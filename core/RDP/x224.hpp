@@ -36,6 +36,8 @@
 struct X224
 //##############################################################################
 {
+    BStream stream;
+
     // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
     // -------------------------------------------------------------------------
     // Packet header to delimit data units in an octet stream
@@ -470,7 +472,6 @@ struct X224
 // |                                      | 5.4.5.2).                          |
 // +--------------------------------------+------------------------------------+
 
-    Stream & stream;
     uint16_t bop;
     uint32_t verbose;
 
@@ -546,9 +547,9 @@ struct X224
 
     // CONSTRUCTOR
     //==============================================================================
-    X224(Stream & stream, uint32_t verbose = 0)
+    X224(uint32_t verbose = 0)
     //==============================================================================
-    : stream(stream)
+    : stream(65536)
     , bop(stream.get_offset(0))
     , verbose(verbose)
     , tpkt(0,0)

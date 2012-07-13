@@ -97,7 +97,8 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
         int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
         BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
-        GraphicsToFile gtf(&trans, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
+        BStream stream(65536);
+        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
         RDPOpaqueRect cmd(Rect(0, 0, 800, 600), 0);
         gtf.draw(cmd, screen_rect);
         gtf.flush();
@@ -161,7 +162,8 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk_reading_with_unserializ
         int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
         BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
-        GraphicsToFile gtf(&trans, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
+        BStream stream(65536);
+        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
         RDPOpaqueRect cmd(Rect(0, 0, 800, 600), 0);
         gtf.draw(cmd, screen_rect);
         gtf.flush();
@@ -214,7 +216,8 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
         BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
-        GraphicsToFile gtf(&trans, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
+        BStream stream(65536);
+        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), screen_rect);
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), Rect(10, 10, 100, 100));
         gtf.flush();
@@ -282,7 +285,8 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
         int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
         BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
-        GraphicsToFile gtf(&trans, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
+        BStream stream(65536);
+        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
         BGRPalette palette332;
         init_palette332(palette332);
 

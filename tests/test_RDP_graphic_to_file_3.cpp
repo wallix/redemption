@@ -96,7 +96,8 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         printf("filename: %s\n", tmpname);
         int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
         OutFileTransport trans(fd);
-        GraphicsToFile gtf(&trans, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
+        BStream stream(65536);
+        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), screen_rect);
         gtf.timestamp();
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), Rect(10, 10, 100, 100));

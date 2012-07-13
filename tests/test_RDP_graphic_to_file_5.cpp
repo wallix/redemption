@@ -98,7 +98,8 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
         int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
         BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
-        GraphicsToFile gtf(&trans, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
+        BStream stream(65536);
+        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
         now.tv_sec += 5;
         now.tv_usec += 1100;
         gtf.timestamp(now);

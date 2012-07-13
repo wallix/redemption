@@ -38,7 +38,6 @@
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
-    BStream stream(65536);
     GeneratorTransport t(
         "\x03\x00\x00\x3d"
         "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x80\x2e\x08\x00\x00\x00\x05"
@@ -46,7 +45,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         "\x63\x15\x71\xd5\x73\xb0\xfe\xe7\xba\x9e\x75\xa0\x68\x67\xa9\x3f"
         "\x7b\xfa\x9a\x3b\x15\x9f\x89\x32\xd4"
         , 61);
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.recv_begin(&t);
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(61, x224.tpkt.len);
@@ -151,7 +151,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
 BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
 {
-    BStream stream(65536);
     GeneratorTransport t(
 /* 0000 */"\x03\x00\x01\x4d"                                                 //...M
 // Socket RDP Client (5) receiving 329 bytes
@@ -178,7 +177,8 @@ BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
 /* 0140 */"\x39\x1b\xac\xe8\xf9\x4d\x67\x70\x44"                             //9....MgpD
         , 333);
 
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.recv_begin(&t);
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(333, x224.tpkt.len);

@@ -756,8 +756,8 @@ static inline void recv_security_exchange_PDU(
     uint8_t client_crypt_random[512];
     memset(client_crypt_random, 0, 512);
 
-    BStream stream(32768);
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.recv_begin(trans);
 
     Mcs mcs(stream);
@@ -808,18 +808,17 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     LOG(LOG_INFO, "Iso Layer : setting encryption");
     /* Send the client random to the server */
     //      if (this->encryption)
-    BStream sdrq_stream(32768);
-
-    X224 x224(sdrq_stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.emit_begin(X224::DT_TPDU);
-    Mcs mcs(sdrq_stream);
+    Mcs mcs(stream);
     mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
 
-    sdrq_stream.out_uint32_le(SEC_EXCHANGE_PKT);
-    sdrq_stream.out_uint32_le(server_public_key_len + SEC_PADDING_SIZE);
+    stream.out_uint32_le(SEC_EXCHANGE_PKT);
+    stream.out_uint32_le(server_public_key_len + SEC_PADDING_SIZE);
     LOG(LOG_INFO, "Server public key is %d bytes long", server_public_key_len);
-    sdrq_stream.out_copy_bytes(client_crypt_random, server_public_key_len);
-    sdrq_stream.out_clear_bytes(SEC_PADDING_SIZE);
+    stream.out_copy_bytes(client_crypt_random, server_public_key_len);
+    stream.out_clear_bytes(SEC_PADDING_SIZE);
 
     mcs.emit_end();
     x224.emit_end();

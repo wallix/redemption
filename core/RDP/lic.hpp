@@ -187,8 +187,8 @@ enum {
 static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
 {
 
-    BStream stream(32768);
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.emit_begin(X224::DT_TPDU);
     Mcs mcs(stream);
     mcs.emit_begin(MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
@@ -265,8 +265,8 @@ static inline void send_lic_response(Transport * trans, int userid) throw (Error
                              0x28, 0x14, 0x00, 0x00
                            };
 
-    BStream stream(32768);
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.emit_begin(X224::DT_TPDU);
     Mcs mcs(stream);
     mcs.emit_begin(MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
@@ -285,8 +285,8 @@ static inline void send_media_lic_response(Transport * trans, int userid) throw 
                              0xf3, 0x99, 0x00, 0x00
                              };
 
-    BStream stream(32768);
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.emit_begin(X224::DT_TPDU);
     Mcs mcs(stream);
     mcs.emit_begin(MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
@@ -462,8 +462,8 @@ struct RdpLicence {
     {
         int length = 58;
 
-        BStream stream(32768);
-        X224 x224(stream);
+        X224 x224;
+        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
@@ -696,8 +696,8 @@ struct RdpLicence {
         int hostlen = strlen(hostname) + 1;
         int length = 128 + userlen + hostlen;
 
-        BStream stream(32768);
-        X224 x224(stream);
+        X224 x224;
+        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
@@ -828,8 +828,8 @@ struct RdpLicence {
                 uint8_t* licence_data, int licence_size, uint8_t* hwid,
                 uint8_t* signature, int userid, const int licence_issued, int use_rdp5)
     {
-        BStream stream(32768);
-        X224 x224(stream);
+        X224 x224;
+        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);

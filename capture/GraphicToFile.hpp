@@ -109,13 +109,18 @@ struct GraphicsToFile : public RDPSerializer
     uint16_t chunk_type;
     TimerCapture timer;
 
-    GraphicsToFile(Transport * trans, const Inifile * ini,
-                   const uint8_t  bpp,
-                   uint32_t small_entries, uint32_t small_size,
-                   uint32_t medium_entries, uint32_t medium_size,
-                   uint32_t big_entries, uint32_t big_size,
-                   const timeval& now)
-    : RDPSerializer(trans, ini, bpp,
+    GraphicsToFile(Transport * trans
+                , Stream * pstream
+                , const Inifile * ini
+                , const uint8_t  bpp
+                , uint32_t small_entries
+                , uint32_t small_size
+                , uint32_t medium_entries
+                , uint32_t medium_size
+                , uint32_t big_entries
+                , uint32_t big_size
+                , const timeval& now)
+    : RDPSerializer(trans, pstream, ini, bpp,
                     small_entries, small_size,
                     medium_entries, medium_size,
                     big_entries, big_size,
@@ -126,12 +131,17 @@ struct GraphicsToFile : public RDPSerializer
         this->init();
     }
 
-    GraphicsToFile(Transport * trans, const Inifile * ini,
-                   const uint8_t  bpp,
-                   uint32_t small_entries, uint32_t small_size,
-                   uint32_t medium_entries, uint32_t medium_size,
-                   uint32_t big_entries, uint32_t big_size)
-    : RDPSerializer(trans, ini,
+    GraphicsToFile(Transport * trans
+                , Stream * pstream
+                , const Inifile * ini
+                , const uint8_t  bpp
+                , uint32_t small_entries
+                , uint32_t small_size
+                , uint32_t medium_entries
+                , uint32_t medium_size
+                , uint32_t big_entries
+                , uint32_t big_size)
+    : RDPSerializer(trans, pstream, ini,
                     bpp,
                     small_entries, small_size,
                     medium_entries, medium_size,
@@ -151,18 +161,18 @@ struct GraphicsToFile : public RDPSerializer
             LOG(LOG_INFO, "GraphicsToFile::init::Initializing orders batch");
         }
         this->order_count = 0;
-        this->stream.init(allocate);
+        this->pstream->init(allocate);
 
         // to keep things easy all chunks should have 8 bytes headers
         // starting with chunk_type, chunk_size
         // and order_count (whatever it means, depending on chunks)
-        this->offset_chunk_type = this->stream.get_offset(0);
-        this->stream.out_uint16_le(0);
-        this->offset_chunk_size = this->stream.get_offset(0);
-        this->stream.out_clear_bytes(2); // 16 bits chunk size (stored in padding reserved zone)
-        this->offset_order_count = this->stream.get_offset(0);
-        this->stream.out_clear_bytes(2); /* number of orders, set later */
-        this->stream.out_clear_bytes(2); /* pad */
+        this->offset_chunk_type = this->pstream->get_offset(0);
+        this->pstream->out_uint16_le(0);
+        this->offset_chunk_size = this->pstream->get_offset(0);
+        this->pstream->out_clear_bytes(2); // 16 bits chunk size (stored in padding reserved zone)
+        this->offset_order_count = this->pstream->get_offset(0);
+        this->pstream->out_clear_bytes(2); /* number of orders, set later */
+        this->pstream->out_clear_bytes(2); /* pad */
     }
 
     virtual void timestamp()
@@ -182,7 +192,7 @@ struct GraphicsToFile : public RDPSerializer
         this->flush();
         this->chunk_type = WRMChunk::TIMESTAMP;
         this->order_count = 1;
-        this->stream.out_uint64_be(usec);
+        this->pstream->out_uint64_be(usec);
         this->flush();
     }
 
@@ -201,11 +211,11 @@ struct GraphicsToFile : public RDPSerializer
 
     void send_order()
     {
-        uint16_t chunk_size = (uint16_t)(this->stream.p - this->stream.data);
-        this->stream.set_out_uint16_le(this->chunk_type, this->offset_chunk_type);
-        this->stream.set_out_uint16_le(chunk_size, this->offset_chunk_size);
-        this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
-        this->trans->send(this->stream.data, chunk_size);
+        uint16_t chunk_size = (uint16_t)(this->pstream->p - this->pstream->data);
+        this->pstream->set_out_uint16_le(this->chunk_type, this->offset_chunk_type);
+        this->pstream->set_out_uint16_le(chunk_size, this->offset_chunk_size);
+        this->pstream->set_out_uint16_le(this->order_count, this->offset_order_count);
+        this->trans->send(this->pstream->data, chunk_size);
     }
 
 };

@@ -76,7 +76,7 @@ struct MetaWRM {
 
     void emit(RDPSerializer& serializer) const
     {
-        this->emit(serializer.stream, *serializer.trans);
+        this->emit(*serializer.pstream, *serializer.trans);
     }
 
     void emit(Stream& stream, Transport& transport) const

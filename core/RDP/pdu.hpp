@@ -59,8 +59,7 @@ namespace RDP {
         };
 
         PDU(Stream & stream) :
-            pduType(UNKNOWN_PDU),
-            x224(stream)
+            pduType(UNKNOWN_PDU)
         {
         }
         void recv_begin(Transport * t) 

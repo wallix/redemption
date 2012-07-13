@@ -60,6 +60,7 @@ class NativeCapture : public RDPGraphicDevice
     int height;
     int bpp;
     OutFileTransport trans;
+    BStream stream;
     GraphicsToFile recorder;
     char filename[1024];
     unsigned int filename_len;
@@ -99,8 +100,8 @@ private:
         this->recorder.chunk_type = WRMChunk::META_FILE;
         this->recorder.order_count = 1;
         {
-            this->recorder.stream.out_uint32_le(this->meta_name_len);
-            this->recorder.stream.out_copy_bytes(this->meta_name, this->meta_name_len);
+            this->recorder.pstream->out_uint32_le(this->meta_name_len);
+            this->recorder.pstream->out_copy_bytes(this->meta_name, this->meta_name_len);
         }
         this->recorder.flush();
     }
@@ -111,7 +112,8 @@ public:
     , height(height)
     , bpp(24)
     , trans(-1)
-    , recorder(&this->trans, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288)
+    , stream(65536)
+    , recorder(&this->trans, &this->stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288)
     , nb_file(0)
     , file_id(0)
     {
@@ -191,32 +193,32 @@ public:
 private:
     void send_rect(const Rect& rect)
     {
-        this->recorder.stream.out_uint16_le(rect.x);
-        this->recorder.stream.out_uint16_le(rect.y);
-        this->recorder.stream.out_uint16_le(rect.cx);
-        this->recorder.stream.out_uint16_le(rect.cy);
+        this->recorder.pstream->out_uint16_le(rect.x);
+        this->recorder.pstream->out_uint16_le(rect.y);
+        this->recorder.pstream->out_uint16_le(rect.cx);
+        this->recorder.pstream->out_uint16_le(rect.cy);
     }
 
     void send_brush(const RDPBrush& brush)
     {
-        this->recorder.stream.out_uint8(brush.org_x);
-        this->recorder.stream.out_uint8(brush.org_y);
-        this->recorder.stream.out_uint8(brush.style);
-        this->recorder.stream.out_uint8(brush.hatch);
-        this->recorder.stream.out_uint8(brush.extra[0]);
-        this->recorder.stream.out_uint8(brush.extra[1]);
-        this->recorder.stream.out_uint8(brush.extra[2]);
-        this->recorder.stream.out_uint8(brush.extra[3]);
-        this->recorder.stream.out_uint8(brush.extra[4]);
-        this->recorder.stream.out_uint8(brush.extra[5]);
-        this->recorder.stream.out_uint8(brush.extra[6]);
+        this->recorder.pstream->out_uint8(brush.org_x);
+        this->recorder.pstream->out_uint8(brush.org_y);
+        this->recorder.pstream->out_uint8(brush.style);
+        this->recorder.pstream->out_uint8(brush.hatch);
+        this->recorder.pstream->out_uint8(brush.extra[0]);
+        this->recorder.pstream->out_uint8(brush.extra[1]);
+        this->recorder.pstream->out_uint8(brush.extra[2]);
+        this->recorder.pstream->out_uint8(brush.extra[3]);
+        this->recorder.pstream->out_uint8(brush.extra[4]);
+        this->recorder.pstream->out_uint8(brush.extra[5]);
+        this->recorder.pstream->out_uint8(brush.extra[6]);
     }
 
     void send_pen(const RDPPen pen)
     {
-        this->recorder.stream.out_uint32_le(pen.color);
-        this->recorder.stream.out_uint8(pen.style);
-        this->recorder.stream.out_uint8(pen.width);
+        this->recorder.pstream->out_uint32_le(pen.color);
+        this->recorder.pstream->out_uint8(pen.style);
+        this->recorder.pstream->out_uint8(pen.width);
     }
 
 public:
@@ -224,8 +226,8 @@ public:
     {
         this->recorder.chunk_type = WRMChunk::TIME_START;
         this->recorder.order_count = 1;
-        this->recorder.stream.out_uint64_be(now.tv_sec);
-        this->recorder.stream.out_uint64_be(now.tv_usec);
+        this->recorder.pstream->out_uint64_be(now.tv_sec);
+        this->recorder.pstream->out_uint64_be(now.tv_usec);
         this->recorder.flush();
     }
 
@@ -239,7 +241,7 @@ public:
         this->recorder.order_count = 1;
         {
             this->next_filename();
-            this->recorder.stream.out_uint32_le(++this->file_id);
+            this->recorder.pstream->out_uint32_le(++this->file_id);
         }
         this->recorder.send_order();
 
@@ -251,11 +253,11 @@ public:
 
         this->recorder.chunk_type = WRMChunk::BREAKPOINT;
         this->recorder.order_count = 1;
-        this->recorder.stream.out_uint16_le(this->width);
-        this->recorder.stream.out_uint16_le(this->height);
-        this->recorder.stream.out_uint8(this->bpp);
-        this->recorder.stream.out_uint64_le(this->recorder.timer.sec());
-        this->recorder.stream.out_uint64_le(this->recorder.timer.usec());
+        this->recorder.pstream->out_uint16_le(this->width);
+        this->recorder.pstream->out_uint16_le(this->height);
+        this->recorder.pstream->out_uint8(this->bpp);
+        this->recorder.pstream->out_uint64_le(this->recorder.timer.sec());
+        this->recorder.pstream->out_uint64_le(this->recorder.timer.usec());
 
         {
             const uint16_t TILE_CX = 32;
@@ -268,14 +270,14 @@ public:
                 if (nb_axe * TILE_CX != width)
                     ++nb_axe;
                 //std::cout << "write nb_axis " << nb_axe << ' ';
-                this->recorder.stream.out_uint16_le(nb_axe);
+                this->recorder.pstream->out_uint16_le(nb_axe);
                 nb_axe = height / TILE_CY;
                 if (nb_axe * TILE_CY != height)
                     ++nb_axe;
                 //std::cout << nb_axe << '\n';
-                this->recorder.stream.out_uint16_le(nb_axe);
+                this->recorder.pstream->out_uint16_le(nb_axe);
             }
-            //std::cout << "writer data size " << (this->recorder.stream.p - this->recorder.stream.data) << '\n';
+            //std::cout << "writer data size " << (this->recorder.pstream->p - this->recorder.pstream->data) << '\n';
             this->recorder.send_order();
 
             this->recorder.chunk_type = RDP_UPDATE_ORDERS;
@@ -295,7 +297,7 @@ public:
                     this->recorder.init();
                     this->recorder.order_count = 1;
                     const RDPBmpCache cmdcache(&tiled_bmp, 0, 0, this->recorder.ini ? this->recorder.ini->globals.debug.primary_orders : 0);
-                    cmdcache.emit(this->recorder.stream, this->recorder.bitmap_cache_version,
+                    cmdcache.emit(*this->recorder.pstream, this->recorder.bitmap_cache_version,
                                   this->recorder.use_bitmap_comp, this->recorder.op2);
                     this->recorder.send_order();
                 }
@@ -308,65 +310,65 @@ public:
         this->recorder.order_count = 1;
         this->recorder.chunk_type = WRMChunk::BREAKPOINT;
 
-        this->recorder.stream.out_uint8(this->recorder.common.order);
+        this->recorder.pstream->out_uint8(this->recorder.common.order);
         this->send_rect(this->recorder.common.clip);
 
-        this->recorder.stream.out_uint32_le(this->recorder.opaquerect.color);
+        this->recorder.pstream->out_uint32_le(this->recorder.opaquerect.color);
         this->send_rect(this->recorder.opaquerect.rect);
 
-        this->recorder.stream.out_uint8(this->recorder.destblt.rop);
+        this->recorder.pstream->out_uint8(this->recorder.destblt.rop);
         this->send_rect(this->recorder.destblt.rect);
 
-        this->recorder.stream.out_uint8(this->recorder.patblt.rop);
-        this->recorder.stream.out_uint32_le(this->recorder.patblt.back_color);
-        this->recorder.stream.out_uint32_le(this->recorder.patblt.fore_color);
+        this->recorder.pstream->out_uint8(this->recorder.patblt.rop);
+        this->recorder.pstream->out_uint32_le(this->recorder.patblt.back_color);
+        this->recorder.pstream->out_uint32_le(this->recorder.patblt.fore_color);
         this->send_brush(this->recorder.patblt.brush);
         this->send_rect(this->recorder.patblt.rect);
 
-        this->recorder.stream.out_uint8(this->recorder.scrblt.rop);
-        this->recorder.stream.out_uint16_le(this->recorder.scrblt.srcx);
-        this->recorder.stream.out_uint16_le(this->recorder.scrblt.srcy);
+        this->recorder.pstream->out_uint8(this->recorder.scrblt.rop);
+        this->recorder.pstream->out_uint16_le(this->recorder.scrblt.srcx);
+        this->recorder.pstream->out_uint16_le(this->recorder.scrblt.srcy);
         this->send_rect(this->recorder.scrblt.rect);
 
-        this->recorder.stream.out_uint8(this->recorder.memblt.rop);
-        this->recorder.stream.out_uint16_le(this->recorder.memblt.srcx);
-        this->recorder.stream.out_uint16_le(this->recorder.memblt.srcy);
-        this->recorder.stream.out_uint16_le(this->recorder.memblt.cache_id);
-        this->recorder.stream.out_uint16_le(this->recorder.memblt.cache_idx);
+        this->recorder.pstream->out_uint8(this->recorder.memblt.rop);
+        this->recorder.pstream->out_uint16_le(this->recorder.memblt.srcx);
+        this->recorder.pstream->out_uint16_le(this->recorder.memblt.srcy);
+        this->recorder.pstream->out_uint16_le(this->recorder.memblt.cache_id);
+        this->recorder.pstream->out_uint16_le(this->recorder.memblt.cache_idx);
         this->send_rect(this->recorder.memblt.rect);
 
-        this->recorder.stream.out_uint8(this->recorder.lineto.rop2);
-        this->recorder.stream.out_uint16_le(this->recorder.lineto.startx);
-        this->recorder.stream.out_uint16_le(this->recorder.lineto.starty);
-        this->recorder.stream.out_uint16_le(this->recorder.lineto.endx);
-        this->recorder.stream.out_uint16_le(this->recorder.lineto.endy);
-        this->recorder.stream.out_uint8(this->recorder.lineto.back_mode);
-        this->recorder.stream.out_uint32_le(this->recorder.lineto.back_color);
+        this->recorder.pstream->out_uint8(this->recorder.lineto.rop2);
+        this->recorder.pstream->out_uint16_le(this->recorder.lineto.startx);
+        this->recorder.pstream->out_uint16_le(this->recorder.lineto.starty);
+        this->recorder.pstream->out_uint16_le(this->recorder.lineto.endx);
+        this->recorder.pstream->out_uint16_le(this->recorder.lineto.endy);
+        this->recorder.pstream->out_uint8(this->recorder.lineto.back_mode);
+        this->recorder.pstream->out_uint32_le(this->recorder.lineto.back_color);
         this->send_pen(this->recorder.lineto.pen);
 
-        this->recorder.stream.out_uint32_le(this->recorder.glyphindex.back_color);
-        this->recorder.stream.out_uint32_le(this->recorder.glyphindex.fore_color);
-        this->recorder.stream.out_uint16_le(this->recorder.glyphindex.f_op_redundant);
-        this->recorder.stream.out_uint16_le(this->recorder.glyphindex.fl_accel);
-        this->recorder.stream.out_uint16_le(this->recorder.glyphindex.glyph_x);
-        this->recorder.stream.out_uint16_le(this->recorder.glyphindex.glyph_y);
-        this->recorder.stream.out_uint16_le(this->recorder.glyphindex.ui_charinc);
-        this->recorder.stream.out_uint8(this->recorder.glyphindex.cache_id);
-        this->recorder.stream.out_uint8(this->recorder.glyphindex.data_len);
+        this->recorder.pstream->out_uint32_le(this->recorder.glyphindex.back_color);
+        this->recorder.pstream->out_uint32_le(this->recorder.glyphindex.fore_color);
+        this->recorder.pstream->out_uint16_le(this->recorder.glyphindex.f_op_redundant);
+        this->recorder.pstream->out_uint16_le(this->recorder.glyphindex.fl_accel);
+        this->recorder.pstream->out_uint16_le(this->recorder.glyphindex.glyph_x);
+        this->recorder.pstream->out_uint16_le(this->recorder.glyphindex.glyph_y);
+        this->recorder.pstream->out_uint16_le(this->recorder.glyphindex.ui_charinc);
+        this->recorder.pstream->out_uint8(this->recorder.glyphindex.cache_id);
+        this->recorder.pstream->out_uint8(this->recorder.glyphindex.data_len);
         this->send_rect(this->recorder.glyphindex.bk);
         this->send_rect(this->recorder.glyphindex.op);
         this->send_brush(this->recorder.glyphindex.brush);
-        this->recorder.stream.out_copy_bytes(this->recorder.glyphindex.data, this->recorder.glyphindex.data_len);
+        this->recorder.pstream->out_copy_bytes(this->recorder.glyphindex.data, this->recorder.glyphindex.data_len);
 
-        this->recorder.stream.out_uint16_le(this->recorder.order_count);
+        this->recorder.pstream->out_uint16_le(this->recorder.order_count);
 
-        this->recorder.stream.out_uint16_le(this->recorder.bmp_cache.small_entries);
-        this->recorder.stream.out_uint16_le(this->recorder.bmp_cache.small_size);
-        this->recorder.stream.out_uint16_le(this->recorder.bmp_cache.medium_entries);
-        this->recorder.stream.out_uint16_le(this->recorder.bmp_cache.medium_size);
-        this->recorder.stream.out_uint16_le(this->recorder.bmp_cache.big_entries);
-        this->recorder.stream.out_uint16_le(this->recorder.bmp_cache.big_size);
-        this->recorder.stream.out_uint32_le(this->recorder.bmp_cache.stamp);
+        this->recorder.pstream->out_uint16_le(this->recorder.bmp_cache.small_entries);
+        this->recorder.pstream->out_uint16_le(this->recorder.bmp_cache.small_size);
+        this->recorder.pstream->out_uint16_le(this->recorder.bmp_cache.medium_entries);
+        this->recorder.pstream->out_uint16_le(this->recorder.bmp_cache.medium_size);
+        this->recorder.pstream->out_uint16_le(this->recorder.bmp_cache.big_entries);
+        this->recorder.pstream->out_uint16_le(this->recorder.bmp_cache.big_size);
+        this->recorder.pstream->out_uint32_le(this->recorder.bmp_cache.stamp);
 
         {
             uint16_t nb_img = 0;
@@ -378,7 +380,7 @@ public:
                     }
                 }
             }
-            this->recorder.stream.out_uint16_le(nb_img);
+            this->recorder.pstream->out_uint16_le(nb_img);
             //std::cout << "write nb_img " << nb_img << '\n';
         }
 
@@ -392,7 +394,7 @@ public:
                     this->recorder.init();
                     this->recorder.order_count = 1;
                     const RDPBmpCache cmdcache(bitmaps[cidx], cid, cidx);
-                    cmdcache.emit_v1_compressed(this->recorder.stream, true);
+                    cmdcache.emit_v1_compressed(*this->recorder.pstream, true);
                     this->recorder.send_order();
                 }
             }
@@ -406,11 +408,11 @@ public:
                 this->recorder.init();
                 this->recorder.order_count = 1;
                 for (uint16_t last = std::min<>(cidx + 8192 / 9, 8192); cidx != last; ++cidx){
-                    this->recorder.stream.out_uint32_le(stamps[cidx]);
+                    this->recorder.pstream->out_uint32_le(stamps[cidx]);
                 }
                 this->recorder.send_order();
             }
-            //std::cout << this->recorder.stream.capacity << " / " << (this->recorder.stream.p - this->recorder.stream.data) << std::endl;
+            //std::cout << this->recorder.pstream->capacity << " / " << (this->recorder.pstream->p - this->recorder.pstream->data) << std::endl;
         }
 
         this->recorder.init();

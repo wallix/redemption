@@ -344,8 +344,8 @@ struct RdpNego
     void recv_connection_confirm()
     {
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
-        BStream stream(8192);
-        X224 x224(stream);
+        X224 x224;
+        Stream & stream = x224.stream;
         x224.recv_begin(this->trans);
         if (x224.tpkt.version != 3){
             throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
@@ -581,23 +581,23 @@ struct RdpNego
     void send_negotiation_request()
     {
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu");
-        BStream out;
-        X224 x224(out);
+        X224 x224;
+        Stream & stream = x224.stream;
         x224.emit_begin(X224::CR_TPDU);
-        x224.stream.out_concat("Cookie: mstshash=");
-        x224.stream.out_concat(this->username);
-        x224.stream.out_concat("\r\n");
-//        x224.stream.out_uint8(0x01);
-//        x224.stream.out_uint8(0x00);
-//        x224.stream.out_uint32_le(0x00);
+        stream.out_concat("Cookie: mstshash=");
+        stream.out_concat(this->username);
+        stream.out_concat("\r\n");
+//        stream.out_uint8(0x01);
+//        stream.out_uint8(0x00);
+//        stream.out_uint32_le(0x00);
 
         if (this->tls)
         {
             /* RDP_NEG_DATA must be present for TLS and NLA */
-            x224.stream.out_uint8(X224::RDP_NEG_REQ);
-            x224.stream.out_uint8(0); /* flags, must be set to zero */
-            x224.stream.out_uint16_le(8); /* RDP_NEG_DATA length (8) */
-            x224.stream.out_uint32_le(X224::RDP_NEG_PROTOCOL_TLS);
+            stream.out_uint8(X224::RDP_NEG_REQ);
+            stream.out_uint8(0); /* flags, must be set to zero */
+            stream.out_uint16_le(8); /* RDP_NEG_DATA length (8) */
+            stream.out_uint32_le(X224::RDP_NEG_PROTOCOL_TLS);
         }
 
         x224.extend_tpdu_hdr();

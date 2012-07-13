@@ -427,8 +427,8 @@ public:
         if (this->verbose){
             LOG(LOG_INFO, "Front::disconnect()");
         }
-        BStream stream(32768);
-        X224 x224(stream);
+        X224 x224;
+        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
 
         stream.out_uint8((MCSPDU_DisconnectProviderUltimatum << 2) | 1);
@@ -462,9 +462,8 @@ public:
             LOG(LOG_INFO, "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)", data, length, chunk_size, flags);
         }
 
-        BStream stream(65536);
-
-        X224 x224(stream);
+        X224 x224;
+        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, channel.chanid);
@@ -511,10 +510,8 @@ public:
             if (this->verbose > 4){
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
-            BStream stream(32768);
-
-            // Packet header
-            X224 x224(stream);
+            X224 x224;
+            Stream & stream = x224.stream;
             x224.emit_begin(X224::DT_TPDU);
             Mcs mcs(stream);
             mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
@@ -667,10 +664,8 @@ public:
         if (this->verbose){
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
         }
-        BStream stream(32768);
-
-        // Packet header
-        X224 x224(stream);
+        X224 x224;
+        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
@@ -799,10 +794,8 @@ public:
         if (this->verbose){
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
         }
-        BStream stream(32768);
-
-        // Packet header
-        X224 x224(stream);
+        X224 x224;
+        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
@@ -862,8 +855,7 @@ public:
             }
 
             {
-                BStream in(8192);
-                X224 x224(in);
+                X224 x224;
                 x224.recv_begin(this->trans);
 
                 if (x224.tpdu_hdr.code != X224::CR_TPDU) {
@@ -877,8 +869,7 @@ public:
                 LOG(LOG_INFO, "Front::incoming::sending x224 connection confirm PDU");
             }
             {
-                BStream out(128);
-                X224 x224(out);
+                X224 x224;
                 x224.emit_begin(X224::CC_TPDU);
                 x224.emit_end();
                 this->trans->send(x224.header(), x224.size());
@@ -1081,9 +1072,8 @@ public:
             LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
         }
         {
-            BStream stream(65535);
-
-            X224 x224(stream);
+            X224 x224;
+            Stream & stream = x224.stream;
             x224.recv_begin(this->trans);
             Mcs mcs(stream);
             mcs.recv_begin();
@@ -1155,8 +1145,8 @@ public:
             LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE");
         }
         {
-            BStream stream(65535);
-            X224 x224(stream);
+            X224 x224;
+            Stream & stream = x224.stream;
             x224.recv_begin(this->trans);
             Mcs mcs(stream);
             mcs.recv_begin();
@@ -1353,9 +1343,8 @@ public:
         {
             ChannelDefArray & channel_list = this->channel_list;
 
-            BStream stream(65535);
-
-            X224 x224(stream);
+            X224 x224;
+            Stream & stream = x224.stream;
             x224.recv_begin(this->trans);
 
             if (x224.tpdu_hdr.code != X224::DT_TPDU){
@@ -1504,10 +1493,8 @@ public:
         if (this->verbose){
             LOG(LOG_INFO, "send_data_update_sync");
         }
-        BStream stream(32768);
-
-        // Packet header
-        X224 x224(stream);
+        X224 x224;
+        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
@@ -1539,10 +1526,8 @@ public:
     {
         LOG(LOG_INFO, "Front::send_demand_active");
 
-        BStream stream(32768);
-
-        // Packet header
-        X224 x224(stream);
+        X224 x224;
+        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
@@ -1888,10 +1873,8 @@ public:
     {
         LOG(LOG_INFO, "send_synchronize");
 
-        BStream stream(32768);
-
-        // Packet header
-        X224 x224(stream);
+        X224 x224;
+        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
@@ -1942,10 +1925,8 @@ public:
     {
         LOG(LOG_INFO, "send_control action=%u", action);
 
-        BStream stream(32768);
-
-        // Packet header
-        X224 x224(stream);
+        X224 x224;
+        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
@@ -2004,10 +1985,8 @@ public:
 
         TODO(" we should create some RDPStream object created on init and sent before destruction")
 
-        BStream stream(32768);
-
-        // Packet header
-        X224 x224(stream);
+        X224 x224;
+        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
@@ -2204,10 +2183,8 @@ public:
                 // so the client is sure the connection is alive and it can ask
                 // if user really wants to disconnect */
 
-                BStream stream(32768);
-
-                // Packet header
-                X224 x224(stream);
+                X224 x224;
+                Stream & stream = x224.stream;
                 x224.emit_begin(X224::DT_TPDU);
                 Mcs mcs(stream);
                 mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
@@ -2363,10 +2340,8 @@ public:
     {
         LOG(LOG_INFO, "send_deactive");
 
-        BStream stream(32768);
-
-        // Packet header
-        X224 x224(stream);
+        X224 x224;
+        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);

@@ -60,10 +60,8 @@ BOOST_AUTO_TEST_CASE(TestSendShareControlAndData)
 
 BOOST_AUTO_TEST_CASE(TestX224SendShareControlAndData)
 {
-    BStream stream(65536);
-    memset(stream.data, 0, 65536);
-
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.emit_begin(X224::DT_TPDU);
     ShareControl sctrl(stream);
     sctrl.emit_begin(PDUTYPE_DATAPDU, 1);

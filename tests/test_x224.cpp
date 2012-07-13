@@ -35,9 +35,9 @@
 
 BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU)
 {
-    BStream stream;
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.recv_begin(&t);
     x224.recv_end();
 
@@ -52,9 +52,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU)
 {
-    BStream stream;
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xD0\x00\x00\x00\x00\x00", 11);
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.recv_begin(&t);
     x224.recv_end();
 
@@ -70,9 +70,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU)
 {
-    BStream stream;
     GeneratorTransport t("\x03\x00\x00\x0B\x06\x80\x00\x00\x00\x00\x01", 11);
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.recv_begin(&t);
     x224.recv_end();
 
@@ -90,9 +90,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU)
 {
-    BStream stream;
     GeneratorTransport t("\x03\x00\x00\x0B\x02\xF0\x80\x12\x34\x56\x78", 11);
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.recv_begin(&t);
 
     // tpkt header is OK
@@ -119,9 +119,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU)
 {
-    BStream stream;
     GeneratorTransport t("\x03\x00\x00\x0D\x08\x70\x00\x00\x02\xC1\x02\x06\x22", 13);
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.recv_begin(&t);
     x224.recv_end();
 
@@ -142,11 +142,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU)
 {
-    BStream stream(65536);
-    memset(stream.data, 0, 65536);
-
     GeneratorTransport t("", 0); // used as /dev/null
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.emit_begin(X224::CR_TPDU);
     x224.emit_end();
 
@@ -170,12 +168,10 @@ BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU)
 {
-    BStream stream(65536);
-    memset(stream.data, 0, 65536);
-
     GeneratorTransport t("", 0); // used as /dev/null
 
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.emit_begin(X224::CC_TPDU);
     x224.emit_end();
 
@@ -200,12 +196,10 @@ BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestSend_DR_TPDU)
 {
-    BStream stream(65536);
-    memset(stream.data, 0, 65536);
-
     GeneratorTransport t("", 0); // used as /dev/null
 
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.emit_begin(X224::DR_TPDU);
     x224.emit_end();
 
@@ -230,11 +224,9 @@ BOOST_AUTO_TEST_CASE(TestSend_DR_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestSend_ER_TPDU)
 {
-    BStream stream(65536);
-    memset(stream.data, 0, 65536);
-
     GeneratorTransport t("", 0); // used as /dev/null
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.emit_begin(X224::ER_TPDU);
     x224.emit_end();
 
@@ -259,11 +251,10 @@ BOOST_AUTO_TEST_CASE(TestSend_ER_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestSend_DT_TPDU)
 {
-    BStream stream(65536);
-    memset(stream.data, 0, 65536);
     GeneratorTransport t("", 0); // used as /dev/null
 
-    X224 x224(stream);
+    X224 x224;
+    Stream & stream = x224.stream;
     x224.emit_begin(X224::DT_TPDU);
     //------------ Here stream points to where user must write his data if any
     stream.out_uint8(0x12);

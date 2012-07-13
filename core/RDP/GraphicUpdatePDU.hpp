@@ -123,7 +123,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
                       const int bitmap_cache_version,
                       const int use_bitmap_comp,
                       const int op2)
-        : RDPSerializer(trans, ini,
+        : RDPSerializer(trans, NULL, ini,
             bpp,
             small_entries, small_size,
             medium_entries, medium_size,
@@ -160,23 +160,23 @@ struct GraphicsUpdatePDU : public RDPSerializer
         if (this->ini->globals.debug.primary_orders > 63){
             LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
         }
-        this->stream.init(32768);
-        this->x224 = new X224(this->stream);
+        this->x224 = new X224();
+        this->pstream = &(this->x224->stream);
         this->x224->emit_begin(X224::DT_TPDU);
-        this->mcs = new Mcs(this->stream);
+        this->mcs = new Mcs(*this->pstream);
         this->mcs->emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-        this->sec = new Sec(this->stream, this->encrypt);
+        this->sec = new Sec(*this->pstream, this->encrypt);
         this->sec->emit_begin( this->crypt_level?SEC_ENCRYPT:0 );
-        this->sctrl = new ShareControl(this->stream);
+        this->sctrl = new ShareControl(*this->pstream);
         this->sctrl->emit_begin( PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE );
-        this->sdata = new ShareData(this->stream);
+        this->sdata = new ShareData(*this->pstream);
         this->sdata->emit_begin( PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED );
 
-        this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
-        this->stream.out_clear_bytes(2); /* pad */
-        this->offset_order_count = this->stream.get_offset(0);
-        this->stream.out_clear_bytes(2); /* number of orders, set later */
-        this->stream.out_clear_bytes(2); /* pad */
+        this->pstream->out_uint16_le(RDP_UPDATE_ORDERS);
+        this->pstream->out_clear_bytes(2); /* pad */
+        this->offset_order_count = this->pstream->get_offset(0);
+        this->pstream->out_clear_bytes(2); /* number of orders, set later */
+        this->pstream->out_clear_bytes(2); /* pad */
     }
 
     virtual void flush()
@@ -185,7 +185,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
             if (this->ini->globals.debug.primary_orders > 63){
                 LOG(LOG_INFO, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             }
-            this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
+            this->pstream->set_out_uint16_le(this->order_count, this->offset_order_count);
             this->order_count = 0;
 
             this->sdata->emit_end();
