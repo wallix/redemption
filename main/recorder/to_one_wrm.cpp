@@ -18,14 +18,12 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#include <iostream>
-
 #include "to_one_wrm.hpp"
 #include "timer_compute.hpp"
 #include "nativecapture.hpp"
 
 void to_one_wrm(WRMRecorder& recorder, const char* outfile,
-            std::size_t start, std::size_t stop, const char* metaname
+                std::size_t start, std::size_t stop, const char* metaname
 )
 {
     NativeCapture capture(recorder.meta().width,
@@ -36,6 +34,7 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
 
     timeval mstart = timercompute.start();
     uint64_t mtime = timercompute.advance_second(start);
+    GraphicsToFile& caprecorder = capture.recorder;
 
     if (start && !mtime)
         return /*0*/;
@@ -43,27 +42,67 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
         capture.send_time_start(mstart);
     }
     if (mtime){
-        capture.recorder.timestamp(mtime);
-        capture.recorder.timer += mtime;
+        caprecorder.timestamp(mtime);
+        caprecorder.timer += mtime;
     }
 
     timercompute.usec() = mtime - start;
     mtime = TimerCompute::coeff_sec_to_usec * (stop - start);
+    BStream& stream = recorder.reader.stream;
 
     while (recorder.selected_next_order())
     {
         if (timercompute.interpret_is_time_chunk()) {
             if (timercompute.chunk_time_value) {
-                capture.recorder.timestamp(timercompute.chunk_time_value);
-                capture.recorder.timer += timercompute.chunk_time_value;
+                caprecorder.timestamp(timercompute.chunk_time_value);
+                caprecorder.timer += timercompute.chunk_time_value;
             }
 
-            if (mtime >= timercompute.usec()){
+            if (mtime <= timercompute.usec()){
                 break;
             }
         }
         else {
-            recorder.interpret_order();
+            switch (recorder.chunk_type()) {
+                case WRMChunk::NEXT_FILE_ID:
+                    recorder.interpret_order();
+                    break;
+                case WRMChunk::META_FILE:
+                case WRMChunk::TIME_START:
+                    recorder.ignore_chunks();
+                    break;
+                case WRMChunk::BREAKPOINT:
+                {
+                    stream.p += 2 + 2 + 1 + 8 + 8;
+                    uint nb_img = stream.in_uint16_le() * stream.in_uint16_le();
+
+                    --recorder.remaining_order_count();
+
+                    while (nb_img)
+                    {
+                        recorder.selected_next_order();
+                        nb_img -= recorder.remaining_order_count();
+                        recorder.ignore_chunks();
+                    }
+
+                    recorder.selected_next_order();
+
+                    stream.p = stream.end - 2;
+                    recorder.remaining_order_count() = 0;
+                    nb_img = stream.in_uint16_le();
+
+                    for (uint ignore = nb_img + 27; ignore; --ignore){
+                        recorder.selected_next_order();
+                        recorder.ignore_chunks();
+                    }
+                }
+                    break;
+                default:
+                    caprecorder.trans->send(stream.data,
+                                            stream.end - stream.data);
+                    recorder.ignore_chunks();
+                    break;
+            }
         }
     }
 

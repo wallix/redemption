@@ -18,8 +18,6 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#include <iostream>
-
 #include "to_wrm.hpp"
 #include "timer_compute.hpp"
 #include "capture.hpp"

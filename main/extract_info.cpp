@@ -151,7 +151,6 @@ int main(int argc, char** argv)
                 breakpoint_info.weight += weight;
                 std::cout << "\n\tcache stamp size: " << weight
                 << "\n\ttotal: " << (breakpoint_info.weight - start_weight) << '\n';
-
             }
                 break;
             case WRMChunk::META_FILE:

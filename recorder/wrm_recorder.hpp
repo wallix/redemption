@@ -361,6 +361,11 @@ public:
     void interpret_order()
     {
         switch (this->reader.chunk_type) {
+            case WRMChunk::TIME_START:
+            {
+                this->ignore_chunks();
+            }
+            break;
             case WRMChunk::META_FILE:
             {
                 this->ignore_chunks();
@@ -373,11 +378,6 @@ public:
                 this->idx_file = this->reader.stream.in_uint32_le();
                 this->check_idx_wrm(this->idx_file);
                 this->next_file(this->meta().files[this->idx_file].c_str());
-            }
-            break;
-            case WRMChunk::TIME_START:
-            {
-                this->ignore_chunks();
             }
             break;
             case WRMChunk::BREAKPOINT:

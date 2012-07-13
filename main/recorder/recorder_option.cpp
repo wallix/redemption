@@ -11,6 +11,7 @@ RecorderOption::RecorderOption()
 , screenshot_wrm(false)
 , screenshot_start(false)
 , no_screenshot_stop(false)
+, cat_wrm(false)
 {
     this->add_default_options();
 }
