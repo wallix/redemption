@@ -35,6 +35,7 @@ struct RecorderOption
     bool screenshot_wrm;
     bool screenshot_start;
     bool no_screenshot_stop;
+    bool cat_wrm;
 
     RecorderOption();
 

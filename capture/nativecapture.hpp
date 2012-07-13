@@ -183,13 +183,10 @@ public:
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void glyph_index(const RDPGlyphIndex & cmd, const Rect & clip)
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
     }
-
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
-    {}
 
 private:
     void send_rect(const Rect& rect)

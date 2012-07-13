@@ -524,7 +524,8 @@ public:
                 //std::cout << "interpret_order: "  << this->reader.bmp_cache.small_entries << ',' << this->reader.bmp_cache.small_size << ',' << this->reader.bmp_cache.medium_entries << ',' << this->reader.bmp_cache.medium_size << ',' << this->reader.bmp_cache.big_entries << ',' << this->reader.bmp_cache.big_size << '\n';
 
                 this->reader.bmp_cache.reset();
-                uint16_t nb_img = this->reader.stream.in_uint16_le();                //std::cout << "read nb_img " << nb_img << '\n';
+                uint16_t nb_img = this->reader.stream.in_uint16_le();
+                //std::cout << "read nb_img " << nb_img << '\n';
                 this->reader.remaining_order_count = 0;
                 for (; nb_img; --nb_img){
                     this->reader.next();
