@@ -353,8 +353,8 @@ struct mod_vnc : public client_mod {
                 "\x00\x1F" // red max     : 2 bytes = 31
                 "\x00\x3F" // green max   : 2 bytes = 63
                 "\x00\x1F" // blue max    : 2 bytes = 31
-                "\x0B" // red shift       : 1 bytes = 10
-                "\x05" // green shift     : 1 bytes =  6
+                "\x0B" // red shift       : 1 bytes = 11
+                "\x05" // green shift     : 1 bytes =  5
                 "\x00" // blue shift      : 1 bytes =  0
                 "\0\0\0"; // padding      : 3 bytes
             stream.out_copy_bytes(pixel_format, 16);
@@ -364,12 +364,12 @@ struct mod_vnc : public client_mod {
             this->depth  = 16;
             this->endianess = 0;
             this->true_color_flag = 1;
-            this->red_max = 0x1F;
-            this->green_max = 0x3F;
-            this->blue_max = 0x1F;
-            this->red_shift = 10;
-            this->green_shift = 6;
-            this->blue_shift = 0;
+            this->red_max       = 0x1F;
+            this->green_max     = 0x3F;
+            this->blue_max      = 0x1F;
+            this->red_shift     = 0x0B;
+            this->green_shift   = 0x05;
+            this->blue_shift    = 0;
         }
 
         // 7.4.2   SetEncodings
@@ -577,7 +577,7 @@ struct mod_vnc : public client_mod {
 
     private:
     TODO(" use it for copy/paste  it is not called now")
-    int lib_process_channel_data(int chanid, int flags, int size, Stream & stream, int total_size)
+    int lib_process_channel_data(int chanid, int flags, int size, BStream & stream, int total_size)
     {
 //        if (chanid == this->clip_chanid) {
 //            uint16_t type = stream.in_uint16_le();
@@ -731,39 +731,54 @@ struct mod_vnc : public client_mod {
                 const uint8_t *vnc_pointer_mask = stream.in_uint8p(sz_bitmask);
 
                 uint8_t rdp_cursor_mask[32 * (32 / 8)] = {};
-
-                // clear target cursor mask
-                for (size_t tmpy = 0; tmpy < 32; tmpy++) {
-                    for (size_t mask_x = 0; mask_x < nbbytes(32); mask_x++) {
-                        rdp_cursor_mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
-                    }
-                }
-
-                TODO("The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask use is 1 bit per pixel arrays")
-                // copy vnc pointer and mask to rdp pointer and mask
                 uint8_t rdp_cursor_data[32 * (32 * 3)] = {};
-                for (int yy = 0; yy < cy; yy++) {
-                    for (int xx = 0 ; xx < cx ; xx++){
-                        if (vnc_pointer_mask[yy * nbbytes(cx) + xx / 8 ] & (0x80 >> (xx&7))){
-                            if ((yy < 32) && (xx < 32)){
-                                rdp_cursor_mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
-                                int pixel = 0;
-                                for (int tt = 0 ; tt < Bpp; tt++){
-                                    pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
+
+                // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
+                if (cx == 1 && cy == 1) {
+                    memset(rdp_cursor_data, 0, sizeof(rdp_cursor_data));
+                    rdp_cursor_data[2883] = 0xFF;
+                    rdp_cursor_data[2884] = 0xFF;
+                    rdp_cursor_data[2885] = 0xFF;
+                    memset(rdp_cursor_mask, 0xFF, sizeof(rdp_cursor_mask));
+                    rdp_cursor_mask[116] = 0x1F;
+                    rdp_cursor_mask[120] = 0x1F;
+                    rdp_cursor_mask[124] = 0x1F;
+                }
+                else {
+                    // clear target cursor mask
+                    for (size_t tmpy = 0; tmpy < 32; tmpy++) {
+                        for (size_t mask_x = 0; mask_x < nbbytes(32); mask_x++) {
+                            rdp_cursor_mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
+                        }
+                    }
+                    TODO("The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask use is 1 bit per pixel arrays")
+                    // copy vnc pointer and mask to rdp pointer and mask
+
+                    for (int yy = 0; yy < cy; yy++) {
+                        for (int xx = 0 ; xx < cx ; xx++){
+                            if (vnc_pointer_mask[yy * nbbytes(cx) + xx / 8 ] & (0x80 >> (xx&7))){
+                                if ((yy < 32) && (xx < 32)){
+                                    rdp_cursor_mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
+                                    int pixel = 0;
+                                    for (int tt = 0 ; tt < Bpp; tt++){
+                                        pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
+                                    }
+                                    TODO("temporary: force black cursor")
+                                    int red   = (pixel >> this->red_shift) & red_max;
+                                    int green = (pixel >> this->green_shift) & green_max;
+                                    int blue  = (pixel >> this->blue_shift) & blue_max;
+                                    rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 0] = (red << 3) | (red >> 2);
+                                    rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 1] = (green << 2) | (green >> 4);;
+                                    rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 2] = (blue << 3) | (blue >> 2);
                                 }
-                                TODO("temporary: force black cursor")
-                                rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 0] = 0;
-                                rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 1] = 0;
-                                rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 2] = 0;
                             }
                         }
                     }
+                    /* keep these in 32x32, vnc cursor can be alot bigger */
+                    /* (anyway hotspot is usually 0, 0)                   */
+                    if (x > 31) { x = 31; }
+                    if (y > 31) { y = 31; }
                 }
-
-                /* keep these in 32x32, vnc cursor can be alot bigger */
-                /* (anyway hotspot is usually 0, 0)                   */
-                if (x > 31) { x = 31; }
-                if (y > 31) { y = 31; }
 TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation")
                 this->front.begin_update();
                 this->front.server_set_pointer(x, y, rdp_cursor_data, rdp_cursor_mask);
