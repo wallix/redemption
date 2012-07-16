@@ -1324,7 +1324,6 @@ struct mod_rdp : public client_mod {
             LOG(LOG_DEBUG, "mod_rdp::draw_event::Exception!!!Closing connection (status=%u)", e.id);
             try {
                 X224 x224;
-                Stream & stream = x224.stream;
                 x224.emit_begin(X224::DR_TPDU);
                 x224.emit_end();
                 this->nego.trans->send(x224.header(), x224.size());

@@ -57,6 +57,7 @@
 
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/capabilities.hpp"
+#include "payload.hpp"
 
 #include "front_api.hpp"
 #include "genrandom.hpp"

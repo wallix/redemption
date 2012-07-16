@@ -31,9 +31,10 @@
 #include "stream.hpp"
 #include "log.hpp"
 #include "error.hpp"
+#include "payload.hpp"
 
 //##############################################################################
-struct X224
+struct X224 : public Payload
 //##############################################################################
 {
     BStream stream;
@@ -472,7 +473,6 @@ struct X224
 // |                                      | 5.4.5.2).                          |
 // +--------------------------------------+------------------------------------+
 
-    uint16_t bop;
     uint32_t verbose;
 
     //##############################################################################
@@ -550,7 +550,6 @@ struct X224
     X224(uint32_t verbose = 0)
     //==============================================================================
     : stream(65536)
-    , bop(stream.get_offset(0))
     , verbose(verbose)
     , tpkt(0,0)
     , tpdu_hdr(0, 0)
@@ -561,12 +560,25 @@ struct X224
         }
     } // END CONSTRUCTOR
 
+
+    // total length including payload length
+    virtual size_t len(void)
+    {
+        return this->stream.get_offset(0);
+    }
+
+    // used to send payloads
+    virtual void send(Transport & trans) 
+    {
+    }
+
+
     // for Transport
     //==============================================================================
     uint8_t * header()
     //==============================================================================
     {
-        return this->stream.data + this->bop;
+        return this->stream.data;
     }
 
     // for Transport
@@ -574,7 +586,7 @@ struct X224
     size_t size()
     //==============================================================================
     {
-        return this->stream.get_offset(this->bop);
+        return this->stream.get_offset(0);
     }
 
     // Receive a X224 TPDU from the wires - Open stream
@@ -848,7 +860,7 @@ struct X224
     void extend_tpdu_hdr()
     //==============================================================================
     {
-        this->stream.set_out_uint8(this->stream.get_offset(this->bop) - 5, this->bop + 4); // LI
+        this->stream.set_out_uint8(this->stream.get_offset(0) - 5, 4); // LI
 
     } // END METHOD extend_tpdu_hdr
 
@@ -858,9 +870,9 @@ struct X224
     // This function update header informations of TPDU before it is sent
     // on the wires.
     {
-        this->stream.set_out_uint16_be(stream.get_offset(this->bop), this->bop + 2);
+        this->stream.set_out_uint16_be(stream.get_offset(0), 2);
 //        LOG(LOG_INFO, "2) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", this->stream.data[0], this->stream.data[1], this->stream.data[2], this->stream.data[3], this->stream.data[4], this->stream.data[5], this->stream.data[6], this->stream.data[7]);
-        uint8_t tpdutype = stream.data[this->bop+5];
+        uint8_t tpdutype = stream.data[5];
         switch (tpdutype){
             case CR_TPDU: // Connection Request 1110 xxxx
 //                LOG(LOG_INFO, "----> sent X224 OUT CR_TPDU");
