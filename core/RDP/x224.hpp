@@ -38,6 +38,7 @@ struct X224 : public Payload
 //##############################################################################
 {
     BStream stream;
+    SubStream payload;
 
     // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
     // -------------------------------------------------------------------------
@@ -550,6 +551,7 @@ struct X224 : public Payload
     X224(uint32_t verbose = 0)
     //==============================================================================
     : stream(65536)
+    , payload(this->stream, 0) // useless as long as recv is not done
     , verbose(verbose)
     , tpkt(0,0)
     , tpdu_hdr(0, 0)
@@ -733,6 +735,7 @@ struct X224 : public Payload
                 // just skip remaining TPDU header content
                 stream.in_skip_bytes(this->tpdu_hdr.LI-1);
         }
+        this->payload.reset(this->stream, this->stream.get_offset(0));
     } // END METHOD recv_begin
 
 
@@ -740,7 +743,10 @@ struct X224 : public Payload
     //==============================================================================
     void recv_end(){
     //==============================================================================
-        if (this->stream.p != this->stream.end) {
+        TODO("In the end We will only keep the payload check, the other one is the old one to be removed")
+        if (this->stream.p != this->stream.end 
+        && this->payload.p != this->payload.end) 
+        {
             LOG(LOG_WARNING, "%u bytes remaining in X224 TPDU", this->stream.end - this->stream.p);
             throw Error(ERR_MCS_RECV_CJCF_ERROR_CHECKING_STREAM);
         }
