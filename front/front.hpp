@@ -461,19 +461,18 @@ public:
         }
 
         X224 x224;
-        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
-        Mcs mcs(stream);
+        Mcs mcs(x224.stream);
         mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, channel.chanid);
-        Sec sec(stream, this->encrypt);
+        Sec sec(x224.stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
 
-        stream.out_uint32_le(length);
+        x224.stream.out_uint32_le(length);
         if (channel.flags & ChannelDef::CHANNEL_OPTION_SHOW_PROTOCOL) {
             flags |= ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
-        stream.out_uint32_le(flags);
-        stream.out_copy_bytes(data, chunk_size);
+        x224.stream.out_uint32_le(flags);
+        x224.stream.out_copy_bytes(data, chunk_size);
 
         sec.emit_end();
         mcs.emit_end();
@@ -509,29 +508,28 @@ public:
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
             X224 x224;
-            Stream & stream = x224.stream;
             x224.emit_begin(X224::DT_TPDU);
-            Mcs mcs(stream);
+            Mcs mcs(x224.stream);
             mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-            Sec sec(stream, this->encrypt);
+            Sec sec(x224.stream, this->encrypt);
             sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
-            ShareControl sctrl(stream);
+            ShareControl sctrl(x224.stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-            ShareData sdata(stream);
+            ShareData sdata(x224.stream);
             sdata.emit_begin(PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
             // Payload
-            stream.out_uint16_le(RDP_UPDATE_PALETTE);
-            stream.out_uint16_le(0);
-            stream.out_uint32_le(256); /* # of colors */
+            x224.stream.out_uint16_le(RDP_UPDATE_PALETTE);
+            x224.stream.out_uint16_le(0);
+            x224.stream.out_uint32_le(256); /* # of colors */
             for (int i = 0; i < 256; i++) {
                 int color = palette[i];
                 uint8_t r = color >> 16;
                 uint8_t g = color >> 8;
                 uint8_t b = color;
-                stream.out_uint8(b);
-                stream.out_uint8(g);
-                stream.out_uint8(r);
+                x224.stream.out_uint8(b);
+                x224.stream.out_uint8(g);
+                x224.stream.out_uint8(r);
             }
 
             // Packet trailer
@@ -663,27 +661,26 @@ public:
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
         }
         X224 x224;
-        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
-        Mcs mcs(stream);
+        Mcs mcs(x224.stream);
         mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-        Sec sec(stream, this->encrypt);
+        Sec sec(x224.stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
-        ShareControl sctrl(stream);
+        ShareControl sctrl(x224.stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareData sdata(stream);
+        ShareData sdata(x224.stream);
         sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
         // Payload
-        stream.out_uint16_le(RDP_POINTER_COLOR);
-        stream.out_uint16_le(0); /* pad */
+        x224.stream.out_uint16_le(RDP_POINTER_COLOR);
+        x224.stream.out_uint16_le(0); /* pad */
 
 //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
 //      entry in the pointer cache in which to store the pointer image. The
 //      number of cache entries is negotiated using the Pointer Capability Set
 //      (section 2.2.7.1.5).
 
-        stream.out_uint16_le(cache_idx);
+        x224.stream.out_uint16_le(cache_idx);
 
 //    hotSpot (4 bytes): Point (section 2.2.9.1.1.4.1) structure containing the
 //      x-coordinates and y-coordinates of the pointer hotspot.
@@ -695,32 +692,32 @@ public:
 //            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(x);
+        x224.stream.out_uint16_le(x);
 
 //            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(y);
+        x224.stream.out_uint16_le(y);
 
 //    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
 //      pixels (the maximum allowed pointer width is 32 pixels).
 
-        stream.out_uint16_le(32);
+        x224.stream.out_uint16_le(32);
 
 //    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
 //      in pixels (the maximum allowed pointer height is 32 pixels).
 
-        stream.out_uint16_le(32);
+        x224.stream.out_uint16_le(32);
 
 //    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the andMaskData field.
 
-        stream.out_uint16_le(128);
+        x224.stream.out_uint16_le(128);
 
 //    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the xorMaskData field.
 
-        stream.out_uint16_le(32*32*3);
+        x224.stream.out_uint16_le(32*32*3);
 
 //    xorMaskData (variable): Variable number of bytes: Contains the 24-bpp,
 //      bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte
@@ -728,7 +725,7 @@ public:
 //      is being sent, then each scan-line will consume 10 bytes (3 pixels per
 //      scan-line multiplied by 3 bpp, rounded up to the next even number of
 //      bytes).
-        stream.out_copy_bytes(data, 32*32*3);
+        x224.stream.out_copy_bytes(data, 32*32*3);
 
 //    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
 //      bottom-up AND mask scan-line data. The AND mask is padded to a 2-byte
@@ -736,7 +733,7 @@ public:
 //      is being sent, then each scan-line will consume 2 bytes (7 pixels per
 //      scan-line multiplied by 1 bpp, rounded up to the next even number of
 //      bytes).
-        stream.out_copy_bytes(mask, 128); /* mask */
+        x224.stream.out_copy_bytes(mask, 128); /* mask */
 
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
