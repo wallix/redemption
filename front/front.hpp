@@ -1068,9 +1068,8 @@ public:
         }
         {
             X224 x224;
-            Stream & stream = x224.stream;
             x224.recv_begin(this->trans);
-            Mcs mcs(stream);
+            Mcs mcs(x224.stream);
             mcs.recv_begin();
             if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
                 TODO("We should make a special case for MCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
@@ -1081,7 +1080,7 @@ public:
             if (this->verbose >= 256){
                 this->decrypt.dump();
             }
-            Sec sec(stream, this->decrypt);
+            Sec sec(x224.stream, this->decrypt);
             sec.recv_begin(true);
 
             if (!sec.flags & SEC_INFO_PKT) {
@@ -1089,9 +1088,9 @@ public:
             }
 
             /* this is the first test that the decrypt is working */
-            this->client_info.process_logon_info(stream, (uint16_t)(stream.end - stream.p));
+            this->client_info.process_logon_info(x224.stream, (uint16_t)(x224.stream.end - x224.stream.p));
             TODO("check all data are consumed as expected")
-            stream.end = stream.p;
+            x224.stream.end = x224.stream.p;
 
             this->keymap.init_layout(this->client_info.keylayout);
 
@@ -1141,9 +1140,8 @@ public:
         }
         {
             X224 x224;
-            Stream & stream = x224.stream;
             x224.recv_begin(this->trans);
-            Mcs mcs(stream);
+            Mcs mcs(x224.payload);
             mcs.recv_begin();
             if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
                 TODO("We should make a special case for MCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
@@ -1155,7 +1153,7 @@ public:
                 this->decrypt.dump();
             }
 
-            Sec sec(stream, this->decrypt);
+            Sec sec(mcs.payload, this->decrypt);
             sec.recv_begin(true);
 
             // Licensing
@@ -1180,11 +1178,9 @@ public:
             // Disconnect Provider Ultimatum datagram
 
             if (sec.flags & SEC_LICENSE_PKT) {
-                uint8_t tag = stream.in_uint8();
-                uint8_t version = stream.in_uint8();
-                uint16_t length = stream.in_uint16_le();
-                TODO("currently we just skip data, we should consume them instead")
-                stream.p = stream.end;
+                uint8_t tag = sec.payload.in_uint8();
+                uint8_t version = sec.payload.in_uint8();
+                uint16_t length = sec.payload.in_uint16_le();
                 LOG(LOG_INFO, "Front::WAITING_FOR_ANSWER_TO_LICENCE sec_flags=%x %u %u %u", sec.flags, tag, version, length);
 
                 switch (tag) {
@@ -1244,7 +1240,7 @@ public:
                 if (this->verbose){
                     LOG(LOG_INFO, "non licence packet: still waiting for licence");
                 }
-                ShareControl sctrl(stream);
+                ShareControl sctrl(x224.stream);
                 sctrl.recv_begin();
 
                 switch (sctrl.pdu_type1) {
@@ -1258,9 +1254,9 @@ public:
                         LOG(LOG_INFO, "Unexpected CONFIRMACTIVE PDU");
                     }
                     {
-                        uint32_t share_id = stream.in_uint32_le();
-                        uint16_t originatorId = stream.in_uint16_le();
-                        this->process_confirm_active(stream);
+                        uint32_t share_id = x224.stream.in_uint32_le();
+                        uint16_t originatorId = x224.stream.in_uint16_le();
+                        this->process_confirm_active(x224.stream);
                     }
 
                     break;
@@ -1272,7 +1268,7 @@ public:
                     // most data packets should not be received
                     // actually even input is dubious,
                     // but rdesktop actually sends input data
-                    this->process_data(stream, cb);
+                    this->process_data(x224.stream, cb);
                     break;
                 case PDUTYPE_DEACTIVATEALLPDU:
                     if (this->verbose){
@@ -1290,8 +1286,11 @@ public:
                 }
                 sctrl.recv_end();
             }
+            sec.payload.p = sec.payload.end;
             sec.recv_end();
+            mcs.payload.p = mcs.payload.end;
             mcs.recv_end();
+            x224.payload.p = x224.payload.end;
             x224.recv_end();
         }
         break;

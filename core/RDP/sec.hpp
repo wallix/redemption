@@ -639,7 +639,9 @@ class Sec : public Payload
 //##############################################################################
 {
     Stream & stream;
+    public:
     SubStream payload;
+    private:
     uint8_t * pdata;
     CryptContext & crypt;
 
@@ -744,9 +746,6 @@ class Sec : public Payload
         }
     } // END METHOD emit_end
 
-    virtual size_t len(void) 
-    {
-    }
     virtual void send(Transport & trans) 
     {
     }

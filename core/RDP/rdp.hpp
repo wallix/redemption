@@ -30,6 +30,7 @@
 
 #include "channel_list.hpp"
 #include "log.hpp"
+#include "payload.hpp"
 
 // [MS-RDPBCGR] 2.2.8.1.1.1.1 Share Control Header (TS_SHARECONTROLHEADER)
 // =======================================================================
@@ -131,7 +132,7 @@ struct ShareControl : public Payload
             return;
         }
         this->mcs_channel = stream.in_uint16_le();
-        this->payload.reset(this->stream, this->get_offset(0));
+        this->payload.reset(this->stream, this->stream.get_offset(0));
     } // END METHOD recv_begin
 
     //==============================================================================
@@ -399,7 +400,7 @@ struct ShareData  : public Payload
         this->pdutype2 = stream.in_uint8();
         this->compressedType = stream.in_uint8();
         this->compressedLen = stream.in_uint16_le();
-        this->payload.reset(this->stream, this->get_offset(0));
+        this->payload.reset(this->stream, this->stream.get_offset(0));
     } // END METHOD recv_begin
 
     //==============================================================================

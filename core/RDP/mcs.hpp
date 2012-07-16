@@ -186,6 +186,7 @@ struct Mcs
 //##############################################################################
 {
     Stream & stream;
+    SubStream payload;
     uint8_t offlen;
     public:
     uint8_t opcode;
@@ -200,6 +201,7 @@ struct Mcs
     Mcs ( Stream & stream )
     //==============================================================================
     : stream(stream)
+    , payload(this->stream, 0)
     , offlen(0)
     , opcode(0)
     , result(0)
@@ -1905,12 +1907,14 @@ struct Mcs
         }
         break;
         }
+        this->payload.reset(this->stream, this->stream.get_offset(0));
     } // END METHOD recv_begin
 
     //==============================================================================
     void recv_end(){
     //==============================================================================
-        if (this->stream.p != this->stream.end){
+        if (this->stream.p != this->stream.end
+        && this->payload.p != this->payload.end){
             LOG(LOG_ERR, "MCS: all data should have been consumed : remains %d, opcode=%u", stream.end - stream.p, this->opcode);
             exit(0);
         }
