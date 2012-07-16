@@ -428,12 +428,10 @@ public:
             LOG(LOG_INFO, "Front::disconnect()");
         }
         X224 x224;
-        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
-
-        stream.out_uint8((MCSPDU_DisconnectProviderUltimatum << 2) | 1);
-        stream.out_uint8(0x80);
-
+        Mcs mcs(x224.stream);
+        mcs.emit_begin(MCSPDU_DisconnectProviderUltimatum, 0, 0);
+        mcs.emit_end();
         x224.emit_end();
         this->trans->send(x224.header(), x224.size());
     }

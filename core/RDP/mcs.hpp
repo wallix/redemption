@@ -143,6 +143,16 @@ enum {
     BER_TAG_MCS_DOMAIN_PARAMS = 0x30
 };
 
+// Reason ::= ENUMERATED   -- in DisconnectProviderUltimatum, DetachUserRequest, DetachUserIndication
+enum {
+    RN_DOMAIN_DISCONNECTED = 0,
+    RN_PROVIDER_INITIATED  = 1,
+    RN_TOKEN_PURGED        = 2,
+    RN_USER_REQUESTED      = 3,
+    RN_CHANNEL_PURGED      = 4
+};
+
+
 //        ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
 //        {
 //            initiator       UserId,
@@ -369,7 +379,8 @@ struct Mcs
 //        {
 //            reason          Reason
 //        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU DisconnectProviderUltimatum");
+          stream.out_uint8(PER_DomainMCSPDU_CHOICE_DisconnectProviderUltimatum);
+          stream.out_uint8(RN_DOMAIN_DISCONNECTED);
         }
         break;
         case PER_DomainMCSPDU_CHOICE_RejectMCSPDUUltimatum:
