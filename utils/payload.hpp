@@ -26,7 +26,6 @@
 
 struct Payload
 {
-    virtual size_t len(void) = 0;
     virtual void send(Transport & trans) = 0;
 };
 

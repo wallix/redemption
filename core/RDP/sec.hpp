@@ -635,10 +635,11 @@ enum {
 // scenarios.
 
 //##############################################################################
-class Sec
+class Sec : public Payload
 //##############################################################################
 {
     Stream & stream;
+    SubStream payload;
     uint8_t * pdata;
     CryptContext & crypt;
 
@@ -656,6 +657,7 @@ class Sec
         )
     //==============================================================================
     : stream(stream)
+    , payload(this->stream, 0)
     , pdata(0)
     , crypt(crypt)
     , flags(0)
@@ -693,6 +695,7 @@ class Sec
                 }
             }
         }
+        this->payload.reset(this->stream, this->stream.get_offset(0));
     } // END METHOD recv_begin
 
 
@@ -740,6 +743,13 @@ class Sec
             this->crypt.encrypt(this->pdata, datalen);
         }
     } // END METHOD emit_end
+
+    virtual size_t len(void) 
+    {
+    }
+    virtual void send(Transport & trans) 
+    {
+    }
 
 
 }; // END CLASS Sec
