@@ -45,10 +45,13 @@ struct BufferSend
 struct BufferRecv
 {
     Stream & stream;
+    size_t payload_offset;
     BufferRecv(Transport & t, Stream & stream, size_t size)
     : stream(stream)
     {
         t.recv(&stream.end, size - (stream.end - stream.data));
+        // here there is not payload, hence payload offset is at the end
+        this->payload_offset = 5;
     }    
 };
 
@@ -67,18 +70,19 @@ struct MiddleSend
 struct MiddleRecv
 {
     Stream & stream;
+    size_t payload_offset;
+
     MiddleRecv(Transport & t, Stream & stream, size_t size)
     : stream(stream)
     {
         t.recv(&stream.end, size - (stream.end - stream.data));
+        this->payload_offset = 4;
+
     }
     size_t get_payload(SubStream & s)
     {
-        size_t payload_offset = 4;
         s.reset(this->stream, payload_offset);
-        size_t payload_len = this->stream.end - this->stream.data - payload_offset;
-        this->stream.end = this->stream.data + payload_offset;
-        return payload_len;
+        return this->stream.end - this->stream.data - this->payload_offset;
     }
 };
 
@@ -118,36 +122,34 @@ struct CarrierRecvFactory
 struct Carrier1eaderRecv
 {
     Stream & stream;
+    size_t payload_offset;
     Carrier1eaderRecv(Transport & t, Stream & stream)
     : stream(stream)
     {
         t.recv(&stream.end, 12 - (stream.end - stream.data));
+        this->payload_offset = 7;
     }
     size_t get_payload(SubStream & s)
     {
-        size_t payload_offset = 7;
-        s.reset(this->stream, payload_offset);
-        size_t payload_len = this->stream.end - this->stream.data - payload_offset;
-        this->stream.end = this->stream.data + payload_offset;
-        return payload_len;
+        s.reset(this->stream, this->payload_offset);
+        return this->stream.end - this->stream.data - this->payload_offset;
     }
 };
 
 struct CarrierHeaderRecv
 {
     Stream & stream;
+    size_t payload_offset;
     CarrierHeaderRecv(Transport & t, Stream & stream)
     : stream(stream)
     {
         t.recv(&stream.end, 16 - (stream.end - stream.data));
+        this->payload_offset = 7;
     }
     size_t get_payload(SubStream & s)
     {
-        size_t payload_offset = 7;
-        s.reset(this->stream, payload_offset);
-        size_t payload_len = this->stream.end - this->stream.data - payload_offset;
-        this->stream.end = this->stream.data + payload_offset;
-        return payload_len;
+        s.reset(this->stream, this->payload_offset);
+        return this->stream.end - this->stream.data - this->payload_offset;
     }
 };
 
@@ -197,7 +199,7 @@ BOOST_AUTO_TEST_CASE(Test_recv_payload)
     GeneratorTransport t("BODY.", 5);
     BStream b;
     BufferRecv buffer(t, b, 5);
-    BOOST_CHECK_EQUAL(0, memcmp("BODY.", b.data, b.end - b.data));
+    BOOST_CHECK_EQUAL(0, memcmp("BODY.", b.data, buffer.payload_offset));
 }
 
 BOOST_AUTO_TEST_CASE(Test_recv_payload_2)
@@ -210,8 +212,8 @@ BOOST_AUTO_TEST_CASE(Test_recv_payload_2)
         size_t length = carrier.get_payload(b);
         BufferRecv buffer(t, b, length);
 
-        BOOST_CHECK_EQUAL(7, c.end - c.data);
-        BOOST_CHECK_EQUAL(0, memcmp("1EADER:", c.data, c.end - c.data));
+        BOOST_CHECK_EQUAL(7, carrier.payload_offset);
+        BOOST_CHECK_EQUAL(0, memcmp("1EADER:", c.data, carrier.payload_offset));
 
         BOOST_CHECK_EQUAL(5, length);
         BOOST_CHECK_EQUAL(5, b.end - b.data);
@@ -238,16 +240,16 @@ BOOST_AUTO_TEST_CASE(Test_recv_payload_3)
         size_t length_buf = middle.get_payload(b);
         BufferRecv buffer(t, b, length_buf);
 
-        BOOST_CHECK_EQUAL(7, c.end - c.data);
-        BOOST_CHECK_EQUAL(0, memcmp("HEADER:", c.data, c.end - c.data));
+        BOOST_CHECK_EQUAL(7, carrier.payload_offset);
+        BOOST_CHECK_EQUAL(0, memcmp("HEADER:", c.data, carrier.payload_offset));
 
         BOOST_CHECK_EQUAL(4+5, length_mid);
-        BOOST_CHECK_EQUAL(4, m.end - m.data);
-        BOOST_CHECK_EQUAL(0, memcmp("MID:", m.data, m.end - m.data));
+        BOOST_CHECK_EQUAL(4, middle.payload_offset);
+        BOOST_CHECK_EQUAL(0, memcmp("MID:", m.data, middle.payload_offset));
 
         BOOST_CHECK_EQUAL(5, length_buf);
-        BOOST_CHECK_EQUAL(5, b.end - b.data);
-        BOOST_CHECK_EQUAL(0, memcmp("BODY.", b.data, b.end - b.data));
+        BOOST_CHECK_EQUAL(5, buffer.payload_offset);
+        BOOST_CHECK_EQUAL(0, memcmp("BODY.", b.data, buffer.payload_offset));
 
     } catch(Error & e){
         LOG(LOG_ERR, "eid=%u", e.id);
@@ -301,16 +303,16 @@ BOOST_AUTO_TEST_CASE(Test_recv_payload_polymorphic_header)
             size_t length_buf = middle.get_payload(b);
             BufferRecv buffer(t, b, length_buf);
 
-            BOOST_CHECK_EQUAL(7, c.end - c.data);
-            BOOST_CHECK_EQUAL(0, memcmp("HEADER:", c.data, c.end - c.data));
+            BOOST_CHECK_EQUAL(7, carrier.payload_offset);
+            BOOST_CHECK_EQUAL(0, memcmp("HEADER:", c.data, carrier.payload_offset));
 
             BOOST_CHECK_EQUAL(4+5, length_mid);
-            BOOST_CHECK_EQUAL(4, m.end - m.data);
-            BOOST_CHECK_EQUAL(0, memcmp("MID:", m.data, m.end - m.data));
+            BOOST_CHECK_EQUAL(4, middle.payload_offset);
+            BOOST_CHECK_EQUAL(0, memcmp("MID:", m.data, middle.payload_offset));
 
             BOOST_CHECK_EQUAL(5, length_buf);
-            BOOST_CHECK_EQUAL(5, b.end - b.data);
-            BOOST_CHECK_EQUAL(0, memcmp("BODY.", b.data, b.end - b.data));
+            BOOST_CHECK_EQUAL(5, buffer.payload_offset);
+            BOOST_CHECK_EQUAL(0, memcmp("BODY.", b.data, buffer.payload_offset));
         }
         break;
         default:

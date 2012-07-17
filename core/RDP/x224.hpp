@@ -303,176 +303,7 @@ struct X224
         HYBRID_REQUIRED_BY_SERVER = 0x00000005,
     };
 
-// 2.2.1.1 Client X.224 Connection Request PDU
-// ===========================================
 
-// The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
-// client to server during the Connection Initiation phase (see section 1.3.1.1).
-
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-// x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
-// data unit (TPDU), as specified in [X224] section 13.3.
-
-// routingToken (variable): An optional and variable-length routing token
-// (used for load balancing) terminated by a carriage-return (CR) and line-feed
-// (LF) ANSI sequence. For more information about Terminal Server load balancing
-// and the routing token format, see [MSFT-SDLBTS]. The length of the routing
-// token and CR+LF sequence is included in the X.224 Connection Request Length
-// Indicator field. If this field is present, then the cookie field MUST NOT be
-//  present.
-
-//cookie (variable): An optional and variable-length ANSI text string terminated
-// by a carriage-return (CR) and line-feed (LF) ANSI sequence. This text string
-// MUST be "Cookie: mstshash=IDENTIFIER", where IDENTIFIER is an ANSI string
-//(an example cookie string is shown in section 4.1.1). The length of the entire
-// cookie string and CR+LF sequence is included in the X.224 Connection Request
-// Length Indicator field. This field MUST NOT be present if the routingToken
-// field is present.
-
-// rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
-// structure. The length of this negotiation structure is included in the X.224
-// Connection Request Length Indicator field.
-
-// 2.2.1.1.1 RDP Negotiation Request (RDP_NEG_REQ)
-// ===============================================
-
-// The RDP Negotiation Request structure is used by a client to advertise the
-// security protocols which it supports.
-
-// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
-// field MUST be set to 0x01 (TYPE_RDP_NEG_REQ) to indicate that the packet is
-// a Negotiation Request.
-
-// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags. There
-// are currently no defined flags so the field MUST be set to 0x00.
-
-// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size.
-// This field MUST be set to 0x0008 (8 bytes).
-
-// requestedProtocols (4 bytes): A 32-bit, unsigned integer. Flags indicating
-// the supported security protocols.
-
-// +----------------------------+----------------------------------------------+
-// | 0x00000000 PROTOCOL_RDP    | Standard RDP Security (section 5.3).         |
-// +----------------------------+----------------------------------------------+
-// | 0x00000001 PROTOCOL_SSL    | TLS 1.0 (section 5.4.5.1).                   |
-// +----------------------------+----------------------------------------------+
-// | 0x00000002 PROTOCOL_HYBRID | Credential Security Support Provider protocol|
-// |                            | (CredSSP) (section 5.4.5.2). If this flag is |
-// |                            | set, then the PROTOCOL_SSL (0x00000001)      |
-// |                            | SHOULD also be set because Transport Layer   |
-// |                            | Security (TLS) is a subset of CredSSP.       |
-// +----------------------------+----------------------------------------------+
-
-
-// 2.2.1.2 Server X.224 Connection Confirm PDU
-// ===========================================
-
-// The X.224 Connection Confirm PDU is an RDP Connection Sequence PDU sent from
-// server to client during the Connection Initiation phase (see section
-// 1.3.1.1). It is sent as a response to the X.224 Connection Request PDU
-// (section 2.2.1.1).
-
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-// x224Ccf (7 bytes): An X.224 Class 0 Connection Confirm TPDU, as specified in
-// [X224] section 13.4.
-
-// rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1)
-// structure or an optional RDP Negotiation Failure (section 2.2.1.2.2)
-// structure. The length of the negotiation structure is included in the X.224
-// Connection Confirm Length Indicator field.
-
-// 2.2.1.2.1 RDP Negotiation Response (RDP_NEG_RSP)
-// ================================================
-
-// The RDP Negotiation Response structure is used by a server to inform the
-// client of the security protocol which it has selected to use for the
-// connection.
-
-// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
-// field MUST be set to 0x02 (TYPE_RDP_NEG_RSP) to indicate that the packet is
-// a Negotiation Response.
-
-// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags.
-
-// +-------------------------------------+-------------------------------------+
-// | 0x01 EXTENDED_CLIENT_DATA_SUPPORTED | The server supports Extended Client |
-// |                                     | Data Blocks in the GCC Conference   |
-// |                                     | Create Request user data (section   |
-// |                                     | 2.2.1.3).                           |
-// +-------------------------------------+-------------------------------------+
-
-// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This field MUST be set to 0x0008 (8 bytes)
-
-// selectedProtocol (4 bytes): A 32-bit, unsigned integer. Field indicating the selected security protocol.
-
-// +----------------------------+----------------------------------------------+
-// | 0x00000000 PROTOCOL_RDP    | Standard RDP Security (section 5.3)          |
-// +----------------------------+----------------------------------------------+
-// | 0x00000001 PROTOCOL_SSL    | TLS 1.0 (section 5.4.5.1)                    |
-// +----------------------------+----------------------------------------------+
-// | 0x00000002 PROTOCOL_HYBRID | CredSSP (section 5.4.5.2)                    |
-// +----------------------------+----------------------------------------------+
-
-
-// 2.2.1.2.2 RDP Negotiation Failure (RDP_NEG_FAILURE)
-// ===================================================
-
-// The RDP Negotiation Failure structure is used by a server to inform the
-// client of a failure that has occurred while preparing security for the
-// connection.
-
-// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
-// field MUST be set to 0x03 (TYPE_RDP_NEG_FAILURE) to indicate that the packet
-// is a Negotiation Failure.
-
-// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags. There
-// are currently no defined flags so the field MUST be set to 0x00.
-
-// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This
-// field MUST be set to 0x0008 (8 bytes).
-
-// failureCode (4 bytes): A 32-bit, unsigned integer. Field containing the
-// failure code.
-
-// +--------------------------------------+------------------------------------+
-// | 0x00000001 SSL_REQUIRED_BY_SERVER    | The server requires that the       |
-// |                                      | client support Enhanced RDP        |
-// |                                      | Security (section 5.4) with either |
-// |                                      | TLS 1.0 (section 5.4.5.1) or       |
-// |                                      | CredSSP (section 5.4.5.2). If only |
-// |                                      | CredSSP was requested then the     |
-// |                                      | server only supports TLS.          |
-// +--------------------------------------+------------------------------------+
-// | 0x00000002 SSL_NOT_ALLOWED_BY_SERVER | The server is configured to only   |
-// |                                      | use Standard RDP Security          |
-// |                                      | mechanisms (section 5.3) and does  |
-// |                                      | not support any External Security  |
-// |                                      | Protocols (section 5.4.5).         |
-// +--------------------------------------+------------------------------------+
-// | 0x00000003 SSL_CERT_NOT_ON_SERVER    | The server does not possess a valid|
-// |                                      | authentication certificate and     |
-// |                                      | cannot initialize the External     |
-// |                                      | Security Protocol Provider         |
-// |                                      | (section 5.4.5).                   |
-// +--------------------------------------+------------------------------------+
-// | 0x00000004 INCONSISTENT_FLAGS        | The list of requested security     |
-// |                                      | protocols is not consistent with   |
-// |                                      | the current security protocol in   |
-// |                                      | effect. This error is only possible|
-// |                                      | when the Direct Approach (see      |
-// |                                      | sections 5.4.2.2 and 1.3.1.2) is   |
-// |                                      | used and an External Security      |
-// |                                      | Protocol (section 5.4.5) is already|
-// |                                      | being used.                        |
-// +--------------------------------------+------------------------------------+
-// | 0x00000005 HYBRID_REQUIRED_BY_SERVER | The server requires that the client|
-// |                                      | support Enhanced RDP Security      |
-// |                                      | (section 5.4) with CredSSP (section|
-// |                                      | 5.4.5.2).                          |
-// +--------------------------------------+------------------------------------+
 
     uint32_t verbose;
 
@@ -889,5 +720,539 @@ struct X224
 
 }; // END CLASS X224
 
+
+// Factory just read enough data to know the type of packet we are dealing with
+struct X224RecvFactory
+{
+    enum {
+        CR_TPDU = 0xE0, // Connection Request 1110 xxxx
+        CC_TPDU = 0xD0, // Connection Confirm 1101 xxxx
+        DR_TPDU = 0x80, // Disconnect Request 1000 0000
+        DT_TPDU = 0xF0, // Data               1111 0000 (no ROA = No Ack)
+        ER_TPDU = 0x70  // TPDU Error         0111 0000
+    };
+
+    enum {
+        TPKT_HEADER_LEN = 4
+    };
+
+    int type;
+    size_t length;
+
+    X224RecvFactory(Transport & t, Stream & stream)
+    {
+        t.recv((char**)(&(stream.end)), TPKT_HEADER_LEN);
+        uint8_t tpkt_version = stream.in_uint8();
+        if (tpkt_version != 3) {
+            LOG(LOG_ERR, "Tpkt type 3 slow-path PDU expected (version = %u)", tpkt_version);
+            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+        }
+        stream.in_skip_bytes(1);
+        uint16_t tpkt_len = stream.in_uint16_be();
+        t.recv((char**)(&(stream.end)), 2);
+        if (tpkt_len < 6){
+            LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", tpkt_len);
+            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+        }
+        this->length = tpkt_len;
+        stream.in_skip_bytes(1);
+        uint8_t tpdu_type = stream.in_uint8();
+        switch (tpdu_type & 0xF0){
+        case CR_TPDU: // Connection Request 1110 xxxx
+        case CC_TPDU: // Connection Confirm 1101 xxxx
+        case DR_TPDU: // Disconnect Request 1000 0000
+        case DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
+        case ER_TPDU:  // TPDU Error         0111 0000
+            this->type = tpdu_type & 0xF0;
+        break;
+        default:
+            this->type = 0;
+            LOG(LOG_ERR, "Bad X224 header, unknown TPDU type (code = %u)", tpdu_type);
+            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+        break;
+        }
+    }
+};
+
+
+// 2.2.1.1 Client X.224 Connection Request PDU
+// ===========================================
+
+// The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
+// client to server during the Connection Initiation phase (see section 1.3.1.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
+// data unit (TPDU), as specified in [X224] section 13.3.
+
+// Class 0 x224 TPDU
+// -----------------
+//                                                    +--------+
+//                     +----+-----+---------+---------+ CLASS  |
+//                     | LI |     | DST-REF | SRC-REF | OPTION |
+//            +--------+----+-----+---------+---------+--------+
+//            | OFFSET | 4  |  5  |  6   7  |  8   9  |   10   |
+// +----------+--------+----+-----+---------+---------+--------+
+// | Connection Request|    |     |         |         |        |
+// | CR_TPDU 1110 xxxx | 06 |  E0 |  00  00 |  00  00 |   00   |
+// +-------------------+----+-----+---------+---------+--------+
+
+// routingToken (variable): An optional and variable-length routing token
+// (used for load balancing) terminated by a carriage-return (CR) and line-feed
+// (LF) ANSI sequence. For more information about Terminal Server load balancing
+// and the routing token format, see [MSFT-SDLBTS]. The length of the routing
+// token and CR+LF sequence is included in the X.224 Connection Request Length
+// Indicator field. If this field is present, then the cookie field MUST NOT be
+//  present.
+
+//cookie (variable): An optional and variable-length ANSI text string terminated
+// by a carriage-return (CR) and line-feed (LF) ANSI sequence. This text string
+// MUST be "Cookie: mstshash=IDENTIFIER", where IDENTIFIER is an ANSI string
+//(an example cookie string is shown in section 4.1.1). The length of the entire
+// cookie string and CR+LF sequence is included in the X.224 Connection Request
+// Length Indicator field. This field MUST NOT be present if the routingToken
+// field is present.
+
+// rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
+// structure. The length of this negotiation structure is included in the X.224
+// Connection Request Length Indicator field.
+
+// 2.2.1.1.1 RDP Negotiation Request (RDP_NEG_REQ)
+// ===============================================
+
+// The RDP Negotiation Request structure is used by a client to advertise the
+// security protocols which it supports.
+
+// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
+// field MUST be set to 0x01 (TYPE_RDP_NEG_REQ) to indicate that the packet is
+// a Negotiation Request.
+
+// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags. There
+// are currently no defined flags so the field MUST be set to 0x00.
+
+// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size.
+// This field MUST be set to 0x0008 (8 bytes).
+
+// requestedProtocols (4 bytes): A 32-bit, unsigned integer. Flags indicating
+// the supported security protocols.
+
+// +----------------------------+----------------------------------------------+
+// | 0x00000000 PROTOCOL_RDP    | Standard RDP Security (section 5.3).         |
+// +----------------------------+----------------------------------------------+
+// | 0x00000001 PROTOCOL_SSL    | TLS 1.0 (section 5.4.5.1).                   |
+// +----------------------------+----------------------------------------------+
+// | 0x00000002 PROTOCOL_HYBRID | Credential Security Support Provider protocol|
+// |                            | (CredSSP) (section 5.4.5.2). If this flag is |
+// |                            | set, then the PROTOCOL_SSL (0x00000001)      |
+// |                            | SHOULD also be set because Transport Layer   |
+// |                            | Security (TLS) is a subset of CredSSP.       |
+// +----------------------------+----------------------------------------------+
+
+//##############################################################################
+struct X224_CR_TPDU_Recv
+//##############################################################################
+{
+    Stream & stream;
+    size_t payload_offset;
+
+    uint32_t verbose;
+
+    struct Tpkt
+    {
+        uint8_t version;
+        uint16_t len;
+    } tpkt;
+
+    struct TPDUHeader
+    {
+        uint8_t LI;
+        uint8_t code;
+
+        uint16_t dst_ref;
+        uint16_t src_ref;
+        uint8_t class_option;
+    } tpdu_hdr;
+
+    char cookie[1024];
+
+    uint8_t rdp_neg_type;
+    uint8_t rdp_neg_flags;
+    uint16_t rdp_neg_length;
+    uint32_t rdp_neg_code;
+
+    enum {
+        TPKT_HEADER_LEN = 4
+    };
+
+    enum {
+        RDP_NEG_REQ = 1,
+        RDP_NEG_RESP = 2,
+        RDP_NEG_FAILURE = 3
+    };
+
+    enum {
+        RDP_NEG_PROTOCOL_RDP    = 0,
+        RDP_NEG_PROTOCOL_TLS    = 1,
+        RDP_NEG_PROTOCOL_HYBRID = 2,
+    };
+
+    // CONSTRUCTOR
+    //==============================================================================
+    X224_CR_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
+    //==============================================================================
+    : stream(stream)
+    , verbose(verbose)
+    {
+        t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
+        this->stream.p = this->stream.data;
+
+        // TPKT
+        this->tpkt.version = stream.in_uint8();
+        stream.in_skip_bytes(1);
+        this->tpkt.len = stream.in_uint16_be();
+
+        // TPDU
+        this->tpdu_hdr.LI = stream.in_uint8();
+        this->tpdu_hdr.code = stream.in_uint8() & 0xF0;
+        this->tpdu_hdr.dst_ref = stream.in_uint16_le();
+        this->tpdu_hdr.src_ref = stream.in_uint16_le();
+        this->tpdu_hdr.class_option = stream.in_uint8();
+
+        // extended negotiation header
+        this->cookie[0] = 0;        
+        this->rdp_neg_type = 0;
+
+        uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+        for (uint8_t * p = stream.p + 1; p < end_of_header ; p++){
+            if (p[-1] == 0x0D &&  p[0]  == 0x0A){
+                size_t cookie_len = p - (stream.data + 11) + 1;
+                if (cookie_len > 1023){
+                    LOG(LOG_ERR, "Bad Connection Request X224 header, cookie too large (length = %u)", cookie_len);
+                    throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+                }
+                memcpy(this->cookie, stream.data + 11, cookie_len);
+                this->cookie[cookie_len] = 0;
+                if (this->verbose){
+                    LOG(LOG_INFO, "cookie: %s", this->cookie);
+                }
+                p++;
+                if (end_of_header - p >= 8){
+                    this->stream.p = p;
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Found RDP Negotiation Request Structure");
+                    }
+                    this->rdp_neg_type = this->stream.in_uint8();
+                    this->rdp_neg_flags = this->stream.in_uint8();
+                    this->rdp_neg_length = this->stream.in_uint16_le();
+                    this->rdp_neg_code = this->stream.in_uint32_le();
+
+                    
+                    if (this->rdp_neg_type != RDP_NEG_REQ){
+                        LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
+                            this->tpdu_hdr.LI, this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_code);
+                        throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+                    }
+
+                    switch (this->rdp_neg_code){
+                        case RDP_NEG_PROTOCOL_RDP:
+                            LOG(LOG_INFO, "PROTOCOL RDP");
+                            break;
+                        case RDP_NEG_PROTOCOL_TLS:
+                            LOG(LOG_INFO, "PROTOCOL TLS 1.0");
+                            break;
+                        case RDP_NEG_PROTOCOL_HYBRID:
+                            LOG(LOG_INFO, "PROTOCOL HYBRID");
+                            break;
+                    }
+                }
+            }
+        }
+        stream.p = end_of_header;
+        this->payload_offset = this->stream.get_offset(0);
+    }
+
+    size_t get_payload(SubStream & s)
+    {
+        s.reset(this->stream, payload_offset);
+        return this->stream.end - this->stream.data - this->payload_offset;
+    }
+}; // END CLASS X224_CR_TPDU_Recv
+
+
+// 2.2.1.2 Server X.224 Connection Confirm PDU
+// ===========================================
+
+// The X.224 Connection Confirm PDU is an RDP Connection Sequence PDU sent from
+// server to client during the Connection Initiation phase (see section
+// 1.3.1.1). It is sent as a response to the X.224 Connection Request PDU
+// (section 2.2.1.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Ccf (7 bytes): An X.224 Class 0 Connection Confirm TPDU, as specified in
+// [X224] section 13.4.
+
+//    Class 0 x224 TPDU
+//    -----------------
+//                                                       +--------+
+//                        +----+-----+---------+---------+ CLASS  |
+//                        | LI |     | DST-REF | SRC-REF | OPTION |
+//               +--------+----+-----+---------+---------+--------+
+//               | OFFSET | 4  |  5  |  6   7  |  8   9  |   10   |
+//    +----------+--------+----+-----+---------+---------+--------+
+//    | Connection Confirm|    |     |         |         |        |
+//    | CC_TPDU 1101 xxxx | 06 |  D0 |  00  00 |  00  00 |   00   |
+//    +-------------------+----+-----+---------+---------+--------+
+
+
+// rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1)
+// structure or an optional RDP Negotiation Failure (section 2.2.1.2.2)
+// structure. The length of the negotiation structure is included in the X.224
+// Connection Confirm Length Indicator field.
+
+// 2.2.1.2.1 RDP Negotiation Response (RDP_NEG_RSP)
+// ================================================
+
+// The RDP Negotiation Response structure is used by a server to inform the
+// client of the security protocol which it has selected to use for the
+// connection.
+
+// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
+// field MUST be set to 0x02 (TYPE_RDP_NEG_RSP) to indicate that the packet is
+// a Negotiation Response.
+
+// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags.
+
+// +-------------------------------------+-------------------------------------+
+// | 0x01 EXTENDED_CLIENT_DATA_SUPPORTED | The server supports Extended Client |
+// |                                     | Data Blocks in the GCC Conference   |
+// |                                     | Create Request user data (section   |
+// |                                     | 2.2.1.3).                           |
+// +-------------------------------------+-------------------------------------+
+
+// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This field MUST be set to 0x0008 (8 bytes)
+
+// selectedProtocol (4 bytes): A 32-bit, unsigned integer. Field indicating the selected security protocol.
+
+// +----------------------------+----------------------------------------------+
+// | 0x00000000 PROTOCOL_RDP    | Standard RDP Security (section 5.3)          |
+// +----------------------------+----------------------------------------------+
+// | 0x00000001 PROTOCOL_SSL    | TLS 1.0 (section 5.4.5.1)                    |
+// +----------------------------+----------------------------------------------+
+// | 0x00000002 PROTOCOL_HYBRID | CredSSP (section 5.4.5.2)                    |
+// +----------------------------+----------------------------------------------+
+
+
+// 2.2.1.2.2 RDP Negotiation Failure (RDP_NEG_FAILURE)
+// ===================================================
+
+// The RDP Negotiation Failure structure is used by a server to inform the
+// client of a failure that has occurred while preparing security for the
+// connection.
+
+// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
+// field MUST be set to 0x03 (TYPE_RDP_NEG_FAILURE) to indicate that the packet
+// is a Negotiation Failure.
+
+// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags. There
+// are currently no defined flags so the field MUST be set to 0x00.
+
+// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This
+// field MUST be set to 0x0008 (8 bytes).
+
+// failureCode (4 bytes): A 32-bit, unsigned integer. Field containing the
+// failure code.
+
+// +--------------------------------------+------------------------------------+
+// | 0x00000001 SSL_REQUIRED_BY_SERVER    | The server requires that the       |
+// |                                      | client support Enhanced RDP        |
+// |                                      | Security (section 5.4) with either |
+// |                                      | TLS 1.0 (section 5.4.5.1) or       |
+// |                                      | CredSSP (section 5.4.5.2). If only |
+// |                                      | CredSSP was requested then the     |
+// |                                      | server only supports TLS.          |
+// +--------------------------------------+------------------------------------+
+// | 0x00000002 SSL_NOT_ALLOWED_BY_SERVER | The server is configured to only   |
+// |                                      | use Standard RDP Security          |
+// |                                      | mechanisms (section 5.3) and does  |
+// |                                      | not support any External Security  |
+// |                                      | Protocols (section 5.4.5).         |
+// +--------------------------------------+------------------------------------+
+// | 0x00000003 SSL_CERT_NOT_ON_SERVER    | The server does not possess a valid|
+// |                                      | authentication certificate and     |
+// |                                      | cannot initialize the External     |
+// |                                      | Security Protocol Provider         |
+// |                                      | (section 5.4.5).                   |
+// +--------------------------------------+------------------------------------+
+// | 0x00000004 INCONSISTENT_FLAGS        | The list of requested security     |
+// |                                      | protocols is not consistent with   |
+// |                                      | the current security protocol in   |
+// |                                      | effect. This error is only possible|
+// |                                      | when the Direct Approach (see      |
+// |                                      | sections 5.4.2.2 and 1.3.1.2) is   |
+// |                                      | used and an External Security      |
+// |                                      | Protocol (section 5.4.5) is already|
+// |                                      | being used.                        |
+// +--------------------------------------+------------------------------------+
+// | 0x00000005 HYBRID_REQUIRED_BY_SERVER | The server requires that the client|
+// |                                      | support Enhanced RDP Security      |
+// |                                      | (section 5.4) with CredSSP (section|
+// |                                      | 5.4.5.2).                          |
+// +--------------------------------------+------------------------------------+
+
+
+struct X224_CC_TPDU_Recv
+{
+    Stream & stream;
+    size_t payload_offset;
+
+    uint32_t verbose;
+
+    struct Tpkt
+    {
+        uint8_t version;
+        uint16_t len;
+    } tpkt;
+
+    struct TPDUHeader
+    {
+        uint8_t LI;
+        uint8_t code;
+
+        uint16_t dst_ref;
+        uint16_t src_ref;
+        uint8_t class_option;
+    } tpdu_hdr;
+
+    uint8_t rdp_neg_type;
+    uint8_t rdp_neg_flags;
+    uint16_t rdp_neg_length;
+    uint32_t rdp_neg_code; // selected_protocol or failure_code
+
+    enum {
+        TPKT_HEADER_LEN = 4
+    };
+
+    enum {
+        RDP_NEG_REQ = 1,
+        RDP_NEG_RESP = 2,
+        RDP_NEG_FAILURE = 3
+    };
+
+    enum {
+        RDP_NEG_PROTOCOL_RDP    = 0,
+        RDP_NEG_PROTOCOL_TLS    = 1,
+        RDP_NEG_PROTOCOL_HYBRID = 2,
+    };
+
+    // CONSTRUCTOR
+    //==============================================================================
+    X224_CC_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
+    //==============================================================================
+    : stream(stream)
+    , verbose(verbose)
+    {
+        t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
+        this->stream.p = this->stream.data;
+
+        // TPKT
+        this->tpkt.version = stream.in_uint8();
+        stream.in_skip_bytes(1);
+        this->tpkt.len = stream.in_uint16_be();
+
+        // TPDU
+        this->tpdu_hdr.LI = stream.in_uint8();
+        this->tpdu_hdr.code = stream.in_uint8();
+
+        if (!this->tpdu_hdr.code == X224RecvFactory::CC_TPDU){
+            LOG(LOG_ERR, "Unexpected TPDU opcode, expected CC_TPDU, got %u", 
+                this->tpdu_hdr.code);
+        }
+
+        this->tpdu_hdr.dst_ref = stream.in_uint16_le();
+        this->tpdu_hdr.src_ref = stream.in_uint16_le();
+        this->tpdu_hdr.class_option = stream.in_uint8();
+
+        // extended negotiation header
+        this->rdp_neg_type = 0;
+
+        uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+        if (this->stream.end - this->stream.p >= 8){
+            this->rdp_neg_type = this->stream.in_uint8();
+
+            if ((this->rdp_neg_type != RDP_NEG_FAILURE)
+            &&  (this->rdp_neg_type != RDP_NEG_RESP)){
+                LOG(LOG_ERR, "X224:RDP_NEG_RESP or X224:RDP_NEG_FAILURE Expected, got LI=%u %x %x %x %x",
+                    this->tpdu_hdr.LI,
+                    this->rdp_neg_type,
+                    this->rdp_neg_flags,
+                    this->rdp_neg_length,   
+                    this->rdp_neg_code);
+                throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+            }
+
+            if (this->verbose){
+                LOG(LOG_INFO, "Found RDP Negotiation %s Structure", 
+                    (this->rdp_neg_type == RDP_NEG_RESP)?"Response":"Failure");
+            }
+
+            this->rdp_neg_flags = this->stream.in_uint8();
+            this->rdp_neg_length = this->stream.in_uint16_le();
+            this->rdp_neg_code = this->stream.in_uint32_le();
+
+            switch (this->rdp_neg_type){
+            case RDP_NEG_RESP:
+                switch (this->rdp_neg_code){
+                    case RDP_NEG_PROTOCOL_RDP:
+                        LOG(LOG_INFO, "PROTOCOL RDP");
+                        break;
+                    case RDP_NEG_PROTOCOL_TLS:
+                        LOG(LOG_INFO, "PROTOCOL TLS 1.0");
+                        break;
+                    case RDP_NEG_PROTOCOL_HYBRID:
+                        LOG(LOG_INFO, "PROTOCOL HYBRID");
+                        break;
+                    default:
+                        LOG(LOG_INFO, "Unknown protocol code %u", this->rdp_neg_code);
+                        break;
+                }
+                break;
+            case RDP_NEG_FAILURE:
+                switch (this->rdp_neg_code){
+                    case 1:
+                        LOG(LOG_INFO, "SSL_REQUIRED_BY_SERVER");
+                        break;
+                    case 2:
+                        LOG(LOG_INFO, "SSL_NOT_ALLOWED_BY_SERVER");
+                        break;
+                    case 3:
+                        LOG(LOG_INFO, "SSL_CERT_NOT_ON_SERVER");
+                        break;
+                    case 4:
+                        LOG(LOG_INFO, "INCONSISTENT_FLAGS");
+                        break;
+                    case 5:
+                        LOG(LOG_INFO, "HYBRID_REQUIRED_BY_SERVER");
+                        break;
+                    default:
+                        LOG(LOG_INFO, "Unknown failure code %u", this->rdp_neg_code);
+                        break;
+                }
+                break;
+            default:
+                break;
+            }
+        }
+        stream.p = end_of_header;
+        this->payload_offset = this->stream.get_offset(0);
+    }
+
+    size_t get_payload(SubStream & s)
+    {
+        s.reset(this->stream, payload_offset);
+        return this->stream.end - this->stream.data - this->payload_offset;
+    }
+}; // END CLASS X224_CC_TPDU_Recv
 
 #endif
