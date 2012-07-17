@@ -34,7 +34,7 @@
 #include "payload.hpp"
 
 //##############################################################################
-struct X224 : public Payload
+struct X224
 //##############################################################################
 {
     BStream stream;
@@ -561,19 +561,6 @@ struct X224 : public Payload
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
     } // END CONSTRUCTOR
-
-
-    // total length including payload length
-    virtual size_t len(void)
-    {
-        return this->stream.get_offset(0);
-    }
-
-    // used to send payloads
-    virtual void send(Transport & trans) 
-    {
-    }
-
 
     // for Transport
     //==============================================================================

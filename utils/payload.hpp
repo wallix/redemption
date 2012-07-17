@@ -26,12 +26,4 @@
 
 #include "transport.hpp"
 
-struct Payload
-{
-    virtual void send(Transport & trans) {
-        LOG(LOG_ERR, "payload::send Implemented by subclasses");
-        exit(0);
-    };
-};
-
 #endif

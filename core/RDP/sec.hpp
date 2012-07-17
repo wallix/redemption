@@ -635,7 +635,7 @@ enum {
 // scenarios.
 
 //##############################################################################
-class Sec : public Payload
+class Sec
 //##############################################################################
 {
     Stream & stream;
@@ -745,11 +745,6 @@ class Sec : public Payload
             this->crypt.encrypt(this->pdata, datalen);
         }
     } // END METHOD emit_end
-
-    virtual void send(Transport & trans) 
-    {
-    }
-
 
 }; // END CLASS Sec
 
