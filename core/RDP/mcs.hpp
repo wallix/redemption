@@ -2362,63 +2362,65 @@ static inline void mcs_recv_connect_initial(
                 ClientInfo * client_info,
                 ChannelDefArray & channel_list)
 {
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.recv_begin(trans);
+    BStream stream(65536);
+    X224RecvFactory f(*trans, stream);
+    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    SubStream payload;
+    x224.get_payload(payload);
 
-    if (stream.in_uint16_be() != BER_TAG_ConnectMCSPDU_CONNECT_INITIAL) {
+    if (payload.in_uint16_be() != BER_TAG_ConnectMCSPDU_CONNECT_INITIAL) {
         LOG(LOG_ERR, "Recv connect initial expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
-    int len = stream.in_ber_len();
-    if (stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
+    int len = payload.in_ber_len();
+    if (payload.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
         LOG(LOG_ERR, "Recv connect initial string expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
-    len = stream.in_ber_len();
-    stream.in_skip_bytes(len);
+    len = payload.in_ber_len();
+    payload.in_skip_bytes(len);
 
-    if (stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
+    if (payload.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
         LOG(LOG_ERR, "Recv connect initial string 2 expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
-    len = stream.in_ber_len();
-    stream.in_skip_bytes(len);
-    if (stream.in_uint8() != Stream::BER_TAG_BOOLEAN) {
+    len = payload.in_ber_len();
+    payload.in_skip_bytes(len);
+    if (payload.in_uint8() != Stream::BER_TAG_BOOLEAN) {
         LOG(LOG_ERR, "Recv connect initial boolean expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
-    len = stream.in_ber_len();
-    stream.in_skip_bytes(len);
+    len = payload.in_ber_len();
+    payload.in_skip_bytes(len);
 
-    if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+    if (payload.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
         LOG(LOG_ERR, "Recv connect initial Domain Params expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
-    len = stream.in_ber_len();
-    stream.in_skip_bytes(len);
+    len = payload.in_ber_len();
+    payload.in_skip_bytes(len);
 
-    if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+    if (payload.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
         LOG(LOG_ERR, "Recv connect initial Domain Params 2 expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
-    len = stream.in_ber_len();
-    stream.in_skip_bytes(len);
+    len = payload.in_ber_len();
+    payload.in_skip_bytes(len);
 
-    if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+    if (payload.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
         LOG(LOG_ERR, "Recv connect initial Domain Params 3 expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
-    len = stream.in_ber_len();
-    stream.in_skip_bytes(len);
+    len = payload.in_ber_len();
+    payload.in_skip_bytes(len);
 
-    if (stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
+    if (payload.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
         LOG(LOG_ERR, "Recv connect initial Domain Params 4 expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
-    len = stream.in_ber_len();
+    len = payload.in_ber_len();
 
-    stream.in_skip_bytes(23);
+    payload.in_skip_bytes(23);
 
 // 2.2.1.3.1 User Data Header (TS_UD_HEADER)
 // =========================================
@@ -2455,11 +2457,11 @@ static inline void mcs_recv_connect_initial(
 // length (2 bytes): A 16-bit, unsigned integer. The size in bytes of the data
 //   block, including this header.
 
-    while (stream.check_rem(4)) {
-        uint8_t * current_header = stream.p;
-        uint16_t tag = stream.in_uint16_le();
-        uint16_t length = stream.in_uint16_le();
-        if (length < 4 || !stream.check_rem(length - 4)) {
+    while (payload.check_rem(4)) {
+        uint8_t * current_header = payload.p;
+        uint16_t tag = payload.in_uint16_le();
+        uint16_t length = payload.in_uint16_le();
+        if (length < 4 || !payload.check_rem(length - 4)) {
             LOG(LOG_ERR,
                 "error reading block tag %d size %d\n",
                 tag, length);
@@ -2470,7 +2472,7 @@ static inline void mcs_recv_connect_initial(
             case CS_CORE:
             {
                 CSCoreGccUserData cs_core;
-                cs_core.recv(stream, length);
+                cs_core.recv(payload, length);
                 client_info->width = cs_core.desktopWidth;
                 client_info->height = cs_core.desktopHeight;
                 client_info->keylayout = cs_core.keyboardLayout;
@@ -2499,15 +2501,15 @@ static inline void mcs_recv_connect_initial(
             }
             break;
             case CS_SECURITY:
-                parse_mcs_data_cs_security(stream);
+                parse_mcs_data_cs_security(payload);
             break;
             case CS_NET:
-                parse_mcs_data_cs_net(stream, client_info, channel_list);
+                parse_mcs_data_cs_net(payload, client_info, channel_list);
             break;
             case CS_CLUSTER:
             {
                 CSClusterGccUserData cs_cluster;
-                cs_cluster.recv(stream, length);
+                cs_cluster.recv(payload, length);
                 client_info->console_session =
                     (0 != (cs_cluster.flags & CSClusterGccUserData::REDIRECTED_SESSIONID_FIELD_VALID));
                 cs_cluster.log("Receiving from Client");
@@ -2516,7 +2518,7 @@ static inline void mcs_recv_connect_initial(
             case CS_MONITOR:
             {
                 CSMonitorGccUserData cs_monitor;
-                cs_monitor.recv(stream, length);
+                cs_monitor.recv(payload, length);
                 cs_monitor.log("Receiving from Client");
             }
             break;
@@ -2524,7 +2526,7 @@ static inline void mcs_recv_connect_initial(
                 LOG(LOG_INFO, "Unexpected data block tag %x\n", tag);
             break;
         }
-        stream.p = current_header + length;
+        payload.p = current_header + length;
     }
 }
 
@@ -3330,10 +3332,13 @@ static inline void mcs_send_channel_join_request_pdu(Transport * trans, int user
 
 static inline void mcs_recv_channel_join_confirm_pdu(Transport * trans, uint16_t & mcs_userid, uint16_t & req_chanid, uint16_t & join_chanid)
 {
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.recv_begin(trans);
-    Mcs mcs(stream);
+    BStream stream(65536);
+    X224RecvFactory f(*trans, stream);
+    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    SubStream payload;
+    x224.get_payload(payload);
+
+    Mcs mcs(payload);
     mcs.recv_begin();
 
     if ((mcs.opcode >> 2) != MCSPDU_ChannelJoinConfirm) {
@@ -3346,7 +3351,7 @@ static inline void mcs_recv_channel_join_confirm_pdu(Transport * trans, uint16_t
     }
     mcs_userid = mcs.user_id;
     join_chanid = mcs.chan_id;
-    x224.recv_end();
+    mcs.recv_end();
 }
 
 // 2.2.1.7 Server MCS Attach User Confirm PDU
@@ -3400,23 +3405,25 @@ static inline void mcs_recv_channel_join_confirm_pdu(Transport * trans, uint16_t
 
 static inline void mcs_recv_attach_user_confirm_pdu(Transport * trans, uint16_t & userid)
 {
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.recv_begin(trans);
-    int opcode = stream.in_uint8();
+    BStream stream(65536);
+    X224RecvFactory f(*trans, stream);
+    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    SubStream payload;
+    x224.get_payload(payload);
+
+    int opcode = payload.in_uint8();
     if ((opcode >> 2) != MCSPDU_AttachUserConfirm) {
         LOG(LOG_ERR, "Attach user confirm pdu expected");
         throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
     }
-    int res = stream.in_uint8();
+    int res = payload.in_uint8();
     if (res != 0) {
         LOG(LOG_ERR, "Attach user confirm pdu OK expected");
         throw Error(ERR_MCS_RECV_AUCF_RES_NOT_0);
     }
     if (opcode & 2) {
-        userid = stream.in_uint16_be();
+        userid = payload.in_uint16_be();
     }
-    x224.recv_end();
 }
 
 //   2.2.1.5 Client MCS Erect Domain Request PDU
@@ -3479,27 +3486,32 @@ static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport *
 {
     TODO(" this code could lead to some problem if both MCS are combined in the same TPDU  we should manage this case")
     {
-        X224 x224;
-        Stream & stream = x224.stream;
-        x224.recv_begin(trans);
-        uint8_t opcode = stream.in_uint8();
+        BStream stream(65536);
+        X224RecvFactory f(*trans, stream);
+        X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+        SubStream payload;
+        x224.get_payload(payload);
+
+        uint8_t opcode = payload.in_uint8();
         if ((opcode >> 2) != MCSPDU_ErectDomainRequest) {
             LOG(LOG_ERR, "Erect Domain Request expected");
             throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
         }
-        stream.in_skip_bytes(2);
-        stream.in_skip_bytes(2);
+        payload.in_skip_bytes(2);
+        payload.in_skip_bytes(2);
         if (opcode & 2) {
             userid = stream.in_uint16_be();
         }
-        x224.recv_end();
     }
 
     {
-        X224 x224;
-        Stream & stream = x224.stream;
-        x224.recv_begin(trans);
-        uint8_t opcode = stream.in_uint8();
+        BStream stream(65536);
+        X224RecvFactory f(*trans, stream);
+        X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+        SubStream payload;
+        x224.get_payload(payload);
+
+        uint8_t opcode = payload.in_uint8();
         if ((opcode >> 2) != MCSPDU_AttachUserRequest) {
             LOG(LOG_ERR, "Attach User Request expected");
             throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
@@ -3507,7 +3519,7 @@ static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport *
         if (opcode & 2) {
             userid = stream.in_uint16_be();
         }
-        x224.recv_end();
+
     }
 }
 
@@ -3745,10 +3757,13 @@ static inline void mcs_send_channel_join_confirm_pdu(Transport * trans, uint16_t
 static inline void mcs_recv_channel_join_request_pdu(Transport * trans, uint16_t & userid, uint16_t & chanid){
     // read tpktHeader (4 bytes = 3 0 len)
     // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.recv_begin(trans);
-    Mcs mcs(stream);
+    BStream stream(65536);
+    X224RecvFactory f(*trans, stream);
+    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    SubStream payload;
+    x224.get_payload(payload);
+
+    Mcs mcs(payload);
     mcs.recv_begin();
     if ((mcs.opcode >> 2) != MCSPDU_ChannelJoinRequest) {
         LOG(LOG_INFO, "unexpected opcode = %u", mcs.opcode);
@@ -3757,7 +3772,6 @@ static inline void mcs_recv_channel_join_request_pdu(Transport * trans, uint16_t
     userid = mcs.user_id;
     chanid = mcs.chan_id;
     mcs.recv_end();
-    x224.recv_end();
 }
 
 #endif
