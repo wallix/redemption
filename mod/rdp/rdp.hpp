@@ -828,15 +828,19 @@ struct mod_rdp : public client_mod {
             int res = 0;
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-            X224 x224;
-            Stream & stream = x224.stream;
-            x224.recv_begin(this->nego.trans);
-            Mcs mcs(stream);
+
+            BStream stream(65536);
+            X224RecvFactory f(*this->nego.trans, stream);
+            X224_DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
+            SubStream payload;
+            x224.get_payload(payload);
+
+            Mcs mcs(payload);
             mcs.recv_begin();
             if ((mcs.opcode >> 2) != MCSPDU_SendDataIndication) {
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
-            Sec sec(stream, this->decrypt);
+            Sec sec(payload, this->decrypt);
             sec.recv_begin(true);
 
             if (sec.flags & SEC_LICENSE_PKT) {
@@ -955,27 +959,27 @@ struct mod_rdp : public client_mod {
                 // BB_ERROR_BLOB (0x0004) that includes information relevant to
                 // the error code specified in dwErrorCode.
 
-                uint8_t tag = stream.in_uint8();
-                uint8_t version = stream.in_uint8();
-                uint16_t length = stream.in_uint16_le();
+                uint8_t tag = payload.in_uint8();
+                uint8_t version = payload.in_uint8();
+                uint16_t length = payload.in_uint16_le();
                 switch (tag) {
                 case LICENSE_REQUEST:
                     if (this->verbose){
                         LOG(LOG_INFO, "Rdp:: License Request");
                     }
-                    this->lic_layer.rdp_lic_process_demand(this->nego.trans, stream, hostname, username, userid, licence_issued, this->encrypt, this->crypt_level, this->use_rdp5);
+                    this->lic_layer.rdp_lic_process_demand(this->nego.trans, payload, hostname, username, userid, licence_issued, this->encrypt, this->crypt_level, this->use_rdp5);
                     break;
                 case PLATFORM_CHALLENGE:
                     if (this->verbose){
                         LOG(LOG_INFO, "Rdp::Platform Challenge");
                     }
-                    this->lic_layer.rdp_lic_process_authreq(this->nego.trans, stream, hostname, userid, licence_issued, this->encrypt, this->use_rdp5);
+                    this->lic_layer.rdp_lic_process_authreq(this->nego.trans, payload, hostname, userid, licence_issued, this->encrypt, this->use_rdp5);
                     break;
                 case NEW_LICENSE:
                     if (this->verbose){
                         LOG(LOG_INFO, "Rdp::New License");
                     }
-                    res = this->lic_layer.rdp_lic_process_issue(stream, hostname, licence_issued, this->use_rdp5);
+                    res = this->lic_layer.rdp_lic_process_issue(payload, hostname, licence_issued, this->use_rdp5);
                     break;
                 case UPGRADE_LICENSE:
                     if (this->verbose){
@@ -988,9 +992,9 @@ struct mod_rdp : public client_mod {
                     }
                 TODO("This should be moved to RDP/lic.hpp (and probably the switch should also move there)")
                 {
-                    uint32_t dwErrorCode = stream.in_uint32_le();
-                    uint32_t dwStateTransition = stream.in_uint32_le();
-                    uint32_t bbErrorInfo = stream.in_uint32_le();
+                    uint32_t dwErrorCode = payload.in_uint32_le();
+                    uint32_t dwStateTransition = payload.in_uint32_le();
+                    uint32_t bbErrorInfo = payload.in_uint32_le();
                     if (this->verbose){
                         LOG(LOG_INFO, "%u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u",
                             version, length, dwErrorCode, dwStateTransition, bbErrorInfo);
@@ -1007,9 +1011,10 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_INFO, "ERR_SEC_EXPECTED_LICENCE_NEGOTIATION_PDU");
                 throw Error(ERR_SEC_EXPECTED_LICENCE_NEGOTIATION_PDU);
             }
-            TODO("check if moving end is still necessar all data should have been consumed")
-            stream.p = stream.end;
-            x224.recv_end();
+            TODO("check if moving end is still necessary all data should have been consumed")
+            if (payload.p != payload.end){
+                LOG(LOG_ERR, "all data should have been consumed %s:%u ", __FILE__, __LINE__);
+            }
             if (res){
                 this->state = MOD_RDP_CONNECTED;
             }
