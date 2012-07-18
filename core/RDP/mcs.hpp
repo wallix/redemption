@@ -2191,24 +2191,26 @@ static inline void mcs_recv_connect_response(
                         int & use_rdp5,
                         Random * gen)
 {
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.recv_begin(trans);
+    BStream stream(65536);
+    X224RecvFactory f(*trans, stream);
+    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    SubStream payload;
+    x224.get_payload(payload);
 
-    if (stream.in_uint16_be() != BER_TAG_ConnectMCSPDU_CONNECT_RESPONSE) {
+    if (payload.in_uint16_be() != BER_TAG_ConnectMCSPDU_CONNECT_RESPONSE) {
         LOG(LOG_ERR, "recv connect response expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
-    int len = stream.in_ber_len();
+    int len = payload.in_ber_len();
     // ----------------------------------------------------------
 
-    if (stream.in_uint8() != Stream::BER_TAG_RESULT) {
+    if (payload.in_uint8() != Stream::BER_TAG_RESULT) {
         LOG(LOG_ERR, "recv connect response result expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
-    len = stream.in_ber_len();
+    len = payload.in_ber_len();
     // ----------------------------------------------------------
-    int res = stream.in_uint8();
+    int res = payload.in_uint8();
 
 //Result ::= ENUMERATED
 //-- in Connect, response, confirm
@@ -2235,45 +2237,45 @@ static inline void mcs_recv_connect_response(
         LOG(LOG_ERR, "recv connect response result OK expected");
         throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
     }
-    if (stream.in_uint8() != Stream::BER_TAG_INTEGER) {
+    if (payload.in_uint8() != Stream::BER_TAG_INTEGER) {
         LOG(LOG_ERR, "recv connect response result OK integer expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
-    len = stream.in_ber_len();
-    stream.in_skip_bytes(len); /* connect id */
+    len = payload.in_ber_len();
+    payload.in_skip_bytes(len); /* connect id */
 
-    if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+    if (payload.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
         LOG(LOG_ERR, "recv connect response Domain param expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
-    len = stream.in_ber_len();
-    stream.in_skip_bytes(len);
+    len = payload.in_ber_len();
+    payload.in_skip_bytes(len);
 
-    if (stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
+    if (payload.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
         LOG(LOG_ERR, "recv connect response Domain param string value expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
-    len = stream.in_ber_len();
+    len = payload.in_ber_len();
 
-    stream.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
-    len = stream.in_uint8();
+    payload.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
+    len = payload.in_uint8();
 
     if (len & 0x80) {
-        len = stream.in_uint8();
+        len = payload.in_uint8();
     }
-    while (stream.p < stream.end) {
-        uint16_t tag = stream.in_uint16_le();
-        uint16_t length = stream.in_uint16_le();
+    while (payload.p < payload.end) {
+        uint16_t tag = payload.in_uint16_le();
+        uint16_t length = payload.in_uint16_le();
         if (length <= 4) {
             LOG(LOG_ERR, "recv connect response parsing gcc data : short header");
             throw Error(ERR_MCS_DATA_SHORT_HEADER);
         }
-        uint8_t *next_tag = (stream.p + length) - 4;
+        uint8_t *next_tag = (payload.p + length) - 4;
         switch (tag) {
         case SC_CORE:
         {
             SCCoreGccUserData sc_core;
-            sc_core.recv(stream, length);
+            sc_core.recv(payload, length);
             sc_core.log("Receiving SC_CORE from server");
             if (0x0080001 == sc_core.version){ // can't use rdp5
                 use_rdp5 = 0;
@@ -2282,20 +2284,20 @@ static inline void mcs_recv_connect_response(
         break;
         case SC_SECURITY:
             LOG(LOG_INFO, "Receiving SC_Security from server");
-            parse_mcs_data_sc_security(stream, encrypt, decrypt,
+            parse_mcs_data_sc_security(payload, encrypt, decrypt,
                                        server_public_key_len, client_crypt_random,
                                        crypt_level,
                                        gen);
         break;
         case SC_NET:
             LOG(LOG_INFO, "Receiving SC_Net from server");
-            parse_mcs_data_sc_net(stream, front_channel_list, mod_channel_list);
+            parse_mcs_data_sc_net(payload, front_channel_list, mod_channel_list);
             break;
         default:
             LOG(LOG_WARNING, "response tag 0x%x", tag);
             break;
         }
-        stream.p = next_tag;
+        payload.p = next_tag;
     }
 }
 
