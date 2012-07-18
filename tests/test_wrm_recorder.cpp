@@ -41,8 +41,7 @@
 BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 {
     BOOST_CHECK(1);
-//     WRMRecorder recorder(FIXTURES_PATH "/test_w2008_2-5446.mwrm", FIXTURES_PATH);
-    WRMRecorder recorder("/tmp/test.mwrm");
+    WRMRecorder recorder(FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
 
     BOOST_CHECK_EQUAL(800, recorder.meta().width);
     BOOST_CHECK_EQUAL(600, recorder.meta().height);
@@ -89,7 +88,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
             }
         }
         //consumer.breakpoint();
-        BOOST_CHECK_EQUAL(333, ntime);
+        BOOST_CHECK_EQUAL(17, ntime);
     }
     BOOST_REQUIRE(1);
 

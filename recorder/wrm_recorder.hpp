@@ -30,6 +30,7 @@
 #include "stream.hpp"
 #include "png.hpp"
 #include "error.hpp"
+#include "auto_buffer.hpp"
 
 class WRMRecorder
 {
@@ -509,6 +510,7 @@ public:
                 zstrm.opaque = 0;
                 int ret;
                 const int Bpp = 3;
+                AutoBuffer buffer;
                 while (1)
                 {
                     this->reader.stream.init(14);
@@ -528,9 +530,9 @@ public:
                     zstrm.avail_in = buffer_size;
                     zstrm.next_in = this->reader.stream.data;
 
-                    uint8_t * data = new uint8_t[cx*cy * Bpp];
+                    buffer.alloc(cx*cy * Bpp);
                     zstrm.avail_out = cx*cy * Bpp;
-                    zstrm.next_out = data;
+                    zstrm.next_out = buffer.get();
 
                     if ((ret = inflateInit(&zstrm)) != Z_OK)
                     {
@@ -550,8 +552,7 @@ public:
                     uint cid = idx / 8192;
                     uint cidx = idx % 8192;
                     this->reader.bmp_cache.stamps[cid][cidx] = stamp;
-                    this->reader.bmp_cache.cache[cid][cidx] = new Bitmap(24, 0, cx, cy, data, cx*cy);
-                    delete [] data;
+                    this->reader.bmp_cache.cache[cid][cidx] = new Bitmap(24, 0, cx, cy, buffer.get(), cx*cy);
                 }
             }
             break;

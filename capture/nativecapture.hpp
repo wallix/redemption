@@ -51,6 +51,7 @@
 
 #include "GraphicToFile.hpp"
 #include "png.hpp"
+#include "auto_buffer.hpp"
 
 class NativeCapture : public RDPGraphicDevice
 {
@@ -236,86 +237,6 @@ public:
         this->recorder.flush();
     }
 
-private:
-    struct StreamCache
-    : Stream {
-        uint8_t buffer[1024*20];
-
-        StreamCache(std::size_t __size = 1024*20)
-        : Stream()
-        {
-            this->capacity = 0;
-            this->p = this->buffer;
-            this->data = this->buffer;
-            this->end = this->buffer + sizeof(this->buffer);
-        }
-
-        ~StreamCache()
-        {
-            if (this->data != this->buffer)
-                delete[] this->data;
-        }
-
-        void realloc(size_t size)
-        {
-            if (size > sizeof(buffer))
-            {
-                if (this->data == this->buffer)
-                {
-                    this->data = (uint8_t*)malloc(size);
-                    this->p = this->data;
-                    this->end = this->p + size;
-                }
-                else
-                {
-                    uint8_t * data = this->data;
-                    this->data = (uint8_t*)::realloc(this->data, size);
-                    if (data != this->data){
-                        this->end = this->data + (this->p - data);
-                        this->p = this->data + (this->p - data);
-                    }
-                }
-            }
-            this->capacity = size;
-        }
-
-        virtual void init(size_t /*capacity*/)
-        {
-//             if (capacity > this->capacity)
-//             {
-//                 uint8_t * data = this->data;
-//                 this->data = (uint8_t*)realloc(this->data, __size);
-//                 if (data != this->data){
-//                     this->end = this->data + (this->p - data);
-//                     this->p = this->data;
-//                 }
-//                 this->capacity = __size;
-//             }
-        }
-
-        void reset()
-        {
-            if (this->data != this->buffer)
-                delete[] this->data;
-            this->capacity = 0;
-            this->p = this->buffer;
-            this->data = this->buffer;
-            this->end = this->buffer + sizeof(this->buffer);
-        }
-    };
-
-    static void write_bitmap_data(png_structp png_ptr, png_bytep data, png_size_t length)
-    {
-        /* with libpng15 next line causes pointer deference error; use libpng12 */
-        StreamCache* p = static_cast<StreamCache*>(png_ptr->io_ptr);
-        p->realloc(p->capacity + length);
-        p->out_copy_bytes(data, length);
-    }
-
-    static void flush_bitmap_data(png_structp /*png_ptr*/)
-    {}
-
-public:
     void breakpoint(const uint8_t* data_drawable, uint8_t bpp,
                     uint16_t width, uint16_t height, size_t rowsize,
                     const timeval& now)
@@ -429,7 +350,7 @@ public:
 
         this->stream.init(14);
         this->recorder.chunk_type = WRMChunk::BREAKPOINT;
-        StreamCache scache;
+        AutoBuffer buffer;
         z_stream zstrm;
         zstrm.zalloc = 0;
         zstrm.zfree = 0;
@@ -457,12 +378,12 @@ public:
                     /*const*/ uint8_t *src = bitmaps[cidx]->data_bitmap.get();
                     uint size_x = bitmaps[cidx]->cx * Bpp;
                     uLong destlen = compressBound(size_x * bitmaps[cidx]->cy);
-                    scache.realloc(destlen);
+                    buffer.alloc(destlen);
 
                     do {
                         zstrm.next_in = src;
                         zstrm.avail_in = size_x;
-                        zstrm.next_out = scache.buffer + zstrm.total_out;
+                        zstrm.next_out = buffer.get() + zstrm.total_out;
                         zstrm.avail_out = destlen - zstrm.total_out;
                         flush = y == bitmaps[cidx]->cy ? Z_FINISH : Z_NO_FLUSH;
                         if ((ret = deflate(&zstrm, flush)) == Z_STREAM_ERROR)
@@ -477,8 +398,7 @@ public:
                     deflateEnd(&zstrm);
                     this->stream.out_uint32_le(zstrm.total_out);
                     this->trans.send(this->stream.data, 14);
-                    this->trans.send(scache.data, zstrm.total_out);
-                    scache.reset();
+                    this->trans.send(buffer.get(), zstrm.total_out);
                     this->stream.p = this->stream.data;
                 }
             }

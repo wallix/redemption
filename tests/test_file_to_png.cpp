@@ -93,14 +93,14 @@ BOOST_AUTO_TEST_CASE(TestFileWithoutMetaToPng)
 
 BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
 {
-    int fd = ::open(FIXTURES_PATH "/replay2.wrm", O_RDONLY);
+    int fd = ::open(FIXTURES_PATH "/test_w2008_2-880-0.wrm", O_RDONLY);
     BOOST_REQUIRE(fd != -1);
     InFileTransport in_trans(fd);
     RDPUnserializer reader(&in_trans, 0, Rect());
     reader.selected_next_order();
     BOOST_REQUIRE(reader.chunk_type == WRMChunk::META_FILE);
     //reader.interpret_order();
-    BOOST_REQUIRE(reader.load_data(FIXTURES_PATH "/test_w2008_2-5446.mwrm") == true);
+    BOOST_REQUIRE(reader.load_data(FIXTURES_PATH "/test_w2008_2-880.mwrm") == true);
     reader.stream.p = reader.stream.end;
     reader.remaining_order_count = 0;
     BOOST_CHECK(1);
@@ -133,11 +133,11 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     }
     consumer.flush();
     ++count_img;
-    BOOST_CHECK_EQUAL(count_img, 74);
+    BOOST_CHECK_EQUAL(count_img, 7);
     char mess[1024];
     if (!check_sig(consumer.drawable, mess,
-        "\xab\x4f\x76\x3c\x60\xa2\xe0\xd7\x50\xcd"
-        "\x5c\x90\x68\x26\x59\xe4\x4f\x3b\xea\xd2"))
+        "\xd0\x8a\xe3\x69\x7c\x88\x91\xf8\xc4\xf5"
+        "\xd8\x90\xaa\xaa\xec\x13\xd0\xde\x1c\xe1"))
     {
         BOOST_CHECK_MESSAGE(false, mess);
     }
