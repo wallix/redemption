@@ -1145,9 +1145,13 @@ public:
             LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE");
         }
         {
-            X224 x224;
-            x224.recv_begin(this->trans);
-            Mcs mcs(x224.payload);
+            BStream stream(65536);
+            X224RecvFactory fx224(*this->trans, stream);
+            X224_DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
+            SubStream payload;
+            size_t len = x224.get_payload(payload);
+
+            Mcs mcs(payload);
             mcs.recv_begin();
             if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
                 TODO("We should make a special case for MCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
@@ -1296,8 +1300,9 @@ public:
             sec.recv_end();
             mcs.payload.p = mcs.payload.end;
             mcs.recv_end();
-            x224.payload.p = x224.payload.end;
-            x224.recv_end();
+            if (payload.p != payload.end){
+                LOG(LOG_ERR, "All data should have been consumed, %u bytes remaining", payload.end - payload.p);
+            }
         }
         break;
 
@@ -1343,17 +1348,24 @@ public:
         {
             ChannelDefArray & channel_list = this->channel_list;
 
-            X224 x224;
-            Stream & stream = x224.stream;
-            x224.recv_begin(this->trans);
-
-            if (x224.tpdu_hdr.code != X224::DT_TPDU){
-                TODO("we can also get a DR (Disconnect Request), this a normal case that should be managed")
-                LOG(LOG_INFO, "Front::Unexpected non data PDU (got %u)", x224.tpdu_hdr.code);
+            BStream stream(65536);
+            X224RecvFactory fx224(*this->trans, stream);
+            TODO("We shall put a specific case when we get Disconnect Request")
+            if (fx224.type == X224::DR_TPDU){
+                TODO("What is the clean way to actually disconnect ?")
+                X224_DR_TPDU_Recv x224(*this->trans, stream, fx224.length);
+                LOG(LOG_INFO, "Front::Received Disconnect Request from RDP client");
+                throw Error(ERR_X224_EXPECTED_DATA_PDU);
+            }
+            else if (fx224.type != X224::DT_TPDU){
+                LOG(LOG_INFO, "Front::Unexpected non data PDU (got %u)", fx224.type);
                 throw Error(ERR_X224_EXPECTED_DATA_PDU);
             }
 
-            Mcs mcs(stream);
+            X224_DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
+            SubStream payload;
+            size_t len = x224.get_payload(payload);
+            Mcs mcs(payload);
             mcs.recv_begin();
 
             // Disconnect Provider Ultimatum datagram
@@ -1365,7 +1377,7 @@ public:
                 throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
 
-            Sec sec(stream, this->decrypt);
+            Sec sec(payload, this->decrypt);
             sec.recv_begin(true);
 
             if (this->verbose & 4){
@@ -1374,29 +1386,30 @@ public:
 
             if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
                 if (this->verbose){
-                    LOG(LOG_INFO, "Front::incoming::SEC_REDIRECT_ENCRYPT");
+                    LOG(LOG_INFO, "Front::incoming::SEC_REDIRECT_ENCRYPT not supported");
+                    throw Error(ERR_X224_EXPECTED_DATA_PDU);
                 }
-                /* Check for a redirect packet, starts with 00 04 */
-                if (stream.p[0] == 0 && stream.p[1] == 4){
-                /* for some reason the PDU and the length seem to be swapped.
-                   This isn't good, but we're going to do a byte for byte
-                   swap.  So the first four value appear as: 00 04 XX YY,
-                   where XX YY is the little endian length. We're going to
-                   use 04 00 as the PDU type, so after our swap this will look
-                   like: XX YY 04 00 */
+//                /* Check for a redirect packet, starts with 00 04 */
+//                if (stream.p[0] == 0 && stream.p[1] == 4){
+//                /* for some reason the PDU and the length seem to be swapped.
+//                   This isn't good, but we're going to do a byte for byte
+//                   swap.  So the first four value appear as: 00 04 XX YY,
+//                   where XX YY is the little endian length. We're going to
+//                   use 04 00 as the PDU type, so after our swap this will look
+//                   like: XX YY 04 00 */
 
-                    uint8_t swapbyte1 = stream.p[0];
-                    stream.p[0] = stream.p[2];
-                    stream.p[2] = swapbyte1;
+//                    uint8_t swapbyte1 = stream.p[0];
+//                    stream.p[0] = stream.p[2];
+//                    stream.p[2] = swapbyte1;
 
-                    uint8_t swapbyte2 = stream.p[1];
-                    stream.p[1] = stream.p[3];
-                    stream.p[3] = swapbyte2;
+//                    uint8_t swapbyte2 = stream.p[1];
+//                    stream.p[1] = stream.p[3];
+//                    stream.p[3] = swapbyte2;
 
-                    uint8_t swapbyte3 = stream.p[2];
-                    stream.p[2] = stream.p[3];
-                    stream.p[3] = swapbyte3;
-                }
+//                    uint8_t swapbyte3 = stream.p[2];
+//                    stream.p[2] = stream.p[3];
+//                    stream.p[3] = swapbyte3;
+//                }
             }
 
             if (mcs.chan_id != MCS_GLOBAL_CHANNEL) {
@@ -1415,19 +1428,19 @@ public:
 
                 const ChannelDef & channel = channel_list[num_channel_src];
 
-                int length = stream.in_uint32_le();
-                int flags = stream.in_uint32_le();
+                int length = payload.in_uint32_le();
+                int flags = payload.in_uint32_le();
 
-                size_t chunk_size = stream.end - stream.p;
+                size_t chunk_size = payload.end - payload.p;
 
                 if (this->up_and_running){
-                    cb.send_to_mod_channel(channel.name, stream.p, length, chunk_size, flags);
+                    cb.send_to_mod_channel(channel.name, payload.p, length, chunk_size, flags);
                 }
-                stream.p += chunk_size;
+                payload.p += chunk_size;
             }
             else {
-                while (stream.p < stream.end) {
-                    ShareControl sctrl(stream);
+                while (payload.p < payload.end) {
+                    ShareControl sctrl(payload);
                     sctrl.recv_begin();
 
                     switch (sctrl.pdu_type1) {
@@ -1441,9 +1454,9 @@ public:
                             LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU");
                         }
                         {
-                            uint32_t share_id = stream.in_uint32_le();
-                            uint16_t originatorId = stream.in_uint16_le();
-                            this->process_confirm_active(stream);
+                            uint32_t share_id = payload.in_uint32_le();
+                            uint16_t originatorId = payload.in_uint16_le();
+                            this->process_confirm_active(payload);
                         }
                         // reset caches, etc.
                         this->reset();
@@ -1460,7 +1473,7 @@ public:
                         // this is rdp_process_data that will set up_and_running to 1
                         // when fonts have been received
                         // we will not exit this loop until we are in this state.
-                        this->process_data(stream, cb);
+                        this->process_data(payload, cb);
                         break;
                     case PDUTYPE_DEACTIVATEALLPDU:
                         if (this->verbose){
@@ -1481,7 +1494,7 @@ public:
             }
             sec.recv_end();
             mcs.recv_end();
-            x224.recv_end();
+            TODO("check all data have been consumed")
         }
         break;
         }
