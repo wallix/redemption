@@ -1401,7 +1401,6 @@ struct X224_ER_TPDU_Recv
         uint8_t code;
 
         uint16_t dst_ref;
-        uint16_t src_ref;
         uint8_t reject_cause;
         uint8_t invalid_tpdu_var;
         uint8_t invalid_tpdu_vl;
@@ -1450,11 +1449,10 @@ struct X224_ER_TPDU_Recv
         }
 
         this->tpdu_hdr.dst_ref = stream.in_uint16_le();
-        this->tpdu_hdr.src_ref = stream.in_uint16_le();
         this->tpdu_hdr.reject_cause = stream.in_uint8();
 
         uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
-        if (end_of_header - this->stream.p > 2){
+        if (end_of_header - this->stream.p >= 2){
             this->tpdu_hdr.invalid_tpdu_var = stream.in_uint8();
             if (this->tpdu_hdr.invalid_tpdu_var != 0xC1){
                 LOG(LOG_ERR, "Unexpected ER TPDU, variable code, expected C1 (invalid TPDU details), got %x", 
@@ -1467,15 +1465,16 @@ struct X224_ER_TPDU_Recv
                     this->tpdu_hdr.LI - 6, this->tpdu_hdr.invalid_tpdu_vl);
                 throw Error(ERR_X224);
             }
-            memcpy(this->tpdu_hdr.invalid, this->stream.p, this->tpdu_hdr.invalid_tpdu_vl);
+            this->stream.in_copy_bytes(this->tpdu_hdr.invalid, this->tpdu_hdr.invalid_tpdu_vl);
             if (this->tpdu_hdr.LI - 6 - this->tpdu_hdr.invalid_tpdu_vl != 0){
                 LOG(LOG_ERR, "Trailing variable data in ER_TPDU, %u bytes", 
                     this->tpdu_hdr.LI - 6 - this->tpdu_hdr.invalid_tpdu_vl);
                 throw Error(ERR_X224);
             }
+            
         }
         if (end_of_header != this->stream.p){
-            LOG(LOG_ERR, "ER TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
+            LOG(LOG_ERR, "ER TPDU header should be terminated, got trailing data %u", end_of_header - this->stream.p);
             throw Error(ERR_X224);
         }
         stream.p = end_of_header;

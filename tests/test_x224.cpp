@@ -222,6 +222,28 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU)
     BOOST_CHECK(1);
 }
 
+BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_new_with_factory)
+{
+    GeneratorTransport t("\x03\x00\x00\x0B\x06\x80\x00\x00\x00\x00\x01", 11);
+
+    BStream stream(65536);
+    X224RecvFactory fac_x224(t, stream);
+    BOOST_CHECK_EQUAL((uint8_t)X224::DR_TPDU, fac_x224.type);
+    BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
+    
+    X224_DR_TPDU_Recv x224(t, stream, fac_x224.length);
+
+    BOOST_CHECK_EQUAL(3, x224.tpkt.version);
+    BOOST_CHECK_EQUAL(11, x224.tpkt.len);
+    BOOST_CHECK_EQUAL((uint8_t)X224::DR_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
+
+    SubStream pay;
+    size_t length_pay = x224.get_payload(pay);
+    BOOST_CHECK_EQUAL(11, x224.stream.end - x224.stream.data);
+    BOOST_CHECK_EQUAL(0, length_pay);
+    BOOST_CHECK_EQUAL(0, pay.end - pay.data);
+}
 
 BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU)
 {
@@ -252,6 +274,29 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU)
     x224.recv_end();
 }
 
+BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_new_with_factory)
+{
+    GeneratorTransport t("\x03\x00\x00\x0C\x02\xF0\x80\x12\x34\x56\x78\x9A", 12);
+
+    BStream stream(65536);
+    X224RecvFactory fac_x224(t, stream);
+    BOOST_CHECK_EQUAL((uint8_t)X224::DT_TPDU, fac_x224.type);
+    BOOST_CHECK_EQUAL((size_t)12, (size_t)fac_x224.length);
+    
+    X224_DT_TPDU_Recv x224(t, stream, fac_x224.length);
+
+    BOOST_CHECK_EQUAL(3, x224.tpkt.version);
+    BOOST_CHECK_EQUAL(12, x224.tpkt.len);
+    BOOST_CHECK_EQUAL((uint8_t)X224::DT_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(2, x224.tpdu_hdr.LI);
+
+    SubStream pay;
+    size_t length_pay = x224.get_payload(pay);
+    BOOST_CHECK_EQUAL(12, x224.stream.end - x224.stream.data);
+    BOOST_CHECK_EQUAL(5, length_pay);
+    BOOST_CHECK_EQUAL(5, pay.end - pay.data);
+}
+
 BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU)
 {
     GeneratorTransport t("\x03\x00\x00\x0D\x08\x70\x00\x00\x02\xC1\x02\x06\x22", 13);
@@ -273,6 +318,31 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU)
     BOOST_CHECK_EQUAL(stream.end, stream.data+x224.tpkt.len);
 }
 
+BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU_new_with_factory)
+{
+    GeneratorTransport t("\x03\x00\x00\x0D\x08\x70\x00\x00\x02\xC1\x02\x06\x22", 13);
+
+    BStream stream(65536);
+    X224RecvFactory fac_x224(t, stream);
+    BOOST_CHECK_EQUAL((uint8_t)X224::ER_TPDU, fac_x224.type);
+    BOOST_CHECK_EQUAL((size_t)13, (size_t)fac_x224.length);
+    
+    X224_ER_TPDU_Recv x224(t, stream, fac_x224.length);
+
+    BOOST_CHECK_EQUAL(3, x224.tpkt.version);
+    BOOST_CHECK_EQUAL(13, x224.tpkt.len);
+    BOOST_CHECK_EQUAL((uint8_t)X224::ER_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(8, x224.tpdu_hdr.LI);
+    BOOST_CHECK_EQUAL(2, x224.tpdu_hdr.reject_cause);
+    BOOST_CHECK_EQUAL(0xC1, x224.tpdu_hdr.invalid_tpdu_var);
+    BOOST_CHECK_EQUAL(2, x224.tpdu_hdr.invalid_tpdu_vl);
+
+    SubStream pay;
+    size_t length_pay = x224.get_payload(pay);
+    BOOST_CHECK_EQUAL(13, x224.stream.end - x224.stream.data);
+    BOOST_CHECK_EQUAL(0, length_pay);
+    BOOST_CHECK_EQUAL(0, pay.end - pay.data);
+}
 
 
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU)
