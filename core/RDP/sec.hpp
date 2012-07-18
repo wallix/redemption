@@ -670,7 +670,7 @@ class Sec
 
 
     //==============================================================================
-    void recv_begin( bool enabled )
+    void recv_begin(bool enabled)
     //==============================================================================
     {
         this->enabled = enabled;
@@ -760,33 +760,35 @@ static inline void recv_security_exchange_PDU(
     uint8_t client_crypt_random[512];
     memset(client_crypt_random, 0, 512);
 
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.recv_begin(trans);
+    BStream stream(65536);
+    X224RecvFactory f(*trans, stream);
+    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
 
-    Mcs mcs(stream);
+    SubStream payload;
+    x224.get_payload(payload);
+
+    Mcs mcs(payload);
     mcs.recv_begin();
 
     if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
         throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
     }
 
-    Sec sec(stream, decrypt);
+    Sec sec(payload, decrypt);
     sec.emit_begin(true);
     if (!sec.flags & SEC_EXCHANGE_PKT) {
         throw Error(ERR_SEC_EXPECTING_CLIENT_RANDOM);
     }
-    uint32_t len = stream.in_uint32_le() - SEC_PADDING_SIZE;
+    uint32_t len = payload.in_uint32_le() - SEC_PADDING_SIZE;
 
     if (len != 64){
         throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
     }
 
-    memcpy(client_crypt_random, stream.in_uint8p(len), len);
-    stream.in_skip_bytes(SEC_PADDING_SIZE);
+    memcpy(client_crypt_random, payload.in_uint8p(len), len);
+    payload.in_skip_bytes(SEC_PADDING_SIZE);
 
     mcs.recv_end();
-    x224.recv_end();
 
     uint8_t client_random[64];
     memset(client_random, 0, 64);
