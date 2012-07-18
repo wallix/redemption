@@ -371,7 +371,7 @@ public:
                     if ((ret = deflateInit(&zstrm, Z_DEFAULT_COMPRESSION)) != Z_OK)
                     {
                         LOG(LOG_ERR, "zlib: deflateInit: %d", ret);
-                        throw Error(ERR_WRM_RECORDER_ZIP_COMPRESS);
+                        throw Error(ERR_RECORDER_NATIVE_CAPTURE_ZIP_COMPRESS);
                     }
                     uint16_t y = 1;
                     int flush;
@@ -390,7 +390,7 @@ public:
                         {
                             deflateEnd(&zstrm);
                             LOG(LOG_ERR, "zlib: deflate: %d", ret);
-                            throw Error(ERR_WRM_RECORDER_ZIP_COMPRESS);
+                            throw Error(ERR_RECORDER_NATIVE_CAPTURE_ZIP_COMPRESS);
                         }
                         ++y;
                         src += bitmaps[cidx]->line_size;

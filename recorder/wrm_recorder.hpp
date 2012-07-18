@@ -409,7 +409,9 @@ public:
 
                 //read screen
                 if (this->redrawable) {
-                    const char * filename = this->meta().files[this->idx_file].second.c_str();
+                    const char * filename = this->get_cpath(
+                        this->meta().files[this->idx_file].second.c_str()
+                    );
                     if (std::FILE* fd = std::fopen(filename, "w+"))
                     {
                         read_png24(fd, this->redrawable->data, width, height, this->redrawable->rowsize);

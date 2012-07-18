@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
     }
     BOOST_REQUIRE(1);
 
-//     unlink_mwrm_and_wrm("/tmp/replay_part", breakpoint+1);
+    unlink_full_wrm("/tmp/replay_part", breakpoint+1);
 }
 
 /*BOOST_AUTO_TEST_CASE(TestMultiWRMToPng)

@@ -132,6 +132,6 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     }
 
     TODO("if boost::unit_test::error_count() == 0")
-    unlink_wrm("/tmp/test_breakpoint", 3);
+    unlink_full_wrm("/tmp/test_breakpoint", 3);
     unlink(mwrm_filename.c_str());
 }
