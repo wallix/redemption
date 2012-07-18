@@ -46,6 +46,26 @@ inline void unlink_wrm(const char * path_base, uint count)
     unlink_wrm(path_base, getpid(), 0, count);
 }
 
+inline void unlink_breakpoint(const char * path_base, pid_t pid, uint start, uint count)
+{
+    char filename[50];
+    for (count += start; start < count; ++start)
+    {
+        std::sprintf(filename, "%s-%u-%u.wrm.png", path_base, pid, start);
+        unlink(filename);
+    }
+}
+
+inline void unlink_breakpoint(const char * path_base, pid_t pid, uint count)
+{
+    unlink_breakpoint(path_base, pid, 1, count);
+}
+
+inline void unlink_breakpoint(const char * path_base, uint count)
+{
+    unlink_breakpoint(path_base, getpid(), 1, count);
+}
+
 inline void unlink_mwrm(const char * path_base, pid_t pid)
 {
     char filename[50];
@@ -62,6 +82,7 @@ inline void unlink_mwrm_and_wrm(const char * path_base, pid_t pid, uint start, u
 {
     unlink_mwrm(path_base, pid);
     unlink_wrm(path_base, pid, start, count);
+    unlink_breakpoint(path_base, pid, start+1, count);
 }
 
 inline void unlink_mwrm_and_wrm(const char * path_base, pid_t pid, uint count)

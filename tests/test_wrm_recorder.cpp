@@ -25,7 +25,7 @@
 
 #include <unistd.h>
 
-// #define LOGPRINT
+#define LOGPRINT
 
 // #include <iostream>
 #include "wrm_recorder.hpp"
@@ -41,7 +41,8 @@
 BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 {
     BOOST_CHECK(1);
-    WRMRecorder recorder(FIXTURES_PATH "/test_w2008_2-5446.mwrm", FIXTURES_PATH);
+//     WRMRecorder recorder(FIXTURES_PATH "/test_w2008_2-5446.mwrm", FIXTURES_PATH);
+    WRMRecorder recorder("/tmp/test.mwrm");
 
     BOOST_CHECK_EQUAL(800, recorder.meta().width);
     BOOST_CHECK_EQUAL(600, recorder.meta().height);
@@ -92,7 +93,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
     }
     BOOST_REQUIRE(1);
 
-    unlink_mwrm_and_wrm("/tmp/replay_part", breakpoint+1);
+//     unlink_mwrm_and_wrm("/tmp/replay_part", breakpoint+1);
 }
 
 /*BOOST_AUTO_TEST_CASE(TestMultiWRMToPng)
@@ -179,7 +180,7 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
     BOOST_CHECK(1);
 
     recorder->consumer(consumer);
-    recorder->redraw_consumer(consumer);
+    recorder->redraw_consumer(&consumer->drawable);
     bool is_chunk_time = true;
     BOOST_CHECK(1);
 
@@ -195,7 +196,7 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
         } else if (recorder->chunk_type() == WRMChunk::NEXT_FILE_ID) {
             BOOST_CHECK(1);
             std::size_t n = recorder->reader.stream.in_uint32_le();
-            std::string wrm_filename = recorder->meta().files[n];
+            std::string wrm_filename = recorder->meta().files[n].first;
             BOOST_CHECK(1);
             delete recorder;
             BOOST_CHECK(1);
@@ -210,7 +211,7 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
                                              0, 0);
             }
             recorder->consumer(consumer);
-            recorder->redraw_consumer(consumer);
+            recorder->redraw_consumer(&consumer->drawable);
             BOOST_CHECK(1);
         } else {
             BOOST_CHECK(1);

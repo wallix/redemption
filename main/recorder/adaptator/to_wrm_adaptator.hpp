@@ -39,11 +39,12 @@ public:
 
     virtual void operator()(WRMRecorder& recorder, const char* outfile)
     {
+        const char * metaname = this->_option.metaname.empty() ? 0 : this->_option.metaname.c_str();
         if (this->_option.cat_wrm) {
             to_one_wrm(recorder, outfile,
                        this->_option.range.left.time,
                        this->_option.range.right.time,
-                       this->_option.metaname.empty() ? 0 : this->_option.metaname.c_str()
+                       metaname
                       );
         }
         if (!this->_option.cat_wrm) {
@@ -54,10 +55,10 @@ public:
                    this->_option.frame,
                    this->_option.screenshot_start,
                    this->_option.screenshot_wrm,
-                   this->_option.metaname.empty() ? 0 : this->_option.metaname.c_str()
+                   metaname
                   );
         }
-    };
+    }
 };
 
 #endif

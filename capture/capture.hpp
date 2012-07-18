@@ -49,9 +49,9 @@ private:
         this->start_static_capture = now;
         this->start_native_capture = now;
         this->start_break_capture = now;
-        this->inter_frame_interval_static_capture       = 5000000; // 1 000 000 us is 1 sec (default)
-        this->inter_frame_interval_native_capture       =  400000; // 1 000 000 us is 1 sec (default)
-        this->inter_frame_interval_start_break_capture  = 1000000 * 60 * 10; // 1 000 000 us is 1 sec (default)
+        this->inter_frame_interval_static_capture       = 50000000; // 1 000 000 us is 1 sec (default)
+        this->inter_frame_interval_native_capture       =  4000000; // 1 000 000 us is 1 sec (default)
+        this->inter_frame_interval_start_break_capture  = 1000000 * 60 * 1; // 1 000 000 us is 1 sec (default)
     }
 
 public:
@@ -181,6 +181,7 @@ public:
                             24,
                             this->sc.drawable.width,
                             this->sc.drawable.height,
+                            this->sc.drawable.rowsize,
                             now);
     }
 

@@ -43,6 +43,9 @@ public:
 
     virtual const std::string& operator()()
     { return this->_filename; }
+
+    const std::string& get_filename()
+    { return (*this)(); }
 };
 
 
@@ -87,7 +90,7 @@ public:
     }
 };
 
-std::string filename_to_pid_filename(const std::string& filename)
+inline std::string filename_to_pid_filename(const std::string& filename)
 {
     std::size_t p = filename.find_last_of('.');
     std::string pid_filename = filename.substr(0, p);
@@ -98,22 +101,22 @@ std::string filename_to_pid_filename(const std::string& filename)
     return pid_filename;
 }
 
-FilenameGenerator make_pid_filename_generator(const std::string& filename)
+inline FilenameGenerator make_pid_filename_generator(const std::string& filename)
 {
     return FilenameGenerator(filename_to_pid_filename(filename));
 }
 
-FilenameGenerator make_pid_filename_generator(const std::string& filename, const std::string& extension)
+inline FilenameGenerator make_pid_filename_generator(const std::string& filename, const std::string& extension)
 {
     return FilenameGenerator(filename + boost::lexical_cast<std::string>(getpid()) + extension);
 }
 
-FilenameIncrementalGenerator make_pid_filename_incremental_generator(const std::string& filename, std::size_t first = 0)
+inline FilenameIncrementalGenerator make_pid_filename_incremental_generator(const std::string& filename, std::size_t first = 0)
 {
     return FilenameIncrementalGenerator(filename_to_pid_filename(filename), first);
 }
 
-FilenameIncrementalGenerator make_pid_filename_incremental_generator(const std::string& filename, const std::string& extension, std::size_t first = 0)
+inline FilenameIncrementalGenerator make_pid_filename_incremental_generator(const std::string& filename, const std::string& extension, std::size_t first = 0)
 {
     return FilenameIncrementalGenerator(filename + boost::lexical_cast<std::string>(getpid()), extension, first);
 }

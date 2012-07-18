@@ -33,7 +33,8 @@
 
 struct DataMetaFile
 {
-    std::vector<std::string> files;
+    typedef std::pair<std::string, std::string> WrmInfo;
+    std::vector<WrmInfo> files;
 
     uint16_t version;
     uint16_t width;
@@ -56,8 +57,17 @@ inline std::istream& operator>>(std::istream& is, DataMetaFile& data)
     std::string line;
     while (std::getline(is, line) && line != "--")
     {
-        if (!line.empty())
-            data.files.push_back(line);
+        if (!line.empty()){
+            std::size_t pos = line.find(',', 1);
+            if (std::string::npos == pos){
+                data.files.push_back(DataMetaFile::WrmInfo(line, ""));
+            } else {
+                data.files.push_back(DataMetaFile::WrmInfo(
+                    line.substr(0, pos),
+                    line.substr(pos + 1)
+                ));
+            }
+        }
     }
     data.loaded = true;
     return is;
@@ -77,7 +87,11 @@ inline std::ostream& operator<<(std::ostream& os, DataMetaFile& data)
     os << data.width << ' ' << data.height << '\n';
     for (std::size_t i = 0, last = data.files.size(); i < last; ++i)
     {
-        os << data.files[i] << '\n';
+        os << data.files[i].first;
+        if (!data.files[i].second.empty()){
+            os << ',' << data.files[i].second;
+        }
+        os << '\n';
     }
     return os << "--\n";
 }

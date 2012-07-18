@@ -45,7 +45,7 @@ public:
                this->_option.screenshot_start,
                this->_option.no_screenshot_stop
         );
-    };
+    }
 };
 
 #endif

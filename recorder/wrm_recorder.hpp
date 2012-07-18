@@ -28,7 +28,8 @@
 #include "RDP/RDPDrawable.hpp"
 #include "bitmap.hpp"
 #include "stream.hpp"
-
+#include "png.hpp"
+#include "error.hpp"
 
 class WRMRecorder
 {
@@ -38,7 +39,7 @@ public:
     RDPUnserializer reader;
 
 private:
-    RDPGraphicDevice * redrawable;
+    Drawable * redrawable;
 
 public:
     std::size_t idx_file;
@@ -123,7 +124,7 @@ public:
             throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
         if (this->meta().files.empty())
             throw Error(ERR_RECORDER_META_REFERENCE_WRM);
-        this->open_wrm_only(this->get_cpath(this->meta().files[0].c_str()));
+        this->open_wrm_only(this->get_cpath(this->meta().files[0].first.c_str()));
         ++this->idx_file;
         if (this->selected_next_order() && this->is_meta_chunk())
             this->ignore_chunks();
@@ -276,7 +277,7 @@ public:
     std::size_t get_idx_file(const char* wrm_name) const
     {
         std::size_t i = 0;
-        while (i < this->meta().files.size() && this->meta().files[i] != wrm_name){
+        while (i < this->meta().files.size() && this->meta().files[i].first != wrm_name){
             ++i;
         }
         return i;
@@ -287,7 +288,7 @@ public:
         this->reader.consumer = consumer;
     }
 
-    void redraw_consumer(RDPGraphicDevice* consumer)
+    void redraw_consumer(Drawable* consumer)
     {
         this->redrawable = consumer;
     }
@@ -358,6 +359,22 @@ public:
         return time;
     }
 
+private:
+    struct PngBuffer {
+        uint8_t * data;
+        PngBuffer(uint8_t * __data)
+        : data(__data)
+        {}
+    };
+    static void png_read_data(png_structp png_ptr, png_bytep data, png_size_t length)
+    {
+        /* with libpng15 next line causes pointer deference error; use libpng12 */
+        PngBuffer* buffer = static_cast<PngBuffer*>(png_ptr->io_ptr);
+        memcpy(data, buffer->data, length);
+        buffer->data += length;
+    }
+
+public:
     void interpret_order()
     {
         switch (this->reader.chunk_type) {
@@ -377,7 +394,7 @@ public:
             {
                 this->idx_file = this->reader.stream.in_uint32_le();
                 this->check_idx_wrm(this->idx_file);
-                this->next_file(this->meta().files[this->idx_file].c_str());
+                this->next_file(this->meta().files[this->idx_file].first.c_str());
             }
             break;
             case WRMChunk::BREAKPOINT:
@@ -387,59 +404,19 @@ public:
                 /*uint8_t bpp = */this->reader.stream.in_uint8();
                 this->reader.wait_cap.timer.sec() = this->reader.stream.in_uint64_le();
                 this->reader.wait_cap.timer.usec() = this->reader.stream.in_uint64_le();
+                --this->reader.remaining_order_count;
 
-                //char texttest[10000];
-
-                {
-                    uint16_t nx = this->reader.stream.in_uint16_le();
-                    //std::cout << "read nb_axis " << nx << ' ';
-                    uint16_t ny = this->reader.stream.in_uint16_le();
-                    //std::cout << ny << '\n';
-
-                    //std::cout << "read data size " << (this->reader.stream.p - this->reader.stream.data) << '\n';
-
-                    --this->reader.remaining_order_count;
-                    //uint nn = 0;
-
-                    if (this->redrawable) {
-                        Rect clip(0,0, width, height);
-                        RDPMemBlt memblt(0, Rect(0,0,32,32), 0xCC, 0, 0, 0);
-                        RDPBmpCache cmdcache;
-                        BGRPalette palette;
-
-                        for (uint16_t y = 0 ; y != ny; ++y, memblt.rect.y += 32) {
-                            memblt.rect.x = 0;
-                            for (uint16_t x = 0 ; x != nx;
-                                 ++x, memblt.rect.x += 32) {
-                                this->selected_next_order();
-                                //std::cout << "read bmp chunk (type: " << this->reader.chunk_type << ", n:" << this->reader.remaining_order_count << "): " << (RDP_UPDATE_ORDERS == this->reader.chunk_type) <<  ' ';
-                                uint8_t control = this->reader.stream.in_uint8();
-                                --this->reader.remaining_order_count;
-                                RDPSecondaryOrderHeader header(this->reader.stream);
-                                uint8_t *next_order = this->reader.stream.p + header.length + 7;
-                                //std::cout  << (header.type == RDP::TS_CACHE_BITMAP_COMPRESSED) << ' ';
-                                cmdcache.receive(this->reader.stream, control, header, palette);
-                                this->reader.stream.p = next_order;
-
-                                this->redrawable->draw(memblt, clip, *cmdcache.bmp);
-
-                                //std::cout << "reader bmp (size:" << cmdcache.bmp->bmp_size << "): " << (this->reader.stream.p - this->reader.stream.data) << '\n';
-                                delete cmdcache.bmp;
-                                //++nn;
-                            }
-                        }
+                //read screen
+                if (this->redrawable) {
+                    const char * filename = this->meta().files[this->idx_file].second.c_str();
+                    if (std::FILE* fd = std::fopen(filename, "w+"))
+                    {
+                        read_png24(fd, this->redrawable->data, width, height, this->redrawable->rowsize);
+                        fclose(fd);
+                    } else {
+                        LOG(LOG_ERR, "open context screen %s: %s", filename, strerror(errno));
+                        throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
                     }
-                    else {
-                        //std::cout << "read ignore cache\n";
-                        uint n = nx * ny;
-                        while (n)
-                        {
-                            this->selected_next_order();
-                            n -= this->reader.remaining_order_count;
-                            this->ignore_chunks();
-                        }
-                    }
-                    //std::cout << "read number img  " << nn << '\n';
                 }
 
                 this->selected_next_order();
@@ -521,30 +498,61 @@ public:
                 this->reader.bmp_cache.big_entries = this->reader.stream.in_uint16_le();
                 this->reader.bmp_cache.big_size = this->reader.stream.in_uint16_le();
                 uint32_t stamp = this->reader.stream.in_uint32_le();
-                //std::cout << "interpret_order: "  << this->reader.bmp_cache.small_entries << ',' << this->reader.bmp_cache.small_size << ',' << this->reader.bmp_cache.medium_entries << ',' << this->reader.bmp_cache.medium_size << ',' << this->reader.bmp_cache.big_entries << ',' << this->reader.bmp_cache.big_size << '\n';
 
                 this->reader.bmp_cache.reset();
-                uint16_t nb_img = this->reader.stream.in_uint16_le();
-                //std::cout << "read nb_img " << nb_img << '\n';
-                this->reader.remaining_order_count = 0;
-                for (; nb_img; --nb_img){
-                    this->reader.next();
-                }
                 this->reader.bmp_cache.stamp = stamp;
+                this->reader.remaining_order_count = 0;
 
-                for (size_t cid = 0; cid != 3 ; ++cid){
-                    uint32_t (&stamps)[8192] = this->reader.bmp_cache.stamps[cid];
-                    uint16_t cidx = 0;
-                    for (uint16_t n = 0; n != 9 ; ++n){
-                        this->selected_next_order();
-                        for (uint16_t last = std::min<>(cidx + 8192 / 9, 8192); cidx != last; ++cidx){
-                            stamps[cidx] = this->reader.stream.in_uint32_le();
-                        }
-                        this->reader.remaining_order_count = 0;
+                z_stream zstrm;
+                zstrm.zalloc = 0;
+                zstrm.zfree = 0;
+                zstrm.opaque = 0;
+                int ret;
+                const int Bpp = 3;
+                while (1)
+                {
+                    this->reader.stream.init(14);
+                    this->reader.trans->recv(&this->reader.stream.end, 14);
+                    uint16_t idx = this->reader.stream.in_uint16_le();
+                    uint32_t stamp = this->reader.stream.in_uint32_le();
+                    uint16_t cx = this->reader.stream.in_uint16_le();
+                    uint16_t cy = this->reader.stream.in_uint16_le();
+                    uint32_t buffer_size = this->reader.stream.in_uint32_le();
+                    if (idx == 8192 * 3 + 1){
+                        break;
                     }
-                }
 
-                //this->ignore_chunks();
+                    this->reader.stream.init(buffer_size);
+                    this->reader.trans->recv(&this->reader.stream.end, buffer_size);
+
+                    zstrm.avail_in = buffer_size;
+                    zstrm.next_in = this->reader.stream.data;
+
+                    uint8_t * data = new uint8_t[cx*cy * Bpp];
+                    zstrm.avail_out = cx*cy * Bpp;
+                    zstrm.next_out = data;
+
+                    if ((ret = inflateInit(&zstrm)) != Z_OK)
+                    {
+                        LOG(LOG_ERR, "zlib: inflateInit: %d", ret);
+                        throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
+                    }
+
+                    ret = inflate(&zstrm, Z_FINISH);
+                    inflateEnd(&zstrm);
+
+                    if (ret != Z_STREAM_END)
+                    {
+                        LOG(LOG_ERR, "zlib: inflate: %d", ret);
+                        throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
+                    }
+
+                    uint cid = idx / 8192;
+                    uint cidx = idx % 8192;
+                    this->reader.bmp_cache.stamps[cid][cidx] = stamp;
+                    this->reader.bmp_cache.cache[cid][cidx] = new Bitmap(24, 0, cx, cy, data, cx*cy);
+                    delete [] data;
+                }
             }
             break;
             default:
