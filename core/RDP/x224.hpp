@@ -260,23 +260,6 @@ struct X224
 
 // See docs/X224_class0_cheat_sheet.txt for supported packets format details
 
-// 2.2.1.2   Server X.224 Connection Confirm PDU
-// =============================================
-
-//  The X.224 Connection Confirm PDU is an RDP Connection Sequence PDU sent from
-//  server to client during the Connection Initiation phase (see section
-//  1.3.1.1). It is sent as a response to the X.224 Connection Request PDU
-//  (section 2.2.1.1).
-
-//tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-//x224Ccf (7 bytes): An X.224 Class 0 Connection Confirm TPDU, as specified in [X224] section
-//   13.4.
-
-//rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1) structure or an
-//   optional RDP Negotiation Failure (section 2.2.1.2.2) structure. The length of the negotiation
-//   structure is included in the X.224 Connection Confirm Length Indicator field.
-
 
     enum {
         TPKT_HEADER_LEN = 4
@@ -745,14 +728,14 @@ struct X224RecvFactory
         uint8_t tpkt_version = stream.in_uint8();
         if (tpkt_version != 3) {
             LOG(LOG_ERR, "Tpkt type 3 slow-path PDU expected (version = %u)", tpkt_version);
-            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+            throw Error(ERR_X224);
         }
         stream.in_skip_bytes(1);
         uint16_t tpkt_len = stream.in_uint16_be();
         t.recv((char**)(&(stream.end)), 2);
         if (tpkt_len < 6){
             LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", tpkt_len);
-            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+            throw Error(ERR_X224);
         }
         this->length = tpkt_len;
         stream.in_skip_bytes(1);
@@ -768,7 +751,7 @@ struct X224RecvFactory
         default:
             this->type = 0;
             LOG(LOG_ERR, "Bad X224 header, unknown TPDU type (code = %u)", tpdu_type);
-            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+            throw Error(ERR_X224);
         break;
         }
     }
@@ -911,10 +894,22 @@ struct X224_CR_TPDU_Recv
         this->tpkt.version = stream.in_uint8();
         stream.in_skip_bytes(1);
         this->tpkt.len = stream.in_uint16_be();
+        if (this->tpkt.len != length){
+            LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
+                this->tpkt.len, length);
+            throw Error(ERR_X224);
+        }
 
         // TPDU
         this->tpdu_hdr.LI = stream.in_uint8();
-        this->tpdu_hdr.code = stream.in_uint8() & 0xF0;
+        this->tpdu_hdr.code = stream.in_uint8();
+
+        if (!this->tpdu_hdr.code == X224RecvFactory::CR_TPDU){
+            LOG(LOG_ERR, "Unexpected TPDU opcode, expected CR_TPDU, got %u", 
+                this->tpdu_hdr.code);
+            throw Error(ERR_X224);
+        }
+
         this->tpdu_hdr.dst_ref = stream.in_uint16_le();
         this->tpdu_hdr.src_ref = stream.in_uint16_le();
         this->tpdu_hdr.class_option = stream.in_uint8();
@@ -929,7 +924,7 @@ struct X224_CR_TPDU_Recv
                 size_t cookie_len = p - (stream.data + 11) + 1;
                 if (cookie_len > 1023){
                     LOG(LOG_ERR, "Bad Connection Request X224 header, cookie too large (length = %u)", cookie_len);
-                    throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+                    throw Error(ERR_X224);
                 }
                 memcpy(this->cookie, stream.data + 11, cookie_len);
                 this->cookie[cookie_len] = 0;
@@ -951,7 +946,7 @@ struct X224_CR_TPDU_Recv
                     if (this->rdp_neg_type != RDP_NEG_REQ){
                         LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
                             this->tpdu_hdr.LI, this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_code);
-                        throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+                        throw Error(ERR_X224);
                     }
 
                     switch (this->rdp_neg_code){
@@ -968,6 +963,11 @@ struct X224_CR_TPDU_Recv
                 }
             }
         }
+        if (end_of_header != this->stream.p){
+            LOG(LOG_ERR, "CR TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
+            throw Error(ERR_X224);
+        }
+
         stream.p = end_of_header;
         this->payload_offset = this->stream.get_offset(0);
     }
@@ -1160,6 +1160,11 @@ struct X224_CC_TPDU_Recv
         this->tpkt.version = stream.in_uint8();
         stream.in_skip_bytes(1);
         this->tpkt.len = stream.in_uint16_be();
+        if (this->tpkt.len != length){
+            LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
+                this->tpkt.len, length);
+            throw Error(ERR_X224);
+        }
 
         // TPDU
         this->tpdu_hdr.LI = stream.in_uint8();
@@ -1168,6 +1173,7 @@ struct X224_CC_TPDU_Recv
         if (!this->tpdu_hdr.code == X224RecvFactory::CC_TPDU){
             LOG(LOG_ERR, "Unexpected TPDU opcode, expected CC_TPDU, got %u", 
                 this->tpdu_hdr.code);
+            throw Error(ERR_X224);
         }
 
         this->tpdu_hdr.dst_ref = stream.in_uint16_le();
@@ -1189,7 +1195,7 @@ struct X224_CC_TPDU_Recv
                     this->rdp_neg_flags,
                     this->rdp_neg_length,   
                     this->rdp_neg_code);
-                throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+                throw Error(ERR_X224);
             }
 
             if (this->verbose){
@@ -1244,6 +1250,10 @@ struct X224_CC_TPDU_Recv
                 break;
             }
         }
+        if (end_of_header != this->stream.p){
+            LOG(LOG_ERR, "CC TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
+            throw Error(ERR_X224);
+        }
         stream.p = end_of_header;
         this->payload_offset = this->stream.get_offset(0);
     }
@@ -1254,5 +1264,322 @@ struct X224_CC_TPDU_Recv
         return this->stream.end - this->stream.data - this->payload_offset;
     }
 }; // END CLASS X224_CC_TPDU_Recv
+
+
+//    Class 0 x224 TPDU
+//    -----------------
+
+//                        +----+-----+---------+---------+---------------------------+
+//                        | LI |     | DST-REF | SRC-REF | REASON                    |
+//               +--------+----+-----+---------+---------+---------------------------+
+//               | OFFSET | 4  |  5  |  6   7  |  8   9  |    10                     |
+//    +-------------------+----+-----+---------+---------+---------------------------+
+//    | Disconnect Request|    |     |         |         | 00 = NOT SPECIFIED        |
+//    | DR_TPDU 1000 0000 | 06 |  80 |  00  00 |  00  00 | 01 = CONGESTION           |
+//    |                   |    |     |         |         | 02 = SESSION NOT ATTACHED |
+//    |                   |    |     |         |         | 03 = ADDRESS UNKNOWN      |
+//    +-------------------+----+-----+---------+---------+---------------------------+
+
+struct X224_DR_TPDU_Recv
+{
+    Stream & stream;
+    size_t payload_offset;
+
+    uint32_t verbose;
+
+    struct Tpkt
+    {
+        uint8_t version;
+        uint16_t len;
+    } tpkt;
+
+    struct TPDUHeader
+    {
+        uint8_t LI;
+        uint8_t code;
+
+        uint16_t dst_ref;
+        uint16_t src_ref;
+        uint8_t reason;
+    } tpdu_hdr;
+
+    enum {
+        TPKT_HEADER_LEN = 4
+    };
+
+    enum {
+        REASON_NOT_SPECIFIED        = 0,
+        REASON_CONGESTION           = 1,
+        REASON_SESSION_NOT_ATTACHED = 2,
+        REASON_ADDRESS_UNKNOWN      = 3,
+    };
+
+    // CONSTRUCTOR
+    //==============================================================================
+    X224_DR_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
+    //==============================================================================
+    : stream(stream)
+    , verbose(verbose)
+    {
+        t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
+        this->stream.p = this->stream.data;
+
+        // TPKT
+        this->tpkt.version = stream.in_uint8();
+        stream.in_skip_bytes(1);
+        this->tpkt.len = stream.in_uint16_be();
+        if (this->tpkt.len != length){
+            LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
+                this->tpkt.len, length);
+            throw Error(ERR_X224);
+        }
+
+        // TPDU
+        this->tpdu_hdr.LI = stream.in_uint8();
+        this->tpdu_hdr.code = stream.in_uint8();
+
+        if (!this->tpdu_hdr.code == X224RecvFactory::DR_TPDU){
+            LOG(LOG_ERR, "Unexpected TPDU opcode, expected DR_TPDU, got %u", 
+                this->tpdu_hdr.code);
+            throw Error(ERR_X224);
+        }
+
+        this->tpdu_hdr.dst_ref = stream.in_uint16_le();
+        this->tpdu_hdr.src_ref = stream.in_uint16_le();
+        this->tpdu_hdr.reason = stream.in_uint8();
+
+        uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+        if (end_of_header != this->stream.p){
+            LOG(LOG_ERR, "DR TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
+            throw Error(ERR_X224);
+        }
+        stream.p = end_of_header;
+        this->payload_offset = this->stream.get_offset(0);
+    }
+
+    size_t get_payload(SubStream & s)
+    {
+        s.reset(this->stream, payload_offset);
+        return this->stream.end - this->stream.data - this->payload_offset;
+    }
+}; // END CLASS X224_DR_TPDU_Recv
+
+//    Class 0 x224 TPDU
+//    -----------------
+
+//                                                                             +----------------------------------------------------+
+//                                                                             |           Variable Part                            |
+//                        +----+-----+---------+-------------------------------+-----------+-----+----------------------------------+
+//                        |    |     |         |                               | Invalid   |     | Rejected TPDU Header up to octet |
+//                        | LI |     | DST-REF |         REJECT CAUSE          |  TPDU     | VL  | which caused rejection           |
+//                        |    |     |         |                               |           |     | (mandatory in class 0)           |
+//               +--------+----+-----+---------+-------------------------------+-----------+-----+----------------------------------+
+//               | OFFSET | 4  |  5  |  6   7  |                8              |    9      |  10 | 11 ...                           |
+//    +-------------------+----+-----+---------+---------+---------------------+-----------+-----+----------------------------------+
+//    | TPDU Error        |    |     |         |  00 = Reason not specified    |           |     |                                  |
+//    | ER_TPDU 0111 0000 | 04 |  70 |  00  00 |  01 = Invalid parameter code  |    C1     |  v  | ?? ?? ?? ?? ??                   |
+//    |                   |+2+v|     |         |  02 = Invalid TPDU type       | 1100 0001 |     | ~~~~~~~~~~~~~~                   |
+//    |                   |    |     |         |  03 = Invalid Parameter Value |           |     |    v bytes                       |
+//    +-------------------+----+-----+---------+-------------------------------+-----------+-----+----------------------------------+
+
+struct X224_ER_TPDU_Recv
+{
+    Stream & stream;
+    size_t payload_offset;
+
+    uint32_t verbose;
+
+    struct Tpkt
+    {
+        uint8_t version;
+        uint16_t len;
+    } tpkt;
+
+    struct TPDUHeader
+    {
+        uint8_t LI;
+        uint8_t code;
+
+        uint16_t dst_ref;
+        uint16_t src_ref;
+        uint8_t reject_cause;
+        uint8_t invalid_tpdu_var;
+        uint8_t invalid_tpdu_vl;
+        uint8_t invalid[256];
+    } tpdu_hdr;
+
+    enum {
+        TPKT_HEADER_LEN = 4
+    };
+
+    enum {
+        REASON_NOT_SPECIFIED            = 0,
+        REASON_INVALID_PARAMETER_CODE   = 1,
+        REASON_INVALID_TPDU_TYPE        = 2,
+        REASON_INVALID_PARAMETER_VALUE  = 3,
+    };
+
+    // CONSTRUCTOR
+    //==============================================================================
+    X224_ER_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
+    //==============================================================================
+    : stream(stream)
+    , verbose(verbose)
+    {
+        t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
+        this->stream.p = this->stream.data;
+
+        // TPKT
+        this->tpkt.version = stream.in_uint8();
+        stream.in_skip_bytes(1);
+        this->tpkt.len = stream.in_uint16_be();
+        if (this->tpkt.len != length){
+            LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
+                this->tpkt.len, length);
+            throw Error(ERR_X224);
+        }
+
+        // TPDU
+        this->tpdu_hdr.LI = stream.in_uint8();
+        this->tpdu_hdr.code = stream.in_uint8();
+
+        if (!this->tpdu_hdr.code == X224RecvFactory::ER_TPDU){
+            LOG(LOG_ERR, "Unexpected TPDU opcode, expected ER_TPDU, got %u", 
+                this->tpdu_hdr.code);
+            throw Error(ERR_X224);
+        }
+
+        this->tpdu_hdr.dst_ref = stream.in_uint16_le();
+        this->tpdu_hdr.src_ref = stream.in_uint16_le();
+        this->tpdu_hdr.reject_cause = stream.in_uint8();
+
+        uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+        if (end_of_header - this->stream.p > 2){
+            this->tpdu_hdr.invalid_tpdu_var = stream.in_uint8();
+            if (this->tpdu_hdr.invalid_tpdu_var != 0xC1){
+                LOG(LOG_ERR, "Unexpected ER TPDU, variable code, expected C1 (invalid TPDU details), got %x", 
+                    this->tpdu_hdr.invalid_tpdu_var);
+                throw Error(ERR_X224);
+            }
+            this->tpdu_hdr.invalid_tpdu_vl = stream.in_uint8();
+            if (this->tpdu_hdr.invalid_tpdu_vl > this->tpdu_hdr.LI - 6){
+                LOG(LOG_ERR, "Invalid TPDU details too large, max=%u got %x", 
+                    this->tpdu_hdr.LI - 6, this->tpdu_hdr.invalid_tpdu_vl);
+                throw Error(ERR_X224);
+            }
+            memcpy(this->tpdu_hdr.invalid, this->stream.p, this->tpdu_hdr.invalid_tpdu_vl);
+            if (this->tpdu_hdr.LI - 6 - this->tpdu_hdr.invalid_tpdu_vl != 0){
+                LOG(LOG_ERR, "Trailing variable data in ER_TPDU, %u bytes", 
+                    this->tpdu_hdr.LI - 6 - this->tpdu_hdr.invalid_tpdu_vl);
+                throw Error(ERR_X224);
+            }
+        }
+        if (end_of_header != this->stream.p){
+            LOG(LOG_ERR, "ER TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
+            throw Error(ERR_X224);
+        }
+        stream.p = end_of_header;
+        this->payload_offset = this->stream.get_offset(0);
+    }
+
+    size_t get_payload(SubStream & s)
+    {
+        s.reset(this->stream, payload_offset);
+        return this->stream.end - this->stream.data - this->payload_offset;
+    }
+}; // END CLASS X224_ER_TPDU_Recv
+
+//    Class 0 x224 TPDU
+//    -----------------
+
+//                        +----+-----+----------------+
+//                        | LI |     | EOT            |
+//               +--------+----+-----+----------------+
+//               | OFFSET | 4  |  5  |  6             |
+//    +----------+--------+----+-----+----------------+
+//    | Data              |    |     | 80 = EOT       |
+//    | DT_TPDU 1111 0000 | 02 |  F0 | 00 = MORE DATA |
+//    +-------------------+----+-----+----------------+
+
+struct X224_DT_TPDU_Recv
+{
+    Stream & stream;
+    size_t payload_offset;
+
+    uint32_t verbose;
+
+    struct Tpkt
+    {
+        uint8_t version;
+        uint16_t len;
+    } tpkt;
+
+    struct TPDUHeader
+    {
+        uint8_t LI;
+        uint8_t code;
+        uint8_t eot;
+    } tpdu_hdr;
+
+    enum {
+        TPKT_HEADER_LEN = 4
+    };
+
+    enum {
+        EOT_MOR_DATA        = 0x00,
+        EOT_EOT             = 0x80
+    };
+
+    // CONSTRUCTOR
+    //==============================================================================
+    X224_DT_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
+    //==============================================================================
+    : stream(stream)
+    , verbose(verbose)
+    {
+        t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
+        this->stream.p = this->stream.data;
+
+        // TPKT
+        this->tpkt.version = stream.in_uint8();
+        stream.in_skip_bytes(1);
+        this->tpkt.len = stream.in_uint16_be();
+        if (this->tpkt.len != length){
+            LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
+                this->tpkt.len, length);
+            throw Error(ERR_X224);
+        }
+
+        // TPDU
+        this->tpdu_hdr.LI = stream.in_uint8();
+
+        this->tpdu_hdr.code = stream.in_uint8();
+        if (!this->tpdu_hdr.code == X224RecvFactory::DT_TPDU){
+            LOG(LOG_ERR, "Unexpected TPDU opcode, expected DT_TPDU, got %u", 
+                this->tpdu_hdr.code);
+            throw Error(ERR_X224);
+        }
+
+        this->tpdu_hdr.eot = stream.in_uint8();
+        if (this->tpdu_hdr.eot != EOT_EOT){
+            LOG(LOG_ERR, "DT TPDU should say EOT, got=%x", this->tpdu_hdr.eot);
+            throw Error(ERR_X224);
+        }
+
+        uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+        if (end_of_header != this->stream.p){
+            LOG(LOG_ERR, "DT TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
+            throw Error(ERR_X224);
+        }
+        stream.p = end_of_header;
+        this->payload_offset = this->stream.get_offset(0);
+    }
+
+    size_t get_payload(SubStream & s)
+    {
+        s.reset(this->stream, payload_offset);
+        return this->stream.end - this->stream.data - this->payload_offset;
+    }
+}; // END CLASS X224_DT_TPDU_Recv
 
 #endif
