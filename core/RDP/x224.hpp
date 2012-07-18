@@ -857,6 +857,7 @@ struct X224_CR_TPDU_Recv
         uint8_t class_option;
     } tpdu_hdr;
 
+    size_t cookie_len;
     char cookie[1024];
 
     uint8_t rdp_neg_type;
@@ -915,56 +916,60 @@ struct X224_CR_TPDU_Recv
         this->tpdu_hdr.class_option = stream.in_uint8();
 
         // extended negotiation header
-        this->cookie[0] = 0;        
+        this->cookie_len = 0;
+        this->cookie[0] = 0;
         this->rdp_neg_type = 0;
 
         uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
         for (uint8_t * p = stream.p + 1; p < end_of_header ; p++){
             if (p[-1] == 0x0D &&  p[0]  == 0x0A){
-                size_t cookie_len = p - (stream.data + 11) + 1;
+                this->cookie_len = p - (stream.data + 11) + 1;
+                LOG(LOG_ERR, "cookie found at %u", cookie_len);
                 if (cookie_len > 1023){
                     LOG(LOG_ERR, "Bad Connection Request X224 header, cookie too large (length = %u)", cookie_len);
                     throw Error(ERR_X224);
                 }
-                memcpy(this->cookie, stream.data + 11, cookie_len);
-                this->cookie[cookie_len] = 0;
+                memcpy(this->cookie, stream.data + 11, this->cookie_len);
+                this->cookie[this->cookie_len] = 0;
                 if (this->verbose){
                     LOG(LOG_INFO, "cookie: %s", this->cookie);
                 }
-                p++;
-                if (end_of_header - p >= 8){
-                    this->stream.p = p;
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Found RDP Negotiation Request Structure");
-                    }
-                    this->rdp_neg_type = this->stream.in_uint8();
-                    this->rdp_neg_flags = this->stream.in_uint8();
-                    this->rdp_neg_length = this->stream.in_uint16_le();
-                    this->rdp_neg_code = this->stream.in_uint32_le();
-
-                    
-                    if (this->rdp_neg_type != RDP_NEG_REQ){
-                        LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
-                            this->tpdu_hdr.LI, this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_code);
-                        throw Error(ERR_X224);
-                    }
-
-                    switch (this->rdp_neg_code){
-                        case RDP_NEG_PROTOCOL_RDP:
-                            LOG(LOG_INFO, "PROTOCOL RDP");
-                            break;
-                        case RDP_NEG_PROTOCOL_TLS:
-                            LOG(LOG_INFO, "PROTOCOL TLS 1.0");
-                            break;
-                        case RDP_NEG_PROTOCOL_HYBRID:
-                            LOG(LOG_INFO, "PROTOCOL HYBRID");
-                            break;
-                    }
-                }
+                break;
             }
         }
+        stream.p += this->cookie_len;
+
+        if (end_of_header - stream.p >= 8){
+            if (this->verbose){
+                LOG(LOG_INFO, "Found RDP Negotiation Request Structure");
+            }
+            this->rdp_neg_type = this->stream.in_uint8();
+            this->rdp_neg_flags = this->stream.in_uint8();
+            this->rdp_neg_length = this->stream.in_uint16_le();
+            this->rdp_neg_code = this->stream.in_uint32_le();
+
+            if (this->rdp_neg_type != RDP_NEG_REQ){
+                LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
+                    this->tpdu_hdr.LI, this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_code);
+                throw Error(ERR_X224);
+            }
+
+            switch (this->rdp_neg_code){
+                case RDP_NEG_PROTOCOL_RDP:
+                    LOG(LOG_INFO, "PROTOCOL RDP");
+                    break;
+                case RDP_NEG_PROTOCOL_TLS:
+                    LOG(LOG_INFO, "PROTOCOL TLS 1.0");
+                    break;
+                case RDP_NEG_PROTOCOL_HYBRID:
+                    LOG(LOG_INFO, "PROTOCOL HYBRID");
+                    break;
+            }
+        }
+
         if (end_of_header != this->stream.p){
-            LOG(LOG_ERR, "CR TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
+            LOG(LOG_ERR, "CR TPDU header should be terminated, got trailing data %u", end_of_header - this->stream.p);
+            hexdump_c(this->stream.data, this->stream.end - this->stream.data);
             throw Error(ERR_X224);
         }
 

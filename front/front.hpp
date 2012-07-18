@@ -850,14 +850,14 @@ public:
             }
 
             {
-                X224 x224;
-                x224.recv_begin(this->trans);
-
-                if (x224.tpdu_hdr.code != X224::CR_TPDU) {
-                    LOG(LOG_INFO, "recv x224 connection request PDU failed code=%u", x224.tpdu_hdr.code);
-                    throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
+                BStream stream(65536);
+                X224RecvFactory fac_x224(*this->trans, stream);
+                X224_CR_TPDU_Recv x224(*this->trans, stream, fac_x224.length);
+                SubStream payload;
+                size_t len = x224.get_payload(payload);
+                if (len){
+                    LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed, %u bytes remains", len);
                 }
-                x224.recv_end();
             }
 
             if (this->verbose){
@@ -1067,9 +1067,13 @@ public:
             LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
         }
         {
-            X224 x224;
-            x224.recv_begin(this->trans);
-            Mcs mcs(x224.stream);
+            BStream stream(65536);
+            X224RecvFactory fx224(*this->trans, stream);
+            X224_DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
+            SubStream payload;
+            size_t len = x224.get_payload(payload);
+
+            Mcs mcs(payload);
             mcs.recv_begin();
             if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
                 TODO("We should make a special case for MCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
@@ -1080,7 +1084,7 @@ public:
             if (this->verbose >= 256){
                 this->decrypt.dump();
             }
-            Sec sec(x224.stream, this->decrypt);
+            Sec sec(payload, this->decrypt);
             sec.recv_begin(true);
 
             if (!sec.flags & SEC_INFO_PKT) {
@@ -1088,9 +1092,14 @@ public:
             }
 
             /* this is the first test that the decrypt is working */
-            this->client_info.process_logon_info(x224.stream, (uint16_t)(x224.stream.end - x224.stream.p));
+            this->client_info.process_logon_info(payload, (uint16_t)(payload.end - payload.p));
+            sec.recv_end();
+            mcs.recv_end();
+
             TODO("check all data are consumed as expected")
-            x224.stream.end = x224.stream.p;
+            if (payload.end != payload.p){
+                LOG(LOG_ERR, "Front::incoming::process_logon all data should have been consumed");
+            }
 
             this->keymap.init_layout(this->client_info.keylayout);
 
@@ -1118,9 +1127,6 @@ public:
                 this->send_demand_active();
 
                 this->state = ACTIVATE_AND_PROCESS_DATA;
-                sec.recv_end();
-                mcs.recv_end();
-                x224.recv_end();
             }
             else {
                 LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
