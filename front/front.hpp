@@ -428,12 +428,10 @@ public:
             LOG(LOG_INFO, "Front::disconnect()");
         }
         X224 x224;
-        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
-
-        stream.out_uint8((MCSPDU_DisconnectProviderUltimatum << 2) | 1);
-        stream.out_uint8(0x80);
-
+        Mcs mcs(x224.stream);
+        mcs.emit_begin(MCSPDU_DisconnectProviderUltimatum, 0, 0);
+        mcs.emit_end();
         x224.emit_end();
         this->trans->send(x224.header(), x224.size());
     }
@@ -463,19 +461,18 @@ public:
         }
 
         X224 x224;
-        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
-        Mcs mcs(stream);
+        Mcs mcs(x224.stream);
         mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, channel.chanid);
-        Sec sec(stream, this->encrypt);
+        Sec sec(x224.stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
 
-        stream.out_uint32_le(length);
+        x224.stream.out_uint32_le(length);
         if (channel.flags & ChannelDef::CHANNEL_OPTION_SHOW_PROTOCOL) {
             flags |= ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
-        stream.out_uint32_le(flags);
-        stream.out_copy_bytes(data, chunk_size);
+        x224.stream.out_uint32_le(flags);
+        x224.stream.out_copy_bytes(data, chunk_size);
 
         sec.emit_end();
         mcs.emit_end();
@@ -511,29 +508,28 @@ public:
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
             X224 x224;
-            Stream & stream = x224.stream;
             x224.emit_begin(X224::DT_TPDU);
-            Mcs mcs(stream);
+            Mcs mcs(x224.stream);
             mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-            Sec sec(stream, this->encrypt);
+            Sec sec(x224.stream, this->encrypt);
             sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
-            ShareControl sctrl(stream);
+            ShareControl sctrl(x224.stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-            ShareData sdata(stream);
+            ShareData sdata(x224.stream);
             sdata.emit_begin(PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
             // Payload
-            stream.out_uint16_le(RDP_UPDATE_PALETTE);
-            stream.out_uint16_le(0);
-            stream.out_uint32_le(256); /* # of colors */
+            x224.stream.out_uint16_le(RDP_UPDATE_PALETTE);
+            x224.stream.out_uint16_le(0);
+            x224.stream.out_uint32_le(256); /* # of colors */
             for (int i = 0; i < 256; i++) {
                 int color = palette[i];
                 uint8_t r = color >> 16;
                 uint8_t g = color >> 8;
                 uint8_t b = color;
-                stream.out_uint8(b);
-                stream.out_uint8(g);
-                stream.out_uint8(r);
+                x224.stream.out_uint8(b);
+                x224.stream.out_uint8(g);
+                x224.stream.out_uint8(r);
             }
 
             // Packet trailer
@@ -665,27 +661,26 @@ public:
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
         }
         X224 x224;
-        Stream & stream = x224.stream;
         x224.emit_begin(X224::DT_TPDU);
-        Mcs mcs(stream);
+        Mcs mcs(x224.stream);
         mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-        Sec sec(stream, this->encrypt);
+        Sec sec(x224.stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
-        ShareControl sctrl(stream);
+        ShareControl sctrl(x224.stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareData sdata(stream);
+        ShareData sdata(x224.stream);
         sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
         // Payload
-        stream.out_uint16_le(RDP_POINTER_COLOR);
-        stream.out_uint16_le(0); /* pad */
+        x224.stream.out_uint16_le(RDP_POINTER_COLOR);
+        x224.stream.out_uint16_le(0); /* pad */
 
 //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
 //      entry in the pointer cache in which to store the pointer image. The
 //      number of cache entries is negotiated using the Pointer Capability Set
 //      (section 2.2.7.1.5).
 
-        stream.out_uint16_le(cache_idx);
+        x224.stream.out_uint16_le(cache_idx);
 
 //    hotSpot (4 bytes): Point (section 2.2.9.1.1.4.1) structure containing the
 //      x-coordinates and y-coordinates of the pointer hotspot.
@@ -697,32 +692,32 @@ public:
 //            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(x);
+        x224.stream.out_uint16_le(x);
 
 //            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(y);
+        x224.stream.out_uint16_le(y);
 
 //    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
 //      pixels (the maximum allowed pointer width is 32 pixels).
 
-        stream.out_uint16_le(32);
+        x224.stream.out_uint16_le(32);
 
 //    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
 //      in pixels (the maximum allowed pointer height is 32 pixels).
 
-        stream.out_uint16_le(32);
+        x224.stream.out_uint16_le(32);
 
 //    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the andMaskData field.
 
-        stream.out_uint16_le(128);
+        x224.stream.out_uint16_le(128);
 
 //    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the xorMaskData field.
 
-        stream.out_uint16_le(32*32*3);
+        x224.stream.out_uint16_le(32*32*3);
 
 //    xorMaskData (variable): Variable number of bytes: Contains the 24-bpp,
 //      bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte
@@ -730,7 +725,7 @@ public:
 //      is being sent, then each scan-line will consume 10 bytes (3 pixels per
 //      scan-line multiplied by 3 bpp, rounded up to the next even number of
 //      bytes).
-        stream.out_copy_bytes(data, 32*32*3);
+        x224.stream.out_copy_bytes(data, 32*32*3);
 
 //    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
 //      bottom-up AND mask scan-line data. The AND mask is padded to a 2-byte
@@ -738,7 +733,7 @@ public:
 //      is being sent, then each scan-line will consume 2 bytes (7 pixels per
 //      scan-line multiplied by 1 bpp, rounded up to the next even number of
 //      bytes).
-        stream.out_copy_bytes(mask, 128); /* mask */
+        x224.stream.out_copy_bytes(mask, 128); /* mask */
 
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
@@ -1073,9 +1068,8 @@ public:
         }
         {
             X224 x224;
-            Stream & stream = x224.stream;
             x224.recv_begin(this->trans);
-            Mcs mcs(stream);
+            Mcs mcs(x224.stream);
             mcs.recv_begin();
             if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
                 TODO("We should make a special case for MCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
@@ -1086,7 +1080,7 @@ public:
             if (this->verbose >= 256){
                 this->decrypt.dump();
             }
-            Sec sec(stream, this->decrypt);
+            Sec sec(x224.stream, this->decrypt);
             sec.recv_begin(true);
 
             if (!sec.flags & SEC_INFO_PKT) {
@@ -1094,9 +1088,9 @@ public:
             }
 
             /* this is the first test that the decrypt is working */
-            this->client_info.process_logon_info(stream, (uint16_t)(stream.end - stream.p));
+            this->client_info.process_logon_info(x224.stream, (uint16_t)(x224.stream.end - x224.stream.p));
             TODO("check all data are consumed as expected")
-            stream.end = stream.p;
+            x224.stream.end = x224.stream.p;
 
             this->keymap.init_layout(this->client_info.keylayout);
 
@@ -1146,9 +1140,8 @@ public:
         }
         {
             X224 x224;
-            Stream & stream = x224.stream;
             x224.recv_begin(this->trans);
-            Mcs mcs(stream);
+            Mcs mcs(x224.payload);
             mcs.recv_begin();
             if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
                 TODO("We should make a special case for MCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
@@ -1160,7 +1153,7 @@ public:
                 this->decrypt.dump();
             }
 
-            Sec sec(stream, this->decrypt);
+            Sec sec(mcs.payload, this->decrypt);
             sec.recv_begin(true);
 
             // Licensing
@@ -1185,11 +1178,9 @@ public:
             // Disconnect Provider Ultimatum datagram
 
             if (sec.flags & SEC_LICENSE_PKT) {
-                uint8_t tag = stream.in_uint8();
-                uint8_t version = stream.in_uint8();
-                uint16_t length = stream.in_uint16_le();
-                TODO("currently we just skip data, we should consume them instead")
-                stream.p = stream.end;
+                uint8_t tag = sec.payload.in_uint8();
+                uint8_t version = sec.payload.in_uint8();
+                uint16_t length = sec.payload.in_uint16_le();
                 LOG(LOG_INFO, "Front::WAITING_FOR_ANSWER_TO_LICENCE sec_flags=%x %u %u %u", sec.flags, tag, version, length);
 
                 switch (tag) {
@@ -1249,7 +1240,7 @@ public:
                 if (this->verbose){
                     LOG(LOG_INFO, "non licence packet: still waiting for licence");
                 }
-                ShareControl sctrl(stream);
+                ShareControl sctrl(x224.stream);
                 sctrl.recv_begin();
 
                 switch (sctrl.pdu_type1) {
@@ -1263,9 +1254,9 @@ public:
                         LOG(LOG_INFO, "Unexpected CONFIRMACTIVE PDU");
                     }
                     {
-                        uint32_t share_id = stream.in_uint32_le();
-                        uint16_t originatorId = stream.in_uint16_le();
-                        this->process_confirm_active(stream);
+                        uint32_t share_id = x224.stream.in_uint32_le();
+                        uint16_t originatorId = x224.stream.in_uint16_le();
+                        this->process_confirm_active(x224.stream);
                     }
 
                     break;
@@ -1277,7 +1268,7 @@ public:
                     // most data packets should not be received
                     // actually even input is dubious,
                     // but rdesktop actually sends input data
-                    this->process_data(stream, cb);
+                    this->process_data(x224.stream, cb);
                     break;
                 case PDUTYPE_DEACTIVATEALLPDU:
                     if (this->verbose){
@@ -1295,8 +1286,11 @@ public:
                 }
                 sctrl.recv_end();
             }
+            sec.payload.p = sec.payload.end;
             sec.recv_end();
+            mcs.payload.p = mcs.payload.end;
             mcs.recv_end();
+            x224.payload.p = x224.payload.end;
             x224.recv_end();
         }
         break;

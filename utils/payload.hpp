@@ -24,10 +24,6 @@
 #if !defined(__UTILS_PAYLOAD_HPP__)
 #define __UTILS_PAYLOAD_HPP__
 
-struct Payload
-{
-    virtual size_t len(void) = 0;
-    virtual void send(Transport & trans) = 0;
-};
+#include "transport.hpp"
 
 #endif

@@ -33,6 +33,88 @@
 #include "RDP/x224.hpp"
 
 
+BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_new)
+{
+    GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
+
+    BStream stream(65536);
+    X224_CR_TPDU_Recv x224(t, stream, 11);
+
+    BOOST_CHECK_EQUAL(3, x224.tpkt.version);
+    BOOST_CHECK_EQUAL(11, x224.tpkt.len);
+    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
+
+    SubStream pay;
+    size_t length_pay = x224.get_payload(pay);
+    BOOST_CHECK_EQUAL(11, x224.stream.end - x224.stream.data);
+    BOOST_CHECK_EQUAL(0, length_pay);
+    BOOST_CHECK_EQUAL(0, pay.end - pay.data);
+}
+
+
+BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_new_with_factory)
+{
+    GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
+
+    BStream stream(65536);
+    X224RecvFactory fac_x224(t, stream);
+    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
+    BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
+    
+    X224_CR_TPDU_Recv x224(t, stream, fac_x224.length);
+
+    BOOST_CHECK_EQUAL(3, x224.tpkt.version);
+    BOOST_CHECK_EQUAL(11, x224.tpkt.len);
+    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
+    BOOST_CHECK_EQUAL(0, strlen(x224.cookie));
+    BOOST_CHECK_EQUAL(0, x224.rdp_neg_type);
+
+    SubStream pay;
+    size_t length_pay = x224.get_payload(pay);
+    BOOST_CHECK_EQUAL(11, x224.stream.end - x224.stream.data);
+    BOOST_CHECK_EQUAL(0, length_pay);
+    BOOST_CHECK_EQUAL(0, pay.end - pay.data);
+}
+
+BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
+{
+    size_t tpkt_len = 55;
+    GeneratorTransport t(
+/* 0000 */ "\x03\x00\x00\x37\x32\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...72......Cooki |
+/* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x61\x64\x6d\x69" //e: mstshash=admi |
+/* 0020 */ "\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72\x40\x71\x61\x0d\x0a\x01" //nistrateur@qa... |
+/* 0030 */ "\x00\x08\x00\x01\x00\x00\x00"                                     //....... |
+        , tpkt_len);
+
+    BStream stream(65536);
+    X224RecvFactory fac_x224(t, stream);
+    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
+    BOOST_CHECK_EQUAL(tpkt_len, (size_t)fac_x224.length);
+    
+    X224_CR_TPDU_Recv x224(t, stream, fac_x224.length);
+
+    BOOST_CHECK_EQUAL(3, x224.tpkt.version);
+    BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
+    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(0x32, x224.tpdu_hdr.LI);
+
+    BOOST_CHECK_EQUAL(0, strcmp("Cookie: mstshash=administrateur@qa\x0D\x0A", x224.cookie));
+    BOOST_CHECK_EQUAL(X224::RDP_NEG_REQ, x224.rdp_neg_type);
+    BOOST_CHECK_EQUAL(0, x224.rdp_neg_flags);
+    BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
+    BOOST_CHECK_EQUAL(X224::RDP_NEG_PROTOCOL_TLS, x224.rdp_neg_code);
+
+    SubStream pay;
+    size_t length_pay = x224.get_payload(pay);
+    BOOST_CHECK_EQUAL(tpkt_len, x224.stream.end - x224.stream.data);
+    BOOST_CHECK_EQUAL(0, length_pay);
+    BOOST_CHECK_EQUAL(0, pay.end - pay.data);
+}
+
+
+
 BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU)
 {
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
@@ -48,6 +130,59 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU)
 
     BOOST_CHECK_EQUAL(11, stream.get_offset(0));
     BOOST_CHECK_EQUAL(stream.end, stream.data+x224.tpkt.len);
+}
+
+BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_new_with_factory)
+{
+    GeneratorTransport t("\x03\x00\x00\x0B\x06\xD0\x00\x00\x00\x00\x00", 11);
+
+    BStream stream(65536);
+    X224RecvFactory fac_x224(t, stream);
+    BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, fac_x224.type);
+    BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
+    
+    X224_CC_TPDU_Recv x224(t, stream, fac_x224.length);
+
+    BOOST_CHECK_EQUAL(3, x224.tpkt.version);
+    BOOST_CHECK_EQUAL(11, x224.tpkt.len);
+    BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
+    BOOST_CHECK_EQUAL(0, x224.rdp_neg_type);
+
+    SubStream pay;
+    size_t length_pay = x224.get_payload(pay);
+    BOOST_CHECK_EQUAL(11, x224.stream.end - x224.stream.data);
+    BOOST_CHECK_EQUAL(0, length_pay);
+    BOOST_CHECK_EQUAL(0, pay.end - pay.data);
+}
+
+BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_new_TLS_with_factory)
+{
+    size_t tpkt_len = 19;
+    GeneratorTransport t("\x03\x00\x00\x13\x0e\xd0\x00\x00\x12\x34\x00\x02\x00\x08\x00\x01\x00\x00\x00", tpkt_len);
+
+    BStream stream(65536);
+    X224RecvFactory fac_x224(t, stream);
+    BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, fac_x224.type);
+    BOOST_CHECK_EQUAL((size_t)tpkt_len, (size_t)fac_x224.length);
+    
+    X224_CC_TPDU_Recv x224(t, stream, fac_x224.length);
+
+    BOOST_CHECK_EQUAL(3, x224.tpkt.version);
+    BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
+    BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(14, x224.tpdu_hdr.LI);
+
+    BOOST_CHECK_EQUAL(X224::RDP_NEG_RESP, x224.rdp_neg_type);
+    BOOST_CHECK_EQUAL(0, x224.rdp_neg_flags);
+    BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
+    BOOST_CHECK_EQUAL(X224::RDP_NEG_PROTOCOL_TLS, x224.rdp_neg_code);
+
+    SubStream pay;
+    size_t length_pay = x224.get_payload(pay);
+    BOOST_CHECK_EQUAL(tpkt_len, x224.stream.end - x224.stream.data);
+    BOOST_CHECK_EQUAL(0, length_pay);
+    BOOST_CHECK_EQUAL(0, pay.end - pay.data);
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU)

@@ -345,7 +345,6 @@ struct RdpNego
     {
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
         X224 x224;
-        Stream & stream = x224.stream;
         x224.recv_begin(this->trans);
         if (x224.tpkt.version != 3){
             throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);

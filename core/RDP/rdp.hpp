@@ -30,6 +30,7 @@
 
 #include "channel_list.hpp"
 #include "log.hpp"
+#include "payload.hpp"
 
 // [MS-RDPBCGR] 2.2.8.1.1.1.1 Share Control Header (TS_SHARECONTROLHEADER)
 // =======================================================================
@@ -75,6 +76,7 @@ struct ShareControl
 //##############################################################################
 {
     Stream & stream;
+    SubStream payload;
     uint8_t offlen;
     public:
     uint16_t len;
@@ -86,6 +88,7 @@ struct ShareControl
     ShareControl (Stream & stream )
     //==============================================================================
     : stream(stream)
+    , payload(this->stream, 0)
     , offlen(stream.get_offset(0))
     , len(0)
     , pdu_type1(0)
@@ -129,14 +132,15 @@ struct ShareControl
             return;
         }
         this->mcs_channel = stream.in_uint16_le();
-
+        this->payload.reset(this->stream, this->stream.get_offset(0));
     } // END METHOD recv_begin
 
     //==============================================================================
     void recv_end()
     //==============================================================================
     {
-        if (this->stream.p != this->stream.end){
+        if (this->stream.p != this->stream.end
+        && this->payload.p != this->payload.end){
             LOG(LOG_ERR, "all data should have been consumed : remains %d", stream.end - stream.p);
 //            exit(0);
         }
@@ -333,6 +337,8 @@ struct ShareData
 //##############################################################################
 {
     Stream & stream;
+    SubStream payload;
+
     uint8_t offlen;
     public:
     uint32_t share_id;
@@ -347,6 +353,7 @@ struct ShareData
     ShareData ( Stream & stream )
     //==============================================================================
     : stream(stream)
+    , payload(this->stream, 0)
     , offlen(stream.get_offset(0))
     , share_id(0)
     , streamid(0)
@@ -393,15 +400,17 @@ struct ShareData
         this->pdutype2 = stream.in_uint8();
         this->compressedType = stream.in_uint8();
         this->compressedLen = stream.in_uint16_le();
-
+        this->payload.reset(this->stream, this->stream.get_offset(0));
     } // END METHOD recv_begin
 
     //==============================================================================
     void recv_end()
     //==============================================================================
     {
-        if (stream.p != stream.end){
-            LOG(LOG_INFO, "some data were not consumed len=%u compressedLen=%u remains=%u", this->len, this->compressedLen, stream.end - stream.p);
+        if (stream.p != stream.end
+        &&  payload.p != payload.end){
+            LOG(LOG_INFO, "some data were not consumed len=%u compressedLen=%u remains=%u", 
+                this->len, this->compressedLen, stream.end - stream.p);
         }
     } // END METHOD recv_end
 

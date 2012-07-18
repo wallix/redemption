@@ -143,6 +143,16 @@ enum {
     BER_TAG_MCS_DOMAIN_PARAMS = 0x30
 };
 
+// Reason ::= ENUMERATED   -- in DisconnectProviderUltimatum, DetachUserRequest, DetachUserIndication
+enum {
+    RN_DOMAIN_DISCONNECTED = 0,
+    RN_PROVIDER_INITIATED  = 1,
+    RN_TOKEN_PURGED        = 2,
+    RN_USER_REQUESTED      = 3,
+    RN_CHANNEL_PURGED      = 4
+};
+
+
 //        ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
 //        {
 //            initiator       UserId,
@@ -176,6 +186,7 @@ struct Mcs
 //##############################################################################
 {
     Stream & stream;
+    SubStream payload;
     uint8_t offlen;
     public:
     uint8_t opcode;
@@ -190,6 +201,7 @@ struct Mcs
     Mcs ( Stream & stream )
     //==============================================================================
     : stream(stream)
+    , payload(this->stream, 0)
     , offlen(0)
     , opcode(0)
     , result(0)
@@ -369,7 +381,8 @@ struct Mcs
 //        {
 //            reason          Reason
 //        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU DisconnectProviderUltimatum");
+          stream.out_uint8(PER_DomainMCSPDU_CHOICE_DisconnectProviderUltimatum);
+          stream.out_uint8(RN_DOMAIN_DISCONNECTED);
         }
         break;
         case PER_DomainMCSPDU_CHOICE_RejectMCSPDUUltimatum:
@@ -1894,12 +1907,14 @@ struct Mcs
         }
         break;
         }
+        this->payload.reset(this->stream, this->stream.get_offset(0));
     } // END METHOD recv_begin
 
     //==============================================================================
     void recv_end(){
     //==============================================================================
-        if (this->stream.p != this->stream.end){
+        if (this->stream.p != this->stream.end
+        && this->payload.p != this->payload.end){
             LOG(LOG_ERR, "MCS: all data should have been consumed : remains %d, opcode=%u", stream.end - stream.p, this->opcode);
             exit(0);
         }
