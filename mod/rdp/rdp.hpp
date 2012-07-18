@@ -1073,18 +1073,22 @@ struct mod_rdp : public client_mod {
             LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED bpp=%u", this->bpp);
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-            X224 x224;
-            Stream & stream = x224.stream;
-            x224.recv_begin(this->nego.trans);
+
+            BStream stream(65536);
+            X224RecvFactory f(*this->nego.trans, stream);
+            X224_DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
+            SubStream payload;
+            x224.get_payload(payload);
+
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:X224");
-            Mcs mcs(stream);
+            Mcs mcs(payload);
             mcs.recv_begin();
             if ((mcs.opcode >> 2) != MCSPDU_SendDataIndication) {
                 LOG(LOG_ERR, "Error: MCSPDU_SendDataIndication TPDU expected, got %u", (mcs.opcode >> 2));
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");
-            Sec sec(stream, this->decrypt);
+            Sec sec(payload, this->decrypt);
             sec.recv_begin(this->crypt_level);
             if (sec.flags & SEC_LICENSE_PKT) { /* 0x80 */
                 LOG(LOG_ERR, "Error: unexpected license negotiation sec packet flags=%04x", sec.flags);
@@ -1092,28 +1096,29 @@ struct mod_rdp : public client_mod {
             }
 
             if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
-                LOG(LOG_INFO, "sec redirect encrypt");
-                /* Check for a redirect packet, starts with 00 04 */
-                if (stream.p[0] == 0 && stream.p[1] == 4){
-                /* for some reason the PDU and the length seem to be swapped.
-                   This isn't good, but we're going to do a byte for byte
-                   swap.  So the first four value appear as: 00 04 XX YY,
-                   where XX YY is the little endian length. We're going to
-                   use 04 00 as the PDU type, so after our swap this will look
-                   like: XX YY 04 00 */
+                LOG(LOG_ERR, "sec redirect encrypt not supported");
+                throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
+//                /* Check for a redirect packet, starts with 00 04 */
+//                if (payload.p[0] == 0 && payload.p[1] == 4){
+//                /* for some reason the PDU and the length seem to be swapped.
+//                   This isn't good, but we're going to do a byte for byte
+//                   swap.  So the first four value appear as: 00 04 XX YY,
+//                   where XX YY is the little endian length. We're going to
+//                   use 04 00 as the PDU type, so after our swap this will look
+//                   like: XX YY 04 00 */
 
-                    uint8_t swapbyte1 = stream.p[0];
-                    stream.p[0] = stream.p[2];
-                    stream.p[2] = swapbyte1;
+//                    uint8_t swapbyte1 = payload.p[0];
+//                    payload.p[0] = payload.p[2];
+//                    payload.p[2] = swapbyte1;
 
-                    uint8_t swapbyte2 = stream.p[1];
-                    stream.p[1] = stream.p[3];
-                    stream.p[3] = swapbyte2;
+//                    uint8_t swapbyte2 = payload.p[1];
+//                    payload.p[1] = payload.p[3];
+//                    payload.p[3] = swapbyte2;
 
-                    uint8_t swapbyte3 = stream.p[2];
-                    stream.p[2] = stream.p[3];
-                    stream.p[3] = swapbyte3;
-                }
+//                    uint8_t swapbyte3 = payload.p[2];
+//                    payload.p[2] = payload.p[3];
+//                    payload.p[3] = swapbyte3;
+//                }
             }
 
             if (mcs.chan_id != MCS_GLOBAL_CHANNEL){
@@ -1134,20 +1139,20 @@ struct mod_rdp : public client_mod {
 
                 const ChannelDef & mod_channel = this->mod_channel_list[num_channel_src];
 
-                uint32_t length = stream.in_uint32_le();
-                int flags = stream.in_uint32_le();
-                size_t chunk_size = stream.end - stream.p;
+                uint32_t length = payload.in_uint32_le();
+                int flags = payload.in_uint32_le();
+                size_t chunk_size = payload.end - payload.p;
 
-                this->send_to_front_channel(mod_channel.name, stream.p, length, chunk_size, flags);
+                this->send_to_front_channel(mod_channel.name, payload.p, length, chunk_size, flags);
 
-                stream.p = stream.end;
+                payload.p = payload.end;
             }
             else {
 
-                uint8_t * next_packet = stream.p;
-                while (next_packet < stream.end) {
-                    stream.p = next_packet;
-                    ShareControl sctrl(stream);
+                uint8_t * next_packet = payload.p;
+                while (next_packet < payload.end) {
+                    payload.p = next_packet;
+                    ShareControl sctrl(payload);
                     sctrl.recv_begin();
                     if (this->verbose){
 //                        LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:len = %u pdu_type = %u",
@@ -1184,7 +1189,7 @@ struct mod_rdp : public client_mod {
                         case UP_AND_RUNNING:
                         {
 //                            LOG(LOG_INFO, "Up and running bpp=%u", this->bpp);
-                            ShareData sdata(stream);
+                            ShareData sdata(payload);
                             sdata.recv_begin();
 //                            LOG(LOG_INFO, "Up and running");
                             switch (sdata.pdutype2) {
@@ -1198,30 +1203,30 @@ struct mod_rdp : public client_mod {
                                 // interact with the session running on the server. The global palette
                                 // information for a session is sent to the client in the Update Palette PDU.
 
-                                int update_type = stream.in_uint16_le();
+                                int update_type = payload.in_uint16_le();
                                 LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:update_type = %u", update_type);
                                 switch (update_type) {
                                 case RDP_UPDATE_ORDERS:
                                     {
                                         LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_ORDERS");
-                                        stream.in_skip_bytes(2); /* pad */
-                                        int count = stream.in_uint16_le();
-                                        stream.in_skip_bytes(2); /* pad */
+                                        payload.in_skip_bytes(2); /* pad */
+                                        int count = payload.in_uint16_le();
+                                        payload.in_skip_bytes(2); /* pad */
                                         this->front.begin_update();
-                                        this->orders.process_orders(this->bpp, stream, count, this);
+                                        this->orders.process_orders(this->bpp, payload, count, this);
                                         this->front.end_update();
                                     }
                                     break;
                                 case RDP_UPDATE_BITMAP:
                                     LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_BITMAP");
                                     this->front.begin_update();
-                                    this->process_bitmap_updates(stream, this);
+                                    this->process_bitmap_updates(payload, this);
                                     this->front.end_update();
                                     break;
                                 case RDP_UPDATE_PALETTE:
                                     LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_PALETTE");
                                     this->front.begin_update();
-                                    this->process_palette(stream, this);
+                                    this->process_palette(payload, this);
                                     this->front.end_update();
                                     break;
                                 case RDP_UPDATE_SYNCHRONIZE:
@@ -1243,7 +1248,7 @@ struct mod_rdp : public client_mod {
                             break;
                             case PDUTYPE2_POINTER:
                                 LOG(LOG_INFO, "mod_rdp::PDUTYPE2_POINTER");
-                                this->process_pointer_pdu(stream, this);
+                                this->process_pointer_pdu(payload, this);
                             break;
                             case PDUTYPE2_PLAY_SOUND:
                                 LOG(LOG_INFO, "mod_rdp::PDUTYPE2_PLAY_SOUND");
@@ -1253,7 +1258,7 @@ struct mod_rdp : public client_mod {
                             break;
                             case PDUTYPE2_SET_ERROR_INFO_PDU:
                                 LOG(LOG_INFO, "DATA PDU DISCONNECT");
-                                this->process_disconnect_pdu(stream);
+                                this->process_disconnect_pdu(payload);
                             break;
                             default:
                                 LOG(LOG_INFO, "mod_rdp::unknown PDUTYPE2");
@@ -1267,12 +1272,12 @@ struct mod_rdp : public client_mod {
                         LOG(LOG_INFO, "Received demand active PDU");
                         {
                             client_mod * mod = this;
-                            this->share_id = stream.in_uint32_le();
-                            uint16_t lengthSourceDescriptor = stream.in_uint16_le();
-                            uint16_t lengthCombinedCapabilities = stream.in_uint16_le();
-                            stream.in_skip_bytes(lengthSourceDescriptor);
-                            this->process_server_caps(stream, lengthCombinedCapabilities);
-//                            uint32_t sessionId = stream.in_uint32_le();
+                            this->share_id = payload.in_uint32_le();
+                            uint16_t lengthSourceDescriptor = payload.in_uint16_le();
+                            uint16_t lengthCombinedCapabilities = payload.in_uint16_le();
+                            payload.in_skip_bytes(lengthSourceDescriptor);
+                            this->process_server_caps(payload, lengthCombinedCapabilities);
+//                            uint32_t sessionId = payload.in_uint32_le();
                             TODO(" we should be able to pack all the following sends to the same X224 TPDU  instead of creating a different one for each send")
                             LOG(LOG_INFO, "Sending confirm active PDU");
                             this->send_confirm_active(mod);
