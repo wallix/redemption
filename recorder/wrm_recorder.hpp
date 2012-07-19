@@ -262,6 +262,25 @@ private:
         this->ignore_chunks();
     }
 
+    void load_png_context(const char * pngfilename)
+    {
+        if (this->redrawable) {
+            pngfilename = this->get_cpath(pngfilename);
+            if (std::FILE* fd = std::fopen(pngfilename, "w+"))
+            {
+                read_png24(fd,
+                           this->redrawable->data,
+                           this->redrawable->width,
+                           this->redrawable->height,
+                           this->redrawable->rowsize);
+                fclose(fd);
+            } else {
+                LOG(LOG_ERR, "open context screen %s: %s", pngfilename, strerror(errno));
+                throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
+            }
+        }
+    }
+
 public:
     void get_order_file(char * filename)
     {
@@ -396,31 +415,17 @@ public:
                 this->idx_file = this->reader.stream.in_uint32_le();
                 this->check_idx_wrm(this->idx_file);
                 this->next_file(this->meta().files[this->idx_file].first.c_str());
+                this->load_png_context(this->meta().files[this->idx_file].second.c_str());
             }
             break;
             case WRMChunk::BREAKPOINT:
             {
-                uint16_t width = this->reader.stream.in_uint16_le();
-                uint16_t height = this->reader.stream.in_uint16_le();
+                /*uint16_t width = */this->reader.stream.in_uint16_le();
+                /*uint16_t height = */this->reader.stream.in_uint16_le();
                 /*uint8_t bpp = */this->reader.stream.in_uint8();
                 this->reader.wait_cap.timer.sec() = this->reader.stream.in_uint64_le();
                 this->reader.wait_cap.timer.usec() = this->reader.stream.in_uint64_le();
                 --this->reader.remaining_order_count;
-
-                //read screen
-                if (this->redrawable) {
-                    const char * filename = this->get_cpath(
-                        this->meta().files[this->idx_file].second.c_str()
-                    );
-                    if (std::FILE* fd = std::fopen(filename, "w+"))
-                    {
-                        read_png24(fd, this->redrawable->data, width, height, this->redrawable->rowsize);
-                        fclose(fd);
-                    } else {
-                        LOG(LOG_ERR, "open context screen %s: %s", filename, strerror(errno));
-                        throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
-                    }
-                }
 
                 this->selected_next_order();
 

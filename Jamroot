@@ -160,21 +160,21 @@ exe redrec
         <link>static
     ;
 
-# exe wrminfo
-#     :
-#         main/extract_info.cpp
-#         main/recorder/wrm_recorder_option.cpp
-#
-#         openssl
-#         crypto
-#         png
-#         z
-#         dl
-#
-#         libboost_program_options
-#     :
-#         <link>static
-#     ;
+exe wrminfo
+    :
+        main/extract_info.cpp
+        main/recorder/wrm_recorder_option.cpp
+
+        openssl
+        crypto
+        png
+        z
+        dl
+
+        libboost_program_options
+    :
+        <link>static
+    ;
 
 #
 # Unit Tests

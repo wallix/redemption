@@ -33,7 +33,7 @@
 
 struct WrmInfo
 {
-    uint weight;
+    ulong weight;
     uint number;
 
     WrmInfo()
@@ -68,14 +68,15 @@ int main(int argc, char** argv)
         << "\nheight: " << meta.height
         << "\nfiles:";
         for (uint i = 0; i != meta.files.size(); ++i){
-            std::cout << "\n\t" << (i+1) << ' ' << meta.files[i];
+            std::cout << "\n\t" << (i+1) << " wrm: " << meta.files[i].first << ", png: " << meta.files[i].second;
         }
         std::cout << "\n\n";
     }
 
-    uint weight;
+    ulong weight;
     RDPUnserializer& unserializer = recorder.reader;
     Stream& stream = unserializer.stream;
+    Transport* trans = unserializer.trans;
     uint16_t& remaining_order_count = unserializer.remaining_order_count;
 
     WrmInfo timestamp_info;
@@ -94,7 +95,7 @@ int main(int argc, char** argv)
         {
             case  WRMChunk::BREAKPOINT:
             {
-                uint start_weight = breakpoint_info.weight;
+                ulong start_weight = breakpoint_info.weight;
                 ++breakpoint_info.number;
                 uint16_t width = stream.in_uint16_le();
                 uint16_t height = stream.in_uint16_le();
@@ -104,64 +105,53 @@ int main(int argc, char** argv)
                 //unserializer.wait_cap.timer.sec() = sec;
                 //unserializer.wait_cap.timer.usec() = usec;
 
-                uint nb_img = stream.in_uint16_le() * stream.in_uint16_le();
-
                 std::cout << "BREAKPOINT: number: " << remaining_order_count
                 << "\n\twidth: " << width << ", height: " << height
-                << "\n\tsec: " << sec << ", usec: " << usec
-                << "\n\tweight: " << weight
-                << "\n\timages: " << nb_img;
+                << "\n\tsec: " << sec << ", usec: " << usec << '\n';
                 breakpoint_info.weight += weight;
 
                 --remaining_order_count;
 
-                while (nb_img)
-                {
-                    recorder.selected_next_order();
-                    weight = (stream.end - stream.p);
-                    breakpoint_info.weight += weight;
-                    std::cout
-                    << "\n\t\tnumber: " << remaining_order_count
-                    << "\n\t\tsize: " << weight;
-                    nb_img -= remaining_order_count;
-                    recorder.ignore_chunks();
-                }
-
                 recorder.selected_next_order();
 
-                std::cout << "\n\torder size: " << (stream.end - stream.p);
-                stream.p = stream.end - 2;
-                nb_img = stream.in_uint16_le();
+                weight = stream.end - stream.p;
+                std::cout << "\torder size: " << weight;
+                breakpoint_info.weight += weight;
 
                 remaining_order_count = 0;
-                for (; nb_img; --nb_img){
-                    recorder.selected_next_order();
-                    weight = (stream.end - stream.p);
-                    breakpoint_info.weight += weight;
-                    std::cout << "\n\timage size: " << weight;
-                    recorder.ignore_chunks();
+                std::cout << "\n\tcache: \n";
+                while (1)
+                {
+                    stream.init(14);
+                    trans->recv(&stream.end, 14);
+                    uint16_t idx = stream.in_uint16_le();
+                    stream.p += 4;
+                    uint16_t cx = stream.in_uint16_le();
+                    uint16_t cy = stream.in_uint16_le();
+                    uint32_t buffer_size = stream.in_uint32_le();
+                    breakpoint_info.weight += 14 + buffer_size;
+                    if (idx == 8192 * 3 + 1){
+                        break;
+                    }
+                    std::cout << "\t\timage: width: " << cx << ", height: " << cy << ", size (zip compression): " << buffer_size << " B\n";
+                    stream.init(buffer_size);
+                    trans->recv(&stream.end, buffer_size);
                 }
-
-                weight = 0;
-                for (uint n = 0; n != 27; ++n){
-                    recorder.selected_next_order();
-                    weight += stream.end - stream.p;
-                    recorder.ignore_chunks();
-                }
-                breakpoint_info.weight += weight;
-                std::cout << "\n\tcache stamp size: " << weight
-                << "\n\ttotal: " << (breakpoint_info.weight - start_weight) << '\n';
+                std::cout << "\ttotal: " << (breakpoint_info.weight - start_weight) << '\n';
             }
                 break;
             case WRMChunk::META_FILE:
+            {
                 ++meta_file_info.number;
                 meta_file_info.weight += weight;
                 std::cout << "META_FILE: number: " << remaining_order_count
-                << ", weight: " << weight
-                << ", filename: ";
-                std::cout.write(reinterpret_cast<const char *>(stream.p + 4),
-                                stream.in_uint32_le()) << '\n';
+                << ", size: " << weight
+                << " B, filename : ";
+                uint32_t len = stream.in_uint32_le();
+                std::cout.write(reinterpret_cast<const char *>(stream.p),
+                                len) << '\n';
                 recorder.ignore_chunks();
+            }
                 break;
             case WRMChunk::TIME_START:
             {
@@ -169,8 +159,8 @@ int main(int argc, char** argv)
                 time_start_info.weight += weight;
                 timeval tv = recorder.get_start_time_order();
                 std::cout << "TIME_START: number: " << remaining_order_count
-                << ", weight: " << weight
-                << ", sec: " << tv.tv_sec << ", usec: " << tv.tv_usec << '\n';
+                << ", size: " << weight
+                << " B, sec: " << tv.tv_sec << ", usec: " << tv.tv_usec << '\n';
                 --remaining_order_count;
             }
                 break;
@@ -180,8 +170,8 @@ int main(int argc, char** argv)
                 timestamp_info.weight += weight;
                 uint64_t micro_sec = stream.in_uint64_be();
                 std::cout << "TIMESTAMP: number: " << remaining_order_count
-                << ", weight: " << weight
-                << ", micro seconde: " << micro_sec << '\n';
+                << ", size: " << weight
+                << " B, micro seconde: " << micro_sec << '\n';
                 --remaining_order_count;
                 //unserializer.wait_cap.timer.sec() = sec;
                 //unserializer.wait_cap.timer.usec() = usec;
@@ -191,10 +181,10 @@ int main(int argc, char** argv)
             {
                 ++next_file_id_info.number;
                 next_file_id_info.weight += weight;
-                std::cout << "NEXT_FILE_ID: number: " << remaining_order_count
-                << ", weight: " << weight;
+                uint16_t tmp = remaining_order_count;
                 recorder.interpret_order();
-                std::cout << ", idx: " << recorder.idx_file << '/' << recorder.meta().files.size() << ", open: " << recorder.meta().files[recorder.idx_file] << '\n';
+                std::cout << "NEXT_FILE_ID: number: " << tmp
+                << ", size: " << weight << " B, idx: " << recorder.idx_file << '/' << recorder.meta().files.size() << ", open: wrm: " << recorder.meta().files[recorder.idx_file].first << ", png: " << recorder.meta().files[recorder.idx_file].second << '\n';
             }
                 break;
             default:
@@ -202,7 +192,7 @@ int main(int argc, char** argv)
                 ++info.number;
                 info.weight += weight;
                 std::cout << recorder.chunk_type() << ": number: " << remaining_order_count
-                << ", weight: " << weight << '\n';
+                << ", size: " << weight << " B\n";
                 recorder.ignore_chunks();
                 break;
         }
@@ -216,7 +206,15 @@ int main(int argc, char** argv)
     << time_start_info.number << " TIME_START " << time_start_info.weight << " B\n"
     << draw_info.number << " type=0 " << draw_info.weight << " B\n"
     << other_info.number << " other " << other_info.weight << " B\n"
-    ;
+    << "total " << (
+        timestamp_info.weight
+        + meta_file_info.weight
+        + breakpoint_info.weight
+        + next_file_id_info.weight
+        + time_start_info.weight
+        + draw_info.weight
+        + other_info.weight
+    ) << " B\n";
 
     return 0;
 }

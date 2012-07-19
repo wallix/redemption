@@ -249,7 +249,7 @@ public:
             this->next_filename();
             this->stream.out_uint32_le(++this->file_id);
         }
-        this->recorder.send_order();
+        this->recorder.flush();
 
         close(this->trans.fd);
         this->open_file();
