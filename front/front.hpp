@@ -864,10 +864,9 @@ public:
                 LOG(LOG_INFO, "Front::incoming::sending x224 connection confirm PDU");
             }
             {
-                X224 x224;
-                x224.emit_begin(X224::CC_TPDU);
-                x224.emit_end();
-                this->trans->send(x224.header(), x224.size());
+                BStream stream(256);
+                X224_CC_TPDU_Send x224(stream, 0, 0, 0);
+                this->trans->send(stream.data, stream.end - stream.data);
             }
             // Basic Settings Exchange
             // -----------------------

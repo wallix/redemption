@@ -33,26 +33,6 @@
 #include "RDP/x224.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_new)
-{
-    GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
-
-    BStream stream(65536);
-    X224_CR_TPDU_Recv x224(t, stream, 11);
-
-    BOOST_CHECK_EQUAL(3, x224.tpkt.version);
-    BOOST_CHECK_EQUAL(11, x224.tpkt.len);
-    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
-    BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
-
-    SubStream pay;
-    size_t length_pay = x224.get_payload(pay);
-    BOOST_CHECK_EQUAL(11, x224.stream.end - x224.stream.data);
-    BOOST_CHECK_EQUAL(0, length_pay);
-    BOOST_CHECK_EQUAL(0, pay.end - pay.data);
-}
-
-
 BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
 {
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
@@ -136,7 +116,7 @@ BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet)
     , stream.data, 55));
 }
 
-BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_new_with_factory)
+BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_with_factory)
 {
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xD0\x00\x00\x00\x00\x00", 11);
 
@@ -160,10 +140,19 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_new_with_factory)
     BOOST_CHECK_EQUAL(0, pay.end - pay.data);
 }
 
-BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_new_TLS_with_factory)
+
+BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU)
+{
+    BStream stream(256); 
+    X224_CC_TPDU_Send x224(stream, 0, 0, 0);
+    BOOST_CHECK_EQUAL(11, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0B\x06\xD0\x00\x00\x00\x00\x00", stream.data, 11));
+}
+
+BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_TLS_with_factory)
 {
     size_t tpkt_len = 19;
-    GeneratorTransport t("\x03\x00\x00\x13\x0e\xd0\x00\x00\x12\x34\x00\x02\x00\x08\x00\x01\x00\x00\x00", tpkt_len);
+    GeneratorTransport t("\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x01\x00\x00\x00", tpkt_len);
 
     BStream stream(65536);
     X224RecvFactory fac_x224(t, stream);
@@ -175,6 +164,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_new_TLS_with_factory)
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
     BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(0, x224.tpdu_hdr.dst_ref);
+    BOOST_CHECK_EQUAL(0, x224.tpdu_hdr.src_ref);
     BOOST_CHECK_EQUAL(14, x224.tpdu_hdr.LI);
 
     BOOST_CHECK_EQUAL((uint8_t)X224::RDP_NEG_RESP, x224.rdp_neg_type);
@@ -187,6 +178,15 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_new_TLS_with_factory)
     BOOST_CHECK_EQUAL(tpkt_len, x224.stream.end - x224.stream.data);
     BOOST_CHECK_EQUAL(0, length_pay);
     BOOST_CHECK_EQUAL(0, pay.end - pay.data);
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU_TLS)
+{
+    BStream stream(256); 
+    X224_CC_TPDU_Send x224(stream, X224::RDP_NEG_RESP, 0, X224::RDP_NEG_PROTOCOL_TLS);
+    BOOST_CHECK_EQUAL(19, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(0, 
+        memcmp("\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x01\x00\x00\x00", stream.data, 19));
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_new_with_factory)
@@ -259,35 +259,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU_new_with_factory)
     BOOST_CHECK_EQUAL(13, x224.stream.end - x224.stream.data);
     BOOST_CHECK_EQUAL(0, length_pay);
     BOOST_CHECK_EQUAL(0, pay.end - pay.data);
-}
-
-
-BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU)
-{
-    GeneratorTransport t("", 0); // used as /dev/null
-
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.emit_begin(X224::CC_TPDU);
-    x224.emit_end();
-
-    BOOST_CHECK_EQUAL(stream.get_offset(0), stream.data[2]*256+stream.data[3]);
-    // tpkt header
-    BOOST_CHECK_EQUAL(0x03, stream.data[0]); // version 3
-    BOOST_CHECK_EQUAL(0x00, stream.data[1]);
-    BOOST_CHECK_EQUAL(0x00, stream.data[2]); // len 11
-    BOOST_CHECK_EQUAL(0x0B, stream.data[3]); //
-
-    // CC_TPDU
-    BOOST_CHECK_EQUAL(0x06, stream.data[4]); // LI
-    BOOST_CHECK_EQUAL(0xD0, stream.data[5]); // CC_TPDU code
-    BOOST_CHECK_EQUAL(0x00, stream.data[6]); // DST-REF
-    BOOST_CHECK_EQUAL(0x00, stream.data[7]); //
-    BOOST_CHECK_EQUAL(0x00, stream.data[8]); // SRC-REF
-    BOOST_CHECK_EQUAL(0x00, stream.data[9]); //
-    BOOST_CHECK_EQUAL(0x00, stream.data[10]);  // CLASS OPTION
-
-    t.send(x224.header(), x224.size());
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_DR_TPDU)

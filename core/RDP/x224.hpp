@@ -400,13 +400,6 @@ struct X224
     {
         REDASSERT(stream.p == stream.data);
         switch (tpdutype){
-            case CR_TPDU: // Connection Request 1110 xxxx
-                if (this->verbose){
-                    LOG(LOG_INFO, "X224 OUT CR_TPDU");
-                }
-                // we can write the header, there must not be any data afterward
-                // tpkt
-                break;
             case CC_TPDU: // Connection Confirm 1101 xxxx
                 if (this->verbose){
                     LOG(LOG_INFO, "X224 OUT CC_TPDU");
@@ -508,8 +501,6 @@ struct X224
 //        LOG(LOG_INFO, "2) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", this->stream.data[0], this->stream.data[1], this->stream.data[2], this->stream.data[3], this->stream.data[4], this->stream.data[5], this->stream.data[6], this->stream.data[7]);
         uint8_t tpdutype = stream.data[5];
         switch (tpdutype){
-            case CR_TPDU: // Connection Request 1110 xxxx
-//                LOG(LOG_INFO, "----> sent X224 OUT CR_TPDU");
             break;
             case CC_TPDU: // Connection Confirm 1101 xxxx
 //                LOG(LOG_INFO, "----> sent X224 OUT CC_TPDU");
@@ -751,7 +742,6 @@ struct X224_CR_TPDU_Recv
         for (uint8_t * p = stream.p + 1; p < end_of_header ; p++){
             if (p[-1] == 0x0D &&  p[0]  == 0x0A){
                 this->cookie_len = p - (stream.data + 11) + 1;
-                LOG(LOG_ERR, "cookie found at %u", cookie_len);
                 if (cookie_len > 1023){
                     LOG(LOG_ERR, "Bad Connection Request X224 header, cookie too large (length = %u)", cookie_len);
                     throw Error(ERR_X224);
@@ -830,10 +820,8 @@ struct X224_CR_TPDU_Send
         stream.out_uint8(6); // LI = TPDU header length
 
         stream.out_uint8(X224::CR_TPDU); // CR_TPDU code
-        stream.out_uint8(0x00); // DST-REF
-        stream.out_uint8(0x00); //
-        stream.out_uint8(0x00); // SRC-REF
-        stream.out_uint8(0x00); //
+        stream.out_uint16_be(0x0000); // DST-REF
+        stream.out_uint16_be(0x0000); // SRC-REF
         stream.out_uint8(0x00); // CLASS OPTION
         
         size_t cookie_len = strlen(cookie);
@@ -1137,6 +1125,40 @@ struct X224_CC_TPDU_Recv
         return this->stream.end - this->stream.data - this->payload_offset;
     }
 }; // END CLASS X224_CC_TPDU_Recv
+
+struct X224_CC_TPDU_Send
+{
+     X224_CC_TPDU_Send( Stream & stream
+                     , uint8_t rdp_neg_type
+                     , uint8_t rdp_neg_flags
+                     , uint32_t rdp_neg_code)
+    {
+
+        stream.out_uint8(0x03); // version 3
+        stream.out_uint8(0x00);
+        uint16_t offset_tpkt_len = stream.get_offset(0);
+        stream.out_uint16_be(0); // 11 bytes + extension tpkt length
+
+        uint16_t offset_LI = stream.get_offset(0);
+        stream.out_uint8(6); // LI = TPDU header length
+
+        stream.out_uint8(X224::CC_TPDU); // CC_TPDU code
+        stream.out_uint16_be(0x0000); // DST-REF
+        stream.out_uint16_be(0x0000); // SRC-REF
+        stream.out_uint8(0x00); // CLASS OPTION
+        
+        if (rdp_neg_type){
+            stream.out_uint8(rdp_neg_type);
+            stream.out_uint8(rdp_neg_flags);
+            stream.out_uint16_le(8);
+            stream.out_uint32_le(rdp_neg_code);
+        }
+
+        stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
+        stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
+        stream.end = stream.p;
+    }
+};
 
 
 //    Class 0 x224 TPDU
