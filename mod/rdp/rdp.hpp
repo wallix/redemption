@@ -532,7 +532,7 @@ struct mod_rdp : public client_mod {
         stream.end = stream.p;    
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         this->nego.trans->send(x224_header.data, x224_header.end - x224_header.data);
         this->nego.trans->send(stream.data, stream.end - stream.data);
@@ -832,8 +832,8 @@ struct mod_rdp : public client_mod {
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
             BStream stream(65536);
-            X224RecvFactory f(*this->nego.trans, stream);
-            X224_DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
+            X224::RecvFactory f(*this->nego.trans, stream);
+            X224::DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
             SubStream payload;
             x224.get_payload(payload);
 
@@ -1077,8 +1077,8 @@ struct mod_rdp : public client_mod {
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
             BStream stream(65536);
-            X224RecvFactory f(*this->nego.trans, stream);
-            X224_DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
+            X224::RecvFactory f(*this->nego.trans, stream);
+            X224::DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
             SubStream payload;
             x224.get_payload(payload);
 
@@ -1335,7 +1335,7 @@ struct mod_rdp : public client_mod {
         catch(Error e){
             LOG(LOG_DEBUG, "mod_rdp::draw_event::Exception!!!Closing connection (status=%u)", e.id);
             BStream stream(256);
-            X224_DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
+            X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
             try {
                 this->nego.trans->send(stream.data, stream.end - stream.data);
                 LOG(LOG_DEBUG, "Connection closed (status=0)");
@@ -1568,7 +1568,7 @@ struct mod_rdp : public client_mod {
             stream.end = stream.p;    
 
             BStream x224_header(256);
-            X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+            X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
             this->nego.trans->send(x224_header.data, x224_header.end - x224_header.data);
             this->nego.trans->send(stream.data, stream.end - stream.data);
@@ -2401,7 +2401,7 @@ struct mod_rdp : public client_mod {
             stream.end = stream.p;    
 
             BStream x224_header(256);
-            X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+            X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
             this->nego.trans->send(x224_header.data, x224_header.end - x224_header.data);
             this->nego.trans->send(stream.data, stream.end - stream.data);
@@ -2439,7 +2439,7 @@ struct mod_rdp : public client_mod {
             stream.end = stream.p;    
 
             BStream x224_header(256);
-            X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+            X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
             this->nego.trans->send(x224_header.data, x224_header.end - x224_header.data);
             this->nego.trans->send(stream.data, stream.end - stream.data);
@@ -2478,7 +2478,7 @@ struct mod_rdp : public client_mod {
             stream.end = stream.p;    
 
             BStream x224_header(256);
-            X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+            X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
             this->nego.trans->send(x224_header.data, x224_header.end - x224_header.data);
             this->nego.trans->send(stream.data, stream.end - stream.data);
@@ -2534,7 +2534,7 @@ struct mod_rdp : public client_mod {
             stream.end = stream.p;    
 
             BStream x224_header(256);
-            X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+            X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
             this->nego.trans->send(x224_header.data, x224_header.end - x224_header.data);
             this->nego.trans->send(stream.data, stream.end - stream.data);
@@ -2578,7 +2578,7 @@ struct mod_rdp : public client_mod {
                     stream.end = stream.p;    
 
                     BStream x224_header(256);
-                    X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+                    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
                     this->nego.trans->send(x224_header.data, x224_header.end - x224_header.data);
                     this->nego.trans->send(stream.data, stream.end - stream.data);
@@ -2853,7 +2853,7 @@ struct mod_rdp : public client_mod {
         stream.end = stream.p;    
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         this->nego.trans->send(x224_header.data, x224_header.end - x224_header.data);
         this->nego.trans->send(stream.data, stream.end - stream.data);

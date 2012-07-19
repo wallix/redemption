@@ -2129,7 +2129,7 @@ static inline void mcs_send_connect_initial(
     stream.end = stream.p;
 
     BStream x224_header(256);
-    X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
     trans->send(x224_header.data, x224_header.end - x224_header.data);
     trans->send(stream.data, stream.end - stream.data);
@@ -2194,8 +2194,8 @@ static inline void mcs_recv_connect_response(
                         Random * gen)
 {
     BStream stream(65536);
-    X224RecvFactory f(*trans, stream);
-    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    X224::RecvFactory f(*trans, stream);
+    X224::DT_TPDU_Recv x224(*trans, stream, f.length);
     SubStream payload;
     x224.get_payload(payload);
 
@@ -2365,8 +2365,8 @@ static inline void mcs_recv_connect_initial(
                 ChannelDefArray & channel_list)
 {
     BStream stream(65536);
-    X224RecvFactory f(*trans, stream);
-    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    X224::RecvFactory f(*trans, stream);
+    X224::DT_TPDU_Recv x224(*trans, stream, f.length);
     SubStream payload;
     x224.get_payload(payload);
 
@@ -3075,7 +3075,7 @@ static inline void mcs_send_connect_response(
     stream.end = stream.p;
 
     BStream x224_header(256);
-    X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
     trans->send(x224_header.data, x224_header.end - x224_header.data);
     trans->send(stream.data, stream.end - stream.data);
@@ -3151,7 +3151,7 @@ static inline void mcs_send_erect_domain_and_attach_user_request_pdu(Transport *
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         trans->send(x224_header.data, x224_header.end - x224_header.data);
         trans->send(stream.data, stream.end - stream.data);
@@ -3162,7 +3162,7 @@ static inline void mcs_send_erect_domain_and_attach_user_request_pdu(Transport *
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         trans->send(x224_header.data, x224_header.end - x224_header.data);
         trans->send(stream.data, stream.end - stream.data);
@@ -3262,7 +3262,7 @@ static inline void mcs_send_channel_join_request_pdu(Transport * trans, int user
     stream.end = stream.p;
 
     BStream x224_header(256);
-    X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
     trans->send(x224_header.data, x224_header.end - x224_header.data);
     trans->send(stream.data, stream.end - stream.data);
@@ -3344,8 +3344,8 @@ static inline void mcs_send_channel_join_request_pdu(Transport * trans, int user
 static inline void mcs_recv_channel_join_confirm_pdu(Transport * trans, uint16_t & mcs_userid, uint16_t & req_chanid, uint16_t & join_chanid)
 {
     BStream stream(65536);
-    X224RecvFactory f(*trans, stream);
-    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    X224::RecvFactory f(*trans, stream);
+    X224::DT_TPDU_Recv x224(*trans, stream, f.length);
     SubStream payload;
     x224.get_payload(payload);
 
@@ -3417,8 +3417,8 @@ static inline void mcs_recv_channel_join_confirm_pdu(Transport * trans, uint16_t
 static inline void mcs_recv_attach_user_confirm_pdu(Transport * trans, uint16_t & userid)
 {
     BStream stream(65536);
-    X224RecvFactory f(*trans, stream);
-    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    X224::RecvFactory f(*trans, stream);
+    X224::DT_TPDU_Recv x224(*trans, stream, f.length);
     SubStream payload;
     x224.get_payload(payload);
 
@@ -3498,8 +3498,8 @@ static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport *
     TODO(" this code could lead to some problem if both MCS are combined in the same TPDU  we should manage this case")
     {
         BStream stream(65536);
-        X224RecvFactory f(*trans, stream);
-        X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+        X224::RecvFactory f(*trans, stream);
+        X224::DT_TPDU_Recv x224(*trans, stream, f.length);
         SubStream payload;
         x224.get_payload(payload);
 
@@ -3517,8 +3517,8 @@ static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport *
 
     {
         BStream stream(65536);
-        X224RecvFactory f(*trans, stream);
-        X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+        X224::RecvFactory f(*trans, stream);
+        X224::DT_TPDU_Recv x224(*trans, stream, f.length);
         SubStream payload;
         x224.get_payload(payload);
 
@@ -3593,7 +3593,7 @@ static inline void mcs_send_attach_user_confirm_pdu(Transport * trans, uint16_t 
     stream.end = stream.p;
 
     BStream x224_header(256);
-    X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
     trans->send(x224_header.data, x224_header.end - x224_header.data);
     trans->send(stream.data, stream.end - stream.data);
@@ -3681,7 +3681,7 @@ static inline void mcs_send_channel_join_confirm_pdu(Transport * trans, uint16_t
     stream.end = stream.p;
 
     BStream x224_header(256);
-    X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
     trans->send(x224_header.data, x224_header.end - x224_header.data);
     trans->send(stream.data, stream.end - stream.data);
@@ -3775,8 +3775,8 @@ static inline void mcs_recv_channel_join_request_pdu(Transport * trans, uint16_t
     // read tpktHeader (4 bytes = 3 0 len)
     // TPDU class 0    (3 bytes = LI F0 PDU_DT)
     BStream stream(65536);
-    X224RecvFactory f(*trans, stream);
-    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    X224::RecvFactory f(*trans, stream);
+    X224::DT_TPDU_Recv x224(*trans, stream, f.length);
     SubStream payload;
     x224.get_payload(payload);
 

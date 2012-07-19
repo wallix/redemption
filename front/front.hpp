@@ -433,7 +433,7 @@ public:
         mcs.emit_end();
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         trans->send(x224_header.data, x224_header.end - x224_header.data);
         trans->send(stream.data, stream.end - stream.data);
@@ -481,7 +481,7 @@ public:
         stream.end = stream.p;    
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         trans->send(x224_header.data, x224_header.end - x224_header.data);
         trans->send(stream.data, stream.end - stream.data);
@@ -545,7 +545,7 @@ public:
             stream.end = stream.p;    
 
             BStream x224_header(256);
-            X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+            X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
             trans->send(x224_header.data, x224_header.end - x224_header.data);
             trans->send(stream.data, stream.end - stream.data);
@@ -755,7 +755,7 @@ public:
         stream.end = stream.p;    
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         trans->send(x224_header.data, x224_header.end - x224_header.data);
         trans->send(stream.data, stream.end - stream.data);
@@ -824,7 +824,7 @@ public:
         stream.end = stream.p;    
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         trans->send(x224_header.data, x224_header.end - x224_header.data);
         trans->send(stream.data, stream.end - stream.data);
@@ -865,8 +865,8 @@ public:
 
             {
                 BStream stream(65536);
-                X224RecvFactory fac_x224(*this->trans, stream);
-                X224_CR_TPDU_Recv x224(*this->trans, stream, fac_x224.length);
+                X224::RecvFactory fac_x224(*this->trans, stream);
+                X224::CR_TPDU_Recv x224(*this->trans, stream, fac_x224.length);
                 SubStream payload;
                 size_t len = x224.get_payload(payload);
                 if (len){
@@ -879,7 +879,7 @@ public:
             }
             {
                 BStream stream(256);
-                X224_CC_TPDU_Send x224(stream, 0, 0, 0);
+                X224::CC_TPDU_Send x224(stream, 0, 0, 0);
                 this->trans->send(stream.data, stream.end - stream.data);
             }
             // Basic Settings Exchange
@@ -1081,8 +1081,8 @@ public:
         }
         {
             BStream stream(65536);
-            X224RecvFactory fx224(*this->trans, stream);
-            X224_DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
+            X224::RecvFactory fx224(*this->trans, stream);
+            X224::DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
             SubStream payload;
             size_t len = x224.get_payload(payload);
 
@@ -1159,8 +1159,8 @@ public:
         }
         {
             BStream stream(65536);
-            X224RecvFactory fx224(*this->trans, stream);
-            X224_DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
+            X224::RecvFactory fx224(*this->trans, stream);
+            X224::DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
             SubStream payload;
             size_t len = x224.get_payload(payload);
 
@@ -1362,11 +1362,11 @@ public:
             ChannelDefArray & channel_list = this->channel_list;
 
             BStream stream(65536);
-            X224RecvFactory fx224(*this->trans, stream);
+            X224::RecvFactory fx224(*this->trans, stream);
             TODO("We shall put a specific case when we get Disconnect Request")
             if (fx224.type == X224::DR_TPDU){
                 TODO("What is the clean way to actually disconnect ?")
-                X224_DR_TPDU_Recv x224(*this->trans, stream, fx224.length);
+                X224::DR_TPDU_Recv x224(*this->trans, stream, fx224.length);
                 LOG(LOG_INFO, "Front::Received Disconnect Request from RDP client");
                 throw Error(ERR_X224_EXPECTED_DATA_PDU);
             }
@@ -1375,7 +1375,7 @@ public:
                 throw Error(ERR_X224_EXPECTED_DATA_PDU);
             }
 
-            X224_DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
+            X224::DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
             SubStream payload;
             size_t len = x224.get_payload(payload);
             Mcs mcs(payload);
@@ -1541,7 +1541,7 @@ public:
         stream.end = stream.p;    
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         trans->send(x224_header.data, x224_header.end - x224_header.data);
         trans->send(stream.data, stream.end - stream.data);
@@ -1664,7 +1664,7 @@ public:
         stream.end = stream.p;    
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         trans->send(x224_header.data, x224_header.end - x224_header.data);
         trans->send(stream.data, stream.end - stream.data);
@@ -1925,7 +1925,7 @@ public:
         stream.end = stream.p;    
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         trans->send(x224_header.data, x224_header.end - x224_header.data);
         trans->send(stream.data, stream.end - stream.data);
@@ -1980,7 +1980,7 @@ public:
         stream.end = stream.p;    
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         trans->send(x224_header.data, x224_header.end - x224_header.data);
         trans->send(stream.data, stream.end - stream.data);
@@ -2038,7 +2038,7 @@ public:
         stream.end = stream.p;    
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         trans->send(x224_header.data, x224_header.end - x224_header.data);
         trans->send(stream.data, stream.end - stream.data);
@@ -2235,7 +2235,7 @@ public:
                 stream.end = stream.p;    
 
                 BStream x224_header(256);
-                X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+                X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
                 trans->send(x224_header.data, x224_header.end - x224_header.data);
                 trans->send(stream.data, stream.end - stream.data);
@@ -2391,7 +2391,7 @@ public:
         stream.end = stream.p;    
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         trans->send(x224_header.data, x224_header.end - x224_header.data);
         trans->send(stream.data, stream.end - stream.data);

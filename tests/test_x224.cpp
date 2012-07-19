@@ -38,11 +38,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
 
     BStream stream(65536);
-    X224RecvFactory fac_x224(t, stream);
+    X224::RecvFactory fac_x224(t, stream);
     BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
     
-    X224_CR_TPDU_Recv x224(t, stream, fac_x224.length);
+    X224::CR_TPDU_Recv x224(t, stream, fac_x224.length);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU)
 {
     BStream stream(256); 
-    X224_CR_TPDU_Send x224(stream, "", 0, 0, 0);
+    X224::CR_TPDU_Send x224(stream, "", 0, 0, 0);
     BOOST_CHECK_EQUAL(11, stream.end - stream.data);
     BOOST_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", stream.data, 11));
 }
@@ -77,11 +77,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
         , tpkt_len);
 
     BStream stream(65536);
-    X224RecvFactory fac_x224(t, stream);
+    X224::RecvFactory fac_x224(t, stream);
     BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL(tpkt_len, (size_t)fac_x224.length);
     
-    X224_CR_TPDU_Recv x224(t, stream, fac_x224.length);
+    X224::CR_TPDU_Recv x224(t, stream, fac_x224.length);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet)
 {
     BStream stream(256); 
-    X224_CR_TPDU_Send(stream,
+    X224::CR_TPDU_Send(stream,
             "Cookie: mstshash=administrateur@qa\x0D\x0A", 
             X224::RDP_NEG_REQ, 0, X224::RDP_NEG_PROTOCOL_TLS);
     BOOST_CHECK_EQUAL(55, stream.end - stream.data);
@@ -121,11 +121,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_with_factory)
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xD0\x00\x00\x00\x00\x00", 11);
 
     BStream stream(65536);
-    X224RecvFactory fac_x224(t, stream);
+    X224::RecvFactory fac_x224(t, stream);
     BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
     
-    X224_CC_TPDU_Recv x224(t, stream, fac_x224.length);
+    X224::CC_TPDU_Recv x224(t, stream, fac_x224.length);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_with_factory)
 BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU)
 {
     BStream stream(256); 
-    X224_CC_TPDU_Send x224(stream, 0, 0, 0);
+    X224::CC_TPDU_Send x224(stream, 0, 0, 0);
     BOOST_CHECK_EQUAL(11, stream.end - stream.data);
     BOOST_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0B\x06\xD0\x00\x00\x00\x00\x00", stream.data, 11));
 }
@@ -155,11 +155,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_TLS_with_factory)
     GeneratorTransport t("\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x01\x00\x00\x00", tpkt_len);
 
     BStream stream(65536);
-    X224RecvFactory fac_x224(t, stream);
+    X224::RecvFactory fac_x224(t, stream);
     BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)tpkt_len, (size_t)fac_x224.length);
     
-    X224_CC_TPDU_Recv x224(t, stream, fac_x224.length);
+    X224::CC_TPDU_Recv x224(t, stream, fac_x224.length);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_TLS_with_factory)
 BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU_TLS)
 {
     BStream stream(256); 
-    X224_CC_TPDU_Send x224(stream, X224::RDP_NEG_RESP, 0, X224::RDP_NEG_PROTOCOL_TLS);
+    X224::CC_TPDU_Send x224(stream, X224::RDP_NEG_RESP, 0, X224::RDP_NEG_PROTOCOL_TLS);
     BOOST_CHECK_EQUAL(19, stream.end - stream.data);
     BOOST_CHECK_EQUAL(0, 
         memcmp("\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x01\x00\x00\x00", stream.data, 19));
@@ -194,11 +194,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_with_factory)
     GeneratorTransport t("\x03\x00\x00\x0B\x06\x80\x00\x00\x00\x00\x00", 11);
 
     BStream stream(65536);
-    X224RecvFactory fac_x224(t, stream);
+    X224::RecvFactory fac_x224(t, stream);
     BOOST_CHECK_EQUAL((uint8_t)X224::DR_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
     
-    X224_DR_TPDU_Recv x224(t, stream, fac_x224.length);
+    X224::DR_TPDU_Recv x224(t, stream, fac_x224.length);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_with_factory)
 BOOST_AUTO_TEST_CASE(TestSend_DR_TPDU)
 {
     BStream stream(256); 
-    X224_DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
+    X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
     BOOST_CHECK_EQUAL(11, stream.end - stream.data);
     BOOST_CHECK_EQUAL(0, 
         memcmp("\x03\x00\x00\x0B\x06\x80\x00\x00\x00\x00\x00", stream.data, 11));
@@ -227,11 +227,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU_with_factory)
     GeneratorTransport t("\x03\x00\x00\x0D\x08\x70\x00\x00\x02\xC1\x02\x06\x22", 13);
 
     BStream stream(65536);
-    X224RecvFactory fac_x224(t, stream);
+    X224::RecvFactory fac_x224(t, stream);
     BOOST_CHECK_EQUAL((uint8_t)X224::ER_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)13, (size_t)fac_x224.length);
     
-    X224_ER_TPDU_Recv x224(t, stream, fac_x224.length);
+    X224::ER_TPDU_Recv x224(t, stream, fac_x224.length);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(13, x224.tpkt.len);
@@ -252,7 +252,7 @@ BOOST_AUTO_TEST_CASE(TestSend_ER_TPDU)
 {
     BStream stream(256);
     uint8_t invalid[2] = {0x06, 0x22};
-    X224_ER_TPDU_Send x224(stream, X224::REASON_INVALID_TPDU_TYPE, 2, invalid);
+    X224::ER_TPDU_Send x224(stream, X224::REASON_INVALID_TPDU_TYPE, 2, invalid);
     BOOST_CHECK_EQUAL(13, stream.end - stream.data);
     BOOST_CHECK_EQUAL(0, 
         memcmp("\x03\x00\x00\x0D\x08\x70\x00\x00\x02\xC1\x02\x06\x22", stream.data, 13));
@@ -263,11 +263,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_with_factory)
     GeneratorTransport t("\x03\x00\x00\x0C\x02\xF0\x80\x12\x34\x56\x78\x9A", 12);
 
     BStream stream(65536);
-    X224RecvFactory fac_x224(t, stream);
+    X224::RecvFactory fac_x224(t, stream);
     BOOST_CHECK_EQUAL((uint8_t)X224::DT_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)12, (size_t)fac_x224.length);
     
-    X224_DT_TPDU_Recv x224(t, stream, fac_x224.length);
+    X224::DT_TPDU_Recv x224(t, stream, fac_x224.length);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(12, x224.tpkt.len);
@@ -290,7 +290,7 @@ BOOST_AUTO_TEST_CASE(TestSend_DT_TPDU)
 
     size_t payload_len = payload.end - payload.data;
     BStream stream(256);
-    X224_DT_TPDU_Send x224(stream, payload_len);
+    X224::DT_TPDU_Send x224(stream, payload_len);
 
     BOOST_CHECK_EQUAL(7, stream.end - stream.data);
     BOOST_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0C\x02\xF0\x80", stream.data, 7));

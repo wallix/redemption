@@ -253,7 +253,7 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
     stream.end = stream.p;
 
     BStream x224_header;
-    X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
     trans->send(x224_header.data, x224_header.end - x224_header.data);
     trans->send(stream.data, stream.end - stream.data);
@@ -277,7 +277,7 @@ static inline void send_lic_response(Transport * trans, int userid) throw (Error
     stream.end = stream.p;
 
     BStream x224_header(256);
-    X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
     trans->send(x224_header.data, x224_header.end - x224_header.data);
     trans->send(stream.data, stream.end - stream.data);
@@ -301,7 +301,7 @@ static inline void send_media_lic_response(Transport * trans, int userid) throw 
     stream.end = stream.p;
 
     BStream x224_header(256);
-    X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
     trans->send(x224_header.data, x224_header.end - x224_header.data);
     trans->send(stream.data, stream.end - stream.data);
@@ -516,7 +516,7 @@ struct RdpLicence {
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.p - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.p - stream.data);
 
         trans->send(x224_header.data, x224_header.end - x224_header.data);
         trans->send(stream.data, stream.end - stream.data);
@@ -835,7 +835,7 @@ struct RdpLicence {
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         trans->send(x224_header.data, x224_header.end - x224_header.data);
         trans->send(stream.data, stream.end - stream.data);
@@ -875,7 +875,7 @@ struct RdpLicence {
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
 
         trans->send(x224_header.data, x224_header.end - x224_header.data);
         trans->send(stream.data, stream.end - stream.data);

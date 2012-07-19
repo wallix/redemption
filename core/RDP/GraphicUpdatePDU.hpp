@@ -193,7 +193,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
 
             size_t payload_len = this->pstream->end - this->pstream->data;
             BStream x224_header(256);
-            X224_DT_TPDU_Send(x224_header, payload_len);
+            X224::DT_TPDU_Send(x224_header, payload_len);
 
             this->trans->send(x224_header.data, x224_header.end - x224_header.data);
             this->trans->send(pstream->data, payload_len);
