@@ -1,3 +1,4 @@
+
 /*
  T his program *is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -25,7 +26,7 @@
 
 #define LOGPRINT
 
-#include "nativecapture.hpp"
+#include "wrm_recorder.hpp"
 #include "staticcapture.hpp"
 #include "transport.hpp"
 
@@ -93,18 +94,9 @@ BOOST_AUTO_TEST_CASE(TestFileWithoutMetaToPng)
 
 BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
 {
-    int fd = ::open(FIXTURES_PATH "/test_w2008_2-880-0.wrm", O_RDONLY);
-    BOOST_REQUIRE(fd != -1);
-    InFileTransport in_trans(fd);
-    RDPUnserializer reader(&in_trans, 0, Rect());
-    reader.selected_next_order();
-    BOOST_REQUIRE(reader.chunk_type == WRMChunk::META_FILE);
-    //reader.interpret_order();
-    BOOST_REQUIRE(reader.load_data(FIXTURES_PATH "/test_w2008_2-880.mwrm") == true);
-    reader.stream.p = reader.stream.end;
-    reader.remaining_order_count = 0;
-    BOOST_CHECK(1);
-    DataMetaFile& meta = reader.data_meta;
+    WRMRecorder reader(FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
+    DataMetaFile& meta = reader.meta();
+    BOOST_CHECK_EQUAL(reader.is_meta_chunk(), true);
     BOOST_CHECK_EQUAL(800, meta.width);
     BOOST_CHECK_EQUAL(600, meta.height);
 
@@ -114,24 +106,23 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     bool is_chunk_time = false;
     uint count_img = 0;
 
-    reader.consumer = &consumer;
+    reader.consumer(&consumer);
     while (reader.selected_next_order())
     {
-        if (reader.chunk_type == WRMChunk::TIMESTAMP){
+        if (reader.chunk_type() == WRMChunk::TIMESTAMP){
             is_chunk_time = true;
-            reader.remaining_order_count = 0;
-            reader.stream.p = reader.stream.end;
+            reader.ignore_chunks();
         } else {
             reader.interpret_order();
             if (is_chunk_time)
             {
-                consumer.flush();
+                consumer.dump_png();
                 ++count_img;
                 is_chunk_time = false;
             }
         }
     }
-    consumer.flush();
+    consumer.dump_png();
     ++count_img;
     BOOST_CHECK_EQUAL(count_img, 7);
     char mess[1024];
@@ -141,6 +132,5 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     {
         BOOST_CHECK_MESSAGE(false, mess);
     }
-    TODO("if boost::unit_test::error_count() == 0");
     unlink_png("/tmp/test_replay_to_png", count_img);
 }
