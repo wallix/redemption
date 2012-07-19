@@ -258,7 +258,7 @@ BOOST_AUTO_TEST_CASE(TestSend_ER_TPDU)
         memcmp("\x03\x00\x00\x0D\x08\x70\x00\x00\x02\xC1\x02\x06\x22", stream.data, 13));
 }
 
-BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_new_with_factory)
+BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_with_factory)
 {
     GeneratorTransport t("\x03\x00\x00\x0C\x02\xF0\x80\x12\x34\x56\x78\x9A", 12);
 
@@ -284,35 +284,22 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_new_with_factory)
 
 BOOST_AUTO_TEST_CASE(TestSend_DT_TPDU)
 {
-    GeneratorTransport t("", 0); // used as /dev/null
+    BStream payload(256);
+    payload.out_copy_bytes("\x12\x34\x56\x78\x9A", 5);
+    payload.end = payload.p;
 
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.emit_begin(X224::DT_TPDU);
-    //------------ Here stream points to where user must write his data if any
-    stream.out_uint8(0x12);
-    stream.out_uint8(0x34);
-    stream.out_uint8(0x56);
-    stream.out_uint8(0x78);
-    x224.emit_end();
+    size_t payload_len = payload.end - payload.data;
+    BStream stream(256);
+    X224_DT_TPDU_Send x224(stream, payload_len);
 
-    BOOST_CHECK_EQUAL(stream.get_offset(0), stream.data[2]*256+stream.data[3]);
-    // tpkt header
-    BOOST_CHECK_EQUAL(0x03, stream.data[0]); // version 3
-    BOOST_CHECK_EQUAL(0x00, stream.data[1]);
-    BOOST_CHECK_EQUAL(0x00, stream.data[2]); // len 11
-    BOOST_CHECK_EQUAL(0x0B, stream.data[3]); //
+    BOOST_CHECK_EQUAL(7, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0C\x02\xF0\x80", stream.data, 7));
+    BOOST_CHECK_EQUAL(5, payload_len);
+    BOOST_CHECK_EQUAL(0, memcmp("\x12\x34\x56\x78\x9A", payload.data, 5));
 
-    // DT_TPDU
-    BOOST_CHECK_EQUAL(0x02, stream.data[4]); // LI
-    BOOST_CHECK_EQUAL(0xF0, stream.data[5]); // DT_TPDU code
-    BOOST_CHECK_EQUAL(0x80, stream.data[6]); // EOT
-
-    // USER DATA
-    BOOST_CHECK_EQUAL(0x12, stream.data[7]);
-    BOOST_CHECK_EQUAL(0x34, stream.data[8]);
-    BOOST_CHECK_EQUAL(0x56, stream.data[9]);
-    BOOST_CHECK_EQUAL(0x78, stream.data[10]);
-
-    t.send(x224.header(), x224.size());
+    
+    CheckTransport t("\x03\x00\x00\x0C\x02\xF0\x80\x12\x34\x56\x78\x9A", 12);
+    t.send(stream.data, stream.end - stream.data);
+    t.send(payload.data, payload_len);
+    BOOST_CHECK_EQUAL(true, t.status);
 }

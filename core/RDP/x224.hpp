@@ -282,6 +282,11 @@ struct X224
     };
 
     enum {
+        EOT_MORE_DATA       = 0x00,
+        EOT_EOT             = 0x80
+    };
+
+    enum {
         RDP_NEG_NONE    = 0,
         RDP_NEG_REQ     = 1,
         RDP_NEG_RESP    = 2,
@@ -1385,7 +1390,7 @@ struct X224_DT_TPDU_Recv
     };
 
     enum {
-        EOT_MOR_DATA        = 0x00,
+        EOT_MORE_DATA        = 0x00,
         EOT_EOT             = 0x80
     };
 
@@ -1440,5 +1445,23 @@ struct X224_DT_TPDU_Recv
         return this->stream.end - this->stream.data - this->payload_offset;
     }
 }; // END CLASS X224_DT_TPDU_Recv
+
+struct X224_DT_TPDU_Send
+{
+     X224_DT_TPDU_Send(Stream & stream, size_t payload_len)
+    {
+
+        stream.out_uint8(0x03); // version 3
+        stream.out_uint8(0x00);
+        stream.out_uint16_be(7 + payload_len);
+
+        stream.out_uint8(2); // LI = TPDU header length
+
+        stream.out_uint8(X224::DT_TPDU);
+        stream.out_uint8(X224::EOT_EOT);
+
+        stream.end = stream.p;
+    }
+};
 
 #endif
