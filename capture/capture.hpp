@@ -181,6 +181,7 @@ public:
                             24,
                             this->sc.drawable.width,
                             this->sc.drawable.height,
+                            this->sc.drawable.rowsize,
                             now);
     }
 

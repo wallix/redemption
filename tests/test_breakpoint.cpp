@@ -24,6 +24,8 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <boost/lexical_cast.hpp>
 
+#define LOGPRINT
+
 #include "capture.hpp"
 #include "transport.hpp"
 #include "wrm_recorder.hpp"
@@ -35,6 +37,7 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
 {
     const char * filename_base = "/tmp/test_breakpoint";
 
+    BOOST_CHECK(1);
     {
         int w = 1024, h = 912;
         Capture cap(w, h, filename_base, 0, 0);
@@ -129,6 +132,6 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     }
 
     TODO("if boost::unit_test::error_count() == 0")
-    unlink_wrm("/tmp/test_breakpoint", 3);
+    unlink_full_wrm("/tmp/test_breakpoint", 3);
     unlink(mwrm_filename.c_str());
 }

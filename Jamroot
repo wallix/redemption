@@ -279,4 +279,3 @@ unit-test test_time_point : tests/test_time_point.cpp libboost_unit_test ;
 unit-test test_range_time_point : tests/test_range_time_point.cpp libboost_unit_test ;
 
 unit-test test_filename_generator : tests/test_filename_generator.cpp libboost_unit_test ;
-
