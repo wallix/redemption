@@ -345,10 +345,8 @@ namespace X224
         }
     };
 
-
-    //##############################################################################
+    // ################################### COMMON CODE #################################
     struct Recv
-    //##############################################################################
     {
         size_t header_size;
         uint32_t verbose;
@@ -376,6 +374,27 @@ namespace X224
             }
         }
     };
+
+    struct Send 
+    {
+        enum {
+            OFFSET_TPKT_LEN = 2,
+            OFFSET_LI       = 4
+        };
+
+        void header(Stream & stream) {
+            stream.out_uint8(0x03); // version 3
+            stream.out_uint8(0x00);
+            stream.out_skip_bytes(3);
+        }
+
+        void trailer(Stream & stream) {
+            stream.set_out_uint16_be(stream.p - stream.data, OFFSET_TPKT_LEN);
+            stream.set_out_uint8(stream.p - stream.data - 5, OFFSET_LI);
+            stream.end = stream.p;
+        }
+    };
+    // ################################ END OF COMMON CODE #################################
 
     // 2.2.1.1 Client X.224 Connection Request PDU
     // ===========================================
@@ -452,9 +471,7 @@ namespace X224
     // +----------------------------+----------------------------------------------+
 
 
-    //##############################################################################
     struct CR_TPDU_Recv : public Recv
-    //##############################################################################
     {
         struct TPDUHeader
         {
@@ -474,10 +491,7 @@ namespace X224
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_code;
 
-        // CONSTRUCTOR
-        //==============================================================================
         CR_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-        //==============================================================================
         : Recv(t, stream, length, verbose)
         {
             this->tpdu_hdr.LI = stream.in_uint8();
@@ -556,22 +570,11 @@ namespace X224
     }; // END CLASS CR_TPDU_Recv
 
 
-    struct CR_TPDU_Send
+    struct CR_TPDU_Send : public Send
     {
-         CR_TPDU_Send( Stream & stream
-                         , const char * cookie
-                         , uint8_t rdp_neg_type
-                         , uint8_t rdp_neg_flags
-                         , uint32_t rdp_neg_code)
+        CR_TPDU_Send(Stream & stream, const char * cookie, uint8_t rdp_neg_type, uint8_t rdp_neg_flags, uint32_t rdp_neg_code)
         {
-
-            stream.out_uint8(0x03); // version 3
-            stream.out_uint8(0x00);
-            uint16_t offset_tpkt_len = stream.get_offset(0);
-            stream.out_uint16_be(0); // 11 bytes + extension tpkt length
-
-            uint16_t offset_LI = stream.get_offset(0);
-            stream.out_uint8(6); // LI = TPDU header length
+            this->header(stream);
 
             stream.out_uint8(X224::CR_TPDU); // CR_TPDU code
             stream.out_uint16_be(0x0000); // DST-REF
@@ -589,9 +592,8 @@ namespace X224
                 stream.out_uint32_le(rdp_neg_code);
             }
 
-            stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
-            stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
-            stream.end = stream.p;
+            this->trailer(stream);
+
         }
     };
 
@@ -734,10 +736,7 @@ namespace X224
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_code; // selected_protocol or failure_code
 
-        // CONSTRUCTOR
-        //==============================================================================
         CC_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-        //==============================================================================
         : Recv(t, stream, length, verbose)
         {
             this->tpdu_hdr.LI = stream.in_uint8();
@@ -832,22 +831,12 @@ namespace X224
         }
     }; // END CLASS CC_TPDU_Recv
 
-    struct CC_TPDU_Send
+    struct CC_TPDU_Send : public Send
     {
-         CC_TPDU_Send( Stream & stream
-                         , uint8_t rdp_neg_type
-                         , uint8_t rdp_neg_flags
-                         , uint32_t rdp_neg_code)
+        CC_TPDU_Send(Stream & stream, uint8_t rdp_neg_type, uint8_t rdp_neg_flags, uint32_t rdp_neg_code)
         {
-
-            stream.out_uint8(0x03); // version 3
-            stream.out_uint8(0x00);
-            uint16_t offset_tpkt_len = stream.get_offset(0);
-            stream.out_uint16_be(0); // 11 bytes + extension tpkt length
-
-            uint16_t offset_LI = stream.get_offset(0);
-            stream.out_uint8(6); // LI = TPDU header length
-
+            this->header(stream);
+           
             stream.out_uint8(X224::CC_TPDU); // CC_TPDU code
             stream.out_uint16_be(0x0000); // DST-REF
             stream.out_uint16_be(0x0000); // SRC-REF
@@ -860,9 +849,7 @@ namespace X224
                 stream.out_uint32_le(rdp_neg_code);
             }
 
-            stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
-            stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
-            stream.end = stream.p;
+            this->trailer(stream);
         }
     };
 
@@ -923,27 +910,18 @@ namespace X224
     }; // END CLASS DR_TPDU_Recv
 
 
-    struct DR_TPDU_Send
+    struct DR_TPDU_Send : public Send
     {
          DR_TPDU_Send( Stream & stream, uint8_t reason)
         {
-
-            stream.out_uint8(0x03); // version 3
-            stream.out_uint8(0x00);
-            uint16_t offset_tpkt_len = stream.get_offset(0);
-            stream.out_uint16_be(0); // 11 bytes + extension tpkt length
-
-            uint16_t offset_LI = stream.get_offset(0);
-            stream.out_uint8(6); // LI = TPDU header length
+            this->header(stream);
 
             stream.out_uint8(X224::DR_TPDU);
             stream.out_uint16_be(0x0000); // DST-REF
             stream.out_uint16_be(0x0000); // SRC-REF
             stream.out_uint8(reason);
-            
-            stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
-            stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
-            stream.end = stream.p;
+
+            this->trailer(stream);
         }
     };
 
@@ -980,10 +958,7 @@ namespace X224
             uint8_t invalid[256];
         } tpdu_hdr;
 
-        // CONSTRUCTOR
-        //==============================================================================
         ER_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-        //==============================================================================
         : Recv(t, stream, length, verbose)
         {
             // TPDU
@@ -1030,18 +1005,11 @@ namespace X224
         }
     }; // END CLASS ER_TPDU_Recv
 
-    struct ER_TPDU_Send
+    struct ER_TPDU_Send : public Send
     {
-         ER_TPDU_Send(Stream & stream, uint8_t cause, uint8_t vl, uint8_t * invalid)
+        ER_TPDU_Send(Stream & stream, uint8_t cause, uint8_t vl, uint8_t * invalid)
         {
-
-            stream.out_uint8(0x03); // version 3
-            stream.out_uint8(0x00);
-            uint16_t offset_tpkt_len = stream.get_offset(0);
-            stream.out_uint16_be(0); // 11 bytes + extension tpkt length
-
-            uint16_t offset_LI = stream.get_offset(0);
-            stream.out_uint8(6); // LI = TPDU header length
+            this->header(stream);
 
             stream.out_uint8(X224::ER_TPDU);
             stream.out_uint16_be(0x0000); // DST-REF
@@ -1051,9 +1019,7 @@ namespace X224
             stream.out_uint8(vl);
             stream.out_copy_bytes(invalid, vl);
 
-            stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
-            stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
-            stream.end = stream.p;
+            this->trailer(stream);
         }
     };
 
@@ -1086,10 +1052,7 @@ namespace X224
             EOT_EOT             = 0x80
         };
 
-        // CONSTRUCTOR
-        //==============================================================================
         DT_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-        //==============================================================================
         : Recv(t, stream, length, verbose)
         {
             this->tpdu_hdr.LI = stream.in_uint8();
@@ -1118,20 +1081,17 @@ namespace X224
         }
     }; // END CLASS DT_TPDU_Recv
 
-    struct DT_TPDU_Send
+    struct DT_TPDU_Send : public Send
     {
-         DT_TPDU_Send(Stream & stream, size_t payload_len)
+        DT_TPDU_Send(Stream & stream, size_t payload_len)
         {
-
-            stream.out_uint8(0x03); // version 3
-            stream.out_uint8(0x00);
-            stream.out_uint16_be(7 + payload_len);
-
-            stream.out_uint8(2); // LI = TPDU header length
+            this->header(stream);            
 
             stream.out_uint8(X224::DT_TPDU);
             stream.out_uint8(X224::EOT_EOT);
 
+            stream.set_out_uint16_be(7 + payload_len, Send::OFFSET_TPKT_LEN);
+            stream.set_out_uint8(2, Send::OFFSET_LI);
             stream.end = stream.p;
         }
     };
