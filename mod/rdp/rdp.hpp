@@ -834,8 +834,7 @@ struct mod_rdp : public client_mod {
             BStream stream(65536);
             X224::RecvFactory f(*this->nego.trans, stream);
             X224::DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
-            SubStream payload;
-            x224.get_payload(payload);
+            SubStream payload(stream, x224.header_size);
 
             Mcs mcs(payload);
             mcs.recv_begin();
@@ -1079,8 +1078,7 @@ struct mod_rdp : public client_mod {
             BStream stream(65536);
             X224::RecvFactory f(*this->nego.trans, stream);
             X224::DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
-            SubStream payload;
-            x224.get_payload(payload);
+            SubStream payload(stream, x224.header_size);
 
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:X224");
             Mcs mcs(payload);

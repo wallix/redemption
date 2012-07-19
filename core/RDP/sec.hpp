@@ -763,9 +763,7 @@ static inline void recv_security_exchange_PDU(
     BStream stream(65536);
     X224::RecvFactory f(*trans, stream);
     X224::DT_TPDU_Recv x224(*trans, stream, f.length);
-
-    SubStream payload;
-    x224.get_payload(payload);
+    SubStream payload(stream, x224.header_size);
 
     Mcs mcs(payload);
     mcs.recv_begin();

@@ -867,10 +867,9 @@ public:
                 BStream stream(65536);
                 X224::RecvFactory fac_x224(*this->trans, stream);
                 X224::CR_TPDU_Recv x224(*this->trans, stream, fac_x224.length);
-                SubStream payload;
-                size_t len = x224.get_payload(payload);
-                if (len){
-                    LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed, %u bytes remains", len);
+                if (x224.header_size != (size_t)(stream.end - stream.data)){
+                    LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
+                                 " %d bytes remains", stream.end - stream.data - x224.header_size);
                 }
             }
 
@@ -1083,8 +1082,7 @@ public:
             BStream stream(65536);
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
-            SubStream payload;
-            size_t len = x224.get_payload(payload);
+            SubStream payload(stream, x224.header_size);
 
             Mcs mcs(payload);
             mcs.recv_begin();
@@ -1161,9 +1159,8 @@ public:
             BStream stream(65536);
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
-            SubStream payload;
-            size_t len = x224.get_payload(payload);
 
+            SubStream payload(stream, x224.header_size);
             Mcs mcs(payload);
             mcs.recv_begin();
             if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
@@ -1263,7 +1260,7 @@ public:
                 if (this->verbose){
                     LOG(LOG_INFO, "non licence packet: still waiting for licence");
                 }
-                ShareControl sctrl(x224.stream);
+                ShareControl sctrl(payload);
                 sctrl.recv_begin();
 
                 switch (sctrl.pdu_type1) {
@@ -1277,9 +1274,9 @@ public:
                         LOG(LOG_INFO, "Unexpected CONFIRMACTIVE PDU");
                     }
                     {
-                        uint32_t share_id = x224.stream.in_uint32_le();
-                        uint16_t originatorId = x224.stream.in_uint16_le();
-                        this->process_confirm_active(x224.stream);
+                        uint32_t share_id = payload.in_uint32_le();
+                        uint16_t originatorId = payload.in_uint16_le();
+                        this->process_confirm_active(payload);
                     }
 
                     break;
@@ -1291,7 +1288,7 @@ public:
                     // most data packets should not be received
                     // actually even input is dubious,
                     // but rdesktop actually sends input data
-                    this->process_data(x224.stream, cb);
+                    this->process_data(payload, cb);
                     break;
                 case PDUTYPE_DEACTIVATEALLPDU:
                     if (this->verbose){
@@ -1376,8 +1373,8 @@ public:
             }
 
             X224::DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
-            SubStream payload;
-            size_t len = x224.get_payload(payload);
+
+            SubStream payload(stream, x224.header_size);
             Mcs mcs(payload);
             mcs.recv_begin();
 

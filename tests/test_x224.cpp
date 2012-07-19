@@ -51,11 +51,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
     BOOST_CHECK_EQUAL(0, strlen(x224.cookie));
     BOOST_CHECK_EQUAL(0, x224.rdp_neg_type);
 
-    SubStream pay;
-    size_t length_pay = x224.get_payload(pay);
-    BOOST_CHECK_EQUAL(11, x224.stream.end - x224.stream.data);
-    BOOST_CHECK_EQUAL(0, length_pay);
-    BOOST_CHECK_EQUAL(0, pay.end - pay.data);
+    BOOST_CHECK_EQUAL(stream.end - stream.data, x224.tpkt.len);
+    BOOST_CHECK_EQUAL(x224.header_size, stream.end - stream.data);
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU)
@@ -94,11 +91,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
     BOOST_CHECK_EQUAL((uint32_t)X224::RDP_NEG_PROTOCOL_TLS, x224.rdp_neg_code);
 
-    SubStream pay;
-    size_t length_pay = x224.get_payload(pay);
-    BOOST_CHECK_EQUAL(tpkt_len, x224.stream.end - x224.stream.data);
-    BOOST_CHECK_EQUAL(0, length_pay);
-    BOOST_CHECK_EQUAL(0, pay.end - pay.data);
+    BOOST_CHECK_EQUAL(stream.end - stream.data, x224.tpkt.len);
+    BOOST_CHECK_EQUAL(x224.header_size, stream.end - stream.data);
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet)
@@ -133,11 +127,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_with_factory)
     BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
     BOOST_CHECK_EQUAL(0, x224.rdp_neg_type);
 
-    SubStream pay;
-    size_t length_pay = x224.get_payload(pay);
-    BOOST_CHECK_EQUAL(11, x224.stream.end - x224.stream.data);
-    BOOST_CHECK_EQUAL(0, length_pay);
-    BOOST_CHECK_EQUAL(0, pay.end - pay.data);
+    BOOST_CHECK_EQUAL(stream.end - stream.data, x224.tpkt.len);
+    BOOST_CHECK_EQUAL(x224.header_size, stream.end - stream.data);
 }
 
 
@@ -173,11 +164,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_TLS_with_factory)
     BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
     BOOST_CHECK_EQUAL((uint32_t)X224::RDP_NEG_PROTOCOL_TLS, x224.rdp_neg_code);
 
-    SubStream pay;
-    size_t length_pay = x224.get_payload(pay);
-    BOOST_CHECK_EQUAL(tpkt_len, x224.stream.end - x224.stream.data);
-    BOOST_CHECK_EQUAL(0, length_pay);
-    BOOST_CHECK_EQUAL(0, pay.end - pay.data);
+    BOOST_CHECK_EQUAL(stream.end - stream.data, x224.tpkt.len);
+    BOOST_CHECK_EQUAL(x224.header_size, stream.end - stream.data);
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU_TLS)
@@ -206,11 +194,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::REASON_NOT_SPECIFIED, x224.tpdu_hdr.reason);
     BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
 
-    SubStream pay;
-    size_t length_pay = x224.get_payload(pay);
-    BOOST_CHECK_EQUAL(11, x224.stream.end - x224.stream.data);
-    BOOST_CHECK_EQUAL(0, length_pay);
-    BOOST_CHECK_EQUAL(0, pay.end - pay.data);
+    BOOST_CHECK_EQUAL(stream.end - stream.data, x224.tpkt.len);
+    BOOST_CHECK_EQUAL(x224.header_size, stream.end - stream.data);
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_DR_TPDU)
@@ -241,11 +226,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU_with_factory)
     BOOST_CHECK_EQUAL(0xC1, x224.tpdu_hdr.invalid_tpdu_var);
     BOOST_CHECK_EQUAL(2, x224.tpdu_hdr.invalid_tpdu_vl);
 
-    SubStream pay;
-    size_t length_pay = x224.get_payload(pay);
-    BOOST_CHECK_EQUAL(13, x224.stream.end - x224.stream.data);
-    BOOST_CHECK_EQUAL(0, length_pay);
-    BOOST_CHECK_EQUAL(0, pay.end - pay.data);
+    BOOST_CHECK_EQUAL(stream.end - stream.data, x224.tpkt.len);
+    BOOST_CHECK_EQUAL(x224.header_size, stream.end - stream.data);
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_ER_TPDU)
@@ -274,11 +256,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::DT_TPDU, x224.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(2, x224.tpdu_hdr.LI);
 
-    SubStream pay;
-    size_t length_pay = x224.get_payload(pay);
-    BOOST_CHECK_EQUAL(12, x224.stream.end - x224.stream.data);
-    BOOST_CHECK_EQUAL(5, length_pay);
-    BOOST_CHECK_EQUAL(5, pay.end - pay.data);
+    BOOST_CHECK_EQUAL(stream.end - stream.data, x224.tpkt.len);
+    BOOST_CHECK_EQUAL(7, x224.header_size);
+    BOOST_CHECK_EQUAL(x224.header_size + x224.payload_size, stream.end - stream.data);
+
+    BOOST_CHECK_EQUAL(5, x224.payload_size);
 }
 
 

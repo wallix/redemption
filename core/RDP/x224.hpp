@@ -350,9 +350,7 @@ namespace X224
     struct Recv
     //##############################################################################
     {
-        Stream & stream;
-        size_t payload_offset;
-
+        size_t header_size;
         uint32_t verbose;
 
         struct Tpkt
@@ -362,10 +360,10 @@ namespace X224
         } tpkt;
 
         Recv(Transport & t, Stream & stream, uint16_t length, uint32_t verbose) 
-            : stream(stream), verbose(verbose) 
+            : header_size(4), verbose(verbose) 
         {
             t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
-            this->stream.p = this->stream.data;
+            stream.p = stream.data;
 
             // TPKT
             this->tpkt.version = stream.in_uint8();
@@ -500,7 +498,7 @@ namespace X224
             this->cookie[0] = 0;
             this->rdp_neg_type = 0;
 
-            uint8_t * end_of_header = this->stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            uint8_t * end_of_header = stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
             for (uint8_t * p = stream.p + 1; p < end_of_header ; p++){
                 if (p[-1] == 0x0D &&  p[0]  == 0x0A){
                     this->cookie_len = p - (stream.data + 11) + 1;
@@ -522,10 +520,10 @@ namespace X224
                 if (this->verbose){
                     LOG(LOG_INFO, "Found RDP Negotiation Request Structure");
                 }
-                this->rdp_neg_type = this->stream.in_uint8();
-                this->rdp_neg_flags = this->stream.in_uint8();
-                this->rdp_neg_length = this->stream.in_uint16_le();
-                this->rdp_neg_code = this->stream.in_uint32_le();
+                this->rdp_neg_type = stream.in_uint8();
+                this->rdp_neg_flags = stream.in_uint8();
+                this->rdp_neg_length = stream.in_uint16_le();
+                this->rdp_neg_code = stream.in_uint32_le();
 
                 if (this->rdp_neg_type != X224::RDP_NEG_REQ){
                     LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
@@ -546,20 +544,14 @@ namespace X224
                 }
             }
 
-            if (end_of_header != this->stream.p){
-                LOG(LOG_ERR, "CR TPDU header should be terminated, got trailing data %u", end_of_header - this->stream.p);
-                hexdump_c(this->stream.data, this->stream.end - this->stream.data);
+            if (end_of_header != stream.p){
+                LOG(LOG_ERR, "CR TPDU header should be terminated, got trailing data %u", end_of_header - stream.p);
+                hexdump_c(stream.data, stream.end - stream.data);
                 throw Error(ERR_X224);
             }
 
             stream.p = end_of_header;
-            this->payload_offset = this->stream.get_offset(0);
-        }
-
-        size_t get_payload(SubStream & s)
-        {
-            s.reset(this->stream, payload_offset);
-            return this->stream.end - this->stream.data - this->payload_offset;
+            this->header_size = stream.get_offset(0);
         }
     }; // END CLASS CR_TPDU_Recv
 
@@ -764,9 +756,9 @@ namespace X224
             // extended negotiation header
             this->rdp_neg_type = 0;
 
-            uint8_t * end_of_header = this->stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
-            if (this->stream.end - this->stream.p >= 8){
-                this->rdp_neg_type = this->stream.in_uint8();
+            uint8_t * end_of_header = stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            if (stream.end - stream.p >= 8){
+                this->rdp_neg_type = stream.in_uint8();
 
                 if ((this->rdp_neg_type != X224::RDP_NEG_FAILURE)
                 &&  (this->rdp_neg_type != X224::RDP_NEG_RESP)){
@@ -784,9 +776,9 @@ namespace X224
                         (this->rdp_neg_type == X224::RDP_NEG_RESP)?"Response":"Failure");
                 }
 
-                this->rdp_neg_flags = this->stream.in_uint8();
-                this->rdp_neg_length = this->stream.in_uint16_le();
-                this->rdp_neg_code = this->stream.in_uint32_le();
+                this->rdp_neg_flags = stream.in_uint8();
+                this->rdp_neg_length = stream.in_uint16_le();
+                this->rdp_neg_code = stream.in_uint32_le();
 
                 switch (this->rdp_neg_type){
                 case X224::RDP_NEG_RESP:
@@ -807,19 +799,19 @@ namespace X224
                     break;
                 case X224::RDP_NEG_FAILURE:
                     switch (this->rdp_neg_code){
-                        case 1:
+                        case X224::SSL_REQUIRED_BY_SERVER:
                             LOG(LOG_INFO, "SSL_REQUIRED_BY_SERVER");
                             break;
-                        case 2:
+                        case X224::SSL_NOT_ALLOWED_BY_SERVER:
                             LOG(LOG_INFO, "SSL_NOT_ALLOWED_BY_SERVER");
                             break;
-                        case 3:
+                        case X224::SSL_CERT_NOT_ON_SERVER:
                             LOG(LOG_INFO, "SSL_CERT_NOT_ON_SERVER");
                             break;
-                        case 4:
+                        case X224::INCONSISTENT_FLAGS:
                             LOG(LOG_INFO, "INCONSISTENT_FLAGS");
                             break;
-                        case 5:
+                        case X224::HYBRID_REQUIRED_BY_SERVER:
                             LOG(LOG_INFO, "HYBRID_REQUIRED_BY_SERVER");
                             break;
                         default:
@@ -831,18 +823,12 @@ namespace X224
                     break;
                 }
             }
-            if (end_of_header != this->stream.p){
-                LOG(LOG_ERR, "CC TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
+            if (end_of_header != stream.p){
+                LOG(LOG_ERR, "CC TPDU header should be tertminated, got trailing data %u", end_of_header - stream.p);
                 throw Error(ERR_X224);
             }
             stream.p = end_of_header;
-            this->payload_offset = this->stream.get_offset(0);
-        }
-
-        size_t get_payload(SubStream & s)
-        {
-            s.reset(this->stream, payload_offset);
-            return this->stream.end - this->stream.data - this->payload_offset;
+            this->header_size = stream.get_offset(0);
         }
     }; // END CLASS CC_TPDU_Recv
 
@@ -926,19 +912,13 @@ namespace X224
             this->tpdu_hdr.src_ref = stream.in_uint16_le();
             this->tpdu_hdr.reason = stream.in_uint8();
 
-            uint8_t * end_of_header = this->stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
-            if (end_of_header != this->stream.p){
-                LOG(LOG_ERR, "DR TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
+            uint8_t * end_of_header = stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            if (end_of_header != stream.p){
+                LOG(LOG_ERR, "DR TPDU header should be tertminated, got trailing data %u", end_of_header - stream.p);
                 throw Error(ERR_X224);
             }
             stream.p = end_of_header;
-            this->payload_offset = this->stream.get_offset(0);
-        }
-
-        size_t get_payload(SubStream & s)
-        {
-            s.reset(this->stream, payload_offset);
-            return this->stream.end - this->stream.data - this->payload_offset;
+            this->header_size = stream.get_offset(0);
         }
     }; // END CLASS DR_TPDU_Recv
 
@@ -1019,8 +999,8 @@ namespace X224
             this->tpdu_hdr.dst_ref = stream.in_uint16_le();
             this->tpdu_hdr.reject_cause = stream.in_uint8();
 
-            uint8_t * end_of_header = this->stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
-            if (end_of_header - this->stream.p >= 2){
+            uint8_t * end_of_header = stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            if (end_of_header - stream.p >= 2){
                 this->tpdu_hdr.invalid_tpdu_var = stream.in_uint8();
                 if (this->tpdu_hdr.invalid_tpdu_var != 0xC1){
                     LOG(LOG_ERR, "Unexpected ER TPDU, variable code, expected C1 (invalid TPDU details), got %x", 
@@ -1033,7 +1013,7 @@ namespace X224
                         this->tpdu_hdr.LI - 6, this->tpdu_hdr.invalid_tpdu_vl);
                     throw Error(ERR_X224);
                 }
-                this->stream.in_copy_bytes(this->tpdu_hdr.invalid, this->tpdu_hdr.invalid_tpdu_vl);
+                stream.in_copy_bytes(this->tpdu_hdr.invalid, this->tpdu_hdr.invalid_tpdu_vl);
                 if (this->tpdu_hdr.LI - 6 - this->tpdu_hdr.invalid_tpdu_vl != 0){
                     LOG(LOG_ERR, "Trailing variable data in ER_TPDU, %u bytes", 
                         this->tpdu_hdr.LI - 6 - this->tpdu_hdr.invalid_tpdu_vl);
@@ -1041,18 +1021,12 @@ namespace X224
                 }
                 
             }
-            if (end_of_header != this->stream.p){
-                LOG(LOG_ERR, "ER TPDU header should be terminated, got trailing data %u", end_of_header - this->stream.p);
+            if (end_of_header != stream.p){
+                LOG(LOG_ERR, "ER TPDU header should be terminated, got trailing data %u", end_of_header - stream.p);
                 throw Error(ERR_X224);
             }
             stream.p = end_of_header;
-            this->payload_offset = this->stream.get_offset(0);
-        }
-
-        size_t get_payload(SubStream & s)
-        {
-            s.reset(this->stream, payload_offset);
-            return this->stream.end - this->stream.data - this->payload_offset;
+            this->header_size = stream.get_offset(0);
         }
     }; // END CLASS ER_TPDU_Recv
 
@@ -1098,6 +1072,8 @@ namespace X224
 
     struct DT_TPDU_Recv : public Recv
     {
+        size_t payload_size;
+
         struct TPDUHeader
         {
             uint8_t LI;
@@ -1131,19 +1107,14 @@ namespace X224
                 throw Error(ERR_X224);
             }
 
-            uint8_t * end_of_header = this->stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
-            if (end_of_header != this->stream.p){
-                LOG(LOG_ERR, "DT TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
+            uint8_t * end_of_header = stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            if (end_of_header != stream.p){
+                LOG(LOG_ERR, "DT TPDU header should be tertminated, got trailing data %u", end_of_header - stream.p);
                 throw Error(ERR_X224);
             }
             stream.p = end_of_header;
-            this->payload_offset = this->stream.get_offset(0);
-        }
-
-        size_t get_payload(SubStream & s)
-        {
-            s.reset(this->stream, payload_offset);
-            return this->stream.end - this->stream.data - this->payload_offset;
+            this->header_size = stream.get_offset(0);
+            this->payload_size = stream.end - stream.data - this->header_size;
         }
     }; // END CLASS DT_TPDU_Recv
 

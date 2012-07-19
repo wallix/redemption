@@ -2196,8 +2196,7 @@ static inline void mcs_recv_connect_response(
     BStream stream(65536);
     X224::RecvFactory f(*trans, stream);
     X224::DT_TPDU_Recv x224(*trans, stream, f.length);
-    SubStream payload;
-    x224.get_payload(payload);
+    SubStream payload(stream, x224.header_size);
 
     if (payload.in_uint16_be() != BER_TAG_ConnectMCSPDU_CONNECT_RESPONSE) {
         LOG(LOG_ERR, "recv connect response expected");
@@ -2367,8 +2366,7 @@ static inline void mcs_recv_connect_initial(
     BStream stream(65536);
     X224::RecvFactory f(*trans, stream);
     X224::DT_TPDU_Recv x224(*trans, stream, f.length);
-    SubStream payload;
-    x224.get_payload(payload);
+    SubStream payload(stream, x224.header_size);
 
     if (payload.in_uint16_be() != BER_TAG_ConnectMCSPDU_CONNECT_INITIAL) {
         LOG(LOG_ERR, "Recv connect initial expected");
@@ -3346,8 +3344,7 @@ static inline void mcs_recv_channel_join_confirm_pdu(Transport * trans, uint16_t
     BStream stream(65536);
     X224::RecvFactory f(*trans, stream);
     X224::DT_TPDU_Recv x224(*trans, stream, f.length);
-    SubStream payload;
-    x224.get_payload(payload);
+    SubStream payload(stream, x224.header_size);
 
     Mcs mcs(payload);
     mcs.recv_begin();
@@ -3419,8 +3416,7 @@ static inline void mcs_recv_attach_user_confirm_pdu(Transport * trans, uint16_t 
     BStream stream(65536);
     X224::RecvFactory f(*trans, stream);
     X224::DT_TPDU_Recv x224(*trans, stream, f.length);
-    SubStream payload;
-    x224.get_payload(payload);
+    SubStream payload(stream, x224.header_size);
 
     int opcode = payload.in_uint8();
     if ((opcode >> 2) != MCSPDU_AttachUserConfirm) {
@@ -3500,8 +3496,7 @@ static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport *
         BStream stream(65536);
         X224::RecvFactory f(*trans, stream);
         X224::DT_TPDU_Recv x224(*trans, stream, f.length);
-        SubStream payload;
-        x224.get_payload(payload);
+        SubStream payload(stream, x224.header_size);
 
         uint8_t opcode = payload.in_uint8();
         if ((opcode >> 2) != MCSPDU_ErectDomainRequest) {
@@ -3519,8 +3514,7 @@ static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport *
         BStream stream(65536);
         X224::RecvFactory f(*trans, stream);
         X224::DT_TPDU_Recv x224(*trans, stream, f.length);
-        SubStream payload;
-        x224.get_payload(payload);
+        SubStream payload(stream, x224.header_size);
 
         uint8_t opcode = payload.in_uint8();
         if ((opcode >> 2) != MCSPDU_AttachUserRequest) {
@@ -3777,8 +3771,7 @@ static inline void mcs_recv_channel_join_request_pdu(Transport * trans, uint16_t
     BStream stream(65536);
     X224::RecvFactory f(*trans, stream);
     X224::DT_TPDU_Recv x224(*trans, stream, f.length);
-    SubStream payload;
-    x224.get_payload(payload);
+    SubStream payload(stream, x224.header_size);
 
     Mcs mcs(payload);
     mcs.recv_begin();
