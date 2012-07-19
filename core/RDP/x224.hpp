@@ -266,6 +266,13 @@ struct X224
     };
 
     enum {
+        REASON_NOT_SPECIFIED        = 0,
+        REASON_CONGESTION           = 1,
+        REASON_SESSION_NOT_ATTACHED = 2,
+        REASON_ADDRESS_UNKNOWN      = 3,
+    };
+
+    enum {
         RDP_NEG_REQ = 1,
         RDP_NEG_RESP = 2,
         RDP_NEG_FAILURE = 3
@@ -308,24 +315,6 @@ struct X224
 
         // Commented lines are for data not yet managed by ReDemPtion
         union {
-//            struct  {
-//                uint16_t dst_ref;
-//                uint16_t src_ref;
-//                uint8_t class_option;
-//            } CR_TPDU; // Code = 1110
-//
-//            struct  {
-//                uint16_t dst_ref;
-//                uint16_t src_ref;
-//                uint8_t class_option;
-//            } CC_TPDU; // Code = 1101
-
-            struct  {
-//                uint16_t dst_ref;
-//                uint16_t src_ref;
-                uint8_t reason;
-            } DR_TPDU; // Code = 1000
-
             struct  {
                 uint8_t eot;
             } DT_TPDU; // Code = 1111
@@ -337,23 +326,13 @@ struct X224
 
         } code_part;
 
-        uint8_t rdp_neg_type;
-        uint8_t rdp_neg_flags;
-        uint16_t rdp_neg_length;
-        uint32_t rdp_neg_code;
-
         // CONSTRUCTOR
         //==============================================================================
         TPDUHeader (uint8_t LI, uint8_t code)
         //==============================================================================
         : LI(LI)
         , code(code)
-        , rdp_neg_type(0)
-        , rdp_neg_flags(0)
-        , rdp_neg_length(0)
-        , rdp_neg_code(0)
         {
-            code_part.DR_TPDU.reason = 0;
             code_part.DT_TPDU.eot = 0;
             code_part.ER_TPDU.reject_cause = 0;
         } // END CONSTRUCTOR
@@ -400,44 +379,6 @@ struct X224
     {
         REDASSERT(stream.p == stream.data);
         switch (tpdutype){
-            case CC_TPDU: // Connection Confirm 1101 xxxx
-                if (this->verbose){
-                    LOG(LOG_INFO, "X224 OUT CC_TPDU");
-                }
-                // we can write the header, there must not be any data
-                // tpkt
-                this->stream.out_uint8(0x03); // version 3
-                this->stream.out_uint8(0x00);
-                this->stream.out_uint16_be(11); // 11 bytes tpkt length
-
-                this->stream.out_uint8(6); // LI = TPDU header length
-
-                this->stream.out_uint8(CC_TPDU); // CC_TPDU code
-                this->stream.out_uint8(0x00); // DST-REF
-                this->stream.out_uint8(0x00); //
-                this->stream.out_uint8(0x00); // SRC-REF
-                this->stream.out_uint8(0x00); //
-                this->stream.out_uint8(0x00); // CLASS OPTION
-                break;
-            case DR_TPDU: // Disconnect Request 1000 0000
-                if (this->verbose){
-                    LOG(LOG_INFO, "X224 OUT DR_TPDU");
-                }
-                // we can write the header, there must not be any data
-                // tpkt
-                this->stream.out_uint8(0x03); // version 3
-                this->stream.out_uint8(0x00);
-                this->stream.out_uint16_be(11); // 11 bytes tpkt length
-
-                this->stream.out_uint8(6); // LI = TPDU header length
-
-                this->stream.out_uint8(DR_TPDU); // DR_TPDU code
-                this->stream.out_uint8(0x00); // DST-REF
-                this->stream.out_uint8(0x00); //
-                this->stream.out_uint8(0x00); // SRC-REF
-                this->stream.out_uint8(0x00); //
-                this->stream.out_uint8(0x00); // CLASS OPTION
-                break;
             case DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
                 if (this->verbose & 0x200){
                     LOG(LOG_INFO, "X224 OUT DT_TPDU");
@@ -479,18 +420,6 @@ struct X224
         }
     } // EN METHOD emit_begin
 
-    // include user data from end of tpdu header to stream.p inside tpdu header.
-    // Not really part of x224, but RDP uses it to transmit username
-    // and protocol negotiation appending a string "Cookie: mstshash=username\r\n"
-    // to tpdu header.
-    //==============================================================================
-    void extend_tpdu_hdr()
-    //==============================================================================
-    {
-        this->stream.set_out_uint8(this->stream.get_offset(0) - 5, 4); // LI
-
-    } // END METHOD extend_tpdu_hdr
-
     //==============================================================================
     void emit_end()
     //==============================================================================
@@ -501,12 +430,6 @@ struct X224
 //        LOG(LOG_INFO, "2) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", this->stream.data[0], this->stream.data[1], this->stream.data[2], this->stream.data[3], this->stream.data[4], this->stream.data[5], this->stream.data[6], this->stream.data[7]);
         uint8_t tpdutype = stream.data[5];
         switch (tpdutype){
-            break;
-            case CC_TPDU: // Connection Confirm 1101 xxxx
-//                LOG(LOG_INFO, "----> sent X224 OUT CC_TPDU");
-            break;
-            case DR_TPDU: // Disconnect Request 1000 0000
-//                LOG(LOG_INFO, "----> sent X224 OUT DR_TPDU");
             break;
             case DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
 //                LOG(LOG_INFO, "----> sent X224 OUT DT_TPDU");
@@ -1258,6 +1181,32 @@ struct X224_DR_TPDU_Recv
         return this->stream.end - this->stream.data - this->payload_offset;
     }
 }; // END CLASS X224_DR_TPDU_Recv
+
+
+struct X224_DR_TPDU_Send
+{
+     X224_DR_TPDU_Send( Stream & stream, uint8_t reason)
+    {
+
+        stream.out_uint8(0x03); // version 3
+        stream.out_uint8(0x00);
+        uint16_t offset_tpkt_len = stream.get_offset(0);
+        stream.out_uint16_be(0); // 11 bytes + extension tpkt length
+
+        uint16_t offset_LI = stream.get_offset(0);
+        stream.out_uint8(6); // LI = TPDU header length
+
+        stream.out_uint8(X224::DR_TPDU);
+        stream.out_uint16_be(0x0000); // DST-REF
+        stream.out_uint16_be(0x0000); // SRC-REF
+        stream.out_uint8(reason);
+        
+        stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
+        stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
+        stream.end = stream.p;
+    }
+};
+
 
 //    Class 0 x224 TPDU
 //    -----------------

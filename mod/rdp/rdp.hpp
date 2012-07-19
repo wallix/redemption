@@ -1332,12 +1332,11 @@ struct mod_rdp : public client_mod {
         }
         catch(Error e){
             LOG(LOG_DEBUG, "mod_rdp::draw_event::Exception!!!Closing connection (status=%u)", e.id);
+            BStream stream(256);
+            X224_DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
             try {
-                X224 x224;
-                x224.emit_begin(X224::DR_TPDU);
-                x224.emit_end();
-                this->nego.trans->send(x224.header(), x224.size());
-                LOG(LOG_DEBUG, "Connection closed (status=%u)", 0);
+                this->nego.trans->send(stream.data, stream.end - stream.data);
+                LOG(LOG_DEBUG, "Connection closed (status=0)");
             }
             catch(Error e){
                 LOG(LOG_DEBUG, "Connection Already closed (status=%u)", e.id);
