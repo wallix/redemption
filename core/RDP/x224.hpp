@@ -37,9 +37,6 @@
 struct X224
 //##############################################################################
 {
-    BStream stream;
-    SubStream payload;
-
     // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
     // -------------------------------------------------------------------------
     // Packet header to delimit data units in an octet stream
@@ -299,7 +296,6 @@ struct X224
         RDP_NEG_PROTOCOL_HYBRID = 2,
     };
 
-
     enum {
         SSL_REQUIRED_BY_SERVER    = 0x00000001,
         SSL_NOT_ALLOWED_BY_SERVER = 0x00000002,
@@ -307,93 +303,18 @@ struct X224
         INCONSISTENT_FLAGS        = 0x00000004,
         HYBRID_REQUIRED_BY_SERVER = 0x00000005,
     };
-
-
-
-    uint32_t verbose;
-
-    //##############################################################################
-    struct Tpkt
-    //##############################################################################
-    {
-         Tpkt(uint8_t version, uint16_t len) : version(version), len(len) {}
-        uint8_t version;
-        uint16_t len;
-    } tpkt;
-
-    //##############################################################################
-    struct TPDUHeader
-    //##############################################################################
-    {
-        uint8_t LI;
-        uint8_t code;
-
-        // Commented lines are for data not yet managed by ReDemPtion
-        union {
-            struct  {
-                uint8_t eot;
-            } DT_TPDU; // Code = 1111
-
-            struct  {
-//                uint16_t dst_ref;
-                uint8_t reject_cause;
-            } ER_TPDU; // Code = 0111
-
-        } code_part;
-
-        // CONSTRUCTOR
-        //==============================================================================
-        TPDUHeader (uint8_t LI, uint8_t code)
-        //==============================================================================
-        : LI(LI)
-        , code(code)
-        {
-            code_part.DT_TPDU.eot = 0;
-            code_part.ER_TPDU.reject_cause = 0;
-        } // END CONSTRUCTOR
-
-    } tpdu_hdr;
-
-    // CONSTRUCTOR
-    //==============================================================================
-    X224(uint32_t verbose = 0)
-    //==============================================================================
-    : stream(65536)
-    , payload(this->stream, 0) // useless as long as recv is not done
-    , verbose(verbose)
-    , tpkt(0,0)
-    , tpdu_hdr(0, 0)
-    {
-        if (!stream.has_room(TPKT_HEADER_LEN)){
-            LOG(LOG_INFO, "ERR_STREAM_MEMORY_TOO_SMALL");
-            throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
-        }
-    } // END CONSTRUCTOR
-
 }; // END CLASS X224
 
 
 // Factory just read enough data to know the type of packet we are dealing with
 struct X224RecvFactory
 {
-    enum {
-        CR_TPDU = 0xE0, // Connection Request 1110 xxxx
-        CC_TPDU = 0xD0, // Connection Confirm 1101 xxxx
-        DR_TPDU = 0x80, // Disconnect Request 1000 0000
-        DT_TPDU = 0xF0, // Data               1111 0000 (no ROA = No Ack)
-        ER_TPDU = 0x70  // TPDU Error         0111 0000
-    };
-
-    enum {
-        TPKT_HEADER_LEN = 4
-    };
-
     int type;
     size_t length;
 
     X224RecvFactory(Transport & t, Stream & stream)
     {
-        t.recv((char**)(&(stream.end)), TPKT_HEADER_LEN);
+        t.recv((char**)(&(stream.end)), X224::TPKT_HEADER_LEN);
         uint8_t tpkt_version = stream.in_uint8();
         if (tpkt_version != 3) {
             LOG(LOG_ERR, "Tpkt type 3 slow-path PDU expected (version = %u)", tpkt_version);
@@ -410,11 +331,11 @@ struct X224RecvFactory
         stream.in_skip_bytes(1);
         uint8_t tpdu_type = stream.in_uint8();
         switch (tpdu_type & 0xF0){
-        case CR_TPDU: // Connection Request 1110 xxxx
-        case CC_TPDU: // Connection Confirm 1101 xxxx
-        case DR_TPDU: // Disconnect Request 1000 0000
-        case DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
-        case ER_TPDU:  // TPDU Error         0111 0000
+        case X224::CR_TPDU: // Connection Request 1110 xxxx
+        case X224::CC_TPDU: // Connection Confirm 1101 xxxx
+        case X224::DR_TPDU: // Disconnect Request 1000 0000
+        case X224::DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
+        case X224::ER_TPDU:  // TPDU Error         0111 0000
             this->type = tpdu_type & 0xF0;
         break;
         default:
@@ -534,22 +455,6 @@ struct X224_CR_TPDU_Recv
     uint16_t rdp_neg_length;
     uint32_t rdp_neg_code;
 
-    enum {
-        TPKT_HEADER_LEN = 4
-    };
-
-    enum {
-        RDP_NEG_REQ = 1,
-        RDP_NEG_RESP = 2,
-        RDP_NEG_FAILURE = 3
-    };
-
-    enum {
-        RDP_NEG_PROTOCOL_RDP    = 0,
-        RDP_NEG_PROTOCOL_TLS    = 1,
-        RDP_NEG_PROTOCOL_HYBRID = 2,
-    };
-
     // CONSTRUCTOR
     //==============================================================================
     X224_CR_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
@@ -574,7 +479,7 @@ struct X224_CR_TPDU_Recv
         this->tpdu_hdr.LI = stream.in_uint8();
         this->tpdu_hdr.code = stream.in_uint8();
 
-        if (!this->tpdu_hdr.code == X224RecvFactory::CR_TPDU){
+        if (!this->tpdu_hdr.code == X224::CR_TPDU){
             LOG(LOG_ERR, "Unexpected TPDU opcode, expected CR_TPDU, got %u", 
                 this->tpdu_hdr.code);
             throw Error(ERR_X224);
@@ -589,7 +494,7 @@ struct X224_CR_TPDU_Recv
         this->cookie[0] = 0;
         this->rdp_neg_type = 0;
 
-        uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+        uint8_t * end_of_header = this->stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
         for (uint8_t * p = stream.p + 1; p < end_of_header ; p++){
             if (p[-1] == 0x0D &&  p[0]  == 0x0A){
                 this->cookie_len = p - (stream.data + 11) + 1;
@@ -616,20 +521,20 @@ struct X224_CR_TPDU_Recv
             this->rdp_neg_length = this->stream.in_uint16_le();
             this->rdp_neg_code = this->stream.in_uint32_le();
 
-            if (this->rdp_neg_type != RDP_NEG_REQ){
+            if (this->rdp_neg_type != X224::RDP_NEG_REQ){
                 LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
                     this->tpdu_hdr.LI, this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_code);
                 throw Error(ERR_X224);
             }
 
             switch (this->rdp_neg_code){
-                case RDP_NEG_PROTOCOL_RDP:
+                case X224::RDP_NEG_PROTOCOL_RDP:
                     LOG(LOG_INFO, "PROTOCOL RDP");
                     break;
-                case RDP_NEG_PROTOCOL_TLS:
+                case X224::RDP_NEG_PROTOCOL_TLS:
                     LOG(LOG_INFO, "PROTOCOL TLS 1.0");
                     break;
-                case RDP_NEG_PROTOCOL_HYBRID:
+                case X224::RDP_NEG_PROTOCOL_HYBRID:
                     LOG(LOG_INFO, "PROTOCOL HYBRID");
                     break;
             }
@@ -842,22 +747,6 @@ struct X224_CC_TPDU_Recv
     uint16_t rdp_neg_length;
     uint32_t rdp_neg_code; // selected_protocol or failure_code
 
-    enum {
-        TPKT_HEADER_LEN = 4
-    };
-
-    enum {
-        RDP_NEG_REQ = 1,
-        RDP_NEG_RESP = 2,
-        RDP_NEG_FAILURE = 3
-    };
-
-    enum {
-        RDP_NEG_PROTOCOL_RDP    = 0,
-        RDP_NEG_PROTOCOL_TLS    = 1,
-        RDP_NEG_PROTOCOL_HYBRID = 2,
-    };
-
     // CONSTRUCTOR
     //==============================================================================
     X224_CC_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
@@ -882,7 +771,7 @@ struct X224_CC_TPDU_Recv
         this->tpdu_hdr.LI = stream.in_uint8();
         this->tpdu_hdr.code = stream.in_uint8();
 
-        if (!this->tpdu_hdr.code == X224RecvFactory::CC_TPDU){
+        if (!this->tpdu_hdr.code == X224::CC_TPDU){
             LOG(LOG_ERR, "Unexpected TPDU opcode, expected CC_TPDU, got %u", 
                 this->tpdu_hdr.code);
             throw Error(ERR_X224);
@@ -895,12 +784,12 @@ struct X224_CC_TPDU_Recv
         // extended negotiation header
         this->rdp_neg_type = 0;
 
-        uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+        uint8_t * end_of_header = this->stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
         if (this->stream.end - this->stream.p >= 8){
             this->rdp_neg_type = this->stream.in_uint8();
 
-            if ((this->rdp_neg_type != RDP_NEG_FAILURE)
-            &&  (this->rdp_neg_type != RDP_NEG_RESP)){
+            if ((this->rdp_neg_type != X224::RDP_NEG_FAILURE)
+            &&  (this->rdp_neg_type != X224::RDP_NEG_RESP)){
                 LOG(LOG_ERR, "X224:RDP_NEG_RESP or X224:RDP_NEG_FAILURE Expected, got LI=%u %x %x %x %x",
                     this->tpdu_hdr.LI,
                     this->rdp_neg_type,
@@ -912,7 +801,7 @@ struct X224_CC_TPDU_Recv
 
             if (this->verbose){
                 LOG(LOG_INFO, "Found RDP Negotiation %s Structure", 
-                    (this->rdp_neg_type == RDP_NEG_RESP)?"Response":"Failure");
+                    (this->rdp_neg_type == X224::RDP_NEG_RESP)?"Response":"Failure");
             }
 
             this->rdp_neg_flags = this->stream.in_uint8();
@@ -920,15 +809,15 @@ struct X224_CC_TPDU_Recv
             this->rdp_neg_code = this->stream.in_uint32_le();
 
             switch (this->rdp_neg_type){
-            case RDP_NEG_RESP:
+            case X224::RDP_NEG_RESP:
                 switch (this->rdp_neg_code){
-                    case RDP_NEG_PROTOCOL_RDP:
+                    case X224::RDP_NEG_PROTOCOL_RDP:
                         LOG(LOG_INFO, "PROTOCOL RDP");
                         break;
-                    case RDP_NEG_PROTOCOL_TLS:
+                    case X224::RDP_NEG_PROTOCOL_TLS:
                         LOG(LOG_INFO, "PROTOCOL TLS 1.0");
                         break;
-                    case RDP_NEG_PROTOCOL_HYBRID:
+                    case X224::RDP_NEG_PROTOCOL_HYBRID:
                         LOG(LOG_INFO, "PROTOCOL HYBRID");
                         break;
                     default:
@@ -936,7 +825,7 @@ struct X224_CC_TPDU_Recv
                         break;
                 }
                 break;
-            case RDP_NEG_FAILURE:
+            case X224::RDP_NEG_FAILURE:
                 switch (this->rdp_neg_code){
                     case 1:
                         LOG(LOG_INFO, "SSL_REQUIRED_BY_SERVER");
@@ -1049,17 +938,6 @@ struct X224_DR_TPDU_Recv
         uint8_t reason;
     } tpdu_hdr;
 
-    enum {
-        TPKT_HEADER_LEN = 4
-    };
-
-    enum {
-        REASON_NOT_SPECIFIED        = 0,
-        REASON_CONGESTION           = 1,
-        REASON_SESSION_NOT_ATTACHED = 2,
-        REASON_ADDRESS_UNKNOWN      = 3,
-    };
-
     // CONSTRUCTOR
     //==============================================================================
     X224_DR_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
@@ -1084,7 +962,7 @@ struct X224_DR_TPDU_Recv
         this->tpdu_hdr.LI = stream.in_uint8();
         this->tpdu_hdr.code = stream.in_uint8();
 
-        if (!this->tpdu_hdr.code == X224RecvFactory::DR_TPDU){
+        if (!this->tpdu_hdr.code == X224::DR_TPDU){
             LOG(LOG_ERR, "Unexpected TPDU opcode, expected DR_TPDU, got %u", 
                 this->tpdu_hdr.code);
             throw Error(ERR_X224);
@@ -1094,7 +972,7 @@ struct X224_DR_TPDU_Recv
         this->tpdu_hdr.src_ref = stream.in_uint16_le();
         this->tpdu_hdr.reason = stream.in_uint8();
 
-        uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+        uint8_t * end_of_header = this->stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
         if (end_of_header != this->stream.p){
             LOG(LOG_ERR, "DR TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
             throw Error(ERR_X224);
@@ -1179,17 +1057,6 @@ struct X224_ER_TPDU_Recv
         uint8_t invalid[256];
     } tpdu_hdr;
 
-    enum {
-        TPKT_HEADER_LEN = 4
-    };
-
-    enum {
-        REASON_NOT_SPECIFIED            = 0,
-        REASON_INVALID_PARAMETER_CODE   = 1,
-        REASON_INVALID_TPDU_TYPE        = 2,
-        REASON_INVALID_PARAMETER_VALUE  = 3,
-    };
-
     // CONSTRUCTOR
     //==============================================================================
     X224_ER_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
@@ -1214,7 +1081,7 @@ struct X224_ER_TPDU_Recv
         this->tpdu_hdr.LI = stream.in_uint8();
         this->tpdu_hdr.code = stream.in_uint8();
 
-        if (!this->tpdu_hdr.code == X224RecvFactory::ER_TPDU){
+        if (!this->tpdu_hdr.code == X224::ER_TPDU){
             LOG(LOG_ERR, "Unexpected TPDU opcode, expected ER_TPDU, got %u", 
                 this->tpdu_hdr.code);
             throw Error(ERR_X224);
@@ -1223,7 +1090,7 @@ struct X224_ER_TPDU_Recv
         this->tpdu_hdr.dst_ref = stream.in_uint16_le();
         this->tpdu_hdr.reject_cause = stream.in_uint8();
 
-        uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+        uint8_t * end_of_header = this->stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
         if (end_of_header - this->stream.p >= 2){
             this->tpdu_hdr.invalid_tpdu_var = stream.in_uint8();
             if (this->tpdu_hdr.invalid_tpdu_var != 0xC1){
@@ -1321,10 +1188,6 @@ struct X224_DT_TPDU_Recv
     } tpdu_hdr;
 
     enum {
-        TPKT_HEADER_LEN = 4
-    };
-
-    enum {
         EOT_MORE_DATA        = 0x00,
         EOT_EOT             = 0x80
     };
@@ -1353,7 +1216,7 @@ struct X224_DT_TPDU_Recv
         this->tpdu_hdr.LI = stream.in_uint8();
 
         this->tpdu_hdr.code = stream.in_uint8();
-        if (!this->tpdu_hdr.code == X224RecvFactory::DT_TPDU){
+        if (!this->tpdu_hdr.code == X224::DT_TPDU){
             LOG(LOG_ERR, "Unexpected TPDU opcode, expected DT_TPDU, got %u", 
                 this->tpdu_hdr.code);
             throw Error(ERR_X224);
@@ -1365,7 +1228,7 @@ struct X224_DT_TPDU_Recv
             throw Error(ERR_X224);
         }
 
-        uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+        uint8_t * end_of_header = this->stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
         if (end_of_header != this->stream.p){
             LOG(LOG_ERR, "DT TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
             throw Error(ERR_X224);
