@@ -299,36 +299,16 @@ struct RdpNego
     void send_negotiation_request()
     {
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu");
-        X224 x224;
-        Stream & stream = x224.stream;
-        x224.emit_begin(X224::CR_TPDU);
-        stream.out_concat("Cookie: mstshash=");
-        stream.out_concat(this->username);
-        stream.out_concat("\r\n");
-//        stream.out_uint8(0x01);
-//        stream.out_uint8(0x00);
-//        stream.out_uint32_le(0x00);
+        BStream stream;
+        char cookie[256];
+        snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
 
-        if (this->tls)
-        {
-            /* RDP_NEG_DATA must be present for TLS and NLA */
-            stream.out_uint8(X224::RDP_NEG_REQ);
-            stream.out_uint8(0); /* flags, must be set to zero */
-            stream.out_uint16_le(8); /* RDP_NEG_DATA length (8) */
-            stream.out_uint32_le(X224::RDP_NEG_PROTOCOL_TLS);
-        }
-
-        x224.extend_tpdu_hdr();
-
-        x224.emit_end();
-        this->trans->send(x224.header(), x224.size());
+        X224_CR_TPDU_Send(stream, cookie, 
+                this->tls?X224::RDP_NEG_REQ:0, 
+                0, 
+                this->tls?X224::RDP_NEG_PROTOCOL_TLS:0); 
+        this->trans->send(stream.data, stream.end - stream.data);
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
-
-//        if (nego->routing_token != NULL)
-//        {
-//            stream_write(s, nego->routing_token->data, nego->routing_token->length);
-//            length += nego->routing_token->length;
-//        }
     }
 
 

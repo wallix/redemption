@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_new)
 }
 
 
-BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_new_with_factory)
+BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
 {
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
 
@@ -76,6 +76,14 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_new_with_factory)
     BOOST_CHECK_EQUAL(11, x224.stream.end - x224.stream.data);
     BOOST_CHECK_EQUAL(0, length_pay);
     BOOST_CHECK_EQUAL(0, pay.end - pay.data);
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU)
+{
+    BStream stream(256); 
+    X224_CR_TPDU_Send x224(stream, "", 0, 0, 0);
+    BOOST_CHECK_EQUAL(11, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", stream.data, 11));
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
@@ -113,6 +121,20 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     BOOST_CHECK_EQUAL(0, pay.end - pay.data);
 }
 
+BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet)
+{
+    BStream stream(256); 
+    X224_CR_TPDU_Send(stream,
+            "Cookie: mstshash=administrateur@qa\x0D\x0A", 
+            X224::RDP_NEG_REQ, 0, X224::RDP_NEG_PROTOCOL_TLS);
+    BOOST_CHECK_EQUAL(55, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(0, memcmp(
+/* 0000 */ "\x03\x00\x00\x37\x32\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...72......Cooki |
+/* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x61\x64\x6d\x69" //e: mstshash=admi |
+/* 0020 */ "\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72\x40\x71\x61\x0d\x0a\x01" //nistrateur@qa... |
+/* 0030 */ "\x00\x08\x00\x01\x00\x00\x00"                                     //....... |
+    , stream.data, 55));
+}
 
 BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_new_with_factory)
 {
@@ -239,32 +261,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU_new_with_factory)
     BOOST_CHECK_EQUAL(0, pay.end - pay.data);
 }
 
-
-BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU)
-{
-    GeneratorTransport t("", 0); // used as /dev/null
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.emit_begin(X224::CR_TPDU);
-    x224.emit_end();
-
-    BOOST_CHECK_EQUAL(stream.get_offset(0), stream.data[2]*256+stream.data[3]);
-    // tpkt header
-    BOOST_CHECK_EQUAL(0x03, stream.data[0]); // version 3
-    BOOST_CHECK_EQUAL(0x00, stream.data[1]);
-    BOOST_CHECK_EQUAL(0x00, stream.data[2]); // len 11
-    BOOST_CHECK_EQUAL(0x0B, stream.data[3]); //
-
-    // CR_TPDU
-    BOOST_CHECK_EQUAL(0x06, stream.data[4]); // LI
-    BOOST_CHECK_EQUAL(0xE0, stream.data[5]); // CR_TPDU code
-    BOOST_CHECK_EQUAL(0x00, stream.data[6]); // DST-REF
-    BOOST_CHECK_EQUAL(0x00, stream.data[7]); //
-    BOOST_CHECK_EQUAL(0x00, stream.data[8]); // SRC-REF
-    BOOST_CHECK_EQUAL(0x00, stream.data[9]); //
-    BOOST_CHECK_EQUAL(0x00, stream.data[10]);  // CLASS OPTION
-    t.send(x224.header(), x224.size());
-}
 
 BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU)
 {

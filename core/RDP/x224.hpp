@@ -406,18 +406,6 @@ struct X224
                 }
                 // we can write the header, there must not be any data afterward
                 // tpkt
-                this->stream.out_uint8(0x03); // version 3
-                this->stream.out_uint8(0x00);
-                this->stream.out_uint16_be(11); // 11 bytes tpkt length
-
-                this->stream.out_uint8(6); // LI = TPDU header length
-
-                this->stream.out_uint8(CR_TPDU); // CR_TPDU code
-                this->stream.out_uint8(0x00); // DST-REF
-                this->stream.out_uint8(0x00); //
-                this->stream.out_uint8(0x00); // SRC-REF
-                this->stream.out_uint8(0x00); //
-                this->stream.out_uint8(0x00); // CLASS OPTION
                 break;
             case CC_TPDU: // Connection Confirm 1101 xxxx
                 if (this->verbose){
@@ -823,6 +811,47 @@ struct X224_CR_TPDU_Recv
     }
 }; // END CLASS X224_CR_TPDU_Recv
 
+
+struct X224_CR_TPDU_Send
+{
+     X224_CR_TPDU_Send( Stream & stream
+                     , const char * cookie
+                     , uint8_t rdp_neg_type
+                     , uint8_t rdp_neg_flags
+                     , uint32_t rdp_neg_code)
+    {
+
+        stream.out_uint8(0x03); // version 3
+        stream.out_uint8(0x00);
+        uint16_t offset_tpkt_len = stream.get_offset(0);
+        stream.out_uint16_be(0); // 11 bytes + extension tpkt length
+
+        uint16_t offset_LI = stream.get_offset(0);
+        stream.out_uint8(6); // LI = TPDU header length
+
+        stream.out_uint8(X224::CR_TPDU); // CR_TPDU code
+        stream.out_uint8(0x00); // DST-REF
+        stream.out_uint8(0x00); //
+        stream.out_uint8(0x00); // SRC-REF
+        stream.out_uint8(0x00); //
+        stream.out_uint8(0x00); // CLASS OPTION
+        
+        size_t cookie_len = strlen(cookie);
+        if (cookie_len){
+            stream.out_copy_bytes(cookie, cookie_len);
+        }
+        if (rdp_neg_type){
+            stream.out_uint8(rdp_neg_type);
+            stream.out_uint8(rdp_neg_flags);
+            stream.out_uint16_le(8);
+            stream.out_uint32_le(rdp_neg_code);
+        }
+
+        stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
+        stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
+        stream.end = stream.p;
+    }
+};
 
 // 2.2.1.2 Server X.224 Connection Confirm PDU
 // ===========================================
