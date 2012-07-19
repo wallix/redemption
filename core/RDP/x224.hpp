@@ -265,6 +265,7 @@ struct X224
         TPKT_HEADER_LEN = 4
     };
 
+    // Error codes for DR_TPDU
     enum {
         REASON_NOT_SPECIFIED        = 0,
         REASON_CONGESTION           = 1,
@@ -272,9 +273,18 @@ struct X224
         REASON_ADDRESS_UNKNOWN      = 3,
     };
 
+    // Error codes in ER_TPDU
     enum {
-        RDP_NEG_REQ = 1,
-        RDP_NEG_RESP = 2,
+        // REASON_NOT_SPECIFIED         = 0,
+        REASON_INVALID_PARAMETER_CODE   = 1,
+        REASON_INVALID_TPDU_TYPE        = 2,
+        REASON_INVALID_PARAMETER_VALUE  = 3,
+    };
+
+    enum {
+        RDP_NEG_NONE    = 0,
+        RDP_NEG_REQ     = 1,
+        RDP_NEG_RESP    = 2,
         RDP_NEG_FAILURE = 3
     };
 
@@ -395,25 +405,6 @@ struct X224
                 this->stream.out_uint8(DT_TPDU); // DT_TPDU code
                 this->stream.out_uint8(0x80); // EOT
                 break;
-            case ER_TPDU:  // TPDU Error         0111 0000
-                if (this->verbose){
-                    LOG(LOG_INFO, "X224 OUT ER_TPDU");
-                }
-                // we can write the header, there must not be any data
-                // tpkt
-                this->stream.out_uint8(0x03); // version 3
-                this->stream.out_uint8(0x00);
-                this->stream.out_uint16_be(11); // 11 bytes tpkt length
-
-                this->stream.out_uint8(6); // LI = TPDU header length
-
-                this->stream.out_uint8(ER_TPDU); // ER_TPDU code
-                this->stream.out_uint8(0x00); // DST-REF
-                this->stream.out_uint8(0x00); //
-                this->stream.out_uint8(0x00); // Reject Cause : Unspecified
-                this->stream.out_uint8(0xC1); // Invalid TPDU Code
-                this->stream.out_uint8(0x00); // Parameter Length 0
-                break;
             default:
                 LOG(LOG_WARNING, "Error: trying to send unknown TPDU Type %u", tpdutype);
                 throw Error(ERR_X224_SENDING_UNKNOWN_PDU_TYPE, tpdutype);
@@ -433,9 +424,6 @@ struct X224
             break;
             case DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
 //                LOG(LOG_INFO, "----> sent X224 OUT DT_TPDU");
-            break;
-            case ER_TPDU:  // TPDU Error         0111 0000
-//                LOG(LOG_INFO, "----> sent X224 OUT ER_TPDU");
             break;
             default:
                 LOG(LOG_ERR, "Error: closing unknown TPDU Type %u", tpdutype);
@@ -1331,6 +1319,34 @@ struct X224_ER_TPDU_Recv
         return this->stream.end - this->stream.data - this->payload_offset;
     }
 }; // END CLASS X224_ER_TPDU_Recv
+
+struct X224_ER_TPDU_Send
+{
+     X224_ER_TPDU_Send(Stream & stream, uint8_t cause, uint8_t vl, uint8_t * invalid)
+    {
+
+        stream.out_uint8(0x03); // version 3
+        stream.out_uint8(0x00);
+        uint16_t offset_tpkt_len = stream.get_offset(0);
+        stream.out_uint16_be(0); // 11 bytes + extension tpkt length
+
+        uint16_t offset_LI = stream.get_offset(0);
+        stream.out_uint8(6); // LI = TPDU header length
+
+        stream.out_uint8(X224::ER_TPDU);
+        stream.out_uint16_be(0x0000); // DST-REF
+        stream.out_uint8(cause);
+
+        stream.out_uint8(0xC1);
+        stream.out_uint8(vl);
+        stream.out_copy_bytes(invalid, vl);
+
+        stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
+        stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
+        stream.end = stream.p;
+    }
+};
+
 
 //    Class 0 x224 TPDU
 //    -----------------
