@@ -346,6 +346,39 @@ namespace X224
     };
 
 
+    //##############################################################################
+    struct Recv
+    //##############################################################################
+    {
+        Stream & stream;
+        size_t payload_offset;
+
+        uint32_t verbose;
+
+        struct Tpkt
+        {
+            uint8_t version;
+            uint16_t len;
+        } tpkt;
+
+        Recv(Transport & t, Stream & stream, uint16_t length, uint32_t verbose) 
+            : stream(stream), verbose(verbose) 
+        {
+            t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
+            this->stream.p = this->stream.data;
+
+            // TPKT
+            this->tpkt.version = stream.in_uint8();
+            stream.in_skip_bytes(1);
+            this->tpkt.len = stream.in_uint16_be();
+            if (this->tpkt.len != length){
+                LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
+                    this->tpkt.len, length);
+                throw Error(ERR_X224);
+            }
+        }
+    };
+
     // 2.2.1.1 Client X.224 Connection Request PDU
     // ===========================================
 
@@ -420,21 +453,11 @@ namespace X224
     // |                            | Security (TLS) is a subset of CredSSP.       |
     // +----------------------------+----------------------------------------------+
 
+
     //##############################################################################
-    struct CR_TPDU_Recv
+    struct CR_TPDU_Recv : public Recv
     //##############################################################################
     {
-        Stream & stream;
-        size_t payload_offset;
-
-        uint32_t verbose;
-
-        struct Tpkt
-        {
-            uint8_t version;
-            uint16_t len;
-        } tpkt;
-
         struct TPDUHeader
         {
             uint8_t LI;
@@ -457,23 +480,8 @@ namespace X224
         //==============================================================================
         CR_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
         //==============================================================================
-        : stream(stream)
-        , verbose(verbose)
+        : Recv(t, stream, length, verbose)
         {
-            t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
-            this->stream.p = this->stream.data;
-
-            // TPKT
-            this->tpkt.version = stream.in_uint8();
-            stream.in_skip_bytes(1);
-            this->tpkt.len = stream.in_uint16_be();
-            if (this->tpkt.len != length){
-                LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
-                    this->tpkt.len, length);
-                throw Error(ERR_X224);
-            }
-
-            // TPDU
             this->tpdu_hdr.LI = stream.in_uint8();
             this->tpdu_hdr.code = stream.in_uint8();
 
@@ -717,19 +725,8 @@ namespace X224
     // +--------------------------------------+------------------------------------+
 
 
-    struct CC_TPDU_Recv
+    struct CC_TPDU_Recv : public Recv
     {
-        Stream & stream;
-        size_t payload_offset;
-
-        uint32_t verbose;
-
-        struct Tpkt
-        {
-            uint8_t version;
-            uint16_t len;
-        } tpkt;
-
         struct TPDUHeader
         {
             uint8_t LI;
@@ -749,23 +746,8 @@ namespace X224
         //==============================================================================
         CC_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
         //==============================================================================
-        : stream(stream)
-        , verbose(verbose)
+        : Recv(t, stream, length, verbose)
         {
-            t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
-            this->stream.p = this->stream.data;
-
-            // TPKT
-            this->tpkt.version = stream.in_uint8();
-            stream.in_skip_bytes(1);
-            this->tpkt.len = stream.in_uint16_be();
-            if (this->tpkt.len != length){
-                LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
-                    this->tpkt.len, length);
-                throw Error(ERR_X224);
-            }
-
-            // TPDU
             this->tpdu_hdr.LI = stream.in_uint8();
             this->tpdu_hdr.code = stream.in_uint8();
 
@@ -913,19 +895,8 @@ namespace X224
     //    |                   |    |     |         |         | 03 = ADDRESS UNKNOWN      |
     //    +-------------------+----+-----+---------+---------+---------------------------+
 
-    struct DR_TPDU_Recv
+    struct DR_TPDU_Recv : public Recv
     {
-        Stream & stream;
-        size_t payload_offset;
-
-        uint32_t verbose;
-
-        struct Tpkt
-        {
-            uint8_t version;
-            uint16_t len;
-        } tpkt;
-
         struct TPDUHeader
         {
             uint8_t LI;
@@ -940,23 +911,8 @@ namespace X224
         //==============================================================================
         DR_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
         //==============================================================================
-        : stream(stream)
-        , verbose(verbose)
+        : Recv(t, stream, length, verbose)
         {
-            t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
-            this->stream.p = this->stream.data;
-
-            // TPKT
-            this->tpkt.version = stream.in_uint8();
-            stream.in_skip_bytes(1);
-            this->tpkt.len = stream.in_uint16_be();
-            if (this->tpkt.len != length){
-                LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
-                    this->tpkt.len, length);
-                throw Error(ERR_X224);
-            }
-
-            // TPDU
             this->tpdu_hdr.LI = stream.in_uint8();
             this->tpdu_hdr.code = stream.in_uint8();
 
@@ -1030,19 +986,8 @@ namespace X224
     //    |                   |    |     |         |  03 = Invalid Parameter Value |           |     |    v bytes                       |
     //    +-------------------+----+-----+---------+-------------------------------+-----------+-----+----------------------------------+
 
-    struct ER_TPDU_Recv
+    struct ER_TPDU_Recv  : public Recv
     {
-        Stream & stream;
-        size_t payload_offset;
-
-        uint32_t verbose;
-
-        struct Tpkt
-        {
-            uint8_t version;
-            uint16_t len;
-        } tpkt;
-
         struct TPDUHeader
         {
             uint8_t LI;
@@ -1059,22 +1004,8 @@ namespace X224
         //==============================================================================
         ER_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
         //==============================================================================
-        : stream(stream)
-        , verbose(verbose)
+        : Recv(t, stream, length, verbose)
         {
-            t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
-            this->stream.p = this->stream.data;
-
-            // TPKT
-            this->tpkt.version = stream.in_uint8();
-            stream.in_skip_bytes(1);
-            this->tpkt.len = stream.in_uint16_be();
-            if (this->tpkt.len != length){
-                LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
-                    this->tpkt.len, length);
-                throw Error(ERR_X224);
-            }
-
             // TPDU
             this->tpdu_hdr.LI = stream.in_uint8();
             this->tpdu_hdr.code = stream.in_uint8();
@@ -1165,19 +1096,8 @@ namespace X224
     //    | DT_TPDU 1111 0000 | 02 |  F0 | 00 = MORE DATA |
     //    +-------------------+----+-----+----------------+
 
-    struct DT_TPDU_Recv
+    struct DT_TPDU_Recv : public Recv
     {
-        Stream & stream;
-        size_t payload_offset;
-
-        uint32_t verbose;
-
-        struct Tpkt
-        {
-            uint8_t version;
-            uint16_t len;
-        } tpkt;
-
         struct TPDUHeader
         {
             uint8_t LI;
@@ -1194,23 +1114,8 @@ namespace X224
         //==============================================================================
         DT_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
         //==============================================================================
-        : stream(stream)
-        , verbose(verbose)
+        : Recv(t, stream, length, verbose)
         {
-            t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
-            this->stream.p = this->stream.data;
-
-            // TPKT
-            this->tpkt.version = stream.in_uint8();
-            stream.in_skip_bytes(1);
-            this->tpkt.len = stream.in_uint16_be();
-            if (this->tpkt.len != length){
-                LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
-                    this->tpkt.len, length);
-                throw Error(ERR_X224);
-            }
-
-            // TPDU
             this->tpdu_hdr.LI = stream.in_uint8();
 
             this->tpdu_hdr.code = stream.in_uint8();
