@@ -267,15 +267,18 @@ static inline void send_lic_response(Transport * trans, int userid) throw (Error
                              0x28, 0x14, 0x00, 0x00
                            };
 
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.emit_begin(X224::DT_TPDU);
+    BStream stream(65536);
     Mcs mcs(stream);
     mcs.emit_begin(MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic2, 20);
     mcs.emit_end();
-    x224.emit_end();
-    trans->send(x224.header(), x224.size());
+    stream.end = stream.p;
+
+    BStream x224_header(256);
+    X224_DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+    trans->send(x224_header.data, x224_header.end - x224_header.data);
+    trans->send(stream.end, stream.end - stream.data);
 }
 
 static inline void send_media_lic_response(Transport * trans, int userid) throw (Error)
