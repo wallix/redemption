@@ -100,7 +100,7 @@
 
 struct GraphicsUpdatePDU : public RDPSerializer
 {
-    X224 * x224;
+    BStream stream;
     Mcs * mcs;
     Sec * sec;
     ShareControl * sctrl;
@@ -129,7 +129,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
             medium_entries, medium_size,
             big_entries, big_size,
             bitmap_cache_version, use_bitmap_comp, op2),
-        x224(NULL),
+        stream(65536),
         mcs(NULL),
         sec(NULL),
         sctrl(NULL),
@@ -143,7 +143,6 @@ struct GraphicsUpdatePDU : public RDPSerializer
     }
 
     ~GraphicsUpdatePDU(){
-        if (this->x224){ delete this->x224; }
         if (this->mcs){ delete this->mcs; }
         if (this->sec){ delete this->sec; }
         if (this->sctrl){ delete this->sctrl; }
@@ -151,7 +150,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
     }
 
     void init(){
-        if (this->x224){ delete this->x224; }
+        this->stream.p = this->stream.data;
         if (this->mcs){ delete this->mcs; }
         if (this->sec){ delete this->sec; }
         if (this->sctrl){ delete this->sctrl; }
@@ -160,9 +159,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
         if (this->ini->globals.debug.primary_orders > 63){
             LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
         }
-        this->x224 = new X224();
-        this->pstream = &(this->x224->stream);
-        this->x224->emit_begin(X224::DT_TPDU);
+        this->pstream = &this->stream;
         this->mcs = new Mcs(*this->pstream);
         this->mcs->emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         this->sec = new Sec(*this->pstream, this->encrypt);
@@ -192,9 +189,14 @@ struct GraphicsUpdatePDU : public RDPSerializer
             this->sctrl->emit_end();
             this->sec->emit_end();
             this->mcs->emit_end();
-            this->x224->emit_end();
+            this->pstream->end = this->pstream->p;    
 
-            this->trans->send(this->x224->header(), this->x224->size());
+            size_t payload_len = this->pstream->end - this->pstream->data;
+            BStream x224_header(256);
+            X224::DT_TPDU_Send(x224_header, payload_len);
+
+            this->trans->send(x224_header.data, x224_header.end - x224_header.data);
+            this->trans->send(pstream->data, payload_len);
             this->init();
         }
     }

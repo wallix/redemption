@@ -223,8 +223,8 @@ struct RdpNego
     {
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
         BStream stream(65536);
-        X224RecvFactory f(*this->trans, stream);
-        X224_CC_TPDU_Recv x224(*this->trans, stream, f.length);
+        X224::RecvFactory f(*this->trans, stream);
+        X224::CC_TPDU_Recv x224(*this->trans, stream, f.length);
 
         if (x224.rdp_neg_type == 0){
             this->tls = false;
@@ -303,7 +303,7 @@ struct RdpNego
         char cookie[256];
         snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
 
-        X224_CR_TPDU_Send(stream, cookie, 
+        X224::CR_TPDU_Send(stream, cookie, 
                 this->tls?X224::RDP_NEG_REQ:0, 
                 0, 
                 this->tls?X224::RDP_NEG_PROTOCOL_TLS:0); 

@@ -1998,10 +1998,7 @@ static inline void mcs_send_connect_initial(
 //    int data_len = data.end - data.data;
 //    int len = 7 + 3 * 34 + 4 + data_len;
 
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.emit_begin(X224::DT_TPDU);
-
+    BStream stream(65536);
     stream.out_uint16_be(BER_TAG_ConnectMCSPDU_CONNECT_INITIAL);
     uint32_t offset_data_len_connect_initial = stream.get_offset(0);
     stream.out_ber_len_uint16(0); // filled later, 3 bytes
@@ -2129,8 +2126,13 @@ static inline void mcs_send_connect_initial(
     LOG(LOG_INFO, "offset_data_len_connect_initial = %u", stream.get_offset(offset_data_len_connect_initial + 3));
     stream.set_out_ber_len_uint16(stream.get_offset(offset_data_len_connect_initial + 3), offset_data_len_connect_initial);
 
-    x224.emit_end();
-    trans->send(x224.header(), x224.size());
+    stream.end = stream.p;
+
+    BStream x224_header(256);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+    trans->send(x224_header.data, x224_header.end - x224_header.data);
+    trans->send(stream.data, stream.end - stream.data);
 }
 
 // 2.2.1.4  Server MCS Connect Response PDU with GCC Conference Create Response
@@ -2192,8 +2194,8 @@ static inline void mcs_recv_connect_response(
                         Random * gen)
 {
     BStream stream(65536);
-    X224RecvFactory f(*trans, stream);
-    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    X224::RecvFactory f(*trans, stream);
+    X224::DT_TPDU_Recv x224(*trans, stream, f.length);
     SubStream payload;
     x224.get_payload(payload);
 
@@ -2363,8 +2365,8 @@ static inline void mcs_recv_connect_initial(
                 ChannelDefArray & channel_list)
 {
     BStream stream(65536);
-    X224RecvFactory f(*trans, stream);
-    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    X224::RecvFactory f(*trans, stream);
+    X224::DT_TPDU_Recv x224(*trans, stream, f.length);
     SubStream payload;
     x224.get_payload(payload);
 
@@ -2819,10 +2821,8 @@ static inline void mcs_send_connect_response(
 {
     // TPKT Header (length = 337 bytes)
     // X.224 Data TPDU
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.emit_begin(X224::DT_TPDU);
 
+    BStream stream(65536);
     // BER: Application-Defined Type = APPLICATION 102 = Connect-Response
     stream.out_uint16_be(BER_TAG_ConnectMCSPDU_CONNECT_RESPONSE);
     uint32_t offset_len_mcs_connect_response = stream.get_offset(0);
@@ -3072,11 +3072,13 @@ static inline void mcs_send_connect_response(
     stream.set_out_ber_len_uint16(stream.get_offset(offset_len_mcs_data + 3), offset_len_mcs_data);
     // set BER_TAG_ConnectMCSPDU_CONNECT_RESPONSE len
     stream.set_out_ber_len_uint16(stream.get_offset(offset_len_mcs_connect_response + 3), offset_len_mcs_connect_response);
+    stream.end = stream.p;
 
-//    tpdu.end();
-//    tpdu.send(trans);
-    x224.emit_end();
-    trans->send(x224.header(), x224.size());
+    BStream x224_header(256);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+    trans->send(x224_header.data, x224_header.end - x224_header.data);
+    trans->send(stream.data, stream.end - stream.data);
 }
 
 //   2.2.1.5 Client MCS Erect Domain Request PDU
@@ -3142,22 +3144,28 @@ static inline void mcs_send_erect_domain_and_attach_user_request_pdu(Transport *
 {
     LOG(LOG_INFO, "mcs_send_erect_domain_and_attach_user_request_pdu");
     {
-        X224 x224;
-        Stream & stream = x224.stream;
-        x224.emit_begin(X224::DT_TPDU);
+        BStream stream(65536);
         stream.out_uint8((MCSPDU_ErectDomainRequest << 2));
         stream.out_per_integer(0); /* subHeight (INTEGER) */
         stream.out_per_integer(0); /* subInterval (INTEGER) */
-        x224.emit_end();
-        trans->send(x224.header(), x224.size());
+        stream.end = stream.p;
+
+        BStream x224_header(256);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+        trans->send(x224_header.data, x224_header.end - x224_header.data);
+        trans->send(stream.data, stream.end - stream.data);
     }
     {
-        X224 x224;
-        Stream & stream = x224.stream;
-        x224.emit_begin(X224::DT_TPDU);
+        BStream stream(65536);
         stream.out_uint8((MCSPDU_AttachUserRequest << 2));
-        x224.emit_end();
-        trans->send(x224.header(), x224.size());
+        stream.end = stream.p;
+
+        BStream x224_header(256);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+        trans->send(x224_header.data, x224_header.end - x224_header.data);
+        trans->send(stream.data, stream.end - stream.data);
     }
 }
 
@@ -3247,14 +3255,17 @@ static inline void mcs_send_erect_domain_and_attach_user_request_pdu(Transport *
 
 static inline void mcs_send_channel_join_request_pdu(Transport * trans, int userid, int chanid)
 {
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.emit_begin(X224::DT_TPDU);
+    BStream stream(65536);
     stream.out_uint8((MCSPDU_ChannelJoinRequest << 2));
     stream.out_uint16_be(userid);
     stream.out_uint16_be(chanid);
-    x224.emit_end();
-    trans->send(x224.header(), x224.size());
+    stream.end = stream.p;
+
+    BStream x224_header(256);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+    trans->send(x224_header.data, x224_header.end - x224_header.data);
+    trans->send(stream.data, stream.end - stream.data);
 }
 
 
@@ -3333,8 +3344,8 @@ static inline void mcs_send_channel_join_request_pdu(Transport * trans, int user
 static inline void mcs_recv_channel_join_confirm_pdu(Transport * trans, uint16_t & mcs_userid, uint16_t & req_chanid, uint16_t & join_chanid)
 {
     BStream stream(65536);
-    X224RecvFactory f(*trans, stream);
-    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    X224::RecvFactory f(*trans, stream);
+    X224::DT_TPDU_Recv x224(*trans, stream, f.length);
     SubStream payload;
     x224.get_payload(payload);
 
@@ -3406,8 +3417,8 @@ static inline void mcs_recv_channel_join_confirm_pdu(Transport * trans, uint16_t
 static inline void mcs_recv_attach_user_confirm_pdu(Transport * trans, uint16_t & userid)
 {
     BStream stream(65536);
-    X224RecvFactory f(*trans, stream);
-    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    X224::RecvFactory f(*trans, stream);
+    X224::DT_TPDU_Recv x224(*trans, stream, f.length);
     SubStream payload;
     x224.get_payload(payload);
 
@@ -3487,8 +3498,8 @@ static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport *
     TODO(" this code could lead to some problem if both MCS are combined in the same TPDU  we should manage this case")
     {
         BStream stream(65536);
-        X224RecvFactory f(*trans, stream);
-        X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+        X224::RecvFactory f(*trans, stream);
+        X224::DT_TPDU_Recv x224(*trans, stream, f.length);
         SubStream payload;
         x224.get_payload(payload);
 
@@ -3506,8 +3517,8 @@ static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport *
 
     {
         BStream stream(65536);
-        X224RecvFactory f(*trans, stream);
-        X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+        X224::RecvFactory f(*trans, stream);
+        X224::DT_TPDU_Recv x224(*trans, stream, f.length);
         SubStream payload;
         x224.get_payload(payload);
 
@@ -3575,14 +3586,17 @@ static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport *
 
 static inline void mcs_send_attach_user_confirm_pdu(Transport * trans, uint16_t userid)
 {
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.emit_begin(X224::DT_TPDU);
+    BStream stream(65536);
     Mcs mcs(stream);
     mcs.emit_begin(MCSPDU_AttachUserConfirm, userid, 0);
     mcs.emit_end();
-    x224.emit_end();
-    trans->send(x224.header(), x224.size());
+    stream.end = stream.p;
+
+    BStream x224_header(256);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+    trans->send(x224_header.data, x224_header.end - x224_header.data);
+    trans->send(stream.data, stream.end - stream.data);
 }
 
 
@@ -3660,14 +3674,17 @@ static inline void mcs_send_attach_user_confirm_pdu(Transport * trans, uint16_t 
 
 static inline void mcs_send_channel_join_confirm_pdu(Transport * trans, uint16_t userid, uint16_t chanid)
 {
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.emit_begin(X224::DT_TPDU);
+    BStream stream(65536);
     Mcs mcs(stream);
     mcs.emit_begin(MCSPDU_ChannelJoinConfirm, userid, chanid);
     mcs.emit_end();
-    x224.emit_end();
-    trans->send(x224.header(), x224.size());
+    stream.end = stream.p;
+
+    BStream x224_header(256);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+    trans->send(x224_header.data, x224_header.end - x224_header.data);
+    trans->send(stream.data, stream.end - stream.data);
 }
 
 
@@ -3758,8 +3775,8 @@ static inline void mcs_recv_channel_join_request_pdu(Transport * trans, uint16_t
     // read tpktHeader (4 bytes = 3 0 len)
     // TPDU class 0    (3 bytes = LI F0 PDU_DT)
     BStream stream(65536);
-    X224RecvFactory f(*trans, stream);
-    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    X224::RecvFactory f(*trans, stream);
+    X224::DT_TPDU_Recv x224(*trans, stream, f.length);
     SubStream payload;
     x224.get_payload(payload);
 

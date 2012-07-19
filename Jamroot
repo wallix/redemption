@@ -215,7 +215,6 @@ unit-test test_secondary_order_bmp_cache : tests/orders/secondary/bmp_cache.cpp 
 
 unit-test test_x224 : tests/test_x224.cpp libboost_unit_test ;
 unit-test test_rdp : tests/test_rdp.cpp libboost_unit_test ;
-unit-test test_pdu : tests/test_pdu.cpp libboost_unit_test ;
 unit-test test_payload : tests/test_payload.cpp libboost_unit_test ;
 
 

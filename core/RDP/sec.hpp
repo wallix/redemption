@@ -761,8 +761,8 @@ static inline void recv_security_exchange_PDU(
     memset(client_crypt_random, 0, 512);
 
     BStream stream(65536);
-    X224RecvFactory f(*trans, stream);
-    X224_DT_TPDU_Recv x224(*trans, stream, f.length);
+    X224::RecvFactory f(*trans, stream);
+    X224::DT_TPDU_Recv x224(*trans, stream, f.length);
 
     SubStream payload;
     x224.get_payload(payload);
@@ -814,9 +814,7 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     LOG(LOG_INFO, "Iso Layer : setting encryption");
     /* Send the client random to the server */
     //      if (this->encryption)
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.emit_begin(X224::DT_TPDU);
+    BStream stream(65536);
     Mcs mcs(stream);
     mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
 
@@ -827,9 +825,13 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     stream.out_clear_bytes(SEC_PADDING_SIZE);
 
     mcs.emit_end();
-    x224.emit_end();
+    stream.end = stream.p;
 
-    trans->send(x224.header(), x224.size());
+    BStream x224_header(256);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+    trans->send(x224_header.data, x224_header.end - x224_header.data);
+    trans->send(stream.data, stream.end - stream.data);
 }
 
 

@@ -186,10 +186,8 @@ enum {
 
 static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
 {
-
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.emit_begin(X224::DT_TPDU);
+    LOG(LOG_INFO, "send_lic_initial");
+    BStream stream(65536);
     Mcs mcs(stream);
     mcs.emit_begin(MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
 
@@ -252,32 +250,42 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
 //    stream.out_copy_bytes((char*)lic1, 322);
 
     mcs.emit_end();
-    x224.emit_end();
-    trans->send(x224.header(), x224.size());
+    stream.end = stream.p;
+
+    BStream x224_header;
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+    trans->send(x224_header.data, x224_header.end - x224_header.data);
+    trans->send(stream.data, stream.end - stream.data);
 }
 
 
 static inline void send_lic_response(Transport * trans, int userid) throw (Error)
 {
+    LOG(LOG_INFO, "send_lic_response");
     /* some compilers need unsigned char to avoid warnings */
     static uint8_t lic2[20] = { 0x80, 0x00, 0x10, 0x00, 0xff, 0x02, 0x10, 0x00,
                              0x07, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
                              0x28, 0x14, 0x00, 0x00
                            };
 
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.emit_begin(X224::DT_TPDU);
+    BStream stream(65536);
     Mcs mcs(stream);
     mcs.emit_begin(MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic2, 20);
     mcs.emit_end();
-    x224.emit_end();
-    trans->send(x224.header(), x224.size());
+    stream.end = stream.p;
+
+    BStream x224_header(256);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+    trans->send(x224_header.data, x224_header.end - x224_header.data);
+    trans->send(stream.data, stream.end - stream.data);
 }
 
 static inline void send_media_lic_response(Transport * trans, int userid) throw (Error)
 {
+    LOG(LOG_INFO, "send_media_lic_response");
     /* mce */
     /* some compilers need unsigned char to avoid warnings */
     static uint8_t lic3[20] = { 0x80, 0x02, 0x10, 0x00, 0xff, 0x03, 0x10, 0x00,
@@ -285,15 +293,18 @@ static inline void send_media_lic_response(Transport * trans, int userid) throw 
                              0xf3, 0x99, 0x00, 0x00
                              };
 
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.emit_begin(X224::DT_TPDU);
+    BStream stream(65536);
     Mcs mcs(stream);
     mcs.emit_begin(MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic3, 20);
     mcs.emit_end();
-    x224.emit_end();
-    trans->send(x224.header(), x224.size());
+    stream.end = stream.p;
+
+    BStream x224_header(256);
+    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+    trans->send(x224_header.data, x224_header.end - x224_header.data);
+    trans->send(stream.data, stream.end - stream.data);
 }
 
 
@@ -460,11 +471,10 @@ struct RdpLicence {
 
     void rdp_lic_send_authresp(Transport * trans, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature, int userid, int licence_issued, CryptContext & encrypt, int use_rdp5)
     {
+        LOG(LOG_INFO, "rdp_lic_send_authresp");
         int length = 58;
 
-        X224 x224;
-        Stream & stream = x224.stream;
-        x224.emit_begin(X224::DT_TPDU);
+        BStream stream(65536);
         Mcs mcs(stream);
         mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, encrypt);
@@ -503,9 +513,13 @@ struct RdpLicence {
 
         sec.emit_end();
         mcs.emit_end();
-        x224.emit_end();
+        stream.end = stream.p;
 
-        trans->send(x224.header(), x224.size());
+        BStream x224_header(256);
+        X224::DT_TPDU_Send(x224_header, stream.p - stream.data);
+
+        trans->send(x224_header.data, x224_header.end - x224_header.data);
+        trans->send(stream.data, stream.end - stream.data);
     }
 
 
@@ -564,6 +578,7 @@ struct RdpLicence {
 
     int rdp_lic_process_issue(Stream & stream, const char * hostname, int & licence_issued, int use_rdp5)
     {
+        LOG(LOG_INFO, "rdp_lic_process_issue");
 
         stream.in_skip_bytes(2); /* 3d 45 - unknown */
         int length = stream.in_uint16_le();
@@ -696,9 +711,7 @@ struct RdpLicence {
         int hostlen = strlen(hostname) + 1;
         int length = 128 + userlen + hostlen;
 
-        X224 x224;
-        Stream & stream = x224.stream;
-        x224.emit_begin(X224::DT_TPDU);
+        BStream stream(65536);
         Mcs mcs(stream);
         mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, encrypt);
@@ -819,18 +832,20 @@ struct RdpLicence {
 
         sec.emit_end();
         mcs.emit_end();
-        x224.emit_end();
+        stream.end = stream.p;
 
-        trans->send(x224.header(), x224.size());
+        BStream x224_header(256);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+        trans->send(x224_header.data, x224_header.end - x224_header.data);
+        trans->send(stream.data, stream.end - stream.data);
     }
 
     void rdp_lic_present(Transport * trans, uint8_t* client_random, uint8_t* rsa_data,
                 uint8_t* licence_data, int licence_size, uint8_t* hwid,
                 uint8_t* signature, int userid, const int licence_issued, int use_rdp5)
     {
-        X224 x224;
-        Stream & stream = x224.stream;
-        x224.emit_begin(X224::DT_TPDU);
+        BStream stream(65536);
         Mcs mcs(stream);
         mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
 
@@ -857,8 +872,13 @@ struct RdpLicence {
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
         mcs.emit_end();
-        x224.emit_end();
-        trans->send(x224.header(), x224.size());
+        stream.end = stream.p;
+
+        BStream x224_header(256);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+        trans->send(x224_header.data, x224_header.end - x224_header.data);
+        trans->send(stream.data, stream.end - stream.data);
     }
 
 };

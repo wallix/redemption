@@ -34,12 +34,9 @@
 #include "payload.hpp"
 
 //##############################################################################
-struct X224
+namespace X224
 //##############################################################################
 {
-    BStream stream;
-    SubStream payload;
-
     // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
     // -------------------------------------------------------------------------
     // Packet header to delimit data units in an octet stream
@@ -282,6 +279,11 @@ struct X224
     };
 
     enum {
+        EOT_MORE_DATA       = 0x00,
+        EOT_EOT             = 0x80
+    };
+
+    enum {
         RDP_NEG_NONE    = 0,
         RDP_NEG_REQ     = 1,
         RDP_NEG_RESP    = 2,
@@ -294,7 +296,6 @@ struct X224
         RDP_NEG_PROTOCOL_HYBRID = 2,
     };
 
-
     enum {
         SSL_REQUIRED_BY_SERVER    = 0x00000001,
         SSL_NOT_ALLOWED_BY_SERVER = 0x00000002,
@@ -303,1142 +304,867 @@ struct X224
         HYBRID_REQUIRED_BY_SERVER = 0x00000005,
     };
 
+    // Factory just read enough data to know the type of packet we are dealing with
+    struct RecvFactory
+    {
+        int type;
+        size_t length;
 
+        RecvFactory(Transport & t, Stream & stream)
+        {
+            t.recv((char**)(&(stream.end)), X224::TPKT_HEADER_LEN);
+            uint8_t tpkt_version = stream.in_uint8();
+            if (tpkt_version != 3) {
+                LOG(LOG_ERR, "Tpkt type 3 slow-path PDU expected (version = %u)", tpkt_version);
+                throw Error(ERR_X224);
+            }
+            stream.in_skip_bytes(1);
+            uint16_t tpkt_len = stream.in_uint16_be();
+            t.recv((char**)(&(stream.end)), 2);
+            if (tpkt_len < 6){
+                LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", tpkt_len);
+                throw Error(ERR_X224);
+            }
+            this->length = tpkt_len;
+            stream.in_skip_bytes(1);
+            uint8_t tpdu_type = stream.in_uint8();
+            switch (tpdu_type & 0xF0){
+            case X224::CR_TPDU: // Connection Request 1110 xxxx
+            case X224::CC_TPDU: // Connection Confirm 1101 xxxx
+            case X224::DR_TPDU: // Disconnect Request 1000 0000
+            case X224::DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
+            case X224::ER_TPDU:  // TPDU Error         0111 0000
+                this->type = tpdu_type & 0xF0;
+            break;
+            default:
+                this->type = 0;
+                LOG(LOG_ERR, "Bad X224 header, unknown TPDU type (code = %u)", tpdu_type);
+                throw Error(ERR_X224);
+            break;
+            }
+        }
+    };
 
-    uint32_t verbose;
 
     //##############################################################################
-    struct Tpkt
+    struct Recv
     //##############################################################################
     {
-         Tpkt(uint8_t version, uint16_t len) : version(version), len(len) {}
-        uint8_t version;
-        uint16_t len;
-    } tpkt;
+        Stream & stream;
+        size_t payload_offset;
+
+        uint32_t verbose;
+
+        struct Tpkt
+        {
+            uint8_t version;
+            uint16_t len;
+        } tpkt;
+
+        Recv(Transport & t, Stream & stream, uint16_t length, uint32_t verbose) 
+            : stream(stream), verbose(verbose) 
+        {
+            t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
+            this->stream.p = this->stream.data;
+
+            // TPKT
+            this->tpkt.version = stream.in_uint8();
+            stream.in_skip_bytes(1);
+            this->tpkt.len = stream.in_uint16_be();
+            if (this->tpkt.len != length){
+                LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
+                    this->tpkt.len, length);
+                throw Error(ERR_X224);
+            }
+        }
+    };
+
+    // 2.2.1.1 Client X.224 Connection Request PDU
+    // ===========================================
+
+    // The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
+    // client to server during the Connection Initiation phase (see section 1.3.1.1).
+
+    // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+    // x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
+    // data unit (TPDU), as specified in [X224] section 13.3.
+
+    // Class 0 x224 TPDU
+    // -----------------
+    //                                                    +--------+
+    //                     +----+-----+---------+---------+ CLASS  |
+    //                     | LI |     | DST-REF | SRC-REF | OPTION |
+    //            +--------+----+-----+---------+---------+--------+
+    //            | OFFSET | 4  |  5  |  6   7  |  8   9  |   10   |
+    // +----------+--------+----+-----+---------+---------+--------+
+    // | Connection Request|    |     |         |         |        |
+    // | CR_TPDU 1110 xxxx | 06 |  E0 |  00  00 |  00  00 |   00   |
+    // +-------------------+----+-----+---------+---------+--------+
+
+    // routingToken (variable): An optional and variable-length routing token
+    // (used for load balancing) terminated by a carriage-return (CR) and line-feed
+    // (LF) ANSI sequence. For more information about Terminal Server load balancing
+    // and the routing token format, see [MSFT-SDLBTS]. The length of the routing
+    // token and CR+LF sequence is included in the X.224 Connection Request Length
+    // Indicator field. If this field is present, then the cookie field MUST NOT be
+    //  present.
+
+    //cookie (variable): An optional and variable-length ANSI text string terminated
+    // by a carriage-return (CR) and line-feed (LF) ANSI sequence. This text string
+    // MUST be "Cookie: mstshash=IDENTIFIER", where IDENTIFIER is an ANSI string
+    //(an example cookie string is shown in section 4.1.1). The length of the entire
+    // cookie string and CR+LF sequence is included in the X.224 Connection Request
+    // Length Indicator field. This field MUST NOT be present if the routingToken
+    // field is present.
+
+    // rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
+    // structure. The length of this negotiation structure is included in the X.224
+    // Connection Request Length Indicator field.
+
+    // 2.2.1.1.1 RDP Negotiation Request (RDP_NEG_REQ)
+    // ===============================================
+
+    // The RDP Negotiation Request structure is used by a client to advertise the
+    // security protocols which it supports.
+
+    // type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
+    // field MUST be set to 0x01 (TYPE_RDP_NEG_REQ) to indicate that the packet is
+    // a Negotiation Request.
+
+    // flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags. There
+    // are currently no defined flags so the field MUST be set to 0x00.
+
+    // length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size.
+    // This field MUST be set to 0x0008 (8 bytes).
+
+    // requestedProtocols (4 bytes): A 32-bit, unsigned integer. Flags indicating
+    // the supported security protocols.
+
+    // +----------------------------+----------------------------------------------+
+    // | 0x00000000 PROTOCOL_RDP    | Standard RDP Security (section 5.3).         |
+    // +----------------------------+----------------------------------------------+
+    // | 0x00000001 PROTOCOL_SSL    | TLS 1.0 (section 5.4.5.1).                   |
+    // +----------------------------+----------------------------------------------+
+    // | 0x00000002 PROTOCOL_HYBRID | Credential Security Support Provider protocol|
+    // |                            | (CredSSP) (section 5.4.5.2). If this flag is |
+    // |                            | set, then the PROTOCOL_SSL (0x00000001)      |
+    // |                            | SHOULD also be set because Transport Layer   |
+    // |                            | Security (TLS) is a subset of CredSSP.       |
+    // +----------------------------+----------------------------------------------+
+
 
     //##############################################################################
-    struct TPDUHeader
+    struct CR_TPDU_Recv : public Recv
     //##############################################################################
     {
-        uint8_t LI;
-        uint8_t code;
+        struct TPDUHeader
+        {
+            uint8_t LI;
+            uint8_t code;
 
-        // Commented lines are for data not yet managed by ReDemPtion
-        union {
-            struct  {
-                uint8_t eot;
-            } DT_TPDU; // Code = 1111
+            uint16_t dst_ref;
+            uint16_t src_ref;
+            uint8_t class_option;
+        } tpdu_hdr;
 
-            struct  {
-//                uint16_t dst_ref;
-                uint8_t reject_cause;
-            } ER_TPDU; // Code = 0111
+        size_t cookie_len;
+        char cookie[1024];
 
-        } code_part;
+        uint8_t rdp_neg_type;
+        uint8_t rdp_neg_flags;
+        uint16_t rdp_neg_length;
+        uint32_t rdp_neg_code;
 
         // CONSTRUCTOR
         //==============================================================================
-        TPDUHeader (uint8_t LI, uint8_t code)
+        CR_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
         //==============================================================================
-        : LI(LI)
-        , code(code)
+        : Recv(t, stream, length, verbose)
         {
-            code_part.DT_TPDU.eot = 0;
-            code_part.ER_TPDU.reject_cause = 0;
-        } // END CONSTRUCTOR
+            this->tpdu_hdr.LI = stream.in_uint8();
+            this->tpdu_hdr.code = stream.in_uint8();
 
-    } tpdu_hdr;
+            if (!this->tpdu_hdr.code == X224::CR_TPDU){
+                LOG(LOG_ERR, "Unexpected TPDU opcode, expected CR_TPDU, got %u", 
+                    this->tpdu_hdr.code);
+                throw Error(ERR_X224);
+            }
 
-    // CONSTRUCTOR
-    //==============================================================================
-    X224(uint32_t verbose = 0)
-    //==============================================================================
-    : stream(65536)
-    , payload(this->stream, 0) // useless as long as recv is not done
-    , verbose(verbose)
-    , tpkt(0,0)
-    , tpdu_hdr(0, 0)
-    {
-        if (!stream.has_room(TPKT_HEADER_LEN)){
-            LOG(LOG_INFO, "ERR_STREAM_MEMORY_TOO_SMALL");
-            throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
-        }
-    } // END CONSTRUCTOR
+            this->tpdu_hdr.dst_ref = stream.in_uint16_le();
+            this->tpdu_hdr.src_ref = stream.in_uint16_le();
+            this->tpdu_hdr.class_option = stream.in_uint8();
 
-    // for Transport
-    //==============================================================================
-    uint8_t * header()
-    //==============================================================================
-    {
-        return this->stream.data;
-    }
+            // extended negotiation header
+            this->cookie_len = 0;
+            this->cookie[0] = 0;
+            this->rdp_neg_type = 0;
 
-    // for Transport
-    //==============================================================================
-    size_t size()
-    //==============================================================================
-    {
-        return this->stream.get_offset(0);
-    }
-
-
-    // Prepare a X224 TPDU in buffer for writing
-    //==============================================================================
-    void emit_begin(uint8_t tpdutype)
-    //==============================================================================
-    {
-        REDASSERT(stream.p == stream.data);
-        switch (tpdutype){
-            case DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
-                if (this->verbose & 0x200){
-                    LOG(LOG_INFO, "X224 OUT DT_TPDU");
+            uint8_t * end_of_header = this->stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            for (uint8_t * p = stream.p + 1; p < end_of_header ; p++){
+                if (p[-1] == 0x0D &&  p[0]  == 0x0A){
+                    this->cookie_len = p - (stream.data + 11) + 1;
+                    if (cookie_len > 1023){
+                        LOG(LOG_ERR, "Bad Connection Request X224 header, cookie too large (length = %u)", cookie_len);
+                        throw Error(ERR_X224);
+                    }
+                    memcpy(this->cookie, stream.data + 11, this->cookie_len);
+                    this->cookie[this->cookie_len] = 0;
+                    if (this->verbose){
+                        LOG(LOG_INFO, "cookie: %s", this->cookie);
+                    }
+                    break;
                 }
-                // we can't write the full header yet,
-                // we will know the length later
-                // tpkt
-                this->stream.out_uint8(0x03); // version 3
-                this->stream.out_uint8(0x00);
-                this->stream.out_uint16_be(0); // tpkt length still unknown
+            }
+            stream.p += this->cookie_len;
 
-                this->stream.out_uint8(2); // LI = TPDU header length
+            if (end_of_header - stream.p >= 8){
+                if (this->verbose){
+                    LOG(LOG_INFO, "Found RDP Negotiation Request Structure");
+                }
+                this->rdp_neg_type = this->stream.in_uint8();
+                this->rdp_neg_flags = this->stream.in_uint8();
+                this->rdp_neg_length = this->stream.in_uint16_le();
+                this->rdp_neg_code = this->stream.in_uint32_le();
 
-                this->stream.out_uint8(DT_TPDU); // DT_TPDU code
-                this->stream.out_uint8(0x80); // EOT
-                break;
-            default:
-                LOG(LOG_WARNING, "Error: trying to send unknown TPDU Type %u", tpdutype);
-                throw Error(ERR_X224_SENDING_UNKNOWN_PDU_TYPE, tpdutype);
-        }
-    } // EN METHOD emit_begin
-
-    //==============================================================================
-    void emit_end()
-    //==============================================================================
-    // This function update header informations of TPDU before it is sent
-    // on the wires.
-    {
-        this->stream.set_out_uint16_be(stream.get_offset(0), 2);
-//        LOG(LOG_INFO, "2) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", this->stream.data[0], this->stream.data[1], this->stream.data[2], this->stream.data[3], this->stream.data[4], this->stream.data[5], this->stream.data[6], this->stream.data[7]);
-        uint8_t tpdutype = stream.data[5];
-        switch (tpdutype){
-            break;
-            case DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
-//                LOG(LOG_INFO, "----> sent X224 OUT DT_TPDU");
-            break;
-            default:
-                LOG(LOG_ERR, "Error: closing unknown TPDU Type %u", tpdutype);
-        }
-    } // END METHOD emit_end
-
-}; // END CLASS X224
-
-
-// Factory just read enough data to know the type of packet we are dealing with
-struct X224RecvFactory
-{
-    enum {
-        CR_TPDU = 0xE0, // Connection Request 1110 xxxx
-        CC_TPDU = 0xD0, // Connection Confirm 1101 xxxx
-        DR_TPDU = 0x80, // Disconnect Request 1000 0000
-        DT_TPDU = 0xF0, // Data               1111 0000 (no ROA = No Ack)
-        ER_TPDU = 0x70  // TPDU Error         0111 0000
-    };
-
-    enum {
-        TPKT_HEADER_LEN = 4
-    };
-
-    int type;
-    size_t length;
-
-    X224RecvFactory(Transport & t, Stream & stream)
-    {
-        t.recv((char**)(&(stream.end)), TPKT_HEADER_LEN);
-        uint8_t tpkt_version = stream.in_uint8();
-        if (tpkt_version != 3) {
-            LOG(LOG_ERR, "Tpkt type 3 slow-path PDU expected (version = %u)", tpkt_version);
-            throw Error(ERR_X224);
-        }
-        stream.in_skip_bytes(1);
-        uint16_t tpkt_len = stream.in_uint16_be();
-        t.recv((char**)(&(stream.end)), 2);
-        if (tpkt_len < 6){
-            LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", tpkt_len);
-            throw Error(ERR_X224);
-        }
-        this->length = tpkt_len;
-        stream.in_skip_bytes(1);
-        uint8_t tpdu_type = stream.in_uint8();
-        switch (tpdu_type & 0xF0){
-        case CR_TPDU: // Connection Request 1110 xxxx
-        case CC_TPDU: // Connection Confirm 1101 xxxx
-        case DR_TPDU: // Disconnect Request 1000 0000
-        case DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
-        case ER_TPDU:  // TPDU Error         0111 0000
-            this->type = tpdu_type & 0xF0;
-        break;
-        default:
-            this->type = 0;
-            LOG(LOG_ERR, "Bad X224 header, unknown TPDU type (code = %u)", tpdu_type);
-            throw Error(ERR_X224);
-        break;
-        }
-    }
-};
-
-
-// 2.2.1.1 Client X.224 Connection Request PDU
-// ===========================================
-
-// The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
-// client to server during the Connection Initiation phase (see section 1.3.1.1).
-
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-// x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
-// data unit (TPDU), as specified in [X224] section 13.3.
-
-// Class 0 x224 TPDU
-// -----------------
-//                                                    +--------+
-//                     +----+-----+---------+---------+ CLASS  |
-//                     | LI |     | DST-REF | SRC-REF | OPTION |
-//            +--------+----+-----+---------+---------+--------+
-//            | OFFSET | 4  |  5  |  6   7  |  8   9  |   10   |
-// +----------+--------+----+-----+---------+---------+--------+
-// | Connection Request|    |     |         |         |        |
-// | CR_TPDU 1110 xxxx | 06 |  E0 |  00  00 |  00  00 |   00   |
-// +-------------------+----+-----+---------+---------+--------+
-
-// routingToken (variable): An optional and variable-length routing token
-// (used for load balancing) terminated by a carriage-return (CR) and line-feed
-// (LF) ANSI sequence. For more information about Terminal Server load balancing
-// and the routing token format, see [MSFT-SDLBTS]. The length of the routing
-// token and CR+LF sequence is included in the X.224 Connection Request Length
-// Indicator field. If this field is present, then the cookie field MUST NOT be
-//  present.
-
-//cookie (variable): An optional and variable-length ANSI text string terminated
-// by a carriage-return (CR) and line-feed (LF) ANSI sequence. This text string
-// MUST be "Cookie: mstshash=IDENTIFIER", where IDENTIFIER is an ANSI string
-//(an example cookie string is shown in section 4.1.1). The length of the entire
-// cookie string and CR+LF sequence is included in the X.224 Connection Request
-// Length Indicator field. This field MUST NOT be present if the routingToken
-// field is present.
-
-// rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
-// structure. The length of this negotiation structure is included in the X.224
-// Connection Request Length Indicator field.
-
-// 2.2.1.1.1 RDP Negotiation Request (RDP_NEG_REQ)
-// ===============================================
-
-// The RDP Negotiation Request structure is used by a client to advertise the
-// security protocols which it supports.
-
-// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
-// field MUST be set to 0x01 (TYPE_RDP_NEG_REQ) to indicate that the packet is
-// a Negotiation Request.
-
-// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags. There
-// are currently no defined flags so the field MUST be set to 0x00.
-
-// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size.
-// This field MUST be set to 0x0008 (8 bytes).
-
-// requestedProtocols (4 bytes): A 32-bit, unsigned integer. Flags indicating
-// the supported security protocols.
-
-// +----------------------------+----------------------------------------------+
-// | 0x00000000 PROTOCOL_RDP    | Standard RDP Security (section 5.3).         |
-// +----------------------------+----------------------------------------------+
-// | 0x00000001 PROTOCOL_SSL    | TLS 1.0 (section 5.4.5.1).                   |
-// +----------------------------+----------------------------------------------+
-// | 0x00000002 PROTOCOL_HYBRID | Credential Security Support Provider protocol|
-// |                            | (CredSSP) (section 5.4.5.2). If this flag is |
-// |                            | set, then the PROTOCOL_SSL (0x00000001)      |
-// |                            | SHOULD also be set because Transport Layer   |
-// |                            | Security (TLS) is a subset of CredSSP.       |
-// +----------------------------+----------------------------------------------+
-
-//##############################################################################
-struct X224_CR_TPDU_Recv
-//##############################################################################
-{
-    Stream & stream;
-    size_t payload_offset;
-
-    uint32_t verbose;
-
-    struct Tpkt
-    {
-        uint8_t version;
-        uint16_t len;
-    } tpkt;
-
-    struct TPDUHeader
-    {
-        uint8_t LI;
-        uint8_t code;
-
-        uint16_t dst_ref;
-        uint16_t src_ref;
-        uint8_t class_option;
-    } tpdu_hdr;
-
-    size_t cookie_len;
-    char cookie[1024];
-
-    uint8_t rdp_neg_type;
-    uint8_t rdp_neg_flags;
-    uint16_t rdp_neg_length;
-    uint32_t rdp_neg_code;
-
-    enum {
-        TPKT_HEADER_LEN = 4
-    };
-
-    enum {
-        RDP_NEG_REQ = 1,
-        RDP_NEG_RESP = 2,
-        RDP_NEG_FAILURE = 3
-    };
-
-    enum {
-        RDP_NEG_PROTOCOL_RDP    = 0,
-        RDP_NEG_PROTOCOL_TLS    = 1,
-        RDP_NEG_PROTOCOL_HYBRID = 2,
-    };
-
-    // CONSTRUCTOR
-    //==============================================================================
-    X224_CR_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-    //==============================================================================
-    : stream(stream)
-    , verbose(verbose)
-    {
-        t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
-        this->stream.p = this->stream.data;
-
-        // TPKT
-        this->tpkt.version = stream.in_uint8();
-        stream.in_skip_bytes(1);
-        this->tpkt.len = stream.in_uint16_be();
-        if (this->tpkt.len != length){
-            LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
-                this->tpkt.len, length);
-            throw Error(ERR_X224);
-        }
-
-        // TPDU
-        this->tpdu_hdr.LI = stream.in_uint8();
-        this->tpdu_hdr.code = stream.in_uint8();
-
-        if (!this->tpdu_hdr.code == X224RecvFactory::CR_TPDU){
-            LOG(LOG_ERR, "Unexpected TPDU opcode, expected CR_TPDU, got %u", 
-                this->tpdu_hdr.code);
-            throw Error(ERR_X224);
-        }
-
-        this->tpdu_hdr.dst_ref = stream.in_uint16_le();
-        this->tpdu_hdr.src_ref = stream.in_uint16_le();
-        this->tpdu_hdr.class_option = stream.in_uint8();
-
-        // extended negotiation header
-        this->cookie_len = 0;
-        this->cookie[0] = 0;
-        this->rdp_neg_type = 0;
-
-        uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
-        for (uint8_t * p = stream.p + 1; p < end_of_header ; p++){
-            if (p[-1] == 0x0D &&  p[0]  == 0x0A){
-                this->cookie_len = p - (stream.data + 11) + 1;
-                if (cookie_len > 1023){
-                    LOG(LOG_ERR, "Bad Connection Request X224 header, cookie too large (length = %u)", cookie_len);
+                if (this->rdp_neg_type != X224::RDP_NEG_REQ){
+                    LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
+                        this->tpdu_hdr.LI, this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_code);
                     throw Error(ERR_X224);
                 }
-                memcpy(this->cookie, stream.data + 11, this->cookie_len);
-                this->cookie[this->cookie_len] = 0;
-                if (this->verbose){
-                    LOG(LOG_INFO, "cookie: %s", this->cookie);
-                }
-                break;
-            }
-        }
-        stream.p += this->cookie_len;
 
-        if (end_of_header - stream.p >= 8){
-            if (this->verbose){
-                LOG(LOG_INFO, "Found RDP Negotiation Request Structure");
-            }
-            this->rdp_neg_type = this->stream.in_uint8();
-            this->rdp_neg_flags = this->stream.in_uint8();
-            this->rdp_neg_length = this->stream.in_uint16_le();
-            this->rdp_neg_code = this->stream.in_uint32_le();
-
-            if (this->rdp_neg_type != RDP_NEG_REQ){
-                LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
-                    this->tpdu_hdr.LI, this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_code);
-                throw Error(ERR_X224);
-            }
-
-            switch (this->rdp_neg_code){
-                case RDP_NEG_PROTOCOL_RDP:
-                    LOG(LOG_INFO, "PROTOCOL RDP");
-                    break;
-                case RDP_NEG_PROTOCOL_TLS:
-                    LOG(LOG_INFO, "PROTOCOL TLS 1.0");
-                    break;
-                case RDP_NEG_PROTOCOL_HYBRID:
-                    LOG(LOG_INFO, "PROTOCOL HYBRID");
-                    break;
-            }
-        }
-
-        if (end_of_header != this->stream.p){
-            LOG(LOG_ERR, "CR TPDU header should be terminated, got trailing data %u", end_of_header - this->stream.p);
-            hexdump_c(this->stream.data, this->stream.end - this->stream.data);
-            throw Error(ERR_X224);
-        }
-
-        stream.p = end_of_header;
-        this->payload_offset = this->stream.get_offset(0);
-    }
-
-    size_t get_payload(SubStream & s)
-    {
-        s.reset(this->stream, payload_offset);
-        return this->stream.end - this->stream.data - this->payload_offset;
-    }
-}; // END CLASS X224_CR_TPDU_Recv
-
-
-struct X224_CR_TPDU_Send
-{
-     X224_CR_TPDU_Send( Stream & stream
-                     , const char * cookie
-                     , uint8_t rdp_neg_type
-                     , uint8_t rdp_neg_flags
-                     , uint32_t rdp_neg_code)
-    {
-
-        stream.out_uint8(0x03); // version 3
-        stream.out_uint8(0x00);
-        uint16_t offset_tpkt_len = stream.get_offset(0);
-        stream.out_uint16_be(0); // 11 bytes + extension tpkt length
-
-        uint16_t offset_LI = stream.get_offset(0);
-        stream.out_uint8(6); // LI = TPDU header length
-
-        stream.out_uint8(X224::CR_TPDU); // CR_TPDU code
-        stream.out_uint16_be(0x0000); // DST-REF
-        stream.out_uint16_be(0x0000); // SRC-REF
-        stream.out_uint8(0x00); // CLASS OPTION
-        
-        size_t cookie_len = strlen(cookie);
-        if (cookie_len){
-            stream.out_copy_bytes(cookie, cookie_len);
-        }
-        if (rdp_neg_type){
-            stream.out_uint8(rdp_neg_type);
-            stream.out_uint8(rdp_neg_flags);
-            stream.out_uint16_le(8);
-            stream.out_uint32_le(rdp_neg_code);
-        }
-
-        stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
-        stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
-        stream.end = stream.p;
-    }
-};
-
-// 2.2.1.2 Server X.224 Connection Confirm PDU
-// ===========================================
-
-// The X.224 Connection Confirm PDU is an RDP Connection Sequence PDU sent from
-// server to client during the Connection Initiation phase (see section
-// 1.3.1.1). It is sent as a response to the X.224 Connection Request PDU
-// (section 2.2.1.1).
-
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-// x224Ccf (7 bytes): An X.224 Class 0 Connection Confirm TPDU, as specified in
-// [X224] section 13.4.
-
-//    Class 0 x224 TPDU
-//    -----------------
-//                                                       +--------+
-//                        +----+-----+---------+---------+ CLASS  |
-//                        | LI |     | DST-REF | SRC-REF | OPTION |
-//               +--------+----+-----+---------+---------+--------+
-//               | OFFSET | 4  |  5  |  6   7  |  8   9  |   10   |
-//    +----------+--------+----+-----+---------+---------+--------+
-//    | Connection Confirm|    |     |         |         |        |
-//    | CC_TPDU 1101 xxxx | 06 |  D0 |  00  00 |  00  00 |   00   |
-//    +-------------------+----+-----+---------+---------+--------+
-
-
-// rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1)
-// structure or an optional RDP Negotiation Failure (section 2.2.1.2.2)
-// structure. The length of the negotiation structure is included in the X.224
-// Connection Confirm Length Indicator field.
-
-// 2.2.1.2.1 RDP Negotiation Response (RDP_NEG_RSP)
-// ================================================
-
-// The RDP Negotiation Response structure is used by a server to inform the
-// client of the security protocol which it has selected to use for the
-// connection.
-
-// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
-// field MUST be set to 0x02 (TYPE_RDP_NEG_RSP) to indicate that the packet is
-// a Negotiation Response.
-
-// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags.
-
-// +-------------------------------------+-------------------------------------+
-// | 0x01 EXTENDED_CLIENT_DATA_SUPPORTED | The server supports Extended Client |
-// |                                     | Data Blocks in the GCC Conference   |
-// |                                     | Create Request user data (section   |
-// |                                     | 2.2.1.3).                           |
-// +-------------------------------------+-------------------------------------+
-
-// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This field MUST be set to 0x0008 (8 bytes)
-
-// selectedProtocol (4 bytes): A 32-bit, unsigned integer. Field indicating the selected security protocol.
-
-// +----------------------------+----------------------------------------------+
-// | 0x00000000 PROTOCOL_RDP    | Standard RDP Security (section 5.3)          |
-// +----------------------------+----------------------------------------------+
-// | 0x00000001 PROTOCOL_SSL    | TLS 1.0 (section 5.4.5.1)                    |
-// +----------------------------+----------------------------------------------+
-// | 0x00000002 PROTOCOL_HYBRID | CredSSP (section 5.4.5.2)                    |
-// +----------------------------+----------------------------------------------+
-
-
-// 2.2.1.2.2 RDP Negotiation Failure (RDP_NEG_FAILURE)
-// ===================================================
-
-// The RDP Negotiation Failure structure is used by a server to inform the
-// client of a failure that has occurred while preparing security for the
-// connection.
-
-// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
-// field MUST be set to 0x03 (TYPE_RDP_NEG_FAILURE) to indicate that the packet
-// is a Negotiation Failure.
-
-// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags. There
-// are currently no defined flags so the field MUST be set to 0x00.
-
-// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This
-// field MUST be set to 0x0008 (8 bytes).
-
-// failureCode (4 bytes): A 32-bit, unsigned integer. Field containing the
-// failure code.
-
-// +--------------------------------------+------------------------------------+
-// | 0x00000001 SSL_REQUIRED_BY_SERVER    | The server requires that the       |
-// |                                      | client support Enhanced RDP        |
-// |                                      | Security (section 5.4) with either |
-// |                                      | TLS 1.0 (section 5.4.5.1) or       |
-// |                                      | CredSSP (section 5.4.5.2). If only |
-// |                                      | CredSSP was requested then the     |
-// |                                      | server only supports TLS.          |
-// +--------------------------------------+------------------------------------+
-// | 0x00000002 SSL_NOT_ALLOWED_BY_SERVER | The server is configured to only   |
-// |                                      | use Standard RDP Security          |
-// |                                      | mechanisms (section 5.3) and does  |
-// |                                      | not support any External Security  |
-// |                                      | Protocols (section 5.4.5).         |
-// +--------------------------------------+------------------------------------+
-// | 0x00000003 SSL_CERT_NOT_ON_SERVER    | The server does not possess a valid|
-// |                                      | authentication certificate and     |
-// |                                      | cannot initialize the External     |
-// |                                      | Security Protocol Provider         |
-// |                                      | (section 5.4.5).                   |
-// +--------------------------------------+------------------------------------+
-// | 0x00000004 INCONSISTENT_FLAGS        | The list of requested security     |
-// |                                      | protocols is not consistent with   |
-// |                                      | the current security protocol in   |
-// |                                      | effect. This error is only possible|
-// |                                      | when the Direct Approach (see      |
-// |                                      | sections 5.4.2.2 and 1.3.1.2) is   |
-// |                                      | used and an External Security      |
-// |                                      | Protocol (section 5.4.5) is already|
-// |                                      | being used.                        |
-// +--------------------------------------+------------------------------------+
-// | 0x00000005 HYBRID_REQUIRED_BY_SERVER | The server requires that the client|
-// |                                      | support Enhanced RDP Security      |
-// |                                      | (section 5.4) with CredSSP (section|
-// |                                      | 5.4.5.2).                          |
-// +--------------------------------------+------------------------------------+
-
-
-struct X224_CC_TPDU_Recv
-{
-    Stream & stream;
-    size_t payload_offset;
-
-    uint32_t verbose;
-
-    struct Tpkt
-    {
-        uint8_t version;
-        uint16_t len;
-    } tpkt;
-
-    struct TPDUHeader
-    {
-        uint8_t LI;
-        uint8_t code;
-
-        uint16_t dst_ref;
-        uint16_t src_ref;
-        uint8_t class_option;
-    } tpdu_hdr;
-
-    uint8_t rdp_neg_type;
-    uint8_t rdp_neg_flags;
-    uint16_t rdp_neg_length;
-    uint32_t rdp_neg_code; // selected_protocol or failure_code
-
-    enum {
-        TPKT_HEADER_LEN = 4
-    };
-
-    enum {
-        RDP_NEG_REQ = 1,
-        RDP_NEG_RESP = 2,
-        RDP_NEG_FAILURE = 3
-    };
-
-    enum {
-        RDP_NEG_PROTOCOL_RDP    = 0,
-        RDP_NEG_PROTOCOL_TLS    = 1,
-        RDP_NEG_PROTOCOL_HYBRID = 2,
-    };
-
-    // CONSTRUCTOR
-    //==============================================================================
-    X224_CC_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-    //==============================================================================
-    : stream(stream)
-    , verbose(verbose)
-    {
-        t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
-        this->stream.p = this->stream.data;
-
-        // TPKT
-        this->tpkt.version = stream.in_uint8();
-        stream.in_skip_bytes(1);
-        this->tpkt.len = stream.in_uint16_be();
-        if (this->tpkt.len != length){
-            LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
-                this->tpkt.len, length);
-            throw Error(ERR_X224);
-        }
-
-        // TPDU
-        this->tpdu_hdr.LI = stream.in_uint8();
-        this->tpdu_hdr.code = stream.in_uint8();
-
-        if (!this->tpdu_hdr.code == X224RecvFactory::CC_TPDU){
-            LOG(LOG_ERR, "Unexpected TPDU opcode, expected CC_TPDU, got %u", 
-                this->tpdu_hdr.code);
-            throw Error(ERR_X224);
-        }
-
-        this->tpdu_hdr.dst_ref = stream.in_uint16_le();
-        this->tpdu_hdr.src_ref = stream.in_uint16_le();
-        this->tpdu_hdr.class_option = stream.in_uint8();
-
-        // extended negotiation header
-        this->rdp_neg_type = 0;
-
-        uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
-        if (this->stream.end - this->stream.p >= 8){
-            this->rdp_neg_type = this->stream.in_uint8();
-
-            if ((this->rdp_neg_type != RDP_NEG_FAILURE)
-            &&  (this->rdp_neg_type != RDP_NEG_RESP)){
-                LOG(LOG_ERR, "X224:RDP_NEG_RESP or X224:RDP_NEG_FAILURE Expected, got LI=%u %x %x %x %x",
-                    this->tpdu_hdr.LI,
-                    this->rdp_neg_type,
-                    this->rdp_neg_flags,
-                    this->rdp_neg_length,   
-                    this->rdp_neg_code);
-                throw Error(ERR_X224);
-            }
-
-            if (this->verbose){
-                LOG(LOG_INFO, "Found RDP Negotiation %s Structure", 
-                    (this->rdp_neg_type == RDP_NEG_RESP)?"Response":"Failure");
-            }
-
-            this->rdp_neg_flags = this->stream.in_uint8();
-            this->rdp_neg_length = this->stream.in_uint16_le();
-            this->rdp_neg_code = this->stream.in_uint32_le();
-
-            switch (this->rdp_neg_type){
-            case RDP_NEG_RESP:
                 switch (this->rdp_neg_code){
-                    case RDP_NEG_PROTOCOL_RDP:
+                    case X224::RDP_NEG_PROTOCOL_RDP:
                         LOG(LOG_INFO, "PROTOCOL RDP");
                         break;
-                    case RDP_NEG_PROTOCOL_TLS:
+                    case X224::RDP_NEG_PROTOCOL_TLS:
                         LOG(LOG_INFO, "PROTOCOL TLS 1.0");
                         break;
-                    case RDP_NEG_PROTOCOL_HYBRID:
+                    case X224::RDP_NEG_PROTOCOL_HYBRID:
                         LOG(LOG_INFO, "PROTOCOL HYBRID");
                         break;
-                    default:
-                        LOG(LOG_INFO, "Unknown protocol code %u", this->rdp_neg_code);
-                        break;
                 }
-                break;
-            case RDP_NEG_FAILURE:
-                switch (this->rdp_neg_code){
-                    case 1:
-                        LOG(LOG_INFO, "SSL_REQUIRED_BY_SERVER");
-                        break;
-                    case 2:
-                        LOG(LOG_INFO, "SSL_NOT_ALLOWED_BY_SERVER");
-                        break;
-                    case 3:
-                        LOG(LOG_INFO, "SSL_CERT_NOT_ON_SERVER");
-                        break;
-                    case 4:
-                        LOG(LOG_INFO, "INCONSISTENT_FLAGS");
-                        break;
-                    case 5:
-                        LOG(LOG_INFO, "HYBRID_REQUIRED_BY_SERVER");
-                        break;
-                    default:
-                        LOG(LOG_INFO, "Unknown failure code %u", this->rdp_neg_code);
-                        break;
-                }
-                break;
-            default:
-                break;
             }
-        }
-        if (end_of_header != this->stream.p){
-            LOG(LOG_ERR, "CC TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
-            throw Error(ERR_X224);
-        }
-        stream.p = end_of_header;
-        this->payload_offset = this->stream.get_offset(0);
-    }
 
-    size_t get_payload(SubStream & s)
-    {
-        s.reset(this->stream, payload_offset);
-        return this->stream.end - this->stream.data - this->payload_offset;
-    }
-}; // END CLASS X224_CC_TPDU_Recv
-
-struct X224_CC_TPDU_Send
-{
-     X224_CC_TPDU_Send( Stream & stream
-                     , uint8_t rdp_neg_type
-                     , uint8_t rdp_neg_flags
-                     , uint32_t rdp_neg_code)
-    {
-
-        stream.out_uint8(0x03); // version 3
-        stream.out_uint8(0x00);
-        uint16_t offset_tpkt_len = stream.get_offset(0);
-        stream.out_uint16_be(0); // 11 bytes + extension tpkt length
-
-        uint16_t offset_LI = stream.get_offset(0);
-        stream.out_uint8(6); // LI = TPDU header length
-
-        stream.out_uint8(X224::CC_TPDU); // CC_TPDU code
-        stream.out_uint16_be(0x0000); // DST-REF
-        stream.out_uint16_be(0x0000); // SRC-REF
-        stream.out_uint8(0x00); // CLASS OPTION
-        
-        if (rdp_neg_type){
-            stream.out_uint8(rdp_neg_type);
-            stream.out_uint8(rdp_neg_flags);
-            stream.out_uint16_le(8);
-            stream.out_uint32_le(rdp_neg_code);
-        }
-
-        stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
-        stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
-        stream.end = stream.p;
-    }
-};
-
-
-//    Class 0 x224 TPDU
-//    -----------------
-
-//                        +----+-----+---------+---------+---------------------------+
-//                        | LI |     | DST-REF | SRC-REF | REASON                    |
-//               +--------+----+-----+---------+---------+---------------------------+
-//               | OFFSET | 4  |  5  |  6   7  |  8   9  |    10                     |
-//    +-------------------+----+-----+---------+---------+---------------------------+
-//    | Disconnect Request|    |     |         |         | 00 = NOT SPECIFIED        |
-//    | DR_TPDU 1000 0000 | 06 |  80 |  00  00 |  00  00 | 01 = CONGESTION           |
-//    |                   |    |     |         |         | 02 = SESSION NOT ATTACHED |
-//    |                   |    |     |         |         | 03 = ADDRESS UNKNOWN      |
-//    +-------------------+----+-----+---------+---------+---------------------------+
-
-struct X224_DR_TPDU_Recv
-{
-    Stream & stream;
-    size_t payload_offset;
-
-    uint32_t verbose;
-
-    struct Tpkt
-    {
-        uint8_t version;
-        uint16_t len;
-    } tpkt;
-
-    struct TPDUHeader
-    {
-        uint8_t LI;
-        uint8_t code;
-
-        uint16_t dst_ref;
-        uint16_t src_ref;
-        uint8_t reason;
-    } tpdu_hdr;
-
-    enum {
-        TPKT_HEADER_LEN = 4
-    };
-
-    enum {
-        REASON_NOT_SPECIFIED        = 0,
-        REASON_CONGESTION           = 1,
-        REASON_SESSION_NOT_ATTACHED = 2,
-        REASON_ADDRESS_UNKNOWN      = 3,
-    };
-
-    // CONSTRUCTOR
-    //==============================================================================
-    X224_DR_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-    //==============================================================================
-    : stream(stream)
-    , verbose(verbose)
-    {
-        t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
-        this->stream.p = this->stream.data;
-
-        // TPKT
-        this->tpkt.version = stream.in_uint8();
-        stream.in_skip_bytes(1);
-        this->tpkt.len = stream.in_uint16_be();
-        if (this->tpkt.len != length){
-            LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
-                this->tpkt.len, length);
-            throw Error(ERR_X224);
-        }
-
-        // TPDU
-        this->tpdu_hdr.LI = stream.in_uint8();
-        this->tpdu_hdr.code = stream.in_uint8();
-
-        if (!this->tpdu_hdr.code == X224RecvFactory::DR_TPDU){
-            LOG(LOG_ERR, "Unexpected TPDU opcode, expected DR_TPDU, got %u", 
-                this->tpdu_hdr.code);
-            throw Error(ERR_X224);
-        }
-
-        this->tpdu_hdr.dst_ref = stream.in_uint16_le();
-        this->tpdu_hdr.src_ref = stream.in_uint16_le();
-        this->tpdu_hdr.reason = stream.in_uint8();
-
-        uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
-        if (end_of_header != this->stream.p){
-            LOG(LOG_ERR, "DR TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
-            throw Error(ERR_X224);
-        }
-        stream.p = end_of_header;
-        this->payload_offset = this->stream.get_offset(0);
-    }
-
-    size_t get_payload(SubStream & s)
-    {
-        s.reset(this->stream, payload_offset);
-        return this->stream.end - this->stream.data - this->payload_offset;
-    }
-}; // END CLASS X224_DR_TPDU_Recv
-
-
-struct X224_DR_TPDU_Send
-{
-     X224_DR_TPDU_Send( Stream & stream, uint8_t reason)
-    {
-
-        stream.out_uint8(0x03); // version 3
-        stream.out_uint8(0x00);
-        uint16_t offset_tpkt_len = stream.get_offset(0);
-        stream.out_uint16_be(0); // 11 bytes + extension tpkt length
-
-        uint16_t offset_LI = stream.get_offset(0);
-        stream.out_uint8(6); // LI = TPDU header length
-
-        stream.out_uint8(X224::DR_TPDU);
-        stream.out_uint16_be(0x0000); // DST-REF
-        stream.out_uint16_be(0x0000); // SRC-REF
-        stream.out_uint8(reason);
-        
-        stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
-        stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
-        stream.end = stream.p;
-    }
-};
-
-
-//    Class 0 x224 TPDU
-//    -----------------
-
-//                                                                             +----------------------------------------------------+
-//                                                                             |           Variable Part                            |
-//                        +----+-----+---------+-------------------------------+-----------+-----+----------------------------------+
-//                        |    |     |         |                               | Invalid   |     | Rejected TPDU Header up to octet |
-//                        | LI |     | DST-REF |         REJECT CAUSE          |  TPDU     | VL  | which caused rejection           |
-//                        |    |     |         |                               |           |     | (mandatory in class 0)           |
-//               +--------+----+-----+---------+-------------------------------+-----------+-----+----------------------------------+
-//               | OFFSET | 4  |  5  |  6   7  |                8              |    9      |  10 | 11 ...                           |
-//    +-------------------+----+-----+---------+---------+---------------------+-----------+-----+----------------------------------+
-//    | TPDU Error        |    |     |         |  00 = Reason not specified    |           |     |                                  |
-//    | ER_TPDU 0111 0000 | 04 |  70 |  00  00 |  01 = Invalid parameter code  |    C1     |  v  | ?? ?? ?? ?? ??                   |
-//    |                   |+2+v|     |         |  02 = Invalid TPDU type       | 1100 0001 |     | ~~~~~~~~~~~~~~                   |
-//    |                   |    |     |         |  03 = Invalid Parameter Value |           |     |    v bytes                       |
-//    +-------------------+----+-----+---------+-------------------------------+-----------+-----+----------------------------------+
-
-struct X224_ER_TPDU_Recv
-{
-    Stream & stream;
-    size_t payload_offset;
-
-    uint32_t verbose;
-
-    struct Tpkt
-    {
-        uint8_t version;
-        uint16_t len;
-    } tpkt;
-
-    struct TPDUHeader
-    {
-        uint8_t LI;
-        uint8_t code;
-
-        uint16_t dst_ref;
-        uint8_t reject_cause;
-        uint8_t invalid_tpdu_var;
-        uint8_t invalid_tpdu_vl;
-        uint8_t invalid[256];
-    } tpdu_hdr;
-
-    enum {
-        TPKT_HEADER_LEN = 4
-    };
-
-    enum {
-        REASON_NOT_SPECIFIED            = 0,
-        REASON_INVALID_PARAMETER_CODE   = 1,
-        REASON_INVALID_TPDU_TYPE        = 2,
-        REASON_INVALID_PARAMETER_VALUE  = 3,
-    };
-
-    // CONSTRUCTOR
-    //==============================================================================
-    X224_ER_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-    //==============================================================================
-    : stream(stream)
-    , verbose(verbose)
-    {
-        t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
-        this->stream.p = this->stream.data;
-
-        // TPKT
-        this->tpkt.version = stream.in_uint8();
-        stream.in_skip_bytes(1);
-        this->tpkt.len = stream.in_uint16_be();
-        if (this->tpkt.len != length){
-            LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
-                this->tpkt.len, length);
-            throw Error(ERR_X224);
-        }
-
-        // TPDU
-        this->tpdu_hdr.LI = stream.in_uint8();
-        this->tpdu_hdr.code = stream.in_uint8();
-
-        if (!this->tpdu_hdr.code == X224RecvFactory::ER_TPDU){
-            LOG(LOG_ERR, "Unexpected TPDU opcode, expected ER_TPDU, got %u", 
-                this->tpdu_hdr.code);
-            throw Error(ERR_X224);
-        }
-
-        this->tpdu_hdr.dst_ref = stream.in_uint16_le();
-        this->tpdu_hdr.reject_cause = stream.in_uint8();
-
-        uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
-        if (end_of_header - this->stream.p >= 2){
-            this->tpdu_hdr.invalid_tpdu_var = stream.in_uint8();
-            if (this->tpdu_hdr.invalid_tpdu_var != 0xC1){
-                LOG(LOG_ERR, "Unexpected ER TPDU, variable code, expected C1 (invalid TPDU details), got %x", 
-                    this->tpdu_hdr.invalid_tpdu_var);
+            if (end_of_header != this->stream.p){
+                LOG(LOG_ERR, "CR TPDU header should be terminated, got trailing data %u", end_of_header - this->stream.p);
+                hexdump_c(this->stream.data, this->stream.end - this->stream.data);
                 throw Error(ERR_X224);
             }
-            this->tpdu_hdr.invalid_tpdu_vl = stream.in_uint8();
-            if (this->tpdu_hdr.invalid_tpdu_vl > this->tpdu_hdr.LI - 6){
-                LOG(LOG_ERR, "Invalid TPDU details too large, max=%u got %x", 
-                    this->tpdu_hdr.LI - 6, this->tpdu_hdr.invalid_tpdu_vl);
-                throw Error(ERR_X224);
-            }
-            this->stream.in_copy_bytes(this->tpdu_hdr.invalid, this->tpdu_hdr.invalid_tpdu_vl);
-            if (this->tpdu_hdr.LI - 6 - this->tpdu_hdr.invalid_tpdu_vl != 0){
-                LOG(LOG_ERR, "Trailing variable data in ER_TPDU, %u bytes", 
-                    this->tpdu_hdr.LI - 6 - this->tpdu_hdr.invalid_tpdu_vl);
-                throw Error(ERR_X224);
-            }
+
+            stream.p = end_of_header;
+            this->payload_offset = this->stream.get_offset(0);
+        }
+
+        size_t get_payload(SubStream & s)
+        {
+            s.reset(this->stream, payload_offset);
+            return this->stream.end - this->stream.data - this->payload_offset;
+        }
+    }; // END CLASS CR_TPDU_Recv
+
+
+    struct CR_TPDU_Send
+    {
+         CR_TPDU_Send( Stream & stream
+                         , const char * cookie
+                         , uint8_t rdp_neg_type
+                         , uint8_t rdp_neg_flags
+                         , uint32_t rdp_neg_code)
+        {
+
+            stream.out_uint8(0x03); // version 3
+            stream.out_uint8(0x00);
+            uint16_t offset_tpkt_len = stream.get_offset(0);
+            stream.out_uint16_be(0); // 11 bytes + extension tpkt length
+
+            uint16_t offset_LI = stream.get_offset(0);
+            stream.out_uint8(6); // LI = TPDU header length
+
+            stream.out_uint8(X224::CR_TPDU); // CR_TPDU code
+            stream.out_uint16_be(0x0000); // DST-REF
+            stream.out_uint16_be(0x0000); // SRC-REF
+            stream.out_uint8(0x00); // CLASS OPTION
             
+            size_t cookie_len = strlen(cookie);
+            if (cookie_len){
+                stream.out_copy_bytes(cookie, cookie_len);
+            }
+            if (rdp_neg_type){
+                stream.out_uint8(rdp_neg_type);
+                stream.out_uint8(rdp_neg_flags);
+                stream.out_uint16_le(8);
+                stream.out_uint32_le(rdp_neg_code);
+            }
+
+            stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
+            stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
+            stream.end = stream.p;
         }
-        if (end_of_header != this->stream.p){
-            LOG(LOG_ERR, "ER TPDU header should be terminated, got trailing data %u", end_of_header - this->stream.p);
-            throw Error(ERR_X224);
-        }
-        stream.p = end_of_header;
-        this->payload_offset = this->stream.get_offset(0);
-    }
-
-    size_t get_payload(SubStream & s)
-    {
-        s.reset(this->stream, payload_offset);
-        return this->stream.end - this->stream.data - this->payload_offset;
-    }
-}; // END CLASS X224_ER_TPDU_Recv
-
-struct X224_ER_TPDU_Send
-{
-     X224_ER_TPDU_Send(Stream & stream, uint8_t cause, uint8_t vl, uint8_t * invalid)
-    {
-
-        stream.out_uint8(0x03); // version 3
-        stream.out_uint8(0x00);
-        uint16_t offset_tpkt_len = stream.get_offset(0);
-        stream.out_uint16_be(0); // 11 bytes + extension tpkt length
-
-        uint16_t offset_LI = stream.get_offset(0);
-        stream.out_uint8(6); // LI = TPDU header length
-
-        stream.out_uint8(X224::ER_TPDU);
-        stream.out_uint16_be(0x0000); // DST-REF
-        stream.out_uint8(cause);
-
-        stream.out_uint8(0xC1);
-        stream.out_uint8(vl);
-        stream.out_copy_bytes(invalid, vl);
-
-        stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
-        stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
-        stream.end = stream.p;
-    }
-};
-
-
-//    Class 0 x224 TPDU
-//    -----------------
-
-//                        +----+-----+----------------+
-//                        | LI |     | EOT            |
-//               +--------+----+-----+----------------+
-//               | OFFSET | 4  |  5  |  6             |
-//    +----------+--------+----+-----+----------------+
-//    | Data              |    |     | 80 = EOT       |
-//    | DT_TPDU 1111 0000 | 02 |  F0 | 00 = MORE DATA |
-//    +-------------------+----+-----+----------------+
-
-struct X224_DT_TPDU_Recv
-{
-    Stream & stream;
-    size_t payload_offset;
-
-    uint32_t verbose;
-
-    struct Tpkt
-    {
-        uint8_t version;
-        uint16_t len;
-    } tpkt;
-
-    struct TPDUHeader
-    {
-        uint8_t LI;
-        uint8_t code;
-        uint8_t eot;
-    } tpdu_hdr;
-
-    enum {
-        TPKT_HEADER_LEN = 4
     };
 
-    enum {
-        EOT_MOR_DATA        = 0x00,
-        EOT_EOT             = 0x80
+    // 2.2.1.2 Server X.224 Connection Confirm PDU
+    // ===========================================
+
+    // The X.224 Connection Confirm PDU is an RDP Connection Sequence PDU sent from
+    // server to client during the Connection Initiation phase (see section
+    // 1.3.1.1). It is sent as a response to the X.224 Connection Request PDU
+    // (section 2.2.1.1).
+
+    // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+    // x224Ccf (7 bytes): An X.224 Class 0 Connection Confirm TPDU, as specified in
+    // [X224] section 13.4.
+
+    //    Class 0 x224 TPDU
+    //    -----------------
+    //                                                       +--------+
+    //                        +----+-----+---------+---------+ CLASS  |
+    //                        | LI |     | DST-REF | SRC-REF | OPTION |
+    //               +--------+----+-----+---------+---------+--------+
+    //               | OFFSET | 4  |  5  |  6   7  |  8   9  |   10   |
+    //    +----------+--------+----+-----+---------+---------+--------+
+    //    | Connection Confirm|    |     |         |         |        |
+    //    | CC_TPDU 1101 xxxx | 06 |  D0 |  00  00 |  00  00 |   00   |
+    //    +-------------------+----+-----+---------+---------+--------+
+
+
+    // rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1)
+    // structure or an optional RDP Negotiation Failure (section 2.2.1.2.2)
+    // structure. The length of the negotiation structure is included in the X.224
+    // Connection Confirm Length Indicator field.
+
+    // 2.2.1.2.1 RDP Negotiation Response (RDP_NEG_RSP)
+    // ================================================
+
+    // The RDP Negotiation Response structure is used by a server to inform the
+    // client of the security protocol which it has selected to use for the
+    // connection.
+
+    // type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
+    // field MUST be set to 0x02 (TYPE_RDP_NEG_RSP) to indicate that the packet is
+    // a Negotiation Response.
+
+    // flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags.
+
+    // +-------------------------------------+-------------------------------------+
+    // | 0x01 EXTENDED_CLIENT_DATA_SUPPORTED | The server supports Extended Client |
+    // |                                     | Data Blocks in the GCC Conference   |
+    // |                                     | Create Request user data (section   |
+    // |                                     | 2.2.1.3).                           |
+    // +-------------------------------------+-------------------------------------+
+
+    // length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This field MUST be set to 0x0008 (8 bytes)
+
+    // selectedProtocol (4 bytes): A 32-bit, unsigned integer. Field indicating the selected security protocol.
+
+    // +----------------------------+----------------------------------------------+
+    // | 0x00000000 PROTOCOL_RDP    | Standard RDP Security (section 5.3)          |
+    // +----------------------------+----------------------------------------------+
+    // | 0x00000001 PROTOCOL_SSL    | TLS 1.0 (section 5.4.5.1)                    |
+    // +----------------------------+----------------------------------------------+
+    // | 0x00000002 PROTOCOL_HYBRID | CredSSP (section 5.4.5.2)                    |
+    // +----------------------------+----------------------------------------------+
+
+
+    // 2.2.1.2.2 RDP Negotiation Failure (RDP_NEG_FAILURE)
+    // ===================================================
+
+    // The RDP Negotiation Failure structure is used by a server to inform the
+    // client of a failure that has occurred while preparing security for the
+    // connection.
+
+    // type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
+    // field MUST be set to 0x03 (TYPE_RDP_NEG_FAILURE) to indicate that the packet
+    // is a Negotiation Failure.
+
+    // flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags. There
+    // are currently no defined flags so the field MUST be set to 0x00.
+
+    // length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This
+    // field MUST be set to 0x0008 (8 bytes).
+
+    // failureCode (4 bytes): A 32-bit, unsigned integer. Field containing the
+    // failure code.
+
+    // +--------------------------------------+------------------------------------+
+    // | 0x00000001 SSL_REQUIRED_BY_SERVER    | The server requires that the       |
+    // |                                      | client support Enhanced RDP        |
+    // |                                      | Security (section 5.4) with either |
+    // |                                      | TLS 1.0 (section 5.4.5.1) or       |
+    // |                                      | CredSSP (section 5.4.5.2). If only |
+    // |                                      | CredSSP was requested then the     |
+    // |                                      | server only supports TLS.          |
+    // +--------------------------------------+------------------------------------+
+    // | 0x00000002 SSL_NOT_ALLOWED_BY_SERVER | The server is configured to only   |
+    // |                                      | use Standard RDP Security          |
+    // |                                      | mechanisms (section 5.3) and does  |
+    // |                                      | not support any External Security  |
+    // |                                      | Protocols (section 5.4.5).         |
+    // +--------------------------------------+------------------------------------+
+    // | 0x00000003 SSL_CERT_NOT_ON_SERVER    | The server does not possess a valid|
+    // |                                      | authentication certificate and     |
+    // |                                      | cannot initialize the External     |
+    // |                                      | Security Protocol Provider         |
+    // |                                      | (section 5.4.5).                   |
+    // +--------------------------------------+------------------------------------+
+    // | 0x00000004 INCONSISTENT_FLAGS        | The list of requested security     |
+    // |                                      | protocols is not consistent with   |
+    // |                                      | the current security protocol in   |
+    // |                                      | effect. This error is only possible|
+    // |                                      | when the Direct Approach (see      |
+    // |                                      | sections 5.4.2.2 and 1.3.1.2) is   |
+    // |                                      | used and an External Security      |
+    // |                                      | Protocol (section 5.4.5) is already|
+    // |                                      | being used.                        |
+    // +--------------------------------------+------------------------------------+
+    // | 0x00000005 HYBRID_REQUIRED_BY_SERVER | The server requires that the client|
+    // |                                      | support Enhanced RDP Security      |
+    // |                                      | (section 5.4) with CredSSP (section|
+    // |                                      | 5.4.5.2).                          |
+    // +--------------------------------------+------------------------------------+
+
+
+    struct CC_TPDU_Recv : public Recv
+    {
+        struct TPDUHeader
+        {
+            uint8_t LI;
+            uint8_t code;
+
+            uint16_t dst_ref;
+            uint16_t src_ref;
+            uint8_t class_option;
+        } tpdu_hdr;
+
+        uint8_t rdp_neg_type;
+        uint8_t rdp_neg_flags;
+        uint16_t rdp_neg_length;
+        uint32_t rdp_neg_code; // selected_protocol or failure_code
+
+        // CONSTRUCTOR
+        //==============================================================================
+        CC_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
+        //==============================================================================
+        : Recv(t, stream, length, verbose)
+        {
+            this->tpdu_hdr.LI = stream.in_uint8();
+            this->tpdu_hdr.code = stream.in_uint8();
+
+            if (!this->tpdu_hdr.code == X224::CC_TPDU){
+                LOG(LOG_ERR, "Unexpected TPDU opcode, expected CC_TPDU, got %u", 
+                    this->tpdu_hdr.code);
+                throw Error(ERR_X224);
+            }
+
+            this->tpdu_hdr.dst_ref = stream.in_uint16_le();
+            this->tpdu_hdr.src_ref = stream.in_uint16_le();
+            this->tpdu_hdr.class_option = stream.in_uint8();
+
+            // extended negotiation header
+            this->rdp_neg_type = 0;
+
+            uint8_t * end_of_header = this->stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            if (this->stream.end - this->stream.p >= 8){
+                this->rdp_neg_type = this->stream.in_uint8();
+
+                if ((this->rdp_neg_type != X224::RDP_NEG_FAILURE)
+                &&  (this->rdp_neg_type != X224::RDP_NEG_RESP)){
+                    LOG(LOG_ERR, "X224:RDP_NEG_RESP or X224:RDP_NEG_FAILURE Expected, got LI=%u %x %x %x %x",
+                        this->tpdu_hdr.LI,
+                        this->rdp_neg_type,
+                        this->rdp_neg_flags,
+                        this->rdp_neg_length,   
+                        this->rdp_neg_code);
+                    throw Error(ERR_X224);
+                }
+
+                if (this->verbose){
+                    LOG(LOG_INFO, "Found RDP Negotiation %s Structure", 
+                        (this->rdp_neg_type == X224::RDP_NEG_RESP)?"Response":"Failure");
+                }
+
+                this->rdp_neg_flags = this->stream.in_uint8();
+                this->rdp_neg_length = this->stream.in_uint16_le();
+                this->rdp_neg_code = this->stream.in_uint32_le();
+
+                switch (this->rdp_neg_type){
+                case X224::RDP_NEG_RESP:
+                    switch (this->rdp_neg_code){
+                        case X224::RDP_NEG_PROTOCOL_RDP:
+                            LOG(LOG_INFO, "PROTOCOL RDP");
+                            break;
+                        case X224::RDP_NEG_PROTOCOL_TLS:
+                            LOG(LOG_INFO, "PROTOCOL TLS 1.0");
+                            break;
+                        case X224::RDP_NEG_PROTOCOL_HYBRID:
+                            LOG(LOG_INFO, "PROTOCOL HYBRID");
+                            break;
+                        default:
+                            LOG(LOG_INFO, "Unknown protocol code %u", this->rdp_neg_code);
+                            break;
+                    }
+                    break;
+                case X224::RDP_NEG_FAILURE:
+                    switch (this->rdp_neg_code){
+                        case 1:
+                            LOG(LOG_INFO, "SSL_REQUIRED_BY_SERVER");
+                            break;
+                        case 2:
+                            LOG(LOG_INFO, "SSL_NOT_ALLOWED_BY_SERVER");
+                            break;
+                        case 3:
+                            LOG(LOG_INFO, "SSL_CERT_NOT_ON_SERVER");
+                            break;
+                        case 4:
+                            LOG(LOG_INFO, "INCONSISTENT_FLAGS");
+                            break;
+                        case 5:
+                            LOG(LOG_INFO, "HYBRID_REQUIRED_BY_SERVER");
+                            break;
+                        default:
+                            LOG(LOG_INFO, "Unknown failure code %u", this->rdp_neg_code);
+                            break;
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+            if (end_of_header != this->stream.p){
+                LOG(LOG_ERR, "CC TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
+                throw Error(ERR_X224);
+            }
+            stream.p = end_of_header;
+            this->payload_offset = this->stream.get_offset(0);
+        }
+
+        size_t get_payload(SubStream & s)
+        {
+            s.reset(this->stream, payload_offset);
+            return this->stream.end - this->stream.data - this->payload_offset;
+        }
+    }; // END CLASS CC_TPDU_Recv
+
+    struct CC_TPDU_Send
+    {
+         CC_TPDU_Send( Stream & stream
+                         , uint8_t rdp_neg_type
+                         , uint8_t rdp_neg_flags
+                         , uint32_t rdp_neg_code)
+        {
+
+            stream.out_uint8(0x03); // version 3
+            stream.out_uint8(0x00);
+            uint16_t offset_tpkt_len = stream.get_offset(0);
+            stream.out_uint16_be(0); // 11 bytes + extension tpkt length
+
+            uint16_t offset_LI = stream.get_offset(0);
+            stream.out_uint8(6); // LI = TPDU header length
+
+            stream.out_uint8(X224::CC_TPDU); // CC_TPDU code
+            stream.out_uint16_be(0x0000); // DST-REF
+            stream.out_uint16_be(0x0000); // SRC-REF
+            stream.out_uint8(0x00); // CLASS OPTION
+            
+            if (rdp_neg_type){
+                stream.out_uint8(rdp_neg_type);
+                stream.out_uint8(rdp_neg_flags);
+                stream.out_uint16_le(8);
+                stream.out_uint32_le(rdp_neg_code);
+            }
+
+            stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
+            stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
+            stream.end = stream.p;
+        }
     };
 
-    // CONSTRUCTOR
-    //==============================================================================
-    X224_DT_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-    //==============================================================================
-    : stream(stream)
-    , verbose(verbose)
+
+    //    Class 0 x224 TPDU
+    //    -----------------
+
+    //                        +----+-----+---------+---------+---------------------------+
+    //                        | LI |     | DST-REF | SRC-REF | REASON                    |
+    //               +--------+----+-----+---------+---------+---------------------------+
+    //               | OFFSET | 4  |  5  |  6   7  |  8   9  |    10                     |
+    //    +-------------------+----+-----+---------+---------+---------------------------+
+    //    | Disconnect Request|    |     |         |         | 00 = NOT SPECIFIED        |
+    //    | DR_TPDU 1000 0000 | 06 |  80 |  00  00 |  00  00 | 01 = CONGESTION           |
+    //    |                   |    |     |         |         | 02 = SESSION NOT ATTACHED |
+    //    |                   |    |     |         |         | 03 = ADDRESS UNKNOWN      |
+    //    +-------------------+----+-----+---------+---------+---------------------------+
+
+    struct DR_TPDU_Recv : public Recv
     {
-        t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
-        this->stream.p = this->stream.data;
+        struct TPDUHeader
+        {
+            uint8_t LI;
+            uint8_t code;
 
-        // TPKT
-        this->tpkt.version = stream.in_uint8();
-        stream.in_skip_bytes(1);
-        this->tpkt.len = stream.in_uint16_be();
-        if (this->tpkt.len != length){
-            LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
-                this->tpkt.len, length);
-            throw Error(ERR_X224);
+            uint16_t dst_ref;
+            uint16_t src_ref;
+            uint8_t reason;
+        } tpdu_hdr;
+
+        // CONSTRUCTOR
+        //==============================================================================
+        DR_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
+        //==============================================================================
+        : Recv(t, stream, length, verbose)
+        {
+            this->tpdu_hdr.LI = stream.in_uint8();
+            this->tpdu_hdr.code = stream.in_uint8();
+
+            if (!this->tpdu_hdr.code == X224::DR_TPDU){
+                LOG(LOG_ERR, "Unexpected TPDU opcode, expected DR_TPDU, got %u", 
+                    this->tpdu_hdr.code);
+                throw Error(ERR_X224);
+            }
+
+            this->tpdu_hdr.dst_ref = stream.in_uint16_le();
+            this->tpdu_hdr.src_ref = stream.in_uint16_le();
+            this->tpdu_hdr.reason = stream.in_uint8();
+
+            uint8_t * end_of_header = this->stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            if (end_of_header != this->stream.p){
+                LOG(LOG_ERR, "DR TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
+                throw Error(ERR_X224);
+            }
+            stream.p = end_of_header;
+            this->payload_offset = this->stream.get_offset(0);
         }
 
-        // TPDU
-        this->tpdu_hdr.LI = stream.in_uint8();
-
-        this->tpdu_hdr.code = stream.in_uint8();
-        if (!this->tpdu_hdr.code == X224RecvFactory::DT_TPDU){
-            LOG(LOG_ERR, "Unexpected TPDU opcode, expected DT_TPDU, got %u", 
-                this->tpdu_hdr.code);
-            throw Error(ERR_X224);
+        size_t get_payload(SubStream & s)
+        {
+            s.reset(this->stream, payload_offset);
+            return this->stream.end - this->stream.data - this->payload_offset;
         }
+    }; // END CLASS DR_TPDU_Recv
 
-        this->tpdu_hdr.eot = stream.in_uint8();
-        if (this->tpdu_hdr.eot != EOT_EOT){
-            LOG(LOG_ERR, "DT TPDU should say EOT, got=%x", this->tpdu_hdr.eot);
-            throw Error(ERR_X224);
-        }
 
-        uint8_t * end_of_header = this->stream.data + TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
-        if (end_of_header != this->stream.p){
-            LOG(LOG_ERR, "DT TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
-            throw Error(ERR_X224);
-        }
-        stream.p = end_of_header;
-        this->payload_offset = this->stream.get_offset(0);
-    }
-
-    size_t get_payload(SubStream & s)
+    struct DR_TPDU_Send
     {
-        s.reset(this->stream, payload_offset);
-        return this->stream.end - this->stream.data - this->payload_offset;
-    }
-}; // END CLASS X224_DT_TPDU_Recv
+         DR_TPDU_Send( Stream & stream, uint8_t reason)
+        {
+
+            stream.out_uint8(0x03); // version 3
+            stream.out_uint8(0x00);
+            uint16_t offset_tpkt_len = stream.get_offset(0);
+            stream.out_uint16_be(0); // 11 bytes + extension tpkt length
+
+            uint16_t offset_LI = stream.get_offset(0);
+            stream.out_uint8(6); // LI = TPDU header length
+
+            stream.out_uint8(X224::DR_TPDU);
+            stream.out_uint16_be(0x0000); // DST-REF
+            stream.out_uint16_be(0x0000); // SRC-REF
+            stream.out_uint8(reason);
+            
+            stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
+            stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
+            stream.end = stream.p;
+        }
+    };
+
+
+    //    Class 0 x224 TPDU
+    //    -----------------
+
+    //                                                                             +----------------------------------------------------+
+    //                                                                             |           Variable Part                            |
+    //                        +----+-----+---------+-------------------------------+-----------+-----+----------------------------------+
+    //                        |    |     |         |                               | Invalid   |     | Rejected TPDU Header up to octet |
+    //                        | LI |     | DST-REF |         REJECT CAUSE          |  TPDU     | VL  | which caused rejection           |
+    //                        |    |     |         |                               |           |     | (mandatory in class 0)           |
+    //               +--------+----+-----+---------+-------------------------------+-----------+-----+----------------------------------+
+    //               | OFFSET | 4  |  5  |  6   7  |                8              |    9      |  10 | 11 ...                           |
+    //    +-------------------+----+-----+---------+---------+---------------------+-----------+-----+----------------------------------+
+    //    | TPDU Error        |    |     |         |  00 = Reason not specified    |           |     |                                  |
+    //    | ER_TPDU 0111 0000 | 04 |  70 |  00  00 |  01 = Invalid parameter code  |    C1     |  v  | ?? ?? ?? ?? ??                   |
+    //    |                   |+2+v|     |         |  02 = Invalid TPDU type       | 1100 0001 |     | ~~~~~~~~~~~~~~                   |
+    //    |                   |    |     |         |  03 = Invalid Parameter Value |           |     |    v bytes                       |
+    //    +-------------------+----+-----+---------+-------------------------------+-----------+-----+----------------------------------+
+
+    struct ER_TPDU_Recv  : public Recv
+    {
+        struct TPDUHeader
+        {
+            uint8_t LI;
+            uint8_t code;
+
+            uint16_t dst_ref;
+            uint8_t reject_cause;
+            uint8_t invalid_tpdu_var;
+            uint8_t invalid_tpdu_vl;
+            uint8_t invalid[256];
+        } tpdu_hdr;
+
+        // CONSTRUCTOR
+        //==============================================================================
+        ER_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
+        //==============================================================================
+        : Recv(t, stream, length, verbose)
+        {
+            // TPDU
+            this->tpdu_hdr.LI = stream.in_uint8();
+            this->tpdu_hdr.code = stream.in_uint8();
+
+            if (!this->tpdu_hdr.code == X224::ER_TPDU){
+                LOG(LOG_ERR, "Unexpected TPDU opcode, expected ER_TPDU, got %u", 
+                    this->tpdu_hdr.code);
+                throw Error(ERR_X224);
+            }
+
+            this->tpdu_hdr.dst_ref = stream.in_uint16_le();
+            this->tpdu_hdr.reject_cause = stream.in_uint8();
+
+            uint8_t * end_of_header = this->stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            if (end_of_header - this->stream.p >= 2){
+                this->tpdu_hdr.invalid_tpdu_var = stream.in_uint8();
+                if (this->tpdu_hdr.invalid_tpdu_var != 0xC1){
+                    LOG(LOG_ERR, "Unexpected ER TPDU, variable code, expected C1 (invalid TPDU details), got %x", 
+                        this->tpdu_hdr.invalid_tpdu_var);
+                    throw Error(ERR_X224);
+                }
+                this->tpdu_hdr.invalid_tpdu_vl = stream.in_uint8();
+                if (this->tpdu_hdr.invalid_tpdu_vl > this->tpdu_hdr.LI - 6){
+                    LOG(LOG_ERR, "Invalid TPDU details too large, max=%u got %x", 
+                        this->tpdu_hdr.LI - 6, this->tpdu_hdr.invalid_tpdu_vl);
+                    throw Error(ERR_X224);
+                }
+                this->stream.in_copy_bytes(this->tpdu_hdr.invalid, this->tpdu_hdr.invalid_tpdu_vl);
+                if (this->tpdu_hdr.LI - 6 - this->tpdu_hdr.invalid_tpdu_vl != 0){
+                    LOG(LOG_ERR, "Trailing variable data in ER_TPDU, %u bytes", 
+                        this->tpdu_hdr.LI - 6 - this->tpdu_hdr.invalid_tpdu_vl);
+                    throw Error(ERR_X224);
+                }
+                
+            }
+            if (end_of_header != this->stream.p){
+                LOG(LOG_ERR, "ER TPDU header should be terminated, got trailing data %u", end_of_header - this->stream.p);
+                throw Error(ERR_X224);
+            }
+            stream.p = end_of_header;
+            this->payload_offset = this->stream.get_offset(0);
+        }
+
+        size_t get_payload(SubStream & s)
+        {
+            s.reset(this->stream, payload_offset);
+            return this->stream.end - this->stream.data - this->payload_offset;
+        }
+    }; // END CLASS ER_TPDU_Recv
+
+    struct ER_TPDU_Send
+    {
+         ER_TPDU_Send(Stream & stream, uint8_t cause, uint8_t vl, uint8_t * invalid)
+        {
+
+            stream.out_uint8(0x03); // version 3
+            stream.out_uint8(0x00);
+            uint16_t offset_tpkt_len = stream.get_offset(0);
+            stream.out_uint16_be(0); // 11 bytes + extension tpkt length
+
+            uint16_t offset_LI = stream.get_offset(0);
+            stream.out_uint8(6); // LI = TPDU header length
+
+            stream.out_uint8(X224::ER_TPDU);
+            stream.out_uint16_be(0x0000); // DST-REF
+            stream.out_uint8(cause);
+
+            stream.out_uint8(0xC1);
+            stream.out_uint8(vl);
+            stream.out_copy_bytes(invalid, vl);
+
+            stream.set_out_uint16_be(stream.p - stream.data, offset_tpkt_len);
+            stream.set_out_uint8(stream.p - stream.data - 5, offset_LI);
+            stream.end = stream.p;
+        }
+    };
+
+
+    //    Class 0 x224 TPDU
+    //    -----------------
+
+    //                        +----+-----+----------------+
+    //                        | LI |     | EOT            |
+    //               +--------+----+-----+----------------+
+    //               | OFFSET | 4  |  5  |  6             |
+    //    +----------+--------+----+-----+----------------+
+    //    | Data              |    |     | 80 = EOT       |
+    //    | DT_TPDU 1111 0000 | 02 |  F0 | 00 = MORE DATA |
+    //    +-------------------+----+-----+----------------+
+
+    struct DT_TPDU_Recv : public Recv
+    {
+        struct TPDUHeader
+        {
+            uint8_t LI;
+            uint8_t code;
+            uint8_t eot;
+        } tpdu_hdr;
+
+        enum {
+            EOT_MORE_DATA        = 0x00,
+            EOT_EOT             = 0x80
+        };
+
+        // CONSTRUCTOR
+        //==============================================================================
+        DT_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
+        //==============================================================================
+        : Recv(t, stream, length, verbose)
+        {
+            this->tpdu_hdr.LI = stream.in_uint8();
+
+            this->tpdu_hdr.code = stream.in_uint8();
+            if (!this->tpdu_hdr.code == X224::DT_TPDU){
+                LOG(LOG_ERR, "Unexpected TPDU opcode, expected DT_TPDU, got %u", 
+                    this->tpdu_hdr.code);
+                throw Error(ERR_X224);
+            }
+
+            this->tpdu_hdr.eot = stream.in_uint8();
+            if (this->tpdu_hdr.eot != EOT_EOT){
+                LOG(LOG_ERR, "DT TPDU should say EOT, got=%x", this->tpdu_hdr.eot);
+                throw Error(ERR_X224);
+            }
+
+            uint8_t * end_of_header = this->stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            if (end_of_header != this->stream.p){
+                LOG(LOG_ERR, "DT TPDU header should be tertminated, got trailing data %u", end_of_header - this->stream.p);
+                throw Error(ERR_X224);
+            }
+            stream.p = end_of_header;
+            this->payload_offset = this->stream.get_offset(0);
+        }
+
+        size_t get_payload(SubStream & s)
+        {
+            s.reset(this->stream, payload_offset);
+            return this->stream.end - this->stream.data - this->payload_offset;
+        }
+    }; // END CLASS DT_TPDU_Recv
+
+    struct DT_TPDU_Send
+    {
+         DT_TPDU_Send(Stream & stream, size_t payload_len)
+        {
+
+            stream.out_uint8(0x03); // version 3
+            stream.out_uint8(0x00);
+            stream.out_uint16_be(7 + payload_len);
+
+            stream.out_uint8(2); // LI = TPDU header length
+
+            stream.out_uint8(X224::DT_TPDU);
+            stream.out_uint8(X224::EOT_EOT);
+
+            stream.end = stream.p;
+        }
+    };
+
+}; // end namespace X224 
 
 #endif
