@@ -60,18 +60,16 @@ BOOST_AUTO_TEST_CASE(TestSendShareControlAndData)
 
 BOOST_AUTO_TEST_CASE(TestX224SendShareControlAndData)
 {
-    X224 x224;
-    Stream & stream = x224.stream;
-    x224.emit_begin(X224::DT_TPDU);
+    BStream stream(65536);
     ShareControl sctrl(stream);
     sctrl.emit_begin(PDUTYPE_DATAPDU, 1);
     ShareData sdata(stream);
     sdata.emit_begin(PDUTYPE2_UPDATE, 0x12345678, RDP::STREAM_MED);
     sdata.emit_end();
     sctrl.emit_end();
-    x224.emit_end();
+    
 
-    uint8_t * data = stream.data + 7;
+    uint8_t * data = stream.data;
     BOOST_CHECK_EQUAL(0x12, data[0] + data[1]*256);
     BOOST_CHECK_EQUAL(0x10 | PDUTYPE_DATAPDU, data[2] + data[3]*256);
     BOOST_CHECK_EQUAL(1, data[4] + data[5]*256);
