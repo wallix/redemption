@@ -214,6 +214,7 @@ unit-test test_secondary_order_col_cache : tests/orders/secondary/col_cache.cpp 
 unit-test test_secondary_order_bmp_cache : tests/orders/secondary/bmp_cache.cpp libboost_unit_test ini_config libboost_program_options ;
 
 unit-test test_x224 : tests/test_x224.cpp libboost_unit_test ;
+unit-test test_mcs : tests/test_mcs.cpp libboost_unit_test ;
 unit-test test_rdp : tests/test_rdp.cpp libboost_unit_test ;
 unit-test test_payload : tests/test_payload.cpp libboost_unit_test ;
 

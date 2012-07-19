@@ -3784,4 +3784,233 @@ static inline void mcs_recv_channel_join_request_pdu(Transport * trans, uint16_t
     mcs.recv_end();
 }
 
+namespace MCS
+{
+    enum {
+        BER_ENCODING,
+        PER_ENCODING
+    };
+
+    enum DomainMCSPDU
+    {
+        MCSPDU_PlumbDomainIndication       = 0x00,
+        MCSPDU_ErectDomainRequest          = 0x01,
+        MCSPDU_MergeChannelsRequest        = 0x02,
+        MCSPDU_MergeChannelsConfirm        = 0x03,
+        MCSPDU_PurgeChannelsIndication     = 0x04,
+        MCSPDU_MergeTokensRequest          = 0x05,
+        MCSPDU_MergeTokensConfirm          = 0x06,
+        MCSPDU_PurgeTokensIndication       = 0x07,
+        MCSPDU_DisconnectProviderUltimatum = 0x08,
+        MCSPDU_RejectMCSPDUUltimatum       = 0x09,
+        MCSPDU_AttachUserRequest           = 0x0A,
+        MCSPDU_AttachUserConfirm           = 0x0B,
+        MCSPDU_DetachUserRequest           = 0x0C,
+        MCSPDU_DetachUserIndication        = 0x0D,
+        MCSPDU_ChannelJoinRequest          = 0x0E,
+        MCSPDU_ChannelJoinConfirm          = 0x0F,
+        MCSPDU_ChannelLeaveRequest         = 0x10,
+        MCSPDU_ChannelConveneRequest       = 0x11,
+        MCSPDU_ChannelConveneConfirm       = 0x12,
+        MCSPDU_ChannelDisbandRequest       = 0x13,
+        MCSPDU_ChannelDisbandIndication    = 0x14,
+        MCSPDU_ChannelAdmitRequest         = 0x15,
+        MCSPDU_ChannelAdmitIndication      = 0x16,
+        MCSPDU_ChannelExpelRequest         = 0x17,
+        MCSPDU_ChannelExpelIndication      = 0x18,
+        MCSPDU_SendDataRequest             = 0x19,
+        MCSPDU_SendDataIndication          = 0x1A,
+        MCSPDU_UniformSendDataRequest      = 0x1B,
+        MCSPDU_UniformSendDataIndication   = 0x1C,
+        MCSPDU_TokenGrabRequest            = 0x1D,
+        MCSPDU_TokenGrabConfirm            = 0x1E,
+        MCSPDU_TokenInhibitRequest         = 0x1F,
+        MCSPDU_TokenInhibitConfirm         = 0x20,
+        MCSPDU_TokenGiveRequest            = 0x21,
+        MCSPDU_TokenGiveIndication         = 0x22,
+        MCSPDU_TokenGiveResponse           = 0x23,
+        MCSPDU_TokenGiveConfirm            = 0x24,
+        MCSPDU_TokenPleaseRequest          = 0x25,
+        MCSPDU_TokenPleaseIndication       = 0x26,
+        MCSPDU_TokenReleaseRequest         = 0x27,
+        MCSPDU_TokenReleaseConfirm         = 0x28,
+        MCSPDU_TokenTestRequest            = 0x29,
+        MCSPDU_TokenTestConfirm            = 0x2A,
+    };
+
+    enum ConnectMCSPDU {
+        MCSPDU_CONNECT_INITIAL             = 101,
+        MCSPDU_CONNECT_RESPONSE            = 102,
+        MCSPDU_CONNECT_ADDITIONAL          = 103,
+        MCSPDU_CONNECT_RESULT              = 104,
+    };
+
+    struct RecvFactory
+    {
+        int type;
+        RecvFactory(Stream & stream, int encoding)
+        {
+            switch (encoding){
+            case PER_ENCODING:
+                TODO("Check we have at least 1 byte available")
+                this->type = (stream.data[0] >> 2);
+            break;
+            default:
+            case BER_ENCODING:
+                TODO("Check we have at least 2 bytes available")
+                TODO("getting to the type this way should works in our restricted use case,"
+                     " but it would be nicer to perform actual BER TAG value decoding")
+                this->type = stream.data[1];
+            break;
+            }
+        }
+    };
+
+
+// 2.2.1.3 Client MCS Connect Initial PDU with GCC Conference Create Request
+// =========================================================================
+
+// The MCS Connect Initial PDU is an RDP Connection Sequence PDU sent from
+// client to server during the Basic Settings Exchange phase (see section
+// 1.3.1.1). It is sent after receiving the X.224 Connection Confirm PDU
+// (section 2.2.1.2). The MCS Connect Initial PDU encapsulates a GCC Conference
+// Create Request, which encapsulates concatenated blocks of settings data. A
+// basic high-level overview of the nested structure for the Client MCS Connect
+// Initial PDU is illustrated in section 1.3.1.1, in the figure specifying MCS
+// Connect Initial PDU. Note that the order of the settings data blocks is
+// allowed to vary from that shown in the previously mentioned figure and the
+// message syntax layout that follows. This is possible because each data block
+// is identified by a User Data Header structure (section 2.2.1.3.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+//   section 13.7.
+
+// mcsCi (variable): Variable-length BER-encoded MCS Connect Initial structure
+//   (using definite-length encoding) as described in [T125] (the ASN.1
+//   structure definition is detailed in [T125] section 7, part 2). The userData
+//   field of the MCS Connect Initial encapsulates the GCC Conference Create
+//   Request data (contained in the gccCCrq and subsequent fields). The maximum
+//   allowed size of this user data is 1024 bytes, which implies that the
+//   combined size of the gccCCrq and subsequent fields MUST be less than 1024
+//   bytes.
+
+//    Connect-Initial ::= [APPLICATION 101] IMPLICIT SEQUENCE
+//    {
+//        callingDomainSelector   OCTET STRING,
+//        calledDomainSelector    OCTET STRING,
+//        upwardFlag              BOOLEAN,
+//                                -- TRUE if called provider is higher
+//        targetParameters        DomainParameters,
+//        minimumParameters       DomainParameters,
+//        maximumParameters       DomainParameters,
+//        userData                OCTET STRING
+//    }
+
+//    DomainParameters ::= SEQUENCE
+//    {
+//        maxChannelIds   INTEGER (0..MAX),
+//                        -- a limit on channel ids in use,
+//                        -- static + user id + private + assigned
+
+//        maxUserIds      INTEGER (0..MAX),
+//                        -- a sublimit on user id channels alone
+//        maxTokenIds     INTEGER (0..MAX),
+//                        -- a limit on token ids in use
+//                        -- grabbed + inhibited + giving + ungivable + given
+//        numPriorities   INTEGER (0..MAX),
+//                        -- the number of TCs in an MCS connection
+//        minThroughput   INTEGER (0..MAX),
+//                        -- the enforced number of octets per second
+//        maxHeight       INTEGER (0..MAX),
+//                        -- a limit on the height of a provider
+//        maxMCSPDUsize   INTEGER (0..MAX),
+//                        -- an octet limit on domain MCSPDUs
+//        protocolVersion INTEGER (0..MAX)
+//    }
+
+// gccCCrq (variable): Variable-length Packed Encoding Rule encoded
+//   (PER-encoded) GCC Connect Data structure, which encapsulates a Connect GCC
+//   PDU that contains a GCC Conference Create Request structure as described in
+//   [T124] (the ASN.1 structure definitions are detailed in [T124] section 8.7)
+//   appended as user data to the MCS Connect Initial (using the format
+//   described in [T124] sections 9.5 and 9.6). The userData field of the GCC
+//   Conference Create Request contains one user data set consisting of
+//   concatenated client data blocks.
+
+// clientCoreData (216 bytes): Client Core Data structure (section 2.2.1.3.2).
+
+// clientSecurityData (12 bytes): Client Security Data structure (section
+//   2.2.1.3.3).
+
+// clientNetworkData (variable): Optional and variable-length Client Network
+//   Data structure (section 2.2.1.3.4).
+
+// clientClusterData (12 bytes): Optional Client Cluster Data structure (section
+//   2.2.1.3.5).
+
+// clientMonitorData (variable): Optional Client Monitor Data structure (section
+//   2.2.1.3.6). This field MUST NOT be included if the server does not
+//   advertise support for extended client data blocks by using the
+//   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
+//   2.2.1.2.1.
+
+    struct CONNECT_INITIAL_PDU_Recv
+    {
+        size_t header_size;
+        size_t payload_size;
+
+        CONNECT_INITIAL_PDU_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+            stream.in_uint16_be();
+            size_t len = stream.in_ber_len();
+
+//        callingDomainSelector   OCTET STRING,
+            stream.in_uint8();
+            len = stream.in_ber_len();
+            stream.in_skip_bytes(len);
+
+//        calledDomainSelector    OCTET STRING,
+            stream.in_uint8();
+            len = stream.in_ber_len();
+            stream.in_skip_bytes(len);
+
+//        upwardFlag              BOOLEAN,
+//                                -- TRUE if called provider is higher
+            stream.in_uint8();
+            len = stream.in_ber_len();
+            stream.in_skip_bytes(len);
+
+//        targetParameters        DomainParameters,
+            stream.in_uint8();
+            len = stream.in_ber_len();
+            stream.in_skip_bytes(len);
+
+//        minimumParameters       DomainParameters,
+            stream.in_uint8();
+            len = stream.in_ber_len();
+            stream.in_skip_bytes(len);
+
+//        maximumParameters       DomainParameters,
+            stream.in_uint8();
+            len = stream.in_ber_len();
+            stream.in_skip_bytes(len);
+
+//        userData                OCTET STRING
+            stream.in_uint8();
+            len = stream.in_ber_len();
+            TODO("this is already part of GCC Conference User Data")
+//            stream.in_skip_bytes(23);
+
+// The payload is the USER_DATA block
+            this->header_size  = stream.p - stream.data;
+            this->payload_size = stream.end - stream.p;
+            
+        }
+    };
+
+
+};
+
 #endif
