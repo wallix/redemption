@@ -110,128 +110,6 @@ struct RdpNego
         }
     }
 
-    void connect()
-    {
-//        if (nego->state == this->STATE_INITIAL)
-//        {
-//            if (nego->enabled_protocols[PROTOCOL_NLA] > 0)
-//                nego->state = this->STATE_NLA;
-//            else if (nego->enabled_protocols[PROTOCOL_TLS] > 0)
-//                nego->state = this->STATE_TLS;
-//            else if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
-//                nego->state = this->STATE_RDP;
-//            else
-//                nego->state = this->STATE_FAIL;
-//        }
-
-//        do
-//        {
-//            DEBUG_NEGO("state: %s", this->STATE_STRINGS[nego->state]);
-
-//            if (nego->state == this->STATE_NLA){
-//                nego->requested_protocols = PROTOCOL_NLA | PROTOCOL_TLS;
-//                DEBUG_NEGO("Attempting NLA security");
-//            }
-//            else if (nego->state == this->STATE_TLS){
-//                nego->requested_protocols = PROTOCOL_TLS;
-//                DEBUG_NEGO("Attempting TLS security");
-//            }
-//            else if (nego->state == this->STATE_RDP){
-//                nego->requested_protocols = PROTOCOL_RDP;
-//                DEBUG_NEGO("Attempting RDP security");
-//            }
-//            else{
-//                DEBUG_NEGO("invalid negotiation state for sending");
-//                nego->state = this->STATE_FINAL;
-//                return false;
-//            }
-
-//            if (nego->state == this->STATE_NLA){
-//                nego->requested_protocols = PROTOCOL_NLA | PROTOCOL_TLS;
-//                DEBUG_NEGO("Attempting NLA security");
-//                DEBUG_NEGO("state: %s", this->STATE_STRINGS[nego->state]);
-//                if (nego->state != this->STATE_FINAL)
-//                {
-//                      if (nego->tcp_connected)
-//                          tcp_disconnect(nego->transport);
-//                      nego->tcp_connected = 0;
-//                    if (nego->enabled_protocols[PROTOCOL_TLS] > 0)
-//                        nego->state = this->STATE_TLS;
-//                    else if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
-//                        nego->state = this->STATE_RDP;
-//                    else
-//                        nego->state = this->STATE_FAIL;
-//                }
-//            }
-//            else if (nego->state == this->STATE_TLS){
-//                nego->requested_protocols = PROTOCOL_TLS;
-//                DEBUG_NEGO("Attempting TLS security");
-//                if (nego->state != this->STATE_FINAL)
-//                {
-//                      if (nego->tcp_connected)
-//                          tcp_disconnect(nego->transport);
-//                      nego->tcp_connected = 0;
-
-//                    if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
-//                        nego->state = this->STATE_RDP;
-//                    else
-//                        nego->state = this->STATE_FAIL;
-//                }
-//            }
-//            else if (nego->state == this->STATE_RDP){
-//                nego->requested_protocols = PROTOCOL_RDP;
-//                DEBUG_NEGO("Attempting RDP security");
-//            }
-//            else{
-//                DEBUG_NEGO("invalid negotiation state for sending");
-//                nego->state = this->STATE_FINAL;
-//                return false;
-//            }
-
-//            if (nego->tcp_connected == 0
-//            && !tcp_connect(nego->transport, nego->hostname, nego->port)){
-//                nego->state = this->STATE_FAIL;
-//            }
-//            else {
-//                nego->tcp_connected = 1;
-//                if (this->send_negotiation_request(nego))
-//                {
-//                    STREAM* s = transport_recv_stream_init(nego->transport, 1024);
-//                    if (transport_read(nego->transport, s) < 0)
-//                        nego->state = this->STATE_FAIL;
-//                }
-//                else
-//                {
-//                    nego->state = this->STATE_FAIL;
-//                }
-//            }
-
-//            if (nego->state == this->STATE_FAIL)
-//            {
-//                DEBUG_NEGO("Protocol Security Negotiation Failure");
-//                nego->state = this->STATE_FINAL;
-//                return false;
-//            }
-//        }
-//        while (nego->state != this->STATE_FINAL);
-
-//        DEBUG_NEGO("Negotiated %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
-
-//        /* update settings with negotiated protocol security */
-//        nego->transport->settings->requested_protocols = nego->requested_protocols;
-//        nego->transport->settings->selected_protocol = nego->selected_protocol;
-//        nego->transport->settings->negotiationFlags = nego->flags;
-
-//        if(nego->selected_protocol == PROTOCOL_RDP)
-//        {
-//            nego->transport->settings->encryption = true;
-//            nego->transport->settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-//            nego->transport->settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
-//        }
-
-//        return true;
-    }
-
 
 // 2.2.1.2 Server X.224 Connection Confirm PDU
 // ===========================================
@@ -344,34 +222,25 @@ struct RdpNego
     void recv_connection_confirm()
     {
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
-        X224 x224;
-        x224.recv_begin(this->trans);
-        if (x224.tpkt.version != 3){
-            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
-        }
-        if (x224.tpdu_hdr.code != X224::CC_TPDU){
-            throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
-        }
+        BStream stream(65536);
+        X224RecvFactory f(*this->trans, stream);
+        X224_CC_TPDU_Recv x224(*this->trans, stream, f.length);
 
-        if (x224.tpdu_hdr.LI == 6){
+        if (x224.rdp_neg_type == 0){
             this->tls = false;
             this->state = NEGO_STATE_FINAL;
             return;
         }
 
-        LOG(LOG_INFO, "RdpNego::neg_type=%u neg_code=%u",
-            x224.tpdu_hdr.rdp_neg_type,
-            x224.tpdu_hdr.rdp_neg_code);
-
         if (this->tls){
-            if (x224.tpdu_hdr.rdp_neg_type == X224::RDP_NEG_RESP
-            && x224.tpdu_hdr.rdp_neg_code == X224::RDP_NEG_PROTOCOL_TLS){
+            if (x224.rdp_neg_type == X224::RDP_NEG_RESP
+            && x224.rdp_neg_code == X224::RDP_NEG_PROTOCOL_TLS){
                 LOG(LOG_INFO, "activating SSL");
                 this->trans->enable_tls();
                 this->state = NEGO_STATE_FINAL;
             }
-            else if (x224.tpdu_hdr.rdp_neg_type == X224::RDP_NEG_FAILURE
-            && x224.tpdu_hdr.rdp_neg_code == X224::SSL_NOT_ALLOWED_BY_SERVER){
+            else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE
+            && x224.rdp_neg_code == X224::SSL_NOT_ALLOWED_BY_SERVER){
                 LOG(LOG_INFO, "Can't activate SSL, falling back to RDP legacy encryption");
                 this->tls = false;
                 this->trans->disconnect();
@@ -384,8 +253,8 @@ struct RdpNego
             TODO("Other cases are errors, set an appropriate error message");
         }
         else {
-            if (x224.tpdu_hdr.rdp_neg_type == X224::RDP_NEG_RESP 
-            && x224.tpdu_hdr.rdp_neg_code == X224::RDP_NEG_PROTOCOL_RDP){
+            if (x224.rdp_neg_type == X224::RDP_NEG_RESP 
+            && x224.rdp_neg_code == X224::RDP_NEG_PROTOCOL_RDP){
                 this->state = NEGO_STATE_FINAL;
             }
             TODO("Check tpdu has no embedded negotiation code")
@@ -393,156 +262,6 @@ struct RdpNego
             TODO("Other cases are errors, set an appropriate error message");
         }
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
-
-//        uint8 li;
-//        uint8 type;
-//        rdpNego* nego = (rdpNego*) extra;
-
-//        if (tpkt_read_header(s) == 0)
-//            return false;
-
-//        li = tpdu_read_connection_confirm(s);
-
-//        if (li > 6)
-//        {
-//            /* rdpNegData (optional) */
-
-//            stream_read_uint8(s, type); /* Type */
-
-//            switch (type)
-//            {
-//                case TYPE_RDP_NEG_RSP:
-//                  uint16 length;
-
-//                  DEBUG_NEGO("RDP_NEG_RSP");
-
-//                  /* process_negotiation_response */
-//                  stream_read_uint8(s, nego->flags);
-//                  stream_read_uint16(s, length);
-//                  stream_read_uint32(s, nego->selected_protocol);
-
-//                  nego->state = this->STATE_FINAL;
-
-//                  DEBUG_NEGO("selected_protocol: %d", nego->selected_protocol);
-
-//                    /* enhanced security selected ? */
-//                    if (nego->selected_protocol) {
-//                        if (nego->selected_protocol == PROTOCOL_NLA &&
-//                            !nego->enabled_protocols[PROTOCOL_NLA])
-//                            nego->state = this->STATE_FAIL;
-//                        if (nego->selected_protocol == PROTOCOL_TLS &&
-//                            !nego->enabled_protocols[PROTOCOL_TLS])
-//                            nego->state = this->STATE_FAIL;
-//                    } else if (!nego->enabled_protocols[PROTOCOL_RDP])
-//                        nego->state = this->STATE_FAIL;
-//                break;
-
-//                case TYPE_RDP_NEG_FAILURE:
-//                        uint8 flags;
-//                        uint16 length;
-//                        uint32 failureCode;
-
-//                        DEBUG_NEGO("RDP_NEG_FAILURE");
-
-//                        stream_read_uint8(s, flags);
-//                        stream_read_uint16(s, length);
-//                        stream_read_uint32(s, failureCode);
-
-//                        switch (failureCode)
-//                        {
-//                        case SSL_REQUIRED_BY_SERVER:
-//                            DEBUG_NEGO("Error: SSL_REQUIRED_BY_SERVER");
-//                        break;
-//                        case SSL_NOT_ALLOWED_BY_SERVER:
-//                            DEBUG_NEGO("Error: SSL_NOT_ALLOWED_BY_SERVER");
-//                        break;
-//                        case SSL_CERT_NOT_ON_SERVER:
-//                            DEBUG_NEGO("Error: SSL_CERT_NOT_ON_SERVER");
-//                        break;
-//                        case INCONSISTENT_FLAGS:
-//                            DEBUG_NEGO("Error: INCONSISTENT_FLAGS");
-//                        break;
-//                        case HYBRID_REQUIRED_BY_SERVER:
-//                            DEBUG_NEGO("Error: HYBRID_REQUIRED_BY_SERVER");
-//                        break;
-//                        default:
-//                            DEBUG_NEGO("Error: Unknown protocol security error %d", failureCode);
-//                        break;
-//                        }
-//                        nego->state = this->STATE_FAIL;
-//                break;
-//            }
-//        }
-//        else
-//        {
-//            DEBUG_NEGO("no rdpNegData");
-//            if (!nego->enabled_protocols[PROTOCOL_RDP])
-//                nego->state = this->STATE_FAIL;
-//            else
-//                nego->state = this->STATE_FINAL;
-//        }
-
-//        return true;
-    }
-
-
-    void read_request(Stream & stream)
-    {
-//        uint8 li;
-//        uint8 c;
-//        uint8 type;
-
-//        tpkt_read_header(s);
-//        li = tpdu_read_connection_request(s);
-
-//        if (li != stream_get_left(s) + 6)
-//        {
-//            printf("Incorrect TPDU length indicator.\n");
-//            return false;
-//        }
-
-//        if (stream_get_left(s) > 8)
-//        {
-//            /* Optional routingToken or cookie, ending with CR+LF */
-//            while (stream_get_left(s) > 0)
-//            {
-//                stream_read_uint8(s, c);
-//                if (c != '\x0D')
-//                    continue;
-//                stream_peek_uint8(s, c);
-//                if (c != '\x0A')
-//                    continue;
-
-//                stream_seek_uint8(s);
-//                break;
-//            }
-//        }
-
-//        if (stream_get_left(s) >= 8)
-//        {
-//            /* rdpNegData (optional) */
-
-//            stream_read_uint8(s, type); /* Type */
-//            if (type != TYPE_RDP_NEG_REQ)
-//            {
-//                printf("Incorrect negotiation request type %d\n", type);
-//                return false;
-//            }
-
-//        /* process_negotiation_request(Stream & stream) */
-//           uint8 flags;
-//           uint16 length;
-
-//           DEBUG_NEGO("RDP_NEG_REQ");
-
-//           stream_read_uint8(s, flags);
-//           stream_read_uint16(s, length);
-//           stream_read_uint32(s, nego->requested_protocols);
-
-//           nego->state = this->STATE_FINAL;
-//        }
-
-//        return true;
     }
 
 
@@ -580,36 +299,16 @@ struct RdpNego
     void send_negotiation_request()
     {
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu");
-        X224 x224;
-        Stream & stream = x224.stream;
-        x224.emit_begin(X224::CR_TPDU);
-        stream.out_concat("Cookie: mstshash=");
-        stream.out_concat(this->username);
-        stream.out_concat("\r\n");
-//        stream.out_uint8(0x01);
-//        stream.out_uint8(0x00);
-//        stream.out_uint32_le(0x00);
+        BStream stream;
+        char cookie[256];
+        snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
 
-        if (this->tls)
-        {
-            /* RDP_NEG_DATA must be present for TLS and NLA */
-            stream.out_uint8(X224::RDP_NEG_REQ);
-            stream.out_uint8(0); /* flags, must be set to zero */
-            stream.out_uint16_le(8); /* RDP_NEG_DATA length (8) */
-            stream.out_uint32_le(X224::RDP_NEG_PROTOCOL_TLS);
-        }
-
-        x224.extend_tpdu_hdr();
-
-        x224.emit_end();
-        this->trans->send(x224.header(), x224.size());
+        X224_CR_TPDU_Send(stream, cookie, 
+                this->tls?X224::RDP_NEG_REQ:0, 
+                0, 
+                this->tls?X224::RDP_NEG_PROTOCOL_TLS:0); 
+        this->trans->send(stream.data, stream.end - stream.data);
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
-
-//        if (nego->routing_token != NULL)
-//        {
-//            stream_write(s, nego->routing_token->data, nego->routing_token->length);
-//            length += nego->routing_token->length;
-//        }
     }
 
 

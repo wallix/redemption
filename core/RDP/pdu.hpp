@@ -64,8 +64,9 @@ namespace RDP {
         }
         void recv_begin(Transport * t) 
         {
-            x224.recv_begin(t);
-            switch (x224.tpdu_hdr.code){
+            BStream stream(65536);
+            X224RecvFactory fx224(*t, stream);
+            switch (fx224.type){
             case X224::CR_TPDU:
                 this->pduType = CONNECTION_REQUEST;
             break;
@@ -83,7 +84,6 @@ namespace RDP {
             }
         }
         void recv_end() {
-            x224.recv_end();
         }
     };
 };
