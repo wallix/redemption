@@ -101,10 +101,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     BOOST_CHECK_EQUAL(0x32, x224.tpdu_hdr.LI);
 
     BOOST_CHECK_EQUAL(0, strcmp("Cookie: mstshash=administrateur@qa\x0D\x0A", x224.cookie));
-    BOOST_CHECK_EQUAL(X224::RDP_NEG_REQ, x224.rdp_neg_type);
+    BOOST_CHECK_EQUAL((uint8_t)X224::RDP_NEG_REQ, x224.rdp_neg_type);
     BOOST_CHECK_EQUAL(0, x224.rdp_neg_flags);
     BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
-    BOOST_CHECK_EQUAL(X224::RDP_NEG_PROTOCOL_TLS, x224.rdp_neg_code);
+    BOOST_CHECK_EQUAL((uint32_t)X224::RDP_NEG_PROTOCOL_TLS, x224.rdp_neg_code);
 
     SubStream pay;
     size_t length_pay = x224.get_payload(pay);
@@ -155,10 +155,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_new_TLS_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, x224.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(14, x224.tpdu_hdr.LI);
 
-    BOOST_CHECK_EQUAL(X224::RDP_NEG_RESP, x224.rdp_neg_type);
+    BOOST_CHECK_EQUAL((uint8_t)X224::RDP_NEG_RESP, x224.rdp_neg_type);
     BOOST_CHECK_EQUAL(0, x224.rdp_neg_flags);
     BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
-    BOOST_CHECK_EQUAL(X224::RDP_NEG_PROTOCOL_TLS, x224.rdp_neg_code);
+    BOOST_CHECK_EQUAL((uint32_t)X224::RDP_NEG_PROTOCOL_TLS, x224.rdp_neg_code);
 
     SubStream pay;
     size_t length_pay = x224.get_payload(pay);
