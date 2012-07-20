@@ -520,6 +520,38 @@ class Stream {
         BER_TAG_RESULT       =   10,
     };
 
+
+    // return string length or -1 on error
+    int in_ber_octet_string(uint8_t * target, uint16_t target_len) 
+    {
+        if (this->in_uint8() != BER_TAG_OCTET_STRING){
+            LOG(LOG_ERR, "Octet string BER tag expected");
+            return -1;
+        }
+        size_t len = this->in_ber_len();
+        if (len > target_len){
+            LOG(LOG_ERR, "target string too large (max=%u, got=%u)", target_len, len);
+            return -1;
+        }
+        this->in_copy_bytes(target, len);
+        return len;
+    }
+
+    // return 0 if false, 1 if true, -1 on error
+    int in_ber_boolean() 
+    {
+        if (this->in_uint8() != BER_TAG_BOOLEAN){
+            LOG(LOG_ERR, "Boolean BER tag expected");
+            return -1;
+        }
+        size_t len = this->in_ber_len();
+        if (len != 1){
+            LOG(LOG_ERR, "Boolean BER should be one byte");
+            return -1;
+        }
+        return this->in_uint8();
+    }
+
     unsigned int in_ber_len(void) {
         uint8_t l = this->in_uint8();
         if (l & 0x80) {

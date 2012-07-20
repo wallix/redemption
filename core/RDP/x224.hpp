@@ -357,8 +357,8 @@ namespace X224
             uint16_t len;
         } tpkt;
 
-        Recv(Transport & t, Stream & stream, uint16_t length, uint32_t verbose) 
-            : header_size(4), verbose(verbose) 
+        Recv(Transport & t, Stream & stream, uint16_t length, uint32_t verbose)
+            : header_size(4), verbose(verbose)
         {
             t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
             stream.p = stream.data;
@@ -368,14 +368,14 @@ namespace X224
             stream.in_skip_bytes(1);
             this->tpkt.len = stream.in_uint16_be();
             if (this->tpkt.len != length){
-                LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u", 
+                LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u",
                     this->tpkt.len, length);
                 throw Error(ERR_X224);
             }
         }
     };
 
-    struct Send 
+    struct Send
     {
         enum {
             OFFSET_TPKT_LEN = 2,
@@ -498,7 +498,7 @@ namespace X224
             this->tpdu_hdr.code = stream.in_uint8();
 
             if (!this->tpdu_hdr.code == X224::CR_TPDU){
-                LOG(LOG_ERR, "Unexpected TPDU opcode, expected CR_TPDU, got %u", 
+                LOG(LOG_ERR, "Unexpected TPDU opcode, expected CR_TPDU, got %u",
                     this->tpdu_hdr.code);
                 throw Error(ERR_X224);
             }
@@ -580,7 +580,7 @@ namespace X224
             stream.out_uint16_be(0x0000); // DST-REF
             stream.out_uint16_be(0x0000); // SRC-REF
             stream.out_uint8(0x00); // CLASS OPTION
-            
+
             size_t cookie_len = strlen(cookie);
             if (cookie_len){
                 stream.out_copy_bytes(cookie, cookie_len);
@@ -743,7 +743,7 @@ namespace X224
             this->tpdu_hdr.code = stream.in_uint8();
 
             if (!this->tpdu_hdr.code == X224::CC_TPDU){
-                LOG(LOG_ERR, "Unexpected TPDU opcode, expected CC_TPDU, got %u", 
+                LOG(LOG_ERR, "Unexpected TPDU opcode, expected CC_TPDU, got %u",
                     this->tpdu_hdr.code);
                 throw Error(ERR_X224);
             }
@@ -765,13 +765,13 @@ namespace X224
                         this->tpdu_hdr.LI,
                         this->rdp_neg_type,
                         this->rdp_neg_flags,
-                        this->rdp_neg_length,   
+                        this->rdp_neg_length,
                         this->rdp_neg_code);
                     throw Error(ERR_X224);
                 }
 
                 if (this->verbose){
-                    LOG(LOG_INFO, "Found RDP Negotiation %s Structure", 
+                    LOG(LOG_INFO, "Found RDP Negotiation %s Structure",
                         (this->rdp_neg_type == X224::RDP_NEG_RESP)?"Response":"Failure");
                 }
 
@@ -836,12 +836,12 @@ namespace X224
         CC_TPDU_Send(Stream & stream, uint8_t rdp_neg_type, uint8_t rdp_neg_flags, uint32_t rdp_neg_code)
         {
             this->header(stream);
-           
+
             stream.out_uint8(X224::CC_TPDU); // CC_TPDU code
             stream.out_uint16_be(0x0000); // DST-REF
             stream.out_uint16_be(0x0000); // SRC-REF
             stream.out_uint8(0x00); // CLASS OPTION
-            
+
             if (rdp_neg_type){
                 stream.out_uint8(rdp_neg_type);
                 stream.out_uint8(rdp_neg_flags);
@@ -890,7 +890,7 @@ namespace X224
             this->tpdu_hdr.code = stream.in_uint8();
 
             if (!this->tpdu_hdr.code == X224::DR_TPDU){
-                LOG(LOG_ERR, "Unexpected TPDU opcode, expected DR_TPDU, got %u", 
+                LOG(LOG_ERR, "Unexpected TPDU opcode, expected DR_TPDU, got %u",
                     this->tpdu_hdr.code);
                 throw Error(ERR_X224);
             }
@@ -966,7 +966,7 @@ namespace X224
             this->tpdu_hdr.code = stream.in_uint8();
 
             if (!this->tpdu_hdr.code == X224::ER_TPDU){
-                LOG(LOG_ERR, "Unexpected TPDU opcode, expected ER_TPDU, got %u", 
+                LOG(LOG_ERR, "Unexpected TPDU opcode, expected ER_TPDU, got %u",
                     this->tpdu_hdr.code);
                 throw Error(ERR_X224);
             }
@@ -978,23 +978,23 @@ namespace X224
             if (end_of_header - stream.p >= 2){
                 this->tpdu_hdr.invalid_tpdu_var = stream.in_uint8();
                 if (this->tpdu_hdr.invalid_tpdu_var != 0xC1){
-                    LOG(LOG_ERR, "Unexpected ER TPDU, variable code, expected C1 (invalid TPDU details), got %x", 
+                    LOG(LOG_ERR, "Unexpected ER TPDU, variable code, expected C1 (invalid TPDU details), got %x",
                         this->tpdu_hdr.invalid_tpdu_var);
                     throw Error(ERR_X224);
                 }
                 this->tpdu_hdr.invalid_tpdu_vl = stream.in_uint8();
                 if (this->tpdu_hdr.invalid_tpdu_vl > this->tpdu_hdr.LI - 6){
-                    LOG(LOG_ERR, "Invalid TPDU details too large, max=%u got %x", 
+                    LOG(LOG_ERR, "Invalid TPDU details too large, max=%u got %x",
                         this->tpdu_hdr.LI - 6, this->tpdu_hdr.invalid_tpdu_vl);
                     throw Error(ERR_X224);
                 }
                 stream.in_copy_bytes(this->tpdu_hdr.invalid, this->tpdu_hdr.invalid_tpdu_vl);
                 if (this->tpdu_hdr.LI - 6 - this->tpdu_hdr.invalid_tpdu_vl != 0){
-                    LOG(LOG_ERR, "Trailing variable data in ER_TPDU, %u bytes", 
+                    LOG(LOG_ERR, "Trailing variable data in ER_TPDU, %u bytes",
                         this->tpdu_hdr.LI - 6 - this->tpdu_hdr.invalid_tpdu_vl);
                     throw Error(ERR_X224);
                 }
-                
+
             }
             if (end_of_header != stream.p){
                 LOG(LOG_ERR, "ER TPDU header should be terminated, got trailing data %u", end_of_header - stream.p);
@@ -1059,7 +1059,7 @@ namespace X224
 
             this->tpdu_hdr.code = stream.in_uint8();
             if (!this->tpdu_hdr.code == X224::DT_TPDU){
-                LOG(LOG_ERR, "Unexpected TPDU opcode, expected DT_TPDU, got %u", 
+                LOG(LOG_ERR, "Unexpected TPDU opcode, expected DT_TPDU, got %u",
                     this->tpdu_hdr.code);
                 throw Error(ERR_X224);
             }
@@ -1085,7 +1085,7 @@ namespace X224
     {
         DT_TPDU_Send(Stream & stream, size_t payload_len)
         {
-            this->header(stream);            
+            this->header(stream);
 
             stream.out_uint8(X224::DT_TPDU);
             stream.out_uint8(X224::EOT_EOT);
@@ -1096,6 +1096,6 @@ namespace X224
         }
     };
 
-}; // end namespace X224 
+}; // end namespace X224
 
 #endif

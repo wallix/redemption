@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
 
 //BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
 //{
-//    BStream stream(256); 
+//    BStream stream(256);
 //    X224::CR_TPDU_Send x224(stream, "", 0, 0, 0);
 //    BOOST_CHECK_EQUAL(11, stream.end - stream.data);
 //    BOOST_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", stream.data, 11));
