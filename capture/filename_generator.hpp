@@ -44,7 +44,7 @@ public:
     virtual const std::string& operator()()
     { return this->_filename; }
 
-    const std::string& get_filename()
+    const std::string& next()
     { return (*this)(); }
 };
 

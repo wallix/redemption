@@ -21,8 +21,6 @@
 #if !defined(__MAIN_RECORDER_RECORDER_APP__)
 #define __MAIN_RECORDER_RECORDER_APP__
 
-#include <iostream>
-
 #include "recorder_run.hpp"
 #include "parse_command_line.hpp"
 
