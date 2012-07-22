@@ -3938,27 +3938,61 @@ namespace MCS
             int minThroughput;
             int maxHeight;
             int maxMCSPDUsize;
-            
+            int protocolVersion;            
+
+            int in_ber_int(Stream & stream, int & v){
+                uint8_t tag = stream.in_uint8();
+                if (Stream::BER_TAG_INTEGER != tag){
+                    LOG(LOG_ERR, "Connect Initial BER_TAG_INTEGER (%u) expected, got %u", Stream::BER_TAG_INTEGER, tag);
+                    return -1;
+                }
+                uint8_t len = stream.in_uint8();
+                v = stream.in_bytes_be(len);
+                return 0;
+            }
+
             int recv(Stream & stream){
-
-//    stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-//    stream.out_ber_len(26);      // 26 = 0x1a
-//    stream.out_ber_int8(34);     // max_channels
-//    stream.out_ber_int8(2);      // max_users
-//    stream.out_ber_int8(0);      // max_tokens
-//    stream.out_ber_int8(1);
-//    stream.out_ber_int8(0);
-//    stream.out_ber_int8(1);
-//    stream.out_ber_int24(0xffff); // max_pdu_size
-//    stream.out_ber_int8(2);
-      
-
                 if (BER_TAG_MCS_DOMAIN_PARAMS != stream.in_uint8()){
                     LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS expected");
                     return -1;
                 }
                 size_t len = stream.in_ber_len();
-                stream.in_skip_bytes(len);
+                size_t start_offset = stream.get_offset(0);
+                if ( -1 == this->in_ber_int(stream, this->maxChannelIds)){
+                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxChannelIds tag error");
+                    return -1;
+                }
+                if ( -1 == this->in_ber_int(stream, this->maxUserIds)){
+                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxUserIds tag error");
+                    return -1;
+                }
+                if ( -1 == this->in_ber_int(stream, this->maxTokenIds)){
+                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxTokenIds tag error");
+                    return -1;
+                }
+                if ( -1 == this->in_ber_int(stream, this->numPriorities)){
+                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::numPriorities tag error");
+                    return -1;
+                }
+                if ( -1 == this->in_ber_int(stream, this->minThroughput)){
+                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::minThroughput tag error");
+                    return -1;
+                }
+                if ( -1 == this->in_ber_int(stream, this->maxHeight)){
+                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxHeight tag error");
+                    return -1;
+                }
+                if ( -1 == this->in_ber_int(stream, this->maxMCSPDUsize)){
+                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxMCSPDUsize tag error");
+                    return -1;
+                }
+                if ( -1 == this->in_ber_int(stream, this->protocolVersion)){
+                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxMCSPDUsize tag error");
+                    return -1;
+                }
+                if (stream.get_offset(start_offset) != len){
+                    LOG(LOG_ERR, "Connect Initial, bad length in BER_TAG_MCS_DOMAIN_PARAMS. Total subfield length mismatch %u %u", stream.get_offset(start_offset), len);
+                }
                 return 0;
             }
         } targetParameters, minimumParameters, maximumParameters;

@@ -71,6 +71,41 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
 
     MCS::CONNECT_INITIAL_PDU_Recv mcs(payload, payload_length, MCS::BER_ENCODING);
 
+    BOOST_CHECK_EQUAL(34, mcs.targetParameters.maxChannelIds);
+    BOOST_CHECK_EQUAL(2, mcs.targetParameters.maxUserIds);
+    BOOST_CHECK_EQUAL(0, mcs.targetParameters.maxTokenIds);
+    BOOST_CHECK_EQUAL(1, mcs.targetParameters.numPriorities);
+    BOOST_CHECK_EQUAL(0, mcs.targetParameters.minThroughput);
+    BOOST_CHECK_EQUAL(1, mcs.targetParameters.maxHeight);
+    BOOST_CHECK_EQUAL(16776960, mcs.targetParameters.maxMCSPDUsize);
+    BOOST_CHECK_EQUAL(2, mcs.targetParameters.protocolVersion);            
+
+    BOOST_CHECK_EQUAL(1, mcs.minimumParameters.maxChannelIds);
+    BOOST_CHECK_EQUAL(1, mcs.minimumParameters.maxUserIds);
+    BOOST_CHECK_EQUAL(1, mcs.minimumParameters.maxTokenIds);
+    BOOST_CHECK_EQUAL(1, mcs.minimumParameters.numPriorities);
+    BOOST_CHECK_EQUAL(0, mcs.minimumParameters.minThroughput);
+    BOOST_CHECK_EQUAL(1, mcs.minimumParameters.maxHeight);
+    BOOST_CHECK_EQUAL(8196, mcs.minimumParameters.maxMCSPDUsize);
+    BOOST_CHECK_EQUAL(2, mcs.minimumParameters.protocolVersion);            
+
+    BOOST_CHECK_EQUAL(16776960, mcs.maximumParameters.maxChannelIds);
+    BOOST_CHECK_EQUAL(6140, mcs.maximumParameters.maxUserIds);
+    BOOST_CHECK_EQUAL(16776960, mcs.maximumParameters.maxTokenIds);
+    BOOST_CHECK_EQUAL(1, mcs.maximumParameters.numPriorities);
+    BOOST_CHECK_EQUAL(0, mcs.maximumParameters.minThroughput);
+    BOOST_CHECK_EQUAL(1, mcs.maximumParameters.maxHeight);
+    BOOST_CHECK_EQUAL(16776960, mcs.maximumParameters.maxMCSPDUsize);
+    BOOST_CHECK_EQUAL(2, mcs.maximumParameters.protocolVersion);            
+
+    BOOST_CHECK_EQUAL(1, mcs.len_callingDomainSelector);
+    BOOST_CHECK_EQUAL(0, memcmp("\x01", mcs.callingDomainSelector, 1));
+
+    BOOST_CHECK_EQUAL(1, mcs.len_calledDomainSelector);
+    BOOST_CHECK_EQUAL(0, memcmp("\x01", mcs.calledDomainSelector, 1));
+
+    BOOST_CHECK_EQUAL(true, mcs.upwardFlag);
+
     BOOST_CHECK_EQUAL(106, mcs.header_size); // everything up to USER_DATA
     BOOST_CHECK_EQUAL(mcs.payload_size, payload.end - payload.data - mcs.header_size);
 }
