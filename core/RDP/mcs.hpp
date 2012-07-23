@@ -4076,6 +4076,13 @@ namespace MCS
         }
     };
 
+    struct CONNECT_INITIAL_Send
+    {
+        CONNECT_INITIAL_Send(Stream & stream, size_t payload_length, int encoding)
+        {
+        }
+    };
+
 // 2.2.1.4  Server MCS Connect Response PDU with GCC Conference Create Response
 // ----------------------------------------------------------------------------
 

@@ -110,16 +110,18 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
     BOOST_CHECK_EQUAL(true, mcs.upwardFlag);
 
     BOOST_CHECK_EQUAL(106, mcs.header_size); // everything up to USER_DATA
+    BOOST_CHECK_EQUAL(263, mcs.payload_size); // USER_DATA (after len)
     BOOST_CHECK_EQUAL(mcs.payload_size, payload.end - payload.data - mcs.header_size);
 }
 
-//BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
-//{
-//    BStream stream(256);
-//    X224::CR_TPDU_Send x224(stream, "", 0, 0, 0);
-//    BOOST_CHECK_EQUAL(11, stream.end - stream.data);
-//    BOOST_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", stream.data, 11));
-//}
+BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
+{
+    BStream stream(1024);
+    size_t payload_length = 266;
+    MCS::CONNECT_INITIAL_Send mcs(stream, payload_length, MCS::BER_ENCODING);
+    //BOOST_CHECK_EQUAL(369, stream.end - stream.data);
+    //BOOST_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", stream.data, 11));
+}
 
 BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
 {
