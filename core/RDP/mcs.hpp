@@ -3985,7 +3985,7 @@ namespace MCS
                 return -1;
             }
             if ( -1 == this->in_ber_int(stream, this->protocolVersion)){
-                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxMCSPDUsize tag error");
+                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::protocolVersion tag error");
                 return -1;
             }
             if (stream.get_offset(start_offset) != len){
@@ -4080,6 +4080,60 @@ namespace MCS
     {
         CONNECT_INITIAL_Send(Stream & stream, size_t payload_length, int encoding)
         {
+            stream.out_uint16_be(BER_TAG_ConnectMCSPDU_CONNECT_INITIAL);
+            stream.out_ber_len_uint16(0); // filled later, 3 bytes
+
+            stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
+            stream.out_ber_len(1); /* calling domain */
+            stream.out_uint8(1);
+            stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
+            stream.out_ber_len(1); /* called domain */
+            stream.out_uint8(1);
+            stream.out_uint8(Stream::BER_TAG_BOOLEAN);
+            stream.out_ber_len(1);
+            stream.out_uint8(0xff); /* upward flag */
+
+            // target params
+            stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+            stream.out_ber_len(26);      // 26 = 0x1a
+            stream.out_ber_int8(34);     // max_channels
+            stream.out_ber_int8(2);      // max_users
+            stream.out_ber_int8(0);      // max_tokens
+            stream.out_ber_int8(1);
+            stream.out_ber_int8(0);
+            stream.out_ber_int8(1);
+            stream.out_ber_int24(0xffff); // max_pdu_size
+            stream.out_ber_int8(2);
+
+            // min params
+            stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+            stream.out_ber_len(25);     // 25=0x19
+            stream.out_ber_int8(1);     // max_channels
+            stream.out_ber_int8(1);     // max_users
+            stream.out_ber_int8(1);     // max_tokens
+            stream.out_ber_int8(1);
+            stream.out_ber_int8(0);
+            stream.out_ber_int8(1);
+            stream.out_ber_int16(0x420); // max_pdu_size
+            stream.out_ber_int8(2);
+
+            // max params
+            stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+            stream.out_ber_len(31);
+            stream.out_ber_int24(0xffff); // max_channels
+            stream.out_ber_int16(0xfc17); // max_users
+            stream.out_ber_int24(0xffff); // max_tokens
+            stream.out_ber_int8(1);
+            stream.out_ber_int8(0);
+            stream.out_ber_int8(1);
+            stream.out_ber_int24(0xffff); // max_pdu_size
+            stream.out_ber_int8(2);
+
+            stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
+            stream.out_ber_len_uint16(payload_length);
+            // now we know full MCS Initial header length (without initial tag and len)
+            stream.set_out_ber_len_uint16(payload_length + stream.get_offset(5), 2);
+            stream.end = stream.p;
         }
     };
 
