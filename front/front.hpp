@@ -478,7 +478,7 @@ public:
 
         sec.emit_end();
         mcs.emit_end();
-        stream.end = stream.p;    
+        stream.end = stream.p;
 
         BStream x224_header(256);
         X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
@@ -542,7 +542,7 @@ public:
             sctrl.emit_end();
             sec.emit_end();
             mcs.emit_end();
-            stream.end = stream.p;    
+            stream.end = stream.p;
 
             BStream x224_header(256);
             X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
@@ -752,7 +752,7 @@ public:
         sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
-        stream.end = stream.p;    
+        stream.end = stream.p;
 
         BStream x224_header(256);
         X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
@@ -821,7 +821,7 @@ public:
         sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
-        stream.end = stream.p;    
+        stream.end = stream.p;
 
         BStream x224_header(256);
         X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
@@ -1535,7 +1535,7 @@ public:
         sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
-        stream.end = stream.p;    
+        stream.end = stream.p;
 
         BStream x224_header(256);
         X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
@@ -1658,7 +1658,7 @@ public:
         sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
-        stream.end = stream.p;    
+        stream.end = stream.p;
 
         BStream x224_header(256);
         X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
@@ -1696,15 +1696,15 @@ public:
         for (int n = 0; n < numberCapabilities; n++) {
             LOG(LOG_INFO, "capability %u", n);
             if (stream.p + 4 > theoricCapabilitiesEnd) {
-                LOG(LOG_ERR, "Incomplete capabilities received (bad length): expected length=%d need=%d available=%d", 
-                    lengthCombinedCapabilities, 
-                    stream.p-start, 
+                LOG(LOG_ERR, "Incomplete capabilities received (bad length): expected length=%d need=%d available=%d",
+                    lengthCombinedCapabilities,
+                    stream.p-start,
                     stream.end-stream.p);
             }
             if (stream.p + 4 > actualCapabilitiesEnd) {
-                LOG(LOG_ERR, "Incomplete capabilities received (need more data): expected length=%d need=%d available=%d", 
-                    lengthCombinedCapabilities, 
-                    stream.p-start, 
+                LOG(LOG_ERR, "Incomplete capabilities received (need more data): expected length=%d need=%d available=%d",
+                    lengthCombinedCapabilities,
+                    stream.p-start,
                     stream.end-stream.p);
                 return;
             }
@@ -1919,7 +1919,7 @@ public:
         sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
-        stream.end = stream.p;    
+        stream.end = stream.p;
 
         BStream x224_header(256);
         X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
@@ -1974,7 +1974,7 @@ public:
         sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
-        stream.end = stream.p;    
+        stream.end = stream.p;
 
         BStream x224_header(256);
         X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
@@ -2032,7 +2032,7 @@ public:
         sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
-        stream.end = stream.p;    
+        stream.end = stream.p;
 
         BStream x224_header(256);
         X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
@@ -2229,7 +2229,7 @@ public:
                 sctrl.emit_end();
                 sec.emit_end();
                 mcs.emit_end();
-                stream.end = stream.p;    
+                stream.end = stream.p;
 
                 BStream x224_header(256);
                 X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
@@ -2385,7 +2385,7 @@ public:
         sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
-        stream.end = stream.p;    
+        stream.end = stream.p;
 
         BStream x224_header(256);
         X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
