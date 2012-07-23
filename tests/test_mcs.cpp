@@ -71,6 +71,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
 
     MCS::CONNECT_INITIAL_PDU_Recv mcs(payload, payload_length, MCS::BER_ENCODING);
 
+    BOOST_CHECK_EQUAL(101, mcs.tag);
+    BOOST_CHECK_EQUAL(364, mcs.tag_len);
+ 
     BOOST_CHECK_EQUAL(34, mcs.targetParameters.maxChannelIds);
     BOOST_CHECK_EQUAL(2, mcs.targetParameters.maxUserIds);
     BOOST_CHECK_EQUAL(0, mcs.targetParameters.maxTokenIds);
@@ -130,12 +133,27 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
  /* 0050 */ "\xeb\x03\x00\x00\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
    , payload_length);
 
-   BStream payload(65536);
+    BStream payload(65536);
     t.recv(&payload.end, payload_length);
 
     MCS::RecvFactory fac_mcs(payload, MCS::BER_ENCODING);
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_CONNECT_RESPONSE, fac_mcs.type);
 
     MCS::CONNECT_RESPONSE_PDU_Recv mcs(payload, payload_length, MCS::BER_ENCODING);
+ 
+    BOOST_CHECK_EQUAL(102, mcs.tag);
+    BOOST_CHECK_EQUAL(90, mcs.tag_len);
+
+    BOOST_CHECK_EQUAL(0, mcs.result);
+    BOOST_CHECK_EQUAL(0, mcs.connectId);
+
+    BOOST_CHECK_EQUAL(34, mcs.domainParameters.maxChannelIds);
+    BOOST_CHECK_EQUAL(3, mcs.domainParameters.maxUserIds);
+    BOOST_CHECK_EQUAL(0, mcs.domainParameters.maxTokenIds);
+    BOOST_CHECK_EQUAL(1, mcs.domainParameters.numPriorities);
+    BOOST_CHECK_EQUAL(0, mcs.domainParameters.minThroughput);
+    BOOST_CHECK_EQUAL(1, mcs.domainParameters.maxHeight);
+    BOOST_CHECK_EQUAL(16318208, mcs.domainParameters.maxMCSPDUsize);
+    BOOST_CHECK_EQUAL(2, mcs.domainParameters.protocolVersion);            
 
 }
