@@ -59,12 +59,23 @@ inline std::istream& operator>>(std::istream& is, DataMetaFile& data)
     {
         if (!line.empty()){
             std::size_t pos = line.find(',', 1);
-            if (std::string::npos == pos){
+            std::size_t posend = 0;
+            if (std::string::npos != pos){
+                posend = pos;
+            }
+            posend = line.find(' ', posend + 1);
+            if (std::string::npos == pos && std::string::npos == posend)
+            {
                 data.files.push_back(DataMetaFile::WrmInfo(line, ""));
-            } else {
+            }
+            else
+            {
+                if (std::string::npos == pos){
+                    pos = posend;
+                }
                 data.files.push_back(DataMetaFile::WrmInfo(
                     line.substr(0, pos),
-                    line.substr(pos + 1)
+                    line.substr(pos + 1, posend - pos - 1)
                 ));
             }
         }
@@ -73,6 +84,14 @@ inline std::istream& operator>>(std::istream& is, DataMetaFile& data)
     return is;
 }
 
+/**
+ width height
+
+ wrm_filename[,png_filename][ ignore-text]
+ ...
+ [--
+ [ignore-text]]
+ */
 inline bool read_meta_file(DataMetaFile& data, const char * filename)
 {
     std::ifstream file(filename);

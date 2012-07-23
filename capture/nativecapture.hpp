@@ -88,19 +88,6 @@ private:
         }
     }
 
-    void write_filename()
-    {
-        this->filename[this->filename_len] = '\n';
-        fwrite(this->filename, this->filename_len + 1, 1, this->meta_file);
-        this->filename[this->filename_len] = 0;
-    }
-
-    void write_breakpoint_filename()
-    {
-        fprintf(this->meta_file, "%s,%s.png\n",
-                this->filename, this->filename);
-    }
-
     void send_meta_path()
     {
         this->recorder.chunk_type = WRMChunk::META_FILE;
@@ -147,8 +134,8 @@ public:
             throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE);
         }
 
-        fprintf(this->meta_file, "%d %d\n\n", this->width, this->height);
-        this->write_filename();
+        fprintf(this->meta_file, "%d %d\n\n%s",
+                this->width, this->height, this->filename);
     }
 
     ~NativeCapture(){
@@ -235,6 +222,11 @@ public:
         this->stream.out_uint64_be(now.tv_sec);
         this->stream.out_uint64_be(now.tv_usec);
         this->recorder.flush();
+
+        std::tm * tm = std::gmtime(&now.tv_sec);
+        fprintf(this->meta_file, " %4d-%02d-%02d %02d:%02d:%02d",
+                tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+                tm->tm_hour, tm->tm_min, tm->tm_sec);
     }
 
     void breakpoint(const uint8_t* data_drawable, uint8_t bpp,
@@ -256,7 +248,8 @@ public:
 
         this->send_meta_path();
 
-        this->write_breakpoint_filename();
+        fprintf(this->meta_file, "\n%s,%s.png",
+                this->filename, this->filename);
 
         this->recorder.chunk_type = WRMChunk::BREAKPOINT;
         this->recorder.order_count = 1;

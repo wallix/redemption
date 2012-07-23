@@ -25,7 +25,6 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include <iostream>
 #include "range_time_point.hpp"
 
 void range_time_point_error(const std::string& s)

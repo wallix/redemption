@@ -21,7 +21,7 @@
  *
  */
 
-// #define LOGPRINT
+#define LOGPRINT
 
 #include "recorder/recorder_app.hpp"
 #include "recorder/recorder_option.hpp"
@@ -33,7 +33,6 @@ int main(int argc, char** argv)
     RecorderOption opt;
     ToPngAdaptator to_png(opt);
     ToWrmAdaptator to_wrm(opt);
-    ToWrmAdaptator to_one_wrm(opt);
     RecorderAction recorder_actions[] = {
         RecorderAction("png", &to_png),
         RecorderAction("wrm", &to_wrm),

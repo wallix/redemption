@@ -160,6 +160,12 @@ class Stream {
         return ::in_bytes_le(nb, this->p - nb);
     }
 
+    unsigned in_bytes_be(const uint8_t nb){
+        REDASSERT(check_rem(nb));
+        this->p += nb;
+        return ::in_bytes_be(nb, this->p - nb);
+    }
+
     void in_copy_bytes(uint8_t * v, size_t n) {
         REDASSERT(check_rem(n));
         memcpy(v, this->p, n);
