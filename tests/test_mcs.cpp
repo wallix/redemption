@@ -302,3 +302,44 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
     BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, header_size));
 }
 
+BOOST_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
+{
+    BStream stream(1024);
+    size_t length = 5;
+    int subheight = 0;
+    int subinterval = 0;
+    MCS::ErectDomainRequest_Send mcs(stream, subheight, subinterval, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+
+    const char * expected = 
+        "\x04"  // ErectDomainRequest * 4
+        "\x01"  // subHeight len
+        "\x00"  // subHeight
+        "\x01"  // subInterval len
+        "\x00"  // subInterval
+    ;
+
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
+{
+    BStream stream(1024);
+    size_t length = 5;
+    GeneratorTransport t(
+        "\x04"  // ErectDomainRequest * 4
+        "\x01"  // subHeight len
+        "\x00"  // subHeight
+        "\x01"  // subInterval len
+        "\x00"  // subInterval
+   , length);
+    t.recv(&stream.end, length);
+
+    MCS::ErectDomainRequest_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+    BOOST_CHECK_EQUAL(MCS::MCSPDU_ErectDomainRequest , mcs.type);
+    BOOST_CHECK_EQUAL(0, mcs.subHeight);
+    BOOST_CHECK_EQUAL(0, mcs.subInterval);
+}
+
+

@@ -1953,24 +1953,6 @@ struct Mcs
 
 
 
-//   2.2.1.5 Client MCS Erect Domain Request PDU
-//   -------------------------------------------
-//   The MCS Erect Domain Request PDU is an RDP Connection Sequence PDU sent
-//   from client to server during the Channel Connection phase (see section
-//   1.3.1.1). It is sent after receiving the MCS Connect Response PDU (section
-//   2.2.1.4).
-
-//   tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-//   x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
-//      section 13.7.
-
-// See description of tpktHeader and x224 Data TPDU in cheat sheet
-
-//   mcsEDrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an MCS
-//      Erect Domain Request structure, as specified in [T125] (the ASN.1
-//      structure definitions are given in [T125] section 7, parts 3 and 10).
-
 
 // 2.2.1.6 Client MCS Attach User Request PDU
 // ------------------------------------------
@@ -3246,6 +3228,1021 @@ namespace MCS
             stream.end = stream.p;
         }
     };
+
+//    PlumbDomainIndication ::= [APPLICATION 0] IMPLICIT SEQUENCE
+//    {
+//        heightLimit     INTEGER (0..MAX)
+//                        -- a restriction on the MCSPDU receiver
+//    }
+    struct PlumbDomainIndication_Send
+    {
+        PlumbDomainIndication_Send(Stream & stream, int encoding)
+        {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+        }
+    };
+
+    struct PlumbDomainIndication_Recv
+    {
+        PlumbDomainIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+        }
+    };
+
+//   2.2.1.5 Client MCS Erect Domain Request PDU
+//   -------------------------------------------
+//   The MCS Erect Domain Request PDU is an RDP Connection Sequence PDU sent
+//   from client to server during the Channel Connection phase (see section
+//   1.3.1.1). It is sent after receiving the MCS Connect Response PDU (section
+//   2.2.1.4).
+
+//   tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+//   x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+//      section 13.7.
+
+// See description of tpktHeader and x224 Data TPDU in cheat sheet
+
+//   mcsEDrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an MCS
+//      Erect Domain Request structure, as specified in [T125] (the ASN.1
+//      structure definitions are given in [T125] section 7, parts 3 and 10).
+
+//    ErectDomainRequest ::= [APPLICATION 1] IMPLICIT SEQUENCE
+//    {
+//        subHeight   INTEGER (0..MAX),
+//                    -- height in domain of the MCSPDU transmitter
+//        subInterval INTEGER (0..MAX)
+//                    -- its throughput enforcement interval in milliseconds
+//    }
+
+//    {
+//        BStream stream(65536);
+//        stream.out_uint8((MCSPDU_ErectDomainRequest << 2));
+//        stream.out_per_integer(0); /* subHeight (INTEGER) */
+//        stream.out_per_integer(0); /* subInterval (INTEGER) */
+//        stream.end = stream.p;
+
+//        BStream x224_header(256);
+//        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+//        trans->send(x224_header.data, x224_header.end - x224_header.data);
+//        trans->send(stream.data, stream.end - stream.data);
+//    }
+
+    struct ErectDomainRequest_Send
+    {
+        ErectDomainRequest_Send(Stream & stream, uint32_t subheight, uint32_t subinterval, int encoding)
+        {
+            stream.out_uint8((MCSPDU_ErectDomainRequest << 2));
+            stream.out_per_integer(subheight); /* subHeight (INTEGER) */
+            stream.out_per_integer(subinterval); /* subInterval (INTEGER) */
+            stream.end = stream.p;
+        }
+    };
+
+    struct ErectDomainRequest_Recv
+    {
+        uint8_t type;
+        uint32_t subHeight;
+        uint32_t subInterval;
+
+        ErectDomainRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+            uint8_t tag = stream.in_uint8();
+            if ((MCS::MCSPDU_ErectDomainRequest << 2) != tag){
+                LOG(LOG_ERR, "ErectDomainRequest expected, got %u", tag);
+                throw Error(ERR_MCS);
+            }
+            this->type = MCS::MCSPDU_ErectDomainRequest;
+            this->subHeight = stream.in_per_integer();
+            this->subInterval = stream.in_per_integer();
+        }
+    };
+
+//    ChannelAttributes ::= CHOICE
+//    {
+//        static [0] IMPLICIT SEQUENCE
+//        {
+//            channelId   StaticChannelId
+//                        -- joined is implicitly TRUE
+//        },
+
+//        userId  [1] IMPLICIT SEQUENCE
+//        {
+//            joined      BOOLEAN,
+//                        -- TRUE if user is joined to its user id
+//            userId      UserId
+//        },
+
+//        private [2] IMPLICIT SEQUENCE
+//        {
+//            joined      BOOLEAN,
+//                        -- TRUE if channel id is joined below
+//            channelId   PrivateChannelId,
+//            manager     UserId,
+//            admitted    SET OF UserId
+//                        -- may span multiple MergeChannelsRequest
+//        },
+
+//        assigned [3] IMPLICIT SEQUENCE
+//        {
+//            channelId   AssignedChannelId
+//                        -- joined is implicitly TRUE
+//        }
+//    }
+
+//    MergeChannelsRequest ::= [APPLICATION 2] IMPLICIT SEQUENCE
+//    {
+//        mergeChannels   SET OF ChannelAttributes,
+//        purgeChannelIds SET OF ChannelId
+//    }
+
+    struct MergeChannelRequest_Send
+    {
+        MergeChannelRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct MergeChannelRequest_Recv
+    {
+        MergeChannelRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    MergeChannelsConfirm ::= [APPLICATION 3] IMPLICIT SEQUENCE
+//    {
+//        mergeChannels   SET OF ChannelAttributes,
+//        purgeChannelIds SET OF ChannelId
+//    }
+
+    struct MergeChannelsConfirm_Send
+    {
+        MergeChannelsConfirm_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct MergeChannelsConfirm_Recv
+    {
+        MergeChannelsConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    PurgeChannelsIndication ::= [APPLICATION 4] IMPLICIT SEQUENCE
+//    {
+//        detachUserIds       SET OF UserId,
+//                            -- purge user id channels
+//        purgeChannelIds     SET OF ChannelId
+//                            -- purge other channels
+//    }
+    struct PurgeChannelsIndication_Send
+    {
+        PurgeChannelsIndication_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct PurgeChannelsIndication_Recv
+    {
+        PurgeChannelsIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    TokenAttributes ::= CHOICE
+//    {
+//        grabbed [0] IMPLICIT SEQUENCE
+//        {
+//            tokenId     TokenId,
+//            grabber     UserId
+//        },
+
+//        inhibited [1] IMPLICIT SEQUENCE
+//        {
+//            tokenId     TokenId,
+//            inhibitors  SET OF UserId
+//                        -- may span multiple MergeTokensRequest
+//        },
+
+//        giving [2] IMPLICIT SEQUENCE
+//        {
+//            tokenId     TokenId,
+//            grabber     UserId,
+//            recipient   UserId
+//        },
+
+//        ungivable [3] IMPLICIT SEQUENCE
+//        {
+//            tokenId     TokenId,
+//            grabber     UserId
+//                        -- recipient has since detached
+//        },
+
+//        given [4] IMPLICIT SEQUENCE
+//        {
+//            tokenId         TokenId,
+//            recipient       UserId
+//                            -- grabber released or detached
+//        }
+//    }
+
+//    MergeTokensRequest ::= [APPLICATION 5] IMPLICIT SEQUENCE
+//    {
+//        mergeTokens     SET OF TokenAttributes,
+//        purgeTokenIds   SET OF TokenId
+//    }
+
+    struct MergeTokensRequest_Send
+    {
+        MergeTokensRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct MergeTokensRequest_Recv
+    {
+        MergeTokensRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    MergeTokensConfirm ::= [APPLICATION 6] IMPLICIT SEQUENCE
+//    {
+//        mergeTokens     SET OF TokenAttributes,
+//        purgeTokenIds   SET OF TokenId
+//    }
+
+    struct MergeTokensConfirm_Send
+    {
+        MergeTokensConfirm_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct MergeTokensConfirm_Recv
+    {
+        MergeTokensConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    PurgeTokensIndication ::= [APPLICATION 7] IMPLICIT SEQUENCE
+//    {
+//        purgeTokenIds   SET OF TokenId
+//    }
+
+    struct PurgeTokensIndication_Send
+    {
+        PurgeTokensIndication_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct PurgeTokensIndication_Recv
+    {
+        PurgeTokensIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    DisconnectProviderUltimatum ::= [APPLICATION 8] IMPLICIT SEQUENCE
+//    {
+//        reason          Reason
+//    }
+
+    struct DisconnectProviderUltimatum_Send
+    {
+        DisconnectProviderUltimatum_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct DisconnectProviderUltimatum_Recv
+    {
+        DisconnectProviderUltimatum_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    RejectMCSPDUUltimatum ::= [APPLICATION 9] IMPLICIT SEQUENCE
+//    {
+//        diagnostic      Diagnostic,
+//        initialOctets   OCTET STRING
+//    }
+
+    struct RejectMCSPDUUltimatum_Send
+    {
+        RejectMCSPDUUltimatum_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct RejectMCSPDUUltimatum_Recv
+    {
+        RejectMCSPDUUltimatum_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    AttachUserRequest ::= [APPLICATION 10] IMPLICIT SEQUENCE
+//    {
+//    }
+
+    struct AttachUserRequest_Send
+    {
+        AttachUserRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct AttachUserRequest_Recv
+    {
+        AttachUserRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    AttachUserConfirm ::= [APPLICATION 11] IMPLICIT SEQUENCE
+//    {
+//        result          Result,
+//        initiator       UserId OPTIONAL
+//    }
+
+    struct AttachUserConfirm_Send
+    {
+        AttachUserConfirm_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct AttachUserConfirm_Recv
+    {
+        AttachUserConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    DetachUserRequest ::= [APPLICATION 12] IMPLICIT SEQUENCE
+//    {
+//        reason          Reason,
+//        userIds         SET OF UserId
+//    }
+
+    struct DetachUserRequest_Send
+    {
+        DetachUserRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct DetachUserRequest_Recv
+    {
+        DetachUserRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    DetachUserIndication ::= [APPLICATION 13] IMPLICIT SEQUENCE
+//    {
+//        reason          Reason,
+//        userIds         SET OF UserId
+//    }
+
+    struct DetachUserIndication_Send
+    {
+        DetachUserIndication_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct DetachUserIndication_Recv
+    {
+        DetachUserIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+//    {
+//        initiator       UserId,
+//        channelId       ChannelId
+//                        -- may be zero
+//    }
+
+    struct ChannelJoinRequest_Send
+    {
+        ChannelJoinRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct ChannelJoinRequest_Recv
+    {
+        ChannelJoinRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    ChannelJoinConfirm ::= [APPLICATION 15] IMPLICIT SEQUENCE
+//    {
+//        result          Result,
+//        initiator       UserId,
+//        requested       ChannelId,
+//                        -- may be zero
+//        channelId       ChannelId OPTIONAL
+//    }
+
+    struct ChannelJoinConfirm_Send
+    {
+        ChannelJoinConfirm_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct ChannelJoinConfirm_Recv
+    {
+        ChannelJoinConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    ChannelLeaveRequest ::= [APPLICATION 16] IMPLICIT SEQUENCE
+//    {
+//        channelIds      SET OF ChannelId
+//    }
+
+    struct ChannelLeaveRequest_Send
+    {
+        ChannelLeaveRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct ChannelLeaveRequest_Recv
+    {
+        ChannelLeaveRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    ChannelConveneRequest ::= [APPLICATION 17] IMPLICIT SEQUENCE
+//    {
+//        initiator       UserId
+//    }
+
+    struct ChannelConveneRequest_Send
+    {
+        ChannelConveneRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct ChannelConveneRequest_Recv
+    {
+        ChannelConveneRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    ChannelConveneConfirm ::= [APPLICATION 18] IMPLICIT SEQUENCE
+//    {
+//        result          Result,
+//        initiator       UserId,
+//        channelId       PrivateChannelId OPTIONAL
+//    }
+
+    struct ChannelConveneConfirm_Send
+    {
+        ChannelConveneConfirm_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct ChannelConveneConfirm_Recv
+    {
+        ChannelConveneConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    ChannelDisbandRequest ::= [APPLICATION 19] IMPLICIT SEQUENCE
+//    {
+//        initiator       UserId,
+//        channelId       PrivateChannelId
+//    }
+
+    struct ChannelDisbandRequest_Send
+    {
+        ChannelDisbandRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct ChannelDisbandRequest_Recv
+    {
+        ChannelDisbandRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    ChannelDisbandIndication ::= [APPLICATION 20] IMPLICIT SEQUENCE
+//    {
+//        channelId       PrivateChannelId
+//    }
+
+    struct ChannelDisbandIndication_Send
+    {
+        ChannelDisbandIndication_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct ChannelDisbandIndication_Recv
+    {
+        ChannelDisbandIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    ChannelAdmitRequest ::= [APPLICATION 21] IMPLICIT SEQUENCE
+//    {
+//        initiator       UserId,
+//        channelId       PrivateChannelId,
+//        userIds         SET OF UserId
+//    }
+
+    struct ChannelAdmitRequest_Send
+    {
+        ChannelAdmitRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct ChannelAdmitRequest_Recv
+    {
+        ChannelAdmitRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+
+//    ChannelAdmitIndication ::= [APPLICATION 22] IMPLICIT SEQUENCE
+//    {
+//        initiator       UserId,
+//        channelId       PrivateChannelId,
+//        userIds         SET OF UserId
+//    }
+
+    struct ChannelAdmitIndication_Send
+    {
+        ChannelAdmitIndication_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct ChannelAdmitIndication_Recv
+    {
+        ChannelAdmitIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+
+//    ChannelExpelRequest ::= [APPLICATION 23] IMPLICIT SEQUENCE
+//    {
+//        initiator       UserId,
+//        channelId       PrivateChannelId,
+//        userIds         SET OF UserId
+//    }
+
+    struct ChannelExpelRequest_Send
+    {
+        ChannelExpelRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct ChannelExpelRequest_Recv
+    {
+        ChannelExpelRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    ChannelExpelIndication ::= [APPLICATION 24] IMPLICIT SEQUENCE
+//    {
+//        channelId       PrivateChannelId,
+//        userIds         SET OF UserId
+//    }
+
+    struct ChannelExpelIndication_Send
+    {
+        ChannelExpelIndication_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct ChannelExpelIndication_Recv
+    {
+        ChannelExpelIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    SendDataRequest ::= [APPLICATION 25] IMPLICIT SEQUENCE
+//    {
+//        initiator       UserId,
+//        channelId       ChannelId,
+//        dataPriority    DataPriority,
+//        segmentation    Segmentation,
+//        userData        OCTET STRING
+//    }
+
+    struct ChannelSendDataRequest_Send
+    {
+        ChannelSendDataRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct ChannelSendDataRequest_Recv
+    {
+        ChannelSendDataRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    SendDataIndication ::= [APPLICATION 26] IMPLICIT SEQUENCE
+//    {
+//        initiator       UserId,
+//        channelId       ChannelId,
+//        dataPriority    DataPriority,
+//        segmentation    Segmentation,
+//        userData        OCTET STRING
+//    }
+
+    struct ChannelSendDataIndication_Send
+    {
+        ChannelSendDataIndication_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct SendDataIndication_Recv
+    {
+        SendDataIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+
+//    UniformSendDataRequest ::= [APPLICATION 27] IMPLICIT SEQUENCE
+//    {
+//        initiator       UserId,
+//        channelId       ChannelId,
+//        dataPriority    DataPriority,
+//        segmentation    Segmentation,
+//        userData        OCTET STRING
+//    }
+
+    struct UniformSendDataRequest_Send
+    {
+        UniformSendDataRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct UniformSendDataRequest_Recv
+    {
+        UniformSendDataRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    UniformSendDataIndication ::= [APPLICATION 28] IMPLICIT SEQUENCE
+//    {
+//        initiator       UserId,
+//        channelId       ChannelId,
+//        dataPriority    DataPriority,
+//        segmentation    Segmentation,
+//        userData        OCTET STRING
+//    }
+
+    struct UniformSendDataIndication_Send
+    {
+        UniformSendDataIndication_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct UniformSendDataIndication_Recv
+    {
+        UniformSendDataIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    TokenGrabRequest ::= [APPLICATION 29] IMPLICIT SEQUENCE
+//    {
+//        initiator   UserId,
+//        tokenId     TokenId
+//    }
+
+    struct TokenGrabRequest_Send
+    {
+        TokenGrabRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct TokenGrabRequest_Recv
+    {
+        TokenGrabRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    TokenGrabConfirm ::= [APPLICATION 30] IMPLICIT SEQUENCE
+//    {
+//        result      Result,
+//        initiator   UserId,
+//        tokenId     TokenId,
+//        tokenStatus TokenStatus
+//    }
+
+    struct TokenGrabConfirm_Send
+    {
+        TokenGrabConfirm_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct TokenGrabConfirm_Recv
+    {
+        TokenGrabConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    TokenInhibitRequest ::= [APPLICATION 31] IMPLICIT SEQUENCE
+//    {
+//        initiator   UserId,
+//        tokenId     TokenId
+//    }
+
+    struct TokenInhibitRequest_Send
+    {
+        TokenInhibitRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct TokenInhibitRequest_Recv
+    {
+        TokenInhibitRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    TokenInhibitConfirm ::= [APPLICATION 32] IMPLICIT SEQUENCE
+//    {
+//        result      Result,
+//        initiator   UserId,
+//        tokenId     TokenId,
+//        tokenStatus TokenStatus
+//    }
+
+
+    struct TokenInhibitConfirm_Send
+    {
+        TokenInhibitConfirm_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct TokenInhibitConfirm_Recv
+    {
+        TokenInhibitConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    TokenGiveRequest ::= [APPLICATION 33] IMPLICIT SEQUENCE
+//    {
+//        initiator   UserId,
+//        tokenId     TokenId,
+//        recipient   UserId
+//    }
+
+    struct TokenGiveRequest_Send
+    {
+        TokenGiveRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct TokenGiveRequest_Recv
+    {
+        TokenGiveRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+
+//    TokenGiveIndication ::= [APPLICATION 34] IMPLICIT SEQUENCE
+//    {
+//        initiator   UserId,
+//        tokenId     TokenId,
+//        recipient   UserId
+//    }
+
+    struct TokenGiveIndication_Send
+    {
+        TokenGiveIndication_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct TokenGiveIndication_Recv
+    {
+        TokenGiveIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+
+//    TokenGiveResponse ::= [APPLICATION 35] IMPLICIT SEQUENCE
+//    {
+//        result      Result,
+//        recipient   UserId,
+//        tokenId     TokenId
+//    }
+
+    struct TokenGiveResponse_Send
+    {
+        TokenGiveResponse_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct TokenGiveResponse_Recv
+    {
+        TokenGiveResponse_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    TokenGiveConfirm ::= [APPLICATION 36] IMPLICIT SEQUENCE
+//    {
+//        result       Result,
+//        initiator    UserId,
+//        tokenId      TokenId,
+//        tokenStatus  TokenStatus
+//    }
+
+    struct TokenGiveConfirm_Send
+    {
+        TokenGiveConfirm_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct TokenGiveConfirm_Recv
+    {
+        TokenGiveConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    TokenPleaseRequest ::= [APPLICATION 37] IMPLICIT SEQUENCE
+//    {
+//        initiator    UserId,
+//        tokenId      TokenId
+//    }
+
+    struct TokenPleaseRequest_Send
+    {
+        TokenPleaseRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct TokenPleaseRequest_Recv
+    {
+        TokenPleaseRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    TokenPleaseIndication ::= [APPLICATION 38] IMPLICIT SEQUENCE
+//    {
+//        initiator   UserId,
+//        tokenId     TokenId
+//    }
+
+
+    struct TokenPleaseIndication_Send
+    {
+        TokenPleaseIndication_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct TokenPleaseIndication_Recv
+    {
+        TokenPleaseIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    TokenReleaseRequest ::= [APPLICATION 39] IMPLICIT SEQUENCE
+//    {
+//        initiator   UserId,
+//        tokenId     TokenId
+//    }
+
+    struct TokenReleaseRequest_Send
+    {
+        TokenReleaseRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct TokenReleaseRequest_Recv
+    {
+        TokenReleaseRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+
+//    TokenReleaseConfirm ::= [APPLICATION 40] IMPLICIT SEQUENCE
+//    {
+//        result      Result,
+//        initiator   UserId,
+//        tokenId     TokenId,
+//        tokenStatus TokenStatus
+//    }
+
+    struct TokenReleaseConfirm_Send
+    {
+        TokenReleaseConfirm_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct TokenReleaseConfirm_Recv
+    {
+        TokenReleaseConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    TokenTestRequest ::= [APPLICATION 41] IMPLICIT SEQUENCE
+//    {
+//        initiator   UserId,
+//        tokenId     TokenId
+//    }
+
+    struct TokenTestRequest_Send
+    {
+        TokenTestRequest_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct TokenTestRequest_Recv
+    {
+        TokenTestRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
+//    TokenTestConfirm ::= [APPLICATION 42] IMPLICIT SEQUENCE
+//    {
+//        initiator    UserId,
+//        tokenId      TokenId,
+//        tokenStatus  TokenStatus
+//    }
+
+    struct TokenTestConfirm_Send
+    {
+        TokenTestConfirm_Send(Stream & stream, int encoding)
+        {
+        }
+    };
+
+    struct TokenTestConfirm_Recv
+    {
+        TokenTestConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+        }
+    };
+
 };
 
 
