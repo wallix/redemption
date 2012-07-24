@@ -904,7 +904,125 @@ public:
                 LOG(LOG_INFO, "Front::incoming::channel_list : %u", this->channel_list.size());
             }
 
-            mcs_recv_connect_initial(this->trans, &this->client_info, this->channel_list);
+            BStream x224_data(65536);
+            X224::RecvFactory f(*this->trans, x224_data);
+            X224::DT_TPDU_Recv x224(*this->trans, x224_data, f.length);
+
+            SubStream mcs_data(x224_data, x224.header_size);
+            MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(mcs_data, x224.payload_size, MCS::BER_ENCODING);
+
+            SubStream payload(mcs_data, mcs_ci.header_size);
+
+        // GCC User Data
+        // -------------
+            payload.in_skip_bytes(23);
+
+        // 2.2.1.3.1 User Data Header (TS_UD_HEADER)
+        // =========================================
+
+        // type (2 bytes): A 16-bit, unsigned integer. The type of the data
+        //                 block that this header precedes.
+
+        // +-------------------+-------------------------------------------------------+
+        // | CS_CORE 0xC001    | The data block that follows contains Client Core      |
+        // |                   | Data (section 2.2.1.3.2).                             |
+        // +-------------------+-------------------------------------------------------+
+        // | CS_SECURITY 0xC002| The data block that follows contains Client           |
+        // |                   | Security Data (section 2.2.1.3.3).                    |
+        // +-------------------+-------------------------------------------------------+
+        // | CS_NET 0xC003     | The data block that follows contains Client Network   |
+        // |                   | Data (section 2.2.1.3.4).                             |
+        // +-------------------+-------------------------------------------------------+
+        // | CS_CLUSTER 0xC004 | The data block that follows contains Client Cluster   |
+        // |                   | Data (section 2.2.1.3.5).                             |
+        // +-------------------+-------------------------------------------------------+
+        // | CS_MONITOR 0xC005 | The data block that follows contains Client           |
+        // |                   | Monitor Data (section 2.2.1.3.6).                     |
+        // +-------------------+-------------------------------------------------------+
+        // | SC_CORE 0x0C01    | The data block that follows contains Server Core      |
+        // |                   | Data (section 2.2.1.4.2)                              |
+        // +-------------------+-------------------------------------------------------+
+        // | SC_SECURITY 0x0C02| The data block that follows contains Server           |
+        // |                   | Security Data (section 2.2.1.4.3).                    |
+        // +-------------------+-------------------------------------------------------+
+        // | SC_NET 0x0C03     | The data block that follows contains Server Network   |
+        // |                   | Data (section 2.2.1.4.4)                              |
+        // +-------------------+-------------------------------------------------------+
+
+        // length (2 bytes): A 16-bit, unsigned integer. The size in bytes of the data
+        //   block, including this header.
+
+            while (payload.check_rem(4)) {
+                uint8_t * current_header = payload.p;
+                uint16_t tag = payload.in_uint16_le();
+                uint16_t length = payload.in_uint16_le();
+                if (length < 4 || !payload.check_rem(length - 4)) {
+                    LOG(LOG_ERR,
+                        "error reading block tag %d size %d\n",
+                        tag, length);
+                    break;
+                }
+
+                switch (tag){
+                    case CS_CORE:
+                    {
+                        CSCoreGccUserData cs_core;
+                        cs_core.recv(payload, length);
+                        client_info.width = cs_core.desktopWidth;
+                        client_info.height = cs_core.desktopHeight;
+                        client_info.keylayout = cs_core.keyboardLayout;
+                        client_info.build = cs_core.clientBuild;
+                        for (size_t i = 0; i < 16 ; i++){
+                            client_info.hostname[i] = cs_core.clientName[i];
+                        }
+                        client_info.bpp = 8;
+                        switch (cs_core.postBeta2ColorDepth){
+                        case 0xca01:
+                            client_info.bpp = (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
+                        break;
+                        case 0xca02:
+                            client_info.bpp = 15;
+                        break;
+                        case 0xca03:
+                            client_info.bpp = 16;
+                        break;
+                        case 0xca04:
+                            client_info.bpp = 24;
+                        break;
+                        default:
+                        break;
+                        }
+                        cs_core.log("Receiving from Client");
+                    }
+                    break;
+                    case CS_SECURITY:
+                        parse_mcs_data_cs_security(payload);
+                    break;
+                    case CS_NET:
+                        parse_mcs_data_cs_net(payload, &client_info, this->channel_list);
+                    break;
+                    case CS_CLUSTER:
+                    {
+                        CSClusterGccUserData cs_cluster;
+                        cs_cluster.recv(payload, length);
+                        client_info.console_session =
+                            (0 != (cs_cluster.flags & CSClusterGccUserData::REDIRECTED_SESSIONID_FIELD_VALID));
+                        cs_cluster.log("Receiving from Client");
+                    }
+                    break;
+                    case CS_MONITOR:
+                    {
+                        CSMonitorGccUserData cs_monitor;
+                        cs_monitor.recv(payload, length);
+                        cs_monitor.log("Receiving from Client");
+                    }
+                    break;
+                    default:
+                        LOG(LOG_INFO, "Unexpected data block tag %x\n", tag);
+                    break;
+                }
+                payload.p = current_header + length;
+            }
 
             BStream stream(65536);
 
@@ -1111,7 +1229,7 @@ public:
             size_t payload_length = stream.end - stream.data;
 
             BStream mcs_header(256);
-            MCS::CONNECT_RESPONSE_Send mcs(mcs_header, payload_length, MCS::BER_ENCODING);
+            MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, payload_length, MCS::BER_ENCODING);
             size_t mcs_header_length = mcs_header.end - mcs_header.data;
 
             BStream x224_header(256);
