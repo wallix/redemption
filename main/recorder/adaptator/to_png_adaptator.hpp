@@ -43,7 +43,8 @@ public:
                this->_option.time.time,
                this->_option.frame,
                this->_option.screenshot_start,
-               this->_option.no_screenshot_stop
+               this->_option.no_screenshot_stop,
+               this->_option.screenshot_all
         );
     }
 };

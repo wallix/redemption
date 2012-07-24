@@ -38,11 +38,12 @@ WrmRecorderOption::WrmRecorderOption()
 , frame(std::numeric_limits<uint>::max())
 , time(60*2)
 , in_filename()
-, idx_start("0")
+, idx_start(0)
 , base_path()
 , metaname()
 , ignore_dir_for_meta_in_wrm(false)
 , input_type()
+, times_in_meta_are_false(false)
 {
     this->add_default_options();
 }
@@ -57,7 +58,7 @@ void WrmRecorderOption::add_default_options()
     ("range,r", po::value(&this->range),
      "interval of capture"
      "\n\nformat:"
-     "\n[[[+|-]time[h|m|s][...]][,][[+]time[h|m|s][[+|-]time[h|m|s][...]]]]"
+     "\n[[+|-]time[h|m|s][...]][,[[+]time[h|m|s][[+|-]time[h|m|s][...]]]]"
      "\n\nexamples:"
      "\n1h30,+10m -> from 1h30 to 1h40"
      "\n20m+2h-50s,3h -> from 2h19m10s to 3h")
@@ -67,8 +68,9 @@ void WrmRecorderOption::add_default_options()
     ("input-file,i", po::value(&this->in_filename), "input filename (see --input-type)")
     ("index-start,x", po::value(&this->idx_start), "index file in the meta")
     ("path,p", po::value(&this->base_path), "base path for the files presents in the meta")
-    ("ignore-dir,N", "ignore directory for meta in the file wrm")
+    ("ignore-dir,N", "ignore directory for meta in the wrm file")
     ("deduce-dir,d", "use --ignore-dir and set --path with the directory of --input-file")
+    ("times-in-meta-file-are-false", "")
     ("output-meta-name,m", po::value(&this->metaname), "specified name of meta file")
     ("input-type,I", po::value(&this->input_type), "accept 'mwrm' or 'wrm'")
     ;
@@ -107,6 +109,9 @@ int WrmRecorderOption::normalize_options()
 
     if (this->options.find("ignore-dir") != end)
         this->ignore_dir_for_meta_in_wrm = true;
+
+    if (this->options.find("times-in-meta-file-are-false") != end)
+        this->times_in_meta_are_false = true;
 
     if (this->options.find("deduce-dir") != end)
     {

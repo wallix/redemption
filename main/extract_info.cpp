@@ -68,7 +68,11 @@ int main(int argc, char** argv)
         << "\nheight: " << meta.height
         << "\nfiles:";
         for (uint i = 0; i != meta.files.size(); ++i){
-            std::cout << "\n\t" << (i+1) << " wrm: " << meta.files[i].first << ", png: " << meta.files[i].second;
+            std::cout << "\n\t" << (i+1)
+            << " wrm: " << meta.files[i].wrm_filename
+            << ", png: " << meta.files[i].png_filename
+            << ", start_sec: " << meta.files[i].start_sec
+            << ", start_usec: " << meta.files[i].start_usec;
         }
         std::cout << "\n\n";
     }
@@ -183,8 +187,14 @@ int main(int argc, char** argv)
                 next_file_id_info.weight += weight;
                 uint16_t tmp = remaining_order_count;
                 recorder.interpret_order();
+                DataFile& info = recorder.meta().files[recorder.idx_file];
                 std::cout << "NEXT_FILE_ID: number: " << tmp
-                << ", size: " << weight << " B, idx: " << recorder.idx_file << '/' << recorder.meta().files.size() << ", open: wrm: " << recorder.meta().files[recorder.idx_file].first << ", png: " << recorder.meta().files[recorder.idx_file].second << '\n';
+                << ", size: " << weight << " B, idx: "
+                << recorder.idx_file << '/' << recorder.meta().files.size()
+                << ", open: wrm: " << info.wrm_filename
+                << ", png: " << info.png_filename
+                << ", start_sec: " << info.start_sec
+                << ", start_usec: " << info.start_usec << '\n';
             }
                 break;
             default:
