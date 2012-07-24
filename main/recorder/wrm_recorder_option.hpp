@@ -36,11 +36,12 @@ struct WrmRecorderOption
     uint frame;
     time_point time;
     std::string in_filename;
-    std::string idx_start;
+    uint idx_start;
     std::string base_path;
     std::string metaname;
     bool ignore_dir_for_meta_in_wrm;
     std::string input_type;
+    bool times_in_meta_are_false;
 
     WrmRecorderOption();
 

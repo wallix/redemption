@@ -11,6 +11,7 @@ RecorderOption::RecorderOption()
 , screenshot_wrm(false)
 , screenshot_start(false)
 , no_screenshot_stop(false)
+, screenshot_all(false)
 , cat_wrm(false)
 {
     this->add_default_options();
@@ -23,6 +24,7 @@ void RecorderOption::add_default_options()
     ("screenshot-wrm,s", "capture the screen when a file wrm is create")
     ("screenshot-start,0", "")
     ("no-screenshot-stop,n", "")
+    ("screenshot-all,a", "")
     ("concat-wrm,c", "concat each wrm in a single wrm")
     ;
 }
@@ -59,6 +61,7 @@ int RecorderOption::normalize_options()
             pair_type("screenshot-wrm", this->screenshot_wrm),
             pair_type("screenshot-start", this->screenshot_start),
             pair_type("no-screenshot-stop", this->no_screenshot_stop),
+            pair_type("screenshot-all", this->screenshot_all),
             pair_type("concat-wrm", this->cat_wrm),
         };
         for (std::size_t n = 0; n < sizeof(p)/sizeof(p[0]); ++n) {

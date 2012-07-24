@@ -125,7 +125,7 @@ public:
             throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
         if (this->meta().files.empty())
             throw Error(ERR_RECORDER_META_REFERENCE_WRM);
-        this->open_wrm_only(this->get_cpath(this->meta().files[0].first.c_str()));
+        this->open_wrm_only(this->get_cpath(this->meta().files[0].wrm_filename.c_str()));
         ++this->idx_file;
         if (this->selected_next_order() && this->is_meta_chunk())
             this->ignore_chunks();
@@ -248,7 +248,7 @@ public:
         return this->reader.data_meta;
     }
 
-private:
+public:
     void next_file(const char * filename)
     {
         ::close(this->trans.fd);
@@ -297,7 +297,7 @@ public:
     std::size_t get_idx_file(const char* wrm_name) const
     {
         std::size_t i = 0;
-        while (i < this->meta().files.size() && this->meta().files[i].first != wrm_name){
+        while (i < this->meta().files.size() && this->meta().files[i].wrm_filename != wrm_name){
             ++i;
         }
         return i;
@@ -414,8 +414,8 @@ public:
             {
                 this->idx_file = this->reader.stream.in_uint32_le();
                 this->check_idx_wrm(this->idx_file);
-                this->next_file(this->meta().files[this->idx_file].first.c_str());
-                this->load_png_context(this->meta().files[this->idx_file].second.c_str());
+                this->next_file(this->meta().files[this->idx_file].wrm_filename.c_str());
+                this->load_png_context(this->meta().files[this->idx_file].png_filename.c_str());
             }
             break;
             case WRMChunk::BREAKPOINT:

@@ -25,7 +25,8 @@
 void to_png(WRMRecorder& recorder, const char* outfile,
             std::size_t start, std::size_t stop, std::size_t interval,
             uint frame_limit,
-            bool screenshot_start, bool no_screenshot_stop)
+            bool screenshot_start, bool no_screenshot_stop,
+            bool screenshot_all)
 {
     StaticCapture capture(recorder.meta().width,
                           recorder.meta().height,
@@ -42,6 +43,8 @@ void to_png(WRMRecorder& recorder, const char* outfile,
     uint frame = 0;
     uint64_t mtime = TimerCompute::coeff_sec_to_usec * interval;
     uint64_t msecond = TimerCompute::coeff_sec_to_usec * (stop - start);
+    uint64_t minterval = 0;
+
     while (recorder.selected_next_order())
     {
         if (timercompute.interpret_is_time_chunk()){
@@ -51,7 +54,16 @@ void to_png(WRMRecorder& recorder, const char* outfile,
                 timercompute.reset();
                 if (++frame == frame_limit)
                     break;
+                if (screenshot_all)
+                {
+                    minterval += usec - mtime;
+                    while (minterval >= mtime){
+                        capture.dump_png();
+                        minterval -= mtime;
+                    }
+                }
             }
+
             if (msecond <= usec){
                 msecond = 0;
                 break;

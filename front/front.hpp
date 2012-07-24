@@ -329,6 +329,7 @@ public:
             buffer[255] = 0;
             this->capture = new Capture(width, height, path, codec_id, quality);
             this->capture->set_prefix(buffer, strlen(buffer));
+            this->capture->start();
         }
     }
 

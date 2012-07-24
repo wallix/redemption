@@ -134,7 +134,7 @@ public:
             throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE);
         }
 
-        fprintf(this->meta_file, "%d %d\n\n%s",
+        fprintf(this->meta_file, "%d %d\n\n%s,",
                 this->width, this->height, this->filename);
     }
 
@@ -223,10 +223,7 @@ public:
         this->stream.out_uint64_be(now.tv_usec);
         this->recorder.flush();
 
-        std::tm * tm = std::gmtime(&now.tv_sec);
-        fprintf(this->meta_file, " %4d-%02d-%02d %02d:%02d:%02d",
-                tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-                tm->tm_hour, tm->tm_min, tm->tm_sec);
+        fprintf(this->meta_file, " %ld %ld", now.tv_sec, now.tv_usec);
     }
 
     void breakpoint(const uint8_t* data_drawable, uint8_t bpp,

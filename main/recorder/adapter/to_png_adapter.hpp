@@ -18,20 +18,20 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__MAIN_RECORDER_ADAPTATOR_TO_PNG_ADAPTATOR_HPP__)
-#define __MAIN_RECORDER_ADAPTATOR_TO_PNG_ADAPTATOR_HPP__
+#if !defined(__MAIN_RECORDER_ADAPTER_TO_PNG_ADAPTER_HPP__)
+#define __MAIN_RECORDER_ADAPTER_TO_PNG_ADAPTER_HPP__
 
-#include "recorder/adaptator.hpp"
+#include "recorder/adapter.hpp"
 #include "recorder/recorder_option.hpp"
 #include "recorder/to_png.hpp"
 
-class ToPngAdaptator
-: public RecorderAdaptator
+class ToPngAdapter
+: public RecorderAdapter
 {
     RecorderOption& _option;
 
 public:
-    ToPngAdaptator(RecorderOption& option)
+    ToPngAdapter(RecorderOption& option)
     : _option(option)
     {}
 
@@ -43,7 +43,8 @@ public:
                this->_option.time.time,
                this->_option.frame,
                this->_option.screenshot_start,
-               this->_option.no_screenshot_stop
+               this->_option.no_screenshot_stop,
+               this->_option.screenshot_all
         );
     }
 };

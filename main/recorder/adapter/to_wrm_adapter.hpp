@@ -18,21 +18,21 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__MAIN_RECORDER_ADAPTATOR_TO_WRM_ADAPTATOR_HPP__)
-#define __MAIN_RECORDER_ADAPTATOR_TO_WRM_ADAPTATOR_HPP__
+#if !defined(__MAIN_RECORDER_ADAPTER_TO_WRM_ADAPTER_HPP__)
+#define __MAIN_RECORDER_ADAPTER_TO_WRM_ADAPTER_HPP__
 
-#include "recorder/adaptator.hpp"
+#include "recorder/adapter.hpp"
 #include "recorder/recorder_option.hpp"
 #include "recorder/to_wrm.hpp"
 #include "recorder/to_one_wrm.hpp"
 
-class ToWrmAdaptator
-: public RecorderAdaptator
+class ToWrmAdapter
+: public RecorderAdapter
 {
     RecorderOption& _option;
 
 public:
-    ToWrmAdaptator(RecorderOption& option)
+    ToWrmAdapter(RecorderOption& option)
     : _option(option)
     {}
 

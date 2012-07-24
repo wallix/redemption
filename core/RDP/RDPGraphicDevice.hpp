@@ -348,7 +348,7 @@ struct RDPUnserializer
     {
         if (!read_meta_file(this->data_meta, filename))
         {
-            LOG(LOG_ERR, "meta %s: %s", this->stream.p, strerror(errno));
+            LOG(LOG_ERR, "meta %s: %s", filename, strerror(errno));
             return false;
         }
         this->screen_rect.cx = this->data_meta.width;

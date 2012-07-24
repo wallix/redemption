@@ -195,7 +195,7 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
         } else if (recorder->chunk_type() == WRMChunk::NEXT_FILE_ID) {
             BOOST_CHECK(1);
             std::size_t n = recorder->reader.stream.in_uint32_le();
-            std::string wrm_filename = recorder->meta().files[n].first;
+            std::string wrm_filename = recorder->meta().files[n].wrm_filename;
             BOOST_CHECK(1);
             delete recorder;
             BOOST_CHECK(1);

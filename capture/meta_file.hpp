@@ -24,17 +24,46 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <sstream>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <stdint.h>
 
-/**
- * MetaFileReadOnly
- * MetaFileWriteOnly
- * DataMetaFile
- */
+struct DataFile
+{
+    std::string wrm_filename;
+    std::string png_filename;
+    time_t start_sec;
+    suseconds_t start_usec;
+
+    DataFile(const std::string& __wrm_filename = std::string(),
+            const std::string& __png_filename = std::string(),
+            time_t __start_sec = 0,
+            suseconds_t __start_usec = 0
+           )
+    : wrm_filename(__wrm_filename)
+    , png_filename(__png_filename)
+    , start_sec(__start_sec)
+    , start_usec(__start_usec)
+    {}
+};
+
+inline bool operator==(const DataFile& a, const DataFile& b)
+{
+    return a.start_sec == b.start_sec
+    && a.start_usec == b.start_usec
+    && a.png_filename == b.png_filename
+    && a.wrm_filename == b.wrm_filename;
+}
+
+inline bool operator!=(const DataFile& a, const DataFile& b)
+{
+    return !(a == b);
+}
 
 struct DataMetaFile
 {
-    typedef std::pair<std::string, std::string> WrmInfo;
-    std::vector<WrmInfo> files;
+    std::vector<DataFile> files;
 
     uint16_t version;
     uint16_t width;
@@ -53,31 +82,32 @@ struct DataMetaFile
 
 inline std::istream& operator>>(std::istream& is, DataMetaFile& data)
 {
+    data.files.clear();
     is >> data.width >> data.height;
+
     std::string line;
-    while (std::getline(is, line) && line != "--")
+    while (std::getline(is, line))
     {
         if (!line.empty()){
-            std::size_t pos = line.find(',', 1);
-            std::size_t posend = 0;
-            if (std::string::npos != pos){
-                posend = pos;
-            }
-            posend = line.find(' ', posend + 1);
-            if (std::string::npos == pos && std::string::npos == posend)
-            {
-                data.files.push_back(DataMetaFile::WrmInfo(line, ""));
-            }
-            else
-            {
-                if (std::string::npos == pos){
-                    pos = posend;
+            std::size_t p1 = line.find(',', 1);
+
+            DataFile info(line.substr(0, p1));
+
+            if (std::string::npos != p1){
+                std::size_t p2 = line.find(' ', p1 + 1);
+                info.png_filename = line.substr(p1 + 1, p2 - p1 - 1);
+
+                if (std::string::npos != p2){
+                    std::size_t p3 = line.find(' ', p2 + 1);
+                    std::istringstream(line.substr(p2 + 1, p3 - p2 - 1)) >> info.start_sec;
+
+                    if (std::string::npos != p3){
+                        std::istringstream(line.substr(p3 + 1, line.find(' ', p3 + 1) - p3 - 1)) >> info.start_usec;
+                    }
                 }
-                data.files.push_back(DataMetaFile::WrmInfo(
-                    line.substr(0, pos),
-                    line.substr(pos + 1, posend - pos - 1)
-                ));
             }
+
+            data.files.push_back(info);
         }
     }
     data.loaded = true;
@@ -85,13 +115,10 @@ inline std::istream& operator>>(std::istream& is, DataMetaFile& data)
 }
 
 /**
- width height
+width height
 
- wrm_filename[,png_filename][ ignore-text]
- ...
- [--
- [ignore-text]]
- */
+wrm_filename,[png_filename] [start_sec [start_usec]]
+*/
 inline bool read_meta_file(DataMetaFile& data, const char * filename)
 {
     std::ifstream file(filename);
@@ -103,16 +130,14 @@ inline bool read_meta_file(DataMetaFile& data, const char * filename)
 
 inline std::ostream& operator<<(std::ostream& os, DataMetaFile& data)
 {
-    os << data.width << ' ' << data.height << '\n';
+    os << data.width << ' ' << data.height << "\n\n";
     for (std::size_t i = 0, last = data.files.size(); i < last; ++i)
     {
-        os << data.files[i].first;
-        if (!data.files[i].second.empty()){
-            os << ',' << data.files[i].second;
-        }
-        os << '\n';
+        DataFile& info = data.files[i];
+        os << info.wrm_filename << ',' << info.png_filename
+        << ' ' << info.start_sec << ' ' << info.start_usec << '\n';
     }
-    return os << "--\n";
+    return os;
 }
 
 inline bool write_meta_file(DataMetaFile& data, const char * filename)
