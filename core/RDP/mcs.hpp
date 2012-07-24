@@ -191,159 +191,6 @@ struct Mcs
     {
         this->opcode = command << 2;
         switch (this->opcode){
-        case PER_DomainMCSPDU_CHOICE_PlumbDomainIndication:
-        {
-//        PlumbDomainIndication ::= [APPLICATION 0] IMPLICIT SEQUENCE
-//        {
-//            heightLimit     INTEGER (0..MAX)
-//                            -- a restriction on the MCSPDU receiver
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU PlumbDomainIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ErectDomainRequest:
-        {
-//        ErectDomainRequest ::= [APPLICATION 1] IMPLICIT SEQUENCE
-//        {
-//            subHeight   INTEGER (0..MAX),
-//                        -- height in domain of the MCSPDU transmitter
-//            subInterval INTEGER (0..MAX)
-//                        -- its throughput enforcement interval in milliseconds
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ErectDomainRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_MergeChannelsRequest:
-        {
-//        ChannelAttributes ::= CHOICE
-//        {
-//            static [0] IMPLICIT SEQUENCE
-//            {
-//                channelId   StaticChannelId
-//                            -- joined is implicitly TRUE
-//            },
-
-//            userId  [1] IMPLICIT SEQUENCE
-//            {
-//                joined      BOOLEAN,
-//                            -- TRUE if user is joined to its user id
-//                userId      UserId
-//            },
-
-//            private [2] IMPLICIT SEQUENCE
-//            {
-//                joined      BOOLEAN,
-//                            -- TRUE if channel id is joined below
-//                channelId   PrivateChannelId,
-//                manager     UserId,
-//                admitted    SET OF UserId
-//                            -- may span multiple MergeChannelsRequest
-//            },
-
-//            assigned [3] IMPLICIT SEQUENCE
-//            {
-//                channelId   AssignedChannelId
-//                            -- joined is implicitly TRUE
-//            }
-//        }
-
-//        MergeChannelsRequest ::= [APPLICATION 2] IMPLICIT SEQUENCE
-//        {
-//            mergeChannels   SET OF ChannelAttributes,
-//            purgeChannelIds SET OF ChannelId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU MergeChannelsRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_MergeChannelsConfirm:
-        {
-//        MergeChannelsConfirm ::= [APPLICATION 3] IMPLICIT SEQUENCE
-//        {
-//            mergeChannels   SET OF ChannelAttributes,
-//            purgeChannelIds SET OF ChannelId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU MergeChannelsConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_PurgeChannelsIndication:
-        {
-//        PurgeChannelsIndication ::= [APPLICATION 4] IMPLICIT SEQUENCE
-//        {
-//            detachUserIds       SET OF UserId,
-//                                -- purge user id channels
-//            purgeChannelIds     SET OF ChannelId
-//                                -- purge other channels
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU PurgeChannelsIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_MergeTokensRequest:
-        {
-//        TokenAttributes ::= CHOICE
-//        {
-//            grabbed [0] IMPLICIT SEQUENCE
-//            {
-//                tokenId     TokenId,
-//                grabber     UserId
-//            },
-
-//            inhibited [1] IMPLICIT SEQUENCE
-//            {
-//                tokenId     TokenId,
-//                inhibitors  SET OF UserId
-//                            -- may span multiple MergeTokensRequest
-//            },
-
-//            giving [2] IMPLICIT SEQUENCE
-//            {
-//                tokenId     TokenId,
-//                grabber     UserId,
-//                recipient   UserId
-//            },
-
-//            ungivable [3] IMPLICIT SEQUENCE
-//            {
-//                tokenId     TokenId,
-//                grabber     UserId
-//                            -- recipient has since detached
-//            },
-
-//            given [4] IMPLICIT SEQUENCE
-//            {
-//                tokenId         TokenId,
-//                recipient       UserId
-//                                -- grabber released or detached
-//            }
-//        }
-
-//        MergeTokensRequest ::= [APPLICATION 5] IMPLICIT SEQUENCE
-//        {
-//            mergeTokens     SET OF TokenAttributes,
-//            purgeTokenIds   SET OF TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU MergeTokensRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_MergeTokensConfirm:
-        {
-//        MergeTokensConfirm ::= [APPLICATION 6] IMPLICIT SEQUENCE
-//        {
-//            mergeTokens     SET OF TokenAttributes,
-//            purgeTokenIds   SET OF TokenId
-//        }
-
-            LOG(LOG_WARNING, "Unsupported DomainPDU MergeTokensConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_PurgeTokensIndication:
-        {
-//        PurgeTokensIndication ::= [APPLICATION 7] IMPLICIT SEQUENCE
-//        {
-//            purgeTokenIds   SET OF TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU PurgeTokensIndication");
-        }
-        break;
         case PER_DomainMCSPDU_CHOICE_DisconnectProviderUltimatum:
         {
 //        -- Part 4: Disconnect provider
@@ -763,159 +610,6 @@ struct Mcs
     void emit_end(){
     //==============================================================================
         switch (this->opcode){
-        case PER_DomainMCSPDU_CHOICE_PlumbDomainIndication:
-        {
-//        PlumbDomainIndication ::= [APPLICATION 0] IMPLICIT SEQUENCE
-//        {
-//            heightLimit     INTEGER (0..MAX)
-//                            -- a restriction on the MCSPDU receiver
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU PlumbDomainIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ErectDomainRequest:
-        {
-//        ErectDomainRequest ::= [APPLICATION 1] IMPLICIT SEQUENCE
-//        {
-//            subHeight   INTEGER (0..MAX),
-//                        -- height in domain of the MCSPDU transmitter
-//            subInterval INTEGER (0..MAX)
-//                        -- its throughput enforcement interval in milliseconds
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ErectDomainRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_MergeChannelsRequest:
-        {
-//        ChannelAttributes ::= CHOICE
-//        {
-//            static [0] IMPLICIT SEQUENCE
-//            {
-//                channelId   StaticChannelId
-//                            -- joined is implicitly TRUE
-//            },
-
-//            userId  [1] IMPLICIT SEQUENCE
-//            {
-//                joined      BOOLEAN,
-//                            -- TRUE if user is joined to its user id
-//                userId      UserId
-//            },
-
-//            private [2] IMPLICIT SEQUENCE
-//            {
-//                joined      BOOLEAN,
-//                            -- TRUE if channel id is joined below
-//                channelId   PrivateChannelId,
-//                manager     UserId,
-//                admitted    SET OF UserId
-//                            -- may span multiple MergeChannelsRequest
-//            },
-
-//            assigned [3] IMPLICIT SEQUENCE
-//            {
-//                channelId   AssignedChannelId
-//                            -- joined is implicitly TRUE
-//            }
-//        }
-
-//        MergeChannelsRequest ::= [APPLICATION 2] IMPLICIT SEQUENCE
-//        {
-//            mergeChannels   SET OF ChannelAttributes,
-//            purgeChannelIds SET OF ChannelId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU MergeChannelsRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_MergeChannelsConfirm:
-        {
-//        MergeChannelsConfirm ::= [APPLICATION 3] IMPLICIT SEQUENCE
-//        {
-//            mergeChannels   SET OF ChannelAttributes,
-//            purgeChannelIds SET OF ChannelId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU MergeChannelsConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_PurgeChannelsIndication:
-        {
-//        PurgeChannelsIndication ::= [APPLICATION 4] IMPLICIT SEQUENCE
-//        {
-//            detachUserIds       SET OF UserId,
-//                                -- purge user id channels
-//            purgeChannelIds     SET OF ChannelId
-//                                -- purge other channels
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU PurgeChannelsIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_MergeTokensRequest:
-        {
-//        TokenAttributes ::= CHOICE
-//        {
-//            grabbed [0] IMPLICIT SEQUENCE
-//            {
-//                tokenId     TokenId,
-//                grabber     UserId
-//            },
-
-//            inhibited [1] IMPLICIT SEQUENCE
-//            {
-//                tokenId     TokenId,
-//                inhibitors  SET OF UserId
-//                            -- may span multiple MergeTokensRequest
-//            },
-
-//            giving [2] IMPLICIT SEQUENCE
-//            {
-//                tokenId     TokenId,
-//                grabber     UserId,
-//                recipient   UserId
-//            },
-
-//            ungivable [3] IMPLICIT SEQUENCE
-//            {
-//                tokenId     TokenId,
-//                grabber     UserId
-//                            -- recipient has since detached
-//            },
-
-//            given [4] IMPLICIT SEQUENCE
-//            {
-//                tokenId         TokenId,
-//                recipient       UserId
-//                                -- grabber released or detached
-//            }
-//        }
-
-//        MergeTokensRequest ::= [APPLICATION 5] IMPLICIT SEQUENCE
-//        {
-//            mergeTokens     SET OF TokenAttributes,
-//            purgeTokenIds   SET OF TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU MergeTokensRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_MergeTokensConfirm:
-        {
-//        MergeTokensConfirm ::= [APPLICATION 6] IMPLICIT SEQUENCE
-//        {
-//            mergeTokens     SET OF TokenAttributes,
-//            purgeTokenIds   SET OF TokenId
-//        }
-
-            LOG(LOG_WARNING, "Unsupported DomainPDU MergeTokensConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_PurgeTokensIndication:
-        {
-//        PurgeTokensIndication ::= [APPLICATION 7] IMPLICIT SEQUENCE
-//        {
-//            purgeTokenIds   SET OF TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU PurgeTokensIndication");
-        }
-        break;
         case PER_DomainMCSPDU_CHOICE_DisconnectProviderUltimatum:
         {
 //        -- Part 4: Disconnect provider
@@ -1315,159 +1009,6 @@ struct Mcs
     //==============================================================================
         this->opcode = stream.in_uint8();
         switch (this->opcode & 0xFC){
-        case PER_DomainMCSPDU_CHOICE_PlumbDomainIndication:
-        {
-//        PlumbDomainIndication ::= [APPLICATION 0] IMPLICIT SEQUENCE
-//        {
-//            heightLimit     INTEGER (0..MAX)
-//                            -- a restriction on the MCSPDU receiver
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU PlumbDomainIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ErectDomainRequest:
-        {
-//        ErectDomainRequest ::= [APPLICATION 1] IMPLICIT SEQUENCE
-//        {
-//            subHeight   INTEGER (0..MAX),
-//                        -- height in domain of the MCSPDU transmitter
-//            subInterval INTEGER (0..MAX)
-//                        -- its throughput enforcement interval in milliseconds
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ErectDomainRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_MergeChannelsRequest:
-        {
-//        ChannelAttributes ::= CHOICE
-//        {
-//            static [0] IMPLICIT SEQUENCE
-//            {
-//                channelId   StaticChannelId
-//                            -- joined is implicitly TRUE
-//            },
-
-//            userId  [1] IMPLICIT SEQUENCE
-//            {
-//                joined      BOOLEAN,
-//                            -- TRUE if user is joined to its user id
-//                userId      UserId
-//            },
-
-//            private [2] IMPLICIT SEQUENCE
-//            {
-//                joined      BOOLEAN,
-//                            -- TRUE if channel id is joined below
-//                channelId   PrivateChannelId,
-//                manager     UserId,
-//                admitted    SET OF UserId
-//                            -- may span multiple MergeChannelsRequest
-//            },
-
-//            assigned [3] IMPLICIT SEQUENCE
-//            {
-//                channelId   AssignedChannelId
-//                            -- joined is implicitly TRUE
-//            }
-//        }
-
-//        MergeChannelsRequest ::= [APPLICATION 2] IMPLICIT SEQUENCE
-//        {
-//            mergeChannels   SET OF ChannelAttributes,
-//            purgeChannelIds SET OF ChannelId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU MergeChannelsRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_MergeChannelsConfirm:
-        {
-//        MergeChannelsConfirm ::= [APPLICATION 3] IMPLICIT SEQUENCE
-//        {
-//            mergeChannels   SET OF ChannelAttributes,
-//            purgeChannelIds SET OF ChannelId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU MergeChannelsConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_PurgeChannelsIndication:
-        {
-//        PurgeChannelsIndication ::= [APPLICATION 4] IMPLICIT SEQUENCE
-//        {
-//            detachUserIds       SET OF UserId,
-//                                -- purge user id channels
-//            purgeChannelIds     SET OF ChannelId
-//                                -- purge other channels
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU PurgeChannelsIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_MergeTokensRequest:
-        {
-//        TokenAttributes ::= CHOICE
-//        {
-//            grabbed [0] IMPLICIT SEQUENCE
-//            {
-//                tokenId     TokenId,
-//                grabber     UserId
-//            },
-
-//            inhibited [1] IMPLICIT SEQUENCE
-//            {
-//                tokenId     TokenId,
-//                inhibitors  SET OF UserId
-//                            -- may span multiple MergeTokensRequest
-//            },
-
-//            giving [2] IMPLICIT SEQUENCE
-//            {
-//                tokenId     TokenId,
-//                grabber     UserId,
-//                recipient   UserId
-//            },
-
-//            ungivable [3] IMPLICIT SEQUENCE
-//            {
-//                tokenId     TokenId,
-//                grabber     UserId
-//                            -- recipient has since detached
-//            },
-
-//            given [4] IMPLICIT SEQUENCE
-//            {
-//                tokenId         TokenId,
-//                recipient       UserId
-//                                -- grabber released or detached
-//            }
-//        }
-
-//        MergeTokensRequest ::= [APPLICATION 5] IMPLICIT SEQUENCE
-//        {
-//            mergeTokens     SET OF TokenAttributes,
-//            purgeTokenIds   SET OF TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU MergeTokensRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_MergeTokensConfirm:
-        {
-//        MergeTokensConfirm ::= [APPLICATION 6] IMPLICIT SEQUENCE
-//        {
-//            mergeTokens     SET OF TokenAttributes,
-//            purgeTokenIds   SET OF TokenId
-//        }
-
-            LOG(LOG_WARNING, "Unsupported DomainPDU MergeTokensConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_PurgeTokensIndication:
-        {
-//        PurgeTokensIndication ::= [APPLICATION 7] IMPLICIT SEQUENCE
-//        {
-//            purgeTokenIds   SET OF TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU PurgeTokensIndication");
-        }
-        break;
         case PER_DomainMCSPDU_CHOICE_DisconnectProviderUltimatum:
         {
 //        -- Part 4: Disconnect provider
@@ -1896,134 +1437,6 @@ struct Mcs
 
 
 
-// 2.2.1.3 Client MCS Connect Initial PDU with GCC Conference Create Request
-// =========================================================================
-
-// The MCS Connect Initial PDU is an RDP Connection Sequence PDU sent from
-// client to server during the Basic Settings Exchange phase (see section
-// 1.3.1.1). It is sent after receiving the X.224 Connection Confirm PDU
-// (section 2.2.1.2). The MCS Connect Initial PDU encapsulates a GCC Conference
-// Create Request, which encapsulates concatenated blocks of settings data. A
-// basic high-level overview of the nested structure for the Client MCS Connect
-// Initial PDU is illustrated in section 1.3.1.1, in the figure specifying MCS
-// Connect Initial PDU. Note that the order of the settings data blocks is
-// allowed to vary from that shown in the previously mentioned figure and the
-// message syntax layout that follows. This is possible because each data block
-// is identified by a User Data Header structure (section 2.2.1.3.1).
-
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
-//   section 13.7.
-
-// mcsCi (variable): Variable-length BER-encoded MCS Connect Initial structure
-//   (using definite-length encoding) as described in [T125] (the ASN.1
-//   structure definition is detailed in [T125] section 7, part 2). The userData
-//   field of the MCS Connect Initial encapsulates the GCC Conference Create
-//   Request data (contained in the gccCCrq and subsequent fields). The maximum
-//   allowed size of this user data is 1024 bytes, which implies that the
-//   combined size of the gccCCrq and subsequent fields MUST be less than 1024
-//   bytes.
-
-// gccCCrq (variable): Variable-length Packed Encoding Rule encoded
-//   (PER-encoded) GCC Connect Data structure, which encapsulates a Connect GCC
-//   PDU that contains a GCC Conference Create Request structure as described in
-//   [T124] (the ASN.1 structure definitions are detailed in [T124] section 8.7)
-//   appended as user data to the MCS Connect Initial (using the format
-//   described in [T124] sections 9.5 and 9.6). The userData field of the GCC
-//   Conference Create Request contains one user data set consisting of
-//   concatenated client data blocks.
-
-// clientCoreData (216 bytes): Client Core Data structure (section 2.2.1.3.2).
-
-// clientSecurityData (12 bytes): Client Security Data structure (section
-//   2.2.1.3.3).
-
-// clientNetworkData (variable): Optional and variable-length Client Network
-//   Data structure (section 2.2.1.3.4).
-
-// clientClusterData (12 bytes): Optional Client Cluster Data structure (section
-//   2.2.1.3.5).
-
-// clientMonitorData (variable): Optional Client Monitor Data structure (section
-//   2.2.1.3.6). This field MUST NOT be included if the server does not
-//   advertise support for extended client data blocks by using the
-//   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
-//   2.2.1.2.1.
-
-
-
-
-// 2.2.1.6 Client MCS Attach User Request PDU
-// ------------------------------------------
-// The MCS Attach User Request PDU is an RDP Connection Sequence PDU
-// sent from client to server during the Channel Connection phase (see
-// section 1.3.1.1) to request a user channel ID. It is sent after
-// transmitting the MCS Erect Domain Request PDU (section 2.2.1.5).
-
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
-//   [X224] section 13.7.
-
-// See description of tpktHeader and x224 Data TPDU in cheat sheet
-
-// mcsAUrq (1 byte): PER-encoded MCS Domain PDU which encapsulates an
-//  MCS Attach User Request structure, as specified in [T125] (the ASN.1
-//  structure definitions are given in [T125] section 7, parts 5 and 10).
-
-// AttachUserRequest ::= [APPLICATION 10] IMPLICIT SEQUENCE
-// {
-// }
-
-// 11.17 AttachUserRequest
-// -----------------------
-
-// AttachUserRequest is generated by an MCS-ATTACH-USER request. It rises to the
-// top MCS provider, which returns an AttachUserConfirm reply. If the domain
-// limit on number of user ids allows, a new user id is generated.
-
-// AttachUserRequest contains no information other than its MCSPDU type. The
-// domain to which the user attaches is determined by the MCS connection
-// conveying the MCSPDU. The only initial characteristic of the user id
-// generated is its uniqueness. An MCS provider shall make a record of each
-// unanswered AttachUserRequest received and by which MCS connection it arrived,
-// so that a replying AttachUserConfirm can be routed back to the same source.
-// To distribute replies fairly, each provider should maintain a first-in,
-// first-out queue for this purpose.
-
-
-
-static inline void mcs_send_erect_domain_and_attach_user_request_pdu(Transport * trans)
-{
-    LOG(LOG_INFO, "mcs_send_erect_domain_and_attach_user_request_pdu");
-    {
-        BStream stream(65536);
-        stream.out_uint8((MCSPDU_ErectDomainRequest << 2));
-        stream.out_per_integer(0); /* subHeight (INTEGER) */
-        stream.out_per_integer(0); /* subInterval (INTEGER) */
-        stream.end = stream.p;
-
-        BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
-    }
-    {
-        BStream stream(65536);
-        stream.out_uint8((MCSPDU_AttachUserRequest << 2));
-        stream.end = stream.p;
-
-        BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
-    }
-}
-
-
 // 2.2.1.8 Client MCS Channel Join Request PDU
 // -------------------------------------------
 // The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
@@ -2289,102 +1702,6 @@ static inline void mcs_recv_attach_user_confirm_pdu(Transport * trans, uint16_t 
     }
 }
 
-//   2.2.1.5 Client MCS Erect Domain Request PDU
-//   -------------------------------------------
-//   The MCS Erect Domain Request PDU is an RDP Connection Sequence PDU sent
-//   from client to server during the Channel Connection phase (see section
-//   1.3.1.1). It is sent after receiving the MCS Connect Response PDU (section
-//   2.2.1.4).
-
-//   tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-//   x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
-//      section 13.7.
-
-// See description of tpktHeader and x224 Data TPDU in cheat sheet
-
-//   mcsEDrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an MCS
-//      Erect Domain Request structure, as specified in [T125] (the ASN.1
-//      structure definitions are given in [T125] section 7, parts 3 and 10).
-
-// 2.2.1.6 Client MCS Attach User Request PDU
-// ------------------------------------------
-// The MCS Attach User Request PDU is an RDP Connection Sequence PDU
-// sent from client to server during the Channel Connection phase (see
-// section 1.3.1.1) to request a user channel ID. It is sent after
-// transmitting the MCS Erect Domain Request PDU (section 2.2.1.5).
-
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
-//   [X224] section 13.7.
-
-// See description of tpktHeader and x224 Data TPDU in cheat sheet
-
-// mcsAUrq (1 byte): PER-encoded MCS Domain PDU which encapsulates an
-//  MCS Attach User Request structure, as specified in [T125] (the ASN.1
-//  structure definitions are given in [T125] section 7, parts 5 and 10).
-
-// AttachUserRequest ::= [APPLICATION 10] IMPLICIT SEQUENCE
-// {
-// }
-
-// 11.17 AttachUserRequest
-// -----------------------
-
-// AttachUserRequest is generated by an MCS-ATTACH-USER request. It rises to the
-// top MCS provider, which returns an AttachUserConfirm reply. If the domain
-// limit on number of user ids allows, a new user id is generated.
-
-// AttachUserRequest contains no information other than its MCSPDU type. The
-// domain to which the user attaches is determined by the MCS connection
-// conveying the MCSPDU. The only initial characteristic of the user id
-// generated is its uniqueness. An MCS provider shall make a record of each
-// unanswered AttachUserRequest received and by which MCS connection it arrived,
-// so that a replying AttachUserConfirm can be routed back to the same source.
-// To distribute replies fairly, each provider should maintain a first-in,
-// first-out queue for this purpose.
-
-static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport * trans, uint16_t & userid)
-{
-    TODO(" this code could lead to some problem if both MCS are combined in the same TPDU  we should manage this case")
-    {
-        BStream stream(65536);
-        X224::RecvFactory f(*trans, stream);
-        X224::DT_TPDU_Recv x224(*trans, stream, f.length);
-        SubStream payload(stream, x224.header_size);
-
-        uint8_t opcode = payload.in_uint8();
-        if ((opcode >> 2) != MCSPDU_ErectDomainRequest) {
-            LOG(LOG_ERR, "Erect Domain Request expected");
-            throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
-        }
-        payload.in_skip_bytes(2);
-        payload.in_skip_bytes(2);
-        if (opcode & 2) {
-            userid = stream.in_uint16_be();
-        }
-    }
-
-    {
-        BStream stream(65536);
-        X224::RecvFactory f(*trans, stream);
-        X224::DT_TPDU_Recv x224(*trans, stream, f.length);
-        SubStream payload(stream, x224.header_size);
-
-        uint8_t opcode = payload.in_uint8();
-        if ((opcode >> 2) != MCSPDU_AttachUserRequest) {
-            LOG(LOG_ERR, "Attach User Request expected");
-            throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
-        }
-        if (opcode & 2) {
-            userid = stream.in_uint16_be();
-        }
-
-    }
-}
-
-
 // 2.2.1.7 Server MCS Attach User Confirm PDU
 // ------------------------------------------
 // The MCS Attach User Confirm PDU is an RDP Connection Sequence
@@ -2645,6 +1962,14 @@ namespace MCS
     enum {
         BER_ENCODING,
         PER_ENCODING
+    };
+
+    enum {
+        RN_DOMAIN_DISCONNECTED = 0,
+        RN_PROVIDER_INITIATED  = 1,
+        RN_TOKEN_PURGED        = 2,
+        RN_USER_REQUESTED      = 3,
+        RN_CHANNEL_PURGED      = 4
     };
 
     enum DomainMCSPDU
@@ -3239,6 +2564,7 @@ namespace MCS
         PlumbDomainIndication_Send(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3247,6 +2573,7 @@ namespace MCS
         PlumbDomainIndication_Recv(Stream & stream, size_t available_length, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3362,6 +2689,8 @@ namespace MCS
     {
         MergeChannelRequest_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3369,6 +2698,8 @@ namespace MCS
     {
         MergeChannelRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3382,6 +2713,8 @@ namespace MCS
     {
         MergeChannelsConfirm_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3389,6 +2722,8 @@ namespace MCS
     {
         MergeChannelsConfirm_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3403,6 +2738,8 @@ namespace MCS
     {
         PurgeChannelsIndication_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3410,6 +2747,8 @@ namespace MCS
     {
         PurgeChannelsIndication_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3460,6 +2799,8 @@ namespace MCS
     {
         MergeTokensRequest_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3467,6 +2808,8 @@ namespace MCS
     {
         MergeTokensRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3480,6 +2823,8 @@ namespace MCS
     {
         MergeTokensConfirm_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3487,6 +2832,8 @@ namespace MCS
     {
         MergeTokensConfirm_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3499,6 +2846,8 @@ namespace MCS
     {
         PurgeTokensIndication_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3506,6 +2855,8 @@ namespace MCS
     {
         PurgeTokensIndication_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3516,15 +2867,27 @@ namespace MCS
 
     struct DisconnectProviderUltimatum_Send
     {
-        DisconnectProviderUltimatum_Send(Stream & stream, int encoding)
+        DisconnectProviderUltimatum_Send(Stream & stream, uint8_t reason, int encoding)
         {
+          stream.out_uint8(MCS::MCSPDU_DisconnectProviderUltimatum << 2);
+          stream.out_uint8(reason); // (<< 6 ?)
+          stream.end = stream.p;
         }
     };
 
     struct DisconnectProviderUltimatum_Recv
     {
+        uint8_t type;
+        uint8_t reason;
         DisconnectProviderUltimatum_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            uint8_t tag = stream.in_uint8();
+            if ((MCS::MCSPDU_DisconnectProviderUltimatum << 2) != tag){
+                LOG(LOG_ERR, "DisconnectProviderUltimatum expected, got %u", tag);
+                throw Error(ERR_MCS);
+            }
+            this->type = MCS::MCSPDU_DisconnectProviderUltimatum;
+            this->reason = stream.in_uint8(); // (>> 6 ?)
         }
     };
 
@@ -4244,6 +3607,139 @@ namespace MCS
     };
 
 };
+
+// 2.2.1.6 Client MCS Attach User Request PDU
+// ------------------------------------------
+// The MCS Attach User Request PDU is an RDP Connection Sequence PDU
+// sent from client to server during the Channel Connection phase (see
+// section 1.3.1.1) to request a user channel ID. It is sent after
+// transmitting the MCS Erect Domain Request PDU (section 2.2.1.5).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+//   [X224] section 13.7.
+
+// See description of tpktHeader and x224 Data TPDU in cheat sheet
+
+// mcsAUrq (1 byte): PER-encoded MCS Domain PDU which encapsulates an
+//  MCS Attach User Request structure, as specified in [T125] (the ASN.1
+//  structure definitions are given in [T125] section 7, parts 5 and 10).
+
+// AttachUserRequest ::= [APPLICATION 10] IMPLICIT SEQUENCE
+// {
+// }
+
+// 11.17 AttachUserRequest
+// -----------------------
+
+// AttachUserRequest is generated by an MCS-ATTACH-USER request. It rises to the
+// top MCS provider, which returns an AttachUserConfirm reply. If the domain
+// limit on number of user ids allows, a new user id is generated.
+
+// AttachUserRequest contains no information other than its MCSPDU type. The
+// domain to which the user attaches is determined by the MCS connection
+// conveying the MCSPDU. The only initial characteristic of the user id
+// generated is its uniqueness. An MCS provider shall make a record of each
+// unanswered AttachUserRequest received and by which MCS connection it arrived,
+// so that a replying AttachUserConfirm can be routed back to the same source.
+// To distribute replies fairly, each provider should maintain a first-in,
+// first-out queue for this purpose.
+
+
+
+static inline void mcs_send_erect_domain_and_attach_user_request_pdu(Transport * trans)
+{
+    LOG(LOG_INFO, "mcs_send_erect_domain_and_attach_user_request_pdu");
+    {
+        BStream x224_header(256);
+        BStream mcs_data(256);
+
+        MCS::ErectDomainRequest_Send mcs(mcs_data, 0, 0, MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header, mcs_data.end - mcs_data.data);
+
+        trans->send(x224_header.data, x224_header.end - x224_header.data);
+        trans->send(mcs_data.data, mcs_data.end - mcs_data.data);
+    }
+    {
+        BStream stream(65536);
+        stream.out_uint8((MCSPDU_AttachUserRequest << 2));
+        stream.end = stream.p;
+
+        BStream x224_header(256);
+        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+
+        trans->send(x224_header.data, x224_header.end - x224_header.data);
+        trans->send(stream.data, stream.end - stream.data);
+    }
+}
+
+
+// 2.2.1.6 Client MCS Attach User Request PDU
+// ------------------------------------------
+// The MCS Attach User Request PDU is an RDP Connection Sequence PDU
+// sent from client to server during the Channel Connection phase (see
+// section 1.3.1.1) to request a user channel ID. It is sent after
+// transmitting the MCS Erect Domain Request PDU (section 2.2.1.5).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+//   [X224] section 13.7.
+
+// See description of tpktHeader and x224 Data TPDU in cheat sheet
+
+// mcsAUrq (1 byte): PER-encoded MCS Domain PDU which encapsulates an
+//  MCS Attach User Request structure, as specified in [T125] (the ASN.1
+//  structure definitions are given in [T125] section 7, parts 5 and 10).
+
+// AttachUserRequest ::= [APPLICATION 10] IMPLICIT SEQUENCE
+// {
+// }
+
+// 11.17 AttachUserRequest
+// -----------------------
+
+// AttachUserRequest is generated by an MCS-ATTACH-USER request. It rises to the
+// top MCS provider, which returns an AttachUserConfirm reply. If the domain
+// limit on number of user ids allows, a new user id is generated.
+
+// AttachUserRequest contains no information other than its MCSPDU type. The
+// domain to which the user attaches is determined by the MCS connection
+// conveying the MCSPDU. The only initial characteristic of the user id
+// generated is its uniqueness. An MCS provider shall make a record of each
+// unanswered AttachUserRequest received and by which MCS connection it arrived,
+// so that a replying AttachUserConfirm can be routed back to the same source.
+// To distribute replies fairly, each provider should maintain a first-in,
+// first-out queue for this purpose.
+
+static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport * trans, uint16_t & userid)
+{
+    {
+        BStream x224_data(65536);
+        X224::RecvFactory f(*trans, x224_data);
+        X224::DT_TPDU_Recv x224(*trans, x224_data, f.length);
+        SubStream mcs_data(x224_data, x224.header_size);
+        MCS::ErectDomainRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+    }
+
+    {
+        BStream stream(65536);
+        X224::RecvFactory f(*trans, stream);
+        X224::DT_TPDU_Recv x224(*trans, stream, f.length);
+        SubStream payload(stream, x224.header_size);
+
+        uint8_t opcode = payload.in_uint8();
+        if ((opcode >> 2) != MCSPDU_AttachUserRequest) {
+            LOG(LOG_ERR, "Attach User Request expected");
+            throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
+        }
+        if (opcode & 2) {
+            userid = stream.in_uint16_be();
+        }
+
+    }
+}
 
 
 #endif

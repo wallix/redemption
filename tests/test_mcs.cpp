@@ -342,4 +342,203 @@ BOOST_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
     BOOST_CHECK_EQUAL(0, mcs.subInterval);
 }
 
+BOOST_AUTO_TEST_CASE(TestSend_DisconnectProviderUltimatum)
+{
+    BStream stream(1024);
+    size_t length = 2;
+    MCS::DisconnectProviderUltimatum_Send mcs(stream, MCS::RN_DOMAIN_DISCONNECTED, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+
+    const char * expected = 
+        "\x20"  // DisconnectProviderUltimatum * 4
+        "\x00"  // reason
+    ;
+
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
+{
+    BStream stream(1024);
+    size_t length = 2;
+    GeneratorTransport t(
+        "\x20"  // DisconnectProviderUltimatum * 4
+        "\x00"  // reason
+   , length);
+    t.recv(&stream.end, length);
+
+    MCS::DisconnectProviderUltimatum_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+    BOOST_CHECK_EQUAL(MCS::MCSPDU_DisconnectProviderUltimatum , mcs.type);
+    BOOST_CHECK_EQUAL(0, mcs.reason);
+}
+
+
+BOOST_AUTO_TEST_CASE(TestSend_AttachUserRequest)
+{
+    BStream stream(1024);
+//    size_t length = 1;
+//    MCS::_Send mcs(stream, MCS::PER_ENCODING);
+//    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+
+//    const char * expected = 
+//        "\x20"  //  * 4
+//    ;
+
+//    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
+{
+    BStream stream(1024);
+//    size_t length = 1;
+//    GeneratorTransport t(
+//        "\x20"  //  * 4
+//   , length);
+//    t.recv(&stream.end, length);
+
+//    MCS::XXX_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+//    BOOST_CHECK_EQUAL(MCS::MCSPDU_XXX , mcs.type);
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm)
+{
+    BStream stream(1024);
+//    size_t length = 1;
+//    MCS::_Send mcs(stream, MCS::PER_ENCODING);
+//    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+
+//    const char * expected = 
+//        "\x20"  //  * 4
+//    ;
+
+//    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm)
+{
+    BStream stream(1024);
+//    size_t length = 1;
+//    GeneratorTransport t(
+//        "\x20"  //  * 4
+//   , length);
+//    t.recv(&stream.end, length);
+
+//    MCS::XXX_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+//    BOOST_CHECK_EQUAL(MCS::MCSPDU_XXX , mcs.type);
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinRequest)
+{
+    BStream stream(1024);
+//    size_t length = 1;
+//    MCS::_Send mcs(stream, MCS::PER_ENCODING);
+//    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+
+//    const char * expected = 
+//        "\x20"  //  * 4
+//    ;
+
+//    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
+{
+    BStream stream(1024);
+//    size_t length = 1;
+//    GeneratorTransport t(
+//        "\x20"  //  * 4
+//   , length);
+//    t.recv(&stream.end, length);
+
+//    MCS::XXX_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+//    BOOST_CHECK_EQUAL(MCS::MCSPDU_XXX , mcs.type);
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinConfirm)
+{
+    BStream stream(1024);
+//    size_t length = 1;
+//    MCS::_Send mcs(stream, MCS::PER_ENCODING);
+//    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+
+//    const char * expected = 
+//        "\x20"  //  * 4
+//    ;
+
+//    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
+{
+    BStream stream(1024);
+//    size_t length = 1;
+//    GeneratorTransport t(
+//        "\x20"  //  * 4
+//   , length);
+//    t.recv(&stream.end, length);
+
+//    MCS::XXX_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+//    BOOST_CHECK_EQUAL(MCS::MCSPDU_XXX , mcs.type);
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_SendDataRequest)
+{
+    BStream stream(1024);
+//    size_t length = 1;
+//    MCS::_Send mcs(stream, MCS::PER_ENCODING);
+//    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+
+//    const char * expected = 
+//        "\x20"  //  * 4
+//    ;
+
+//    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
+{
+    BStream stream(1024);
+//    size_t length = 1;
+//    GeneratorTransport t(
+//        "\x20"  //  * 4
+//   , length);
+//    t.recv(&stream.end, length);
+
+//    MCS::XXX_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+//    BOOST_CHECK_EQUAL(MCS::MCSPDU_XXX , mcs.type);
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_SendDataIndication)
+{
+    BStream stream(1024);
+//    size_t length = 1;
+//    MCS::_Send mcs(stream, MCS::PER_ENCODING);
+//    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+
+//    const char * expected = 
+//        "\x20"  //  * 4
+//    ;
+
+//    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
+{
+    BStream stream(1024);
+//    size_t length = 1;
+//    GeneratorTransport t(
+//        "\x20"  //  * 4
+//   , length);
+//    t.recv(&stream.end, length);
+
+//    MCS::XXX_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+//    BOOST_CHECK_EQUAL(MCS::MCSPDU_XXX , mcs.type);
+}
 

@@ -1519,8 +1519,6 @@ public:
             // Client                                                     Server
             //    | <------ Licence Error PDU Valid Client ---------------- |
 
-            // Disconnect Provider Ultimatum datagram
-
             if (sec.flags & SEC_LICENSE_PKT) {
                 uint8_t tag = sec.payload.in_uint8();
                 uint8_t version = sec.payload.in_uint8();
