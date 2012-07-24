@@ -56,8 +56,8 @@ static inline unsigned in_bytes_le(const uint8_t nb, const uint8_t * ptr)
 static inline unsigned in_bytes_be(const uint8_t nb, const uint8_t * ptr)
 {
     unsigned res = 0;
-    for (int b = nb ; b > 0 ; --b){
-        res |= ptr[b-1] << (8 * (b-1));
+    for (int b = 0 ; b < nb ; ++b){
+        res = (res << 8) | ptr[b];
     }
     return res;
 }

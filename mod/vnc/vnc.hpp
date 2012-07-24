@@ -579,7 +579,7 @@ struct mod_vnc : public client_mod {
     TODO(" use it for copy/paste  it is not called now")
     int lib_process_channel_data(int chanid, int flags, int size, BStream & stream, int total_size)
     {
-//        if (chanid == this->clip_chanid) {
+//        if (chanid == this->clip_chanid) {lib_process_channel_data
 //            uint16_t type = stream.in_uint16_le();
 //            uint16_t status = stream.in_uint16_le();
 //            uint32_t length = stream.in_uint32_le();
@@ -795,6 +795,21 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
     }
 
+    /******************************************************************************/
+    void lib_open_clip_channel(void)
+    {
+        TODO(" not working  see why")
+        return;
+//        uint8_t init_data[12] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+//        this->clip_chanid = this->server_get_channel_id((char*)"cliprdr");
+
+//        if (this->clip_chanid >= 0) {
+            // this->send_to_front_channel(
+//        }
+    }
+
+    /******************************************************************************/
     void lib_clip_data(void)
     {
         BStream stream(32768);
@@ -805,7 +820,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         this->clip_data.init(size);
         this->clip_data_size = size;
         this->t->recv((char**)&this->clip_data.end, size);
-
+//        hexdump(this->clip_data.data, size);
         BStream out_s(8192);
         out_s.out_uint16_le(2);
         out_s.out_uint16_le(0);
@@ -855,19 +870,6 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         this->front.end_update();
     }
 
-    /******************************************************************************/
-    void lib_open_clip_channel(void)
-    {
-        TODO(" not working  see why")
-        return;
-//        uint8_t init_data[12] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-//        this->clip_chanid = this->server_get_channel_id((char*)"cliprdr");
-
-//        if (this->clip_chanid >= 0) {
-            // this->send_to_front_channel(
-//        }
-    }
 };
 
 #endif

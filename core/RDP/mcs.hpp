@@ -3927,75 +3927,79 @@ namespace MCS
 //   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
 //   2.2.1.2.1.
 
+    struct DomainParameters
+    {
+        int maxChannelIds;
+        int maxUserIds;
+        int maxTokenIds;
+        int numPriorities;
+        int minThroughput;
+        int maxHeight;
+        int maxMCSPDUsize;
+        int protocolVersion;            
+
+        int in_ber_int(Stream & stream, int & v){
+            uint8_t tag = stream.in_uint8();
+            if (Stream::BER_TAG_INTEGER != tag){
+                LOG(LOG_ERR, "Connect Initial BER_TAG_INTEGER (%u) expected, got %u", Stream::BER_TAG_INTEGER, tag);
+                return -1;
+            }
+            uint8_t len = stream.in_uint8();
+            v = stream.in_bytes_be(len);
+            return 0;
+        }
+
+        int recv(Stream & stream){
+            if (BER_TAG_MCS_DOMAIN_PARAMS != stream.in_uint8()){
+                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS expected");
+                return -1;
+            }
+            size_t len = stream.in_ber_len();
+            size_t start_offset = stream.get_offset(0);
+            if ( -1 == this->in_ber_int(stream, this->maxChannelIds)){
+                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxChannelIds tag error");
+                return -1;
+            }
+            if ( -1 == this->in_ber_int(stream, this->maxUserIds)){
+                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxUserIds tag error");
+                return -1;
+            }
+            if ( -1 == this->in_ber_int(stream, this->maxTokenIds)){
+                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxTokenIds tag error");
+                return -1;
+            }
+            if ( -1 == this->in_ber_int(stream, this->numPriorities)){
+                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::numPriorities tag error");
+                return -1;
+            }
+            if ( -1 == this->in_ber_int(stream, this->minThroughput)){
+                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::minThroughput tag error");
+                return -1;
+            }
+            if ( -1 == this->in_ber_int(stream, this->maxHeight)){
+                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxHeight tag error");
+                return -1;
+            }
+            if ( -1 == this->in_ber_int(stream, this->maxMCSPDUsize)){
+                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxMCSPDUsize tag error");
+                return -1;
+            }
+            if ( -1 == this->in_ber_int(stream, this->protocolVersion)){
+                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::protocolVersion tag error");
+                return -1;
+            }
+            if (stream.get_offset(start_offset) != len){
+                LOG(LOG_ERR, "Connect Initial, bad length in BER_TAG_MCS_DOMAIN_PARAMS. Total subfield length mismatch %u %u", stream.get_offset(start_offset), len);
+            }
+            return 0;
+        }
+    };
+
     struct CONNECT_INITIAL_PDU_Recv
     {
-        struct DomainParameters
-        {
-            int maxChannelIds;
-            int maxUserIds;
-            int maxTokenIds;
-            int numPriorities;
-            int minThroughput;
-            int maxHeight;
-            int maxMCSPDUsize;
-            int protocolVersion;            
-
-            int in_ber_int(Stream & stream, int & v){
-                uint8_t tag = stream.in_uint8();
-                if (Stream::BER_TAG_INTEGER != tag){
-                    LOG(LOG_ERR, "Connect Initial BER_TAG_INTEGER (%u) expected, got %u", Stream::BER_TAG_INTEGER, tag);
-                    return -1;
-                }
-                uint8_t len = stream.in_uint8();
-                v = stream.in_bytes_be(len);
-                return 0;
-            }
-
-            int recv(Stream & stream){
-                if (BER_TAG_MCS_DOMAIN_PARAMS != stream.in_uint8()){
-                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS expected");
-                    return -1;
-                }
-                size_t len = stream.in_ber_len();
-                size_t start_offset = stream.get_offset(0);
-                if ( -1 == this->in_ber_int(stream, this->maxChannelIds)){
-                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxChannelIds tag error");
-                    return -1;
-                }
-                if ( -1 == this->in_ber_int(stream, this->maxUserIds)){
-                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxUserIds tag error");
-                    return -1;
-                }
-                if ( -1 == this->in_ber_int(stream, this->maxTokenIds)){
-                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxTokenIds tag error");
-                    return -1;
-                }
-                if ( -1 == this->in_ber_int(stream, this->numPriorities)){
-                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::numPriorities tag error");
-                    return -1;
-                }
-                if ( -1 == this->in_ber_int(stream, this->minThroughput)){
-                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::minThroughput tag error");
-                    return -1;
-                }
-                if ( -1 == this->in_ber_int(stream, this->maxHeight)){
-                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxHeight tag error");
-                    return -1;
-                }
-                if ( -1 == this->in_ber_int(stream, this->maxMCSPDUsize)){
-                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxMCSPDUsize tag error");
-                    return -1;
-                }
-                if ( -1 == this->in_ber_int(stream, this->protocolVersion)){
-                    LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxMCSPDUsize tag error");
-                    return -1;
-                }
-                if (stream.get_offset(start_offset) != len){
-                    LOG(LOG_ERR, "Connect Initial, bad length in BER_TAG_MCS_DOMAIN_PARAMS. Total subfield length mismatch %u %u", stream.get_offset(start_offset), len);
-                }
-                return 0;
-            }
-        } targetParameters, minimumParameters, maximumParameters;
+        struct DomainParameters targetParameters;
+        struct DomainParameters minimumParameters;
+        struct DomainParameters maximumParameters;
 
         size_t header_size;
         size_t payload_size;
@@ -4013,20 +4017,21 @@ namespace MCS
 
         CONNECT_INITIAL_PDU_Recv(Stream & stream, size_t available_length, int encoding)
         {
-            if (BER_TAG_ConnectMCSPDU_CONNECT_INITIAL == stream.in_uint16_be()){
-                this->tag = MCSPDU_CONNECT_INITIAL;
+            this->tag = stream.in_uint16_be();
+            if (BER_TAG_ConnectMCSPDU_CONNECT_INITIAL != this->tag){
+                LOG(LOG_ERR, "Connect Initial::CONNECT_INITIAL tag expected, got %u", this->tag);
+                throw Error(ERR_MCS);
             }
+            this->tag = MCSPDU_CONNECT_INITIAL;
             this->tag_len = stream.in_ber_len();
 
-            this->len_callingDomainSelector = stream.in_ber_octet_string(callingDomainSelector,
-                                                                         sizeof(callingDomainSelector));
+            this->len_callingDomainSelector = stream.in_ber_octet_string(callingDomainSelector, sizeof(callingDomainSelector));
             if (-1 == this->len_callingDomainSelector){
                 LOG(LOG_ERR, "Connect Initial::bad callingDomainSelector");
                 throw Error(ERR_MCS);
             }
 
-            this->len_calledDomainSelector = stream.in_ber_octet_string(calledDomainSelector,
-                                                                        sizeof(calledDomainSelector));
+            this->len_calledDomainSelector = stream.in_ber_octet_string(calledDomainSelector, sizeof(calledDomainSelector));
             if (-1 == this->len_calledDomainSelector){
                 LOG(LOG_ERR, "Connect Initial::bad calledDomainSelector");
                 throw Error(ERR_MCS);
@@ -4071,6 +4076,202 @@ namespace MCS
         }
     };
 
+    struct CONNECT_INITIAL_Send
+    {
+        CONNECT_INITIAL_Send(Stream & stream, size_t payload_length, int encoding)
+        {
+            stream.out_uint16_be(BER_TAG_ConnectMCSPDU_CONNECT_INITIAL);
+            stream.out_ber_len_uint16(0); // filled later, 3 bytes
+
+            stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
+            stream.out_ber_len(1); /* calling domain */
+            stream.out_uint8(1);
+            stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
+            stream.out_ber_len(1); /* called domain */
+            stream.out_uint8(1);
+            stream.out_uint8(Stream::BER_TAG_BOOLEAN);
+            stream.out_ber_len(1);
+            stream.out_uint8(0xff); /* upward flag */
+
+            // target params
+            stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+            stream.out_ber_len(26);      // 26 = 0x1a
+            stream.out_ber_int8(34);     // max_channels
+            stream.out_ber_int8(2);      // max_users
+            stream.out_ber_int8(0);      // max_tokens
+            stream.out_ber_int8(1);
+            stream.out_ber_int8(0);
+            stream.out_ber_int8(1);
+            stream.out_ber_int24(0xffff); // max_pdu_size
+            stream.out_ber_int8(2);
+
+            // min params
+            stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+            stream.out_ber_len(25);     // 25=0x19
+            stream.out_ber_int8(1);     // max_channels
+            stream.out_ber_int8(1);     // max_users
+            stream.out_ber_int8(1);     // max_tokens
+            stream.out_ber_int8(1);
+            stream.out_ber_int8(0);
+            stream.out_ber_int8(1);
+            stream.out_ber_int16(0x420); // max_pdu_size
+            stream.out_ber_int8(2);
+
+            // max params
+            stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+            stream.out_ber_len(31);
+            stream.out_ber_int24(0xffff); // max_channels
+            stream.out_ber_int16(0xfc17); // max_users
+            stream.out_ber_int24(0xffff); // max_tokens
+            stream.out_ber_int8(1);
+            stream.out_ber_int8(0);
+            stream.out_ber_int8(1);
+            stream.out_ber_int24(0xffff); // max_pdu_size
+            stream.out_ber_int8(2);
+
+            stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
+            stream.out_ber_len_uint16(payload_length);
+            // now we know full MCS Initial header length (without initial tag and len)
+            stream.set_out_ber_len_uint16(payload_length + stream.get_offset(5), 2);
+            stream.end = stream.p;
+        }
+    };
+
+// 2.2.1.4  Server MCS Connect Response PDU with GCC Conference Create Response
+// ----------------------------------------------------------------------------
+
+// From [MSRDPCGR]
+
+// The MCS Connect Response PDU is an RDP Connection Sequence PDU sent from
+// server to client during the Basic Settings Exchange phase (see section
+// 1.3.1.1). It is sent as a response to the MCS Connect Initial PDU (section
+// 2.2.1.3). The MCS Connect Response PDU encapsulates a GCC Conference Create
+// Response, which encapsulates concatenated blocks of settings data.
+
+// A basic high-level overview of the nested structure for the Server MCS
+// Connect Response PDU is illustrated in section 1.3.1.1, in the figure
+// specifying MCS Connect Response PDU. Note that the order of the settings
+// data blocks is allowed to vary from that shown in the previously mentioned
+// figure and the message syntax layout that follows. This is possible because
+// each data block is identified by a User Data Header structure (section
+// 2.2.1.4.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+// section 13.7.
+
+// mcsCrsp (variable): Variable-length BER-encoded MCS Connect Response
+//   structure (using definite-length encoding) as described in [T125]
+//   (the ASN.1 structure definition is detailed in [T125] section 7, part 2).
+//   The userData field of the MCS Connect Response encapsulates the GCC
+//   Conference Create Response data (contained in the gccCCrsp and subsequent
+//   fields).
+
+// Result ::= ENUMERATED   -- in Connect, response, confirm
+// {
+//    rt-successful               (0),
+//    rt-domain-merging           (1),
+//    rt-domain-not-hierarchical  (2),
+//    rt-no-such-channel          (3),
+//    rt-no-such-domain           (4),
+//    rt-no-such-user             (5),
+//    rt-not-admitted             (6),
+//    rt-other-user-id            (7),
+//    rt-parameters-unacceptable  (8),
+//    rt-token-not-available      (9),
+//    rt-token-not-possessed      (10),
+//    rt-too-many-channels        (11),
+//    rt-too-many-tokens          (12),
+//    rt-too-many-users           (13),
+//    rt-unspecified-failure      (14),
+//    rt-user-rejected            (15)
+// }
+
+//    Connect-Response ::= [APPLICATION 102] IMPLICIT SEQUENCE
+//    {
+//        result              Result,
+//        calledConnectId     INTEGER (0..MAX),
+//                            -- assigned by the called provider
+//                            -- to identify additional TCs of
+//                            -- the same MCS connection
+//        domainParameters    DomainParameters,
+//        userData            OCTET STRING
+//    }
+
+// gccCCrsp (variable): Variable-length PER-encoded GCC Connect Data structure
+//   which encapsulates a Connect GCC PDU that contains a GCC Conference Create
+//   Response structure as described in [T124] (the ASN.1 structure definitions
+//   are specified in [T124] section 8.7) appended as user data to the MCS
+//   Connect Response (using the format specified in [T124] sections 9.5 and
+//   9.6). The userData field of the GCC Conference Create Response contains
+//   one user data set consisting of concatenated server data blocks.
+
+    struct CONNECT_RESPONSE_PDU_Recv
+    {
+        uint16_t tag;
+        size_t tag_len;
+
+        uint8_t result;
+        int connectId;
+
+        struct DomainParameters domainParameters;
+
+        size_t header_size;
+        size_t payload_size;
+
+        CONNECT_RESPONSE_PDU_Recv(Stream & stream, size_t available_length, int encoding)
+        {
+            this->tag = stream.in_uint16_be();
+            if (BER_TAG_ConnectMCSPDU_CONNECT_RESPONSE != this->tag){
+                LOG(LOG_ERR, "recv connect response (%u) expected, got (%u)",
+                    MCS::MCSPDU_CONNECT_RESPONSE, this->tag);
+                throw Error(ERR_MCS);
+            }
+            this->tag = MCS::MCSPDU_CONNECT_RESPONSE;
+            this->tag_len = stream.in_ber_len();
+
+            if (stream.in_uint8() != Stream::BER_TAG_RESULT) {
+                LOG(LOG_ERR, "recv connect response result expected");
+                throw Error(ERR_MCS);
+            }
+            if (1 != stream.in_ber_len()){
+                LOG(LOG_ERR, "result length should be 1");
+                throw Error(ERR_MCS);
+            }                
+            this->result = stream.in_uint8();
+
+            if (stream.in_uint8() != Stream::BER_TAG_INTEGER) {
+                LOG(LOG_ERR, "recv connect response connectId type not Integer");
+                throw Error(ERR_MCS);
+            }
+            {
+                size_t len = stream.in_ber_len();
+                this->connectId = stream.in_bytes_le(len); /* connect id */
+            }
+
+            if (-1 == this->domainParameters.recv(stream)){
+                LOG(LOG_ERR, "Connect Initial::bad targetParameters");
+                throw Error(ERR_MCS);
+            }
+
+//        userData                OCTET STRING
+            stream.in_uint8();
+            this->payload_size = stream.in_ber_len();
+            if (this->payload_size != (size_t)(stream.end - stream.p)){
+                LOG(LOG_ERR, "ConnectInitial::BER payload size (%u) does not match available data size (%u)",
+                    this->payload_size, stream.end - stream.p);
+                throw Error(ERR_MCS);
+            }
+            TODO("Octets below are part of GCC Conference User Data")
+//            stream.in_skip_bytes(23);
+
+// The payload is the USER_DATA block
+            this->header_size  = stream.p - stream.data;
+        }
+    };
+
 };
+
 
 #endif

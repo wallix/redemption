@@ -71,13 +71,16 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
 
     MCS::CONNECT_INITIAL_PDU_Recv mcs(payload, payload_length, MCS::BER_ENCODING);
 
+    BOOST_CHECK_EQUAL(101, mcs.tag);
+    BOOST_CHECK_EQUAL(369, mcs.tag_len + 5);
+ 
     BOOST_CHECK_EQUAL(34, mcs.targetParameters.maxChannelIds);
     BOOST_CHECK_EQUAL(2, mcs.targetParameters.maxUserIds);
     BOOST_CHECK_EQUAL(0, mcs.targetParameters.maxTokenIds);
     BOOST_CHECK_EQUAL(1, mcs.targetParameters.numPriorities);
     BOOST_CHECK_EQUAL(0, mcs.targetParameters.minThroughput);
     BOOST_CHECK_EQUAL(1, mcs.targetParameters.maxHeight);
-    BOOST_CHECK_EQUAL(16776960, mcs.targetParameters.maxMCSPDUsize);
+    BOOST_CHECK_EQUAL(65535, mcs.targetParameters.maxMCSPDUsize);
     BOOST_CHECK_EQUAL(2, mcs.targetParameters.protocolVersion);            
 
     BOOST_CHECK_EQUAL(1, mcs.minimumParameters.maxChannelIds);
@@ -86,17 +89,17 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
     BOOST_CHECK_EQUAL(1, mcs.minimumParameters.numPriorities);
     BOOST_CHECK_EQUAL(0, mcs.minimumParameters.minThroughput);
     BOOST_CHECK_EQUAL(1, mcs.minimumParameters.maxHeight);
-    BOOST_CHECK_EQUAL(8196, mcs.minimumParameters.maxMCSPDUsize);
-    BOOST_CHECK_EQUAL(2, mcs.minimumParameters.protocolVersion);            
+    BOOST_CHECK_EQUAL(1056, mcs.minimumParameters.maxMCSPDUsize);
+    BOOST_CHECK_EQUAL(2, mcs.minimumParameters.protocolVersion);
 
-    BOOST_CHECK_EQUAL(16776960, mcs.maximumParameters.maxChannelIds);
-    BOOST_CHECK_EQUAL(6140, mcs.maximumParameters.maxUserIds);
-    BOOST_CHECK_EQUAL(16776960, mcs.maximumParameters.maxTokenIds);
+    BOOST_CHECK_EQUAL(65535, mcs.maximumParameters.maxChannelIds);
+    BOOST_CHECK_EQUAL(64535, mcs.maximumParameters.maxUserIds);
+    BOOST_CHECK_EQUAL(65535, mcs.maximumParameters.maxTokenIds);
     BOOST_CHECK_EQUAL(1, mcs.maximumParameters.numPriorities);
     BOOST_CHECK_EQUAL(0, mcs.maximumParameters.minThroughput);
     BOOST_CHECK_EQUAL(1, mcs.maximumParameters.maxHeight);
-    BOOST_CHECK_EQUAL(16776960, mcs.maximumParameters.maxMCSPDUsize);
-    BOOST_CHECK_EQUAL(2, mcs.maximumParameters.protocolVersion);            
+    BOOST_CHECK_EQUAL(65535, mcs.maximumParameters.maxMCSPDUsize);
+    BOOST_CHECK_EQUAL(2, mcs.maximumParameters.protocolVersion);
 
     BOOST_CHECK_EQUAL(1, mcs.len_callingDomainSelector);
     BOOST_CHECK_EQUAL(0, memcmp("\x01", mcs.callingDomainSelector, 1));
@@ -107,14 +110,64 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
     BOOST_CHECK_EQUAL(true, mcs.upwardFlag);
 
     BOOST_CHECK_EQUAL(106, mcs.header_size); // everything up to USER_DATA
+    BOOST_CHECK_EQUAL(263, mcs.payload_size); // USER_DATA (after len)
     BOOST_CHECK_EQUAL(mcs.payload_size, payload.end - payload.data - mcs.header_size);
 }
 
-//BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
-//{
-//    BStream stream(256);
-//    X224::CR_TPDU_Send x224(stream, "", 0, 0, 0);
-//    BOOST_CHECK_EQUAL(11, stream.end - stream.data);
-//    BOOST_CHECK_EQUAL(0, memcmp("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", stream.data, 11));
-//}
+BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
+{
+    BStream stream(1024);
+    size_t payload_length = 263;
+    MCS::CONNECT_INITIAL_Send mcs(stream, payload_length, MCS::BER_ENCODING);
+    BOOST_CHECK_EQUAL(106, stream.end - stream.data);
 
+    const char * expected = 
+/* 0000 */                             "\x7f\x65\x82\x01\x6c\x04\x01\x01\x04" //       .e..l.... |
+/* 0010 */ "\x01\x01\x01\x01\xff\x30\x1a\x02\x01\x22\x02\x01\x02\x02\x01\x00" //.....0..."...... |
+/* 0020 */ "\x02\x01\x01\x02\x01\x00\x02\x01\x01\x02\x03\x00\xff\xff\x02\x01" //................ |
+/* 0030 */ "\x02\x30\x19\x02\x01\x01\x02\x01\x01\x02\x01\x01\x02\x01\x01\x02" //.0.............. |
+/* 0040 */ "\x01\x00\x02\x01\x01\x02\x02\x04\x20\x02\x01\x02\x30\x1f\x02\x03" //........ ...0... |
+/* 0050 */ "\x00\xff\xff\x02\x02\xfc\x17\x02\x03\x00\xff\xff\x02\x01\x01\x02" //................ |
+/* 0060 */ "\x01\x00\x02\x01\x01\x02\x03\x00\xff\xff\x02\x01\x02\x04\x82\x01" //................ |
+/* 0070 */ "\x07" //.....|.......... |
+    ;
+
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, 106));
+}
+
+BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
+{
+    size_t payload_length = 93;
+    GeneratorTransport t(
+ /* 0000 */             "\x7f\x66\x5a\x0a\x01\x00\x02\x01\x00\x30\x1a\x02\x01" //....fZ......0... |
+ /* 0010 */ "\x22\x02\x01\x03\x02\x01\x00\x02\x01\x01\x02\x01\x00\x02\x01\x01" //"............... |
+ /* 0020 */ "\x02\x03\x00\xff\xf8\x02\x01\x02\x04\x36\x00\x05\x00\x14\x7c\x00" //.........6....|. |
+ /* 0030 */ "\x01\x2a\x14\x76\x0a\x01\x01\x00\x01\xc0\x00\x4d\x63\x44\x6e\x20" //.*.v.......McDn  |
+ /* 0040 */ "\x01\x0c\x0c\x00\x04\x00\x08\x00\x01\x00\x00\x00\x03\x0c\x08\x00" //................ |
+ /* 0050 */ "\xeb\x03\x00\x00\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
+   , payload_length);
+
+    BStream payload(65536);
+    t.recv(&payload.end, payload_length);
+
+    MCS::RecvFactory fac_mcs(payload, MCS::BER_ENCODING);
+    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_CONNECT_RESPONSE, fac_mcs.type);
+
+    MCS::CONNECT_RESPONSE_PDU_Recv mcs(payload, payload_length, MCS::BER_ENCODING);
+ 
+    BOOST_CHECK_EQUAL(102, mcs.tag);
+    BOOST_CHECK_EQUAL(90, mcs.tag_len);
+
+    BOOST_CHECK_EQUAL(0, mcs.result);
+    BOOST_CHECK_EQUAL(0, mcs.connectId);
+
+    BOOST_CHECK_EQUAL(34, mcs.domainParameters.maxChannelIds);
+    BOOST_CHECK_EQUAL(3, mcs.domainParameters.maxUserIds);
+    BOOST_CHECK_EQUAL(0, mcs.domainParameters.maxTokenIds);
+    BOOST_CHECK_EQUAL(1, mcs.domainParameters.numPriorities);
+    BOOST_CHECK_EQUAL(0, mcs.domainParameters.minThroughput);
+    BOOST_CHECK_EQUAL(1, mcs.domainParameters.maxHeight);
+    BOOST_CHECK_EQUAL(65528, mcs.domainParameters.maxMCSPDUsize);
+    BOOST_CHECK_EQUAL(2, mcs.domainParameters.protocolVersion);            
+
+}
