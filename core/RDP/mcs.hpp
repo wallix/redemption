@@ -4061,7 +4061,10 @@ namespace MCS
             }
 
 //        userData                OCTET STRING
-            stream.in_uint8();
+            if (Stream::BER_TAG_OCTET_STRING != stream.in_uint8()){
+                LOG(LOG_ERR, "ConnectInitial::BER payload size, tag mismatch, expected (BER_TAG_OCTET_STRING)");
+                throw Error(ERR_MCS);
+            }
             this->payload_size = stream.in_ber_len();
             if (this->payload_size != (size_t)(stream.end - stream.p)){
                 LOG(LOG_ERR, "ConnectInitial::BER payload size (%u) does not match available data size (%u)",
@@ -4271,6 +4274,67 @@ namespace MCS
         }
     };
 
+    struct CONNECT_RESPONSE_Send
+    {
+        CONNECT_RESPONSE_Send(Stream & stream, size_t payload_length, int encoding)
+        {
+            // BER: Application-Defined Type = APPLICATION 102 = Connect-Response
+            stream.out_uint16_be(BER_TAG_ConnectMCSPDU_CONNECT_RESPONSE);
+            // BER: Type Length
+            if (payload_length > 88){
+                stream.out_ber_len_uint16(0);
+            }
+            else {
+                stream.out_ber_len_uint7(0);
+            }
+            uint16_t start_offset = stream.get_offset(0);
+
+            // Connect-Response::result = rt-successful (0)
+            // The first byte (0x0a) is the ASN.1 BER encoded Enumerated type. The
+            // length of the value is given by the second byte (1 byte), and the
+            // actual value is 0 (rt-successful).
+            stream.out_uint8(Stream::BER_TAG_RESULT);
+            stream.out_ber_len_uint7(1);
+            stream.out_uint8(0);
+
+            // Connect-Response::calledConnectId = 0
+            stream.out_uint8(Stream::BER_TAG_INTEGER);
+            stream.out_ber_len_uint7(1);
+            stream.out_uint8(0);
+
+            // Connect-Response::domainParameters (26 bytes)
+            stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+            stream.out_ber_len_uint7(26);
+            // DomainParameters::maxChannelIds = 34
+            stream.out_ber_int8(34);
+            // DomainParameters::maxUserIds = 3
+            stream.out_ber_int8(3);
+            // DomainParameters::maximumTokenIds = 0
+            stream.out_ber_int8(0);
+            // DomainParameters::numPriorities = 1
+            stream.out_ber_int8(1);
+            // DomainParameters::minThroughput = 0
+            stream.out_ber_int8(0);
+            // DomainParameters::maxHeight = 1
+            stream.out_ber_int8(1);
+            // DomainParameters::maxMCSPDUsize = 65528
+            stream.out_ber_int24(0xfff8);
+            // DomainParameters::protocolVersion = 2
+            stream.out_ber_int8(2);
+
+            stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
+            stream.out_ber_len(payload_length);
+
+            // now we know full MCS Initial header length (without initial tag and len)
+            if (payload_length > 88){
+                stream.set_out_ber_len_uint16(payload_length + stream.get_offset(start_offset), 2);
+            }
+            else {
+                stream.set_out_ber_len_uint7(payload_length + stream.get_offset(start_offset), 2);
+            }
+            stream.end = stream.p;
+        }
+    };
 };
 
 

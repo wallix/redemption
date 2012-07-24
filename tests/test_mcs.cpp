@@ -170,4 +170,135 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
     BOOST_CHECK_EQUAL(65528, mcs.domainParameters.maxMCSPDUsize);
     BOOST_CHECK_EQUAL(2, mcs.domainParameters.protocolVersion);            
 
+    BOOST_CHECK_EQUAL(54, mcs.payload_size);
+    BOOST_CHECK_EQUAL(39, mcs.header_size);
 }
+
+BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
+{
+    BStream stream(1024);
+    size_t payload_size = 54;
+    size_t header_size = 39;
+    MCS::CONNECT_RESPONSE_Send mcs(stream, payload_size, MCS::BER_ENCODING);
+    BOOST_CHECK_EQUAL(header_size, stream.end - stream.data);
+
+    const char * expected = 
+    "\x7f\x66" // BER_TAG_MCS_CONNECT_RESPONSE
+    "\x5a"     // LEN = payload_size + header_size
+        // Result
+        "\x0a"     // Stream::BER_TAG_RESULT
+        "\x01"     // LEN RESULT
+        "\x00"     // RESULT VALUE
+        // ConnectId
+        "\x02"     // BER_TAG_INTEGER
+        "\x01"     // LEN
+        "\x00"     // ConnectId value
+        // DomainParameters
+        "\x30"     // BER_TAG_MCS_DOMAIN_PARAMS
+        "\x1a"     // LEN
+            // DomainParameters::maxChannelIds = 34
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x22" // VALUE
+            // DomainParameters::maxUserIds = 3
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x03" // VALUE
+            // DomainParameters::maximumTokenIds = 0
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x00" // VALUE
+            // DomainParameters::numPriorities = 1
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x01" // VALUE
+            // DomainParameters::minThroughput = 0
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x00" // VALUE
+            // DomainParameters::maxHeight = 1
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x01" // VALUE
+            // DomainParameters::maxMCSPDUsize = 65528
+            "\x02" // BER_TAG_INTEGER
+            "\x03" // LEN
+            "\x00\xff\xf8" // VALUE
+            // DomainParameters::protocolVersion = 2
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x02" // VALUE
+        // UserData
+        "\x04" // BER_TAG_OCTET_STRING
+        "\x36" // PAYLOAD LEN
+    ;
+
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, header_size));
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
+{
+    BStream stream(2048);
+    size_t payload_size = 1024;
+    size_t header_size = 43;
+    try {
+        MCS::CONNECT_RESPONSE_Send mcs(stream, payload_size, MCS::BER_ENCODING);
+    }
+    catch (...) {
+    };
+    BOOST_CHECK_EQUAL(header_size, stream.end - stream.data);
+
+    const char * expected = 
+    "\x7f\x66" // BER_TAG_MCS_CONNECT_RESPONSE
+    "\x82\x04\x26"     // LEN = payload_size + header_size
+        // Result
+        "\x0a"     // Stream::BER_TAG_RESULT
+        "\x01"     // LEN RESULT
+        "\x00"     // RESULT VALUE
+        // ConnectId
+        "\x02"     // BER_TAG_INTEGER
+        "\x01"     // LEN
+        "\x00"     // ConnectId value
+        // DomainParameters
+        "\x30"     // BER_TAG_MCS_DOMAIN_PARAMS
+        "\x1a"     // LEN
+            // DomainParameters::maxChannelIds = 34
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x22" // VALUE
+            // DomainParameters::maxUserIds = 3
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x03" // VALUE
+            // DomainParameters::maximumTokenIds = 0
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x00" // VALUE
+            // DomainParameters::numPriorities = 1
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x01" // VALUE
+            // DomainParameters::minThroughput = 0
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x00" // VALUE
+            // DomainParameters::maxHeight = 1
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x01" // VALUE
+            // DomainParameters::maxMCSPDUsize = 65528
+            "\x02" // BER_TAG_INTEGER
+            "\x03" // LEN
+            "\x00\xff\xf8" // VALUE
+            // DomainParameters::protocolVersion = 2
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x02" // VALUE
+        // UserData
+        "\x04" // BER_TAG_OCTET_STRING
+        "\x82\x04\x00" // PAYLOAD LEN
+    ;
+
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, header_size));
+}
+
