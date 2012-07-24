@@ -671,17 +671,58 @@ struct mod_rdp : public client_mod {
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
             }
-            mcs_recv_connect_response(
-                    this->nego.trans,
-                    this->mod_channel_list,
-                    this->front.get_channel_list(),
-                    this->encrypt,
-                    this->decrypt,
-                    this->server_public_key_len,
-                    this->client_crypt_random,
-                    this->crypt_level,
-                    this->use_rdp5,
-                    this->gen);
+            {
+                BStream x224_data(65536);
+                X224::RecvFactory f(*this->nego.trans, x224_data);
+                X224::DT_TPDU_Recv x224(*this->nego.trans, x224_data, f.length);
+
+                SubStream mcs_data(x224_data, x224.header_size);
+                MCS::CONNECT_RESPONSE_PDU_Recv mcs(mcs_data, x224.payload_size, MCS::BER_ENCODING);
+                SubStream payload(mcs_data, mcs.header_size);
+
+                payload.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
+                size_t len = payload.in_uint8();
+
+                if (len & 0x80) {
+                    len = payload.in_uint8();
+                }
+                while (payload.p < payload.end) {
+                    uint16_t tag = payload.in_uint16_le();
+                    uint16_t length = payload.in_uint16_le();
+                    if (length <= 4) {
+                        LOG(LOG_ERR, "recv connect response parsing gcc data : short header");
+                        throw Error(ERR_MCS_DATA_SHORT_HEADER);
+                    }
+                    uint8_t *next_tag = (payload.p + length) - 4;
+                    switch (tag) {
+                    case SC_CORE:
+                    {
+                        SCCoreGccUserData sc_core;
+                        sc_core.recv(payload, length);
+                        sc_core.log("Receiving SC_CORE from server");
+                        if (0x0080001 == sc_core.version){ // can't use rdp5
+                            this->use_rdp5 = 0;
+                        }
+                    }
+                    break;
+                    case SC_SECURITY:
+                        LOG(LOG_INFO, "Receiving SC_Security from server");
+                        parse_mcs_data_sc_security(payload, this->encrypt, this->decrypt,
+                                                   this->server_public_key_len, this->client_crypt_random,
+                                                   this->crypt_level,
+                                                   this->gen);
+                    break;
+                    case SC_NET:
+                        LOG(LOG_INFO, "Receiving SC_Net from server");
+                        parse_mcs_data_sc_net(payload, this->front.get_channel_list(), this->mod_channel_list);
+                        break;
+                    default:
+                        LOG(LOG_WARNING, "response tag 0x%x", tag);
+                        break;
+                    }
+                    payload.p = next_tag;
+                }
+            }
 
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::Channel Connection");
