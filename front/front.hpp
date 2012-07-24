@@ -906,15 +906,221 @@ public:
 
             mcs_recv_connect_initial(this->trans, &this->client_info, this->channel_list);
 
-            mcs_send_connect_response(
-                this->trans,
-                &this->client_info,
-                this->channel_list,
-                this->server_random,
-                this->encrypt.rc4_key_size,
-                this->pub_mod,
-                this->pri_exp,
-                this->gen);
+            BStream stream(65536);
+
+            // GCC Conference Create Response
+            // ------------------------------
+
+            // ConferenceCreateResponse Parameters
+            // -----------------------------------
+
+            // Generic definitions used in parameter descriptions:
+
+            // simpleTextFirstCharacter UniversalString ::= {0, 0, 0, 0}
+
+            // simpleTextLastCharacter UniversalString ::= {0, 0, 0, 255}
+
+            // SimpleTextString ::=  BMPString (SIZE (0..255)) (FROM (simpleTextFirstCharacter..simpleTextLastCharacter))
+
+            // TextString ::= BMPString (SIZE (0..255)) -- Basic Multilingual Plane of ISO/IEC 10646-1 (Unicode)
+
+            // SimpleNumericString ::= NumericString (SIZE (1..255)) (FROM ("0123456789"))
+
+            // DynamicChannelID ::= INTEGER (1001..65535) -- Those created and deleted by MCS
+
+            // UserID ::= DynamicChannelID
+
+            // H221NonStandardIdentifier ::= OCTET STRING (SIZE (4..255))
+            //      -- First four octets shall be country code and
+            //      -- Manufacturer code, assigned as specified in
+            //      -- Annex A/H.221 for NS-cap and NS-comm
+
+            // Key ::= CHOICE   -- Identifier of a standard or non-standard object
+            // {
+            //      object              OBJECT IDENTIFIER,
+            //      h221NonStandard     H221NonStandardIdentifier
+            // }
+
+            // UserData ::= SET OF SEQUENCE
+            // {
+            //      key     Key,
+            //      value   OCTET STRING OPTIONAL
+            // }
+
+            // ConferenceCreateResponse ::= SEQUENCE
+            // {    -- MCS-Connect-Provider response user data
+            //      nodeID              UserID, -- Node ID of the sending node
+            //      tag                 INTEGER,
+            //      result              ENUMERATED
+            //      {
+            //          success                         (0),
+            //          userRejected                    (1),
+            //          resourcesNotAvailable           (2),
+            //          rejectedForSymmetryBreaking     (3),
+            //          lockedConferenceNotSupported    (4),
+            //          ...
+            //      },
+            //      userData            UserData OPTIONAL,
+            //      ...
+            //}
+
+
+            // User Data                 : Optional
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+            // User Data: Optional user data which may be used for functions outside
+            // the scope of this Recommendation such as authentication, billing,
+            // etc.
+
+            // Result                    : Mandatory
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+            // An indication of whether the request was accepted or rejected, and if
+            // rejected, the reason why. It contains one of a list of possible
+            // results: successful, user rejected, resources not available, rejected
+            // for symmetry-breaking, locked conference not supported, Conference
+            // Name and Conference Name Modifier already exist, domain parameters
+            // unacceptable, domain not hierarchical, lower-layer initiated
+            // disconnect, unspecified failure to connect. A negative result in the
+            // GCC-Conference-Create confirm does not imply that the physical
+            // connection to the node to which the connection was being attempted
+            // is disconnected.
+
+            // The ConferenceCreateResponse PDU is shown in Table 8-4. The Node ID
+            // parameter, which is the User ID assigned by MCS in response to the
+            // MCS-Attach-User request issued by the GCC Provider, shall be supplied
+            // by the GCC Provider sourcing this PDU. The Tag parameter is assigned
+            // by the source GCC Provider to be locally unique. It is used to
+            // identify the returned UserIDIndication PDU. The Result parameter
+            // includes GCC-specific failure information sourced directly from
+            // the Result parameter in the GCC-Conference-Create response primitive.
+            // If the Result parameter is anything except successful, the Result
+            // parameter in the MCS-Connect-Provider response is set to
+            // user-rejected.
+
+            //            Table 8-4 – ConferenceCreateResponse GCCPDU
+            // +------------------+------------------+--------------------------+
+            // | Content          |     Source       |         Sink             |
+            // +==================+==================+==========================+
+            // | Node ID          | Top GCC Provider | Destination GCC Provider |
+            // +------------------+------------------+--------------------------+
+            // | Tag              | Top GCC Provider | Destination GCC Provider |
+            // +------------------+------------------+--------------------------+
+            // | Result           | Response         | Confirm                  |
+            // +------------------+------------------+--------------------------+
+            // | User Data (opt.) | Response         | Confirm                  |
+            // +------------------+------------------+--------------------------+
+
+            //PER encoded (ALIGNED variant of BASIC-PER) GCC Connection Data (ConnectData):
+            // 00 05 00
+            // 14 7c 00 01
+            // 2a
+            // 14 76 0a 01 01 00 01 c0 00 4d 63 44 6e
+            // 81 08
+
+
+            // 00 05 -> Key::object length = 5 bytes
+            // 00 14 7c 00 01 -> Key::object = { 0 0 20 124 0 1 }
+            stream.out_uint16_be(5);
+            stream.out_copy_bytes("\x00\x14\x7c\x00\x01", 5);
+
+
+            // 2a -> ConnectData::connectPDU length = 42 bytes
+            // This length MUST be ignored by the client.
+            stream.out_uint8(0x2a);
+
+            // PER encoded (ALIGNED variant of BASIC-PER) GCC Conference Create Response
+            // PDU:
+            // 14 76 0a 01 01 00 01 c0 00 00 4d 63 44 6e 81 08
+
+            // 0x14:
+            // 0 - extension bit (ConnectGCCPDU)
+            // 0 - --\ ...
+            // 0 -   | CHOICE: From ConnectGCCPDU select conferenceCreateResponse (1)
+            // 1 - --/ of type ConferenceCreateResponse
+            // 0 - extension bit (ConferenceCreateResponse)
+            // 1 - ConferenceCreateResponse::userData present
+            // 0 - padding
+            // 0 - padding
+            stream.out_uint8(0x10 | 4);
+
+            // ConferenceCreateResponse::nodeID
+            //  = 0x760a + 1001 = 30218 + 1001 = 31219
+            //  (minimum for UserID is 1001)
+            stream.out_uint16_le(0x760a);
+
+            // ConferenceCreateResponse::tag length = 1 byte
+            stream.out_uint8(1);
+
+            // ConferenceCreateResponse::tag = 1
+            stream.out_uint8(1);
+
+            // 0x00:
+            // 0 - extension bit (Result)
+            // 0 - --\ ...
+            // 0 -   | ConferenceCreateResponse::result = success (0)
+            // 0 - --/
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            stream.out_uint8(0);
+
+            // number of UserData sets = 1
+            stream.out_uint8(1);
+
+            // 0xc0:
+            // 1 - UserData::value present
+            // 1 - CHOICE: From Key select h221NonStandard (1)
+            //               of type H221NonStandardIdentifier
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            stream.out_uint8(0xc0);
+
+            // h221NonStandard length = 0 + 4 = 4 octets
+            //   (minimum for H221NonStandardIdentifier is 4)
+            stream.out_uint8(0);
+
+            // h221NonStandard (server-to-client H.221 key) = "McDn"
+            stream.out_copy_bytes("McDn", 4);
+
+        //        uint16_t padding = this->channel_list.size() & 1;
+        //        uint16_t srv_channel_size = 8 + (this->channel_list.size() + padding) * 2;
+        //        stream.out_2BUE(8 + srv_channel_size + 236 + 4); // len
+
+
+            uint32_t offset_user_data_len = stream.get_offset(0);
+            stream.out_uint16_be(0);
+
+            SCCoreGccUserData sc_core;
+            sc_core.version = 0x00080004; // RDP 5
+            sc_core.log("Sending SC_CORE to client");
+            sc_core.emit(stream);
+
+            out_mcs_data_sc_net(stream, this->channel_list);
+            front_out_gcc_conference_user_data_sc_sec1(stream, client_info.crypt_level, this->server_random, this->encrypt.rc4_key_size, this->pub_mod, this->pri_exp, this->gen);
+            // set user_data_len (TWO_BYTE_UNSIGNED_ENCODING)
+            stream.set_out_uint16_be(0x8000 | (stream.get_offset(offset_user_data_len + 2)), offset_user_data_len);
+
+           stream.end = stream.p;
+
+            size_t payload_length = stream.end - stream.data;
+
+            BStream mcs_header(256);
+            MCS::CONNECT_RESPONSE_Send mcs(mcs_header, payload_length, MCS::BER_ENCODING);
+            size_t mcs_header_length = mcs_header.end - mcs_header.data;
+
+            BStream x224_header(256);
+            X224::DT_TPDU_Send(x224_header, mcs_header_length + payload_length);
+            size_t x224_header_length = x224_header.end - x224_header.data;
+
+            this->trans->send(x224_header.data, x224_header_length);
+            this->trans->send(mcs_header.data, mcs_header_length);
+            this->trans->send(stream.data, payload_length);
 
             // Channel Connection
             // ------------------
