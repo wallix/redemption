@@ -560,6 +560,7 @@ struct mod_rdp : public client_mod {
                     this->nego.server_event();
                 break;
                 case RdpNego::NEGO_STATE_FINAL:
+                {
                     // Basic Settings Exchange
                     // -----------------------
 
@@ -576,21 +577,91 @@ struct mod_rdp : public client_mod {
                     // Client                                                     Server
                     //    |--------------MCS Connect Initial PDU with-------------> |
                     //                   GCC Conference Create Request
-                   //    | <------------MCS Connect Response PDU with------------- |
+                    //    | <------------MCS Connect Response PDU with------------- |
                     //                   GCC conference Create Response
 
-                    mcs_send_connect_initial(
-                            this->nego.trans,
-                            this->front.get_channel_list(),
-                            this->front_width,
-                            this->front_height,
-                            this->front_bpp,
-                            keylayout,
-                            hostname,
-                            this->use_rdp5,
-                            this->console_session,
-                            this->nego.tls);
+                    BStream stream(65536);
+                    /* Generic Conference Control (T.124) ConferenceCreateRequest */
+
+                    size_t offset_gcc_conference_create_request_header_length = 0;
+                    gcc_write_conference_create_request_header(stream, offset_gcc_conference_create_request_header_length);
+
+                    size_t offset_user_data_length = stream.get_offset(0);
+                    stream.out_per_length(256); // remaining length, reserve 16 bits
+
+                    // Client User Data
+                    // ================
+                    // 158 bytes
+                    CSCoreGccUserData cs_core;
+                    cs_core.version = this->use_rdp5?0x00080004:0x00080001;
+                    cs_core.desktopWidth = this->front_width;
+                    cs_core.desktopHeight = this->front_height;
+                    cs_core.highColorDepth = this->front_bpp;
+                    cs_core.keyboardLayout = keylayout;
+                    uint16_t hostlen = strlen(hostname);
+                    uint16_t maxhostlen = std::min((uint16_t)15, hostlen);
+                    for (size_t i = 0; i < maxhostlen ; i++){
+                        cs_core.clientName[i] = hostname[i];
+                    }
+                    bzero(&(cs_core.clientName[hostlen]), 16-hostlen);
+                    if (this->nego.tls){
+                        cs_core.serverSelectedProtocol = 1;
+                    }
+                    cs_core.log("Sending to Server");
+                    if (this->nego.tls){
+                    }
+                    cs_core.emit(stream);
+
+                    CSClusterGccUserData cs_cluster;
+                    TODO("values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?")
+
+                    if (!this->nego.tls){
+                         if (this->console_session){
+                            cs_cluster.flags = CSClusterGccUserData::REDIRECTED_SESSIONID_FIELD_VALID | (3 << 2) ; // REDIRECTION V4
+                        }
+                        else {
+                            cs_cluster.flags = CSClusterGccUserData::REDIRECTION_SUPPORTED            | (2 << 2) ; // REDIRECTION V3
+                        }
+                    }
+                    else {
+                        cs_cluster.flags = CSClusterGccUserData::REDIRECTION_SUPPORTED * ((3 << 2)|1);  // REDIRECTION V4
+                        if (this->console_session){
+                            cs_cluster.flags |= CSClusterGccUserData::REDIRECTED_SESSIONID_FIELD_VALID ;
+                        }
+                    }
+                    cs_cluster.log("Sending to server");
+                    cs_cluster.emit(stream);
+
+                    // 12 bytes
+                    CSSecGccUserData cs_sec_gccuserdata;
+                    cs_sec_gccuserdata.encryptionMethods = FORTY_BIT_ENCRYPTION_FLAG|HUNDRED_TWENTY_EIGHT_BIT_ENCRYPTION_FLAG;
+                    cs_sec_gccuserdata.log("Sending cs_sec gccuserdata to server");
+                    cs_sec_gccuserdata.emit(stream);
+
+                    // 12 * nbchan + 8 bytes
+                    mod_rdp_out_cs_net(stream, this->front.get_channel_list());
+
+                    stream.set_out_per_length(stream.get_offset(offset_user_data_length + 2), offset_user_data_length); // user data length
+
+                    stream.set_out_per_length(stream.get_offset(offset_gcc_conference_create_request_header_length + 2), offset_gcc_conference_create_request_header_length); // length including header
+
+                    stream.end = stream.p;
+                    size_t payload_length = stream.end - stream.data;
+
+                    BStream mcs_header(65536);
+                    MCS::CONNECT_INITIAL_Send mcs(mcs_header, payload_length, MCS::BER_ENCODING);
+                    size_t mcs_header_length = mcs_header.end - mcs_header.data;
+
+                    BStream x224_header(256);
+                    X224::DT_TPDU_Send(x224_header, mcs_header_length + payload_length);
+                    size_t x224_header_length = x224_header.end - x224_header.data;
+
+                    this->nego.trans->send(x224_header.data, x224_header_length);
+                    this->nego.trans->send(mcs_header.data, mcs_header_length);
+                    this->nego.trans->send(stream.data, payload_length);
+
                     this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
+                }
                 break;
             }
         break;
