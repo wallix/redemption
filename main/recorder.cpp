@@ -25,14 +25,14 @@
 
 #include "recorder/recorder_app.hpp"
 #include "recorder/recorder_option.hpp"
-#include "recorder/adaptator/to_png_adaptator.hpp"
-#include "recorder/adaptator/to_wrm_adaptator.hpp"
+#include "recorder/adapter/to_png_adapter.hpp"
+#include "recorder/adapter/to_wrm_adapter.hpp"
 
 int main(int argc, char** argv)
 {
     RecorderOption opt;
-    ToPngAdaptator to_png(opt);
-    ToWrmAdaptator to_wrm(opt);
+    ToPngAdapter to_png(opt);
+    ToWrmAdapter to_wrm(opt);
     RecorderAction recorder_actions[] = {
         RecorderAction("png", &to_png),
         RecorderAction("wrm", &to_wrm),

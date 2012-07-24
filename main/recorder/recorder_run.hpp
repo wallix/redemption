@@ -25,7 +25,7 @@
 
 #include <boost/program_options/options_description.hpp>
 
-#include "adaptator.hpp"
+#include "adapter.hpp"
 #include "recorder_option.hpp"
 #include "wrm_recorder_init.hpp"
 
@@ -36,9 +36,9 @@ int recorder_run(RecorderOption& opt,
     const std::size_t pos = opt.out_filename.find_last_of('.');
     std::string extension = opt.output_type.empty() ? opt.out_filename.substr(pos + 1) : opt.output_type;
 
-    RecorderAdaptator* adaptator = get_recorder_adaptator(actions, actions + n,
+    RecorderAdapter* adapter = get_recorder_adapter(actions, actions + n,
                                                           extension);
-    if (!adaptator){
+    if (!adapter){
         std::cerr
         << "Incorrect output-type, "
         << opt.desc.find("output-type", false).description() << '\n';
@@ -53,7 +53,7 @@ int recorder_run(RecorderOption& opt,
     try
     {
         opt.out_filename.erase(pos);
-        (*adaptator)(recorder, opt.out_filename.c_str());
+        (*adapter)(recorder, opt.out_filename.c_str());
     }
     catch (Error& error)
     {

@@ -18,22 +18,22 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__MAIN_RECORDER_ADAPTATOR_HPP__)
-#define __MAIN_RECORDER_ADAPTATOR_HPP__
+#if !defined(__MAIN_RECORDER_ADAPTER_HPP__)
+#define __MAIN_RECORDER_ADAPTER_HPP__
 
 #include <utility>
 #include <string>
 
 #include "wrm_recorder.hpp"
 
-struct RecorderAdaptator
+struct RecorderAdapter
 {
     virtual void operator()(WRMRecorder& recorder, const char* outfile) = 0;
 };
 
-typedef std::pair<std::string, RecorderAdaptator*> RecorderAction;
+typedef std::pair<std::string, RecorderAdapter*> RecorderAction;
 
-RecorderAdaptator* get_recorder_adaptator(RecorderAction* first,
+RecorderAdapter* get_recorder_adapter(RecorderAction* first,
                                           RecorderAction* last,
                                           const std::string& extension)
 {

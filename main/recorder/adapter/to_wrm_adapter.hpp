@@ -18,34 +18,46 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__MAIN_RECORDER_ADAPTATOR_TO_PNG_ADAPTATOR_HPP__)
-#define __MAIN_RECORDER_ADAPTATOR_TO_PNG_ADAPTATOR_HPP__
+#if !defined(__MAIN_RECORDER_ADAPTER_TO_WRM_ADAPTER_HPP__)
+#define __MAIN_RECORDER_ADAPTER_TO_WRM_ADAPTER_HPP__
 
-#include "recorder/adaptator.hpp"
+#include "recorder/adapter.hpp"
 #include "recorder/recorder_option.hpp"
-#include "recorder/to_png.hpp"
+#include "recorder/to_wrm.hpp"
+#include "recorder/to_one_wrm.hpp"
 
-class ToPngAdaptator
-: public RecorderAdaptator
+class ToWrmAdapter
+: public RecorderAdapter
 {
     RecorderOption& _option;
 
 public:
-    ToPngAdaptator(RecorderOption& option)
+    ToWrmAdapter(RecorderOption& option)
     : _option(option)
     {}
 
+
     virtual void operator()(WRMRecorder& recorder, const char* outfile)
     {
-        to_png(recorder, outfile,
-               this->_option.range.left.time,
-               this->_option.range.right.time,
-               this->_option.time.time,
-               this->_option.frame,
-               this->_option.screenshot_start,
-               this->_option.no_screenshot_stop,
-               this->_option.screenshot_all
-        );
+        const char * metaname = this->_option.metaname.empty() ? 0 : this->_option.metaname.c_str();
+        if (this->_option.cat_wrm) {
+            to_one_wrm(recorder, outfile,
+                       this->_option.range.left.time,
+                       this->_option.range.right.time,
+                       metaname
+                      );
+        }
+        if (!this->_option.cat_wrm) {
+            to_wrm(recorder, outfile,
+                   this->_option.range.left.time,
+                   this->_option.range.right.time,
+                   this->_option.time.time,
+                   this->_option.frame,
+                   this->_option.screenshot_start,
+                   this->_option.screenshot_wrm,
+                   metaname
+                  );
+        }
     }
 };
 
