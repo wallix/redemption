@@ -510,29 +510,42 @@ BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
 BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinConfirm)
 {
     BStream stream(1024);
-//    size_t length = 1;
-//    MCS::_Send mcs(stream, MCS::PER_ENCODING);
-//    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+    size_t length = 8;
+    MCS::ChannelJoinConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, 3, 1004, true, 1004, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
 
-//    const char * expected = 
-//        "\x20"  //  * 4
-//    ;
+    const char * expected = 
+        "\x3E"  // ChannelJoinConfirm * 4
+        "\x00"  // result RT_SUCCESSFUL
+        "\x00\x03" // userId = 3
+        "\x03\xec" // requested = 1004
+        "\x03\xec" // channelId = 1004
+    ;
 
-//    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
 }
 
 BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
 {
     BStream stream(1024);
-//    size_t length = 1;
-//    GeneratorTransport t(
-//        "\x20"  //  * 4
-//   , length);
-//    t.recv(&stream.end, length);
+    size_t length = 8;
+    GeneratorTransport t(
+        "\x3E"  // ChannelJoinConfirm * 4
+        "\x00"  // result RT_SUCCESSFUL
+        "\x00\x03" // userId = 3
+        "\x03\xec" // requested = 1004
+        "\x03\xec" // channelId = 1004
+   , length);
+    t.recv(&stream.end, length);
 
-//    MCS::XXX_Recv mcs(stream, length, MCS::PER_ENCODING);
+    MCS::ChannelJoinConfirm_Recv mcs(stream, length, MCS::PER_ENCODING);
 
-//    BOOST_CHECK_EQUAL(MCS::MCSPDU_XXX , mcs.type);
+    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_ChannelJoinConfirm , mcs.type);
+    BOOST_CHECK_EQUAL((uint8_t)MCS::RT_SUCCESSFUL , mcs.result);
+    BOOST_CHECK_EQUAL((uint16_t)3 , mcs.initiator);
+    BOOST_CHECK_EQUAL((uint16_t)1004 , mcs.requested);
+    BOOST_CHECK_EQUAL(true , mcs.channelId_flag);
+    BOOST_CHECK_EQUAL((uint16_t)1004 , mcs.channelId);
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_SendDataRequest)

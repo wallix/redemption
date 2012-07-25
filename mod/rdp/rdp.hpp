@@ -822,22 +822,21 @@ struct mod_rdp : public client_mod {
                 }
 
                 for (size_t index = 0; index < num_channels+2; index++){
-                        BStream x224_header(256);
-                        BStream mcs_data(256);
+                    BStream x224_header(256);
+                    BStream mcs_cjrq_data(256);
+                    MCS::ChannelJoinRequest_Send(mcs_cjrq_data, this->userid, channels_id[index], MCS::PER_ENCODING);
+                    size_t mcs_length = mcs_cjrq_data.end - mcs_cjrq_data.data;
+                    X224::DT_TPDU_Send(x224_header, mcs_length);
+                    size_t x224_header_length = x224_header.end - x224_header.data;
+                    this->nego.trans->send(x224_header.data, x224_header_length);
+                    this->nego.trans->send(mcs_cjrq_data.data, mcs_length);
 
-                        MCS::ChannelJoinRequest_Send(mcs_data, this->userid, channels_id[index], MCS::PER_ENCODING);
-                        size_t mcs_length = mcs_data.end - mcs_data.data;
-                        X224::DT_TPDU_Send(x224_header, mcs_length);
-                        size_t x224_header_length = x224_header.end - x224_header.data;
-
-                        this->nego.trans->send(x224_header.data, x224_header_length);
-                        this->nego.trans->send(mcs_data.data, mcs_length);
-                    {
-                        uint16_t tmp_userid;
-                        uint16_t tmp_req_chanid;
-                        uint16_t tmp_join_chanid;
-                        mcs_recv_channel_join_confirm_pdu(this->nego.trans, tmp_userid, tmp_req_chanid, tmp_join_chanid);
-                    }
+                    BStream x224_data(256);
+                    X224::RecvFactory f(*this->nego.trans, x224_data);
+                    X224::DT_TPDU_Recv x224(*this->nego.trans, x224_data, f.length);
+                    SubStream mcs_cjcf_data(x224_data, x224.header_size);
+                    MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, x224.payload_size, MCS::PER_ENCODING);
+                    TODO("We should check channel confirmation worked, for now we just do like server said OK to everything... and that may not be the case, some channels may be closed for instance. We should also check requested chanid are some confirm may come out of order"); 
                 }
             }
 

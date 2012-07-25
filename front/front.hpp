@@ -1317,6 +1317,8 @@ public:
                 this->trans->send(mcs_data.data, mcs_length);
             }
 
+
+            TODO("The code below should be simplified and correctly manage channels (confirm only channels that are really supported)")
             {
                 // read tpktHeader (4 bytes = 3 0 len)
                 // TPDU class 0    (3 bytes = LI F0 PDU_DT)
@@ -1326,20 +1328,48 @@ public:
                 SubStream mcs_data(x224_data, x224.header_size);
                 MCS::ChannelJoinRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
                 this->userid = mcs.initiator;
-                mcs_send_channel_join_confirm_pdu(this->trans, mcs.initiator, mcs.channelId);
+
+                BStream x224_header(256);
+                BStream mcs_cjcf_data(256);
+
+                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL, 
+                                             mcs.initiator, 
+                                             mcs.channelId, 
+                                             true, mcs.channelId, 
+                                             MCS::PER_ENCODING);
+                size_t mcs_cjcf_data_length = mcs_cjcf_data.end - mcs_cjcf_data.data;
+                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data_length);
+                size_t x224_header_length = x224_header.end - x224_header.data;
+
+                this->trans->send(x224_header.data, x224_header_length);
+                this->trans->send(mcs_cjcf_data.data, mcs_cjcf_data_length);
             }
 
             {
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
                 X224::DT_TPDU_Recv x224(*this->trans, x224_data, f.length);
-                SubStream mcs_data(x224_data, x224.header_size);
-                MCS::ChannelJoinRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+                SubStream mcs_cjrq_data(x224_data, x224.header_size);
+                MCS::ChannelJoinRequest_Recv mcs(mcs_cjrq_data, x224.payload_size, MCS::PER_ENCODING);
                 if (mcs.initiator != this->userid){
                     LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
                     throw Error(ERR_MCS_BAD_USERID);
                 }
-                mcs_send_channel_join_confirm_pdu(this->trans, mcs.initiator, mcs.channelId);
+
+                BStream x224_header(256);
+                BStream mcs_cjcf_data(256);
+
+                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL, 
+                                             mcs.initiator, 
+                                             mcs.channelId, 
+                                             true, mcs.channelId, 
+                                             MCS::PER_ENCODING);
+                size_t mcs_cjcf_data_length = mcs_cjcf_data.end - mcs_cjcf_data.data;
+                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data_length);
+                size_t x224_header_length = x224_header.end - x224_header.data;
+
+                this->trans->send(x224_header.data, x224_header_length);
+                this->trans->send(mcs_cjcf_data.data, mcs_cjcf_data_length);
             }
 
             for (size_t i = 0 ; i < this->channel_list.size() ; i++){
@@ -1352,7 +1382,22 @@ public:
                     LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
                     throw Error(ERR_MCS_BAD_USERID);
                 }
-                mcs_send_channel_join_confirm_pdu(this->trans, this->userid, mcs.channelId);
+
+                BStream x224_header(256);
+                BStream mcs_cjcf_data(256);
+
+                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL, 
+                                             mcs.initiator, 
+                                             mcs.channelId, 
+                                             true, mcs.channelId, 
+                                             MCS::PER_ENCODING);
+                size_t mcs_cjcf_data_length = mcs_cjcf_data.end - mcs_cjcf_data.data;
+                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data_length);
+                size_t x224_header_length = x224_header.end - x224_header.data;
+
+                this->trans->send(x224_header.data, x224_header_length);
+                this->trans->send(mcs_cjcf_data.data, mcs_cjcf_data_length);
+
                 this->channel_list.set_chanid(i, mcs.channelId);
             }
 
