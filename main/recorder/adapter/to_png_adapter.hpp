@@ -41,6 +41,8 @@ public:
                this->_option.range.left.time,
                this->_option.range.right.time,
                this->_option.time.time,
+               this->_option.png_scale_width,
+               this->_option.png_scale_height,
                this->_option.frame,
                this->_option.screenshot_start,
                this->_option.no_screenshot_stop,

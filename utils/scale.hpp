@@ -21,19 +21,25 @@
 #if !defined(__UTILS_SCALE_HPP__)
 #define __UTILS_SCALE_HPP__
 
+#include <stdlib.h>
+
 /**
  * \brief Scaling with Bresenham
+ *
+ * @{
  */
-inline void scale_data(uint8_t *dest, uint8_t *src,
-                       unsigned int dest_width, unsigned int src_width,
-                       unsigned int dest_height, unsigned int src_height,
-                       unsigned int src_rowsize)
+template<typename _FunctorCopy>
+inline void scale_data_impl(uint8_t *dest, uint8_t *src,
+                            unsigned int dest_width, unsigned int src_width,
+                            unsigned int dest_height, unsigned int src_height,
+                            unsigned int src_rowsize,
+                            unsigned Bpp, _FunctorCopy f = _FunctorCopy())
 {
     unsigned int y_pixels = dest_height;
     unsigned int y_int_part = src_height / dest_height * src_rowsize;
     unsigned int y_fract_part = src_height % dest_height;
     unsigned int yE = 0;
-    unsigned int x_int_part = src_width / dest_width * 3;
+    unsigned int x_int_part = src_width / dest_width * Bpp;
     unsigned int x_fract_part = src_width % dest_width;
 
     while (y_pixels-- > 0)
@@ -43,15 +49,14 @@ inline void scale_data(uint8_t *dest, uint8_t *src,
         unsigned int x_pixels = dest_width;
         while (x_pixels-- > 0)
         {
-            *dest++ = *x_src;
-            *dest++ = x_src[1];
-            *dest++ = x_src[2];
+            f(dest, x_src);
+            dest += Bpp;
             x_src += x_int_part;
             xE += x_fract_part;
             if (xE >= dest_width)
             {
                 xE -= dest_width;
-                x_src += 3;
+                x_src += Bpp;
             }
         }
         src += y_int_part;
@@ -63,6 +68,56 @@ inline void scale_data(uint8_t *dest, uint8_t *src,
         }
     }
 }
+
+
+struct scale_data_copy_3
+{
+    void operator()(uint8_t * dest, uint8_t * src) const
+    {
+        dest[0] = src[0];
+        dest[1] = src[1];
+        dest[2] = src[2];
+    }
+};
+
+struct scale_data_copy_3_rgb_to_bgr
+{
+    void operator()(uint8_t * dest, uint8_t * src)
+    {
+        dest[0] = src[2];
+        dest[1] = src[1];
+        dest[2] = src[0];
+    }
+};
+
+inline void scale_data(uint8_t *dest, uint8_t *src,
+                       unsigned int dest_width, unsigned int src_width,
+                       unsigned int dest_height, unsigned int src_height,
+                       unsigned int src_rowsize)
+{
+    scale_data_impl<scale_data_copy_3>(
+        dest, src,
+        dest_width, src_width,
+        dest_height, src_height,
+        src_rowsize, 3
+    );
+}
+
+inline void scale_data_rgb_to_bgr(uint8_t *dest, uint8_t *src,
+                                  unsigned int dest_width,
+                                  unsigned int src_width,
+                                  unsigned int dest_height,
+                                  unsigned int src_height,
+                                  unsigned int src_rowsize)
+{
+    scale_data_impl<scale_data_copy_3_rgb_to_bgr>(
+        dest, src,
+        dest_width, src_width,
+        dest_height, src_height,
+        src_rowsize, 3
+    );
+}
+//@}
 
 /**
  * \code

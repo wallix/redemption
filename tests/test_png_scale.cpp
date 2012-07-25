@@ -34,7 +34,6 @@ BOOST_AUTO_TEST_CASE(TestPngScale)
     Drawable drawable(800,600);
     Bitmap bmp(FIXTURES_PATH"/color_image.bmp");
     drawable.mem_blt(Rect(0,0,800,600), bmp, 0,0,0,1);
-    //dump_png24(fopen("/tmp/scale.png", "w+"), drawable.data, src_width, src_height, drawable.rowsize);
 
     const unsigned int dest_width = 260;
     const unsigned int dest_height = 160;

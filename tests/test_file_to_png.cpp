@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     BOOST_CHECK_EQUAL(600, meta.height);
 
     StaticCapture consumer(meta.width, meta.height,
-                           "/tmp/test_replay_to_png", 0, 0);
+                           "/tmp/test_replay_to_png");
 
     bool is_chunk_time = false;
     uint count_img = 0;
