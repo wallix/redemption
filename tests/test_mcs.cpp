@@ -369,7 +369,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
 
     MCS::DisconnectProviderUltimatum_Recv mcs(stream, length, MCS::PER_ENCODING);
 
-    BOOST_CHECK_EQUAL(MCS::MCSPDU_DisconnectProviderUltimatum , mcs.type);
+    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_DisconnectProviderUltimatum , mcs.type);
     BOOST_CHECK_EQUAL(0, mcs.reason);
 }
 
@@ -399,39 +399,78 @@ BOOST_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
 
     try {
         MCS::AttachUserRequest_Recv mcs(stream, length, MCS::PER_ENCODING);
-        BOOST_CHECK_EQUAL(MCS::MCSPDU_AttachUserRequest , mcs.type);
+        BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserRequest , mcs.type);
     }
     catch(...){
         BOOST_CHECK(0);
     };
 }
 
-BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm)
+BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm_without_userid)
 {
     BStream stream(1024);
-//    size_t length = 1;
-//    MCS::_Send mcs(stream, MCS::PER_ENCODING);
-//    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+    size_t length = 2;
+    MCS::AttachUserConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, false, 0, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
 
-//    const char * expected = 
-//        "\x20"  //  * 4
-//    ;
+    const char * expected = 
+        "\x2C"  //  AttachUserConfirm * 4
+        "\x00"
+    ;
 
-//    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
 }
 
-BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm)
+BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_without_userid)
 {
     BStream stream(1024);
-//    size_t length = 1;
-//    GeneratorTransport t(
-//        "\x20"  //  * 4
-//   , length);
-//    t.recv(&stream.end, length);
+    size_t length = 2;
+    GeneratorTransport t(
+        "\x2C"  // AttachUserConfirm * 4
+        "\x00"
+   , length);
+    t.recv(&stream.end, length);
 
-//    MCS::XXX_Recv mcs(stream, length, MCS::PER_ENCODING);
+    MCS::AttachUserConfirm_Recv mcs(stream, length, MCS::PER_ENCODING);
 
-//    BOOST_CHECK_EQUAL(MCS::MCSPDU_XXX , mcs.type);
+    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserConfirm , mcs.type);
+    BOOST_CHECK_EQUAL(0 , mcs.result);
+    BOOST_CHECK_EQUAL(false , mcs.initiator_flag);
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm_with_userid)
+{
+    BStream stream(1024);
+    size_t length = 4;
+    MCS::AttachUserConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, true, 1, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+
+    const char * expected = 
+        "\x2E"  //  AttachUserConfirm * 4
+        "\x00"
+        "\x00\x01"
+    ;
+
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
+{
+    BStream stream(1024);
+    size_t length = 4;
+    GeneratorTransport t(
+        "\x2E"  // AttachUserConfirm * 4
+        "\x00"
+        "\x00\x01"
+   , length);
+    t.recv(&stream.end, length);
+
+    MCS::AttachUserConfirm_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserConfirm , mcs.type);
+    BOOST_CHECK_EQUAL((uint8_t)0 , mcs.result);
+    BOOST_CHECK_EQUAL(true , mcs.initiator_flag);
+    BOOST_CHECK_EQUAL((uint16_t)1 , mcs.initiator);
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinRequest)

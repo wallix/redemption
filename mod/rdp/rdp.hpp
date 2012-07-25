@@ -798,7 +798,17 @@ struct mod_rdp : public client_mod {
             LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User");
         }
         {
-            mcs_recv_attach_user_confirm_pdu(this->nego.trans, this->userid);
+            {
+                BStream stream(65536);
+                X224::RecvFactory f(*this->nego.trans, stream);
+                X224::DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
+                SubStream payload(stream, x224.header_size);
+
+                MCS::AttachUserConfirm_Recv mcs(payload, x224.payload_size, MCS::PER_ENCODING);
+                if (mcs.initiator_flag){
+                    this->userid = mcs.initiator;
+                }
+            }
 
             {
                 TODO(" the array size below is arbitrary  it should be checked to avoid buffer overflow")

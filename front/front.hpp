@@ -1279,15 +1279,20 @@ public:
 
             if (this->verbose){
                 LOG(LOG_INFO, "Front::incoming::Channel Connection");
-                LOG(LOG_INFO, "Front::incoming::mcs_recv_erect_domain_and_attach_user_request_pdu : user_id=%u", this->userid);
             }
 
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming:: Send MCS::ErectDomainRequest");
+            }
             {
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
                 X224::DT_TPDU_Recv x224(*trans, x224_data, f.length);
                 SubStream mcs_data(x224_data, x224.header_size);
                 MCS::ErectDomainRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+            }
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming:: Send MCS::AttachUserRequest");
             }
             {
                 BStream x224_data(256);
@@ -1296,11 +1301,21 @@ public:
                 SubStream mcs_data(x224_data, x224.header_size);
                 MCS::AttachUserRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
             }
-
             if (this->verbose){
-                LOG(LOG_INFO, "Front::incoming::mcs_send_attach_user_confirm_pdu : user_id=%u", this->userid);
+                LOG(LOG_INFO, "Front::incoming:: Recv MCS::AttachUserConfirm", this->userid);
             }
-            mcs_send_attach_user_confirm_pdu(this->trans, this->userid);
+            {
+                BStream x224_header(256);
+                BStream mcs_data(256);
+
+                MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
+                size_t mcs_length = mcs_data.end - mcs_data.data;
+                X224::DT_TPDU_Send(x224_header, mcs_length);
+                size_t x224_header_length = x224_header.end - x224_header.data;
+
+                this->trans->send(x224_header.data, x224_header_length);
+                this->trans->send(mcs_data.data, mcs_length);
+            }
 
             {
                 uint16_t tmp_userid;

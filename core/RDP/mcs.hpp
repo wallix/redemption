@@ -1631,140 +1631,6 @@ static inline void mcs_recv_channel_join_confirm_pdu(Transport * trans, uint16_t
     mcs.recv_end();
 }
 
-// 2.2.1.7 Server MCS Attach User Confirm PDU
-// ------------------------------------------
-// The MCS Attach User Confirm PDU is an RDP Connection Sequence
-// PDU sent from server to client during the Channel Connection
-// phase (see section 1.3.1.1). It is sent as a response to the MCS
-// Attach User Request PDU (section 2.2.1.6).
-
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
-//   section 8.
-
-// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
-//   section [X224] 13.7.
-
-// mcsAUcf (4 bytes): PER-encoded MCS Domain PDU which encapsulates
-//   an MCS Attach User Confirm structure, as specified in [T125]
-//   (the ASN.1 structure definitions are given in [T125] section 7,
-// parts 5 and 10).
-
-// AttachUserConfirm ::= [APPLICATION 11] IMPLICIT SEQUENCE
-// {
-//     result       Result,
-//     initiator    UserId OPTIONAL
-// }
-
-// 11.18 AttachUserConfirm
-// -----------------------
-
-// AttachUserConfirm is generated at the top MCS provider upon receipt of
-// AttachUserRequest. Routed back to the requesting provider, it generates an
-//  MCS-ATTACH-USER confirm.
-
-//      Table 11-18/T.125 – AttachUserConfirm MCSPDU
-// +----------------------+-----------------+------------+
-// |     Contents         |      Source     |    Sink    |
-// +----------------------+-----------------+------------+
-// | Result               | Top provider    |  Confirm   |
-// +----------------------+-----------------+------------+
-// | Initiator (optional) | Top provider    |  Confirm   |
-// +----------------------+-----------------+------------+
-
-// AttachUserConfirm contains a user id if and only if the result is successful.
-// Providers that receive a successful AttachUserConfirm shall enter the user id
-// into their information base. MCS providers shall route AttachUserConfirm to
-// the source of an antecedent AttachUserRequest, using the knowledge that
-// there is a one-to-one reply. A provider that transmits AttachUserConfirm
-// shall note to which downward MCS connection the new user id is thereby
-// assigned, so that it may validate the user id when it arises later in other
-// requests.
-
-static inline void mcs_recv_attach_user_confirm_pdu(Transport * trans, uint16_t & userid)
-{
-    BStream stream(65536);
-    X224::RecvFactory f(*trans, stream);
-    X224::DT_TPDU_Recv x224(*trans, stream, f.length);
-    SubStream payload(stream, x224.header_size);
-
-    int opcode = payload.in_uint8();
-    if ((opcode >> 2) != MCSPDU_AttachUserConfirm) {
-        LOG(LOG_ERR, "Attach user confirm pdu expected");
-        throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
-    }
-    int res = payload.in_uint8();
-    if (res != 0) {
-        LOG(LOG_ERR, "Attach user confirm pdu OK expected");
-        throw Error(ERR_MCS_RECV_AUCF_RES_NOT_0);
-    }
-    if (opcode & 2) {
-        userid = payload.in_uint16_be();
-    }
-}
-
-// 2.2.1.7 Server MCS Attach User Confirm PDU
-// ------------------------------------------
-// The MCS Attach User Confirm PDU is an RDP Connection Sequence
-// PDU sent from server to client during the Channel Connection
-// phase (see section 1.3.1.1). It is sent as a response to the MCS
-// Attach User Request PDU (section 2.2.1.6).
-
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
-//   section 8.
-
-// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
-//   section [X224] 13.7.
-
-// mcsAUcf (4 bytes): PER-encoded MCS Domain PDU which encapsulates
-//   an MCS Attach User Confirm structure, as specified in [T125]
-//   (the ASN.1 structure definitions are given in [T125] section 7,
-// parts 5 and 10).
-
-// AttachUserConfirm ::= [APPLICATION 11] IMPLICIT SEQUENCE
-// {
-//     result       Result,
-//     initiator    UserId OPTIONAL
-// }
-
-// 11.18 AttachUserConfirm
-// -----------------------
-
-// AttachUserConfirm is generated at the top MCS provider upon receipt of
-// AttachUserRequest. Routed back to the requesting provider, it generates an
-//  MCS-ATTACH-USER confirm.
-
-//      Table 11-18/T.125 – AttachUserConfirm MCSPDU
-// +----------------------+-----------------+------------+
-// |     Contents         |      Source     |    Sink    |
-// +----------------------+-----------------+------------+
-// | Result               | Top provider    |  Confirm   |
-// +----------------------+-----------------+------------+
-// | Initiator (optional) | Top provider    |  Confirm   |
-// +----------------------+-----------------+------------+
-
-// AttachUserConfirm contains a user id if and only if the result is successful.
-// Providers that receive a successful AttachUserConfirm shall enter the user id
-// into their information base. MCS providers shall route AttachUserConfirm to
-// the source of an antecedent AttachUserRequest, using the knowledge that
-// there is a one-to-one reply. A provider that transmits AttachUserConfirm
-// shall note to which downward MCS connection the new user id is thereby
-// assigned, so that it may validate the user id when it arises later in other
-// requests.
-
-static inline void mcs_send_attach_user_confirm_pdu(Transport * trans, uint16_t userid)
-{
-    BStream stream(65536);
-    Mcs mcs(stream);
-    mcs.emit_begin(MCSPDU_AttachUserConfirm, userid, 0);
-    mcs.emit_end();
-    stream.end = stream.p;
-
-    BStream x224_header(256);
-    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-    trans->send(x224_header.data, x224_header.end - x224_header.data);
-    trans->send(stream.data, stream.end - stream.data);
-}
 
 
 // 2.2.1.9 Server MCS Channel Join Confirm PDU
@@ -1970,6 +1836,26 @@ namespace MCS
         RN_TOKEN_PURGED        = 2,
         RN_USER_REQUESTED      = 3,
         RN_CHANNEL_PURGED      = 4
+    };
+
+    // Result ::= ENUMERATED   -- in Connect, response, confirm
+    enum {
+        RT_SUCCESSFUL               = 0,
+        RT_DOMAIN_MERGING           = 1,
+        RT_DOMAIN_NOT_HIERARCHICAL  = 2,
+        RT_NO_SUCH_CHANNEL          = 3,
+        rt_NO_SUCH_DOMAIN           = 4,
+        RT_NO_SUCH_USER             = 5,
+        RT_NOT_ADMITTED             = 6,
+        RT_OTHER_USER_ID            = 7,
+        RT_PARAMETERS_UNACCEPTABLE  = 8,
+        RT_TOKEN_NOT_AVAILABLE      = 9,
+        RT_TOKEN_NOT_POSSESSED      = 10,
+        RT_TOO_MANY_CHANNELS        = 11,
+        RT_TOO_MANY_TOKENS          = 12,
+        RT_TOO_MANY_USERS           = 13,
+        RT_UNSPECIFIED_FAILURE      = 14,
+        RT_USER_REJECTED            = 15
     };
 
     enum DomainMCSPDU
@@ -2958,6 +2844,108 @@ namespace MCS
         }
     };
 
+// 2.2.1.7 Server MCS Attach User Confirm PDU
+// ------------------------------------------
+// The MCS Attach User Confirm PDU is an RDP Connection Sequence
+// PDU sent from server to client during the Channel Connection
+// phase (see section 1.3.1.1). It is sent as a response to the MCS
+// Attach User Request PDU (section 2.2.1.6).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+//   section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+//   section [X224] 13.7.
+
+// mcsAUcf (4 bytes): PER-encoded MCS Domain PDU which encapsulates
+//   an MCS Attach User Confirm structure, as specified in [T125]
+//   (the ASN.1 structure definitions are given in [T125] section 7,
+// parts 5 and 10).
+
+// AttachUserConfirm ::= [APPLICATION 11] IMPLICIT SEQUENCE
+// {
+//     result       Result,
+//     initiator    UserId OPTIONAL
+// }
+
+// 11.18 AttachUserConfirm
+// -----------------------
+
+// AttachUserConfirm is generated at the top MCS provider upon receipt of
+// AttachUserRequest. Routed back to the requesting provider, it generates an
+//  MCS-ATTACH-USER confirm.
+
+//      Table 11-18/T.125 – AttachUserConfirm MCSPDU
+// +----------------------+-----------------+------------+
+// |     Contents         |      Source     |    Sink    |
+// +----------------------+-----------------+------------+
+// | Result               | Top provider    |  Confirm   |
+// +----------------------+-----------------+------------+
+// | Initiator (optional) | Top provider    |  Confirm   |
+// +----------------------+-----------------+------------+
+
+// AttachUserConfirm contains a user id if and only if the result is successful.
+// Providers that receive a successful AttachUserConfirm shall enter the user id
+// into their information base. MCS providers shall route AttachUserConfirm to
+// the source of an antecedent AttachUserRequest, using the knowledge that
+// there is a one-to-one reply. A provider that transmits AttachUserConfirm
+// shall note to which downward MCS connection the new user id is thereby
+// assigned, so that it may validate the user id when it arises later in other
+// requests.
+
+//            stream.out_uint8(PER_DomainMCSPDU_CHOICE_AttachUserConfirm | 2);
+//            stream.out_uint8(0); // result OK
+//            stream.out_uint16_be(user_id);
+
+// 2.2.1.7 Server MCS Attach User Confirm PDU
+// ------------------------------------------
+// The MCS Attach User Confirm PDU is an RDP Connection Sequence
+// PDU sent from server to client during the Channel Connection
+// phase (see section 1.3.1.1). It is sent as a response to the MCS
+// Attach User Request PDU (section 2.2.1.6).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+//   section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+//   section [X224] 13.7.
+
+// mcsAUcf (4 bytes): PER-encoded MCS Domain PDU which encapsulates
+//   an MCS Attach User Confirm structure, as specified in [T125]
+//   (the ASN.1 structure definitions are given in [T125] section 7,
+// parts 5 and 10).
+
+// AttachUserConfirm ::= [APPLICATION 11] IMPLICIT SEQUENCE
+// {
+//     result       Result,
+//     initiator    UserId OPTIONAL
+// }
+
+// 11.18 AttachUserConfirm
+// -----------------------
+
+// AttachUserConfirm is generated at the top MCS provider upon receipt of
+// AttachUserRequest. Routed back to the requesting provider, it generates an
+//  MCS-ATTACH-USER confirm.
+
+//      Table 11-18/T.125 – AttachUserConfirm MCSPDU
+// +----------------------+-----------------+------------+
+// |     Contents         |      Source     |    Sink    |
+// +----------------------+-----------------+------------+
+// | Result               | Top provider    |  Confirm   |
+// +----------------------+-----------------+------------+
+// | Initiator (optional) | Top provider    |  Confirm   |
+// +----------------------+-----------------+------------+
+
+// AttachUserConfirm contains a user id if and only if the result is successful.
+// Providers that receive a successful AttachUserConfirm shall enter the user id
+// into their information base. MCS providers shall route AttachUserConfirm to
+// the source of an antecedent AttachUserRequest, using the knowledge that
+// there is a one-to-one reply. A provider that transmits AttachUserConfirm
+// shall note to which downward MCS connection the new user id is thereby
+// assigned, so that it may validate the user id when it arises later in other
+// requests.
+
 //    AttachUserConfirm ::= [APPLICATION 11] IMPLICIT SEQUENCE
 //    {
 //        result          Result,
@@ -2966,15 +2954,37 @@ namespace MCS
 
     struct AttachUserConfirm_Send
     {
-        AttachUserConfirm_Send(Stream & stream, int encoding)
+        AttachUserConfirm_Send(Stream & stream, uint8_t result, bool initiator_flag, uint16_t initiator, int encoding)
         {
+            stream.out_uint8((MCS::MCSPDU_AttachUserConfirm << 2) | initiator_flag * 2);
+            stream.out_uint8(result);
+            if (initiator_flag){
+                stream.out_uint16_be(initiator);
+            }
+            stream.end = stream.p;
         }
     };
 
     struct AttachUserConfirm_Recv
     {
+        uint8_t type;
+        uint8_t result;
+        bool initiator_flag;
+        uint16_t initiator;
+        
         AttachUserConfirm_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            uint8_t tag = stream.in_uint8();
+            this->initiator_flag = (tag & 2) != 0;
+            if ((tag & 0xFC) != MCS::MCSPDU_AttachUserConfirm << 2){
+                LOG(LOG_ERR, "expecting AttachUserConfirm (%u), got %u", MCS::MCSPDU_AttachUserConfirm << 2, tag);
+                throw Error(ERR_MCS);
+            }
+            this->type = MCS::MCSPDU_AttachUserConfirm;
+            this->result = stream.in_uint8();
+            if (this->initiator_flag){
+                this->initiator = stream.in_uint16_be();
+            }
         }
     };
 
@@ -3034,6 +3044,8 @@ namespace MCS
 
     struct ChannelJoinRequest_Recv
     {
+        uint8_t type;
+
         ChannelJoinRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
         }
@@ -3057,6 +3069,8 @@ namespace MCS
 
     struct ChannelJoinConfirm_Recv
     {
+        uint8_t type;
+
         ChannelJoinConfirm_Recv(Stream & stream, size_t available_length, int encoding)
         {
         }
@@ -3263,6 +3277,8 @@ namespace MCS
 
     struct ChannelSendDataRequest_Recv
     {
+        uint8_t type;
+
         ChannelSendDataRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
         }
@@ -3279,6 +3295,8 @@ namespace MCS
 
     struct ChannelSendDataIndication_Send
     {
+        uint8_t type;
+
         ChannelSendDataIndication_Send(Stream & stream, int encoding)
         {
         }
