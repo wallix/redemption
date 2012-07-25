@@ -24,6 +24,7 @@
 
 void to_png(WRMRecorder& recorder, const char* outfile,
             std::size_t start, std::size_t stop, std::size_t interval,
+            unsigned resize_width, unsigned resize_height,
             uint frame_limit,
             bool screenshot_start, bool no_screenshot_stop,
             bool screenshot_all)
@@ -31,7 +32,7 @@ void to_png(WRMRecorder& recorder, const char* outfile,
     StaticCapture capture(recorder.meta().width,
                           recorder.meta().height,
                           outfile,
-                          0, 0);
+                          resize_width, resize_height);
     recorder.consumer(&capture);
     TimerCompute timercompute(recorder);
     if (start && !timercompute.advance_second(start))

@@ -25,6 +25,7 @@
 
 void to_png(WRMRecorder& recorder, const char* outfile,
             std::size_t start, std::size_t stop, std::size_t interval,
+            unsigned resize_width = -1, unsigned resize_height = -1,
             uint frame_limit = -1,
             bool screenshot_start = true, bool no_screenshot_stop = false,
             bool screenshot_all = false);

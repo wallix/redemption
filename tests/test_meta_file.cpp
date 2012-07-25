@@ -15,7 +15,7 @@
  *
  * Product name: redemption, a FLOSS RDP proxy
  * Copyright (C) Wallix 2010-2012
- * Author(s): Christophe Grosjean, Jonathan Poelen
+ * Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -27,7 +27,6 @@
 
 #include "meta_file.hpp"
 
-#include <iostream>
 #include <sstream>
 
 BOOST_AUTO_TEST_CASE(TestMetaFile)

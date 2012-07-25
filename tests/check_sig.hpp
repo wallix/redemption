@@ -23,14 +23,15 @@
 
 #include "drawable.hpp"
 
-inline bool check_sig(Drawable & data, char * message, const char * shasig)
+inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
+                      char * message, const char * shasig)
 {
     SSL_SHA1 sha1;
     uint8_t sig[20];
     ssllib ssl;
     ssl.sha1_init(&sha1);
-    for (size_t y = 0; y < (size_t)data.height; y++){
-        ssl.sha1_update(&sha1, data.data + y * data.rowsize, data.rowsize);
+    for (size_t y = 0; y < (size_t)height; y++){
+        ssl.sha1_update(&sha1, data + y * len, len);
     }
     ssl.sha1_final(&sha1, sig);
 
@@ -49,6 +50,11 @@ inline bool check_sig(Drawable & data, char * message, const char * shasig)
         return false;
     }
     return true;
+}
+
+inline bool check_sig(Drawable & data, char * message, const char * shasig)
+{
+    return check_sig(data.data, data.height, data.rowsize, message, shasig);
 }
 
 #endif

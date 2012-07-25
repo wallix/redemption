@@ -37,6 +37,8 @@ struct RecorderOption
     bool no_screenshot_stop;
     bool screenshot_all;
     bool cat_wrm;
+    unsigned png_scale_width;
+    unsigned png_scale_height;
 
     RecorderOption();
 
