@@ -1281,7 +1281,21 @@ public:
                 LOG(LOG_INFO, "Front::incoming::Channel Connection");
                 LOG(LOG_INFO, "Front::incoming::mcs_recv_erect_domain_and_attach_user_request_pdu : user_id=%u", this->userid);
             }
-            mcs_recv_erect_domain_and_attach_user_request_pdu(this->trans, this->userid);
+
+            {
+                BStream x224_data(256);
+                X224::RecvFactory f(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(*trans, x224_data, f.length);
+                SubStream mcs_data(x224_data, x224.header_size);
+                MCS::ErectDomainRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+            }
+            {
+                BStream x224_data(256);
+                X224::RecvFactory f(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(*trans, x224_data, f.length);
+                SubStream mcs_data(x224_data, x224.header_size);
+                MCS::AttachUserRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+            }
 
             if (this->verbose){
                 LOG(LOG_INFO, "Front::incoming::mcs_send_attach_user_confirm_pdu : user_id=%u", this->userid);

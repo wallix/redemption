@@ -377,29 +377,33 @@ BOOST_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
 BOOST_AUTO_TEST_CASE(TestSend_AttachUserRequest)
 {
     BStream stream(1024);
-//    size_t length = 1;
-//    MCS::_Send mcs(stream, MCS::PER_ENCODING);
-//    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+    size_t length = 1;
+    MCS::AttachUserRequest_Send mcs(stream, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
 
-//    const char * expected = 
-//        "\x20"  //  * 4
-//    ;
+    const char * expected = 
+        "\x28"  //  * 4
+    ;
 
-//    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
 }
 
 BOOST_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
 {
     BStream stream(1024);
-//    size_t length = 1;
-//    GeneratorTransport t(
-//        "\x20"  //  * 4
-//   , length);
-//    t.recv(&stream.end, length);
+    size_t length = 1;
+    GeneratorTransport t(
+        "\x28"  //  * 4
+   , length);
+    t.recv(&stream.end, length);
 
-//    MCS::XXX_Recv mcs(stream, length, MCS::PER_ENCODING);
-
-//    BOOST_CHECK_EQUAL(MCS::MCSPDU_XXX , mcs.type);
+    try {
+        MCS::AttachUserRequest_Recv mcs(stream, length, MCS::PER_ENCODING);
+        BOOST_CHECK_EQUAL(MCS::MCSPDU_AttachUserRequest , mcs.type);
+    }
+    catch(...){
+        BOOST_CHECK(0);
+    };
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm)

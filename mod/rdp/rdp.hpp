@@ -763,7 +763,32 @@ struct mod_rdp : public client_mod {
             //    |-------MCS Channel Join Request PDU--------------------> |
             //    | <-----MCS Channel Join Confirm PDU--------------------- |
 
-            mcs_send_erect_domain_and_attach_user_request_pdu(this->nego.trans);
+            LOG(LOG_INFO, "Send MCS::ErectDomainRequest");
+            {
+                BStream x224_header(256);
+                BStream mcs_data(256);
+
+                MCS::ErectDomainRequest_Send mcs(mcs_data, 0, 0, MCS::PER_ENCODING);
+                size_t mcs_length = mcs_data.end - mcs_data.data;
+                X224::DT_TPDU_Send(x224_header, mcs_length);
+                size_t x224_length = x224_header.end - x224_header.data;
+
+                this->nego.trans->send(x224_header.data, x224_length);
+                this->nego.trans->send(mcs_data.data, mcs_length);
+            }
+            LOG(LOG_INFO, "Send MCS::AttachUserRequest");
+            {
+                BStream x224_header(256);
+                BStream mcs_data(256);
+
+                MCS::AttachUserRequest_Send mcs(mcs_data, MCS::PER_ENCODING);
+                size_t mcs_length = mcs_data.end - mcs_data.data;
+                X224::DT_TPDU_Send(x224_header, mcs_length);
+                size_t x224_length = x224_header.end - x224_header.data;
+
+                this->nego.trans->send(x224_header.data, x224_length);
+                this->nego.trans->send(mcs_data.data, mcs_length);
+            }
             this->state = MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER;
         break;
 
