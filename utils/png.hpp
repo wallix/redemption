@@ -21,6 +21,7 @@
 #if !defined(__UTILS_PNG_HPP__)
 #define __UTILS_PNG_HPP__
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <png.h>
 
