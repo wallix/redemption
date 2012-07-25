@@ -1459,15 +1459,12 @@ public:
             BStream stream(65536);
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
-            SubStream payload(stream, x224.header_size);
 
-            Mcs mcs(payload);
-            mcs.recv_begin();
-            if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
-                TODO("We should make a special case for MCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
-                // mcs.opcode >> 2) == MCSPDU_DisconnectProviderUltimatum
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-            }
+            SubStream mcs_data(stream, x224.header_size);
+            MCS::SendDataRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+            TODO("We should also manage the DisconnectRequest case as it can also happen")
+
+            SubStream payload(mcs_data, mcs.header_size);
 
             if (this->verbose >= 256){
                 this->decrypt.dump();
@@ -1482,7 +1479,6 @@ public:
             /* this is the first test that the decrypt is working */
             this->client_info.process_logon_info(payload, (uint16_t)(payload.end - payload.p));
             sec.recv_end();
-            mcs.recv_end();
 
             TODO("check all data are consumed as expected")
             if (payload.end != payload.p){
@@ -1537,20 +1533,17 @@ public:
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
 
-            SubStream payload(stream, x224.header_size);
-            Mcs mcs(payload);
-            mcs.recv_begin();
-            if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
-                TODO("We should make a special case for MCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
-                // mcs.opcode >> 2) == MCSPDU_DisconnectProviderUltimatum
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-            }
+            SubStream mcs_data(stream, x224.header_size);
+            MCS::SendDataRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+            TODO("We should also manage the DisconnectRequest case as it can also happen")
+
+            SubStream payload(mcs_data, mcs.header_size);
 
             if (this->verbose >= 256){
                 this->decrypt.dump();
             }
 
-            Sec sec(mcs.payload, this->decrypt);
+            Sec sec(payload, this->decrypt);
             sec.recv_begin(true);
 
             // Licensing
@@ -1683,11 +1676,6 @@ public:
             }
             sec.payload.p = sec.payload.end;
             sec.recv_end();
-            mcs.payload.p = mcs.payload.end;
-            mcs.recv_end();
-            if (payload.p != payload.end){
-                LOG(LOG_ERR, "All data should have been consumed, %u bytes remaining", payload.end - payload.p);
-            }
         }
         break;
 
@@ -1749,18 +1737,11 @@ public:
 
             X224::DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
 
-            SubStream payload(stream, x224.header_size);
-            Mcs mcs(payload);
-            mcs.recv_begin();
+            SubStream mcs_data(stream, x224.header_size);
+            MCS::SendDataRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+            TODO("We should also manage the DisconnectRequest case as it can also happen")
 
-            // Disconnect Provider Ultimatum datagram
-            if ((mcs.opcode >> 2) == MCSPDU_DisconnectProviderUltimatum) {
-                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
-            }
-
-            if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-            }
+            SubStream payload(mcs_data, mcs.header_size);
 
             Sec sec(payload, this->decrypt);
             sec.recv_begin(true);
@@ -1797,10 +1778,10 @@ public:
 //                }
             }
 
-            if (mcs.chan_id != MCS_GLOBAL_CHANNEL) {
+            if (mcs.channelId != MCS_GLOBAL_CHANNEL) {
                 size_t num_channel_src = channel_list.size();
                 for (size_t index = 0; index < channel_list.size(); index++){
-                    if (channel_list[index].chanid == mcs.chan_id){
+                    if (channel_list[index].chanid == mcs.channelId){
                         num_channel_src = index;
                         break;
                     }
@@ -1878,7 +1859,6 @@ public:
                 }
             }
             sec.recv_end();
-            mcs.recv_end();
             TODO("check all data have been consumed")
         }
         break;
