@@ -1318,64 +1318,42 @@ public:
             }
 
             {
-                uint16_t tmp_userid;
-                uint16_t tmp_chanid;
-                mcs_recv_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
-                if (this->verbose){
-                    LOG(LOG_INFO, "Front::incoming::mcs_recv_channel_join_request (G): user_id=%u chanid=%u", tmp_userid, tmp_chanid);
-                }
-                if (tmp_userid != this->userid){
-                    LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
-                    throw Error(ERR_MCS_BAD_USERID);
-                }
-                if (tmp_chanid != this->userid + MCS_USERCHANNEL_BASE){
-                    LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->userid + MCS_USERCHANNEL_BASE, tmp_chanid);
-                    throw Error(ERR_MCS_BAD_CHANID);
-                }
-                if (this->verbose){
-                    LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (G): user_id=%u chanid=%u", this->userid, tmp_chanid);
-                }
-                mcs_send_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
+                // read tpktHeader (4 bytes = 3 0 len)
+                // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+                BStream x224_data(256);
+                X224::RecvFactory f(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(*this->trans, x224_data, f.length);
+                SubStream mcs_data(x224_data, x224.header_size);
+                MCS::ChannelJoinRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+                this->userid = mcs.initiator;
+                mcs_send_channel_join_confirm_pdu(this->trans, mcs.initiator, mcs.channelId);
             }
 
             {
-                uint16_t tmp_userid;
-                uint16_t tmp_chanid;
-                mcs_recv_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
-                if (this->verbose){
-                    LOG(LOG_INFO, "Front::incoming::mcs_recv_channel_join_request (IO): user_id=%u chanid=%u", tmp_userid, tmp_chanid);
-                }
-                if (tmp_userid != this->userid){
-                    LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
+                BStream x224_data(256);
+                X224::RecvFactory f(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(*this->trans, x224_data, f.length);
+                SubStream mcs_data(x224_data, x224.header_size);
+                MCS::ChannelJoinRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+                if (mcs.initiator != this->userid){
+                    LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
                     throw Error(ERR_MCS_BAD_USERID);
                 }
-                if (tmp_chanid != MCS_GLOBAL_CHANNEL){
-                    LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", MCS_GLOBAL_CHANNEL, tmp_chanid);
-                    throw Error(ERR_MCS_BAD_CHANID);
-                }
-                if (this->verbose){
-                    LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (IO): user_id=%u chanid=%u", this->userid, tmp_chanid);
-                }
-                mcs_send_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
+                mcs_send_channel_join_confirm_pdu(this->trans, mcs.initiator, mcs.channelId);
             }
 
             for (size_t i = 0 ; i < this->channel_list.size() ; i++){
-                    uint16_t tmp_userid;
-                    uint16_t tmp_chanid;
-                    mcs_recv_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
-                    if (tmp_userid != this->userid){
-                        LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
-                        throw Error(ERR_MCS_BAD_USERID);
-                    }
-                    if (tmp_chanid != this->channel_list[i].chanid){
-                        LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->channel_list[i].chanid, tmp_chanid);
-                        throw Error(ERR_MCS_BAD_CHANID);
-                    }
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu : user_id=%u chanid=%u", this->userid, tmp_chanid);
-                    }
-                    mcs_send_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
-                    this->channel_list.set_chanid(i, tmp_chanid);
+                BStream x224_data(256);
+                X224::RecvFactory f(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(*this->trans, x224_data, f.length);
+                SubStream mcs_data(x224_data, x224.header_size);
+                MCS::ChannelJoinRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+                if (mcs.initiator != this->userid){
+                    LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
+                    throw Error(ERR_MCS_BAD_USERID);
+                }
+                mcs_send_channel_join_confirm_pdu(this->trans, this->userid, mcs.channelId);
+                this->channel_list.set_chanid(i, mcs.channelId);
             }
 
             if (this->verbose){

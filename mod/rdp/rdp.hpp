@@ -822,7 +822,16 @@ struct mod_rdp : public client_mod {
                 }
 
                 for (size_t index = 0; index < num_channels+2; index++){
-                    mcs_send_channel_join_request_pdu(this->nego.trans, this->userid, channels_id[index]);
+                        BStream x224_header(256);
+                        BStream mcs_data(256);
+
+                        MCS::ChannelJoinRequest_Send(mcs_data, this->userid, channels_id[index], MCS::PER_ENCODING);
+                        size_t mcs_length = mcs_data.end - mcs_data.data;
+                        X224::DT_TPDU_Send(x224_header, mcs_length);
+                        size_t x224_header_length = x224_header.end - x224_header.data;
+
+                        this->nego.trans->send(x224_header.data, x224_header_length);
+                        this->nego.trans->send(mcs_data.data, mcs_length);
                     {
                         uint16_t tmp_userid;
                         uint16_t tmp_req_chanid;
