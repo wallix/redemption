@@ -188,6 +188,7 @@ struct IniAccounts {
     // if remote authentication is on below is address of authentication server
     char authip[255];      // should use string
     int authport;
+    int maxtick;
 };
 
 struct Inifile {
