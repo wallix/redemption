@@ -1139,7 +1139,7 @@ const char outdata[] =
 // TLS Send done on RDP W2008 TLS Target (4) |
 // Sending synchronize |
 // TLS Socket RDP W2008 TLS Target (4) sending 37 bytes |
-/* 0000 */ "\x03\x00\x00\x25\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x80\x16\x16" //...%...d....p... |
+/* 0000 */ "\x03\x00\x00\x24\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x16\x16" //...%...d....p... |
 /* 0010 */ "\x00\x17\x00\xec\x03\xea\x03\x01\x00\x00\x02\x08\x00\x1f\x00\x00" //................ |
 /* 0020 */ "\x00\x01\x00\xea\x03"                                             //..... |
 // TLS Dump done RDP W2008 TLS Target (4) sending 37 bytes |
@@ -1147,7 +1147,7 @@ const char outdata[] =
 // TLS Send done on RDP W2008 TLS Target (4) |
 // Sending control cooperate |
 // TLS Socket RDP W2008 TLS Target (4) sending 41 bytes |
-/* 0000 */ "\x03\x00\x00\x29\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x80\x1a\x1a" //...)...d....p... |
+/* 0000 */ "\x03\x00\x00\x28\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x1a\x1a" //...)...d....p... |
 /* 0010 */ "\x00\x17\x00\xec\x03\xea\x03\x01\x00\x00\x02\x0c\x00\x14\x00\x00" //................ |
 /* 0020 */ "\x00\x04\x00\x00\x00\x00\x00\x00\x00"                             //......... |
 // TLS Dump done RDP W2008 TLS Target (4) sending 41 bytes |
@@ -1155,7 +1155,7 @@ const char outdata[] =
 // TLS Send done on RDP W2008 TLS Target (4) |
 // Sending request control |
 // TLS Socket RDP W2008 TLS Target (4) sending 41 bytes |
-/* 0000 */ "\x03\x00\x00\x29\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x80\x1a\x1a" //...)...d....p... |
+/* 0000 */ "\x03\x00\x00\x28\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x1a\x1a" //...)...d....p... |
 /* 0010 */ "\x00\x17\x00\xec\x03\xea\x03\x01\x00\x00\x02\x0c\x00\x14\x00\x00" //................ |
 /* 0020 */ "\x00\x01\x00\x00\x00\x00\x00\x00\x00"                             //......... |
 // TLS Dump done RDP W2008 TLS Target (4) sending 41 bytes |
@@ -1163,7 +1163,7 @@ const char outdata[] =
 // TLS Send done on RDP W2008 TLS Target (4) |
 // Sending input synchronize |
 // TLS Socket RDP W2008 TLS Target (4) sending 49 bytes |
-/* 0000 */ "\x03\x00\x00\x31\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x80\x22\x22" //...1...d....p."" |
+/* 0000 */ "\x03\x00\x00\x30\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x22\x22" //...1...d....p."" |
 /* 0010 */ "\x00\x17\x00\xec\x03\xea\x03\x01\x00\x00\x04\x14\x00\x1c\x00\x00" //................ |
 /* 0020 */ "\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 0030 */ "\x00"                                                             //. |
@@ -1173,7 +1173,7 @@ const char outdata[] =
 // Sending font List |
 // use rdp5 |
 // TLS Socket RDP W2008 TLS Target (4) sending 41 bytes |
-/* 0000 */ "\x03\x00\x00\x29\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x80\x1a\x1a" //...)...d....p... |
+/* 0000 */ "\x03\x00\x00\x28\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x1a\x1a" //...)...d....p... |
 /* 0010 */ "\x00\x17\x00\xec\x03\xea\x03\x01\x00\x00\x02\x0c\x00\x27\x00\x00" //.............'.. |
 /* 0020 */ "\x00\x00\x00\x00\x00\x03\x00\x32\x00"                             //.......2. |
 // TLS Dump done RDP W2008 TLS Target (4) sending 41 bytes |
@@ -5208,7 +5208,7 @@ const char outdata[] =
 // TLS Send done on RDP W2008 TLS Target (4) |
 // Sending synchronize |
 // TLS Socket RDP W2008 TLS Target (4) sending 37 bytes |
-/* 0000 */ "\x03\x00\x00\x25\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x80\x16\x16" //...%...d....p... |
+/* 0000 */ "\x03\x00\x00\x24\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x16\x16" //...%...d....p... |
 /* 0010 */ "\x00\x17\x00\xec\x03\xea\x03\x02\x00\x00\x02\x08\x00\x1f\x00\x00" //................ |
 /* 0020 */ "\x00\x01\x00\xea\x03"                                             //..... |
 // TLS Dump done RDP W2008 TLS Target (4) sending 37 bytes |
@@ -5216,7 +5216,7 @@ const char outdata[] =
 // TLS Send done on RDP W2008 TLS Target (4) |
 // Sending control cooperate |
 // TLS Socket RDP W2008 TLS Target (4) sending 41 bytes |
-/* 0000 */ "\x03\x00\x00\x29\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x80\x1a\x1a" //...)...d....p... |
+/* 0000 */ "\x03\x00\x00\x28\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x1a\x1a" //...)...d....p... |
 /* 0010 */ "\x00\x17\x00\xec\x03\xea\x03\x02\x00\x00\x02\x0c\x00\x14\x00\x00" //................ |
 /* 0020 */ "\x00\x04\x00\x00\x00\x00\x00\x00\x00"                             //......... |
 // TLS Dump done RDP W2008 TLS Target (4) sending 41 bytes |
@@ -5224,7 +5224,7 @@ const char outdata[] =
 // TLS Send done on RDP W2008 TLS Target (4) |
 // Sending request control |
 // TLS Socket RDP W2008 TLS Target (4) sending 41 bytes |
-/* 0000 */ "\x03\x00\x00\x29\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x80\x1a\x1a" //...)...d....p... |
+/* 0000 */ "\x03\x00\x00\x28\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x1a\x1a" //...)...d....p... |
 /* 0010 */ "\x00\x17\x00\xec\x03\xea\x03\x02\x00\x00\x02\x0c\x00\x14\x00\x00" //................ |
 /* 0020 */ "\x00\x01\x00\x00\x00\x00\x00\x00\x00"                             //......... |
 // TLS Dump done RDP W2008 TLS Target (4) sending 41 bytes |
@@ -5232,7 +5232,7 @@ const char outdata[] =
 // TLS Send done on RDP W2008 TLS Target (4) |
 // Sending input synchronize |
 // TLS Socket RDP W2008 TLS Target (4) sending 49 bytes |
-/* 0000 */ "\x03\x00\x00\x31\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x80\x22\x22" //...1...d....p."" |
+/* 0000 */ "\x03\x00\x00\x30\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x22\x22" //...1...d....p."" |
 /* 0010 */ "\x00\x17\x00\xec\x03\xea\x03\x02\x00\x00\x04\x14\x00\x1c\x00\x00" //................ |
 /* 0020 */ "\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................ |
 /* 0030 */ "\x00"                                                             //. |
@@ -5242,7 +5242,7 @@ const char outdata[] =
 // Sending font List |
 // use rdp5 |
 // TLS Socket RDP W2008 TLS Target (4) sending 41 bytes |
-/* 0000 */ "\x03\x00\x00\x29\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x80\x1a\x1a" //...)...d....p... |
+/* 0000 */ "\x03\x00\x00\x28\x02\xf0\x80\x64\x00\x03\x03\xeb\x70\x1a\x1a" //...)...d....p... |
 /* 0010 */ "\x00\x17\x00\xec\x03\xea\x03\x02\x00\x00\x02\x0c\x00\x27\x00\x00" //.............'.. |
 /* 0020 */ "\x00\x00\x00\x00\x00\x03\x00\x32\x00"                             //.......2. |
 // TLS Dump done RDP W2008 TLS Target (4) sending 41 bytes |
