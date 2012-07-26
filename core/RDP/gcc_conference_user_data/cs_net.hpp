@@ -27,7 +27,7 @@
 #define __CORE_RDP_GCC_CONFERENCE_USER_DATA_CS_NET_HPP__
 
 #include "channel_list.hpp"
-
+#include "client_info.hpp"
 
 // 2.2.1.3.4 Client Network Data (TS_UD_CS_NET)
 // --------------------------------------------

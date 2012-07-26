@@ -26,1372 +26,8 @@
 #define __CORE_RDP_MCS_HPP__
 
 #include <algorithm>
-#include "client_info.hpp"
-#include "RDP/x224.hpp"
-#include "RDP/gcc.hpp"
-#include "channel_list.hpp"
-#include "genrandom.hpp"
 
-enum ConnectMCSPDU {
-    MCSPDU_CONNECT_INITIAL             = 101,
-    MCSPDU_CONNECT_RESPONSE            = 102,
-    MCSPDU_CONNECT_ADDITIONAL          = 103,
-    MCSPDU_CONNECT_RESULT              = 104,
-};
-
-enum {
-    PER_DomainMCSPDU_CHOICE_PlumbDomainIndication       =  0,
-    PER_DomainMCSPDU_CHOICE_ErectDomainRequest          =  4,
-    PER_DomainMCSPDU_CHOICE_MergeChannelsRequest        =  8,
-    PER_DomainMCSPDU_CHOICE_MergeChannelsConfirm        = 12,
-    PER_DomainMCSPDU_CHOICE_PurgeChannelsIndication     = 16,
-    PER_DomainMCSPDU_CHOICE_MergeTokensRequest          = 20,
-    PER_DomainMCSPDU_CHOICE_MergeTokensConfirm          = 24,
-    PER_DomainMCSPDU_CHOICE_PurgeTokensIndication       = 28,
-    PER_DomainMCSPDU_CHOICE_DisconnectProviderUltimatum = 32,
-    PER_DomainMCSPDU_CHOICE_RejectMCSPDUUltimatum       = 36,
-    PER_DomainMCSPDU_CHOICE_AttachUserRequest           = 40,
-    PER_DomainMCSPDU_CHOICE_AttachUserConfirm           = 44,
-    PER_DomainMCSPDU_CHOICE_DetachUserRequest           = 48,
-    PER_DomainMCSPDU_CHOICE_DetachUserIndication        = 52,
-    PER_DomainMCSPDU_CHOICE_ChannelJoinRequest          = 56,
-    PER_DomainMCSPDU_CHOICE_ChannelJoinConfirm          = 60,
-    PER_DomainMCSPDU_CHOICE_ChannelLeaveRequest         = 64,
-    PER_DomainMCSPDU_CHOICE_ChannelConveneRequest       = 68,
-    PER_DomainMCSPDU_CHOICE_ChannelConveneConfirm       = 72,
-    PER_DomainMCSPDU_CHOICE_ChannelDisbandRequest       = 76,
-    PER_DomainMCSPDU_CHOICE_ChannelDisbandIndication    = 80,
-    PER_DomainMCSPDU_CHOICE_ChannelAdmitRequest         = 84,
-    PER_DomainMCSPDU_CHOICE_ChannelAdmitIndication      = 88,
-    PER_DomainMCSPDU_CHOICE_ChannelExpelRequest         = 92,
-    PER_DomainMCSPDU_CHOICE_ChannelExpelIndication      = 96,
-    PER_DomainMCSPDU_CHOICE_SendDataRequest             = 100,
-    PER_DomainMCSPDU_CHOICE_SendDataIndication          = 104,
-    PER_DomainMCSPDU_CHOICE_UniformSendDataRequest      = 108,
-    PER_DomainMCSPDU_CHOICE_UniformSendDataIndication   = 112,
-    PER_DomainMCSPDU_CHOICE_TokenGrabRequest            = 116,
-    PER_DomainMCSPDU_CHOICE_TokenGrabConfirm            = 120,
-    PER_DomainMCSPDU_CHOICE_TokenInhibitRequest         = 124,
-    PER_DomainMCSPDU_CHOICE_TokenInhibitConfirm         = 128,
-    PER_DomainMCSPDU_CHOICE_TokenGiveRequest            = 132,
-    PER_DomainMCSPDU_CHOICE_TokenGiveIndication         = 136,
-    PER_DomainMCSPDU_CHOICE_TokenGiveResponse           = 140,
-    PER_DomainMCSPDU_CHOICE_TokenGiveConfirm            = 144,
-    PER_DomainMCSPDU_CHOICE_TokenPleaseRequest          = 148,
-    PER_DomainMCSPDU_CHOICE_TokenPleaseIndication       = 152,
-    PER_DomainMCSPDU_CHOICE_TokenReleaseRequest         = 156,
-    PER_DomainMCSPDU_CHOICE_TokenReleaseConfirm         = 160,
-    PER_DomainMCSPDU_CHOICE_TokenTestRequest            = 164,
-    PER_DomainMCSPDU_CHOICE_TokenTestConfirm            = 168,
-};
-
-enum {
-    BER_TAG_ConnectMCSPDU_CONNECT_INITIAL    = 0x7f65,
-    BER_TAG_ConnectMCSPDU_CONNECT_RESPONSE   = 0x7f66,
-    BER_TAG_ConnectMCSPDU_CONNECT_ADDITIONAL = 0x7f67,
-    BER_TAG_ConnectMCSPDU_CONNECT_RESULT     = 0x7f68,
-};
-
-enum {
-    BER_TAG_MCS_DOMAIN_PARAMS = 0x30
-};
-
-// Reason ::= ENUMERATED   -- in DisconnectProviderUltimatum, DetachUserRequest, DetachUserIndication
-enum {
-    RN_DOMAIN_DISCONNECTED = 0,
-    RN_PROVIDER_INITIATED  = 1,
-    RN_TOKEN_PURGED        = 2,
-    RN_USER_REQUESTED      = 3,
-    RN_CHANNEL_PURGED      = 4
-};
-
-//##############################################################################
-struct Mcs
-//##############################################################################
-{
-    Stream & stream;
-    SubStream payload;
-    uint8_t offlen;
-    public:
-    uint8_t opcode;
-    uint8_t result;
-    uint16_t user_id;
-    uint16_t chan_id;
-    uint8_t magic_0x70; // some ber header ?
-    uint16_t len;
-
-    // CONSTRUCTOR
-    //==============================================================================
-    Mcs ( Stream & stream )
-    //==============================================================================
-    : stream(stream)
-    , payload(this->stream, 0)
-    , offlen(0)
-    , opcode(0)
-    , result(0)
-    , user_id(0)
-    , chan_id(0)
-    , len(0)
-    {
-    } // END CONSTRUCTOR
-
-    //==============================================================================
-    void emit_begin( uint8_t command
-                   , uint8_t user_id
-                   , uint16_t chan_id
-                   )
-    //==============================================================================
-    {
-        this->opcode = command << 2;
-        switch (this->opcode){
-        case PER_DomainMCSPDU_CHOICE_DisconnectProviderUltimatum:
-        {
-//        -- Part 4: Disconnect provider
-
-//        DisconnectProviderUltimatum ::= [APPLICATION 8] IMPLICIT SEQUENCE
-//        {
-//            reason          Reason
-//        }
-          stream.out_uint8(PER_DomainMCSPDU_CHOICE_DisconnectProviderUltimatum);
-          stream.out_uint8(RN_DOMAIN_DISCONNECTED);
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_RejectMCSPDUUltimatum:
-        {
-//        RejectMCSPDUUltimatum ::= [APPLICATION 9] IMPLICIT SEQUENCE
-//        {
-//            diagnostic      Diagnostic,
-//            initialOctets   OCTET STRING
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU RejectMCSPDUUltimatum");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_AttachUserRequest:
-        {
-//        -- Part 5: Attach/Detach user
-
-//        AttachUserRequest ::= [APPLICATION 10] IMPLICIT SEQUENCE
-//        {
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU AttachUserRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_AttachUserConfirm:
-        {
-//        AttachUserConfirm ::= [APPLICATION 11] IMPLICIT SEQUENCE
-//        {
-//            result          Result,
-//            initiator       UserId OPTIONAL
-//        }
-            stream.out_uint8(PER_DomainMCSPDU_CHOICE_AttachUserConfirm | 2);
-            stream.out_uint8(0); // result OK
-            stream.out_uint16_be(user_id);
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_DetachUserRequest:
-        {
-//        DetachUserRequest ::= [APPLICATION 12] IMPLICIT SEQUENCE
-//        {
-//            reason          Reason,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU DetachUserRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_DetachUserIndication:
-        {
-//        DetachUserIndication ::= [APPLICATION 13] IMPLICIT SEQUENCE
-//        {
-//            reason          Reason,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU DetachUserIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelJoinRequest:
-        {
-//        ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       ChannelId
-//                            -- may be zero
-//        }
-            stream.out_uint8(PER_DomainMCSPDU_CHOICE_ChannelJoinRequest);
-            stream.out_uint16_be(user_id);
-            stream.out_uint16_be(chan_id);
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelJoinConfirm:
-        {
-//        ChannelJoinConfirm ::= [APPLICATION 15] IMPLICIT SEQUENCE
-//        {
-//            result          Result,
-//            initiator       UserId,
-//            requested       ChannelId,
-//                            -- may be zero
-//            channelId       ChannelId OPTIONAL
-//        }
-
-            stream.out_uint8(PER_DomainMCSPDU_CHOICE_ChannelJoinConfirm | 2);
-            stream.out_uint8(0); // Result = rt_successfull
-            stream.out_uint16_be(user_id);
-            stream.out_uint16_be(chan_id);
-            stream.out_uint16_be(chan_id);
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelLeaveRequest:
-        {
-//        ChannelLeaveRequest ::= [APPLICATION 16] IMPLICIT SEQUENCE
-//        {
-//            channelIds      SET OF ChannelId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelLeaveRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelConveneRequest:
-        {
-//        ChannelConveneRequest ::= [APPLICATION 17] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelConveneRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelConveneConfirm:
-        {
-//        ChannelConveneConfirm ::= [APPLICATION 18] IMPLICIT SEQUENCE
-//        {
-//            result          Result,
-//            initiator       UserId,
-//            channelId       PrivateChannelId OPTIONAL
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelConveneConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelDisbandRequest:
-        {
-//        ChannelDisbandRequest ::= [APPLICATION 19] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       PrivateChannelId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelDisbandRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelDisbandIndication:
-        {
-//        ChannelDisbandIndication ::= [APPLICATION 20] IMPLICIT SEQUENCE
-//        {
-//            channelId       PrivateChannelId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelDisbandIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelAdmitRequest:
-        {
-//        ChannelAdmitRequest ::= [APPLICATION 21] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       PrivateChannelId,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelAdmitRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelAdmitIndication:
-        {
-//        ChannelAdmitIndication ::= [APPLICATION 22] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       PrivateChannelId,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelAdmitIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelExpelRequest:
-        {
-//        ChannelExpelRequest ::= [APPLICATION 23] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       PrivateChannelId,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelExpelRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelExpelIndication:
-        {
-//        ChannelExpelIndication ::= [APPLICATION 24] IMPLICIT SEQUENCE
-//        {
-//            channelId       PrivateChannelId,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelExpelIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_SendDataRequest:
-        {
-
-//        SendDataRequest ::= [APPLICATION 25] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       ChannelId,
-//            dataPriority    DataPriority, ENUMERATED { top = 00, high = 01, medium = 10, low = 11 }
-//            segmentation    Segmentation, BIT STRING { begin = 00, end = 11 }
-//            userData        OCTET STRING
-//        }
-
-            stream.out_uint8(PER_DomainMCSPDU_CHOICE_SendDataRequest);
-            stream.out_uint16_be(user_id);
-            stream.out_uint16_be(chan_id);
-            stream.out_uint8(0x70);  // dataPriority = high, segmentation = end
-            this->offlen = stream.get_offset(0);
-            stream.out_uint16_be(0); // skip len
-//            int len = stream.get_offset(this->offlen + 2);
-//            stream.set_out_uint16_be(0x8000|len, this->offlen); // userData header
-
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_SendDataIndication:
-        {
-
-//        SendDataIndication ::= [APPLICATION 26] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       ChannelId,
-//            dataPriority    DataPriority,
-//            segmentation    Segmentation,
-//            userData        OCTET STRING
-//        }
-
-            stream.out_uint8(PER_DomainMCSPDU_CHOICE_SendDataIndication);
-            stream.out_uint16_be(user_id);
-            stream.out_uint16_be(chan_id);
-            stream.out_uint8(0x70);  // dataPriority = high, segmentation = end
-            this->offlen = stream.get_offset(0);
-            stream.out_uint16_be(0); // skip len
-
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_UniformSendDataRequest:
-        {
-//        UniformSendDataRequest ::= [APPLICATION 27] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       ChannelId,
-//            dataPriority    DataPriority,
-//            segmentation    Segmentation,
-//            userData        OCTET STRING
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU UniformSendDataRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_UniformSendDataIndication:
-        {
-//        UniformSendDataIndication ::= [APPLICATION 28] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       ChannelId,
-//            dataPriority    DataPriority,
-//            segmentation    Segmentation,
-//            userData        OCTET STRING
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU UniformSendDataIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGrabRequest:
-        {
-//        -- Part 8: Token management
-
-//        TokenGrabRequest ::= [APPLICATION 29] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGrabRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGrabConfirm:
-        {
-//        TokenGrabConfirm ::= [APPLICATION 30] IMPLICIT SEQUENCE
-//        {
-//            result      Result,
-//            initiator   UserId,
-//            tokenId     TokenId,
-//            tokenStatus TokenStatus
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGrabConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenInhibitRequest:
-        {
-//        TokenInhibitRequest ::= [APPLICATION 31] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenInhibitRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenInhibitConfirm:
-        {
-//        TokenInhibitConfirm ::= [APPLICATION 32] IMPLICIT SEQUENCE
-//        {
-//            result      Result,
-//            initiator   UserId,
-//            tokenId     TokenId,
-//            tokenStatus TokenStatus
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenInhibitConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGiveRequest:
-        {
-//        TokenGiveRequest ::= [APPLICATION 33] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId,
-//            recipient   UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGiveIndication:
-        {
-//        TokenGiveIndication ::= [APPLICATION 34] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId,
-//            recipient   UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGiveResponse:
-        {
-//        TokenGiveResponse ::= [APPLICATION 35] IMPLICIT SEQUENCE
-//        {
-//            result      Result,
-//            recipient   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveResponse");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGiveConfirm:
-        {
-//        TokenGiveConfirm ::= [APPLICATION 36] IMPLICIT SEQUENCE
-//        {
-//            result       Result,
-//            initiator    UserId,
-//            tokenId      TokenId,
-//            tokenStatus  TokenStatus
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenPleaseRequest:
-        {
-//        TokenPleaseRequest ::= [APPLICATION 37] IMPLICIT SEQUENCE
-//        {
-//            initiator    UserId,
-//            tokenId      TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenPleaseRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenPleaseIndication:
-        {
-//        TokenPleaseIndication ::= [APPLICATION 38] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenPleaseIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenReleaseRequest:
-        {
-//        TokenReleaseRequest ::= [APPLICATION 39] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenReleaseRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenReleaseConfirm:
-        {
-//        TokenReleaseConfirm ::= [APPLICATION 40] IMPLICIT SEQUENCE
-//        {
-//            result      Result,
-//            initiator   UserId,
-//            tokenId     TokenId,
-//            tokenStatus TokenStatus
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenReleaseConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenTestRequest:
-        {
-//        TokenTestRequest ::= [APPLICATION 41] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenTestRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenTestConfirm:
-        {
-//        TokenTestConfirm ::= [APPLICATION 42] IMPLICIT SEQUENCE
-//        {
-//            initiator    UserId,
-//            tokenId      TokenId,
-//            tokenStatus  TokenStatus
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenTestConfirm");
-        }
-        break;
-        default:
-        {
-            LOG(LOG_WARNING, "Unsupported DomainPDU %u", this->opcode);
-        }
-        break;
-        }
-
-    } // END METHOD emit_begin
-
-    //==============================================================================
-    void emit_end(){
-    //==============================================================================
-        switch (this->opcode){
-        case PER_DomainMCSPDU_CHOICE_DisconnectProviderUltimatum:
-        {
-//        -- Part 4: Disconnect provider
-
-//        DisconnectProviderUltimatum ::= [APPLICATION 8] IMPLICIT SEQUENCE
-//        {
-//            reason          Reason
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU DisconnectProviderUltimatum");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_RejectMCSPDUUltimatum:
-        {
-//        RejectMCSPDUUltimatum ::= [APPLICATION 9] IMPLICIT SEQUENCE
-//        {
-//            diagnostic      Diagnostic,
-//            initialOctets   OCTET STRING
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU RejectMCSPDUUltimatum");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_AttachUserRequest:
-        {
-//        -- Part 5: Attach/Detach user
-
-//        AttachUserRequest ::= [APPLICATION 10] IMPLICIT SEQUENCE
-//        {
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU AttachUserRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_AttachUserConfirm:
-        {
-//        AttachUserConfirm ::= [APPLICATION 11] IMPLICIT SEQUENCE
-//        {
-//            result          Result,
-//            initiator       UserId OPTIONAL
-//        }
-            // Nothing to do
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_DetachUserRequest:
-        {
-//        DetachUserRequest ::= [APPLICATION 12] IMPLICIT SEQUENCE
-//        {
-//            reason          Reason,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU DetachUserRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_DetachUserIndication:
-        {
-//        DetachUserIndication ::= [APPLICATION 13] IMPLICIT SEQUENCE
-//        {
-//            reason          Reason,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU DetachUserIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelJoinRequest:
-        {
-//        ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       ChannelId
-//                            -- may be zero
-//        }
-        }
-        // Nothing to do
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelJoinConfirm:
-        {
-//        ChannelJoinConfirm ::= [APPLICATION 15] IMPLICIT SEQUENCE
-//        {
-//            result          Result,
-//            initiator       UserId,
-//            requested       ChannelId,
-//                            -- may be zero
-//            channelId       ChannelId OPTIONAL
-//        }
-        // Nothing to do
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelLeaveRequest:
-        {
-//        ChannelLeaveRequest ::= [APPLICATION 16] IMPLICIT SEQUENCE
-//        {
-//            channelIds      SET OF ChannelId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelLeaveRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelConveneRequest:
-        {
-//        ChannelConveneRequest ::= [APPLICATION 17] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelConveneRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelConveneConfirm:
-        {
-//        ChannelConveneConfirm ::= [APPLICATION 18] IMPLICIT SEQUENCE
-//        {
-//            result          Result,
-//            initiator       UserId,
-//            channelId       PrivateChannelId OPTIONAL
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelConveneConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelDisbandRequest:
-        {
-//        ChannelDisbandRequest ::= [APPLICATION 19] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       PrivateChannelId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelDisbandRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelDisbandIndication:
-        {
-//        ChannelDisbandIndication ::= [APPLICATION 20] IMPLICIT SEQUENCE
-//        {
-//            channelId       PrivateChannelId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelDisbandIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelAdmitRequest:
-        {
-//        ChannelAdmitRequest ::= [APPLICATION 21] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       PrivateChannelId,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelAdmitRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelAdmitIndication:
-        {
-//        ChannelAdmitIndication ::= [APPLICATION 22] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       PrivateChannelId,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelAdmitIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelExpelRequest:
-        {
-//        ChannelExpelRequest ::= [APPLICATION 23] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       PrivateChannelId,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelExpelRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelExpelIndication:
-        {
-//        ChannelExpelIndication ::= [APPLICATION 24] IMPLICIT SEQUENCE
-//        {
-//            channelId       PrivateChannelId,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelExpelIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_SendDataRequest:
-        {
-//        SendDataRequest ::= [APPLICATION 25] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       ChannelId,
-//            dataPriority    DataPriority, ENUMERATED { top = 00, high = 01, medium = 10, low = 11 }
-//            segmentation    Segmentation, BIT STRING { begin = 00, end = 11 }
-//            userData        OCTET STRING
-//        }
-            int len = stream.get_offset(this->offlen + 2);
-            stream.set_out_uint16_be(0x8000|len, this->offlen); // userData header
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_SendDataIndication:
-        {
-
-//        SendDataIndication ::= [APPLICATION 26] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       ChannelId,
-//            dataPriority    DataPriority,
-//            segmentation    Segmentation,
-//            userData        OCTET STRING
-//        }
-
-            int len = stream.get_offset(this->offlen + 2);
-            stream.set_out_uint16_be(0x8000|len, this->offlen); // userData header
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_UniformSendDataRequest:
-        {
-//        UniformSendDataRequest ::= [APPLICATION 27] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       ChannelId,
-//            dataPriority    DataPriority,
-//            segmentation    Segmentation,
-//            userData        OCTET STRING
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU UniformSendDataRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_UniformSendDataIndication:
-        {
-//        UniformSendDataIndication ::= [APPLICATION 28] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       ChannelId,
-//            dataPriority    DataPriority,
-//            segmentation    Segmentation,
-//            userData        OCTET STRING
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU UniformSendDataIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGrabRequest:
-        {
-//        -- Part 8: Token management
-
-//        TokenGrabRequest ::= [APPLICATION 29] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGrabRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGrabConfirm:
-        {
-//        TokenGrabConfirm ::= [APPLICATION 30] IMPLICIT SEQUENCE
-//        {
-//            result      Result,
-//            initiator   UserId,
-//            tokenId     TokenId,
-//            tokenStatus TokenStatus
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGrabConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenInhibitRequest:
-        {
-//        TokenInhibitRequest ::= [APPLICATION 31] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenInhibitRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenInhibitConfirm:
-        {
-//        TokenInhibitConfirm ::= [APPLICATION 32] IMPLICIT SEQUENCE
-//        {
-//            result      Result,
-//            initiator   UserId,
-//            tokenId     TokenId,
-//            tokenStatus TokenStatus
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenInhibitConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGiveRequest:
-        {
-//        TokenGiveRequest ::= [APPLICATION 33] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId,
-//            recipient   UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGiveIndication:
-        {
-//        TokenGiveIndication ::= [APPLICATION 34] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId,
-//            recipient   UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGiveResponse:
-        {
-//        TokenGiveResponse ::= [APPLICATION 35] IMPLICIT SEQUENCE
-//        {
-//            result      Result,
-//            recipient   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveResponse");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGiveConfirm:
-        {
-//        TokenGiveConfirm ::= [APPLICATION 36] IMPLICIT SEQUENCE
-//        {
-//            result       Result,
-//            initiator    UserId,
-//            tokenId      TokenId,
-//            tokenStatus  TokenStatus
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenPleaseRequest:
-        {
-//        TokenPleaseRequest ::= [APPLICATION 37] IMPLICIT SEQUENCE
-//        {
-//            initiator    UserId,
-//            tokenId      TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenPleaseRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenPleaseIndication:
-        {
-//        TokenPleaseIndication ::= [APPLICATION 38] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenPleaseIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenReleaseRequest:
-        {
-//        TokenReleaseRequest ::= [APPLICATION 39] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenReleaseRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenReleaseConfirm:
-        {
-//        TokenReleaseConfirm ::= [APPLICATION 40] IMPLICIT SEQUENCE
-//        {
-//            result      Result,
-//            initiator   UserId,
-//            tokenId     TokenId,
-//            tokenStatus TokenStatus
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenReleaseConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenTestRequest:
-        {
-//        TokenTestRequest ::= [APPLICATION 41] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenTestRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenTestConfirm:
-        {
-//        TokenTestConfirm ::= [APPLICATION 42] IMPLICIT SEQUENCE
-//        {
-//            initiator    UserId,
-//            tokenId      TokenId,
-//            tokenStatus  TokenStatus
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenTestConfirm");
-        }
-        break;
-        default:
-        {
-            LOG(LOG_WARNING, "Unsupported DomainPDU %u", this->opcode);
-        }
-        break;
-        }
-    } // END METHOD emit_end
-
-    //==============================================================================
-    void recv_begin() {
-    //==============================================================================
-        this->opcode = stream.in_uint8();
-        switch (this->opcode & 0xFC){
-        case PER_DomainMCSPDU_CHOICE_DisconnectProviderUltimatum:
-        {
-//        -- Part 4: Disconnect provider
-
-//        DisconnectProviderUltimatum ::= [APPLICATION 8] IMPLICIT SEQUENCE
-//        {
-//            reason          Reason
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU DisconnectProviderUltimatum");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_RejectMCSPDUUltimatum:
-        {
-//        RejectMCSPDUUltimatum ::= [APPLICATION 9] IMPLICIT SEQUENCE
-//        {
-//            diagnostic      Diagnostic,
-//            initialOctets   OCTET STRING
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU RejectMCSPDUUltimatum");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_AttachUserRequest:
-        {
-//        -- Part 5: Attach/Detach user
-
-//        AttachUserRequest ::= [APPLICATION 10] IMPLICIT SEQUENCE
-//        {
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU AttachUserRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_AttachUserConfirm:
-        {
-//        AttachUserConfirm ::= [APPLICATION 11] IMPLICIT SEQUENCE
-//        {
-//            result          Result,
-//            initiator       UserId OPTIONAL
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU AttachUserConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_DetachUserRequest:
-        {
-//        DetachUserRequest ::= [APPLICATION 12] IMPLICIT SEQUENCE
-//        {
-//            reason          Reason,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU DetachUserRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_DetachUserIndication:
-        {
-//        DetachUserIndication ::= [APPLICATION 13] IMPLICIT SEQUENCE
-//        {
-//            reason          Reason,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU DetachUserIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelJoinRequest:
-        {
-//        ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       ChannelId
-//                            -- may be zero
-//        }
-            this->user_id = stream.in_uint16_be();
-            this->chan_id = stream.in_uint16_be();
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelJoinConfirm:
-        {
-//        ChannelJoinConfirm ::= [APPLICATION 15] IMPLICIT SEQUENCE
-//        {
-//            result          Result,
-//            initiator       UserId,
-//            requested       ChannelId,
-//                            -- may be zero
-//            channelId       ChannelId OPTIONAL
-//        }
-            // TODO: the actual result should be checked
-            this->result  = stream.in_uint8();
-            this->user_id = stream.in_uint16_be();
-            this->chan_id = stream.in_uint16_be();
-            if (this->opcode & 2){
-                this->chan_id = stream.in_uint16_be();
-            }
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelLeaveRequest:
-        {
-//        ChannelLeaveRequest ::= [APPLICATION 16] IMPLICIT SEQUENCE
-//        {
-//            channelIds      SET OF ChannelId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelLeaveRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelConveneRequest:
-        {
-//        ChannelConveneRequest ::= [APPLICATION 17] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelConveneRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelConveneConfirm:
-        {
-//        ChannelConveneConfirm ::= [APPLICATION 18] IMPLICIT SEQUENCE
-//        {
-//            result          Result,
-//            initiator       UserId,
-//            channelId       PrivateChannelId OPTIONAL
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelConveneConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelDisbandRequest:
-        {
-//        ChannelDisbandRequest ::= [APPLICATION 19] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       PrivateChannelId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelDisbandRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelDisbandIndication:
-        {
-//        ChannelDisbandIndication ::= [APPLICATION 20] IMPLICIT SEQUENCE
-//        {
-//            channelId       PrivateChannelId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelDisbandIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelAdmitRequest:
-        {
-//        ChannelAdmitRequest ::= [APPLICATION 21] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       PrivateChannelId,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelAdmitRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelAdmitIndication:
-        {
-//        ChannelAdmitIndication ::= [APPLICATION 22] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       PrivateChannelId,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelAdmitIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelExpelRequest:
-        {
-//        ChannelExpelRequest ::= [APPLICATION 23] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       PrivateChannelId,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelExpelRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_ChannelExpelIndication:
-        {
-//        ChannelExpelIndication ::= [APPLICATION 24] IMPLICIT SEQUENCE
-//        {
-//            channelId       PrivateChannelId,
-//            userIds         SET OF UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelExpelIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_SendDataRequest:
-        {
-//        SendDataRequest ::= [APPLICATION 25] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       ChannelId,
-//            dataPriority    DataPriority, ENUMERATED { top = 00, high = 01, medium = 10, low = 11 }
-//            segmentation    Segmentation, BIT STRING { begin = 00, end = 11 }
-//            userData        OCTET STRING
-//        }
-
-            this->user_id = stream.in_uint16_be();
-            this->chan_id = stream.in_uint16_be();
-            this->magic_0x70 = stream.in_uint8(); // dataPriority = high 2 bits, segmentation = end 2 bits, padding 4 bits
-            this->len = stream.in_uint8();
-            if (this->len & 0x80){
-                this->len = ((this->len & 0x7F) << 8) + stream.in_uint8();
-            }
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_SendDataIndication:
-        {
-
-//        SendDataIndication ::= [APPLICATION 26] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       ChannelId,
-//            dataPriority    DataPriority,
-//            segmentation    Segmentation,
-//            userData        OCTET STRING
-//        }
-
-            this->user_id = stream.in_uint16_be();
-            this->chan_id = stream.in_uint16_be();
-            this->magic_0x70 = stream.in_uint8(); // dataPriority = high 2 bits, segmentation = end 2 bits, padding 4 bits
-            this->len = stream.in_uint8();
-            if (this->len & 0x80){
-                this->len = ((this->len & 0x7F) << 8) + stream.in_uint8();
-            }
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_UniformSendDataRequest:
-        {
-//        UniformSendDataRequest ::= [APPLICATION 27] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       ChannelId,
-//            dataPriority    DataPriority,
-//            segmentation    Segmentation,
-//            userData        OCTET STRING
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU UniformSendDataRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_UniformSendDataIndication:
-        {
-//        UniformSendDataIndication ::= [APPLICATION 28] IMPLICIT SEQUENCE
-//        {
-//            initiator       UserId,
-//            channelId       ChannelId,
-//            dataPriority    DataPriority,
-//            segmentation    Segmentation,
-//            userData        OCTET STRING
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU UniformSendDataIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGrabRequest:
-        {
-//        -- Part 8: Token management
-
-//        TokenGrabRequest ::= [APPLICATION 29] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGrabRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGrabConfirm:
-        {
-//        TokenGrabConfirm ::= [APPLICATION 30] IMPLICIT SEQUENCE
-//        {
-//            result      Result,
-//            initiator   UserId,
-//            tokenId     TokenId,
-//            tokenStatus TokenStatus
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGrabConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenInhibitRequest:
-        {
-//        TokenInhibitRequest ::= [APPLICATION 31] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenInhibitRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenInhibitConfirm:
-        {
-//        TokenInhibitConfirm ::= [APPLICATION 32] IMPLICIT SEQUENCE
-//        {
-//            result      Result,
-//            initiator   UserId,
-//            tokenId     TokenId,
-//            tokenStatus TokenStatus
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenInhibitConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGiveRequest:
-        {
-//        TokenGiveRequest ::= [APPLICATION 33] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId,
-//            recipient   UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGiveIndication:
-        {
-//        TokenGiveIndication ::= [APPLICATION 34] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId,
-//            recipient   UserId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGiveResponse:
-        {
-//        TokenGiveResponse ::= [APPLICATION 35] IMPLICIT SEQUENCE
-//        {
-//            result      Result,
-//            recipient   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveResponse");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenGiveConfirm:
-        {
-//        TokenGiveConfirm ::= [APPLICATION 36] IMPLICIT SEQUENCE
-//        {
-//            result       Result,
-//            initiator    UserId,
-//            tokenId      TokenId,
-//            tokenStatus  TokenStatus
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenPleaseRequest:
-        {
-//        TokenPleaseRequest ::= [APPLICATION 37] IMPLICIT SEQUENCE
-//        {
-//            initiator    UserId,
-//            tokenId      TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenPleaseRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenPleaseIndication:
-        {
-//        TokenPleaseIndication ::= [APPLICATION 38] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenPleaseIndication");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenReleaseRequest:
-        {
-//        TokenReleaseRequest ::= [APPLICATION 39] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenReleaseRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenReleaseConfirm:
-        {
-//        TokenReleaseConfirm ::= [APPLICATION 40] IMPLICIT SEQUENCE
-//        {
-//            result      Result,
-//            initiator   UserId,
-//            tokenId     TokenId,
-//            tokenStatus TokenStatus
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenReleaseConfirm");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenTestRequest:
-        {
-//        TokenTestRequest ::= [APPLICATION 41] IMPLICIT SEQUENCE
-//        {
-//            initiator   UserId,
-//            tokenId     TokenId
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenTestRequest");
-        }
-        break;
-        case PER_DomainMCSPDU_CHOICE_TokenTestConfirm:
-        {
-//        TokenTestConfirm ::= [APPLICATION 42] IMPLICIT SEQUENCE
-//        {
-//            initiator    UserId,
-//            tokenId      TokenId,
-//            tokenStatus  TokenStatus
-//        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU TokenTestConfirm");
-        }
-        break;
-        default:
-        {
-            LOG(LOG_WARNING, "Unsupported DomainPDU %u ", this->opcode);
-        }
-        break;
-        }
-        this->payload.reset(this->stream, this->stream.get_offset(0));
-    } // END METHOD recv_begin
-
-    //==============================================================================
-    void recv_end(){
-    //==============================================================================
-        if (this->stream.p != this->stream.end
-        && this->payload.p != this->payload.end){
-            LOG(LOG_ERR, "MCS: all data should have been consumed : remains %d, opcode=%u", stream.end - stream.p, this->opcode);
-            exit(0);
-        }
-    } // END METHOD recv_end
-
-
-}; // END CLASS Mcs
-
+#include "stream.hpp"
 
 namespace MCS
 {
@@ -1400,12 +36,17 @@ namespace MCS
         PER_ENCODING
     };
 
+    // Reason ::= ENUMERATED   -- in DisconnectProviderUltimatum, DetachUserRequest, DetachUserIndication
     enum {
         RN_DOMAIN_DISCONNECTED = 0,
         RN_PROVIDER_INITIATED  = 1,
         RN_TOKEN_PURGED        = 2,
         RN_USER_REQUESTED      = 3,
         RN_CHANNEL_PURGED      = 4
+    };
+
+    enum {
+        BER_TAG_MCS_DOMAIN_PARAMS = 0x30
     };
 
     // Result ::= ENUMERATED   -- in Connect, response, confirm
@@ -1683,8 +324,12 @@ namespace MCS
 
         CONNECT_INITIAL_PDU_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            if (encoding != BER_ENCODING){
+                LOG(LOG_ERR, "Connect Initial::BER_ENCODING mandatory for Connect PDUs");
+                throw Error(ERR_MCS);
+            }
             this->tag = stream.in_uint16_be();
-            if (BER_TAG_ConnectMCSPDU_CONNECT_INITIAL != this->tag){
+            if ((0x7F00|MCSPDU_CONNECT_INITIAL) != this->tag){
                 LOG(LOG_ERR, "Connect Initial::CONNECT_INITIAL tag expected, got %u", this->tag);
                 throw Error(ERR_MCS);
             }
@@ -1749,7 +394,11 @@ namespace MCS
     {
         CONNECT_INITIAL_Send(Stream & stream, size_t payload_length, int encoding)
         {
-            stream.out_uint16_be(BER_TAG_ConnectMCSPDU_CONNECT_INITIAL);
+            if (encoding != BER_ENCODING){
+                LOG(LOG_ERR, "Connect Initial::BER_ENCODING mandatory for Connect PDUs");
+                throw Error(ERR_MCS);
+            }
+            stream.out_uint16_be(0x7F00|MCSPDU_CONNECT_INITIAL);
             stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
             stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
@@ -1899,8 +548,12 @@ namespace MCS
 
         CONNECT_RESPONSE_PDU_Recv(Stream & stream, size_t available_length, int encoding)
         {
-            this->tag = stream.in_uint16_be();
-            if (BER_TAG_ConnectMCSPDU_CONNECT_RESPONSE != this->tag){
+            if (encoding != BER_ENCODING){
+                LOG(LOG_ERR, "Connect Response::BER_ENCODING mandatory for Connect PDUs");
+                throw Error(ERR_MCS);
+           }
+           this->tag = stream.in_uint16_be();
+            if ((0x7F00|MCSPDU_CONNECT_RESPONSE) != this->tag){
                 LOG(LOG_ERR, "recv connect response (%u) expected, got (%u)",
                     MCS::MCSPDU_CONNECT_RESPONSE, this->tag);
                 throw Error(ERR_MCS);
@@ -1952,8 +605,12 @@ namespace MCS
     {
         CONNECT_RESPONSE_Send(Stream & stream, size_t payload_length, int encoding)
         {
+            if (encoding != BER_ENCODING){
+                LOG(LOG_ERR, "Connect Response::BER_ENCODING mandatory for Connect PDUs");
+                throw Error(ERR_MCS);
+           }
             // BER: Application-Defined Type = APPLICATION 102 = Connect-Response
-            stream.out_uint16_be(BER_TAG_ConnectMCSPDU_CONNECT_RESPONSE);
+            stream.out_uint16_be(0x7F00|MCSPDU_CONNECT_RESPONSE);
             // BER: Type Length
             if (payload_length > 88){
                 stream.out_ber_len_uint16(0);
@@ -2063,6 +720,10 @@ namespace MCS
     {
         ErectDomainRequest_Send(Stream & stream, uint32_t subheight, uint32_t subinterval, int encoding)
         {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "ErectDomainRequest PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
             stream.out_uint8((MCSPDU_ErectDomainRequest << 2));
             stream.out_per_integer(subheight); /* subHeight (INTEGER) */
             stream.out_per_integer(subinterval); /* subInterval (INTEGER) */
@@ -2078,6 +739,10 @@ namespace MCS
 
         ErectDomainRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "ErectDomainRequest PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
             uint8_t tag = stream.in_uint8();
             if ((MCS::MCSPDU_ErectDomainRequest << 2) != tag){
                 LOG(LOG_ERR, "ErectDomainRequest expected, got %u", tag);
@@ -2311,9 +976,13 @@ namespace MCS
     {
         DisconnectProviderUltimatum_Send(Stream & stream, uint8_t reason, int encoding)
         {
-          stream.out_uint8(MCS::MCSPDU_DisconnectProviderUltimatum << 2);
-          stream.out_uint8(reason); // (<< 6 ?)
-          stream.end = stream.p;
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "DisconnectProviderUltimatum PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
+            stream.out_uint8(MCS::MCSPDU_DisconnectProviderUltimatum << 2);
+            stream.out_uint8(reason << 6); // (<< 6 ?)
+            stream.end = stream.p;
         }
     };
 
@@ -2323,13 +992,17 @@ namespace MCS
         uint8_t reason;
         DisconnectProviderUltimatum_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "DisconnectProviderUltimatum PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
             uint8_t tag = stream.in_uint8();
             if ((MCS::MCSPDU_DisconnectProviderUltimatum << 2) != tag){
                 LOG(LOG_ERR, "DisconnectProviderUltimatum expected, got %u", tag);
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_DisconnectProviderUltimatum;
-            this->reason = stream.in_uint8(); // (>> 6 ?)
+            this->reason = stream.in_uint8() >> 6; // (>> 6 ?)
         }
     };
 
@@ -2343,6 +1016,8 @@ namespace MCS
     {
         RejectMCSPDUUltimatum_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2350,6 +1025,8 @@ namespace MCS
     {
         RejectMCSPDUUltimatum_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2395,8 +1072,12 @@ namespace MCS
     {
         AttachUserRequest_Send(Stream & stream, int encoding)
         {
-          stream.out_uint8(MCS::MCSPDU_AttachUserRequest << 2);
-          stream.end = stream.p;
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "AttachUserRequest PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
+            stream.out_uint8(MCS::MCSPDU_AttachUserRequest << 2);
+            stream.end = stream.p;
         }
     };
 
@@ -2405,6 +1086,10 @@ namespace MCS
         uint8_t type;
         AttachUserRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "AttachUserRequest PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
             uint8_t tag = stream.in_uint8();
             if ((MCS::MCSPDU_AttachUserRequest << 2) != tag){
                 LOG(LOG_ERR, "expecting AttachUserRequest (%u), got %u", MCS::MCSPDU_AttachUserRequest << 2, tag);
@@ -2526,6 +1211,10 @@ namespace MCS
     {
         AttachUserConfirm_Send(Stream & stream, uint8_t result, bool initiator_flag, uint16_t initiator, int encoding)
         {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "AttachUserConfirm PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
             stream.out_uint8((MCS::MCSPDU_AttachUserConfirm << 2) | initiator_flag * 2);
             stream.out_uint8(result);
             if (initiator_flag){
@@ -2544,6 +1233,10 @@ namespace MCS
         
         AttachUserConfirm_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "AttachUserConfirm PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
             uint8_t tag = stream.in_uint8();
             this->initiator_flag = (tag & 2) != 0;
             if ((tag & 0xFC) != MCS::MCSPDU_AttachUserConfirm << 2){
@@ -2568,6 +1261,8 @@ namespace MCS
     {
         DetachUserRequest_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2575,6 +1270,8 @@ namespace MCS
     {
         DetachUserRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2588,6 +1285,8 @@ namespace MCS
     {
         DetachUserIndication_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2595,6 +1294,8 @@ namespace MCS
     {
         DetachUserIndication_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2686,6 +1387,10 @@ namespace MCS
     {
         ChannelJoinRequest_Send(Stream & stream, uint16_t initiator, uint16_t channelId, int encoding)
         {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "ChannelJoinRequest PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
             stream.out_uint8(MCS::MCSPDU_ChannelJoinRequest << 2);
             stream.out_uint16_be(initiator);
             stream.out_uint16_be(channelId);
@@ -2701,6 +1406,10 @@ namespace MCS
 
         ChannelJoinRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "ChannelJoinRequest PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
             uint8_t tag = stream.in_uint8();
             if (tag != (MCS::MCSPDU_ChannelJoinRequest << 2)){
                 LOG(LOG_ERR, "expecting ChannelJoinRequest (%u), got %u", MCS::MCSPDU_ChannelJoinRequest << 2, tag);
@@ -2796,6 +1505,10 @@ namespace MCS
                                , uint16_t channelId 
                                , int encoding)
         {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "ChannelJoinConfirm PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
             stream.out_uint8((MCSPDU_ChannelJoinConfirm << 2) | 2 * channelId_flag);
             stream.out_uint8(result); // Result = rt_successfull
             stream.out_uint16_be(initiator);
@@ -2818,6 +1531,10 @@ namespace MCS
 
         ChannelJoinConfirm_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "ChannelJoinConfirm PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
             uint8_t tag = stream.in_uint8();
             if ((tag & 0xFC) != (MCS::MCSPDU_ChannelJoinConfirm << 2)){
                 LOG(LOG_ERR, "expecting ChannelJoinConfirm (%u), got %u", MCS::MCSPDU_ChannelJoinConfirm << 2, tag);
@@ -2847,6 +1564,8 @@ namespace MCS
     {
         ChannelLeaveRequest_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2854,6 +1573,8 @@ namespace MCS
     {
         ChannelLeaveRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2866,6 +1587,8 @@ namespace MCS
     {
         ChannelConveneRequest_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2873,6 +1596,8 @@ namespace MCS
     {
         ChannelConveneRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2887,6 +1612,8 @@ namespace MCS
     {
         ChannelConveneConfirm_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2894,6 +1621,8 @@ namespace MCS
     {
         ChannelConveneConfirm_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2907,6 +1636,8 @@ namespace MCS
     {
         ChannelDisbandRequest_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2914,6 +1645,8 @@ namespace MCS
     {
         ChannelDisbandRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2926,6 +1659,8 @@ namespace MCS
     {
         ChannelDisbandIndication_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2933,6 +1668,8 @@ namespace MCS
     {
         ChannelDisbandIndication_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2947,6 +1684,8 @@ namespace MCS
     {
         ChannelAdmitRequest_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2954,6 +1693,8 @@ namespace MCS
     {
         ChannelAdmitRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2969,6 +1710,8 @@ namespace MCS
     {
         ChannelAdmitIndication_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2976,6 +1719,8 @@ namespace MCS
     {
         ChannelAdmitIndication_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2991,6 +1736,8 @@ namespace MCS
     {
         ChannelExpelRequest_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -2998,6 +1745,8 @@ namespace MCS
     {
         ChannelExpelRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3011,6 +1760,8 @@ namespace MCS
     {
         ChannelExpelIndication_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3018,6 +1769,8 @@ namespace MCS
     {
         ChannelExpelIndication_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3034,6 +1787,10 @@ namespace MCS
     {
         SendDataRequest_Send(Stream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
         {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "SendDataRequest PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
             stream.out_uint8(MCS::MCSPDU_SendDataRequest << 2);
             stream.out_uint16_be(initiator);
             stream.out_uint16_be(channelId);
@@ -3056,6 +1813,10 @@ namespace MCS
 
         SendDataRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "SendDataRequest PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
             uint8_t tag = stream.in_uint8();
             if (tag != (MCS::MCSPDU_SendDataRequest << 2)){
                 LOG(LOG_ERR, "expecting SendDataRequest (%u), got %u", MCS::MCSPDU_SendDataRequest << 2, tag);
@@ -3091,6 +1852,10 @@ namespace MCS
     {
         SendDataIndication_Send(Stream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
         {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "SendDataIndication PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
             stream.out_uint8(MCS::MCSPDU_SendDataIndication << 2);
             stream.out_uint16_be(initiator);
             stream.out_uint16_be(channelId);
@@ -3112,6 +1877,10 @@ namespace MCS
 
         SendDataIndication_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            if (encoding != PER_ENCODING){
+                LOG(LOG_ERR, "SendDataIndication PER_ENCODING mandatory");
+                throw Error(ERR_MCS);
+            }
             uint8_t tag = stream.in_uint8();
             if (tag != (MCS::MCSPDU_SendDataIndication << 2)){
                 LOG(LOG_ERR, "expecting SendDataIndication (%u), got %u", MCS::MCSPDU_SendDataIndication << 2, tag);
@@ -3148,6 +1917,8 @@ namespace MCS
     {
         UniformSendDataRequest_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3155,6 +1926,8 @@ namespace MCS
     {
         UniformSendDataRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3171,6 +1944,8 @@ namespace MCS
     {
         UniformSendDataIndication_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3178,6 +1953,8 @@ namespace MCS
     {
         UniformSendDataIndication_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3191,6 +1968,8 @@ namespace MCS
     {
         TokenGrabRequest_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3198,6 +1977,8 @@ namespace MCS
     {
         TokenGrabRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3213,6 +1994,8 @@ namespace MCS
     {
         TokenGrabConfirm_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3220,6 +2003,8 @@ namespace MCS
     {
         TokenGrabConfirm_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3233,6 +2018,8 @@ namespace MCS
     {
         TokenInhibitRequest_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3240,6 +2027,8 @@ namespace MCS
     {
         TokenInhibitRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3256,6 +2045,8 @@ namespace MCS
     {
         TokenInhibitConfirm_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3263,6 +2054,8 @@ namespace MCS
     {
         TokenInhibitConfirm_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3277,6 +2070,8 @@ namespace MCS
     {
         TokenGiveRequest_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3284,6 +2079,8 @@ namespace MCS
     {
         TokenGiveRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3299,6 +2096,8 @@ namespace MCS
     {
         TokenGiveIndication_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3306,6 +2105,8 @@ namespace MCS
     {
         TokenGiveIndication_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3321,6 +2122,8 @@ namespace MCS
     {
         TokenGiveResponse_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3328,6 +2131,8 @@ namespace MCS
     {
         TokenGiveResponse_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3343,6 +2148,8 @@ namespace MCS
     {
         TokenGiveConfirm_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3350,6 +2157,8 @@ namespace MCS
     {
         TokenGiveConfirm_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3363,6 +2172,8 @@ namespace MCS
     {
         TokenPleaseRequest_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3370,6 +2181,8 @@ namespace MCS
     {
         TokenPleaseRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3384,6 +2197,8 @@ namespace MCS
     {
         TokenPleaseIndication_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3391,6 +2206,8 @@ namespace MCS
     {
         TokenPleaseIndication_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3404,6 +2221,8 @@ namespace MCS
     {
         TokenReleaseRequest_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3411,6 +2230,8 @@ namespace MCS
     {
         TokenReleaseRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3427,6 +2248,8 @@ namespace MCS
     {
         TokenReleaseConfirm_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3434,6 +2257,8 @@ namespace MCS
     {
         TokenReleaseConfirm_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3447,6 +2272,8 @@ namespace MCS
     {
         TokenTestRequest_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3454,6 +2281,8 @@ namespace MCS
     {
         TokenTestRequest_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3468,6 +2297,8 @@ namespace MCS
     {
         TokenTestConfirm_Send(Stream & stream, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 
@@ -3475,6 +2306,8 @@ namespace MCS
     {
         TokenTestConfirm_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
+            throw Error(ERR_MCS);
         }
     };
 

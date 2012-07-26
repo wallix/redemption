@@ -39,15 +39,18 @@
 #include "constants.hpp"
 #include "client_mod.hpp"
 #include "log.hpp"
-#include "channel_list.hpp"
-#include "colors.hpp"
 
 #include "RDP/x224.hpp"
-#include "RDP/sec.hpp"
 #include "RDP/nego.hpp"
-#include "RDP/connection.hpp"
+#include "RDP/mcs.hpp"
 #include "RDP/lic.hpp"
 #include "RDP/logon.hpp"
+#include "channel_list.hpp"
+#include "RDP/gcc.hpp"
+#include "RDP/sec.hpp"
+#include "colors.hpp"
+#include "RDP/capabilities.hpp"
+#include "RDP/connection.hpp"
 
 //#include "RDP/orders/RDPOrdersNames.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"
@@ -63,7 +66,6 @@
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
-#include "RDP/capabilities.hpp"
 
 #include "genrandom.hpp"
 

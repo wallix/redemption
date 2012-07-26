@@ -34,8 +34,21 @@
 #include <deque>
 #include <algorithm>
 
-#include "stream.hpp"
 #include "constants.hpp"
+#include "stream.hpp"
+#include "transport.hpp"
+#include "RDP/x224.hpp"
+#include "RDP/nego.hpp"
+#include "RDP/mcs.hpp"
+#include "RDP/lic.hpp"
+#include "RDP/logon.hpp"
+#include "channel_list.hpp"
+#include "RDP/gcc.hpp"
+#include "RDP/sec.hpp"
+#include "colors.hpp"
+#include "RDP/capabilities.hpp"
+#include "RDP/connection.hpp"
+
 #include "ssl_calls.hpp"
 #include "altoco.hpp"
 #include "rect.hpp"
@@ -53,7 +66,6 @@
 #include "callback.hpp"
 #include "colors.hpp"
 #include "altoco.hpp"
-#include "transport.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/capabilities.hpp"
