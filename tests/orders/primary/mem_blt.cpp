@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
         };
         check_datas(stream.p-stream.data, stream.data, 9, datas, "MemBlt 1");
 
-        stream.end = stream.p; stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.data;
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
         };
         check_datas(stream.p-stream.data, stream.data, 21, datas, "MemBlt 2");
 
-        stream.end = stream.p; stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.data;
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();

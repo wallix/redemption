@@ -90,7 +90,7 @@ enum {
             stream.out_uint32_le(0);
             stream.out_uint32_le(0);
             stream.mark_end();
-            int len = (int)(stream.end - stream.data);
+            int len = (int)(stream.size());
             stream.p = hdr;
             stream.out_uint32_le(len);
             this->t->send(stream.data, len);

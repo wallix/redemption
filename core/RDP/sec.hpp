@@ -684,7 +684,7 @@ class Sec
                 // decrypting to the end of tpdu
                 if (this->verbose >= 0x200){
                     LOG(LOG_DEBUG, "Receiving encrypted TPDU");
-                    hexdump((char*)stream.data, stream.end - stream.data);
+                    hexdump((char*)stream.data, stream.size());
                 }
                 if (this->verbose >= 0x100){
                     LOG(LOG_DEBUG, "Crypt context is:");
@@ -809,7 +809,7 @@ static inline void send_security_exchange_PDU(Stream & stream, uint32_t server_p
     LOG(LOG_INFO, "Server public key is %d bytes long", server_public_key_len);
     stream.out_copy_bytes(client_crypt_random, server_public_key_len);
     stream.out_clear_bytes(SEC_PADDING_SIZE);
-    stream.end = stream.p;
+    stream.mark_end();
 }
 
 

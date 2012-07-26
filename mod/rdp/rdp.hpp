@@ -529,7 +529,7 @@ struct mod_rdp : public client_mod {
         stream.out_copy_bytes(data, chunk_size);
 
         sec.emit_end();
-        stream.end = stream.p;    
+        stream.mark_end();    
 
         this->send_data_request(channel.chanid, stream);
 
@@ -543,7 +543,7 @@ struct mod_rdp : public client_mod {
         BStream x224_header(256);
         BStream mcs_header(256);
 
-        size_t payload_len = stream.end - stream.data;
+        size_t payload_len = stream.size();
         MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channelId, 1, 3, payload_len, MCS::PER_ENCODING);
         size_t mcs_header_len = mcs_header.end - mcs_header.data;
         X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
@@ -656,8 +656,8 @@ struct mod_rdp : public client_mod {
 
                     stream.set_out_per_length(stream.get_offset(offset_gcc_conference_create_request_header_length + 2), offset_gcc_conference_create_request_header_length); // length including header
 
-                    stream.end = stream.p;
-                    size_t payload_length = stream.end - stream.data;
+                    stream.mark_end();
+                    size_t payload_length = stream.size();
 
                     BStream mcs_header(65536);
                     MCS::CONNECT_INITIAL_Send mcs(mcs_header, payload_length, MCS::BER_ENCODING);
@@ -1511,7 +1511,7 @@ struct mod_rdp : public client_mod {
             BStream stream(256);
             X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
             try {
-                this->nego.trans->send(stream.data, stream.end - stream.data);
+                this->nego.trans->send(stream.data, stream.size());
                 LOG(LOG_DEBUG, "Connection closed (status=0)");
             }
             catch(Error e){
@@ -1736,7 +1736,7 @@ struct mod_rdp : public client_mod {
             // Packet trailer
             sctrl.emit_end();
             sec.emit_end();
-            stream.end = stream.p;    
+            stream.mark_end();    
 
             this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
 
@@ -2562,7 +2562,7 @@ struct mod_rdp : public client_mod {
             sdata.emit_end();
             sctrl.emit_end();
             sec.emit_end();
-            stream.end = stream.p;    
+            stream.mark_end();    
 
             this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
 
@@ -2593,7 +2593,7 @@ struct mod_rdp : public client_mod {
             sdata.emit_end();
             sctrl.emit_end();
             sec.emit_end();
-            stream.end = stream.p;    
+            stream.mark_end();    
 
             this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
 
@@ -2625,7 +2625,7 @@ struct mod_rdp : public client_mod {
             sdata.emit_end();
             sctrl.emit_end();
             sec.emit_end();
-            stream.end = stream.p;    
+            stream.mark_end();    
 
             this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
 
@@ -2674,7 +2674,7 @@ struct mod_rdp : public client_mod {
             sdata.emit_end();
             sctrl.emit_end();
             sec.emit_end();
-            stream.end = stream.p;    
+            stream.mark_end();    
 
             this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
 
@@ -2711,7 +2711,7 @@ struct mod_rdp : public client_mod {
                     sdata.emit_end();
                     sctrl.emit_end();
                     sec.emit_end();
-                    stream.end = stream.p;    
+                    stream.mark_end();    
 
                     this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
                 }
@@ -2979,7 +2979,7 @@ struct mod_rdp : public client_mod {
         infoPacket.emit( stream );
 
         sec.emit_end();
-        stream.end = stream.p;    
+        stream.mark_end();    
 
         this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
 

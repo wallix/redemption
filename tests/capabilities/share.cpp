@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityShareEmit)
 
     BStream stream(1024);
     share_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     ShareCaps share_caps2;

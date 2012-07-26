@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFontEmit)
 
     BStream stream(1024);
     font_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     FontCaps font_caps2;

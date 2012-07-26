@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityRailEmit)
 
     BStream stream(1024);
     rail_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     RailCaps rail_caps2;

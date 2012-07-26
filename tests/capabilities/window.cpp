@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityWindowsListEmit)
 
     BStream stream(1024);
     windowslist_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     WindowsListCaps windowslist_caps2;

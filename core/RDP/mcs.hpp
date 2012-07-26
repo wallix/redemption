@@ -451,7 +451,7 @@ namespace MCS
             stream.out_ber_len_uint16(payload_length);
             // now we know full MCS Initial header length (without initial tag and len)
             stream.set_out_ber_len_uint16(payload_length + stream.get_offset(5), 2);
-            stream.end = stream.p;
+            stream.mark_end();
         }
     };
 
@@ -663,7 +663,7 @@ namespace MCS
             else {
                 stream.set_out_ber_len_uint7(payload_length + stream.get_offset(start_offset), 2);
             }
-            stream.end = stream.p;
+            stream.mark_end();
         }
     };
 
@@ -727,7 +727,7 @@ namespace MCS
             stream.out_uint8((MCSPDU_ErectDomainRequest << 2));
             stream.out_per_integer(subheight); /* subHeight (INTEGER) */
             stream.out_per_integer(subinterval); /* subInterval (INTEGER) */
-            stream.end = stream.p;
+            stream.mark_end();
         }
     };
 
@@ -982,7 +982,7 @@ namespace MCS
             }
             stream.out_uint8(MCS::MCSPDU_DisconnectProviderUltimatum << 2);
             stream.out_uint8(reason << 6); // (<< 6 ?)
-            stream.end = stream.p;
+            stream.mark_end();
         }
     };
 
@@ -1077,7 +1077,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
             stream.out_uint8(MCS::MCSPDU_AttachUserRequest << 2);
-            stream.end = stream.p;
+            stream.mark_end();
         }
     };
 
@@ -1220,7 +1220,7 @@ namespace MCS
             if (initiator_flag){
                 stream.out_uint16_be(initiator);
             }
-            stream.end = stream.p;
+            stream.mark_end();
         }
     };
 
@@ -1394,7 +1394,7 @@ namespace MCS
             stream.out_uint8(MCS::MCSPDU_ChannelJoinRequest << 2);
             stream.out_uint16_be(initiator);
             stream.out_uint16_be(channelId);
-            stream.end = stream.p;
+            stream.mark_end();
         }
     };
 
@@ -1516,7 +1516,7 @@ namespace MCS
             if (channelId_flag){
                 stream.out_uint16_be(channelId);
             }
-            stream.end = stream.p;
+            stream.mark_end();
         }
     };
 
@@ -1796,7 +1796,7 @@ namespace MCS
             stream.out_uint16_be(channelId);
             stream.out_uint8((dataPriority << 6)|(segmentation << 4));
             stream.out_per_length(payload_length);
-            stream.end = stream.p;
+            stream.mark_end();
         }
     };
 
@@ -1861,7 +1861,7 @@ namespace MCS
             stream.out_uint16_be(channelId);
             stream.out_uint8((dataPriority << 6)|(segmentation << 4));
             stream.out_per_length(payload_length);
-            stream.end = stream.p;
+            stream.mark_end();
         }
     };
 

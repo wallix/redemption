@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityVirtualChannelEmit)
 
     BStream stream(1024);
     virtualchannel_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     VirtualChannelCaps virtualchannel_caps2;

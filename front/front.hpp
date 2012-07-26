@@ -489,7 +489,7 @@ public:
         stream.out_copy_bytes(data, chunk_size);
 
         sec.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
         this->send_data_indication(channel.chanid, stream);
 
@@ -546,7 +546,7 @@ public:
             sdata.emit_end();
             sctrl.emit_end();
             sec.emit_end();
-            stream.end = stream.p;
+            stream.mark_end();
 
             this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
 
@@ -749,7 +749,7 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
         this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
 
@@ -811,7 +811,7 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
         this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
 
@@ -853,9 +853,9 @@ public:
                 BStream stream(65536);
                 X224::RecvFactory fac_x224(*this->trans, stream);
                 X224::CR_TPDU_Recv x224(*this->trans, stream, fac_x224.length);
-                if (x224.header_size != (size_t)(stream.end - stream.data)){
+                if (x224.header_size != (size_t)(stream.size())){
                     LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
-                                 " %d bytes remains", stream.end - stream.data - x224.header_size);
+                                 " %d bytes remains", stream.size() - x224.header_size);
                 }
             }
 
@@ -865,7 +865,7 @@ public:
             {
                 BStream stream(256);
                 X224::CC_TPDU_Send x224(stream, 0, 0, 0);
-                this->trans->send(stream.data, stream.end - stream.data);
+                this->trans->send(stream.data, stream.size());
             }
             // Basic Settings Exchange
             // -----------------------
@@ -1210,9 +1210,9 @@ public:
             // set user_data_len (TWO_BYTE_UNSIGNED_ENCODING)
             stream.set_out_uint16_be(0x8000 | (stream.get_offset(offset_user_data_len + 2)), offset_user_data_len);
 
-           stream.end = stream.p;
+           stream.mark_end();
 
-            size_t payload_length = stream.end - stream.data;
+            size_t payload_length = stream.size();
 
             BStream mcs_header(256);
             MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, payload_length, MCS::BER_ENCODING);
@@ -1874,7 +1874,7 @@ public:
         BStream x224_header(256);
         BStream mcs_header(256);
 
-        size_t payload_len = stream.end - stream.data;
+        size_t payload_len = stream.size();
         MCS::SendDataIndication_Send mcs(mcs_header, userid, channelId, 1, 3, payload_len, MCS::PER_ENCODING);
         size_t mcs_header_len = mcs_header.end - mcs_header.data;
         X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
@@ -1907,7 +1907,7 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
         this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
     }
@@ -2023,7 +2023,7 @@ public:
         // Packet trailer
         sctrl.emit_end();
         sec.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
         this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
     }
@@ -2277,7 +2277,7 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
         this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
     }
@@ -2325,7 +2325,7 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
         this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
     }
@@ -2376,7 +2376,7 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
         this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
     }
@@ -2566,7 +2566,7 @@ public:
                 sdata_out.emit_end();
                 sctrl.emit_end();
                 sec.emit_end();
-                stream.end = stream.p;
+                stream.mark_end();
 
                 this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
             }
@@ -2715,7 +2715,7 @@ public:
         // Packet trailer
         sctrl.emit_end();
         sec.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
         this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
     }

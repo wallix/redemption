@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
     BStream stream(1024);
     size_t payload_length = 263;
     MCS::CONNECT_INITIAL_Send mcs(stream, payload_length, MCS::BER_ENCODING);
-    BOOST_CHECK_EQUAL(106, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(106, stream.size());
 
     const char * expected = 
 /* 0000 */                             "\x7f\x65\x82\x01\x6c\x04\x01\x01\x04" //       .e..l.... |
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
     size_t payload_size = 54;
     size_t header_size = 39;
     MCS::CONNECT_RESPONSE_Send mcs(stream, payload_size, MCS::BER_ENCODING);
-    BOOST_CHECK_EQUAL(header_size, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(header_size, stream.size());
 
     const char * expected = 
     "\x7f\x66" // BER_TAG_MCS_CONNECT_RESPONSE
@@ -246,7 +246,7 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
     }
     catch (...) {
     };
-    BOOST_CHECK_EQUAL(header_size, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(header_size, stream.size());
 
     const char * expected = 
     "\x7f\x66" // BER_TAG_MCS_CONNECT_RESPONSE
@@ -309,7 +309,7 @@ BOOST_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
     int subheight = 0;
     int subinterval = 0;
     MCS::ErectDomainRequest_Send mcs(stream, subheight, subinterval, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(length, stream.size());
 
     const char * expected = 
         "\x04"  // ErectDomainRequest * 4
@@ -347,7 +347,7 @@ BOOST_AUTO_TEST_CASE(TestSend_DisconnectProviderUltimatum)
     BStream stream(1024);
     size_t length = 2;
     MCS::DisconnectProviderUltimatum_Send mcs(stream, MCS::RN_DOMAIN_DISCONNECTED, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(length, stream.size());
 
     const char * expected = 
         "\x20"  // DisconnectProviderUltimatum * 4
@@ -379,7 +379,7 @@ BOOST_AUTO_TEST_CASE(TestSend_AttachUserRequest)
     BStream stream(1024);
     size_t length = 1;
     MCS::AttachUserRequest_Send mcs(stream, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(length, stream.size());
 
     const char * expected = 
         "\x28"  //  * 4
@@ -411,7 +411,7 @@ BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm_without_userid)
     BStream stream(1024);
     size_t length = 2;
     MCS::AttachUserConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, false, 0, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(length, stream.size());
 
     const char * expected = 
         "\x2C"  //  AttachUserConfirm * 4
@@ -443,7 +443,7 @@ BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm_with_userid)
     BStream stream(1024);
     size_t length = 4;
     MCS::AttachUserConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, true, 1, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(length, stream.size());
 
     const char * expected = 
         "\x2E"  //  AttachUserConfirm * 4
@@ -478,7 +478,7 @@ BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinRequest)
     BStream stream(1024);
     size_t length = 5;
     MCS::ChannelJoinRequest_Send mcs(stream, 3, 1004, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(length, stream.size());
 
     const char * expected = 
         "\x38"  // ChannelJoinRequest * 4
@@ -512,7 +512,7 @@ BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinConfirm)
     BStream stream(1024);
     size_t length = 8;
     MCS::ChannelJoinConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, 3, 1004, true, 1004, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(length, stream.size());
 
     const char * expected = 
         "\x3E"  // ChannelJoinConfirm * 4
@@ -553,7 +553,7 @@ BOOST_AUTO_TEST_CASE(TestSend_SendDataRequest)
     BStream stream(1024);
     size_t length = 8;
     MCS::SendDataRequest_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(length, stream.size());
 
     const char * expected = 
         "\x64"  // SendDataRequest * 4
@@ -593,7 +593,7 @@ BOOST_AUTO_TEST_CASE(TestSend_SendDataIndication)
     BStream stream(1024);
     size_t length = 8;
     MCS::SendDataIndication_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
-    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(length, stream.size());
 
     const char * expected = 
         "\x68"  // SendDataIndication * 4

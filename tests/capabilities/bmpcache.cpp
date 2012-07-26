@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBmpCachepEmit)
 
     BStream stream(1024);
     bmpcache_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     BmpCacheCaps bmpcache_caps2;

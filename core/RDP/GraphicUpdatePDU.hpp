@@ -182,7 +182,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
             this->sdata->emit_end();
             this->sctrl->emit_end();
             this->sec->emit_end();
-            this->pstream->end = this->pstream->p;    
+            this->pstream->mark_end();    
 
             BStream x224_header(256);
             BStream mcs_header(256);

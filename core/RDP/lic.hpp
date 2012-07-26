@@ -240,7 +240,7 @@ static inline void send_lic_initial(Stream & stream) throw (Error)
    };
 
     stream.out_copy_bytes((char*)lic1, 314);
-    stream.end = stream.p;
+    stream.mark_end();
 }
 
 
@@ -254,7 +254,7 @@ static inline void send_lic_response(Stream & stream) throw (Error)
                            };
 
     stream.out_copy_bytes((char*)lic2, 20);
-    stream.end = stream.p;
+    stream.mark_end();
 }
 
 static inline void send_media_lic_response(Stream & stream) throw (Error)
@@ -268,7 +268,7 @@ static inline void send_media_lic_response(Stream & stream) throw (Error)
                              };
 
     stream.out_copy_bytes((char*)lic3, 20);
-    stream.end = stream.p;
+    stream.mark_end();
 }
 
 
@@ -473,7 +473,7 @@ struct RdpLicence {
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
         sec.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
     }
 
     void set_licence_keys(const uint8_t * server_random)
@@ -786,7 +786,7 @@ struct RdpLicence {
         stream.out_copy_bytes(hostname, hostlen);
 
         sec.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
     }
 
     void rdp_lic_present(Stream & stream, uint8_t* client_random, uint8_t* rsa_data,
@@ -815,7 +815,7 @@ struct RdpLicence {
         stream.out_copy_bytes(hwid, LICENCE_HWID_SIZE);
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
-        stream.end = stream.p;
+        stream.mark_end();
     }
 
 };

@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
         };
 
         check_datas(stream.p-stream.data, stream.data, sizeof(datas), datas, "Bmp Cache 1");
-        stream.end = stream.p;
+        stream.mark_end();
         stream.p = stream.data;
 
         uint8_t control = stream.in_uint8();

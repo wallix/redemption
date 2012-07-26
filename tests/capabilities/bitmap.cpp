@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapEmit)
 
     BStream stream(1024);
     bitmap_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     BitmapCaps bitmap_caps2;

@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(TestColCache)
         };
 
         check_datas(stream.p-stream.data, stream.data, sizeof(datas), datas, "Color Cache 1");
-        stream.end = stream.p; stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.data;
 
         uint8_t control = stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));

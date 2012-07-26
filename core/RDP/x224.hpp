@@ -360,7 +360,7 @@ namespace X224
         Recv(Transport & t, Stream & stream, uint16_t length, uint32_t verbose)
             : header_size(4), verbose(verbose)
         {
-            t.recv((char**)(&(stream.end)), length - (stream.end - stream.data));
+            t.recv((char**)(&(stream.end)), length - (stream.size()));
             stream.p = stream.data;
 
             // TPKT
@@ -391,7 +391,7 @@ namespace X224
         void trailer(Stream & stream) {
             stream.set_out_uint16_be(stream.p - stream.data, OFFSET_TPKT_LEN);
             stream.set_out_uint8(stream.p - stream.data - 5, OFFSET_LI);
-            stream.end = stream.p;
+            stream.mark_end();
         }
     };
     // ################################ END OF COMMON CODE #################################
@@ -560,7 +560,7 @@ namespace X224
 
             if (end_of_header != stream.p){
                 LOG(LOG_ERR, "CR TPDU header should be terminated, got trailing data %u", end_of_header - stream.p);
-                hexdump_c(stream.data, stream.end - stream.data);
+                hexdump_c(stream.data, stream.size());
                 throw Error(ERR_X224);
             }
 
@@ -1077,7 +1077,7 @@ namespace X224
             }
             stream.p = end_of_header;
             this->header_size = stream.get_offset(0);
-            this->payload_size = stream.end - stream.data - this->header_size;
+            this->payload_size = stream.size() - this->header_size;
         }
     }; // END CLASS DT_TPDU_Recv
 
@@ -1092,7 +1092,7 @@ namespace X224
 
             stream.set_out_uint16_be(7 + payload_len, Send::OFFSET_TPKT_LEN);
             stream.set_out_uint8(2, Send::OFFSET_LI);
-            stream.end = stream.p;
+            stream.mark_end();
         }
     };
 

@@ -52,7 +52,7 @@ class Stream {
     virtual void init(size_t capacity) = 0;
 
     bool has_room(unsigned n) {
-        return (this->end - this->data + n) <= this->capacity;
+        return (this->p - this->data + n) <= this->capacity;
     }
 
     uint16_t get_offset(uint16_t offset){
@@ -420,8 +420,12 @@ class Stream {
         this->end = this->p;
     }
 
-    void goto_end() {
-        this->p = this->end;
+    void rewind(){
+        this->p = this->data;
+    }
+
+    size_t size(){
+        return this->end - this->data;
     }
 
     // Output zero terminated string, including trailing 0

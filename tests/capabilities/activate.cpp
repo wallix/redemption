@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityActivationEmit)
 
     BStream stream(1024);
     activation_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     ActivationCaps activation_caps2;

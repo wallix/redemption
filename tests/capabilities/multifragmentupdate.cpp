@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityMultiFragmentUpdateEmit)
 
     BStream stream(1024);
     multifragmentupdate_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     MultiFragmentUpdateCaps multifragmentupdate_caps2;

@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityPointerEmit)
 
     BStream stream(1024);
     pointer_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     PointerCaps pointer_caps2;
