@@ -531,11 +531,20 @@ struct mod_rdp : public client_mod {
         sec.emit_end();
         stream.end = stream.p;    
 
+        this->send_data_request(channel.chanid, stream);
+
+        if (this->verbose){
+            LOG(LOG_INFO, "mod_rdp::send_to_channel done");
+        }
+    }
+
+    void send_data_request(uint16_t channelId, Stream & stream)
+    {
         BStream x224_header(256);
         BStream mcs_header(256);
 
         size_t payload_len = stream.end - stream.data;
-        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channel.chanid, 1, 3, payload_len, MCS::PER_ENCODING);
+        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channelId, 1, 3, payload_len, MCS::PER_ENCODING);
         size_t mcs_header_len = mcs_header.end - mcs_header.data;
         X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
         size_t x224_header_len = x224_header.end - x224_header.data;
@@ -543,12 +552,7 @@ struct mod_rdp : public client_mod {
         this->nego.trans->send(x224_header.data, x224_header_len);
         this->nego.trans->send(mcs_header.data, mcs_header_len);
         this->nego.trans->send(stream.data, payload_len);
-
-        if (this->verbose){
-            LOG(LOG_INFO, "mod_rdp::send_to_channel done");
-        }
     }
-
 
     virtual BackEvent_t draw_event(void)
     {
@@ -884,19 +888,7 @@ struct mod_rdp : public client_mod {
                 BStream stream(65535);
 
                 send_security_exchange_PDU(stream, this->server_public_key_len, this->client_crypt_random);
-
-                BStream x224_header(256);
-                BStream mcs_header(256);
-
-                size_t payload_len = stream.end - stream.data;
-                MCS::SendDataRequest_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
-                size_t mcs_header_len = mcs_header.end - mcs_header.data;
-                X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
-                size_t x224_header_len = x224_header.end - x224_header.data;
-
-                this->nego.trans->send(x224_header.data, x224_header_len);
-                this->nego.trans->send(mcs_header.data, mcs_header_len);
-                this->nego.trans->send(stream.data, payload_len);
+                this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
             }
             // Secure Settings Exchange
             // ------------------------
@@ -999,7 +991,6 @@ struct mod_rdp : public client_mod {
         {
             const char * hostname = this->hostname;
             const char * username = this->username;
-            const int userid = this->userid;
             int & licence_issued = this->lic_layer.licence_issued;
             int res = 0;
             // read tpktHeader (4 bytes = 3 0 len)
@@ -1150,18 +1141,8 @@ struct mod_rdp : public client_mod {
                                                                licence_issued, 
                                                                this->encrypt, this->crypt_level, 
                                                                this->use_rdp5);
-                        BStream x224_header(256);
-                        BStream mcs_header(256);
 
-                        size_t payload_len = stream.end - stream.data;
-                        MCS::SendDataRequest_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
-                        size_t mcs_header_len = mcs_header.end - mcs_header.data;
-                        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
-                        size_t x224_header_len = x224_header.end - x224_header.data;
-
-                        this->nego.trans->send(x224_header.data, x224_header_len);
-                        this->nego.trans->send(mcs_header.data, mcs_header_len);
-                        this->nego.trans->send(stream.data, payload_len);
+                        this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
                     }
                     break;
                 case PLATFORM_CHALLENGE:
@@ -1173,18 +1154,7 @@ struct mod_rdp : public client_mod {
 
                         this->lic_layer.rdp_lic_process_authreq(stream, payload, hostname, licence_issued, this->encrypt, this->use_rdp5);
 
-                        BStream x224_header(256);
-                        BStream mcs_header(256);
-
-                        size_t payload_len = stream.end - stream.data;
-                        MCS::SendDataRequest_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
-                        size_t mcs_header_len = mcs_header.end - mcs_header.data;
-                        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
-                        size_t x224_header_len = x224_header.end - x224_header.data;
-
-                        this->nego.trans->send(x224_header.data, x224_header_len);
-                        this->nego.trans->send(mcs_header.data, mcs_header_len);
-                        this->nego.trans->send(stream.data, payload_len);
+                        this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
                     }
                     break;
                 case NEW_LICENSE:
@@ -1768,18 +1738,7 @@ struct mod_rdp : public client_mod {
             sec.emit_end();
             stream.end = stream.p;    
 
-            BStream x224_header(256);
-            BStream mcs_header(256);
-
-            size_t payload_len = stream.end - stream.data;
-            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
-            size_t mcs_header_len = mcs_header.end - mcs_header.data;
-            X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
-            size_t x224_header_len = x224_header.end - x224_header.data;
-
-            this->nego.trans->send(x224_header.data, x224_header_len);
-            this->nego.trans->send(mcs_header.data, mcs_header_len);
-            this->nego.trans->send(stream.data, payload_len);
+            this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
 
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_confirm_active done");
@@ -2605,18 +2564,7 @@ struct mod_rdp : public client_mod {
             sec.emit_end();
             stream.end = stream.p;    
 
-            BStream x224_header(256);
-            BStream mcs_header(256);
-
-            size_t payload_len = stream.end - stream.data;
-            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
-            size_t mcs_header_len = mcs_header.end - mcs_header.data;
-            X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
-            size_t x224_header_len = x224_header.end - x224_header.data;
-
-            this->nego.trans->send(x224_header.data, x224_header_len);
-            this->nego.trans->send(mcs_header.data, mcs_header_len);
-            this->nego.trans->send(stream.data, payload_len);
+            this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
 
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_control done");
@@ -2647,19 +2595,7 @@ struct mod_rdp : public client_mod {
             sec.emit_end();
             stream.end = stream.p;    
 
-            BStream x224_header(256);
-            BStream mcs_header(256);
-
-            size_t payload_len = stream.end - stream.data;
-            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
-            size_t mcs_header_len = mcs_header.end - mcs_header.data;
-            X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
-            size_t x224_header_len = x224_header.end - x224_header.data;
-            LOG(LOG_ERR, "x224_len=%u mcs_len=%u payload_len=%u", x224_header_len, mcs_header_len, payload_len);
-
-            this->nego.trans->send(x224_header.data, x224_header_len);
-            this->nego.trans->send(mcs_header.data, mcs_header_len);
-            this->nego.trans->send(stream.data, payload_len);
+            this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
 
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_synchronise done");
@@ -2691,18 +2627,7 @@ struct mod_rdp : public client_mod {
             sec.emit_end();
             stream.end = stream.p;    
 
-            BStream x224_header(256);
-            BStream mcs_header(256);
-
-            size_t payload_len = stream.end - stream.data;
-            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
-            size_t mcs_header_len = mcs_header.end - mcs_header.data;
-            X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
-            size_t x224_header_len = x224_header.end - x224_header.data;
-
-            this->nego.trans->send(x224_header.data, x224_header_len);
-            this->nego.trans->send(mcs_header.data, mcs_header_len);
-            this->nego.trans->send(stream.data, payload_len);
+            this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
 
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_fonts done");
@@ -2751,18 +2676,7 @@ struct mod_rdp : public client_mod {
             sec.emit_end();
             stream.end = stream.p;    
 
-            BStream x224_header(256);
-            BStream mcs_header(256);
-
-            size_t payload_len = stream.end - stream.data;
-            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
-            size_t mcs_header_len = mcs_header.end - mcs_header.data;
-            X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
-            size_t x224_header_len = x224_header.end - x224_header.data;
-
-            this->nego.trans->send(x224_header.data, x224_header_len);
-            this->nego.trans->send(mcs_header.data, mcs_header_len);
-            this->nego.trans->send(stream.data, payload_len);
+            this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
 
             if (this->verbose > 10){
                 LOG(LOG_INFO, "mod_rdp::send_input done");
@@ -2799,18 +2713,7 @@ struct mod_rdp : public client_mod {
                     sec.emit_end();
                     stream.end = stream.p;    
 
-                    BStream x224_header(256);
-                    BStream mcs_header(256);
-
-                    size_t payload_len = stream.end - stream.data;
-                    MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
-                    size_t mcs_header_len = mcs_header.end - mcs_header.data;
-                    X224::DT_TPDU_Send x224(x224_header, payload_len + mcs_header_len);
-                    size_t x224_header_len = x224_header.end - x224_header.data;
-
-                    this->nego.trans->send(x224_header.data, x224_header_len);
-                    this->nego.trans->send(mcs_header.data, mcs_header_len);
-                    this->nego.trans->send(stream.data, payload_len);
+                    this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
                 }
             }
             if (this->verbose){
@@ -3078,18 +2981,7 @@ struct mod_rdp : public client_mod {
         sec.emit_end();
         stream.end = stream.p;    
 
-        BStream x224_header(256);
-        BStream mcs_header(256);
-
-        size_t payload_len = stream.end - stream.data;
-        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
-        size_t mcs_header_len = mcs_header.end - mcs_header.data;
-        X224::DT_TPDU_Send x224(x224_header, payload_len + mcs_header_len);
-        size_t x224_header_len = x224_header.end - x224_header.data;
-
-        this->nego.trans->send(x224_header.data, x224_header_len);
-        this->nego.trans->send(mcs_header.data, mcs_header_len);
-        this->nego.trans->send(stream.data, payload_len);
+        this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
 
         LOG(LOG_INFO, "send login info ok");
         if (this->verbose){
