@@ -881,10 +881,22 @@ struct mod_rdp : public client_mod {
                 if (this->verbose){
                     LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
                 }
-                send_security_exchange_PDU(this->nego.trans,
-                    this->userid,
-                    this->server_public_key_len,
-                    this->client_crypt_random);
+                BStream stream(65535);
+
+                send_security_exchange_PDU(stream, this->server_public_key_len, this->client_crypt_random);
+
+                BStream x224_header(256);
+                BStream mcs_header(256);
+
+                size_t payload_len = stream.end - stream.data;
+                MCS::SendDataRequest_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+                size_t mcs_header_len = mcs_header.end - mcs_header.data;
+                X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+                size_t x224_header_len = x224_header.end - x224_header.data;
+
+                this->nego.trans->send(x224_header.data, x224_header_len);
+                this->nego.trans->send(mcs_header.data, mcs_header_len);
+                this->nego.trans->send(stream.data, payload_len);
             }
             // Secure Settings Exchange
             // ------------------------
@@ -1156,7 +1168,24 @@ struct mod_rdp : public client_mod {
                     if (this->verbose){
                         LOG(LOG_INFO, "Rdp::Platform Challenge");
                     }
-                    this->lic_layer.rdp_lic_process_authreq(this->nego.trans, payload, hostname, userid, licence_issued, this->encrypt, this->use_rdp5);
+                    {
+                        BStream stream(65535);
+
+                        this->lic_layer.rdp_lic_process_authreq(stream, payload, hostname, licence_issued, this->encrypt, this->use_rdp5);
+
+                        BStream x224_header(256);
+                        BStream mcs_header(256);
+
+                        size_t payload_len = stream.end - stream.data;
+                        MCS::SendDataRequest_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+                        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+                        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+                        size_t x224_header_len = x224_header.end - x224_header.data;
+
+                        this->nego.trans->send(x224_header.data, x224_header_len);
+                        this->nego.trans->send(mcs_header.data, mcs_header_len);
+                        this->nego.trans->send(stream.data, payload_len);
+                    }
                     break;
                 case NEW_LICENSE:
                     if (this->verbose){

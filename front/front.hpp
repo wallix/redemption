@@ -1519,8 +1519,24 @@ public:
             if (this->client_info.is_mce) {
                 LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
                 LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");
-                send_media_lic_response(this->trans, this->userid);
+                {
+                    BStream stream(65535);
 
+                    send_media_lic_response(stream);
+
+                    BStream x224_header(256);
+                    BStream mcs_header(256);
+
+                    size_t payload_len = stream.end - stream.data;
+                    MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+                    size_t mcs_header_len = mcs_header.end - mcs_header.data;
+                    X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+                    size_t x224_header_len = x224_header.end - x224_header.data;
+
+                    trans->send(x224_header.data, x224_header_len);
+                    trans->send(mcs_header.data, mcs_header_len);
+                    trans->send(stream.data, payload_len);
+                }
                 // proceed with capabilities exchange
 
                 // Capabilities Exchange
@@ -1545,7 +1561,23 @@ public:
                 LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
                 LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
 
-                send_lic_initial(this->trans, this->userid);
+
+                BStream stream(65535);
+
+                send_lic_initial(stream);
+
+                BStream x224_header(256);
+                BStream mcs_header(256);
+
+                size_t payload_len = stream.end - stream.data;
+                MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+                size_t mcs_header_len = mcs_header.end - mcs_header.data;
+                X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+                size_t x224_header_len = x224_header.end - x224_header.data;
+
+                this->trans->send(x224_header.data, x224_header_len);
+                this->trans->send(mcs_header.data, mcs_header_len);
+                this->trans->send(stream.data, payload_len);
 
                 LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
                 this->state = WAITING_FOR_ANSWER_TO_LICENCE;
@@ -1604,7 +1636,24 @@ public:
                 case LICENSE_REQUEST:
                     LOG(LOG_INFO, "Front::LICENSE_REQUEST");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
-                    send_lic_response(this->trans, this->userid);
+                    {
+                        BStream stream(65535);                        
+    
+                        send_lic_response(stream);
+
+                        BStream x224_header(256);
+                        BStream mcs_header(256);
+
+                        size_t payload_len = stream.end - stream.data;
+                        MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+                        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+                        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+                        size_t x224_header_len = x224_header.end - x224_header.data;
+
+                        trans->send(x224_header.data, x224_header_len);
+                        trans->send(mcs_header.data, mcs_header_len);
+                        trans->send(stream.data, payload_len);
+                    }
                     break;
                 case LICENSE_INFO:
                     LOG(LOG_INFO, "Front::LICENSE_INFO");
@@ -1624,7 +1673,23 @@ public:
                 case NEW_LICENSE_REQUEST:
                     LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
-                    send_lic_response(this->trans, this->userid);
+                    {
+                        BStream stream(65535);
+                        send_lic_response(stream);
+
+                        BStream x224_header(256);
+                        BStream mcs_header(256);
+
+                        size_t payload_len = stream.end - stream.data;
+                        MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+                        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+                        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+                        size_t x224_header_len = x224_header.end - x224_header.data;
+
+                        trans->send(x224_header.data, x224_header_len);
+                        trans->send(mcs_header.data, mcs_header_len);
+                        trans->send(stream.data, payload_len);                    
+                    }
                     break;
                 case PLATFORM_CHALLENGE_RESPONSE:
                     LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE_RESPONSE");
