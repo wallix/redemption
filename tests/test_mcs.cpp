@@ -591,28 +591,40 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
 BOOST_AUTO_TEST_CASE(TestSend_SendDataIndication)
 {
     BStream stream(1024);
-//    size_t length = 1;
-//    MCS::_Send mcs(stream, MCS::PER_ENCODING);
-//    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
+    size_t length = 8;
+    MCS::SendDataIndication_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.end - stream.data);
 
-//    const char * expected = 
-//        "\x20"  //  * 4
-//    ;
-
-//    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+    const char * expected = 
+        "\x68"  // SendDataIndication * 4
+        "\x00\x03" // userid  = 3
+        "\x03\xec" // channel = 1005 
+        "\x70"     // high priority, segmentation end
+        "\x81\x7b" // len 379
+    ;
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
 }
 
 BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
 {
     BStream stream(1024);
-//    size_t length = 1;
-//    GeneratorTransport t(
-//        "\x20"  //  * 4
-//   , length);
-//    t.recv(&stream.end, length);
+    size_t length = 8;
+    GeneratorTransport t(
+        "\x68"  // SendDataIndication * 4
+        "\x00\x03" // userid  = 3
+        "\x03\xec" // channel = 1005 
+        "\x70"     // high priority, segmentation end
+        "\x81\x7b" // len 379
+   , length);
+    t.recv(&stream.end, length);
 
-//    MCS::XXX_Recv mcs(stream, length, MCS::PER_ENCODING);
+    MCS::SendDataIndication_Recv mcs(stream, length, MCS::PER_ENCODING);
 
-//    BOOST_CHECK_EQUAL(MCS::MCSPDU_XXX , mcs.type);
+    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_SendDataIndication , mcs.type);
+    BOOST_CHECK_EQUAL((uint16_t)3, mcs.initiator);
+    BOOST_CHECK_EQUAL((uint16_t)1004 , mcs.channelId);
+    BOOST_CHECK_EQUAL((uint8_t)1 , mcs.dataPriority);
+    BOOST_CHECK_EQUAL((uint8_t)3 , mcs.segmentation);
+    BOOST_CHECK_EQUAL((uint16_t)379 , mcs.payload_len);
 }
 

@@ -3134,19 +3134,50 @@ namespace MCS
 //        userData        OCTET STRING
 //    }
 
-    struct ChannelSendDataIndication_Send
+    struct SendDataIndication_Send
     {
-        uint8_t type;
-
-        ChannelSendDataIndication_Send(Stream & stream, int encoding)
+        SendDataIndication_Send(Stream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
         {
+            stream.out_uint8(MCS::MCSPDU_SendDataIndication << 2);
+            stream.out_uint16_be(initiator);
+            stream.out_uint16_be(channelId);
+            stream.out_uint8((dataPriority << 6)|(segmentation << 4));
+            stream.out_per_length(payload_length);
+            stream.end = stream.p;
         }
     };
 
     struct SendDataIndication_Recv
     {
+        uint8_t type;
+        uint16_t initiator;
+        uint16_t channelId;
+        uint8_t dataPriority;
+        uint8_t segmentation;
+        uint16_t header_size;
+        uint16_t payload_len;
+
         SendDataIndication_Recv(Stream & stream, size_t available_length, int encoding)
         {
+            uint8_t tag = stream.in_uint8();
+            if (tag != (MCS::MCSPDU_SendDataIndication << 2)){
+                LOG(LOG_ERR, "expecting SendDataIndication (%u), got %u", MCS::MCSPDU_SendDataIndication << 2, tag);
+                throw Error(ERR_MCS);
+            }
+            this->type = MCS::MCSPDU_SendDataIndication;
+            
+            this->initiator = stream.in_uint16_be();
+            this->channelId = stream.in_uint16_be();
+            uint8_t magic = stream.in_uint8();
+            // dataPriority = high 2 bits,
+            this->dataPriority = (magic >> 6) & 3;
+            // segmentation = end 2 bits
+            this->segmentation = (magic >> 4) & 3;
+            // low 4 bits of magic are padding
+
+            // length of payload, per_encoded
+            this->payload_len = stream.in_per_length();
+            this->header_size = stream.p - stream.data;
         }
     };
 
