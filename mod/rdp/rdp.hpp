@@ -1127,7 +1127,30 @@ struct mod_rdp : public client_mod {
                     if (this->verbose){
                         LOG(LOG_INFO, "Rdp:: License Request");
                     }
-                    this->lic_layer.rdp_lic_process_demand(this->nego.trans, payload, hostname, username, userid, licence_issued, this->encrypt, this->crypt_level, this->use_rdp5);
+                    {
+                        /* Retrieve the server random from the incoming packet */
+                        const uint8_t * server_random = payload.in_uint8p(SEC_RANDOM_SIZE);
+                        this->lic_layer.set_licence_keys(server_random);
+
+                        BStream stream(65535);
+
+                        this->lic_layer.rdp_lic_process_demand(stream, hostname, username, 
+                                                               licence_issued, 
+                                                               this->encrypt, this->crypt_level, 
+                                                               this->use_rdp5);
+                        BStream x224_header(256);
+                        BStream mcs_header(256);
+
+                        size_t payload_len = stream.end - stream.data;
+                        MCS::SendDataRequest_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+                        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+                        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+                        size_t x224_header_len = x224_header.end - x224_header.data;
+
+                        this->nego.trans->send(x224_header.data, x224_header_len);
+                        this->nego.trans->send(mcs_header.data, mcs_header_len);
+                        this->nego.trans->send(stream.data, payload_len);
+                    }
                     break;
                 case PLATFORM_CHALLENGE:
                     if (this->verbose){
