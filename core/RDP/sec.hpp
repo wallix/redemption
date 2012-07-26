@@ -807,23 +807,25 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     /* Send the client random to the server */
     //      if (this->encryption)
     BStream stream(65536);
-    Mcs mcs(stream);
-    mcs.emit_begin(MCS::MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
-
     stream.out_uint32_le(SEC_EXCHANGE_PKT);
     stream.out_uint32_le(server_public_key_len + SEC_PADDING_SIZE);
     LOG(LOG_INFO, "Server public key is %d bytes long", server_public_key_len);
     stream.out_copy_bytes(client_crypt_random, server_public_key_len);
     stream.out_clear_bytes(SEC_PADDING_SIZE);
-
-    mcs.emit_end();
     stream.end = stream.p;
 
     BStream x224_header(256);
-    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+    BStream mcs_header(256);
 
-    trans->send(x224_header.data, x224_header.end - x224_header.data);
-    trans->send(stream.data, stream.end - stream.data);
+    size_t payload_len = stream.end - stream.data;
+    MCS::SendDataRequest_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+    size_t mcs_header_len = mcs_header.end - mcs_header.data;
+    X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+    size_t x224_header_len = x224_header.end - x224_header.data;
+
+    trans->send(x224_header.data, x224_header_len);
+    trans->send(mcs_header.data, mcs_header_len);
+    trans->send(stream.data, payload_len);
 }
 
 

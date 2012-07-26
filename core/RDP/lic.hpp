@@ -188,8 +188,6 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
 {
     LOG(LOG_INFO, "send_lic_initial");
     BStream stream(65536);
-    Mcs mcs(stream);
-    mcs.emit_begin(MCS::MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
 
     stream.out_uint32_le(SEC_LICENSE_PKT);
     stream.out_uint8(LICENSE_REQUEST);
@@ -243,20 +241,20 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
    };
 
     stream.out_copy_bytes((char*)lic1, 314);
-
-//    BStream stream(32768);
-//    X224Out tpdu(X224::DT_TPDU, stream);
-//    McsOut sdin_out(stream, MCS::MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
-//    stream.out_copy_bytes((char*)lic1, 322);
-
-    mcs.emit_end();
     stream.end = stream.p;
 
-    BStream x224_header;
-    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+    BStream x224_header(256);
+    BStream mcs_header(256);
 
-    trans->send(x224_header.data, x224_header.end - x224_header.data);
-    trans->send(stream.data, stream.end - stream.data);
+    size_t payload_len = stream.end - stream.data;
+    MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+    size_t mcs_header_len = mcs_header.end - mcs_header.data;
+    X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+    size_t x224_header_len = x224_header.end - x224_header.data;
+
+    trans->send(x224_header.data, x224_header_len);
+    trans->send(mcs_header.data, mcs_header_len);
+    trans->send(stream.data, payload_len);
 }
 
 
@@ -270,17 +268,21 @@ static inline void send_lic_response(Transport * trans, int userid) throw (Error
                            };
 
     BStream stream(65536);
-    Mcs mcs(stream);
-    mcs.emit_begin(MCS::MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic2, 20);
-    mcs.emit_end();
     stream.end = stream.p;
 
     BStream x224_header(256);
-    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+    BStream mcs_header(256);
 
-    trans->send(x224_header.data, x224_header.end - x224_header.data);
-    trans->send(stream.data, stream.end - stream.data);
+    size_t payload_len = stream.end - stream.data;
+    MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+    size_t mcs_header_len = mcs_header.end - mcs_header.data;
+    X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+    size_t x224_header_len = x224_header.end - x224_header.data;
+
+    trans->send(x224_header.data, x224_header_len);
+    trans->send(mcs_header.data, mcs_header_len);
+    trans->send(stream.data, payload_len);
 }
 
 static inline void send_media_lic_response(Transport * trans, int userid) throw (Error)
@@ -294,17 +296,21 @@ static inline void send_media_lic_response(Transport * trans, int userid) throw 
                              };
 
     BStream stream(65536);
-    Mcs mcs(stream);
-    mcs.emit_begin(MCS::MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic3, 20);
-    mcs.emit_end();
     stream.end = stream.p;
 
     BStream x224_header(256);
-    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+    BStream mcs_header(256);
 
-    trans->send(x224_header.data, x224_header.end - x224_header.data);
-    trans->send(stream.data, stream.end - stream.data);
+    size_t payload_len = stream.end - stream.data;
+    MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+    size_t mcs_header_len = mcs_header.end - mcs_header.data;
+    X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+    size_t x224_header_len = x224_header.end - x224_header.data;
+
+    trans->send(x224_header.data, x224_header_len);
+    trans->send(mcs_header.data, mcs_header_len);
+    trans->send(stream.data, payload_len);
 }
 
 
@@ -475,8 +481,6 @@ struct RdpLicence {
         int length = 58;
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCS::MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, encrypt);
         sec.emit_begin( SEC_LICENSE_PKT );
 
@@ -512,14 +516,20 @@ struct RdpLicence {
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
         sec.emit_end();
-        mcs.emit_end();
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.p - stream.data);
+        BStream mcs_header(256);
 
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        size_t payload_len = stream.end - stream.data;
+        MCS::SendDataRequest_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+        size_t x224_header_len = x224_header.end - x224_header.data;
+
+        trans->send(x224_header.data, x224_header_len);
+        trans->send(mcs_header.data, mcs_header_len);
+        trans->send(stream.data, payload_len);
     }
 
 
@@ -712,8 +722,6 @@ struct RdpLicence {
         int length = 128 + userlen + hostlen;
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCS::MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, encrypt);
         sec.emit_begin( SEC_LICENSE_PKT );
 
@@ -831,14 +839,20 @@ struct RdpLicence {
         stream.out_copy_bytes(hostname, hostlen);
 
         sec.emit_end();
-        mcs.emit_end();
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+        BStream mcs_header(256);
 
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        size_t payload_len = stream.end - stream.data;
+        MCS::SendDataRequest_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+        size_t x224_header_len = x224_header.end - x224_header.data;
+
+        trans->send(x224_header.data, x224_header_len);
+        trans->send(mcs_header.data, mcs_header_len);
+        trans->send(stream.data, payload_len);
     }
 
     void rdp_lic_present(Transport * trans, uint8_t* client_random, uint8_t* rsa_data,
@@ -846,8 +860,6 @@ struct RdpLicence {
                 uint8_t* signature, int userid, const int licence_issued, int use_rdp5)
     {
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCS::MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
 
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
@@ -871,14 +883,20 @@ struct RdpLicence {
         stream.out_copy_bytes(hwid, LICENCE_HWID_SIZE);
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
-        mcs.emit_end();
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+        BStream mcs_header(256);
 
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        size_t payload_len = stream.end - stream.data;
+        MCS::SendDataRequest_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+        size_t x224_header_len = x224_header.end - x224_header.data;
+
+        trans->send(x224_header.data, x224_header_len);
+        trans->send(mcs_header.data, mcs_header_len);
+        trans->send(stream.data, payload_len);
     }
 
 };
