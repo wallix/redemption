@@ -189,7 +189,7 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
     LOG(LOG_INFO, "send_lic_initial");
     BStream stream(65536);
     Mcs mcs(stream);
-    mcs.emit_begin(MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
+    mcs.emit_begin(MCS::MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
 
     stream.out_uint32_le(SEC_LICENSE_PKT);
     stream.out_uint8(LICENSE_REQUEST);
@@ -246,7 +246,7 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
 
 //    BStream stream(32768);
 //    X224Out tpdu(X224::DT_TPDU, stream);
-//    McsOut sdin_out(stream, MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
+//    McsOut sdin_out(stream, MCS::MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
 //    stream.out_copy_bytes((char*)lic1, 322);
 
     mcs.emit_end();
@@ -271,7 +271,7 @@ static inline void send_lic_response(Transport * trans, int userid) throw (Error
 
     BStream stream(65536);
     Mcs mcs(stream);
-    mcs.emit_begin(MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
+    mcs.emit_begin(MCS::MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic2, 20);
     mcs.emit_end();
     stream.end = stream.p;
@@ -295,7 +295,7 @@ static inline void send_media_lic_response(Transport * trans, int userid) throw 
 
     BStream stream(65536);
     Mcs mcs(stream);
-    mcs.emit_begin(MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
+    mcs.emit_begin(MCS::MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic3, 20);
     mcs.emit_end();
     stream.end = stream.p;
@@ -476,7 +476,7 @@ struct RdpLicence {
 
         BStream stream(65536);
         Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
+        mcs.emit_begin(MCS::MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, encrypt);
         sec.emit_begin( SEC_LICENSE_PKT );
 
@@ -713,7 +713,7 @@ struct RdpLicence {
 
         BStream stream(65536);
         Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
+        mcs.emit_begin(MCS::MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, encrypt);
         sec.emit_begin( SEC_LICENSE_PKT );
 
@@ -847,7 +847,7 @@ struct RdpLicence {
     {
         BStream stream(65536);
         Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
+        mcs.emit_begin(MCS::MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
 
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;

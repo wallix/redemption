@@ -994,13 +994,10 @@ struct mod_rdp : public client_mod {
             BStream stream(65536);
             X224::RecvFactory f(*this->nego.trans, stream);
             X224::DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
-            SubStream payload(stream, x224.header_size);
+            SubStream mcs_data(stream, x224.header_size);
+            MCS::SendDataIndication_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+            SubStream payload(mcs_data, mcs.header_size);
 
-            Mcs mcs(payload);
-            mcs.recv_begin();
-            if ((mcs.opcode >> 2) != MCSPDU_SendDataIndication) {
-                throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
-            }
             Sec sec(payload, this->decrypt);
             sec.recv_begin(true);
 
@@ -1238,15 +1235,10 @@ struct mod_rdp : public client_mod {
             BStream stream(65536);
             X224::RecvFactory f(*this->nego.trans, stream);
             X224::DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
-            SubStream payload(stream, x224.header_size);
+            SubStream mcs_data(stream, x224.header_size);
+            MCS::SendDataIndication_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+            SubStream payload(mcs_data, mcs.header_size);
 
-//            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:X224");
-            Mcs mcs(payload);
-            mcs.recv_begin();
-            if ((mcs.opcode >> 2) != MCSPDU_SendDataIndication) {
-                LOG(LOG_ERR, "Error: MCSPDU_SendDataIndication TPDU expected, got %u", (mcs.opcode >> 2));
-                throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
-            }
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");
             Sec sec(payload, this->decrypt);
             sec.recv_begin(this->crypt_level);
@@ -1281,12 +1273,12 @@ struct mod_rdp : public client_mod {
 //                }
             }
 
-            if (mcs.chan_id != MCS_GLOBAL_CHANNEL){
+            if (mcs.channelId != MCS_GLOBAL_CHANNEL){
 //                LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:Channel");
                 size_t num_channel_src = this->mod_channel_list.size();
                 for (size_t index = 0; index < num_channel_src; index++){
                     const ChannelDef & mod_channel_item = this->mod_channel_list[index];
-                    if (mcs.chan_id == mod_channel_item.chanid){
+                    if (mcs.channelId == mod_channel_item.chanid){
                         num_channel_src = index;
                         break;
                     }

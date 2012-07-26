@@ -763,14 +763,10 @@ static inline void recv_security_exchange_PDU(
     BStream stream(65536);
     X224::RecvFactory f(*trans, stream);
     X224::DT_TPDU_Recv x224(*trans, stream, f.length);
-    SubStream payload(stream, x224.header_size);
+    SubStream mcs_data(stream, x224.header_size);
+    MCS::SendDataRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
 
-    Mcs mcs(payload);
-    mcs.recv_begin();
-
-    if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
-        throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-    }
+    SubStream payload(mcs_data, mcs.header_size);
 
     Sec sec(payload, decrypt);
     sec.emit_begin(true);
@@ -785,8 +781,6 @@ static inline void recv_security_exchange_PDU(
 
     memcpy(client_crypt_random, payload.in_uint8p(len), len);
     payload.in_skip_bytes(SEC_PADDING_SIZE);
-
-    mcs.recv_end();
 
     uint8_t client_random[64];
     memset(client_random, 0, 64);
@@ -814,7 +808,7 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     //      if (this->encryption)
     BStream stream(65536);
     Mcs mcs(stream);
-    mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
+    mcs.emit_begin(MCS::MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
 
     stream.out_uint32_le(SEC_EXCHANGE_PKT);
     stream.out_uint32_le(server_public_key_len + SEC_PADDING_SIZE);

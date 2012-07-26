@@ -428,16 +428,17 @@ public:
         if (this->verbose){
             LOG(LOG_INFO, "Front::disconnect()");
         }
-        BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_DisconnectProviderUltimatum, 0, 0);
-        mcs.emit_end();
 
         BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+        BStream mcs_data(256);
 
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        MCS::DisconnectProviderUltimatum_Send(mcs_data, 0, MCS::PER_ENCODING);
+        size_t mcs_data_len = mcs_data.end - mcs_data.data;
+        X224::DT_TPDU_Send(x224_header, mcs_data_len);
+        size_t x224_header_len = x224_header.end - x224_header.data;
+
+        trans->send(x224_header.data, x224_header_len);
+        trans->send(mcs_data.data, mcs_data_len);
     }
 
     void set_console_session(bool b)
@@ -465,8 +466,6 @@ public:
         }
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, channel.chanid);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
 
@@ -478,14 +477,20 @@ public:
         stream.out_copy_bytes(data, chunk_size);
 
         sec.emit_end();
-        mcs.emit_end();
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+        BStream mcs_header(256);
 
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        size_t payload_len = stream.end - stream.data;
+        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, channel.chanid, 1, 3, payload_len, MCS::PER_ENCODING);
+        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+        size_t x224_header_len = x224_header.end - x224_header.data;
+
+        this->trans->send(x224_header.data, x224_header_len);
+        this->trans->send(mcs_header.data, mcs_header_len);
+        this->trans->send(stream.data, payload_len);
 
         if (this->verbose){
             LOG(LOG_INFO, "Front::send_to_channel done");
@@ -515,8 +520,6 @@ public:
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
             BStream stream(65536);
-            Mcs mcs(stream);
-            mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
             Sec sec(stream, this->encrypt);
             sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
             ShareControl sctrl(stream);
@@ -542,14 +545,20 @@ public:
             sdata.emit_end();
             sctrl.emit_end();
             sec.emit_end();
-            mcs.emit_end();
             stream.end = stream.p;
 
             BStream x224_header(256);
-            X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+            BStream mcs_header(256);
 
-            trans->send(x224_header.data, x224_header.end - x224_header.data);
-            trans->send(stream.data, stream.end - stream.data);
+            size_t payload_len = stream.end - stream.data;
+            MCS::SendDataIndication_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+            size_t mcs_header_len = mcs_header.end - mcs_header.data;
+            X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+            size_t x224_header_len = x224_header.end - x224_header.data;
+
+            this->trans->send(x224_header.data, x224_header_len);
+            this->trans->send(mcs_header.data, mcs_header_len);
+            this->trans->send(stream.data, payload_len);
 
             this->palette_sent = true;
         }
@@ -672,8 +681,6 @@ public:
         }
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
@@ -752,14 +759,20 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+        BStream mcs_header(256);
 
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        size_t payload_len = stream.end - stream.data;
+        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+        size_t x224_header_len = x224_header.end - x224_header.data;
+
+        this->trans->send(x224_header.data, x224_header_len);
+        this->trans->send(mcs_header.data, mcs_header_len);
+        this->trans->send(stream.data, payload_len);
 
         if (this->verbose){
             LOG(LOG_INFO, "Front::send_pointer done");
@@ -803,8 +816,6 @@ public:
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
         }
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
@@ -821,14 +832,20 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+        BStream mcs_header(256);
 
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        size_t payload_len = stream.end - stream.data;
+        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+        size_t x224_header_len = x224_header.end - x224_header.data;
+
+        this->trans->send(x224_header.data, x224_header_len);
+        this->trans->send(mcs_header.data, mcs_header_len);
+        this->trans->send(stream.data, payload_len);
 
         if (this->verbose){
             LOG(LOG_INFO, "Front::set_pointer done");
@@ -1872,8 +1889,6 @@ public:
             LOG(LOG_INFO, "send_data_update_sync");
         }
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
@@ -1889,14 +1904,20 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+        BStream mcs_header(256);
 
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        size_t payload_len = stream.end - stream.data;
+        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+        size_t x224_header_len = x224_header.end - x224_header.data;
+
+        this->trans->send(x224_header.data, x224_header_len);
+        this->trans->send(mcs_header.data, mcs_header_len);
+        this->trans->send(stream.data, payload_len);
     }
 
 
@@ -1907,8 +1928,6 @@ public:
         LOG(LOG_INFO, "Front::send_demand_active");
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
@@ -2012,14 +2031,20 @@ public:
         // Packet trailer
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+        BStream mcs_header(256);
 
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        size_t payload_len = stream.end - stream.data;
+        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+        size_t x224_header_len = x224_header.end - x224_header.data;
+
+        this->trans->send(x224_header.data, x224_header_len);
+        this->trans->send(mcs_header.data, mcs_header_len);
+        this->trans->send(stream.data, payload_len);
     }
 
 
@@ -2256,8 +2281,6 @@ public:
         LOG(LOG_INFO, "send_synchronize");
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
@@ -2273,14 +2296,20 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+        BStream mcs_header(256);
 
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        size_t payload_len = stream.end - stream.data;
+        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+        size_t x224_header_len = x224_header.end - x224_header.data;
+
+        this->trans->send(x224_header.data, x224_header_len);
+        this->trans->send(mcs_header.data, mcs_header_len);
+        this->trans->send(stream.data, payload_len);
     }
 
 // 2.2.1.15.1 Control PDU Data (TS_CONTROL_PDU)
@@ -2310,8 +2339,6 @@ public:
         LOG(LOG_INFO, "send_control action=%u", action);
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
@@ -2328,14 +2355,20 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+        BStream mcs_header(256);
 
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        size_t payload_len = stream.end - stream.data;
+        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+        size_t x224_header_len = x224_header.end - x224_header.data;
+
+        this->trans->send(x224_header.data, x224_header_len);
+        this->trans->send(mcs_header.data, mcs_header_len);
+        this->trans->send(stream.data, payload_len);
     }
 
 
@@ -2370,8 +2403,6 @@ public:
                               };
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
@@ -2386,14 +2417,20 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+        BStream mcs_header(256);
 
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        size_t payload_len = stream.end - stream.data;
+        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+        size_t x224_header_len = x224_header.end - x224_header.data;
+
+        this->trans->send(x224_header.data, x224_header_len);
+        this->trans->send(mcs_header.data, mcs_header_len);
+        this->trans->send(stream.data, payload_len);
     }
 
     /* PDUTYPE_DATAPDU */
@@ -2570,8 +2607,6 @@ public:
                 // if user really wants to disconnect */
 
                 BStream stream(65536);
-                Mcs mcs(stream);
-                mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
                 Sec sec(stream, this->encrypt);
                 sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
                 ShareControl sctrl(stream);
@@ -2583,14 +2618,20 @@ public:
                 sdata_out.emit_end();
                 sctrl.emit_end();
                 sec.emit_end();
-                mcs.emit_end();
                 stream.end = stream.p;
 
                 BStream x224_header(256);
-                X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+                BStream mcs_header(256);
 
-                trans->send(x224_header.data, x224_header.end - x224_header.data);
-                trans->send(stream.data, stream.end - stream.data);
+                size_t payload_len = stream.end - stream.data;
+                MCS::SendDataIndication_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+                size_t mcs_header_len = mcs_header.end - mcs_header.data;
+                X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+                size_t x224_header_len = x224_header.end - x224_header.data;
+
+                this->trans->send(x224_header.data, x224_header_len);
+                this->trans->send(mcs_header.data, mcs_header_len);
+                this->trans->send(stream.data, payload_len);
             }
         break;
         case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
@@ -2729,8 +2770,6 @@ public:
         LOG(LOG_INFO, "send_deactive");
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
@@ -2739,14 +2778,20 @@ public:
         // Packet trailer
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
         stream.end = stream.p;
 
         BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+        BStream mcs_header(256);
 
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        size_t payload_len = stream.end - stream.data;
+        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
+        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+        size_t x224_header_len = x224_header.end - x224_header.data;
+
+        this->trans->send(x224_header.data, x224_header_len);
+        this->trans->send(mcs_header.data, mcs_header_len);
+        this->trans->send(stream.data, payload_len);
     }
 
 
