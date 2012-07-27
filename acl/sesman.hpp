@@ -50,10 +50,17 @@ class SessionManager {
 
     struct ClientSocketTransport * auth_trans_t;
     wait_obj * auth_event;
+    int keepalive_grace_delay;
+    int max_tick;
     uint32_t verbose;
 
-    SessionManager(ModContext & context, uint32_t verbose)
-        : mod_state(MOD_STATE_INIT), context(context), tick_count(0), verbose(verbose)
+    SessionManager(ModContext & context, int keepalive_grace_delay, int max_tick, uint32_t verbose)
+        : mod_state(MOD_STATE_INIT)
+        , context(context)
+        , tick_count(0)
+        , keepalive_grace_delay(keepalive_grace_delay)
+        , max_tick(max_tick)
+        , verbose(verbose)
     {
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::SessionManager");
@@ -187,8 +194,8 @@ class SessionManager {
 
     bool keep_alive_or_inactivity(long & keepalive_time, long & now, Transport * trans)
     {
-        int keepalive_grace_delay = 30;
-        int maxtick = 30;
+        int keepalive_grace_delay = this->keepalive_grace_delay;
+        int maxtick = this->max_tick;
 
         // Keepalive Data exchange with sesman
         if (this->auth_trans_t){

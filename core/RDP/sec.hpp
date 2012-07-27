@@ -617,29 +617,35 @@ enum {
     {
         uint32_t basicSecurityHeader;
         uint32_t length;
-        uint8_t client_crypt_random[512];
+        uint8_t * client_crypt_random;
 
         SecExchangePacket_Recv(Stream & stream, uint16_t available_len)
         {
-            this->basicSecurityHeader = stream.in_uint32_le();
+            this->basicSecurityHeader = stream.in_uint32_le() & 0xFFFF;
+
+            if (!(this->basicSecurityHeader & SEC::SEC_EXCHANGE_PKT)) {
+                LOG(LOG_ERR, "Expecting SEC::SEC_EXCHANGE_PKT, got (%x)", this->basicSecurityHeader);
+                throw Error(ERR_SEC);
+            }
             this->length = stream.in_uint32_le();
+            this->client_crypt_random = (uint8_t*)calloc(this->length, 1);
+            stream.in_copy_bytes(this->client_crypt_random, length);
+        }
 
-//            memcpy(client_crypt_random, stream.in_uint8p(len), len);
-//            stream.in_skip_bytes(SEC_PADDING_SIZE);
-
-//            uint8_t client_random[64];
-//            memset(client_random, 0, 64);
-
-//            ssl_mod_exp(client_random, 64, client_crypt_random, 64, pub_mod, 64, pri_exp, 64);
-
-//            // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
-//            rdp_sec_generate_keys(decrypt, encrypt, encrypt.sign_key, client_random, server_random, encrypt.rc4_key_size);
+        ~SecExchangePacket_Recv(){
+            free(this->client_crypt_random);
         }
     };
 
     struct SecExchangePacket_Send
     {
-        SecExchangePacket_Send(Stream & stream){
+        SecExchangePacket_Send(Stream & stream, const uint8_t * client_encrypted_key, size_t keylen_in_bytes){
+            stream.out_uint32_le(SEC::SEC_EXCHANGE_PKT);
+            stream.out_uint32_le(keylen_in_bytes + 8);
+            stream.out_copy_bytes(client_encrypted_key, keylen_in_bytes);
+            const uint8_t null[8] = {};
+            stream.out_copy_bytes(null, 8);
+            stream.mark_end();
         }
     };
 
@@ -760,63 +766,6 @@ class Sec
 }; // END CLASS Sec
 
 
-static inline void recv_security_exchange_PDU(
-                        Transport * trans,
-                        CryptContext & decrypt,
-                        CryptContext & encrypt,
-                        uint8_t (&server_random)[32],
-                        uint8_t (&pub_mod)[512],
-                        uint8_t (&pri_exp)[512])
-{
-    uint8_t client_crypt_random[512];
-    memset(client_crypt_random, 0, 512);
-
-    BStream stream(65536);
-    X224::RecvFactory f(*trans, stream);
-    X224::DT_TPDU_Recv x224(*trans, stream, f.length);
-    SubStream mcs_data(stream, x224.header_size);
-    MCS::SendDataRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
-    SubStream payload(mcs_data, mcs.header_size);
-//    SEC::SecExchangePacket_Recv(payload, mcs.payload_size);
-
-    LOG(LOG_INFO, "SEC_EXCHANGE_PKT");
-    hexdump_c(payload.data, payload.size());
-
-    Sec sec(payload, decrypt);
-    sec.recv_begin(true);
-    if (!sec.flags & SEC::SEC_EXCHANGE_PKT) {
-        throw Error(ERR_SEC_EXPECTING_CLIENT_RANDOM);
-    }
-    uint32_t len = payload.in_uint32_le() - SEC_PADDING_SIZE;
-
-    if (len != 64){
-        throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
-    }
-
-    memcpy(client_crypt_random, payload.in_uint8p(len), len);
-    payload.in_skip_bytes(SEC_PADDING_SIZE);
-
-    uint8_t client_random[64];
-    memset(client_random, 0, 64);
-
-    ssl_mod_exp(client_random, 64, client_crypt_random, 64, pub_mod, 64, pri_exp, 64);
-
-    // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
-    rdp_sec_generate_keys(decrypt, encrypt, encrypt.sign_key, client_random, server_random, encrypt.rc4_key_size);
-}
-
-static inline void send_security_exchange_PDU(Stream & stream, uint32_t server_public_key_len, uint8_t * client_crypt_random)
-{
-    LOG(LOG_INFO, "Iso Layer : setting encryption");
-    /* Send the client random to the server */
-    //      if (this->encryption)
-    stream.out_uint32_le(SEC::SEC_EXCHANGE_PKT);
-    stream.out_uint32_le(server_public_key_len + SEC_PADDING_SIZE);
-    LOG(LOG_INFO, "Server public key is %d bytes long", server_public_key_len);
-    stream.out_copy_bytes(client_crypt_random, server_public_key_len);
-    stream.out_clear_bytes(SEC_PADDING_SIZE);
-    stream.mark_end();
-}
 
 
 #endif

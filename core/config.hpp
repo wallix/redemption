@@ -244,6 +244,10 @@ struct Inifile {
         int h_width;
         int h_qscale;
 
+        // keepalive and no traffic auto deconnexion
+        int max_tick;
+        int keepalive_grace_delay;
+
         struct {
             uint32_t x224;
             uint32_t mcs;
