@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         };
         check_datas(stream.p-stream.data, stream.data, 30, datas, "PatBlt 1");
 
-        stream.end = stream.p; stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.data;
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         };
         check_datas(stream.p-stream.data, stream.data, 23, datas, "PatBlt 2");
 
-        stream.end = stream.p; stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.data;
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         };
         check_datas(stream.p-stream.data, stream.data, 28, datas, "PatBlt 3");
 
-        stream.end = stream.p; stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.data;
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();

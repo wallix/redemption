@@ -99,7 +99,7 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
                     break;
                 default:
                     caprecorder.trans->send(stream.data,
-                                            stream.end - stream.data);
+                                            stream.size());
                     recorder.ignore_chunks();
                     break;
             }

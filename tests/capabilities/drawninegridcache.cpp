@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityDrawNineGridCacheEmit)
 
     BStream stream(1024);
     drawninegridcache_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     DrawNineGridCacheCaps drawninegridcache_caps2;

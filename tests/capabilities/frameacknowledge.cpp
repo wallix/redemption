@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFrameAcknowledgeEmit)
 
     BStream stream(1024);
     frameacknowledge_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     FrameAcknowledgeCaps frameacknowledge_caps2;

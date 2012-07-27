@@ -34,8 +34,21 @@
 #include <deque>
 #include <algorithm>
 
-#include "stream.hpp"
 #include "constants.hpp"
+#include "stream.hpp"
+#include "transport.hpp"
+#include "RDP/x224.hpp"
+#include "RDP/nego.hpp"
+#include "RDP/mcs.hpp"
+#include "RDP/lic.hpp"
+#include "RDP/logon.hpp"
+#include "channel_list.hpp"
+#include "RDP/gcc.hpp"
+#include "RDP/sec.hpp"
+#include "colors.hpp"
+#include "RDP/capabilities.hpp"
+#include "RDP/connection.hpp"
+
 #include "ssl_calls.hpp"
 #include "altoco.hpp"
 #include "rect.hpp"
@@ -53,7 +66,6 @@
 #include "callback.hpp"
 #include "colors.hpp"
 #include "altoco.hpp"
-#include "transport.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/capabilities.hpp"
@@ -428,16 +440,17 @@ public:
         if (this->verbose){
             LOG(LOG_INFO, "Front::disconnect()");
         }
-        BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_DisconnectProviderUltimatum, 0, 0);
-        mcs.emit_end();
 
         BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
+        BStream mcs_data(256);
 
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        MCS::DisconnectProviderUltimatum_Send(mcs_data, 0, MCS::PER_ENCODING);
+        size_t mcs_data_len = mcs_data.end - mcs_data.data;
+        X224::DT_TPDU_Send(x224_header, mcs_data_len);
+        size_t x224_header_len = x224_header.end - x224_header.data;
+
+        trans->send(x224_header.data, x224_header_len);
+        trans->send(mcs_data.data, mcs_data_len);
     }
 
     void set_console_session(bool b)
@@ -465,10 +478,8 @@ public:
         }
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, channel.chanid);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
 
         stream.out_uint32_le(length);
         if (channel.flags & ChannelDef::CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -478,14 +489,9 @@ public:
         stream.out_copy_bytes(data, chunk_size);
 
         sec.emit_end();
-        mcs.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
-        BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        this->send_data_indication(channel.chanid, stream);
 
         if (this->verbose){
             LOG(LOG_INFO, "Front::send_to_channel done");
@@ -515,10 +521,8 @@ public:
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
             BStream stream(65536);
-            Mcs mcs(stream);
-            mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
             Sec sec(stream, this->encrypt);
-            sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+            sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
             ShareControl sctrl(stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareData sdata(stream);
@@ -542,14 +546,9 @@ public:
             sdata.emit_end();
             sctrl.emit_end();
             sec.emit_end();
-            mcs.emit_end();
-            stream.end = stream.p;
+            stream.mark_end();
 
-            BStream x224_header(256);
-            X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-            trans->send(x224_header.data, x224_header.end - x224_header.data);
-            trans->send(stream.data, stream.end - stream.data);
+            this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
 
             this->palette_sent = true;
         }
@@ -672,10 +671,8 @@ public:
         }
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -752,14 +749,9 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
-        BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
 
         if (this->verbose){
             LOG(LOG_INFO, "Front::send_pointer done");
@@ -803,10 +795,8 @@ public:
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
         }
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -821,14 +811,9 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
-        BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
 
         if (this->verbose){
             LOG(LOG_INFO, "Front::set_pointer done");
@@ -868,9 +853,9 @@ public:
                 BStream stream(65536);
                 X224::RecvFactory fac_x224(*this->trans, stream);
                 X224::CR_TPDU_Recv x224(*this->trans, stream, fac_x224.length);
-                if (x224.header_size != (size_t)(stream.end - stream.data)){
+                if (x224.header_size != (size_t)(stream.size())){
                     LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
-                                 " %d bytes remains", stream.end - stream.data - x224.header_size);
+                                 " %d bytes remains", stream.size() - x224.header_size);
                 }
             }
 
@@ -880,7 +865,7 @@ public:
             {
                 BStream stream(256);
                 X224::CC_TPDU_Send x224(stream, 0, 0, 0);
-                this->trans->send(stream.data, stream.end - stream.data);
+                this->trans->send(stream.data, stream.size());
             }
             // Basic Settings Exchange
             // -----------------------
@@ -905,17 +890,341 @@ public:
                 LOG(LOG_INFO, "Front::incoming::channel_list : %u", this->channel_list.size());
             }
 
-            mcs_recv_connect_initial(this->trans, &this->client_info, this->channel_list);
+            BStream x224_data(65536);
+            X224::RecvFactory f(*this->trans, x224_data);
+            X224::DT_TPDU_Recv x224(*this->trans, x224_data, f.length);
 
-            mcs_send_connect_response(
-                this->trans,
-                &this->client_info,
-                this->channel_list,
-                this->server_random,
-                this->encrypt.rc4_key_size,
-                this->pub_mod,
-                this->pri_exp,
-                this->gen);
+            SubStream mcs_data(x224_data, x224.header_size);
+            MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(mcs_data, x224.payload_size, MCS::BER_ENCODING);
+
+            SubStream payload(mcs_data, mcs_ci.header_size);
+
+        // GCC User Data
+        // -------------
+            payload.in_skip_bytes(23);
+
+        // 2.2.1.3.1 User Data Header (TS_UD_HEADER)
+        // =========================================
+
+        // type (2 bytes): A 16-bit, unsigned integer. The type of the data
+        //                 block that this header precedes.
+
+        // +-------------------+-------------------------------------------------------+
+        // | CS_CORE 0xC001    | The data block that follows contains Client Core      |
+        // |                   | Data (section 2.2.1.3.2).                             |
+        // +-------------------+-------------------------------------------------------+
+        // | CS_SECURITY 0xC002| The data block that follows contains Client           |
+        // |                   | Security Data (section 2.2.1.3.3).                    |
+        // +-------------------+-------------------------------------------------------+
+        // | CS_NET 0xC003     | The data block that follows contains Client Network   |
+        // |                   | Data (section 2.2.1.3.4).                             |
+        // +-------------------+-------------------------------------------------------+
+        // | CS_CLUSTER 0xC004 | The data block that follows contains Client Cluster   |
+        // |                   | Data (section 2.2.1.3.5).                             |
+        // +-------------------+-------------------------------------------------------+
+        // | CS_MONITOR 0xC005 | The data block that follows contains Client           |
+        // |                   | Monitor Data (section 2.2.1.3.6).                     |
+        // +-------------------+-------------------------------------------------------+
+        // | SC_CORE 0x0C01    | The data block that follows contains Server Core      |
+        // |                   | Data (section 2.2.1.4.2)                              |
+        // +-------------------+-------------------------------------------------------+
+        // | SC_SECURITY 0x0C02| The data block that follows contains Server           |
+        // |                   | Security Data (section 2.2.1.4.3).                    |
+        // +-------------------+-------------------------------------------------------+
+        // | SC_NET 0x0C03     | The data block that follows contains Server Network   |
+        // |                   | Data (section 2.2.1.4.4)                              |
+        // +-------------------+-------------------------------------------------------+
+
+        // length (2 bytes): A 16-bit, unsigned integer. The size in bytes of the data
+        //   block, including this header.
+
+            while (payload.check_rem(4)) {
+                uint8_t * current_header = payload.p;
+                uint16_t tag = payload.in_uint16_le();
+                uint16_t length = payload.in_uint16_le();
+                if (length < 4 || !payload.check_rem(length - 4)) {
+                    LOG(LOG_ERR,
+                        "error reading block tag %d size %d\n",
+                        tag, length);
+                    break;
+                }
+
+                switch (tag){
+                    case CS_CORE:
+                    {
+                        CSCoreGccUserData cs_core;
+                        cs_core.recv(payload, length);
+                        client_info.width = cs_core.desktopWidth;
+                        client_info.height = cs_core.desktopHeight;
+                        client_info.keylayout = cs_core.keyboardLayout;
+                        client_info.build = cs_core.clientBuild;
+                        for (size_t i = 0; i < 16 ; i++){
+                            client_info.hostname[i] = cs_core.clientName[i];
+                        }
+                        client_info.bpp = 8;
+                        switch (cs_core.postBeta2ColorDepth){
+                        case 0xca01:
+                            client_info.bpp = (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
+                        break;
+                        case 0xca02:
+                            client_info.bpp = 15;
+                        break;
+                        case 0xca03:
+                            client_info.bpp = 16;
+                        break;
+                        case 0xca04:
+                            client_info.bpp = 24;
+                        break;
+                        default:
+                        break;
+                        }
+                        cs_core.log("Receiving from Client");
+                    }
+                    break;
+                    case CS_SECURITY:
+                        parse_mcs_data_cs_security(payload);
+                    break;
+                    case CS_NET:
+                        parse_mcs_data_cs_net(payload, &client_info, this->channel_list);
+                    break;
+                    case CS_CLUSTER:
+                    {
+                        CSClusterGccUserData cs_cluster;
+                        cs_cluster.recv(payload, length);
+                        client_info.console_session =
+                            (0 != (cs_cluster.flags & CSClusterGccUserData::REDIRECTED_SESSIONID_FIELD_VALID));
+                        cs_cluster.log("Receiving from Client");
+                    }
+                    break;
+                    case CS_MONITOR:
+                    {
+                        CSMonitorGccUserData cs_monitor;
+                        cs_monitor.recv(payload, length);
+                        cs_monitor.log("Receiving from Client");
+                    }
+                    break;
+                    default:
+                        LOG(LOG_INFO, "Unexpected data block tag %x\n", tag);
+                    break;
+                }
+                payload.p = current_header + length;
+            }
+
+            BStream stream(65536);
+
+            // GCC Conference Create Response
+            // ------------------------------
+
+            // ConferenceCreateResponse Parameters
+            // -----------------------------------
+
+            // Generic definitions used in parameter descriptions:
+
+            // simpleTextFirstCharacter UniversalString ::= {0, 0, 0, 0}
+
+            // simpleTextLastCharacter UniversalString ::= {0, 0, 0, 255}
+
+            // SimpleTextString ::=  BMPString (SIZE (0..255)) (FROM (simpleTextFirstCharacter..simpleTextLastCharacter))
+
+            // TextString ::= BMPString (SIZE (0..255)) -- Basic Multilingual Plane of ISO/IEC 10646-1 (Unicode)
+
+            // SimpleNumericString ::= NumericString (SIZE (1..255)) (FROM ("0123456789"))
+
+            // DynamicChannelID ::= INTEGER (1001..65535) -- Those created and deleted by MCS
+
+            // UserID ::= DynamicChannelID
+
+            // H221NonStandardIdentifier ::= OCTET STRING (SIZE (4..255))
+            //      -- First four octets shall be country code and
+            //      -- Manufacturer code, assigned as specified in
+            //      -- Annex A/H.221 for NS-cap and NS-comm
+
+            // Key ::= CHOICE   -- Identifier of a standard or non-standard object
+            // {
+            //      object              OBJECT IDENTIFIER,
+            //      h221NonStandard     H221NonStandardIdentifier
+            // }
+
+            // UserData ::= SET OF SEQUENCE
+            // {
+            //      key     Key,
+            //      value   OCTET STRING OPTIONAL
+            // }
+
+            // ConferenceCreateResponse ::= SEQUENCE
+            // {    -- MCS-Connect-Provider response user data
+            //      nodeID              UserID, -- Node ID of the sending node
+            //      tag                 INTEGER,
+            //      result              ENUMERATED
+            //      {
+            //          success                         (0),
+            //          userRejected                    (1),
+            //          resourcesNotAvailable           (2),
+            //          rejectedForSymmetryBreaking     (3),
+            //          lockedConferenceNotSupported    (4),
+            //          ...
+            //      },
+            //      userData            UserData OPTIONAL,
+            //      ...
+            //}
+
+
+            // User Data                 : Optional
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+            // User Data: Optional user data which may be used for functions outside
+            // the scope of this Recommendation such as authentication, billing,
+            // etc.
+
+            // Result                    : Mandatory
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+            // An indication of whether the request was accepted or rejected, and if
+            // rejected, the reason why. It contains one of a list of possible
+            // results: successful, user rejected, resources not available, rejected
+            // for symmetry-breaking, locked conference not supported, Conference
+            // Name and Conference Name Modifier already exist, domain parameters
+            // unacceptable, domain not hierarchical, lower-layer initiated
+            // disconnect, unspecified failure to connect. A negative result in the
+            // GCC-Conference-Create confirm does not imply that the physical
+            // connection to the node to which the connection was being attempted
+            // is disconnected.
+
+            // The ConferenceCreateResponse PDU is shown in Table 8-4. The Node ID
+            // parameter, which is the User ID assigned by MCS in response to the
+            // MCS-Attach-User request issued by the GCC Provider, shall be supplied
+            // by the GCC Provider sourcing this PDU. The Tag parameter is assigned
+            // by the source GCC Provider to be locally unique. It is used to
+            // identify the returned UserIDIndication PDU. The Result parameter
+            // includes GCC-specific failure information sourced directly from
+            // the Result parameter in the GCC-Conference-Create response primitive.
+            // If the Result parameter is anything except successful, the Result
+            // parameter in the MCS-Connect-Provider response is set to
+            // user-rejected.
+
+            //            Table 8-4 – ConferenceCreateResponse GCCPDU
+            // +------------------+------------------+--------------------------+
+            // | Content          |     Source       |         Sink             |
+            // +==================+==================+==========================+
+            // | Node ID          | Top GCC Provider | Destination GCC Provider |
+            // +------------------+------------------+--------------------------+
+            // | Tag              | Top GCC Provider | Destination GCC Provider |
+            // +------------------+------------------+--------------------------+
+            // | Result           | Response         | Confirm                  |
+            // +------------------+------------------+--------------------------+
+            // | User Data (opt.) | Response         | Confirm                  |
+            // +------------------+------------------+--------------------------+
+
+            //PER encoded (ALIGNED variant of BASIC-PER) GCC Connection Data (ConnectData):
+            // 00 05 00
+            // 14 7c 00 01
+            // 2a
+            // 14 76 0a 01 01 00 01 c0 00 4d 63 44 6e
+            // 81 08
+
+
+            // 00 05 -> Key::object length = 5 bytes
+            // 00 14 7c 00 01 -> Key::object = { 0 0 20 124 0 1 }
+            stream.out_uint16_be(5);
+            stream.out_copy_bytes("\x00\x14\x7c\x00\x01", 5);
+
+
+            // 2a -> ConnectData::connectPDU length = 42 bytes
+            // This length MUST be ignored by the client.
+            stream.out_uint8(0x2a);
+
+            // PER encoded (ALIGNED variant of BASIC-PER) GCC Conference Create Response
+            // PDU:
+            // 14 76 0a 01 01 00 01 c0 00 00 4d 63 44 6e 81 08
+
+            // 0x14:
+            // 0 - extension bit (ConnectGCCPDU)
+            // 0 - --\ ...
+            // 0 -   | CHOICE: From ConnectGCCPDU select conferenceCreateResponse (1)
+            // 1 - --/ of type ConferenceCreateResponse
+            // 0 - extension bit (ConferenceCreateResponse)
+            // 1 - ConferenceCreateResponse::userData present
+            // 0 - padding
+            // 0 - padding
+            stream.out_uint8(0x10 | 4);
+
+            // ConferenceCreateResponse::nodeID
+            //  = 0x760a + 1001 = 30218 + 1001 = 31219
+            //  (minimum for UserID is 1001)
+            stream.out_uint16_le(0x760a);
+
+            // ConferenceCreateResponse::tag length = 1 byte
+            stream.out_uint8(1);
+
+            // ConferenceCreateResponse::tag = 1
+            stream.out_uint8(1);
+
+            // 0x00:
+            // 0 - extension bit (Result)
+            // 0 - --\ ...
+            // 0 -   | ConferenceCreateResponse::result = success (0)
+            // 0 - --/
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            stream.out_uint8(0);
+
+            // number of UserData sets = 1
+            stream.out_uint8(1);
+
+            // 0xc0:
+            // 1 - UserData::value present
+            // 1 - CHOICE: From Key select h221NonStandard (1)
+            //               of type H221NonStandardIdentifier
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            // 0 - padding
+            stream.out_uint8(0xc0);
+
+            // h221NonStandard length = 0 + 4 = 4 octets
+            //   (minimum for H221NonStandardIdentifier is 4)
+            stream.out_uint8(0);
+
+            // h221NonStandard (server-to-client H.221 key) = "McDn"
+            stream.out_copy_bytes("McDn", 4);
+
+        //        uint16_t padding = this->channel_list.size() & 1;
+        //        uint16_t srv_channel_size = 8 + (this->channel_list.size() + padding) * 2;
+        //        stream.out_2BUE(8 + srv_channel_size + 236 + 4); // len
+
+
+            uint32_t offset_user_data_len = stream.get_offset(0);
+            stream.out_uint16_be(0);
+
+            SCCoreGccUserData sc_core;
+            sc_core.version = 0x00080004; // RDP 5
+            sc_core.log("Sending SC_CORE to client");
+            sc_core.emit(stream);
+
+            out_mcs_data_sc_net(stream, this->channel_list);
+            front_out_gcc_conference_user_data_sc_sec1(stream, client_info.crypt_level, this->server_random, this->encrypt.rc4_key_size, this->pub_mod, this->pri_exp, this->gen);
+            // set user_data_len (TWO_BYTE_UNSIGNED_ENCODING)
+            stream.set_out_uint16_be(0x8000 | (stream.get_offset(offset_user_data_len + 2)), offset_user_data_len);
+
+           stream.mark_end();
+
+            size_t payload_length = stream.size();
+
+            BStream mcs_header(256);
+            MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, payload_length, MCS::BER_ENCODING);
+            size_t mcs_header_length = mcs_header.end - mcs_header.data;
+
+            BStream x224_header(256);
+            X224::DT_TPDU_Send(x224_header, mcs_header_length + payload_length);
+            size_t x224_header_length = x224_header.end - x224_header.data;
+
+            this->trans->send(x224_header.data, x224_header_length);
+            this->trans->send(mcs_header.data, mcs_header_length);
+            this->trans->send(stream.data, payload_length);
 
             // Channel Connection
             // ------------------
@@ -955,74 +1264,126 @@ public:
 
             if (this->verbose){
                 LOG(LOG_INFO, "Front::incoming::Channel Connection");
-                LOG(LOG_INFO, "Front::incoming::mcs_recv_erect_domain_and_attach_user_request_pdu : user_id=%u", this->userid);
             }
-            mcs_recv_erect_domain_and_attach_user_request_pdu(this->trans, this->userid);
 
             if (this->verbose){
-                LOG(LOG_INFO, "Front::incoming::mcs_send_attach_user_confirm_pdu : user_id=%u", this->userid);
+                LOG(LOG_INFO, "Front::incoming:: Send MCS::ErectDomainRequest");
             }
-            mcs_send_attach_user_confirm_pdu(this->trans, this->userid);
+            {
+                BStream x224_data(256);
+                X224::RecvFactory f(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(*trans, x224_data, f.length);
+                SubStream mcs_data(x224_data, x224.header_size);
+                MCS::ErectDomainRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+            }
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming:: Send MCS::AttachUserRequest");
+            }
+            {
+                BStream x224_data(256);
+                X224::RecvFactory f(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(*trans, x224_data, f.length);
+                SubStream mcs_data(x224_data, x224.header_size);
+                MCS::AttachUserRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+            }
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming:: Recv MCS::AttachUserConfirm", this->userid);
+            }
+            {
+                BStream x224_header(256);
+                BStream mcs_data(256);
+
+                MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
+                size_t mcs_length = mcs_data.end - mcs_data.data;
+                X224::DT_TPDU_Send(x224_header, mcs_length);
+                size_t x224_header_length = x224_header.end - x224_header.data;
+
+                this->trans->send(x224_header.data, x224_header_length);
+                this->trans->send(mcs_data.data, mcs_length);
+            }
+
+
+            TODO("The code below should be simplified and correctly manage channels (confirm only channels that are really supported)")
+            {
+                // read tpktHeader (4 bytes = 3 0 len)
+                // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+                BStream x224_data(256);
+                X224::RecvFactory f(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(*this->trans, x224_data, f.length);
+                SubStream mcs_data(x224_data, x224.header_size);
+                MCS::ChannelJoinRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+                this->userid = mcs.initiator;
+
+                BStream x224_header(256);
+                BStream mcs_cjcf_data(256);
+
+                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL, 
+                                             mcs.initiator, 
+                                             mcs.channelId, 
+                                             true, mcs.channelId, 
+                                             MCS::PER_ENCODING);
+                size_t mcs_cjcf_data_length = mcs_cjcf_data.end - mcs_cjcf_data.data;
+                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data_length);
+                size_t x224_header_length = x224_header.end - x224_header.data;
+
+                this->trans->send(x224_header.data, x224_header_length);
+                this->trans->send(mcs_cjcf_data.data, mcs_cjcf_data_length);
+            }
 
             {
-                uint16_t tmp_userid;
-                uint16_t tmp_chanid;
-                mcs_recv_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
-                if (this->verbose){
-                    LOG(LOG_INFO, "Front::incoming::mcs_recv_channel_join_request (G): user_id=%u chanid=%u", tmp_userid, tmp_chanid);
-                }
-                if (tmp_userid != this->userid){
-                    LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
+                BStream x224_data(256);
+                X224::RecvFactory f(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(*this->trans, x224_data, f.length);
+                SubStream mcs_cjrq_data(x224_data, x224.header_size);
+                MCS::ChannelJoinRequest_Recv mcs(mcs_cjrq_data, x224.payload_size, MCS::PER_ENCODING);
+                if (mcs.initiator != this->userid){
+                    LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
                     throw Error(ERR_MCS_BAD_USERID);
                 }
-                if (tmp_chanid != this->userid + MCS_USERCHANNEL_BASE){
-                    LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->userid + MCS_USERCHANNEL_BASE, tmp_chanid);
-                    throw Error(ERR_MCS_BAD_CHANID);
-                }
-                if (this->verbose){
-                    LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (G): user_id=%u chanid=%u", this->userid, tmp_chanid);
-                }
-                mcs_send_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
-            }
 
-            {
-                uint16_t tmp_userid;
-                uint16_t tmp_chanid;
-                mcs_recv_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
-                if (this->verbose){
-                    LOG(LOG_INFO, "Front::incoming::mcs_recv_channel_join_request (IO): user_id=%u chanid=%u", tmp_userid, tmp_chanid);
-                }
-                if (tmp_userid != this->userid){
-                    LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
-                    throw Error(ERR_MCS_BAD_USERID);
-                }
-                if (tmp_chanid != MCS_GLOBAL_CHANNEL){
-                    LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", MCS_GLOBAL_CHANNEL, tmp_chanid);
-                    throw Error(ERR_MCS_BAD_CHANID);
-                }
-                if (this->verbose){
-                    LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (IO): user_id=%u chanid=%u", this->userid, tmp_chanid);
-                }
-                mcs_send_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
+                BStream x224_header(256);
+                BStream mcs_cjcf_data(256);
+
+                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL, 
+                                             mcs.initiator, 
+                                             mcs.channelId, 
+                                             true, mcs.channelId, 
+                                             MCS::PER_ENCODING);
+                size_t mcs_cjcf_data_length = mcs_cjcf_data.end - mcs_cjcf_data.data;
+                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data_length);
+                size_t x224_header_length = x224_header.end - x224_header.data;
+
+                this->trans->send(x224_header.data, x224_header_length);
+                this->trans->send(mcs_cjcf_data.data, mcs_cjcf_data_length);
             }
 
             for (size_t i = 0 ; i < this->channel_list.size() ; i++){
-                    uint16_t tmp_userid;
-                    uint16_t tmp_chanid;
-                    mcs_recv_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
-                    if (tmp_userid != this->userid){
-                        LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
-                        throw Error(ERR_MCS_BAD_USERID);
-                    }
-                    if (tmp_chanid != this->channel_list[i].chanid){
-                        LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->channel_list[i].chanid, tmp_chanid);
-                        throw Error(ERR_MCS_BAD_CHANID);
-                    }
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu : user_id=%u chanid=%u", this->userid, tmp_chanid);
-                    }
-                    mcs_send_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
-                    this->channel_list.set_chanid(i, tmp_chanid);
+                BStream x224_data(256);
+                X224::RecvFactory f(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(*this->trans, x224_data, f.length);
+                SubStream mcs_data(x224_data, x224.header_size);
+                MCS::ChannelJoinRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+                if (mcs.initiator != this->userid){
+                    LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
+                    throw Error(ERR_MCS_BAD_USERID);
+                }
+
+                BStream x224_header(256);
+                BStream mcs_cjcf_data(256);
+
+                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL, 
+                                             mcs.initiator, 
+                                             mcs.channelId, 
+                                             true, mcs.channelId, 
+                                             MCS::PER_ENCODING);
+                size_t mcs_cjcf_data_length = mcs_cjcf_data.end - mcs_cjcf_data.data;
+                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data_length);
+                size_t x224_header_length = x224_header.end - x224_header.data;
+
+                this->trans->send(x224_header.data, x224_header_length);
+                this->trans->send(mcs_cjcf_data.data, mcs_cjcf_data_length);
+
+                this->channel_list.set_chanid(i, mcs.channelId);
             }
 
             if (this->verbose){
@@ -1083,15 +1444,12 @@ public:
             BStream stream(65536);
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
-            SubStream payload(stream, x224.header_size);
 
-            Mcs mcs(payload);
-            mcs.recv_begin();
-            if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
-                TODO("We should make a special case for MCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
-                // mcs.opcode >> 2) == MCSPDU_DisconnectProviderUltimatum
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-            }
+            SubStream mcs_data(stream, x224.header_size);
+            MCS::SendDataRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+            TODO("We should also manage the DisconnectRequest case as it can also happen")
+
+            SubStream payload(mcs_data, mcs.header_size);
 
             if (this->verbose >= 256){
                 this->decrypt.dump();
@@ -1099,14 +1457,13 @@ public:
             Sec sec(payload, this->decrypt);
             sec.recv_begin(true);
 
-            if (!sec.flags & SEC_INFO_PKT) {
+            if (!sec.flags & SEC::SEC_INFO_PKT) {
                 throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
             }
 
             /* this is the first test that the decrypt is working */
             this->client_info.process_logon_info(payload, (uint16_t)(payload.end - payload.p));
             sec.recv_end();
-            mcs.recv_end();
 
             TODO("check all data are consumed as expected")
             if (payload.end != payload.p){
@@ -1118,8 +1475,13 @@ public:
             if (this->client_info.is_mce) {
                 LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
                 LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");
-                send_media_lic_response(this->trans, this->userid);
+                {
+                    BStream stream(65535);
 
+                    send_media_lic_response(stream);
+
+                    this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+                }
                 // proceed with capabilities exchange
 
                 // Capabilities Exchange
@@ -1144,7 +1506,12 @@ public:
                 LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
                 LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
 
-                send_lic_initial(this->trans, this->userid);
+
+                BStream stream(65535);
+
+                send_lic_initial(stream);
+
+                this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
 
                 LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
                 this->state = WAITING_FOR_ANSWER_TO_LICENCE;
@@ -1161,20 +1528,17 @@ public:
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
 
-            SubStream payload(stream, x224.header_size);
-            Mcs mcs(payload);
-            mcs.recv_begin();
-            if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
-                TODO("We should make a special case for MCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
-                // mcs.opcode >> 2) == MCSPDU_DisconnectProviderUltimatum
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-            }
+            SubStream mcs_data(stream, x224.header_size);
+            MCS::SendDataRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+            TODO("We should also manage the DisconnectRequest case as it can also happen")
+
+            SubStream payload(mcs_data, mcs.header_size);
 
             if (this->verbose >= 256){
                 this->decrypt.dump();
             }
 
-            Sec sec(mcs.payload, this->decrypt);
+            Sec sec(payload, this->decrypt);
             sec.recv_begin(true);
 
             // Licensing
@@ -1196,9 +1560,7 @@ public:
             // Client                                                     Server
             //    | <------ Licence Error PDU Valid Client ---------------- |
 
-            // Disconnect Provider Ultimatum datagram
-
-            if (sec.flags & SEC_LICENSE_PKT) {
+            if (sec.flags & SEC::SEC_LICENSE_PKT) {
                 uint8_t tag = sec.payload.in_uint8();
                 uint8_t version = sec.payload.in_uint8();
                 uint16_t length = sec.payload.in_uint16_le();
@@ -1208,7 +1570,11 @@ public:
                 case LICENSE_REQUEST:
                     LOG(LOG_INFO, "Front::LICENSE_REQUEST");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
-                    send_lic_response(this->trans, this->userid);
+                    {
+                        BStream stream(65535);                        
+                        send_lic_response(stream);
+                        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+                    }
                     break;
                 case LICENSE_INFO:
                     LOG(LOG_INFO, "Front::LICENSE_INFO");
@@ -1228,7 +1594,12 @@ public:
                 case NEW_LICENSE_REQUEST:
                     LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
-                    send_lic_response(this->trans, this->userid);
+                    {
+                        BStream stream(65535);
+                        send_lic_response(stream);
+                        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+
+                    }
                     break;
                 case PLATFORM_CHALLENGE_RESPONSE:
                     LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE_RESPONSE");
@@ -1309,11 +1680,6 @@ public:
             }
             sec.payload.p = sec.payload.end;
             sec.recv_end();
-            mcs.payload.p = mcs.payload.end;
-            mcs.recv_end();
-            if (payload.p != payload.end){
-                LOG(LOG_ERR, "All data should have been consumed, %u bytes remaining", payload.end - payload.p);
-            }
         }
         break;
 
@@ -1375,18 +1741,11 @@ public:
 
             X224::DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
 
-            SubStream payload(stream, x224.header_size);
-            Mcs mcs(payload);
-            mcs.recv_begin();
+            SubStream mcs_data(stream, x224.header_size);
+            MCS::SendDataRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+            TODO("We should also manage the DisconnectRequest case as it can also happen")
 
-            // Disconnect Provider Ultimatum datagram
-            if ((mcs.opcode >> 2) == MCSPDU_DisconnectProviderUltimatum) {
-                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
-            }
-
-            if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-            }
+            SubStream payload(mcs_data, mcs.header_size);
 
             Sec sec(payload, this->decrypt);
             sec.recv_begin(true);
@@ -1423,10 +1782,10 @@ public:
 //                }
             }
 
-            if (mcs.chan_id != MCS_GLOBAL_CHANNEL) {
+            if (mcs.channelId != MCS_GLOBAL_CHANNEL) {
                 size_t num_channel_src = channel_list.size();
                 for (size_t index = 0; index < channel_list.size(); index++){
-                    if (channel_list[index].chanid == mcs.chan_id){
+                    if (channel_list[index].chanid == mcs.channelId){
                         num_channel_src = index;
                         break;
                     }
@@ -1504,11 +1863,26 @@ public:
                 }
             }
             sec.recv_end();
-            mcs.recv_end();
             TODO("check all data have been consumed")
         }
         break;
         }
+    }
+
+    void send_data_indication(uint16_t channelId, Stream & stream)
+    {
+        BStream x224_header(256);
+        BStream mcs_header(256);
+
+        size_t payload_len = stream.size();
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, channelId, 1, 3, payload_len, MCS::PER_ENCODING);
+        size_t mcs_header_len = mcs_header.end - mcs_header.data;
+        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
+        size_t x224_header_len = x224_header.end - x224_header.data;
+
+        trans->send(x224_header.data, x224_header_len);
+        trans->send(mcs_header.data, mcs_header_len);
+        trans->send(stream.data, payload_len);                    
     }
 
     /*****************************************************************************/
@@ -1518,10 +1892,8 @@ public:
             LOG(LOG_INFO, "send_data_update_sync");
         }
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -1535,14 +1907,9 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
-        BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
     }
 
 
@@ -1553,10 +1920,8 @@ public:
         LOG(LOG_INFO, "Front::send_demand_active");
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DEMANDACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
 
@@ -1658,14 +2023,9 @@ public:
         // Packet trailer
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
-        BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
     }
 
 
@@ -1902,10 +2262,8 @@ public:
         LOG(LOG_INFO, "send_synchronize");
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -1919,14 +2277,9 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
-        BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
     }
 
 // 2.2.1.15.1 Control PDU Data (TS_CONTROL_PDU)
@@ -1956,10 +2309,8 @@ public:
         LOG(LOG_INFO, "send_control action=%u", action);
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -1974,14 +2325,9 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
-        BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
     }
 
 
@@ -2016,10 +2362,8 @@ public:
                               };
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -2032,14 +2376,9 @@ public:
         sdata.emit_end();
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
-        BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
     }
 
     /* PDUTYPE_DATAPDU */
@@ -2216,10 +2555,8 @@ public:
                 // if user really wants to disconnect */
 
                 BStream stream(65536);
-                Mcs mcs(stream);
-                mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
                 Sec sec(stream, this->encrypt);
-                sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+                sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
                 ShareControl sctrl(stream);
                 sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
                 ShareData sdata_out(stream);
@@ -2229,14 +2566,9 @@ public:
                 sdata_out.emit_end();
                 sctrl.emit_end();
                 sec.emit_end();
-                mcs.emit_end();
-                stream.end = stream.p;
+                stream.mark_end();
 
-                BStream x224_header(256);
-                X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-                trans->send(x224_header.data, x224_header.end - x224_header.data);
-                trans->send(stream.data, stream.end - stream.data);
+                this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
             }
         break;
         case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
@@ -2375,24 +2707,17 @@ public:
         LOG(LOG_INFO, "send_deactive");
 
         BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DEACTIVATEALLPDU, this->userid + MCS_USERCHANNEL_BASE);
 
         // Packet trailer
         sctrl.emit_end();
         sec.emit_end();
-        mcs.emit_end();
-        stream.end = stream.p;
+        stream.mark_end();
 
-        BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
     }
 
 

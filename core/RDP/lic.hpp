@@ -184,14 +184,11 @@ enum {
     BB_CLIENT_MACHINE_NAME_BLOB = 0x0010,
 };
 
-static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
+static inline void send_lic_initial(Stream & stream) throw (Error)
 {
     LOG(LOG_INFO, "send_lic_initial");
-    BStream stream(65536);
-    Mcs mcs(stream);
-    mcs.emit_begin(MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
 
-    stream.out_uint32_le(SEC_LICENSE_PKT);
+    stream.out_uint32_le(SEC::SEC_LICENSE_PKT);
     stream.out_uint8(LICENSE_REQUEST);
     stream.out_uint8(2); // preamble flags : PREAMBLE_VERSION_2_0 (RDP 4.0)
     stream.out_uint16_le(318); // wMsgSize = 318 including preamble
@@ -243,24 +240,11 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
    };
 
     stream.out_copy_bytes((char*)lic1, 314);
-
-//    BStream stream(32768);
-//    X224Out tpdu(X224::DT_TPDU, stream);
-//    McsOut sdin_out(stream, MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
-//    stream.out_copy_bytes((char*)lic1, 322);
-
-    mcs.emit_end();
-    stream.end = stream.p;
-
-    BStream x224_header;
-    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-    trans->send(x224_header.data, x224_header.end - x224_header.data);
-    trans->send(stream.data, stream.end - stream.data);
+    stream.mark_end();
 }
 
 
-static inline void send_lic_response(Transport * trans, int userid) throw (Error)
+static inline void send_lic_response(Stream & stream) throw (Error)
 {
     LOG(LOG_INFO, "send_lic_response");
     /* some compilers need unsigned char to avoid warnings */
@@ -269,21 +253,11 @@ static inline void send_lic_response(Transport * trans, int userid) throw (Error
                              0x28, 0x14, 0x00, 0x00
                            };
 
-    BStream stream(65536);
-    Mcs mcs(stream);
-    mcs.emit_begin(MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic2, 20);
-    mcs.emit_end();
-    stream.end = stream.p;
-
-    BStream x224_header(256);
-    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-    trans->send(x224_header.data, x224_header.end - x224_header.data);
-    trans->send(stream.data, stream.end - stream.data);
+    stream.mark_end();
 }
 
-static inline void send_media_lic_response(Transport * trans, int userid) throw (Error)
+static inline void send_media_lic_response(Stream & stream) throw (Error)
 {
     LOG(LOG_INFO, "send_media_lic_response");
     /* mce */
@@ -293,18 +267,8 @@ static inline void send_media_lic_response(Transport * trans, int userid) throw 
                              0xf3, 0x99, 0x00, 0x00
                              };
 
-    BStream stream(65536);
-    Mcs mcs(stream);
-    mcs.emit_begin(MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic3, 20);
-    mcs.emit_end();
-    stream.end = stream.p;
-
-    BStream x224_header(256);
-    X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-    trans->send(x224_header.data, x224_header.end - x224_header.data);
-    trans->send(stream.data, stream.end - stream.data);
+    stream.mark_end();
 }
 
 
@@ -338,7 +302,7 @@ struct RdpLicence {
         }
     }
 
-    void rdp_lic_process_authreq(Transport * trans, Stream & stream, const char * hostname, int userid, int licence_issued, CryptContext & encrypt, int use_rdp5)
+    void rdp_lic_process_authreq(Stream & stream, Stream & payload, const char * hostname, int licence_issued, CryptContext & encrypt, int use_rdp5)
     {
         ssllib ssl;
 
@@ -351,16 +315,16 @@ struct RdpLicence {
 
         in_token = 0;
         /* Parse incoming packet and save the encrypted token */
-        stream.in_skip_bytes(6); /* unknown: f8 3d 15 00 04 f6 */
+        payload.in_skip_bytes(6); /* unknown: f8 3d 15 00 04 f6 */
 
-        int tokenlen = stream.in_uint16_le();
+        int tokenlen = payload.in_uint16_le();
         if (tokenlen != LICENCE_TOKEN_SIZE) {
             LOG(LOG_ERR, "token len = %d, expected %d", tokenlen, LICENCE_TOKEN_SIZE);
         }
         else{
-            in_token = stream.in_uint8p(tokenlen);
-            stream.in_uint8p(LICENCE_SIGNATURE_SIZE); // in_sig
-            stream.check_end();
+            in_token = payload.in_uint8p(tokenlen);
+            payload.in_uint8p(LICENCE_SIGNATURE_SIZE); // in_sig
+            payload.check_end();
         }
 
         memcpy(out_token, in_token, LICENCE_TOKEN_SIZE);
@@ -388,7 +352,7 @@ struct RdpLicence {
         memcpy(crypt_hwid, hwid, LICENCE_HWID_SIZE);
         ssl.rc4_crypt(crypt_key, crypt_hwid, crypt_hwid, LICENCE_HWID_SIZE);
 
-        rdp_lic_send_authresp(trans, out_token, crypt_hwid, out_sig, userid, licence_issued, encrypt, use_rdp5);
+        rdp_lic_send_authresp(stream, out_token, crypt_hwid, out_sig, licence_issued, encrypt, use_rdp5);
     }
 
     // 2.2.2.5 Client Platform Challenge Response (CLIENT_PLATFORM_CHALLENGE_RESPONSE)
@@ -469,16 +433,13 @@ struct RdpLicence {
     // and the Platform Challenge Response Data, see section 3.1.5.1.
 
 
-    void rdp_lic_send_authresp(Transport * trans, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature, int userid, int licence_issued, CryptContext & encrypt, int use_rdp5)
+    void rdp_lic_send_authresp(Stream & stream, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature, int licence_issued, CryptContext & encrypt, int use_rdp5)
     {
         LOG(LOG_INFO, "rdp_lic_send_authresp");
         int length = 58;
 
-        BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, encrypt);
-        sec.emit_begin( SEC_LICENSE_PKT );
+        sec.emit_begin(SEC::SEC_LICENSE_PKT );
 
         stream.out_uint8(PLATFORM_CHALLENGE_RESPONSE);
         stream.out_uint8(use_rdp5?3:2); /* version */
@@ -512,27 +473,12 @@ struct RdpLicence {
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
         sec.emit_end();
-        mcs.emit_end();
-        stream.end = stream.p;
-
-        BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.p - stream.data);
-
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        stream.mark_end();
     }
 
-
-    void rdp_lic_process_demand(Transport * trans, Stream & stream, const char * hostname, const char * username, int userid, const int licence_issued, CryptContext & encrypt, int crypt_level, int use_rdp5)
+    void set_licence_keys(const uint8_t * server_random)
     {
-        LOG(LOG_DEBUG, "rdp_lic_process_demand");
-
         uint8_t null_data[SEC_MODULUS_SIZE];
-        uint8_t signature[LICENCE_SIGNATURE_SIZE];
-        uint8_t hwid[LICENCE_HWID_SIZE];
-
-        /* Retrieve the server random from the incoming packet */
-        const uint8_t * server_random = stream.in_uint8p(SEC_RANDOM_SIZE);
 
         // RDP licence generate key
         {
@@ -552,12 +498,19 @@ struct RdpLicence {
             /* Generate RC4 key from next 16 bytes */
             sec_hash_16(this->licence_key, key_block + 16, client_random, server_random);
         }
+    }
+
+    void rdp_lic_process_demand(Stream & stream, const char * hostname, const char * username, const int licence_issued, CryptContext & encrypt, int crypt_level, int use_rdp5)
+    {
+        LOG(LOG_DEBUG, "rdp_lic_process_demand");
 
         if (this->licence_size > 0) {
+            uint8_t hwid[LICENCE_HWID_SIZE];
             buf_out_uint32(hwid, 2);
             memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
 
             /* Generate a signature for the HWID buffer */
+            uint8_t signature[LICENCE_SIGNATURE_SIZE];
             sec_sign(signature, 16, this->licence_sign_key, 16, hwid, sizeof(hwid));
             /* Now encrypt the HWID */
             ssllib ssl;
@@ -566,13 +519,18 @@ struct RdpLicence {
             ssl.rc4_set_key(crypt_key, this->licence_key, 16);
             ssl.rc4_crypt(crypt_key, hwid, hwid, sizeof(hwid));
 
-            this->rdp_lic_present(trans, null_data, null_data,
+            uint8_t null_data[SEC_MODULUS_SIZE];
+            memset(null_data, 0, sizeof(null_data));
+
+            this->rdp_lic_present(stream, null_data, null_data,
                                   this->licence_data,
                                   this->licence_size,
-                                  hwid, signature, userid, licence_issued, use_rdp5);
+                                  hwid, signature, licence_issued, use_rdp5);
         }
         else {
-            this->rdp_lic_send_request(trans, null_data, null_data, hostname, username, userid, licence_issued, encrypt, crypt_level, use_rdp5);
+            uint8_t null_data[SEC_MODULUS_SIZE];
+            memset(null_data, 0, sizeof(null_data));
+            this->rdp_lic_send_request(stream, null_data, null_data, hostname, username, licence_issued, encrypt, crypt_level, use_rdp5);
         }
     }
 
@@ -703,7 +661,7 @@ struct RdpLicence {
     // null-terminated ANSI character set format and is used along with the
     // ClientUserName BLOB to keep track of licenses issued to clients.
 
-    void rdp_lic_send_request(Transport * trans, uint8_t* client_random, uint8_t* rsa_data, const char * hostname, const char * username, int userid, int licence_issued, CryptContext & encrypt, int crypt_level, int use_rdp5)
+    void rdp_lic_send_request(Stream & stream, uint8_t* client_random, uint8_t* rsa_data, const char * hostname, const char * username, int licence_issued, CryptContext & encrypt, int crypt_level, int use_rdp5)
     {
         LOG(LOG_INFO, "rdp_lic_send_request");
 
@@ -711,11 +669,8 @@ struct RdpLicence {
         int hostlen = strlen(hostname) + 1;
         int length = 128 + userlen + hostlen;
 
-        BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, encrypt);
-        sec.emit_begin( SEC_LICENSE_PKT );
+        sec.emit_begin(SEC::SEC_LICENSE_PKT);
 
         stream.out_uint8(NEW_LICENSE_REQUEST);
         stream.out_uint8(use_rdp5?3:2);
@@ -831,24 +786,13 @@ struct RdpLicence {
         stream.out_copy_bytes(hostname, hostlen);
 
         sec.emit_end();
-        mcs.emit_end();
-        stream.end = stream.p;
-
-        BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        stream.mark_end();
     }
 
-    void rdp_lic_present(Transport * trans, uint8_t* client_random, uint8_t* rsa_data,
+    void rdp_lic_present(Stream & stream, uint8_t* client_random, uint8_t* rsa_data,
                 uint8_t* licence_data, int licence_size, uint8_t* hwid,
-                uint8_t* signature, int userid, const int licence_issued, int use_rdp5)
+                uint8_t* signature, const int licence_issued, int use_rdp5)
     {
-        BStream stream(65536);
-        Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
-
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
 
@@ -871,14 +815,7 @@ struct RdpLicence {
         stream.out_copy_bytes(hwid, LICENCE_HWID_SIZE);
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
-        mcs.emit_end();
-        stream.end = stream.p;
-
-        BStream x224_header(256);
-        X224::DT_TPDU_Send(x224_header, stream.end - stream.data);
-
-        trans->send(x224_header.data, x224_header.end - x224_header.data);
-        trans->send(stream.data, stream.end - stream.data);
+        stream.mark_end();
     }
 
 };

@@ -38,7 +38,7 @@ struct BufferSend
     Stream & stream;
     BufferSend(Stream & stream) : stream(stream) {
         stream.out_string("BODY.");
-        stream.end = stream.p;
+        stream.mark_end();
     }
 }; 
 
@@ -49,7 +49,7 @@ struct BufferRecv
     BufferRecv(Transport & t, Stream & stream, size_t size)
     : stream(stream)
     {
-        t.recv(&stream.end, size - (stream.end - stream.data));
+        t.recv(&stream.end, size - (stream.size()));
         // here there is not payload, hence payload offset is at the end
         this->payload_offset = 5;
     }    
@@ -63,7 +63,7 @@ struct MiddleSend
     : stream(stream), payload(payload) 
     {
         stream.out_string("MID:");
-        stream.end = stream.p;
+        stream.mark_end();
     }
 };
 
@@ -75,7 +75,7 @@ struct MiddleRecv
     MiddleRecv(Transport & t, Stream & stream, size_t size)
     : stream(stream)
     {
-        t.recv(&stream.end, size - (stream.end - stream.data));
+        t.recv(&stream.end, size - (stream.size()));
         this->payload_offset = 4;
 
     }
@@ -94,7 +94,7 @@ struct CarrierSend
     : stream(stream), payload(payload) 
     {
         stream.out_string("HEADER:");
-        stream.end = stream.p;
+        stream.mark_end();
     }
 };
 
@@ -109,12 +109,12 @@ struct CarrierRecvFactory
     int type;
     CarrierRecvFactory(Transport & t, Stream & stream)
     {
-        t.recv(&stream.end, 8 - (stream.end - stream.data));
+        t.recv(&stream.end, 8 - (stream.size()));
         if (stream.data[7] == 'B'){
-            this->type = CARRIER_TYPE_1EADER; // t.recv(&stream.end, 12 - (stream.end - stream.data));
+            this->type = CARRIER_TYPE_1EADER; // t.recv(&stream.end, 12 - (stream.size()));
         }
         else {
-            this->type = CARRIER_TYPE_HEADER; // t.recv(&stream.end, 16 - (stream.end - stream.data));
+            this->type = CARRIER_TYPE_HEADER; // t.recv(&stream.end, 16 - (stream.size()));
         }
     }
 };
@@ -126,7 +126,7 @@ struct Carrier1eaderRecv
     Carrier1eaderRecv(Transport & t, Stream & stream)
     : stream(stream)
     {
-        t.recv(&stream.end, 12 - (stream.end - stream.data));
+        t.recv(&stream.end, 12 - (stream.size()));
         this->payload_offset = 7;
     }
     size_t get_payload(SubStream & s)
@@ -143,7 +143,7 @@ struct CarrierHeaderRecv
     CarrierHeaderRecv(Transport & t, Stream & stream)
     : stream(stream)
     {
-        t.recv(&stream.end, 16 - (stream.end - stream.data));
+        t.recv(&stream.end, 16 - (stream.size()));
         this->payload_offset = 7;
     }
     size_t get_payload(SubStream & s)
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(Test_send_payload)
     BStream stream;
     BufferSend buffer(stream);
     CheckTransport t("BODY.", 5);
-    t.send(stream.data, stream.end - stream.data);
+    t.send(stream.data, stream.size());
     BOOST_CHECK_EQUAL(0, t.remaining());
 }
 

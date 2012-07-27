@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityInputEmit)
 
     BStream stream(1024);
     input_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     InputCaps input_caps2;

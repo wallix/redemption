@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
         };
         check_datas(stream.p-stream.data, stream.data, 11, datas, "DestBlt 1");
 
-        stream.end = stream.p; stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.data;
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();

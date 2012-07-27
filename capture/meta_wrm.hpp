@@ -97,7 +97,7 @@ struct MetaWRM {
         this->emit(stream);
         transport.send(stream.data, stream.p - stream.data);
         stream.p = stream.data + 8;
-        stream.end = stream.p;
+        stream.mark_end();
     }
 
     void emit(Stream& stream) const

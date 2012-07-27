@@ -13,6 +13,8 @@ RecorderOption::RecorderOption()
 , no_screenshot_stop(false)
 , screenshot_all(false)
 , cat_wrm(false)
+, png_scale_width(-1)
+, png_scale_height(-1)
 {
     this->add_default_options();
 }
@@ -25,6 +27,8 @@ void RecorderOption::add_default_options()
     ("screenshot-start,0", "")
     ("no-screenshot-stop,n", "")
     ("screenshot-all,a", "")
+    ("png-scale-width,W", po::value(&this->png_scale_width), "")
+    ("png-scale-height,H", po::value(&this->png_scale_height), "")
     ("concat-wrm,c", "concat each wrm in a single wrm")
     ;
 }

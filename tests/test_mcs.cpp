@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2010
    Author(s): Christophe Grosjean
 
-   Unit test to RDP Orders coder/decoder
+   Unit test to Mcs PDU coder/decoder
    Using lib boost functions for testing
 */
 #define BOOST_AUTO_TEST_MAIN
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
     BStream stream(1024);
     size_t payload_length = 263;
     MCS::CONNECT_INITIAL_Send mcs(stream, payload_length, MCS::BER_ENCODING);
-    BOOST_CHECK_EQUAL(106, stream.end - stream.data);
+    BOOST_CHECK_EQUAL(106, stream.size());
 
     const char * expected = 
 /* 0000 */                             "\x7f\x65\x82\x01\x6c\x04\x01\x01\x04" //       .e..l.... |
@@ -170,4 +170,461 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
     BOOST_CHECK_EQUAL(65528, mcs.domainParameters.maxMCSPDUsize);
     BOOST_CHECK_EQUAL(2, mcs.domainParameters.protocolVersion);            
 
+    BOOST_CHECK_EQUAL(54, mcs.payload_size);
+    BOOST_CHECK_EQUAL(39, mcs.header_size);
 }
+
+BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
+{
+    BStream stream(1024);
+    size_t payload_size = 54;
+    size_t header_size = 39;
+    MCS::CONNECT_RESPONSE_Send mcs(stream, payload_size, MCS::BER_ENCODING);
+    BOOST_CHECK_EQUAL(header_size, stream.size());
+
+    const char * expected = 
+    "\x7f\x66" // BER_TAG_MCS_CONNECT_RESPONSE
+    "\x5a"     // LEN = payload_size + header_size
+        // Result
+        "\x0a"     // Stream::BER_TAG_RESULT
+        "\x01"     // LEN RESULT
+        "\x00"     // RESULT VALUE
+        // ConnectId
+        "\x02"     // BER_TAG_INTEGER
+        "\x01"     // LEN
+        "\x00"     // ConnectId value
+        // DomainParameters
+        "\x30"     // BER_TAG_MCS_DOMAIN_PARAMS
+        "\x1a"     // LEN
+            // DomainParameters::maxChannelIds = 34
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x22" // VALUE
+            // DomainParameters::maxUserIds = 3
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x03" // VALUE
+            // DomainParameters::maximumTokenIds = 0
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x00" // VALUE
+            // DomainParameters::numPriorities = 1
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x01" // VALUE
+            // DomainParameters::minThroughput = 0
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x00" // VALUE
+            // DomainParameters::maxHeight = 1
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x01" // VALUE
+            // DomainParameters::maxMCSPDUsize = 65528
+            "\x02" // BER_TAG_INTEGER
+            "\x03" // LEN
+            "\x00\xff\xf8" // VALUE
+            // DomainParameters::protocolVersion = 2
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x02" // VALUE
+        // UserData
+        "\x04" // BER_TAG_OCTET_STRING
+        "\x36" // PAYLOAD LEN
+    ;
+
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, header_size));
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
+{
+    BStream stream(2048);
+    size_t payload_size = 1024;
+    size_t header_size = 43;
+    try {
+        MCS::CONNECT_RESPONSE_Send mcs(stream, payload_size, MCS::BER_ENCODING);
+    }
+    catch (...) {
+    };
+    BOOST_CHECK_EQUAL(header_size, stream.size());
+
+    const char * expected = 
+    "\x7f\x66" // BER_TAG_MCS_CONNECT_RESPONSE
+    "\x82\x04\x26"     // LEN = payload_size + header_size
+        // Result
+        "\x0a"     // Stream::BER_TAG_RESULT
+        "\x01"     // LEN RESULT
+        "\x00"     // RESULT VALUE
+        // ConnectId
+        "\x02"     // BER_TAG_INTEGER
+        "\x01"     // LEN
+        "\x00"     // ConnectId value
+        // DomainParameters
+        "\x30"     // BER_TAG_MCS_DOMAIN_PARAMS
+        "\x1a"     // LEN
+            // DomainParameters::maxChannelIds = 34
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x22" // VALUE
+            // DomainParameters::maxUserIds = 3
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x03" // VALUE
+            // DomainParameters::maximumTokenIds = 0
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x00" // VALUE
+            // DomainParameters::numPriorities = 1
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x01" // VALUE
+            // DomainParameters::minThroughput = 0
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x00" // VALUE
+            // DomainParameters::maxHeight = 1
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x01" // VALUE
+            // DomainParameters::maxMCSPDUsize = 65528
+            "\x02" // BER_TAG_INTEGER
+            "\x03" // LEN
+            "\x00\xff\xf8" // VALUE
+            // DomainParameters::protocolVersion = 2
+            "\x02" // BER_TAG_INTEGER
+            "\x01" // LEN
+            "\x02" // VALUE
+        // UserData
+        "\x04" // BER_TAG_OCTET_STRING
+        "\x82\x04\x00" // PAYLOAD LEN
+    ;
+
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, header_size));
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
+{
+    BStream stream(1024);
+    size_t length = 5;
+    int subheight = 0;
+    int subinterval = 0;
+    MCS::ErectDomainRequest_Send mcs(stream, subheight, subinterval, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.size());
+
+    const char * expected = 
+        "\x04"  // ErectDomainRequest * 4
+        "\x01"  // subHeight len
+        "\x00"  // subHeight
+        "\x01"  // subInterval len
+        "\x00"  // subInterval
+    ;
+
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
+{
+    BStream stream(1024);
+    size_t length = 5;
+    GeneratorTransport t(
+        "\x04"  // ErectDomainRequest * 4
+        "\x01"  // subHeight len
+        "\x00"  // subHeight
+        "\x01"  // subInterval len
+        "\x00"  // subInterval
+   , length);
+    t.recv(&stream.end, length);
+
+    MCS::ErectDomainRequest_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+    BOOST_CHECK_EQUAL(MCS::MCSPDU_ErectDomainRequest , mcs.type);
+    BOOST_CHECK_EQUAL(0, mcs.subHeight);
+    BOOST_CHECK_EQUAL(0, mcs.subInterval);
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_DisconnectProviderUltimatum)
+{
+    BStream stream(1024);
+    size_t length = 2;
+    MCS::DisconnectProviderUltimatum_Send mcs(stream, MCS::RN_DOMAIN_DISCONNECTED, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.size());
+
+    const char * expected = 
+        "\x20"  // DisconnectProviderUltimatum * 4
+        "\x00"  // reason
+    ;
+
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
+{
+    BStream stream(1024);
+    size_t length = 2;
+    GeneratorTransport t(
+        "\x20"  // DisconnectProviderUltimatum * 4
+        "\x00"  // reason
+   , length);
+    t.recv(&stream.end, length);
+
+    MCS::DisconnectProviderUltimatum_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_DisconnectProviderUltimatum , mcs.type);
+    BOOST_CHECK_EQUAL(0, mcs.reason);
+}
+
+
+BOOST_AUTO_TEST_CASE(TestSend_AttachUserRequest)
+{
+    BStream stream(1024);
+    size_t length = 1;
+    MCS::AttachUserRequest_Send mcs(stream, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.size());
+
+    const char * expected = 
+        "\x28"  //  * 4
+    ;
+
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
+{
+    BStream stream(1024);
+    size_t length = 1;
+    GeneratorTransport t(
+        "\x28"  //  * 4
+   , length);
+    t.recv(&stream.end, length);
+
+    try {
+        MCS::AttachUserRequest_Recv mcs(stream, length, MCS::PER_ENCODING);
+        BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserRequest , mcs.type);
+    }
+    catch(...){
+        BOOST_CHECK(0);
+    };
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm_without_userid)
+{
+    BStream stream(1024);
+    size_t length = 2;
+    MCS::AttachUserConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, false, 0, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.size());
+
+    const char * expected = 
+        "\x2C"  //  AttachUserConfirm * 4
+        "\x00"
+    ;
+
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_without_userid)
+{
+    BStream stream(1024);
+    size_t length = 2;
+    GeneratorTransport t(
+        "\x2C"  // AttachUserConfirm * 4
+        "\x00"
+   , length);
+    t.recv(&stream.end, length);
+
+    MCS::AttachUserConfirm_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserConfirm , mcs.type);
+    BOOST_CHECK_EQUAL(0 , mcs.result);
+    BOOST_CHECK_EQUAL(false , mcs.initiator_flag);
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm_with_userid)
+{
+    BStream stream(1024);
+    size_t length = 4;
+    MCS::AttachUserConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, true, 1, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.size());
+
+    const char * expected = 
+        "\x2E"  //  AttachUserConfirm * 4
+        "\x00"
+        "\x00\x01"
+    ;
+
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
+{
+    BStream stream(1024);
+    size_t length = 4;
+    GeneratorTransport t(
+        "\x2E"  // AttachUserConfirm * 4
+        "\x00"
+        "\x00\x01"
+   , length);
+    t.recv(&stream.end, length);
+
+    MCS::AttachUserConfirm_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserConfirm , mcs.type);
+    BOOST_CHECK_EQUAL((uint8_t)0 , mcs.result);
+    BOOST_CHECK_EQUAL(true , mcs.initiator_flag);
+    BOOST_CHECK_EQUAL((uint16_t)1 , mcs.initiator);
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinRequest)
+{
+    BStream stream(1024);
+    size_t length = 5;
+    MCS::ChannelJoinRequest_Send mcs(stream, 3, 1004, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.size());
+
+    const char * expected = 
+        "\x38"  // ChannelJoinRequest * 4
+        "\x00\x03" // userId = 3
+        "\x03\xec" // channelId = 1004
+    ;
+
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
+{
+    BStream stream(1024);
+    size_t length = 5;
+    GeneratorTransport t(
+        "\x38"  // ChannelJoinRequest * 4
+        "\x00\x03" // userId = 3
+        "\x03\xec" // channelId = 1004
+   , length);
+    t.recv(&stream.end, length);
+
+    MCS::ChannelJoinRequest_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_ChannelJoinRequest , mcs.type);
+    BOOST_CHECK_EQUAL((uint16_t)3, mcs.initiator);
+    BOOST_CHECK_EQUAL((uint16_t)1004, mcs.channelId);
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinConfirm)
+{
+    BStream stream(1024);
+    size_t length = 8;
+    MCS::ChannelJoinConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, 3, 1004, true, 1004, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.size());
+
+    const char * expected = 
+        "\x3E"  // ChannelJoinConfirm * 4
+        "\x00"  // result RT_SUCCESSFUL
+        "\x00\x03" // userId = 3
+        "\x03\xec" // requested = 1004
+        "\x03\xec" // channelId = 1004
+    ;
+
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
+{
+    BStream stream(1024);
+    size_t length = 8;
+    GeneratorTransport t(
+        "\x3E"  // ChannelJoinConfirm * 4
+        "\x00"  // result RT_SUCCESSFUL
+        "\x00\x03" // userId = 3
+        "\x03\xec" // requested = 1004
+        "\x03\xec" // channelId = 1004
+   , length);
+    t.recv(&stream.end, length);
+
+    MCS::ChannelJoinConfirm_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_ChannelJoinConfirm , mcs.type);
+    BOOST_CHECK_EQUAL((uint8_t)MCS::RT_SUCCESSFUL , mcs.result);
+    BOOST_CHECK_EQUAL((uint16_t)3 , mcs.initiator);
+    BOOST_CHECK_EQUAL((uint16_t)1004 , mcs.requested);
+    BOOST_CHECK_EQUAL(true , mcs.channelId_flag);
+    BOOST_CHECK_EQUAL((uint16_t)1004 , mcs.channelId);
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_SendDataRequest)
+{
+    BStream stream(1024);
+    size_t length = 8;
+    MCS::SendDataRequest_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.size());
+
+    const char * expected = 
+        "\x64"  // SendDataRequest * 4
+        "\x00\x03" // userid  = 3
+        "\x03\xec" // channel = 1005 
+        "\x70"     // high priority, segmentation end
+        "\x81\x7b" // len 379
+    ;
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
+{
+    BStream stream(1024);
+    size_t length = 8;
+    GeneratorTransport t(
+        "\x64"  // SendDataRequest * 4
+        "\x00\x03" // userid  = 3
+        "\x03\xec" // channel = 1005 
+        "\x70"     // high priority, segmentation end
+        "\x81\x7b" // len 379
+   , length);
+    t.recv(&stream.end, length);
+
+    MCS::SendDataRequest_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_SendDataRequest , mcs.type);
+    BOOST_CHECK_EQUAL((uint16_t)3, mcs.initiator);
+    BOOST_CHECK_EQUAL((uint16_t)1004 , mcs.channelId);
+    BOOST_CHECK_EQUAL((uint8_t)1 , mcs.dataPriority);
+    BOOST_CHECK_EQUAL((uint8_t)3 , mcs.segmentation);
+    BOOST_CHECK_EQUAL((uint16_t)379 , mcs.payload_len);
+}
+
+BOOST_AUTO_TEST_CASE(TestSend_SendDataIndication)
+{
+    BStream stream(1024);
+    size_t length = 8;
+    MCS::SendDataIndication_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
+    BOOST_CHECK_EQUAL(length, stream.size());
+
+    const char * expected = 
+        "\x68"  // SendDataIndication * 4
+        "\x00\x03" // userid  = 3
+        "\x03\xec" // channel = 1005 
+        "\x70"     // high priority, segmentation end
+        "\x81\x7b" // len 379
+    ;
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+}
+
+BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
+{
+    BStream stream(1024);
+    size_t length = 8;
+    GeneratorTransport t(
+        "\x68"  // SendDataIndication * 4
+        "\x00\x03" // userid  = 3
+        "\x03\xec" // channel = 1005 
+        "\x70"     // high priority, segmentation end
+        "\x81\x7b" // len 379
+   , length);
+    t.recv(&stream.end, length);
+
+    MCS::SendDataIndication_Recv mcs(stream, length, MCS::PER_ENCODING);
+
+    BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_SendDataIndication , mcs.type);
+    BOOST_CHECK_EQUAL((uint16_t)3, mcs.initiator);
+    BOOST_CHECK_EQUAL((uint16_t)1004 , mcs.channelId);
+    BOOST_CHECK_EQUAL((uint8_t)1 , mcs.dataPriority);
+    BOOST_CHECK_EQUAL((uint8_t)3 , mcs.segmentation);
+    BOOST_CHECK_EQUAL((uint16_t)379 , mcs.payload_len);
+}
+

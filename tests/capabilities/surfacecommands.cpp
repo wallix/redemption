@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilitySurfaceCommandsEmit)
 
     BStream stream(1024);
     surfacecommands_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     SurfaceCommandsCaps surfacecommands_caps2;

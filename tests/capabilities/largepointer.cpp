@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityLargePointerEmit)
 
     BStream stream(1024);
     largepointer_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     LargePointerCaps largepointer_caps2;

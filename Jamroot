@@ -215,6 +215,7 @@ unit-test test_secondary_order_bmp_cache : tests/orders/secondary/bmp_cache.cpp 
 
 unit-test test_x224 : tests/test_x224.cpp libboost_unit_test ;
 unit-test test_mcs : tests/test_mcs.cpp libboost_unit_test ;
+unit-test test_sec : tests/test_sec.cpp libboost_unit_test ;
 unit-test test_rdp : tests/test_rdp.cpp libboost_unit_test ;
 unit-test test_payload : tests/test_payload.cpp libboost_unit_test ;
 
@@ -282,3 +283,5 @@ unit-test test_range_time_point : tests/test_range_time_point.cpp libboost_unit_
 unit-test test_filename_generator : tests/test_filename_generator.cpp libboost_unit_test ;
 
 unit-test test_meta_file : tests/test_meta_file.cpp libboost_unit_test ;
+
+unit-test test_png_scale : tests/test_png_scale.cpp libboost_unit_test png z crypto ;

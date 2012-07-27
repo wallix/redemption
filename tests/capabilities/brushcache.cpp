@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBrushCacheEmit)
 
     BStream stream(1024);
     brushcache_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
 

@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityDrawGdiPlusEmit)
 
     BStream stream(1024);
     drawgdiplus_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     DrawGdiPlusCaps drawgdiplus_caps2;

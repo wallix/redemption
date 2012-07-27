@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
 
     BStream stream(1024);
     glyphsupport_caps.emit(stream);
-    stream.end = stream.p;
+    stream.mark_end();
     stream.p = stream.data;
 
     GlyphSupportCaps glyphsupport_caps2;

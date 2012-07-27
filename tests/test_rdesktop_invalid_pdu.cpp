@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     Sec sec(stream, decrypt);
     sec.recv_begin(true);
-    BOOST_CHECK_EQUAL((uint32_t)SEC_ENCRYPT, (uint32_t)sec.flags);
+    BOOST_CHECK_EQUAL((uint32_t)SEC::SEC_ENCRYPT, (uint32_t)sec.flags);
 
     uint16_t length = stream.in_uint16_le();
     BOOST_CHECK_EQUAL((uint16_t)34, length);
@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
     Sec sec(stream, decrypt);
     sec.recv_begin(true);
 
-    BOOST_CHECK_EQUAL((uint32_t)(SEC_ENCRYPT|SEC_INFO_PKT), (uint32_t)sec.flags);
+    BOOST_CHECK_EQUAL((uint32_t)(SEC::SEC_ENCRYPT|SEC::SEC_INFO_PKT), (uint32_t)sec.flags);
 
     uint8_t * start_of_logon_info = stream.p;
     uint32_t codepage = stream.in_uint32_le();
