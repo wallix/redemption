@@ -621,20 +621,19 @@ enum {
 
         SecExchangePacket_Recv(Stream & stream, uint16_t available_len)
         {
-            this->flags = stream.in_uint32_le();
-            this->len = stream.in_uint32_le();
-            if 
+            this->basicSecurityHeader = stream.in_uint32_le();
+            this->length = stream.in_uint32_le();
 
-            memcpy(client_crypt_random, stream.in_uint8p(len), len);
-            stream.in_skip_bytes(SEC_PADDING_SIZE);
+//            memcpy(client_crypt_random, stream.in_uint8p(len), len);
+//            stream.in_skip_bytes(SEC_PADDING_SIZE);
 
-            uint8_t client_random[64];
-            memset(client_random, 0, 64);
+//            uint8_t client_random[64];
+//            memset(client_random, 0, 64);
 
-            ssl_mod_exp(client_random, 64, client_crypt_random, 64, pub_mod, 64, pri_exp, 64);
+//            ssl_mod_exp(client_random, 64, client_crypt_random, 64, pub_mod, 64, pri_exp, 64);
 
-            // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
-            rdp_sec_generate_keys(decrypt, encrypt, encrypt.sign_key, client_random, server_random, encrypt.rc4_key_size);
+//            // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
+//            rdp_sec_generate_keys(decrypt, encrypt, encrypt.sign_key, client_random, server_random, encrypt.rc4_key_size);
         }
     };
 
