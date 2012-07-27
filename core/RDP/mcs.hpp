@@ -1808,7 +1808,7 @@ namespace MCS
         uint8_t dataPriority;
         uint8_t segmentation;
         uint16_t header_size;
-        uint16_t payload_len;
+        uint16_t payload_size;
 
 
         SendDataRequest_Recv(Stream & stream, size_t available_length, int encoding)
@@ -1834,7 +1834,7 @@ namespace MCS
             // low 4 bits of magic are padding
 
             // length of payload, per_encoded
-            this->payload_len = stream.in_per_length();
+            this->payload_size = stream.in_per_length();
             this->header_size = stream.p - stream.data;
         }
     };
@@ -1873,7 +1873,7 @@ namespace MCS
         uint8_t dataPriority;
         uint8_t segmentation;
         uint16_t header_size;
-        uint16_t payload_len;
+        uint16_t payload_size;
 
         SendDataIndication_Recv(Stream & stream, size_t available_length, int encoding)
         {
@@ -1898,7 +1898,7 @@ namespace MCS
             // low 4 bits of magic are padding
 
             // length of payload, per_encoded
-            this->payload_len = stream.in_per_length();
+            this->payload_size = stream.in_per_length();
             this->header_size = stream.p - stream.data;
         }
     };

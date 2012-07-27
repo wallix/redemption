@@ -1420,8 +1420,29 @@ public:
             // Client                                                     Server
             //    |------Security Exchange PDU ---------------------------> |
 
-            recv_security_exchange_PDU(this->trans, this->decrypt, this->encrypt, this->server_random, this->pub_mod, this->pri_exp);
+            {
+                BStream pdu(65536);
+                X224::RecvFactory f(*this->trans, pdu);
+                X224::DT_TPDU_Recv x224(*this->trans, pdu, f.length);
+                SubStream mcs_data(pdu, x224.header_size);
+                MCS::SendDataRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+                SubStream payload(mcs_data, mcs.header_size);
+                SEC::SecExchangePacket_Recv sec(payload, mcs.payload_size);
 
+                if (sec.length - 8 != 64){
+                    throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
+                }
+
+                uint8_t client_random[64];
+                memset(client_random, 0, 64);
+
+                ssl_mod_exp(client_random, 64, sec.client_crypt_random, 64, this->pub_mod, 64, this->pri_exp, 64);
+
+                // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
+                rdp_sec_generate_keys(this->decrypt, this->encrypt, this->encrypt.sign_key, 
+                                      client_random, 
+                                      this->server_random, this->encrypt.rc4_key_size);
+            }
             this->state = WAITING_FOR_LOGON_INFO;
         }
         break;

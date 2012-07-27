@@ -37,13 +37,14 @@ BOOST_AUTO_TEST_CASE(TestSend_SecExchangePacket)
     BStream stream(1024);
     size_t length = 5;
 
-    const char * sec_pkt =
-/* 0000 */ "\x01\x00\x00\x00" // 0x00000001 = SEC_EXCHANGE_PKT
-           "\x48\x00\x00\x00\xca\xe7\xdf\x85\x01\x42\x02\x47" //....H........B.G
-/* 0010 */ "\x28\xfc\x11\x97\x85\xa3\xf9\x40\x73\x97\x33\x2d\x9e\xe4\x0c\x8e" //(......@s.3-....
-/* 0020 */ "\xe0\x97\xfc\x17\x24\x4e\x35\x33\xe0\x4e\x7d\xdc\x12\x1d\x41\xf1" //....$N53.N}...A.
-/* 0030 */ "\xd8\x17\x86\x0e\x79\x9b\x4f\x44\xb2\x82\xf0\x93\x17\xf8\x59\xc9" //....y.OD......Y.
-/* 0040 */ "\x7b\xba\x2a\x22\x59\x45\xa7\x3a\x00\x00\x00\x00\x00\x00\x00\x00" //{.*"YE.:........
+    const char sec_pkt[] =
+        "\x01\x00\x00\x00" // 0x00000001 = SEC_EXCHANGE_PKT
+        "\x48\x00\x00\x00" // 0x00000048 = 72 (64 bytes key + 8 bytes padding)
+        "\xca\xe7\xdf\x85\x01\x42\x02\x47\x28\xfc\x11\x97\x85\xa3\xf9\x40"
+        "\x73\x97\x33\x2d\x9e\xe4\x0c\x8e\xe0\x97\xfc\x17\x24\x4e\x35\x33"
+        "\xe0\x4e\x7d\xdc\x12\x1d\x41\xf1\xd8\x17\x86\x0e\x79\x9b\x4f\x44"
+        "\xb2\x82\xf0\x93\x17\xf8\x59\xc9\x7b\xba\x2a\x22\x59\x45\xa7\x3a"
+        "\x00\x00\x00\x00\x00\x00\x00\x00" // Padding
     ;
 
     SEC::SecExchangePacket_Send mcs(stream);
@@ -59,16 +60,22 @@ BOOST_AUTO_TEST_CASE(TestSend_SecExchangePacket)
 BOOST_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
 {
     BStream stream(1024);
-    size_t length = 5;
-    GeneratorTransport t(
-        "\x04"  // ErectDomainRequest * 4
-        "\x01"  // subHeight len
-        "\x00"  // subHeight
-        "\x01"  // subInterval len
-        "\x00"  // subInterval
-   , length);
+
+    const char sec_pkt[] =
+        "\x01\x00\x00\x00" // 0x00000001 = SEC_EXCHANGE_PKT
+        "\x48\x00\x00\x00" // 0x00000048 = 72 (64 bytes key + 8 bytes padding)
+        "\xca\xe7\xdf\x85\x01\x42\x02\x47\x28\xfc\x11\x97\x85\xa3\xf9\x40"
+        "\x73\x97\x33\x2d\x9e\xe4\x0c\x8e\xe0\x97\xfc\x17\x24\x4e\x35\x33"
+        "\xe0\x4e\x7d\xdc\x12\x1d\x41\xf1\xd8\x17\x86\x0e\x79\x9b\x4f\x44"
+        "\xb2\x82\xf0\x93\x17\xf8\x59\xc9\x7b\xba\x2a\x22\x59\x45\xa7\x3a"
+        "\x00\x00\x00\x00\x00\x00\x00\x00" // Padding
+    ;
+    size_t length = sizeof(sec_pkt);
+    GeneratorTransport t(sec_pkt, length);
     t.recv(&stream.end, length);
 
-//    SEC::SecExchangePacket_Recv mcs(stream, length);
-//    BOOST_CHECK_EQUAL((uint32_t)0, sec.flags);
+    SEC::SecExchangePacket_Recv sec(stream, length);
+    BOOST_CHECK_EQUAL((uint32_t)SEC::SEC_EXCHANGE_PKT, sec.basicSecurityHeader);
+    BOOST_CHECK_EQUAL(72, sec.length);
+    BOOST_CHECK_EQUAL(0, memcmp(sec_pkt+8, sec.client_crypt_random, sec.length));
 }

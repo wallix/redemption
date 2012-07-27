@@ -585,7 +585,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
     BOOST_CHECK_EQUAL((uint16_t)1004 , mcs.channelId);
     BOOST_CHECK_EQUAL((uint8_t)1 , mcs.dataPriority);
     BOOST_CHECK_EQUAL((uint8_t)3 , mcs.segmentation);
-    BOOST_CHECK_EQUAL((uint16_t)379 , mcs.payload_len);
+    BOOST_CHECK_EQUAL((uint16_t)379 , mcs.payload_size);
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_SendDataIndication)
@@ -625,6 +625,6 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
     BOOST_CHECK_EQUAL((uint16_t)1004 , mcs.channelId);
     BOOST_CHECK_EQUAL((uint8_t)1 , mcs.dataPriority);
     BOOST_CHECK_EQUAL((uint8_t)3 , mcs.segmentation);
-    BOOST_CHECK_EQUAL((uint16_t)379 , mcs.payload_len);
+    BOOST_CHECK_EQUAL((uint16_t)379 , mcs.payload_size);
 }
 
