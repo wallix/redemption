@@ -640,7 +640,13 @@ enum {
 
     struct SecExchangePacket_Send
     {
-        SecExchangePacket_Send(Stream & stream){
+        SecExchangePacket_Send(Stream & stream, const uint8_t * client_encrypted_key, size_t keylen_in_bytes){
+            stream.out_uint32_le(SEC::SEC_EXCHANGE_PKT);
+            stream.out_uint32_le(keylen_in_bytes + 8);
+            stream.out_copy_bytes(client_encrypted_key, keylen_in_bytes);
+            const uint8_t null[8] = {};
+            stream.out_copy_bytes(null, 8);
+            stream.mark_end();
         }
     };
 
