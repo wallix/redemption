@@ -29,6 +29,7 @@
 #include <stdint.h>
 
 #include "RDP/x224.hpp"
+#include "RDP/mcs.hpp"
 #include "RDP/rdp.hpp"
 #include "client_info.hpp"
 #include "rsa_keys.hpp"
@@ -39,6 +40,8 @@
 TODO(" ssl calls introduce some dependency on ssl system library  injecting it in the sec object would be better.")
 #include "ssl_calls.hpp"
 
+namespace SEC
+{
 
 // 2.2.8.1.1.2 Security Headers
 // =============================
@@ -195,89 +198,6 @@ enum {
 // |                                 | also be set because Transport Layer     |
 // |                                 | Security (TLS) is a subset of CredSSP.  |
 // +---------------------------------+-----------------------------------------+
-
-// 2.2.1.2.1   RDP Negotiation Response (RDP_NEG_RSP)
-// ==================================================
-
-//  The RDP Negotiation Response structure is used by a server to inform the
-//  client of the security protocol which it has selected to use for the
-//  connection.
-
-// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This field MUST be set to
-//   0x02 (TYPE_RDP_NEG_RSP) to indicate that the packet is a Negotiation Response.
-
-// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags.
-
-// +--------------------------------+------------------------------------------+
-// | EXTENDED_CLIENT_DATA_SUPPORTED | The server supports extended client data |
-// | 0x00000001                     | blocks in the GCC Conference Create      |
-// |                                | Request user data (section 2.2.1.3).     |
-// +--------------------------------+------------------------------------------+
-
-// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This
-//   field MUST be set to 0x0008 (8 bytes)
-
-// selectedProtocol (4 bytes): A 32-bit, unsigned integer. Field indicating the
-//   selected security protocol.
-
-// +---------------------------------------------------------------------------+
-// | 0x00000000 PROTOCOL_RDP    | Legacy RDP encryption                        |
-// +---------------------------------------------------------------------------+
-// | 0x00000001 PROTOCOL_SSL    | TLS 1.0 (section 5.4.5.1)                    |
-// +---------------------------------------------------------------------------+
-// | 0x00000002 PROTOCOL_HYBRID | CredSSP (section 5.4.5.2)                    |
-// +---------------------------------------------------------------------------+
-
-// 2.2.1.2.2   RDP Negotiation Failure (RDP_NEG_FAILURE)
-// =====================================================
-
-//  The RDP Negotiation Failure structure is used by a server to inform the
-//  client of a failure that has occurred while preparing security for the
-//  connection.
-
-// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
-//   field MUST be set to 0x03 (TYPE_RDP_NEG_FAILURE) to indicate that the
-//   packet is a Negotiation Failure.
-
-// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags. There
-//   are currently no defined flags so the field MUST be set to 0x00.
-
-// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This
-//   field MUST be set to 0x0008 (8 bytes).
-
-// failureCode (4 bytes): A 32-bit, unsigned integer. Field containing the
-//   failure code.
-
-// +---------------------------+-----------------------------------------------+
-// | SSL_REQUIRED_BY_SERVER    | The server requires that the client support   |
-// | 0x00000001                | Enhanced RDP Security (section 5.4) with      |
-// |                           | either TLS 1.0 (section 5.4.5.1) or CredSSP   |
-// |                           | (section 5.4.5.2). If only CredSSP was        |
-// |                           | requested then the server only supports TLS.  |
-// +---------------------------+-----------------------------------------------+
-// | SSL_NOT_ALLOWED_BY_SERVER | The server is configured to only use Standard |
-// | 0x00000002                | RDP Security mechanisms (section 5.3) and     |
-// |                           | does not support any External                 |
-// |                           | Security Protocols (section 5.4.5).           |
-// +---------------------------+-----------------------------------------------+
-// | SSL_CERT_NOT_ON_SERVER    | The server does not possess a valid server    |
-// | 0x00000003                | authentication certificate and cannot         |
-// |                           | initialize the External Security Protocol     |
-// |                           | Provider (section 5.4.5).                     |
-// +---------------------------+-----------------------------------------------+
-// | INCONSISTENT_FLAGS        | The list of requested security protocols is   |
-// | 0x00000004                | not consistent with the current security      |
-// |                           | protocol in effect. This error is only        |
-// |                           | possible when the Direct Approach (see        |
-// |                           | sections 5.4.2.2 and 1.3.1.2) is used and an  |
-// |                           | External Security Protocol (section 5.4.5) is |
-// |                           | already being used.                           |
-// +---------------------------+-----------------------------------------------+
-// | HYBRID_REQUIRED_BY_SERVER | The server requires that the client support   |
-// | 0x00000005                | Enhanced RDP Security (section 5.4) with      |
-// |                           | CredSSP (section 5.4.5.2).                    |
-// +---------------------------+-----------------------------------------------+
-
 
 // 5 Security
 // ==========
@@ -634,6 +554,44 @@ enum {
 // packet formats and the structure of the Security Header in both of these
 // scenarios.
 
+    struct SecExchangePacket_Recv
+    {
+        uint32_t flags;
+        uint32_t len;
+
+        SecExchangePacket_Recv(Stream & stream,
+                        CryptContext & decrypt,
+                        CryptContext & encrypt,
+                        uint8_t (&server_random)[32],
+                        uint8_t (&pub_mod)[512],
+                        uint8_t (&pri_exp)[512]){
+
+            uint8_t client_crypt_random[512];
+            memset(client_crypt_random, 0, 512);
+
+            this->flags = stream.in_uint32_le();
+            this->len = stream.in_uint32_le() - SEC_PADDING_SIZE;
+            memcpy(client_crypt_random, stream.in_uint8p(len), len);
+            stream.in_skip_bytes(SEC_PADDING_SIZE);
+
+            uint8_t client_random[64];
+            memset(client_random, 0, 64);
+
+            ssl_mod_exp(client_random, 64, client_crypt_random, 64, pub_mod, 64, pri_exp, 64);
+
+            // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
+            rdp_sec_generate_keys(decrypt, encrypt, encrypt.sign_key, client_random, server_random, encrypt.rc4_key_size);
+        }
+    };
+
+    struct SecExchangePacket_Send
+    {
+        SecExchangePacket_Send(Stream & stream){
+        }
+    };
+
+};
+
 //##############################################################################
 class Sec
 //##############################################################################
@@ -676,7 +634,7 @@ class Sec
         this->enabled = enabled;
         if (enabled){
             this->flags = stream.in_uint32_le();
-            if ((this->flags & SEC_ENCRYPT)  || (this->flags & 0x0400)){
+            if ((this->flags & SEC::SEC_ENCRYPT)  || (this->flags & 0x0400)){
                 uint8_t * pdata = stream.p + 8;
                 uint16_t datalen = stream.end - pdata;
                 TODO(" shouldn't we check signature ?")
@@ -721,8 +679,8 @@ class Sec
         if (flags) {
             this->stream.out_uint32_le(flags);
 
-            if ((flags & SEC_ENCRYPT)
-            ||  (flags & SEC_REDIRECTION_PKT))
+            if ((flags & SEC::SEC_ENCRYPT)
+            ||  (flags & SEC::SEC_REDIRECTION_PKT))
             {
                 this->stream.out_skip_bytes(8); // skip crypt signature, filled later
             }
@@ -734,7 +692,7 @@ class Sec
     void emit_end()
     //==============================================================================
     {
-        if ( (this->flags & SEC_ENCRYPT)||(this->flags & SEC_REDIRECTION_PKT) )
+        if ( (this->flags & SEC::SEC_ENCRYPT)||(this->flags & SEC::SEC_REDIRECTION_PKT) )
         {
             int datalen = this->stream.p - this->pdata;
             if (this->verbose >= 0x80){
@@ -766,10 +724,11 @@ static inline void recv_security_exchange_PDU(
     SubStream mcs_data(stream, x224.header_size);
     MCS::SendDataRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
     SubStream payload(mcs_data, mcs.header_size);
+//    SEC::SecExchangePacket_Recv(payload, mcs.payload_size);
 
     Sec sec(payload, decrypt);
-    sec.emit_begin(true);
-    if (!sec.flags & SEC_EXCHANGE_PKT) {
+    sec.recv_begin(true);
+    if (!sec.flags & SEC::SEC_EXCHANGE_PKT) {
         throw Error(ERR_SEC_EXPECTING_CLIENT_RANDOM);
     }
     uint32_t len = payload.in_uint32_le() - SEC_PADDING_SIZE;
@@ -784,19 +743,10 @@ static inline void recv_security_exchange_PDU(
     uint8_t client_random[64];
     memset(client_random, 0, 64);
 
-    ssl_mod_exp(client_random, 64,
-                client_crypt_random, 64,
-                pub_mod, 64,
-                pri_exp, 64);
+    ssl_mod_exp(client_random, 64, client_crypt_random, 64, pub_mod, 64, pri_exp, 64);
 
     // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
-    rdp_sec_generate_keys(
-        decrypt,
-        encrypt,
-        encrypt.sign_key,
-        client_random,
-        server_random,
-        encrypt.rc4_key_size);
+    rdp_sec_generate_keys(decrypt, encrypt, encrypt.sign_key, client_random, server_random, encrypt.rc4_key_size);
 }
 
 static inline void send_security_exchange_PDU(Stream & stream, uint32_t server_public_key_len, uint8_t * client_crypt_random)
@@ -804,7 +754,7 @@ static inline void send_security_exchange_PDU(Stream & stream, uint32_t server_p
     LOG(LOG_INFO, "Iso Layer : setting encryption");
     /* Send the client random to the server */
     //      if (this->encryption)
-    stream.out_uint32_le(SEC_EXCHANGE_PKT);
+    stream.out_uint32_le(SEC::SEC_EXCHANGE_PKT);
     stream.out_uint32_le(server_public_key_len + SEC_PADDING_SIZE);
     LOG(LOG_INFO, "Server public key is %d bytes long", server_public_key_len);
     stream.out_copy_bytes(client_crypt_random, server_public_key_len);

@@ -519,7 +519,7 @@ struct mod_rdp : public client_mod {
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin( this->crypt_level?SEC_ENCRYPT:0 );
+        sec.emit_begin(this->crypt_level?SEC::SEC_ENCRYPT:0 );
 
         stream.out_uint32_le(length);
         stream.out_uint32_le(flags);
@@ -1006,7 +1006,7 @@ struct mod_rdp : public client_mod {
             Sec sec(payload, this->decrypt);
             sec.recv_begin(true);
 
-            if (sec.flags & SEC_LICENSE_PKT) {
+            if (sec.flags & SEC::SEC_LICENSE_PKT) {
 
                 // 2.2.1.12.1 Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
                 // ================================================================
@@ -1266,12 +1266,12 @@ struct mod_rdp : public client_mod {
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");
             Sec sec(payload, this->decrypt);
             sec.recv_begin(this->crypt_level);
-            if (sec.flags & SEC_LICENSE_PKT) { /* 0x80 */
+            if (sec.flags & SEC::SEC_LICENSE_PKT) { /* 0x80 */
                 LOG(LOG_ERR, "Error: unexpected license negotiation sec packet flags=%04x", sec.flags);
                 throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
             }
 
-            if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
+            if (sec.flags & 0x0400){ /* SEC::SEC_REDIRECT_ENCRYPT */
                 LOG(LOG_ERR, "sec redirect encrypt not supported");
                 throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
 //                /* Check for a redirect packet, starts with 00 04 */
@@ -1573,7 +1573,7 @@ struct mod_rdp : public client_mod {
             BStream stream(65536);
 //            uint8_t * prev = stream.p;
             Sec sec(stream, this->encrypt);
-            sec.emit_begin( this->crypt_level?SEC_ENCRYPT:0 );
+            sec.emit_begin( this->crypt_level?SEC::SEC_ENCRYPT:0 );
 //            hexdump((const char*)prev, stream.p - prev);
 //            prev = stream.p;
         // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1) containing information about the packet. The type subfield of the pduType field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
@@ -2547,7 +2547,7 @@ struct mod_rdp : public client_mod {
             }
             BStream stream(65536);
             Sec sec(stream, this->encrypt);
-            sec.emit_begin( this->crypt_level?SEC_ENCRYPT:0 );
+            sec.emit_begin( this->crypt_level?SEC::SEC_ENCRYPT:0 );
             ShareControl sctrl(stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareData sdata(stream);
@@ -2579,7 +2579,7 @@ struct mod_rdp : public client_mod {
             }
             BStream stream(65536);
             Sec sec(stream, this->encrypt);
-            sec.emit_begin( this->crypt_level?SEC_ENCRYPT:0 ) ;
+            sec.emit_begin( this->crypt_level?SEC::SEC_ENCRYPT:0 ) ;
             ShareControl sctrl(stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareData sdata(stream);
@@ -2609,7 +2609,7 @@ struct mod_rdp : public client_mod {
             }
             BStream stream(65536);
             Sec sec(stream, this->encrypt);
-            sec.emit_begin( this->crypt_level?SEC_ENCRYPT:0 );
+            sec.emit_begin( this->crypt_level?SEC::SEC_ENCRYPT:0 );
             ShareControl sctrl(stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareData sdata(stream);
@@ -2655,7 +2655,7 @@ struct mod_rdp : public client_mod {
             }
             BStream stream(65536);
             Sec sec(stream, this->encrypt);
-            sec.emit_begin( this->crypt_level?SEC_ENCRYPT:0 );
+            sec.emit_begin( this->crypt_level?SEC::SEC_ENCRYPT:0 );
             ShareControl sctrl(stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareData sdata(stream);
@@ -2693,7 +2693,7 @@ struct mod_rdp : public client_mod {
                 if (!r.isempty()){
                     BStream stream(65536);
                     Sec sec(stream, this->encrypt);
-                    sec.emit_begin( this->crypt_level?SEC_ENCRYPT:0 );
+                    sec.emit_begin( this->crypt_level?SEC::SEC_ENCRYPT:0 );
                     ShareControl sctrl(stream);
                     sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
                     ShareData sdata(stream);
@@ -2959,7 +2959,7 @@ struct mod_rdp : public client_mod {
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin( SEC_INFO_PKT | (this->crypt_level?SEC_ENCRYPT:0) );
+        sec.emit_begin(SEC::SEC_INFO_PKT | (this->crypt_level?SEC::SEC_ENCRYPT:0) );
 
         InfoPacket infoPacket;
         infoPacket.rdp5_support = this->use_rdp5;

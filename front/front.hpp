@@ -479,7 +479,7 @@ public:
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
 
         stream.out_uint32_le(length);
         if (channel.flags & ChannelDef::CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -522,7 +522,7 @@ public:
             }
             BStream stream(65536);
             Sec sec(stream, this->encrypt);
-            sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+            sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
             ShareControl sctrl(stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareData sdata(stream);
@@ -672,7 +672,7 @@ public:
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -796,7 +796,7 @@ public:
         }
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -1457,7 +1457,7 @@ public:
             Sec sec(payload, this->decrypt);
             sec.recv_begin(true);
 
-            if (!sec.flags & SEC_INFO_PKT) {
+            if (!sec.flags & SEC::SEC_INFO_PKT) {
                 throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
             }
 
@@ -1560,7 +1560,7 @@ public:
             // Client                                                     Server
             //    | <------ Licence Error PDU Valid Client ---------------- |
 
-            if (sec.flags & SEC_LICENSE_PKT) {
+            if (sec.flags & SEC::SEC_LICENSE_PKT) {
                 uint8_t tag = sec.payload.in_uint8();
                 uint8_t version = sec.payload.in_uint8();
                 uint16_t length = sec.payload.in_uint16_le();
@@ -1893,7 +1893,7 @@ public:
         }
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -1921,7 +1921,7 @@ public:
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DEMANDACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
 
@@ -2263,7 +2263,7 @@ public:
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -2310,7 +2310,7 @@ public:
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -2363,7 +2363,7 @@ public:
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -2556,7 +2556,7 @@ public:
 
                 BStream stream(65536);
                 Sec sec(stream, this->encrypt);
-                sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+                sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
                 ShareControl sctrl(stream);
                 sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
                 ShareData sdata_out(stream);
@@ -2708,7 +2708,7 @@ public:
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DEACTIVATEALLPDU, this->userid + MCS_USERCHANNEL_BASE);
 

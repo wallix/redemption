@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2010
    Author(s): Christophe Grosjean
 
-   Unit test to RDP Orders coder/decoder
+   Unit test to Mcs PDU coder/decoder
    Using lib boost functions for testing
 */
 #define BOOST_AUTO_TEST_MAIN

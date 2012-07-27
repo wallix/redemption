@@ -157,7 +157,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
         }
         this->pstream = &this->stream;
         this->sec = new Sec(*this->pstream, this->encrypt);
-        this->sec->emit_begin( this->crypt_level?SEC_ENCRYPT:0 );
+        this->sec->emit_begin( this->crypt_level?SEC::SEC_ENCRYPT:0 );
         this->sctrl = new ShareControl(*this->pstream);
         this->sctrl->emit_begin( PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE );
         this->sdata = new ShareData(*this->pstream);

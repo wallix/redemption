@@ -188,7 +188,7 @@ static inline void send_lic_initial(Stream & stream) throw (Error)
 {
     LOG(LOG_INFO, "send_lic_initial");
 
-    stream.out_uint32_le(SEC_LICENSE_PKT);
+    stream.out_uint32_le(SEC::SEC_LICENSE_PKT);
     stream.out_uint8(LICENSE_REQUEST);
     stream.out_uint8(2); // preamble flags : PREAMBLE_VERSION_2_0 (RDP 4.0)
     stream.out_uint16_le(318); // wMsgSize = 318 including preamble
@@ -439,7 +439,7 @@ struct RdpLicence {
         int length = 58;
 
         Sec sec(stream, encrypt);
-        sec.emit_begin( SEC_LICENSE_PKT );
+        sec.emit_begin(SEC::SEC_LICENSE_PKT );
 
         stream.out_uint8(PLATFORM_CHALLENGE_RESPONSE);
         stream.out_uint8(use_rdp5?3:2); /* version */
@@ -670,7 +670,7 @@ struct RdpLicence {
         int length = 128 + userlen + hostlen;
 
         Sec sec(stream, encrypt);
-        sec.emit_begin(SEC_LICENSE_PKT);
+        sec.emit_begin(SEC::SEC_LICENSE_PKT);
 
         stream.out_uint8(NEW_LICENSE_REQUEST);
         stream.out_uint8(use_rdp5?3:2);
