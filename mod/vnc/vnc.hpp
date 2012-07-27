@@ -37,11 +37,14 @@
 #include "keymap2.hpp"
 #include "keymapSym.hpp"
 #include "client_mod.hpp"
+#include "channel_list.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
 
+//###############################################################################################################
 struct mod_vnc : public client_mod {
+//###############################################################################################################
     /* mod data */
     char mod_name[256];
     uint8_t mod_mouse_state;
@@ -51,9 +54,13 @@ struct mod_vnc : public client_mod {
     char password[256];
     public:
     Transport *t;
-    int clip_chanid;
+
+//    const ChannelDef * clip_channel;
+//    int clip_chanid;
+
     BStream clip_data;
     size_t clip_data_size;
+
     uint16_t width;
     uint16_t height;
     uint8_t bpp;
@@ -72,6 +79,7 @@ struct mod_vnc : public client_mod {
     int incr;
     wait_obj * event;
 
+    //==============================================================================================================
     mod_vnc ( Transport * t
             , wait_obj * event
             , const char * username
@@ -88,6 +96,7 @@ struct mod_vnc : public client_mod {
         , keymapSym(verbose)
         , incr(0)
         , event(event)
+    //==============================================================================================================
     {
         LOG(LOG_INFO, "Connecting to VNC Server");
         init_palette332(this->palette332);
@@ -104,7 +113,7 @@ struct mod_vnc : public client_mod {
         memset(this->username, 0, 256);
         memset(this->password, 0, 256);
 
-        this->clip_chanid = 0;
+//        this->clip_chanid = 0;
         this->clip_data_size = 0;
 
         strcpy(this->username, username);
@@ -436,8 +445,11 @@ struct mod_vnc : public client_mod {
             LOG(LOG_INFO, "error - problem connecting\n");
             throw Error(ERR_VNC_CONNECTION_ERROR);
         }
-        this->lib_open_clip_channel();
+
+//        this->clip_channel = get_channel_from_front_by_name((char*)"cliprdr");
+//        this->lib_open_clip_channel();
 //            LOG(LOG_INFO, "VNC lib open clip channel ok\n");
+
         LOG(LOG_INFO, "VNC connection complete, connected ok\n");
         TODO("Clearing the front screen could be done in session")
         this->front.begin_update();
@@ -446,11 +458,20 @@ struct mod_vnc : public client_mod {
         this->front.end_update();
 
         this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
-    }
 
+    } // Constructor
+
+    //==============================================================================================================
     virtual ~mod_vnc(){}
+    //==============================================================================================================
 
-    void change_mouse_state(uint16_t x, uint16_t y, uint8_t button, bool set)
+    //==============================================================================================================
+    void change_mouse_state( uint16_t x
+                           , uint16_t y
+                           , uint8_t button
+                           , bool set
+                           )
+    //==============================================================================================================
     {
         BStream stream(6);
         this->mod_mouse_state = set?(this->mod_mouse_state|button):(this->mod_mouse_state&~button); // set or clear bit
@@ -459,11 +480,18 @@ struct mod_vnc : public client_mod {
         stream.out_uint16_be(x);
         stream.out_uint16_be(y);
         this->t->send(stream.data, 6);
-    }
+
+    } // change_mouse_state
 
 
     TODO("It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?")
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+    //==============================================================================================================
+    virtual void rdp_input_mouse( int device_flags
+                                , int x
+                                , int y
+                                , Keymap2 * keymap
+                                )
+    //==============================================================================================================
     {
         BStream stream(32768);
 
@@ -491,9 +519,17 @@ struct mod_vnc : public client_mod {
             this->change_mouse_state(x, y, 16, true); // DOWN
             this->change_mouse_state(x, y, 16, false); // UP
         }
-    }
+    } // rdp_input_mouse
 
-    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap){
+    //==============================================================================================================
+    virtual void rdp_input_scancode( long param1
+                                   , long param2
+                                   , long device_flags
+                                   , long param4
+                                   , Keymap2 * keymap
+                                   )
+    //==============================================================================================================
+    {
         keymapSym.event(device_flags, param1);
         int key = keymapSym.get_sym();
         if (key > 0) {
@@ -505,17 +541,26 @@ struct mod_vnc : public client_mod {
             this->t->send(stream.data, 8);
             this->event->set(1000);
         }
-    }
+    } // rdp_input_scancode
 
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+    //==============================================================================================================
+    virtual void rdp_input_synchronize( uint32_t time
+                                      , uint16_t device_flags
+                                      , int16_t param1
+                                      , int16_t param2
+                                      )
+    //==============================================================================================================
     {
         if (this->verbose){
             LOG(LOG_INFO, "KeymapSym::synchronize(time=%u, device_flags=%08x, param1=%04x, param1=%04x", time, device_flags, param1, param2);
         }
         this->keymapSym.synchronize(param1);
-    }
 
-    virtual void rdp_input_invalidate(const Rect & r)
+    } // rdp_input_synchronize
+
+    //==============================================================================================================
+    virtual void rdp_input_invalidate( const Rect & r )
+    //==============================================================================================================
     {
 //        LOG(LOG_INFO, "rdp_input_invalidate");
         if (!r.isempty()) {
@@ -530,9 +575,11 @@ struct mod_vnc : public client_mod {
             this->t->send(stream.data, 10);
             this->incr = 1;
         }
-    }
+    } // rdp_input_invalidate
 
-    virtual BackEvent_t draw_event(void)
+    //==============================================================================================================
+    virtual BackEvent_t draw_event( void )
+    //==============================================================================================================
     {
         if (this->verbose){
             LOG(LOG_INFO, "vnc::draw_event");
@@ -573,73 +620,14 @@ struct mod_vnc : public client_mod {
             this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
         }
         return rv;
-    }
+
+    } // draw_event
 
     private:
-    TODO(" use it for copy/paste  it is not called now")
-    int lib_process_channel_data(int chanid, int flags, int size, BStream & stream, int total_size)
-    {
-//        if (chanid == this->clip_chanid) {lib_process_channel_data
-//            uint16_t type = stream.in_uint16_le();
-//            uint16_t status = stream.in_uint16_le();
-//            uint32_t length = stream.in_uint32_le();
-////            LOG(LOG_DEBUG, "lib_process_channel_data: type=%u status=%u length=%u",
-////                (unsigned)type, (unsigned)status, (unsigned)length);
-//            switch (type) {
-//            case 2:
-//            { /* CLIPRDR_FORMAT_ANNOUNCE */
-//                Stream out_s(8192);
-//                out_s.out_uint16_le(3);
-//                out_s.out_uint16_le(1);
-//                out_s.out_uint32_le(0);
-//                out_s.out_clear_bytes(4); /* pad */
-//                // this->send_to_front_channel(
-//            }
-//            break;
-//            case 3: /* CLIPRDR_FORMAT_ACK */
-//                break;
-//            case 4:
-//            { /* CLIPRDR_DATA_REQUEST */
-//                uint32_t format = 0;
-//                if (length >= 4) {
-//                    format = stream.in_uint32_le();
-//                }
-//                /* only support CF_TEXT and CF_UNICODETEXT */
-//                if ((format != 1) && (format != 13)) {
-//                    break;
-//                }
-//                Stream out_s(8192);
-//                out_s.out_uint16_le(5);
-//                out_s.out_uint16_le(1);
-//                if (format == 13) { /* CF_UNICODETEXT */
-//                    out_s.out_uint32_le(this->clip_data_size * 2 + 2);
-//                    for (size_t index = 0; index < this->clip_data_size; index++) {
-//                        out_s.out_uint8(this->clip_data.data[index]);
-//                        out_s.out_uint8(0);
-//                    }
-//                    out_s.out_clear_bytes(2);
-//                }
-//                else if (format == 1) { /* CF_TEXT */
-//                    out_s.out_uint32_le(this->clip_data_size + 1);
-//                    for (size_t index = 0; index < this->clip_data_size; index++) {
-//                        out_s.out_uint8(this->clip_data.data[index]);
-//                    }
-//                    out_s.out_clear_bytes(1);
-//                }
-//                out_s.out_clear_bytes(4); /* pad */
-//                // this->send_to_front_channel(
-//            }
-//            break;
-//            }
-//        } else {
-//            LOG(LOG_INFO, "lib_process_channel_data: unknown chanid %d"
-//                   " this->clip_chanid %d\n",
-//                      chanid, this->clip_chanid);
-//        }
-        return 0;
-    }
 
+    //==============================================================================================================
     void lib_framebuffer_update() throw (Error)
+    //==============================================================================================================
     {
         BStream stream(256);
         this->t->recv((char**)&stream.end, 3);
@@ -793,54 +781,13 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         }
 
         this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
-    }
 
-    /******************************************************************************/
-    void lib_open_clip_channel(void)
-    {
-        TODO(" not working  see why")
-        return;
-//        uint8_t init_data[12] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    } // lib_framebuffer_update
 
-//        this->clip_chanid = this->server_get_channel_id((char*)"cliprdr");
 
-//        if (this->clip_chanid >= 0) {
-            // this->send_to_front_channel(
-//        }
-    }
-
-    /******************************************************************************/
-    void lib_clip_data(void)
-    {
-        BStream stream(32768);
-        this->t->recv((char**)&stream.end, 7);
-        stream.in_skip_bytes(3);
-        int size = stream.in_uint32_be();
-
-        this->clip_data.init(size);
-        this->clip_data_size = size;
-        this->t->recv((char**)&this->clip_data.end, size);
-//        hexdump(this->clip_data.data, size);
-        BStream out_s(8192);
-        out_s.out_uint16_le(2);
-        out_s.out_uint16_le(0);
-        out_s.out_uint32_le(0x90);
-        out_s.out_uint8(0x0d);
-        out_s.out_clear_bytes(35);
-        out_s.out_uint8(0x10);
-        out_s.out_clear_bytes(35);
-        out_s.out_uint8(0x01);
-        out_s.out_clear_bytes(35);
-        out_s.out_uint8(0x07);
-        out_s.out_clear_bytes(35);
-        out_s.out_clear_bytes(4);
-        out_s.mark_end();
-        size = (int)(out_s.end - out_s.data);
-        // this->send_to_front_channel(
-    }
-
-    /******************************************************************************/
-    void lib_palette_update(void)
+    //==============================================================================================================
+    void lib_palette_update( void )
+    //==============================================================================================================
     {
         BStream stream(32768);
         this->t->recv((char**)&stream.end, 5);
@@ -868,7 +815,285 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         this->front.begin_update();
         this->front.color_cache(this->palette, 0);
         this->front.end_update();
-    }
+
+    } // lib_palette_update
+
+
+//    /******************************************************************************/
+//    void lib_open_clip_channel(void)
+//    {
+//        TODO(" not working  see why")
+//        return;
+////        uint8_t init_data[12] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+////        this->clip_chanid = this->server_get_channel_id((char*)"cliprdr");
+
+////        if (this->clip_chanid >= 0) {
+//            // this->send_to_front_channel(
+////        }
+//    } // lib_open_clip_channel
+
+
+    //==============================================================================================================
+    const ChannelDef * get_channel_from_front_by_name(char * channel_name)
+    //==============================================================================================================
+    {
+        ChannelDefArray channel_list = this->front.get_channel_list();
+        const ChannelDef * channel = channel_list.get(channel_name);
+        return channel;
+
+    } // get_channel_from_front_by_name
+
+
+    /******************************************************************************/
+    // Entry point for VNC server clipboard content reception
+    // Conversion to RDP behaviour :
+    //  - store this content in a buffer, waiting for an explicit request from the front
+    //  - send a notification to the front (Format List PDU) that the server clipboard
+    //    status has changed
+    /******************************************************************************/
+    //==============================================================================================================
+    void lib_clip_data( void )
+    //==============================================================================================================
+    {
+        ChannelDefArray chanlist = this->front.get_channel_list();
+        const ChannelDef * channel = chanlist.get((char *) "cliprdr");
+
+        if (channel) {
+
+            // Store the clipboard into clip_data
+            BStream stream(32768);
+            this->t->recv((char**)&stream.end, 7);
+            stream.in_skip_bytes(3);
+            int size = stream.in_uint32_be();
+
+            this->clip_data.init(size);
+            if (size > 0){
+                this->clip_data_size = size;
+                this->t->recv((char**)&this->clip_data.end, size);
+
+// DLA_DEBUG
+                LOG(LOG_INFO, "#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#");
+
+                hexdump(this->clip_data.data, size);
+                LOG(LOG_INFO, "CLIP CHANNEL Number = %d", chanlist.channelCount);
+                for (size_t i = 0; i < chanlist.channelCount; i++) {
+                    LOG(LOG_INFO, "CLIP CHANNEL idx = %d = Name: %s ID:Id %d flags:%x", i, chanlist.items[i].name, chanlist.items[i].chanid, chanlist.items[i].flags );
+                }
+
+                LOG(LOG_INFO, "CLIP CHANNEL Name: %s ID:Id %d flags:%#x", channel->name, channel->chanid, channel->flags );
+                LOG(LOG_INFO, "#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#");
+// < -- Fin DLA_DEBUG
+
+
+                BStream out_s(8192);
+                out_s.out_uint16_le(2);
+                out_s.out_uint16_le(0);
+//                out_s.out_uint32_le(0x90);
+                out_s.out_uint32_le(0x24);
+                out_s.out_uint8(0x0d);
+                out_s.out_clear_bytes(35);
+//                out_s.out_uint8(0x10);
+//                out_s.out_clear_bytes(35);
+//                out_s.out_uint8(0x01);
+//                out_s.out_clear_bytes(35);
+//                out_s.out_uint8(0x07);
+//                out_s.out_clear_bytes(35);
+                out_s.out_clear_bytes(4);
+                out_s.mark_end();
+
+                uint32_t length = out_s.end - out_s.data;
+                size_t chunk_size = length < ChannelDef::CHANNEL_CHUNK_LENGTH ? length : ChannelDef::CHANNEL_CHUNK_LENGTH;
+
+                this->front.send_to_channel( *channel
+                                           , out_s.data
+//                                           , (size_t) sizeof(formatlist)
+//                                           , (size_t) sizeof(formatlist) < ChannelDef::CHANNEL_CHUNK_LENGTH ? sizeof(formatlist) : ChannelDef::CHANNEL_CHUNK_LENGTH
+                                           , length
+                                           , chunk_size
+                                           , ChannelDef::CHANNEL_FLAG_FIRST | ChannelDef::CHANNEL_FLAG_LAST
+                                           );
+
+            }
+        }
+        else {
+            LOG(LOG_INFO, "Clipboard Channel Redirection unavailable");
+        }
+    } // lib_clip_data
+
+
+    //==============================================================================================================
+    virtual void send_to_mod_channel( const char * const front_channel_name
+                                    , uint8_t * data
+                                    , size_t length
+                                    , size_t chunk_size
+                                    , uint32_t flags
+                                    )
+    //==============================================================================================================
+    {
+        LOG(LOG_INFO, "mod_vnc::send_to_mod_channel");
+        if (this->verbose){
+            LOG(LOG_INFO, "mod_vnc::send_to_mod_channel");
+        }
+        ChannelDefArray chanlist = this->front.get_channel_list();
+        const ChannelDef * mod_channel = chanlist.get(front_channel_name);
+
+        // send it if module has a matching channel, if no matching channel is found just forget it
+        if (mod_channel){
+            this->send_to_channel(*mod_channel, data, length, chunk_size, flags);
+        }
+        if (this->verbose){
+            LOG(LOG_INFO, "mod_vnc::send_to_mod_channel done");
+        }
+    } // send_to_mod_channel
+
+
+    //==============================================================================================================
+    void send_to_channel( const ChannelDef & channel
+                        , uint8_t * data
+                        , size_t length
+                        , size_t chunk_size
+                        , uint32_t flags
+                        )
+    //==============================================================================================================
+    {
+        if (this->verbose){
+            LOG(LOG_INFO, "mod_rdp::send_to_channel");
+        }
+        if (this->verbose){
+            LOG(LOG_INFO, ">>>>>>>>>>> VNC >>>>>>>>>>> mod_vnc::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%#x)", data, length, chunk_size, flags);
+            LOG(LOG_INFO, ">>>>>>>>>>> VNC >>>>>>>>>>> (CHANNEL) , name=%s, chanid=%d, flags=%#x)", channel.name, channel.chanid, channel.flags);
+        }
+
+// DLA_DEBUG
+        hexdump(data, chunk_size);
+
+        // specific treatement depending on msgType
+        BStream stream(length);
+        memcpy(stream.data, data, length);
+        uint8_t msgType = stream.in_uint16_le();
+
+        if ( msgType == ChannelDef::CB_FORMAT_DATA_REQUEST ) {
+            // msgType = Format Data Request PDU
+            // This is a fake treatment that pretends to send RDP PDU to VNC server.
+            // In fact, the RDP PDU is handled locally and the response PDU, if any, is also built locally and sent back to front
+
+            // This is a msgType VNC isn't able to respond to
+            // So, we create a handshift response, using the clipboard buffer this class manages
+
+            uint8_t msgFlags = stream.in_uint16_le();
+            uint8_t datalen  = stream.in_uint32_le();
+            uint8_t resquestedFormatId = stream.in_uint32_le();
+
+//            // only support CF_TEXT and CF_UNICODETEXT
+//            if ((resquestedFormatId != 1) && (resquestedFormatId != 13)) {
+
+            // only support CF_UNICODETEXT
+            if (resquestedFormatId == 13) {
+
+                BStream out_s(8192);
+                out_s.out_uint16_le(5);
+                out_s.out_uint16_le(1);
+
+                out_s.out_uint32_le(this->clip_data_size * 2 + 2);
+                for (size_t index = 0; index < this->clip_data_size; index++) {
+                    out_s.out_uint8(this->clip_data.data[index]);
+                    out_s.out_uint8(0);
+                }
+                out_s.out_clear_bytes(2);
+                out_s.mark_end();
+
+                uint32_t length = out_s.end - out_s.data;
+                size_t chunk_size = length < ChannelDef::CHANNEL_CHUNK_LENGTH ? length : ChannelDef::CHANNEL_CHUNK_LENGTH;
+
+                this->send_to_front_channel( "cliprdr"
+                                           , out_s.data
+                                           , length
+                                           , chunk_size
+                                           , ChannelDef::CHANNEL_FLAG_FIRST | ChannelDef::CHANNEL_FLAG_LAST );
+
+                if ( this->verbose ){
+                    LOG( LOG_INFO, "mod_rdp::send_to_front_channel done" );
+                }
+            }
+            else {
+                LOG( LOG_INFO, "mod_vnc::send_to_channel: unhandled clipboard resquested format Id %d", resquestedFormatId );
+            }
+        }
+        else {
+            LOG( LOG_INFO, "mod_vnc::send_to_channel: unknown message type %d", msgType );
+        }
+        if ( this->verbose ){
+            LOG( LOG_INFO, "mod_vnc::send_to_channel done" );
+        }
+    } // send_to_channel
+
+
+//    TODO(" use it for copy/paste  it is not called now")
+//    //==============================================================================================================
+//    int lib_process_channel_data(int chanid, int flags, int size, BStream & stream, int total_size)
+//    //==============================================================================================================
+//    {
+//        if (chanid == this->clip_chanid) {lib_process_channel_data
+//            uint16_t type = stream.in_uint16_le();
+//            uint16_t status = stream.in_uint16_le();
+//            uint32_t length = stream.in_uint32_le();
+////            LOG(LOG_DEBUG, "lib_process_channel_data: type=%u status=%u length=%u",
+////                (unsigned)type, (unsigned)status, (unsigned)length);
+//            switch (type) {
+//            case 2:
+//            { /* CLIPRDR_FORMAT_ANNOUNCE */
+//                Stream out_s(8192);
+//                out_s.out_uint16_le(3);
+//                out_s.out_uint16_le(1);
+//                out_s.out_uint32_le(0);
+//                out_s.out_clear_bytes(4); /* pad */
+//                // this->send_to_front_channel(
+//            }
+//            break;
+//            case 3: /* CLIPRDR_FORMAT_ACK */
+//                break;
+//            case 4:
+//            { /* CLIPRDR_DATA_REQUEST */
+//                uint32_t format = 0;
+//                if (length >= 4) {
+//                    format = stream.in_uint32_le();
+//                }
+//                /* only support CF_TEXT and CF_UNICODETEXT */
+//                if ((format != 1) && (format != 13)) {
+//                    break;
+//                }
+//                Stream out_s(8192);
+//                out_s.out_uint16_le(5);
+//                out_s.out_uint16_le(1);
+//                if (format == 13) { /* CF_UNICODETEXT */
+//                    out_s.out_uint32_le(this->clip_data_size * 2 + 2);
+//                    for (size_t index = 0; index < this->clip_data_size; index++) {
+//                        out_s.out_uint8(this->clip_data.data[index]);
+//                        out_s.out_uint8(0);
+//                    }
+//                    out_s.out_clear_bytes(2);
+//                }
+//                else if (format == 1) { /* CF_TEXT */
+//                    out_s.out_uint32_le(this->clip_data_size + 1);
+//                    for (size_t index = 0; index < this->clip_data_size; index++) {
+//                        out_s.out_uint8(this->clip_data.data[index]);
+//                    }
+//                    out_s.out_clear_bytes(1);
+//                }
+//                out_s.out_clear_bytes(4); /* pad */
+//                // this->send_to_front_channel(
+//            }
+//            break;
+//            }
+//        } else {
+//            LOG(LOG_INFO, "lib_process_channel_data: unknown chanid %d"
+//                   " this->clip_chanid %d\n",
+//                      chanid, this->clip_chanid);
+//        }
+//        return 0;
+
+//    } // lib_process_channel_data
 
 };
 
