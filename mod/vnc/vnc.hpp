@@ -446,10 +446,6 @@ struct mod_vnc : public client_mod {
             throw Error(ERR_VNC_CONNECTION_ERROR);
         }
 
-//        this->clip_channel = get_channel_from_front_by_name((char*)"cliprdr");
-//        this->lib_open_clip_channel();
-//            LOG(LOG_INFO, "VNC lib open clip channel ok\n");
-
         LOG(LOG_INFO, "VNC connection complete, connected ok\n");
         TODO("Clearing the front screen could be done in session")
         this->front.begin_update();
@@ -861,7 +857,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
         if (channel) {
 
-            // Store the clipboard into clip_data
+            // Store the clipboard into *clip_data* and its length in *clip_data_size*
             BStream stream(32768);
             this->t->recv((char**)&stream.end, 7);
             stream.in_skip_bytes(3);
@@ -876,9 +872,9 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                 LOG(LOG_INFO, "#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#");
 
                 hexdump(this->clip_data.data, size);
-                LOG(LOG_INFO, "CLIP CHANNEL Number = %d", chanlist.channelCount);
-                for (size_t i = 0; i < chanlist.channelCount; i++) {
-                    LOG(LOG_INFO, "CLIP CHANNEL idx = %d = Name: %s ID:Id %d flags:%x", i, chanlist.items[i].name, chanlist.items[i].chanid, chanlist.items[i].flags );
+                LOG(LOG_INFO, "CLIP CHANNEL Number = %d", chanlist.size());
+                for (size_t i = 0; i < chanlist.size(); i++) {
+                    LOG(LOG_INFO, "CLIP CHANNEL idx = %d = Name: %s ID:Id %d flags:%x", i, chanlist[i].name, chanlist[i].chanid, chanlist[i].flags );
                 }
 
                 LOG(LOG_INFO, "CLIP CHANNEL Name: %s ID:Id %d flags:%#x", channel->name, channel->chanid, channel->flags );
@@ -886,21 +882,27 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 // < -- Fin DLA_DEBUG
 
 
+                // Only CF_TEXT format is passed to front (as ISO 8859-1 (Latin-1) is the only encoding that VNC RFB 3.x is supposed to use for clipboard)
                 BStream out_s(8192);
                 out_s.out_uint16_le(2);
                 out_s.out_uint16_le(0);
 //                out_s.out_uint32_le(0x90);
                 out_s.out_uint32_le(0x24);
-                out_s.out_uint8(0x0d);
-                out_s.out_clear_bytes(35);
+//                out_s.out_uint8(0x0d);
+//                out_s.out_clear_bytes(35);
 //                out_s.out_uint8(0x10);
 //                out_s.out_clear_bytes(35);
-//                out_s.out_uint8(0x01);
-//                out_s.out_clear_bytes(35);
+                out_s.out_uint8(0x01);
+                out_s.out_clear_bytes(35);
 //                out_s.out_uint8(0x07);
 //                out_s.out_clear_bytes(35);
                 out_s.out_clear_bytes(4);
                 out_s.mark_end();
+
+
+// DLA_DEBUG
+                hexdump(out_s.data, out_s.end - out_s.data);
+                LOG(LOG_INFO, "#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#");
 
                 uint32_t length = out_s.end - out_s.data;
                 size_t chunk_size = length < ChannelDef::CHANNEL_CHUNK_LENGTH ? length : ChannelDef::CHANNEL_CHUNK_LENGTH;
@@ -973,55 +975,65 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         memcpy(stream.data, data, length);
         uint8_t msgType = stream.in_uint16_le();
 
-        if ( msgType == ChannelDef::CB_FORMAT_DATA_REQUEST ) {
-            // msgType = Format Data Request PDU
-            // This is a fake treatment that pretends to send RDP PDU to VNC server.
-            // In fact, the RDP PDU is handled locally and the response PDU, if any, is also built locally and sent back to front
 
-            // This is a msgType VNC isn't able to respond to
-            // So, we create a handshift response, using the clipboard buffer this class manages
+        switch (msgType) {
 
-            uint8_t msgFlags = stream.in_uint16_le();
-            uint8_t datalen  = stream.in_uint32_le();
-            uint8_t resquestedFormatId = stream.in_uint32_le();
-
-//            // only support CF_TEXT and CF_UNICODETEXT
-//            if ((resquestedFormatId != 1) && (resquestedFormatId != 13)) {
-
-            // only support CF_UNICODETEXT
-            if (resquestedFormatId == 13) {
-
-                BStream out_s(8192);
-                out_s.out_uint16_le(5);
-                out_s.out_uint16_le(1);
-
-                out_s.out_uint32_le(this->clip_data_size * 2 + 2);
-                for (size_t index = 0; index < this->clip_data_size; index++) {
-                    out_s.out_uint8(this->clip_data.data[index]);
-                    out_s.out_uint8(0);
-                }
-                out_s.out_clear_bytes(2);
-                out_s.mark_end();
-
-                uint32_t length = out_s.end - out_s.data;
-                size_t chunk_size = length < ChannelDef::CHANNEL_CHUNK_LENGTH ? length : ChannelDef::CHANNEL_CHUNK_LENGTH;
-
-                this->send_to_front_channel( "cliprdr"
-                                           , out_s.data
-                                           , length
-                                           , chunk_size
-                                           , ChannelDef::CHANNEL_FLAG_FIRST | ChannelDef::CHANNEL_FLAG_LAST );
-
-                if ( this->verbose ){
-                    LOG( LOG_INFO, "mod_rdp::send_to_front_channel done" );
-                }
+            case ChannelDef::ChannelDef::CB_FORMAT_LIST:
+            {
+                LOG( LOG_INFO, "mod_rdp::send_to_front_channel - CB_FORMAT_LIST" );
+                break;
             }
-            else {
-                LOG( LOG_INFO, "mod_vnc::send_to_channel: unhandled clipboard resquested format Id %d", resquestedFormatId );
+            case ChannelDef::CB_FORMAT_DATA_REQUEST:
+            {
+                // msgType = Format Data Request PDU
+                // This is a fake treatment that pretends to send RDP PDU to VNC server.
+                // In fact, the RDP PDU is handled localy and the response PDU, if any, is also built locally and sent back to front
+
+                // This is a msgType VNC isn't able to respond to
+                // So, we create a handshift response, using the clipboard buffer this class manages
+
+                uint8_t msgFlags = stream.in_uint16_le();
+                uint8_t datalen  = stream.in_uint32_le();
+                uint8_t resquestedFormatId = stream.in_uint32_le();
+
+    //            // only support CF_TEXT and CF_UNICODETEXT
+    //            if ((resquestedFormatId != CF_TEXT) && (resquestedFormatId != CF_UNICODETEXT)) {
+
+                // only support CF_UNICODETEXT
+                if (resquestedFormatId == CF_UNICODETEXT) {
+
+                    BStream out_s(8192);
+                    out_s.out_uint16_le(5);
+                    out_s.out_uint16_le(1);
+
+                    out_s.out_uint32_le(this->clip_data_size * 2 + 2);
+                    for (size_t index = 0; index < this->clip_data_size; index++) {
+                        out_s.out_uint8(this->clip_data.data[index]);
+                        out_s.out_uint8(0);
+                    }
+                    out_s.out_clear_bytes(2);
+                    out_s.mark_end();
+
+                    uint32_t length = out_s.end - out_s.data;
+                    size_t chunk_size = length < ChannelDef::CHANNEL_CHUNK_LENGTH ? length : ChannelDef::CHANNEL_CHUNK_LENGTH;
+
+                    this->send_to_front_channel( "cliprdr"
+                                               , out_s.data
+                                               , length
+                                               , chunk_size
+                                               , ChannelDef::CHANNEL_FLAG_FIRST | ChannelDef::CHANNEL_FLAG_LAST );
+                    if ( this->verbose ){
+                        LOG( LOG_INFO, "mod_rdp::send_to_front_channel done" );
+                    }
+                }
+                else {
+                    LOG( LOG_INFO, "mod_vnc::send_to_channel: unhandled clipboard resquested format Id %d", resquestedFormatId );
+                }
+                break;
             }
-        }
-        else {
-            LOG( LOG_INFO, "mod_vnc::send_to_channel: unknown message type %d", msgType );
+            default:
+                LOG( LOG_INFO, "mod_vnc::send_to_channel: unknown message type %d", msgType );
+                break;
         }
         if ( this->verbose ){
             LOG( LOG_INFO, "mod_vnc::send_to_channel done" );
