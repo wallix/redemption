@@ -181,7 +181,10 @@ struct Session {
                 sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword));
         this->context->cpy(STRAUTHID_HOST, ip_source);
 
-        this->sesman = new SessionManager(*this->context, this->ini->globals.debug.auth);
+        this->sesman = new SessionManager(*this->context
+                                         , this->ini->globals.keepalive_grace_delay
+                                         , this->ini->globals.max_tick
+                                         , this->ini->globals.debug.auth);
         this->sesman->auth_trans_t = 0;
 
         this->mod = 0;

@@ -382,7 +382,7 @@ BOOST_AUTO_TEST_CASE(TestSend_AttachUserRequest)
     BOOST_CHECK_EQUAL(length, stream.size());
 
     const char * expected = 
-        "\x28"  //  * 4
+        "\x28"  // AttachUserRequest * 4
     ;
 
     BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
@@ -393,7 +393,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
     BStream stream(1024);
     size_t length = 1;
     GeneratorTransport t(
-        "\x28"  //  * 4
+        "\x28"  // AttachUserRequest * 4
    , length);
     t.recv(&stream.end, length);
 

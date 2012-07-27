@@ -981,7 +981,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
             stream.out_uint8(MCS::MCSPDU_DisconnectProviderUltimatum << 2);
-            stream.out_uint8(reason << 6); // (<< 6 ?)
+            stream.out_uint8(reason << 5);
             stream.mark_end();
         }
     };
@@ -1002,7 +1002,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_DisconnectProviderUltimatum;
-            this->reason = stream.in_uint8() >> 6; // (>> 6 ?)
+            this->reason = stream.in_uint8() >> 5;
         }
     };
 

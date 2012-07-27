@@ -1317,10 +1317,10 @@ public:
                 BStream x224_header(256);
                 BStream mcs_cjcf_data(256);
 
-                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL, 
-                                             mcs.initiator, 
-                                             mcs.channelId, 
-                                             true, mcs.channelId, 
+                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
+                                             mcs.initiator,
+                                             mcs.channelId,
+                                             true, mcs.channelId,
                                              MCS::PER_ENCODING);
                 size_t mcs_cjcf_data_length = mcs_cjcf_data.end - mcs_cjcf_data.data;
                 X224::DT_TPDU_Send(x224_header, mcs_cjcf_data_length);
@@ -1344,10 +1344,10 @@ public:
                 BStream x224_header(256);
                 BStream mcs_cjcf_data(256);
 
-                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL, 
-                                             mcs.initiator, 
-                                             mcs.channelId, 
-                                             true, mcs.channelId, 
+                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
+                                             mcs.initiator,
+                                             mcs.channelId,
+                                             true, mcs.channelId,
                                              MCS::PER_ENCODING);
                 size_t mcs_cjcf_data_length = mcs_cjcf_data.end - mcs_cjcf_data.data;
                 X224::DT_TPDU_Send(x224_header, mcs_cjcf_data_length);
@@ -1371,10 +1371,10 @@ public:
                 BStream x224_header(256);
                 BStream mcs_cjcf_data(256);
 
-                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL, 
-                                             mcs.initiator, 
-                                             mcs.channelId, 
-                                             true, mcs.channelId, 
+                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
+                                             mcs.initiator,
+                                             mcs.channelId,
+                                             true, mcs.channelId,
                                              MCS::PER_ENCODING);
                 size_t mcs_cjcf_data_length = mcs_cjcf_data.end - mcs_cjcf_data.data;
                 X224::DT_TPDU_Send(x224_header, mcs_cjcf_data_length);
@@ -1439,8 +1439,8 @@ public:
                 ssl_mod_exp(client_random, 64, sec.client_crypt_random, 64, this->pub_mod, 64, this->pri_exp, 64);
 
                 // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
-                rdp_sec_generate_keys(this->decrypt, this->encrypt, this->encrypt.sign_key, 
-                                      client_random, 
+                rdp_sec_generate_keys(this->decrypt, this->encrypt, this->encrypt.sign_key,
+                                      client_random,
                                       this->server_random, this->encrypt.rc4_key_size);
             }
             this->state = WAITING_FOR_LOGON_INFO;
@@ -1592,7 +1592,7 @@ public:
                     LOG(LOG_INFO, "Front::LICENSE_REQUEST");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
                     {
-                        BStream stream(65535);                        
+                        BStream stream(65535);
                         send_lic_response(stream);
                         this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
                     }
@@ -1903,7 +1903,7 @@ public:
 
         trans->send(x224_header.data, x224_header_len);
         trans->send(mcs_header.data, mcs_header_len);
-        trans->send(stream.data, payload_len);                    
+        trans->send(stream.data, payload_len);
     }
 
     /*****************************************************************************/
@@ -3024,3 +3024,4 @@ public:
 };
 
 #endif
+
