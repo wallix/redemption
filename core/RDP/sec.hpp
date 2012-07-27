@@ -629,8 +629,7 @@ enum {
             }
             this->length = stream.in_uint32_le();
             this->client_crypt_random = (uint8_t*)calloc(this->length, 1);
-            const uint8_t * data = stream.in_uint8p(this->length);
-            memcpy(this->client_crypt_random, data, this->length);
+            stream.in_copy_bytes(this->client_crypt_random, length);
         }
 
         ~SecExchangePacket_Recv(){
@@ -767,18 +766,6 @@ class Sec
 }; // END CLASS Sec
 
 
-static inline void send_security_exchange_PDU(Stream & stream, uint32_t server_public_key_len, uint8_t * client_crypt_random)
-{
-    LOG(LOG_INFO, "Iso Layer : setting encryption");
-    /* Send the client random to the server */
-    //      if (this->encryption)
-    stream.out_uint32_le(SEC::SEC_EXCHANGE_PKT);
-    stream.out_uint32_le(server_public_key_len + SEC_PADDING_SIZE);
-    LOG(LOG_INFO, "Server public key is %d bytes long", server_public_key_len);
-    stream.out_copy_bytes(client_crypt_random, server_public_key_len);
-    stream.out_clear_bytes(SEC_PADDING_SIZE);
-    stream.mark_end();
-}
 
 
 #endif

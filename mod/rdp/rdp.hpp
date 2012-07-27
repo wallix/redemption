@@ -880,16 +880,16 @@ struct mod_rdp : public client_mod {
 
             // Client                                                     Server
             //    |------Security Exchange PDU ---------------------------> |
+            if (this->verbose){
+                LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
+            }
 
             if (this->crypt_level){
-                if (this->verbose){
-                    LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
-                }
-                BStream stream(65535);
-
-                send_security_exchange_PDU(stream, this->server_public_key_len, this->client_crypt_random);
+                BStream stream(server_public_key_len + 32);
+                SEC::SecExchangePacket_Send mcs(stream, client_crypt_random, server_public_key_len);
                 this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
             }
+
             // Secure Settings Exchange
             // ------------------------
 
