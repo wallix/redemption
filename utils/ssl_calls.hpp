@@ -403,32 +403,35 @@ static inline int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len
     BIGNUM lexp;
     BIGNUM lin;
     BIGNUM lout;
-
     int rv;
-    ctx = BN_CTX_new();
+    uint8_t* l_out;
+    uint8_t* l_in;
+    uint8_t* l_mod;
+    uint8_t* l_exp;
 
-    uint8_t l_out[1024];
+    TODO(" replace these fucking new / delete by objects on stack")
+    l_out = new uint8_t[out_len];
     memset(l_out, 0, out_len);
-    BN_init(&lout);
-
-    uint8_t l_in[1024];
-    ssl_reverse_it(l_in, in_len);
+    l_in = new uint8_t[in_len];
+    memset(l_in, 0, in_len);
+    l_mod = new uint8_t[mod_len];
+    memset(l_mod, 0, mod_len);
+    l_exp = new uint8_t[exp_len];
+    memset(l_exp, 0, exp_len);
     memcpy(l_in, in, in_len);
-    BN_init(&lin);
-    BN_bin2bn((uint8_t*)l_in, in_len, &lin);
-
-    uint8_t l_mod[1024];
     memcpy(l_mod, mod, mod_len);
-    ssl_reverse_it(l_mod, mod_len);
-    BN_init(&lmod);
-    BN_bin2bn((uint8_t*)l_mod, mod_len, &lmod);
-
-    uint8_t l_exp[1024];
     memcpy(l_exp, exp, exp_len);
+    ssl_reverse_it(l_in, in_len);
+    ssl_reverse_it(l_mod, mod_len);
     ssl_reverse_it(l_exp, exp_len);
+    ctx = BN_CTX_new();
+    BN_init(&lmod);
     BN_init(&lexp);
+    BN_init(&lin);
+    BN_init(&lout);
+    BN_bin2bn((uint8_t*)l_mod, mod_len, &lmod);
     BN_bin2bn((uint8_t*)l_exp, exp_len, &lexp);
-
+    BN_bin2bn((uint8_t*)l_in, in_len, &lin);
     BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
     rv = BN_bn2bin(&lout, (uint8_t*)l_out);
     if (rv <= out_len) {
@@ -442,7 +445,10 @@ static inline int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len
     BN_free(&lexp);
     BN_free(&lmod);
     BN_CTX_free(ctx);
-
+    delete [] l_out;
+    delete [] l_in;
+    delete [] l_mod;
+    delete [] l_exp;
     return rv;
 }
 
