@@ -52,14 +52,16 @@ class SessionManager {
     wait_obj * auth_event;
     int keepalive_grace_delay;
     int max_tick;
+    bool internal_domain;
     uint32_t verbose;
 
-    SessionManager(ModContext & context, int keepalive_grace_delay, int max_tick, uint32_t verbose)
+    SessionManager(ModContext & context, int keepalive_grace_delay, int max_tick, bool internal_domain, uint32_t verbose)
         : mod_state(MOD_STATE_INIT)
         , context(context)
         , tick_count(0)
         , keepalive_grace_delay(keepalive_grace_delay)
         , max_tick(max_tick)
+        , internal_domain(internal_domain)
         , verbose(verbose)
     {
         if (this->verbose & 0x10){
@@ -264,6 +266,12 @@ class SessionManager {
             LOG(LOG_INFO, "auth::get_mod_from_protocol");
         }
         const char * protocol = this->context.get(STRAUTHID_TARGET_PROTOCOL);
+        if (this->internal_domain){
+            char * target = this->context.get(STRAUTHID_TARGET_DEVICE);
+            if (0 == strncmp(target, "wabautotest", 11)){
+                protocol = "INTERNAL";
+            }
+        }
         int res = MCTX_STATUS_EXIT;
         if (strncasecmp(protocol, "RDP", 4) == 0){
             if (this->verbose & 0x4){
@@ -287,11 +295,11 @@ class SessionManager {
             this->mod_state = MOD_STATE_DONE_CONNECTED;
         }
         else if (strncasecmp(protocol, "INTERNAL", 8) == 0){
+            char * target = this->context.get(STRAUTHID_TARGET_DEVICE);
             if (this->verbose & 0x4){
                 LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL");
             }
             res = MCTX_STATUS_INTERNAL;
-            char * target = this->context.get(STRAUTHID_TARGET_DEVICE);
             if (0 == strcmp(target, "bouncer2")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL bouncer2");
@@ -299,11 +307,16 @@ class SessionManager {
                 this->context.nextmod = ModContext::INTERNAL_BOUNCER2;
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
-            else if (0 == strncmp(target, "test?", 5)){
+            else if (0 == strncmp(target, "wabautotest", 11)){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL test");
                 }
-                strcpy(this->context.movie, target+5);
+                char * user = this->context.get(STRAUTHID_TARGET_USER);
+                size_t len_user = strlen(user);
+                strcpy(this->context.movie, user);
+                if (0 != strcmp(".wrm", user + len_user - 4)){
+                    strcpy(this->context.movie + len_user, ".wrm");
+                } 
                 this->context.nextmod = ModContext::INTERNAL_TEST;
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
             }

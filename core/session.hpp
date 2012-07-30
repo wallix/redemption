@@ -184,6 +184,7 @@ struct Session {
         this->sesman = new SessionManager(*this->context
                                          , this->ini->globals.keepalive_grace_delay
                                          , this->ini->globals.max_tick
+                                         , this->ini->globals.internal_domain
                                          , this->ini->globals.debug.auth);
         this->sesman->auth_trans_t = 0;
 

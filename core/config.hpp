@@ -249,6 +249,7 @@ struct Inifile {
         int keepalive_grace_delay;
 
         char movie_path[1024];
+        bool internal_domain;
 
         struct {
             uint32_t x224;

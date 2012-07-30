@@ -43,6 +43,8 @@ struct test_internal_mod : public internal_mod {
     {
         strcpy(this->movie, path);
         strcat(this->movie, movie);
+        LOG(LOG_INFO, "Playing %s", this->movie);
+
         this->event = event;
         this->event->set();
     }
