@@ -299,10 +299,11 @@ class SessionManager {
                 this->context.nextmod = ModContext::INTERNAL_BOUNCER2;
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
-            else if (0 == strcmp(target, "test")){
+            else if (0 == strncmp(target, "test?", 5)){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL test");
                 }
+                strcpy(this->context.movie, target+5);
                 this->context.nextmod = ModContext::INTERNAL_TEST;
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
             }

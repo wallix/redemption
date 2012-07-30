@@ -812,6 +812,8 @@ struct Session {
                                         this->back_event,
                                         *this->context,
                                         *this->front,
+                                        this->ini->globals.movie_path,
+                                        this->context->movie,
                                         this->front->client_info.width,
                                         this->front->client_info.height
                                         );

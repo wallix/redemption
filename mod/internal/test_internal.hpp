@@ -29,11 +29,20 @@
 #include "RDP/RDPGraphicDevice.hpp"
 
 struct test_internal_mod : public internal_mod {
-    test_internal_mod(
-        wait_obj * event,
-        ModContext & context, FrontAPI & front, uint16_t width, uint16_t height):
+
+    char movie[1024];
+
+    test_internal_mod( wait_obj * event
+                     , ModContext & context
+                     , FrontAPI & front
+                     , char * path
+                     , char * movie
+                     , uint16_t width
+                     , uint16_t height):
             internal_mod(front, width, height)
     {
+        strcpy(this->movie, path);
+        strcat(this->movie, movie);
         this->event = event;
         this->event->set();
     }
@@ -64,8 +73,7 @@ struct test_internal_mod : public internal_mod {
     virtual BackEvent_t draw_event()
     {
         this->event->reset();
-        const char * movie = "/tmp/replay.wrm";
-        int fd = ::open(movie, O_RDONLY);
+        int fd = ::open(this->movie, O_RDONLY);
         assert(fd > 0);
         InFileTransport in_trans(fd);
         RDPUnserializer reader(&in_trans, &this->front, this->get_screen_rect());

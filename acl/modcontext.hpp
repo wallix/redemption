@@ -66,6 +66,7 @@ struct ModContext : public Dico {
         INTERNAL_CARD,
     } nextmod;
 
+    char movie[1024];
     public:
     ModContext(ProtocolKeyword * KeywordsDefinitions, unsigned nbkeywords) :
         Dico(KeywordsDefinitions, nbkeywords), nextmod(INTERNAL_NONE)

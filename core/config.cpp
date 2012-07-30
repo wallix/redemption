@@ -242,6 +242,8 @@ TODO(" find a more generic way to read this struct with any number of account li
     ("globals.max_tick", po::value<int>()->default_value(30), "")
     ("globals.keepalive_grace_delay", po::value<int>()->default_value(30), "")
 
+    ("globals.movie_path", po::value<string>()->default_value("/tmp/"), "")
+
     ("globals.debug_x224", po::value<uint32_t>()->default_value(0), "")
     ("globals.debug_mcs", po::value<uint32_t>()->default_value(0), "")
     ("globals.debug_sec", po::value<uint32_t>()->default_value(0), "")
@@ -355,8 +357,11 @@ TODO(" find a more generic way to read this struct with any number of account li
         this->globals.h_width     = vm["globals.h_width"].as<int>();
         this->globals.h_qscale    = vm["globals.h_qscale"].as<int>();
 
-       this->globals.max_tick              = vm["globals.max_tick"].as<int>();
-       this->globals.keepalive_grace_delay = vm["globals.keepalive_grace_delay"].as<int>();
+        this->globals.max_tick              = vm["globals.max_tick"].as<int>();
+        this->globals.keepalive_grace_delay = vm["globals.keepalive_grace_delay"].as<int>();
+
+        strncpy(this->globals.movie_path, vm["globals.movie_path"].as<string>().data(), vm["globals.movie_path"].as<string>().length());
+        this->globals.movie_path[vm["globals.movie_path"].as<string>().length()] = 0;
 
 
         this->globals.debug.x224              = vm["globals.debug_x224"].as<uint32_t>();

@@ -248,6 +248,8 @@ struct Inifile {
         int max_tick;
         int keepalive_grace_delay;
 
+        char movie_path[1024];
+
         struct {
             uint32_t x224;
             uint32_t mcs;
