@@ -1210,8 +1210,7 @@ public:
             // set user_data_len (TWO_BYTE_UNSIGNED_ENCODING)
             stream.set_out_uint16_be(0x8000 | (stream.get_offset(offset_user_data_len + 2)), offset_user_data_len);
 
-           stream.mark_end();
-
+            stream.mark_end();
             size_t payload_length = stream.size();
 
             BStream mcs_header(256);
@@ -1267,7 +1266,7 @@ public:
             }
 
             if (this->verbose){
-                LOG(LOG_INFO, "Front::incoming:: Send MCS::ErectDomainRequest");
+                LOG(LOG_INFO, "Front::incoming:: Recv MCS::ErectDomainRequest");
             }
             {
                 BStream x224_data(256);
@@ -1277,7 +1276,7 @@ public:
                 MCS::ErectDomainRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
             }
             if (this->verbose){
-                LOG(LOG_INFO, "Front::incoming:: Send MCS::AttachUserRequest");
+                LOG(LOG_INFO, "Front::incoming:: Recv MCS::AttachUserRequest");
             }
             {
                 BStream x224_data(256);
@@ -1287,7 +1286,7 @@ public:
                 MCS::AttachUserRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
             }
             if (this->verbose){
-                LOG(LOG_INFO, "Front::incoming:: Recv MCS::AttachUserConfirm", this->userid);
+                LOG(LOG_INFO, "Front::incoming:: Send MCS::AttachUserConfirm", this->userid);
             }
             {
                 BStream x224_header(256);

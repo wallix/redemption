@@ -147,7 +147,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
     }
 
     void init(){
-        this->stream.p = this->stream.data;
+        this->stream.p = this->stream.end = this->stream.data;
         if (this->sec){ delete this->sec; }
         if (this->sctrl){ delete this->sctrl; }
         if (this->sdata){ delete this->sdata; }
@@ -156,6 +156,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
             LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
         }
         this->pstream = &this->stream;
+        this->pstream->p = this->pstream->end = this->pstream->data;
         this->sec = new Sec(*this->pstream, this->encrypt);
         this->sec->emit_begin( this->crypt_level?SEC::SEC_ENCRYPT:0 );
         this->sctrl = new ShareControl(*this->pstream);
