@@ -39,7 +39,7 @@
 
 // using a template for default size of stream would make sense instead of always using the large buffer below
 enum {
-     AUTOSIZE = 8192
+     AUTOSIZE = 65536
 };
 
 class Stream {
@@ -781,6 +781,7 @@ class Stream {
     uint32_t in_per_integer()
     {
         switch (this->in_per_length()){
+        case 0: // 0 is bogus bug rdesktop sends that...
         case 1:
             return this->in_uint8();
         case 2:

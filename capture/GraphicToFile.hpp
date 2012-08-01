@@ -156,7 +156,7 @@ struct GraphicsToFile : public RDPSerializer
     ~GraphicsToFile(){
     }
 
-    void init(size_t allocate = 4096){
+    void init(size_t allocate = 32768){
         if (this->ini && this->ini->globals.debug.primary_orders){
             LOG(LOG_INFO, "GraphicsToFile::init::Initializing orders batch");
         }

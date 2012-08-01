@@ -164,7 +164,7 @@ struct RDPUnserializer
         }
         if (!this->remaining_order_count){
             try {
-                this->stream.init(4096);
+                this->stream.init(32768);
                 this->trans->recv(&this->stream.end, 8);
                 this->chunk_type = this->stream.in_uint16_le();
                 this->chunk_size = this->stream.in_uint16_le();
@@ -176,7 +176,7 @@ struct RDPUnserializer
                 return (e.id == ERR_TRANSPORT_READ_FAILED) ? false : true;
             }
             const uint16_t stream_size = this->chunk_size - 8;
-            if (stream_size > 4096){
+            if (stream_size > 32768){
                 this->stream.init(stream_size);
             }
             this->trans->recv(&this->stream.end, stream_size);
@@ -431,9 +431,12 @@ struct RDPSerializer : public RDPGraphicDevice
     void reserve_order(size_t asked_size)
     {
         if (this->ini && this->ini->globals.debug.primary_orders > 63){
-            LOG(LOG_INFO, "GraphicsUpdatePDU::reserve_order[%u](%u) remains=%u", this->order_count, asked_size, std::min(this->pstream->capacity, (size_t)4096) - this->pstream->get_offset(0));
+            LOG(LOG_INFO, "GraphicsUpdatePDU::reserve_order[%u](%u) remains=%u", this->order_count, asked_size, std::min(this->pstream->capacity, (size_t)32768) - this->pstream->get_offset(0));
         }
-        assert(asked_size < this->pstream->capacity);
+        if (asked_size > this->pstream->capacity){
+            LOG(LOG_ERR, "asked_size (%u) > this->pstream->capacity (%u)", asked_size, this->pstream->capacity);
+            assert(asked_size <= this->pstream->capacity);
+        }
         size_t max_packet_size = std::min(this->pstream->capacity, (size_t)4096);
         size_t used_size = this->pstream->get_offset(0);
         const size_t max_order_batch = 4096;
