@@ -52,7 +52,7 @@ inline static uint __wrm_recorder_init_get_good_idx(WRMRecorder& recorder,
     if (!files[0].start_sec)
         return opt.idx_start;
     const timeval tm = {files[0].start_sec, files[0].start_usec};
-    const uint64_t time = opt.range.left.time;
+    uint64_t time = 0;
     uint real_idx = opt.idx_start;
     for (uint idx = real_idx + 1; idx != files.size(); ++idx)
     {
@@ -61,11 +61,12 @@ inline static uint __wrm_recorder_init_get_good_idx(WRMRecorder& recorder,
         {
             timeval tm2 = {data_file.start_sec, data_file.start_usec};
             uint64_t elapsed = difftimeval(tm2, tm) / 1000000;
-            if (elapsed > time)
+            if (elapsed > opt.range.left.time)
             {
                 opt.range.left.time -= time;
                 break;
             }
+            time = elapsed;
             real_idx = idx;
         }
     }
@@ -94,9 +95,14 @@ int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt, InputType::
                     std::cerr << "invalid meta chunck in " << opt.in_filename << std::endl;
                     return 2003;
                 }
-                if (opt.idx_start >= recorder.meta().files.size())
+                if (!recorder.meta().files.empty())
+                {
+                    if (opt.idx_start >= recorder.meta().files.size())
+                        return __wrm_recorder_init_idx_not_found(recorder, opt);
+                    opt.idx_start = __wrm_recorder_init_get_good_idx(recorder, opt);
+                }
+                else  if (opt.idx_start > recorder.meta().files.size())
                     return __wrm_recorder_init_idx_not_found(recorder, opt);
-                opt.idx_start = __wrm_recorder_init_get_good_idx(recorder, opt);
                 if (opt.idx_start != recorder.idx_file)
                 {
                     recorder.next_file(recorder.meta().files[recorder.idx_file].wrm_filename.c_str());
