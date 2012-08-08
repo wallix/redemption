@@ -118,7 +118,9 @@ inline FilenameIncrementalGenerator make_pid_filename_incremental_generator(cons
 
 inline FilenameIncrementalGenerator make_pid_filename_incremental_generator(const std::string& filename, const std::string& extension, std::size_t first = 0)
 {
-    return FilenameIncrementalGenerator(filename + boost::lexical_cast<std::string>(getpid()), extension, first);
+    std::string tmp = filename + boost::lexical_cast<std::string>(getpid());
+    tmp += '-';
+    return FilenameIncrementalGenerator(tmp, extension, first);
 }
 
 #endif

@@ -66,6 +66,7 @@ void WrmRecorderOption::add_default_options()
     ("time,t", po::value(&this->time), "duration between each capture"
     "\nformat: [+|-]time[h|m|s][...]")
     ("input-file,i", po::value(&this->in_filename), "input filename (see --input-type)")
+    ("in,i", po::value(&this->in_filename), "alias for --input-file")
     ("index-start,x", po::value(&this->idx_start), "index file in the meta")
     ("path,p", po::value(&this->base_path), "base path for the files presents in the meta")
     ("ignore-dir,N", "ignore directory for meta in the wrm file")

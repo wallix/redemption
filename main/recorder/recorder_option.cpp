@@ -23,6 +23,7 @@ void RecorderOption::add_default_options()
 {
     this->desc.add_options()
     ("output-file,o", po::value(&this->out_filename), "output filename (see --output-type)")
+    ("out", po::value(&this->out_filename), "alias for --output-file")
     ("screenshot-wrm,s", "capture the screen when a file wrm is create")
     ("screenshot-start,0", "")
     ("no-screenshot-stop,n", "")

@@ -181,7 +181,7 @@ public:
     }
 
     ~NativeCapture(){
-        //this->recorder.flush();
+        this->recorder.flush();
         if (this->cipher_is_active())
         {
             this->cipher_trans.stop();

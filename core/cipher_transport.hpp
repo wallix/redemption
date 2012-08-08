@@ -78,10 +78,9 @@ public:
 
     virtual void send(const char * const buffer, size_t len) throw (Error)
     {
-        this->do_send((const unsigned char * const)buffer, len);
+        this->do_send((const uint8_t * const)buffer, len);
     }
-
-    virtual void send(const unsigned char * const buffer, size_t len) throw (Error)
+    void send(const uint8_t * const buffer, size_t len) throw (Error)
     {
         this->do_send(buffer, len);
     }
@@ -92,7 +91,7 @@ private:
         this->out->send(this->buf_data, this->cipher_data.size());
     }
 
-    void do_send(const unsigned char * const buffer, size_t len) throw (Error)
+    void do_send(const uint8_t * const buffer, size_t len) throw (Error)
     {
         std::size_t remaining_len = 0;
         while (len)
@@ -161,9 +160,9 @@ public:
 
     virtual void recv(char ** pbuffer, size_t len) throw (Error)
     {
-        this->do_recv((unsigned char **)pbuffer, len);
+        this->do_recv((uint8_t**)pbuffer, len);
     }
-    virtual void recv(unsigned char ** pbuffer, size_t len) throw (Error)
+    void recv(uint8_t ** pbuffer, size_t len) throw (Error)
     {
         this->do_recv(pbuffer, len);
     }
@@ -176,7 +175,7 @@ public:
     }
 
 private:
-    size_t _copy_data_buf(unsigned char ** pbuffer, size_t len)
+    size_t _copy_data_buf(uint8_t ** pbuffer, size_t len)
     {
         std::size_t size = 0;
         if (!this->cipher_data.empty() && this->cipher_data.size() != this->remaining_data)
@@ -195,7 +194,7 @@ private:
         return size;
     }
 
-    std::size_t _copy_recv(unsigned char ** pbuffer, size_t len) throw (Error)
+    std::size_t _copy_recv(uint8_t ** pbuffer, size_t len) throw (Error)
     {
         unsigned char * const tmp = *pbuffer;
         while (len >= EVP_MAX_BLOCK_LENGTH)
@@ -230,10 +229,8 @@ private:
         this->remaining_data = 0;
     }
 
-    void do_recv(unsigned char ** pbuffer, size_t len) throw (Error)
+    void do_recv(uint8_t ** pbuffer, size_t len) throw (Error)
     {
-        unsigned char * const p = *pbuffer;
-
         while (len
             && (len -= this->_copy_data_buf(pbuffer, len))
             && (len -= this->_copy_recv(pbuffer, len))
@@ -241,16 +238,17 @@ private:
             this->_recv_in_buf();
             if (!this->use_buf)
             {
-                if (!this->is_stop)
-                    this->cipher_crypt.stop();
-                if ((size_t)(*pbuffer - p) == len)
-                    break;
-                if (this->cipher_data.empty())
-                    throw Error(ERR_TRANSPORT_READ_FAILED, 0);
+                if (this->is_stop)
+                {
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                }
+                this->cipher_crypt.stop();
+                len -= this->_copy_data_buf(pbuffer, len);
+                if (len)
+                {
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                }
                 this->is_stop = true;
-                unsigned char * const tmp = *pbuffer;
-                this->_copy_data_buf(pbuffer, len);
-                this->remaining_data = *pbuffer - tmp;
                 break;
             }
         }

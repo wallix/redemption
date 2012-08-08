@@ -78,11 +78,28 @@ private:
             throw Error(ERR_RECORDER_META_REFERENCE_WRM);
         }
     }
-    bool _start_cipher(const unsigned char* key = 0,
-                       const unsigned char* iv = 0,
-                       ENGINE* impl = 0)
+
+    bool _start_cipher(const unsigned char* key,
+                       const unsigned char* iv,
+                       ENGINE* impl)
     {
         return this->cipher_trans.start(this->cipher_mode, key, iv, impl);
+    }
+
+    bool _start_cipher()
+    {
+        return this->_start_cipher(this->cipher_key,
+                                   this->cipher_iv,
+                                   this->cipher_impl);
+    }
+
+    void start_cipher_if_active()
+    {
+        if (this->cipher_mode && !this->_start_cipher())
+        {
+            LOG(LOG_ERR, "Error cipher start in NativeCapture");
+            throw Error(ERR_CIPHER_START_ERR);
+        }
     }
 
 public:
@@ -94,8 +111,8 @@ public:
     , cipher_key(key)
     , cipher_iv(iv)
     , cipher_impl(impl)
-    , cipher_trans(&trans)
     , trans(0, this->cipher_mode ? false : true)
+    , cipher_trans(&trans)
     , reader(this->cipher_mode
              ? (Transport*)&this->cipher_trans : &this->trans,
              0, Rect())
@@ -104,7 +121,9 @@ public:
     , path()
     , base_path_len(0)
     , only_filename(false)
-    {}
+    {
+        this->start_cipher_if_active();
+    }
 
     WRMRecorder(int fd, const std::string basepath = "",
                 CipherMode::enum_t e = CipherMode::NO_MODE,
@@ -115,8 +134,8 @@ public:
     , cipher_key(key)
     , cipher_iv(iv)
     , cipher_impl(impl)
-    , cipher_trans(&trans)
     , trans(0, this->cipher_mode ? false : true)
+    , cipher_trans(&trans)
     , reader(this->cipher_mode
              ? (Transport*)&this->cipher_trans : &this->trans,
              0, Rect())
@@ -127,6 +146,7 @@ public:
     , only_filename(false)
     {
         this->normalize_path();
+        this->start_cipher_if_active();
     }
 
     WRMRecorder(const std::string& filename, const std::string basepath = "",
@@ -138,8 +158,8 @@ public:
     , cipher_key(key)
     , cipher_iv(iv)
     , cipher_impl(impl)
-    , cipher_trans(&trans)
     , trans(0, this->cipher_mode ? false : true)
+    , cipher_trans(&trans)
     , reader(this->cipher_mode
              ? (Transport*)&this->cipher_trans : &this->trans,
              0, Rect())
@@ -154,12 +174,8 @@ public:
             LOG(LOG_ERR, "Error selected cipher mode (%d) in WRMRecorder", e);
             throw Error(ERR_CIPHER_START_ERR);
         }
-        if (this->cipher_mode && !this->_start_cipher())
-        {
-            LOG(LOG_ERR, "Error cipher start in NativeCapture");
-            throw Error(ERR_CIPHER_START_ERR);
-        }
         this->normalize_path();
+        this->start_cipher_if_active();
         std::size_t pos = filename.find_last_not_of('.');
         if (pos != std::string::npos
             && pos < filename.size()

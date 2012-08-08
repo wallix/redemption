@@ -43,28 +43,7 @@
 
 #include "filename_generator.hpp"
 
-// BlowFish
-#define MY_CIPHER_MODE EVP_bf_cbc()   // Blowfish CBC mode
-//#define MY_CIPHER_MODE EVP_bf_ecb()   // Blowfish ECB mode
-
-// DES
-//#define MY_CIPHER_MODE EVP_des_cbc()    // DES CBC mode
-//#define MY_CIPHER_MODE EVP_des_ecb()    // DES ECB mode
-//#define MY_CIPHER_MODE EVP_des_ede()    // DES EDE mode
-///des_ede3 = error … @{
-//#define MY_CIPHER_MODE EVP_des_ede3_cbc()
-//#define MY_CIPHER_MODE EVP_des_ede3_ofb()
-//#define MY_CIPHER_MODE EVP_des_ede3_cfb()
-//#define MY_CIPHER_MODE EVP_des_ede3()   // DES EDE3 mode
-///@}
-
-// RC2
-//#define MY_CIPHER_MODE EVP_rc2_cbc()    // RC2 CBC mode
-//#define MY_CIPHER_MODE EVP_rc2_ecb()    // RC2 ECB mode
-
-// RC4
-//#define MY_CIPHER_MODE EVP_rc4()      // RC4 mode
-//#define MY_CIPHER_MODE EVP_rc4_40()   // RC4 40 mode
+#define MY_CIPHER_MODE CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC)
 
 void cipher_crypt_test_run(CipherCrypt& cipher_crypt,
                            const unsigned char* data, std::size_t len,
@@ -97,8 +76,6 @@ BOOST_AUTO_TEST_CASE(TestCryptOpenSSL)
     //const char * mystr = "1234567890";
     const char * mystr = "123456";
 
-    std::cout << "EVP_MAX_BLOCK_LENGTH: " << EVP_MAX_BLOCK_LENGTH << '\n';
-
     unsigned char pEncryptedStr[1024] = {0};
     unsigned char pDecryptedStr[1024] = {0};
     std::size_t outlen;
@@ -114,10 +91,19 @@ BOOST_AUTO_TEST_CASE(TestCryptOpenSSL)
                               (const unsigned char *)mystr,
                               strlen(mystr),
                               key, iv);
-        BOOST_REQUIRE(true);
         outlen = crypt_data.size();
-        std::cout << "After encrypted: " << pEncryptedStr << std::endl;
-        std::cout << "size: " << outlen << std::endl;
+        BOOST_REQUIRE_EQUAL(outlen, 8);
+        const unsigned char * tmp = (const unsigned char *)"\x17\xf9\x7b\xe7\xfb\x8b\xfa\xd6";
+        BOOST_REQUIRE(
+            pEncryptedStr[0] == tmp[0]
+            && pEncryptedStr[1] == tmp[1]
+            && pEncryptedStr[2] == tmp[2]
+            && pEncryptedStr[3] == tmp[3]
+            && pEncryptedStr[4] == tmp[4]
+            && pEncryptedStr[5] == tmp[5]
+            && pEncryptedStr[6] == tmp[6]
+            && pEncryptedStr[7] == tmp[7]
+        );
     }
     crypt_data.reset(pDecryptedStr);
     {
@@ -127,8 +113,16 @@ BOOST_AUTO_TEST_CASE(TestCryptOpenSSL)
         cipher_crypt_test_run(cipher_crypt,
                               pEncryptedStr, outlen,
                               key, iv);
-        BOOST_REQUIRE(true);
-        std::cout << "After decrypted: " << pDecryptedStr << std::endl;
+        BOOST_REQUIRE_EQUAL(crypt_data.size(), 6);
+        const unsigned char * tmp = (const unsigned char *)mystr;
+        BOOST_REQUIRE(
+            pDecryptedStr[0] == tmp[0]
+            && pDecryptedStr[1] == tmp[1]
+            && pDecryptedStr[2] == tmp[2]
+            && pDecryptedStr[3] == tmp[3]
+            && pDecryptedStr[4] == tmp[4]
+            && pDecryptedStr[5] == tmp[5]
+        );
     }
 }
 
@@ -141,8 +135,6 @@ BOOST_AUTO_TEST_CASE(TestCryptFileOpenSSL)
     const char * mystr = "123456";
 
     unsigned char pDecryptedStr[1024] = {0};
-
-    std::cout << "EVP_MAX_BLOCK_LENGTH: " << EVP_MAX_BLOCK_LENGTH << '\n';
 
     int fd = open("/tmp/encrypt.txt", O_WRONLY|O_CREAT, 0644);
     BOOST_REQUIRE(fd != 0);
@@ -166,13 +158,23 @@ BOOST_AUTO_TEST_CASE(TestCryptFileOpenSSL)
         BOOST_REQUIRE(true);
         unsigned char * p = pDecryptedStr;
         trans.recv(&p, size_buf);
-        BOOST_REQUIRE(true);
-        std::cout << "size: " << p - pDecryptedStr << std::endl;
-        std::cout << "After decrypted: " << pDecryptedStr << std::endl;
+        BOOST_REQUIRE_EQUAL(p - pDecryptedStr, 4);
+        BOOST_REQUIRE(
+            pDecryptedStr[0] == '1'
+            && pDecryptedStr[1] == '2'
+            && pDecryptedStr[2] == '3'
+            && pDecryptedStr[3] == '4'
+        );
         trans.recv(&p, 2);
-        BOOST_REQUIRE(true);
-        std::cout << "size: " << p - pDecryptedStr << std::endl;
-        std::cout << "After decrypted: " << pDecryptedStr << std::endl;
+        BOOST_REQUIRE_EQUAL(p - pDecryptedStr, 6);
+        BOOST_REQUIRE(
+            pDecryptedStr[0] == '1'
+            && pDecryptedStr[1] == '2'
+            && pDecryptedStr[2] == '3'
+            && pDecryptedStr[3] == '4'
+            && pDecryptedStr[4] == '5'
+            && pDecryptedStr[5] == '6'
+        );
         try {
             trans.recv(&p, size_buf);
             BOOST_REQUIRE(true);
@@ -261,7 +263,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
 
     Rect clip(0,0, 800,600);
     {
-        NativeCapture cap(800, 600, "/tmp/encrypt-cap.wrm", 0,
+        NativeCapture cap(800, 600, "/tmp/encrypt-cap", 0,
                           CipherMode::BLOWFISH_CBC, key, iv);
         timeval tm = {0,0};
         cap.send_time_start(tm);
@@ -272,22 +274,28 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         BOOST_REQUIRE(true);
         cap.draw(RDPOpaqueRect(Rect(500,400,50,18), GREEN), clip);
         BOOST_REQUIRE(true);
-        cap.flush();
+        cap.recorder.flush();
     }
 
-    try
+    std::string filename_mwrm = filename_to_pid_filename(
+        "/tmp/encrypt-cap.mwrm");
     {
-        WRMRecorder recorder(filename_to_pid_filename(
-            "/tmp/encrypt-cap.wrm.mwrm"),
-            "",
-            CipherMode::BLOWFISH_CBC, key, iv);
-        StaticCapture pngcap(800,600,"/tmp/decrypt-cap.png");
+        WRMRecorder recorder;
+        recorder.init_cipher(CipherMode::BLOWFISH_CBC, key, iv);
+        recorder.open_meta_followed_wrm(filename_mwrm.c_str());
+        /*WRMRecorder recorder(filename_mwrm, "",
+                             CipherMode::BLOWFISH_CBC, key, iv);*/
+        StaticCapture pngcap(800,600,"/tmp/decrypt-cap");
         recorder.consumer(&pngcap);
         BOOST_REQUIRE(true);
 
         char message[1024];
 
         BOOST_CHECK_MESSAGE(recorder.selected_next_order(), true);
+        BOOST_CHECK_EQUAL(recorder.chunk_type(), 1008);
+        recorder.interpret_order();
+        BOOST_CHECK_MESSAGE(recorder.selected_next_order(), true);
+        BOOST_CHECK_EQUAL(recorder.chunk_type(), 0);
         recorder.interpret_order();
         if (!check_sig(pngcap.drawable, message,
             "\x2d\x26\x43\x36\x49\xe3\x03\xd2\xb7\xf9"
@@ -311,12 +319,11 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         {
             BOOST_CHECK_MESSAGE(false, message);
         }
-        BOOST_CHECK_MESSAGE(recorder.selected_next_order(), false);
-    } catch (Error& e)
-    {
-        std::cerr << e.id << std::endl;
-        throw ;
+
+        BOOST_CHECK_EQUAL(recorder.selected_next_order(), false);
     }
 
-//     unlink("/tmp/encrypt.wrm");
+    unlink(filename_mwrm.c_str());
+    filename_mwrm.erase(filename_mwrm.size() - 4, 1);
+    unlink(FilenameIncrementalGenerator(filename_mwrm).next().c_str());
 }
