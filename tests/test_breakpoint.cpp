@@ -67,11 +67,11 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
                            "/tmp/test.png");
     recorder.consumer(&consumer);
 
-    uint16_t next_file_id   = WRMChunk::NEXT_FILE_ID;
-    uint16_t meta_file      = WRMChunk::META_FILE;
-    uint16_t breakpoint     = WRMChunk::BREAKPOINT;
-    uint16_t timestamp      = WRMChunk::TIMESTAMP;
-    uint16_t time_start     = WRMChunk::TIME_START;
+    const uint16_t next_file_id   = WRMChunk::NEXT_FILE_ID;
+    const uint16_t meta_file      = WRMChunk::META_FILE;
+    const uint16_t breakpoint     = WRMChunk::BREAKPOINT;
+    const uint16_t timestamp      = WRMChunk::TIMESTAMP;
+    const uint16_t time_start     = WRMChunk::TIME_START;
 
     BOOST_REQUIRE(recorder.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), time_start);

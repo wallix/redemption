@@ -68,6 +68,7 @@ struct DataMetaFile
     uint16_t version;
     uint16_t width;
     uint16_t height;
+    unsigned  cipher_mode;
 
     bool loaded;
 
@@ -76,6 +77,7 @@ struct DataMetaFile
     , version(0)
     , width(0)
     , height(0)
+    , cipher_mode(0)
     , loaded(false)
     {}
 };
@@ -83,7 +85,7 @@ struct DataMetaFile
 inline std::istream& operator>>(std::istream& is, DataMetaFile& data)
 {
     data.files.clear();
-    is >> data.width >> data.height;
+    is >> data.width >> data.height >> data.cipher_mode;
 
     std::string line;
     while (std::getline(is, line))
@@ -116,6 +118,7 @@ inline std::istream& operator>>(std::istream& is, DataMetaFile& data)
 
 /**
 width height
+cipher_mode
 
 wrm_filename,[png_filename] [start_sec [start_usec]]
 */
@@ -130,7 +133,8 @@ inline bool read_meta_file(DataMetaFile& data, const char * filename)
 
 inline std::ostream& operator<<(std::ostream& os, DataMetaFile& data)
 {
-    os << data.width << ' ' << data.height << "\n\n";
+    os << data.width << ' ' << data.height << "\n"
+    << data.cipher_mode << "\n\n";
     for (std::size_t i = 0, last = data.files.size(); i < last; ++i)
     {
         DataFile& info = data.files[i];

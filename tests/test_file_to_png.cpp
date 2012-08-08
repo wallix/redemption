@@ -91,14 +91,18 @@ BOOST_AUTO_TEST_CASE(TestFileWithoutMetaToPng)
                 "\xee\x36\xa3\xa2\x20\x99\x04\x1e\xb7\xba");
     unlink_mwrm_and_wrm("/tmp/test_file_without_meta_to_png", 1);
 }*/
-
+#include <iostream>
 BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
 {
+    BOOST_CHECK(true);
     WRMRecorder reader(FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
+    BOOST_CHECK(true);
     DataMetaFile& meta = reader.meta();
     BOOST_CHECK_EQUAL(reader.is_meta_chunk(), true);
     BOOST_CHECK_EQUAL(800, meta.width);
     BOOST_CHECK_EQUAL(600, meta.height);
+
+    std::cout << "cipher is active: " << reader.cipher_is_active() << std::endl;
 
     StaticCapture consumer(meta.width, meta.height,
                            "/tmp/test_replay_to_png");
@@ -116,13 +120,13 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
             reader.interpret_order();
             if (is_chunk_time)
             {
-                consumer.dump_png();
+                //consumer.dump_png();
                 ++count_img;
                 is_chunk_time = false;
             }
         }
     }
-    consumer.dump_png();
+    //consumer.dump_png();
     ++count_img;
     BOOST_CHECK_EQUAL(count_img, 7);
     char mess[1024];
@@ -132,5 +136,5 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     {
         BOOST_CHECK_MESSAGE(false, mess);
     }
-    unlink_png("/tmp/test_replay_to_png", count_img);
+    //unlink_png("/tmp/test_replay_to_png", count_img);
 }

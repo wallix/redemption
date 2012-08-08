@@ -65,6 +65,7 @@ BOOST_AUTO_TEST_CASE(TestMetaFile)
 
     ss.clear();
     ss.str("800 600\n"
+    "2\n\n"
     "khifeza.wrm, \n"
     "ldehgmzg.wrm,cceds.png 46767\n"
     "ezpiuze.wrm,jz.png\n");
@@ -75,6 +76,7 @@ BOOST_AUTO_TEST_CASE(TestMetaFile)
     data2.files[1].start_usec = 0;
     data2.files[2].start_sec = 0;
     data2.files[2].start_usec = 0;
+    data.cipher_mode = 2;
     BOOST_REQUIRE_EQUAL(data.files.size(), data2.files.size());
     BOOST_REQUIRE(data.files == data2.files);
 }

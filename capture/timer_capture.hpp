@@ -103,90 +103,10 @@ public:
         useconds += this->usec();
         this->sec() += useconds / 1000000;
         this->usec() = useconds % 1000000;
-        /*this->now.tv_sec += useconds / 1000000;
-        this->now.tv_usec += useconds % 1000000;
-        if (this->now.tv_usec >= 1000000)
-        {
-            this->now.tv_sec += this->now.tv_usec / 1000000;
-            this->now.tv_usec %= 1000000;
-        }*/
         return *this;
     }
 
     using URT::reset;
-};
-
-struct WaitCapture {
-    TimerCapture timer;
-
-private:
-    uint64_t time_future;
-
-//public:
-    uint64_t time_wait;
-
-public:
-    WaitCapture()
-    : timer(TimerCapture::invalid_timer())
-    , time_future(0)
-    {}
-
-    void future(uint64_t micro_sec)
-    {
-        if (this->timer.valid())
-        {
-            uint64_t elapsed = this->timer.elapsed() + this->time_future;
-            if (elapsed <= micro_sec)
-            {
-                this->time_wait = micro_sec - elapsed;
-                this->time_future = 0;
-            }
-            else
-            {
-                this->time_future = elapsed - micro_sec;
-                this->time_wait = 0;
-            }
-        }
-        else
-        {
-            timer.reset();
-            this->time_wait = micro_sec;
-            this->time_future = 0;
-        }
-    }
-
-    void sleep()
-    {
-        if (this->time_wait)
-        {
-            struct timespec wtime = {
-                this->time_wait / 1000000,
-                this->time_wait % 1000000 * 1000
-            };
-            nanosleep(&wtime, NULL);
-            this->timer += this->time_wait;
-        }
-    }
-
-    void fake_sleep()
-    {
-        if (this->time_wait)
-        {
-            this->timer += this->time_wait;
-        }
-    }
-
-    void wait(uint64_t micro_sec)
-    {
-        this->future(micro_sec);
-        this->sleep();
-    }
-
-    void fake_wait(uint64_t micro_sec)
-    {
-        this->future(micro_sec);
-        this->fake_sleep();
-    }
 };
 
 #endif

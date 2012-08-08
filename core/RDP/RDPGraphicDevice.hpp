@@ -122,7 +122,7 @@ struct RDPUnserializer
     uint16_t remaining_order_count;
     uint16_t order_count;
 
-    WaitCapture wait_cap;
+    TimerCapture timer_cap;
 
     DataMetaFile data_meta;
 
@@ -145,7 +145,7 @@ struct RDPUnserializer
     chunk_type(0),
     remaining_order_count(0),
     order_count(0),
-    wait_cap(),
+    timer_cap(),
 
     data_meta()
     {
@@ -287,7 +287,15 @@ struct RDPUnserializer
             case WRMChunk::TIMESTAMP:
             {
                 uint64_t micro_sec = this->stream.in_uint64_be();
-                this->wait_cap.wait(micro_sec);
+                uint64_t elapsed = this->timer_cap.elapsed();
+                if (elapsed <= micro_sec)
+                {
+                    struct timespec wtime = {
+                        (micro_sec - elapsed) / 1000000,
+                        (micro_sec - elapsed) % 1000000 * 1000
+                    };
+                    nanosleep(&wtime, NULL);
+                }
                 --this->remaining_order_count;
             }
             break;

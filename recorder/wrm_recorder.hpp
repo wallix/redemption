@@ -31,10 +31,16 @@
 #include "png.hpp"
 #include "error.hpp"
 #include "auto_buffer.hpp"
+#include "cipher_transport.hpp"
 
 class WRMRecorder
 {
+    const EVP_CIPHER * cipher_mode;
+    const unsigned char* cipher_key;
+    const unsigned char* cipher_iv;
+    ENGINE* cipher_impl;
     InFileTransport trans;
+    InCipherTransport cipher_trans;
 
 public:
     RDPUnserializer reader;
@@ -72,11 +78,27 @@ private:
             throw Error(ERR_RECORDER_META_REFERENCE_WRM);
         }
     }
+    bool _start_cipher(const unsigned char* key = 0,
+                       const unsigned char* iv = 0,
+                       ENGINE* impl = 0)
+    {
+        return this->cipher_trans.start(this->cipher_mode, key, iv, impl);
+    }
 
 public:
-    WRMRecorder()
-    : trans(0)
-    , reader(&trans, 0, Rect())
+    WRMRecorder(CipherMode::enum_t e = CipherMode::NO_MODE,
+                const unsigned char* key = 0,
+                const unsigned char* iv = 0,
+                ENGINE* impl = 0)
+    : cipher_mode(CipherMode::to_evp_cipher(e))
+    , cipher_key(key)
+    , cipher_iv(iv)
+    , cipher_impl(impl)
+    , cipher_trans(&trans)
+    , trans(0, this->cipher_mode ? false : true)
+    , reader(this->cipher_mode
+             ? (Transport*)&this->cipher_trans : &this->trans,
+             0, Rect())
     , redrawable(0)
     , idx_file(0)
     , path()
@@ -84,9 +106,20 @@ public:
     , only_filename(false)
     {}
 
-    WRMRecorder(int fd, const std::string basepath = "")
-    : trans(fd)
-    , reader(&trans, 0, Rect())
+    WRMRecorder(int fd, const std::string basepath = "",
+                CipherMode::enum_t e = CipherMode::NO_MODE,
+                const unsigned char* key = 0,
+                const unsigned char* iv = 0,
+                ENGINE* impl = 0)
+    : cipher_mode(CipherMode::to_evp_cipher(e))
+    , cipher_key(key)
+    , cipher_iv(iv)
+    , cipher_impl(impl)
+    , cipher_trans(&trans)
+    , trans(0, this->cipher_mode ? false : true)
+    , reader(this->cipher_mode
+             ? (Transport*)&this->cipher_trans : &this->trans,
+             0, Rect())
     , redrawable(0)
     , idx_file(0)
     , path(basepath)
@@ -96,15 +129,36 @@ public:
         this->normalize_path();
     }
 
-    WRMRecorder(const std::string& filename, const std::string basepath = "")
-    : trans(0)
-    , reader(&trans, 0, Rect())
+    WRMRecorder(const std::string& filename, const std::string basepath = "",
+                CipherMode::enum_t e = CipherMode::NO_MODE,
+                const unsigned char* key = 0,
+                const unsigned char* iv = 0,
+                ENGINE* impl = 0)
+    : cipher_mode(CipherMode::to_evp_cipher(e))
+    , cipher_key(key)
+    , cipher_iv(iv)
+    , cipher_impl(impl)
+    , cipher_trans(&trans)
+    , trans(0, this->cipher_mode ? false : true)
+    , reader(this->cipher_mode
+             ? (Transport*)&this->cipher_trans : &this->trans,
+             0, Rect())
     , redrawable(0)
     , idx_file(0)
     , path(basepath)
     , base_path_len(basepath.length())
     , only_filename(false)
     {
+        if (e && !this->cipher_mode)
+        {
+            LOG(LOG_ERR, "Error selected cipher mode (%d) in WRMRecorder", e);
+            throw Error(ERR_CIPHER_START_ERR);
+        }
+        if (this->cipher_mode && !this->_start_cipher())
+        {
+            LOG(LOG_ERR, "Error cipher start in NativeCapture");
+            throw Error(ERR_CIPHER_START_ERR);
+        }
         this->normalize_path();
         std::size_t pos = filename.find_last_not_of('.');
         if (pos != std::string::npos
@@ -116,7 +170,34 @@ public:
         else {
             if (!this->open_wrm_followed_meta(filename.c_str()))
                 throw Error(ERR_RECORDER_META_REFERENCE_WRM, errno);
+            if (this->meta().cipher_mode && !this->cipher_mode)
+                throw Error(ERR_RECORDER_FILE_CRYPTED);
         }
+    }
+
+    bool init_cipher(CipherMode::enum_t e,
+                     const unsigned char* key = 0,
+                     const unsigned char* iv = 0,
+                     ENGINE* impl = 0)
+    {
+        this->cipher_mode = CipherMode::to_evp_cipher(e);
+        if (!this->cipher_mode)
+            return false;
+        if (!this->_start_cipher(key, iv, impl))
+        {
+            this->cipher_mode = 0;
+            return false;
+        }
+        this->cipher_key = key;
+        this->cipher_iv = iv;
+        this->cipher_impl = impl;
+        this->reader.trans = &this->cipher_trans;
+        this->trans.diff_size_is_error = false;
+    }
+
+    bool cipher_is_active() const
+    {
+        return this->cipher_mode;
     }
 
     void open_meta_followed_wrm(const char * filename)
@@ -125,6 +206,8 @@ public:
             throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
         if (this->meta().files.empty())
             throw Error(ERR_RECORDER_META_REFERENCE_WRM);
+        if (this->meta().cipher_mode && !this->cipher_mode)
+            throw Error(ERR_RECORDER_FILE_CRYPTED);
         this->open_wrm_only(this->get_cpath(this->meta().files[0].wrm_filename.c_str()));
         ++this->idx_file;
         if (this->selected_next_order() && this->is_meta_chunk())
@@ -423,8 +506,8 @@ public:
                 /*uint16_t width = */this->reader.stream.in_uint16_le();
                 /*uint16_t height = */this->reader.stream.in_uint16_le();
                 /*uint8_t bpp = */this->reader.stream.in_uint8();
-                this->reader.wait_cap.timer.sec() = this->reader.stream.in_uint64_le();
-                this->reader.wait_cap.timer.usec() = this->reader.stream.in_uint64_le();
+                this->reader.timer_cap.sec() = this->reader.stream.in_uint64_le();
+                this->reader.timer_cap.usec() = this->reader.stream.in_uint64_le();
                 --this->reader.remaining_order_count;
 
                 this->selected_next_order();
