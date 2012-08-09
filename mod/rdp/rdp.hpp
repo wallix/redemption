@@ -717,11 +717,45 @@ struct mod_rdp : public client_mod {
                     }
                     break;
                     case SC_SECURITY:
+                    {
                         LOG(LOG_INFO, "Receiving SC_Security from server");
-                        parse_mcs_data_sc_security(payload, this->encrypt, this->decrypt,
-                                                   this->server_public_key_len, this->client_crypt_random,
+                        uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
+                        uint32_t encryptionMethod;
+                        uint8_t modulus[SEC_MAX_MODULUS_SIZE];
+                        memset(modulus, 0, sizeof(modulus));
+                        uint8_t exponent[SEC_EXPONENT_SIZE];
+                        memset(exponent, 0, sizeof(exponent));
+
+                        parse_mcs_data_sc_security(payload, encryptionMethod, serverRandom,
+                                                   modulus, exponent,
+                                                   this->server_public_key_len, 
+                                                   this->client_crypt_random,
                                                    this->crypt_level,
                                                    this->gen);
+
+                        if (this->crypt_level == 0 && encryptionMethod == 0) { /* no encryption */
+                            LOG(LOG_INFO, "No encryption");
+                        }
+                        else {
+                            uint8_t client_random[SEC_RANDOM_SIZE];
+                            memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
+
+                            /* Generate a client random, and determine encryption keys */	
+                            this->gen->random(client_random, SEC_RANDOM_SIZE);
+
+                            ssllib ssl;
+
+                            ssl.rsa_encrypt(client_crypt_random, client_random, SEC_RANDOM_SIZE, server_public_key_len, modulus, exponent);
+                            uint8_t key_block[48];
+                            rdp_sec_generate_keyblock(key_block, client_random, serverRandom);
+                            memcpy(encrypt.sign_key, key_block, 16);
+                            if (encryptionMethod == 1){
+                                sec_make_40bit(encrypt.sign_key);
+                            }
+                            rdp_sec_generate_decrypt_keys(this->decrypt, &key_block[16], client_random, serverRandom, encryptionMethod);
+                            rdp_sec_generate_encrypt_keys(this->encrypt, &key_block[32], client_random, serverRandom, encryptionMethod);
+                        }
+                    }
                     break;
                     case SC_NET:
                         LOG(LOG_INFO, "Receiving SC_Net from server");

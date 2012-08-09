@@ -1438,9 +1438,15 @@ public:
                 ssl_mod_exp(client_random, 64, sec.client_crypt_random, 64, this->pub_mod, 64, this->pri_exp, 64);
 
                 // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
-                rdp_sec_generate_keys(this->decrypt, this->encrypt, this->encrypt.sign_key,
-                                      client_random,
-                                      this->server_random, this->encrypt.rc4_key_size);
+                uint8_t key_block[48];
+                rdp_sec_generate_keyblock(key_block, client_random, this->server_random);
+                memcpy(this->encrypt.sign_key, key_block, 16);
+                if (this->encrypt.rc4_key_size == 1){
+                    sec_make_40bit(this->encrypt.sign_key);
+                }
+
+                rdp_sec_generate_encrypt_keys(this->decrypt, &key_block[32], client_random, this->server_random, this->encrypt.rc4_key_size);
+                rdp_sec_generate_decrypt_keys(this->encrypt, &key_block[16], client_random, this->server_random, this->encrypt.rc4_key_size);
             }
             this->state = WAITING_FOR_LOGON_INFO;
         }

@@ -335,8 +335,10 @@ struct SCSecurityGccUserData {
 };
 
 static inline void parse_mcs_data_sc_security(Stream & cr_stream,
-                                              CryptContext & encrypt,
-                                              CryptContext & decrypt,
+                                              uint32_t & encryptionMethod,
+                                              uint8_t (& serverRandom)[SEC_RANDOM_SIZE],
+                                              uint8_t (& modulus)[SEC_MAX_MODULUS_SIZE],
+                                              uint8_t (& exponent)[SEC_EXPONENT_SIZE],
                                               uint32_t & server_public_key_len,
                                               uint8_t (& client_crypt_random)[512],
                                               int & encryptionLevel,
@@ -344,7 +346,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
 {
     LOG(LOG_INFO, "SC_SECURITY");
 
-    uint32_t encryptionMethod = cr_stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
+    encryptionMethod = cr_stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
     LOG(LOG_INFO, "encryptionMethod = %u", encryptionMethod);
     encryptionLevel = cr_stream.in_uint32_le(); /* 1 = low, 2 = medium, 3 = high */
     LOG(LOG_INFO, "encryptionLevel = %u", encryptionLevel);
@@ -353,11 +355,6 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         LOG(LOG_INFO, "No encryption");
         return;
     }
-
-    uint8_t modulus[SEC_MAX_MODULUS_SIZE];
-    uint8_t exponent[SEC_EXPONENT_SIZE];
-    memset(modulus, 0, sizeof(modulus));
-    memset(exponent, 0, sizeof(exponent));
 
     ssllib ssl;
 
@@ -386,7 +383,6 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
 // given by the serverRandomLen field. If the encryptionMethod and
 // encryptionLevel fields are both set to 0 then this field MUST NOT be present.
 
-    uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
     cr_stream.in_copy_bytes(serverRandom, serverRandomLen);
 
 // serverCertificate (variable): The variable-length certificate containing the
@@ -570,15 +566,6 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         TODO(" find a way to correctly dispose of garbage at end of buffer")
         /* There's some garbage here we don't care about */
     }
-
-    uint8_t client_random[SEC_RANDOM_SIZE];
-
-    memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
-
-    /* Generate a client random, and determine encryption keys */
-    gen->random(client_random, SEC_RANDOM_SIZE);
-    ssl.rsa_encrypt(client_crypt_random, client_random, SEC_RANDOM_SIZE, server_public_key_len, modulus, exponent);
-    rdp_sec_generate_keys(encrypt, decrypt, encrypt.sign_key, client_random, serverRandom, encryptionMethod);
 }
 
 
