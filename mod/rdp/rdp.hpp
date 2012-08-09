@@ -543,15 +543,12 @@ struct mod_rdp : public client_mod {
         BStream x224_header(256);
         BStream mcs_header(256);
 
-        size_t payload_len = stream.size();
-        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channelId, 1, 3, payload_len, MCS::PER_ENCODING);
-        size_t mcs_header_len = mcs_header.end - mcs_header.data;
-        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
-        size_t x224_header_len = x224_header.end - x224_header.data;
+        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channelId, 1, 3, stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
 
-        this->nego.trans->send(x224_header.data, x224_header_len);
-        this->nego.trans->send(mcs_header.data, mcs_header_len);
-        this->nego.trans->send(stream.data, payload_len);
+        this->nego.trans->send(x224_header.data, x224_header.size());
+        this->nego.trans->send(mcs_header.data, mcs_header.size());
+        this->nego.trans->send(stream.data, stream.size());
     }
 
     virtual BackEvent_t draw_event(void)
@@ -657,19 +654,16 @@ struct mod_rdp : public client_mod {
                     stream.set_out_per_length(stream.get_offset(offset_gcc_conference_create_request_header_length + 2), offset_gcc_conference_create_request_header_length); // length including header
 
                     stream.mark_end();
-                    size_t payload_length = stream.size();
 
                     BStream mcs_header(65536);
-                    MCS::CONNECT_INITIAL_Send mcs(mcs_header, payload_length, MCS::BER_ENCODING);
-                    size_t mcs_header_length = mcs_header.end - mcs_header.data;
+                    MCS::CONNECT_INITIAL_Send mcs(mcs_header, stream.size(), MCS::BER_ENCODING);
 
                     BStream x224_header(256);
-                    X224::DT_TPDU_Send(x224_header, mcs_header_length + payload_length);
-                    size_t x224_header_length = x224_header.end - x224_header.data;
+                    X224::DT_TPDU_Send(x224_header, mcs_header.size() + stream.size());
 
-                    this->nego.trans->send(x224_header.data, x224_header_length);
-                    this->nego.trans->send(mcs_header.data, mcs_header_length);
-                    this->nego.trans->send(stream.data, payload_length);
+                    this->nego.trans->send(x224_header.data, x224_header.size());
+                    this->nego.trans->send(mcs_header.data, mcs_header.size());
+                    this->nego.trans->send(stream.data, stream.size());
 
                     this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
                 }
@@ -814,12 +808,9 @@ struct mod_rdp : public client_mod {
                 BStream mcs_data(256);
 
                 MCS::ErectDomainRequest_Send mcs(mcs_data, 0, 0, MCS::PER_ENCODING);
-                size_t mcs_length = mcs_data.end - mcs_data.data;
-                X224::DT_TPDU_Send(x224_header, mcs_length);
-                size_t x224_length = x224_header.end - x224_header.data;
-
-                this->nego.trans->send(x224_header.data, x224_length);
-                this->nego.trans->send(mcs_data.data, mcs_length);
+                X224::DT_TPDU_Send(x224_header, mcs_data.size());
+                this->nego.trans->send(x224_header.data, x224_header.size());
+                this->nego.trans->send(mcs_data.data, mcs_data.size());
             }
             LOG(LOG_INFO, "Send MCS::AttachUserRequest");
             {
@@ -827,9 +818,9 @@ struct mod_rdp : public client_mod {
                 BStream mcs_data(256);
 
                 MCS::AttachUserRequest_Send mcs(mcs_data, MCS::PER_ENCODING);
-                size_t mcs_length = mcs_data.end - mcs_data.data;
+                size_t mcs_length = mcs_data.size();
                 X224::DT_TPDU_Send(x224_header, mcs_length);
-                size_t x224_length = x224_header.end - x224_header.data;
+                size_t x224_length = x224_header.size();
 
                 this->nego.trans->send(x224_header.data, x224_length);
                 this->nego.trans->send(mcs_data.data, mcs_length);
@@ -870,9 +861,9 @@ struct mod_rdp : public client_mod {
                     BStream x224_header(256);
                     BStream mcs_cjrq_data(256);
                     MCS::ChannelJoinRequest_Send(mcs_cjrq_data, this->userid, channels_id[index], MCS::PER_ENCODING);
-                    size_t mcs_length = mcs_cjrq_data.end - mcs_cjrq_data.data;
+                    size_t mcs_length = mcs_cjrq_data.size();
                     X224::DT_TPDU_Send(x224_header, mcs_length);
-                    size_t x224_header_length = x224_header.end - x224_header.data;
+                    size_t x224_header_length = x224_header.size();
                     this->nego.trans->send(x224_header.data, x224_header_length);
                     this->nego.trans->send(mcs_cjrq_data.data, mcs_length);
 

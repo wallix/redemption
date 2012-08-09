@@ -188,15 +188,12 @@ struct GraphicsUpdatePDU : public RDPSerializer
             BStream x224_header(256);
             BStream mcs_header(256);
 
-            size_t payload_len = this->pstream->end - this->pstream->data;
-            MCS::SendDataIndication_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, payload_len, MCS::PER_ENCODING);
-            size_t mcs_header_len = mcs_header.end - mcs_header.data;
-            X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
-            size_t x224_header_len = x224_header.end - x224_header.data;
+            MCS::SendDataIndication_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, this->pstream->size(), MCS::PER_ENCODING);
+            X224::DT_TPDU_Send(x224_header, this->pstream->size() + mcs_header.size());
 
-            this->trans->send(x224_header.data, x224_header_len);
-            this->trans->send(mcs_header.data, mcs_header_len);
-            this->trans->send(pstream->data, payload_len);
+            this->trans->send(x224_header.data, x224_header.size());
+            this->trans->send(mcs_header.data, mcs_header.size());
+            this->trans->send(pstream->data, this->pstream->size());
             this->init();
         }
     }

@@ -445,12 +445,10 @@ public:
         BStream mcs_data(256);
 
         MCS::DisconnectProviderUltimatum_Send(mcs_data, 0, MCS::PER_ENCODING);
-        size_t mcs_data_len = mcs_data.end - mcs_data.data;
-        X224::DT_TPDU_Send(x224_header, mcs_data_len);
-        size_t x224_header_len = x224_header.end - x224_header.data;
+        X224::DT_TPDU_Send(x224_header,  mcs_data.size());
 
-        trans->send(x224_header.data, x224_header_len);
-        trans->send(mcs_data.data, mcs_data_len);
+        trans->send(x224_header.data, x224_header.size());
+        trans->send(mcs_data.data,  mcs_data.size());
     }
 
     void set_console_session(bool b)
@@ -1211,19 +1209,16 @@ public:
             stream.set_out_uint16_be(0x8000 | (stream.get_offset(offset_user_data_len + 2)), offset_user_data_len);
 
             stream.mark_end();
-            size_t payload_length = stream.size();
 
             BStream mcs_header(256);
-            MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, payload_length, MCS::BER_ENCODING);
-            size_t mcs_header_length = mcs_header.end - mcs_header.data;
+            MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, stream.size(), MCS::BER_ENCODING);
 
             BStream x224_header(256);
-            X224::DT_TPDU_Send(x224_header, mcs_header_length + payload_length);
-            size_t x224_header_length = x224_header.end - x224_header.data;
+            X224::DT_TPDU_Send(x224_header, mcs_header.size() + stream.size());
 
-            this->trans->send(x224_header.data, x224_header_length);
-            this->trans->send(mcs_header.data, mcs_header_length);
-            this->trans->send(stream.data, payload_length);
+            this->trans->send(x224_header.data, x224_header.size());
+            this->trans->send(mcs_header.data, mcs_header.size());
+            this->trans->send(stream.data, stream.size());
 
             // Channel Connection
             // ------------------
@@ -1293,12 +1288,10 @@ public:
                 BStream mcs_data(256);
 
                 MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
-                size_t mcs_length = mcs_data.end - mcs_data.data;
-                X224::DT_TPDU_Send(x224_header, mcs_length);
-                size_t x224_header_length = x224_header.end - x224_header.data;
+                X224::DT_TPDU_Send(x224_header, mcs_data.size());
 
-                this->trans->send(x224_header.data, x224_header_length);
-                this->trans->send(mcs_data.data, mcs_length);
+                this->trans->send(x224_header.data, x224_header.size());
+                this->trans->send(mcs_data.data, mcs_data.size());
             }
 
 
@@ -1321,12 +1314,10 @@ public:
                                              mcs.channelId,
                                              true, mcs.channelId,
                                              MCS::PER_ENCODING);
-                size_t mcs_cjcf_data_length = mcs_cjcf_data.end - mcs_cjcf_data.data;
-                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data_length);
-                size_t x224_header_length = x224_header.end - x224_header.data;
+                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
 
-                this->trans->send(x224_header.data, x224_header_length);
-                this->trans->send(mcs_cjcf_data.data, mcs_cjcf_data_length);
+                this->trans->send(x224_header.data, x224_header.size());
+                this->trans->send(mcs_cjcf_data.data, mcs_cjcf_data.size());
             }
 
             {
@@ -1348,12 +1339,9 @@ public:
                                              mcs.channelId,
                                              true, mcs.channelId,
                                              MCS::PER_ENCODING);
-                size_t mcs_cjcf_data_length = mcs_cjcf_data.end - mcs_cjcf_data.data;
-                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data_length);
-                size_t x224_header_length = x224_header.end - x224_header.data;
-
-                this->trans->send(x224_header.data, x224_header_length);
-                this->trans->send(mcs_cjcf_data.data, mcs_cjcf_data_length);
+                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
+                this->trans->send(x224_header.data, x224_header.size());
+                this->trans->send(mcs_cjcf_data.data, mcs_cjcf_data.size());
             }
 
             for (size_t i = 0 ; i < this->channel_list.size() ; i++){
@@ -1375,12 +1363,10 @@ public:
                                              mcs.channelId,
                                              true, mcs.channelId,
                                              MCS::PER_ENCODING);
-                size_t mcs_cjcf_data_length = mcs_cjcf_data.end - mcs_cjcf_data.data;
-                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data_length);
-                size_t x224_header_length = x224_header.end - x224_header.data;
+                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
 
-                this->trans->send(x224_header.data, x224_header_length);
-                this->trans->send(mcs_cjcf_data.data, mcs_cjcf_data_length);
+                this->trans->send(x224_header.data, x224_header.size());
+                this->trans->send(mcs_cjcf_data.data, mcs_cjcf_data.size());
 
                 this->channel_list.set_chanid(i, mcs.channelId);
             }
@@ -1900,15 +1886,12 @@ public:
         BStream x224_header(256);
         BStream mcs_header(256);
 
-        size_t payload_len = stream.size();
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, channelId, 1, 3, payload_len, MCS::PER_ENCODING);
-        size_t mcs_header_len = mcs_header.end - mcs_header.data;
-        X224::DT_TPDU_Send(x224_header, payload_len + mcs_header_len);
-        size_t x224_header_len = x224_header.end - x224_header.data;
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, channelId, 1, 3, stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
 
-        trans->send(x224_header.data, x224_header_len);
-        trans->send(mcs_header.data, mcs_header_len);
-        trans->send(stream.data, payload_len);
+        trans->send(x224_header.data, x224_header.size());
+        trans->send(mcs_header.data, mcs_header.size());
+        trans->send(stream.data, stream.size());
     }
 
     /*****************************************************************************/

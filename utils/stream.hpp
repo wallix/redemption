@@ -424,7 +424,7 @@ class Stream {
         this->p = this->data;
     }
 
-    size_t size(){
+    size_t size() const {
         return this->end - this->data;
     }
 
