@@ -166,11 +166,11 @@ struct GraphicsToFile : public RDPSerializer
         // to keep things easy all chunks should have 8 bytes headers
         // starting with chunk_type, chunk_size
         // and order_count (whatever it means, depending on chunks)
-        this->offset_chunk_type = this->pstream->get_offset(0);
+        this->offset_chunk_type = this->pstream->get_offset();
         this->pstream->out_uint16_le(0);
-        this->offset_chunk_size = this->pstream->get_offset(0);
+        this->offset_chunk_size = this->pstream->get_offset();
         this->pstream->out_clear_bytes(2); // 16 bits chunk size (stored in padding reserved zone)
-        this->offset_order_count = this->pstream->get_offset(0);
+        this->offset_order_count = this->pstream->get_offset();
         this->pstream->out_clear_bytes(2); /* number of orders, set later */
         this->pstream->out_clear_bytes(2); /* pad */
     }

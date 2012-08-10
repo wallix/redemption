@@ -55,8 +55,8 @@ class Stream {
         return (this->p - this->data + n) <= this->capacity;
     }
 
-    uint16_t get_offset(uint16_t offset){
-        return this->p - this->data - offset;
+    uint16_t get_offset(){
+        return this->p - this->data;
     }
 
     bool check_rem(unsigned n) {

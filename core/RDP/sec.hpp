@@ -810,7 +810,7 @@ class Sec
             }
         }
 
-        this->payload.reset(this->stream, this->stream.get_offset(0));
+        this->payload.reset(this->stream, this->stream.get_offset());
     } // END METHOD recv_begin
 
 

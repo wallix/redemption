@@ -166,7 +166,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
 
         this->pstream->out_uint16_le(RDP_UPDATE_ORDERS);
         this->pstream->out_clear_bytes(2); /* pad */
-        this->offset_order_count = this->pstream->get_offset(0);
+        this->offset_order_count = this->pstream->get_offset();
         this->pstream->out_clear_bytes(2); /* number of orders, set later */
         this->pstream->out_clear_bytes(2); /* pad */
     }

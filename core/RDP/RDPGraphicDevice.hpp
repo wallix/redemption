@@ -439,14 +439,14 @@ struct RDPSerializer : public RDPGraphicDevice
     void reserve_order(size_t asked_size)
     {
         if (this->ini && this->ini->globals.debug.primary_orders > 63){
-            LOG(LOG_INFO, "GraphicsUpdatePDU::reserve_order[%u](%u) remains=%u", this->order_count, asked_size, std::min(this->pstream->capacity, (size_t)32768) - this->pstream->get_offset(0));
+            LOG(LOG_INFO, "GraphicsUpdatePDU::reserve_order[%u](%u) remains=%u", this->order_count, asked_size, std::min(this->pstream->capacity, (size_t)32768) - this->pstream->get_offset());
         }
         if (asked_size > this->pstream->capacity){
             LOG(LOG_ERR, "asked_size (%u) > this->pstream->capacity (%u)", asked_size, this->pstream->capacity);
             assert(asked_size <= this->pstream->capacity);
         }
         size_t max_packet_size = std::min(this->pstream->capacity, (size_t)4096);
-        size_t used_size = this->pstream->get_offset(0);
+        size_t used_size = this->pstream->get_offset();
         const size_t max_order_batch = 4096;
         if ((this->order_count >= max_order_batch)
         || (used_size + asked_size + 100) > max_packet_size) {

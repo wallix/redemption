@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOrderCommon state_common(RECT, Rect(700, 200, 100, 200));
         RDPOpaqueRect state_orect(Rect(0, 0, 800, 600), 0);
 
-        BOOST_CHECK_EQUAL(0, (stream.get_offset(0)));
+        BOOST_CHECK_EQUAL(0, (stream.get_offset()));
 
         RDPOrderCommon newcommon(RECT, Rect(0, 400, 800, 76));
         RDPOpaqueRect(Rect(0, 0, 800, 600), 0).emit(stream, newcommon, state_common, state_orect);
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             0x90,
             0x01,
             0x4C };
-        check_datas(stream.get_offset(0), stream.data, 7, datas, "rect draw 0");
+        check_datas(stream.get_offset(), stream.data, 7, datas, "rect draw 0");
 
         stream.mark_end(); stream.p = stream.data;
 
@@ -85,13 +85,13 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), 0xFFFFFF);
 
-        BOOST_CHECK_EQUAL(0, (stream.get_offset(0)));
+        BOOST_CHECK_EQUAL(0, (stream.get_offset()));
 
         RDPOrderCommon newcommon(RECT, Rect(0, 0, 800, 600));
         RDPOpaqueRect(Rect(0, 0, 10, 10), 0xFFFFFF).emit(stream, newcommon, state_common, state_orect);
 
         uint8_t datas[2] = {SMALL | DELTA | CHANGE | STANDARD, RECT};
-        check_datas(stream.get_offset(0), stream.data, 2, datas, "rect draw identical");
+        check_datas(stream.get_offset(), stream.data, 2, datas, "rect draw identical");
 
         stream.mark_end(); stream.p = stream.data;
 
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             1, // x coordinate changed
             5, // +5 on x
         };
-        check_datas(stream.get_offset(0), stream.data, 4, datas, "rect draw 1");
+        check_datas(stream.get_offset(), stream.data, 4, datas, "rect draw 1");
 
         stream.mark_end(); stream.p = stream.data;
 

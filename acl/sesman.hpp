@@ -106,7 +106,7 @@ class SessionManager {
             this->context.ask(STRAUTHID_KEEPALIVE);
             this->out_item(stream, STRAUTHID_KEEPALIVE);
             // now set length
-            int total_length = stream.get_offset(0);
+            int total_length = stream.get_offset();
             stream.p = stream.data;
             stream.out_uint32_be(total_length);
             // and send
@@ -250,7 +250,7 @@ class SessionManager {
                 this->context.ask(STRAUTHID_KEEPALIVE);
                 this->out_item(stream, STRAUTHID_KEEPALIVE);
                 // now set length in header
-                int total_length = stream.get_offset(0);
+                int total_length = stream.get_offset();
                 stream.p = stream.data;
                 stream.out_uint32_be(total_length); /* size */
                 // and send
@@ -570,7 +570,7 @@ class SessionManager {
             this->out_item(stream, STRAUTHID_TRANS_DIAGNOSTIC);
             this->out_item(stream, STRAUTHID_TRANS_CONNECTION_CLOSED);
 
-            int total_length = stream.get_offset(0);
+            int total_length = stream.get_offset();
             stream.p = stream.data;
             stream.out_uint32_be(total_length); /* size */
             this->auth_trans_t->send(stream.data, total_length);

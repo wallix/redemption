@@ -565,7 +565,7 @@ namespace X224
             }
 
             stream.p = end_of_header;
-            this->header_size = stream.get_offset(0);
+            this->header_size = stream.get_offset();
         }
     }; // END CLASS CR_TPDU_Recv
 
@@ -826,7 +826,7 @@ namespace X224
                 throw Error(ERR_X224);
             }
             stream.p = end_of_header;
-            this->header_size = stream.get_offset(0);
+            this->header_size = stream.get_offset();
         }
     }; // END CLASS CC_TPDU_Recv
 
@@ -904,7 +904,7 @@ namespace X224
                 throw Error(ERR_X224);
             }
             stream.p = end_of_header;
-            this->header_size = stream.get_offset(0);
+            this->header_size = stream.get_offset();
         }
     }; // END CLASS DR_TPDU_Recv
 
@@ -1000,7 +1000,7 @@ namespace X224
                 throw Error(ERR_X224);
             }
             stream.p = end_of_header;
-            this->header_size = stream.get_offset(0);
+            this->header_size = stream.get_offset();
         }
     }; // END CLASS ER_TPDU_Recv
 
@@ -1075,7 +1075,7 @@ namespace X224
                 throw Error(ERR_X224);
             }
             stream.p = end_of_header;
-            this->header_size = stream.get_offset(0);
+            this->header_size = stream.get_offset();
             this->payload_size = stream.size() - this->header_size;
         }
     }; // END CLASS DT_TPDU_Recv

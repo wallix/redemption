@@ -1195,7 +1195,7 @@ public:
         //        stream.out_2BUE(8 + srv_channel_size + 236 + 4); // len
 
 
-            uint32_t offset_user_data_len = stream.get_offset(0);
+            uint32_t offset_user_data_len = stream.get_offset();
             stream.out_uint16_be(0);
 
             SCCoreGccUserData sc_core;
@@ -1206,7 +1206,7 @@ public:
             out_mcs_data_sc_net(stream, this->channel_list);
             front_out_gcc_conference_user_data_sc_sec1(stream, client_info.crypt_level, this->server_random, this->encrypt.rc4_key_size, this->pub_mod, this->pri_exp, this->gen);
             // set user_data_len (TWO_BYTE_UNSIGNED_ENCODING)
-            stream.set_out_uint16_be(0x8000 | (stream.get_offset(offset_user_data_len + 2)), offset_user_data_len);
+            stream.set_out_uint16_be(0x8000 | (stream.get_offset() - (offset_user_data_len + 2)), offset_user_data_len);
 
             stream.mark_end();
 

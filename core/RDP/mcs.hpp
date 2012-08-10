@@ -262,7 +262,7 @@ namespace MCS
                 return -1;
             }
             size_t len = stream.in_ber_len();
-            size_t start_offset = stream.get_offset(0);
+            size_t start_offset = stream.get_offset();
             if ( -1 == this->in_ber_int(stream, this->maxChannelIds)){
                 LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxChannelIds tag error");
                 return -1;
@@ -295,8 +295,8 @@ namespace MCS
                 LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::protocolVersion tag error");
                 return -1;
             }
-            if (stream.get_offset(start_offset) != len){
-                LOG(LOG_ERR, "Connect Initial, bad length in BER_TAG_MCS_DOMAIN_PARAMS. Total subfield length mismatch %u %u", stream.get_offset(start_offset), len);
+            if (stream.get_offset() != start_offset + len){
+                LOG(LOG_ERR, "Connect Initial, bad length in BER_TAG_MCS_DOMAIN_PARAMS. Total subfield length mismatch %u %u", stream.get_offset() - start_offset, len);
             }
             return 0;
         }
@@ -450,7 +450,7 @@ namespace MCS
             stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
             stream.out_ber_len_uint16(payload_length);
             // now we know full MCS Initial header length (without initial tag and len)
-            stream.set_out_ber_len_uint16(payload_length + stream.get_offset(5), 2);
+            stream.set_out_ber_len_uint16(payload_length + stream.get_offset() - 5, 2);
             stream.mark_end();
         }
     };
@@ -618,7 +618,7 @@ namespace MCS
             else {
                 stream.out_ber_len_uint7(0);
             }
-            uint16_t start_offset = stream.get_offset(0);
+            uint16_t start_offset = stream.get_offset();
 
             // Connect-Response::result = rt-successful (0)
             // The first byte (0x0a) is the ASN.1 BER encoded Enumerated type. The
@@ -658,10 +658,10 @@ namespace MCS
 
             // now we know full MCS Initial header length (without initial tag and len)
             if (payload_length > 88){
-                stream.set_out_ber_len_uint16(payload_length + stream.get_offset(start_offset), 2);
+                stream.set_out_ber_len_uint16(payload_length + stream.get_offset() - start_offset, 2);
             }
             else {
-                stream.set_out_ber_len_uint7(payload_length + stream.get_offset(start_offset), 2);
+                stream.set_out_ber_len_uint7(payload_length + stream.get_offset() - start_offset, 2);
             }
             stream.mark_end();
         }

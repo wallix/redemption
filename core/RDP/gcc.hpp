@@ -68,7 +68,7 @@ static inline void gcc_write_conference_create_request_header(Stream & stream, s
     stream.out_per_object_identifier(t124_02_98_oid); // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
 
 //  ConnectData::connectPDU (OCTET_STRING)
-    offset_length = stream.get_offset(0);
+    offset_length = stream.get_offset();
     stream.out_per_length(256); // connectPDU length (reserve 16 bits)
 
 //  ConnectGCCPDU
