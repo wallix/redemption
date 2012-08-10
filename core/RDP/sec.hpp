@@ -645,6 +645,31 @@ enum {
         }
     };
 
+    struct SecInfoPacket_Recv
+    {
+        uint32_t basicSecurityHeader;
+        SubStream payload;
+
+        SecInfoPacket_Recv(Stream & stream, uint16_t available_len, CryptContext & crypt)
+        : payload(stream, 4 + 8)
+        {
+            this->basicSecurityHeader = stream.in_uint32_le() & 0xFFFF;
+            if (0 == (this->basicSecurityHeader & SEC::SEC_INFO_PKT)){
+                LOG(LOG_INFO, "SEC_INFO_PKT expected, got %x", this->basicSecurityHeader);
+            }
+            if (0 == (this->basicSecurityHeader & SEC::SEC_ENCRYPT)){
+                LOG(LOG_INFO, "SEC_ENCRYPT expected, got %x", this->basicSecurityHeader);
+            }
+
+            // skip signature
+            stream.in_skip_bytes(8);
+            
+            // decrypting to the end of tpdu
+            crypt.decrypt(stream.p, stream.end - stream.p);
+        }
+    };
+
+
     enum {
         LICENSE_REQUEST             = 0x01,
         PLATFORM_CHALLENGE          = 0x02,
@@ -731,6 +756,7 @@ class Sec
     uint32_t flags;
     bool enabled;
     uint32_t verbose;
+    int count;
 
 
     // CONSTRUCTOR
@@ -747,6 +773,7 @@ class Sec
     , flags(0)
     , enabled(0)
     , verbose(verbose)
+    , count(0)
     {
     } // END CONSTRUCTOR
 
@@ -755,10 +782,13 @@ class Sec
     void recv_begin(bool enabled)
     //==============================================================================
     {
+//        LOG(LOG_INFO, "sec_recv exit enabled=%u", enabled);
+
+//        this->verbose = 0x380;
         this->enabled = enabled;
         if (enabled){
             this->flags = stream.in_uint32_le();
-            if ((this->flags & SEC::SEC_ENCRYPT)  || (this->flags & 0x0400)){
+            if ((this->flags & SEC::SEC_ENCRYPT)  || (this->flags & SEC::SEC_REDIRECTION_PKT)){
                 uint8_t * pdata = stream.p + 8;
                 uint16_t datalen = stream.end - pdata;
                 TODO(" shouldn't we check signature ?")
@@ -766,7 +796,7 @@ class Sec
                 // decrypting to the end of tpdu
                 if (this->verbose >= 0x200){
                     LOG(LOG_DEBUG, "Receiving encrypted TPDU");
-                    hexdump((char*)stream.data, stream.size());
+                    hexdump_c((char*)stream.data, stream.size());
                 }
                 if (this->verbose >= 0x100){
                     LOG(LOG_DEBUG, "Crypt context is:");
@@ -775,10 +805,11 @@ class Sec
                 crypt.decrypt(stream.p, stream.end - stream.p);
                 if (this->verbose >= 0x80){
                     LOG(LOG_DEBUG, "Decrypted %u bytes", datalen);
-                    hexdump((char*)pdata, datalen);
+                    hexdump_c((char*)pdata, datalen);
                 }
             }
         }
+
         this->payload.reset(this->stream, this->stream.get_offset(0));
     } // END METHOD recv_begin
 
@@ -811,7 +842,6 @@ class Sec
         }
     } // END METHOD emit_start
 
-
     //==============================================================================
     void emit_end()
     //==============================================================================
@@ -829,8 +859,5 @@ class Sec
     } // END METHOD emit_end
 
 }; // END CLASS Sec
-
-
-
 
 #endif
