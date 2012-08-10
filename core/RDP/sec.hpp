@@ -28,8 +28,6 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "RDP/x224.hpp"
-#include "RDP/mcs.hpp"
 #include "RDP/rdp.hpp"
 #include "client_info.hpp"
 #include "constants.hpp"
