@@ -25,34 +25,6 @@
 
 #include "ssl_calls.hpp"
 
-// 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
-// Both SHA1 and MD5 algorithms are used.
-static inline void sec_hash_48(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2, const uint8_t salt)
-{
-    uint8_t shasig[20];
-    uint8_t pad[4];
-    SSL_SHA1 sha1;
-    SSL_MD5 md5;
-
-    ssllib ssl;
-
-    for (int i = 0; i < 3; i++) {
-        memset(pad, salt + i, i + 1);
-
-        ssl.sha1_init(&sha1);
-        ssl.sha1_update(&sha1, pad, i + 1);
-        ssl.sha1_update(&sha1, in, 48);
-        ssl.sha1_update(&sha1, salt1, 32);
-        ssl.sha1_update(&sha1, salt2, 32);
-        ssl.sha1_final(&sha1, shasig);
-
-        ssl.md5_init(&md5);
-        ssl.md5_update(&md5, in, 48);
-        ssl.md5_update(&md5, shasig, 20);
-        ssl.md5_final(&md5, &out[i * 16]);
-    }
-}
-
 // 16-byte transformation used to generate export keys (6.2.2).
 static inline void sec_hash_16(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2)
 {
@@ -123,9 +95,51 @@ inline static void rdp_sec_generate_keyblock(uint8_t (& key_block)[48], uint8_t 
     memcpy(pre_master_secret, client_random, 24);
     memcpy(pre_master_secret + 24, server_random, 24);
 
-    /* Generate master secret and then key material */
-    sec_hash_48(master_secret, pre_master_secret, client_random, server_random, 'A');
-    sec_hash_48(key_block, master_secret, client_random, server_random, 'X');
+    uint8_t shasig[20];
+
+    ssllib ssl;
+
+    // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
+    for (int i = 0; i < 3; i++) {
+        uint8_t pad[4];
+        SSL_SHA1 sha1;
+        SSL_MD5 md5;
+
+        memset(pad, 'A' + i, i + 1);
+
+        ssl.sha1_init(&sha1);
+        ssl.sha1_update(&sha1, pad, i + 1);
+        ssl.sha1_update(&sha1, pre_master_secret, 48);
+        ssl.sha1_update(&sha1, client_random, 32);
+        ssl.sha1_update(&sha1, server_random, 32);
+        ssl.sha1_final(&sha1, shasig);
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, pre_master_secret, 48);
+        ssl.md5_update(&md5, shasig, 20);
+        ssl.md5_final(&md5, &master_secret[i * 16]);
+    }
+
+    // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
+    for (int i = 0; i < 3; i++) {
+        uint8_t pad[4];
+        SSL_SHA1 sha1;
+        SSL_MD5 md5;
+
+        memset(pad, 'X' + i, i + 1);
+
+        ssl.sha1_init(&sha1);
+        ssl.sha1_update(&sha1, pad, i + 1);
+        ssl.sha1_update(&sha1, master_secret, 48);
+        ssl.sha1_update(&sha1, client_random, 32);
+        ssl.sha1_update(&sha1, server_random, 32);
+        ssl.sha1_final(&sha1, shasig);
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, master_secret, 48);
+        ssl.md5_update(&md5, shasig, 20);
+        ssl.md5_final(&md5, &key_block[i * 16]);
+    }
 }
 
 

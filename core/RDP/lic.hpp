@@ -480,24 +480,61 @@ struct RdpLicence {
     {
         uint8_t null_data[SEC_MODULUS_SIZE];
 
-        // RDP licence generate key
-        {
-            /* We currently use null client keys. This is a bit naughty but, hey,
-               the security of licence negotiation isn't exactly paramount. */
-            memset(null_data, 0, sizeof(null_data));
-            uint8_t* client_random = null_data;
-            uint8_t* pre_master_secret = null_data;
-            uint8_t master_secret[48];
-            uint8_t key_block[48];
+        /* We currently use null client keys. This is a bit naughty but, hey,
+           the security of licence negotiation isn't exactly paramount. */
+        memset(null_data, 0, sizeof(null_data));
+        uint8_t* client_random = null_data;
+        uint8_t* pre_master_secret = null_data;
+        uint8_t master_secret[48];
+        uint8_t key_block[48];
 
-            /* Generate master secret and then key material */
-            sec_hash_48(master_secret, pre_master_secret, client_random, server_random, 65);
-            sec_hash_48(key_block, master_secret, server_random, client_random, 65);
-            /* Store first 16 bytes of session key as MAC secret */
-            memcpy(this->licence_sign_key, key_block, 16);
-            /* Generate RC4 key from next 16 bytes */
-            sec_hash_16(this->licence_key, key_block + 16, client_random, server_random);
+        /* Generate master secret and then key material */
+        ssllib ssl;
+
+        for (int i = 0; i < 3; i++) {
+            uint8_t shasig[20];
+            uint8_t pad[4];
+            SSL_SHA1 sha1;
+            SSL_MD5 md5;
+            memset(pad, 'A' + i, i + 1);
+
+            ssl.sha1_init(&sha1);
+            ssl.sha1_update(&sha1, pad, i + 1);
+            ssl.sha1_update(&sha1, pre_master_secret, 48);
+            ssl.sha1_update(&sha1, client_random, 32);
+            ssl.sha1_update(&sha1, server_random, 32);
+            ssl.sha1_final(&sha1, shasig);
+
+            ssl.md5_init(&md5);
+            ssl.md5_update(&md5, pre_master_secret, 48);
+            ssl.md5_update(&md5, shasig, 20);
+            ssl.md5_final(&md5, &master_secret[i * 16]);
         }
+
+        for (int i = 0; i < 3; i++) {
+            uint8_t shasig[20];
+            uint8_t pad[4];
+            SSL_SHA1 sha1;
+            SSL_MD5 md5;
+            memset(pad, 'A' + i, i + 1);
+
+            ssl.sha1_init(&sha1);
+            ssl.sha1_update(&sha1, pad, i + 1);
+            ssl.sha1_update(&sha1, master_secret, 48);
+            ssl.sha1_update(&sha1, server_random, 32);
+            ssl.sha1_update(&sha1, client_random, 32);
+            ssl.sha1_final(&sha1, shasig);
+
+            ssl.md5_init(&md5);
+            ssl.md5_update(&md5, master_secret, 48);
+            ssl.md5_update(&md5, shasig, 20);
+            ssl.md5_final(&md5, &key_block[i * 16]);
+        }
+
+        /* Store first 16 bytes of session key as MAC secret */
+        memcpy(this->licence_sign_key, key_block, 16);
+        /* Generate RC4 key from next 16 bytes */
+        sec_hash_16(this->licence_key, key_block + 16, client_random, server_random);
     }
 
     void rdp_lic_process_demand(Stream & stream, const char * hostname, const char * username, const int licence_issued, CryptContext & encrypt, int crypt_level, int use_rdp5)
