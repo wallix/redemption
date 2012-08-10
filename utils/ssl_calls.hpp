@@ -233,6 +233,33 @@ struct CryptContext
         this->rc4_key_size = 0;
     }
 
+    void generate_key(uint8_t * key_block, const uint8_t* salt1, const uint8_t* salt2, uint32_t rc4_key_size)
+    {
+        // 16-byte transformation used to generate export keys (6.2.2).
+        SSL_MD5 md5;
+        ssllib ssl;
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, key_block, 16);
+        ssl.md5_update(&md5, salt1, 32);
+        ssl.md5_update(&md5, salt2, 32);
+        ssl.md5_final(&md5, this->key);
+
+        if (rc4_key_size == 1) {
+            // LOG(LOG_DEBUG, "40-bit encryption enabled");
+            sec_make_40bit(this->key);
+            this->rc4_key_len = 8;
+        }
+        else {
+            //LOG(LOG_DEBUG, "rc_4_key_size == %d, 128-bit encryption enabled", rc4_key_size);
+            this->rc4_key_len = 16;
+        }
+
+        /* Save initial RC4 keys as update keys */
+        memcpy(this->update_key, this->key, 16);
+
+        ssl.rc4_set_key(this->rc4_info, this->key, this->rc4_key_len);
+    }
 
     void rc4dump(const char * data, size_t size){
         char buffer[16384];
