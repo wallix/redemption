@@ -1431,8 +1431,8 @@ public:
                     sec_make_40bit(this->encrypt.sign_key);
                 }
 
-                rdp_sec_generate_encrypt_keys(this->decrypt, &key_block[32], client_random, this->server_random, this->encrypt.rc4_key_size);
-                rdp_sec_generate_decrypt_keys(this->encrypt, &key_block[16], client_random, this->server_random, this->encrypt.rc4_key_size);
+                rdp_sec_generate_key(this->decrypt, &key_block[32], client_random, this->server_random, this->encrypt.rc4_key_size);
+                rdp_sec_generate_key(this->encrypt, &key_block[16], client_random, this->server_random, this->encrypt.rc4_key_size);
             }
             this->state = WAITING_FOR_LOGON_INFO;
         }

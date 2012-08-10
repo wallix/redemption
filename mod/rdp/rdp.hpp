@@ -746,8 +746,8 @@ struct mod_rdp : public client_mod {
                             if (encryptionMethod == 1){
                                 sec_make_40bit(encrypt.sign_key);
                             }
-                            rdp_sec_generate_decrypt_keys(this->decrypt, &key_block[16], client_random, serverRandom, encryptionMethod);
-                            rdp_sec_generate_encrypt_keys(this->encrypt, &key_block[32], client_random, serverRandom, encryptionMethod);
+                            rdp_sec_generate_key(this->decrypt, &key_block[16], client_random, serverRandom, encryptionMethod);
+                            rdp_sec_generate_key(this->encrypt, &key_block[32], client_random, serverRandom, encryptionMethod);
                         }
                     }
                     break;

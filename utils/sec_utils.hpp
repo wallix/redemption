@@ -25,65 +25,32 @@
 
 #include "ssl_calls.hpp"
 
-// 16-byte transformation used to generate export keys (6.2.2).
-static inline void sec_hash_16(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2)
+inline static void rdp_sec_generate_key(CryptContext & crypt, uint8_t * key_block, const uint8_t* salt1, const uint8_t* salt2, uint32_t rc4_key_size)
 {
+    // 16-byte transformation used to generate export keys (6.2.2).
     SSL_MD5 md5;
-
     ssllib ssl;
 
     ssl.md5_init(&md5);
-    ssl.md5_update(&md5, in, 16);
+    ssl.md5_update(&md5, key_block, 16);
     ssl.md5_update(&md5, salt1, 32);
     ssl.md5_update(&md5, salt2, 32);
-    ssl.md5_final(&md5, out);
-}
-
-
-inline static void rdp_sec_generate_encrypt_keys(CryptContext & encrypt, uint8_t * key_block, const uint8_t* salt1, const uint8_t* salt2, uint32_t rc4_key_size)
-{
-    /* Generate encrypt key from third block of 16 bytes */
-    sec_hash_16(encrypt.key, key_block, salt1, salt2);
+    ssl.md5_final(&md5, crypt.key);
 
     if (rc4_key_size == 1) {
         // LOG(LOG_DEBUG, "40-bit encryption enabled");
-        sec_make_40bit(encrypt.key);
-        encrypt.rc4_key_len = 8;
+        sec_make_40bit(crypt.key);
+        crypt.rc4_key_len = 8;
     }
     else {
         //LOG(LOG_DEBUG, "rc_4_key_size == %d, 128-bit encryption enabled", rc4_key_size);
-        encrypt.rc4_key_len = 16;
+        crypt.rc4_key_len = 16;
     }
 
     /* Save initial RC4 keys as update keys */
-    memcpy(encrypt.update_key, encrypt.key, 16);
+    memcpy(crypt.update_key, crypt.key, 16);
 
-    ssllib ssl;
-
-    ssl.rc4_set_key(encrypt.rc4_info, encrypt.key, encrypt.rc4_key_len);
-}
-
-inline static void rdp_sec_generate_decrypt_keys(CryptContext & decrypt, uint8_t * key_block, const uint8_t* salt1, const uint8_t* salt2, uint32_t rc4_key_size)
-{
-    /* Generate decrypt key from second block of 16 bytes */
-    sec_hash_16(decrypt.key, key_block, salt1, salt2);
-
-    if (rc4_key_size == 1) {
-        // LOG(LOG_DEBUG, "40-bit encryption enabled");
-        sec_make_40bit(decrypt.key);
-        decrypt.rc4_key_len = 8;
-    }
-    else {
-        //LOG(LOG_DEBUG, "rc_4_key_size == %d, 128-bit encryption enabled", rc4_key_size);
-        decrypt.rc4_key_len = 16;
-    }
-
-    /* Save initial RC4 keys as update keys */
-    memcpy(decrypt.update_key, decrypt.key, 16);
-
-    ssllib ssl;
-
-    ssl.rc4_set_key(decrypt.rc4_info, decrypt.key, decrypt.rc4_key_len);
+    ssl.rc4_set_key(crypt.rc4_info, crypt.key, crypt.rc4_key_len);
 }
 
 inline static void rdp_sec_generate_keyblock(uint8_t (& key_block)[48], uint8_t *client_random, uint8_t *server_random)

@@ -533,8 +533,16 @@ struct RdpLicence {
 
         /* Store first 16 bytes of session key as MAC secret */
         memcpy(this->licence_sign_key, key_block, 16);
-        /* Generate RC4 key from next 16 bytes */
-        sec_hash_16(this->licence_key, key_block + 16, client_random, server_random);
+
+        // Generate RC4 key from next 16 bytes
+        // 16-byte transformation used to generate export keys (6.2.2).
+        SSL_MD5 md5;
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, key_block + 16, 16);
+        ssl.md5_update(&md5, client_random, 32);
+        ssl.md5_update(&md5, server_random, 32);
+        ssl.md5_final(&md5, this->licence_key);
     }
 
     void rdp_lic_process_demand(Stream & stream, const char * hostname, const char * username, const int licence_issued, CryptContext & encrypt, int crypt_level, int use_rdp5)
