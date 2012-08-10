@@ -67,4 +67,47 @@ static inline uint16_t row_size(uint16_t width, uint8_t bpp)
     return align4(width * nbbytes(bpp));
 }
 
+// The  rmemcpy() function copies n bytes from memory area src to memory area dest inverting end and beginning.
+// The memory areas must not overlap.  Use rmemmove() if the memory areas do overlap.
+static inline void rmemcpy(uint8_t *dest, const uint8_t *src, size_t n)
+{
+    for (size_t i = 0; i < n ; i++){
+        dest[n-i] = src[i];
+    }
+}
+
+static inline void reverseit(uint8_t *buffer, size_t n){
+    for (size_t i = 0 ; i < n / 2; n++){
+        uint8_t tmp = buffer[n - i];
+        buffer[n-i] = buffer[i];
+        buffer[i] = tmp;
+    }
+}
+
+static inline void rmemmove(uint8_t *dest, uint8_t *src, size_t n)
+{
+    if (src > dest){
+        size_t intersect = src - dest;
+        if (intersect > n){
+            rmemcpy(dest, src, n);
+        }
+        else {
+            rmemcpy(dest, src + intersect, n - intersect);
+            reverseit(src, intersect);
+        }
+    }
+    else {
+        size_t intersect = dest - src;
+        if (intersect > n){
+            rmemcpy(dest, src, n);
+        }
+        else {
+            rmemcpy(dest + intersect, src, n - intersect);
+            reverseit(dest, intersect);
+        }
+
+    }
+}
+
+
 #endif

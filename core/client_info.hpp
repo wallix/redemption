@@ -134,7 +134,7 @@ struct ClientInfo {
     void process_logon_info(Stream & stream, uint32_t length) throw (Error)
     {
         InfoPacket infoPacket;
-        infoPacket.recv( stream );
+        infoPacket.recv(stream);
         infoPacket.log("Receiving from client");
 
         memcpy(this->domain, infoPacket.Domain, sizeof(infoPacket.Domain));

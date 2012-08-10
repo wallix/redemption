@@ -479,6 +479,41 @@ static inline int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len
     return rv;
 }
 
+//static inline void ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len,
+//                uint8_t* mod, int mod_len, uint8_t* exp, int exp_len)
+//{
+//    uint8_t l_out[out_len];
+//    memset(l_out, 0, out_len);
+//    uint8_t l_in[in_len];
+//    rmemcpy(l_in, in, in_len);
+//    uint8_t l_mod[mod_len];
+//    rmemcpy(l_mod, mod, mod_len);
+//    uint8_t l_exp[exp_len];
+//    rmemcpy(l_exp, exp, exp_len);
+
+//    BN_CTX *ctx = BN_CTX_new();
+
+//    BIGNUM lmod;
+//    BN_init(&lmod);
+//    BIGNUM lexp;
+//    BN_init(&lexp);
+//    BIGNUM lin;
+//    BN_init(&lin);
+//    BIGNUM lout;
+//    BN_init(&lout);
+
+//    BN_bin2bn(l_mod, mod_len, &lmod);
+//    BN_bin2bn(l_exp, exp_len, &lexp);
+//    BN_bin2bn(l_in, in_len, &lin);
+//    BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
+//    BN_bn2bin(&lout, l_out);
+//    rmemcpy(out, l_out, out_len);
+//    BN_free(&lin);
+//    BN_free(&lout);
+//    BN_free(&lexp);
+//    BN_free(&lmod);
+//    BN_CTX_free(ctx);
+//}
 
 
 /*****************************************************************************/

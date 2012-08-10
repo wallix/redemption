@@ -77,9 +77,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
 
     SEC::SecExchangePacket_Recv sec(stream, length);
     BOOST_CHECK_EQUAL((uint32_t)SEC::SEC_EXCHANGE_PKT, sec.basicSecurityHeader);
-    BOOST_CHECK_EQUAL(length - 8, sec.length);
-    BOOST_CHECK_EQUAL(72, sec.length);
-    BOOST_CHECK_EQUAL(0, memcmp(sec_pkt+8, sec.client_crypt_random, sec.length));
+    BOOST_CHECK_EQUAL(length - 8, sec.payload.size());
+    BOOST_CHECK_EQUAL(72, sec.payload.size());
+    BOOST_CHECK_EQUAL(0, memcmp(sec_pkt+8, sec.payload.data, sec.payload.size()));
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)

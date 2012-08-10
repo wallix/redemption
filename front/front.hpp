@@ -851,9 +851,9 @@ public:
                 BStream stream(65536);
                 X224::RecvFactory fac_x224(*this->trans, stream);
                 X224::CR_TPDU_Recv x224(*this->trans, stream, fac_x224.length);
-                if (x224.header_size != (size_t)(stream.size())){
+                if (x224._header_size != (size_t)(stream.size())){
                     LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
-                                 " %d bytes remains", stream.size() - x224.header_size);
+                                 " %d bytes remains", stream.size() - x224._header_size);
                 }
             }
 
@@ -892,10 +892,10 @@ public:
             X224::RecvFactory f(*this->trans, x224_data);
             X224::DT_TPDU_Recv x224(*this->trans, x224_data, f.length);
 
-            SubStream mcs_data(x224_data, x224.header_size);
+            SubStream & mcs_data = x224.payload;
             MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(mcs_data, x224.payload_size, MCS::BER_ENCODING);
 
-            SubStream payload(mcs_data, mcs_ci.header_size);
+            SubStream & payload = mcs_ci.payload;
 
         // GCC User Data
         // -------------
@@ -1267,7 +1267,7 @@ public:
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
                 X224::DT_TPDU_Recv x224(*trans, x224_data, f.length);
-                SubStream mcs_data(x224_data, x224.header_size);
+                SubStream & mcs_data = x224.payload;
                 MCS::ErectDomainRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
             }
             if (this->verbose){
@@ -1277,7 +1277,7 @@ public:
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
                 X224::DT_TPDU_Recv x224(*trans, x224_data, f.length);
-                SubStream mcs_data(x224_data, x224.header_size);
+                SubStream & mcs_data = x224.payload;
                 MCS::AttachUserRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
             }
             if (this->verbose){
@@ -1302,7 +1302,7 @@ public:
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
                 X224::DT_TPDU_Recv x224(*this->trans, x224_data, f.length);
-                SubStream mcs_data(x224_data, x224.header_size);
+                SubStream & mcs_data = x224.payload;
                 MCS::ChannelJoinRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
                 this->userid = mcs.initiator;
 
@@ -1324,7 +1324,7 @@ public:
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
                 X224::DT_TPDU_Recv x224(*this->trans, x224_data, f.length);
-                SubStream mcs_cjrq_data(x224_data, x224.header_size);
+                SubStream & mcs_cjrq_data = x224.payload;
                 MCS::ChannelJoinRequest_Recv mcs(mcs_cjrq_data, x224.payload_size, MCS::PER_ENCODING);
                 if (mcs.initiator != this->userid){
                     LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
@@ -1348,7 +1348,7 @@ public:
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
                 X224::DT_TPDU_Recv x224(*this->trans, x224_data, f.length);
-                SubStream mcs_data(x224_data, x224.header_size);
+                SubStream & mcs_data = x224.payload;
                 MCS::ChannelJoinRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
                 if (mcs.initiator != this->userid){
                     LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
@@ -1409,19 +1409,20 @@ public:
                 BStream pdu(65536);
                 X224::RecvFactory f(*this->trans, pdu);
                 X224::DT_TPDU_Recv x224(*this->trans, pdu, f.length);
-                SubStream mcs_data(pdu, x224.header_size);
+                SubStream & mcs_data = x224.payload;
                 MCS::SendDataRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
-                SubStream payload(mcs_data, mcs.header_size);
+                SubStream & payload = mcs.payload;
                 SEC::SecExchangePacket_Recv sec(payload, mcs.payload_size);
 
-                if (sec.length - 8 != 64){
+                if (sec.payload.size() != 64 + 8){
+                    LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %u", sec.payload.size());
                     throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
                 }
 
                 uint8_t client_random[64];
                 memset(client_random, 0, 64);
 
-                ssl_mod_exp(client_random, 64, sec.client_crypt_random, 64, this->pub_mod, 64, this->pri_exp, 64);
+                ssl_mod_exp(client_random, 64, sec.payload.data, 64, this->pub_mod, 64, this->pri_exp, 64);
 
                 // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
                 uint8_t key_block[48];
@@ -1457,11 +1458,11 @@ public:
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
 
-            SubStream mcs_data(stream, x224.header_size);
+            SubStream & mcs_data = x224.payload;
             MCS::SendDataRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
             TODO("We should also manage the DisconnectRequest case as it can also happen")
 
-            SubStream payload(mcs_data, mcs.header_size);
+            SubStream & payload = mcs.payload;
 
             if (this->verbose >= 256){
                 this->decrypt.dump();
@@ -1474,6 +1475,7 @@ public:
             }
 
             /* this is the first test that the decrypt is working */
+            TODO("Use sec.payload")
             this->client_info.process_logon_info(payload, (uint16_t)(payload.end - payload.p));
             sec.recv_end();
 
@@ -1540,11 +1542,11 @@ public:
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
 
-            SubStream mcs_data(stream, x224.header_size);
+            SubStream & mcs_data = x224.payload;
             MCS::SendDataRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
             TODO("We should also manage the DisconnectRequest case as it can also happen")
 
-            SubStream payload(mcs_data, mcs.header_size);
+            SubStream & payload = mcs.payload;
 
             if (this->verbose >= 256){
                 this->decrypt.dump();
@@ -1753,11 +1755,11 @@ public:
 
             X224::DT_TPDU_Recv x224(*this->trans, stream, fx224.length);
 
-            SubStream mcs_data(stream, x224.header_size);
+            SubStream & mcs_data = x224.payload;
             MCS::SendDataRequest_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
             TODO("We should also manage the DisconnectRequest case as it can also happen")
 
-            SubStream payload(mcs_data, mcs.header_size);
+            SubStream & payload = mcs.payload;
 
             Sec sec(payload, this->decrypt);
             sec.recv_begin(true);

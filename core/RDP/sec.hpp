@@ -612,10 +612,10 @@ enum {
     struct SecExchangePacket_Recv
     {
         uint32_t basicSecurityHeader;
-        uint32_t length;
-        uint8_t * client_crypt_random;
+        SubStream payload;
 
-        SecExchangePacket_Recv(Stream & stream, uint16_t available_len)
+        SecExchangePacket_Recv(Stream & stream, uint16_t available_len) 
+        : payload(stream, 8)
         {
             this->basicSecurityHeader = stream.in_uint32_le() & 0xFFFF;
 
@@ -623,13 +623,10 @@ enum {
                 LOG(LOG_ERR, "Expecting SEC::SEC_EXCHANGE_PKT, got (%x)", this->basicSecurityHeader);
                 throw Error(ERR_SEC);
             }
-            this->length = stream.in_uint32_le();
-            this->client_crypt_random = (uint8_t*)calloc(this->length, 1);
-            stream.in_copy_bytes(this->client_crypt_random, length);
-        }
-
-        ~SecExchangePacket_Recv(){
-            free(this->client_crypt_random);
+            uint32_t length = stream.in_uint32_le();
+            if (length + 8 != available_len){
+                LOG(LOG_ERR, "Bad SEC_EXCHANGE_PKT length, header say length=%u available=%u", length, available_len-8);
+            }
         }
     };
 
