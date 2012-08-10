@@ -29,7 +29,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "sec_utils.hpp"
 #include "RDP/sec.hpp"
 
 enum {

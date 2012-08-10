@@ -33,7 +33,6 @@
 #include "RDP/rdp.hpp"
 #include "client_info.hpp"
 #include "rsa_keys.hpp"
-#include "sec_utils.hpp"
 #include "constants.hpp"
 
 
