@@ -24,6 +24,8 @@
 #include "wrm_recorder.hpp"
 
 void to_one_wrm(WRMRecorder& recorder, const char* outfile,
-                std::size_t start, std::size_t stop, const char* metaname = 0);
+                std::size_t start, std::size_t stop, const char* metaname = 0,
+                CipherMode::enum_t = CipherMode::NO_MODE,
+                const unsigned char * key = 0, const unsigned char * iv = 0);
 
 #endif

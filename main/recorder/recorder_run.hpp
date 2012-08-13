@@ -34,10 +34,12 @@ int recorder_run(RecorderOption& opt,
                  InputType::enum_t itype)
 {
     const std::size_t pos = opt.out_filename.find_last_of('.');
-    std::string extension = opt.output_type.empty() ? opt.out_filename.substr(pos + 1) : opt.output_type;
+    std::string extension = opt.output_type.empty()
+    ? (std::string::npos == pos ? "" : opt.out_filename.substr(pos + 1))
+    : opt.output_type;
 
     RecorderAdapter* adapter = get_recorder_adapter(actions, actions + n,
-                                                          extension);
+                                                    extension);
     if (!adapter){
         std::cerr
         << "Incorrect output-type, "
@@ -50,14 +52,18 @@ int recorder_run(RecorderOption& opt,
         return error;
     }
 
+    if (std::string::npos != pos)
+        opt.out_filename.erase(pos);
     try
     {
-        opt.out_filename.erase(pos);
         (*adapter)(recorder, opt.out_filename.c_str());
     }
     catch (Error& error)
     {
-        std::cerr << "Error " << error.id << ": " << strerror(error.errnum) << std::endl;
+        std::cerr << "Error " << error.id;
+        if (error.errnum)
+            std::cerr << ": " << strerror(error.errnum);
+        std::cerr << std::endl;
         return 100000 + error.errnum;
     }
     return 0;

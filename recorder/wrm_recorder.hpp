@@ -98,7 +98,7 @@ private:
         if (this->cipher_mode && !this->_start_cipher())
         {
             LOG(LOG_ERR, "Error cipher start in NativeCapture");
-            throw Error(ERR_CIPHER_START_ERR);
+            throw Error(ERR_CIPHER_START);
         }
     }
 
@@ -172,7 +172,7 @@ public:
         if (e && !this->cipher_mode)
         {
             LOG(LOG_ERR, "Error selected cipher mode (%d) in WRMRecorder", e);
-            throw Error(ERR_CIPHER_START_ERR);
+            throw Error(ERR_CIPHER_START);
         }
         this->normalize_path();
         this->start_cipher_if_active();
@@ -209,6 +209,7 @@ public:
         this->cipher_impl = impl;
         this->reader.trans = &this->cipher_trans;
         this->trans.diff_size_is_error = false;
+        return true;
     }
 
     bool cipher_is_active() const
