@@ -18,17 +18,25 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__MAIN_RECORDER_TO_WRM__)
-#define __MAIN_RECORDER_TO_WRM__
+#if !defined(__MAIN_RECORDER_VALIDATE_HPP__)
+#define __MAIN_RECORDER_VALIDATE_HPP__
 
-#include "wrm_recorder.hpp"
+#include <vector>
+#include <string>
+#include <boost/any.hpp>
+#include "range_time_point.hpp"
+#include "cipher.hpp"
 
-void to_wrm(WRMRecorder& recorder, const char* outfile,
-            std::size_t start, std::size_t stop, std::size_t interval,
-            uint frame_limit = -1,
-            bool screenshot_start = false, bool screenshot_wrm = false,
-            const char* metaname = 0,
-            CipherMode::enum_t = CipherMode::NO_MODE,
-            const unsigned char * key = 0, const unsigned char * iv = 0);
+void validate(boost::any& v,
+              const std::vector<std::string>& values,
+              range_time_point* range, int);
+
+void validate(boost::any& v,
+              const std::vector<std::string>& values,
+              time_point* time, int);
+
+void validate(boost::any& v,
+              const std::vector<std::string>& values,
+              CipherMode::enum_t* mode, int);
 
 #endif

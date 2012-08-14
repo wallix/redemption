@@ -4,14 +4,14 @@
 
 #include "wrm_recorder_option.hpp"
 #include "get_type.hpp"
+#include "validate.hpp"
 
 namespace po = boost::program_options;
 
 void validate(boost::any& v,
               const std::vector<std::string>& values,
-              range_time_point* range, int)
+              range_time_point* /*range*/, int)
 {
-    // Make sure no previous assignment to 'a' was made.
     po::validators::check_first_occurrence(v);
     // Extract the first string from 'values'. If there is more than
     // one string, it's an error, and exception will be thrown.
@@ -21,7 +21,7 @@ void validate(boost::any& v,
 
 void validate(boost::any& v,
               const std::vector<std::string>& values,
-              time_point* time, int)
+              time_point* /*time*/, int)
 {
     // Make sure no previous assignment to 'a' was made.
     po::validators::check_first_occurrence(v);
@@ -29,6 +29,49 @@ void validate(boost::any& v,
     // one string, it's an error, and exception will be thrown.
     const std::string& s = po::validators::get_single_string(values);
     v = boost::any(time_point(s));
+}
+
+void validate(boost::any& v,
+              const std::vector<std::string>& values,
+              CipherMode::enum_t* /*mode*/, int)
+{
+    po::validators::check_first_occurrence(v);
+    // Extract the first string from 'values'. If there is more than
+    // one string, it's an error, and exception will be thrown.
+    const std::string& s = po::validators::get_single_string(values);
+    CipherMode::enum_t mode = CipherMode::NO_MODE;
+
+    if (s == "bf")
+        mode = CipherMode::BLOWFISH_CBC;
+    else if (s == "bf-cbc")
+        mode = CipherMode::BLOWFISH_CBC;
+    else if (s == "bf-ecb")
+        mode = CipherMode::BLOWFISH_ECB;
+    else if (s == "bf-ofb")
+        mode = CipherMode::BLOWFISH_OFB;
+
+    else if (s == "des")
+        mode = CipherMode::DES_CBC;
+    else if (s == "des-cbc")
+        mode = CipherMode::DES_CBC;
+    else if (s == "des-ecb")
+        mode = CipherMode::DES_ECB;
+    else if (s == "des-ede")
+        mode = CipherMode::DES_EDE;
+
+    else if (s == "rc2")
+        mode = CipherMode::RC2_CBC;
+    else if (s == "rc2-cbc")
+        mode = CipherMode::RC2_CBC;
+    else if (s == "rc2-ecb")
+        mode = CipherMode::RC2_ECB;
+
+    else if (s == "rc4")
+        mode = CipherMode::RC4;
+    else if (s == "rc4-40")
+        mode = CipherMode::RC4_40;
+
+    v = boost::any(mode);
 }
 
 WrmRecorderOption::WrmRecorderOption()
@@ -44,6 +87,9 @@ WrmRecorderOption::WrmRecorderOption()
 , ignore_dir_for_meta_in_wrm(false)
 , input_type()
 , times_in_meta_are_false(false)
+, in_cipher_mode(CipherMode::NO_MODE)
+, in_cipher_key()
+, in_cipher_iv()
 {
     this->add_default_options();
 }
@@ -74,6 +120,9 @@ void WrmRecorderOption::add_default_options()
     ("times-in-meta-file-are-false", "")
     ("output-meta-name,m", po::value(&this->metaname), "specified name of meta file")
     ("input-type,I", po::value(&this->input_type), "accept 'mwrm' or 'wrm'")
+    ("in-cipher-key", po::value(&this->in_cipher_key), "")
+    ("in-cipher-iv", po::value(&this->in_cipher_iv), "")
+    ("in-cipher-mode", po::value(&this->in_cipher_mode), "")
     ;
 }
 
@@ -85,7 +134,7 @@ void WrmRecorderOption::parse_command_line(int argc, char** argv)
         po::command_line_parser(argc, argv).options(
             this->desc
         ).positional(p).run(),
-              this->options
+        this->options
     );
 }
 
@@ -96,6 +145,10 @@ int WrmRecorderOption::notify_options()
     if (this->in_filename.empty()){
         return IN_FILENAME_IS_EMPTY;
     }
+
+    if ((!this->in_cipher_iv.empty() || !this->in_cipher_key.empty())
+        && !this->in_cipher_mode)
+        return KEY_OR_IV_WITHOUT_MODE;
 
     return SUCCESS;
 }
@@ -149,4 +202,3 @@ int WrmRecorderOption::prepare(InputType::enum_t& itype)
 
     return 0;
 }
-

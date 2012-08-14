@@ -26,8 +26,6 @@
 
 #define LOGPRINT
 
-#include <iostream>
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -176,10 +174,8 @@ BOOST_AUTO_TEST_CASE(TestCryptFileOpenSSL)
             && pDecryptedStr[5] == '6'
         );
         try {
-            trans.recv(&p, size_buf);
-            BOOST_REQUIRE(true);
-            std::cout << "size: " << p - pDecryptedStr << std::endl;
-            std::cout << "After decrypted: " << pDecryptedStr << std::endl;
+            trans.recv(&p, size_buf); ///\note recv() throw an exeption
+            BOOST_REQUIRE(false);
         } catch (Error& err) {
             //throw std::runtime_error("normal error");
         }
@@ -223,16 +219,16 @@ BOOST_AUTO_TEST_CASE(TestCryptWRMFileOpenSSL)
         RaiiInCipherTransport raii(trans, MY_CIPHER_MODE, key, iv);
         StaticCapture pngcap(800,600,"/tmp/decrypt.png");
         RDPUnserializer unserializer(&trans, &pngcap, Rect(0,0,800,600));
-        BOOST_REQUIRE(true);
 
         char message[1024];
 
+        BOOST_REQUIRE(true);
         unserializer.next();
         if (!check_sig(pngcap.drawable, message,
             "\x2d\x26\x43\x36\x49\xe3\x03\xd2\xb7\xf9"
             "\x76\x8a\x60\xbe\x38\xc2\x76\xf4\xb8\x28"))
         {
-            BOOST_CHECK_MESSAGE(false, message);
+            BOOST_REQUIRE_MESSAGE(false, message);
         }
         BOOST_REQUIRE(true);
         unserializer.next();
@@ -240,7 +236,7 @@ BOOST_AUTO_TEST_CASE(TestCryptWRMFileOpenSSL)
             "\x50\xda\x3f\xef\x0b\x53\x74\x2c\xa5\x4f"
             "\x07\x5f\xcd\x77\xa0\xa6\x60\x7d\xc7\x1a"))
         {
-            BOOST_CHECK_MESSAGE(false, message);
+            BOOST_REQUIRE_MESSAGE(false, message);
         }
         BOOST_REQUIRE(true);
         unserializer.next();
@@ -248,7 +244,7 @@ BOOST_AUTO_TEST_CASE(TestCryptWRMFileOpenSSL)
             "\xab\xd2\xed\x13\xa5\x3e\xc6\x85\xb0\x1a"
             "\x2a\x68\xb0\x1d\xc1\x74\x20\x83\x48\x42"))
         {
-            BOOST_CHECK_MESSAGE(false, message);
+            BOOST_REQUIRE_MESSAGE(false, message);
         }
         BOOST_CHECK_EQUAL(unserializer.next(), false);
     }
@@ -274,6 +270,11 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         BOOST_REQUIRE(true);
         cap.draw(RDPOpaqueRect(Rect(500,400,50,18), GREEN), clip);
         BOOST_REQUIRE(true);
+        //cap.recorder.flush();
+        Bitmap bitmap(FIXTURES_PATH "/logo-truncated-16x16.bmp");
+        BOOST_REQUIRE(true);
+        cap.draw(RDPMemBlt(0, Rect(0,0,bitmap.cx, bitmap.cy), 0xcc, 0, 0, 0), clip, bitmap);
+        BOOST_REQUIRE(true);
         cap.recorder.flush();
     }
 
@@ -290,40 +291,124 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         BOOST_REQUIRE(true);
 
         char message[1024];
+        bool b;
 
-        BOOST_CHECK_MESSAGE(recorder.selected_next_order(), true);
-        BOOST_CHECK_EQUAL(recorder.chunk_type(), 1008);
+        b = recorder.selected_next_order();
+        BOOST_REQUIRE_EQUAL(b, true);
+        BOOST_REQUIRE_EQUAL(recorder.chunk_type(), 1008);
         recorder.interpret_order();
-        BOOST_CHECK_MESSAGE(recorder.selected_next_order(), true);
-        BOOST_CHECK_EQUAL(recorder.chunk_type(), 0);
+        b = recorder.selected_next_order();
+        BOOST_REQUIRE_EQUAL(b, true);
+        BOOST_REQUIRE_EQUAL(recorder.chunk_type(), 0);
         recorder.interpret_order();
         if (!check_sig(pngcap.drawable, message,
             "\x2d\x26\x43\x36\x49\xe3\x03\xd2\xb7\xf9"
             "\x76\x8a\x60\xbe\x38\xc2\x76\xf4\xb8\x28"))
         {
-            BOOST_CHECK_MESSAGE(false, message);
+            BOOST_REQUIRE_MESSAGE(false, message);
         }
-        BOOST_CHECK_MESSAGE(recorder.selected_next_order(), true);
+        b = recorder.selected_next_order();
+        BOOST_REQUIRE_EQUAL(b, true);
         recorder.interpret_order();
         if (!check_sig(pngcap.drawable, message,
             "\x50\xda\x3f\xef\x0b\x53\x74\x2c\xa5\x4f"
             "\x07\x5f\xcd\x77\xa0\xa6\x60\x7d\xc7\x1a"))
         {
-            BOOST_CHECK_MESSAGE(false, message);
+            BOOST_REQUIRE_MESSAGE(false, message);
         }
-        BOOST_CHECK_MESSAGE(recorder.selected_next_order(), true);
+        b = recorder.selected_next_order();
+        BOOST_REQUIRE_EQUAL(b, true);
         recorder.interpret_order();
         if (!check_sig(pngcap.drawable, message,
             "\xab\xd2\xed\x13\xa5\x3e\xc6\x85\xb0\x1a"
             "\x2a\x68\xb0\x1d\xc1\x74\x20\x83\x48\x42"))
         {
-            BOOST_CHECK_MESSAGE(false, message);
+            BOOST_REQUIRE_MESSAGE(false, message);
+        }
+        b = recorder.selected_next_order();
+        BOOST_REQUIRE_EQUAL(b, true);
+        recorder.interpret_order();
+        if (!check_sig(pngcap.drawable, message,
+            "\xab\xd2\xed\x13\xa5\x3e\xc6\x85\xb0\x1a"
+            "\x2a\x68\xb0\x1d\xc1\x74\x20\x83\x48\x42"))
+        {
+            BOOST_REQUIRE_MESSAGE(false, message);
+        }
+        b = recorder.selected_next_order();
+        BOOST_REQUIRE_EQUAL(b, true);
+        recorder.interpret_order();
+        if (!check_sig(pngcap.drawable, message,
+            "\x0f\x3e\xa2\x25\x2c\x2a\x77\x1e\xdf\x26"
+            "\x95\x54\x59\xd3\x33\xfb\x1b\x97\xed\xc3"))
+        {
+            BOOST_REQUIRE_MESSAGE(false, message);
         }
 
-        BOOST_CHECK_EQUAL(recorder.selected_next_order(), false);
+        b = recorder.selected_next_order();
+        BOOST_REQUIRE_EQUAL(b, false);
     }
 
     unlink(filename_mwrm.c_str());
     filename_mwrm.erase(filename_mwrm.size() - 4, 1);
     unlink(FilenameIncrementalGenerator(filename_mwrm).next().c_str());
+}
+
+BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
+{
+    unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+    unsigned char iv[] = {1,2,3,4,5,6,7,8};
+
+    BOOST_CHECK(true);
+    {
+        WRMRecorder recorder(FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
+        BOOST_CHECK(true);
+        NativeCapture cap(800, 600, "/tmp/wrm-encrypt", 0,
+                          CipherMode::BLOWFISH_CBC, key, iv);
+        timeval now;
+        gettimeofday(&now, 0);
+        cap.send_time_start(now);
+        BOOST_CHECK(true);
+        recorder.consumer(&cap);
+
+        while (recorder.selected_next_order())
+        {
+            if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
+            {
+                recorder.ignore_chunks();
+                cap.recorder.timestamp();
+                continue;
+            }
+            recorder.interpret_order();
+            BOOST_CHECK(true);
+        }
+        cap.flush();
+    }
+    BOOST_CHECK(true);
+    {
+        WRMRecorder recorder(make_pid_filename_generator("/tmp/wrm-encrypt.mwrm")().c_str(), "",
+                             CipherMode::BLOWFISH_CBC, key, iv);
+        BOOST_CHECK(true);
+        StaticCapture cap(800, 600, "/tmp/wrm-encrypt");
+        BOOST_CHECK(true);
+        recorder.consumer(&cap);
+
+        while (recorder.selected_next_order())
+        {
+            if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
+            {
+                recorder.ignore_chunks();
+                continue;
+            }
+            recorder.interpret_order();
+            BOOST_CHECK(true);
+        }
+
+        char message[1024];
+        if (!check_sig(cap.drawable, message,
+            "\xd0\x8a\xe3\x69\x7c\x88\x91\xf8\xc4\xf5"
+            "\xd8\x90\xaa\xaa\xec\x13\xd0\xde\x1c\xe1"))
+        {
+            BOOST_REQUIRE_MESSAGE(false, message);
+        }
+    }
 }

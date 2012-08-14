@@ -70,11 +70,24 @@ public:
         this->_init();
     }
 
+    Capture(int width, int height, const char * path, const char * path_meta, const char * codec_id, const char * video_quality, bool bgr, CipherMode::enum_t mode = CipherMode::NO_MODE, const unsigned char * key = 0, const unsigned char * iv = 0) :
+    sc(width, height, path, codec_id, video_quality, bgr),
+    nc(width, height, path, path_meta, mode, key, iv)
+    {
+        this->_init();
+    }
+
     ~Capture(){
     }
 
     void start(const timeval& now)
     {
+        this->nc.send_time_start(now);
+    }
+
+    void start_with_invalid_now()
+    {
+        struct timeval now = {0,0};
         this->nc.send_time_start(now);
     }
 

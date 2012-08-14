@@ -21,14 +21,19 @@
 #include "to_one_wrm.hpp"
 #include "timer_compute.hpp"
 #include "nativecapture.hpp"
+#include "urt.hpp"
 
 void to_one_wrm(WRMRecorder& recorder, const char* outfile,
-                std::size_t start, std::size_t stop, const char* metaname
+                std::size_t start, std::size_t stop, const char* metaname,
+                CipherMode::enum_t mode,
+                const unsigned char * key, const unsigned char * iv
 )
 {
     NativeCapture capture(recorder.meta().width,
                           recorder.meta().height,
-                          outfile, metaname);
+                          outfile, metaname,
+                          mode, key, iv
+                         );
     recorder.consumer(&capture);
     TimerCompute timercompute(recorder);
 
@@ -38,9 +43,20 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
 
     if (start && !mtime)
         return /*0*/;
-    if (mstart.tv_sec != 0){
+
+    if (mstart.tv_sec != 0)
+    {
+        if (mtime)
+        {
+            URT urt(mtime);
+            urt += mstart;
+            mstart = urt.tv;
+        }
         capture.send_time_start(mstart);
     }
+    else
+        capture.write_start_in_meta(mstart);
+
     if (mtime){
         caprecorder.timestamp(mtime);
         caprecorder.timer += mtime;
@@ -73,28 +89,23 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
                     break;
                 case WRMChunk::BREAKPOINT:
                 {
-                    stream.p += 2 + 2 + 1 + 8 + 8;
-                    uint nb_img = stream.in_uint16_le() * stream.in_uint16_le();
-
-                    --recorder.remaining_order_count();
-
-                    while (nb_img)
-                    {
-                        recorder.selected_next_order();
-                        nb_img -= recorder.remaining_order_count();
-                        recorder.ignore_chunks();
-                    }
-
+                    recorder.ignore_chunks();
                     recorder.selected_next_order();
 
-                    stream.p = stream.end - 2;
-                    recorder.remaining_order_count() = 0;
-                    nb_img = stream.in_uint16_le();
-
-                    for (uint ignore = nb_img + 27; ignore; --ignore){
-                        recorder.selected_next_order();
-                        recorder.ignore_chunks();
+                    while (1)
+                    {
+                        recorder.reader.stream.init(14);
+                        recorder.reader.trans->recv(&recorder.reader.stream.end, 14);
+                        if (recorder.reader.stream.in_uint16_le() == 8192 * 3 + 1){
+                            break;
+                        }
+                        recorder.reader.stream.p += 8;
+                        uint32_t buffer_size = recorder.reader.stream.in_uint32_le();
+                        recorder.reader.stream.init(buffer_size);
+                        recorder.reader.trans->recv(&recorder.reader.stream.end, buffer_size);
                     }
+
+                    recorder.ignore_chunks();
                 }
                     break;
                 default:

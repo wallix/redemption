@@ -122,7 +122,7 @@ struct URT
     }
 
     URT& operator+=(const URT & other) {
-        this->sec()  = (this->usec() + other.usec()) / 1000000 + this->sec()   + other.sec();
+        this->sec()  = (this->usec() + other.usec()) / 1000000 + this->sec() + other.sec();
         this->usec() = (this->usec() + other.usec()) % 1000000;
         return *this;
     }

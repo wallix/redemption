@@ -36,15 +36,27 @@ public:
     : _option(option)
     {}
 
-
     virtual void operator()(WRMRecorder& recorder, const char* outfile)
     {
         const char * metaname = this->_option.metaname.empty() ? 0 : this->_option.metaname.c_str();
+
+        const unsigned char * key = 0;
+        const unsigned char * iv = 0;
+        if (this->_option.out_cipher_mode)
+        {
+            if (!this->_option.out_cipher_key.empty())
+                key = (const unsigned char *)this->_option.out_cipher_key.c_str();
+            if (!this->_option.out_cipher_iv.empty())
+                iv = (const unsigned char *)this->_option.out_cipher_iv.c_str();
+        }
+
         if (this->_option.cat_wrm) {
             to_one_wrm(recorder, outfile,
                        this->_option.range.left.time,
                        this->_option.range.right.time,
-                       metaname
+                       metaname,
+                       this->_option.out_cipher_mode,
+                       key, iv
                       );
         }
         if (!this->_option.cat_wrm) {
@@ -55,7 +67,9 @@ public:
                    this->_option.frame,
                    this->_option.screenshot_start,
                    this->_option.screenshot_wrm,
-                   metaname
+                   metaname,
+                   this->_option.out_cipher_mode,
+                   key, iv
                   );
         }
     }

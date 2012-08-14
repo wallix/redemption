@@ -26,13 +26,16 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
             std::size_t start, std::size_t stop, std::size_t interval,
             uint frame_limit,
             bool screenshot_start, bool screenshot_wrm,
-            const char* metaname
+            const char* metaname,
+            CipherMode::enum_t mode,
+            const unsigned char * key, const unsigned char * iv
 )
 {
     Capture capture(recorder.meta().width,
                     recorder.meta().height,
                     outfile, metaname,
-                    0, 0, true);
+                    0, 0, true,
+                    mode, key, iv);
     recorder.consumer(&capture);
     TimerCompute timercompute(recorder);
     timeval mstart = timercompute.start();
@@ -40,12 +43,20 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
 
     if (start && !mtime)
         return /*0*/;
-    if (mstart.tv_sec != 0){
-        //mstart.tv_usec += mtime % TimerCompute::coeff_sec_to_usec;
-        //mstart.tv_sec += mtime / TimerCompute::coeff_sec_to_usec + mstart.tv_usec / TimerCompute::coeff_sec_to_usec;
-        //mstart.tv_usec %= TimerCompute::coeff_sec_to_usec;
+
+    if (mstart.tv_sec != 0)
+    {
+        if (mtime)
+        {
+            URT urt(mtime);
+            urt += mstart;
+            mstart = urt.tv;
+        }
         capture.start(mstart);
     }
+    else
+        capture.start_with_invalid_now();
+
     if (mtime){
         capture.timestamp(mtime);
         capture.timer() += mtime;
@@ -73,9 +84,9 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
 
             if (usec >= mtime) {
                 /*if (chunk_time) {
-                    *                   std::cout << "timestamp + breakpoint chunk_time: " << chunk_time  << '\n';
-                    *                   capture.timestamp(chunk_time);
-                    *                   chunk_time = 0;
+                    std::cout << "timestamp + breakpoint chunk_time: " <<   chunk_time  << '\n';
+                    capture.timestamp(chunk_time);
+                    chunk_time = 0;
                 }*/
                 capture.breakpoint(capture.timer().time());
                 if (screenshot_wrm)
@@ -94,9 +105,9 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
         }
         else {
             /*if (chunk_time) {
-                *               std::cout << "timestamp chunk_time: " << chunk_time  << '\n';
-                *               capture.timestamp(chunk_time);
-                *               chunk_time = 0;
+                 std::cout << "timestamp chunk_time: " << chunk_time  << '\n';
+                 capture.timestamp(chunk_time);
+                 chunk_time = 0;
             }*/
 
             recorder.interpret_order();
@@ -104,7 +115,7 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
     }
 
     /*if (chunk_time) {
-        *       capture.timestamp(chunk_time);
+         capture.timestamp(chunk_time);
     }*/
 
     //return frame;

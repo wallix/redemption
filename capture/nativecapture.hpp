@@ -145,12 +145,12 @@ public:
         if (e && !this->cipher_mode)
         {
             LOG(LOG_ERR, "Error selected cipher mode (%d) in NativeCapture", e);
-            throw Error(ERR_CIPHER_START_ERR);
+            throw Error(ERR_CIPHER_START);
         }
         if (this->cipher_mode && !this->_start_cipher())
         {
             LOG(LOG_ERR, "Error cipher start in NativeCapture");
-            throw Error(ERR_CIPHER_START_ERR);
+            throw Error(ERR_CIPHER_START);
         }
         this->basepath_len = sprintf(this->filename, "%s-%u-", path, getpid());
         this->next_filename();
@@ -276,11 +276,16 @@ private:
     }
 
 public:
+    void write_start_in_meta(const timeval& now)
+    {
+        fprintf(this->meta_file, "%s, %ld %ld\n",
+                this->filename, now.tv_sec, now.tv_usec);
+    }
+
     void send_time_start(const timeval& now)
     {
         this->send_time_start_order(now);
-        fprintf(this->meta_file, "%s, %ld %ld\n",
-                this->filename, now.tv_sec, now.tv_usec);
+        this->write_start_in_meta(now);
     }
 
     void breakpoint(const uint8_t* data_drawable, uint8_t bpp,
@@ -295,12 +300,12 @@ public:
             this->next_filename();
             this->stream.out_uint32_le(++this->file_id);
         }
-        this->recorder.flush();
-
         if (this->cipher_is_active())
         {
             this->cipher_trans.stop();
         }
+        this->recorder.flush();
+
         close(this->trans.fd);
         this->open_file();
         if (this->cipher_is_active())

@@ -73,10 +73,24 @@ inline static uint __wrm_recorder_init_get_good_idx(WRMRecorder& recorder,
     return real_idx;
 }
 
+inline const unsigned char * __get_ucharp(const std::string& s)
+{
+    return s.empty() ? 0 : (const unsigned char *)s.c_str();
+}
+
 int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt, InputType::enum_t itype)
 {
     recorder.set_basepath(opt.base_path);
     recorder.only_filename = opt.ignore_dir_for_meta_in_wrm;
+
+    if (opt.in_cipher_mode
+        && !recorder.init_cipher(opt.in_cipher_mode,
+                                 __get_ucharp(opt.in_cipher_key),
+                                 __get_ucharp(opt.in_cipher_iv)))
+    {
+        std::cerr << "Error in cipher initialisation" << std::endl;
+        return 3000;
+    }
 
     try
     {

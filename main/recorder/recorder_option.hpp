@@ -26,6 +26,7 @@
 
 #include "wrm_recorder_option.hpp"
 #include "range_time_point.hpp"
+#include "cipher.hpp"
 
 struct RecorderOption
 : WrmRecorderOption
@@ -39,6 +40,9 @@ struct RecorderOption
     bool cat_wrm;
     unsigned png_scale_width;
     unsigned png_scale_height;
+    CipherMode::enum_t out_cipher_mode;
+    std::string out_cipher_key;
+    std::string out_cipher_iv;
 
     RecorderOption();
 
@@ -65,9 +69,11 @@ struct RecorderOption
 
     /**
      * Return 0 if success.
+     * @{
      */
     virtual int notify_options();
     virtual int normalize_options();
+    //@}
 
     virtual const char * version() const
     {
@@ -75,8 +81,9 @@ struct RecorderOption
     };
 
     enum Error {
-        SUCCESS              = WrmRecorderOption::SUCCESS,
-        IN_FILENAME_IS_EMPTY = WrmRecorderOption::IN_FILENAME_IS_EMPTY,
+        SUCCESS                = WrmRecorderOption::SUCCESS,
+        IN_FILENAME_IS_EMPTY   = WrmRecorderOption::IN_FILENAME_IS_EMPTY,
+        KEY_OR_IV_WITHOUT_MODE = WrmRecorderOption::KEY_OR_IV_WITHOUT_MODE,
         OUT_FILENAME_IS_EMPTY
     };
 

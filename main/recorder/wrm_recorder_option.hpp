@@ -26,6 +26,7 @@
 
 #include "range_time_point.hpp"
 #include "input_type.hpp"
+#include "cipher.hpp"
 
 struct WrmRecorderOption
 {
@@ -42,6 +43,9 @@ struct WrmRecorderOption
     bool ignore_dir_for_meta_in_wrm;
     std::string input_type;
     bool times_in_meta_are_false;
+    CipherMode::enum_t in_cipher_mode;
+    std::string in_cipher_key;
+    std::string in_cipher_iv;
 
     WrmRecorderOption();
 
@@ -49,9 +53,11 @@ struct WrmRecorderOption
 
     /**
      * Return 0 if success.
+     * @{
      */
     virtual int notify_options();
     virtual int normalize_options();
+    //@}
 
     virtual const char * version() const
     {
@@ -60,13 +66,16 @@ struct WrmRecorderOption
 
     enum Error {
         SUCCESS,
-        IN_FILENAME_IS_EMPTY
+        IN_FILENAME_IS_EMPTY,
+        KEY_OR_IV_WITHOUT_MODE
     };
 
     virtual const char * get_cerror(int error)
     {
         if (error == IN_FILENAME_IS_EMPTY)
             return "Not input-file";
+        if (error == KEY_OR_IV_WITHOUT_MODE)
+            return "Set --cipher-key or --cipher-iv without --cipher-mode";
         if (error == SUCCESS)
             return "Success";
         return "Unknow";
