@@ -24,8 +24,6 @@
 #include "cipher.hpp"
 #include "transport.hpp"
 
-#include <iostream>
-
 class OutCipherTransport
 : public Transport
 {
@@ -222,7 +220,7 @@ private:
 
     void _decrypt_in_uncrypt() throw ()
     {
-        this->uncrypt.pbuf = this->uncrypt.data;
+        this->uncrypt.pbuf = this->uncrypt_buf;
         this->cipher_data.reset(this->uncrypt.data);
         std::size_t size = std::min<std::size_t>(this->crypt.size(),
                                                  EVP_MAX_BLOCK_LENGTH);
@@ -240,15 +238,47 @@ private:
         this->crypt.data += size;
     }
 
+    void _recv()
+    {
+        this->crypt.data = this->crypt_buf;
+        this->crypt.pbuf = this->crypt.data;
+        this->in->recv(&this->crypt.pbuf, sizeof(this->crypt_buf));
+    }
+
+    std::size_t _recv_and_uncrypt_block(uint8_t ** pbuffer, std::size_t len)
+    {
+        this->_recv();
+        if (crypt.size() != sizeof(this->crypt_buf))
+        {
+            this->status_in = 1;
+        }
+        if (!crypt.empty())
+        {
+            this->_decrypt_in_uncrypt();
+            return this->_uncrypt_move(pbuffer, len);
+        }
+        return 0;
+    }
+
+    std::size_t _status_in_equal_to_1(uint8_t ** pbuffer, std::size_t len)
+    {
+        this->uncrypt.pbuf = this->uncrypt_buf;
+        this->cipher_data.reset(this->uncrypt.data);
+        this->cipher_crypt.stop();
+        this->uncrypt.pbuf = this->uncrypt.data;
+        this->uncrypt.pend = this->uncrypt.data + this->cipher_data.size();
+        this->status_in = 2;
+        return this->_uncrypt_move(pbuffer, len);
+    }
+
     void do_recv(uint8_t ** pbuffer, size_t len) throw (Error)
     {
-        std::cout << "do_rec " << len << '\n';
         if (!this->uncrypt.empty() && !(len -= _uncrypt_move(pbuffer, len)))
             return ;
 
         if (!this->crypt.empty())
         {
-            if (len >= EVP_MAX_BLOCK_LENGTH)
+            if (len > EVP_MAX_BLOCK_LENGTH)
             {
                 this->cipher_data.reset(*pbuffer);
                 std::size_t size = std::min(this->crypt.size(),
@@ -258,7 +288,7 @@ private:
                 if (!(len -= this->cipher_data.size()))
                     return ;
             }
-            if (!this->crypt.empty())
+            if (len && !this->crypt.empty())
             {
                 this->_decrypt_in_uncrypt();
                 if (!(len -= this->_uncrypt_move(pbuffer, len)))
@@ -266,12 +296,19 @@ private:
             }
         }
 
-        while (len >= EVP_MAX_BLOCK_LENGTH)
+        if (this->status_in != 0)
         {
-            this->crypt.data = this->crypt_buf;
-            this->crypt.pbuf = this->crypt.data;
-            this->in->recv(&this->crypt.pbuf, sizeof(this->crypt_buf));
-            if (!this->crypt.size())
+            if (this->status_in == 2)
+                throw Error(ERR_TRANSPORT_READ_FAILED);
+            len -= _status_in_equal_to_1(pbuffer, len);
+            if (len)
+                throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+
+        while (len > EVP_MAX_BLOCK_LENGTH)
+        {
+            this->_recv();
+            if (this->crypt.empty())
                 throw Error(ERR_TRANSPORT_READ_FAILED);
             std::size_t size = std::min(this->crypt.size(),
                                         len - EVP_MAX_BLOCK_LENGTH);
@@ -288,39 +325,31 @@ private:
                 switch (this->status_in)
                 {
                     case 1:
-                        this->uncrypt.pbuf = this->uncrypt.data;
-                        this->cipher_data.reset(this->uncrypt.data);
-                        this->cipher_crypt.stop();
-                        this->uncrypt.pbuf = this->uncrypt.data;
-                        this->uncrypt.pend = this->uncrypt.data + this->cipher_data.size();
-                        len -= this->_uncrypt_move(pbuffer, len);
-                        this->status_in = 2;
+                        len -= _status_in_equal_to_1(pbuffer, len);
                         break;
                     case 2:
                         throw Error(ERR_TRANSPORT_READ_FAILED);
                         break;
                     default:
-                        this->crypt.data = this->crypt_buf;
-                        this->crypt.pbuf = this->crypt.data;
-                        this->in->recv(&this->crypt.pbuf, sizeof(this->crypt_buf));
-                        if (crypt.size() != sizeof(this->crypt_buf))
-                            this->status_in = 1;
-                        if (crypt.empty())
-                            throw Error(ERR_TRANSPORT_READ_FAILED);
-                        this->_decrypt_in_uncrypt();
-                        if (this->uncrypt.full())
-                        {
-                            this->status_in = 2;
-                            this->uncrypt.pbuf = this->uncrypt.data;
-                            this->cipher_data.reset(this->uncrypt.data);
-                            this->cipher_crypt.stop();
-                            this->uncrypt.pend = this->uncrypt.data + this->cipher_data.size();
-                        }
-                        len -= this->_uncrypt_move(pbuffer, len);
+                        len -= this->_recv_and_uncrypt_block(pbuffer, len);
+                        if (len && this->status_in == 1)
+                            len -= _status_in_equal_to_1(pbuffer, len);
                         break;
                 }
             }
+            else
+            {
+                this->_decrypt_in_uncrypt();
+                len -= this->_uncrypt_move(pbuffer, len);
+                if (len && this->crypt.empty())
+                {
+                    len -= this->_recv_and_uncrypt_block(pbuffer, len);
+                    if (len && this->status_in == 1)
+                        len -= _status_in_equal_to_1(pbuffer, len);
+                }
+            }
         }
+
         if (len)
             throw Error(ERR_TRANSPORT_READ_FAILED);
     }

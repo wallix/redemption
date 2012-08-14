@@ -26,8 +26,6 @@
 
 #define LOGPRINT
 
-#include <iostream>
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -355,57 +353,62 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
     unlink(FilenameIncrementalGenerator(filename_mwrm).next().c_str());
 }
 
-// BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
-// {
-//     unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
-//     unsigned char iv[] = {1,2,3,4,5,6,7,8};
-//
-//     BOOST_CHECK(true);
-//     {
-//         WRMRecorder recorder(FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH/*,
-//                              CipherMode::BLOWFISH_CBC, key, iv*/);
-//         BOOST_CHECK(true);
-//         NativeCapture cap(800, 600, "/tmp/wrm-encrypt", 0,
-//                           CipherMode::BLOWFISH_CBC, key, iv);
-//         timeval now;
-//         gettimeofday(&now, 0);
-//         cap.send_time_start(now);
-//         BOOST_CHECK(true);
-//         recorder.consumer(&cap);
-//
-//         while (recorder.selected_next_order())
-//         {
-//             std::cout << recorder.reader.chunk_size << std::endl;
-//             if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
-//             {
-//                 recorder.ignore_chunks();
-//                 continue;
-//             }
-//             recorder.interpret_order();
-//             BOOST_CHECK(true);
-//         }
-//         cap.flush();
-//     }
-//     BOOST_CHECK(true);
-//     {
-//
-//         WRMRecorder recorder(make_pid_filename_generator("/tmp/wrm-encrypt.mwrm")().c_str(), "",
-//                              CipherMode::BLOWFISH_CBC, key, iv);
-//         BOOST_CHECK(true);
-//         StaticCapture cap(800, 600, "/tmp/wrm-encrypt");
-//         BOOST_CHECK(true);
-//         recorder.consumer(&cap);
-//
-//         while (recorder.selected_next_order())
-//         {
-//             std::cout << recorder.chunk_type() << '\n';
-//             if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
-//             {
-//                 recorder.ignore_chunks();
-//                 continue;
-//             }
-//             recorder.interpret_order();
-//             BOOST_CHECK(true);
-//         }
-//     }
-// }
+BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
+{
+    unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+    unsigned char iv[] = {1,2,3,4,5,6,7,8};
+
+    BOOST_CHECK(true);
+    {
+        WRMRecorder recorder(FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
+        BOOST_CHECK(true);
+        NativeCapture cap(800, 600, "/tmp/wrm-encrypt", 0,
+                          CipherMode::BLOWFISH_CBC, key, iv);
+        timeval now;
+        gettimeofday(&now, 0);
+        cap.send_time_start(now);
+        BOOST_CHECK(true);
+        recorder.consumer(&cap);
+
+        while (recorder.selected_next_order())
+        {
+            if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
+            {
+                recorder.ignore_chunks();
+                cap.recorder.timestamp();
+                continue;
+            }
+            recorder.interpret_order();
+            BOOST_CHECK(true);
+        }
+        cap.flush();
+    }
+    BOOST_CHECK(true);
+    {
+        WRMRecorder recorder(make_pid_filename_generator("/tmp/wrm-encrypt.mwrm")().c_str(), "",
+                             CipherMode::BLOWFISH_CBC, key, iv);
+        BOOST_CHECK(true);
+        StaticCapture cap(800, 600, "/tmp/wrm-encrypt");
+        BOOST_CHECK(true);
+        recorder.consumer(&cap);
+
+        while (recorder.selected_next_order())
+        {
+            if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
+            {
+                recorder.ignore_chunks();
+                continue;
+            }
+            recorder.interpret_order();
+            BOOST_CHECK(true);
+        }
+
+        char message[1024];
+        if (!check_sig(cap.drawable, message,
+            "\xd0\x8a\xe3\x69\x7c\x88\x91\xf8\xc4\xf5"
+            "\xd8\x90\xaa\xaa\xec\x13\xd0\xde\x1c\xe1"))
+        {
+            BOOST_REQUIRE_MESSAGE(false, message);
+        }
+    }
+}

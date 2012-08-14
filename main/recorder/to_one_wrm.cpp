@@ -23,15 +23,12 @@
 #include "nativecapture.hpp"
 #include "urt.hpp"
 
-#include <iostream>
-
 void to_one_wrm(WRMRecorder& recorder, const char* outfile,
                 std::size_t start, std::size_t stop, const char* metaname,
                 CipherMode::enum_t mode,
                 const unsigned char * key, const unsigned char * iv
 )
 {
-    std::cout << "to_one_wrm" << std::endl;
     NativeCapture capture(recorder.meta().width,
                           recorder.meta().height,
                           outfile, metaname,
@@ -40,7 +37,6 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
     recorder.consumer(&capture);
     TimerCompute timercompute(recorder);
 
-    std::cout << "start" << std::endl;
     timeval mstart = timercompute.start();
     uint64_t mtime = timercompute.advance_second(start);
     GraphicsToFile& caprecorder = capture.recorder;
@@ -48,7 +44,6 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
     if (start && !mtime)
         return /*0*/;
 
-    std::cout << "mstart" << std::endl;
     if (mstart.tv_sec != 0)
     {
         if (mtime)
@@ -62,7 +57,6 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
     else
         capture.write_start_in_meta(mstart);
 
-    std::cout << "mtime" << std::endl;
     if (mtime){
         caprecorder.timestamp(mtime);
         caprecorder.timer += mtime;
@@ -72,11 +66,9 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
     mtime = TimerCompute::coeff_sec_to_usec * (stop - start);
     BStream& stream = recorder.reader.stream;
 
-    std::cout << "while" << std::endl;
     while (recorder.selected_next_order())
     {
         if (timercompute.interpret_is_time_chunk()) {
-            std::cout << "if" << std::endl;
             if (timercompute.chunk_time_value) {
                 caprecorder.timestamp(timercompute.chunk_time_value);
                 caprecorder.timer += timercompute.chunk_time_value;
@@ -87,7 +79,6 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
             }
         }
         else {
-            std::cout << "else" << std::endl;
             switch (recorder.chunk_type()) {
                 case WRMChunk::NEXT_FILE_ID:
                     recorder.interpret_order();
