@@ -109,9 +109,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
 
     BOOST_CHECK_EQUAL(true, mcs.upwardFlag);
 
-    BOOST_CHECK_EQUAL(106, mcs.header_size); // everything up to USER_DATA
+    BOOST_CHECK_EQUAL(106, mcs._header_size); // everything up to USER_DATA
     BOOST_CHECK_EQUAL(263, mcs.payload_size); // USER_DATA (after len)
-    BOOST_CHECK_EQUAL(mcs.payload_size, payload.end - payload.data - mcs.header_size);
+    BOOST_CHECK_EQUAL(263, mcs.payload.size()); // USER_DATA (after len)
+    BOOST_CHECK_EQUAL(mcs.payload_size, payload.end - payload.data - mcs._header_size);
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
@@ -171,7 +172,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
     BOOST_CHECK_EQUAL(2, mcs.domainParameters.protocolVersion);            
 
     BOOST_CHECK_EQUAL(54, mcs.payload_size);
-    BOOST_CHECK_EQUAL(39, mcs.header_size);
+    BOOST_CHECK_EQUAL(54, mcs.payload.size());
+    BOOST_CHECK_EQUAL(39, mcs._header_size);
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)

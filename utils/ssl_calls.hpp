@@ -233,6 +233,33 @@ struct CryptContext
         this->rc4_key_size = 0;
     }
 
+    void generate_key(uint8_t * key_block, const uint8_t* salt1, const uint8_t* salt2, uint32_t rc4_key_size)
+    {
+        // 16-byte transformation used to generate export keys (6.2.2).
+        SSL_MD5 md5;
+        ssllib ssl;
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, key_block, 16);
+        ssl.md5_update(&md5, salt1, 32);
+        ssl.md5_update(&md5, salt2, 32);
+        ssl.md5_final(&md5, this->key);
+
+        if (rc4_key_size == 1) {
+            // LOG(LOG_DEBUG, "40-bit encryption enabled");
+            sec_make_40bit(this->key);
+            this->rc4_key_len = 8;
+        }
+        else {
+            //LOG(LOG_DEBUG, "rc_4_key_size == %d, 128-bit encryption enabled", rc4_key_size);
+            this->rc4_key_len = 16;
+        }
+
+        /* Save initial RC4 keys as update keys */
+        memcpy(this->update_key, this->key, 16);
+
+        ssl.rc4_set_key(this->rc4_info, this->key, this->rc4_key_len);
+    }
 
     void rc4dump(const char * data, size_t size){
         char buffer[16384];
@@ -452,6 +479,41 @@ static inline int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len
     return rv;
 }
 
+//static inline void ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len,
+//                uint8_t* mod, int mod_len, uint8_t* exp, int exp_len)
+//{
+//    uint8_t l_out[out_len];
+//    memset(l_out, 0, out_len);
+//    uint8_t l_in[in_len];
+//    rmemcpy(l_in, in, in_len);
+//    uint8_t l_mod[mod_len];
+//    rmemcpy(l_mod, mod, mod_len);
+//    uint8_t l_exp[exp_len];
+//    rmemcpy(l_exp, exp, exp_len);
+
+//    BN_CTX *ctx = BN_CTX_new();
+
+//    BIGNUM lmod;
+//    BN_init(&lmod);
+//    BIGNUM lexp;
+//    BN_init(&lexp);
+//    BIGNUM lin;
+//    BN_init(&lin);
+//    BIGNUM lout;
+//    BN_init(&lout);
+
+//    BN_bin2bn(l_mod, mod_len, &lmod);
+//    BN_bin2bn(l_exp, exp_len, &lexp);
+//    BN_bin2bn(l_in, in_len, &lin);
+//    BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
+//    BN_bn2bin(&lout, l_out);
+//    rmemcpy(out, l_out, out_len);
+//    BN_free(&lin);
+//    BN_free(&lout);
+//    BN_free(&lexp);
+//    BN_free(&lmod);
+//    BN_CTX_free(ctx);
+//}
 
 
 /*****************************************************************************/
@@ -555,5 +617,60 @@ static inline int ssl_rkey_get_exp_mod(SSL_RKEY * rkey, uint8_t* exponent, int m
   return 0;
 }
 
+inline static void rdp_sec_generate_keyblock(uint8_t (& key_block)[48], uint8_t *client_random, uint8_t *server_random)
+{
+    uint8_t pre_master_secret[48];
+    uint8_t master_secret[48];
+
+    /* Construct pre-master secret (session key) */
+    memcpy(pre_master_secret, client_random, 24);
+    memcpy(pre_master_secret + 24, server_random, 24);
+
+    uint8_t shasig[20];
+
+    ssllib ssl;
+
+    // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
+    for (int i = 0; i < 3; i++) {
+        uint8_t pad[4];
+        SSL_SHA1 sha1;
+        SSL_MD5 md5;
+
+        memset(pad, 'A' + i, i + 1);
+
+        ssl.sha1_init(&sha1);
+        ssl.sha1_update(&sha1, pad, i + 1);
+        ssl.sha1_update(&sha1, pre_master_secret, 48);
+        ssl.sha1_update(&sha1, client_random, 32);
+        ssl.sha1_update(&sha1, server_random, 32);
+        ssl.sha1_final(&sha1, shasig);
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, pre_master_secret, 48);
+        ssl.md5_update(&md5, shasig, 20);
+        ssl.md5_final(&md5, &master_secret[i * 16]);
+    }
+
+    // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
+    for (int i = 0; i < 3; i++) {
+        uint8_t pad[4];
+        SSL_SHA1 sha1;
+        SSL_MD5 md5;
+
+        memset(pad, 'X' + i, i + 1);
+
+        ssl.sha1_init(&sha1);
+        ssl.sha1_update(&sha1, pad, i + 1);
+        ssl.sha1_update(&sha1, master_secret, 48);
+        ssl.sha1_update(&sha1, client_random, 32);
+        ssl.sha1_update(&sha1, server_random, 32);
+        ssl.sha1_final(&sha1, shasig);
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, master_secret, 48);
+        ssl.md5_update(&md5, shasig, 20);
+        ssl.md5_final(&md5, &key_block[i * 16]);
+    }
+}
 
 #endif

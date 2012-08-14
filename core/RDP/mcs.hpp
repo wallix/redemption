@@ -262,7 +262,7 @@ namespace MCS
                 return -1;
             }
             size_t len = stream.in_ber_len();
-            size_t start_offset = stream.get_offset(0);
+            size_t start_offset = stream.get_offset();
             if ( -1 == this->in_ber_int(stream, this->maxChannelIds)){
                 LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxChannelIds tag error");
                 return -1;
@@ -295,8 +295,8 @@ namespace MCS
                 LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::protocolVersion tag error");
                 return -1;
             }
-            if (stream.get_offset(start_offset) != len){
-                LOG(LOG_ERR, "Connect Initial, bad length in BER_TAG_MCS_DOMAIN_PARAMS. Total subfield length mismatch %u %u", stream.get_offset(start_offset), len);
+            if (stream.get_offset() != start_offset + len){
+                LOG(LOG_ERR, "Connect Initial, bad length in BER_TAG_MCS_DOMAIN_PARAMS. Total subfield length mismatch %u %u", stream.get_offset() - start_offset, len);
             }
             return 0;
         }
@@ -308,7 +308,8 @@ namespace MCS
         struct DomainParameters minimumParameters;
         struct DomainParameters maximumParameters;
 
-        size_t header_size;
+        size_t _header_size;
+        SubStream payload;
         size_t payload_size;
 
         uint16_t tag;
@@ -322,7 +323,8 @@ namespace MCS
 
         bool upwardFlag;
 
-        CONNECT_INITIAL_PDU_Recv(Stream & stream, size_t available_length, int encoding)
+        CONNECT_INITIAL_PDU_Recv(Stream & stream, size_t available_length, int encoding) 
+            : payload(stream, 0) // initialized later
         {
             if (encoding != BER_ENCODING){
                 LOG(LOG_ERR, "Connect Initial::BER_ENCODING mandatory for Connect PDUs");
@@ -382,11 +384,17 @@ namespace MCS
                     this->payload_size, stream.end - stream.p);
                 throw Error(ERR_MCS);
             }
+
+            TODO("Factorize this")
+            this->payload.data = this->payload.p = stream.p;
+            this->payload.capacity = this->payload_size;
+            this->payload.end = this->payload.data + this->payload_size;
+
             TODO("Octets below are part of GCC Conference User Data")
 //            stream.in_skip_bytes(23);
 
 // The payload is the USER_DATA block
-            this->header_size  = stream.p - stream.data;
+            this->_header_size  = stream.p - stream.data;
         }
     };
 
@@ -450,7 +458,7 @@ namespace MCS
             stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
             stream.out_ber_len_uint16(payload_length);
             // now we know full MCS Initial header length (without initial tag and len)
-            stream.set_out_ber_len_uint16(payload_length + stream.get_offset(5), 2);
+            stream.set_out_ber_len_uint16(payload_length + stream.get_offset() - 5, 2);
             stream.mark_end();
         }
     };
@@ -543,10 +551,12 @@ namespace MCS
 
         struct DomainParameters domainParameters;
 
-        size_t header_size;
+        size_t _header_size;
+        SubStream payload;
         size_t payload_size;
 
         CONNECT_RESPONSE_PDU_Recv(Stream & stream, size_t available_length, int encoding)
+            : payload(stream, 0)
         {
             if (encoding != BER_ENCODING){
                 LOG(LOG_ERR, "Connect Response::BER_ENCODING mandatory for Connect PDUs");
@@ -593,11 +603,17 @@ namespace MCS
                     this->payload_size, stream.end - stream.p);
                 throw Error(ERR_MCS);
             }
+
+            TODO("Factorize this")
+            this->payload.data = this->payload.p = stream.p;
+            this->payload.capacity = this->payload_size;
+            this->payload.end = this->payload.data + this->payload_size;
+
             TODO("Octets below are part of GCC Conference User Data")
 //            stream.in_skip_bytes(23);
 
 // The payload is the USER_DATA block
-            this->header_size  = stream.p - stream.data;
+            this->_header_size  = stream.p - stream.data;
         }
     };
 
@@ -618,7 +634,7 @@ namespace MCS
             else {
                 stream.out_ber_len_uint7(0);
             }
-            uint16_t start_offset = stream.get_offset(0);
+            uint16_t start_offset = stream.get_offset();
 
             // Connect-Response::result = rt-successful (0)
             // The first byte (0x0a) is the ASN.1 BER encoded Enumerated type. The
@@ -658,10 +674,10 @@ namespace MCS
 
             // now we know full MCS Initial header length (without initial tag and len)
             if (payload_length > 88){
-                stream.set_out_ber_len_uint16(payload_length + stream.get_offset(start_offset), 2);
+                stream.set_out_ber_len_uint16(payload_length + stream.get_offset() - start_offset, 2);
             }
             else {
-                stream.set_out_ber_len_uint7(payload_length + stream.get_offset(start_offset), 2);
+                stream.set_out_ber_len_uint7(payload_length + stream.get_offset() - start_offset, 2);
             }
             stream.mark_end();
         }
@@ -1802,16 +1818,20 @@ namespace MCS
 
     struct SendDataRequest_Recv
     {
+        SubStream payload;
+
         uint8_t type;
         uint16_t initiator;
         uint16_t channelId;
         uint8_t dataPriority;
         uint8_t segmentation;
-        uint16_t header_size;
+
+        uint16_t _header_size;
         uint16_t payload_size;
 
 
         SendDataRequest_Recv(Stream & stream, size_t available_length, int encoding)
+            : payload(stream, 0)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "SendDataRequest PER_ENCODING mandatory");
@@ -1835,7 +1855,12 @@ namespace MCS
 
             // length of payload, per_encoded
             this->payload_size = stream.in_per_length();
-            this->header_size = stream.p - stream.data;
+            this->_header_size = stream.p - stream.data;
+
+            TODO("Factorize this")
+            this->payload.data = this->payload.p = stream.p;
+            this->payload.capacity = this->payload_size;
+            this->payload.end = this->payload.data + this->payload_size;
         }
     };
 
@@ -1867,15 +1892,19 @@ namespace MCS
 
     struct SendDataIndication_Recv
     {
+        SubStream payload;
+
         uint8_t type;
         uint16_t initiator;
         uint16_t channelId;
         uint8_t dataPriority;
         uint8_t segmentation;
-        uint16_t header_size;
+
+        uint16_t _header_size;
         uint16_t payload_size;
 
         SendDataIndication_Recv(Stream & stream, size_t available_length, int encoding)
+            : payload(stream, 0)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "SendDataIndication PER_ENCODING mandatory");
@@ -1899,7 +1928,13 @@ namespace MCS
 
             // length of payload, per_encoded
             this->payload_size = stream.in_per_length();
-            this->header_size = stream.p - stream.data;
+            this->_header_size = stream.p - stream.data;
+
+            TODO("Factorize this")
+            this->payload.data = this->payload.p = stream.p;
+            this->payload.capacity = this->payload_size;
+            this->payload.end = this->payload.data + this->payload_size;
+
         }
     };
 

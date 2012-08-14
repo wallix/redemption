@@ -594,7 +594,7 @@ struct mod_rdp : public client_mod {
                     size_t offset_gcc_conference_create_request_header_length = 0;
                     gcc_write_conference_create_request_header(stream, offset_gcc_conference_create_request_header_length);
 
-                    size_t offset_user_data_length = stream.get_offset(0);
+                    size_t offset_user_data_length = stream.get_offset();
                     stream.out_per_length(256); // remaining length, reserve 16 bits
 
                     // Client User Data
@@ -649,9 +649,9 @@ struct mod_rdp : public client_mod {
                     // 12 * nbchan + 8 bytes
                     mod_rdp_out_cs_net(stream, this->front.get_channel_list());
 
-                    stream.set_out_per_length(stream.get_offset(offset_user_data_length + 2), offset_user_data_length); // user data length
+                    stream.set_out_per_length(stream.get_offset() - (offset_user_data_length + 2), offset_user_data_length); // user data length
 
-                    stream.set_out_per_length(stream.get_offset(offset_gcc_conference_create_request_header_length + 2), offset_gcc_conference_create_request_header_length); // length including header
+                    stream.set_out_per_length(stream.get_offset() - (offset_gcc_conference_create_request_header_length + 2), offset_gcc_conference_create_request_header_length); // length including header
 
                     stream.mark_end();
 
@@ -681,9 +681,9 @@ struct mod_rdp : public client_mod {
                 X224::RecvFactory f(*this->nego.trans, x224_data);
                 X224::DT_TPDU_Recv x224(*this->nego.trans, x224_data, f.length);
 
-                SubStream mcs_data(x224_data, x224.header_size);
+                SubStream & mcs_data = x224.payload;
                 MCS::CONNECT_RESPONSE_PDU_Recv mcs(mcs_data, x224.payload_size, MCS::BER_ENCODING);
-                SubStream payload(mcs_data, mcs.header_size);
+                SubStream & payload = mcs.payload;
 
                 payload.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
                 size_t len = payload.in_uint8();
@@ -746,8 +746,8 @@ struct mod_rdp : public client_mod {
                             if (encryptionMethod == 1){
                                 sec_make_40bit(encrypt.sign_key);
                             }
-                            rdp_sec_generate_decrypt_keys(this->decrypt, &key_block[16], client_random, serverRandom, encryptionMethod);
-                            rdp_sec_generate_encrypt_keys(this->encrypt, &key_block[32], client_random, serverRandom, encryptionMethod);
+                            this->decrypt.generate_key(&key_block[16], client_random, serverRandom, encryptionMethod);
+                            this->encrypt.generate_key(&key_block[32], client_random, serverRandom, encryptionMethod);
                         }
                     }
                     break;
@@ -838,7 +838,7 @@ struct mod_rdp : public client_mod {
                 BStream stream(65536);
                 X224::RecvFactory f(*this->nego.trans, stream);
                 X224::DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
-                SubStream payload(stream, x224.header_size);
+                SubStream & payload = x224.payload;
 
                 MCS::AttachUserConfirm_Recv mcs(payload, x224.payload_size, MCS::PER_ENCODING);
                 if (mcs.initiator_flag){
@@ -870,7 +870,7 @@ struct mod_rdp : public client_mod {
                     BStream x224_data(256);
                     X224::RecvFactory f(*this->nego.trans, x224_data);
                     X224::DT_TPDU_Recv x224(*this->nego.trans, x224_data, f.length);
-                    SubStream mcs_cjcf_data(x224_data, x224.header_size);
+                    SubStream & mcs_cjcf_data = x224.payload;
                     MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, x224.payload_size, MCS::PER_ENCODING);
                     TODO("We should check channel confirmation worked, for now we just do like server said OK to everything... and that may not be the case, some channels may be closed for instance. We should also check requested chanid are some confirm may come out of order"); 
                 }
@@ -1024,9 +1024,9 @@ struct mod_rdp : public client_mod {
             BStream stream(65536);
             X224::RecvFactory f(*this->nego.trans, stream);
             X224::DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
-            SubStream mcs_data(stream, x224.header_size);
+            SubStream & mcs_data = x224.payload;
             MCS::SendDataIndication_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
-            SubStream payload(mcs_data, mcs.header_size);
+            SubStream & payload = mcs.payload;
 
             Sec sec(payload, this->decrypt);
             sec.recv_begin(true);
@@ -1284,9 +1284,9 @@ struct mod_rdp : public client_mod {
             BStream stream(65536);
             X224::RecvFactory f(*this->nego.trans, stream);
             X224::DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
-            SubStream mcs_data(stream, x224.header_size);
+            SubStream & mcs_data = x224.payload;
             MCS::SendDataIndication_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
-            SubStream payload(mcs_data, mcs.header_size);
+            SubStream & payload = mcs.payload;
 
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");
             Sec sec(payload, this->decrypt);
@@ -1619,14 +1619,14 @@ struct mod_rdp : public client_mod {
 
         // lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer. The combined size in bytes of the numberCapabilities, pad2Octets, and capabilitySets fields.
 
-            uint16_t offset_caplen = stream.get_offset(0);
+            uint16_t offset_caplen = stream.get_offset();
             stream.out_uint16_le(0); // caplen
 
         // sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see [T128] section 8.4.1 for more information regarding source descriptors).
             stream.out_copy_bytes("MSTSC", 5);
 
         // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the Demand Active PDU.
-            uint16_t offset_capscount = stream.get_offset(0);
+            uint16_t offset_capscount = stream.get_offset();
             uint16_t capscount = 0;
             stream.out_uint16_le(0); /* num_caps */
 
@@ -1634,7 +1634,7 @@ struct mod_rdp : public client_mod {
             stream.out_clear_bytes(2); /* pad */
 
         // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number of capability sets is specified by the numberCapabilities field.
-            uint16_t total_caplen = stream.get_offset(0);
+            uint16_t total_caplen = stream.get_offset();
 
             GeneralCaps general_caps;
             general_caps.extraflags = this->use_rdp5 ? NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:0;
@@ -1747,15 +1747,15 @@ struct mod_rdp : public client_mod {
 //            capscount++;
 
             TODO("Check caplen here")
-            total_caplen = stream.get_offset(total_caplen);
+            total_caplen = stream.get_offset() - total_caplen;
 
             // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
             stream.out_uint32_le(0);
 
-//            stream.set_out_uint16_le(stream.get_offset(offset_caplen + 47), offset_caplen); // caplen
+//            stream.set_out_uint16_le(stream.get_offset() - (offset_caplen + 47), offset_caplen); // caplen
 //            stream.set_out_uint16_le(caplen, offset_caplen); // caplen
             stream.set_out_uint16_le(total_caplen + 4, offset_caplen); // caplen
-//            LOG(LOG_INFO, "total_caplen = %u, caplen=%u computed caplen=%u offset_here = %u offset_caplen=%u", total_caplen, 388, stream.get_offset(offset_caplen), stream.get_offset(0), offset_caplen);
+//            LOG(LOG_INFO, "total_caplen = %u, caplen=%u computed caplen=%u offset_here = %u offset_caplen=%u", total_caplen, 388, stream.get_offset() - offset_caplen, stream.get_offset(), offset_caplen);
             stream.set_out_uint16_le(capscount, offset_capscount); // caplen
 
             // Packet trailer

@@ -93,15 +93,15 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 
     gcc_write_conference_create_request_header(stream, offset_length);
 
-    size_t offset_user_data_length = stream.get_offset(0);
+    size_t offset_user_data_length = stream.get_offset();
     stream.out_per_length(256); // remaining length, reserve 16 bits
 
     stream.out_copy_bytes(gcc_user_data, sizeof(gcc_user_data)-1); // -1 to ignore final 0
 
-    stream.set_out_per_length(stream.get_offset(offset_user_data_length + 2), offset_user_data_length); // user data length
-    stream.set_out_per_length(stream.get_offset(offset_length + 2), offset_length); // length including header
+    stream.set_out_per_length(stream.get_offset() - (offset_user_data_length + 2), offset_user_data_length); // user data length
+    stream.set_out_per_length(stream.get_offset() - (offset_length + 2), offset_length); // length including header
 
-    BOOST_CHECK_EQUAL(stream.get_offset(0), sizeof(gcc_conference_create_request_expected)-1);
+    BOOST_CHECK_EQUAL(stream.get_offset(), sizeof(gcc_conference_create_request_expected)-1);
 
     t.send(stream.data, stream.p - stream.data);
     BOOST_CHECK(t.status);

@@ -348,7 +348,7 @@ namespace X224
     // ################################### COMMON CODE #################################
     struct Recv
     {
-        size_t header_size;
+        size_t _header_size;
         uint32_t verbose;
 
         struct Tpkt
@@ -358,7 +358,7 @@ namespace X224
         } tpkt;
 
         Recv(Transport & t, Stream & stream, uint16_t length, uint32_t verbose)
-            : header_size(4), verbose(verbose)
+            : _header_size(4), verbose(verbose)
         {
             t.recv((char**)(&(stream.end)), length - (stream.size()));
             stream.p = stream.data;
@@ -563,9 +563,7 @@ namespace X224
                 hexdump_c(stream.data, stream.size());
                 throw Error(ERR_X224);
             }
-
-            stream.p = end_of_header;
-            this->header_size = stream.get_offset(0);
+            this->_header_size = stream.get_offset();
         }
     }; // END CLASS CR_TPDU_Recv
 
@@ -825,8 +823,7 @@ namespace X224
                 LOG(LOG_ERR, "CC TPDU header should be tertminated, got trailing data %u", end_of_header - stream.p);
                 throw Error(ERR_X224);
             }
-            stream.p = end_of_header;
-            this->header_size = stream.get_offset(0);
+            this->_header_size = stream.get_offset();
         }
     }; // END CLASS CC_TPDU_Recv
 
@@ -903,8 +900,7 @@ namespace X224
                 LOG(LOG_ERR, "DR TPDU header should be tertminated, got trailing data %u", end_of_header - stream.p);
                 throw Error(ERR_X224);
             }
-            stream.p = end_of_header;
-            this->header_size = stream.get_offset(0);
+            this->_header_size = stream.get_offset();
         }
     }; // END CLASS DR_TPDU_Recv
 
@@ -999,8 +995,7 @@ namespace X224
                 LOG(LOG_ERR, "ER TPDU header should be terminated, got trailing data %u", end_of_header - stream.p);
                 throw Error(ERR_X224);
             }
-            stream.p = end_of_header;
-            this->header_size = stream.get_offset(0);
+            this->_header_size = stream.get_offset();
         }
     }; // END CLASS ER_TPDU_Recv
 
@@ -1038,6 +1033,7 @@ namespace X224
     struct DT_TPDU_Recv : public Recv
     {
         size_t payload_size;
+        SubStream payload;
 
         struct TPDUHeader
         {
@@ -1053,6 +1049,7 @@ namespace X224
 
         DT_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
         : Recv(t, stream, length, verbose)
+        , payload(stream, 0)
         {
             this->tpdu_hdr.LI = stream.in_uint8();
 
@@ -1074,9 +1071,13 @@ namespace X224
                 LOG(LOG_ERR, "DT TPDU header should be tertminated, got trailing data %u", end_of_header - stream.p);
                 throw Error(ERR_X224);
             }
-            stream.p = end_of_header;
-            this->header_size = stream.get_offset(0);
-            this->payload_size = stream.size() - this->header_size;
+            this->_header_size = stream.get_offset();
+            this->payload_size = stream.size() - this->_header_size;
+            
+            TODO("Factorize this")
+            this->payload.data = this->payload.p = stream.p;
+            this->payload.capacity = this->payload_size;
+            this->payload.end = this->payload.data + this->payload_size;
         }
     }; // END CLASS DT_TPDU_Recv
 

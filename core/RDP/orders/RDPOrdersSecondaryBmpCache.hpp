@@ -503,14 +503,14 @@ class RDPBmpCache {
         int order_flags = STANDARD | SECONDARY;
         stream.out_uint8(order_flags);
         /* length after type minus 7 */
-        uint32_t offset_header = stream.get_offset(0);
+        uint32_t offset_header = stream.get_offset();
         stream.out_uint16_le(0); // placeholder for size after type - 7
 
          // flags : why do we put 8 ? Any value should be ok except NO_BITMAP_COMPRESSION_HDR
         stream.out_uint16_le(use_compact_packets?NO_BITMAP_COMPRESSION_HDR:8); // flags
         stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); // type
 
-        uint32_t offset_after_type = stream.get_offset(0);
+        uint32_t offset_after_type = stream.get_offset();
         stream.out_uint8(this->id);
         stream.out_clear_bytes(1); /* pad */
 
@@ -518,11 +518,11 @@ class RDPBmpCache {
         stream.out_uint8(this->bmp->cy);
         stream.out_uint8(this->bmp->original_bpp);
 
-        uint32_t offset = stream.get_offset(0);
+        uint32_t offset = stream.get_offset();
         stream.out_uint16_le(0); // placeholder for bufsize
         stream.out_uint16_le(this->idx);
 
-        uint32_t offset_compression_header = stream.get_offset(0);
+        uint32_t offset_compression_header = stream.get_offset();
         if (!use_compact_packets){
             if (this->verbose){
                 LOG(LOG_INFO, "/* Use compression headers */");
@@ -533,16 +533,16 @@ class RDPBmpCache {
             stream.out_uint16_le(this->bmp->bmp_size); // final size
         }
 
-        uint32_t offset_buf_start = stream.get_offset(0);
+        uint32_t offset_buf_start = stream.get_offset();
         this->bmp->compress(stream);
-        uint32_t bufsize = stream.get_offset(offset_buf_start);
+        uint32_t bufsize = stream.get_offset() - offset_buf_start;
 
         if (!use_compact_packets){
             stream.set_out_uint16_le(bufsize, offset_compression_header + 2);
         }
 
-        stream.set_out_uint16_le(stream.get_offset(offset_compression_header), offset);
-        stream.set_out_uint16_le(stream.get_offset(offset_after_type) - 7, offset_header);
+        stream.set_out_uint16_le(stream.get_offset() - offset_compression_header, offset);
+        stream.set_out_uint16_le(stream.get_offset() - offset_after_type - 7, offset_header);
     }
 
     void emit_raw_v1(Stream & stream) const
@@ -759,7 +759,7 @@ class RDPBmpCache {
 
         stream.out_uint8(STANDARD | SECONDARY);
 
-        uint32_t offset_header = stream.get_offset(0);
+        uint32_t offset_header = stream.get_offset();
         stream.out_uint16_le(0); // placeholder for length after type minus 7
         uint16_t cbr2_flags = (CBR2_NO_BITMAP_COMPRESSION_HEADER << 7) & 0xFF80;
         uint16_t cbr2_bpp = (((Bpp + 2) << 3) & 0x78);
@@ -768,15 +768,15 @@ class RDPBmpCache {
 
         stream.out_2BUE(this->bmp->cx);
         stream.out_2BUE(this->bmp->cy);
-        uint32_t offset_bitmapLength = stream.get_offset(0);
+        uint32_t offset_bitmapLength = stream.get_offset();
         TODO("define out_4BUE in stream and find a way to predict compressed bitmap size (the problem is to write to it afterward). May be we can keep a compressed version of the bitmap instead of recompressing every time. The first time we would use a conservative encoding for length based on cx and cy.")
         stream.out_uint16_be(0);
         stream.out_2BUE(this->idx);
-        uint32_t offset_startBitmap = stream.get_offset(0);
+        uint32_t offset_startBitmap = stream.get_offset();
         this->bmp->compress(stream);
 
-        stream.set_out_uint16_be(stream.get_offset(offset_startBitmap) | 0x4000, offset_bitmapLength); // set the actual size
-        stream.set_out_uint16_le(stream.get_offset(offset_header+12), offset_header); // length after type minus 7
+        stream.set_out_uint16_be((stream.get_offset() - offset_startBitmap) | 0x4000, offset_bitmapLength); // set the actual size
+        stream.set_out_uint16_le(stream.get_offset() - (offset_header+12), offset_header); // length after type minus 7
     }
 
 
@@ -787,7 +787,7 @@ class RDPBmpCache {
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);
 
-        uint32_t offset_header = stream.get_offset(0);
+        uint32_t offset_header = stream.get_offset();
         stream.out_uint16_le(0); // placeholder for length after type minus 7
 
         int bitsPerPixelId = nbbytes(this->bmp->original_bpp)+2;
@@ -865,7 +865,7 @@ class RDPBmpCache {
         // for uncompressed bitmaps the format is quite simple
         stream.out_copy_bytes(this->bmp->data(), this->bmp->bmp_size);
 
-        stream.set_out_uint16_le(stream.get_offset(offset_header + 12), offset_header);
+        stream.set_out_uint16_le(stream.get_offset() - (offset_header + 12), offset_header);
 
     }
 

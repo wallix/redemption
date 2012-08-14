@@ -89,7 +89,7 @@ struct ShareControl
     //==============================================================================
     : stream(stream)
     , payload(this->stream, 0)
-    , offlen(stream.get_offset(0))
+    , offlen(stream.get_offset())
     , len(0)
     , pdu_type1(0)
     , mcs_channel(0)
@@ -116,7 +116,7 @@ struct ShareControl
     void emit_end()
     //==============================================================================
     {
-        stream.set_out_uint16_le(stream.get_offset(this->offlen), this->offlen);
+        stream.set_out_uint16_le(stream.get_offset() - this->offlen, this->offlen);
 
     } // END METHOD emit_end
 
@@ -132,7 +132,7 @@ struct ShareControl
             return;
         }
         this->mcs_channel = stream.in_uint16_le();
-        this->payload.reset(this->stream, this->stream.get_offset(0));
+        this->payload.reset(this->stream, this->stream.get_offset());
     } // END METHOD recv_begin
 
     //==============================================================================
@@ -354,7 +354,7 @@ struct ShareData
     //==============================================================================
     : stream(stream)
     , payload(this->stream, 0)
-    , offlen(stream.get_offset(0))
+    , offlen(stream.get_offset())
     , share_id(0)
     , streamid(0)
     , len(0)
@@ -385,7 +385,7 @@ struct ShareData
     void emit_end()
     //==============================================================================
     {
-        stream.set_out_uint16_le(stream.get_offset(this->offlen + 8), this->offlen + 6);
+        stream.set_out_uint16_le(stream.get_offset() - (this->offlen + 8), this->offlen + 6);
 
     } // END METHOD emit_end
 
@@ -400,7 +400,7 @@ struct ShareData
         this->pdutype2 = stream.in_uint8();
         this->compressedType = stream.in_uint8();
         this->compressedLen = stream.in_uint16_le();
-        this->payload.reset(this->stream, this->stream.get_offset(0));
+        this->payload.reset(this->stream, this->stream.get_offset());
     } // END METHOD recv_begin
 
     //==============================================================================
