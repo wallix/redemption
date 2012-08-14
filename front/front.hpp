@@ -50,7 +50,7 @@
 #include "RDP/connection.hpp"
 
 #include "ssl_calls.hpp"
-#include "altoco.hpp"
+#include "bitfu.hpp"
 #include "rect.hpp"
 #include "region.hpp"
 #include "capture.hpp"
@@ -65,7 +65,7 @@
 #include "error.hpp"
 #include "callback.hpp"
 #include "colors.hpp"
-#include "altoco.hpp"
+#include "bitfu.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/capabilities.hpp"

@@ -27,7 +27,7 @@
 #include "constants.hpp"
 #include "stream.hpp"
 #include "rect.hpp"
-#include "altoco.hpp"
+#include "bitfu.hpp"
 #include "bitmap.hpp"
 #include "client_info.hpp"
 

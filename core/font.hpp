@@ -35,7 +35,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <bits/posix1_lim.h>
-#include "altoco.hpp"
+#include "bitfu.hpp"
 
 struct FontChar {
     int offset;  // leading whistespace before char

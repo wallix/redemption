@@ -27,7 +27,7 @@
 #define BOOST_TEST_MODULE TestALignedToCompact
 #include <boost/test/auto_unit_test.hpp>
 
-#include "altoco.hpp"
+#include "bitfu.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestCompactToAlignedSizeComputing)

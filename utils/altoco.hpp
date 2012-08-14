@@ -72,14 +72,14 @@ static inline uint16_t row_size(uint16_t width, uint8_t bpp)
 static inline void rmemcpy(uint8_t *dest, const uint8_t *src, size_t n)
 {
     for (size_t i = 0; i < n ; i++){
-        dest[n-i] = src[i];
+        dest[n-1-i] = src[i];
     }
 }
 
 static inline void reverseit(uint8_t *buffer, size_t n){
-    for (size_t i = 0 ; i < n / 2; n++){
-        uint8_t tmp = buffer[n - i];
-        buffer[n-i] = buffer[i];
+    for (size_t i = 0 ; i < n / 2; i++){
+        uint8_t tmp = buffer[n-1-i];
+        buffer[n-1-i] = buffer[i];
         buffer[i] = tmp;
     }
 }

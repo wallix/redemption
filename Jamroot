@@ -284,3 +284,6 @@ unit-test test_meta_file : tests/test_meta_file.cpp libboost_unit_test ;
 unit-test test_png_scale : tests/test_png_scale.cpp libboost_unit_test png z crypto ;
 
 unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp libboost_unit_test z dl crypto png ;
+
+unit-test test_bitfu : tests/test_bitfu.cpp libboost_unit_test ;
+

@@ -35,7 +35,7 @@
 #include "constants.hpp"
 #include "ssl_calls.hpp"
 #include "error.hpp"
-#include "altoco.hpp"
+#include "bitfu.hpp"
 
 // using a template for default size of stream would make sense instead of always using the large buffer below
 enum {
