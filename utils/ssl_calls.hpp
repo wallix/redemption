@@ -113,8 +113,7 @@ class ssllib
 
         reverseit(modulus, modulus_size);
         reverseit(exponent, SEC_EXPONENT_SIZE);
-        memcpy(inr, in, len);
-        reverseit(inr, len);
+        rmemcpy(inr, in, len);
 
         ctx = BN_CTX_new();
         BN_init(&mod);
@@ -128,7 +127,7 @@ class ssllib
         BN_mod_exp(&y, &x, &exp, &mod, ctx);
         outlen = BN_bn2bin(&y, out);
         reverseit(out, outlen);
-        if (outlen < (int) modulus_size){
+        if (outlen < (int)modulus_size){
             memset(out + outlen, 0, modulus_size - outlen);
         }
         BN_free(&y);
@@ -145,9 +144,8 @@ class ssllib
         key[2] = 0x9e;
     }
 
-    TODO(" method used by licence  common with basic crypto support code should be made common. pad are also common to several functions.")
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    static void sec_sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen, uint8_t* data, int datalen)
+    static void sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen, uint8_t* data, int datalen)
     {
         static uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
                                      54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
@@ -474,34 +472,8 @@ struct CryptContext
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
     void sign(uint8_t* signature, int siglen, uint8_t* data, int datalen)
     {
-        static uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                                     54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                                     54, 54, 54, 54, 54, 54, 54, 54
-                                   };
-        static uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-                               };
-
-        uint8_t lenhdr[4];
-        buf_out_uint32(lenhdr, datalen);
-
-        SslSha1 sha1;
-        sha1.update(this->sign_key, this->rc4_key_len);
-        sha1.update(pad_54, 40);
-        sha1.update(lenhdr, 4);
-        sha1.update(data, datalen);
-        uint8_t shasig[20];
-        sha1.final(shasig);
-
-        SslMd5 md5;
-        md5.update(this->sign_key, this->rc4_key_len);
-        md5.update(pad_92, 48);
-        md5.update(shasig, 20);
-        uint8_t md5sig[16];
-        md5.final(md5sig);
-
-        memcpy(signature, md5sig, siglen);
+        ssllib ssl;
+        ssl.sign(signature, siglen, this->sign_key, this->rc4_key_len, data, datalen);
     }
 
     void update()
