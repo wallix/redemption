@@ -147,11 +147,11 @@ class ssllib
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
     static void sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen, uint8_t* data, int datalen)
     {
-        static uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+        const uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
                                      54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
                                      54, 54, 54, 54, 54, 54, 54, 54
                                    };
-        static uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+        const uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
                                  92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
                                  92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
                                };
@@ -181,41 +181,19 @@ class ssllib
     inline int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len,
                     uint8_t* mod, int mod_len, uint8_t* exp, int exp_len)
     {
-        BN_CTX* ctx;
-        BIGNUM lmod;
-        BIGNUM lexp;
-        BIGNUM lin;
-        BIGNUM lout;
         int rv;
-        uint8_t* l_out;
-        uint8_t* l_in;
-        uint8_t* l_mod;
-        uint8_t* l_exp;
+        uint8_t l_out[out_len]; memset(l_out, 0, out_len);
+        uint8_t l_in[in_len];   rmemcpy(l_in, in, in_len);
+        uint8_t l_mod[mod_len]; rmemcpy(l_mod, mod, mod_len);
+        uint8_t l_exp[exp_len]; rmemcpy(l_exp, exp, exp_len);
 
-        TODO(" replace these fucking new / delete by objects on stack")
-        l_out = new uint8_t[out_len];
-        memset(l_out, 0, out_len);
-        l_in = new uint8_t[in_len];
-        memset(l_in, 0, in_len);
-        l_mod = new uint8_t[mod_len];
-        memset(l_mod, 0, mod_len);
-        l_exp = new uint8_t[exp_len];
-        memset(l_exp, 0, exp_len);
-        memcpy(l_in, in, in_len);
-        memcpy(l_mod, mod, mod_len);
-        memcpy(l_exp, exp, exp_len);
-        reverseit(l_in, in_len);
-        reverseit(l_mod, mod_len);
-        reverseit(l_exp, exp_len);
+        BN_CTX* ctx;
         ctx = BN_CTX_new();
-        BN_init(&lmod);
-        BN_init(&lexp);
-        BN_init(&lin);
-        BN_init(&lout);
-        BN_bin2bn((uint8_t*)l_mod, mod_len, &lmod);
-        BN_bin2bn((uint8_t*)l_exp, exp_len, &lexp);
-        BN_bin2bn((uint8_t*)l_in, in_len, &lin);
-        BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
+        BIGNUM lmod; BN_init(&lmod); BN_bin2bn((uint8_t*)l_mod, mod_len, &lmod);
+        BIGNUM lexp; BN_init(&lexp); BN_bin2bn((uint8_t*)l_exp, exp_len, &lexp);
+        BIGNUM lin; BN_init(&lin);  BN_bin2bn((uint8_t*)l_in, in_len, &lin);
+        BIGNUM lout; BN_init(&lout); BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
+
         rv = BN_bn2bin(&lout, (uint8_t*)l_out);
         if (rv <= out_len) {
             reverseit(l_out, rv);
@@ -228,10 +206,6 @@ class ssllib
         BN_free(&lexp);
         BN_free(&lmod);
         BN_CTX_free(ctx);
-        delete [] l_out;
-        delete [] l_in;
-        delete [] l_mod;
-        delete [] l_exp;
         return rv;
     }
 
@@ -478,13 +452,13 @@ struct CryptContext
 
     void update()
     {
-        static uint8_t pad_54[40] = {
+        const uint8_t pad_54[40] = {
             54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
             54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
             54, 54, 54, 54, 54, 54, 54, 54
         };
 
-        static uint8_t pad_92[48] = {
+        const uint8_t pad_92[48] = {
             92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
             92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
             92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
