@@ -1090,14 +1090,12 @@ public:
 
     void compute_sha1(uint8_t (&sig)[20]) const
     {
-        SHA_CTX sha1;
-        ssllib ssl;
-        ssl.sha1_init(&sha1);
+        SslSha1 sha1;
         uint16_t rowsize = (uint16_t)(this->cx * nbbytes(this->original_bpp));
         for (size_t y = 0; y < (size_t)this->cy; y++){
-            ssl.sha1_update(&sha1, this->data_bitmap.get() + y * rowsize, rowsize);
+            sha1.update(this->data_bitmap.get() + y * rowsize, rowsize);
         }
-        ssl.sha1_final(&sha1, sig);
+        sha1.final(sig);
     }
 
     uint32_t compute_crc() const

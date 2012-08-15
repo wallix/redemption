@@ -49,6 +49,8 @@ class Stream {
     uint8_t* data;
     size_t capacity;
 
+    virtual ~Stream() {}
+
     virtual void init(size_t capacity) = 0;
 
     bool has_room(unsigned n) {
@@ -1403,7 +1405,7 @@ class BStream : public Stream {
         this->capacity = 0;
         this->init(size);
     }
-    ~BStream() {
+    virtual ~BStream() {
         if (this->capacity > AUTOSIZE) {
 //            LOG(LOG_DEBUG, "Stream buffer freed : size=%d @%p\n", this->capacity, this->data);
             delete [] this->data;
@@ -1460,7 +1462,7 @@ class SubStream : public Stream {
         this->end = stream.end;
     }
 
-    ~SubStream() {}
+    virtual ~SubStream() {}
 
     // Not allowed on SubStreams
     void init(size_t v) {}

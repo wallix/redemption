@@ -26,14 +26,12 @@
 inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
                       char * message, const char * shasig)
 {
-    SHA_CTX sha1;
     uint8_t sig[20];
-    ssllib ssl;
-    ssl.sha1_init(&sha1);
+    SslSha1 sha1;
     for (size_t y = 0; y < (size_t)height; y++){
-        ssl.sha1_update(&sha1, data + y * len, len);
+        sha1.update(data + y * len, len);
     }
-    ssl.sha1_final(&sha1, sig);
+    sha1.final(sig);
 
     if (memcmp(shasig, sig, 20)){
         sprintf(message, "Expected signature: \""

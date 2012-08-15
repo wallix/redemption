@@ -493,16 +493,16 @@ struct RdpLicence {
         for (int i = 0; i < 3; i++) {
             uint8_t shasig[20];
             uint8_t pad[4];
-            SHA_CTX sha1;
+
             MD5_CTX md5;
             memset(pad, 'A' + i, i + 1);
 
-            ssl.sha1_init(&sha1);
-            ssl.sha1_update(&sha1, pad, i + 1);
-            ssl.sha1_update(&sha1, pre_master_secret, 48);
-            ssl.sha1_update(&sha1, client_random, 32);
-            ssl.sha1_update(&sha1, server_random, 32);
-            ssl.sha1_final(&sha1, shasig);
+            SslSha1 sha1;
+            sha1.update(pad, i + 1);
+            sha1.update(pre_master_secret, 48);
+            sha1.update(client_random, 32);
+            sha1.update(server_random, 32);
+            sha1.final(shasig);
 
             ssl.md5_init(&md5);
             ssl.md5_update(&md5, pre_master_secret, 48);
@@ -513,16 +513,15 @@ struct RdpLicence {
         for (int i = 0; i < 3; i++) {
             uint8_t shasig[20];
             uint8_t pad[4];
-            SHA_CTX sha1;
             MD5_CTX md5;
             memset(pad, 'A' + i, i + 1);
 
-            ssl.sha1_init(&sha1);
-            ssl.sha1_update(&sha1, pad, i + 1);
-            ssl.sha1_update(&sha1, master_secret, 48);
-            ssl.sha1_update(&sha1, server_random, 32);
-            ssl.sha1_update(&sha1, client_random, 32);
-            ssl.sha1_final(&sha1, shasig);
+            SslSha1 sha1;
+            sha1.update(pad, i + 1);
+            sha1.update(master_secret, 48);
+            sha1.update(server_random, 32);
+            sha1.update(client_random, 32);
+            sha1.final(shasig);
 
             ssl.md5_init(&md5);
             ssl.md5_update(&md5, master_secret, 48);
