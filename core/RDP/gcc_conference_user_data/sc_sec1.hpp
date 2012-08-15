@@ -485,7 +485,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
             LOG(LOG_WARNING, " Ignored certs left: %d", certcount);
             uint32_t ignorelen = cr_stream.in_uint32_le();
             LOG(LOG_WARNING, "Ignored Certificate length is %d", ignorelen);
-            SSL_CERT *ignorecert = ssl.ssl_cert_read(cr_stream.p, ignorelen);
+            X509 *ignorecert = ssl.ssl_cert_read(cr_stream.p, ignorelen);
             cr_stream.in_skip_bytes(ignorelen);
             if (ignorecert == NULL){
                 LOG(LOG_WARNING,
@@ -507,7 +507,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         /* Loading CA_Certificate from server*/
         uint32_t cacert_len = cr_stream.in_uint32_le();
         LOG(LOG_DEBUG, "CA Certificate length is %d", cacert_len);
-        SSL_CERT *cacert = ssl.ssl_cert_read(cr_stream.p, cacert_len);
+        X509 *cacert = ssl.ssl_cert_read(cr_stream.p, cacert_len);
         cr_stream.in_skip_bytes(cacert_len);
         if (NULL == cacert){
             LOG(LOG_DEBUG, "Couldn't load CA Certificate from server");
@@ -517,7 +517,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         /* Loading Certificate from server*/
         uint32_t cert_len = cr_stream.in_uint32_le();
         LOG(LOG_DEBUG, "Certificate length is %d", cert_len);
-        SSL_CERT *server_cert = ssl.ssl_cert_read(cr_stream.p, cert_len);
+        X509 *server_cert = ssl.ssl_cert_read(cr_stream.p, cert_len);
         cr_stream.in_skip_bytes(cert_len);
         if (NULL == server_cert){
             ssl.ssl_cert_free(cacert);
@@ -534,7 +534,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         }
         ssl.ssl_cert_free(cacert);
         cr_stream.in_skip_bytes(16); /* Padding */
-        SSL_RKEY *server_public_key = ssl.ssl_cert_to_rkey(server_cert, server_public_key_len);
+        RSA *server_public_key = ssl.ssl_cert_to_rkey(server_cert, server_public_key_len);
         LOG(LOG_DEBUG, "Server public key length=%u", (unsigned)server_public_key_len);
 
         if (NULL == server_public_key){

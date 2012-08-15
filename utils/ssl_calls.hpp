@@ -30,9 +30,6 @@
 #include "bitfu.hpp"
 
 #include <stdint.h>
-#define SSL_CERT X509
-#define SSL_RKEY RSA
-
 #include <stdlib.h> /* needed for openssl headers */
 #include <openssl/rc4.h>
 #include <openssl/md5.h>
@@ -88,7 +85,7 @@ class ssllib
         RC4(&rc4, len, in_data, out_data);
     }
 
-    static void rkey_free(SSL_RKEY * rkey)
+    static void rkey_free(RSA * rkey)
     {
         RSA_free(rkey);
     }
@@ -233,9 +230,9 @@ class ssllib
 
 
     /*****************************************************************************/
-    /* returns newly allocated SSL_CERT or NULL */
+    /* returns newly allocated X509 or NULL */
 
-    inline SSL_CERT * ssl_cert_read(uint8_t* data, int len)
+    inline X509 * ssl_cert_read(uint8_t* data, int len)
     {
       /* this will move the data pointer but we don't care, we don't use it again */
       return d2i_X509(NULL, (const unsigned char **) &data, len);
@@ -243,8 +240,8 @@ class ssllib
 
     /*****************************************************************************/
 
-    /* Free an allocated SSL_CERT */
-    inline void ssl_cert_free(SSL_CERT * cert)
+    /* Free an allocated X509 */
+    inline void ssl_cert_free(X509 * cert)
     {
       X509_free(cert);
     }
@@ -252,7 +249,7 @@ class ssllib
     /*****************************************************************************/
 
     /* returns boolean */
-    inline int ssl_certs_ok(SSL_CERT * server_cert, SSL_CERT * cacert)
+    inline int ssl_certs_ok(X509 * server_cert, X509 * cacert)
     {
       /* Currently, we don't use the CA Certificate.
       FIXME:
@@ -268,11 +265,11 @@ class ssllib
 
     /*****************************************************************************/
 
-    /* returns newly allocated SSL_RKEY or NULL */
-    inline SSL_RKEY *ssl_cert_to_rkey(SSL_CERT* cert, uint32_t & key_len)
+    /* returns newly allocated RSA or NULL */
+    inline RSA *ssl_cert_to_rkey(X509* cert, uint32_t & key_len)
     {
       EVP_PKEY *epk = NULL;
-      SSL_RKEY *lkey;
+      RSA *lkey;
       int nid;
 
       /* By some reason, Microsoft sets the OID of the Public RSA key to
@@ -301,7 +298,7 @@ class ssllib
 
 
     /* returns error */
-    inline int ssl_rkey_get_exp_mod(SSL_RKEY * rkey, uint8_t* exponent, int max_exp_len,
+    inline int ssl_rkey_get_exp_mod(RSA * rkey, uint8_t* exponent, int max_exp_len,
                          uint8_t* modulus, int max_mod_len)
     {
       int len;
