@@ -328,7 +328,7 @@ struct RdpLicence {
 
         memcpy(out_token, in_token, LICENCE_TOKEN_SIZE);
         /* Decrypt the token. It should read TEST in Unicode. */
-        SSL_RC4 crypt_key;
+        RC4_KEY crypt_key;
         ssl.rc4_set_key(crypt_key, this->licence_key, 16);
         memcpy(decrypt_token, in_token, LICENCE_TOKEN_SIZE);
         ssl.rc4_crypt(crypt_key, decrypt_token, decrypt_token, LICENCE_TOKEN_SIZE);
@@ -559,7 +559,7 @@ struct RdpLicence {
             ssl.sec_sign(signature, 16, this->licence_sign_key, 16, hwid, sizeof(hwid));
             /* Now encrypt the HWID */
 
-            SSL_RC4 crypt_key;
+            RC4_KEY crypt_key;
             ssl.rc4_set_key(crypt_key, this->licence_key, 16);
             ssl.rc4_crypt(crypt_key, hwid, hwid, sizeof(hwid));
 
@@ -588,7 +588,7 @@ struct RdpLicence {
             return 0; // 0 = not connected, this case is probably worse and should cause a disconnection
         }
         ssllib ssl;
-        SSL_RC4 crypt_key;
+        RC4_KEY crypt_key;
         ssl.rc4_set_key(crypt_key, this->licence_key, 16);
         ssl.rc4_crypt(crypt_key, stream.p, stream.p, length);
         int check = stream.in_uint16_le();

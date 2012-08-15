@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     // dirty trick to guess internal openssl memory layout for rc4_info structure...
     // yes it's black magic
-    SSL_RC4 rc4_info;
+    RC4_KEY rc4_info;
     RC4_set_key(&rc4_info, 8, (const unsigned char*)"\x10ZZZZZZZZ");
 
     if (rc4_info.data[0] == 0x10){
@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
     decrypt.rc4_key_len=8;
     // dirty trick to guess internal openssl memory layout for rc4_info structure...
     // yes it's black magic
-    SSL_RC4 rc4_info;
+    RC4_KEY rc4_info;
     RC4_set_key(&rc4_info, 8, (const unsigned char*)"\x10ZZZZZZZZ");
 
     if (rc4_info.data[0] == 0x10){

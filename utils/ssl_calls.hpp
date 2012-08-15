@@ -45,15 +45,6 @@
 #include "constants.hpp"
 #include "log.hpp"
 
-#if defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x0090800f)
-#undef OLD_RSA_GEN1
-#define D2I_X509_CONST const
-#else
-#define OLD_RSA_GEN1
-#define D2I_X509_CONST
-#endif
-
-#define SSL_RC4 RC4_KEY
 #define SSL_SHA1 SHA_CTX
 #define SSL_MD5 MD5_CTX
 #define SSL_CERT X509
@@ -92,12 +83,12 @@ class ssllib
         MD5_Final(out_data, md5);
     }
 
-    static void rc4_set_key(SSL_RC4 & rc4, uint8_t * key, int len)
+    static void rc4_set_key(RC4_KEY & rc4, uint8_t * key, int len)
     {
         RC4_set_key(&rc4, len, key);
     }
 
-    static void rc4_crypt(SSL_RC4 & rc4, uint8_t * in_data, uint8_t * out_data, int len)
+    static void rc4_crypt(RC4_KEY & rc4, uint8_t * in_data, uint8_t * out_data, int len)
     {
         RC4(&rc4, len, in_data, out_data);
     }
@@ -252,7 +243,7 @@ class ssllib
     inline SSL_CERT * ssl_cert_read(uint8_t* data, int len)
     {
       /* this will move the data pointer but we don't care, we don't use it again */
-      return d2i_X509(NULL, (D2I_X509_CONST unsigned char **) &data, len);
+      return d2i_X509(NULL, (const unsigned char **) &data, len);
     }
 
     /*****************************************************************************/
@@ -397,7 +388,7 @@ struct CryptContext
     uint8_t key[16];
     uint8_t update_key[16];
     int rc4_key_len;
-    SSL_RC4 rc4_info;
+    RC4_KEY rc4_info;
     int rc4_key_size; /* 1 = 40-bit, 2 = 128-bit */
 
     CryptContext() : use_count(0)
@@ -559,7 +550,7 @@ struct CryptContext
         uint8_t shasig[20];
         SSL_SHA1 sha1;
         SSL_MD5 md5;
-        SSL_RC4 update;
+        RC4_KEY update;
 
         ssllib ssl;
 
