@@ -27,6 +27,7 @@
 
 #if !defined(SSL_CALLS_H)
 #define SSL_CALLS_H
+#include "bitfu.hpp"
 
 #include <stdint.h>
 #define SSL_CERT X509
@@ -113,10 +114,10 @@ class ssllib
         uint8_t inr[SEC_MAX_MODULUS_SIZE];
         int outlen;
 
-        reverse(modulus, modulus_size);
-        reverse(exponent, SEC_EXPONENT_SIZE);
+        reverseit(modulus, modulus_size);
+        reverseit(exponent, SEC_EXPONENT_SIZE);
         memcpy(inr, in, len);
-        reverse(inr, len);
+        reverseit(inr, len);
 
         ctx = BN_CTX_new();
         BN_init(&mod);
@@ -129,7 +130,7 @@ class ssllib
         BN_bin2bn(inr, len, &x);
         BN_mod_exp(&y, &x, &exp, &mod, ctx);
         outlen = BN_bn2bin(&y, out);
-        reverse(out, outlen);
+        reverseit(out, outlen);
         if (outlen < (int) modulus_size){
             memset(out + outlen, 0, modulus_size - outlen);
         }
@@ -139,19 +140,6 @@ class ssllib
         BN_free(&mod);
         BN_CTX_free(ctx);
     }
-
-    static void reverse(uint8_t * p, int len)
-    {
-        int i, j;
-        uint8_t temp;
-
-        for (i = 0, j = len - 1; i < j; i++, j--){
-            temp = p[i];
-            p[i] = p[j];
-            p[j] = temp;
-        }
-    }
-
 };
 
 inline static void sec_make_40bit(uint8_t* key)
@@ -406,22 +394,6 @@ struct CryptContext
 
 
 /*****************************************************************************/
-static inline void ssl_reverse_it(uint8_t* p, int len)
-{
-    char temp;
-
-    int i = 0;
-    int j = len - 1;
-    while (i < j) {
-        temp = p[i];
-        p[i] = p[j];
-        p[j] = temp;
-        i++;
-        j--;
-    }
-}
-
-/*****************************************************************************/
 static inline int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len,
                 uint8_t* mod, int mod_len, uint8_t* exp, int exp_len)
 {
@@ -448,9 +420,9 @@ static inline int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len
     memcpy(l_in, in, in_len);
     memcpy(l_mod, mod, mod_len);
     memcpy(l_exp, exp, exp_len);
-    ssl_reverse_it(l_in, in_len);
-    ssl_reverse_it(l_mod, mod_len);
-    ssl_reverse_it(l_exp, exp_len);
+    reverseit(l_in, in_len);
+    reverseit(l_mod, mod_len);
+    reverseit(l_exp, exp_len);
     ctx = BN_CTX_new();
     BN_init(&lmod);
     BN_init(&lexp);
@@ -462,7 +434,7 @@ static inline int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len
     BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
     rv = BN_bn2bin(&lout, (uint8_t*)l_out);
     if (rv <= out_len) {
-        ssl_reverse_it(l_out, rv);
+        reverseit(l_out, rv);
         memcpy(out, l_out, out_len);
     } else {
         rv = 0;
@@ -584,21 +556,6 @@ static inline SSL_RKEY *ssl_cert_to_rkey(SSL_CERT* cert, uint32_t & key_len)
 }
 
 
-/*****************************************************************************/
-static void reverse(uint8_t* p, int len)
-{
-  int i;
-  int j;
-  char temp;
-
-  for (i = 0, j = len - 1; i < j; i++, j--)
-  {
-    temp = p[i];
-    p[i] = p[j];
-    p[j] = temp;
-  }
-}
-
 /* returns error */
 static inline int ssl_rkey_get_exp_mod(SSL_RKEY * rkey, uint8_t* exponent, int max_exp_len,
                      uint8_t* modulus, int max_mod_len)
@@ -611,9 +568,9 @@ static inline int ssl_rkey_get_exp_mod(SSL_RKEY * rkey, uint8_t* exponent, int m
     return 1;
   }
   len = BN_bn2bin(rkey->e, (unsigned char*)exponent);
-  reverse(exponent, len);
+  reverseit(exponent, len);
   len = BN_bn2bin(rkey->n, (unsigned char*)modulus);
-  reverse(modulus, len);
+  reverseit(modulus, len);
   return 0;
 }
 
