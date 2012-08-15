@@ -186,6 +186,207 @@ class ssllib
 
         memcpy(signature, md5sig, siglen);
     }
+
+    inline int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len,
+                    uint8_t* mod, int mod_len, uint8_t* exp, int exp_len)
+    {
+        BN_CTX* ctx;
+        BIGNUM lmod;
+        BIGNUM lexp;
+        BIGNUM lin;
+        BIGNUM lout;
+        int rv;
+        uint8_t* l_out;
+        uint8_t* l_in;
+        uint8_t* l_mod;
+        uint8_t* l_exp;
+
+        TODO(" replace these fucking new / delete by objects on stack")
+        l_out = new uint8_t[out_len];
+        memset(l_out, 0, out_len);
+        l_in = new uint8_t[in_len];
+        memset(l_in, 0, in_len);
+        l_mod = new uint8_t[mod_len];
+        memset(l_mod, 0, mod_len);
+        l_exp = new uint8_t[exp_len];
+        memset(l_exp, 0, exp_len);
+        memcpy(l_in, in, in_len);
+        memcpy(l_mod, mod, mod_len);
+        memcpy(l_exp, exp, exp_len);
+        reverseit(l_in, in_len);
+        reverseit(l_mod, mod_len);
+        reverseit(l_exp, exp_len);
+        ctx = BN_CTX_new();
+        BN_init(&lmod);
+        BN_init(&lexp);
+        BN_init(&lin);
+        BN_init(&lout);
+        BN_bin2bn((uint8_t*)l_mod, mod_len, &lmod);
+        BN_bin2bn((uint8_t*)l_exp, exp_len, &lexp);
+        BN_bin2bn((uint8_t*)l_in, in_len, &lin);
+        BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
+        rv = BN_bn2bin(&lout, (uint8_t*)l_out);
+        if (rv <= out_len) {
+            reverseit(l_out, rv);
+            memcpy(out, l_out, out_len);
+        } else {
+            rv = 0;
+        }
+        BN_free(&lin);
+        BN_free(&lout);
+        BN_free(&lexp);
+        BN_free(&lmod);
+        BN_CTX_free(ctx);
+        delete [] l_out;
+        delete [] l_in;
+        delete [] l_mod;
+        delete [] l_exp;
+        return rv;
+    }
+
+
+
+    /*****************************************************************************/
+    /* returns newly allocated SSL_CERT or NULL */
+
+    inline SSL_CERT * ssl_cert_read(uint8_t* data, int len)
+    {
+      /* this will move the data pointer but we don't care, we don't use it again */
+      return d2i_X509(NULL, (D2I_X509_CONST unsigned char **) &data, len);
+    }
+
+    /*****************************************************************************/
+
+    /* Free an allocated SSL_CERT */
+    inline void ssl_cert_free(SSL_CERT * cert)
+    {
+      X509_free(cert);
+    }
+
+    /*****************************************************************************/
+
+    /* returns boolean */
+    inline int ssl_certs_ok(SSL_CERT * server_cert, SSL_CERT * cacert)
+    {
+      /* Currently, we don't use the CA Certificate.
+      FIXME:
+      *) Verify the server certificate (server_cert) with the
+      CA certificate.
+      *) Store the CA Certificate with the hostname of the
+      server we are connecting to as key, and compare it
+      when we connect the next time, in order to prevent
+      MITM-attacks.
+      */
+      return 1;
+    }
+
+    /*****************************************************************************/
+
+    /* returns newly allocated SSL_RKEY or NULL */
+    inline SSL_RKEY *ssl_cert_to_rkey(SSL_CERT* cert, uint32_t & key_len)
+    {
+      EVP_PKEY *epk = NULL;
+      SSL_RKEY *lkey;
+      int nid;
+
+      /* By some reason, Microsoft sets the OID of the Public RSA key to
+      the oid for "MD5 with RSA Encryption" instead of "RSA Encryption"
+
+      Kudos to Richard Levitte for the following (. intiutive .)
+      lines of code that resets the OID and let's us extract the key. */
+
+      nid = OBJ_obj2nid(cert->cert_info->key->algor->algorithm);
+      if ((nid == NID_md5WithRSAEncryption) || (nid == NID_shaWithRSAEncryption))
+      {
+        ASN1_OBJECT_free(cert->cert_info->key->algor->algorithm);
+        cert->cert_info->key->algor->algorithm = OBJ_nid2obj(NID_rsaEncryption);
+      }
+      epk = X509_get_pubkey(cert);
+      if (NULL == epk){
+        printf("Failed to extract public key from certificate\n");
+        return 0;
+      }
+
+      lkey = RSAPublicKey_dup((RSA *) epk->pkey.ptr);
+      EVP_PKEY_free(epk);
+      key_len = RSA_size(lkey);
+      return lkey;
+    }
+
+
+    /* returns error */
+    inline int ssl_rkey_get_exp_mod(SSL_RKEY * rkey, uint8_t* exponent, int max_exp_len,
+                         uint8_t* modulus, int max_mod_len)
+    {
+      int len;
+
+      if ((BN_num_bytes(rkey->e) > (int) max_exp_len) ||
+         (BN_num_bytes(rkey->n) > (int) max_mod_len))
+      {
+        return 1;
+      }
+      len = BN_bn2bin(rkey->e, (unsigned char*)exponent);
+      reverseit(exponent, len);
+      len = BN_bn2bin(rkey->n, (unsigned char*)modulus);
+      reverseit(modulus, len);
+      return 0;
+    }
+
+    static void rdp_sec_generate_keyblock(uint8_t (& key_block)[48], uint8_t *client_random, uint8_t *server_random)
+    {
+        uint8_t pre_master_secret[48];
+        uint8_t master_secret[48];
+
+        /* Construct pre-master secret (session key) */
+        memcpy(pre_master_secret, client_random, 24);
+        memcpy(pre_master_secret + 24, server_random, 24);
+
+        uint8_t shasig[20];
+
+        ssllib ssl;
+
+        // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
+        for (int i = 0; i < 3; i++) {
+            uint8_t pad[4];
+            SSL_SHA1 sha1;
+            SSL_MD5 md5;
+
+            memset(pad, 'A' + i, i + 1);
+
+            ssl.sha1_init(&sha1);
+            ssl.sha1_update(&sha1, pad, i + 1);
+            ssl.sha1_update(&sha1, pre_master_secret, 48);
+            ssl.sha1_update(&sha1, client_random, 32);
+            ssl.sha1_update(&sha1, server_random, 32);
+            ssl.sha1_final(&sha1, shasig);
+
+            ssl.md5_init(&md5);
+            ssl.md5_update(&md5, pre_master_secret, 48);
+            ssl.md5_update(&md5, shasig, 20);
+            ssl.md5_final(&md5, &master_secret[i * 16]);
+        }
+
+        // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
+        for (int i = 0; i < 3; i++) {
+            uint8_t pad[4];
+            SSL_SHA1 sha1;
+            SSL_MD5 md5;
+
+            memset(pad, 'X' + i, i + 1);
+
+            ssl.sha1_init(&sha1);
+            ssl.sha1_update(&sha1, pad, i + 1);
+            ssl.sha1_update(&sha1, master_secret, 48);
+            ssl.sha1_update(&sha1, client_random, 32);
+            ssl.sha1_update(&sha1, server_random, 32);
+            ssl.sha1_final(&sha1, shasig);
+
+            ssl.md5_init(&md5);
+            ssl.md5_update(&md5, master_secret, 48);
+            ssl.md5_update(&md5, shasig, 20);
+            ssl.md5_final(&md5, &key_block[i * 16]);
+        }
+    }
 };
 
 
@@ -382,240 +583,5 @@ struct CryptContext
 
 
 /*****************************************************************************/
-static inline int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len,
-                uint8_t* mod, int mod_len, uint8_t* exp, int exp_len)
-{
-    BN_CTX* ctx;
-    BIGNUM lmod;
-    BIGNUM lexp;
-    BIGNUM lin;
-    BIGNUM lout;
-    int rv;
-    uint8_t* l_out;
-    uint8_t* l_in;
-    uint8_t* l_mod;
-    uint8_t* l_exp;
-
-    TODO(" replace these fucking new / delete by objects on stack")
-    l_out = new uint8_t[out_len];
-    memset(l_out, 0, out_len);
-    l_in = new uint8_t[in_len];
-    memset(l_in, 0, in_len);
-    l_mod = new uint8_t[mod_len];
-    memset(l_mod, 0, mod_len);
-    l_exp = new uint8_t[exp_len];
-    memset(l_exp, 0, exp_len);
-    memcpy(l_in, in, in_len);
-    memcpy(l_mod, mod, mod_len);
-    memcpy(l_exp, exp, exp_len);
-    reverseit(l_in, in_len);
-    reverseit(l_mod, mod_len);
-    reverseit(l_exp, exp_len);
-    ctx = BN_CTX_new();
-    BN_init(&lmod);
-    BN_init(&lexp);
-    BN_init(&lin);
-    BN_init(&lout);
-    BN_bin2bn((uint8_t*)l_mod, mod_len, &lmod);
-    BN_bin2bn((uint8_t*)l_exp, exp_len, &lexp);
-    BN_bin2bn((uint8_t*)l_in, in_len, &lin);
-    BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
-    rv = BN_bn2bin(&lout, (uint8_t*)l_out);
-    if (rv <= out_len) {
-        reverseit(l_out, rv);
-        memcpy(out, l_out, out_len);
-    } else {
-        rv = 0;
-    }
-    BN_free(&lin);
-    BN_free(&lout);
-    BN_free(&lexp);
-    BN_free(&lmod);
-    BN_CTX_free(ctx);
-    delete [] l_out;
-    delete [] l_in;
-    delete [] l_mod;
-    delete [] l_exp;
-    return rv;
-}
-
-//static inline void ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len,
-//                uint8_t* mod, int mod_len, uint8_t* exp, int exp_len)
-//{
-//    uint8_t l_out[out_len];
-//    memset(l_out, 0, out_len);
-//    uint8_t l_in[in_len];
-//    rmemcpy(l_in, in, in_len);
-//    uint8_t l_mod[mod_len];
-//    rmemcpy(l_mod, mod, mod_len);
-//    uint8_t l_exp[exp_len];
-//    rmemcpy(l_exp, exp, exp_len);
-
-//    BN_CTX *ctx = BN_CTX_new();
-
-//    BIGNUM lmod;
-//    BN_init(&lmod);
-//    BIGNUM lexp;
-//    BN_init(&lexp);
-//    BIGNUM lin;
-//    BN_init(&lin);
-//    BIGNUM lout;
-//    BN_init(&lout);
-
-//    BN_bin2bn(l_mod, mod_len, &lmod);
-//    BN_bin2bn(l_exp, exp_len, &lexp);
-//    BN_bin2bn(l_in, in_len, &lin);
-//    BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
-//    BN_bn2bin(&lout, l_out);
-//    rmemcpy(out, l_out, out_len);
-//    BN_free(&lin);
-//    BN_free(&lout);
-//    BN_free(&lexp);
-//    BN_free(&lmod);
-//    BN_CTX_free(ctx);
-//}
-
-
-/*****************************************************************************/
-/* returns newly allocated SSL_CERT or NULL */
-
-static inline SSL_CERT * ssl_cert_read(uint8_t* data, int len)
-{
-  /* this will move the data pointer but we don't care, we don't use it again */
-  return d2i_X509(NULL, (D2I_X509_CONST unsigned char **) &data, len);
-}
-
-/*****************************************************************************/
-
-/* Free an allocated SSL_CERT */
-static inline void ssl_cert_free(SSL_CERT * cert)
-{
-  X509_free(cert);
-}
-
-/*****************************************************************************/
-
-/* returns boolean */
-static inline int ssl_certs_ok(SSL_CERT * server_cert, SSL_CERT * cacert)
-{
-  /* Currently, we don't use the CA Certificate.
-  FIXME:
-  *) Verify the server certificate (server_cert) with the
-  CA certificate.
-  *) Store the CA Certificate with the hostname of the
-  server we are connecting to as key, and compare it
-  when we connect the next time, in order to prevent
-  MITM-attacks.
-  */
-  return 1;
-}
-
-/*****************************************************************************/
-
-/* returns newly allocated SSL_RKEY or NULL */
-static inline SSL_RKEY *ssl_cert_to_rkey(SSL_CERT* cert, uint32_t & key_len)
-{
-  EVP_PKEY *epk = NULL;
-  SSL_RKEY *lkey;
-  int nid;
-
-  /* By some reason, Microsoft sets the OID of the Public RSA key to
-  the oid for "MD5 with RSA Encryption" instead of "RSA Encryption"
-
-  Kudos to Richard Levitte for the following (. intiutive .)
-  lines of code that resets the OID and let's us extract the key. */
-
-  nid = OBJ_obj2nid(cert->cert_info->key->algor->algorithm);
-  if ((nid == NID_md5WithRSAEncryption) || (nid == NID_shaWithRSAEncryption))
-  {
-    ASN1_OBJECT_free(cert->cert_info->key->algor->algorithm);
-    cert->cert_info->key->algor->algorithm = OBJ_nid2obj(NID_rsaEncryption);
-  }
-  epk = X509_get_pubkey(cert);
-  if (NULL == epk){
-    printf("Failed to extract public key from certificate\n");
-    return 0;
-  }
-
-  lkey = RSAPublicKey_dup((RSA *) epk->pkey.ptr);
-  EVP_PKEY_free(epk);
-  key_len = RSA_size(lkey);
-  return lkey;
-}
-
-
-/* returns error */
-static inline int ssl_rkey_get_exp_mod(SSL_RKEY * rkey, uint8_t* exponent, int max_exp_len,
-                     uint8_t* modulus, int max_mod_len)
-{
-  int len;
-
-  if ((BN_num_bytes(rkey->e) > (int) max_exp_len) ||
-     (BN_num_bytes(rkey->n) > (int) max_mod_len))
-  {
-    return 1;
-  }
-  len = BN_bn2bin(rkey->e, (unsigned char*)exponent);
-  reverseit(exponent, len);
-  len = BN_bn2bin(rkey->n, (unsigned char*)modulus);
-  reverseit(modulus, len);
-  return 0;
-}
-
-inline static void rdp_sec_generate_keyblock(uint8_t (& key_block)[48], uint8_t *client_random, uint8_t *server_random)
-{
-    uint8_t pre_master_secret[48];
-    uint8_t master_secret[48];
-
-    /* Construct pre-master secret (session key) */
-    memcpy(pre_master_secret, client_random, 24);
-    memcpy(pre_master_secret + 24, server_random, 24);
-
-    uint8_t shasig[20];
-
-    ssllib ssl;
-
-    // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
-    for (int i = 0; i < 3; i++) {
-        uint8_t pad[4];
-        SSL_SHA1 sha1;
-        SSL_MD5 md5;
-
-        memset(pad, 'A' + i, i + 1);
-
-        ssl.sha1_init(&sha1);
-        ssl.sha1_update(&sha1, pad, i + 1);
-        ssl.sha1_update(&sha1, pre_master_secret, 48);
-        ssl.sha1_update(&sha1, client_random, 32);
-        ssl.sha1_update(&sha1, server_random, 32);
-        ssl.sha1_final(&sha1, shasig);
-
-        ssl.md5_init(&md5);
-        ssl.md5_update(&md5, pre_master_secret, 48);
-        ssl.md5_update(&md5, shasig, 20);
-        ssl.md5_final(&md5, &master_secret[i * 16]);
-    }
-
-    // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
-    for (int i = 0; i < 3; i++) {
-        uint8_t pad[4];
-        SSL_SHA1 sha1;
-        SSL_MD5 md5;
-
-        memset(pad, 'X' + i, i + 1);
-
-        ssl.sha1_init(&sha1);
-        ssl.sha1_update(&sha1, pad, i + 1);
-        ssl.sha1_update(&sha1, master_secret, 48);
-        ssl.sha1_update(&sha1, client_random, 32);
-        ssl.sha1_update(&sha1, server_random, 32);
-        ssl.sha1_final(&sha1, shasig);
-
-        ssl.md5_init(&md5);
-        ssl.md5_update(&md5, master_secret, 48);
-        ssl.md5_update(&md5, shasig, 20);
-        ssl.md5_final(&md5, &key_block[i * 16]);
-    }
-}
 
 #endif

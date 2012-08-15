@@ -485,7 +485,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
             LOG(LOG_WARNING, " Ignored certs left: %d", certcount);
             uint32_t ignorelen = cr_stream.in_uint32_le();
             LOG(LOG_WARNING, "Ignored Certificate length is %d", ignorelen);
-            SSL_CERT *ignorecert = ssl_cert_read(cr_stream.p, ignorelen);
+            SSL_CERT *ignorecert = ssl.ssl_cert_read(cr_stream.p, ignorelen);
             cr_stream.in_skip_bytes(ignorelen);
             if (ignorecert == NULL){
                 LOG(LOG_WARNING,
@@ -507,7 +507,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         /* Loading CA_Certificate from server*/
         uint32_t cacert_len = cr_stream.in_uint32_le();
         LOG(LOG_DEBUG, "CA Certificate length is %d", cacert_len);
-        SSL_CERT *cacert = ssl_cert_read(cr_stream.p, cacert_len);
+        SSL_CERT *cacert = ssl.ssl_cert_read(cr_stream.p, cacert_len);
         cr_stream.in_skip_bytes(cacert_len);
         if (NULL == cacert){
             LOG(LOG_DEBUG, "Couldn't load CA Certificate from server");
@@ -517,33 +517,33 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         /* Loading Certificate from server*/
         uint32_t cert_len = cr_stream.in_uint32_le();
         LOG(LOG_DEBUG, "Certificate length is %d", cert_len);
-        SSL_CERT *server_cert = ssl_cert_read(cr_stream.p, cert_len);
+        SSL_CERT *server_cert = ssl.ssl_cert_read(cr_stream.p, cert_len);
         cr_stream.in_skip_bytes(cert_len);
         if (NULL == server_cert){
-            ssl_cert_free(cacert);
+            ssl.ssl_cert_free(cacert);
             LOG(LOG_DEBUG, "Couldn't load Certificate from server");
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_LOADED);
         }
 
         /* Matching certificates */
-        if (!ssl_certs_ok(server_cert, cacert)){
-            ssl_cert_free(server_cert);
-            ssl_cert_free(cacert);
+        if (!ssl.ssl_certs_ok(server_cert, cacert)){
+            ssl.ssl_cert_free(server_cert);
+            ssl.ssl_cert_free(cacert);
             LOG(LOG_DEBUG, "Security error CA Certificate invalid");
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_MATCH);
         }
-        ssl_cert_free(cacert);
+        ssl.ssl_cert_free(cacert);
         cr_stream.in_skip_bytes(16); /* Padding */
-        SSL_RKEY *server_public_key = ssl_cert_to_rkey(server_cert, server_public_key_len);
+        SSL_RKEY *server_public_key = ssl.ssl_cert_to_rkey(server_cert, server_public_key_len);
         LOG(LOG_DEBUG, "Server public key length=%u", (unsigned)server_public_key_len);
 
         if (NULL == server_public_key){
             LOG(LOG_DEBUG, "Didn't parse X509 correctly");
-            ssl_cert_free(server_cert);
+            ssl.ssl_cert_free(server_cert);
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_X509_NOT_PARSED);
 
         }
-        ssl_cert_free(server_cert);
+        ssl.ssl_cert_free(server_cert);
 
         LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d",
             server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
@@ -554,7 +554,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
             ssl.rkey_free(server_public_key);
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
         }
-        if (ssl_rkey_get_exp_mod(server_public_key, exponent, SEC_EXPONENT_SIZE,
+        if (ssl.ssl_rkey_get_exp_mod(server_public_key, exponent, SEC_EXPONENT_SIZE,
             modulus, SEC_MAX_MODULUS_SIZE) != 0){
             LOG(LOG_DEBUG, "Problem extracting RSA exponent, modulus");
             ssl.rkey_free(server_public_key);

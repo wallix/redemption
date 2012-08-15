@@ -741,7 +741,7 @@ struct mod_rdp : public client_mod {
 
                             ssl.rsa_encrypt(client_crypt_random, client_random, SEC_RANDOM_SIZE, server_public_key_len, modulus, exponent);
                             uint8_t key_block[48];
-                            rdp_sec_generate_keyblock(key_block, client_random, serverRandom);
+                            ssl.rdp_sec_generate_keyblock(key_block, client_random, serverRandom);
                             memcpy(encrypt.sign_key, key_block, 16);
                             if (encryptionMethod == 1){
                                 ssl.sec_make_40bit(encrypt.sign_key);
