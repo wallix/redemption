@@ -128,15 +128,15 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
         RDPScrBlt(Rect(300, 400, 50, 60), 0xFF, 100, 150).emit(stream, newcommon, state_common, state_scrblt);
 
         uint8_t datas[9] = {
-            CHANGE | STANDARD | DELTA,
-            SCREENBLT,
-            0x6F,   // x, y, cx, cy, srcx, srcy coordinates changed
-            -10,    // x = -10 -> 300
-            +10,    // y = 390 +10 = 400
-            +40,    // cx = 10 + 40 -> 50
-            +50,    // cy = 10 + 50 -> 60
-            -10,     // srcx = 110 - 10 = 100
-            +10,    // srcy = 140 +10 = 150
+            static_cast<uint8_t>(CHANGE | STANDARD | DELTA),
+            static_cast<uint8_t>(SCREENBLT),
+            static_cast<uint8_t>(0x6F),   // x, y, cx, cy, srcx, srcy coordinates changed
+            static_cast<uint8_t>(-10),    // x = -10 -> 300
+            static_cast<uint8_t>(+10),    // y = 390 +10 = 400
+            static_cast<uint8_t>(+40),    // cx = 10 + 40 -> 50
+            static_cast<uint8_t>(+50),    // cy = 10 + 50 -> 60
+            static_cast<uint8_t>(-10),     // srcx = 110 - 10 = 100
+            static_cast<uint8_t>(+10),    // srcy = 140 +10 = 150
         };
         check_datas(stream.p-stream.data, stream.data, 9, datas, "ScrBlt 3");
 
@@ -168,14 +168,14 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
         RDPScrBlt(Rect(300, 400, 50, 60), 0xFF, 100, 150).emit(stream, newcommon, state_common, state_scrblt);
 
         uint8_t datas[8] = {
-            STANDARD | BOUNDS | DELTA | LASTBOUNDS,
-            0x6F,   // x, y, cx, cy, srcx, srcy coordinates changed
-            -10,    // x = -10 -> 300
-            +10,    // y = 390 +10 = 400
-            +40,    // cx = 10 + 40 -> 50
-            +50,    // cy = 10 + 50 -> 60
-            -10,     // srcx = 110 - 10 = 100
-            +10,    // srcy = 140 +10 = 150
+            static_cast<uint8_t>(STANDARD | BOUNDS | DELTA | LASTBOUNDS),
+            static_cast<uint8_t>(0x6F),   // x, y, cx, cy, srcx, srcy coordinates changed
+            static_cast<uint8_t>(-10),    // x = -10 -> 300
+            static_cast<uint8_t>(+10),    // y = 390 +10 = 400
+            static_cast<uint8_t>(+40),    // cx = 10 + 40 -> 50
+            static_cast<uint8_t>(+50),    // cy = 10 + 50 -> 60
+            static_cast<uint8_t>(-10),     // srcx = 110 - 10 = 100
+            static_cast<uint8_t>(+10),    // srcy = 140 +10 = 150
         };
         check_datas(stream.p-stream.data, stream.data, 8, datas, "ScrBlt 4");
 

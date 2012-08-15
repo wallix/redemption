@@ -344,7 +344,7 @@ struct RdpLicence {
         uint8_t sealed_buffer[LICENCE_TOKEN_SIZE + LICENCE_HWID_SIZE];
         memcpy(sealed_buffer, decrypt_token, LICENCE_TOKEN_SIZE);
         memcpy(sealed_buffer + LICENCE_TOKEN_SIZE, hwid, LICENCE_HWID_SIZE);
-        sec_sign(out_sig, 16, this->licence_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
+        ssl.sec_sign(out_sig, 16, this->licence_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
 
         /* Now encrypt the HWID */
         ssl.rc4_set_key(crypt_key, this->licence_key, 16);
@@ -553,11 +553,11 @@ struct RdpLicence {
             buf_out_uint32(hwid, 2);
             memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
 
+            ssllib ssl;
             /* Generate a signature for the HWID buffer */
             uint8_t signature[LICENCE_SIGNATURE_SIZE];
-            sec_sign(signature, 16, this->licence_sign_key, 16, hwid, sizeof(hwid));
+            ssl.sec_sign(signature, 16, this->licence_sign_key, 16, hwid, sizeof(hwid));
             /* Now encrypt the HWID */
-            ssllib ssl;
 
             SSL_RC4 crypt_key;
             ssl.rc4_set_key(crypt_key, this->licence_key, 16);

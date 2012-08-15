@@ -1419,6 +1419,7 @@ public:
                     throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
                 }
 
+                ssllib ssl;
                 uint8_t client_random[64];
                 memset(client_random, 0, 64);
 
@@ -1429,7 +1430,7 @@ public:
                 rdp_sec_generate_keyblock(key_block, client_random, this->server_random);
                 memcpy(this->encrypt.sign_key, key_block, 16);
                 if (this->encrypt.rc4_key_size == 1){
-                    sec_make_40bit(this->encrypt.sign_key);
+                    ssl.sec_make_40bit(this->encrypt.sign_key);
                 }
 
                 this->decrypt.generate_key(&key_block[32], client_random, this->server_random, this->encrypt.rc4_key_size);

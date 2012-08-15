@@ -109,5 +109,17 @@ static inline void rmemmove(uint8_t *dest, uint8_t *src, size_t n)
     }
 }
 
+// Output a uint32 into a buffer (little-endian)
+static inline void buf_out_uint32(uint8_t* buffer, int value)
+{
+  buffer[0] = value & 0xff;
+  buffer[1] = (value >> 8) & 0xff;
+  buffer[2] = (value >> 16) & 0xff;
+  buffer[3] = (value >> 24) & 0xff;
+}
+
+
+
+
 
 #endif

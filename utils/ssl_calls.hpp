@@ -140,65 +140,53 @@ class ssllib
         BN_free(&mod);
         BN_CTX_free(ctx);
     }
-};
 
-inline static void sec_make_40bit(uint8_t* key)
-{
-    key[0] = 0xd1;
-    key[1] = 0x26;
-    key[2] = 0x9e;
-}
+    static void sec_make_40bit(uint8_t* key)
+    {
+        key[0] = 0xd1;
+        key[1] = 0x26;
+        key[2] = 0x9e;
+    }
 
-// Output a uint32 into a buffer (little-endian)
-inline static void buf_out_uint32(uint8_t* buffer, int value)
-{
-  buffer[0] = value & 0xff;
-  buffer[1] = (value >> 8) & 0xff;
-  buffer[2] = (value >> 16) & 0xff;
-  buffer[3] = (value >> 24) & 0xff;
-}
-
-
-TODO(" method used by licence  common with basic crypto support code should be made common. pad are also common to several functions.")
-/* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-inline static void sec_sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen, uint8_t* data, int datalen)
-{
-    static uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                                 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                                 54, 54, 54, 54, 54, 54, 54, 54
+    TODO(" method used by licence  common with basic crypto support code should be made common. pad are also common to several functions.")
+    /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
+    static void sec_sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen, uint8_t* data, int datalen)
+    {
+        static uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                     54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                     54, 54, 54, 54, 54, 54, 54, 54
+                                   };
+        static uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
                                };
-    static uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                             92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                             92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-                           };
 
-    uint8_t shasig[20];
-    uint8_t md5sig[16];
-    uint8_t lenhdr[4];
-    SSL_SHA1 sha1;
-    SSL_MD5 md5;
+        uint8_t shasig[20];
+        uint8_t md5sig[16];
+        uint8_t lenhdr[4];
+        SSL_SHA1 sha1;
+        SSL_MD5 md5;
 
-    buf_out_uint32(lenhdr, datalen);
+        buf_out_uint32(lenhdr, datalen);
 
-    ssllib ssl;
+        ssllib ssl;
 
-    ssl.sha1_init(&sha1);
-    ssl.sha1_update(&sha1, session_key, keylen);
-    ssl.sha1_update(&sha1, pad_54, 40);
-    ssl.sha1_update(&sha1, lenhdr, 4);
-    ssl.sha1_update(&sha1, data, datalen);
-    ssl.sha1_final(&sha1, shasig);
+        ssl.sha1_init(&sha1);
+        ssl.sha1_update(&sha1, session_key, keylen);
+        ssl.sha1_update(&sha1, pad_54, 40);
+        ssl.sha1_update(&sha1, lenhdr, 4);
+        ssl.sha1_update(&sha1, data, datalen);
+        ssl.sha1_final(&sha1, shasig);
 
-    ssl.md5_init(&md5);
-    ssl.md5_update(&md5, session_key, keylen);
-    ssl.md5_update(&md5, pad_92, 48);
-    ssl.md5_update(&md5, shasig, 20);
-    ssl.md5_final(&md5, md5sig);
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, session_key, keylen);
+        ssl.md5_update(&md5, pad_92, 48);
+        ssl.md5_update(&md5, shasig, 20);
+        ssl.md5_final(&md5, md5sig);
 
-    memcpy(signature, md5sig, siglen);
-}
-
-
+        memcpy(signature, md5sig, siglen);
+    }
+};
 
 
 struct CryptContext
@@ -235,7 +223,7 @@ struct CryptContext
 
         if (rc4_key_size == 1) {
             // LOG(LOG_DEBUG, "40-bit encryption enabled");
-            sec_make_40bit(this->key);
+            ssl.sec_make_40bit(this->key);
             this->rc4_key_len = 8;
         }
         else {
@@ -289,7 +277,7 @@ struct CryptContext
         if (this->use_count == 4096){
             this->update();
             if (this->rc4_key_len == 8) {
-                sec_make_40bit(this->key);
+                ssl.sec_make_40bit(this->key);
             }
             ssl.rc4_set_key(this->rc4_info, this->key, this->rc4_key_len);
             this->use_count = 0;
@@ -306,7 +294,7 @@ struct CryptContext
         if (this->use_count == 4096) {
             this->update();
             if (this->rc4_key_len == 8) {
-                sec_make_40bit(this->key);
+                ssl.sec_make_40bit(this->key);
             }
             ssl.rc4_set_key(this->rc4_info, this->key, this->rc4_key_len);
             this->use_count = 0;
