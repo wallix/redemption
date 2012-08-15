@@ -555,11 +555,12 @@ public:
         if (header.control & BOUNDS) {
             if (!(header.control & LASTBOUNDS)){
                 int bound_fields = stream.in_uint8();
-                uint16_t bounds[4] = {
-                     this->clip.x,
-                     this->clip.y,
-                     this->clip.x + this->clip.cx - 1 ,
-                     this->clip.y + this->clip.cy - 1};
+                uint16_t bounds[4] = 
+                    { static_cast<uint16_t>(this->clip.x)
+                    , static_cast<uint16_t>(this->clip.y)
+                    , static_cast<uint16_t>(this->clip.x + this->clip.cx - 1) 
+                    , static_cast<uint16_t>(this->clip.y + this->clip.cy - 1)
+                    };
 
                 if (bound_fields & 1) {
                     bounds[0] = stream.in_sint16_le();

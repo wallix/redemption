@@ -56,6 +56,8 @@ public:
         status(true)
     {}
 
+    virtual ~Transport() {}
+
     void tick() {
         quantum_count++;
         last_quantum_received = 0;
@@ -255,7 +257,7 @@ class OutFileTransport : public Transport {
 
     OutFileTransport(int fd) : Transport(), fd(fd) {}
 
-    ~OutFileTransport() {}
+    virtual ~OutFileTransport() {}
 
     // recv is not implemented for OutFileTransport
     using Transport::recv;
@@ -298,7 +300,7 @@ class InFileTransport : public Transport {
     {
     }
 
-    ~InFileTransport()
+    virtual ~InFileTransport()
     {
     }
 
@@ -368,7 +370,7 @@ class SocketTransport : public Transport {
         this->sck_closed = 0;
     }
 
-    ~SocketTransport(){
+    virtual ~SocketTransport(){
         if (!this->sck_closed){
             this->disconnect();
         }
@@ -890,7 +892,7 @@ class ClientSocketTransport : public Transport {
         strcpy(this->ip, ip);
     }
 
-    ~ClientSocketTransport(){
+    virtual ~ClientSocketTransport(){
         delete this->st;
     }
 

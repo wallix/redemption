@@ -37,8 +37,11 @@ struct widget_label : public Widget {
         this->caption1 = strdup(title);
     }
 
-    ~widget_label() {
-        free(this->caption1);
+    virtual ~widget_label() {
+        if (this->caption1){
+            free(this->caption1);
+            this->caption1 = 0;
+        }
     }
 
     void draw(const Rect & clip)

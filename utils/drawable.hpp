@@ -1006,7 +1006,11 @@ struct Drawable
     void line(const int mix_mode, const int startx, const int starty, const int endx, const int endy, const uint32_t color, const Rect & clip)
     {
         // Color handling
-        uint8_t col[3] = { color, color >> 8, color >> 16};
+        uint8_t col[3] = 
+            { static_cast<uint8_t>(color)
+            , static_cast<uint8_t>(color >> 8)
+            , static_cast<uint8_t>(color >> 16)
+            };
 
         const Rect line_clip = clip.intersect(Rect(0, 0, this->width, this->height));
 
@@ -1046,7 +1050,10 @@ struct Drawable
     void vertical_line(const uint8_t mix_mode, const uint16_t x, const uint16_t starty, const uint16_t endy, const uint32_t color)
     {
         // Color handling
-        uint8_t col[3] = { color, color >> 8, color >> 16};
+        uint8_t col[3] = 
+            { static_cast<uint8_t>(color)
+            , static_cast<uint8_t>(color >> 8)
+            , static_cast<uint8_t>(color >> 16)};
 
         uint8_t * p = this->data + (starty * this->width + x) * 3;
         for (int dy = starty; dy <= endy ; dy++) {
@@ -1059,7 +1066,11 @@ struct Drawable
 
     void horizontal_line(const uint8_t mix_mode, const uint16_t startx, const uint16_t y, const uint16_t endx, const uint32_t color)
     {
-        uint8_t col[3] = { color, color >> 8, color >> 16};
+        uint8_t col[3] = 
+            { static_cast<uint8_t>(color)
+            , static_cast<uint8_t>(color >> 8)
+            , static_cast<uint8_t>(color >> 16)
+            };
 
         uint8_t * p = this->data + (y * this->width + startx) * 3;
         for (int dx = startx; dx <= endx ; dx++) {

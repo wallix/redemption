@@ -52,7 +52,7 @@ class Stream {
     virtual void init(size_t capacity) = 0;
 
     bool has_room(unsigned n) {
-        return (this->p - this->data + n) <= this->capacity;
+        return this->get_offset() + n <= this->capacity;
     }
 
     uint16_t get_offset(){

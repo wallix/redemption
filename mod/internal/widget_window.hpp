@@ -44,7 +44,7 @@ struct window : public Widget
         return this;
     }
 
-    ~window() {
+    virtual ~window() {
         if (this->caption1){
             free(this->caption1);
             this->caption1 = 0;

@@ -3361,6 +3361,21 @@ struct selector_mod : public internal_mod {
 
     virtual ~selector_mod()
     {
+        delete this->logout_active;
+        delete this->logout_inactive;
+        delete this->apply_active;
+        delete this->apply_inactive;
+        delete this->connect_active;
+        delete this->connect_inactive;
+
+        delete this->first_page;
+        delete this->prec_page;
+        delete this->next_page;
+        delete this->last_page;
+        delete this->first_page_inactive;
+        delete this->prec_page_inactive;
+        delete this->next_page_inactive;
+        delete this->last_page_inactive;
     }
 
     virtual void refresh_context(ModContext & context)

@@ -472,10 +472,9 @@ private:
 public:
     timeval get_start_time_order()
     {
-        timeval time = {
-            this->reader.stream.in_uint64_be(),
-            this->reader.stream.in_uint64_be()
-        };
+        timeval time;
+        time.tv_sec = this->reader.stream.in_uint64_be();
+        time.tv_usec = this->reader.stream.in_uint64_be();
         return time;
     }
 

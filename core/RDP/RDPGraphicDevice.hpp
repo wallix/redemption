@@ -290,10 +290,10 @@ struct RDPUnserializer
                 uint64_t elapsed = this->timer_cap.elapsed();
                 if (elapsed <= micro_sec)
                 {
-                    struct timespec wtime = {
-                        (micro_sec - elapsed) / 1000000,
-                        (micro_sec - elapsed) % 1000000 * 1000
-                    };
+                    struct timespec wtime = 
+                        { static_cast<uint32_t>((micro_sec - elapsed) / 1000000)
+                        , static_cast<uint32_t>((micro_sec - elapsed) % 1000000 * 1000)
+                        };
                     nanosleep(&wtime, NULL);
                 }
                 --this->remaining_order_count;

@@ -39,7 +39,7 @@ struct widget_button : public Widget
         this->caption1 = strdup(caption);
     }
 
-    ~widget_button() {
+    virtual ~widget_button() {
         if (this->caption1){
             free(this->caption1);
             this->caption1 = 0;

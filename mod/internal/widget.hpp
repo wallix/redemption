@@ -183,7 +183,7 @@ struct Widget {
         this->rect.cy = height;
     }
 
-    ~Widget(){
+    virtual ~Widget(){
         if (this->type != WND_TYPE_SCREEN){
             vector<Widget*>::iterator it;
             for (it = this->child_list.begin(); it != this->child_list.end(); it++){
@@ -193,11 +193,6 @@ struct Widget {
                 }
             }
         }
-        if (this->caption1){
-            free(this->caption1);
-            this->caption1 = 0;
-        }
-
     }
 
     /*****************************************************************************/
