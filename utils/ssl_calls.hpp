@@ -45,25 +45,22 @@
 #include "constants.hpp"
 #include "log.hpp"
 
-#define SSL_SHA1 SHA_CTX
 #define SSL_MD5 MD5_CTX
-#define SSL_CERT X509
-#define SSL_RKEY RSA
 
 class ssllib
 {
     public:
-    static void sha1_init(SSL_SHA1 * sha1)
+    static void sha1_init(SHA_CTX * sha1)
     {
         SHA1_Init(sha1);
     }
 
-    static void sha1_update(SSL_SHA1 * sha1, const uint8_t * data, uint32_t len)
+    static void sha1_update(SHA_CTX * sha1, const uint8_t * data, uint32_t len)
     {
         SHA1_Update(sha1, data, len);
     }
 
-    static void sha1_final(SSL_SHA1 * sha1, uint8_t * out_data)
+    static void sha1_final(SHA_CTX * sha1, uint8_t * out_data)
     {
         SHA1_Final(out_data, sha1);
     }
@@ -155,7 +152,7 @@ class ssllib
         uint8_t shasig[20];
         uint8_t md5sig[16];
         uint8_t lenhdr[4];
-        SSL_SHA1 sha1;
+        SHA_CTX sha1;
         SSL_MD5 md5;
 
         buf_out_uint32(lenhdr, datalen);
@@ -339,7 +336,7 @@ class ssllib
         // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
         for (int i = 0; i < 3; i++) {
             uint8_t pad[4];
-            SSL_SHA1 sha1;
+            SHA_CTX sha1;
             SSL_MD5 md5;
 
             memset(pad, 'A' + i, i + 1);
@@ -360,7 +357,7 @@ class ssllib
         // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
         for (int i = 0; i < 3; i++) {
             uint8_t pad[4];
-            SSL_SHA1 sha1;
+            SHA_CTX sha1;
             SSL_MD5 md5;
 
             memset(pad, 'X' + i, i + 1);
@@ -510,7 +507,7 @@ struct CryptContext
         uint8_t shasig[20];
         uint8_t md5sig[16];
         uint8_t lenhdr[4];
-        SSL_SHA1 sha1;
+        SHA_CTX sha1;
         SSL_MD5 md5;
 
         buf_out_uint32(lenhdr, datalen);
@@ -548,7 +545,7 @@ struct CryptContext
         };
 
         uint8_t shasig[20];
-        SSL_SHA1 sha1;
+        SHA_CTX sha1;
         SSL_MD5 md5;
         RC4_KEY update;
 

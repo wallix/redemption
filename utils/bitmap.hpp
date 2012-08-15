@@ -1090,7 +1090,7 @@ public:
 
     void compute_sha1(uint8_t (&sig)[20]) const
     {
-        SSL_SHA1 sha1;
+        SHA_CTX sha1;
         ssllib ssl;
         ssl.sha1_init(&sha1);
         uint16_t rowsize = (uint16_t)(this->cx * nbbytes(this->original_bpp));

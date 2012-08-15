@@ -493,7 +493,7 @@ struct RdpLicence {
         for (int i = 0; i < 3; i++) {
             uint8_t shasig[20];
             uint8_t pad[4];
-            SSL_SHA1 sha1;
+            SHA_CTX sha1;
             SSL_MD5 md5;
             memset(pad, 'A' + i, i + 1);
 
@@ -513,7 +513,7 @@ struct RdpLicence {
         for (int i = 0; i < 3; i++) {
             uint8_t shasig[20];
             uint8_t pad[4];
-            SSL_SHA1 sha1;
+            SHA_CTX sha1;
             SSL_MD5 md5;
             memset(pad, 'A' + i, i + 1);
 

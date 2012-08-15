@@ -26,7 +26,7 @@
 inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
                       char * message, const char * shasig)
 {
-    SSL_SHA1 sha1;
+    SHA_CTX sha1;
     uint8_t sig[20];
     ssllib ssl;
     ssl.sha1_init(&sha1);
