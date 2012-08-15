@@ -64,24 +64,31 @@ class SslSha1
     }
 };
 
+class SslMd5
+{
+    MD5_CTX md5;
+
+    public:
+
+    SslMd5()
+    {
+        MD5_Init(&this->md5);
+    }
+
+    void update(const uint8_t * const data, uint32_t len)
+    {
+        MD5_Update(&this->md5, data, len);
+    }
+
+    void final(uint8_t * out_data)
+    {
+        MD5_Final(out_data, &this->md5);
+    }
+};
+
 class ssllib
 {
     public:
-    static void md5_init(MD5_CTX * md5)
-    {
-        MD5_Init(md5);
-    }
-
-    static void md5_update(MD5_CTX * md5, const uint8_t * data, uint32_t len)
-    {
-        MD5_Update(md5, data, len);
-    }
-
-    static void md5_final(MD5_CTX * md5, uint8_t * out_data)
-    {
-        MD5_Final(out_data, md5);
-    }
-
     static void rc4_set_key(RC4_KEY & rc4, uint8_t * key, int len)
     {
         RC4_set_key(&rc4, len, key);
@@ -154,7 +161,6 @@ class ssllib
         uint8_t shasig[20];
         uint8_t md5sig[16];
         uint8_t lenhdr[4];
-        MD5_CTX md5;
 
         buf_out_uint32(lenhdr, datalen);
 
@@ -165,13 +171,11 @@ class ssllib
         sha1.update(data, datalen);
         sha1.final(shasig);
 
-        ssllib ssl;
-
-        ssl.md5_init(&md5);
-        ssl.md5_update(&md5, session_key, keylen);
-        ssl.md5_update(&md5, pad_92, 48);
-        ssl.md5_update(&md5, shasig, 20);
-        ssl.md5_final(&md5, md5sig);
+        SslMd5 md5;
+        md5.update(session_key, keylen);
+        md5.update(pad_92, 48);
+        md5.update(shasig, 20);
+        md5.final(md5sig);
 
         memcpy(signature, md5sig, siglen);
     }
@@ -332,12 +336,9 @@ class ssllib
 
         uint8_t shasig[20];
 
-        ssllib ssl;
-
         // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
         for (int i = 0; i < 3; i++) {
             uint8_t pad[4];
-            MD5_CTX md5;
 
             memset(pad, 'A' + i, i + 1);
 
@@ -348,16 +349,15 @@ class ssllib
             sha1.update(server_random, 32);
             sha1.final(shasig);
 
-            ssl.md5_init(&md5);
-            ssl.md5_update(&md5, pre_master_secret, 48);
-            ssl.md5_update(&md5, shasig, 20);
-            ssl.md5_final(&md5, &master_secret[i * 16]);
+            SslMd5 md5;
+            md5.update(pre_master_secret, 48);
+            md5.update(shasig, 20);
+            md5.final(&master_secret[i * 16]);
         }
 
         // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
         for (int i = 0; i < 3; i++) {
             uint8_t pad[4];
-            MD5_CTX md5;
 
             memset(pad, 'X' + i, i + 1);
 
@@ -368,10 +368,10 @@ class ssllib
             sha1.update(server_random, 32);
             sha1.final(shasig);
 
-            ssl.md5_init(&md5);
-            ssl.md5_update(&md5, master_secret, 48);
-            ssl.md5_update(&md5, shasig, 20);
-            ssl.md5_final(&md5, &key_block[i * 16]);
+            SslMd5 md5;
+            md5.update(master_secret, 48);
+            md5.update(shasig, 20);
+            md5.final(&key_block[i * 16]);
         }
     }
 };
@@ -400,14 +400,13 @@ struct CryptContext
     void generate_key(uint8_t * key_block, const uint8_t* salt1, const uint8_t* salt2, uint32_t rc4_key_size)
     {
         // 16-byte transformation used to generate export keys (6.2.2).
-        MD5_CTX md5;
         ssllib ssl;
 
-        ssl.md5_init(&md5);
-        ssl.md5_update(&md5, key_block, 16);
-        ssl.md5_update(&md5, salt1, 32);
-        ssl.md5_update(&md5, salt2, 32);
-        ssl.md5_final(&md5, this->key);
+        SslMd5 md5;
+        md5.update(key_block, 16);
+        md5.update(salt1, 32);
+        md5.update(salt2, 32);
+        md5.final(this->key);
 
         if (rc4_key_size == 1) {
             // LOG(LOG_DEBUG, "40-bit encryption enabled");
@@ -506,11 +505,8 @@ struct CryptContext
         uint8_t shasig[20];
         uint8_t md5sig[16];
         uint8_t lenhdr[4];
-        MD5_CTX md5;
 
         buf_out_uint32(lenhdr, datalen);
-
-        ssllib ssl;
 
         SslSha1 sha1;
         sha1.update(this->sign_key, this->rc4_key_len);
@@ -519,11 +515,11 @@ struct CryptContext
         sha1.update(data, datalen);
         sha1.final(shasig);
 
-        ssl.md5_init(&md5);
-        ssl.md5_update(&md5, this->sign_key, this->rc4_key_len);
-        ssl.md5_update(&md5, pad_92, 48);
-        ssl.md5_update(&md5, shasig, 20);
-        ssl.md5_final(&md5, md5sig);
+        SslMd5 md5;
+        md5.update(this->sign_key, this->rc4_key_len);
+        md5.update(pad_92, 48);
+        md5.update(shasig, 20);
+        md5.final(md5sig);
 
         memcpy(signature, md5sig, siglen);
     }
@@ -543,7 +539,6 @@ struct CryptContext
         };
 
         uint8_t shasig[20];
-        MD5_CTX md5;
         RC4_KEY update;
 
         ssllib ssl;
@@ -554,11 +549,11 @@ struct CryptContext
         sha1.update(this->key, this->rc4_key_len);
         sha1.final(shasig);
 
-        ssl.md5_init(&md5);
-        ssl.md5_update(&md5, this->update_key, this->rc4_key_len);
-        ssl.md5_update(&md5, pad_92, 48);
-        ssl.md5_update(&md5, shasig, 20);
-        ssl.md5_final(&md5, key);
+        SslMd5 md5;
+        md5.update(this->update_key, this->rc4_key_len);
+        md5.update(pad_92, 48);
+        md5.update(shasig, 20);
+        md5.final(key);
 
         ssl.rc4_set_key(update, this->key, this->rc4_key_len);
         ssl.rc4_crypt(update, this->key, this->key, this->rc4_key_len);

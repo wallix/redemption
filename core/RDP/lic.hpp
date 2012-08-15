@@ -488,13 +488,10 @@ struct RdpLicence {
         uint8_t key_block[48];
 
         /* Generate master secret and then key material */
-        ssllib ssl;
-
         for (int i = 0; i < 3; i++) {
             uint8_t shasig[20];
             uint8_t pad[4];
 
-            MD5_CTX md5;
             memset(pad, 'A' + i, i + 1);
 
             SslSha1 sha1;
@@ -504,16 +501,15 @@ struct RdpLicence {
             sha1.update(server_random, 32);
             sha1.final(shasig);
 
-            ssl.md5_init(&md5);
-            ssl.md5_update(&md5, pre_master_secret, 48);
-            ssl.md5_update(&md5, shasig, 20);
-            ssl.md5_final(&md5, &master_secret[i * 16]);
+            SslMd5 md5;
+            md5.update(pre_master_secret, 48);
+            md5.update(shasig, 20);
+            md5.final(&master_secret[i * 16]);
         }
 
         for (int i = 0; i < 3; i++) {
             uint8_t shasig[20];
             uint8_t pad[4];
-            MD5_CTX md5;
             memset(pad, 'A' + i, i + 1);
 
             SslSha1 sha1;
@@ -523,10 +519,10 @@ struct RdpLicence {
             sha1.update(client_random, 32);
             sha1.final(shasig);
 
-            ssl.md5_init(&md5);
-            ssl.md5_update(&md5, master_secret, 48);
-            ssl.md5_update(&md5, shasig, 20);
-            ssl.md5_final(&md5, &key_block[i * 16]);
+            SslMd5 md5;
+            md5.update(master_secret, 48);
+            md5.update(shasig, 20);
+            md5.final(&key_block[i * 16]);
         }
 
         /* Store first 16 bytes of session key as MAC secret */
@@ -534,13 +530,11 @@ struct RdpLicence {
 
         // Generate RC4 key from next 16 bytes
         // 16-byte transformation used to generate export keys (6.2.2).
-        MD5_CTX md5;
-
-        ssl.md5_init(&md5);
-        ssl.md5_update(&md5, key_block + 16, 16);
-        ssl.md5_update(&md5, client_random, 32);
-        ssl.md5_update(&md5, server_random, 32);
-        ssl.md5_final(&md5, this->licence_key);
+        SslMd5 md5;
+        md5.update(key_block + 16, 16);
+        md5.update(client_random, 32);
+        md5.update(server_random, 32);
+        md5.final(this->licence_key);
     }
 
     void rdp_lic_process_demand(Stream & stream, const char * hostname, const char * username, const int licence_issued, CryptContext & encrypt, int crypt_level, int use_rdp5)
