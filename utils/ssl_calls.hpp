@@ -306,25 +306,6 @@ class ssllib
       return lkey;
     }
 
-
-    /* returns error */
-    inline int ssl_rkey_get_exp_mod(RSA * rkey, uint8_t* exponent, int max_exp_len,
-                         uint8_t* modulus, int max_mod_len)
-    {
-      int len;
-
-      if ((BN_num_bytes(rkey->e) > (int) max_exp_len) ||
-         (BN_num_bytes(rkey->n) > (int) max_mod_len))
-      {
-        return 1;
-      }
-      len = BN_bn2bin(rkey->e, (unsigned char*)exponent);
-      reverseit(exponent, len);
-      len = BN_bn2bin(rkey->n, (unsigned char*)modulus);
-      reverseit(modulus, len);
-      return 0;
-    }
-
     static void rdp_sec_generate_keyblock(uint8_t (& key_block)[48], uint8_t *client_random, uint8_t *server_random)
     {
         uint8_t pre_master_secret[48];
@@ -502,10 +483,7 @@ struct CryptContext
                                  92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
                                };
 
-        uint8_t shasig[20];
-        uint8_t md5sig[16];
         uint8_t lenhdr[4];
-
         buf_out_uint32(lenhdr, datalen);
 
         SslSha1 sha1;
@@ -513,12 +491,14 @@ struct CryptContext
         sha1.update(pad_54, 40);
         sha1.update(lenhdr, 4);
         sha1.update(data, datalen);
+        uint8_t shasig[20];
         sha1.final(shasig);
 
         SslMd5 md5;
         md5.update(this->sign_key, this->rc4_key_len);
         md5.update(pad_92, 48);
         md5.update(shasig, 20);
+        uint8_t md5sig[16];
         md5.final(md5sig);
 
         memcpy(signature, md5sig, siglen);
@@ -538,23 +518,21 @@ struct CryptContext
             92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
         };
 
-        uint8_t shasig[20];
-        RC4_KEY update;
-
-        ssllib ssl;
-
         SslSha1 sha1;
         sha1.update(this->update_key, this->rc4_key_len);
         sha1.update(pad_54, 40);
         sha1.update(this->key, this->rc4_key_len);
+        uint8_t shasig[20];
         sha1.final(shasig);
 
         SslMd5 md5;
         md5.update(this->update_key, this->rc4_key_len);
         md5.update(pad_92, 48);
         md5.update(shasig, 20);
-        md5.final(key);
+        md5.final(this->key);
 
+        ssllib ssl;
+        RC4_KEY update;
         ssl.rc4_set_key(update, this->key, this->rc4_key_len);
         ssl.rc4_crypt(update, this->key, this->key, this->rc4_key_len);
     }

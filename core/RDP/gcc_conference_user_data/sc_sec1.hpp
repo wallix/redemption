@@ -534,6 +534,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         }
         ssl.ssl_cert_free(cacert);
         cr_stream.in_skip_bytes(16); /* Padding */
+
         RSA *server_public_key = ssl.ssl_cert_to_rkey(server_cert, server_public_key_len);
         LOG(LOG_DEBUG, "Server public key length=%u", (unsigned)server_public_key_len);
 
@@ -547,19 +548,25 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
 
         LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d",
             server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
+
         if ((server_public_key_len < SEC_MODULUS_SIZE) ||
             (server_public_key_len > SEC_MAX_MODULUS_SIZE)){
-            LOG(LOG_DEBUG, "Bad server public key size (%u bits)",
-                server_public_key_len * 8);
+            LOG(LOG_WARNING, "Bad server public key size (%u bits)", server_public_key_len * 8);
             ssl.rkey_free(server_public_key);
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
         }
-        if (ssl.ssl_rkey_get_exp_mod(server_public_key, exponent, SEC_EXPONENT_SIZE,
-            modulus, SEC_MAX_MODULUS_SIZE) != 0){
-            LOG(LOG_DEBUG, "Problem extracting RSA exponent, modulus");
+
+        if ((BN_num_bytes(server_public_key->e) > SEC_EXPONENT_SIZE) 
+        ||  (BN_num_bytes(server_public_key->n) > SEC_MAX_MODULUS_SIZE)){
+            LOG(LOG_WARNING, "Problem extracting RSA exponent, modulus");
             ssl.rkey_free(server_public_key);
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_RSA_EXP_NOT_OK);
         }
+        int len_e = BN_bn2bin(server_public_key->e, (unsigned char*)exponent);
+        reverseit(exponent, len_e);
+        int len_n = BN_bn2bin(server_public_key->n, (unsigned char*)modulus);
+        reverseit(modulus, len_n);
+
         ssl.rkey_free(server_public_key);
         TODO(" find a way to correctly dispose of garbage at end of buffer")
         /* There's some garbage here we don't care about */
