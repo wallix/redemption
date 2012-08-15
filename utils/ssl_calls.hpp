@@ -45,8 +45,6 @@
 #include "constants.hpp"
 #include "log.hpp"
 
-#define SSL_MD5 MD5_CTX
-
 class ssllib
 {
     public:
@@ -65,17 +63,17 @@ class ssllib
         SHA1_Final(out_data, sha1);
     }
 
-    static void md5_init(SSL_MD5 * md5)
+    static void md5_init(MD5_CTX * md5)
     {
         MD5_Init(md5);
     }
 
-    static void md5_update(SSL_MD5 * md5, const uint8_t * data, uint32_t len)
+    static void md5_update(MD5_CTX * md5, const uint8_t * data, uint32_t len)
     {
         MD5_Update(md5, data, len);
     }
 
-    static void md5_final(SSL_MD5 * md5, uint8_t * out_data)
+    static void md5_final(MD5_CTX * md5, uint8_t * out_data)
     {
         MD5_Final(out_data, md5);
     }
@@ -153,7 +151,7 @@ class ssllib
         uint8_t md5sig[16];
         uint8_t lenhdr[4];
         SHA_CTX sha1;
-        SSL_MD5 md5;
+        MD5_CTX md5;
 
         buf_out_uint32(lenhdr, datalen);
 
@@ -337,7 +335,7 @@ class ssllib
         for (int i = 0; i < 3; i++) {
             uint8_t pad[4];
             SHA_CTX sha1;
-            SSL_MD5 md5;
+            MD5_CTX md5;
 
             memset(pad, 'A' + i, i + 1);
 
@@ -358,7 +356,7 @@ class ssllib
         for (int i = 0; i < 3; i++) {
             uint8_t pad[4];
             SHA_CTX sha1;
-            SSL_MD5 md5;
+            MD5_CTX md5;
 
             memset(pad, 'X' + i, i + 1);
 
@@ -401,7 +399,7 @@ struct CryptContext
     void generate_key(uint8_t * key_block, const uint8_t* salt1, const uint8_t* salt2, uint32_t rc4_key_size)
     {
         // 16-byte transformation used to generate export keys (6.2.2).
-        SSL_MD5 md5;
+        MD5_CTX md5;
         ssllib ssl;
 
         ssl.md5_init(&md5);
@@ -508,7 +506,7 @@ struct CryptContext
         uint8_t md5sig[16];
         uint8_t lenhdr[4];
         SHA_CTX sha1;
-        SSL_MD5 md5;
+        MD5_CTX md5;
 
         buf_out_uint32(lenhdr, datalen);
 
@@ -546,7 +544,7 @@ struct CryptContext
 
         uint8_t shasig[20];
         SHA_CTX sha1;
-        SSL_MD5 md5;
+        MD5_CTX md5;
         RC4_KEY update;
 
         ssllib ssl;

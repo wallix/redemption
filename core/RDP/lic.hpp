@@ -494,7 +494,7 @@ struct RdpLicence {
             uint8_t shasig[20];
             uint8_t pad[4];
             SHA_CTX sha1;
-            SSL_MD5 md5;
+            MD5_CTX md5;
             memset(pad, 'A' + i, i + 1);
 
             ssl.sha1_init(&sha1);
@@ -514,7 +514,7 @@ struct RdpLicence {
             uint8_t shasig[20];
             uint8_t pad[4];
             SHA_CTX sha1;
-            SSL_MD5 md5;
+            MD5_CTX md5;
             memset(pad, 'A' + i, i + 1);
 
             ssl.sha1_init(&sha1);
@@ -535,7 +535,7 @@ struct RdpLicence {
 
         // Generate RC4 key from next 16 bytes
         // 16-byte transformation used to generate export keys (6.2.2).
-        SSL_MD5 md5;
+        MD5_CTX md5;
 
         ssl.md5_init(&md5);
         ssl.md5_update(&md5, key_block + 16, 16);
