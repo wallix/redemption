@@ -41,7 +41,10 @@
 
 #include "filename_generator.hpp"
 
-#define MY_CIPHER_MODE CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC)
+const EVP_CIPHER* cipher_mode()
+{
+    return CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC);
+}
 
 void cipher_crypt_test_run(CipherCrypt& cipher_crypt,
                            const unsigned char* data, std::size_t len,
@@ -51,7 +54,7 @@ void cipher_crypt_test_run(CipherCrypt& cipher_crypt,
     if (len)
     {
         BOOST_REQUIRE(true);
-        cipher_crypt.start(MY_CIPHER_MODE, key, iv);
+        cipher_crypt.start(cipher_mode(), key, iv);
         BOOST_REQUIRE(true);
         std::size_t p = 0;
         for (std::size_t n = 2; n <= len; p = n, n += 2)
@@ -139,7 +142,7 @@ BOOST_AUTO_TEST_CASE(TestCryptFileOpenSSL)
     {
         OutFileTransport out_file(fd);
         OutCipherTransport trans(&out_file);
-        RaiiOutCipherTransport raii(trans, MY_CIPHER_MODE, key, iv);
+        RaiiOutCipherTransport raii(trans, cipher_mode(), key, iv);
         BOOST_REQUIRE(true);
         trans.send(mystr, strlen(mystr));
         BOOST_REQUIRE(true);
@@ -152,7 +155,7 @@ BOOST_AUTO_TEST_CASE(TestCryptFileOpenSSL)
     {
         InFileTransport in_file(fd, false);
         InCipherTransport trans(&in_file);
-        RaiiInCipherTransport raii(trans, MY_CIPHER_MODE, key, iv);
+        RaiiInCipherTransport raii(trans, cipher_mode(), key, iv);
         BOOST_REQUIRE(true);
         unsigned char * p = pDecryptedStr;
         trans.recv(&p, size_buf);
@@ -196,7 +199,7 @@ BOOST_AUTO_TEST_CASE(TestCryptWRMFileOpenSSL)
     {
         OutFileTransport out_file(fd);
         OutCipherTransport trans(&out_file);
-        RaiiOutCipherTransport raii(trans, MY_CIPHER_MODE, key, iv);
+        RaiiOutCipherTransport raii(trans, cipher_mode(), key, iv);
         BStream stream(65536);
         GraphicsToFile gtof(&trans, &stream, 0, 24,
                             8192, 768, 8192, 3072, 8192, 12288);
@@ -216,7 +219,7 @@ BOOST_AUTO_TEST_CASE(TestCryptWRMFileOpenSSL)
     {
         InFileTransport in_file(fd, false);
         InCipherTransport trans(&in_file);
-        RaiiInCipherTransport raii(trans, MY_CIPHER_MODE, key, iv);
+        RaiiInCipherTransport raii(trans, cipher_mode(), key, iv);
         StaticCapture pngcap(800,600,"/tmp/decrypt.png");
         RDPUnserializer unserializer(&trans, &pngcap, Rect(0,0,800,600));
 

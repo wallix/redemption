@@ -568,7 +568,7 @@ class SocketTransport : public Transport {
 
     static bool try_again(int errnum){
         int res = false;
-        switch (errno){
+        switch (errnum){
             case EAGAIN:
             /* case EWOULDBLOCK: */ // same as EAGAIN on Linux
             case EINPROGRESS:

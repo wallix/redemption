@@ -352,6 +352,10 @@ public:
     void next_file(const char * filename)
     {
         ::close(this->trans.fd);
+        if (this->cipher_is_active())
+        {
+            this->cipher_trans.stop();
+        }
         this->trans.fd = -1;
         this->trans.fd = open(this->get_cpath(filename)); //can throw exception
         this->trans.total_received = 0;
@@ -359,14 +363,18 @@ public:
         this->trans.total_sent = 0;
         this->trans.last_quantum_sent = 0;
         this->trans.quantum_count = 0;
-        this->ignore_chunks();
+        if (this->cipher_is_active())
+        {
+            this->cipher_trans.reset();
+            this->_start_cipher();
+        }
     }
 
     void load_png_context(const char * pngfilename)
     {
         if (this->redrawable) {
             pngfilename = this->get_cpath(pngfilename);
-            if (std::FILE* fd = std::fopen(pngfilename, "w+"))
+            if (std::FILE* fd = std::fopen(pngfilename, "r"))
             {
                 read_png24(fd,
                            this->redrawable->data,
@@ -381,7 +389,6 @@ public:
         }
     }
 
-public:
     void get_order_file(char * filename)
     {
         size_t len = this->reader.stream.in_uint32_le();
@@ -478,22 +485,6 @@ public:
         return time;
     }
 
-private:
-    struct PngBuffer {
-        uint8_t * data;
-        PngBuffer(uint8_t * __data)
-        : data(__data)
-        {}
-    };
-    static void png_read_data(png_structp png_ptr, png_bytep data, png_size_t length)
-    {
-        /* with libpng15 next line causes pointer deference error; use libpng12 */
-        PngBuffer* buffer = static_cast<PngBuffer*>(png_ptr->io_ptr);
-        memcpy(data, buffer->data, length);
-        buffer->data += length;
-    }
-
-public:
     void interpret_order()
     {
         switch (this->reader.chunk_type) {
@@ -514,6 +505,7 @@ public:
                 this->idx_file = this->reader.stream.in_uint32_le();
                 this->check_idx_wrm(this->idx_file);
                 this->next_file(this->meta().files[this->idx_file].wrm_filename.c_str());
+                --this->reader.remaining_order_count;
                 this->load_png_context(this->meta().files[this->idx_file].png_filename.c_str());
             }
             break;
