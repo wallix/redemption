@@ -33,12 +33,13 @@
 //#include <unistd.h>
 #include <sys/socket.h>
 
+#include "config.hpp"
 #include "mainloop.hpp"
+#include "session.hpp"
 #include "log.hpp"
 #include "listen.hpp"
 #include "wait_obj.hpp"
 #include "session.hpp"
-
 
 /*****************************************************************************/
 void shutdown(int sig)
@@ -177,7 +178,9 @@ void redemption_main_loop()
     init_signals();
 
     { /* block to ensure destructor is called immediately */
-        Listen listener;
-        listener.listen_main_loop();
+        SessionServer ss;
+        Inifile ini(CFG_PATH "/" RDPPROXY_INI);
+        int port = ini.globals.port;
+        Listen listener(ss, port);
     }
 }
