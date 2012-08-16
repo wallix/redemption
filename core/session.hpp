@@ -35,6 +35,7 @@
 #include <assert.h>
 #include <sys/time.h>
 
+#include "server.hpp"
 #include "colors.hpp"
 #include "stream.hpp"
 #include "constants.hpp"
@@ -144,7 +145,6 @@ enum {
     // disconnect session
     SESSION_STATE_STOP,
 };
-
 
 struct Session {
 
@@ -998,5 +998,47 @@ struct Session {
     }
 
 };
+
+class SessionServer : public Server
+{
+    virtual Server_status start(int incoming_sck)
+    {
+        struct sockaddr_in sin;
+        unsigned int sin_size = sizeof(struct sockaddr_in);
+        memset(&sin, 0, sin_size);
+        TODO("We should manage accept errors")
+        int sck = accept(incoming_sck, (struct sockaddr*)&sin, &sin_size);
+        char ip_source[256];
+        strcpy(ip_source, inet_ntoa(sin.sin_addr));
+        /* start new process */
+        pid_t pid = fork();
+        switch (pid) {
+        case 0: /* child */
+        {
+            try {
+                close(incoming_sck);
+                LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
+                Inifile ini(CFG_PATH "/" RDPPROXY_INI);
+                Session session(sck, ip_source, &ini);
+                session.session_main_loop();
+            } catch (...) {
+            };
+            return START_WANT_STOP;
+        }
+        break;
+        default: /* father */
+        {
+            close(sck);
+        }
+        break;
+        case -1:
+            // error forking
+            LOG(LOG_INFO, "Error creating process for new session : %s\n", strerror(errno));
+        break;
+        }
+        return START_FAILED;
+    }
+};
+
 
 #endif

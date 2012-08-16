@@ -18,7 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
-   Unit test to writing RDP orders to file and rereading them
+   Unit test to check back-end behavior stays identical 
+   when connecting to reference W2000 server (mocked up)
 
 */
 
