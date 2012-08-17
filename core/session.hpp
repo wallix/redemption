@@ -246,50 +246,45 @@ struct Session {
                 FD_ZERO(&wfds);
                 struct timeval timeout = time_mark;
 
+                this->front_event->add_to_fd_set(rfds, max);
+                if (this->front->up_and_running){
+                    this->sesman->add_to_fd_set(rfds, max);
+                    this->back_event->add_to_fd_set(rfds, max);
+                }
+                select(max + 1, &rfds, &wfds, 0, &timeout);
+
+                if (this->front_event->is_set()) {
+                    try {
+                        this->front->incoming(*this->mod);
+                    }
+                    catch(...){
+                        this->internal_state = previous_state = SESSION_STATE_STOP;
+                    };
+                }
+
                 switch (previous_state)
                 {
                     case SESSION_STATE_ENTRY:
-                    {
-                        this->front_event->add_to_fd_set(rfds, max);
-                        select(max + 1, &rfds, &wfds, 0, &timeout);
-
                         this->step_STATE_ENTRY(time_mark);
-                    }
                     break;
                     case SESSION_STATE_WAITING_FOR_NEXT_MODULE:
                     {
-                        this->front_event->add_to_fd_set(rfds, max);
-                        this->sesman->add_to_fd_set(rfds, max);
-                        select(max + 1, &rfds, &wfds, 0, &timeout);
                         this->step_STATE_WAITING_FOR_NEXT_MODULE(time_mark);
                     }
                     break;
                     case SESSION_STATE_WAITING_FOR_CONTEXT:
                     {
-                        this->front_event->add_to_fd_set(rfds, max);
-                        this->sesman->add_to_fd_set(rfds, max);
-                        select(max + 1, &rfds, &wfds, 0, &timeout);
                         this->step_STATE_WAITING_FOR_CONTEXT(time_mark);
                     }
                     break;
                     case SESSION_STATE_RUNNING:
                     {
-                        this->front_event->add_to_fd_set(rfds, max);
-                        if (this->front->up_and_running){
-                            this->back_event->add_to_fd_set(rfds, max);
-                        }
-                        this->sesman->add_to_fd_set(rfds, max);
-                        select(max + 1, &rfds, &wfds, 0, &timeout);
-
                         this->step_STATE_RUNNING(time_mark);
                     }
                     break;
                     case SESSION_STATE_CLOSE_CONNECTION:
                     {
-                        this->front_event->add_to_fd_set(rfds, max);
-                        this->back_event->add_to_fd_set(rfds, max);
-                        select(max + 1, &rfds, &wfds, 0, &timeout);
-                        this->internal_state = this->step_STATE_CLOSE_CONNECTION(time_mark);
+                        this->step_STATE_CLOSE_CONNECTION(time_mark);
                     }
                     break;
                 }
@@ -333,19 +328,9 @@ struct Session {
 
     void step_STATE_ENTRY(const struct timeval & time_mark)
     {
-        if (this->front_event->is_set()) {
-            try {
-                this->front->incoming(*this->mod);
-            }
-            catch(...){
-                this->internal_state = SESSION_STATE_STOP;
-                return;
-            };
-
-            if (this->front->up_and_running){
-                this->session_setup_mod(MCTX_STATUS_CLI, this->context);
-                this->internal_state = SESSION_STATE_RUNNING;
-            }
+        if (this->front->up_and_running){
+            this->session_setup_mod(MCTX_STATUS_CLI, this->context);
+            this->internal_state = SESSION_STATE_RUNNING;
         }
     }
 
@@ -353,17 +338,6 @@ struct Session {
 
     void step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time_mark)
     {
-        if (this->front_event->is_set()) { /* incoming client data */
-            try {
-                this->front->incoming(*this->mod);
-            }
-            catch(...){
-                LOG(LOG_INFO, "Session::Forced stop from client side");
-                this->internal_state = SESSION_STATE_STOP;
-                return;
-            };
-        }
-
         if (this->sesman->event()){
             this->sesman->receive_next_module();
             this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Failed to connect to remote server");
@@ -375,16 +349,6 @@ struct Session {
 
     void step_STATE_WAITING_FOR_CONTEXT(const struct timeval & time_mark)
     {
-        if (this->front_event->is_set()) { /* incoming client data */
-            try {
-                this->front->incoming(*this->mod);
-            }
-            catch(...){
-                this->internal_state = SESSION_STATE_STOP;
-                return;
-            };
-        }
-
         if (this->sesman->event()){
             if (this->verbose){
                 LOG(LOG_INFO, "Session::Auth Event");
@@ -400,16 +364,6 @@ struct Session {
     {
         time_t timestamp = time(NULL);
         this->front->periodic_snapshot(this->mod->get_pointer_displayed());
-
-        if (this->front_event->is_set()) { /* incoming client data */
-            try {
-                this->front->incoming(*this->mod);
-            }
-            catch(...){
-                this->internal_state = SESSION_STATE_STOP;
-                return;
-            };
-        }
 
         TODO(" this should use the WAIT_FOR_CONTEXT state or some race conditon may cause mayhem")
         if (this->sesman->close_on_timestamp(timestamp)
@@ -552,21 +506,11 @@ struct Session {
     }
 
 
-    int step_STATE_CLOSE_CONNECTION(const struct timeval & time_mark)
+    void step_STATE_CLOSE_CONNECTION(const struct timeval & time_mark)
     {
         if (this->back_event->is_set()) {
-            return SESSION_STATE_STOP;
+            this->internal_state = SESSION_STATE_STOP;
         }
-        if (this->front_event->is_set()) {
-            try {
-                this->front->incoming(*this->mod);
-            }
-            catch(...){
-                return SESSION_STATE_STOP;
-            };
-        }
-
-        return this->internal_state;
     }
 
     void session_setup_mod(int target_module, const ModContext * context)
