@@ -79,7 +79,6 @@ public:
     char * meta_name;
     uint32_t meta_name_len;
     FILE* meta_file;
-    uint32_t file_id;
 
 private:
     void next_filename()
@@ -140,7 +139,6 @@ public:
                ? (Transport*)&this->cipher_trans : &this->trans,
                &this->stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288)
     , nb_file(0)
-    , file_id(0)
     {
         if (e && !this->cipher_mode)
         {
@@ -296,20 +294,19 @@ public:
 
         this->recorder.chunk_type = WRMChunk::NEXT_FILE_ID;
         this->recorder.order_count = 1;
-        {
-            this->next_filename();
-            this->stream.out_uint32_le(++this->file_id);
-        }
+        this->stream.out_uint32_le(this->nb_file);
+        this->next_filename();
+        this->recorder.flush();
         if (this->cipher_is_active())
         {
             this->cipher_trans.stop();
         }
-        this->recorder.flush();
 
         close(this->trans.fd);
         this->open_file();
         if (this->cipher_is_active())
         {
+            this->cipher_trans.reset();
             this->_start_cipher();
         }
         this->send_meta_path();

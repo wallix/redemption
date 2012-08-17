@@ -43,18 +43,17 @@ inline static int __wrm_recorder_init_idx_not_found(WRMRecorder& recorder,
     return 2002;
 }
 
-inline static uint __wrm_recorder_init_get_good_idx(WRMRecorder& recorder,
+inline static void __wrm_recorder_init_get_good_idx(WRMRecorder& recorder,
                                                     WrmRecorderOption& opt)
 {
     if (opt.times_in_meta_are_false)
-        return opt.idx_start;
+        return ;
     const std::vector<DataFile>& files = recorder.meta().files;
     if (!files[0].start_sec)
-        return opt.idx_start;
+        return ;
     const timeval tm = {files[0].start_sec, files[0].start_usec};
     uint64_t time = 0;
-    uint real_idx = opt.idx_start;
-    for (uint idx = real_idx + 1; idx != files.size(); ++idx)
+    for (uint idx = opt.idx_start + 1; idx != files.size(); ++idx)
     {
         const DataFile& data_file = files[idx];
         if (data_file.start_sec)
@@ -67,10 +66,9 @@ inline static uint __wrm_recorder_init_get_good_idx(WRMRecorder& recorder,
                 break;
             }
             time = elapsed;
-            real_idx = idx;
+            opt.idx_start = idx;
         }
     }
-    return real_idx;
 }
 
 inline const unsigned char * __get_ucharp(const std::string& s)
@@ -113,9 +111,9 @@ int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt, InputType::
                 {
                     if (opt.idx_start >= recorder.meta().files.size())
                         return __wrm_recorder_init_idx_not_found(recorder, opt);
-                    opt.idx_start = __wrm_recorder_init_get_good_idx(recorder, opt);
+                    __wrm_recorder_init_get_good_idx(recorder, opt);
                 }
-                else  if (opt.idx_start > recorder.meta().files.size())
+                else  if (opt.idx_start >= recorder.meta().files.size())
                     return __wrm_recorder_init_idx_not_found(recorder, opt);
                 if (opt.idx_start != recorder.idx_file)
                 {
@@ -131,7 +129,7 @@ int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt, InputType::
                 }
                 if (opt.idx_start >= recorder.meta().files.size())
                     return __wrm_recorder_init_idx_not_found(recorder, opt);
-                opt.idx_start = __wrm_recorder_init_get_good_idx(recorder, opt);
+                __wrm_recorder_init_get_good_idx(recorder, opt);
                 recorder.open_wrm_only(
                     recorder.get_cpath(
                         recorder.meta()

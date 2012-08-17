@@ -124,29 +124,23 @@ class InCipherTransport
         uint8_t* pbuf;
         uint8_t* pend;
 
-        Buffer(uint8_t* pbegin, std::size_t size, bool is_full = false)
+        Buffer(uint8_t* pbegin, std::size_t size)
         : data(pbegin)
-        , pbuf(is_full ? pbegin + size : pbegin)
+        , pbuf(pbegin)
         , pend(pbegin + size)
         {}
 
         bool empty() const
         { return this->data == this->pbuf; }
 
-        bool full() const
-        { return this->pend == this->pbuf; }
-
         std::size_t size() const
         { return this->pbuf - this->data; }
-
-        std::size_t max_size() const
-        { return this->pend - this->data; }
 
         std::size_t remain() const
         { return this->pend - this->pbuf; }
     };
 
-    Buffer crypt;
+    CipherCryptData crypt;
     Buffer uncrypt;
 
 public:
@@ -157,7 +151,7 @@ public:
     : cipher_data(0)
     , cipher_crypt(CipherCrypt::DecryptConstruct(), &this->cipher_data)
     , status_in(0)
-    , crypt(this->crypt_buf, sizeof this->crypt_buf)
+    , crypt(this->crypt_buf)
     , uncrypt(this->uncrypt_buf, 0)
     , in(in)
     {
@@ -170,8 +164,10 @@ public:
     void reset()
     {
         this->status_in = 0;
-        this->crypt.pbuf = this->crypt.data;
-        this->uncrypt.pbuf = this->uncrypt.pend;
+        this->crypt.reset(this->crypt_buf);
+        this->uncrypt.data = this->uncrypt_buf;
+        this->uncrypt.pbuf = this->uncrypt_buf;
+        this->uncrypt.pend = this->uncrypt_buf;
     }
 
     bool start(const EVP_CIPHER * mode,
@@ -240,8 +236,7 @@ private:
 
     void _recv()
     {
-        this->crypt.data = this->crypt_buf;
-        this->crypt.pbuf = this->crypt.data;
+        this->crypt.reset(this->crypt_buf);
         this->in->recv(&this->crypt.pbuf, sizeof(this->crypt_buf));
     }
 

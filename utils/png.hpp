@@ -58,27 +58,22 @@ inline void read_png24(FILE * fd, const uint8_t * data,
                       const size_t height,
                       const size_t rowsize)
 {
+//     unsigned char sig[8];
+
+//     if (!fread(sig, 1, 8, fd) || !png_check_sig(sig, 8))
+//         throw std::runtime_error("bad signature");
+
     png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING,
                                                NULL, NULL, NULL);
     png_info * pinfo = png_create_info_struct(ppng);
-
-    // prepare png header
     png_init_io(ppng, fd);
-    png_set_IHDR(ppng, pinfo, width, height, 8,
-                 PNG_COLOR_TYPE_RGB,
-                 PNG_INTERLACE_NONE,
-                 PNG_COMPRESSION_TYPE_BASE,
-                 PNG_FILTER_TYPE_BASE);
+//     png_set_sig_bytes(ppng, 8);
     png_read_info(ppng, pinfo);
 
-    //png_uint_32 png_width = png_get_image_width(ppng, pinfo);
-    //png_uint_32 png_height = png_get_image_height(ppng, pinfo);
-    //png_uint_32 png_rowbytes = png_get_rowbytes(ppng, pinfo);
-    //png_byte png_color_type = png_get_color_type(ppng, pinfo);
-    //png_byte png_bit_depth = png_get_bit_depth(ppng, pinfo);
-
-    /*int number_of_passes =*/ png_set_interlace_handling(ppng);
-    png_read_update_info(ppng, pinfo);
+//     if (png_get_image_width(ppng, pinfo) != width ||
+//         png_get_image_height(ppng, pinfo) != height
+//     )
+//         throw std::runtime_error("bad size");
 
     unsigned char * row = (unsigned char*)data;
     for (size_t k = 0 ; k < height ; ++k) {
