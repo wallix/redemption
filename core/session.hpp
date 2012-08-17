@@ -212,24 +212,22 @@ struct Session {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
             }
 
+            const char * state_names[] = 
+            { "Initializing client session"                         // SESSION_STATE_ENTRY
+            , "Waiting for authentifier"                            // SESSION_STATE_WAITING_FOR_NEXT_MODULE
+            , "Waiting for authentifier (context refresh required)" // SESSION_STATE_WAITING_FOR_CONTEXT
+            , "Running"                                             // SESSION_STATE_RUNNING
+            , "Close connection"                                    // SESSION_STATE_CLOSE_CONNECTION
+            , "Stop required"                                       // SESSION_STATE_STOP
+            };
+
             int previous_state = SESSION_STATE_STOP;
             struct timeval time_mark = { 0, 0 };
-            int usec_timeout = 50000;
-
             while (1) {
                 if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500){
-                    time_mark.tv_sec = usec_timeout / 1000;
-                    time_mark.tv_usec = (usec_timeout % 1000) * 1000;
+                    time_mark.tv_sec = 0;
+                    time_mark.tv_usec = 50000;
                 }
-
-                const char * state_names[] = 
-                { "Initializing client session"                         // SESSION_STATE_ENTRY
-                , "Waiting for authentifier"                            // SESSION_STATE_WAITING_FOR_NEXT_MODULE
-                , "Waiting for authentifier (context refresh required)" // SESSION_STATE_WAITING_FOR_CONTEXT
-                , "Running"                                             // SESSION_STATE_RUNNING
-                , "Close connection"                                    // SESSION_STATE_CLOSE_CONNECTION
-                , "Stop required"                                       // SESSION_STATE_STOP
-                };
 
                 if (this->internal_state != previous_state)
                     LOG(LOG_DEBUG, "Session::-------------- %s\n", state_names[this->internal_state]);
@@ -248,9 +246,10 @@ struct Session {
                     this->sesman->add_to_fd_set(rfds, max);
                     this->mod->event.add_to_fd_set(rfds, max);
                 }
-                select(max + 1, &rfds, &wfds, 0, &timeout);
-
-                if (this->front_event->is_set()) {
+                int num = select(max + 1, &rfds, &wfds, 0, &timeout);
+                
+                if (FD_ISSET(this->sck, &rfds) 
+                && this->front_event->is_set()) {
                     try {
                         this->front->incoming(*this->mod);
                     }
@@ -272,7 +271,9 @@ struct Session {
                     break;
                     case SESSION_STATE_WAITING_FOR_NEXT_MODULE:
                     {
-                        if (this->sesman->event()){
+                        if (this->sesman->auth_event 
+                        && FD_ISSET(this->sesman->auth_event->obj, &rfds) 
+                        && this->sesman->event()){
                             this->sesman->receive_next_module();
                             this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Failed to connect to remote server");
                             this->session_setup_mod(MCTX_STATUS_TRANSITORY, this->context);
@@ -284,7 +285,9 @@ struct Session {
                     break;
                     case SESSION_STATE_WAITING_FOR_CONTEXT:
                     {
-                        if (this->sesman->event()){
+                        if (this->sesman->auth_event 
+                        && FD_ISSET(this->sesman->auth_event->obj, &rfds) 
+                        && this->sesman->event()){
                             this->sesman->receive_next_module();
                             this->mod->refresh_context(*this->context);
                             this->mod->event.set();
@@ -314,6 +317,7 @@ struct Session {
                         }
 
                         // data incoming from server module
+                        TODO("We should also check on FD descriptor, or there is some risk to read even if there is no data available")
                         if (this->front->up_and_running 
                         &&  this->mod->event.is_set()){
                             this->mod->event.reset();
