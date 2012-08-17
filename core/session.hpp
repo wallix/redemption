@@ -216,50 +216,84 @@ struct Session {
             }
 
             int previous_state = SESSION_STATE_STOP;
+            struct timeval time_mark = { 0, 0 };
+            int usec_timeout = 50000;
+
             while (1) {
-                int timeout = 50;
-                static struct timeval time_mark = { 0, 0 };
                 if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500){
-                    time_mark.tv_sec = timeout / 1000;
-                    time_mark.tv_usec = (timeout % 1000) * 1000;
+                    time_mark.tv_sec = usec_timeout / 1000;
+                    time_mark.tv_usec = (usec_timeout % 1000) * 1000;
                 }
-                switch (this->internal_state)
+
+                const char * state_names[] = 
+                { "Initializing client session"                         // SESSION_STATE_ENTRY
+                , "Waiting for authentifier"                            // SESSION_STATE_WAITING_FOR_NEXT_MODULE
+                , "Waiting for authentifier (context refresh required)" // SESSION_STATE_WAITING_FOR_CONTEXT
+                , "Running"                                             // SESSION_STATE_RUNNING
+                , "Close connection"                                    // SESSION_STATE_CLOSE_CONNECTION
+                , "Stop required"                                       // SESSION_STATE_STOP
+                };
+
+                if (this->internal_state != previous_state)
+                    LOG(LOG_DEBUG, "Session::-------------- %s\n", state_names[this->internal_state]);
+                previous_state = this->internal_state;
+
+                unsigned max = 0;
+                fd_set rfds;
+                fd_set wfds;
+
+                FD_ZERO(&rfds);
+                FD_ZERO(&wfds);
+                struct timeval timeout = time_mark;
+
+                switch (previous_state)
                 {
                     case SESSION_STATE_ENTRY:
-                        if (this->internal_state != previous_state)
-                            LOG(LOG_DEBUG, "Session::-------------- Initializing client session\n");
-                        previous_state = this->internal_state;
-                        this->internal_state = this->step_STATE_ENTRY(time_mark);
+                    {
+                        this->front_event->add_to_fd_set(rfds, max);
+                        select(max + 1, &rfds, &wfds, 0, &timeout);
+
+                        this->step_STATE_ENTRY(time_mark);
+                    }
                     break;
                     case SESSION_STATE_WAITING_FOR_NEXT_MODULE:
-                        if (this->internal_state != previous_state)
-                            LOG(LOG_DEBUG, "Session::-------------- Waiting for authentifier\n");
-                        previous_state = this->internal_state;
-                        this->internal_state = this->step_STATE_WAITING_FOR_NEXT_MODULE(time_mark);
+                    {
+                        this->front_event->add_to_fd_set(rfds, max);
+                        this->sesman->add_to_fd_set(rfds, max);
+                        select(max + 1, &rfds, &wfds, 0, &timeout);
+                        this->step_STATE_WAITING_FOR_NEXT_MODULE(time_mark);
+                    }
                     break;
                     case SESSION_STATE_WAITING_FOR_CONTEXT:
-                        if (this->internal_state != previous_state)
-                            LOG(LOG_DEBUG, "Session::-------------- Waiting for authentifier (context refresh required)\n");
-                        previous_state = this->internal_state;
-                        this->internal_state = this->step_STATE_WAITING_FOR_CONTEXT(time_mark);
+                    {
+                        this->front_event->add_to_fd_set(rfds, max);
+                        this->sesman->add_to_fd_set(rfds, max);
+                        select(max + 1, &rfds, &wfds, 0, &timeout);
+                        this->step_STATE_WAITING_FOR_CONTEXT(time_mark);
+                    }
                     break;
                     case SESSION_STATE_RUNNING:
-                        if (this->internal_state != previous_state)
-                            LOG(LOG_DEBUG, "Session::-------------- Running\n");
-                        previous_state = this->internal_state;
-                        this->internal_state = this->step_STATE_RUNNING(time_mark);
+                    {
+                        this->front_event->add_to_fd_set(rfds, max);
+                        if (this->front->up_and_running){
+                            this->back_event->add_to_fd_set(rfds, max);
+                        }
+                        this->sesman->add_to_fd_set(rfds, max);
+                        select(max + 1, &rfds, &wfds, 0, &timeout);
+
+                        this->step_STATE_RUNNING(time_mark);
+                    }
                     break;
                     case SESSION_STATE_CLOSE_CONNECTION:
-                        if (this->internal_state != previous_state)
-                            LOG(LOG_DEBUG, "Session::-------------- Close connection");
-                        previous_state = this->internal_state;
+                    {
+                        this->front_event->add_to_fd_set(rfds, max);
+                        this->back_event->add_to_fd_set(rfds, max);
+                        select(max + 1, &rfds, &wfds, 0, &timeout);
                         this->internal_state = this->step_STATE_CLOSE_CONNECTION(time_mark);
+                    }
                     break;
                 }
                 if (this->internal_state == SESSION_STATE_STOP){
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Session::Session::session_main_loop::stop required()");
-                    }
                     break;
                 }
             }
@@ -297,31 +331,15 @@ struct Session {
     }
 
 
-    int step_STATE_ENTRY(const struct timeval & time_mark)
+    void step_STATE_ENTRY(const struct timeval & time_mark)
     {
-        if (this->verbose){
-            LOG(LOG_INFO, "Session::step_STATE_ENTRY(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
-        }
-        unsigned max = 0;
-        fd_set rfds;
-        fd_set wfds;
-
-        FD_ZERO(&rfds);
-        FD_ZERO(&wfds);
-        struct timeval timeout = time_mark;
-
-        this->front_event->add_to_fd_set(rfds, max);
-        select(max + 1, &rfds, &wfds, 0, &timeout);
-
-        if (this->verbose){
-            LOG(LOG_INFO, "Session::step_STATE_ENTRY::timeout=%u.%0.6u", timeout.tv_sec, timeout.tv_usec);
-        }
         if (this->front_event->is_set()) {
             try {
                 this->front->incoming(*this->mod);
             }
             catch(...){
-                return SESSION_STATE_STOP;
+                this->internal_state = SESSION_STATE_STOP;
+                return;
             };
 
             if (this->front->up_and_running){
@@ -329,36 +347,20 @@ struct Session {
                 this->internal_state = SESSION_STATE_RUNNING;
             }
         }
-
-        return this->internal_state;
     }
 
 
 
-    int step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time_mark)
+    void step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time_mark)
     {
-        if (this->verbose){
-            LOG(LOG_INFO, "Session::step_STATE_WAITING_FOR_NEXT_MODULE(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
-        }
-        unsigned max = 0;
-        fd_set rfds;
-        fd_set wfds;
-
-        FD_ZERO(&rfds);
-        FD_ZERO(&wfds);
-
-        struct timeval timeout = time_mark;
-
-        this->front_event->add_to_fd_set(rfds, max);
-        this->sesman->add_to_fd_set(rfds, max);
-        select(max + 1, &rfds, &wfds, 0, &timeout);
         if (this->front_event->is_set()) { /* incoming client data */
             try {
                 this->front->incoming(*this->mod);
             }
             catch(...){
                 LOG(LOG_INFO, "Session::Forced stop from client side");
-                return SESSION_STATE_STOP;
+                this->internal_state = SESSION_STATE_STOP;
+                return;
             };
         }
 
@@ -369,34 +371,17 @@ struct Session {
             this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed");
             this->internal_state = SESSION_STATE_RUNNING;
         }
-        return this->internal_state;
     }
 
-    int step_STATE_WAITING_FOR_CONTEXT(const struct timeval & time_mark)
+    void step_STATE_WAITING_FOR_CONTEXT(const struct timeval & time_mark)
     {
-        if (this->verbose){
-            LOG(LOG_INFO, "Session::step_STATE_WAITING_FOR_CONTEXT(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
-        }
-        unsigned max = 0;
-        fd_set rfds;
-        fd_set wfds;
-
-        FD_ZERO(&rfds);
-        FD_ZERO(&wfds);
-
-        TODO(" we should manage some **real** timeout here  if context didn't answered in time  then we should close session.")
-        struct timeval timeout = { 1, 0 };
-
-        this->front_event->add_to_fd_set(rfds, max);
-        this->sesman->add_to_fd_set(rfds, max);
-        select(max + 1, &rfds, &wfds, 0, &timeout);
-
         if (this->front_event->is_set()) { /* incoming client data */
             try {
                 this->front->incoming(*this->mod);
             }
             catch(...){
-                return SESSION_STATE_STOP;
+                this->internal_state = SESSION_STATE_STOP;
+                return;
             };
         }
 
@@ -409,31 +394,10 @@ struct Session {
             this->back_event->set();
             this->internal_state = SESSION_STATE_RUNNING;
         }
-        return this->internal_state;
     }
 
-    int step_STATE_RUNNING(const struct timeval & time_mark)
+    void step_STATE_RUNNING(const struct timeval & time_mark)
     {
-        if (this->verbose > 1000){
-            LOG(LOG_INFO, "Session::step_STATE_RUNNING(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
-        }
-        unsigned max = 0;
-        fd_set rfds;
-        fd_set wfds;
-
-        FD_ZERO(&rfds);
-        FD_ZERO(&wfds);
-
-        struct timeval timeout = time_mark;
-
-        this->front_event->add_to_fd_set(rfds, max);
-        if (this->front->up_and_running){
-            this->back_event->add_to_fd_set(rfds, max);
-        }
-        this->sesman->add_to_fd_set(rfds, max);
-
-        select(max + 1, &rfds, &wfds, 0, &timeout);
-
         time_t timestamp = time(NULL);
         this->front->periodic_snapshot(this->mod->get_pointer_displayed());
 
@@ -442,11 +406,11 @@ struct Session {
                 this->front->incoming(*this->mod);
             }
             catch(...){
-                return SESSION_STATE_STOP;
+                this->internal_state = SESSION_STATE_STOP;
+                return;
             };
         }
 
-        // incoming data from context
         TODO(" this should use the WAIT_FOR_CONTEXT state or some race conditon may cause mayhem")
         if (this->sesman->close_on_timestamp(timestamp)
         || !this->sesman->keep_alive_or_inactivity(this->keep_alive_time, timestamp, this->trans)){
@@ -464,7 +428,8 @@ struct Session {
         }
 
         // data incoming from server module
-        if (this->front->up_and_running && this->back_event->is_set()){
+        if (this->front->up_and_running 
+        &&  this->back_event->is_set()){
             this->back_event->reset();
             if (this->verbose){
                 LOG(LOG_INFO, "Session::back_event fired");
@@ -478,7 +443,8 @@ struct Session {
                 // current module finished for some serious reason implying immediate exit
                 // without going to close box.
                 // the typical case (and only one used for now) is... we are coming from CLOSE_BOX
-                return SESSION_STATE_STOP;
+                this->internal_state = SESSION_STATE_STOP;
+                return;
             case BACK_EVENT_REFRESH:
             if (this->verbose){
                 LOG(LOG_INFO, "Session::back event refresh");
@@ -583,30 +549,11 @@ struct Session {
             break;
             }
         }
-        return this->internal_state;
     }
 
 
     int step_STATE_CLOSE_CONNECTION(const struct timeval & time_mark)
     {
-        if (this->verbose){
-            LOG(LOG_INFO, "Session::step_STATE_CLOSE_CONNECTION(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
-        }
-
-        struct timeval timeout = time_mark;
-
-        unsigned max = 0;
-        fd_set rfds;
-        fd_set wfds;
-
-        FD_ZERO(&rfds);
-        FD_ZERO(&wfds);
-
-        this->front_event->add_to_fd_set(rfds, max);
-        this->back_event->add_to_fd_set(rfds, max);
-
-        select(max + 1, &rfds, &wfds, 0, &timeout);
-
         if (this->back_event->is_set()) {
             return SESSION_STATE_STOP;
         }
