@@ -38,8 +38,7 @@ struct login_mod : public internal_mod {
     Widget* button_down;
 
 
-    login_mod(wait_obj * event,
-            ModContext & context, FrontAPI & front, uint16_t width, uint16_t height, Inifile * ini)
+    login_mod(ModContext & context, FrontAPI & front, uint16_t width, uint16_t height, Inifile * ini)
             : internal_mod(front, width, height)
     {
 
@@ -50,7 +49,6 @@ struct login_mod : public internal_mod {
 
         context.cpy(STRAUTHID_SELECTOR_LINES_PER_PAGE, buffer);
 
-        this->event = event;
         this->signal = BACK_EVENT_NONE;
         this->button_down = 0;
 

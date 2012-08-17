@@ -40,7 +40,6 @@
 BOOST_AUTO_TEST_CASE(TestShowTestCard)
 {
     BOOST_CHECK(true);
-    wait_obj back_event(-1);
     ClientInfo info(1, 1, true, true);
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -153,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
     } front(info);
 
     BOOST_CHECK(true);
-    test_card_mod mod(&back_event, front, info.width, info.height);
+    test_card_mod mod(front, info.width, info.height);
     BOOST_CHECK(true);
     try{
         BackEvent_t res = mod.draw_event();

@@ -111,7 +111,7 @@ struct selector_mod : public internal_mod {
     Bitmap * last_page_inactive;
 
 
-    selector_mod(wait_obj * event, ModContext & context, FrontAPI & front, uint16_t width, uint16_t height):
+    selector_mod(ModContext & context, FrontAPI & front, uint16_t width, uint16_t height):
             internal_mod(front, width, height), focus_line(0),
             focus_item(context.selector_focus),
             click_focus(NO_FOCUS),
@@ -3355,8 +3355,6 @@ struct selector_mod : public internal_mod {
 
         this->refresh_context(context);
         LOG(LOG_INFO, "selector init done : signal = %u", this->signal);
-        this->event = event;
-        this->event->set();
     }
 
     virtual ~selector_mod()
@@ -3475,49 +3473,49 @@ struct selector_mod : public internal_mod {
             if (device_flags & MOUSE_FLAG_DOWN){
                 if (this->rect_button_logout.contains_pt(x, y)){
                     this->click_focus = this->focus_item = FOCUS_ON_LOGOUT;
-                    this->event->set();
+                    this->event.set();
                 }
                 else if (this->rect_button_apply.contains_pt(x, y)){
                     this->click_focus = this->focus_item = FOCUS_ON_APPLY;
-                    this->event->set();
+                    this->event.set();
                 }
                 else if (this->rect_button_connect.contains_pt(x, y)){
                     this->click_focus = this->focus_item = FOCUS_ON_CONNECT;
-                    this->event->set();
+                    this->event.set();
                 }
                 else if (this->rect_button_first.contains_pt(x, y)){
                     this->click_focus = this->focus_item = FOCUS_ON_FIRSTPAGE;
-                    this->event->set();
+                    this->event.set();
                 }
                 else if (this->rect_button_prec.contains_pt(x, y)){
                     this->click_focus = this->focus_item = FOCUS_ON_PREVPAGE;
-                    this->event->set();
+                    this->event.set();
                 }
                 else if (this->rect_button_next.contains_pt(x, y)){
                     this->click_focus = this->focus_item = FOCUS_ON_NEXTPAGE;
-                    this->event->set();
+                    this->event.set();
                 }
                 else if (this->rect_button_last.contains_pt(x, y)){
                     this->click_focus = this->focus_item = FOCUS_ON_LASTPAGE;
-                    this->event->set();
+                    this->event.set();
                 }
                 else if (this->rect_group_filter.contains_pt(x, y)){
                     this->click_focus = this->focus_item = FOCUS_ON_FILTER_GROUP;
-                    this->event->set();
+                    this->event.set();
                 }
                 else if (this->rect_device_filter.contains_pt(x, y)){
                     this->click_focus = this->focus_item = FOCUS_ON_FILTER_DEVICE;
-                    this->event->set();
+                    this->event.set();
                 }
                 else if (this->rect_grid.contains_pt(x, y)){
                     this->click_focus = NO_FOCUS;
                     this->focus_item = FOCUS_ON_CONNECT;
                     this->focus_line = (y - this->rect_grid.y) / 20;
-                    this->event->set();
+                    this->event.set();
                 }
                 else {
                     this->click_focus = NO_FOCUS;
-                    this->event->set();
+                    this->event.set();
                 }
             }
             else {
@@ -3525,7 +3523,7 @@ struct selector_mod : public internal_mod {
                     if (this->focus_item != FOCUS_ON_FILTER_GROUP
                     && this->focus_item != FOCUS_ON_FILTER_DEVICE){
                         this->click(this->focus_item);
-                        this->event->set();
+                        this->event.set();
                     }
                 }
             }
@@ -3545,7 +3543,7 @@ struct selector_mod : public internal_mod {
         this->context.ask(STRAUTHID_TARGET_DEVICE);
         this->context.ask(STRAUTHID_SELECTOR);
         this->signal = BACK_EVENT_REFRESH;
-        this->event->set();
+        this->event.set();
     }
 
     void click(unsigned focus){
@@ -3588,7 +3586,7 @@ struct selector_mod : public internal_mod {
                 this->context.get(STRAUTHID_AUTH_USER));
             this->context.parse_username(buffer);
             this->signal = BACK_EVENT_2;
-            this->event->set();
+            this->event.set();
         }
         break;
         case FOCUS_ON_LOGOUT:
@@ -3600,7 +3598,7 @@ struct selector_mod : public internal_mod {
             this->context.ask(STRAUTHID_TARGET_DEVICE);
             this->context.ask(STRAUTHID_SELECTOR);
             this->signal = BACK_EVENT_2;
-            this->event->set();
+            this->event.set();
         }
         break;
         case FOCUS_ON_FILTER_GROUP:
@@ -3634,7 +3632,7 @@ struct selector_mod : public internal_mod {
                                lg_dev_text - this->filter_device_edit_pos + 1);
                         this->filter_device_edit_pos--;
                     }
-                    this->event->set();
+                    this->event.set();
                 }
                 break;
                 case FOCUS_ON_FILTER_GROUP:
@@ -3646,7 +3644,7 @@ struct selector_mod : public internal_mod {
                                lg_group_text - this->filter_group_edit_pos + 1);
                         this->filter_group_edit_pos--;
                     }
-                    this->event->set();
+                    this->event.set();
                 }
                 break;
                 default:
@@ -3665,7 +3663,7 @@ struct selector_mod : public internal_mod {
                                this->filter_device_text + this->filter_device_edit_pos + 1,
                                lg_dev_text - this->filter_device_edit_pos);
                     }
-                    this->event->set();
+                    this->event.set();
                 }
                 break;
                 case FOCUS_ON_FILTER_GROUP:
@@ -3676,7 +3674,7 @@ struct selector_mod : public internal_mod {
                                this->filter_group_text + this->filter_group_edit_pos + 1,
                                lg_group_text - this->filter_group_edit_pos);
                     }
-                    this->event->set();
+                    this->event.set();
                 }
                 break;
                 default:
@@ -3696,7 +3694,7 @@ struct selector_mod : public internal_mod {
                         *(this->filter_device_text + this->filter_device_edit_pos) = c;
                         this->filter_device_edit_pos++;
                     }
-                    this->event->set();
+                    this->event.set();
                 }
                 break;
                 case FOCUS_ON_FILTER_GROUP:
@@ -3710,7 +3708,7 @@ struct selector_mod : public internal_mod {
                         *(this->filter_group_text + this->filter_group_edit_pos) = c;
                         this->filter_group_edit_pos++;
                     }
-                    this->event->set();
+                    this->event.set();
                 }
                 break;
                 default:
@@ -3721,30 +3719,30 @@ struct selector_mod : public internal_mod {
             case Keymap2::KEVENT_TAB:
                 keymap->get_kevent();
                 this->focus_item = (this->focus_item + 1) % MAX_FOCUS_ITEM;
-                this->event->set();
+                this->event.set();
             break;
             case Keymap2::KEVENT_BACKTAB:
                 keymap->get_kevent();
                 this->focus_item = (this->focus_item - 1 + MAX_FOCUS_ITEM) % MAX_FOCUS_ITEM;
-                this->event->set();
+                this->event.set();
             break;
             case Keymap2::KEVENT_ENTER:
                 keymap->get_kevent();
                 this->click_focus = this->focus_item;
                 this->click(this->focus_item);
                 this->click_focus = NO_FOCUS;
-                this->event->set();
+                this->event.set();
             break;
 
             case Keymap2::KEVENT_DOWN_ARROW:
                 keymap->get_kevent();
                 this->focus_line = (this->focus_line + 1) % this->nblines();
-                this->event->set();
+                this->event.set();
             break;
             case Keymap2::KEVENT_UP_ARROW:
                 keymap->get_kevent();
                 this->focus_line = (this->focus_line + this->nblines() - 1) % this->nblines();
-                this->event->set();
+                this->event.set();
             break;
             case Keymap2::KEVENT_LEFT_ARROW:
                 keymap->get_kevent();
@@ -3758,7 +3756,7 @@ struct selector_mod : public internal_mod {
                         this->filter_device_edit_pos--;
                     }
                 }
-                this->event->set();
+                this->event.set();
             break;
             case Keymap2::KEVENT_RIGHT_ARROW:
                 keymap->get_kevent();
@@ -3774,7 +3772,7 @@ struct selector_mod : public internal_mod {
                         this->filter_device_edit_pos++;
                     }
                 }
-                this->event->set();
+                this->event.set();
             break;
             default:
                 keymap->get_kevent();
@@ -3794,7 +3792,7 @@ struct selector_mod : public internal_mod {
     {
 //        LOG(LOG_INFO, "selector::draw_event");
         this->draw(this->get_screen_rect());
-        this->event->reset();
+        this->event.reset();
 //        LOG(LOG_INFO, "draw_event : signal = %u", this->signal);
         return this->signal;
     }

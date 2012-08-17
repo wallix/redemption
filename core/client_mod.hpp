@@ -27,14 +27,12 @@
 #include <string.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
-//#include <locale.h>
 
 #include "client_info.hpp"
 #include "font.hpp"
-//#include "RDP/caches/bmpcache.hpp"
 #include "front.hpp"
 #include "mainloop.hpp"
-//#include "wait_obj.hpp"
+#include "wait_obj.hpp"
 #include "keymap2.hpp"
 #include "callback.hpp"
 #include "modcontext.hpp"
@@ -50,6 +48,7 @@ enum BackEvent_t {
 };
 
 struct client_mod : public Callback {
+    wait_obj event;
     FrontAPI & front;
     RDPPen pen;
     bool pointer_displayed;
@@ -58,11 +57,13 @@ struct client_mod : public Callback {
     uint16_t front_height;
 
     client_mod(FrontAPI & front, const uint16_t front_width, const uint16_t front_height)
-        : front(front)
+        : event(-1)
+        , front(front)
         , front_width(front_width)
         , front_height(front_height)
     {
         this->pointer_displayed = false;
+        this->event.set(0);
     }
 
     virtual ~client_mod()

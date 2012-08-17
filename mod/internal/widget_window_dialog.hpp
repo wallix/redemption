@@ -92,7 +92,7 @@ struct window_dialog : public window
                         (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
                                           :STRAUTHID_DISPLAY_MESSAGE,
                         "False");
-                this->mod->event->set();
+                this->mod->event.set();
                 this->mod->signal = BACK_EVENT_1;
             break;
             case 3: /* ok button -> Enter */
@@ -100,7 +100,7 @@ struct window_dialog : public window
                         (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
                                           :STRAUTHID_DISPLAY_MESSAGE,
                         "True");
-                this->mod->event->set();
+                this->mod->event.set();
                 this->mod->signal = BACK_EVENT_1;
             break;
             default:

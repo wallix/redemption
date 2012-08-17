@@ -44,14 +44,13 @@
 struct bouncer2_mod : public internal_mod {
 
     private:
-        wait_obj * event;
         int speedx;
         int speedy;
         Rect * dancing_rect;
     public:
 
-    bouncer2_mod(wait_obj * back_event, FrontAPI & front, uint16_t width, uint16_t height) :
-        internal_mod(front, width, height), event(back_event), speedx(10), speedy(10), dancing_rect(NULL)
+    bouncer2_mod(FrontAPI & front, uint16_t width, uint16_t height) :
+        internal_mod(front, width, height), speedx(10), speedy(10), dancing_rect(NULL)
     {
 
         this->front.begin_update();
@@ -61,7 +60,7 @@ struct bouncer2_mod : public internal_mod {
         this->dancing_rect = new Rect(0,0,100,100);
 
         // Using µsec set
-        this->event->set(33333);
+        this->event.set(33333);
     }
 
     ~bouncer2_mod()
@@ -146,7 +145,7 @@ struct bouncer2_mod : public internal_mod {
         this->front.end_update();
 
         // Final with setting next idle time
-        this->event->set(33333); // 0.3s is 30fps
+        this->event.set(33333); // 0.3s is 30fps
         return BACK_EVENT_NONE;
     }
 

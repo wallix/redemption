@@ -29,10 +29,8 @@
 // Null module receive every event and does nothing. It allow session code to always have a receiving module active, thus avoidind to test that so back_end is available.
 
 struct transitory_mod : public client_mod {
-
     transitory_mod(FrontAPI & front, uint16_t front_width, uint16_t front_height)
-            :
-            client_mod(front, front_width, front_height)
+            : client_mod(front, front_width, front_height)
     {
 
     }

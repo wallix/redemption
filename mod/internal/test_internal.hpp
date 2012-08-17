@@ -32,8 +32,7 @@ struct test_internal_mod : public internal_mod {
 
     char movie[1024];
 
-    test_internal_mod( wait_obj * event
-                     , ModContext & context
+    test_internal_mod( ModContext & context
                      , FrontAPI & front
                      , char * path
                      , char * movie
@@ -44,9 +43,6 @@ struct test_internal_mod : public internal_mod {
         strcpy(this->movie, path);
         strcat(this->movie, movie);
         LOG(LOG_INFO, "Playing %s", this->movie);
-
-        this->event = event;
-        this->event->set();
     }
 
     virtual ~test_internal_mod()
@@ -74,7 +70,7 @@ struct test_internal_mod : public internal_mod {
     // non 0 if it wants to stop (to run another module)
     virtual BackEvent_t draw_event()
     {
-        this->event->reset();
+        this->event.reset();
         int fd = ::open(this->movie, O_RDONLY);
         assert(fd > 0);
         InFileTransport in_trans(fd);

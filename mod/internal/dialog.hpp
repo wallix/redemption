@@ -33,14 +33,12 @@ struct dialog_mod : public internal_mod {
     struct window_dialog * close_window;
     Widget* button_down;
 
-    dialog_mod(wait_obj * event,
-              ModContext & context,
+    dialog_mod(ModContext & context,
                FrontAPI & front, uint16_t width, uint16_t height,
                const char *message, const char * refuse, Inifile * ini)
             :
             internal_mod(front, width, height)
     {
-        this->event = event;
         this->button_down = 0;
 
         int log_width = 600;

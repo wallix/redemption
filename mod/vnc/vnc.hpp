@@ -77,11 +77,9 @@ struct mod_vnc : public client_mod {
     uint32_t verbose;
     KeymapSym keymapSym;
     int incr;
-    wait_obj * event;
 
     //==============================================================================================================
     mod_vnc ( Transport * t
-            , wait_obj * event
             , const char * username
             , const char * password
             , struct FrontAPI & front
@@ -95,7 +93,6 @@ struct mod_vnc : public client_mod {
         , verbose(verbose)
         , keymapSym(verbose)
         , incr(0)
-        , event(event)
     //==============================================================================================================
     {
         LOG(LOG_INFO, "Connecting to VNC Server");
@@ -535,7 +532,7 @@ struct mod_vnc : public client_mod {
             stream.out_clear_bytes(2);
             stream.out_uint32_be(key);
             this->t->send(stream.data, 8);
-            this->event->set(1000);
+            this->event.set(1000);
         }
     } // rdp_input_scancode
 
@@ -582,7 +579,7 @@ struct mod_vnc : public client_mod {
         }
         BackEvent_t rv = BACK_EVENT_NONE;
 
-        if (this->event->can_recv()){
+        if (this->event.can_recv()){
             BStream stream(1);
             try {
                 this->t->recv((char**)&stream.end, 1);
@@ -610,7 +607,7 @@ struct mod_vnc : public client_mod {
                 LOG(LOG_INFO, "exception raised");
                 rv = BACK_EVENT_1;
             }
-            this->event->set(1000);
+            this->event.set(1000);
         }
         else {
             this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));

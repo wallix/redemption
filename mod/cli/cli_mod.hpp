@@ -26,7 +26,6 @@
 #include "transitory/transitory.hpp"
 
 struct cli_mod : public transitory_mod {
-
     cli_mod(
         struct ModContext & context, FrontAPI & front, ClientInfo & client_info, const uint16_t front_width, const uint16_t front_height)
             : transitory_mod(front, front_width, front_height)

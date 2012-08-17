@@ -29,12 +29,10 @@
 
 struct test_card_mod : public internal_mod {
     BGRPalette palette332;
-    test_card_mod(wait_obj * event, FrontAPI & front, uint16_t width, uint16_t height):
+    test_card_mod(FrontAPI & front, uint16_t width, uint16_t height):
             internal_mod(front, width, height)
     {
         init_palette332(this->palette332);
-        this->event = event;
-        this->event->set();
     }
 
     virtual ~test_card_mod()
@@ -62,7 +60,7 @@ struct test_card_mod : public internal_mod {
     virtual BackEvent_t draw_event()
     {
         this->draw();
-        this->event->reset();
+        this->event.reset();
         return BACK_EVENT_NONE;
     }
 

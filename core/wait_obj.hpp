@@ -111,7 +111,6 @@ class wait_obj
         }
         return rv;
     }
-
 };
 
 #endif

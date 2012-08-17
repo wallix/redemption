@@ -159,8 +159,6 @@ struct Session {
     time_t keep_alive_time;
 
     wait_obj * front_event;
-    wait_obj * back_event;
-
 
     struct client_mod * mod; /* module interface */
     struct client_mod * no_mod;
@@ -208,7 +206,6 @@ struct Session {
             this->mod = this->no_mod;
 
             /* module interface */
-            this->back_event = 0;
             this->keep_alive_time = 0;
 
             if (this->verbose){
@@ -249,7 +246,7 @@ struct Session {
                 this->front_event->add_to_fd_set(rfds, max);
                 if (this->front->up_and_running){
                     this->sesman->add_to_fd_set(rfds, max);
-                    this->back_event->add_to_fd_set(rfds, max);
+                    this->mod->event.add_to_fd_set(rfds, max);
                 }
                 select(max + 1, &rfds, &wfds, 0, &timeout);
 
@@ -265,26 +262,186 @@ struct Session {
                 switch (previous_state)
                 {
                     case SESSION_STATE_ENTRY:
-                        this->step_STATE_ENTRY(time_mark);
+                    {
+                        if (this->front->up_and_running){
+                            this->session_setup_mod(MCTX_STATUS_CLI, this->context);
+                            this->mod->event.set();
+                            this->internal_state = SESSION_STATE_RUNNING;
+                        }
+                    }
                     break;
                     case SESSION_STATE_WAITING_FOR_NEXT_MODULE:
                     {
-                        this->step_STATE_WAITING_FOR_NEXT_MODULE(time_mark);
+                        if (this->sesman->event()){
+                            this->sesman->receive_next_module();
+                            this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Failed to connect to remote server");
+                            this->session_setup_mod(MCTX_STATUS_TRANSITORY, this->context);
+                            this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed");
+                            this->mod->event.set();
+                            this->internal_state = SESSION_STATE_RUNNING;
+                        }
                     }
                     break;
                     case SESSION_STATE_WAITING_FOR_CONTEXT:
                     {
-                        this->step_STATE_WAITING_FOR_CONTEXT(time_mark);
+                        if (this->sesman->event()){
+                            this->sesman->receive_next_module();
+                            this->mod->refresh_context(*this->context);
+                            this->mod->event.set();
+                            this->internal_state = SESSION_STATE_RUNNING;
+                        }
                     }
                     break;
                     case SESSION_STATE_RUNNING:
                     {
-                        this->step_STATE_RUNNING(time_mark);
+                        time_t timestamp = time(NULL);
+                        this->front->periodic_snapshot(this->mod->get_pointer_displayed());
+
+                        TODO(" this should use the WAIT_FOR_CONTEXT state or some race conditon may cause mayhem")
+                        if (this->sesman->close_on_timestamp(timestamp)
+                        || !this->sesman->keep_alive_or_inactivity(this->keep_alive_time, timestamp, this->trans)){
+                            this->internal_state = SESSION_STATE_STOP;
+                            this->context->nextmod = ModContext::INTERNAL_CLOSE;
+                            this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context);
+                            this->keep_alive_time = 0;
+                            TODO(" move that to sesman (to hide implementation details)")
+                            if (this->sesman->auth_event){
+                                delete this->sesman->auth_event;
+                                this->sesman->auth_event = 0;
+                            }
+                            this->internal_state = SESSION_STATE_RUNNING;
+                            this->front->stop_capture();
+                        }
+
+                        // data incoming from server module
+                        if (this->front->up_and_running 
+                        &&  this->mod->event.is_set()){
+                            this->mod->event.reset();
+                            if (this->verbose){
+                                LOG(LOG_INFO, "Session::back_event fired");
+                            }
+                            BackEvent_t signal = this->mod->draw_event();
+                            switch (signal){
+                            case BACK_EVENT_NONE:
+                                // continue with same module
+                            break;
+                            case BACK_EVENT_STOP:
+                                // current module finished for some serious reason implying immediate exit
+                                // without going to close box.
+                                // the typical case (and only one used for now) is... we are coming from CLOSE_BOX
+                                this->internal_state = SESSION_STATE_STOP;
+                                return;
+                            case BACK_EVENT_REFRESH:
+                            if (this->verbose){
+                                LOG(LOG_INFO, "Session::back event refresh");
+                            }
+                            {
+                                bool record_video = false;
+                                bool keep_alive = false;
+                                int next_state = this->sesman->ask_next_module(
+                                                                    this->keep_alive_time,
+                                                                    this->ini->globals.authip,
+                                                                    this->ini->globals.authport,
+                                                                    record_video, keep_alive);
+                                if (next_state != MCTX_STATUS_WAITING){
+                                    this->internal_state = SESSION_STATE_STOP;
+                                    delete this->mod;
+                                    this->mod = this->no_mod;
+                                    this->session_setup_mod(next_state, this->context);
+                                    this->internal_state = SESSION_STATE_RUNNING;
+                                }
+                                else {
+                                    this->internal_state = SESSION_STATE_WAITING_FOR_CONTEXT;
+                                }
+                            }
+                            break;
+                            case BACK_EVENT_1:
+                            case BACK_EVENT_2:
+                            case BACK_EVENT_3:
+                            case BACK_EVENT_5:
+                            default:
+                            {
+                                if (this->verbose){
+                                   LOG(LOG_INFO, "Session::back event end module");
+                                }
+                               // end the current module and switch to new one
+                                if (this->mod != this->no_mod){
+                                    delete this->mod;
+                                    this->mod = this->no_mod;
+                                }
+                                this->context->cpy(STRAUTHID_OPT_WIDTH, this->front->client_info.width);
+                                this->context->cpy(STRAUTHID_OPT_HEIGHT, this->front->client_info.height);
+                                this->context->cpy(STRAUTHID_OPT_BPP, this->front->client_info.bpp);
+                                bool record_video = false;
+                                bool keep_alive = false;
+                                if (this->verbose){
+                                    LOG(LOG_INFO, "Session::asking next module");
+                                }
+                                int next_state = this->sesman->ask_next_module(
+                                                                    this->keep_alive_time,
+                                                                    this->ini->globals.authip,
+                                                                    this->ini->globals.authport,
+                                                                    record_video, keep_alive);
+                                if (next_state != MCTX_STATUS_WAITING){
+                                    this->internal_state = SESSION_STATE_STOP;
+                                    try {
+                                        this->session_setup_mod(next_state, this->context);
+                                        if (record_video) {
+                                            this->front->start_capture(
+                                                this->front->client_info.width,
+                                                this->front->client_info.height,
+                                                this->context->get_bool(STRAUTHID_OPT_MOVIE),
+                                                this->context->get(STRAUTHID_OPT_MOVIE_PATH),
+                                                this->context->get(STRAUTHID_OPT_CODEC_ID),
+                                                this->context->get(STRAUTHID_VIDEO_QUALITY),
+                                                this->context->get(STRAUTHID_AUTH_USER),
+                                                this->context->get(STRAUTHID_HOST),
+                                                this->context->get(STRAUTHID_TARGET_USER),
+                                                this->context->get(STRAUTHID_TARGET_DEVICE)
+                                                );
+                                        }
+                                        else {
+                                            this->front->stop_capture();
+                                        }
+                                        if (keep_alive){
+                                            this->sesman->start_keep_alive(keep_alive_time);
+                                        }
+                                        this->internal_state = SESSION_STATE_RUNNING;
+                                    }
+                                    catch (const Error & e) {
+                                         LOG(LOG_INFO, "Session::connect failed Error=%u", e.id);
+                                         if (e.id == ERR_SOCKET_CONNECT_FAILED) {
+                                            this->internal_state = SESSION_STATE_CLOSE_CONNECTION;
+                                            this->context->nextmod = ModContext::INTERNAL_CLOSE;
+                                            this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context);
+                                            this->keep_alive_time = 0;
+                                            TODO(" move that to sesman (to hide implementation details)")
+                                            if (this->sesman->auth_event){
+                                                delete this->sesman->auth_event;
+                                                this->sesman->auth_event = 0;
+                                            }
+                                            this->internal_state = SESSION_STATE_RUNNING;
+                                            this->front->stop_capture();
+                                        }
+                                        else {
+                                            throw;
+                                        }
+                                    }
+                                }
+                                else {
+                                    this->internal_state = SESSION_STATE_WAITING_FOR_NEXT_MODULE;
+                                }
+                            }
+                            break;
+                            }
+                        }
                     }
                     break;
                     case SESSION_STATE_CLOSE_CONNECTION:
                     {
-                        this->step_STATE_CLOSE_CONNECTION(time_mark);
+                        if (this->mod->event.is_set()) {
+                            this->internal_state = SESSION_STATE_STOP;
+                        }
                     }
                     break;
                 }
@@ -313,9 +470,6 @@ struct Session {
         delete this->front;
         delete this->front_event;
         delete this->trans;
-        if (this->back_event){
-            delete this->back_event;
-        }
         if (this->mod != this->no_mod){
             delete this->mod;
             this->mod = this->no_mod;
@@ -326,192 +480,7 @@ struct Session {
     }
 
 
-    void step_STATE_ENTRY(const struct timeval & time_mark)
-    {
-        if (this->front->up_and_running){
-            this->session_setup_mod(MCTX_STATUS_CLI, this->context);
-            this->internal_state = SESSION_STATE_RUNNING;
-        }
-    }
 
-
-
-    void step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time_mark)
-    {
-        if (this->sesman->event()){
-            this->sesman->receive_next_module();
-            this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Failed to connect to remote server");
-            this->session_setup_mod(MCTX_STATUS_TRANSITORY, this->context);
-            this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed");
-            this->internal_state = SESSION_STATE_RUNNING;
-        }
-    }
-
-    void step_STATE_WAITING_FOR_CONTEXT(const struct timeval & time_mark)
-    {
-        if (this->sesman->event()){
-            if (this->verbose){
-                LOG(LOG_INFO, "Session::Auth Event");
-            }
-            this->sesman->receive_next_module();
-            this->mod->refresh_context(*this->context);
-            this->back_event->set();
-            this->internal_state = SESSION_STATE_RUNNING;
-        }
-    }
-
-    void step_STATE_RUNNING(const struct timeval & time_mark)
-    {
-        time_t timestamp = time(NULL);
-        this->front->periodic_snapshot(this->mod->get_pointer_displayed());
-
-        TODO(" this should use the WAIT_FOR_CONTEXT state or some race conditon may cause mayhem")
-        if (this->sesman->close_on_timestamp(timestamp)
-        || !this->sesman->keep_alive_or_inactivity(this->keep_alive_time, timestamp, this->trans)){
-            this->internal_state = SESSION_STATE_STOP;
-            this->context->nextmod = ModContext::INTERNAL_CLOSE;
-            this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context);
-            this->keep_alive_time = 0;
-            TODO(" move that to sesman (to hide implementation details)")
-            if (this->sesman->auth_event){
-                delete this->sesman->auth_event;
-                this->sesman->auth_event = 0;
-            }
-            this->internal_state = SESSION_STATE_RUNNING;
-            this->front->stop_capture();
-        }
-
-        // data incoming from server module
-        if (this->front->up_and_running 
-        &&  this->back_event->is_set()){
-            this->back_event->reset();
-            if (this->verbose){
-                LOG(LOG_INFO, "Session::back_event fired");
-            }
-            BackEvent_t signal = this->mod->draw_event();
-            switch (signal){
-            case BACK_EVENT_NONE:
-                // continue with same module
-            break;
-            case BACK_EVENT_STOP:
-                // current module finished for some serious reason implying immediate exit
-                // without going to close box.
-                // the typical case (and only one used for now) is... we are coming from CLOSE_BOX
-                this->internal_state = SESSION_STATE_STOP;
-                return;
-            case BACK_EVENT_REFRESH:
-            if (this->verbose){
-                LOG(LOG_INFO, "Session::back event refresh");
-            }
-            {
-                bool record_video = false;
-                bool keep_alive = false;
-                int next_state = this->sesman->ask_next_module(
-                                                    this->keep_alive_time,
-                                                    this->ini->globals.authip,
-                                                    this->ini->globals.authport,
-                                                    record_video, keep_alive);
-                if (next_state != MCTX_STATUS_WAITING){
-                    this->internal_state = SESSION_STATE_STOP;
-                    delete this->mod;
-                    this->mod = this->no_mod;
-                    this->session_setup_mod(next_state, this->context);
-                    this->internal_state = SESSION_STATE_RUNNING;
-                }
-                else {
-                    this->internal_state = SESSION_STATE_WAITING_FOR_CONTEXT;
-                }
-            }
-            break;
-            case BACK_EVENT_1:
-            case BACK_EVENT_2:
-            case BACK_EVENT_3:
-            case BACK_EVENT_5:
-            default:
-            {
-                if (this->verbose){
-                   LOG(LOG_INFO, "Session::back event end module");
-                }
-               // end the current module and switch to new one
-                if (this->mod != this->no_mod){
-                    delete this->mod;
-                    this->mod = this->no_mod;
-                }
-                this->context->cpy(STRAUTHID_OPT_WIDTH, this->front->client_info.width);
-                this->context->cpy(STRAUTHID_OPT_HEIGHT, this->front->client_info.height);
-                this->context->cpy(STRAUTHID_OPT_BPP, this->front->client_info.bpp);
-                bool record_video = false;
-                bool keep_alive = false;
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::asking next module");
-                }
-                int next_state = this->sesman->ask_next_module(
-                                                    this->keep_alive_time,
-                                                    this->ini->globals.authip,
-                                                    this->ini->globals.authport,
-                                                    record_video, keep_alive);
-                if (next_state != MCTX_STATUS_WAITING){
-                    this->internal_state = SESSION_STATE_STOP;
-                    try {
-                        this->session_setup_mod(next_state, this->context);
-                        if (record_video) {
-                            this->front->start_capture(
-                                this->front->client_info.width,
-                                this->front->client_info.height,
-                                this->context->get_bool(STRAUTHID_OPT_MOVIE),
-                                this->context->get(STRAUTHID_OPT_MOVIE_PATH),
-                                this->context->get(STRAUTHID_OPT_CODEC_ID),
-                                this->context->get(STRAUTHID_VIDEO_QUALITY),
-                                this->context->get(STRAUTHID_AUTH_USER),
-                                this->context->get(STRAUTHID_HOST),
-                                this->context->get(STRAUTHID_TARGET_USER),
-                                this->context->get(STRAUTHID_TARGET_DEVICE)
-                                );
-                        }
-                        else {
-                            this->front->stop_capture();
-                        }
-                        if (keep_alive){
-                            this->sesman->start_keep_alive(keep_alive_time);
-                        }
-                        this->internal_state = SESSION_STATE_RUNNING;
-                    }
-                    catch (const Error & e) {
-                         LOG(LOG_INFO, "Session::connect failed Error=%u", e.id);
-                         if (e.id == ERR_SOCKET_CONNECT_FAILED) {
-                            this->internal_state = SESSION_STATE_CLOSE_CONNECTION;
-                            this->context->nextmod = ModContext::INTERNAL_CLOSE;
-                            this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context);
-                            this->keep_alive_time = 0;
-                            TODO(" move that to sesman (to hide implementation details)")
-                            if (this->sesman->auth_event){
-                                delete this->sesman->auth_event;
-                                this->sesman->auth_event = 0;
-                            }
-                            this->internal_state = SESSION_STATE_RUNNING;
-                            this->front->stop_capture();
-                        }
-                        else {
-                            throw;
-                        }
-                    }
-                }
-                else {
-                    this->internal_state = SESSION_STATE_WAITING_FOR_NEXT_MODULE;
-                }
-            }
-            break;
-            }
-        }
-    }
-
-
-    void step_STATE_CLOSE_CONNECTION(const struct timeval & time_mark)
-    {
-        if (this->back_event->is_set()) {
-            this->internal_state = SESSION_STATE_STOP;
-        }
-    }
 
     void session_setup_mod(int target_module, const ModContext * context)
     {
@@ -530,11 +499,6 @@ struct Session {
             // default is "allow", do nothing special
         }
 
-        TODO(" wait_obj should become implementation details of modules  sesman and front end")
-        if (this->back_event) {
-            delete this->back_event;
-            this->back_event = 0;
-        }
         if (this->mod != this->no_mod) {
             delete this->mod;
             this->mod = this->no_mod;
@@ -547,12 +511,10 @@ struct Session {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'CLI parse'");
                 }
-                this->back_event = new wait_obj(-1);
                 this->mod = new cli_mod(*this->context, *(this->front),
                                         this->front->client_info,
                                         this->front->client_info.width,
                                         this->front->client_info.height);
-                this->back_event->set();
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'CLI parse' suceeded");
                 }
@@ -564,12 +526,10 @@ struct Session {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'TRANSITORY'");
                 }
-                this->back_event = new wait_obj(-1);
                 this->mod = new transitory_mod(*(this->front),
                                                this->front->client_info.width,
                                                this->front->client_info.height);
                 // Transitory finish immediately
-                this->back_event->set();
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'TRANSITORY' suceeded");
                 }
@@ -578,7 +538,6 @@ struct Session {
 
             case MCTX_STATUS_INTERNAL:
             {
-                this->back_event = new wait_obj(-1);
                 switch (this->context->nextmod){
                     case ModContext::INTERNAL_CLOSE:
                     {
@@ -588,7 +547,7 @@ struct Session {
                         if (this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                             this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection to server failed");
                         }
-                        this->mod = new close_mod(this->back_event, *this->context,
+                        this->mod = new close_mod(*this->context,
                                                   *this->front,
                                                   this->front->client_info.width,
                                                   this->front->client_info.height);
@@ -607,9 +566,7 @@ struct Session {
                         }
                         message = this->context->get(STRAUTHID_MESSAGE);
                         button = this->context->get(STRAUTHID_TRANS_BUTTON_REFUSED);
-                        this->mod = new dialog_mod(
-                                        this->back_event,
-                                        *this->context,
+                        this->mod = new dialog_mod(*this->context,
                                         *this->front,
                                         this->front->client_info.width,
                                         this->front->client_info.height,
@@ -632,7 +589,6 @@ struct Session {
                         message = this->context->get(STRAUTHID_MESSAGE);
                         button = NULL;
                         this->mod = new dialog_mod(
-                                        this->back_event,
                                         *this->context,
                                         *this->front,
                                         this->front->client_info.width,
@@ -650,7 +606,6 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
                         }
                         this->mod = new login_mod(
-                                        this->back_event,
                                          *this->context,
                                          *this->front,
                                          this->front->client_info.width,
@@ -664,8 +619,7 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'bouncer2'");
                         }
-                        this->mod = new bouncer2_mod(this->back_event,
-                                                     *this->front,
+                        this->mod = new bouncer2_mod(*this->front,
                                                      this->front->client_info.width,
                                                      this->front->client_info.height
                                                      );
@@ -678,7 +632,6 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'test'");
                         }
                         this->mod = new test_internal_mod(
-                                        this->back_event,
                                         *this->context,
                                         *this->front,
                                         this->ini->globals.movie_path,
@@ -695,7 +648,6 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'test_card'");
                         }
                         this->mod = new test_card_mod(
-                                        this->back_event,
                                         *this->front,
                                         this->front->client_info.width,
                                         this->front->client_info.height
@@ -709,7 +661,6 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'selector'");
                         }
                         this->mod = new selector_mod(
-                                        this->back_event,
                                         *this->context,
                                         *this->front,
                                         this->front->client_info.width,
@@ -743,10 +694,10 @@ struct Session {
                 else {
                     this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote X host");
                 }
-                this->back_event = new wait_obj(t->sck);
                 this->mod = new xup_mod(t, *this->context, *(this->front),
                                         this->front->client_info.width,
                                         this->front->client_info.height);
+                this->mod->event.obj = t->sck;
                 this->mod->draw_event();
 //                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "");
@@ -784,7 +735,6 @@ struct Session {
                     this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote RDP host");
                 }
                 TODO("Wait obj should work with transport object, not directly with socket")
-                this->back_event = new wait_obj(t->sck);
                 // enable or disable clipboard
                 // this->context->get_bool(STRAUTHID_OPT_CLIPBOARD)
                 // enable or disable device redirection
@@ -800,7 +750,7 @@ struct Session {
                                     info,
                                     &this->gen,
                                     this->ini->globals.debug.mod_rdp);
-                this->back_event->set();
+                this->mod->event.obj = t->sck;
 
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front->client_info.width, this->front->client_info.height));
                 if (this->verbose){
@@ -829,9 +779,7 @@ struct Session {
                 else {
                     this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote VNC host");
                 }
-                this->back_event = new wait_obj(t->sck);
                 this->mod = new mod_vnc(t,
-                    this->back_event,
                     this->context->get(STRAUTHID_TARGET_USER),
                     this->context->get(STRAUTHID_TARGET_PASSWORD),
                     *this->front,
@@ -840,6 +788,8 @@ struct Session {
                     this->front->client_info.keylayout,
                     this->front->keymap.key_flags,
                     this->ini->globals.debug.mod_vnc);
+
+                this->mod->event.obj = t->sck;
                 this->mod->draw_event();
 //                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 if (this->verbose){

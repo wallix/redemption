@@ -32,13 +32,9 @@ struct close_mod : public internal_mod {
     Widget* button_down;
     bool closing;
 
-    close_mod(
-        wait_obj * event,
-        ModContext & context, FrontAPI & front, uint16_t width, uint16_t height)
+    close_mod(ModContext & context, FrontAPI & front, uint16_t width, uint16_t height)
             : internal_mod(front, width, height), closing(false)
     {
-        this->event = event;
-        this->event->set();
         this->button_down = 0;
 
         int win_width = 600;
@@ -225,7 +221,7 @@ struct close_mod : public internal_mod {
                         this->button_down->state = 0;
                         this->button_down->refresh(this->button_down->rect.wh());
                         this->signal = BACK_EVENT_STOP;
-                        this->event->set();
+                        this->event.set();
                     }
                 }
                 this->button_down = 0;
@@ -241,7 +237,7 @@ struct close_mod : public internal_mod {
             if (this->close_window->has_focus) {
                 this->close_window->def_proc(msg, param1, device_flags, keymap);
                 this->signal = BACK_EVENT_STOP;
-                this->event->set();
+                this->event.set();
             } else {
                 this->close_window->has_focus = 1;
             }
@@ -267,7 +263,7 @@ struct close_mod : public internal_mod {
         this->front.begin_update();
         this->screen.refresh(this->get_screen_rect().wh());
         this->front.end_update();
-        this->event->reset();
+        this->event.reset();
         return signal;
     }
 
