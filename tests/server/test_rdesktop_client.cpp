@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
             return START_WANT_STOP;
         }
     } one_shot_server;
-    Listen listener(one_shot_server, 3389, true, 20);
+    Listen listener(one_shot_server, 3389, true, 5); // 5 seconds to connect, or timeout
 
 
     LOG(LOG_INFO, "Listener closed\n");
