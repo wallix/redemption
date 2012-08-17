@@ -174,10 +174,6 @@ public:
     ~Front(){
     }
 
-    void init_mod()
-    {
-    }
-
     int server_resize(int width, int height, int bpp)
     {
         uint32_t res = 0;

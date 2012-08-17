@@ -165,22 +165,15 @@ void redemption_new_session()
     getpeername(0, (struct sockaddr *)&from, (socklen_t *)&sock_len);
     strcpy(ip_source, inet_ntoa(from.sin_addr));
 
-    try {
-        Session session(0, ip_source, &ini);
-        session.session_main_loop();
-    } catch(...) {
-    };
+    Session session(0, ip_source, &ini);
 }
 
 void redemption_main_loop()
 {
-
     init_signals();
 
-    { /* block to ensure destructor is called immediately */
-        SessionServer ss;
-        Inifile ini(CFG_PATH "/" RDPPROXY_INI);
-        int port = ini.globals.port;
-        Listen listener(ss, port);
-    }
+    SessionServer ss;
+    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
+    int port = ini.globals.port;
+    Listen listener(ss, port);
 }

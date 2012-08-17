@@ -173,83 +173,48 @@ struct Session {
     Session(int sck, const char * ip_source, Inifile * ini)
         : sck(sck), ini(ini), verbose(this->ini->globals.debug.session)
     {
-        if (this->verbose){
-            LOG(LOG_INFO, "Session::new Session(%u)", sck);
-        }
-        this->context = new ModContext(
-                KeywordsDefinitions,
-                sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword));
-        this->context->cpy(STRAUTHID_HOST, ip_source);
-
-        this->sesman = new SessionManager(*this->context
-                                         , this->ini->globals.keepalive_grace_delay
-                                         , this->ini->globals.max_tick
-                                         , this->ini->globals.internal_domain
-                                         , this->ini->globals.debug.auth);
-        this->sesman->auth_trans_t = 0;
-
-        this->mod = 0;
-
-        this->internal_state = SESSION_STATE_ENTRY;
-        this->front_event = new wait_obj(sck);
-
-        /* create these when up and running */
-        this->trans = new SocketTransport("RDP Client", sck, this->ini->globals.debug.front);
-
-        /* set non blocking */
-        int rv = 0;
-    //    rv = fcntl(this->sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
-    //    if (rv < 0){
-    //        /* 1 session_main_loop fnctl socket error */
-    //        throw 1;
-    //    }
-        int nodelay = 1;
-
-        /* SOL_TCP IPPROTO_TCP */
-        rv = setsockopt(this->sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay));
-        if (rv < 0){
-            /* 2 session_main_loop fnctl socket error */
-            throw 2;
-        }
-
-        this->front = new Front(this->trans, &this->gen, ini);
-        this->no_mod = new null_mod(*(this->front));
-        this->front->init_mod();
-        this->mod = this->no_mod;
-
-        /* module interface */
-        this->back_event = 0;
-        this->keep_alive_time = 0;
-    }
-
-
-    ~Session()
-    {
-        if (this->verbose){
-            LOG(LOG_INFO, "Session::end of Session(%u)", sck);
-        }
-        delete this->front;
-        delete this->front_event;
-        delete this->trans;
-        if (this->back_event){
-            delete this->back_event;
-        }
-        if (this->mod != this->no_mod){
-            delete this->mod;
-            this->mod = this->no_mod;
-        }
-        delete this->no_mod;
-        delete this->sesman;
-        delete this->context;
-    }
-
-    int session_main_loop()
-    {
-        if (this->verbose){
-            LOG(LOG_INFO, "Session::session_main_loop()");
-        }
-        int rv = 0;
         try {
+            int nodelay = 1;
+
+            /* SOL_TCP IPPROTO_TCP */
+            if (0 > setsockopt(this->sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay)))
+            {
+                LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
+                return;
+            }
+
+            if (this->verbose){
+                LOG(LOG_INFO, "Session::new Session(%u)", this->sck);
+            }
+            this->context = new ModContext(
+                    KeywordsDefinitions,
+                    sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword));
+            this->context->cpy(STRAUTHID_HOST, ip_source);
+
+            this->sesman = new SessionManager(*this->context
+                                             , this->ini->globals.keepalive_grace_delay
+                                             , this->ini->globals.max_tick
+                                             , this->ini->globals.internal_domain
+                                             , this->ini->globals.debug.auth);
+            this->sesman->auth_trans_t = 0;
+            this->mod = 0;
+            this->internal_state = SESSION_STATE_ENTRY;
+            this->front_event = new wait_obj(this->sck);
+
+            /* create these when up and running */
+            this->trans = new SocketTransport("RDP Client", this->sck, this->ini->globals.debug.front);
+            this->front = new Front(this->trans, &this->gen, ini);
+            this->no_mod = new null_mod(*(this->front));
+            this->mod = this->no_mod;
+
+            /* module interface */
+            this->back_event = 0;
+            this->keep_alive_time = 0;
+
+            if (this->verbose){
+                LOG(LOG_INFO, "Session::session_main_loop() starting");
+            }
+
             int previous_state = SESSION_STATE_STOP;
             while (1) {
                 int timeout = 50;
@@ -301,7 +266,6 @@ struct Session {
             this->front->disconnect();
         }
         catch(...){
-            rv = 1;
         };
         LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         this->front->stop_capture();
@@ -309,8 +273,29 @@ struct Session {
             shutdown(this->sck, 2);
             close(this->sck);
         }
-       return rv;
     }
+
+
+    ~Session()
+    {
+        if (this->verbose){
+            LOG(LOG_INFO, "Session::end of Session(%u)", sck);
+        }
+        delete this->front;
+        delete this->front_event;
+        delete this->trans;
+        if (this->back_event){
+            delete this->back_event;
+        }
+        if (this->mod != this->no_mod){
+            delete this->mod;
+            this->mod = this->no_mod;
+        }
+        delete this->no_mod;
+        delete this->sesman;
+        delete this->context;
+    }
+
 
     int step_STATE_ENTRY(const struct timeval & time_mark)
     {
@@ -672,7 +657,6 @@ struct Session {
                     LOG(LOG_INFO, "Session::Creation of new mod 'CLI parse'");
                 }
                 this->back_event = new wait_obj(-1);
-                this->front->init_mod();
                 this->mod = new cli_mod(*this->context, *(this->front),
                                         this->front->client_info,
                                         this->front->client_info.width,
@@ -690,7 +674,6 @@ struct Session {
                     LOG(LOG_INFO, "Session::Creation of new mod 'TRANSITORY'");
                 }
                 this->back_event = new wait_obj(-1);
-                this->front->init_mod();
                 this->mod = new transitory_mod(*(this->front),
                                                this->front->client_info.width,
                                                this->front->client_info.height);
@@ -714,7 +697,6 @@ struct Session {
                         if (this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                             this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection to server failed");
                         }
-                        this->front->init_mod();
                         this->mod = new close_mod(this->back_event, *this->context,
                                                   *this->front,
                                                   this->front->client_info.width,
@@ -734,7 +716,6 @@ struct Session {
                         }
                         message = this->context->get(STRAUTHID_MESSAGE);
                         button = this->context->get(STRAUTHID_TRANS_BUTTON_REFUSED);
-                        this->front->init_mod();
                         this->mod = new dialog_mod(
                                         this->back_event,
                                         *this->context,
@@ -759,7 +740,6 @@ struct Session {
                         }
                         message = this->context->get(STRAUTHID_MESSAGE);
                         button = NULL;
-                        this->front->init_mod();
                         this->mod = new dialog_mod(
                                         this->back_event,
                                         *this->context,
@@ -778,7 +758,6 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
                         }
-                        this->front->init_mod();
                         this->mod = new login_mod(
                                         this->back_event,
                                          *this->context,
@@ -794,7 +773,6 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'bouncer2'");
                         }
-                        this->front->init_mod();
                         this->mod = new bouncer2_mod(this->back_event,
                                                      *this->front,
                                                      this->front->client_info.width,
@@ -808,7 +786,6 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'test'");
                         }
-                        this->front->init_mod();
                         this->mod = new test_internal_mod(
                                         this->back_event,
                                         *this->context,
@@ -826,7 +803,6 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'test_card'");
                         }
-                        this->front->init_mod();
                         this->mod = new test_card_mod(
                                         this->back_event,
                                         *this->front,
@@ -841,7 +817,6 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'selector'");
                         }
-                        this->front->init_mod();
                         this->mod = new selector_mod(
                                         this->back_event,
                                         *this->context,
@@ -878,7 +853,6 @@ struct Session {
                     this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote X host");
                 }
                 this->back_event = new wait_obj(t->sck);
-                this->front->init_mod();
                 this->mod = new xup_mod(t, *this->context, *(this->front),
                                         this->front->client_info.width,
                                         this->front->client_info.height);
@@ -924,8 +898,6 @@ struct Session {
                 // this->context->get_bool(STRAUTHID_OPT_CLIPBOARD)
                 // enable or disable device redirection
                 // this->context->get_bool(STRAUTHID_OPT_DEVICEREDIRECTION)
-                this->front->init_mod();
-
                 const ClientInfo & info = this->front->client_info;
 
                 this->mod = new mod_rdp(t,
@@ -967,7 +939,6 @@ struct Session {
                     this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote VNC host");
                 }
                 this->back_event = new wait_obj(t->sck);
-                this->front->init_mod();
                 this->mod = new mod_vnc(t,
                     this->back_event,
                     this->context->get(STRAUTHID_TARGET_USER),
@@ -1015,14 +986,10 @@ class SessionServer : public Server
         switch (pid) {
         case 0: /* child */
         {
-            try {
-                close(incoming_sck);
-                LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
-                Inifile ini(CFG_PATH "/" RDPPROXY_INI);
-                Session session(sck, ip_source, &ini);
-                session.session_main_loop();
-            } catch (...) {
-            };
+            close(incoming_sck);
+            LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
+            Inifile ini(CFG_PATH "/" RDPPROXY_INI);
+            Session session(sck, ip_source, &ini);
             return START_WANT_STOP;
         }
         break;
