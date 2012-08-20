@@ -81,44 +81,122 @@ struct CipherMode
         BLOWFISH_ECB,
         BLOWFISH_OFB,
 
+        CAST5_CBC,
+        CAST5_CFB,
+        CAST5_ECB,
+        CAST5_OFB,
+
         DES_CBC,
+        DES_CFB,
+        DES_OFB,
         DES_ECB,
-        DES_EDE,
+
+        DES_EDE_CBC,
+        DES_EDE_ECB,
+        DES_EDE_OFB,
+        DES_EDE_CFB_64,
+
+        DES_EDE3_CBC,
+        DES_EDE3_ECB,
+        DES_EDE3_CFB_1,
+        DES_EDE3_CFB_8,
+        DES_EDE3_CFB_64,
+        DES_EDE3_OFB,
 
         RC2_CBC,
+        RC2_CFB,
         RC2_ECB,
+        RC2_OFB,
+        RC2_64_CBC,
+        RC2_40_CBC,
 
         RC4,
-        RC4_40
+        RC4_40,
+
+        AES_128_CBC,
+        AES_128_CFB,
+        AES_128_CFB1,
+        AES_128_CFB8,
+        AES_128_ECB,
+        AES_128_OFB,
+
+        AES_192_CBC,
+        AES_192_CFB,
+        AES_192_CFB1,
+        AES_192_CFB8,
+        AES_192_ECB,
+        AES_192_OFB,
+
+        AES_256_CBC,
+        AES_256_CFB,
+        AES_256_CFB1,
+        AES_256_CFB8,
+        AES_256_ECB,
+        AES_256_OFB,
     };
 
     static const EVP_CIPHER * to_evp_cipher(enum_t e)
     {
         switch (e)
         {
-            case BLOWFISH_CBC:
-                return EVP_bf_cbc();
-            case BLOWFISH_ECB:
-                return EVP_bf_ecb();
-            case BLOWFISH_OFB:
-                return EVP_bf_ofb();
+            case BLOWFISH_CBC:  return EVP_bf_cbc();
+            case BLOWFISH_ECB:  return EVP_bf_ecb();
+            case BLOWFISH_OFB:  return EVP_bf_ofb();
 
-            case DES_CBC:
-                return EVP_des_cbc();
-            case DES_ECB:
-                return EVP_des_ecb();
-            case DES_EDE:
-                return EVP_des_ede();
+            case CAST5_CBC: return EVP_cast5_cbc();
+            case CAST5_CFB: return EVP_cast5_cfb64();
+            case CAST5_ECB: return EVP_cast5_ecb();
+            case CAST5_OFB: return EVP_cast5_ofb();
 
-            case RC2_CBC:
-                return EVP_rc2_cbc();
-            case RC2_ECB:
-                return EVP_rc2_ecb();
+            case DES_CBC:   return EVP_des_cbc();
+            case DES_CFB:   return EVP_des_cfb1();
+            case DES_OFB:   return EVP_des_ofb();
+            case DES_ECB:   return EVP_des_ecb();
 
-            case RC4:
-                return EVP_rc4();
-            case RC4_40:
-                return EVP_rc4_40();
+            case DES_EDE_CBC:   return EVP_des_ede_cbc();
+            case DES_EDE_ECB:   return EVP_des_ede_ecb();
+            case DES_EDE_OFB:   return EVP_des_ede_ofb();
+            case DES_EDE_CFB_64:return EVP_des_ede_cfb64();
+
+            case DES_EDE3_CBC:   return EVP_des_ede3_cbc();
+            case DES_EDE3_ECB:   return EVP_des_ede3_ecb();
+            case DES_EDE3_CFB_1: return EVP_des_ede3_cfb1();
+            case DES_EDE3_CFB_8: return EVP_des_ede3_cfb8();
+            case DES_EDE3_CFB_64:return EVP_des_ede3_cfb64();
+            case DES_EDE3_OFB:   return EVP_des_ede3_ofb();
+
+            case RC2_CBC:   return EVP_rc2_cbc();
+            case RC2_CFB:   return EVP_rc2_cfb();
+            case RC2_ECB:   return EVP_rc2_ecb();
+            case RC2_OFB:   return EVP_rc2_ofb();
+            case RC2_64_CBC:return EVP_rc2_64_cbc();
+            case RC2_40_CBC:return EVP_rc2_40_cbc();
+
+            case RC4:   return EVP_rc4();
+            case RC4_40:return EVP_rc4_40();
+
+            case AES_128_CBC:   return EVP_aes_128_cbc();
+            case AES_128_CFB:   return EVP_aes_128_cfb();
+            case AES_128_CFB1:  return EVP_aes_128_cfb1();
+            case AES_128_CFB8:  return EVP_aes_128_cfb8();
+            case AES_128_ECB:   return EVP_aes_128_ecb();
+            case AES_128_OFB:   return EVP_aes_128_ofb();
+
+            case AES_192_CBC:   return EVP_aes_192_cbc();
+            case AES_192_CFB:   return EVP_aes_192_cfb();
+            case AES_192_CFB1:  return EVP_aes_192_cfb1();
+            case AES_192_CFB8:  return EVP_aes_192_cfb8();
+            case AES_192_ECB:   return EVP_aes_192_ecb();
+            case AES_192_OFB:   return EVP_aes_192_ofb();
+
+            case AES_256_CBC:   return EVP_aes_256_cbc();
+            case AES_256_CFB:   return EVP_aes_256_cfb();
+            case AES_256_CFB1:  return EVP_aes_256_cfb1();
+            case AES_256_CFB8:  return EVP_aes_256_cfb8();
+            case AES_256_ECB:   return EVP_aes_256_ecb();
+            case AES_256_OFB:   return EVP_aes_256_ofb();
+
+
             default:
                 return 0;
         }

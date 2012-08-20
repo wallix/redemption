@@ -50,26 +50,109 @@ void validate(boost::any& v,
     else if (s == "bf-ofb")
         mode = CipherMode::BLOWFISH_OFB;
 
+    else if (s == "cast5")
+        mode = CipherMode::CAST5_CBC;
+    else if (s == "cast5-cbc")
+        mode = CipherMode::CAST5_CBC;
+    else if (s == "cast5-cfb")
+        mode = CipherMode::CAST5_CFB;
+    else if (s == "cast5-ofb")
+        mode = CipherMode::CAST5_OFB;
+    else if (s == "cast5-ecb")
+        mode = CipherMode::CAST5_ECB;
+
     else if (s == "des")
         mode = CipherMode::DES_CBC;
     else if (s == "des-cbc")
         mode = CipherMode::DES_CBC;
+    else if (s == "des-cfb")
+        mode = CipherMode::DES_CFB;
+    else if (s == "des-ofb")
+        mode = CipherMode::DES_OFB;
     else if (s == "des-ecb")
         mode = CipherMode::DES_ECB;
-    else if (s == "des-ede")
-        mode = CipherMode::DES_EDE;
+
+    else if (s == "des3")
+        mode = CipherMode::DES_EDE3_CBC;
+    else if (s == "des3-ecb")
+        mode = CipherMode::DES_EDE3_ECB;
+    else if (s == "des-ede3-cbc")
+        mode = CipherMode::DES_EDE3_CBC;
+    else if (s == "des-ede3-ecb")
+        mode = CipherMode::DES_EDE3_ECB;
+    else if (s == "des-ede3-cfb-1")
+        mode = CipherMode::DES_EDE3_CFB_1;
+    else if (s == "des-ede3-cfb-8")
+        mode = CipherMode::DES_EDE3_CFB_8;
+    else if (s == "des-ede3-cfb-64")
+        mode = CipherMode::DES_EDE3_CFB_64;
+    else if (s == "des-ede3-ofb")
+        mode = CipherMode::DES_EDE3_OFB;
 
     else if (s == "rc2")
         mode = CipherMode::RC2_CBC;
     else if (s == "rc2-cbc")
         mode = CipherMode::RC2_CBC;
+    else if (s == "rc2-cfb")
+        mode = CipherMode::RC2_CFB;
     else if (s == "rc2-ecb")
         mode = CipherMode::RC2_ECB;
+    else if (s == "rc2-ofb")
+        mode = CipherMode::RC2_OFB;
+    else if (s == "rc2-64-cbc")
+        mode = CipherMode::RC2_64_CBC;
+    else if (s == "rc2-40-cbc")
+        mode = CipherMode::RC2_40_CBC;
 
     else if (s == "rc4")
         mode = CipherMode::RC4;
     else if (s == "rc4-40")
         mode = CipherMode::RC4_40;
+
+    else if (s == "aes-128")
+        mode = CipherMode::AES_128_CBC;
+    else if (s == "aes-128-cbc")
+        mode = CipherMode::AES_128_CBC;
+    else if (s == "aes-128-cfb")
+        mode = CipherMode::AES_128_CFB;
+    else if (s == "aes-128-cfb1")
+        mode = CipherMode::AES_128_CFB1;
+    else if (s == "aes-128-cfb8")
+        mode = CipherMode::AES_128_CFB8;
+    else if (s == "aes-128-ecb")
+        mode = CipherMode::AES_128_ECB;
+    else if (s == "aes-128-ofb")
+        mode = CipherMode::AES_128_OFB;
+
+    else if (s == "aes-192")
+        mode = CipherMode::AES_192_CBC;
+    else if (s == "aes-192-cbc")
+        mode = CipherMode::AES_192_CBC;
+    else if (s == "aes-192-cfb")
+        mode = CipherMode::AES_192_CFB;
+    else if (s == "aes-192-cfb1")
+        mode = CipherMode::AES_192_CFB1;
+    else if (s == "aes-192-cfb8")
+        mode = CipherMode::AES_192_CFB8;
+    else if (s == "aes-192-ecb")
+        mode = CipherMode::AES_192_ECB;
+    else if (s == "aes-192-ofb")
+        mode = CipherMode::AES_192_OFB;
+
+    else if (s == "aes-256")
+        mode = CipherMode::AES_256_CBC;
+    else if (s == "aes-256-cbc")
+        mode = CipherMode::AES_256_CBC;
+    else if (s == "aes-256-cfb")
+        mode = CipherMode::AES_256_CFB;
+    else if (s == "aes-256-cfb1")
+        mode = CipherMode::AES_256_CFB1;
+    else if (s == "aes-256-cfb8")
+        mode = CipherMode::AES_256_CFB8;
+    else if (s == "aes-256-ecb")
+        mode = CipherMode::AES_256_ECB;
+    else if (s == "aes-256-ofb")
+        mode = CipherMode::AES_256_OFB;
 
     v = boost::any(mode);
 }
@@ -87,9 +170,9 @@ WrmRecorderOption::WrmRecorderOption()
 , ignore_dir_for_meta_in_wrm(false)
 , input_type()
 , times_in_meta_are_false(false)
-, in_cipher_mode(CipherMode::NO_MODE)
-, in_cipher_key()
-, in_cipher_iv()
+, in_crypt_mode(CipherMode::NO_MODE)
+, in_crypt_key()
+, in_crypt_iv()
 {
     this->add_default_options();
 }
@@ -120,9 +203,60 @@ void WrmRecorderOption::add_default_options()
     ("times-in-meta-file-are-false", "")
     ("output-meta-name,m", po::value(&this->metaname), "specified name of meta file")
     ("input-type,I", po::value(&this->input_type), "accept 'mwrm' or 'wrm'")
-    ("in-cipher-key", po::value(&this->in_cipher_key), "")
-    ("in-cipher-iv", po::value(&this->in_cipher_iv), "")
-    ("in-cipher-mode", po::value(&this->in_cipher_mode), "")
+    ("in-crypt-key", po::value(&this->in_crypt_key), "")
+    ("in-crypt-iv", po::value(&this->in_crypt_iv), "")
+    ("in-crypt-mode", po::value(&this->in_crypt_mode),
+     "bf-cbc        Blowfish in CBC mode\n"
+     "bf            Alias for bf-cbc\n"
+     "bf-ecb        Blowfish in ECB mode\n"
+     "bf-ofb        Blowfish in OFB mode\n"
+     "\n"
+     "cast-cbc      CAST5 in CBC mode\n"
+     "cast          Alias for cast5-cbc\n"
+     "cast-cbc      CAST5 in CBC mode\n"
+     "cast-cfb      CAST5 in CFB mode\n"
+     "cast-ecb      CAST5 in ECB mode\n"
+     "cast-ofb      CAST5 in OFB mode\n"
+     "\n"
+     "des-cbc       DES in CBC mode\n"
+     "des           Alias for des-cbc\n"
+     "des-cfb       DES in CFB mode\n"
+     "des-ofb       DES in OFB mode\n"
+     "des-ecb       DES in ECB mode\n"
+     "\n"
+     "des-ede-cbc        Two key triple DES EDE in CBC mode\n"
+     "des-ede            Two key triple DES EDE in ECB mode\n"
+     "des-ede-cfb        Two key triple DES EDE in CFB mode\n"
+     "des-ede-ofb        Two key triple DES EDE in OFB mode\n"
+     "des-ede-ecb        Two key triple DES EDE in ECB mode\n"
+     "\n"
+     "des-ede3-cbc       Three key triple DES EDE in CBC mode\n"
+     "des-ede3-ecb       Three key triple DES EDE in ECB mode\n"
+     "des3-ede3          Alias for des-ede3-ecb\n"
+     "des3               Alias for des-ede3-cbc\n"
+     "des-ede3-cfb-1     Three key triple DES EDE in 1 bit CFB mode\n"
+     "des-ede3-cfb-8     Three key triple DES EDE in 8 bit CFB mode\n"
+     "des-ede3-cfb-64    Three key triple DES EDE in 64 bit CFB mode\n"
+     "des-ede3-ofb       Three key triple DES EDE in OFB mode\n"
+     "\n"
+     "rc2-cbc       128 bit RC2 in CBC mode\n"
+     "rc2           Alias for rc2-cbc\n"
+     "rc2-cfb       128 bit RC2 in CFB mode\n"
+     "rc2-ecb       128 bit RC2 in ECB mode\n"
+     "rc2-ofb       128 bit RC2 in OFB mode\n"
+     "rc2-64-cbc    64 bit RC2 in CBC mode\n"
+     "rc2-40-cbc    40 bit RC2 in CBC mode\n"
+     "\n"
+     "rc4           128 bit RC4\n"
+     "rc4-40        40 bit RC4\n"
+     "\n"
+     "aes-[128|192|256]-cbc     128/192/256 bit AES in CBC mode\n"
+     "aes-[128|192|256]         Alias for aes-[128|192|256]-cbc\n"
+     "aes-[128|192|256]-cfb     128/192/256 bit AES in 128 bit CFB mode\n"
+     "aes-[128|192|256]-cfb1    128/192/256 bit AES in 1 bit CFB mode\n"
+     "aes-[128|192|256]-cfb8    128/192/256 bit AES in 8 bit CFB mode\n"
+     "aes-[128|192|256]-ecb     128/192/256 bit AES in ECB mode\n"
+     "aes-[128|192|256]-ofb     128/192/256 bit AES in OFB mode\n")
     ;
 }
 
@@ -146,8 +280,8 @@ int WrmRecorderOption::notify_options()
         return IN_FILENAME_IS_EMPTY;
     }
 
-    if ((!this->in_cipher_iv.empty() || !this->in_cipher_key.empty())
-        && !this->in_cipher_mode)
+    if ((!this->in_crypt_iv.empty() || !this->in_crypt_key.empty())
+        && !this->in_crypt_mode)
         return KEY_OR_IV_WITHOUT_MODE;
 
     return SUCCESS;

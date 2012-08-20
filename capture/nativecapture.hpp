@@ -54,6 +54,8 @@
 #include "auto_buffer.hpp"
 #include "cipher_transport.hpp"
 
+#include "zlib.hpp"
+
 class NativeCapture : public RDPGraphicDevice
 {
 public:
@@ -323,14 +325,74 @@ public:
         // write screen
         {
             this->filename[this->filename_len] = '.';
-            this->filename[this->filename_len+1] = 'p';
-            this->filename[this->filename_len+2] = 'n';
-            this->filename[this->filename_len+3] = 'g';
-            this->filename[this->filename_len+4] = 0;
-            if (std::FILE* fd = std::fopen(this->filename, "w+"))
+            if (this->cipher_is_active())
             {
-                dump_png24(fd, data_drawable, width, height, rowsize);
-                fclose(fd);
+                this->filename[this->filename_len+1] = 'c';
+                this->filename[this->filename_len+2] = 't';
+                this->filename[this->filename_len+3] = 'x';
+                this->filename[this->filename_len+4] = 0;
+                int fd = ::open(this->filename, O_WRONLY|O_CREAT, 0666);
+                if (fd < 0){
+                    LOG(LOG_ERR, "Error opening context file : %s", strerror(errno));
+                    throw Error(ERR_NATIVE_CAPTURE_OPEN_FAILED);
+                }
+                /*OutFileTransport file_trans(fd);
+                OutCipherTransport context_trans(&file_trans);
+                context_trans.start(this->cipher_mode,
+                                    this->cipher_key,
+                                    this->cipher_iv);
+                context_trans.send(data_drawable, rowsize * height);*/
+                OutFileTransport file_trans(fd);
+                OutCipherTransport context_trans(&file_trans);
+                z_stream zstrm;
+                zstrm.zalloc = 0;
+                zstrm.zfree = 0;
+                zstrm.opaque = 0;
+                int ret;
+                if ((ret = deflateInit(&zstrm, Z_DEFAULT_COMPRESSION)) != Z_OK)
+                {
+                    LOG(LOG_ERR, "zlib: deflateInit: %d", ret);
+                    throw Error(ERR_NATIVE_CAPTURE_ZIP_COMPRESS);
+                }
+                ZRaiiDeflateEnd deflate_end(zstrm);
+                uint8_t buffer[8192];
+                context_trans.start(this->cipher_mode,
+                                    this->cipher_key,
+                                    this->cipher_iv);
+                zstrm.next_in = (Bytef *)data_drawable;
+                zstrm.avail_in = rowsize * height;
+                int flush = Z_FINISH;
+                do {
+                    zstrm.next_out = buffer;
+                    zstrm.avail_out = sizeof buffer;
+                    if ((ret = deflate(&zstrm, flush)) != Z_OK)
+                    {
+                        if (Z_STREAM_END != ret)
+                        {
+                            LOG(LOG_ERR, "zlib: deflate: %s", zError(ret));
+                            throw Error(ERR_NATIVE_CAPTURE_ZIP_COMPRESS);
+                        }
+                    }
+                    context_trans.send(buffer, sizeof buffer - zstrm.avail_out);
+                } while (zstrm.avail_out == 0);
+                context_trans.stop();
+            }
+            else
+            {
+                this->filename[this->filename_len+1] = 'p';
+                this->filename[this->filename_len+2] = 'n';
+                this->filename[this->filename_len+3] = 'g';
+                this->filename[this->filename_len+4] = 0;
+                if (std::FILE* fd = std::fopen(this->filename, "w+"))
+                {
+                    dump_png24(fd, data_drawable, width, height, rowsize);
+                    fclose(fd);
+                }
+                else
+                {
+                    LOG(LOG_ERR, "Error opening context file : %s", strerror(errno));
+                    throw Error(ERR_NATIVE_CAPTURE_OPEN_FAILED);
+                }
             }
             this->filename[this->filename_len] = 0;
         }
@@ -465,8 +527,9 @@ public:
 
         this->recorder.init();
         this->send_time_start_order(now);
-        fprintf(this->meta_file, "%s,%s.png %ld %ld\n",
+        fprintf(this->meta_file, "%s,%s.%s %ld %ld\n",
                 this->filename, this->filename,
+                this->cipher_is_active() ? "ctx" : "png",
                 now.tv_sec, now.tv_usec);
         this->recorder.chunk_type = RDP_UPDATE_ORDERS;
     }

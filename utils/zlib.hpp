@@ -18,23 +18,39 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__MAIN_RECORDER_LOAD_PNG_CONTEXT_HPP__)
-#define __MAIN_RECORDER_LOAD_PNG_CONTEXT_HPP__
+#if !defined(__UTILS_ZLIB_HPP__)
+#define __UTILS_ZLIB_HPP__
 
-#include "wrm_recorder.hpp"
+#include <zlib.h>
 
-inline void load_png_context(WRMRecorder& recorder, Drawable& drawable)
+class ZRaiiDeflateEnd
 {
-    if (recorder.idx_file > 1)
+    z_stream& zstrm;
+
+public:
+    ZRaiiDeflateEnd(z_stream& zstream)
+    : zstrm(zstream)
+    {}
+
+    ~ZRaiiDeflateEnd()
     {
-        recorder.redraw_consumer(&drawable);
-        recorder.load_context(
-            recorder.meta()
-            .files[recorder.idx_file - 1]
-            .png_filename.c_str()
-        );
-        recorder.redraw_consumer(0);
+        deflateEnd(&this->zstrm);
     }
-}
+};
+
+class ZRaiiInflateEnd
+{
+    z_stream& zstrm;
+
+public:
+    ZRaiiInflateEnd(z_stream& zstream)
+    : zstrm(zstream)
+    {}
+
+    ~ZRaiiInflateEnd()
+    {
+        inflateEnd(&this->zstrm);
+    }
+};
 
 #endif

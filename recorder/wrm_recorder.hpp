@@ -32,6 +32,7 @@
 #include "error.hpp"
 #include "auto_buffer.hpp"
 #include "cipher_transport.hpp"
+#include "zlib.hpp"
 
 class WRMRecorder
 {
@@ -370,22 +371,109 @@ public:
         }
     }
 
-    void load_png_context(const char * pngfilename)
+    void load_context(const char * filename)
     {
-        if (this->redrawable) {
-            pngfilename = this->get_cpath(pngfilename);
-            if (std::FILE* fd = std::fopen(pngfilename, "r"))
+        if (this->redrawable)
+        {
+            filename = this->get_cpath(filename);
+            std::FILE* fd = std::fopen(filename, "r");
+            if (0 == fd)
+            {
+                LOG(LOG_ERR, "open context screen %s: %s", filename, strerror(errno));
+                throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
+            }
+
+            if (this->cipher_is_active())
+            {
+                /*uint8_t crypt_buf[600*800*3];
+                uint8_t uncrypt_buf[sizeof(crypt_buf) + EVP_MAX_BLOCK_LENGTH];
+                CipherCryptData cipher_data(uncrypt_buf);
+                CipherCrypt cipher_crypt(CipherCrypt::DecryptConstruct(), &cipher_data);
+                cipher_crypt.start(this->cipher_mode,
+                                   this->cipher_key,
+                                   this->cipher_iv);
+                std::size_t len = fread(crypt_buf, 1, sizeof(crypt_buf), fd);
+                if (ferror(fd))
+                {
+                    LOG(LOG_ERR, "read context error : %s",
+                        strerror(ferror(fd)));
+                    throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
+                }
+                cipher_crypt.update(crypt_buf, len);
+                memcpy(this->redrawable->data, uncrypt_buf, cipher_data.size());*/
+                z_stream zstrm;
+                zstrm.zalloc = 0;
+                zstrm.zfree = 0;
+                zstrm.opaque = 0;
+                int ret;
+                if ((ret = inflateInit(&zstrm)) != Z_OK)
+                {
+                    LOG(LOG_ERR, "zlib: inflateInit: %d", ret);
+                    throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
+                }
+                ZRaiiInflateEnd infliate_end(zstrm);
+                uint8_t crypt_buf[8192];
+                uint8_t uncrypt_buf[sizeof(crypt_buf) + EVP_MAX_BLOCK_LENGTH];
+                CipherCryptData cipher_data(uncrypt_buf);
+                CipherCrypt cipher_crypt(CipherCrypt::DecryptConstruct(), &cipher_data);
+                cipher_crypt.start(this->cipher_mode,
+                                   this->cipher_key,
+                                   this->cipher_iv);
+                std::size_t len = 0;
+                int flush;
+                std::size_t pixlen = this->redrawable->height * this->redrawable->rowsize;
+                do
+                {
+                    len = fread(crypt_buf, 1, sizeof(crypt_buf), fd);
+                    if (ferror(fd))
+                    {
+                        LOG(LOG_ERR, "read context error : %s",
+                            strerror(ferror(fd)));
+                        throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
+                    }
+                    cipher_data.reset();
+                    cipher_crypt.update(crypt_buf, len);
+                    if (feof(fd))
+                    {
+                        flush = Z_FINISH;
+                        cipher_crypt.stop();
+                    }
+                    else
+                    {
+                        flush = Z_NO_FLUSH;
+                    }
+                    zstrm.avail_in = cipher_data.size();
+                    zstrm.next_in = uncrypt_buf;
+                    do
+                    {
+                        zstrm.avail_out = pixlen - zstrm.total_out;
+                        zstrm.next_out = this->redrawable->data + zstrm.total_out;
+                        ret = inflate(&zstrm, flush);
+                        if (ret != Z_OK)
+                        {
+                            if (ret == Z_STREAM_END && flush == Z_FINISH)
+                                break;
+                            LOG(LOG_ERR, "zlib: inflate: %s", zError(ret));
+                            throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
+                        }
+                    } while(zstrm.avail_out == 0);
+                    if (zstrm.avail_in != 0)
+                    {
+                        LOG(LOG_ERR, "read context error : %s",
+                            strerror(ferror(fd)));
+                        throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
+                    }
+                } while (flush != Z_FINISH);
+            }
+            else
             {
                 read_png24(fd,
                            this->redrawable->data,
                            this->redrawable->width,
                            this->redrawable->height,
                            this->redrawable->rowsize);
-                fclose(fd);
-            } else {
-                LOG(LOG_ERR, "open context screen %s: %s", pngfilename, strerror(errno));
-                throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
             }
+            fclose(fd);
         }
     }
 
@@ -506,7 +594,7 @@ public:
                 this->check_idx_wrm(this->idx_file);
                 this->next_file(this->meta().files[this->idx_file].wrm_filename.c_str());
                 --this->reader.remaining_order_count;
-                this->load_png_context(this->meta().files[this->idx_file].png_filename.c_str());
+                this->load_context(this->meta().files[this->idx_file].png_filename.c_str());
             }
             break;
             case WRMChunk::BREAKPOINT:

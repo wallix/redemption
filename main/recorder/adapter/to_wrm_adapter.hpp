@@ -42,12 +42,12 @@ public:
 
         const unsigned char * key = 0;
         const unsigned char * iv = 0;
-        if (this->_option.out_cipher_mode)
+        if (this->_option.out_crypt_mode)
         {
-            if (!this->_option.out_cipher_key.empty())
-                key = (const unsigned char *)this->_option.out_cipher_key.c_str();
-            if (!this->_option.out_cipher_iv.empty())
-                iv = (const unsigned char *)this->_option.out_cipher_iv.c_str();
+            if (!this->_option.out_crypt_key.empty())
+                key = (const unsigned char *)this->_option.out_crypt_key.c_str();
+            if (!this->_option.out_crypt_iv.empty())
+                iv = (const unsigned char *)this->_option.out_crypt_iv.c_str();
         }
 
         if (this->_option.cat_wrm) {
@@ -55,7 +55,7 @@ public:
                        this->_option.range.left.time,
                        this->_option.range.right.time,
                        metaname,
-                       this->_option.out_cipher_mode,
+                       this->_option.out_crypt_mode,
                        key, iv
                       );
         }
@@ -68,7 +68,7 @@ public:
                    this->_option.screenshot_start,
                    this->_option.screenshot_wrm,
                    metaname,
-                   this->_option.out_cipher_mode,
+                   this->_option.out_crypt_mode,
                    key, iv
                   );
         }

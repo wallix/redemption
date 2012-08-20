@@ -28,11 +28,11 @@
 #include "wrm_recorder_option.hpp"
 
 inline static int __wrm_recorder_init_meta_not_found(WRMRecorder& recorder,
-                                                     WrmRecorderOption& opt)
+                                                     const char * wrm_filename)
 {
-    std::cerr << recorder.chunk_type() << '\n'
-    << recorder.meta() << '\n'
-    << "Chunk META not found in " << opt.in_filename << std::endl;
+    std::cerr << recorder.meta() << '\n'
+    << "Chunk META not found in " << wrm_filename
+    << "\n. Chunk is " << recorder.chunk_type() << std::endl;
     return 2004;
 }
 
@@ -43,7 +43,7 @@ inline static int __wrm_recorder_init_idx_not_found(WRMRecorder& recorder,
     return 2002;
 }
 
-inline static void __wrm_recorder_init_get_good_idx(WRMRecorder& recorder,
+inline static void __wrm_recorder_init_set_good_idx(WRMRecorder& recorder,
                                                     WrmRecorderOption& opt)
 {
     if (opt.times_in_meta_are_false)
@@ -81,27 +81,29 @@ int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt, InputType::
     recorder.set_basepath(opt.base_path);
     recorder.only_filename = opt.ignore_dir_for_meta_in_wrm;
 
-    if (opt.in_cipher_mode
-        && !recorder.init_cipher(opt.in_cipher_mode,
-                                 __get_ucharp(opt.in_cipher_key),
-                                 __get_ucharp(opt.in_cipher_iv)))
+    if (opt.in_crypt_mode
+        && !recorder.init_cipher(opt.in_crypt_mode,
+                                 __get_ucharp(opt.in_crypt_key),
+                                 __get_ucharp(opt.in_crypt_iv)))
     {
-        std::cerr << "Error in cipher initialisation" << std::endl;
+        std::cerr << "Error in the initialization of the encryption" << std::endl;
         return 3000;
     }
 
     try
     {
+        const char * wrm_filename;
         switch (itype) {
             case InputType::WRM_TYPE:
-                recorder.open_wrm_only(opt.in_filename.c_str());
+                wrm_filename = opt.in_filename.c_str();
+                recorder.open_wrm_only(wrm_filename);
                 if (!recorder.selected_next_order())
                 {
                     std::cerr << opt.in_filename << " is invalid wrm file" << std::endl;
                     return 2001;
                 }
                 if (!recorder.is_meta_chunk())
-                    return __wrm_recorder_init_meta_not_found(recorder, opt);
+                    return __wrm_recorder_init_meta_not_found(recorder, wrm_filename);
                 if (!recorder.interpret_meta_chunk())
                 {
                     std::cerr << "invalid meta chunck in " << opt.in_filename << std::endl;
@@ -111,14 +113,13 @@ int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt, InputType::
                 {
                     if (opt.idx_start >= recorder.meta().files.size())
                         return __wrm_recorder_init_idx_not_found(recorder, opt);
-                    __wrm_recorder_init_get_good_idx(recorder, opt);
+                    __wrm_recorder_init_set_good_idx(recorder, opt);
                 }
                 else  if (opt.idx_start >= recorder.meta().files.size())
                     return __wrm_recorder_init_idx_not_found(recorder, opt);
                 if (opt.idx_start != recorder.idx_file)
                 {
                     recorder.next_file(recorder.meta().files[recorder.idx_file].wrm_filename.c_str());
-                    recorder.load_png_context(recorder.meta().files[recorder.idx_file].png_filename.c_str());
                 }
             break;
             case InputType::META_TYPE:
@@ -129,24 +130,17 @@ int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt, InputType::
                 }
                 if (opt.idx_start >= recorder.meta().files.size())
                     return __wrm_recorder_init_idx_not_found(recorder, opt);
-                __wrm_recorder_init_get_good_idx(recorder, opt);
-                recorder.open_wrm_only(
-                    recorder.get_cpath(
-                        recorder.meta()
-                        .files[opt.idx_start]
-                        .wrm_filename.c_str()
-                    )
+                __wrm_recorder_init_set_good_idx(recorder, opt);
+                wrm_filename = recorder.get_cpath(
+                    recorder.meta()
+                    .files[opt.idx_start]
+                    .wrm_filename.c_str()
                 );
-                if (!recorder.meta().files[opt.idx_start].png_filename.empty())
-                    recorder.load_png_context(
-                        recorder.meta()
-                        .files[opt.idx_start]
-                        .png_filename.c_str()
-                    );
+                recorder.open_wrm_only(wrm_filename);
                 if (recorder.selected_next_order() && recorder.is_meta_chunk())
                     recorder.ignore_chunks();
                 if (!recorder.is_meta_chunk())
-                    return __wrm_recorder_init_meta_not_found(recorder, opt);
+                    return __wrm_recorder_init_meta_not_found(recorder, wrm_filename);
                 break;
             default:
                 std::cerr << "Input type not found" << std::endl;

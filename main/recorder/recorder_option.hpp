@@ -40,9 +40,9 @@ struct RecorderOption
     bool cat_wrm;
     unsigned png_scale_width;
     unsigned png_scale_height;
-    CipherMode::enum_t out_cipher_mode;
-    std::string out_cipher_key;
-    std::string out_cipher_iv;
+    CipherMode::enum_t out_crypt_mode;
+    std::string out_crypt_key;
+    std::string out_crypt_iv;
 
     RecorderOption();
 
