@@ -66,6 +66,7 @@ int main(int argc, char** argv)
         std::cout << "meta v" << meta.version
         << "\nwidth: " << meta.width
         << "\nheight: " << meta.height
+        << "\ncrypt: " << meta.crypt_mode
         << "\nfiles:";
         for (uint i = 0; i != meta.files.size(); ++i){
             std::cout << "\n\t" << (i+1)

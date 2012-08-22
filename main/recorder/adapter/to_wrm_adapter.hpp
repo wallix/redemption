@@ -44,10 +44,10 @@ public:
         const unsigned char * iv = 0;
         if (this->_option.out_crypt_mode)
         {
-            if (!this->_option.out_crypt_key.empty())
-                key = (const unsigned char *)this->_option.out_crypt_key.c_str();
-            if (!this->_option.out_crypt_iv.empty())
-                iv = (const unsigned char *)this->_option.out_crypt_iv.c_str();
+            if (this->_option.out_crypt_key.size)
+                key = this->_option.out_crypt_key.data;
+            if (this->_option.out_crypt_iv.size)
+                iv = this->_option.out_crypt_iv.data;
         }
 
         if (this->_option.cat_wrm) {

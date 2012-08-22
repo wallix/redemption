@@ -41,8 +41,8 @@ struct RecorderOption
     unsigned png_scale_width;
     unsigned png_scale_height;
     CipherMode::enum_t out_crypt_mode;
-    std::string out_crypt_key;
-    std::string out_crypt_iv;
+    WrmRecorderOption::HexadecimalKey out_crypt_key;
+    WrmRecorderOption::HexadecimalIV out_crypt_iv;
 
     RecorderOption();
 
@@ -81,9 +81,10 @@ struct RecorderOption
     };
 
     enum Error {
-        SUCCESS                = WrmRecorderOption::SUCCESS,
-        IN_FILENAME_IS_EMPTY   = WrmRecorderOption::IN_FILENAME_IS_EMPTY,
-        KEY_OR_IV_WITHOUT_MODE = WrmRecorderOption::KEY_OR_IV_WITHOUT_MODE,
+        SUCCESS                 = WrmRecorderOption::SUCCESS,
+        IN_FILENAME_IS_EMPTY    = WrmRecorderOption::IN_FILENAME_IS_EMPTY,
+        UNSPECIFIED_DECRIPT_KEY = WrmRecorderOption::UNSPECIFIED_DECRIPT_KEY,
+        KEY_OR_IV_WITHOUT_MODE,
         OUT_FILENAME_IS_EMPTY
     };
 
@@ -91,6 +92,9 @@ struct RecorderOption
     {
         if (error == OUT_FILENAME_IS_EMPTY)
             return "Not output-file";
+        if (error == KEY_OR_IV_WITHOUT_MODE)
+            return "Set --out-crypt-key or --out-crypt-iv without --out-crypt-mode";
+
         return WrmRecorderOption::get_cerror(error);
     }
 

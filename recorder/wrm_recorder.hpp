@@ -187,7 +187,7 @@ public:
         else {
             if (!this->open_wrm_followed_meta(filename.c_str()))
                 throw Error(ERR_RECORDER_META_REFERENCE_WRM, errno);
-            if (this->meta().cipher_mode && !this->cipher_mode)
+            if (this->meta().crypt_mode && !this->cipher_mode)
                 throw Error(ERR_RECORDER_FILE_CRYPTED);
         }
     }
@@ -224,7 +224,7 @@ public:
             throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
         if (this->meta().files.empty())
             throw Error(ERR_RECORDER_META_REFERENCE_WRM);
-        if (this->meta().cipher_mode && !this->cipher_mode)
+        if (this->meta().crypt_mode && !this->cipher_mode)
             throw Error(ERR_RECORDER_FILE_CRYPTED);
         this->open_wrm_only(this->get_cpath(this->meta().files[0].wrm_filename.c_str()));
         ++this->idx_file;

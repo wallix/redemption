@@ -288,5 +288,7 @@ unit-test test_png_scale : tests/test_png_scale.cpp libboost_unit_test png z cry
 
 unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp libboost_unit_test z dl crypto png ;
 
+unit-test test_hexadecimal_option : tests/test_hexadecimal_option.cpp libboost_unit_test ;
+
 unit-test test_bitfu : tests/test_bitfu.cpp libboost_unit_test ;
 

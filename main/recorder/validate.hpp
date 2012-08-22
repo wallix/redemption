@@ -24,8 +24,12 @@
 #include <vector>
 #include <string>
 #include <boost/any.hpp>
-#include "range_time_point.hpp"
 #include "cipher.hpp"
+
+template<std::size_t>
+class HexadecimalOption;
+class time_point;
+class range_time_point;
 
 void validate(boost::any& v,
               const std::vector<std::string>& values,
@@ -38,5 +42,10 @@ void validate(boost::any& v,
 void validate(boost::any& v,
               const std::vector<std::string>& values,
               CipherMode::enum_t* mode, int);
+
+template<std::size_t _N>
+void validate(boost::any& v,
+              const std::vector<std::string>& values,
+              HexadecimalOption<_N>*, int);
 
 #endif

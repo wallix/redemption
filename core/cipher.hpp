@@ -245,6 +245,16 @@ public:
 
     ~CipherCrypt()
     {
+        this->clean();
+    }
+
+    const EVP_CIPHER_CTX& ctx() const
+    {
+        return this->_ctx;
+    }
+
+    void clean()
+    {
         EVP_CIPHER_CTX_cleanup(&this->_ctx);
     }
 
@@ -272,7 +282,10 @@ public:
         this->init(DecryptConstruct());
     }
 
-    CipherCryptData* data() const { return this->_data; }
+    CipherCryptData* data() const
+    {
+        return this->_data;
+    }
 
     bool start(const EVP_CIPHER * mode,
                const unsigned char* key = 0, const unsigned char* iv = 0,

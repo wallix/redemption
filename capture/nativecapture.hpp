@@ -176,8 +176,24 @@ public:
             throw Error(ERR_NATIVE_CAPTURE_OPEN_FAILED);
         }
 
-        fprintf(this->meta_file, "%d %d\n%d\n\n",
+        fprintf(this->meta_file, "%d %d\n%d",
                 this->width, this->height, e);
+        if (this->cipher_is_active())
+        {
+            if (iv)
+            {
+                fputs(" ", this->meta_file);
+                for (int i = 0, n = EVP_CIPHER_CTX_iv_length(&this->cipher_trans.ctx()); i < n ; ++i)
+                {
+                    fprintf(this->meta_file, "%x%x", iv[i] >> 4, iv[i] & 0xf);
+                }
+            }
+            else
+            {
+                fputs(" 00000000000000000000000000000000", this->meta_file);
+            }
+        }
+        fputs("\n\n", this->meta_file);
     }
 
     ~NativeCapture(){

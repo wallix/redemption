@@ -71,30 +71,45 @@ inline static void __wrm_recorder_init_set_good_idx(WRMRecorder& recorder,
     }
 }
 
-inline const unsigned char * __get_ucharp(const std::string& s)
+inline static bool __wrm_recorder_init_init_crypt(WRMRecorder& recorder,
+                                                  WrmRecorderOption& opt)
 {
-    return s.empty() ? 0 : (const unsigned char *)s.c_str();
+    if (opt.in_crypt_key.size)
+    {
+        if (!opt.in_crypt_iv.size)
+        {
+            opt.in_crypt_iv.size = sizeof(opt.in_crypt_iv.data);
+            memcpy(opt.in_crypt_iv.data,
+                   recorder.meta().crypt_iv,
+                   sizeof(opt.in_crypt_iv.data));
+        }
+        if (!recorder.init_cipher(
+            (CipherMode::enum_t)(opt.in_crypt_mode
+            ? recorder.meta().crypt_mode
+            : 0),
+            opt.in_crypt_key.data,
+            opt.in_crypt_iv.size ? opt.in_crypt_iv.data : 0))
+        {
+            std::cerr << "Error in the initialization of the encryption" << std::endl;
+            return false;
+        }
+    }
+    return true;
 }
+
 
 int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt, InputType::enum_t itype)
 {
     recorder.set_basepath(opt.base_path);
     recorder.only_filename = opt.ignore_dir_for_meta_in_wrm;
 
-    if (opt.in_crypt_mode
-        && !recorder.init_cipher(opt.in_crypt_mode,
-                                 __get_ucharp(opt.in_crypt_key),
-                                 __get_ucharp(opt.in_crypt_iv)))
-    {
-        std::cerr << "Error in the initialization of the encryption" << std::endl;
-        return 3000;
-    }
-
     try
     {
         const char * wrm_filename;
         switch (itype) {
             case InputType::WRM_TYPE:
+                if (!__wrm_recorder_init_init_crypt(recorder, opt))
+                    return 3000;
                 wrm_filename = opt.in_filename.c_str();
                 recorder.open_wrm_only(wrm_filename);
                 if (!recorder.selected_next_order())
@@ -136,7 +151,8 @@ int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt, InputType::
                     .files[opt.idx_start]
                     .wrm_filename.c_str()
                 );
-                recorder.open_wrm_only(wrm_filename);
+                if (!__wrm_recorder_init_init_crypt(recorder, opt))
+                    return 3000;                recorder.open_wrm_only(wrm_filename);
                 if (recorder.selected_next_order() && recorder.is_meta_chunk())
                     recorder.ignore_chunks();
                 if (!recorder.is_meta_chunk())

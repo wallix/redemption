@@ -43,7 +43,14 @@ public:
     }
 
     ~OutCipherTransport()
-    {}
+    {
+        this->cipher_crypt.clean();
+    }
+
+    const EVP_CIPHER_CTX& ctx() const
+    {
+        return this->cipher_crypt.ctx();
+    }
 
     void reset()
     {
@@ -64,8 +71,10 @@ public:
         {
             if (!cipher_data.empty())
                 this->_send_data();
+            this->cipher_crypt.clean();
             return true;
         }
+        this->cipher_crypt.clean();
         return false;
     }
 
@@ -159,6 +168,12 @@ public:
 
     ~InCipherTransport()
     {
+        this->cipher_crypt.clean();
+    }
+
+    const EVP_CIPHER_CTX& ctx() const
+    {
+        return this->cipher_crypt.ctx();
     }
 
     void reset()
@@ -180,12 +195,14 @@ public:
 
     bool stop()
     {
+        bool ret = true;
         if (this->status_in == 0)
         {
             this->cipher_data.reset(this->uncrypt.data);
-            return this->cipher_crypt.stop();
+            ret = this->cipher_crypt.stop();
         }
-        return true;
+        this->cipher_crypt.clean();
+        return ret;
     }
 
     virtual void recv(char ** pbuffer, size_t len) throw (Error)

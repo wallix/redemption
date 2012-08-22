@@ -68,7 +68,8 @@ struct DataMetaFile
     uint16_t version;
     uint16_t width;
     uint16_t height;
-    unsigned  cipher_mode;
+    unsigned  crypt_mode;
+    unsigned char crypt_iv[16];
 
     bool loaded;
 
@@ -77,15 +78,50 @@ struct DataMetaFile
     , version(0)
     , width(0)
     , height(0)
-    , cipher_mode(0)
+    , crypt_mode(0)
+    , crypt_iv()
     , loaded(false)
     {}
 };
 
+inline bool __meta_get_c_hex(std::istream& is, int& c)
+{
+    c = is.get();
+    if (!is.good())
+        return false;
+    if (!(('A' <= c && c <= 'Z') || ('0' <= c && c <= '9')))
+        return false;
+
+    if ('A' <= c && c <= 'Z')
+        c -= 'A' - 0xa;
+    else
+        c -= '0';
+    return true;
+}
+
 inline std::istream& operator>>(std::istream& is, DataMetaFile& data)
 {
     data.files.clear();
-    is >> data.width >> data.height >> data.cipher_mode;
+    is >> data.width >> data.height >> data.crypt_mode;
+    if (data.crypt_mode)
+    {
+        std::ws(is);
+        int c;
+        std::size_t n = 0;
+        for (; n < 16; ++n)
+        {
+            if (!__meta_get_c_hex(is, c))
+                break;
+            data.crypt_iv[n] = c << 4;
+            if (!__meta_get_c_hex(is, c))
+                break;
+            data.crypt_iv[n] += c;
+        }
+        for (; n < 16; ++n)
+            data.crypt_iv[n] = 0;
+    }
+    else
+        is.ignore(-1u, '\n');
 
     std::string line;
     while (std::getline(is, line))
@@ -118,7 +154,7 @@ inline std::istream& operator>>(std::istream& is, DataMetaFile& data)
 
 /**
 width height
-cipher_mode
+crypt_mode
 
 wrm_filename,[png_filename] [start_sec [start_usec]]
 */
@@ -134,7 +170,17 @@ inline bool read_meta_file(DataMetaFile& data, const char * filename)
 inline std::ostream& operator<<(std::ostream& os, DataMetaFile& data)
 {
     os << data.width << ' ' << data.height << "\n"
-    << data.cipher_mode << "\n\n";
+    << data.crypt_mode;
+    if (data.crypt_mode)
+    {
+        os << ' ';
+        for (std::size_t n = 0; n < 16; ++n)
+        {
+            os << "0123456789ABCDEF"[data.crypt_iv[n] >> 4]
+            << "0123456789ABCDEF"[data.crypt_iv[n] & 0xf];
+        }
+    }
+    os << "\n\n";
     for (std::size_t i = 0, last = data.files.size(); i < last; ++i)
     {
         DataFile& info = data.files[i];

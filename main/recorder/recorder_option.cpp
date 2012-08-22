@@ -57,6 +57,10 @@ int RecorderOption::notify_options()
         return OUT_FILENAME_IS_EMPTY;
     }
 
+    if ((this->out_crypt_iv.size || this->out_crypt_key.size)
+        && !this->out_crypt_mode)
+        return KEY_OR_IV_WITHOUT_MODE;
+
     return SUCCESS;
 }
 
@@ -64,10 +68,6 @@ int RecorderOption::normalize_options()
 {
     if (int err = WrmRecorderOption::normalize_options())
         return err;
-
-    if ((!this->out_crypt_iv.empty() || !this->out_crypt_key.empty())
-        && !this->out_crypt_mode)
-        return KEY_OR_IV_WITHOUT_MODE;
 
     po::variables_map::iterator end = this->options.end();
 

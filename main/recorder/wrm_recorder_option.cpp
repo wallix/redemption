@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdexcept>
 
 #include <boost/program_options/parsers.hpp>
 
@@ -29,6 +30,22 @@ void validate(boost::any& v,
     // one string, it's an error, and exception will be thrown.
     const std::string& s = po::validators::get_single_string(values);
     v = boost::any(time_point(s));
+}
+
+template<std::size_t _N>
+void validate(boost::any& v,
+              const std::vector<std::string>& values,
+              HexadecimalOption<_N>* /*binary_string*/, int)
+{
+    // Make sure no previous assignment to 'a' was made.
+    po::validators::check_first_occurrence(v);
+    // Extract the first string from 'values'. If there is more than
+    // one string, it's an error, and exception will be thrown.
+    const std::string& s = po::validators::get_single_string(values);
+    HexadecimalOption<_N> bs;
+    if (!bs.parse(s))
+        throw po::validation_error(po::validation_error::invalid_option_value);
+    v = boost::any(bs);
 }
 
 void validate(boost::any& v,
@@ -203,8 +220,8 @@ void WrmRecorderOption::add_default_options()
     ("times-in-meta-file-are-false", "")
     ("output-meta-name,m", po::value(&this->metaname), "specified name of meta file")
     ("input-type,I", po::value(&this->input_type), "accept 'mwrm' or 'wrm'")
-    ("in-crypt-key", po::value(&this->in_crypt_key), "")
-    ("in-crypt-iv", po::value(&this->in_crypt_iv), "")
+    ("in-crypt-key", po::value(&this->in_crypt_key), "key in hexadecimal base")
+    ("in-crypt-iv", po::value(&this->in_crypt_iv), "IV in hexadecimal base")
     ("in-crypt-mode", po::value(&this->in_crypt_mode),
      "bf-cbc        Blowfish in CBC mode\n"
      "bf            Alias for bf-cbc\n"
@@ -280,9 +297,9 @@ int WrmRecorderOption::notify_options()
         return IN_FILENAME_IS_EMPTY;
     }
 
-    if ((!this->in_crypt_iv.empty() || !this->in_crypt_key.empty())
-        && !this->in_crypt_mode)
-        return KEY_OR_IV_WITHOUT_MODE;
+    if (this->in_crypt_mode && !this->in_crypt_key.size){
+        return UNSPECIFIED_DECRIPT_KEY;
+    }
 
     return SUCCESS;
 }
