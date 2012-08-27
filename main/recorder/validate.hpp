@@ -41,6 +41,10 @@ void validate(boost::any& v,
 
 void validate(boost::any& v,
               const std::vector<std::string>& values,
+              const EVP_CIPHER** mode, int);
+
+void validate(boost::any& v,
+              const std::vector<std::string>& values,
               CipherMode::enum_t* mode, int);
 
 template<std::size_t _N>

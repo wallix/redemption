@@ -23,6 +23,114 @@
 
 #include <cstddef>
 #include <openssl/evp.h>
+#include <string.h>
+
+struct CipherInfo {
+private:
+    unsigned char _key[EVP_MAX_KEY_LENGTH];
+    unsigned char _iv[EVP_MAX_IV_LENGTH];
+    const EVP_CIPHER * _context;
+
+public:
+    CipherInfo(EVP_CIPHER * context = 0)
+    : _key()
+    , _iv()
+    , _context(context)
+    {}
+
+    CipherInfo(unsigned char * key, std::size_t len_key,
+               unsigned char * iv, std::size_t len_iv,
+               EVP_CIPHER * context = 0)
+    : _key()
+    , _iv()
+    , _context(context)
+    {
+        this->set_key(key, len_key);
+        this->set_iv(iv, len_iv);
+    }
+
+    void set_key(unsigned char * key, std::size_t len_key)
+    {
+        memcpy(this->_key, key, len_key);
+    }
+
+    void set_iv(unsigned char * iv, std::size_t len_iv)
+    {
+        memcpy(this->_iv, iv, len_iv);
+    }
+
+    void set_key_zero_after(std::size_t pos)
+    {
+        bzero(this->_key + pos, this->key_max_size() - pos);
+    }
+
+    void set_iv_zero_after(std::size_t pos)
+    {
+        bzero(this->_iv + pos, this->iv_max_size() - pos);
+    }
+
+    void set_full_key(unsigned char * key, std::size_t len_key)
+    {
+        this->set_key(key, len_key);
+        this->set_key_zero_after(len_key);
+    }
+
+    void set_full_iv(unsigned char * iv, std::size_t len_iv)
+    {
+        this->set_iv(iv, len_iv);
+        this->set_iv_zero_after(len_iv);
+    }
+
+    void set_context(const EVP_CIPHER * context)
+    {
+        this->_context = context;
+    }
+
+    unsigned char * key()
+    {
+        return this->_key;
+    }
+
+    unsigned char * iv()
+    {
+        return this->_iv;
+    }
+
+    const unsigned char * key() const
+    {
+        return this->_key;
+    }
+
+    const unsigned char * iv() const
+    {
+        return this->_iv;
+    }
+
+    const EVP_CIPHER * context() const
+    {
+        return this->_context;
+    }
+
+    std::size_t key_max_size() const
+    {
+        return sizeof(this->_key);
+    }
+
+    std::size_t iv_max_size() const
+    {
+        return sizeof(this->_iv);
+    }
+
+    std::size_t key_len() const
+    {
+        return EVP_CIPHER_key_length(this->_context);
+    }
+
+    std::size_t iv_len() const
+    {
+        return EVP_CIPHER_iv_length(this->_context);
+    }
+};
 
 struct CipherCryptData {
     unsigned char * data;

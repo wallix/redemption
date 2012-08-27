@@ -48,14 +48,14 @@ void validate(boost::any& v,
     v = boost::any(bs);
 }
 
-void validate(boost::any& v,
-              const std::vector<std::string>& values,
-              CipherMode::enum_t* /*mode*/, int)
+CipherMode::enum_t get_enum_mode(boost::any& v,
+                                 const std::vector<std::string>& values)
 {
     po::validators::check_first_occurrence(v);
     // Extract the first string from 'values'. If there is more than
     // one string, it's an error, and exception will be thrown.
     const std::string& s = po::validators::get_single_string(values);
+
     CipherMode::enum_t mode = CipherMode::NO_MODE;
 
     if (s == "bf")
@@ -171,7 +171,24 @@ void validate(boost::any& v,
     else if (s == "aes-256-ofb")
         mode = CipherMode::AES_256_OFB;
 
-    v = boost::any(mode);
+    if (!mode)
+        throw po::validation_error(po::validation_error::invalid_option_value);
+
+    return mode;
+}
+
+void validate(boost::any& v,
+              const std::vector<std::string>& values,
+              CipherMode::enum_t* /*mode*/, int)
+{
+    v = boost::any(get_enum_mode(v, values));
+}
+
+void validate(boost::any& v,
+              const std::vector<std::string>& values,
+              const EVP_CIPHER** /*mode*/, int)
+{
+    v = boost::any(CipherMode::to_evp_cipher(get_enum_mode(v, values)));
 }
 
 WrmRecorderOption::WrmRecorderOption()
@@ -187,9 +204,10 @@ WrmRecorderOption::WrmRecorderOption()
 , ignore_dir_for_meta_in_wrm(false)
 , input_type()
 , times_in_meta_are_false(false)
-, in_crypt_mode(CipherMode::NO_MODE)
+, in_crypt_mode(0)
 , in_crypt_key()
 , in_crypt_iv()
+, in_cipher_info()
 {
     this->add_default_options();
 }
@@ -297,8 +315,15 @@ int WrmRecorderOption::notify_options()
         return IN_FILENAME_IS_EMPTY;
     }
 
-    if (this->in_crypt_mode && !this->in_crypt_key.size){
-        return UNSPECIFIED_DECRIPT_KEY;
+    if (this->in_crypt_mode)
+    {
+        if (!this->in_crypt_key.size)
+            return UNSPECIFIED_DECRIPT_KEY;
+        this->in_cipher_info.set_context(this->in_crypt_mode);
+        if (this->in_crypt_key.size > this->in_cipher_info.key_len())
+            return INPUT_KEY_OVERLOAD;
+        if (this->in_crypt_iv.size > this->in_cipher_info.iv_len())
+            return INPUT_IV_OVERLOAD;
     }
 
     return SUCCESS;
@@ -333,7 +358,7 @@ int WrmRecorderOption::prepare(InputType::enum_t& itype)
 {
     int error = this->notify_options();
     if (error){
-        std::cerr << this->get_cerror(error) << '\n'<< this->desc;
+        std::cerr << this->get_cerror(error) << std::endl;
         return error;
     }
 
@@ -341,7 +366,7 @@ int WrmRecorderOption::prepare(InputType::enum_t& itype)
     if (itype == InputType::NOT_FOUND){
         std::cerr
         << "Incorrect input-type, "
-        << this->desc.find("input-type", false).description() << '\n';
+        << this->desc.find("input-type", false).description() << std::endl;
         return 1000;
     }
 

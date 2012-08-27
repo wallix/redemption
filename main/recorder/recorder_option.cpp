@@ -19,6 +19,7 @@ RecorderOption::RecorderOption()
 , out_crypt_mode(CipherMode::NO_MODE)
 , out_crypt_key()
 , out_crypt_iv()
+, out_cipher_info()
 {
     this->add_default_options();
 }
@@ -59,7 +60,22 @@ int RecorderOption::notify_options()
 
     if ((this->out_crypt_iv.size || this->out_crypt_key.size)
         && !this->out_crypt_mode)
-        return KEY_OR_IV_WITHOUT_MODE;
+        return ENCRIPT_KEY_OR_IV_WITHOUT_MODE;
+
+    if (this->out_crypt_mode && !this->out_crypt_key.size){
+        return UNSPECIFIED_ENCRIPT_KEY;
+    }
+
+    if (this->out_crypt_mode)
+    {
+        if (!this->out_crypt_key.size)
+            return UNSPECIFIED_DECRIPT_KEY;
+        this->out_cipher_info.set_context(CipherMode::to_evp_cipher(this->out_crypt_mode));
+        if (this->out_crypt_key.size > this->out_cipher_info.key_len())
+            return OUTPUT_KEY_OVERLOAD;
+        if (this->out_crypt_iv.size > this->out_cipher_info.iv_len())
+            return OUTPUT_IV_OVERLOAD;
+    }
 
     return SUCCESS;
 }
@@ -74,11 +90,11 @@ int RecorderOption::normalize_options()
     {
         typedef std::pair<const char *, bool&> pair_type;
         pair_type p[] = {
-            pair_type("screenshot-wrm", this->screenshot_wrm),
-            pair_type("screenshot-start", this->screenshot_start),
+            pair_type("screenshot-wrm",     this->screenshot_wrm),
+            pair_type("screenshot-start",   this->screenshot_start),
             pair_type("no-screenshot-stop", this->no_screenshot_stop),
-            pair_type("screenshot-all", this->screenshot_all),
-            pair_type("concat-wrm", this->cat_wrm),
+            pair_type("screenshot-all",     this->screenshot_all),
+            pair_type("concat-wrm",         this->cat_wrm),
         };
         for (std::size_t n = 0; n < sizeof(p)/sizeof(p[0]); ++n) {
             if (this->options.find(p[n].first) != end)
