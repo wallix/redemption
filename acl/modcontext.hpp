@@ -52,6 +52,63 @@ enum {
 // (it could also become the role of the initial null module that would allow
 // to simplify further session code)
 
+static ProtocolKeyword KeywordsDefinitions[] = {
+    {STRAUTHID_OPT_MOVIE_PATH, TYPE_TEXT, "!"},
+    {STRAUTHID_AUTH_ERROR_MESSAGE, TYPE_TEXT, "!"},
+    {STRAUTHID_TARGET_USER, TYPE_TEXT, "!"},
+    {STRAUTHID_TARGET_PASSWORD, TYPE_TEXT, "!"},
+    {STRAUTHID_HOST, TYPE_TEXT, "!"},
+    {STRAUTHID_PASSWORD, TYPE_TEXT, "!"},
+    {STRAUTHID_AUTH_USER, TYPE_TEXT, "!"},
+    {STRAUTHID_TARGET_DEVICE, TYPE_TEXT, "!"},
+    {STRAUTHID_TARGET_PORT, TYPE_INTEGER, "!3389"},
+    {STRAUTHID_TARGET_PROTOCOL, TYPE_TEXT, "!RDP"},
+    {STRAUTHID_END_TIME, TYPE_TEXT, "!-"},
+    {STRAUTHID_SELECTOR_GROUP_FILTER, TYPE_TEXT, "!"},
+    {STRAUTHID_SELECTOR_DEVICE_FILTER, TYPE_TEXT, "!"},
+    {STRAUTHID_SELECTOR_LINES_PER_PAGE, TYPE_TEXT, "!20"},
+    {STRAUTHID_SELECTOR_NUMBER_OF_PAGES, TYPE_TEXT, "!"},
+    {STRAUTHID_SELECTOR_CURRENT_PAGE, TYPE_TEXT, "!1"},
+    {STRAUTHID_OPT_MOVIE, TYPE_BOOLEAN, "!False"},
+    {STRAUTHID_OPT_CLIPBOARD, TYPE_BOOLEAN, "!True"},
+    {STRAUTHID_OPT_DEVICEREDIRECTION, TYPE_BOOLEAN, "!True"},
+    {STRAUTHID_MESSAGE, TYPE_TEXT, "!"},
+    {STRAUTHID_DISPLAY_MESSAGE, TYPE_TEXT, "!"},
+    {STRAUTHID_ACCEPT_MESSAGE, TYPE_TEXT, "!"},
+    {STRAUTHID_OPT_WIDTH, TYPE_INTEGER, "!800"},
+    {STRAUTHID_OPT_HEIGHT, TYPE_INTEGER, "!600"},
+    {STRAUTHID_OPT_BPP, TYPE_INTEGER, "!24"},
+    {STRAUTHID_PROXY_TYPE, TYPE_TEXT, "!RDP"},
+    {STRAUTHID_AUTHENTICATED, TYPE_BOOLEAN, "!False"},
+    {STRAUTHID_SELECTOR, TYPE_BOOLEAN, "!False"},
+    {STRAUTHID_KEEPALIVE, TYPE_BOOLEAN, "ASK"},
+    {STRAUTHID_END_DATE_CNX, TYPE_INTEGER, "!0"},
+    {STRAUTHID_OPT_BITRATE, TYPE_INTEGER, "!40000"},
+    {STRAUTHID_OPT_FRAMERATE, TYPE_INTEGER, "!5"},
+    {STRAUTHID_OPT_QSCALE, TYPE_INTEGER, "!15"},
+    {STRAUTHID_OPT_CODEC_ID, TYPE_TEXT, "!flv"},
+    {STRAUTHID_REJECTED, TYPE_TEXT, "!Connection refused by authentifier."},
+    // password or AuthenticationInteractive
+    {"authentication_challenge", TYPE_TEXT, "!password"},
+    // Translation
+    {STRAUTHID_TRANS_BUTTON_OK, TYPE_TEXT, "!OK"},
+    {STRAUTHID_TRANS_BUTTON_CANCEL, TYPE_TEXT, "!Cancel"},
+    {STRAUTHID_TRANS_BUTTON_HELP, TYPE_TEXT, "!Help"},
+    {STRAUTHID_TRANS_BUTTON_CLOSE, TYPE_TEXT, "!Close"},
+    {STRAUTHID_TRANS_BUTTON_REFUSED, TYPE_TEXT, "!Refused"},
+    {STRAUTHID_TRANS_LOGIN, TYPE_TEXT, "!login"},
+    {STRAUTHID_TRANS_USERNAME, TYPE_TEXT, "!username"},
+    {STRAUTHID_TRANS_PASSWORD, TYPE_TEXT, "!password"},
+    {STRAUTHID_TRANS_TARGET, TYPE_TEXT, "!target"},
+    {STRAUTHID_TRANS_DIAGNOSTIC, TYPE_TEXT, "!diagnostic"},
+    {STRAUTHID_TRANS_CONNECTION_CLOSED, TYPE_TEXT, "!Connection closed"},
+    {STRAUTHID_TRANS_HELP_MESSAGE, TYPE_TEXT, "!Help message"},
+    {STRAUTHID_MODE_CONSOLE, TYPE_TEXT, "!allow"},
+    {STRAUTHID_VIDEO_QUALITY, TYPE_TEXT, "!medium"},
+    {STRAUTHID_TIMEZONE, TYPE_INTEGER, "!-3600"},
+};
+
+
 struct ModContext : public Dico {
     unsigned selector_focus;
     enum {
@@ -67,9 +124,11 @@ struct ModContext : public Dico {
     } nextmod;
 
     char movie[1024];
+
     public:
-    ModContext(ProtocolKeyword * KeywordsDefinitions, unsigned nbkeywords) :
-        Dico(KeywordsDefinitions, nbkeywords), nextmod(INTERNAL_NONE)
+    ModContext() 
+        : Dico(KeywordsDefinitions, sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword))
+        , nextmod(INTERNAL_NONE)
     {
         this->selector_focus = 0;
     }
