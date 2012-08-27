@@ -62,6 +62,7 @@ class Stream {
     }
 
     bool check_rem(unsigned n) {
+    // returns true if there is enough data available to read n bytes
         bool res = (this->p + n) <= this->end;
         return res;
     }
@@ -1460,6 +1461,12 @@ class SubStream : public Stream {
         this->p = this->data = stream.data + offset;
         this->capacity = stream.capacity - offset;
         this->end = stream.end;
+    }
+
+    void resize(const Stream & stream, size_t new_size){
+        this->data = this->p = stream.p;
+        this->capacity = new_size;
+        this->end = this->data + new_size;
     }
 
     virtual ~SubStream() {}

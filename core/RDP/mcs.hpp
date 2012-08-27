@@ -130,12 +130,16 @@ namespace MCS
         {
             switch (encoding){
             case PER_ENCODING:
-                TODO("Check we have at least 1 byte available")
+                if (!stream.check_rem(1)){
+                    throw Error(ERR_MCS);
+                }
                 this->type = (stream.data[0] >> 2);
             break;
             default:
             case BER_ENCODING:
-                TODO("Check we have at least 2 bytes available")
+                if (!stream.check_rem(2)){
+                    throw Error(ERR_MCS);
+                }
                 TODO("getting to the type this way should works in our restricted use case,"
                      " but it would be nicer to perform actual BER TAG value decoding")
                 this->type = stream.data[1];
@@ -385,10 +389,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
 
-            TODO("Factorize this")
-            this->payload.data = this->payload.p = stream.p;
-            this->payload.capacity = this->payload_size;
-            this->payload.end = this->payload.data + this->payload_size;
+            this->payload.resize(stream, this->payload_size);
 
             TODO("Octets below are part of GCC Conference User Data")
 //            stream.in_skip_bytes(23);
@@ -604,10 +605,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
 
-            TODO("Factorize this")
-            this->payload.data = this->payload.p = stream.p;
-            this->payload.capacity = this->payload_size;
-            this->payload.end = this->payload.data + this->payload_size;
+            this->payload.resize(stream, this->payload_size);
 
             TODO("Octets below are part of GCC Conference User Data")
 //            stream.in_skip_bytes(23);
@@ -1856,11 +1854,7 @@ namespace MCS
             // length of payload, per_encoded
             this->payload_size = stream.in_per_length();
             this->_header_size = stream.p - stream.data;
-
-            TODO("Factorize this")
-            this->payload.data = this->payload.p = stream.p;
-            this->payload.capacity = this->payload_size;
-            this->payload.end = this->payload.data + this->payload_size;
+            this->payload.resize(stream, this->payload_size);
         }
     };
 
@@ -1930,10 +1924,7 @@ namespace MCS
             this->payload_size = stream.in_per_length();
             this->_header_size = stream.p - stream.data;
 
-            TODO("Factorize this")
-            this->payload.data = this->payload.p = stream.p;
-            this->payload.capacity = this->payload_size;
-            this->payload.end = this->payload.data + this->payload_size;
+            this->payload.resize(stream, this->payload_size);
 
         }
     };
