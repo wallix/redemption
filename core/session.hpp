@@ -111,6 +111,8 @@ struct Session {
     SessionManager * sesman;
     UdevRandom gen;
 
+    TODO("We should probably pass in a Transport object instead of a socket (for testing purposes)."
+         "But if so we must be able to wait on Transport objects instead of sockets in a sane way")
     Session(int sck, const char * ip_source, Inifile * ini)
         : sck(sck), ini(ini), verbose(this->ini->globals.debug.session)
     {
@@ -189,8 +191,7 @@ struct Session {
                 }
                 int num = select(max + 1, &rfds, &wfds, 0, &timeout);
                 
-                if (FD_ISSET(this->sck, &rfds) 
-                && this->front_event->is_set()) {
+                if (this->front_event->is_set(rfds)) {
                     try {
                         this->front->incoming(*this->mod);
                     }
@@ -212,13 +213,11 @@ struct Session {
                     break;
                     case SESSION_STATE_WAITING_FOR_NEXT_MODULE:
                     {
-                        if (this->sesman->auth_event 
-                        && FD_ISSET(this->sesman->auth_event->obj, &rfds) 
-                        && this->sesman->event()){
+                        if (this->sesman->event(rfds)){
                             this->sesman->receive_next_module();
-                            this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Failed to connect to remote server");
+
                             this->session_setup_mod(MCTX_STATUS_TRANSITORY, this->context);
-                            this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed");
+
                             this->mod->event.set();
                             this->internal_state = SESSION_STATE_RUNNING;
                         }
@@ -226,11 +225,12 @@ struct Session {
                     break;
                     case SESSION_STATE_WAITING_FOR_CONTEXT:
                     {
-                        if (this->sesman->auth_event 
-                        && FD_ISSET(this->sesman->auth_event->obj, &rfds) 
-                        && this->sesman->event()){
+                        if (this->sesman->event(rfds)){
                             this->sesman->receive_next_module();
+
+                            TODO("can be unified with case above, only difference is that setup_mod won't change module, but reenter current one")
                             this->mod->refresh_context(*this->context);
+
                             this->mod->event.set();
                             this->internal_state = SESSION_STATE_RUNNING;
                         }
@@ -243,12 +243,12 @@ struct Session {
 
                         TODO(" this should use the WAIT_FOR_CONTEXT state or some race conditon may cause mayhem")
                         if (this->sesman->close_on_timestamp(timestamp)
-                        || !this->sesman->keep_alive_or_inactivity(this->keep_alive_time, timestamp, this->trans)){
+                        || !this->sesman->keep_alive_or_inactivity(rfds, this->keep_alive_time, timestamp, this->trans)){
                             this->internal_state = SESSION_STATE_STOP;
                             this->context->nextmod = ModContext::INTERNAL_CLOSE;
                             this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context);
                             this->keep_alive_time = 0;
-                            TODO(" move that to sesman (to hide implementation details)")
+                            TODO(" move that to sesman ? (to hide implementation details)")
                             if (this->sesman->auth_event){
                                 delete this->sesman->auth_event;
                                 this->sesman->auth_event = 0;
@@ -260,7 +260,7 @@ struct Session {
                         // data incoming from server module
                         TODO("We should also check on FD descriptor, or there is some risk to read even if there is no data available")
                         if (this->front->up_and_running 
-                        &&  this->mod->event.is_set()){
+                        &&  this->mod->event.is_set(rfds)){
                             this->mod->event.reset();
                             if (this->verbose){
                                 LOG(LOG_INFO, "Session::back_event fired");
@@ -384,7 +384,7 @@ struct Session {
                     break;
                     case SESSION_STATE_CLOSE_CONNECTION:
                     {
-                        if (this->mod->event.is_set()) {
+                        if (this->mod->event.is_set(rfds)) {
                             this->internal_state = SESSION_STATE_STOP;
                         }
                     }

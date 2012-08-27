@@ -14,13 +14,13 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Copyright (C) Wallix 2010-2012
+   Author(s): Christophe Grosjean
 
 */
 
-#if !defined(__MODCONTEXT_HPP__)
-#define __MODCONTEXT_HPP__
+#if !defined(__ACL_MODCONTEXT_HPP__)
+#define __ACL_MODCONTEXT_HPP__
 
 #include "config.hpp"
 #include "log.hpp"
@@ -52,6 +52,7 @@ enum {
 // (it could also become the role of the initial null module that would allow
 // to simplify further session code)
 
+TODO("This should be initialized in constructor")
 static ProtocolKeyword KeywordsDefinitions[] = {
     {STRAUTHID_OPT_MOVIE_PATH, TYPE_TEXT, "!"},
     {STRAUTHID_AUTH_ERROR_MESSAGE, TYPE_TEXT, "!"},

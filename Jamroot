@@ -236,7 +236,17 @@ unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w200
 
 unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp libboost_unit_test ini_config openssl crypto d3des z dl libboost_program_options ;
 
-unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp libboost_unit_test ini_config libboost_program_options ;
+unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp libboost_unit_test ini_config libboost_program_options 
+        widget
+
+        d3des
+
+        openssl
+        crypto
+        z
+        dl
+        png
+;
 
 
 unit-test test_capability_activate : tests/capabilities/activate.cpp libboost_unit_test ini_config z dl libboost_program_options ;

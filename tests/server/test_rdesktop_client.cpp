@@ -36,6 +36,9 @@
 #include "log.hpp"
 #include "constants.hpp"
 #include "listen.hpp"
+#include "ssl_calls.hpp"
+#include "config.hpp"
+#include "session.hpp"
 
 BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 {
@@ -62,8 +65,10 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
             return START_WANT_STOP;
         }
     } one_shot_server;
-    Listen listener(one_shot_server, 3389, true, 25); // 25 seconds to connect, or timeout
+    Listen listener(one_shot_server, 3389, true, 5); // 25 seconds to connect, or timeout
 
+//    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
+//    Session session(one_shot_server.sck, one_shot_server.ip_source, &ini);
 
     LOG(LOG_INFO, "Listener closed\n");
     LOG(LOG_INFO, "Incoming socket %d (ip=%s)\n", one_shot_server.sck, one_shot_server.ip_source);

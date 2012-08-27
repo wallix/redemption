@@ -22,6 +22,8 @@
 #if !defined(__CORE_SESSION_SERVER_HPP__)
 #define __CORE_SESSION_SERVER_HPP__
 
+#include "config.hpp"
+#include "ssl_calls.hpp"
 #include "session.hpp"
 
 class SessionServer : public Server

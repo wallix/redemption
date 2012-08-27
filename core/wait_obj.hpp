@@ -63,10 +63,10 @@ class wait_obj
         this->set_state = false;
     }
 
-    bool is_set()
+    bool is_set(fd_set & rfds)
     {
         if (this->obj > 0){
-            return this->can_recv();
+            return FD_ISSET(this->obj, &rfds);
         }
         else{
             if (this->set_state){

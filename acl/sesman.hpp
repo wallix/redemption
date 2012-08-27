@@ -86,11 +86,11 @@ class SessionManager {
         }
     }
 
-    bool event(){
+    bool event(fd_set & rfds){
         if (this->verbose & 0x40){
             LOG(LOG_INFO, "auth::event?");
         }
-        return this->auth_event?this->auth_event->is_set():false;
+        return this->auth_event?this->auth_event->is_set(rfds):false;
     }
 
     void start_keep_alive(long & keepalive_time)
@@ -194,14 +194,14 @@ class SessionManager {
         return res;
     }
 
-    bool keep_alive_or_inactivity(long & keepalive_time, long & now, Transport * trans)
+    bool keep_alive_or_inactivity(fd_set & rfds, long & keepalive_time, long & now, Transport * trans)
     {
         int keepalive_grace_delay = this->keepalive_grace_delay;
         int maxtick = this->max_tick;
 
         // Keepalive Data exchange with sesman
         if (this->auth_trans_t){
-            if (this->auth_event?this->auth_event->is_set():false) {
+            if (this->event(rfds)) {
                 if (this->verbose & 0x10){
                     LOG(LOG_INFO, "auth::keep_alive_or_inactivity");
                 }

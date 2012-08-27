@@ -78,14 +78,14 @@ struct Listen {
         s.sin_port = htons(this->port);
         s.sin_addr.s_addr = INADDR_ANY;
 
-        LOG(LOG_ERR, "Listen: binding socket %d on port %d", this->sck, this->port);
+        LOG(LOG_INFO, "Listen: binding socket %d on port %d", this->sck, this->port);
         if (0 != bind(this->sck, (struct sockaddr*)&s, sizeof(struct sockaddr_in))) {
             LOG(LOG_ERR, "Listen: error binding socket [errno=%u] %s", errno, strerror(errno));
             ((this->sck) && (shutdown(this->sck, 2), close(this->sck)));
             goto end_of_listener;
         }
 
-        LOG(LOG_ERR, "Listen: listening on socket %d", this->sck);
+        LOG(LOG_INFO, "Listen: listening on socket %d", this->sck);
         if (0 != listen(this->sck, 2)) {
             LOG(LOG_ERR, "Listen: error listening on socket\n");
             goto end_of_listener;
@@ -108,7 +108,7 @@ struct Listen {
             goto end_of_listener;
             case 0:
                 if (exit_on_timeout){
-                    LOG(LOG_WARNING, "Listener exiting on timeout");
+                    LOG(LOG_INFO, "Listener exiting on timeout");
                     goto end_of_listener;
                 }
             break;
