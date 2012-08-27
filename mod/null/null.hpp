@@ -14,17 +14,15 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+   Copyright (C) Wallix 2012
+   Author(s): Christophe Grosjean
 
 */
 
-#if !defined(__NULL_HPP__)
-#define __NULL_HPP__
+#if !defined(__MOD_NULL_HPP__)
+#define __MOD_NULL_HPP__
 
 #include "client_mod.hpp"
-#include "session.hpp"
 
 // Null module receive every event and does nothing. It allow session code to always have a receiving module active, thus avoidind to test that so back_end is available.
 

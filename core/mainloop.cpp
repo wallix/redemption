@@ -14,32 +14,27 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+   Copyright (C) Wallix 2010 - 2012
+   Author(s): Christophe Grosjean
 
    Main loop
 
 */
 
 #include <unistd.h>
-//#include <locale.h>
 #include <signal.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
-//#include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
-//#include <unistd.h>
 #include <sys/socket.h>
 
 #include "config.hpp"
 #include "mainloop.hpp"
-#include "session.hpp"
 #include "log.hpp"
 #include "listen.hpp"
 #include "wait_obj.hpp"
-#include "session.hpp"
+#include "session_server.hpp"
 
 /*****************************************************************************/
 void shutdown(int sig)
