@@ -36,6 +36,22 @@ int recorder_app(RecorderOption& opt, int argc, char** argv,
 
     InputType::enum_t itype;
     if (int error = opt.prepare(itype)){
+        switch (error) {
+            case WrmRecorderOption::INPUT_KEY_OVERLOAD:
+                std::cerr << "Size key is " << opt.in_cipher_info.key_len() << " octets" << std::endl;
+                break;
+            case WrmRecorderOption::INPUT_IV_OVERLOAD:
+                std::cerr << "Size IV is " << opt.in_cipher_info.iv_len() << " octets" << std::endl;
+                break;
+            case RecorderOption::OUTPUT_KEY_OVERLOAD:
+                std::cerr << "Size key is " << opt.out_cipher_info.key_len() << " octets" << std::endl;
+                break;
+            case RecorderOption::OUTPUT_IV_OVERLOAD:
+                std::cerr << "Size IV is " << opt.out_cipher_info.iv_len() << " octets" << std::endl;
+                break;
+            default:
+                break;
+        }
         return error;
     }
 

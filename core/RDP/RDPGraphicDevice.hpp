@@ -84,8 +84,6 @@ public:
 
 struct WRMChunk {
     static const uint16_t TIMESTAMP = 1001;
-    static const uint16_t META_INFO = 1002;
-    static const uint16_t PREV_FILE = 1004;
     static const uint16_t BREAKPOINT = 1005;
     static const uint16_t META_FILE = 1006;
     static const uint16_t NEXT_FILE_ID = 1007;
@@ -290,7 +288,7 @@ struct RDPUnserializer
                 uint64_t elapsed = this->timer_cap.elapsed();
                 if (elapsed <= micro_sec)
                 {
-                    struct timespec wtime = 
+                    struct timespec wtime =
                         { static_cast<uint32_t>((micro_sec - elapsed) / 1000000)
                         , static_cast<uint32_t>((micro_sec - elapsed) % 1000000 * 1000)
                         };

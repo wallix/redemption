@@ -95,7 +95,6 @@ struct WrmRecorderOption
     boost::program_options::options_description desc;
     boost::program_options::variables_map options;
 
-protected:
     typedef HexadecimalOption<EVP_MAX_KEY_LENGTH> HexadecimalKey;
     typedef HexadecimalOption<EVP_MAX_IV_LENGTH> HexadecimalIV;
 
@@ -110,9 +109,10 @@ public:
     bool ignore_dir_for_meta_in_wrm;
     std::string input_type;
     bool times_in_meta_are_false;
-    CipherMode::enum_t in_crypt_mode;
+    const EVP_CIPHER* in_crypt_mode;
     HexadecimalKey in_crypt_key;
     HexadecimalIV in_crypt_iv;
+    CipherInfo in_cipher_info;
 
     WrmRecorderOption();
 
@@ -134,7 +134,9 @@ public:
     enum Error {
         SUCCESS,
         IN_FILENAME_IS_EMPTY,
-        UNSPECIFIED_DECRIPT_KEY
+        UNSPECIFIED_DECRIPT_KEY,
+        INPUT_KEY_OVERLOAD,
+        INPUT_IV_OVERLOAD
     };
 
     virtual const char * get_cerror(int error)
@@ -143,6 +145,10 @@ public:
             return "Not input-file";
         if (error == UNSPECIFIED_DECRIPT_KEY)
             return "Unspecified decript key";
+        if (error == INPUT_KEY_OVERLOAD)
+            return "Overload --in-crypt-key";
+        if (error == INPUT_IV_OVERLOAD)
+            return "Overload --in-crypt-iv";
         if (error == SUCCESS)
             return "Success";
         return "Unknow";

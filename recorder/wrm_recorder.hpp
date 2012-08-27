@@ -104,11 +104,11 @@ private:
     }
 
 public:
-    WRMRecorder(CipherMode::enum_t e = CipherMode::NO_MODE,
+    WRMRecorder(const EVP_CIPHER * mode = 0,
                 const unsigned char* key = 0,
                 const unsigned char* iv = 0,
                 ENGINE* impl = 0)
-    : cipher_mode(CipherMode::to_evp_cipher(e))
+    : cipher_mode(mode)
     , cipher_key(key)
     , cipher_iv(iv)
     , cipher_impl(impl)
@@ -127,11 +127,11 @@ public:
     }
 
     WRMRecorder(int fd, const std::string basepath = "",
-                CipherMode::enum_t e = CipherMode::NO_MODE,
+                const EVP_CIPHER * mode = 0,
                 const unsigned char* key = 0,
                 const unsigned char* iv = 0,
                 ENGINE* impl = 0)
-    : cipher_mode(CipherMode::to_evp_cipher(e))
+    : cipher_mode(mode)
     , cipher_key(key)
     , cipher_iv(iv)
     , cipher_impl(impl)
@@ -151,11 +151,11 @@ public:
     }
 
     WRMRecorder(const std::string& filename, const std::string basepath = "",
-                CipherMode::enum_t e = CipherMode::NO_MODE,
+                const EVP_CIPHER * mode = 0,
                 const unsigned char* key = 0,
                 const unsigned char* iv = 0,
                 ENGINE* impl = 0)
-    : cipher_mode(CipherMode::to_evp_cipher(e))
+    : cipher_mode(mode)
     , cipher_key(key)
     , cipher_iv(iv)
     , cipher_impl(impl)
@@ -170,11 +170,6 @@ public:
     , base_path_len(basepath.length())
     , only_filename(false)
     {
-        if (e && !this->cipher_mode)
-        {
-            LOG(LOG_ERR, "Error selected cipher mode (%d) in WRMRecorder", e);
-            throw Error(ERR_CIPHER_START);
-        }
         this->normalize_path();
         this->start_cipher_if_active();
         std::size_t pos = filename.find_last_not_of('.');
@@ -192,12 +187,12 @@ public:
         }
     }
 
-    bool init_cipher(CipherMode::enum_t e,
+    bool init_cipher(const EVP_CIPHER * mode,
                      const unsigned char* key = 0,
                      const unsigned char* iv = 0,
                      ENGINE* impl = 0)
     {
-        this->cipher_mode = CipherMode::to_evp_cipher(e);
+        this->cipher_mode = mode;
         if (!this->cipher_mode)
             return false;
         if (!this->_start_cipher(key, iv, impl))

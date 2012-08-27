@@ -43,7 +43,7 @@ int recorder_run(RecorderOption& opt,
     if (!adapter){
         std::cerr
         << "Incorrect output-type, "
-        << opt.desc.find("output-type", false).description() << '\n';
+        << opt.desc.find("output-type", false).description() << std::endl;
         return 1100;
     }
 

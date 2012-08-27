@@ -269,7 +269,6 @@ unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test : ;
 unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test : ;
 unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test ;
 
-unit-test test_meta : tests/test_meta.cpp libboost_unit_test ;
 unit-test test_file_to_png : tests/test_file_to_png.cpp libboost_unit_test png z d3des openssl crypto dl ;
 unit-test test_breakpoint : tests/test_breakpoint.cpp libboost_unit_test png z d3des openssl dl crypto ;
 
@@ -292,3 +291,4 @@ unit-test test_hexadecimal_option : tests/test_hexadecimal_option.cpp libboost_u
 
 unit-test test_bitfu : tests/test_bitfu.cpp libboost_unit_test ;
 
+unit-test test_zlib : tests/test_zlib.cpp libboost_unit_test z ;

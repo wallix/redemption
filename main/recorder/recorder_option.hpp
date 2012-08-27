@@ -41,8 +41,9 @@ struct RecorderOption
     unsigned png_scale_width;
     unsigned png_scale_height;
     CipherMode::enum_t out_crypt_mode;
-    WrmRecorderOption::HexadecimalKey out_crypt_key;
-    WrmRecorderOption::HexadecimalIV out_crypt_iv;
+    HexadecimalKey out_crypt_key;
+    HexadecimalIV out_crypt_iv;
+    CipherInfo out_cipher_info;
 
     RecorderOption();
 
@@ -84,17 +85,25 @@ struct RecorderOption
         SUCCESS                 = WrmRecorderOption::SUCCESS,
         IN_FILENAME_IS_EMPTY    = WrmRecorderOption::IN_FILENAME_IS_EMPTY,
         UNSPECIFIED_DECRIPT_KEY = WrmRecorderOption::UNSPECIFIED_DECRIPT_KEY,
-        KEY_OR_IV_WITHOUT_MODE,
-        OUT_FILENAME_IS_EMPTY
+        INPUT_KEY_OVERLOAD      = WrmRecorderOption::INPUT_KEY_OVERLOAD,
+        INPUT_IV_OVERLOAD       = WrmRecorderOption::INPUT_IV_OVERLOAD,
+        UNSPECIFIED_ENCRIPT_KEY,
+        ENCRIPT_KEY_OR_IV_WITHOUT_MODE,
+        OUT_FILENAME_IS_EMPTY,
+        OUTPUT_KEY_OVERLOAD,
+        OUTPUT_IV_OVERLOAD
     };
 
     virtual const char * get_cerror(int error)
     {
         if (error == OUT_FILENAME_IS_EMPTY)
             return "Not output-file";
-        if (error == KEY_OR_IV_WITHOUT_MODE)
+        if (error == ENCRIPT_KEY_OR_IV_WITHOUT_MODE)
             return "Set --out-crypt-key or --out-crypt-iv without --out-crypt-mode";
-
+        if (error == OUTPUT_KEY_OVERLOAD)
+            return "Overload --out-crypt-key";
+        if (error == OUTPUT_IV_OVERLOAD)
+            return "Overload --out-crypt-iv";
         return WrmRecorderOption::get_cerror(error);
     }
 

@@ -84,9 +84,11 @@ inline static bool __wrm_recorder_init_init_crypt(WRMRecorder& recorder,
                    sizeof(opt.in_crypt_iv.data));
         }
         if (!recorder.init_cipher(
-            (CipherMode::enum_t)(opt.in_crypt_mode
-            ? recorder.meta().crypt_mode
-            : 0),
+            (opt.in_crypt_mode
+            ? opt.in_crypt_mode
+            : CipherMode::to_evp_cipher(
+                (CipherMode::enum_t)recorder.meta().crypt_mode
+            )),
             opt.in_crypt_key.data,
             opt.in_crypt_iv.size ? opt.in_crypt_iv.data : 0))
         {

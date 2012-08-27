@@ -285,7 +285,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         "/tmp/encrypt-cap.mwrm");
     {
         WRMRecorder recorder;
-        recorder.init_cipher(CipherMode::BLOWFISH_CBC, key, iv);
+        recorder.init_cipher(CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC), key, iv);
         recorder.open_meta_followed_wrm(filename_mwrm.c_str());
         /*WRMRecorder recorder(filename_mwrm, "",
                              CipherMode::BLOWFISH_CBC, key, iv);*/
@@ -389,7 +389,7 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
     BOOST_CHECK(true);
     {
         WRMRecorder recorder(make_pid_filename_generator("/tmp/wrm-encrypt.mwrm")().c_str(), "",
-                             CipherMode::BLOWFISH_CBC, key, iv);
+                             CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC), key, iv);
         BOOST_CHECK(true);
         StaticCapture cap(800, 600, "/tmp/wrm-encrypt");
         BOOST_CHECK(true);
