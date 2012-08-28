@@ -23,6 +23,9 @@ TODO(" rename sesman to authentifier")
 #if !defined(__SESMAN3_HPP__)
 #define __SESMAN3_HPP__
 
+
+TODO("Sesman is performing two largely unrelated tasks : finding out the next module to run (from context reading) and updating context dictionnary from incoming acl traffic. These tasks should be performed by two different modules")
+
 #include "stream.hpp"
 #include "config.hpp"
 #include "sesman.hpp"
@@ -368,25 +371,29 @@ class SessionManager {
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::ask_next_module default state");
             }
-            next_state = this->ask_next_module_remote(auth_host, auth_port);
+            this->ask_next_module_remote(auth_host, auth_port);
+            return MCTX_STATUS_WAITING;
         break;
         case MOD_STATE_DONE_SELECTOR:
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_SELECTOR state");
             }
-            next_state = this->ask_next_module_remote(auth_host, auth_port);
+            this->ask_next_module_remote(auth_host, auth_port);
+            return MCTX_STATUS_WAITING;
         break;
         case MOD_STATE_DONE_LOGIN:
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_LOGIN state");
             }
-            next_state = this->ask_next_module_remote(auth_host, auth_port);
+            this->ask_next_module_remote(auth_host, auth_port);
+            return MCTX_STATUS_WAITING;
         break;
         case MOD_STATE_DONE_PASSWORD:
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_PASSWORD state");
             }
-            next_state = this->ask_next_module_remote(auth_host, auth_port);
+            this->ask_next_module_remote(auth_host, auth_port);
+            return MCTX_STATUS_WAITING;
         break;
         case MOD_STATE_DONE_RECEIVED_CREDENTIALS:
         if (this->verbose & 0x10){
@@ -394,46 +401,46 @@ class SessionManager {
         }
         {
             if (this->context.is_asked(STRAUTHID_AUTH_USER)){
-                next_state = MCTX_STATUS_INTERNAL;
                 this->context.nextmod = ModContext::INTERNAL_LOGIN;
                 this->mod_state = MOD_STATE_DONE_LOGIN;
+                return MCTX_STATUS_INTERNAL;
             }
             else if (this->context.is_asked(STRAUTHID_PASSWORD)){
-                next_state = MCTX_STATUS_INTERNAL;
                 this->context.nextmod = ModContext::INTERNAL_LOGIN;
                 this->mod_state = MOD_STATE_DONE_LOGIN;
+                return MCTX_STATUS_INTERNAL;
             }
             else if (!this->context.is_asked(STRAUTHID_SELECTOR)
                  &&   this->context.get_bool(STRAUTHID_SELECTOR)
                  &&  !this->context.is_asked(STRAUTHID_TARGET_DEVICE)
                  &&  !this->context.is_asked(STRAUTHID_TARGET_USER)){
-                next_state = MCTX_STATUS_INTERNAL;
                 this->context.nextmod = ModContext::INTERNAL_SELECTOR;
                 this->mod_state = MOD_STATE_DONE_SELECTOR;
+                return MCTX_STATUS_INTERNAL;
             }
             else if (this->context.is_asked(STRAUTHID_TARGET_DEVICE)
                  ||  this->context.is_asked(STRAUTHID_TARGET_USER)){
-                    next_state = MCTX_STATUS_INTERNAL;
                     this->context.nextmod = ModContext::INTERNAL_LOGIN;
                     this->mod_state = MOD_STATE_DONE_LOGIN;
+                    return MCTX_STATUS_INTERNAL;
             }
             else if (this->context.is_asked(STRAUTHID_DISPLAY_MESSAGE)){
-                next_state = MCTX_STATUS_INTERNAL;
                 this->context.nextmod = ModContext::INTERNAL_DIALOG_DISPLAY_MESSAGE;
                 this->mod_state = MOD_STATE_DONE_DISPLAY_MESSAGE;
+                return MCTX_STATUS_INTERNAL;
             }
             else if (this->context.is_asked(STRAUTHID_ACCEPT_MESSAGE)){
-                next_state = MCTX_STATUS_INTERNAL;
                 this->context.nextmod = ModContext::INTERNAL_DIALOG_VALID_MESSAGE;
                 this->mod_state = MOD_STATE_DONE_VALID_MESSAGE;
+                return MCTX_STATUS_INTERNAL;
             }
             else if (this->context.get_bool(STRAUTHID_AUTHENTICATED)){
-                next_state = this->get_mod_from_protocol();
                 record_video = this->context.get_bool(STRAUTHID_OPT_MOVIE);
                 keep_alive = true;
                 if (context.get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                     context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "End of connection");
                 }
+                return this->get_mod_from_protocol();
             }
             else {
                 if (context.get(STRAUTHID_REJECTED)[0] != 0){
@@ -447,9 +454,9 @@ class SessionManager {
                     delete this->auth_trans_t;
                     this->auth_trans_t = 0;
                 }
-                next_state = MCTX_STATUS_INTERNAL;
                 this->context.nextmod = ModContext::INTERNAL_CLOSE;
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
+                return MCTX_STATUS_INTERNAL;
             }
         }
         break;
@@ -458,15 +465,15 @@ class SessionManager {
                 LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_CONNECTED state");
             }
             this->context.nextmod = ModContext::INTERNAL_CLOSE;
-            next_state = MCTX_STATUS_INTERNAL;
             this->mod_state = MOD_STATE_DONE_CLOSE;
+            return MCTX_STATUS_INTERNAL;
         break;
         case MOD_STATE_DONE_CLOSE:
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_CONNECTED state");
             }
             this->mod_state = MOD_STATE_DONE_EXIT;
-            next_state = MCTX_STATUS_EXIT;
+            return MCTX_STATUS_EXIT;
         break;
         case MOD_STATE_DONE_EXIT:
             if (this->verbose & 0x10){
@@ -474,12 +481,12 @@ class SessionManager {
             }
             // we should never goes here, the main loop should have stopped before
             LOG(LOG_WARNING, "unexpected forced exit");
+            return MCTX_STATUS_EXIT;
         break;
         }
-        return next_state;
     }
 
-    TODO(""move that function to ModContext  create specialized stream object ModContextStream"")
+    TODO("move that function to ModContext create specialized stream object ModContextStream")
 
     void out_item(Stream & stream, const char * key)
     {
@@ -517,7 +524,7 @@ class SessionManager {
     }
 
 
-    int ask_next_module_remote(const char * auth_host, int authport)
+    void ask_next_module_remote(const char * auth_host, int authport)
     {
         // if anything happen, like authentification socked closing, stop current connection
         try {
@@ -578,7 +585,6 @@ class SessionManager {
             delete this->auth_trans_t;
             this->auth_trans_t = NULL;
         }
-        return MCTX_STATUS_WAITING;
     }
 
     void incoming()
@@ -597,7 +603,7 @@ class SessionManager {
         this->in_items(stream);
     }
 
-    int receive_next_module()
+    void receive_next_module()
     {
         try {
             this->incoming();
@@ -608,7 +614,6 @@ class SessionManager {
             this->auth_trans_t = NULL;
         }
         this->mod_state = MOD_STATE_DONE_RECEIVED_CREDENTIALS;
-        return MCTX_STATUS_TRANSITORY;
     }
 
 };

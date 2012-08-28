@@ -196,7 +196,25 @@ struct Session {
                         if (this->sesman->event(rfds)){
                             this->sesman->receive_next_module();
 
-                            this->session_setup_mod(MCTX_STATUS_TRANSITORY, this->context);
+                            if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"force")==0){
+                                this->front->set_console_session(true);
+                                LOG(LOG_INFO, "Session::mode console : force");
+                            }
+                            else if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"forbid")==0){
+                                this->front->set_console_session(false);
+                                LOG(LOG_INFO, "Session::mode console : forbid");
+                            }
+                            else {
+                                // default is "allow", do nothing special
+                            }
+
+                            if (this->mod != this->no_mod) {
+                                delete this->mod;
+                                this->mod = this->no_mod;
+                            }
+                            this->mod = new transitory_mod(*(this->front),
+                                                           this->front->client_info.width,
+                                                           this->front->client_info.height);
 
                             this->mod->event.set();
                             this->internal_state = SESSION_STATE_RUNNING;
@@ -208,7 +226,23 @@ struct Session {
                         if (this->sesman->event(rfds)){
                             this->sesman->receive_next_module();
 
-                            TODO("can be unified with case above, only difference is that setup_mod won't change module, but reenter current one")
+                            if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"force")==0){
+                                this->front->set_console_session(true);
+                                LOG(LOG_INFO, "Session::mode console : force");
+                            }
+                            else if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"forbid")==0){
+                                this->front->set_console_session(false);
+                                LOG(LOG_INFO, "Session::mode console : forbid");
+                            }
+                            else {
+                                // default is "allow", do nothing special
+                            }
+
+                            if (this->mod != this->no_mod) {
+                                delete this->mod;
+                                this->mod = this->no_mod;
+                            }
+
                             this->mod->refresh_context(*this->context);
 
                             this->mod->event.set();
@@ -394,14 +428,13 @@ struct Session {
         delete this->context;
     }
 
-
-
-
     void session_setup_mod(int target_module, const ModContext * context)
     {
         if (this->verbose){
             LOG(LOG_INFO, "Session::session_setup_mod(target_module=%u)", target_module);
         }
+
+
         if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"force")==0){
             this->front->set_console_session(true);
             LOG(LOG_INFO, "Session::mode console : force");
@@ -414,17 +447,16 @@ struct Session {
             // default is "allow", do nothing special
         }
 
-        if (this->mod != this->no_mod) {
-            delete this->mod;
-            this->mod = this->no_mod;
-        }
-
         switch (target_module)
         {
             case MCTX_STATUS_CLI:
             {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'CLI parse'");
+                }
+                if (this->mod != this->no_mod) {
+                    delete this->mod;
+                    this->mod = this->no_mod;
                 }
                 this->mod = new cli_mod(*this->context, *(this->front),
                                         this->front->client_info,
@@ -436,23 +468,12 @@ struct Session {
             }
             break;
 
-            case MCTX_STATUS_TRANSITORY:
-            {
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'TRANSITORY'");
-                }
-                this->mod = new transitory_mod(*(this->front),
-                                               this->front->client_info.width,
-                                               this->front->client_info.height);
-                // Transitory finish immediately
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'TRANSITORY' suceeded");
-                }
-            }
-            break;
-
             case MCTX_STATUS_INTERNAL:
             {
+                if (this->mod != this->no_mod) {
+                    delete this->mod;
+                    this->mod = this->no_mod;
+                }
                 switch (this->context->nextmod){
                     case ModContext::INTERNAL_CLOSE:
                     {
@@ -597,6 +618,10 @@ struct Session {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'XUP'\n");
                 }
+                if (this->mod != this->no_mod) {
+                    delete this->mod;
+                    this->mod = this->no_mod;
+                }
                 ClientSocketTransport * t = new ClientSocketTransport(name,
                                 this->context->get(STRAUTHID_TARGET_DEVICE),
                                 atoi(this->context->get(STRAUTHID_TARGET_PORT)),
@@ -626,6 +651,10 @@ struct Session {
             {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'RDP'");
+                }
+                if (this->mod != this->no_mod) {
+                    delete this->mod;
+                    this->mod = this->no_mod;
                 }
                 // hostname is the name of the RDP host ("windows" hostname)
                 // it is **not** used to get an ip address.
@@ -680,6 +709,10 @@ struct Session {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'VNC'\n");
                 }
+                if (this->mod != this->no_mod) {
+                    delete this->mod;
+                    this->mod = this->no_mod;
+                }
                 static const char * name = "VNC Target";
                 ClientSocketTransport *t = new ClientSocketTransport(
                                                 name,
@@ -718,6 +751,10 @@ struct Session {
             {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Unknown backend exception\n");
+                }
+                if (this->mod != this->no_mod) {
+                    delete this->mod;
+                    this->mod = this->no_mod;
                 }
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
             }

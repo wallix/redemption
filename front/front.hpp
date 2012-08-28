@@ -2639,7 +2639,7 @@ public:
                 }
                 this->init_pointers();
 
-                if (this->verbose){
+                if (1 || this->verbose){
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
                 }
                 this->up_and_running = 1;
