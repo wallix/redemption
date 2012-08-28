@@ -43,9 +43,29 @@ class SessionServer : public Server
         case 0: /* child */
         {
             close(incoming_sck);
-            LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
+
             Inifile ini(CFG_PATH "/" RDPPROXY_INI);
-            Session session(sck, ip_source, &ini);
+            if (ini.globals.debug.session){
+                LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
+            }
+
+            int nodelay = 1;
+            if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
+                wait_obj front_event(sck);
+                SocketTransport front_trans("RDP Client", sck, ini.globals.debug.front);
+
+                Session session(front_event, front_trans, ip_source, &ini);
+
+                if (ini.globals.debug.session){
+                    LOG(LOG_INFO, "Session::end of Session(%u)", sck);
+                }
+
+                shutdown(sck, 2);
+                close(sck);
+            }
+            else {
+                LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
+            }
             return START_WANT_STOP;
         }
         break;

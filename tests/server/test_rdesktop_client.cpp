@@ -67,8 +67,20 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     } one_shot_server;
     Listen listener(one_shot_server, 3389, true, 5); // 25 seconds to connect, or timeout
 
-//    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
-//    Session session(one_shot_server.sck, one_shot_server.ip_source, &ini);
+    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
+
+    int nodelay = 1;
+    if (-1 == setsockopt(one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
+        LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
+    }
+
+    wait_obj front_event(one_shot_server.sck);
+    SocketTransport front_trans("RDP Client", one_shot_server.sck, ini.globals.debug.front);
+
+//    Session session(front_event, front_trans, one_shot_server.ip_source, &ini);
+
+    shutdown(one_shot_server.sck, 2);
+    close(one_shot_server.sck);
 
     LOG(LOG_INFO, "Listener closed\n");
     LOG(LOG_INFO, "Incoming socket %d (ip=%s)\n", one_shot_server.sck, one_shot_server.ip_source);

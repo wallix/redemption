@@ -160,7 +160,29 @@ void redemption_new_session()
     getpeername(0, (struct sockaddr *)&from, (socklen_t *)&sock_len);
     strcpy(ip_source, inet_ntoa(from.sin_addr));
 
-    Session session(0, ip_source, &ini);
+    int sck = 0;
+    if (ini.globals.debug.session){
+        LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
+    }
+
+    int nodelay = 1;
+    if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
+        wait_obj front_event(sck);
+        SocketTransport front_trans("RDP Client", sck, ini.globals.debug.front);
+
+        Session session(front_event, front_trans, ip_source, &ini);
+
+        if (ini.globals.debug.session){
+            LOG(LOG_INFO, "Session::end of Session(%u)", sck);
+        }
+
+        shutdown(sck, 2);
+        close(sck);
+    }
+    else {
+        LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
+    }
+
 }
 
 void redemption_main_loop()

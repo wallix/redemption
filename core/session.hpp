@@ -91,17 +91,17 @@ enum {
 
 struct Session {
 
-    int sck;
+    wait_obj & front_event;
+    SocketTransport & front_trans;
+
     Inifile * ini;
     uint32_t & verbose;
 
     ModContext * context;
     int internal_state;
     long id;
-    struct SocketTransport * trans;
     time_t keep_alive_time;
 
-    wait_obj * front_event;
 
     struct client_mod * mod; /* module interface */
     struct client_mod * no_mod;
@@ -111,27 +111,12 @@ struct Session {
     SessionManager * sesman;
     UdevRandom gen;
 
-    TODO("We should probably pass in a Transport object instead of a socket (for testing purposes)."
-         "But if so we must be able to wait on Transport objects instead of sockets in a sane way")
-    Session(int sck, const char * ip_source, Inifile * ini)
-        : sck(sck), ini(ini), verbose(this->ini->globals.debug.session)
+    Session(wait_obj & front_event, SocketTransport & front_trans, const char * ip_source, Inifile * ini)
+        : front_event(front_event), front_trans(front_trans), ini(ini), verbose(this->ini->globals.debug.session)
     {
         try {
-            int nodelay = 1;
-
-            /* SOL_TCP IPPROTO_TCP */
-            if (0 > setsockopt(this->sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay)))
-            {
-                LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
-                return;
-            }
-
-            if (this->verbose){
-                LOG(LOG_INFO, "Session::new Session(%u)", this->sck);
-            }
             this->context = new ModContext();
             this->context->cpy(STRAUTHID_HOST, ip_source);
-
             this->sesman = new SessionManager(*this->context
                                              , this->ini->globals.keepalive_grace_delay
                                              , this->ini->globals.max_tick
@@ -140,11 +125,7 @@ struct Session {
             this->sesman->auth_trans_t = 0;
             this->mod = 0;
             this->internal_state = SESSION_STATE_ENTRY;
-            this->front_event = new wait_obj(this->sck);
-
-            /* create these when up and running */
-            this->trans = new SocketTransport("RDP Client", this->sck, this->ini->globals.debug.front);
-            this->front = new Front(this->trans, &this->gen, ini);
+            this->front = new Front(&this->front_trans, &this->gen, ini);
             this->no_mod = new null_mod(*(this->front));
             this->mod = this->no_mod;
 
@@ -184,14 +165,14 @@ struct Session {
                 FD_ZERO(&wfds);
                 struct timeval timeout = time_mark;
 
-                this->front_event->add_to_fd_set(rfds, max);
+                this->front_event.add_to_fd_set(rfds, max);
                 if (this->front->up_and_running){
                     this->sesman->add_to_fd_set(rfds, max);
                     this->mod->event.add_to_fd_set(rfds, max);
                 }
                 int num = select(max + 1, &rfds, &wfds, 0, &timeout);
                 
-                if (this->front_event->is_set(rfds)) {
+                if (this->front_event.is_set(rfds)) {
                     try {
                         this->front->incoming(*this->mod);
                     }
@@ -243,7 +224,7 @@ struct Session {
 
                         TODO(" this should use the WAIT_FOR_CONTEXT state or some race conditon may cause mayhem")
                         if (this->sesman->close_on_timestamp(timestamp)
-                        || !this->sesman->keep_alive_or_inactivity(rfds, this->keep_alive_time, timestamp, this->trans)){
+                        || !this->sesman->keep_alive_or_inactivity(rfds, this->keep_alive_time, timestamp, &this->front_trans)){
                             this->internal_state = SESSION_STATE_STOP;
                             this->context->nextmod = ModContext::INTERNAL_CLOSE;
                             this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context);
@@ -400,21 +381,12 @@ struct Session {
         };
         LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         this->front->stop_capture();
-        if (this->sck){
-            shutdown(this->sck, 2);
-            close(this->sck);
-        }
     }
 
 
     ~Session()
     {
-        if (this->verbose){
-            LOG(LOG_INFO, "Session::end of Session(%u)", sck);
-        }
         delete this->front;
-        delete this->front_event;
-        delete this->trans;
         if (this->mod != this->no_mod){
             delete this->mod;
             this->mod = this->no_mod;
