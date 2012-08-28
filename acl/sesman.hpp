@@ -59,6 +59,8 @@ class SessionManager {
         : mod_state(MOD_STATE_INIT)
         , context(context)
         , tick_count(0)
+        , auth_trans_t(NULL)
+        , auth_event(NULL)        
         , keepalive_grace_delay(keepalive_grace_delay)
         , max_tick(max_tick)
         , internal_domain(internal_domain)
@@ -67,8 +69,6 @@ class SessionManager {
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::SessionManager");
         }
-        this->auth_trans_t = NULL;
-        this->auth_event = 0;
     }
 
     ~SessionManager()
@@ -76,14 +76,11 @@ class SessionManager {
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::~SessionManager");
         }
-        if (this->auth_trans_t) {
-            delete this->auth_trans_t;
-            this->auth_trans_t = 0;
-        }
-        if (this->auth_event){
-            delete this->auth_event;
-            this->auth_event = 0;
-        }
+        delete this->auth_trans_t;
+        this->auth_trans_t = 0;
+
+        delete this->auth_event;
+        this->auth_event = 0;
     }
 
     bool event(fd_set & rfds){

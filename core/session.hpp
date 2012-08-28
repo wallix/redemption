@@ -122,7 +122,6 @@ struct Session {
                                              , this->ini->globals.max_tick
                                              , this->ini->globals.internal_domain
                                              , this->ini->globals.debug.auth);
-            this->sesman->auth_trans_t = 0;
             this->mod = 0;
             this->internal_state = SESSION_STATE_ENTRY;
             this->front = new Front(&this->front_trans, &this->gen, ini);
@@ -230,16 +229,15 @@ struct Session {
                             this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context);
                             this->keep_alive_time = 0;
                             TODO(" move that to sesman ? (to hide implementation details)")
-                            if (this->sesman->auth_event){
-                                delete this->sesman->auth_event;
-                                this->sesman->auth_event = 0;
-                            }
+
+                            delete this->sesman->auth_event;
+                            this->sesman->auth_event = 0;
+
                             this->internal_state = SESSION_STATE_RUNNING;
                             this->front->stop_capture();
                         }
 
                         // data incoming from server module
-                        TODO("We should also check on FD descriptor, or there is some risk to read even if there is no data available")
                         if (this->front->up_and_running 
                         &&  this->mod->event.is_set(rfds)){
                             this->mod->event.reset();
@@ -342,10 +340,10 @@ struct Session {
                                             this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context);
                                             this->keep_alive_time = 0;
                                             TODO(" move that to sesman (to hide implementation details)")
-                                            if (this->sesman->auth_event){
-                                                delete this->sesman->auth_event;
-                                                this->sesman->auth_event = 0;
-                                            }
+
+                                            delete this->sesman->auth_event;
+                                            this->sesman->auth_event = 0;
+
                                             this->internal_state = SESSION_STATE_RUNNING;
                                             this->front->stop_capture();
                                         }

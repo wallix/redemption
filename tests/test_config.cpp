@@ -39,6 +39,39 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     Inifile ini(FIXTURES_PATH "/rdpproxy.ini");
 }
 
+BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
+{
+    // default config
+    Inifile ini;
+
+    BOOST_CHECK_EQUAL(true, ini.globals.bitmap_cache);
+    BOOST_CHECK_EQUAL(false, ini.globals.nomouse);
+    BOOST_CHECK_EQUAL(false, ini.globals.notimestamp);
+    BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
+    BOOST_CHECK_EQUAL(3389, ini.globals.port);
+    BOOST_CHECK_EQUAL(0,    ini.globals.crypt_level);
+    BOOST_CHECK_EQUAL(1,    ini.globals.channel_code);
+    BOOST_CHECK_EQUAL(0,    ini.globals.autologin);
+    BOOST_CHECK_EQUAL(2,    ini.globals.authversion);
+    BOOST_CHECK_EQUAL(std::string("127.0.0.1"), std::string(ini.globals.authip));
+    BOOST_CHECK_EQUAL(3350, ini.globals.authport);
+    BOOST_CHECK_EQUAL(std::string("/tmp/"), std::string(ini.globals.movie_path));
+
+    BOOST_CHECK_EQUAL(ID_LIB_UNKNOWN, ini.account[0].idlib);
+
+    BOOST_CHECK_EQUAL(false, ini.account[0].accountdefined);
+    BOOST_CHECK_EQUAL(0,     ini.account[0].accountname[0]);
+    BOOST_CHECK_EQUAL(false, ini.account[0].askport);
+    BOOST_CHECK_EQUAL(0,     ini.account[0].port);
+    BOOST_CHECK_EQUAL(false, ini.account[0].askusername);
+    BOOST_CHECK_EQUAL(0,     ini.account[0].username[0]);
+    BOOST_CHECK_EQUAL(false, ini.account[0].askpassword);
+    BOOST_CHECK_EQUAL(0,     ini.account[0].password[0]);
+    BOOST_CHECK_EQUAL(false, ini.account[0].askip);
+    BOOST_CHECK_EQUAL(0,     ini.account[0].ip[0]);
+    BOOST_CHECK_EQUAL(0,     ini.account[0].authip[0]);
+    BOOST_CHECK_EQUAL(3350,  ini.account[0].authport);
+}
 
 BOOST_AUTO_TEST_CASE(TestConfigDefault)
 {

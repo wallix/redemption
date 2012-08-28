@@ -195,6 +195,10 @@ void ask_string(po::variables_map & vm, string & key, char buffer[], bool & flag
     }
 }
 
+Inifile::Inifile() {
+    std::stringstream oss("");
+    this->init(oss);
+}
 
 Inifile::Inifile(const char * filename) {
     ifstream inifile(filename);

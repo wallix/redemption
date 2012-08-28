@@ -76,6 +76,9 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     wait_obj front_event(one_shot_server.sck);
     SocketTransport front_trans("RDP Client", one_shot_server.sck, ini.globals.debug.front);
+    UdevRandom gen;
+    Front front(&front_trans, &gen, &ini);
+    null_mod no_mod(front);
 
 //    Session session(front_event, front_trans, one_shot_server.ip_source, &ini);
 

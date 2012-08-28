@@ -275,6 +275,7 @@ struct Inifile {
 
     struct IniAccounts account[6];
 
+    Inifile();
     Inifile(const char * filename);
     Inifile(std::istream & Inifile_stream);
 

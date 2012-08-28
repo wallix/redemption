@@ -129,7 +129,7 @@ public:
         , userid(0)
         , order_level(0)
         , ini(ini)
-        , verbose(this->ini?this->ini->globals.debug.front:0)
+        , verbose(this->ini->globals.debug.front)
         , font(SHARE_PATH "/" DEFAULT_FONT_NAME)
         , brush_cache()
         , pointer_cache()
