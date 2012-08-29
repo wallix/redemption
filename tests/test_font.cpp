@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(TestCreateFont)
     setlogmask(LOG_MASK(LOG_DEBUG));
     LOG(LOG_DEBUG, "reading fonts\n");
 
-    Font f(FIXTURES_PATH "/" DEFAULT_FONT_NAME);
+    Font f(FIXTURES_PATH "/dejavu-sans-10.fv1");
     BOOST_CHECK_EQUAL(std::string("DejaVu Sans"), std::string(f.name));
     BOOST_CHECK_EQUAL(1, f.style);
     BOOST_CHECK_EQUAL(10, f.size);

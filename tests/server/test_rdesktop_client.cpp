@@ -32,6 +32,8 @@
 #include <algorithm>
 #include <sys/un.h>
 
+#define SHARE_PATH "./tests/fixtures"
+
 #define LOGPRINT
 #include "log.hpp"
 #include "constants.hpp"
