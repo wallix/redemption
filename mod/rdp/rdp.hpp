@@ -591,12 +591,6 @@ struct mod_rdp : public client_mod {
                     BStream stream(65536);
                     /* Generic Conference Control (T.124) ConferenceCreateRequest */
 
-                    size_t offset_gcc_conference_create_request_header_length = 0;
-                    gcc_write_conference_create_request_header(stream, offset_gcc_conference_create_request_header_length);
-
-                    size_t offset_user_data_length = stream.get_offset();
-                    stream.out_per_length(256); // remaining length, reserve 16 bits
-
                     // Client User Data
                     // ================
                     // 158 bytes
@@ -648,21 +642,20 @@ struct mod_rdp : public client_mod {
 
                     // 12 * nbchan + 8 bytes
                     mod_rdp_out_cs_net(stream, this->front.get_channel_list());
-
-                    stream.set_out_per_length(stream.get_offset() - (offset_user_data_length + 2), offset_user_data_length); // user data length
-
-                    stream.set_out_per_length(stream.get_offset() - (offset_gcc_conference_create_request_header_length + 2), offset_gcc_conference_create_request_header_length); // length including header
-
                     stream.mark_end();
 
+                    BStream gcc_header(65536);
+                    GCC::Create_Request_Send(gcc_header, stream.size());
+
                     BStream mcs_header(65536);
-                    MCS::CONNECT_INITIAL_Send mcs(mcs_header, stream.size(), MCS::BER_ENCODING);
+                    MCS::CONNECT_INITIAL_Send mcs(mcs_header, gcc_header.size() + stream.size(), MCS::BER_ENCODING);
 
                     BStream x224_header(256);
-                    X224::DT_TPDU_Send(x224_header, mcs_header.size() + stream.size());
+                    X224::DT_TPDU_Send(x224_header, mcs_header.size() + gcc_header.size() + stream.size());
 
                     this->nego.trans->send(x224_header.data, x224_header.size());
                     this->nego.trans->send(mcs_header.data, mcs_header.size());
+                    this->nego.trans->send(gcc_header.data, gcc_header.size());
                     this->nego.trans->send(stream.data, stream.size());
 
                     this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;

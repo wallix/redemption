@@ -19,8 +19,6 @@
 
    T.124 Generic Conference Control (GCC) Unit Test
 
-   Shamelessly adapted of test_gcc.c from FreedRDP (C) Marc-Andre Moreau
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -28,7 +26,7 @@
 #define BOOST_TEST_MODULE TestGCC
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGPRINT
+#define LOGPRINT
 #include "log.hpp"
 
 #include "transport.hpp"
@@ -88,22 +86,15 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
         sizeof(gcc_conference_create_request_expected), 
         256);
 
-    size_t offset_length = 0;
-    BStream stream(sizeof(gcc_conference_create_request_expected)-1);
-
-    gcc_write_conference_create_request_header(stream, offset_length);
-
-    size_t offset_user_data_length = stream.get_offset();
-    stream.out_per_length(256); // remaining length, reserve 16 bits
-
+    BStream stream(65536);
     stream.out_copy_bytes(gcc_user_data, sizeof(gcc_user_data)-1); // -1 to ignore final 0
+    stream.mark_end();
 
-    stream.set_out_per_length(stream.get_offset() - (offset_user_data_length + 2), offset_user_data_length); // user data length
-    stream.set_out_per_length(stream.get_offset() - (offset_length + 2), offset_length); // length including header
+    BStream gcc_header(65536);
+    GCC::Create_Request_Send(gcc_header, stream.size());
 
-    BOOST_CHECK_EQUAL(stream.get_offset(), sizeof(gcc_conference_create_request_expected)-1);
-
-    t.send(stream.data, stream.p - stream.data);
+    t.send(gcc_header.data, gcc_header.size());
+    t.send(stream.data, stream.size());
     BOOST_CHECK(t.status);
 }
 

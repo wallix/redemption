@@ -89,4 +89,43 @@ static inline void gcc_write_conference_create_request_header(Stream & stream, s
     stream.out_per_octet_string(h221_cs_key, 4, 4); // h221NonStandard, client-to-server H.221 key, "Duca"
 }
 
+namespace GCC
+{
+    class Create_Request_Send {
+        public:
+        Create_Request_Send(Stream & stream, size_t payload_size) {
+            // ConnectData
+            stream.out_per_choice(0); // From Key select object (0) of type OBJECT_IDENTIFIER
+            const uint8_t t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
+            stream.out_per_object_identifier(t124_02_98_oid); // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
+
+            //  ConnectData::connectPDU (OCTET_STRING)
+            uint16_t offset_len = stream.get_offset();
+            stream.out_per_length(256); // connectPDU length (reserve 16 bits)
+
+            //  ConnectGCCPDU
+            stream.out_per_choice(0); // From ConnectGCCPDU select conferenceCreateRequest (0) of type ConferenceCreateRequest
+            stream.out_per_selection(0x08); // select optional userData from ConferenceCreateRequest
+
+            //  ConferenceCreateRequest::conferenceName
+            //	stream.out_per_numeric_string(s, (uint8*)"1", 1, 1); /* ConferenceName::numeric */
+            stream.out_uint16_be(16);
+            stream.out_per_padding(1); /* padding */
+
+            //  UserData (SET OF SEQUENCE)
+            stream.out_per_number_of_sets(1); // one set of UserData
+            stream.out_per_choice(0xC0); // UserData::value present + select h221NonStandard (1)
+
+            //  h221NonStandard
+            const uint8_t h221_cs_key[4] = {'D', 'u', 'c', 'a'};
+            stream.out_per_octet_string(h221_cs_key, 4, 4); // h221NonStandard, client-to-server H.221 key, "Duca"
+
+            stream.out_per_length(payload_size); // user data length
+            stream.mark_end();
+
+            stream.set_out_per_length(payload_size + stream.get_offset() - 9, offset_len); // length including header
+        }
+    };
+};
+
 #endif

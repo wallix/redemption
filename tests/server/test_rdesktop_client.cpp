@@ -34,7 +34,7 @@
 
 #define SHARE_PATH "./tests/fixtures"
 
-#define LOGPRINT
+//#define LOGPRINT
 #include "log.hpp"
 #include "constants.hpp"
 #include "listen.hpp"
@@ -5454,41 +5454,20 @@ const char indata[] =
 //    Listen: listening on socket 3
 //    Incoming socket to 4 (ip=127.0.0.1)
 
-//    Reading font file /usr/local/share/rdpproxy/sans-10.fv1
-//    Front::incoming()--------------------------
 //    Front::incoming:CONNECTION_INITIATION
 //    Front::incoming::receiving x224 request PDU
-//    Socket RDP Client (4) receiving 4 bytes
-//    Recv done on RDP Client (4) 4 bytes
-    /* 0000 */ "\x03\x00\x00\x27"                                                 //...'
-//    Dump done on RDP Client (4) 4 bytes
-//    Socket RDP Client (4) receiving 2 bytes
-//    Recv done on RDP Client (4) 2 bytes
-    /* 0000 */ "\x22\xe0"                                                         
-//    Dump done on RDP Client (4) 2 bytes
-//    Socket RDP Client (4) receiving 33 bytes
-//    Recv done on RDP Client (4) 33 bytes
+//    Recv done on RDP Client (4)
+    /* 0000 */ "\x03\x00\x00\x27\x22\xe0"                                                         
     /* 0000 */ "\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69\x65\x3a\x20\x6d\x73\x74" //.....Cookie: mst
     /* 0010 */ "\x73\x68\x61\x73\x68\x3d\x63\x67\x72\x6f\x73\x6a\x65\x61\x6e\x0d" //shash=cgrosjean.
     /* 0020 */ "\x0a"                                                             //.
-//    Dump done on RDP Client (4) 33 bytes
 //    Front::incoming::sending x224 connection confirm PDU
-//    Socket RDP Client (4) sending 11 bytes
 //    /* 0000 */ "\x03\x00\x00\x0b\x06\xd0\x00\x00\x00\x00\x00"                     //...........
-//    Dump done RDP Client (4) sending 11 bytes
-//    Send done on RDP Client (4)
+
 //    Front::incoming::Basic Settings Exchange
-//    Front::incoming::channel_list : 0
-//    Socket RDP Client (4) receiving 4 bytes
-//    Recv done on RDP Client (4) 4 bytes
+//    Recv done on RDP Client (4)
     /* 0000 */ "\x03\x00\x01\xa2"                                                 //....
-//    Dump done on RDP Client (4) 4 bytes
-//    Socket RDP Client (4) receiving 2 bytes
-//    Recv done on RDP Client (4) 2 bytes
     /* 0000 */ "\x02\xf0"                                                         //..
-//    Dump done on RDP Client (4) 2 bytes
-//    Socket RDP Client (4) receiving 412 bytes
-//    Recv done on RDP Client (4) 412 bytes
     /* 0000 */ "\x80\x7f\x65\x82\x01\x96\x04\x01\x01\x04\x01\x01\x01\x01\xff\x30" //..e............0
     /* 0010 */ "\x20\x02\x02\x00\x22\x02\x02\x00\x02\x02\x02\x00\x00\x02\x02\x00" // ..."...........
     /* 0020 */ "\x01\x02\x02\x00\x00\x02\x02\x00\x01\x02\x02\xff\xff\x02\x02\x00" //................
@@ -5515,7 +5494,7 @@ const char indata[] =
     /* 0170 */ "\x02\xc0\x0c\x00\x03\x00\x00\x00\x00\x00\x00\x00\x03\xc0\x20\x00" //.............. .
     /* 0180 */ "\x02\x00\x00\x00\x63\x6c\x69\x70\x72\x64\x72\x00\xc0\xa0\x00\x00" //....cliprdr.....
     /* 0190 */ "\x72\x64\x70\x64\x72\x00\x00\x00\x80\x80\x00\x00"                 //rdpdr.......
-//    Dump done on RDP Client (4) 412 bytes
+
 //    Receiving from Client GCC User Data CS_CORE (212 bytes)
 //    cs_core::version [80004] RDP 5.0, 5.1, 5.2, and 6.0 clients)
 //    cs_core::desktopWidth  = 800
@@ -5545,19 +5524,17 @@ const char indata[] =
 //    CS_SECURITY
 //    CS_NET
 //    cs_net:channel_count 2 [0]
+
 //    Sending SC_CORE to client GCC User Data SC_CORE (8 bytes)
 //    sc_core::version [80004] RDP 5.0, 5.1, 5.2, and 6.0 clients)
-//    Socket RDP Client (4) sending 7 bytes
+
+//    Socket RDP Client (4) sending
 //    /* 0000 */ "\x03\x00\x01\x49\x02\xf0\x80"                                     //...I...
-//    Dump done RDP Client (4) sending 7 bytes
-//    Send done on RDP Client (4)
-//    Socket RDP Client (4) sending 43 bytes
+
 //    /* 0000 */ "\x7f\x66\x82\x01\x3d\x0a\x01\x00\x02\x01\x00\x30\x1a\x02\x01\x22" //.f..=......0..."
 //    /* 0010 */ "\x02\x01\x03\x02\x01\x00\x02\x01\x01\x02\x01\x00\x02\x01\x01\x02" //................
 //    /* 0020 */ "\x03\x00\xff\xf8\x02\x01\x02\x04\x82\x01\x17"                     //...........
-//    Dump done RDP Client (4) sending 43 bytes
-//    Send done on RDP Client (4)
-//    Socket RDP Client (4) sending 279 bytes
+
 //    /* 0000 */ "\x00\x05\x00\x14\x7c\x00\x01\x2a\x14\x0a\x76\x01\x01\x00\x01\xc0" //....|..*..v.....
 //    /* 0010 */ "\x00\x4d\x63\x44\x6e\x81\x00\x01\x0c\x08\x00\x04\x00\x08\x00\x03" //.McDn...........
 //    /* 0020 */ "\x0c\x0c\x00\xeb\x03\x02\x00\xec\x03\xed\x03\x02\x0c\xec\x00\x01" //................
@@ -5576,8 +5553,7 @@ const char indata[] =
 //    /* 00f0 */ "\xf7\x2c\xee\xe4\x8e\x64\x2e\x37\x49\xf0\x4c\x94\x6f\x08\xf5\x63" //.,...d.7I.L.o..c
 //    /* 0100 */ "\x4c\x56\x29\x55\x5a\x63\x41\x2c\x20\x65\x95\x99\xb1\x15\x7c\x00" //LV)UZcA, e....|.
 //    /* 0110 */ "\x00\x00\x00\x00\x00\x00\x00"                                     //.......
-//    Dump done RDP Client (4) sending 279 bytes
-//    Send done on RDP Client (4)
+
 //    Front::incoming::Channel Connection
 //    Front::incoming:: Recv MCS::ErectDomainRequest
 //    Socket RDP Client (4) receiving 4 bytes
