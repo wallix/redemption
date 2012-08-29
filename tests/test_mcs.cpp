@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
     MCS::RecvFactory fac_mcs(payload, MCS::BER_ENCODING);
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_CONNECT_INITIAL, fac_mcs.type);
 
-    MCS::CONNECT_INITIAL_PDU_Recv mcs(payload, payload_length, MCS::BER_ENCODING);
+    MCS::CONNECT_INITIAL_PDU_Recv mcs(payload, MCS::BER_ENCODING);
 
     BOOST_CHECK_EQUAL(101, mcs.tag);
     BOOST_CHECK_EQUAL(369, mcs.tag_len + 5);
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
     MCS::RecvFactory fac_mcs(payload, MCS::BER_ENCODING);
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_CONNECT_RESPONSE, fac_mcs.type);
 
-    MCS::CONNECT_RESPONSE_PDU_Recv mcs(payload, payload_length, MCS::BER_ENCODING);
+    MCS::CONNECT_RESPONSE_PDU_Recv mcs(payload, MCS::BER_ENCODING);
  
     BOOST_CHECK_EQUAL(102, mcs.tag);
     BOOST_CHECK_EQUAL(90, mcs.tag_len);
@@ -337,7 +337,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
    , length);
     t.recv(&stream.end, length);
 
-    MCS::ErectDomainRequest_Recv mcs(stream, length, MCS::PER_ENCODING);
+    MCS::ErectDomainRequest_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL(MCS::MCSPDU_ErectDomainRequest , mcs.type);
     BOOST_CHECK_EQUAL(0, mcs.subHeight);
@@ -369,7 +369,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
    , length);
     t.recv(&stream.end, length);
 
-    MCS::DisconnectProviderUltimatum_Recv mcs(stream, length, MCS::PER_ENCODING);
+    MCS::DisconnectProviderUltimatum_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_DisconnectProviderUltimatum , mcs.type);
     BOOST_CHECK_EQUAL(0, mcs.reason);
@@ -400,7 +400,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
     t.recv(&stream.end, length);
 
     try {
-        MCS::AttachUserRequest_Recv mcs(stream, length, MCS::PER_ENCODING);
+        MCS::AttachUserRequest_Recv mcs(stream, MCS::PER_ENCODING);
         BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserRequest , mcs.type);
     }
     catch(...){
@@ -433,7 +433,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_without_userid)
    , length);
     t.recv(&stream.end, length);
 
-    MCS::AttachUserConfirm_Recv mcs(stream, length, MCS::PER_ENCODING);
+    MCS::AttachUserConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserConfirm , mcs.type);
     BOOST_CHECK_EQUAL(0 , mcs.result);
@@ -467,7 +467,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
    , length);
     t.recv(&stream.end, length);
 
-    MCS::AttachUserConfirm_Recv mcs(stream, length, MCS::PER_ENCODING);
+    MCS::AttachUserConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserConfirm , mcs.type);
     BOOST_CHECK_EQUAL((uint8_t)0 , mcs.result);
@@ -502,7 +502,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
    , length);
     t.recv(&stream.end, length);
 
-    MCS::ChannelJoinRequest_Recv mcs(stream, length, MCS::PER_ENCODING);
+    MCS::ChannelJoinRequest_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_ChannelJoinRequest , mcs.type);
     BOOST_CHECK_EQUAL((uint16_t)3, mcs.initiator);
@@ -540,7 +540,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
    , length);
     t.recv(&stream.end, length);
 
-    MCS::ChannelJoinConfirm_Recv mcs(stream, length, MCS::PER_ENCODING);
+    MCS::ChannelJoinConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_ChannelJoinConfirm , mcs.type);
     BOOST_CHECK_EQUAL((uint8_t)MCS::RT_SUCCESSFUL , mcs.result);
@@ -580,7 +580,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
    , length);
     t.recv(&stream.end, length);
 
-    MCS::SendDataRequest_Recv mcs(stream, length, MCS::PER_ENCODING);
+    MCS::SendDataRequest_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_SendDataRequest , mcs.type);
     BOOST_CHECK_EQUAL((uint16_t)3, mcs.initiator);
@@ -620,7 +620,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
    , length);
     t.recv(&stream.end, length);
 
-    MCS::SendDataIndication_Recv mcs(stream, length, MCS::PER_ENCODING);
+    MCS::SendDataIndication_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_SendDataIndication , mcs.type);
     BOOST_CHECK_EQUAL((uint16_t)3, mcs.initiator);

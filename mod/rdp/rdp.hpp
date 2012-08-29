@@ -675,7 +675,7 @@ struct mod_rdp : public client_mod {
                 X224::DT_TPDU_Recv x224(*this->nego.trans, x224_data, f.length);
 
                 SubStream & mcs_data = x224.payload;
-                MCS::CONNECT_RESPONSE_PDU_Recv mcs(mcs_data, x224.payload_size, MCS::BER_ENCODING);
+                MCS::CONNECT_RESPONSE_PDU_Recv mcs(mcs_data, MCS::BER_ENCODING);
                 SubStream & payload = mcs.payload;
 
                 payload.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
@@ -833,7 +833,7 @@ struct mod_rdp : public client_mod {
                 X224::DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
                 SubStream & payload = x224.payload;
 
-                MCS::AttachUserConfirm_Recv mcs(payload, x224.payload_size, MCS::PER_ENCODING);
+                MCS::AttachUserConfirm_Recv mcs(payload, MCS::PER_ENCODING);
                 if (mcs.initiator_flag){
                     this->userid = mcs.initiator;
                 }
@@ -864,7 +864,7 @@ struct mod_rdp : public client_mod {
                     X224::RecvFactory f(*this->nego.trans, x224_data);
                     X224::DT_TPDU_Recv x224(*this->nego.trans, x224_data, f.length);
                     SubStream & mcs_cjcf_data = x224.payload;
-                    MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, x224.payload_size, MCS::PER_ENCODING);
+                    MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
                     TODO("We should check channel confirmation worked, for now we just do like server said OK to everything... and that may not be the case, some channels may be closed for instance. We should also check requested chanid are some confirm may come out of order"); 
                 }
             }
@@ -1018,7 +1018,7 @@ struct mod_rdp : public client_mod {
             X224::RecvFactory f(*this->nego.trans, stream);
             X224::DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
             SubStream & mcs_data = x224.payload;
-            MCS::SendDataIndication_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+            MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
             SubStream & payload = mcs.payload;
 
             Sec sec(payload, this->decrypt);
@@ -1278,7 +1278,7 @@ struct mod_rdp : public client_mod {
             X224::RecvFactory f(*this->nego.trans, stream);
             X224::DT_TPDU_Recv x224(*this->nego.trans, stream, f.length);
             SubStream & mcs_data = x224.payload;
-            MCS::SendDataIndication_Recv mcs(mcs_data, x224.payload_size, MCS::PER_ENCODING);
+            MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
             SubStream & payload = mcs.payload;
 
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");

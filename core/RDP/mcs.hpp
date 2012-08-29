@@ -327,7 +327,7 @@ namespace MCS
 
         bool upwardFlag;
 
-        CONNECT_INITIAL_PDU_Recv(Stream & stream, size_t available_length, int encoding) 
+        CONNECT_INITIAL_PDU_Recv(Stream & stream, int encoding) 
             : payload(stream, 0) // initialized later
         {
             if (encoding != BER_ENCODING){
@@ -556,7 +556,7 @@ namespace MCS
         SubStream payload;
         size_t payload_size;
 
-        CONNECT_RESPONSE_PDU_Recv(Stream & stream, size_t available_length, int encoding)
+        CONNECT_RESPONSE_PDU_Recv(Stream & stream, int encoding)
             : payload(stream, 0)
         {
             if (encoding != BER_ENCODING){
@@ -697,7 +697,7 @@ namespace MCS
 
     struct PlumbDomainIndication_Recv
     {
-        PlumbDomainIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        PlumbDomainIndication_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -751,7 +751,7 @@ namespace MCS
         uint32_t subHeight;
         uint32_t subInterval;
 
-        ErectDomainRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        ErectDomainRequest_Recv(Stream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "ErectDomainRequest PER_ENCODING mandatory");
@@ -817,7 +817,7 @@ namespace MCS
 
     struct MergeChannelRequest_Recv
     {
-        MergeChannelRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        MergeChannelRequest_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -841,7 +841,7 @@ namespace MCS
 
     struct MergeChannelsConfirm_Recv
     {
-        MergeChannelsConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        MergeChannelsConfirm_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -866,7 +866,7 @@ namespace MCS
 
     struct PurgeChannelsIndication_Recv
     {
-        PurgeChannelsIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        PurgeChannelsIndication_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -927,7 +927,7 @@ namespace MCS
 
     struct MergeTokensRequest_Recv
     {
-        MergeTokensRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        MergeTokensRequest_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -951,7 +951,7 @@ namespace MCS
 
     struct MergeTokensConfirm_Recv
     {
-        MergeTokensConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        MergeTokensConfirm_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -974,7 +974,7 @@ namespace MCS
 
     struct PurgeTokensIndication_Recv
     {
-        PurgeTokensIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        PurgeTokensIndication_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1004,7 +1004,7 @@ namespace MCS
     {
         uint8_t type;
         uint8_t reason;
-        DisconnectProviderUltimatum_Recv(Stream & stream, size_t available_length, int encoding)
+        DisconnectProviderUltimatum_Recv(Stream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "DisconnectProviderUltimatum PER_ENCODING mandatory");
@@ -1037,7 +1037,7 @@ namespace MCS
 
     struct RejectMCSPDUUltimatum_Recv
     {
-        RejectMCSPDUUltimatum_Recv(Stream & stream, size_t available_length, int encoding)
+        RejectMCSPDUUltimatum_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1098,7 +1098,7 @@ namespace MCS
     struct AttachUserRequest_Recv
     {
         uint8_t type;
-        AttachUserRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        AttachUserRequest_Recv(Stream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "AttachUserRequest PER_ENCODING mandatory");
@@ -1245,7 +1245,7 @@ namespace MCS
         bool initiator_flag;
         uint16_t initiator;
         
-        AttachUserConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        AttachUserConfirm_Recv(Stream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "AttachUserConfirm PER_ENCODING mandatory");
@@ -1282,7 +1282,7 @@ namespace MCS
 
     struct DetachUserRequest_Recv
     {
-        DetachUserRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        DetachUserRequest_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1306,7 +1306,7 @@ namespace MCS
 
     struct DetachUserIndication_Recv
     {
-        DetachUserIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        DetachUserIndication_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1418,7 +1418,7 @@ namespace MCS
         uint16_t initiator;
         uint16_t channelId;
 
-        ChannelJoinRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        ChannelJoinRequest_Recv(Stream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "ChannelJoinRequest PER_ENCODING mandatory");
@@ -1543,7 +1543,7 @@ namespace MCS
         bool channelId_flag;
         uint16_t channelId;
 
-        ChannelJoinConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        ChannelJoinConfirm_Recv(Stream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "ChannelJoinConfirm PER_ENCODING mandatory");
@@ -1585,7 +1585,7 @@ namespace MCS
 
     struct ChannelLeaveRequest_Recv
     {
-        ChannelLeaveRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        ChannelLeaveRequest_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1608,7 +1608,7 @@ namespace MCS
 
     struct ChannelConveneRequest_Recv
     {
-        ChannelConveneRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        ChannelConveneRequest_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1633,7 +1633,7 @@ namespace MCS
 
     struct ChannelConveneConfirm_Recv
     {
-        ChannelConveneConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        ChannelConveneConfirm_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1657,7 +1657,7 @@ namespace MCS
 
     struct ChannelDisbandRequest_Recv
     {
-        ChannelDisbandRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        ChannelDisbandRequest_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1680,7 +1680,7 @@ namespace MCS
 
     struct ChannelDisbandIndication_Recv
     {
-        ChannelDisbandIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        ChannelDisbandIndication_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1705,7 +1705,7 @@ namespace MCS
 
     struct ChannelAdmitRequest_Recv
     {
-        ChannelAdmitRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        ChannelAdmitRequest_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1731,7 +1731,7 @@ namespace MCS
 
     struct ChannelAdmitIndication_Recv
     {
-        ChannelAdmitIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        ChannelAdmitIndication_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1757,7 +1757,7 @@ namespace MCS
 
     struct ChannelExpelRequest_Recv
     {
-        ChannelExpelRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        ChannelExpelRequest_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1781,7 +1781,7 @@ namespace MCS
 
     struct ChannelExpelIndication_Recv
     {
-        ChannelExpelIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        ChannelExpelIndication_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1828,7 +1828,7 @@ namespace MCS
         uint16_t payload_size;
 
 
-        SendDataRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        SendDataRequest_Recv(Stream & stream, int encoding)
             : payload(stream, 0)
         {
             if (encoding != PER_ENCODING){
@@ -1897,7 +1897,7 @@ namespace MCS
         uint16_t _header_size;
         uint16_t payload_size;
 
-        SendDataIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        SendDataIndication_Recv(Stream & stream, int encoding)
             : payload(stream, 0)
         {
             if (encoding != PER_ENCODING){
@@ -1950,7 +1950,7 @@ namespace MCS
 
     struct UniformSendDataRequest_Recv
     {
-        UniformSendDataRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        UniformSendDataRequest_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -1977,7 +1977,7 @@ namespace MCS
 
     struct UniformSendDataIndication_Recv
     {
-        UniformSendDataIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        UniformSendDataIndication_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2001,7 +2001,7 @@ namespace MCS
 
     struct TokenGrabRequest_Recv
     {
-        TokenGrabRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        TokenGrabRequest_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2027,7 +2027,7 @@ namespace MCS
 
     struct TokenGrabConfirm_Recv
     {
-        TokenGrabConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        TokenGrabConfirm_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2051,7 +2051,7 @@ namespace MCS
 
     struct TokenInhibitRequest_Recv
     {
-        TokenInhibitRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        TokenInhibitRequest_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2078,7 +2078,7 @@ namespace MCS
 
     struct TokenInhibitConfirm_Recv
     {
-        TokenInhibitConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        TokenInhibitConfirm_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2103,7 +2103,7 @@ namespace MCS
 
     struct TokenGiveRequest_Recv
     {
-        TokenGiveRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        TokenGiveRequest_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2129,7 +2129,7 @@ namespace MCS
 
     struct TokenGiveIndication_Recv
     {
-        TokenGiveIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        TokenGiveIndication_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2155,7 +2155,7 @@ namespace MCS
 
     struct TokenGiveResponse_Recv
     {
-        TokenGiveResponse_Recv(Stream & stream, size_t available_length, int encoding)
+        TokenGiveResponse_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2181,7 +2181,7 @@ namespace MCS
 
     struct TokenGiveConfirm_Recv
     {
-        TokenGiveConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        TokenGiveConfirm_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2205,7 +2205,7 @@ namespace MCS
 
     struct TokenPleaseRequest_Recv
     {
-        TokenPleaseRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        TokenPleaseRequest_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2230,7 +2230,7 @@ namespace MCS
 
     struct TokenPleaseIndication_Recv
     {
-        TokenPleaseIndication_Recv(Stream & stream, size_t available_length, int encoding)
+        TokenPleaseIndication_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2254,7 +2254,7 @@ namespace MCS
 
     struct TokenReleaseRequest_Recv
     {
-        TokenReleaseRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        TokenReleaseRequest_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2281,7 +2281,7 @@ namespace MCS
 
     struct TokenReleaseConfirm_Recv
     {
-        TokenReleaseConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        TokenReleaseConfirm_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2305,7 +2305,7 @@ namespace MCS
 
     struct TokenTestRequest_Recv
     {
-        TokenTestRequest_Recv(Stream & stream, size_t available_length, int encoding)
+        TokenTestRequest_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
@@ -2330,7 +2330,7 @@ namespace MCS
 
     struct TokenTestConfirm_Recv
     {
-        TokenTestConfirm_Recv(Stream & stream, size_t available_length, int encoding)
+        TokenTestConfirm_Recv(Stream & stream, int encoding)
         {
             LOG(LOG_ERR, "Not Implemented, not used by RDP protocol");
             throw Error(ERR_MCS);
