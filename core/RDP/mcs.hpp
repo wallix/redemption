@@ -392,7 +392,6 @@ namespace MCS
             this->payload.resize(stream, this->payload_size);
 
             TODO("Octets below are part of GCC Conference User Data")
-//            stream.in_skip_bytes(23);
 
 // The payload is the USER_DATA block
             this->_header_size  = stream.p - stream.data;
