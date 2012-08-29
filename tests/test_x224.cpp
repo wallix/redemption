@@ -25,7 +25,7 @@
 #define BOOST_TEST_MODULE TestX224
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+//#define LOGPRINT
 #include "log.hpp"
 
 #include "stream.hpp"
@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
     
-    X224::CR_TPDU_Recv x224(t, stream, fac_x224.length);
+    X224::CR_TPDU_Recv x224(t, stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL(tpkt_len, (size_t)fac_x224.length);
     
-    X224::CR_TPDU_Recv x224(t, stream, fac_x224.length);
+    X224::CR_TPDU_Recv x224(t, stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
     
-    X224::CC_TPDU_Recv x224(t, stream, fac_x224.length);
+    X224::CC_TPDU_Recv x224(t, stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_TLS_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)tpkt_len, (size_t)fac_x224.length);
     
-    X224::CC_TPDU_Recv x224(t, stream, fac_x224.length);
+    X224::CC_TPDU_Recv x224(t, stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::DR_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
     
-    X224::DR_TPDU_Recv x224(t, stream, fac_x224.length);
+    X224::DR_TPDU_Recv x224(t, stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::ER_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)13, (size_t)fac_x224.length);
     
-    X224::ER_TPDU_Recv x224(t, stream, fac_x224.length);
+    X224::ER_TPDU_Recv x224(t, stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(13, x224.tpkt.len);
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::DT_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)12, (size_t)fac_x224.length);
     
-    X224::DT_TPDU_Recv x224(t, stream, fac_x224.length);
+    X224::DT_TPDU_Recv x224(t, stream);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(12, x224.tpkt.len);

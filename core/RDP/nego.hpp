@@ -224,7 +224,7 @@ struct RdpNego
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
         BStream stream(65536);
         X224::RecvFactory f(*this->trans, stream);
-        X224::CC_TPDU_Recv x224(*this->trans, stream, f.length);
+        X224::CC_TPDU_Recv x224(*this->trans, stream);
 
         if (x224.rdp_neg_type == 0){
             this->tls = false;

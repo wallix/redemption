@@ -349,7 +349,6 @@ namespace X224
     struct Recv
     {
         size_t _header_size;
-        uint32_t verbose;
 
         struct Tpkt
         {
@@ -357,8 +356,7 @@ namespace X224
             uint16_t len;
         } tpkt;
 
-        Recv(Transport & t, Stream & stream, uint32_t verbose)
-            : _header_size(4), verbose(verbose)
+        Recv(Transport & t, Stream & stream) : _header_size(4)
         {
             uint16_t length = stream.size();
             if (length < 4){
@@ -492,8 +490,8 @@ namespace X224
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_code;
 
-        CR_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-        : Recv(t, stream, verbose)
+        CR_TPDU_Recv(Transport & t, Stream & stream, uint32_t verbose = 0)
+        : Recv(t, stream)
         {
             this->tpdu_hdr.LI = stream.in_uint8();
             this->tpdu_hdr.code = stream.in_uint8();
@@ -523,7 +521,7 @@ namespace X224
                     }
                     memcpy(this->cookie, stream.data + 11, this->cookie_len);
                     this->cookie[this->cookie_len] = 0;
-                    if (this->verbose){
+                    if (verbose){
                         LOG(LOG_INFO, "cookie: %s", this->cookie);
                     }
                     break;
@@ -532,7 +530,7 @@ namespace X224
             stream.p += this->cookie_len;
 
             if (end_of_header - stream.p >= 8){
-                if (this->verbose){
+                if (verbose){
                     LOG(LOG_INFO, "Found RDP Negotiation Request Structure");
                 }
                 this->rdp_neg_type = stream.in_uint8();
@@ -734,8 +732,8 @@ namespace X224
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_code; // selected_protocol or failure_code
 
-        CC_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-        : Recv(t, stream, verbose)
+        CC_TPDU_Recv(Transport & t, Stream & stream, uint32_t verbose = 0)
+        : Recv(t, stream)
         {
             this->tpdu_hdr.LI = stream.in_uint8();
             this->tpdu_hdr.code = stream.in_uint8();
@@ -759,6 +757,9 @@ namespace X224
 
                 if ((this->rdp_neg_type != X224::RDP_NEG_FAILURE)
                 &&  (this->rdp_neg_type != X224::RDP_NEG_RESP)){
+                    this->rdp_neg_flags = stream.in_uint8();
+                    this->rdp_neg_length = stream.in_uint16_le();
+                    this->rdp_neg_code = stream.in_uint32_le();
                     LOG(LOG_ERR, "X224:RDP_NEG_RESP or X224:RDP_NEG_FAILURE Expected, got LI=%u %x %x %x %x",
                         this->tpdu_hdr.LI,
                         this->rdp_neg_type,
@@ -768,7 +769,7 @@ namespace X224
                     throw Error(ERR_X224);
                 }
 
-                if (this->verbose){
+                if (verbose){
                     LOG(LOG_INFO, "Found RDP Negotiation %s Structure",
                         (this->rdp_neg_type == X224::RDP_NEG_RESP)?"Response":"Failure");
                 }
@@ -879,9 +880,9 @@ namespace X224
 
         // CONSTRUCTOR
         //==============================================================================
-        DR_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
+        DR_TPDU_Recv(Transport & t, Stream & stream)
         //==============================================================================
-        : Recv(t, stream, verbose)
+        : Recv(t, stream)
         {
             this->tpdu_hdr.LI = stream.in_uint8();
             this->tpdu_hdr.code = stream.in_uint8();
@@ -954,8 +955,8 @@ namespace X224
             uint8_t invalid[256];
         } tpdu_hdr;
 
-        ER_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-        : Recv(t, stream, verbose)
+        ER_TPDU_Recv(Transport & t, Stream & stream)
+        : Recv(t, stream)
         {
             // TPDU
             this->tpdu_hdr.LI = stream.in_uint8();
@@ -1048,8 +1049,8 @@ namespace X224
             EOT_EOT             = 0x80
         };
 
-        DT_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-        : Recv(t, stream, verbose)
+        DT_TPDU_Recv(Transport & t, Stream & stream)
+        : Recv(t, stream)
         , payload(stream, 0)
         {
             this->tpdu_hdr.LI = stream.in_uint8();
