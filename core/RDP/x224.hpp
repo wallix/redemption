@@ -357,20 +357,21 @@ namespace X224
             uint16_t len;
         } tpkt;
 
-        Recv(Transport & t, Stream & stream, uint16_t length, uint32_t verbose)
+        Recv(Transport & t, Stream & stream, uint32_t verbose)
             : _header_size(4), verbose(verbose)
         {
-            t.recv((char**)(&(stream.end)), length - (stream.size()));
+            uint16_t length = stream.size();
+            if (length < 4){
+                t.recv((char**)(&(stream.end)), 4 - length);
+            }
             stream.p = stream.data;
 
             // TPKT
             this->tpkt.version = stream.in_uint8();
             stream.in_skip_bytes(1);
             this->tpkt.len = stream.in_uint16_be();
-            if (this->tpkt.len != length){
-                LOG(LOG_ERR, "Inconsistant TPDU length, tpkt.len=%u asked=%u",
-                    this->tpkt.len, length);
-                throw Error(ERR_X224);
+            if (stream.size() < this->tpkt.len){
+                t.recv((char**)(&(stream.end)), this->tpkt.len - stream.size());
             }
         }
     };
@@ -492,7 +493,7 @@ namespace X224
         uint32_t rdp_neg_code;
 
         CR_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-        : Recv(t, stream, length, verbose)
+        : Recv(t, stream, verbose)
         {
             this->tpdu_hdr.LI = stream.in_uint8();
             this->tpdu_hdr.code = stream.in_uint8();
@@ -734,7 +735,7 @@ namespace X224
         uint32_t rdp_neg_code; // selected_protocol or failure_code
 
         CC_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-        : Recv(t, stream, length, verbose)
+        : Recv(t, stream, verbose)
         {
             this->tpdu_hdr.LI = stream.in_uint8();
             this->tpdu_hdr.code = stream.in_uint8();
@@ -880,7 +881,7 @@ namespace X224
         //==============================================================================
         DR_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
         //==============================================================================
-        : Recv(t, stream, length, verbose)
+        : Recv(t, stream, verbose)
         {
             this->tpdu_hdr.LI = stream.in_uint8();
             this->tpdu_hdr.code = stream.in_uint8();
@@ -954,7 +955,7 @@ namespace X224
         } tpdu_hdr;
 
         ER_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-        : Recv(t, stream, length, verbose)
+        : Recv(t, stream, verbose)
         {
             // TPDU
             this->tpdu_hdr.LI = stream.in_uint8();
@@ -1048,7 +1049,7 @@ namespace X224
         };
 
         DT_TPDU_Recv(Transport & t, Stream & stream, size_t length, uint32_t verbose = 0)
-        : Recv(t, stream, length, verbose)
+        : Recv(t, stream, verbose)
         , payload(stream, 0)
         {
             this->tpdu_hdr.LI = stream.in_uint8();
