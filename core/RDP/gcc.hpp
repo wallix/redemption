@@ -350,7 +350,22 @@ namespace GCC
         }
     };
 
+    class Create_Response_Recv {
+        public:
+        size_t payload_size;
 
+        SubStream payload;
+
+        Create_Response_Recv(Stream & stream) {
+            stream.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
+            size_t len = payload.in_uint8();
+            if (len & 0x80) { // Bogus? Suspicious?
+                len = payload.in_uint8();
+            }
+            
+            this->payload.resize(stream, stream.size() - stream.get_offset());
+        }
+    };
 
 };
 

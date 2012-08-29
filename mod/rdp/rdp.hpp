@@ -678,6 +678,9 @@ struct mod_rdp : public client_mod {
                 MCS::CONNECT_RESPONSE_PDU_Recv mcs(mcs_data, MCS::BER_ENCODING);
                 SubStream & payload = mcs.payload;
 
+//                GCC::Create_Response_Recv gcc_cr(mcs.payload);
+//                SubStream & payload = gcc_cr.payload;
+
                 payload.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
                 size_t len = payload.in_uint8();
 
