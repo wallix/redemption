@@ -678,18 +678,15 @@ struct mod_rdp : public client_mod {
                 MCS::CONNECT_RESPONSE_PDU_Recv mcs(mcs_data, MCS::BER_ENCODING);
 
                 GCC::Create_Response_Recv gcc_cr(mcs.payload);
-                SubStream & payload = gcc_cr.payload;
 
-                while (payload.check_rem(4)) {
-                    uint16_t tag = payload.in_uint16_le();
-                    uint16_t length = payload.in_uint16_le();
-                    uint8_t *next_tag = (payload.p + length) - 4;
-                    switch (tag) {
+                while (gcc_cr.payload.check_rem(4)) {
+
+                    GCC::UserData::RecvFactory f(gcc_cr.payload);
+                    switch (f.tag) {
                     case SC_CORE:
                     {
-                        SCCoreGccUserData sc_core;
-                        sc_core.recv(payload, length);
-                        sc_core.log("Receiving SC_CORE from server");
+                        GCC::UserData::SCCore_Recv sc_core(f.payload);
+                        sc_core.log("Received SC_CORE from server");
                         if (0x0080001 == sc_core.version){ // can't use rdp5
                             this->use_rdp5 = 0;
                         }
@@ -697,7 +694,6 @@ struct mod_rdp : public client_mod {
                     break;
                     case SC_SECURITY:
                     {
-                        LOG(LOG_INFO, "Receiving SC_Security from server");
                         uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
                         uint32_t encryptionMethod;
                         uint8_t modulus[SEC_MAX_MODULUS_SIZE];
@@ -705,7 +701,10 @@ struct mod_rdp : public client_mod {
                         uint8_t exponent[SEC_EXPONENT_SIZE];
                         memset(exponent, 0, sizeof(exponent));
 
-                        parse_mcs_data_sc_security(payload, encryptionMethod, serverRandom,
+                        uint16_t tag = f.payload.in_uint16_le();
+                        uint16_t length = f.payload.in_uint16_le();
+                        LOG(LOG_INFO, "Receiving SC_Security from server");
+                        parse_mcs_data_sc_security(f.payload, encryptionMethod, serverRandom,
                                                    modulus, exponent,
                                                    this->server_public_key_len, 
                                                    this->client_crypt_random,
@@ -737,16 +736,19 @@ struct mod_rdp : public client_mod {
                     }
                     break;
                     case SC_NET:
+                    {
+                        uint16_t tag = f.payload.in_uint16_le();
+                        uint16_t length = f.payload.in_uint16_le();
                         LOG(LOG_INFO, "Receiving SC_Net from server");
-                        parse_mcs_data_sc_net(payload, this->front.get_channel_list(), this->mod_channel_list);
-                        break;
+                        parse_mcs_data_sc_net(f.payload, this->front.get_channel_list(), this->mod_channel_list);
+                    }
+                    break;
                     default:
-                        LOG(LOG_WARNING, "response tag 0x%x", tag);
+                        LOG(LOG_WARNING, "unsupported response tag 0x%x", f.tag);
                         break;
                     }
-                    payload.p = next_tag;
                 }
-                if (payload.check_rem(1)) {
+                if (gcc_cr.payload.check_rem(1)) {
                     LOG(LOG_ERR, "recv connect response parsing gcc data : short header");
                     throw Error(ERR_MCS_DATA_SHORT_HEADER);
                 }

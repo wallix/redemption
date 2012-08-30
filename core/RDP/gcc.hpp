@@ -486,6 +486,116 @@ namespace GCC
         }
     };
 
+    namespace UserData
+    {
+
+        struct RecvFactory
+        {
+            uint16_t tag;
+            uint16_t length;
+            SubStream payload;
+
+            RecvFactory(Stream & stream) : payload(stream, stream.get_offset())
+            {
+                if (!stream.check_rem(4)){
+                    LOG(LOG_WARNING, "Incomplete GCC::UserData data block header");                      
+                    throw Error(ERR_GCC);
+                }
+                this->tag = stream.in_uint16_le();
+                this->length = stream.in_uint16_le();
+                LOG(LOG_INFO, "GCC::UserData tag=%0.4x length=%u", tag, length);
+                if (!stream.check_rem(length - 4)){
+                    LOG(LOG_WARNING, "Incomplete GCC::UserData data block"
+                                     " tag=%u length=%u available_length=%u",
+                                     tag, length, stream.size() - 4);                      
+                    throw Error(ERR_GCC);
+                }
+                stream.in_skip_bytes(length - 4);
+                this->payload.resize(this->payload, length);
+            }
+        };
+
+
+        // 2.2.1.4.2 Server Core Data (TS_UD_SC_CORE)
+        // ==========================================
+
+        // The TS_UD_SC_CORE data block contains core server connection-related
+        // information.
+
+        // header (4 bytes): GCC user data block header, as specified in User Data
+        //  Header (section 2.2.1.3.1). The User Data Header type field MUST be set to
+        //  SC_CORE (0x0C01).
+
+        // version (4 bytes): A 32-bit, unsigned integer. The server version number for
+        //  the RDP. The major version number is stored in the high two bytes, while the
+        //  minor version number is stored in the low two bytes.
+
+        // 0x00080001 RDP 4.0 servers
+        // 0x00080004 RDP 5.0, 5.1, 5.2, 6.0, 6.1, and 7.0 servers
+
+        // If the server advertises a version number greater than or equal to 0x00080004,
+        // it MUST support a maximum length of 512 bytes for the UserName field in the
+        // Info Packet (section 2.2.1.11.1.1).
+
+        // clientRequestedProtocols (4 bytes): A 32-bit, unsigned integer that contains
+        //  the flags sent by the client in the requestedProtocols field of the RDP
+        //  Negotiation Request (section 2.2.1.1.1). In the event that an RDP
+        //  Negotiation Request was not received from the client, this field MUST be
+        //  initialized to PROTOCOL_RDP (0).
+
+        // Exemple:
+        //01 0c 0c 00 -> TS_UD_HEADER::type = SC_CORE (0x0c01), length = 12 bytes
+        //04 00 08 00 -> TS_UD_SC_CORE::version = 0x0080004
+        //00 00 00 00 -> TS_UD_SC_CORE::clientRequestedProtocols = PROTOCOL_RDP
+
+        struct SCCore_Send {
+            SCCore_Send(Stream & stream, version = 0x00080001, bool option_clientRequestedProtocol = false, clientRequestedProtocols = 0)
+            {
+                stream.out_uint16_le(SC_CORE);
+                stream.out_uint16_le(8 + 4 * option_clientRequestedProtocol);
+                stream.out_uint32_le(version);
+                if (option_clientRequestedProtocol){
+                    stream.out_uint32_le(clientRequestedProtocol);
+                }
+            }
+        };
+                
+        struct SCCore_Recv {
+            uint16_t userDataType;
+            uint16_t length;
+            uint32_t version;
+            uint32_t clientRequestedProtocol;
+
+            SCCoreGccUserData()
+            {
+            : userDataType(SC_CORE)
+            , length(8) // default: everything except serverSelectedProtocol
+            , version(0x00080001)  // RDP version. 1 == RDP4, 4 == RDP5.
+            , clientRequestedProtocol(0)
+                this->userDataType = stream.in_uint16_le();
+                this->length = stream.in_uint16_le();
+                this->version = stream.in_uint32_le();
+                if (this->length < 12) { 
+                    return;
+                }
+                this->clientRequestedProtocol = stream.in_uint32_le();
+            }
+
+            void log(const char * msg)
+            {
+                // --------------------- Base Fields ---------------------------------------
+                LOG(LOG_INFO, "%s GCC User Data SC_CORE (%u bytes)", msg, this->length);
+                LOG(LOG_INFO, "sc_core::version [%04x] %s", this->version,
+                      (this->version==0x00080001) ? "RDP 4 client"
+                     :(this->version==0x00080004) ? "RDP 5.0, 5.1, 5.2, and 6.0 clients)"
+                                                  : "Unknown client");
+                if (this->length < 12) { return; }
+                LOG(LOG_INFO, "sc_core::clientRequestedProtocol  = %u", this->clientRequestedProtocol);
+            }
+        };
+
+    };
+
 };
 
 #endif
