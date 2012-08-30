@@ -1007,8 +1007,9 @@ public:
 
             BStream stream(65536);
 
+            GCC::UserData::SCCore sc_core(0x00080004);
             sc_core.log("Sending SC_CORE to client");
-            GCC::UserData::SCCore_Send sc_core(stream, 0x00080004);
+            sc_core.emit(stream);
 
             out_mcs_data_sc_net(stream, this->channel_list);
             front_out_gcc_conference_user_data_sc_sec1(stream, 

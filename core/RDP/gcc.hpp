@@ -56,7 +56,7 @@ enum DATA_BLOCK_TYPE {
 #include "gcc_conference_user_data/cs_monitor.hpp"
 #include "gcc_conference_user_data/cs_net.hpp"
 #include "gcc_conference_user_data/cs_sec.hpp"
-#include "gcc_conference_user_data/sc_core.hpp"
+//#include "gcc_conference_user_data/sc_core.hpp"
 #include "gcc_conference_user_data/sc_net.hpp"
 #include "gcc_conference_user_data/sc_sec1.hpp"
 
@@ -548,37 +548,48 @@ namespace GCC
         //04 00 08 00 -> TS_UD_SC_CORE::version = 0x0080004
         //00 00 00 00 -> TS_UD_SC_CORE::clientRequestedProtocols = PROTOCOL_RDP
 
-        struct SCCore_Send {
-            SCCore_Send(Stream & stream, version = 0x00080001, bool option_clientRequestedProtocol = false, clientRequestedProtocols = 0)
-            {
-                stream.out_uint16_le(SC_CORE);
-                stream.out_uint16_le(8 + 4 * option_clientRequestedProtocol);
-                stream.out_uint32_le(version);
-                if (option_clientRequestedProtocol){
-                    stream.out_uint32_le(clientRequestedProtocol);
-                }
-            }
-        };
-                
-        struct SCCore_Recv {
+        struct SCCore {
             uint16_t userDataType;
             uint16_t length;
             uint32_t version;
-            uint32_t clientRequestedProtocol;
+            bool option_clientRequestedProtocols;
+            uint32_t clientRequestedProtocols;
 
-            SCCoreGccUserData()
-            {
+            SCCore(Stream & stream)
             : userDataType(SC_CORE)
-            , length(8) // default: everything except serverSelectedProtocol
-            , version(0x00080001)  // RDP version. 1 == RDP4, 4 == RDP5.
-            , clientRequestedProtocol(0)
+            , length(8)
+            , version(0x00080001)
+            , option_clientRequestedProtocols(false)
+            , clientRequestedProtocols(0)
+            {
                 this->userDataType = stream.in_uint16_le();
                 this->length = stream.in_uint16_le();
                 this->version = stream.in_uint32_le();
                 if (this->length < 12) { 
                     return;
                 }
-                this->clientRequestedProtocol = stream.in_uint32_le();
+                this->clientRequestedProtocols = stream.in_uint32_le();
+            }
+
+            SCCore(uint32_t version = 0x00080001, 
+                   bool option_clientRequestedProtocols = false, 
+                   uint32_t clientRequestedProtocols = 0)
+            : userDataType(SC_CORE)
+            , length(8 + 4 * option_clientRequestedProtocols)
+            , version(version)
+            , option_clientRequestedProtocols(false)
+            , clientRequestedProtocols(clientRequestedProtocols)
+            {
+            }
+
+            void emit(Stream & stream)
+            {
+                stream.out_uint16_le(this->userDataType);
+                stream.out_uint16_le(this->length);
+                stream.out_uint32_le(this->version);
+                if (this->option_clientRequestedProtocols){
+                    stream.out_uint32_le(this->clientRequestedProtocols);
+                }
             }
 
             void log(const char * msg)
@@ -590,12 +601,11 @@ namespace GCC
                      :(this->version==0x00080004) ? "RDP 5.0, 5.1, 5.2, and 6.0 clients)"
                                                   : "Unknown client");
                 if (this->length < 12) { return; }
-                LOG(LOG_INFO, "sc_core::clientRequestedProtocol  = %u", this->clientRequestedProtocol);
+                this->option_clientRequestedProtocols = true;
+                LOG(LOG_INFO, "sc_core::clientRequestedProtocols  = %u", this->clientRequestedProtocols);
             }
         };
-
     };
-
 };
 
 #endif

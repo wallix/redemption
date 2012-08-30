@@ -685,7 +685,7 @@ struct mod_rdp : public client_mod {
                     switch (f.tag) {
                     case SC_CORE:
                     {
-                        GCC::UserData::SCCore_Recv sc_core(f.payload);
+                        GCC::UserData::SCCore sc_core(f.payload);
                         sc_core.log("Received SC_CORE from server");
                         if (0x0080001 == sc_core.version){ // can't use rdp5
                             this->use_rdp5 = 0;

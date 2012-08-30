@@ -26,7 +26,6 @@
 #if !defined(__CORE_RDP_GCC_CONFERENCE_USER_DATA_SC_SEC1_HPP__)
 #define __CORE_RDP_GCC_CONFERENCE_USER_DATA_SC_SEC1_HPP__
 
-TODO(" ssl calls introduce some dependency on ssl system library  injecting it in the sec object would be better.")
 #include "ssl_calls.hpp"
 #include "genrandom.hpp"
 
