@@ -676,24 +676,13 @@ struct mod_rdp : public client_mod {
 
                 SubStream & mcs_data = x224.payload;
                 MCS::CONNECT_RESPONSE_PDU_Recv mcs(mcs_data, MCS::BER_ENCODING);
-                SubStream & payload = mcs.payload;
 
-//                GCC::Create_Response_Recv gcc_cr(mcs.payload);
-//                SubStream & payload = gcc_cr.payload;
+                GCC::Create_Response_Recv gcc_cr(mcs.payload);
+                SubStream & payload = gcc_cr.payload;
 
-                payload.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
-                size_t len = payload.in_uint8();
-
-                if (len & 0x80) {
-                    len = payload.in_uint8();
-                }
-                while (payload.p < payload.end) {
+                while (payload.check_rem(4)) {
                     uint16_t tag = payload.in_uint16_le();
                     uint16_t length = payload.in_uint16_le();
-                    if (length <= 4) {
-                        LOG(LOG_ERR, "recv connect response parsing gcc data : short header");
-                        throw Error(ERR_MCS_DATA_SHORT_HEADER);
-                    }
                     uint8_t *next_tag = (payload.p + length) - 4;
                     switch (tag) {
                     case SC_CORE:
@@ -757,6 +746,11 @@ struct mod_rdp : public client_mod {
                     }
                     payload.p = next_tag;
                 }
+                if (payload.check_rem(1)) {
+                    LOG(LOG_ERR, "recv connect response parsing gcc data : short header");
+                    throw Error(ERR_MCS_DATA_SHORT_HEADER);
+                }
+
             }
 
             if (this->verbose){

@@ -90,6 +90,124 @@ namespace GCC
 //    conferenceMode         ConferenceMode OPTIONAL
 // }
 
+//    PER encoded (ALIGNED variant of BASIC-PER) GCC Connection Data (ConnectData):
+//    00 05 00 14 7c 00 01 81 2a 00 08 00 10 00 01 c0
+//    00 44 75 63 61 81 1c
+
+//    0 - CHOICE: From Key select object (0) of type OBJECT IDENTIFIER
+//    0 - padding
+//    0 - padding
+//    0 - padding
+//    0 - padding
+//    0 - padding
+//    0 - padding
+//    0 - padding
+
+//    05 -> object length = 5 bytes
+
+//    00 14 7c 00 01 -> object
+//    The first byte gives the first two values in the sextuple (m and n), as it is encoded as
+//    40m + n. Hence, decoding the remaining data yields the correct results:
+
+//    OID = { 0 0 20 124 0 1 } = {itu-t(0) recommendation(0) t(20) t124(124) version(0) 1}
+//    Description = v.1 of ITU-T Recommendation T.124 (Feb 1998): "Generic Conference Control"
+
+//    81 2a -> ConnectData::connectPDU length = 298 bytes
+//    Since the most significant bit of the first byte (0x81) is set to 1 and the following bit is
+//    set to 0, the length is given by the low six bits of the first byte and the second byte.
+//    Hence, the value is 0x12a, which is 298 bytes.
+
+//    PER encoded (ALIGNED variant of BASIC-PER) GCC Conference Create Request PDU:
+//    00 08 00 10 00 01 c0 00 44 75 63 61 81 1c
+
+//    0x00:
+//    0 - extension bit (ConnectGCCPDU)
+//    0 - --\.
+//    0 -   | CHOICE: From ConnectGCCPDU select conferenceCreateRequest (0)
+//    0 - --/ of type ConferenceCreateRequest
+//    0 - extension bit (ConferenceCreateRequest)
+//    0 - ConferenceCreateRequest::convenerPassword present
+//    0 - ConferenceCreateRequest::password present
+//    0 - ConferenceCreateRequest::conductorPrivileges present
+
+
+//    0x08:
+//    0 - ConferenceCreateRequest::conductedPrivileges present
+//    0 - ConferenceCreateRequest::nonConductedPrivileges present
+//    0 - ConferenceCreateRequest::conferenceDescription present
+//    0 - ConferenceCreateRequest::callerIdentifier present
+//    1 - ConferenceCreateRequest::userData present
+//    0 - extension bit (ConferenceName)
+//    0 - ConferenceName::text present
+//    0 - padding
+
+//    0x00
+//    0 - --\.
+//    0 -   |
+//    0 -   |
+//    0 -   | ConferenceName::numeric length = 0 + 1 = 1 character
+//    0 -   | (minimum for SimpleNumericString is 1)
+//    0 -   |
+//    0 -   |
+//    0 - --/
+
+//    0x10:
+//    0 - --\.
+//    0 -   | ConferenceName::numeric = "1"
+//    0 -   |
+//    1 - --/
+//    0 - ConferenceCreateRequest::lockedConference
+//    0 - ConferenceCreateRequest::listedConference
+//    0 - ConferenceCreateRequest::conducibleConference
+//    0 - extension bit (TerminationMethod)
+
+//    0x00:
+//    0 - TerminationMethod::automatic
+//    0 - padding
+//    0 - padding
+//    0 - padding
+//    0 - padding
+//    0 - padding
+//    0 - padding
+//    0 - padding
+
+//    0x01:
+//    0 - --\.
+//    0 -   |
+//    0 -   |
+//    0 -   | number of UserData sets = 1
+//    0 -   |
+//    0 -   |
+//    0 -   |
+//    1 - --/
+
+//    0xc0:
+//    1 - UserData::value present
+//    1 - CHOICE: From Key select h221NonStandard (1) of type H221NonStandardIdentifier
+//    0 - padding
+//    0 - padding
+//    0 - padding
+//    0 - padding
+//    0 - padding
+//    0 - padding
+
+//    0x00:
+//    0 - --\.
+//    0 -   |
+//    0 -   |
+//    0 -   | h221NonStandard length = 0 + 4 = 4 octets
+//    0 -   | (minimum for H221NonStandardIdentifier is 4)
+//    0 -   |
+//    0 -   |
+//    0 - --/
+
+//    44 75 63 61 -> h221NonStandard (client-to-server H.221 key) = "Duca"
+//    81 1c -> UserData::value length = 284 bytes
+//    Since the most significant bit of the first byte (0x81) is set to 1 and the following bit is
+//    set to 0, the length is given by the low six bits of the first byte and the second byte.
+//    Hence, the value is 0x11c, which is 284 bytes.
+
+
     class Create_Request_Send {
         public:
         Create_Request_Send(Stream & stream, size_t payload_size) {
@@ -150,12 +268,12 @@ namespace GCC
             uint16_t length = stream.in_per_length();
 
             if (length_with_header != length + 14){
-                LOG(LOG_INFO, "GCC Conference Create Request User data Length mismatch with header+data length %u %u", length, length_with_header);
+                LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header+data length %u %u", length, length_with_header);
                 throw Error(ERR_GCC);
             }
 
             if (length != stream.size() - stream.get_offset()){
-                LOG(LOG_INFO, "GCC Conference Create Request User data Length mismatch with header %u %u", length, stream.size() - stream.get_offset());
+                LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header %u %u", length, stream.size() - stream.get_offset());
                 throw Error(ERR_GCC);
             }
             this->payload.resize(stream, stream.size() - stream.get_offset());
@@ -358,9 +476,10 @@ namespace GCC
 
         Create_Response_Recv(Stream & stream) {
             stream.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
-            size_t len = payload.in_uint8();
-            if (len & 0x80) { // Bogus? Suspicious?
-                len = payload.in_uint8();
+            size_t length = stream.in_per_length();
+            if (length != stream.size() - stream.get_offset()){
+                LOG(LOG_WARNING, "GCC Conference Create Response User data Length mismatch with header %u %u", length, stream.size() - stream.get_offset());
+                throw Error(ERR_GCC);
             }
             
             this->payload.resize(stream, stream.size() - stream.get_offset());
