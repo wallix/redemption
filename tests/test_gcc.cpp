@@ -98,37 +98,27 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     BOOST_CHECK(t.status);
 }
 
-BOOST_AUTO_TEST_CASE(Test_gcc_write_client_core_data)
+BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
 {
-const char gcc_client_core_data_expected[] =
-    "\x01\xc0\xd8\x00\x04\x00\x08\x00\x00\x05\x00\x04\x01\xCA\x03\xAA"
-    "\x09\x04\x00\x00\xCE\x0E\x00\x00\x45\x00\x4c\x00\x54\x00\x4f\x00"
-    "\x4e\x00\x53\x00\x2d\x00\x44\x00\x45\x00\x56\x00\x32\x00\x00\x00"
-    "\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00"
-    "\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-    "\x00\x00\x00\x00\x01\xCA\x01\x00\x00\x00\x00\x00\x18\x00\x07\x00"
-    "\x01\x00\x36\x00\x39\x00\x37\x00\x31\x00\x32\x00\x2d\x00\x37\x00"
-    "\x38\x00\x33\x00\x2d\x00\x30\x00\x33\x00\x35\x00\x37\x00\x39\x00"
-    "\x37\x00\x34\x00\x2d\x00\x34\x00\x32\x00\x37\x00\x31\x00\x34\x00"
-    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-    "\x00\x00\x00\x00\x00\x00\x00\x00";
+    const char expected[] = 
+    "\x01\x0c\x0c\x00" // TS_UD_HEADER::type = SC_CORE (0x0c01), length = 12 bytes
+    "\x04\x00\x08\x00" // TS_UD_SC_CORE::version = 0x0080004
+    "\x00\x00\x00\x00" // TS_UD_SC_CORE::clientRequestedProtocols = PROTOCOL_RDP
+    ;
 
-//    settings->width = 1280;
-//    settings->height = 1024;
-//    settings->rdp_version = 5;
-//    settings->color_depth = 24;
-//    settings->kbd_layout = 0x409;
-//    settings->kbd_type = 0x04;
-//    settings->kbd_fn_keys = 12;
-//    settings->client_build = 3790;
-//    strcpy(settings->client_hostname, "ELTONS-DEV2");
-//    strcpy(settings->client_product_id, "69712-783-0357974-42714");
+    BStream stream(12);
+    GCC::UserData::SCCore sc_core(0x0080004, true, 0);
+    sc_core.emit(stream);
+    BOOST_CHECK_EQUAL(12, stream.size());
+    BOOST_CHECK(0 == memcmp(expected, stream.data, 12));
 
-//    gcc_write_client_core_data(s, settings);
-
+    stream.p = stream.data;
+    GCC::UserData::SCCore sc_core2(stream);
+    BOOST_CHECK_EQUAL(SC_CORE, sc_core2.userDataType);
+    BOOST_CHECK_EQUAL(12, sc_core2.length);
+    BOOST_CHECK_EQUAL(0x0080004, sc_core2.version);
+    BOOST_CHECK_EQUAL(true, sc_core2.option_clientRequestedProtocols);
+    BOOST_CHECK_EQUAL(0, sc_core2.clientRequestedProtocols);
 }
 
 BOOST_AUTO_TEST_CASE(Test_gcc_write_client_security_data)

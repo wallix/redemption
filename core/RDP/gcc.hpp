@@ -478,7 +478,8 @@ namespace GCC
             stream.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
             size_t length = stream.in_per_length();
             if (length != stream.size() - stream.get_offset()){
-                LOG(LOG_WARNING, "GCC Conference Create Response User data Length mismatch with header %u %u", length, stream.size() - stream.get_offset());
+                LOG(LOG_WARNING, "GCC Conference Create Response User data Length mismatch with header %u %u",
+                    length, stream.size() - stream.get_offset());
                 throw Error(ERR_GCC);
             }
             
@@ -486,9 +487,44 @@ namespace GCC
         }
     };
 
+
+    // 2.2.1.3.1 User Data Header (TS_UD_HEADER)
+    // =========================================
+
+    // type (2 bytes): A 16-bit, unsigned integer. The type of the data
+    //                 block that this header precedes.
+
+    // +-------------------+-------------------------------------------------------+
+    // | CS_CORE 0xC001    | The data block that follows contains Client Core      |
+    // |                   | Data (section 2.2.1.3.2).                             |
+    // +-------------------+-------------------------------------------------------+
+    // | CS_SECURITY 0xC002| The data block that follows contains Client           |
+    // |                   | Security Data (section 2.2.1.3.3).                    |
+    // +-------------------+-------------------------------------------------------+
+    // | CS_NET 0xC003     | The data block that follows contains Client Network   |
+    // |                   | Data (section 2.2.1.3.4).                             |
+    // +-------------------+-------------------------------------------------------+
+    // | CS_CLUSTER 0xC004 | The data block that follows contains Client Cluster   |
+    // |                   | Data (section 2.2.1.3.5).                             |
+    // +-------------------+-------------------------------------------------------+
+    // | CS_MONITOR 0xC005 | The data block that follows contains Client           |
+    // |                   | Monitor Data (section 2.2.1.3.6).                     |
+    // +-------------------+-------------------------------------------------------+
+    // | SC_CORE 0x0C01    | The data block that follows contains Server Core      |
+    // |                   | Data (section 2.2.1.4.2)                              |
+    // +-------------------+-------------------------------------------------------+
+    // | SC_SECURITY 0x0C02| The data block that follows contains Server           |
+    // |                   | Security Data (section 2.2.1.4.3).                    |
+    // +-------------------+-------------------------------------------------------+
+    // | SC_NET 0x0C03     | The data block that follows contains Server Network   |
+    // |                   | Data (section 2.2.1.4.4)                              |
+    // +-------------------+-------------------------------------------------------+
+
+    // length (2 bytes): A 16-bit, unsigned integer. The size in bytes of the data
+    //   block, including this header.
+
     namespace UserData
     {
-
         struct RecvFactory
         {
             uint16_t tag;
@@ -568,6 +604,7 @@ namespace GCC
                 if (this->length < 12) { 
                     return;
                 }
+                this->option_clientRequestedProtocols = true;
                 this->clientRequestedProtocols = stream.in_uint32_le();
             }
 
@@ -577,7 +614,7 @@ namespace GCC
             : userDataType(SC_CORE)
             , length(8 + 4 * option_clientRequestedProtocols)
             , version(version)
-            , option_clientRequestedProtocols(false)
+            , option_clientRequestedProtocols(option_clientRequestedProtocols)
             , clientRequestedProtocols(clientRequestedProtocols)
             {
             }
@@ -590,6 +627,7 @@ namespace GCC
                 if (this->option_clientRequestedProtocols){
                     stream.out_uint32_le(this->clientRequestedProtocols);
                 }
+                stream.mark_end();
             }
 
             void log(const char * msg)

@@ -896,59 +896,16 @@ public:
             SubStream & gcc_data = mcs_ci.payload;
             GCC::Create_Request_Recv gcc_cr(gcc_data);
 
-            SubStream & payload = gcc_cr.payload;
-
-        // 2.2.1.3.1 User Data Header (TS_UD_HEADER)
-        // =========================================
-
-        // type (2 bytes): A 16-bit, unsigned integer. The type of the data
-        //                 block that this header precedes.
-
-        // +-------------------+-------------------------------------------------------+
-        // | CS_CORE 0xC001    | The data block that follows contains Client Core      |
-        // |                   | Data (section 2.2.1.3.2).                             |
-        // +-------------------+-------------------------------------------------------+
-        // | CS_SECURITY 0xC002| The data block that follows contains Client           |
-        // |                   | Security Data (section 2.2.1.3.3).                    |
-        // +-------------------+-------------------------------------------------------+
-        // | CS_NET 0xC003     | The data block that follows contains Client Network   |
-        // |                   | Data (section 2.2.1.3.4).                             |
-        // +-------------------+-------------------------------------------------------+
-        // | CS_CLUSTER 0xC004 | The data block that follows contains Client Cluster   |
-        // |                   | Data (section 2.2.1.3.5).                             |
-        // +-------------------+-------------------------------------------------------+
-        // | CS_MONITOR 0xC005 | The data block that follows contains Client           |
-        // |                   | Monitor Data (section 2.2.1.3.6).                     |
-        // +-------------------+-------------------------------------------------------+
-        // | SC_CORE 0x0C01    | The data block that follows contains Server Core      |
-        // |                   | Data (section 2.2.1.4.2)                              |
-        // +-------------------+-------------------------------------------------------+
-        // | SC_SECURITY 0x0C02| The data block that follows contains Server           |
-        // |                   | Security Data (section 2.2.1.4.3).                    |
-        // +-------------------+-------------------------------------------------------+
-        // | SC_NET 0x0C03     | The data block that follows contains Server Network   |
-        // |                   | Data (section 2.2.1.4.4)                              |
-        // +-------------------+-------------------------------------------------------+
-
-        // length (2 bytes): A 16-bit, unsigned integer. The size in bytes of the data
-        //   block, including this header.
-
-            while (payload.check_rem(4)) {
-                uint8_t * current_header = payload.p;
-                uint16_t tag = payload.in_uint16_le();
-                uint16_t length = payload.in_uint16_le();
-                if (length < 4 || !payload.check_rem(length - 4)) {
-                    LOG(LOG_ERR,
-                        "error reading block tag %d size %d\n",
-                        tag, length);
-                    break;
-                }
-
-                switch (tag){
+            while (gcc_cr.payload.check_rem(4)) {
+                GCC::UserData::RecvFactory f(gcc_cr.payload);
+                switch (f.tag){
                     case CS_CORE:
                     {
+                        uint16_t tag = f.payload.in_uint16_le();
+                        uint16_t length = f.payload.in_uint16_le();
+
                         CSCoreGccUserData cs_core;
-                        cs_core.recv(payload, length);
+                        cs_core.recv(f.payload, length);
                         client_info.width = cs_core.desktopWidth;
                         client_info.height = cs_core.desktopHeight;
                         client_info.keylayout = cs_core.keyboardLayout;
@@ -977,15 +934,25 @@ public:
                     }
                     break;
                     case CS_SECURITY:
-                        parse_mcs_data_cs_security(payload);
+                    {
+                        uint16_t tag = f.payload.in_uint16_le();
+                        uint16_t length = f.payload.in_uint16_le();
+                        parse_mcs_data_cs_security(f.payload);
+                    }
                     break;
                     case CS_NET:
-                        parse_mcs_data_cs_net(payload, &client_info, this->channel_list);
+                    {
+                        uint16_t tag = f.payload.in_uint16_le();
+                        uint16_t length = f.payload.in_uint16_le();
+                        parse_mcs_data_cs_net(f.payload, &client_info, this->channel_list);
+                    }
                     break;
                     case CS_CLUSTER:
                     {
+                        uint16_t tag = f.payload.in_uint16_le();
+                        uint16_t length = f.payload.in_uint16_le();
                         CSClusterGccUserData cs_cluster;
-                        cs_cluster.recv(payload, length);
+                        cs_cluster.recv(f.payload, length);
                         client_info.console_session =
                             (0 != (cs_cluster.flags & CSClusterGccUserData::REDIRECTED_SESSIONID_FIELD_VALID));
                         cs_cluster.log("Receiving from Client");
@@ -993,17 +960,23 @@ public:
                     break;
                     case CS_MONITOR:
                     {
+                        uint16_t tag = f.payload.in_uint16_le();
+                        uint16_t length = f.payload.in_uint16_le();
                         CSMonitorGccUserData cs_monitor;
-                        cs_monitor.recv(payload, length);
+                        cs_monitor.recv(f.payload, length);
                         cs_monitor.log("Receiving from Client");
                     }
                     break;
                     default:
-                        LOG(LOG_INFO, "Unexpected data block tag %x\n", tag);
+                        LOG(LOG_INFO, "Unexpected data block tag %x\n", f.tag);
                     break;
                 }
-                payload.p = current_header + length;
             }
+            if (gcc_cr.payload.check_rem(1)) {
+                LOG(LOG_ERR, "recv connect request parsing gcc data : short header");
+                throw Error(ERR_MCS_DATA_SHORT_HEADER);
+            }
+
 
             BStream stream(65536);
 
