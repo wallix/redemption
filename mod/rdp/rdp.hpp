@@ -751,10 +751,18 @@ struct mod_rdp : public client_mod {
                     break;
                     case SC_NET:
                     {
-                        uint16_t tag = f.payload.in_uint16_le();
-                        uint16_t length = f.payload.in_uint16_le();
-                        LOG(LOG_INFO, "Receiving SC_Net from server");
-                        parse_mcs_data_sc_net(f.payload, this->front.get_channel_list(), this->mod_channel_list);
+                        GCC::UserData::SCNet sc_net;
+                        sc_net.recv(f.payload);
+
+                        for (uint32_t index = 0; index < sc_net.channelCount; index++) {
+                            ChannelDef def = this->front.get_channel_list()[index];
+                            def.chanid = sc_net.channelDefArray[index].id;
+                            this->mod_channel_list.push_back(def);
+                        }
+                        sc_net.log("Received from server");
+
+//                        LOG(LOG_INFO, "Receiving SC_Net from server");
+//                        parse_mcs_data_sc_net(f.payload, this->front.get_channel_list(), this->mod_channel_list);
                     }
                     break;
                     default:
