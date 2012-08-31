@@ -107,17 +107,21 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
     ;
 
     BStream stream(12);
-    GCC::UserData::SCCore sc_core(0x0080004, true, 0);
+    GCC::UserData::SCCore sc_core;
+    sc_core.length = 12;
+    sc_core.version = 0x0080004;
+    sc_core.clientRequestedProtocols = 0;
     sc_core.emit(stream);
     BOOST_CHECK_EQUAL(12, stream.size());
     BOOST_CHECK(0 == memcmp(expected, stream.data, 12));
 
     stream.p = stream.data;
-    GCC::UserData::SCCore sc_core2(stream);
+    GCC::UserData::SCCore sc_core2;
+
+    sc_core2.recv(stream);
     BOOST_CHECK_EQUAL(SC_CORE, sc_core2.userDataType);
     BOOST_CHECK_EQUAL(12, sc_core2.length);
     BOOST_CHECK_EQUAL(0x0080004, sc_core2.version);
-    BOOST_CHECK_EQUAL(true, sc_core2.option_clientRequestedProtocols);
     BOOST_CHECK_EQUAL(0, sc_core2.clientRequestedProtocols);
 }
 

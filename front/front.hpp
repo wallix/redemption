@@ -901,11 +901,10 @@ public:
                 switch (f.tag){
                     case CS_CORE:
                     {
-                        uint16_t tag = f.payload.in_uint16_le();
-                        uint16_t length = f.payload.in_uint16_le();
+                        GCC::UserData::CSCore cs_core;
+                        cs_core.recv(f.payload);
+                        cs_core.log("Received from Client");
 
-                        CSCoreGccUserData cs_core;
-                        cs_core.recv(f.payload, length);
                         client_info.width = cs_core.desktopWidth;
                         client_info.height = cs_core.desktopHeight;
                         client_info.keylayout = cs_core.keyboardLayout;
@@ -930,7 +929,6 @@ public:
                         default:
                         break;
                         }
-                        cs_core.log("Receiving from Client");
                     }
                     break;
                     case CS_SECURITY:
@@ -980,7 +978,8 @@ public:
 
             BStream stream(65536);
 
-            GCC::UserData::SCCore sc_core(0x00080004);
+            GCC::UserData::SCCore sc_core;
+            sc_core.version = 0x00080004;
             sc_core.log("Sending SC_CORE to client");
             sc_core.emit(stream);
 
