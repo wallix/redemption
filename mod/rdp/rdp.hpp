@@ -588,12 +588,10 @@ struct mod_rdp : public client_mod {
                     //    | <------------MCS Connect Response PDU with------------- |
                     //                   GCC conference Create Response
 
-                    BStream stream(65536);
                     /* Generic Conference Control (T.124) ConferenceCreateRequest */
 
-                    // Client User Data
-                    // ================
-                    // 158 bytes
+                    BStream stream(65536);
+                    // ------------------------------------------------------------
                     GCC::UserData::CSCore cs_core;
                     cs_core.version = this->use_rdp5?0x00080004:0x00080001;
                     cs_core.desktopWidth = this->front_width;
@@ -614,25 +612,27 @@ struct mod_rdp : public client_mod {
                     }
                     cs_core.emit(stream);
 
-                    CSClusterGccUserData cs_cluster;
+                    // ------------------------------------------------------------
+                    GCC::UserData::CSCluster cs_cluster;
                     TODO("values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?")
 
                     if (!this->nego.tls){
                          if (this->console_session){
-                            cs_cluster.flags = CSClusterGccUserData::REDIRECTED_SESSIONID_FIELD_VALID | (3 << 2) ; // REDIRECTION V4
+                            cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID | (3 << 2) ; // REDIRECTION V4
                         }
                         else {
-                            cs_cluster.flags = CSClusterGccUserData::REDIRECTION_SUPPORTED            | (2 << 2) ; // REDIRECTION V3
+                            cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED            | (2 << 2) ; // REDIRECTION V3
                         }
                     }
                     else {
-                        cs_cluster.flags = CSClusterGccUserData::REDIRECTION_SUPPORTED * ((3 << 2)|1);  // REDIRECTION V4
+                        cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED * ((3 << 2)|1);  // REDIRECTION V4
                         if (this->console_session){
-                            cs_cluster.flags |= CSClusterGccUserData::REDIRECTED_SESSIONID_FIELD_VALID ;
+                            cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID ;
                         }
                     }
                     cs_cluster.log("Sending to server");
                     cs_cluster.emit(stream);
+                    // ------------------------------------------------------------
 
                     // 12 bytes
                     CSSecGccUserData cs_sec_gccuserdata;

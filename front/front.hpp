@@ -947,12 +947,10 @@ public:
                     break;
                     case CS_CLUSTER:
                     {
-                        uint16_t tag = f.payload.in_uint16_le();
-                        uint16_t length = f.payload.in_uint16_le();
-                        CSClusterGccUserData cs_cluster;
-                        cs_cluster.recv(f.payload, length);
+                        GCC::UserData::CSCluster cs_cluster;
+                        cs_cluster.recv(f.payload);
                         client_info.console_session =
-                            (0 != (cs_cluster.flags & CSClusterGccUserData::REDIRECTED_SESSIONID_FIELD_VALID));
+                            (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID));
                         cs_cluster.log("Receiving from Client");
                     }
                     break;
