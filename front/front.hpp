@@ -476,7 +476,7 @@ public:
         sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
 
         stream.out_uint32_le(length);
-        if (channel.flags & ChannelDef::CHANNEL_OPTION_SHOW_PROTOCOL) {
+        if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
             flags |= ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
         stream.out_uint32_le(flags);
@@ -940,9 +940,16 @@ public:
                     break;
                     case CS_NET:
                     {
-                        uint16_t tag = f.payload.in_uint16_le();
-                        uint16_t length = f.payload.in_uint16_le();
-                        parse_mcs_data_cs_net(f.payload, &client_info, this->channel_list);
+                        GCC::UserData::CSNet cs_net;
+                        cs_net.recv(f.payload);
+                        for (uint32_t index = 0; index < cs_net.channelCount; index++) {
+                            ChannelDef channel_item;
+                            memcpy(channel_item.name, cs_net.channelDefArray[index].name, 8);
+                            channel_item.flags = cs_net.channelDefArray[index].options;
+                            channel_item.chanid = MCS_GLOBAL_CHANNEL + (index + 1);
+                            channel_list.push_back(channel_item);
+                        }
+                        cs_net.log("Received from Client");
                     }
                     break;
                     case CS_CLUSTER:

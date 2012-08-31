@@ -222,13 +222,13 @@ enum {
     WAVE_FORMAT_MULAW              = 7,
 };
 
-/* Virtual channel options */
-enum {
-    CHANNEL_OPTION_INITIALIZED     = 0x80000000,
-    CHANNEL_OPTION_ENCRYPT_RDP     = 0x40000000,
-    CHANNEL_OPTION_COMPRESS_RDP    = 0x00800000,
-    CHANNEL_OPTION_SHOW_PROTOCOL   = 0x00200000,
-};
+///* Virtual channel options */
+//enum {
+//    CHANNEL_OPTION_INITIALIZED     = 0x80000000,
+//    CHANNEL_OPTION_ENCRYPT_RDP     = 0x40000000,
+//    CHANNEL_OPTION_COMPRESS_RDP    = 0x00800000,
+//    CHANNEL_OPTION_SHOW_PROTOCOL   = 0x00200000,
+//};
 
 /* NT status codes for RDPDR */
 enum {

@@ -523,7 +523,7 @@ struct mod_rdp : public client_mod {
 
         stream.out_uint32_le(length);
         stream.out_uint32_le(flags);
-        if (channel.flags & ChannelDef::CHANNEL_OPTION_SHOW_PROTOCOL) {
+        if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
             flags |= ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
         stream.out_copy_bytes(data, chunk_size);
@@ -639,10 +639,23 @@ struct mod_rdp : public client_mod {
                     cs_sec_gccuserdata.encryptionMethods = FORTY_BIT_ENCRYPTION_FLAG|HUNDRED_TWENTY_EIGHT_BIT_ENCRYPTION_FLAG;
                     cs_sec_gccuserdata.log("Sending cs_sec gccuserdata to server");
                     cs_sec_gccuserdata.emit(stream);
-
-                    // 12 * nbchan + 8 bytes
-                    mod_rdp_out_cs_net(stream, this->front.get_channel_list());
                     stream.mark_end();
+
+                    const ChannelDefArray & channel_list = this->front.get_channel_list();
+                    size_t num_channels = channel_list.size();
+                    if (num_channels > 0) {
+                        /* Here we need to put channel information in order to redirect channel data
+                           from client to server passing through the "proxy" */
+                        GCC::UserData::CSNet cs_net;
+                        cs_net.channelCount = num_channels;
+                        for (size_t index = 0; index < num_channels; index++){
+                            const ChannelDef & channel_item = channel_list[index];
+                            memcpy(cs_net.channelDefArray[index].name, channel_list[index].name, 8);
+                            cs_net.channelDefArray[index].options = channel_item.flags;
+                        }
+                        cs_net.log("Sending to server");
+                        cs_net.emit(stream);
+                    }
 
                     BStream gcc_header(65536);
                     GCC::Create_Request_Send(gcc_header, stream.size());

@@ -25,59 +25,6 @@
 #if !defined(CORE_CHANNEL_LIST_HPP__)
 #define CORE_CHANNEL_LIST_HPP__
 
-// 2.2.1.3.4.1 Channel Definition Structure (CHANNEL_DEF)
-// ------------------------------------------------------
-// The CHANNEL_DEF packet contains information for a particular static
-// virtual channel.
-
-// name (8 bytes): An 8-byte array containing a null-terminated collection
-//                 of seven ANSI characters that uniquely identify the
-//                 channel.
-
-// options (4 bytes): A 32-bit, unsigned integer. Channel option flags.
-//
-//           Flag                             Meaning
-// -------------------------------------------------------------------------
-// CHANNEL_OPTION_INITIALIZED   Absence of this flag indicates that this
-//        0x80000000            channel is a placeholder and that the
-//                              server MUST NOT set it up.
-// -----------------------------------------------------------------------
-// CHANNEL_OPTION_ENCRYPT_RDP   This flag is unused and its value MUST be
-//        0x40000000            ignored by the server.
-// -------------------------------------------------------------------------
-// CHANNEL_OPTION_ENCRYPT_SC    This flag is unused and its value MUST be
-//        0x20000000            ignored by the server.
-// -------------------------------------------------------------------------
-// CHANNEL_OPTION_ENCRYPT_CS    This flag is unused and its value MUST be
-//        0x10000000            ignored by the server.
-// -------------------------------------------------------------------------
-// CHANNEL_OPTION_PRI_HIGH      Channel data MUST be sent with high MCS
-//        0x08000000            priority.
-// -------------------------------------------------------------------------
-// CHANNEL_OPTION_PRI_MED       Channel data MUST be sent with medium
-//        0x04000000            MCS priority.
-// -------------------------------------------------------------------------
-// CHANNEL_OPTION_PRI_LOW       Channel data MUST be sent with low MCS
-//        0x02000000            priority.
-// -------------------------------------------------------------------------
-// CHANNEL_OPTION_COMPRESS_RDP  Virtual channel data MUST be compressed
-//        0x00800000            if RDP data is being compressed.
-// -------------------------------------------------------------------------
-// CHANNEL_OPTION_COMPRESS      Virtual channel data MUST be compressed,
-//        0x00400000            regardless of RDP compression settings.
-// -------------------------------------------------------------------------
-// CHANNEL_OPTION_SHOW_PROTOCOL The value of this flag MUST be ignored by
-//        0x00200000            the server. The visibility of the Channel
-//                              PDU Header (section 2.2.6.1.1) is
-//                              determined by the CHANNEL_FLAG_SHOW_PROTOCOL
-//                              (0x00000010) flag as defined in the flags
-//                              field (section 2.2.6.1.1).
-// -------------------------------------------------------------------------
-// REMOTE_CONTROL_PERSISTENT    Channel MUST be persistent across remote
-//        0x00100000            control transactions.
-
-
-
 struct ChannelDef {
     char name[16];
 
@@ -102,18 +49,6 @@ struct ChannelDef {
         CHANNEL_PACKET_AT_FRONT      = 0x00400000,
         CHANNEL_PACKET_FLUSHED       = 0x00800000,
         CompressionTypeMask          = 0x000F0000,
-
-        CHANNEL_OPTION_INITIALIZED   = 0x80000000,
-        CHANNEL_OPTION_ENCRYPT_RDP   = 0x40000000,
-        CHANNEL_OPTION_ENCRYPT_SC    = 0x20000000,
-        CHANNEL_OPTION_ENCRYPT_CS    = 0x10000000,
-        CHANNEL_OPTION_PRI_HIGH      = 0x08000000,
-        CHANNEL_OPTION_PRI_MED       = 0x04000000,
-        CHANNEL_OPTION_PRI_LOW       = 0x02000000,
-        CHANNEL_OPTION_COMPRESS_RDP  = 0x00800000,
-        CHANNEL_OPTION_COMPRESS      = 0x00400000,
-        CHANNEL_OPTION_SHOW_PROTOCOL = 0x00200000,
-        REMOTE_CONTROL_PERSISTENT    = 0x00100000,
     };
 
     enum { CB_MONITOR_READY        = 0x0001
@@ -136,25 +71,6 @@ struct ChannelDef {
     }
 
     void log(){
-        LOG(LOG_INFO, "Channel %s [%u]", this->name, this->chanid);
-        if (this->flags & CHANNEL_OPTION_INITIALIZED){
-            LOG(LOG_INFO, "channel::options::INITIALIZED");
-        }
-        if (this->flags & CHANNEL_OPTION_PRI_HIGH){
-            LOG(LOG_INFO, "channel::options::PRI_HIGH");
-        }
-        if (this->flags & CHANNEL_OPTION_PRI_MED){
-            LOG(LOG_INFO, "channel::options::PRI_MED");
-        }
-        if (this->flags & CHANNEL_OPTION_PRI_LOW){
-            LOG(LOG_INFO, "channel::options::PRI_LOW");
-        }
-        if (this->flags & CHANNEL_OPTION_COMPRESS_RDP){
-            LOG(LOG_INFO, "channel::options::COMPRESS_RDP");
-        }
-        if (this->flags & CHANNEL_OPTION_COMPRESS){
-            LOG(LOG_INFO, "channel::options::COMPRESS");
-        }
     }
 };
 

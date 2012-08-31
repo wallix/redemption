@@ -51,7 +51,6 @@ enum DATA_BLOCK_TYPE {
     SC_NET = 0x0C03
 };
 
-#include "gcc_conference_user_data/cs_net.hpp"
 #include "gcc_conference_user_data/cs_sec.hpp"
 #include "gcc_conference_user_data/sc_net.hpp"
 #include "gcc_conference_user_data/sc_sec1.hpp"
@@ -1463,7 +1462,154 @@ namespace GCC
             }
         };
 
+        // 2.2.1.3.4 Client Network Data (TS_UD_CS_NET)
+        // --------------------------------------------
+        // The TS_UD_CS_NET packet contains a list of requested virtual channels.
 
+        // header (4 bytes): A 32-bit, unsigned integer. GCC user data block header,
+        //                   as specified in User Data Header (section 2.2.1.3.1).
+        //                   The User Data Header type field MUST be set to CS_NET
+        //                   (0xC003).
+
+        // channelCount (4 bytes): A 32-bit, unsigned integer. The number of
+        //                         requested static virtual channels (the maximum
+        //                         allowed is 31).
+
+        // channelDefArray (variable): A variable-length array containing the
+        //                             information for requested static virtual
+        //                             channels encapsulated in CHANNEL_DEF
+        //                             structures (section 2.2.1.3.4.1). The number
+        //                             of CHANNEL_DEF structures which follows is
+        //                             given by the channelCount field.
+
+        // 2.2.1.3.4.1 Channel Definition Structure (CHANNEL_DEF)
+        // ------------------------------------------------------
+        // The CHANNEL_DEF packet contains information for a particular static
+        // virtual channel.
+
+        // name (8 bytes): An 8-byte array containing a null-terminated collection
+        //                 of seven ANSI characters that uniquely identify the
+        //                 channel.
+
+        // options (4 bytes): A 32-bit, unsigned integer. Channel option flags.
+        //
+        //           Flag                             Meaning
+        // -------------------------------------------------------------------------
+        // CHANNEL_OPTION_INITIALIZED   Absence of this flag indicates that this
+        //        0x80000000            channel is a placeholder and that the
+        //                              server MUST NOT set it up.
+        // ------------------------------------------------------------------------
+        // CHANNEL_OPTION_ENCRYPT_RDP   This flag is unused and its value MUST be
+        //        0x40000000            ignored by the server.
+        // -------------------------------------------------------------------------
+        // CHANNEL_OPTION_ENCRYPT_SC    This flag is unused and its value MUST be
+        //        0x20000000            ignored by the server.
+        // -------------------------------------------------------------------------
+        // CHANNEL_OPTION_ENCRYPT_CS    This flag is unused and its value MUST be
+        //        0x10000000            ignored by the server.
+        // -------------------------------------------------------------------------
+        // CHANNEL_OPTION_PRI_HIGH      Channel data MUST be sent with high MCS
+        //        0x08000000            priority.
+        // -------------------------------------------------------------------------
+        // CHANNEL_OPTION_PRI_MED       Channel data MUST be sent with medium
+        //        0x04000000            MCS priority.
+        // -------------------------------------------------------------------------
+        // CHANNEL_OPTION_PRI_LOW       Channel data MUST be sent with low MCS
+        //        0x02000000            priority.
+        // -------------------------------------------------------------------------
+        // CHANNEL_OPTION_COMPRESS_RDP  Virtual channel data MUST be compressed
+        //        0x00800000            if RDP data is being compressed.
+        // -------------------------------------------------------------------------
+        // CHANNEL_OPTION_COMPRESS      Virtual channel data MUST be compressed,
+        //        0x00400000            regardless of RDP compression settings.
+        // -------------------------------------------------------------------------
+        // CHANNEL_OPTION_SHOW_PROTOCOL The value of this flag MUST be ignored by
+        //        0x00200000            the server. The visibility of the Channel
+        //                              PDU Header (section 2.2.6.1.1) is
+        //                              determined by the CHANNEL_FLAG_SHOW_PROTOCOL
+        //                              (0x00000010) flag as defined in the flags
+        //                              field (section 2.2.6.1.1).
+        // -------------------------------------------------------------------------
+        //REMOTE_CONTROL_PERSISTENT     Channel MUST be persistent across remote
+        //       0x00100000             control transactions.
+
+        struct CSNet {
+            uint16_t userDataType;
+            uint16_t length;
+            uint32_t channelCount;
+
+            enum {
+                CHANNEL_OPTION_INITIALIZED   = 0x80000000,
+                CHANNEL_OPTION_ENCRYPT_RDP   = 0x40000000,
+                CHANNEL_OPTION_ENCRYPT_SC    = 0x20000000,
+                CHANNEL_OPTION_ENCRYPT_CS    = 0x10000000,
+                CHANNEL_OPTION_PRI_HIGH      = 0x08000000,
+                CHANNEL_OPTION_PRI_MED       = 0x04000000,
+                CHANNEL_OPTION_PRI_LOW       = 0x02000000,
+                CHANNEL_OPTION_COMPRESS_RDP  = 0x00800000,
+                CHANNEL_OPTION_COMPRESS      = 0x00400000,
+                CHANNEL_OPTION_SHOW_PROTOCOL = 0x00200000,
+                REMOTE_CONTROL_PERSISTENT    = 0x00100000,
+            };
+
+            struct {
+                char name[8];
+                uint32_t options;
+            } channelDefArray[32];
+
+            CSNet()
+            : userDataType(CS_NET)
+            , length(12)
+            , channelCount(0)            
+            {
+            }
+
+            void emit(Stream & stream)
+            {
+                stream.out_uint16_le(this->userDataType);
+                this->length = this->channelCount * 12 + 8;
+                stream.out_uint16_le(this->length);
+                stream.out_uint32_le(this->channelCount);
+                for (size_t i = 0; i < this->channelCount ; i++){
+                    stream.out_copy_bytes(this->channelDefArray[i].name, 8);
+                    stream.out_uint32_be(this->channelDefArray[i].options);
+                }
+                stream.mark_end();
+            }
+
+            void recv(Stream & stream)
+            {
+                this->userDataType = stream.in_uint16_le();
+                this->length = stream.in_uint16_le();
+                this->channelCount = stream.in_uint32_le();
+                for (size_t i = 0; i < this->channelCount ; i++){
+                    stream.in_copy_bytes(this->channelDefArray[i].name, 8);
+                    this->channelDefArray[i].options = stream.in_uint32_be();
+                }
+            }
+
+            void log(const char * msg)
+            {
+                LOG(LOG_INFO, "%s GCC User Data CS_NET (%u bytes)", msg, this->length);
+                LOG(LOG_INFO, "cs_net::channelCount   = %u", this->channelCount);
+
+                for (size_t i = 0; i < this->channelCount ; i++){
+                    uint32_t options = channelDefArray[i].options;
+                    LOG(LOG_INFO, "cs_net::channel '%*s' [%u]%s%s%s%s%s%s%s%s" 
+                        , 8
+                        , channelDefArray[i].name, MCS_GLOBAL_CHANNEL + i + 1
+                        , (options & CHANNEL_OPTION_INITIALIZED)?" INITIALIZED":""
+                        , (options & CHANNEL_OPTION_PRI_HIGH)?" PRI_HIGH":""
+                        , (options & CHANNEL_OPTION_PRI_MED)?" PRI_MED":""
+                        , (options & CHANNEL_OPTION_PRI_LOW)?" PRI_LOW":""
+                        , (options & CHANNEL_OPTION_COMPRESS_RDP)?" COMPRESS_RDP":""
+                        , (options & CHANNEL_OPTION_COMPRESS)?" COMPRESS":""
+                        , (options & REMOTE_CONTROL_PERSISTENT)?" PERSISTENT":""
+                        , (options & CHANNEL_OPTION_SHOW_PROTOCOL)?" SHOW_PROTOCOL":""
+                        );
+                }
+            }
+        };
 
     };
 };

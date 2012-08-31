@@ -175,6 +175,10 @@ class Stream {
         this->p += n;
     }
 
+    void in_copy_bytes(char * v, size_t n) {
+        this->in_copy_bytes((uint8_t*)(v), n);
+    }
+
     const uint8_t *in_uint8p(unsigned int n) {
         REDASSERT(check_rem(n));
         this->p+=n;

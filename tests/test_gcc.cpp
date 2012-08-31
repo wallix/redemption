@@ -125,8 +125,37 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
     BOOST_CHECK_EQUAL(0, sc_core2.clientRequestedProtocols);
 }
 
-BOOST_AUTO_TEST_CASE(Test_gcc_write_client_security_data)
+BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
 {
+    const char indata[] = 
+        "\x03\xc0"         // CS_NET
+        "\x20\x00"         // 32 bytes user Data
+        "\x02\x00\x00\x00" // ChannelCount
+        "\x63\x6c\x69\x70\x72\x64\x72\x00" // "cliprdr"
+        "\xc0\xa0\x00\x00"
+        "\x72\x64\x70\x64\x72\x00\x00\x00" // "rdpdr"
+        "\x80\x80\x00\x00" 
+    ;
+
+    GeneratorTransport gt(indata, sizeof(indata) - 1);
+    BStream stream(256);
+    gt.recv(&stream.end, sizeof(indata) - 1);
+    GCC::UserData::CSNet cs_net;
+    cs_net.recv(stream);
+    BOOST_CHECK_EQUAL(CS_NET, cs_net.userDataType);
+    BOOST_CHECK_EQUAL(32, cs_net.length);
+    BOOST_CHECK_EQUAL(2, cs_net.channelCount);
+    BOOST_CHECK_EQUAL('c', cs_net.channelDefArray[0].name[0]);
+    BOOST_CHECK_EQUAL(0, memcmp("cliprdr\0", cs_net.channelDefArray[0].name, 8));
+    BOOST_CHECK_EQUAL( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED 
+                     | GCC::UserData::CSNet::CHANNEL_OPTION_ENCRYPT_RDP 
+                     | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
+                     | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL 
+                     , cs_net.channelDefArray[0].options);
+    BOOST_CHECK_EQUAL(0, memcmp("rdpdr\0\0\0", cs_net.channelDefArray[1].name, 8));
+    BOOST_CHECK_EQUAL( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED 
+                     | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
+                     , cs_net.channelDefArray[1].options);
 }
 
 BOOST_AUTO_TEST_CASE(Test_gcc_write_client_cluster_data)
