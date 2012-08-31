@@ -594,7 +594,7 @@ struct mod_rdp : public client_mod {
                     // Client User Data
                     // ================
                     // 158 bytes
-                    CSCoreGccUserData cs_core;
+                    GCC::UserData::CSCore cs_core;
                     cs_core.version = this->use_rdp5?0x00080004:0x00080001;
                     cs_core.desktopWidth = this->front_width;
                     cs_core.desktopHeight = this->front_height;

@@ -51,12 +51,10 @@ enum DATA_BLOCK_TYPE {
     SC_NET = 0x0C03
 };
 
-#include "gcc_conference_user_data/cs_core.hpp"
 #include "gcc_conference_user_data/cs_cluster.hpp"
 #include "gcc_conference_user_data/cs_monitor.hpp"
 #include "gcc_conference_user_data/cs_net.hpp"
 #include "gcc_conference_user_data/cs_sec.hpp"
-//#include "gcc_conference_user_data/sc_core.hpp"
 #include "gcc_conference_user_data/sc_net.hpp"
 #include "gcc_conference_user_data/sc_sec1.hpp"
 
