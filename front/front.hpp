@@ -956,10 +956,8 @@ public:
                     break;
                     case CS_MONITOR:
                     {
-                        uint16_t tag = f.payload.in_uint16_le();
-                        uint16_t length = f.payload.in_uint16_le();
-                        CSMonitorGccUserData cs_monitor;
-                        cs_monitor.recv(f.payload, length);
+                        GCC::UserData::CSMonitor cs_monitor;
+                        cs_monitor.recv(f.payload);
                         cs_monitor.log("Receiving from Client");
                     }
                     break;
