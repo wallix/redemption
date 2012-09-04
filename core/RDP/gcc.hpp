@@ -51,9 +51,6 @@ enum DATA_BLOCK_TYPE {
     SC_NET = 0x0C03
 };
 
-#include "gcc_conference_user_data/cs_sec.hpp"
-#include "gcc_conference_user_data/sc_sec1.hpp"
-
 namespace GCC
 {
 // ConferenceName ::= SEQUENCE
@@ -1705,7 +1702,346 @@ namespace GCC
             }
         };
 
-    };
-};
+        // 2.2.1.4.3 Server Security Data (TS_UD_SC_SEC1)
+        // ==============================================
+
+        // The TS_UD_SC_SEC1 data block returns negotiated security-related information
+        // to the client. See section 5.3.2 for a detailed discussion of how this
+        // information is used.
+
+        // header (4 bytes): GCC user data block header, as specified in User Data
+        // Header (section 2.2.1.3.1). The User Data Header type field MUST be set to
+        // SC_SECURITY (0x0C02).
+
+        // encryptionMethod (4 bytes): A 32-bit, unsigned integer. The selected
+        // cryptographic method to use for the session. When Enhanced RDP Security
+        // (section 5.4) is being used, this field MUST be set to ENCRYPTION_METHOD_NONE
+        // (0).
+
+        // +-------------------------------------+-------------------------------------+
+        // | 0x00000000 ENCRYPTION_METHOD_NONE   | No encryption or Message            |
+        // |                                     | Authentication Codes (MACs) will be |
+        // |                                     | used.                               |
+        // +-------------------------------------+-------------------------------------+
+        // | 0x00000001 ENCRYPTION_METHOD_40BIT  | 40-bit session keys will be used to |
+        // |                                     | encrypt data (with RC4) and generate|
+        // |                                     | MACs.                               |
+        // +-------------------------------------+-------------------------------------+
+        // | 0x00000002 ENCRYPTION_METHOD_128BIT | 128-bit session keys will be used   |
+        // |                                     | to encrypt data (with RC4) and      |
+        // |                                     | generate MACs.                      |
+        // +-------------------------------------+-------------------------------------+
+        // | 0x00000008 ENCRYPTION_METHOD_56BIT  | 56-bit session keys will be used to |
+        // |                                     | encrypt data (with RC4) and generate|
+        // |                                     | MACs.                               |
+        // +-------------------------------------+-------------------------------------+
+        // | 0x00000010 ENCRYPTION_METHOD_FIPS   | All encryption and Message          |
+        // |                                     | Authentication Code                 |
+        // |                                     | generation routines will            |
+        // |                                     | be FIPS 140-1 compliant.            |
+        // +-------------------------------------+-------------------------------------+
+
+        // encryptionLevel (4 bytes): A 32-bit unsigned integer. It describes the
+        //  encryption behavior to use for the session. When Enhanced RDP Security
+        //  (section 5.4) is being used, this field MUST be set to ENCRYPTION_LEVEL_NONE
+        //  (0).
+
+        // +------------------------------------+------------+
+        // | ENCRYPTION_LEVEL_NONE              | 0x00000000 |
+        // +------------------------------------+------------+
+        // | ENCRYPTION_LEVEL_LOW               | 0x00000001 |
+        // +------------------------------------+------------+
+        // | ENCRYPTION_LEVEL_CLIENT_COMPATIBLE | 0x00000002 |
+        // +------------------------------------+------------+
+        // | ENCRYPTION_LEVEL_HIGH              | 0x00000003 |
+        // +------------------------------------+------------+
+        // | ENCRYPTION_LEVEL_FIPS              | 0x00000004 |
+        // +------------------------------------+------------+
+
+        // See section 5.3.1 for a description of each of the low, client-compatible,
+        // high, and FIPS encryption levels.
+
+        // serverRandomLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of
+        // the serverRandom field. If the encryptionMethod and encryptionLevel fields
+        // are both set to 0 then the contents of this field MUST be ignored and the
+        // serverRandom field MUST NOT be present. Otherwise, this field MUST be set to
+        // 32 bytes.
+
+        // serverCertLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of the
+        //  serverCertificate field. If the encryptionMethod and encryptionLevel fields
+        //  are both set to 0 then the contents of this field MUST be ignored and the
+        // serverCertificate field MUST NOT be present.
+
+        // serverRandom (variable): The variable-length server random value used to
+        // derive session keys (see sections 5.3.4 and 5.3.5). The length in bytes is
+        // given by the serverRandomLen field. If the encryptionMethod and
+        // encryptionLevel fields are both set to 0 then this field MUST NOT be present.
+
+        // serverCertificate (variable): The variable-length certificate containing the
+        //  server's public key information. The length in bytes is given by the
+        // serverCertLen field. If the encryptionMethod and encryptionLevel fields are
+        // both set to 0 then this field MUST NOT be present.
+
+        // 2.2.1.4.3.1 Server Certificate (SERVER_CERTIFICATE)
+        // ===================================================
+
+        // The SERVER_CERTIFICATE structure describes the generic server certificate
+        // structure to which all server certificates present in the Server Security
+        // Data (section 2.2.1.4.3) conform.
+
+        // dwVersion (4 bytes): A 32-bit, unsigned integer.
+        // dwVersion::certChainVersion (31 bits): A 31-bit field. The certificate version.
+
+        // +---------------------------------+-----------------------------------------+
+        // | 0x00000001 CERT_CHAIN_VERSION_1 | The certificate contained in the        |
+        // |                                 | certData field is a Server Proprietary  |
+        // |                                 | Certificate (section 2.2.1.4.3.1.1).    |
+        // +---------------------------------+-----------------------------------------+
+        // | 0x00000002 CERT_CHAIN_VERSION_2 | The certificate contained in the        |
+        // |                                 | certData field is an X.509 Certificate  |
+        // |                                 | (see section 5.3.3.2).                  |
+        // +---------------------------------+-----------------------------------------+
+
+        // dwVersion::t (1 bit): A 1-bit field. Indicates whether the certificate contained in the
+        //  certData field has been permanently or temporarily issued to the server.
+
+        // +---+----------------------------------------------------------------------+
+        // | 0 | The certificate has been permanently issued to the server.           |
+        // +---+----------------------------+-----------------------------------------+
+        // | 1 | The certificate has been temporarily issued to the server.           |
+        // +---+----------------------------+-----------------------------------------+
+
+        // certData (variable): Certificate data. The format of this certificate data is
+        //  determined by the dwVersion field.
+
+        // 2.2.1.4.3.1.1 Server Proprietary Certificate (PROPRIETARYSERVERCERTIFICATE)
+        // ===========================================================================
+
+        // The PROPRIETARYSERVERCERTIFICATE structure describes a signed certificate
+        // containing the server's public key and conforming to the structure of a
+        // Server Certificate (section 2.2.1.4.3.1). For a detailed description of
+        // Proprietary Certificates, see section 5.3.3.1.
+
+        // dwVersion (4 bytes): A 32-bit, unsigned integer. The certificate version
+        //  number. This field MUST be set to CERT_CHAIN_VERSION_1 (0x00000001).
+
+        // dwSigAlgId (4 bytes): A 32-bit, unsigned integer. The signature algorithm
+        //  identifier. This field MUST be set to SIGNATURE_ALG_RSA (0x00000001).
+
+        // dwKeyAlgId (4 bytes): A 32-bit, unsigned integer. The key algorithm
+        //  identifier. This field MUST be set to KEY_EXCHANGE_ALG_RSA (0x00000001).
+
+        // wPublicKeyBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
+        //  in the PublicKeyBlob field. This field MUST be set to BB_RSA_KEY_BLOB
+        //  (0x0006).
+
+        // wPublicKeyBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
+        //  of the PublicKeyBlob field.
+
+        // PublicKeyBlob (variable): Variable-length server public key bytes, formatted
+        //  using the Rivest-Shamir-Adleman (RSA) Public Key structure (section
+        //  2.2.1.4.3.1.1.1). The length in bytes is given by the wPublicKeyBlobLen
+        //  field.
+
+        // wSignatureBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
+        //  in the SignatureKeyBlob field. This field is set to BB_RSA_SIGNATURE_BLOB
+        //  (0x0008).
+
+        // wSignatureBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
+        //  of the SignatureKeyBlob field.
+
+        // SignatureBlob (variable): Variable-length signature of the certificate
+        // created with the Terminal Services Signing Key (see sections 5.3.3.1.1 and
+        // 5.3.3.1.2). The length in bytes is given by the wSignatureBlobLen field.
+
+        // 2.2.1.4.3.1.1.1 RSA Public Key (RSA_PUBLIC_KEY)
+        // ===============================================
+        // The structure used to describe a public key in a Proprietary Certificate
+        // (section 2.2.1.4.3.1.1).
+
+        // magic (4 bytes): A 32-bit, unsigned integer. The sentinel value. This field
+        //  MUST be set to 0x31415352.
+
+        // keylen (4 bytes): A 32-bit, unsigned integer. The size in bytes of the
+        //  modulus field. This value is directly related to the bitlen field and MUST
+        //  be ((bitlen / 8) + 8) bytes.
+
+        // bitlen (4 bytes): A 32-bit, unsigned integer. The number of bits in the
+        //  public key modulus.
+
+        // datalen (4 bytes): A 32-bit, unsigned integer. The maximum number of bytes
+        //  that can be encoded using the public key.
+
+        // pubExp (4 bytes): A 32-bit, unsigned integer. The public exponent of the
+        //  public key.
+
+        // modulus (variable): A variable-length array of bytes containing the public
+        //  key modulus. The length in bytes of this field is given by the keylen field.
+        //  The modulus field contains all (bitlen / 8) bytes of the public key modulus
+        //  and 8 bytes of zero padding (which MUST follow after the modulus bytes).
+
+        struct SCSecurity {
+            uint16_t userDataType;
+            uint16_t length;
+
+            enum {
+
+                SEC_TAG_PUBKEY    = 0x0006,
+                SEC_TAG_KEYSIG    = 0x0008,
+
+                SEC_RSA_MAGIC     = 0x31415352, /* RSA1 */
+            };
+
+            enum {
+                ENCRYPTION_METHOD_NONE   = 0x00000000,
+                ENCRYPTION_METHOD_40BIT  = 0x00000001,
+                ENCRYPTION_METHOD_128BIT = 0x00000002,
+                ENCRYPTION_METHOD_56BIT  = 0x00000008,
+                ENCRYPTION_METHOD_FIPS   = 0x00000010,
+            };
+            uint32_t encryptionMethod;
+
+            enum {
+                ENCRYPTION_LEVEL_NONE              = 0x00000000,
+                ENCRYPTION_LEVEL_LOW               = 0x00000001,
+                ENCRYPTION_LEVEL_CLIENT_COMPATIBLE = 0x00000002,
+                ENCRYPTION_LEVEL_HIGH              = 0x00000003,
+                ENCRYPTION_LEVEL_FIPS              = 0x00000004,
+            };
+            uint32_t encryptionLevel;
+            uint32_t serverRandomLen;
+            uint32_t serverCertLen;
+            uint8_t * serverRandom;
+
+            uint8_t pub_mod[64];
+            uint8_t pri_exp[64];
+            uint8_t pub_sig[64];
+            uint8_t pub_exp[4];
+
+            enum {
+                CERT_CHAIN_VERSION_1 = 0x00000001,
+                CERT_CHAIN_VERSION_2 = 0x00000002,
+            };
+
+            struct {
+                uint32_t dwVersion;
+        //        uint32_t certChainVersion;
+        //        bool t;
+
+                union {
+                    struct ServerProprietaryCertificate {
+                        // dwSigAlgId (4 bytes): A 32-bit, unsigned integer. The signature algorithm
+                        //  identifier. This field MUST be set to SIGNATURE_ALG_RSA (0x00000001).
+                        uint32_t dwSigAlgId;
+
+                        // dwKeyAlgId (4 bytes): A 32-bit, unsigned integer. The key algorithm
+                        //  identifier. This field MUST be set to KEY_EXCHANGE_ALG_RSA (0x00000001).
+                        uint32_t dwKeyAlgId;
+
+                        // wPublicKeyBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
+                        //  in the PublicKeyBlob field. This field MUST be set to BB_RSA_KEY_BLOB
+                        //  (0x0006).
+                        uint16_t wPublicKeyBlobType;
+
+                        // wPublicKeyBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
+                        //  of the PublicKeyBlob field.
+                        uint16_t wPublicKeyBlobLen;
+
+                        // PublicKeyBlob (variable): Variable-length server public key bytes, formatted
+                        //  using the Rivest-Shamir-Adleman (RSA) Public Key structure (section
+                        //  2.2.1.4.3.1.1.1). The length in bytes is given by the wPublicKeyBlobLen
+                        //  field.
+                        uint8_t * PublicKeyBlob;
+
+                        // wSignatureBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
+                        //  in the SignatureKeyBlob field. This field is set to BB_RSA_SIGNATURE_BLOB
+                        //  (0x0008).
+                        uint16_t wSignatureBlobType;
+
+                        // wSignatureBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
+                        //  of the SignatureKeyBlob field.
+                        uint16_t wSignatureBlobLen;
+
+                        // SignatureBlob (variable): Variable-length signature of the certificate
+                        // created with the Terminal Services Signing Key (see sections 5.3.3.1.1 and
+                        // 5.3.3.1.2). The length in bytes is given by the wSignatureBlobLen field.
+                        uint8_t * wSignatureBlob;
+
+                    } * proprietary;
+                    struct X509Certificate {
+                        uint8_t * blob;
+                    } * x509;
+                } certData;
+            } * serverCertificate;
+
+            SCSecurity()
+            : userDataType(SC_SECURITY)
+            , length(236)
+            , encryptionMethod(0)
+            , encryptionLevel(0) // crypt level 0 = none, 1 = low 2 = medium, 3 = high
+            , serverRandomLen(0)
+            , serverCertLen(0)
+            , serverRandom(NULL)
+            {
+            }
+
+            void emit(Stream & stream)
+            {
+                stream.out_uint16_le(SC_SECURITY);
+                stream.out_uint16_le(this->length); // length, including tag and length fields
+                stream.out_uint32_le(this->encryptionMethod); // key len 1 = 40 bit 2 = 128 bit
+                stream.out_uint32_le(this->encryptionLevel);
+
+                stream.out_uint32_le(32);  // random len
+                stream.out_uint32_le(184); // len of rsa info(certificate)
+                stream.out_copy_bytes(this->serverRandom, this->serverRandomLen);
+                /* here to end is certificate */
+                /* HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ */
+                /* TermService\Parameters\Certificate */
+                stream.out_uint32_le(1);
+                stream.out_uint32_le(1);
+                stream.out_uint32_le(1);
+
+                // 96 bytes long of sec_tag pubkey
+                stream.out_uint16_le(SEC_TAG_PUBKEY);
+                stream.out_uint16_le(92); // length
+                    stream.out_uint32_le(SEC_RSA_MAGIC);
+                    stream.out_uint32_le(72); /* 72 bytes modulus len */
+                    stream.out_uint32_be(0x00020000);
+                    stream.out_uint32_be(0x3f000000);
+                    stream.out_copy_bytes(this->pub_exp, 4); /* pub exp */
+                    stream.out_copy_bytes(this->pub_mod, 64); /* pub mod */
+                    stream.out_clear_bytes(8); /* pad */
+
+                // 76 bytes long of sec_tag_pub_sig
+                stream.out_uint16_le(SEC_TAG_KEYSIG);
+                stream.out_uint16_le(72); /* len */
+                    stream.out_copy_bytes(this->pub_sig, 64); /* pub sig */
+                    stream.out_clear_bytes(8); /* pad */
+                /* end certificate */
+                stream.mark_end();
+            }
+
+            void recv(Stream & stream, uint16_t length)
+            {
+                this->length = length;
+            }
+
+            void log(const char * msg)
+            {
+                // --------------------- Base Fields ---------------------------------------
+                LOG(LOG_INFO, "%s GCC User Data SC_SECURITY (%u bytes)", msg, this->length);
+                LOG(LOG_INFO, "sc_security::encryptionMethod = %u", this->encryptionMethod);
+                LOG(LOG_INFO, "sc_security::encryptionLevel  = %u", this->encryptionLevel);
+                LOG(LOG_INFO, "sc_security::serverRandomLen  = %u", this->serverRandomLen);
+                LOG(LOG_INFO, "sc_security::serverCertLen    = %u", this->serverCertLen);
+            }
+        };
+
+    }; /* namespace UserData */
+}; /* namespace GCC */
+
+#include "gcc_conference_user_data/cs_sec.hpp"
+#include "gcc_conference_user_data/sc_sec1.hpp"
 
 #endif
