@@ -730,13 +730,6 @@ struct mod_rdp : public client_mod {
                             ssllib ssl;
 
 
-                        // serverCertLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of the
-                        //  serverCertificate field. If the encryptionMethod and encryptionLevel fields
-                        //  are both set to 0 then the contents of this field MUST be ignored and the
-                        // serverCertificate field MUST NOT be present.
-                            uint32_t serverCertLen = f.payload.in_uint32_le();
-                            LOG(LOG_INFO, "serverCertLen = %u", serverCertLen);
-
                         // serverRandom (variable): The variable-length server random value used to
                         // derive session keys (see sections 5.3.4 and 5.3.5). The length in bytes is
                         // given by the serverRandomLen field. If the encryptionMethod and
@@ -750,13 +743,6 @@ struct mod_rdp : public client_mod {
                         // both set to 0 then this field MUST NOT be present.
 
                             /* RSA info */
-                            uint8_t * end = f.payload.p + serverCertLen;
-                            if (end > f.payload.end) {
-                                LOG(LOG_ERR,
-                                    "serverCertLen outside of buffer (%u bytes, remains: %u)", serverCertLen, f.payload.end - f.payload.p);
-                                throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RSA_LEN);
-                            }
-
                             uint32_t dwVersion = f.payload.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
                             LOG(LOG_INFO, "dwVersion = %x", dwVersion);
                             if (dwVersion & GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {

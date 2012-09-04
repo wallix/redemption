@@ -281,6 +281,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
     BOOST_CHECK_EQUAL(1, sc_sec1.encryptionMethod);
     BOOST_CHECK_EQUAL(2, sc_sec1.encryptionLevel);
     BOOST_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
+    BOOST_CHECK_EQUAL(1358, sc_sec1.serverCertLen);
 }
 
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
@@ -314,5 +315,6 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
     BOOST_CHECK_EQUAL(1, sc_sec1.encryptionMethod);
     BOOST_CHECK_EQUAL(1, sc_sec1.encryptionLevel);
     BOOST_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
+    BOOST_CHECK_EQUAL(184, sc_sec1.serverCertLen);
 }
 

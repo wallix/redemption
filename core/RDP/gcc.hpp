@@ -2041,6 +2041,17 @@ namespace GCC
                          this->serverRandomLen, SEC_RANDOM_SIZE);
                     throw Error(ERR_GCC);
                 }
+                // serverCertLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of the
+                //  serverCertificate field. If the encryptionMethod and encryptionLevel fields
+                //  are both set to 0 then the contents of this field MUST be ignored and the
+                // serverCertificate field MUST NOT be present.
+
+                this->serverCertLen = stream.in_uint32_le();
+                if (!stream.check_rem(this->serverCertLen)) {
+                    LOG(LOG_ERR, "SCSecutity recv: serverCertLen %d, not enough data available (%u)",
+                         this->serverCertLen, stream.size() - stream.get_offset());
+                    throw Error(ERR_GCC);
+                }
 
             }
 
