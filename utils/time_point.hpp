@@ -146,12 +146,12 @@ public:
     }*/
 
     /**
-     * @example "7h-20min+2s"
-     * @example "-20m+5h"
-     * @example "50000"
-     * @example "50000s"
-     * @example "1h+1h30"
-     * @example "2h10m-5s"
+     * "7h-20min+2s"
+     * "-20m+5h"
+     * "50000"
+     * "50000s"
+     * "1h+1h30"
+     * "2h10m-5s"
      */
     void parse(const std::string& s)
     {
