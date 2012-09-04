@@ -978,32 +978,42 @@ public:
                 throw Error(ERR_MCS_DATA_SHORT_HEADER);
             }
 
-
+            // ------------------------------------------------------------------
             BStream stream(65536);
-
+            // ------------------------------------------------------------------
             GCC::UserData::SCCore sc_core;
             sc_core.version = 0x00080004;
-            sc_core.log("Sending SC_CORE to client");
+            sc_core.log("Sending to client");
             sc_core.emit(stream);
-
-            out_mcs_data_sc_net(stream, this->channel_list);
+            // ------------------------------------------------------------------
+            GCC::UserData::SCNet sc_net;
+            const uint8_t num_channels = this->channel_list.size();
+            sc_net.MCSChannelId = MCS_GLOBAL_CHANNEL; 
+            sc_net.channelCount = num_channels;
+            for (int index = 0; index < num_channels; index++) {
+                 sc_net.channelDefArray[index].id = MCS_GLOBAL_CHANNEL + index + 1;
+            }
+            sc_net.log("Sending to client");
+            sc_net.emit(stream);
+            // ------------------------------------------------------------------
             front_out_gcc_conference_user_data_sc_sec1(stream, 
                     client_info.crypt_level, this->server_random, this->encrypt.rc4_key_size, this->pub_mod, this->pri_exp, this->gen);
             stream.mark_end();
-
+            // ------------------------------------------------------------------
             BStream gcc_header(256);
             GCC::Create_Response_Send(gcc_header, stream.size());
-
+            // ------------------------------------------------------------------
             BStream mcs_header(256);
             MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, gcc_header.size() + stream.size(), MCS::BER_ENCODING);
-
+            // ------------------------------------------------------------------
             BStream x224_header(256);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + gcc_header.size() + stream.size());
-
+            // ------------------------------------------------------------------
             this->trans->send(x224_header.data, x224_header.size());
             this->trans->send(mcs_header.data, mcs_header.size());
             this->trans->send(gcc_header.data, gcc_header.size());
             this->trans->send(stream.data, stream.size());
+            // ------------------------------------------------------------------
 
             // Channel Connection
             // ------------------

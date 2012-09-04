@@ -365,7 +365,6 @@ class SessionManager {
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::ask_next_module");
         }
-        int next_state = MCTX_STATUS_EXIT;
         switch (this->mod_state){
         default:
             if (this->verbose & 0x10){

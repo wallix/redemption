@@ -51,7 +51,6 @@ enum DATA_BLOCK_TYPE {
     SC_NET = 0x0C03
 };
 
-#include "gcc_conference_user_data/sc_net.hpp"
 #include "gcc_conference_user_data/cs_sec.hpp"
 #include "gcc_conference_user_data/sc_sec1.hpp"
 
@@ -1643,6 +1642,15 @@ namespace GCC
         //  channelCount field contains an even value, then the Pad field is not
         //  required and MUST NOT be present.
 
+        //03 0c 10 00 -> TS_UD_HEADER::type = SC_NET (0x0c03), length = 16 bytes
+
+        //eb 03 -> TS_UD_SC_NET::MCSChannelID = 0x3eb = 1003 (I/O channel)
+        //03 00 -> TS_UD_SC_NET::channelCount = 3
+        //ec 03 -> channel0 = 0x3ec = 1004 (rdpdr)
+        //ed 03 -> channel1 = 0x3ed = 1005 (cliprdr)
+        //ee 03 -> channel2 = 0x3ee = 1006 (rdpsnd)
+        //00 00 -> padding
+
         struct SCNet {
             uint16_t userDataType;
             uint16_t length;
@@ -1655,23 +1663,23 @@ namespace GCC
             SCNet()
             : userDataType(SC_NET)
             , length(12)
-            , MCSChannelId(0)
+            , MCSChannelId(MCS_GLOBAL_CHANNEL)
             , channelCount(0)
             {
             }
 
             void emit(Stream & stream)
             {
-                this->length = 8 + 4 * (this->channelCount >> 1);
+                this->length = 8 + 2 * this->channelCount + 2 * (this->channelCount & 1);
                 stream.out_uint16_le(this->userDataType);
                 stream.out_uint16_le(this->length);        
                 stream.out_uint16_le(this->MCSChannelId);
                 stream.out_uint16_le(this->channelCount);
                 for (size_t i = 0; i < this->channelCount ; i++){
-                    stream.out_uint16_be(this->channelDefArray[i].id);
+                    stream.out_uint16_le(this->channelDefArray[i].id);
                 }
                 if (this->channelCount & 1){
-                    stream.out_uint16_be(0);
+                    stream.out_uint16_le(0);
                 }
                 stream.mark_end();
             }
@@ -1693,39 +1701,9 @@ namespace GCC
             void log(const char * msg)
             {
                 // --------------------- Base Fields ---------------------------------------
-                LOG(LOG_INFO, "%s GCC User Data SC_NET (%u bytes)", msg, this->length);
+                LOG(LOG_INFO, "%s GCC User Data SC_NET (%u bytes) %u channels", msg, this->length, this->channelCount);
             }
         };
-
-
-        //03 0c 10 00 -> TS_UD_HEADER::type = SC_NET (0x0c03), length = 16 bytes
-
-        //eb 03 -> TS_UD_SC_NET::MCSChannelID = 0x3eb = 1003 (I/O channel)
-        //03 00 -> TS_UD_SC_NET::channelCount = 3
-        //ec 03 -> channel0 = 0x3ec = 1004 (rdpdr)
-        //ed 03 -> channel1 = 0x3ed = 1005 (cliprdr)
-        //ee 03 -> channel2 = 0x3ee = 1006 (rdpsnd)
-        //00 00 -> padding
-
-
-//        static inline void out_mcs_data_sc_net(Stream & stream, const ChannelDefArray & channel_list)
-//        {
-//            uint16_t num_channels = channel_list.size();
-//            uint16_t padchan = num_channels & 1;
-
-//            stream.out_uint16_le(SC_NET);
-//            // length, including tag and length fields
-//            stream.out_uint16_le(8 + (num_channels + padchan) * 2);
-//            stream.out_uint16_le(MCS_GLOBAL_CHANNEL);
-//            stream.out_uint16_le(num_channels); /* number of other channels */
-
-//            for (int index = 0; index < num_channels; index++) {
-//                    stream.out_uint16_le(MCS_GLOBAL_CHANNEL + (index + 1));
-//            }
-//            if (padchan){
-//                stream.out_uint16_le(0);
-//            }
-//        }
 
     };
 };

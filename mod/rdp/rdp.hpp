@@ -760,9 +760,6 @@ struct mod_rdp : public client_mod {
                             this->mod_channel_list.push_back(def);
                         }
                         sc_net.log("Received from server");
-
-//                        LOG(LOG_INFO, "Receiving SC_Net from server");
-//                        parse_mcs_data_sc_net(f.payload, this->front.get_channel_list(), this->mod_channel_list);
                     }
                     break;
                     default:
