@@ -64,8 +64,8 @@ struct range_time_point
     }*/
 
     /**
-     * @example "+30m"
-     * @example "1h,-20m"
+     * "+30m"
+     * "1h,-20m"
      */
     void parse(const std::string& s)
     {

@@ -36,8 +36,8 @@ void RecorderOption::add_default_options()
     ("png-scale-width,W", po::value(&this->png_scale_width), "")
     ("png-scale-height,H", po::value(&this->png_scale_height), "")
     ("concat-wrm,c", "concat each wrm in a single wrm")
-    ("out-crypt-key", po::value(&this->out_crypt_key), "")
-    ("out-crypt-iv", po::value(&this->out_crypt_iv), "")
+    ("out-crypt-key", po::value(&this->out_crypt_key), "key in hexadecimal base")
+    ("out-crypt-iv", po::value(&this->out_crypt_iv), "IV in hexadecimal base")
     ("out-crypt-mode", po::value(&this->out_crypt_mode), "see --in-crypt-mode")
     ;
 }
