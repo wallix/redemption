@@ -2022,9 +2022,26 @@ namespace GCC
                 stream.mark_end();
             }
 
-            void recv(Stream & stream, uint16_t length)
+            void recv(Stream & stream)
             {
-                this->length = length;
+                this->userDataType = stream.in_uint16_le();
+                this->length = stream.in_uint16_le();
+                this->encryptionMethod = stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
+                this->encryptionLevel = stream.in_uint32_le();  /* 1 = low, 2 = medium, 3 = high */
+
+                if (this->length == 12) return;
+                // serverRandomLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of
+                // the serverRandom field. If the encryptionMethod and encryptionLevel fields
+                // are both set to 0 then the contents of this field MUST be ignored and the
+                // serverRandom field MUST NOT be present. Otherwise, this field MUST be set to
+                // 32 bytes.
+                this->serverRandomLen = stream.in_uint32_le();
+                if (this->serverRandomLen != SEC_RANDOM_SIZE) {
+                    LOG(LOG_ERR, "SCSecutity recv: serverRandomLen %d, expected %d",
+                         this->serverRandomLen, SEC_RANDOM_SIZE);
+                    throw Error(ERR_GCC);
+                }
+
             }
 
             void log(const char * msg)
@@ -2033,6 +2050,7 @@ namespace GCC
                 LOG(LOG_INFO, "%s GCC User Data SC_SECURITY (%u bytes)", msg, this->length);
                 LOG(LOG_INFO, "sc_security::encryptionMethod = %u", this->encryptionMethod);
                 LOG(LOG_INFO, "sc_security::encryptionLevel  = %u", this->encryptionLevel);
+                if (this->length == 12) { return; }
                 LOG(LOG_INFO, "sc_security::serverRandomLen  = %u", this->serverRandomLen);
                 LOG(LOG_INFO, "sc_security::serverCertLen    = %u", this->serverCertLen);
             }
@@ -2042,6 +2060,5 @@ namespace GCC
 }; /* namespace GCC */
 
 #include "gcc_conference_user_data/cs_sec.hpp"
-#include "gcc_conference_user_data/sc_sec1.hpp"
 
 #endif

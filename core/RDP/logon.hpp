@@ -692,7 +692,7 @@ struct ExtendedInfoPacket {
 
 
 struct InfoPacket {
-
+    uint8_t rdp5_support;
     uint32_t CodePage;
     uint32_t flags;
     uint16_t cbDomain;
@@ -705,18 +705,17 @@ struct InfoPacket {
     uint8_t Password[257];
     uint8_t AlternateShell[257];
     uint8_t WorkingDir[257];
-    uint8_t rdp5_support;
     ExtendedInfoPacket extendedInfoPacket;  // optionals Extra attributes from TS_EXTENDED_INFO_PACKET:
 
     InfoPacket()
-    : CodePage(0) //........... ANSI code page descriptor
+    : rdp5_support(0)
+    , CodePage(0) //........... ANSI code page descriptor
     , flags(0) //               bitmap
     , cbDomain(0) //........... size in bytes of variable size Domain attribute
     , cbUserName(0) //          size in bytes of variable size UserName attribute
     , cbPassword(0) //......... size in bytes of variable size Password attribute
     , cbAlternateShell(0) //    size in bytes of variable size AlternateShell attribute
     , cbWorkingDir(0) //....... size in bytes of variable size WorkingDir attribute
-    , rdp5_support(0)
     , extendedInfoPacket()
     {
         memset(Domain, 0, 256);
@@ -742,37 +741,29 @@ struct InfoPacket {
     } // END FUNCT : std_init()
 
 
-    void conclude_flags(){
+    void emit( Stream & stream) {
 
         this->flags |= ( (strlen((char *) this->Password ) > 0) * INFO_AUTOLOGON );
         this->flags |= ( this->rdp5_support != 0 ) * ( INFO_LOGONERRORS | INFO_NOAUDIOPLAYBACK );
 
-    }  // END FUNCT : conclude_flags()
-
-
-    void emit( Stream & stream) {
-
-        conclude_flags();
-
         stream.out_uint32_le(this->CodePage);
         stream.out_uint32_le(this->flags);
-
         stream.out_uint16_le(this->cbDomain);
         stream.out_uint16_le(this->cbUserName);
         stream.out_uint16_le(this->cbPassword);
         stream.out_uint16_le(this->cbAlternateShell);
         stream.out_uint16_le(this->cbWorkingDir);
 
-           stream.out_unistr((const char *) this->Domain);
-        stream.out_unistr((const char *) this->UserName);
+        stream.out_unistr((const char *)this->Domain);
+        stream.out_unistr((const char *)this->UserName);
         if (flags & INFO_AUTOLOGON){
-            stream.out_unistr((const char *) this->Password);
+            stream.out_unistr((const char *)this->Password);
         }
         else{
             stream.out_uint16_le(0);
         }
-          stream.out_unistr((const char *) this->AlternateShell);
-           stream.out_unistr((const char *) this->WorkingDir);
+        stream.out_unistr((const char *)this->AlternateShell);
+        stream.out_unistr((const char *)this->WorkingDir);
 
         if(!this->rdp5_support){
             LOG(LOG_INFO, "send login info (RDP4-style) %s:%s", this->Domain, this->UserName);
@@ -853,8 +844,9 @@ struct InfoPacket {
         stream.in_uni_to_ascii_str((char *) this->AlternateShell, this->cbAlternateShell);
         stream.in_uni_to_ascii_str((char *) this->WorkingDir, this->cbWorkingDir);
 
-        // Get extended data only if RDP is version 5 or above
+        TODO("Get extended data only if RDP is version 5 or above")
         if (stream.p < stream.end) {
+            this->rdp5_support = true;
             LOG(LOG_DEBUG, "RDP-5 Style logon");
             // clientAddressFamily (skipped)
             stream.in_skip_bytes(2);
@@ -882,8 +874,6 @@ struct InfoPacket {
     } // END FUNCT : recv()
 
     void log(const char * msg){
-
-        conclude_flags();
 
         LOG(LOG_INFO, "%s InfoPacket", msg);
         LOG(LOG_INFO, "InfoPacket::CodePage %u", this->CodePage);
@@ -917,6 +907,8 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::Password <hidden>");
         LOG(LOG_INFO, "InfoPacket::AlternateShell %s", this->AlternateShell);
         LOG(LOG_INFO, "InfoPacket::WorkingDir %s", this->WorkingDir);
+        if (!this->rdp5_support){ return; }
+
         // Extended
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientAddressFamily %u", this->extendedInfoPacket.clientAddressFamily);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientAddress %u", this->extendedInfoPacket.cbClientAddress);

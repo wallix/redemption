@@ -708,44 +708,246 @@ struct mod_rdp : public client_mod {
                     break;
                     case SC_SECURITY:
                     {
+                        LOG(LOG_INFO, "Receiving SC_Security from server");
+
                         uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
-                        uint32_t encryptionMethod;
                         uint8_t modulus[SEC_MAX_MODULUS_SIZE];
                         memset(modulus, 0, sizeof(modulus));
                         uint8_t exponent[SEC_EXPONENT_SIZE];
                         memset(exponent, 0, sizeof(exponent));
 
-                        uint16_t tag = f.payload.in_uint16_le();
-                        uint16_t length = f.payload.in_uint16_le();
-                        LOG(LOG_INFO, "Receiving SC_Security from server");
-                        parse_mcs_data_sc_security(f.payload, encryptionMethod, serverRandom,
-                                                   modulus, exponent,
-                                                   this->server_public_key_len, 
-                                                   this->client_crypt_random,
-                                                   this->crypt_level,
-                                                   this->gen);
+                        GCC::UserData::SCSecurity sc_sec1;
+                        sc_sec1.recv(f.payload);
 
-                        if (this->crypt_level == 0 && encryptionMethod == 0) { /* no encryption */
+                        LOG(LOG_INFO, "SC_SECURITY tag=%04x length=%u", sc_sec1.userDataType, sc_sec1.length);
+
+                        this->crypt_level = sc_sec1.encryptionLevel; 
+                        if (sc_sec1.encryptionLevel == 0 
+                        &&  sc_sec1.encryptionMethod == 0) { /* no encryption */
                             LOG(LOG_INFO, "No encryption");
                         }
                         else {
+                            ssllib ssl;
+
+
+                        // serverCertLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of the
+                        //  serverCertificate field. If the encryptionMethod and encryptionLevel fields
+                        //  are both set to 0 then the contents of this field MUST be ignored and the
+                        // serverCertificate field MUST NOT be present.
+                            uint32_t serverCertLen = f.payload.in_uint32_le();
+                            LOG(LOG_INFO, "serverCertLen = %u", serverCertLen);
+
+                        // serverRandom (variable): The variable-length server random value used to
+                        // derive session keys (see sections 5.3.4 and 5.3.5). The length in bytes is
+                        // given by the serverRandomLen field. If the encryptionMethod and
+                        // encryptionLevel fields are both set to 0 then this field MUST NOT be present.
+
+                            f.payload.in_copy_bytes(serverRandom, sc_sec1.serverRandomLen);
+
+                        // serverCertificate (variable): The variable-length certificate containing the
+                        //  server's public key information. The length in bytes is given by the
+                        // serverCertLen field. If the encryptionMethod and encryptionLevel fields are
+                        // both set to 0 then this field MUST NOT be present.
+
+                            /* RSA info */
+                            uint8_t * end = f.payload.p + serverCertLen;
+                            if (end > f.payload.end) {
+                                LOG(LOG_ERR,
+                                    "serverCertLen outside of buffer (%u bytes, remains: %u)", serverCertLen, f.payload.end - f.payload.p);
+                                throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RSA_LEN);
+                            }
+
+                            uint32_t dwVersion = f.payload.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
+                            LOG(LOG_INFO, "dwVersion = %x", dwVersion);
+                            if (dwVersion & GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {
+                                LOG(LOG_DEBUG, "We're going for the RDP4-style encryption");
+                                // dwSigAlgId (4 bytes): A 32-bit, unsigned integer. The signature algorithm
+                                //  identifier. This field MUST be set to SIGNATURE_ALG_RSA (0x00000001).
+                                uint32_t dwSigAlgId = f.payload.in_uint32_le();
+                                LOG(LOG_DEBUG, "dwSigAlgId = %u", dwSigAlgId);
+
+                                // dwKeyAlgId (4 bytes): A 32-bit, unsigned integer. The key algorithm
+                                //  identifier. This field MUST be set to KEY_EXCHANGE_ALG_RSA (0x00000001).
+                                uint32_t dwKeyAlgId = f.payload.in_uint32_le();
+                                LOG(LOG_DEBUG, "dwKeyAlgId = %u", dwKeyAlgId);
+
+                                LOG(LOG_DEBUG, "ReceivingPublic key, RDP4-style");
+                                // wPublicKeyBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
+                                //  in the PublicKeyBlob field. This field MUST be set to BB_RSA_KEY_BLOB
+                                //  (0x0006).
+                                TODO("put assertion to check type and throw and error if not as expected");
+                                uint16_t wPublicKeyBlobType = f.payload.in_uint16_le();
+                                LOG(LOG_DEBUG, "wPublicKeyBlobType = %u", wPublicKeyBlobType);
+
+                                // wPublicKeyBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
+                                //  of the PublicKeyBlob field.
+                                uint16_t wPublicKeyBlobLen = f.payload.in_uint16_le();
+                                LOG(LOG_DEBUG, "wPublicKeyBlobLen = %u", wPublicKeyBlobLen);
+
+                                uint8_t * next_tag = f.payload.p + wPublicKeyBlobLen;
+
+                                // PublicKeyBlob (variable): Variable-length server public key bytes, formatted
+                                //  using the Rivest-Shamir-Adleman (RSA) Public Key structure (section
+                                //  2.2.1.4.3.1.1.1). The length in bytes is given by the wPublicKeyBlobLen
+                                //  field.
+
+
+                                uint32_t magic = f.payload.in_uint32_le();
+                                if (magic != GCC::UserData::SCSecurity::SEC_RSA_MAGIC) {
+                                    LOG(LOG_WARNING, "RSA magic 0x%x", magic);
+                                    throw Error(ERR_SEC_PARSE_PUB_KEY_MAGIC_NOT_OK);
+                                }
+                                server_public_key_len = f.payload.in_uint32_le() - SEC_PADDING_SIZE;
+
+                                if ((server_public_key_len < SEC_MODULUS_SIZE)
+                                ||  (server_public_key_len > SEC_MAX_MODULUS_SIZE)) {
+                                    LOG(LOG_WARNING, "Bad server public key size (%u bits)", server_public_key_len * 8);
+                                    throw Error(ERR_SEC_PARSE_PUB_KEY_MODUL_NOT_OK);
+                                }
+                                f.payload.in_skip_bytes(8); /* modulus_bits, unknown */
+
+                                f.payload.in_copy_bytes(exponent, SEC_EXPONENT_SIZE);
+                                f.payload.in_copy_bytes(modulus, server_public_key_len);
+                                f.payload.in_skip_bytes(SEC_PADDING_SIZE);
+                                LOG(LOG_DEBUG, "Got Public key, RDP4-style");
+
+                                // This should not be necessary as previous field if fully decoded
+                                f.payload.p = next_tag;
+
+                                LOG(LOG_DEBUG, "Receiving key sig RDP4-style");
+                                // wSignatureBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
+                                //  in the SignatureKeyBlob field. This field is set to BB_RSA_SIGNATURE_BLOB
+                                //  (0x0008).
+                                TODO("put assertion to check type and throw and error if not as expected");
+                                uint16_t wSignatureBlobType = f.payload.in_uint16_le();
+                                LOG(LOG_DEBUG, "wSignatureBlobType = %u", wSignatureBlobType);
+
+                                // wSignatureBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
+                                //  of the SignatureKeyBlob field.
+                                uint16_t wSignatureBlobLen = f.payload.in_uint16_le();
+
+                                // SignatureBlob (variable): Variable-length signature of the certificate
+                                // created with the Terminal Services Signing Key (see sections 5.3.3.1.1 and
+                                // 5.3.3.1.2). The length in bytes is given by the wSignatureBlobLen field.
+                                f.payload.in_skip_bytes(wSignatureBlobLen);
+                                LOG(LOG_DEBUG, "Got key sig RDP4-style");
+                            }
+                            else {
+                                LOG(LOG_DEBUG, "We're going for the RDP5-style encryption");
+                                uint32_t certcount = f.payload.in_uint32_le();
+                                LOG(LOG_DEBUG, "Certcount = %u", certcount);
+
+                                if (certcount < 2){
+                                    LOG(LOG_DEBUG, "Server didn't send enough X509 certificates");
+                                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CERT_NOK);
+                                }
+                                for (; certcount > 2; certcount--){
+                                    /* ignore all the certificates between the root and the signing CA */
+                                    LOG(LOG_WARNING, " Ignored certs left: %d", certcount);
+                                    uint32_t ignorelen = f.payload.in_uint32_le();
+                                    LOG(LOG_WARNING, "Ignored Certificate length is %d", ignorelen);
+                                    X509 *ignorecert = ssl.ssl_cert_read(f.payload.p, ignorelen);
+                                    f.payload.in_skip_bytes(ignorelen);
+                                    if (ignorecert == NULL){
+                                        LOG(LOG_WARNING,
+                                            "got a bad cert: this will probably screw up"
+                                            " the rest of the communication");
+                                    }
+                                    LOG(LOG_WARNING, "cert #%d (ignored)", certcount);
+                                }
+
+                                /* Do da funky X.509 stuffy
+
+                               "How did I find out about this?  I looked up and saw a
+                               bright light and when I came to I had a scar on my forehead
+                               and knew about X.500"
+                               - Peter Gutman in a early version of
+                               http://www.cs.auckland.ac.nz/~pgut001/pubs/x509guide.txt
+                               */
+
+                                /* Loading CA_Certificate from server*/
+                                uint32_t cacert_len = f.payload.in_uint32_le();
+                                LOG(LOG_DEBUG, "CA Certificate length is %d", cacert_len);
+                                X509 *cacert = ssl.ssl_cert_read(f.payload.p, cacert_len);
+                                f.payload.in_skip_bytes(cacert_len);
+                                if (NULL == cacert){
+                                    LOG(LOG_DEBUG, "Couldn't load CA Certificate from server");
+                                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NULL);
+                                }
+
+                                /* Loading Certificate from server*/
+                                uint32_t cert_len = f.payload.in_uint32_le();
+                                LOG(LOG_DEBUG, "Certificate length is %d", cert_len);
+                                X509 *server_cert = ssl.ssl_cert_read(f.payload.p, cert_len);
+                                f.payload.in_skip_bytes(cert_len);
+                                if (NULL == server_cert){
+                                    ssl.ssl_cert_free(cacert);
+                                    LOG(LOG_DEBUG, "Couldn't load Certificate from server");
+                                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_LOADED);
+                                }
+
+                                /* Matching certificates */
+                                if (!ssl.ssl_certs_ok(server_cert, cacert)){
+                                    ssl.ssl_cert_free(server_cert);
+                                    ssl.ssl_cert_free(cacert);
+                                    LOG(LOG_DEBUG, "Security error CA Certificate invalid");
+                                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_MATCH);
+                                }
+                                ssl.ssl_cert_free(cacert);
+                                f.payload.in_skip_bytes(16); /* Padding */
+
+                                RSA *server_public_key = ssl.ssl_cert_to_rkey(server_cert, server_public_key_len);
+                                LOG(LOG_DEBUG, "Server public key length=%u", (unsigned)server_public_key_len);
+
+                                if (NULL == server_public_key){
+                                    LOG(LOG_DEBUG, "Didn't parse X509 correctly");
+                                    ssl.ssl_cert_free(server_cert);
+                                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_X509_NOT_PARSED);
+
+                                }
+                                ssl.ssl_cert_free(server_cert);
+
+                                LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d",
+                                    server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
+
+                                if ((server_public_key_len < SEC_MODULUS_SIZE) ||
+                                    (server_public_key_len > SEC_MAX_MODULUS_SIZE)){
+                                    LOG(LOG_WARNING, "Bad server public key size (%u bits)", server_public_key_len * 8);
+                                    ssl.rkey_free(server_public_key);
+                                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
+                                }
+
+                                if ((BN_num_bytes(server_public_key->e) > SEC_EXPONENT_SIZE) 
+                                ||  (BN_num_bytes(server_public_key->n) > SEC_MAX_MODULUS_SIZE)){
+                                    LOG(LOG_WARNING, "Problem extracting RSA exponent, modulus");
+                                    ssl.rkey_free(server_public_key);
+                                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_RSA_EXP_NOT_OK);
+                                }
+                                int len_e = BN_bn2bin(server_public_key->e, (unsigned char*)exponent);
+                                reverseit(exponent, len_e);
+                                int len_n = BN_bn2bin(server_public_key->n, (unsigned char*)modulus);
+                                reverseit(modulus, len_n);
+
+                                ssl.rkey_free(server_public_key);
+                                TODO(" find a way to correctly dispose of garbage at end of buffer")
+                                /* There's some garbage here we don't care about */
+                            }
                             uint8_t client_random[SEC_RANDOM_SIZE];
                             memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
 
                             /* Generate a client random, and determine encryption keys */	
                             this->gen->random(client_random, SEC_RANDOM_SIZE);
 
-                            ssllib ssl;
-
-                            ssl.rsa_encrypt(client_crypt_random, client_random, SEC_RANDOM_SIZE, server_public_key_len, modulus, exponent);
+                            ssl.rsa_encrypt(client_crypt_random, client_random, 
+                                    SEC_RANDOM_SIZE, server_public_key_len, modulus, exponent);
                             uint8_t key_block[48];
                             ssl.rdp_sec_generate_keyblock(key_block, client_random, serverRandom);
                             memcpy(encrypt.sign_key, key_block, 16);
-                            if (encryptionMethod == 1){
+                            if (sc_sec1.encryptionMethod == 1){
                                 ssl.sec_make_40bit(encrypt.sign_key);
                             }
-                            this->decrypt.generate_key(&key_block[16], client_random, serverRandom, encryptionMethod);
-                            this->encrypt.generate_key(&key_block[32], client_random, serverRandom, encryptionMethod);
+                            this->decrypt.generate_key(&key_block[16], client_random, serverRandom, sc_sec1.encryptionMethod);
+                            this->encrypt.generate_key(&key_block[32], client_random, serverRandom, sc_sec1.encryptionMethod);
                         }
                     }
                     break;
