@@ -1885,10 +1885,7 @@ namespace GCC
             uint16_t length;
 
             enum {
-
-                SEC_TAG_PUBKEY    = 0x0006,
                 SEC_TAG_KEYSIG    = 0x0008,
-
                 SEC_RSA_MAGIC     = 0x31415352, /* RSA1 */
             };
 
@@ -1924,7 +1921,8 @@ namespace GCC
             };
 
             enum { SIGNATURE_ALG_RSA = 1
-                 ,
+                 , KEY_EXCHANGE_ALG_RSA = 1
+                 , BB_RSA_KEY_BLOB = 0x0006
             };
 
             // really proprietaryCertificate and X509Certificate should be some union (sum) controlled by dwVersion
@@ -1956,7 +1954,44 @@ namespace GCC
                 //  using the Rivest-Shamir-Adleman (RSA) Public Key structure (section
                 //  2.2.1.4.3.1.1.1). The length in bytes is given by the wPublicKeyBlobLen
                 //  field.
-                uint8_t * PublicKeyBlob;
+                struct PublicKeyBlob {
+                    // 2.2.1.4.3.1.1.1 RSA Public Key (RSA_PUBLIC_KEY)
+                    // ===============================================
+                    // The structure used to describe a public key in a Proprietary Certificate
+                    // (section 2.2.1.4.3.1.1).
+
+                    // magic (4 bytes): A 32-bit, unsigned integer. The sentinel value. This field
+                    //  MUST be set to 0x31415352.
+                    uint32_t magic;
+
+                    // keylen (4 bytes): A 32-bit, unsigned integer. The size in bytes of the
+                    //  modulus field. This value is directly related to the bitlen field and MUST
+                    //  be ((bitlen / 8) + 8) bytes.
+                    uint32_t keylen;
+
+                    // bitlen (4 bytes): A 32-bit, unsigned integer. The number of bits in the
+                    //  public key modulus.
+                    uint32_t bitlen;
+
+                    // datalen (4 bytes): A 32-bit, unsigned integer. The maximum number of bytes
+                    //  that can be encoded using the public key.
+                    uint32_t datalen;
+
+                    // pubExp (4 bytes): A 32-bit, unsigned integer. The public exponent of the
+                    //  public key.
+                    uint32_t pubExp;
+
+                    // modulus (variable): A variable-length array of bytes containing the public
+                    //  key modulus. The length in bytes of this field is given by the keylen field.
+                    //  The modulus field contains all (bitlen / 8) bytes of the public key modulus
+                    //  and 8 bytes of zero padding (which MUST follow after the modulus bytes).
+                    uint8_t modulus[4096];
+                
+                    PublicKeyBlob() 
+                    {
+                    }
+
+                } RSAPK;
 
                 // wSignatureBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
                 //  in the SignatureKeyBlob field. This field is set to BB_RSA_SIGNATURE_BLOB
@@ -1974,6 +2009,10 @@ namespace GCC
 
                 ServerProprietaryCertificate()
                 : dwSigAlgId(SIGNATURE_ALG_RSA)
+                , dwKeyAlgId(KEY_EXCHANGE_ALG_RSA)
+                , wPublicKeyBlobType(BB_RSA_KEY_BLOB)
+                , wPublicKeyBlobLen(92)
+                
                 {
                 }
             } proprietaryCertificate;
@@ -2011,11 +2050,10 @@ namespace GCC
 
                 if (this->dwVersion == CERT_CHAIN_VERSION_1){
                     stream.out_uint32_le(this->proprietaryCertificate.dwSigAlgId);
-                    stream.out_uint32_le(1);
+                    stream.out_uint32_le(this->proprietaryCertificate.dwKeyAlgId);
+                    stream.out_uint16_le(this->proprietaryCertificate.wPublicKeyBlobType);
+                    stream.out_uint16_le(this->proprietaryCertificate.wPublicKeyBlobLen);
 
-                    // 96 bytes long of sec_tag pubkey
-                    stream.out_uint16_le(SEC_TAG_PUBKEY);
-                    stream.out_uint16_le(92); // length
                         stream.out_uint32_le(SEC_RSA_MAGIC);
                         stream.out_uint32_le(72); /* 72 bytes modulus len */
                         stream.out_uint32_be(0x00020000);
@@ -2078,10 +2116,28 @@ namespace GCC
                 this->dwVersion = certType & 0x7FFFFFFF;
                 this->temporary = 0 != (certType & 0x80000000);
                 if (this->dwVersion == CERT_CHAIN_VERSION_1){
-
                     // dwSigAlgId (4 bytes): A 32-bit, unsigned integer. The signature algorithm
                     //  identifier. This field MUST be set to SIGNATURE_ALG_RSA (0x00000001).
                     this->proprietaryCertificate.dwSigAlgId = stream.in_uint32_le();
+
+                    // dwKeyAlgId (4 bytes): A 32-bit, unsigned integer. The key algorithm
+                    //  identifier. This field MUST be set to KEY_EXCHANGE_ALG_RSA (0x00000001).
+                    this->proprietaryCertificate.dwKeyAlgId = stream.in_uint32_le();
+
+                    // wPublicKeyBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
+                    //  in the PublicKeyBlob field. This field MUST be set to BB_RSA_KEY_BLOB
+                    //  (0x0006).
+                    this->proprietaryCertificate.wPublicKeyBlobType = stream.in_uint16_le();
+
+                    // wPublicKeyBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
+                    //  of the PublicKeyBlob field.
+                    this->proprietaryCertificate.wPublicKeyBlobLen = stream.in_uint16_le();
+
+                    if (this->proprietaryCertificate.wPublicKeyBlobLen > 2048){
+                        LOG(LOG_ERR, "RSA Key blob len too large in certificate %u (expected 92)", 
+                            this->proprietaryCertificate.wPublicKeyBlobLen);
+                        throw Error(ERR_GCC);
+                    }
                 }
                 else {
                 }
@@ -2096,14 +2152,14 @@ namespace GCC
                 if (this->length == 12) { return; }
                 LOG(LOG_INFO, "sc_security::serverRandomLen  = %u", this->serverRandomLen);
                 LOG(LOG_INFO, "sc_security::serverCertLen    = %u", this->serverCertLen);
-                LOG(LOG_INFO, "sc_security::serverCertificate::dwVersion = %x", this->dwVersion);
-                LOG(LOG_INFO, "sc_security::serverCertificate::temporary = %s", this->temporary?"true":"false");
+                LOG(LOG_INFO, "sc_security::dwVersion = %x", this->dwVersion);
+                LOG(LOG_INFO, "sc_security::temporary = %s", this->temporary?"true":"false");
                 if (this->dwVersion == GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {
-                    LOG(LOG_DEBUG, "sc_security::RDP4-style encryption");
-
-                // dwSigAlgId (4 bytes): A 32-bit, unsigned integer. The signature algorithm
-                //  identifier. This field MUST be set to SIGNATURE_ALG_RSA (0x00000001).
-                LOG(LOG_DEBUG, "sc_security::serverCertificate::dwSigAlgId = %u", this->proprietaryCertificate.dwSigAlgId);
+                    LOG(LOG_INFO, "sc_security::RDP4-style encryption");
+                    LOG(LOG_INFO, "sc_security::proprietaryCertificate::dwSigAlgId = %u", this->proprietaryCertificate.dwSigAlgId);
+                    LOG(LOG_INFO, "sc_security::proprietaryCertificate::dwKeyAlgId = %u", this->proprietaryCertificate.dwKeyAlgId);
+                    LOG(LOG_INFO, "wPublicKeyBlobType = %u", this->proprietaryCertificate.wPublicKeyBlobType);
+                    LOG(LOG_INFO, "wPublicKeyBlobLen = %u", this->proprietaryCertificate.wPublicKeyBlobLen);
                 }
                 else {
                     LOG(LOG_DEBUG, "sc_security::RDP5-style encryption");

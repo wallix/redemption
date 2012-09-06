@@ -738,26 +738,6 @@ struct mod_rdp : public client_mod {
 
                             /* RSA info */
                             if (sc_sec1.dwVersion == GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {
-                                // dwKeyAlgId (4 bytes): A 32-bit, unsigned integer. The key algorithm
-                                //  identifier. This field MUST be set to KEY_EXCHANGE_ALG_RSA (0x00000001).
-                                uint32_t dwKeyAlgId = f.payload.in_uint32_le();
-                                LOG(LOG_DEBUG, "dwKeyAlgId = %u", dwKeyAlgId);
-
-                                LOG(LOG_DEBUG, "ReceivingPublic key, RDP4-style");
-                                // wPublicKeyBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
-                                //  in the PublicKeyBlob field. This field MUST be set to BB_RSA_KEY_BLOB
-                                //  (0x0006).
-                                TODO("put assertion to check type and throw and error if not as expected");
-                                uint16_t wPublicKeyBlobType = f.payload.in_uint16_le();
-                                LOG(LOG_DEBUG, "wPublicKeyBlobType = %u", wPublicKeyBlobType);
-
-                                // wPublicKeyBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
-                                //  of the PublicKeyBlob field.
-                                uint16_t wPublicKeyBlobLen = f.payload.in_uint16_le();
-                                LOG(LOG_DEBUG, "wPublicKeyBlobLen = %u", wPublicKeyBlobLen);
-
-                                uint8_t * next_tag = f.payload.p + wPublicKeyBlobLen;
-
                                 // PublicKeyBlob (variable): Variable-length server public key bytes, formatted
                                 //  using the Rivest-Shamir-Adleman (RSA) Public Key structure (section
                                 //  2.2.1.4.3.1.1.1). The length in bytes is given by the wPublicKeyBlobLen
@@ -782,9 +762,6 @@ struct mod_rdp : public client_mod {
                                 f.payload.in_copy_bytes(modulus, server_public_key_len);
                                 f.payload.in_skip_bytes(SEC_PADDING_SIZE);
                                 LOG(LOG_DEBUG, "Got Public key, RDP4-style");
-
-                                // This should not be necessary as previous field if fully decoded
-                                f.payload.p = next_tag;
 
                                 LOG(LOG_DEBUG, "Receiving key sig RDP4-style");
                                 // wSignatureBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
