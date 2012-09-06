@@ -101,9 +101,9 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
 {
     const char expected[] = 
-    "\x01\x0c\x0c\x00" // TS_UD_HEADER::type = SC_CORE (0x0c01), length = 12 bytes
-    "\x04\x00\x08\x00" // TS_UD_SC_CORE::version = 0x0080004
-    "\x00\x00\x00\x00" // TS_UD_SC_CORE::clientRequestedProtocols = PROTOCOL_RDP
+        "\x01\x0c\x0c\x00" // TS_UD_HEADER::type = SC_CORE (0x0c01), length = 12 bytes
+        "\x04\x00\x08\x00" // TS_UD_SC_CORE::version = 0x0080004
+        "\x00\x00\x00\x00" // TS_UD_SC_CORE::clientRequestedProtocols = PROTOCOL_RDP
     ;
 
     BStream stream(12);
@@ -282,6 +282,11 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
     BOOST_CHECK_EQUAL(2, sc_sec1.encryptionLevel);
     BOOST_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
     BOOST_CHECK_EQUAL(1358, sc_sec1.serverCertLen);
+//    hexdump_c(sc_sec1.serverRandom, 32);
+    BOOST_CHECK_EQUAL(0, memcmp(
+                        "\x5e\x69\xf3\x27\x93\x2d\x98\x35\x0e\x09\x1f\xe6\xce\xea\xd9\x07"
+                        "\x58\x2f\x66\x6c\xd6\xa4\x32\x45\x1e\x61\x7a\xba\x95\x8c\xfd\x23"
+                     , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
 }
 
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
@@ -316,5 +321,11 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
     BOOST_CHECK_EQUAL(1, sc_sec1.encryptionLevel);
     BOOST_CHECK_EQUAL(32, sc_sec1.serverRandomLen);
     BOOST_CHECK_EQUAL(184, sc_sec1.serverCertLen);
+//    hexdump_c(sc_sec1.serverRandom, 32);
+    BOOST_CHECK_EQUAL(0, memcmp(
+                    "\x73\xee\x92\x99\x02\x50\xfd\xe7\x89\xec\x2a\x83\xbd\xb4\xde\x56"
+                    "\xc4\x61\xb9\x5b\x05\x3d\xd9\xc6\x84\xe9\x83\x69\x25\xd4\x82\x3f"
+                             , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
+
 }
 

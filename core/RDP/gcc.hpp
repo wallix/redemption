@@ -1911,7 +1911,7 @@ namespace GCC
             uint32_t encryptionLevel;
             uint32_t serverRandomLen;
             uint32_t serverCertLen;
-            uint8_t * serverRandom;
+            uint8_t serverRandom[32];
 
             uint8_t pub_mod[64];
             uint8_t pri_exp[64];
@@ -1981,7 +1981,6 @@ namespace GCC
             , encryptionLevel(0) // crypt level 0 = none, 1 = low 2 = medium, 3 = high
             , serverRandomLen(0)
             , serverCertLen(0)
-            , serverRandom(NULL)
             {
             }
 
@@ -1996,8 +1995,8 @@ namespace GCC
                 stream.out_uint32_le(184); // len of rsa info(certificate)
                 stream.out_copy_bytes(this->serverRandom, this->serverRandomLen);
                 /* here to end is certificate */
-                /* HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ */
-                /* TermService\Parameters\Certificate */
+                // --------------------------------------------------------------
+                /* HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TermService\Parameters\Certificate */
                 stream.out_uint32_le(1);
                 stream.out_uint32_le(1);
                 stream.out_uint32_le(1);
@@ -2018,6 +2017,7 @@ namespace GCC
                 stream.out_uint16_le(72); /* len */
                     stream.out_copy_bytes(this->pub_sig, 64); /* pub sig */
                     stream.out_clear_bytes(8); /* pad */
+                // --------------------------------------------------------------
                 /* end certificate */
                 stream.mark_end();
             }
@@ -2052,6 +2052,7 @@ namespace GCC
                          this->serverCertLen, stream.size() - stream.get_offset());
                     throw Error(ERR_GCC);
                 }
+                stream.in_copy_bytes(this->serverRandom, this->serverRandomLen);
 
             }
 

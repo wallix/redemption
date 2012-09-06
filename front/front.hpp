@@ -1042,7 +1042,8 @@ public:
             sc_sec1.encryptionLevel = client_info.crypt_level;
             sc_sec1.serverRandomLen = 32;
             this->gen->random(this->server_random, 32);
-            sc_sec1.serverRandom = this->server_random;
+            memcpy(sc_sec1.serverRandom, this->server_random, 32);
+
             sc_sec1.log("Sending to client");
             sc_sec1.emit(stream);
 

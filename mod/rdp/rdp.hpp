@@ -735,7 +735,9 @@ struct mod_rdp : public client_mod {
                         // given by the serverRandomLen field. If the encryptionMethod and
                         // encryptionLevel fields are both set to 0 then this field MUST NOT be present.
 
-                            f.payload.in_copy_bytes(serverRandom, sc_sec1.serverRandomLen);
+                            memcpy(serverRandom, sc_sec1.serverRandom, sc_sec1.serverRandomLen);
+
+                            
 
                         // serverCertificate (variable): The variable-length certificate containing the
                         //  server's public key information. The length in bytes is given by the
