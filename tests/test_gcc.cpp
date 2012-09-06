@@ -287,6 +287,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
                         "\x5e\x69\xf3\x27\x93\x2d\x98\x35\x0e\x09\x1f\xe6\xce\xea\xd9\x07"
                         "\x58\x2f\x66\x6c\xd6\xa4\x32\x45\x1e\x61\x7a\xba\x95\x8c\xfd\x23"
                      , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
+    BOOST_CHECK_EQUAL(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_2, sc_sec1.dwVersion);
+    BOOST_CHECK_EQUAL(true, sc_sec1.temporary);
 }
 
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
@@ -326,6 +328,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
                     "\x73\xee\x92\x99\x02\x50\xfd\xe7\x89\xec\x2a\x83\xbd\xb4\xde\x56"
                     "\xc4\x61\xb9\x5b\x05\x3d\xd9\xc6\x84\xe9\x83\x69\x25\xd4\x82\x3f"
                              , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
+    BOOST_CHECK_EQUAL(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1, sc_sec1.dwVersion);
+    BOOST_CHECK_EQUAL(false, sc_sec1.temporary);
 
 }
 

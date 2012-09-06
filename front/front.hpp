@@ -1043,6 +1043,8 @@ public:
             sc_sec1.serverRandomLen = 32;
             this->gen->random(this->server_random, 32);
             memcpy(sc_sec1.serverRandom, this->server_random, 32);
+            sc_sec1.dwVersion = GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1;
+            sc_sec1.temporary = false;
 
             sc_sec1.log("Sending to client");
             sc_sec1.emit(stream);

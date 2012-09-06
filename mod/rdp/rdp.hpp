@@ -729,15 +729,7 @@ struct mod_rdp : public client_mod {
                         else {
                             ssllib ssl;
 
-
-                        // serverRandom (variable): The variable-length server random value used to
-                        // derive session keys (see sections 5.3.4 and 5.3.5). The length in bytes is
-                        // given by the serverRandomLen field. If the encryptionMethod and
-                        // encryptionLevel fields are both set to 0 then this field MUST NOT be present.
-
                             memcpy(serverRandom, sc_sec1.serverRandom, sc_sec1.serverRandomLen);
-
-                            
 
                         // serverCertificate (variable): The variable-length certificate containing the
                         //  server's public key information. The length in bytes is given by the
@@ -745,15 +737,7 @@ struct mod_rdp : public client_mod {
                         // both set to 0 then this field MUST NOT be present.
 
                             /* RSA info */
-                            uint32_t dwVersion = f.payload.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
-                            LOG(LOG_INFO, "dwVersion = %x", dwVersion);
-                            if (dwVersion & GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {
-                                LOG(LOG_DEBUG, "We're going for the RDP4-style encryption");
-                                // dwSigAlgId (4 bytes): A 32-bit, unsigned integer. The signature algorithm
-                                //  identifier. This field MUST be set to SIGNATURE_ALG_RSA (0x00000001).
-                                uint32_t dwSigAlgId = f.payload.in_uint32_le();
-                                LOG(LOG_DEBUG, "dwSigAlgId = %u", dwSigAlgId);
-
+                            if (sc_sec1.dwVersion == GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {
                                 // dwKeyAlgId (4 bytes): A 32-bit, unsigned integer. The key algorithm
                                 //  identifier. This field MUST be set to KEY_EXCHANGE_ALG_RSA (0x00000001).
                                 uint32_t dwKeyAlgId = f.payload.in_uint32_le();
