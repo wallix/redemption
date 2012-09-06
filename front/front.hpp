@@ -1013,8 +1013,7 @@ public:
                 0x3e, 0xf1, 0xed, 0xb8, 0xc4, 0xee, 0xce, 0x5f, 0x6a, 0xf5, 0x43, 0xce, 0x5f, 0x60, 0xca, 0x6c,
                 0x06, 0x75, 0xae, 0xc0, 0xd6, 0xa4, 0x0c, 0x92, 0xa4, 0xc6, 0x75, 0xea, 0x64, 0xb2, 0x50, 0x5b
             };
-            memcpy(sc_sec1.pub_mod, rsa_keys_pub_mod, 64);
-            memcpy(this->pub_mod, sc_sec1.pub_mod, 64);
+            memcpy(this->pub_mod, rsa_keys_pub_mod, 64);
 
             uint8_t rsa_keys_pri_exp[64] = {
                 0x41, 0x93, 0x05, 0xB1, 0xF4, 0x38, 0xFC, 0x47, 0x88, 0xC4, 0x7F, 0x83, 0x8C, 0xEC, 0x90, 0xDA,
@@ -1031,12 +1030,10 @@ public:
                 0x45, 0xf7, 0x2c, 0xee, 0xe4, 0x8e, 0x64, 0x2e, 0x37, 0x49, 0xf0, 0x4c, 0x94, 0x6f, 0x08, 0xf5,
                 0x63, 0x4c, 0x56, 0x29, 0x55, 0x5a, 0x63, 0x41, 0x2c, 0x20, 0x65, 0x95, 0x99, 0xb1, 0x15, 0x7c
             };
-            memcpy(sc_sec1.pub_sig, rsa_keys_pub_sig, 64);
 
             uint8_t rsa_keys_pub_exp[4] = {
                 0x01,0x00,0x01,0x00
             };
-            memcpy(sc_sec1.pub_exp, rsa_keys_pub_exp, 4);
 
             sc_sec1.encryptionMethod = this->encrypt.rc4_key_size;
             sc_sec1.encryptionLevel = client_info.crypt_level;
@@ -1045,6 +1042,13 @@ public:
             memcpy(sc_sec1.serverRandom, this->server_random, 32);
             sc_sec1.dwVersion = GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1;
             sc_sec1.temporary = false;
+            memcpy(sc_sec1.proprietaryCertificate.RSAPK.pubExp, rsa_keys_pub_exp, SEC_EXPONENT_SIZE);
+            memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus, this->pub_mod, 64);
+            memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus + 64, 
+                "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
+            memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob, rsa_keys_pub_sig, 64);
+            memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob + 64, 
+                "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
 
             sc_sec1.log("Sending to client");
             sc_sec1.emit(stream);

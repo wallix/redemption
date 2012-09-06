@@ -710,16 +710,8 @@ struct mod_rdp : public client_mod {
                     {
                         LOG(LOG_INFO, "Receiving SC_Security from server");
 
-                        uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
-                        uint8_t modulus[SEC_MAX_MODULUS_SIZE];
-                        memset(modulus, 0, sizeof(modulus));
-                        uint8_t exponent[SEC_EXPONENT_SIZE];
-                        memset(exponent, 0, sizeof(exponent));
-
                         GCC::UserData::SCSecurity sc_sec1;
                         sc_sec1.recv(f.payload);
-
-                        LOG(LOG_INFO, "SC_SECURITY tag=%04x length=%u", sc_sec1.userDataType, sc_sec1.length);
 
                         this->crypt_level = sc_sec1.encryptionLevel; 
                         if (sc_sec1.encryptionLevel == 0 
@@ -728,6 +720,12 @@ struct mod_rdp : public client_mod {
                         }
                         else {
                             ssllib ssl;
+
+                            uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
+                            uint8_t modulus[SEC_MAX_MODULUS_SIZE];
+                            memset(modulus, 0, sizeof(modulus));
+                            uint8_t exponent[SEC_EXPONENT_SIZE];
+                            memset(exponent, 0, sizeof(exponent));
 
                             memcpy(serverRandom, sc_sec1.serverRandom, sc_sec1.serverRandomLen);
 
@@ -738,48 +736,9 @@ struct mod_rdp : public client_mod {
 
                             /* RSA info */
                             if (sc_sec1.dwVersion == GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {
-                                // PublicKeyBlob (variable): Variable-length server public key bytes, formatted
-                                //  using the Rivest-Shamir-Adleman (RSA) Public Key structure (section
-                                //  2.2.1.4.3.1.1.1). The length in bytes is given by the wPublicKeyBlobLen
-                                //  field.
-
-
-                                uint32_t magic = f.payload.in_uint32_le();
-                                if (magic != GCC::UserData::SCSecurity::SEC_RSA_MAGIC) {
-                                    LOG(LOG_WARNING, "RSA magic 0x%x", magic);
-                                    throw Error(ERR_SEC_PARSE_PUB_KEY_MAGIC_NOT_OK);
-                                }
-                                server_public_key_len = f.payload.in_uint32_le() - SEC_PADDING_SIZE;
-
-                                if ((server_public_key_len < SEC_MODULUS_SIZE)
-                                ||  (server_public_key_len > SEC_MAX_MODULUS_SIZE)) {
-                                    LOG(LOG_WARNING, "Bad server public key size (%u bits)", server_public_key_len * 8);
-                                    throw Error(ERR_SEC_PARSE_PUB_KEY_MODUL_NOT_OK);
-                                }
-                                f.payload.in_skip_bytes(8); /* modulus_bits, unknown */
-
-                                f.payload.in_copy_bytes(exponent, SEC_EXPONENT_SIZE);
-                                f.payload.in_copy_bytes(modulus, server_public_key_len);
-                                f.payload.in_skip_bytes(SEC_PADDING_SIZE);
-                                LOG(LOG_DEBUG, "Got Public key, RDP4-style");
-
-                                LOG(LOG_DEBUG, "Receiving key sig RDP4-style");
-                                // wSignatureBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
-                                //  in the SignatureKeyBlob field. This field is set to BB_RSA_SIGNATURE_BLOB
-                                //  (0x0008).
-                                TODO("put assertion to check type and throw and error if not as expected");
-                                uint16_t wSignatureBlobType = f.payload.in_uint16_le();
-                                LOG(LOG_DEBUG, "wSignatureBlobType = %u", wSignatureBlobType);
-
-                                // wSignatureBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
-                                //  of the SignatureKeyBlob field.
-                                uint16_t wSignatureBlobLen = f.payload.in_uint16_le();
-
-                                // SignatureBlob (variable): Variable-length signature of the certificate
-                                // created with the Terminal Services Signing Key (see sections 5.3.3.1.1 and
-                                // 5.3.3.1.2). The length in bytes is given by the wSignatureBlobLen field.
-                                f.payload.in_skip_bytes(wSignatureBlobLen);
-                                LOG(LOG_DEBUG, "Got key sig RDP4-style");
+                                memcpy(exponent, sc_sec1.proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
+                                memcpy(modulus, sc_sec1.proprietaryCertificate.RSAPK.modulus, 
+                                    sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE);
                             }
                             else {
                                 LOG(LOG_DEBUG, "We're going for the RDP5-style encryption");

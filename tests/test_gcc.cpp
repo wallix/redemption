@@ -330,6 +330,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
                              , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
     BOOST_CHECK_EQUAL(GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1, sc_sec1.dwVersion);
     BOOST_CHECK_EQUAL(false, sc_sec1.temporary);
+    BOOST_CHECK_EQUAL('1ASR', sc_sec1.proprietaryCertificate.RSAPK.magic);
+
 
 }
 
