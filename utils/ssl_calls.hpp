@@ -99,11 +99,6 @@ class ssllib
         RC4(&rc4, len, in_data, out_data);
     }
 
-    static void rkey_free(RSA * rkey)
-    {
-        RSA_free(rkey);
-    }
-
     static void rsa_encrypt(uint8_t * out, uint8_t * in, int len, uint32_t modulus_size, uint8_t * modulus, uint8_t * exponent)
     {
         BN_CTX *ctx;
@@ -207,75 +202,6 @@ class ssllib
         BN_free(&lmod);
         BN_CTX_free(ctx);
         return rv;
-    }
-
-
-
-    /*****************************************************************************/
-    /* returns newly allocated X509 or NULL */
-
-    inline X509 * ssl_cert_read(uint8_t* data, int len)
-    {
-      /* this will move the data pointer but we don't care, we don't use it again */
-      return d2i_X509(NULL, (const unsigned char **) &data, len);
-    }
-
-    /*****************************************************************************/
-
-    /* Free an allocated X509 */
-    inline void ssl_cert_free(X509 * cert)
-    {
-      X509_free(cert);
-    }
-
-    /*****************************************************************************/
-
-    /* returns boolean */
-    inline int ssl_certs_ok(X509 * server_cert, X509 * cacert)
-    {
-      /* Currently, we don't use the CA Certificate.
-      FIXME:
-      *) Verify the server certificate (server_cert) with the
-      CA certificate.
-      *) Store the CA Certificate with the hostname of the
-      server we are connecting to as key, and compare it
-      when we connect the next time, in order to prevent
-      MITM-attacks.
-      */
-      return 1;
-    }
-
-    /*****************************************************************************/
-
-    /* returns newly allocated RSA or NULL */
-    inline RSA *ssl_cert_to_rkey(X509* cert, uint32_t & key_len)
-    {
-      EVP_PKEY *epk = NULL;
-      RSA *lkey;
-      int nid;
-
-      /* By some reason, Microsoft sets the OID of the Public RSA key to
-      the oid for "MD5 with RSA Encryption" instead of "RSA Encryption"
-
-      Kudos to Richard Levitte for the following (. intiutive .)
-      lines of code that resets the OID and let's us extract the key. */
-
-      nid = OBJ_obj2nid(cert->cert_info->key->algor->algorithm);
-      if ((nid == NID_md5WithRSAEncryption) || (nid == NID_shaWithRSAEncryption))
-      {
-        ASN1_OBJECT_free(cert->cert_info->key->algor->algorithm);
-        cert->cert_info->key->algor->algorithm = OBJ_nid2obj(NID_rsaEncryption);
-      }
-      epk = X509_get_pubkey(cert);
-      if (NULL == epk){
-        printf("Failed to extract public key from certificate\n");
-        return 0;
-      }
-
-      lkey = RSAPublicKey_dup((RSA *) epk->pkey.ptr);
-      EVP_PKEY_free(epk);
-      key_len = RSA_size(lkey);
-      return lkey;
     }
 
     static void rdp_sec_generate_keyblock(uint8_t (& key_block)[48], uint8_t *client_random, uint8_t *server_random)

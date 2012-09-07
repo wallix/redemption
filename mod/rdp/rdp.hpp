@@ -741,7 +741,12 @@ struct mod_rdp : public client_mod {
                                     sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE);
                             }
                             else {
+
+                                // ---------------------------------------------------------------------
                                 LOG(LOG_DEBUG, "We're going for the RDP5-style encryption");
+
+                                // structure of certificate chain is : certcount [certlen cert]*
+
                                 uint32_t certcount = f.payload.in_uint32_le();
                                 LOG(LOG_DEBUG, "Certcount = %u", certcount);
 
@@ -754,8 +759,7 @@ struct mod_rdp : public client_mod {
                                     LOG(LOG_WARNING, " Ignored certs left: %d", certcount);
                                     uint32_t ignorelen = f.payload.in_uint32_le();
                                     LOG(LOG_WARNING, "Ignored Certificate length is %d", ignorelen);
-                                    X509 *ignorecert = ssl.ssl_cert_read(f.payload.p, ignorelen);
-                                    f.payload.in_skip_bytes(ignorelen);
+                                    X509 *ignorecert = d2i_X509(NULL, const_cast<const uint8_t **>(&f.payload.p), ignorelen);
                                     if (ignorecert == NULL){
                                         LOG(LOG_WARNING,
                                             "got a bad cert: this will probably screw up"
@@ -776,8 +780,7 @@ struct mod_rdp : public client_mod {
                                 /* Loading CA_Certificate from server*/
                                 uint32_t cacert_len = f.payload.in_uint32_le();
                                 LOG(LOG_DEBUG, "CA Certificate length is %d", cacert_len);
-                                X509 *cacert = ssl.ssl_cert_read(f.payload.p, cacert_len);
-                                f.payload.in_skip_bytes(cacert_len);
+                                X509 *cacert = d2i_X509(NULL, const_cast<const uint8_t **>(&f.payload.p), cacert_len);
                                 if (NULL == cacert){
                                     LOG(LOG_DEBUG, "Couldn't load CA Certificate from server");
                                     throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NULL);
@@ -786,49 +789,69 @@ struct mod_rdp : public client_mod {
                                 /* Loading Certificate from server*/
                                 uint32_t cert_len = f.payload.in_uint32_le();
                                 LOG(LOG_DEBUG, "Certificate length is %d", cert_len);
-                                X509 *server_cert = ssl.ssl_cert_read(f.payload.p, cert_len);
-                                f.payload.in_skip_bytes(cert_len);
+                                X509 *server_cert = d2i_X509(NULL, const_cast<const uint8_t **>(&f.payload.p), cert_len);
                                 if (NULL == server_cert){
-                                    ssl.ssl_cert_free(cacert);
+                                    X509_free(cacert);
                                     LOG(LOG_DEBUG, "Couldn't load Certificate from server");
                                     throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_LOADED);
                                 }
 
                                 /* Matching certificates */
-                                if (!ssl.ssl_certs_ok(server_cert, cacert)){
-                                    ssl.ssl_cert_free(server_cert);
-                                    ssl.ssl_cert_free(cacert);
-                                    LOG(LOG_DEBUG, "Security error CA Certificate invalid");
-                                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_MATCH);
-                                }
-                                ssl.ssl_cert_free(cacert);
+                                TODO("Currently, we don't use the CA Certificate, we should"
+                                     "*) Verify the server certificate (server_cert) with the CA certificate."
+                                     "*) Store the CA Certificate with the hostname of the server we are connecting"
+                                     " to as key, and compare it when we connect the next time, in order to prevent"
+                                     " MITM-attacks.")
+                                X509_free(cacert);
                                 f.payload.in_skip_bytes(16); /* Padding */
+                                // ---------------------------------------------------------------------
 
-                                RSA *server_public_key = ssl.ssl_cert_to_rkey(server_cert, server_public_key_len);
-                                LOG(LOG_DEBUG, "Server public key length=%u", (unsigned)server_public_key_len);
+                                /* By some reason, Microsoft sets the OID of the Public RSA key to
+                                the oid for "MD5 with RSA Encryption" instead of "RSA Encryption"
+
+                                Kudos to Richard Levitte for the following (. intuitive .)
+                                lines of code that resets the OID and let's us extract the key. */
+
+                                int nid = OBJ_obj2nid(server_cert->cert_info->key->algor->algorithm);
+                                if ((nid == NID_md5WithRSAEncryption) || (nid == NID_shaWithRSAEncryption)){
+                                    ASN1_OBJECT_free(server_cert->cert_info->key->algor->algorithm);
+                                    server_cert->cert_info->key->algor->algorithm = OBJ_nid2obj(NID_rsaEncryption);
+                                }
+
+                                EVP_PKEY * epk = X509_get_pubkey(server_cert);
+                                if (NULL == epk){
+                                    printf("Failed to extract public key from certificate\n");
+                                    throw Error(ERR_GCC);
+                                }
+
+                                RSA * server_public_key = RSAPublicKey_dup((RSA *) epk->pkey.ptr);
+                                EVP_PKEY_free(epk);
+                                this->server_public_key_len = RSA_size(server_public_key);
+
+                                LOG(LOG_DEBUG, "Server public key length=%u", (unsigned)this->server_public_key_len);
 
                                 if (NULL == server_public_key){
                                     LOG(LOG_DEBUG, "Didn't parse X509 correctly");
-                                    ssl.ssl_cert_free(server_cert);
+                                    X509_free(server_cert);
                                     throw Error(ERR_SEC_PARSE_CRYPT_INFO_X509_NOT_PARSED);
-
                                 }
-                                ssl.ssl_cert_free(server_cert);
+
+                                X509_free(server_cert);
 
                                 LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d",
-                                    server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
+                                    this->server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
 
-                                if ((server_public_key_len < SEC_MODULUS_SIZE) ||
-                                    (server_public_key_len > SEC_MAX_MODULUS_SIZE)){
-                                    LOG(LOG_WARNING, "Bad server public key size (%u bits)", server_public_key_len * 8);
-                                    ssl.rkey_free(server_public_key);
+                                if ((this->server_public_key_len < SEC_MODULUS_SIZE) ||
+                                    (this->server_public_key_len > SEC_MAX_MODULUS_SIZE)){
+                                    LOG(LOG_WARNING, "Bad server public key size (%u bits)", this->server_public_key_len * 8);
+                                    RSA_free(server_public_key);
                                     throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
                                 }
 
                                 if ((BN_num_bytes(server_public_key->e) > SEC_EXPONENT_SIZE) 
                                 ||  (BN_num_bytes(server_public_key->n) > SEC_MAX_MODULUS_SIZE)){
                                     LOG(LOG_WARNING, "Problem extracting RSA exponent, modulus");
-                                    ssl.rkey_free(server_public_key);
+                                    RSA_free(server_public_key);
                                     throw Error(ERR_SEC_PARSE_CRYPT_INFO_RSA_EXP_NOT_OK);
                                 }
                                 int len_e = BN_bn2bin(server_public_key->e, (unsigned char*)exponent);
@@ -836,10 +859,11 @@ struct mod_rdp : public client_mod {
                                 int len_n = BN_bn2bin(server_public_key->n, (unsigned char*)modulus);
                                 reverseit(modulus, len_n);
 
-                                ssl.rkey_free(server_public_key);
+                                RSA_free(server_public_key);
                                 TODO(" find a way to correctly dispose of garbage at end of buffer")
                                 /* There's some garbage here we don't care about */
                             }
+
                             uint8_t client_random[SEC_RANDOM_SIZE];
                             memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
 
@@ -847,7 +871,7 @@ struct mod_rdp : public client_mod {
                             this->gen->random(client_random, SEC_RANDOM_SIZE);
 
                             ssl.rsa_encrypt(client_crypt_random, client_random, 
-                                    SEC_RANDOM_SIZE, server_public_key_len, modulus, exponent);
+                                    SEC_RANDOM_SIZE, this->server_public_key_len, modulus, exponent);
                             uint8_t key_block[48];
                             ssl.rdp_sec_generate_keyblock(key_block, client_random, serverRandom);
                             memcpy(encrypt.sign_key, key_block, 16);
@@ -1031,8 +1055,8 @@ struct mod_rdp : public client_mod {
             }
 
             if (this->crypt_level){
-                BStream stream(server_public_key_len + 32);
-                SEC::SecExchangePacket_Send mcs(stream, client_crypt_random, server_public_key_len);
+                BStream stream(this->server_public_key_len + 32);
+                SEC::SecExchangePacket_Send mcs(stream, client_crypt_random, this->server_public_key_len);
                 this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
             }
 
