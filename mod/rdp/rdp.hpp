@@ -888,11 +888,18 @@ struct mod_rdp : public client_mod {
                         GCC::UserData::SCNet sc_net;
                         sc_net.recv(f.payload);
 
-                        for (uint32_t index = 0; index < sc_net.channelCount; index++) {
-                            ChannelDef def = this->front.get_channel_list()[index];
-                            def.chanid = sc_net.channelDefArray[index].id;
-                            this->mod_channel_list.push_back(def);
+                        /* We assume that the channel_id array is confirmed in the same order
+                        that it has been sent. If there are any channels not confirmed, they're
+                        going to be the last channels on the array sent in MCS Connect Initial */
+                        for (size_t index = 0; index < sc_net.channelCount; index++){
+                            this->mod_channel_list.push_back(this->front.get_channel_list()[index]);
                         }
+
+//                        for (uint32_t index = 0; index < sc_net.channelCount; index++) {
+//                            ChannelDef def = this->front.get_channel_list()[index];
+//                            def.chanid = sc_net.channelDefArray[index].id;
+//                            this->mod_channel_list.push_back(def);
+//                        }
                         sc_net.log("Received from server");
                     }
                     break;
