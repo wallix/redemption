@@ -634,12 +634,10 @@ struct mod_rdp : public client_mod {
                     cs_cluster.emit(stream);
                     // ------------------------------------------------------------
 
-                    // 12 bytes
-                    CSSecGccUserData cs_sec_gccuserdata;
-                    cs_sec_gccuserdata.encryptionMethods = FORTY_BIT_ENCRYPTION_FLAG|HUNDRED_TWENTY_EIGHT_BIT_ENCRYPTION_FLAG;
-                    cs_sec_gccuserdata.log("Sending cs_sec gccuserdata to server");
-                    cs_sec_gccuserdata.emit(stream);
-                    stream.mark_end();
+                    GCC::UserData::CSSecurity cs_security;
+                    cs_security.log("Sending to server");
+                    cs_security.emit(stream);
+                    // ------------------------------------------------------------
 
                     const ChannelDefArray & channel_list = this->front.get_channel_list();
                     size_t num_channels = channel_list.size();
@@ -656,6 +654,7 @@ struct mod_rdp : public client_mod {
                         cs_net.log("Sending to server");
                         cs_net.emit(stream);
                     }
+                    // ------------------------------------------------------------
 
                     BStream gcc_header(65536);
                     GCC::Create_Request_Send(gcc_header, stream.size());
@@ -755,9 +754,9 @@ struct mod_rdp : public client_mod {
                                     throw Error(ERR_SEC_PARSE_CRYPT_INFO_CERT_NOK);
                                 }
 
-                                uint32_t cacert_len = sc_sec1.x509.cert[certcount - 2].len;
-                                LOG(LOG_DEBUG, "CA Certificate length is %d", cacert_len);
-                                X509 *cacert =  sc_sec1.x509.cert[certcount - 2].cert;
+//                                uint32_t cacert_len = sc_sec1.x509.cert[certcount - 2].len;
+//                                LOG(LOG_DEBUG, "CA Certificate length is %d", cacert_len);
+//                                X509 *cacert =  sc_sec1.x509.cert[certcount - 2].cert;
 
                                 uint32_t cert_len = sc_sec1.x509.cert[certcount - 1].len;
                                 LOG(LOG_DEBUG, "CA Certificate length is %d", cert_len);

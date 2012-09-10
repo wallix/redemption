@@ -933,9 +933,9 @@ public:
                     break;
                     case CS_SECURITY:
                     {
-                        uint16_t tag = f.payload.in_uint16_le();
-                        uint16_t length = f.payload.in_uint16_le();
-                        parse_mcs_data_cs_security(f.payload);
+                        GCC::UserData::CSSecurity cs_sec;
+                        cs_sec.recv(f.payload);
+                        cs_sec.log("Received from Client");
                     }
                     break;
                     case CS_NET:
