@@ -1272,10 +1272,34 @@ struct mod_rdp : public client_mod {
 
                         BStream stream(65535);
 
-                        this->lic_layer.rdp_lic_process_demand(stream, hostname, username, 
-                                                               licence_issued, 
-                                                               this->encrypt, this->crypt_level, 
-                                                               this->use_rdp5);
+                        if (this->lic_layer.licence_size > 0) {
+                            uint8_t hwid[LICENCE_HWID_SIZE];
+                            buf_out_uint32(hwid, 2);
+                            memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
+
+                            ssllib ssl;
+                            /* Generate a signature for the HWID buffer */
+                            uint8_t signature[LICENCE_SIGNATURE_SIZE];
+                            ssl.sign(signature, 16, this->lic_layer.licence_sign_key, 16, hwid, sizeof(hwid));
+                            /* Now encrypt the HWID */
+
+                            RC4_KEY crypt_key;
+                            ssl.rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
+                            ssl.rc4_crypt(crypt_key, hwid, hwid, sizeof(hwid));
+
+                            uint8_t null_data[SEC_MODULUS_SIZE];
+                            memset(null_data, 0, sizeof(null_data));
+
+                            this->lic_layer.rdp_lic_present(stream, null_data, null_data,
+                                                  this->lic_layer.licence_data,
+                                                  this->lic_layer.licence_size,
+                                                  hwid, signature, licence_issued, this->use_rdp5);
+                        }
+                        else {
+                            uint8_t null_data[SEC_MODULUS_SIZE];
+                            memset(null_data, 0, sizeof(null_data));
+                            this->lic_layer.rdp_lic_send_request(stream, null_data, null_data, hostname, username, licence_issued, this->encrypt, this->crypt_level, this->use_rdp5);
+                        }
 
                         this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
                     }
@@ -1287,17 +1311,130 @@ struct mod_rdp : public client_mod {
                     {
                         BStream stream(65535);
 
-                        this->lic_layer.rdp_lic_process_authreq(stream, payload, hostname, licence_issued, this->encrypt, this->use_rdp5);
+                        ssllib ssl;
+
+                        const uint8_t* in_token;
+                        uint8_t out_token[LICENCE_TOKEN_SIZE];
+                        uint8_t decrypt_token[LICENCE_TOKEN_SIZE];
+                        uint8_t hwid[LICENCE_HWID_SIZE];
+                        uint8_t crypt_hwid[LICENCE_HWID_SIZE];
+                        uint8_t out_sig[LICENCE_SIGNATURE_SIZE];
+
+                        in_token = 0;
+                        /* Parse incoming packet and save the encrypted token */
+                        payload.in_skip_bytes(6); /* unknown: f8 3d 15 00 04 f6 */
+
+                        int tokenlen = payload.in_uint16_le();
+                        if (tokenlen != LICENCE_TOKEN_SIZE) {
+                            LOG(LOG_ERR, "token len = %d, expected %d", tokenlen, LICENCE_TOKEN_SIZE);
+                        }
+                        else{
+                            in_token = payload.in_uint8p(tokenlen);
+                            payload.in_uint8p(LICENCE_SIGNATURE_SIZE); // in_sig
+                            payload.check_end();
+                        }
+
+                        memcpy(out_token, in_token, LICENCE_TOKEN_SIZE);
+                        /* Decrypt the token. It should read TEST in Unicode. */
+                        RC4_KEY crypt_key;
+                        ssl.rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
+                        memcpy(decrypt_token, in_token, LICENCE_TOKEN_SIZE);
+                        ssl.rc4_crypt(crypt_key, decrypt_token, decrypt_token, LICENCE_TOKEN_SIZE);
+
+                        hexdump((const char*)decrypt_token, LICENCE_TOKEN_SIZE);
+                        /* Generate a signature for a buffer of token and HWID */
+                        buf_out_uint32(hwid, 2);
+                        memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
+                //        memcpy(hwid, "\x00\x00\x00\x00\x73\x19\x46\x88\x47\xd7\xb1\xae\xe4\x0d\xbf\x5d\xd9\x63\xc9\x99", LICENCE_HWID_SIZE);
+                        hexdump((const char*)hwid, LICENCE_HWID_SIZE);
+
+                        uint8_t sealed_buffer[LICENCE_TOKEN_SIZE + LICENCE_HWID_SIZE];
+                        memcpy(sealed_buffer, decrypt_token, LICENCE_TOKEN_SIZE);
+                        memcpy(sealed_buffer + LICENCE_TOKEN_SIZE, hwid, LICENCE_HWID_SIZE);
+                        ssl.sign(out_sig, 16, this->lic_layer.licence_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
+
+                        /* Now encrypt the HWID */
+                        ssl.rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
+                        memcpy(crypt_hwid, hwid, LICENCE_HWID_SIZE);
+                        ssl.rc4_crypt(crypt_key, crypt_hwid, crypt_hwid, LICENCE_HWID_SIZE);
+
+                        int length = 58;
+
+                        Sec sec(stream, this->encrypt);
+                        sec.emit_begin(SEC::SEC_LICENSE_PKT );
+
+                        stream.out_uint8(PLATFORM_CHALLENGE_RESPONSE);
+                        stream.out_uint8(this->use_rdp5?3:2); /* version */
+                        stream.out_uint16_le(length);
+
+
+                        // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
+                        // the binary information. If wBlobLen is set to 0, then the contents
+                        // of this field SHOULD be ignored.
+                        stream.out_uint16_le(BB_DATA_BLOB);
+
+                        // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+                        // the binary information in the blobData field. If wBlobLen is set to 0,
+                        // then the blobData field is not included in the Licensing Binary BLOB
+                        // structure and the contents of the wBlobType field SHOULD be ignored.
+                        stream.out_uint16_le(LICENCE_TOKEN_SIZE);
+                        stream.out_copy_bytes(out_token, LICENCE_TOKEN_SIZE);
+
+                        // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
+                        // the binary information. If wBlobLen is set to 0, then the contents
+                        // of this field SHOULD be ignored.
+                        stream.out_uint16_le(BB_DATA_BLOB);
+
+                        // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+                        // the binary information in the blobData field. If wBlobLen is set to 0,
+                        // then the blobData field is not included in the Licensing Binary BLOB
+                        // structure and the contents of the wBlobType field SHOULD be ignored.
+                        stream.out_uint16_le(LICENCE_HWID_SIZE);
+                        stream.out_copy_bytes(crypt_hwid, LICENCE_HWID_SIZE);
+
+                        stream.out_copy_bytes(out_sig, LICENCE_SIGNATURE_SIZE);
+
+                        sec.emit_end();
+                        stream.mark_end();
 
                         this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
                     }
                     break;
                 case NEW_LICENSE:
+                {
                     if (this->verbose){
                         LOG(LOG_INFO, "Rdp::New License");
                     }
-                    res = this->lic_layer.rdp_lic_process_issue(payload, hostname, licence_issued, this->use_rdp5, this->lic_layer.licence_key);
-                    break;
+
+                    payload.in_skip_bytes(2); /* 3d 45 - unknown */
+                    int length = payload.in_uint16_le();
+                    ssllib ssl;
+                    RC4_KEY crypt_key;
+                    ssl.rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
+                    ssl.rc4_crypt(crypt_key, payload.p, payload.p, length);
+                    int check = payload.in_uint16_le();
+                    licence_issued = 1;
+
+                    payload.in_skip_bytes(2); /* pad */
+
+                    length = payload.in_uint32_le();
+                    payload.in_skip_bytes(length);
+
+                    length = payload.in_uint32_le();
+                    payload.in_skip_bytes(length);
+
+                    length = payload.in_uint32_le();
+                    payload.in_skip_bytes(length);
+
+                    length = payload.in_uint32_le();
+
+                    TODO("Save licence to keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that")
+                    res = 1;
+
+                    LOG(LOG_INFO, "Temporary exit to ensure that this suspicious licence_issue code is really called... after some testing it looks like this code is indeed never called");
+                    exit(0);
+                }
+                break;
                 case UPGRADE_LICENSE:
                     if (this->verbose){
                         LOG(LOG_INFO, "Rdp::Upgrade License");
