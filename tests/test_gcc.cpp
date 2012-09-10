@@ -98,6 +98,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     BOOST_CHECK(t.status);
 }
 
+TODO("Add some tests for CS_CORE")
+
 BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
 {
     const char expected[] = 
@@ -124,6 +126,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
     BOOST_CHECK_EQUAL(0x0080004, sc_core2.version);
     BOOST_CHECK_EQUAL(0, sc_core2.clientRequestedProtocols);
 }
+
+TODO("Add some tests for SC_NET")
 
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
 {
@@ -335,3 +339,4 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
 
 }
 
+TODO("Add tests for CS_SECURITY")
