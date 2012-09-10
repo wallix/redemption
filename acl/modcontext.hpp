@@ -127,7 +127,7 @@ struct ModContext : public Dico {
     char movie[1024];
 
     public:
-    ModContext() 
+    ModContext()
         : Dico(KeywordsDefinitions, sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword))
         , nextmod(INTERNAL_NONE)
     {
@@ -143,6 +143,7 @@ struct ModContext : public Dico {
 //        LOG(LOG_INFO, "parse_username(%s)", username);
         char target_user[256];
         char target_device[256];
+        char target_protocol[256];
         char auth_user[256];
         target_user[0] = 0;
         target_device[0] = 0;
@@ -154,20 +155,24 @@ struct ModContext : public Dico {
         if (username[0]){
             unsigned iusername = 0;
             unsigned ihost = 0;
+            unsigned iprotocol = 0;
             unsigned iauthuser = 0;
             // well if that is not obvious the code below this
-            // is a finite state automata that split login@host:authuser
+            // is a finite state automata that split login@host:protocol:authuser
             // between it's components parts.
             // ':' is forbidden in login, host or authuser.
             // '@' is forbidden in host or authuser.
             // login can contain an @ character (necessary because it is used
             // for domain names), the rule is that host follow the last @,
             // the login is what is before, even if it contains an @.
-            enum {
-                COPY_USERNAME,
-                COPY_HOST,
-                COPY_AUTHUSER
+            // the protocol is what follows the first :
+            // the user is what follows the second :, or what follows the unique : (if only one is found)
+
+            enum { COPY_USERNAME
+                 , COPY_HOST
+                 , COPY_AUTHUSER
             } state = COPY_USERNAME;
+
             unsigned c;
 
             for (unsigned i = 0; i < 255 && (c = username[i]); i++){
@@ -184,25 +189,37 @@ struct ModContext : public Dico {
                 break;
                 case COPY_HOST:
                     switch (c){
-                    case ':': state = COPY_AUTHUSER;
-                    break;
-                    case '@':
-                        target_user[iusername++] = '@';
-                        memcpy(target_user+iusername, target_device, ihost);
-                        iusername += ihost;
-                        ihost = 0;
-                    break;
-                    default: target_device[ihost++] = c;
-                    break;
+                        case ':': state = COPY_AUTHUSER;
+                           break;
+                        case '@':
+                            target_user[iusername++] = '@';
+                            memcpy(target_user+iusername, target_device, ihost);
+                            iusername += ihost;
+                            ihost = 0;
+                            break;
+                        default: target_device[ihost++] = c;
+                         break;
                     }
                 break;
+//                case COPY_PROTOCOL:
+//                     auth_user[iauthuser++] = c;
+//                break;
                 case COPY_AUTHUSER:
-                     auth_user[iauthuser++] = c;
+                    switch (c){
+                        case ':':
+                            memcpy(target_protocol, auth_user, iauthuser);
+                            iprotocol = iauthuser;
+                            iauthuser = 0;
+                            break;
+                        default: auth_user[iauthuser++] = c;
+                            break;
+                    }
                 break;
                 }
             }
             target_user[iusername] = 0;
             target_device[ihost] = 0;
+            target_protocol[iprotocol] = 0;
             auth_user[iauthuser] = 0;
             if ((iusername > 0) && (ihost == 0) && (iauthuser == 0)){
                 memcpy(auth_user, target_user, iusername);
@@ -222,6 +239,12 @@ struct ModContext : public Dico {
         }
         else {
             this->cpy(STRAUTHID_TARGET_DEVICE, target_device);
+        }
+        if (!*target_protocol) {
+            this->ask(STRAUTHID_TARGET_PROTOCOL);
+        }
+        else {
+            this->cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
         }
         if (!*auth_user) {
             this->ask(STRAUTHID_AUTH_USER);
