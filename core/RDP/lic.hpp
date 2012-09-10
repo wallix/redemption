@@ -571,25 +571,17 @@ struct RdpLicence {
         }
     }
 
-    int rdp_lic_process_issue(Stream & stream, const char * hostname, int & licence_issued, int use_rdp5)
+    int rdp_lic_process_issue(Stream & stream, const char * hostname, int & licence_issued, int use_rdp5, uint8_t * licence_key)
     {
         LOG(LOG_INFO, "rdp_lic_process_issue");
 
         stream.in_skip_bytes(2); /* 3d 45 - unknown */
         int length = stream.in_uint16_le();
-        if (!stream.check_rem(length)) {
-            return 0; // 0 = not connected, this case is probably worse and should cause a disconnection
-        }
         ssllib ssl;
         RC4_KEY crypt_key;
-        ssl.rc4_set_key(crypt_key, this->licence_key, 16);
+        ssl.rc4_set_key(crypt_key, licence_key, 16);
         ssl.rc4_crypt(crypt_key, stream.p, stream.p, length);
         int check = stream.in_uint16_le();
-        if (check != 0) {
-            return 0; // 0 = not connected, is it enough ?
-        }
-
-
         licence_issued = 1;
 
         stream.in_skip_bytes(2); /* pad */
@@ -598,53 +590,10 @@ struct RdpLicence {
         for (int i = 0; i < 4; i++) {
             stream.in_skip_bytes(length);
             length = stream.in_uint32_le();
-            if (!stream.check_rem(length)) {
-                // remaining data after licence
-                return 0; // 0 = not connected, this case is probably worse and should cause a disconnection
-            }
         }
 
-        this->rdp_save_licence(stream.p, length, hostname);
+        TODO("Save licence to keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that")
         return 1;
-    }
-
-    TODO(" this is not supported yet  but using rdp_save_licence we would keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Anyway the use of files to stoe licences should be abstracted.")
-    void rdp_save_licence(uint8_t *data, int length, const char * hostname)
-    {
-        if ((mkdir(LICENCE_PATH, 0700) == -1))
-        {
-            if (errno != EEXIST){
-                LOG(LOG_ERR, "Error creating path to store licence file %s [%s]", LICENCE_PATH, strerror(errno));
-                return;
-            }
-        }
-
-        char path[256];
-        char tmppath[256];
-
-        /* TODO: verify if location that we've stablished is right or not */
-        sprintf(path, LICENCE_PATH "/licence.%s", hostname);
-
-        /* write licence to licence.hostname.new and after rename to licence.hostname */
-        strcpy(tmppath, path);
-        strcat(tmppath, ".new");
-
-        int fd = open(tmppath, O_WRONLY | O_CREAT | O_TRUNC, 0600);
-
-        if (fd == -1){
-            LOG(LOG_ERR, "Error creating licence file %s [%s]", tmppath, strerror(errno));
-            return;
-        }
-
-        if (write(fd, data, length) != length){
-            LOG(LOG_ERR, "Error writing data to licence file %s [%s]", tmppath, strerror(errno));
-            unlink(tmppath);
-        }
-        else if (rename(tmppath, path) == -1){
-            LOG(LOG_ERR, "Error renaming licence file %s -> %s [%s]", tmppath, path, strerror(errno));
-            unlink(tmppath);
-        }
-        close(fd);
     }
 
     // 2.2.2.2 Client New License Request (CLIENT_NEW_LICENSE_REQUEST)

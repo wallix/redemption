@@ -1296,7 +1296,7 @@ struct mod_rdp : public client_mod {
                     if (this->verbose){
                         LOG(LOG_INFO, "Rdp::New License");
                     }
-                    res = this->lic_layer.rdp_lic_process_issue(payload, hostname, licence_issued, this->use_rdp5);
+                    res = this->lic_layer.rdp_lic_process_issue(payload, hostname, licence_issued, this->use_rdp5, this->lic_layer.licence_key);
                     break;
                 case UPGRADE_LICENSE:
                     if (this->verbose){
