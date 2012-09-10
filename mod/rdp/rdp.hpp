@@ -860,8 +860,6 @@ struct mod_rdp : public client_mod {
                                 reverseit(modulus, len_n);
 
                                 RSA_free(server_public_key);
-                                TODO(" find a way to correctly dispose of garbage at end of buffer")
-                                /* There's some garbage here we don't care about */
                             }
 
                             uint8_t client_random[SEC_RANDOM_SIZE];
