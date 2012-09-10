@@ -747,54 +747,21 @@ struct mod_rdp : public client_mod {
 
                                 // structure of certificate chain is : certcount [certlen cert]*
 
-                                uint32_t certcount = f.payload.in_uint32_le();
+                                uint32_t certcount = sc_sec1.x509.certCount;
                                 LOG(LOG_DEBUG, "Certcount = %u", certcount);
 
                                 if (certcount < 2){
                                     LOG(LOG_DEBUG, "Server didn't send enough X509 certificates");
                                     throw Error(ERR_SEC_PARSE_CRYPT_INFO_CERT_NOK);
                                 }
-                                for (; certcount > 2; certcount--){
-                                    /* ignore all the certificates between the root and the signing CA */
-                                    LOG(LOG_WARNING, " Ignored certs left: %d", certcount);
-                                    uint32_t ignorelen = f.payload.in_uint32_le();
-                                    LOG(LOG_WARNING, "Ignored Certificate length is %d", ignorelen);
-                                    X509 *ignorecert = d2i_X509(NULL, const_cast<const uint8_t **>(&f.payload.p), ignorelen);
-                                    if (ignorecert == NULL){
-                                        LOG(LOG_WARNING,
-                                            "got a bad cert: this will probably screw up"
-                                            " the rest of the communication");
-                                    }
-                                    LOG(LOG_WARNING, "cert #%d (ignored)", certcount);
-                                }
 
-                                /* Do da funky X.509 stuffy
-
-                               "How did I find out about this?  I looked up and saw a
-                               bright light and when I came to I had a scar on my forehead
-                               and knew about X.500"
-                               - Peter Gutman in a early version of
-                               http://www.cs.auckland.ac.nz/~pgut001/pubs/x509guide.txt
-                               */
-
-                                /* Loading CA_Certificate from server*/
-                                uint32_t cacert_len = f.payload.in_uint32_le();
+                                uint32_t cacert_len = sc_sec1.x509.cert[certcount - 2].len;
                                 LOG(LOG_DEBUG, "CA Certificate length is %d", cacert_len);
-                                X509 *cacert = d2i_X509(NULL, const_cast<const uint8_t **>(&f.payload.p), cacert_len);
-                                if (NULL == cacert){
-                                    LOG(LOG_DEBUG, "Couldn't load CA Certificate from server");
-                                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NULL);
-                                }
+                                X509 *cacert =  sc_sec1.x509.cert[certcount - 2].cert;
 
-                                /* Loading Certificate from server*/
-                                uint32_t cert_len = f.payload.in_uint32_le();
-                                LOG(LOG_DEBUG, "Certificate length is %d", cert_len);
-                                X509 *server_cert = d2i_X509(NULL, const_cast<const uint8_t **>(&f.payload.p), cert_len);
-                                if (NULL == server_cert){
-                                    X509_free(cacert);
-                                    LOG(LOG_DEBUG, "Couldn't load Certificate from server");
-                                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_LOADED);
-                                }
+                                uint32_t cert_len = sc_sec1.x509.cert[certcount - 1].len;
+                                LOG(LOG_DEBUG, "CA Certificate length is %d", cert_len);
+                                X509 *cert =  sc_sec1.x509.cert[certcount - 1].cert;
 
                                 /* Matching certificates */
                                 TODO("Currently, we don't use the CA Certificate, we should"
@@ -802,8 +769,6 @@ struct mod_rdp : public client_mod {
                                      "*) Store the CA Certificate with the hostname of the server we are connecting"
                                      " to as key, and compare it when we connect the next time, in order to prevent"
                                      " MITM-attacks.")
-                                X509_free(cacert);
-                                f.payload.in_skip_bytes(16); /* Padding */
                                 // ---------------------------------------------------------------------
 
                                 /* By some reason, Microsoft sets the OID of the Public RSA key to
@@ -812,13 +777,13 @@ struct mod_rdp : public client_mod {
                                 Kudos to Richard Levitte for the following (. intuitive .)
                                 lines of code that resets the OID and let's us extract the key. */
 
-                                int nid = OBJ_obj2nid(server_cert->cert_info->key->algor->algorithm);
+                                int nid = OBJ_obj2nid(cert->cert_info->key->algor->algorithm);
                                 if ((nid == NID_md5WithRSAEncryption) || (nid == NID_shaWithRSAEncryption)){
-                                    ASN1_OBJECT_free(server_cert->cert_info->key->algor->algorithm);
-                                    server_cert->cert_info->key->algor->algorithm = OBJ_nid2obj(NID_rsaEncryption);
+                                    ASN1_OBJECT_free(cert->cert_info->key->algor->algorithm);
+                                    cert->cert_info->key->algor->algorithm = OBJ_nid2obj(NID_rsaEncryption);
                                 }
 
-                                EVP_PKEY * epk = X509_get_pubkey(server_cert);
+                                EVP_PKEY * epk = X509_get_pubkey(cert);
                                 if (NULL == epk){
                                     printf("Failed to extract public key from certificate\n");
                                     throw Error(ERR_GCC);
@@ -832,11 +797,8 @@ struct mod_rdp : public client_mod {
 
                                 if (NULL == server_public_key){
                                     LOG(LOG_DEBUG, "Didn't parse X509 correctly");
-                                    X509_free(server_cert);
                                     throw Error(ERR_SEC_PARSE_CRYPT_INFO_X509_NOT_PARSED);
                                 }
-
-                                X509_free(server_cert);
 
                                 LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d",
                                     this->server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
@@ -858,10 +820,7 @@ struct mod_rdp : public client_mod {
                                 reverseit(exponent, len_e);
                                 int len_n = BN_bn2bin(server_public_key->n, (unsigned char*)modulus);
                                 reverseit(modulus, len_n);
-
                                 RSA_free(server_public_key);
-                                TODO(" find a way to correctly dispose of garbage at end of buffer")
-                                /* There's some garbage here we don't care about */
                             }
 
                             uint8_t client_random[SEC_RANDOM_SIZE];

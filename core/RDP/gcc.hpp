@@ -31,6 +31,7 @@
 #define __CORE_RDP_GCC_HPP__
 
 #include "stream.hpp"
+#include "ssl_calls.hpp"
 
 enum DATA_BLOCK_TYPE {
     //  The data block that follows contains Client Core Data (section 2.2.1.3.2).
@@ -2137,8 +2138,12 @@ namespace GCC
                 }
             } proprietaryCertificate;
 
-            struct X509Certificate {
-                uint8_t * blob;
+            struct X509CertificateChain {
+                uint32_t certCount;
+                struct X509CertificateWithLen {
+                    uint32_t len;
+                    X509 * cert;
+                } cert[32]; // a chain of at most 32 certificates, should be enough
             } x509;
 
             SCSecurity()
@@ -2149,6 +2154,18 @@ namespace GCC
             , serverRandomLen(32)
             , serverCertLen(184)
             {
+                for (size_t i = 0 ; i < sizeof(this->x509.cert) / sizeof(this->x509.cert[0]) ; i++){
+                    this->x509.cert[i].cert = NULL;
+                }
+            }
+
+            ~SCSecurity(){
+                for (size_t i = 0 ; i < sizeof(this->x509.cert) / sizeof(this->x509.cert[0]) ; i++){
+                    if (this->x509.cert[i].cert){
+                        X509_free(this->x509.cert[i].cert);
+                        this->x509.cert[i].cert = NULL;
+                    }
+                }
             }
 
             void emit(Stream & stream)
@@ -2188,6 +2205,7 @@ namespace GCC
                     stream.out_clear_bytes(8); /* pad */
                 }
                 else {
+                    // send chain of certificates
                 }
                 /* end certificate */
                 // --------------------------------------------------------------
@@ -2299,6 +2317,12 @@ namespace GCC
                     stream.in_copy_bytes(this->proprietaryCertificate.wSignatureBlob, 64 + SEC_PADDING_SIZE);
                 }
                 else {
+                    this->x509.certCount = stream.in_uint32_le();
+                    for (size_t i = 0; i < this->x509.certCount ; i++){
+                        this->x509.cert[i].len = stream.in_uint32_le();
+                        this->x509.cert[i].cert = d2i_X509(NULL, const_cast<const uint8_t **>(&stream.p), this->x509.cert[i].len);
+                    }
+                    stream.in_skip_bytes(16); /* Padding */
                 }
             }
 
