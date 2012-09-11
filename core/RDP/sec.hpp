@@ -787,6 +787,22 @@ enum {
         }
     };
 
+    struct Sec_Send
+    {
+        Sec_Send(Stream & stream, Stream & data, uint32_t flags, CryptContext & crypt, uint32_t encryptionMethod, uint32_t encryptionLevel){
+            flags |= (encryptionMethod | encryptionLevel)?SEC_ENCRYPT:0;
+            if (flags) {
+                stream.out_uint32_le(flags);
+            }
+            if (flags & SEC_ENCRYPT){
+                crypt.sign(stream.p, 8, data.data, data.size());
+                stream.p += 8;
+                crypt.encrypt(data.data, data.size());
+            }
+            stream.mark_end();
+        }
+    };
+
 };
 
 //##############################################################################
