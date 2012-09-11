@@ -667,22 +667,11 @@ enum {
     };
 
 
-    enum {
-        LICENSE_REQUEST             = 0x01,
-        PLATFORM_CHALLENGE          = 0x02,
-        NEW_LICENSE                 = 0x03,
-        UPGRADE_LICENSE             = 0x04,
-        LICENSE_INFO                = 0x12,
-        NEW_LICENSE_REQUEST         = 0x13,
-        PLATFORM_CHALLENGE_RESPONSE = 0x15,
-        ERROR_ALERT                 = 0xff
-    };
-
     struct SecLicenseRequest_Send
     {
         SecLicenseRequest_Send(Stream & stream){
             stream.out_uint32_le(SEC::SEC_LICENSE_PKT);
-            stream.out_uint8(SEC::LICENSE_REQUEST);
+            stream.out_uint8(/* LIC::LICENSE_REQUEST */ 0x01);
             stream.out_uint8(2); // preamble flags : PREAMBLE_VERSION_2_0 (RDP 4.0)
             stream.out_uint16_le(318); // wMsgSize = 318 including preamble
 

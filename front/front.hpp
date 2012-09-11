@@ -1380,7 +1380,7 @@ public:
                 BStream stream(65535);
 
                 stream.out_uint32_le(SEC::SEC_LICENSE_PKT);
-                stream.out_uint8(LICENSE_REQUEST);
+                stream.out_uint8(LIC::LICENSE_REQUEST);
                 stream.out_uint8(2); // preamble flags : PREAMBLE_VERSION_2_0 (RDP 4.0)
                 stream.out_uint16_le(318); // wMsgSize = 318 including preamble
 
@@ -1489,7 +1489,7 @@ public:
                 LOG(LOG_INFO, "Front::WAITING_FOR_ANSWER_TO_LICENCE sec_flags=%x %u %u %u", sec.flags, tag, version, length);
 
                 switch (tag) {
-                case LICENSE_REQUEST:
+                case LIC::LICENSE_REQUEST:
                     LOG(LOG_INFO, "Front::LICENSE_REQUEST");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
                     {
@@ -1507,22 +1507,22 @@ public:
                         this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
                     }
                     break;
-                case LICENSE_INFO:
+                case LIC::LICENSE_INFO:
                     LOG(LOG_INFO, "Front::LICENSE_INFO");
                     break;
-                case PLATFORM_CHALLENGE:
+                case LIC::PLATFORM_CHALLENGE:
                     LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE");
                     break;
-                case NEW_LICENSE:
+                case LIC::NEW_LICENSE:
                     LOG(LOG_INFO, "Front::NEW_LICENSE");
                     break;
-                case UPGRADE_LICENSE:
+                case LIC::UPGRADE_LICENSE:
                     LOG(LOG_INFO, "Front::UPGRADE_LICENSE");
                     break;
-                case ERROR_ALERT:
+                case LIC::ERROR_ALERT:
                     LOG(LOG_INFO, "Front::ERROR_ALERT");
                     break;
-                case NEW_LICENSE_REQUEST:
+                case LIC::NEW_LICENSE_REQUEST:
                     LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
                     {
@@ -1541,7 +1541,7 @@ public:
 
                     }
                     break;
-                case PLATFORM_CHALLENGE_RESPONSE:
+                case LIC::PLATFORM_CHALLENGE_RESPONSE:
                     LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE_RESPONSE");
                     break;
                 default:
