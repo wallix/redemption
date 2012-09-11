@@ -196,7 +196,7 @@ struct Inifile {
         bool bitmap_cache;       // default true
         bool bitmap_compression; // default true
         int port;                // default 3389
-        int crypt_level;   // 0=low, 1=medium, 2=high
+        int encryptionLevel;   // 0=low, 1=medium, 2=high
         // TODO: CGR : didn't changed it to boolean as I don't know if it shouldn't be a number of channel
         unsigned channel_code; /* 0 = no channels 1 = channels */
         bool autologin;      // true if we should bypass login box and go directly

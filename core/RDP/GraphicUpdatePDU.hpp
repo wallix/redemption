@@ -106,13 +106,13 @@ struct GraphicsUpdatePDU : public RDPSerializer
     ShareData * sdata;
     uint16_t & userid;
     int & shareid;
-    int & crypt_level;
+    int & encryptionLevel;
     CryptContext & encrypt;
 
     GraphicsUpdatePDU(Transport * trans,
                       uint16_t & userid,
                       int & shareid,
-                      int & crypt_level,
+                      int & encryptionLevel,
                       CryptContext & encrypt,
                       const Inifile * ini,
                       const uint8_t bpp,
@@ -134,7 +134,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
         sdata(NULL),
         userid(userid),
         shareid(shareid),
-        crypt_level(crypt_level),
+        encryptionLevel(encryptionLevel),
         encrypt(encrypt)
     {
         this->init();
@@ -158,7 +158,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
         this->pstream = &this->stream;
         this->pstream->p = this->pstream->end = this->pstream->data;
         this->sec = new Sec(*this->pstream, this->encrypt);
-        this->sec->emit_begin( this->crypt_level?SEC::SEC_ENCRYPT:0 );
+        this->sec->emit_begin( this->encryptionLevel?SEC::SEC_ENCRYPT:0 );
         this->sctrl = new ShareControl(*this->pstream);
         this->sctrl->emit_begin( PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE );
         this->sdata = new ShareData(*this->pstream);

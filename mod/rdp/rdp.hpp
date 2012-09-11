@@ -336,7 +336,7 @@ struct mod_rdp : public client_mod {
     char directory[256];
     uint8_t bpp;
 
-    int crypt_level;
+    int encryptionLevel;
     uint32_t server_public_key_len;
     uint8_t client_crypt_random[512];
     CryptContext encrypt, decrypt;
@@ -390,7 +390,7 @@ struct mod_rdp : public client_mod {
                     version(0),
                     userid(0),
                     bpp(bpp),
-                    crypt_level(0),
+                    encryptionLevel(0),
                     server_public_key_len(0),
                     connection_finalization_state(EARLY),
                     state(MOD_RDP_NEGO),
@@ -410,8 +410,8 @@ struct mod_rdp : public client_mod {
         memset(this->encrypt.key, 0, 16);
         memset(this->decrypt.update_key, 0, 16);
         memset(this->encrypt.update_key, 0, 16);
-        this->decrypt.rc4_key_size = 2; /* 128 bits */
-        this->encrypt.rc4_key_size = 2; /* 128 bits */
+        this->decrypt.encryptionMethod = 2; /* 128 bits */
+        this->encrypt.encryptionMethod = 2; /* 128 bits */
         this->decrypt.rc4_key_len = 16; /* 16 = 128 bit */
         this->encrypt.rc4_key_len = 16; /* 16 = 128 bit */
 
@@ -519,7 +519,7 @@ struct mod_rdp : public client_mod {
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->crypt_level?SEC::SEC_ENCRYPT:0 );
+        sec.emit_begin(this->encryptionLevel?SEC::SEC_ENCRYPT:0 );
 
         stream.out_uint32_le(length);
         stream.out_uint32_le(flags);
@@ -712,7 +712,7 @@ struct mod_rdp : public client_mod {
                         GCC::UserData::SCSecurity sc_sec1;
                         sc_sec1.recv(f.payload);
 
-                        this->crypt_level = sc_sec1.encryptionLevel; 
+                        this->encryptionLevel = sc_sec1.encryptionLevel; 
                         if (sc_sec1.encryptionLevel == 0 
                         &&  sc_sec1.encryptionMethod == 0) { /* no encryption */
                             LOG(LOG_INFO, "No encryption");
@@ -1019,7 +1019,7 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
             }
 
-            if (this->crypt_level){
+            if (this->encryptionLevel){
                 BStream stream(this->server_public_key_len + 32);
                 SEC::SecExchangePacket_Send mcs(stream, client_crypt_random, this->server_public_key_len);
                 this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
@@ -1738,7 +1738,7 @@ struct mod_rdp : public client_mod {
 
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");
             Sec sec(payload, this->decrypt);
-            sec.recv_begin(this->crypt_level);
+            sec.recv_begin(this->encryptionLevel);
             if (sec.flags & SEC::SEC_LICENSE_PKT) { /* 0x80 */
                 LOG(LOG_ERR, "Error: unexpected license negotiation sec packet flags=%04x", sec.flags);
                 throw Error(ERR_SEC_UNEXPECTED_LICENSE_NEGOTIATION_PDU);
@@ -2046,7 +2046,7 @@ struct mod_rdp : public client_mod {
             BStream stream(65536);
 //            uint8_t * prev = stream.p;
             Sec sec(stream, this->encrypt);
-            sec.emit_begin( this->crypt_level?SEC::SEC_ENCRYPT:0 );
+            sec.emit_begin( this->encryptionLevel?SEC::SEC_ENCRYPT:0 );
 //            hexdump((const char*)prev, stream.p - prev);
 //            prev = stream.p;
         // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1) containing information about the packet. The type subfield of the pduType field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
@@ -3020,7 +3020,7 @@ struct mod_rdp : public client_mod {
             }
             BStream stream(65536);
             Sec sec(stream, this->encrypt);
-            sec.emit_begin( this->crypt_level?SEC::SEC_ENCRYPT:0 );
+            sec.emit_begin( this->encryptionLevel?SEC::SEC_ENCRYPT:0 );
             ShareControl sctrl(stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareData sdata(stream);
@@ -3052,7 +3052,7 @@ struct mod_rdp : public client_mod {
             }
             BStream stream(65536);
             Sec sec(stream, this->encrypt);
-            sec.emit_begin( this->crypt_level?SEC::SEC_ENCRYPT:0 ) ;
+            sec.emit_begin( this->encryptionLevel?SEC::SEC_ENCRYPT:0 ) ;
             ShareControl sctrl(stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareData sdata(stream);
@@ -3082,7 +3082,7 @@ struct mod_rdp : public client_mod {
             }
             BStream stream(65536);
             Sec sec(stream, this->encrypt);
-            sec.emit_begin( this->crypt_level?SEC::SEC_ENCRYPT:0 );
+            sec.emit_begin( this->encryptionLevel?SEC::SEC_ENCRYPT:0 );
             ShareControl sctrl(stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareData sdata(stream);
@@ -3128,7 +3128,7 @@ struct mod_rdp : public client_mod {
             }
             BStream stream(65536);
             Sec sec(stream, this->encrypt);
-            sec.emit_begin( this->crypt_level?SEC::SEC_ENCRYPT:0 );
+            sec.emit_begin( this->encryptionLevel?SEC::SEC_ENCRYPT:0 );
             ShareControl sctrl(stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareData sdata(stream);
@@ -3166,7 +3166,7 @@ struct mod_rdp : public client_mod {
                 if (!r.isempty()){
                     BStream stream(65536);
                     Sec sec(stream, this->encrypt);
-                    sec.emit_begin( this->crypt_level?SEC::SEC_ENCRYPT:0 );
+                    sec.emit_begin( this->encryptionLevel?SEC::SEC_ENCRYPT:0 );
                     ShareControl sctrl(stream);
                     sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
                     ShareData sdata(stream);
@@ -3432,7 +3432,7 @@ struct mod_rdp : public client_mod {
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(SEC::SEC_INFO_PKT | (this->crypt_level?SEC::SEC_ENCRYPT:0) );
+        sec.emit_begin(SEC::SEC_INFO_PKT | (this->encryptionLevel?SEC::SEC_ENCRYPT:0) );
 
         InfoPacket infoPacket;
         infoPacket.rdp5_support = this->use_rdp5;

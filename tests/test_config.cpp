@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false, ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3389, ini.globals.port);
-    BOOST_CHECK_EQUAL(0,    ini.globals.crypt_level);
+    BOOST_CHECK_EQUAL(0,    ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL(1,    ini.globals.channel_code);
     BOOST_CHECK_EQUAL(0,    ini.globals.autologin);
     BOOST_CHECK_EQUAL(2,    ini.globals.authversion);
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false, ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3389, ini.globals.port);
-    BOOST_CHECK_EQUAL(0,    ini.globals.crypt_level);
+    BOOST_CHECK_EQUAL(0,    ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL(1,    ini.globals.channel_code);
     BOOST_CHECK_EQUAL(0,    ini.globals.autologin);
     BOOST_CHECK_EQUAL(2,    ini.globals.authversion);
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     "bitmap_cache=yes\n"
     "bitmap_compression=true\n"
     "port=3390\n"
-    "crypt_level=low\n"
+    "encryptionLevel=low\n"
     "channel_code=1\n"
     "\n"
     "[xrdp1]\n"
@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     "[globals]\n"
     "bitmap_cache=true\n"
     "bitmap_compression=on\n"
-    "crypt_level=medium\n"
+    "encryptionLevel=medium\n"
     "\n"
     "[xrdp1]\n"
     "lib=libxup.so\n"
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     Inifile ini(oss);
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
-    BOOST_CHECK_EQUAL(1,    ini.globals.crypt_level);
+    BOOST_CHECK_EQUAL(1,    ini.globals.encryptionLevel);
 
     struct IniAccounts & acc = ini.account[0];
 
@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     "[globals]\n"
     "bitmap_cache=no\n"
     "bitmap_compression=false\n"
-    "crypt_level=high\n"
+    "encryptionLevel=high\n"
     "channel_code=0\n"
     "\n"
     "[xrdp1]\n"
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     Inifile ini(oss);
     BOOST_CHECK_EQUAL(false, ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(false, ini.globals.bitmap_compression);
-    BOOST_CHECK_EQUAL(2, ini.globals.crypt_level);
+    BOOST_CHECK_EQUAL(2, ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL(0, ini.globals.channel_code);
 
     struct IniAccounts & acc = ini.account[0];
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     "bitmap_cache=yes\n"
     "bitmap_compression=TRuE\n"
     "port=3390\n"
-    "crypt_level=low\n"
+    "encryptionLevel=low\n"
     "channel_code=1\n"
     "\n"
     "[xrdp1]\n"

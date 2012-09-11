@@ -123,7 +123,7 @@ public:
         , orders(NULL)
         , up_and_running(0)
         , share_id(65538)
-        , client_info(ini->globals.crypt_level, ini->globals.channel_code, ini->globals.bitmap_compression, ini->globals.bitmap_cache)
+        , client_info(ini->globals.encryptionLevel, ini->globals.channel_code, ini->globals.bitmap_compression, ini->globals.bitmap_cache)
         , packet_number(1)
         , trans(trans)
         , userid(0)
@@ -153,18 +153,18 @@ public:
         memset(this->encrypt.key, 0, 16);
         memset(this->decrypt.update_key, 0, 16);
         memset(this->encrypt.update_key, 0, 16);
-        switch (this->client_info.crypt_level) {
+        switch (this->client_info.encryptionLevel) {
         case 1:
         case 2:
-            this->decrypt.rc4_key_size = 1; /* 40 bits */
-            this->encrypt.rc4_key_size = 1; /* 40 bits */
+            this->decrypt.encryptionMethod = 1; /* 40 bits */
+            this->encrypt.encryptionMethod = 1; /* 40 bits */
             this->decrypt.rc4_key_len = 8; /* 8 = 40 bit */
             this->encrypt.rc4_key_len = 8; /* 8 = 40 bit */
         break;
         default:
         case 3:
-            this->decrypt.rc4_key_size = 2; /* 128 bits */
-            this->encrypt.rc4_key_size = 2; /* 128 bits */
+            this->decrypt.encryptionMethod = 2; /* 128 bits */
+            this->encrypt.encryptionMethod = 2; /* 128 bits */
             this->decrypt.rc4_key_len = 16; /* 16 = 128 bit */
             this->encrypt.rc4_key_len = 16; /* 16 = 128 bit */
         break;
@@ -374,7 +374,7 @@ public:
         this->orders = new GraphicsUpdatePDU(trans,
                         this->userid,
                         this->share_id,
-                        this->client_info.crypt_level,
+                        this->client_info.encryptionLevel,
                         this->encrypt,
                         this->ini,
                         this->client_info.bpp,
@@ -473,7 +473,7 @@ public:
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.encryptionLevel?SEC::SEC_ENCRYPT:0);
 
         stream.out_uint32_le(length);
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -516,7 +516,7 @@ public:
             }
             BStream stream(65536);
             Sec sec(stream, this->encrypt);
-            sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
+            sec.emit_begin(this->client_info.encryptionLevel?SEC::SEC_ENCRYPT:0);
             ShareControl sctrl(stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareData sdata(stream);
@@ -666,7 +666,7 @@ public:
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.encryptionLevel?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -790,7 +790,7 @@ public:
         }
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.encryptionLevel?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -1035,8 +1035,8 @@ public:
                 0x01,0x00,0x01,0x00
             };
 
-            sc_sec1.encryptionMethod = this->encrypt.rc4_key_size;
-            sc_sec1.encryptionLevel = client_info.crypt_level;
+            sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
+            sc_sec1.encryptionLevel = client_info.encryptionLevel;
             sc_sec1.serverRandomLen = 32;
             this->gen->random(this->server_random, 32);
             memcpy(sc_sec1.serverRandom, this->server_random, 32);
@@ -1277,12 +1277,12 @@ public:
                 uint8_t key_block[48];
                 ssl.rdp_sec_generate_keyblock(key_block, client_random, this->server_random);
                 memcpy(this->encrypt.sign_key, key_block, 16);
-                if (this->encrypt.rc4_key_size == 1){
+                if (this->encrypt.encryptionMethod == 1){
                     ssl.sec_make_40bit(this->encrypt.sign_key);
                 }
 
-                this->decrypt.generate_key(&key_block[32], client_random, this->server_random, this->encrypt.rc4_key_size);
-                this->encrypt.generate_key(&key_block[16], client_random, this->server_random, this->encrypt.rc4_key_size);
+                this->decrypt.generate_key(&key_block[32], client_random, this->server_random, this->encrypt.encryptionMethod);
+                this->encrypt.generate_key(&key_block[16], client_random, this->server_random, this->encrypt.encryptionMethod);
             }
             this->state = WAITING_FOR_LOGON_INFO;
         }
@@ -1830,7 +1830,7 @@ public:
         }
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.encryptionLevel?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -1858,7 +1858,7 @@ public:
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.encryptionLevel?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DEMANDACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
 
@@ -2200,7 +2200,7 @@ public:
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.encryptionLevel?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -2247,7 +2247,7 @@ public:
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.encryptionLevel?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -2300,7 +2300,7 @@ public:
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.encryptionLevel?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -2493,7 +2493,7 @@ public:
 
                 BStream stream(65536);
                 Sec sec(stream, this->encrypt);
-                sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
+                sec.emit_begin(this->client_info.encryptionLevel?SEC::SEC_ENCRYPT:0);
                 ShareControl sctrl(stream);
                 sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
                 ShareData sdata_out(stream);
@@ -2645,7 +2645,7 @@ public:
 
         BStream stream(65536);
         Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
+        sec.emit_begin(this->client_info.encryptionLevel?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DEACTIVATEALLPDU, this->userid + MCS_USERCHANNEL_BASE);
 

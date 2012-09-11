@@ -56,6 +56,28 @@ namespace SEC
 // |                                | communication and Standard RDP Security  |
 // |                                | mechanisms (section 5.3) are in effect.  |
 // +--------------------------------+------------------------------------------+
+// | 0x0002 SEC_TRANSPORT_REQ       | Indicates that the packet is an          |
+// |                                | Inititiate Multitransport Request PDU    |
+// |                                | (section 2.2.15.1).                      |
+// |                                |                                          |
+// |                                | This flag MUST NOT be present if the PDU |
+// |                                | containing the security header is not    |
+// |                                | being sent on the MCS message channel.   |
+// |                                | The ID of the message channel is         |
+// |                                | specified in the Server Message Channel  |
+// |                                | Data (section 2.2.1.4.5).                |
+// +--------------------------------+------------------------------------------+
+// | 0x0004 RDP_SEC_TRANSPORT_RSP   | Indicates that the packet is an          |
+// |                                | Inititiate Multitransport Error PDU      |
+// |                                | (section 2.2.15.2).                      |
+// |                                |                                          |
+// |                                | This flag MUST NOT be present if the PDU |
+// |                                | containing the security header is not    |
+// |                                | being sent on the MCS message channel.   |
+// |                                | The ID of the message channel is         |
+// |                                | specified in the Server Message Channel  |
+// |                                | Data (section 2.2.1.4.5).                |
+// +--------------------------------+------------------------------------------+
 // | 0x0008 SEC_ENCRYPT             | Indicates that the packet is encrypted.  |
 // +--------------------------------+------------------------------------------+
 // | 0x0010 SEC_RESET_SEQNO         | This flag is not processed by any RDP    |
@@ -100,6 +122,27 @@ namespace SEC
 // |                                | (sections 2.2.8.1.1.2.2 and              |
 // |                                | 2.2.8.1.1.2.3).                          |
 // +--------------------------------+------------------------------------------+
+// | 0x1000 SEC_AUTODETECT_REQ      | Indicates that the autoDetectReqData     |
+// |                                | field is present. This flag MUST NOT be  |
+// |                                | present if the PDU containing the        |
+// |                                | security header is being sent from client|
+// |                                | to server.                               |
+// |                                | This flag MUST NOT be present if the PDU |
+// |                                | containing the security header is not    |
+// |                                | being sent on the MCS message channel.   |
+// |                                | The ID of the message channel is         |
+// |                                | specified in the Server Message Channel  |
+// |                                | Data (section 2.2.1.4.5).                |
+// +--------------------------------+------------------------------------------+
+// | 0x2000 SEC_AUTODETECT_RSP      | Indicates that the packet is an          |
+// |                                | Auto-Detect Response PDU (2.2.14.2).     |
+// |                                | This flag MUST NOT be present if the PDU |
+// |                                | containing the security header is not    |
+// |                                | being sent on the MCS message channel.   |
+// |                                | The ID of the message channel is         |
+// |                                | specified in the Server Message Channel  |
+// |                                | Data (section 2.2.1.4.5).                |
+// +--------------------------------+------------------------------------------+
 // | 0x8000 SEC_FLAGSHI_VALID       | Indicates that the flagsHi field contains|
 // |                                | valid data. If this flag is not set, then|
 // |                                | the contents of the flagsHi field MUST be|
@@ -109,6 +152,8 @@ namespace SEC
 
 enum {
     SEC_EXCHANGE_PKT       = 0x0001,
+    SEC_TRANSPORT_REQ      = 0x0002,
+    RDP_SEC_TRANSPORT_RSP  = 0x0004,
     SEC_ENCRYPT            = 0x0008,
     SEC_RESET_SEQNO        = 0x0010,
     SEC_IGNORE_SEQNO       = 0x0020,
@@ -118,6 +163,9 @@ enum {
     SEC_LICENSE_ENCRYPT_SC = 0x0200,
     SEC_REDIRECTION_PKT    = 0x0400,
     SEC_SECURE_CHECKSUM    = 0x0800,
+    SEC_AUTODETECT_REQ     = 0x1000,
+    SEC_AUTODETECT_RSP     = 0x2000, 
+    SEC_FLAGSHI_VALID      = 0x8000,
 };
 
 
@@ -725,6 +773,20 @@ enum {
             stream.mark_end();
         }
     };
+
+
+    class Sec_Recv
+    {
+        public:
+        uint32_t flags;
+        SubStream payload;
+        Sec_Recv(Stream & stream) : flags(0), payload(stream)
+        {
+            this->flags = stream.in_uint32_le();
+            this->payload.resize(stream, stream.end - stream.p);
+        }
+    };
+
 };
 
 //##############################################################################
