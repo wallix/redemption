@@ -34,7 +34,7 @@
 
 #define SHARE_PATH "./tests/fixtures"
 
-//#define LOGPRINT
+#define LOGPRINT
 #include "log.hpp"
 #include "constants.hpp"
 #include "listen.hpp"
