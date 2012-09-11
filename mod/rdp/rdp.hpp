@@ -1272,10 +1272,177 @@ struct mod_rdp : public client_mod {
 
                         BStream stream(65535);
 
-                        this->lic_layer.rdp_lic_process_demand(stream, hostname, username, 
-                                                               licence_issued, 
-                                                               this->encrypt, this->crypt_level, 
-                                                               this->use_rdp5);
+                        if (this->lic_layer.licence_size > 0) {
+                            uint8_t hwid[LICENCE_HWID_SIZE];
+                            buf_out_uint32(hwid, 2);
+                            memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
+
+                            ssllib ssl;
+                            /* Generate a signature for the HWID buffer */
+                            uint8_t signature[LICENCE_SIGNATURE_SIZE];
+                            ssl.sign(signature, 16, this->lic_layer.licence_sign_key, 16, hwid, sizeof(hwid));
+                            /* Now encrypt the HWID */
+
+                            RC4_KEY crypt_key;
+                            ssl.rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
+                            ssl.rc4_crypt(crypt_key, hwid, hwid, sizeof(hwid));
+
+                            uint8_t null_data[SEC_MODULUS_SIZE];
+                            memset(null_data, 0, sizeof(null_data));
+
+                            int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
+                                     this->lic_layer.licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
+
+                            stream.out_uint8(LICENSE_INFO);
+                            stream.out_uint8(this->use_rdp5?3:2); /* version */
+                            stream.out_uint16_le(length);
+                            stream.out_uint32_le(1);
+                            stream.out_uint16_le(0);
+                            stream.out_uint16_le(0x0201);
+                            stream.out_copy_bytes(null_data, SEC_RANDOM_SIZE); // client_random
+                            stream.out_uint16_le(0);
+                            stream.out_uint16_le(SEC_MODULUS_SIZE + SEC_PADDING_SIZE);
+                            stream.out_copy_bytes(null_data, SEC_MODULUS_SIZE); // rsa_data
+                            stream.out_clear_bytes( SEC_PADDING_SIZE);
+                            stream.out_uint16_le(1);
+                            stream.out_uint16_le(this->lic_layer.licence_size);
+                            stream.out_copy_bytes(this->lic_layer.licence_data, this->lic_layer.licence_size);
+                            stream.out_uint16_le(1);
+                            stream.out_uint16_le(LICENCE_HWID_SIZE);
+                            stream.out_copy_bytes(hwid, LICENCE_HWID_SIZE);
+                            stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
+
+                            stream.mark_end();
+                        }
+                        else {
+                            uint8_t null_data[SEC_MODULUS_SIZE];
+                            memset(null_data, 0, sizeof(null_data));
+
+                            LOG(LOG_INFO, "rdp_lic_send_request");
+
+                            int userlen = strlen(username) + 1;
+                            int hostlen = strlen(hostname) + 1;
+                            int length = 128 + userlen + hostlen;
+
+                            Sec sec(stream, this->encrypt);
+                            sec.emit_begin(SEC::SEC_LICENSE_PKT);
+
+                            stream.out_uint8(NEW_LICENSE_REQUEST);
+                            stream.out_uint8(this->use_rdp5?3:2);
+                            stream.out_uint16_le(length);
+
+                            // PreferredKeyExchangeAlg (4 bytes): A 32-bit unsigned integer that
+                            // indicates the key exchange algorithm chosen by the client. It MUST be set
+                            // to KEY_EXCHANGE_ALG_RSA (0x00000001), which indicates an RSA-based key
+                            // exchange with a 512-bit asymmetric key.<9>
+
+                            stream.out_uint32_le(KEY_EXCHANGE_ALG_RSA);
+
+                            // PlatformId (4 bytes): A 32-bit unsigned integer. This field is composed
+                            // of two identifiers: the operating system identifier and the independent
+                            // software vendor (ISV) identifier. The platform ID is composed of the
+                            // logical OR of these two values.
+
+                            // The most significant byte of the PlatformId field contains the operating
+                            // system version of the client.<10>
+
+                            // The second most significant byte of the PlatformId field identifies the
+                            // ISV that provided the client image.<11>
+
+                            // The remaining two bytes in the PlatformId field are used by the ISV to
+                            // identify the build number of the operating system.<12>
+
+                            stream.out_uint32_le(0);
+
+                            // ClientRandom (32 bytes): A 32-byte random number generated by the client
+                            // using a cryptographically secure pseudo-random number generator. The
+                            // ClientRandom and ServerRandom (see section 2.2.2.1) values, along with
+                            // the data in the EncryptedPreMasterSecret field, are used to generate
+                            // licensing encryption keys (see section 5.1.3). These keys are used to
+                            // encrypt licensing protocol messages (see sections 5.1.4 and 5.1.5).
+
+                            stream.out_copy_bytes(null_data, SEC_RANDOM_SIZE); // client_random
+
+                            // EncryptedPreMasterSecret (variable): A Licensing Binary BLOB structure
+                            // (see [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_RANDOM_BLOB (0x0002).
+                            // This BLOB contains an encrypted 48-byte random number. For instructions
+                            // on how to encrypt this random number, see section 5.1.2.1.
+
+                            // 2.2.1.12.1.2 Licensing Binary Blob (LICENSE_BINARY_BLOB)
+                            // --------------------------------------------------------
+                            // The LICENSE_BINARY_BLOB structure is used to encapsulate arbitrary
+                            // length binary licensing data.
+
+                            // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
+                            // the binary information. If wBlobLen is set to 0, then the contents
+                            // of this field SHOULD be ignored.
+
+                            // +------------------------------------+-------------------------------------+
+                            // | 0x0001 BB_DATA_BLOB                | Used by License Information PDU and |
+                            // |                                    | Platform Challenge Response PDU     |
+                            // |                                    | ([MS-RDPELE] sections 2.2.2.3 and   |
+                            // |                                    | 2.2.2.5).                           |
+                            // +------------------------------------+-------------------------------------+
+                            // | 0x0002 BB_RANDOM_BLOB              | Used by License Information PDU and |
+                            // |                                    | New License Request PDU ([MS-RDPELE]|
+                            // |                                    | sections 2.2.2.3 and 2.2.2.2).      |
+                            // +------------------------------------+-------------------------------------+
+                            // | 0x0003 BB_CERTIFICATE_BLOB         | Used by License Request PDU         |
+                            // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+                            // +------------------------------------+-------------------------------------+
+                            // | 0x0004 BB_ERROR_BLOB               | Used by License Error PDU (section  |
+                            // |                                    | 2.2.1.12).                          |
+                            // +------------------------------------+-------------------------------------+
+                            // | 0x0009 BB_ENCRYPTED_DATA_BLOB      | Used by Platform Challenge Response |
+                            // |                                    | PDU and Upgrade License PDU         |
+                            // |                                    | ([MS-RDPELE] sections 2.2.2.5 and   |
+                            // |                                    | 2.2.2.6).                           |
+                            // +------------------------------------+-------------------------------------+
+                            // | 0x000D BB_KEY_EXCHG_ALG_BLOB       | Used by License Request PDU         |
+                            // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+                            // +------------------------------------+-------------------------------------+
+                            // | 0x000E BB_SCOPE_BLOB               | Used by License Request PDU         |
+                            // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+                            // +------------------------------------+-------------------------------------+
+                            // | 0x000F BB_CLIENT_USER_NAME_BLOB    | Used by New License Request PDU     |
+                            // |                                    | ([MS-RDPELE] section 2.2.2.2).      |
+                            // +------------------------------------+-------------------------------------+
+                            // | 0x0010 BB_CLIENT_MACHINE_NAME_BLOB | Used by New License Request PDU     |
+                            // |                                    | ([MS-RDPELE] section 2.2.2.2).      |
+                            // +------------------------------------+-------------------------------------+
+
+                            // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of the binary information in the blobData field. If wBlobLen is set to 0, then the blobData field is not included in the Licensing Binary BLOB structure and the contents of the wBlobType field SHOULD be ignored.
+
+                            // blobData (variable): Variable-length binary data. The size of this data in bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field is not included in the Licensing Binary BLOB structure.
+
+                            stream.out_uint16_le(BB_RANDOM_BLOB);
+                            stream.out_uint16_le((SEC_MODULUS_SIZE + SEC_PADDING_SIZE));
+                            stream.out_copy_bytes(null_data, SEC_MODULUS_SIZE); // rsa_data
+                            stream.out_clear_bytes(SEC_PADDING_SIZE);
+
+                            // ClientUserName (variable): A Licensing Binary BLOB structure (see
+                            // [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_CLIENT_USER_NAME_BLOB
+                            // (0x000F). This BLOB contains the client user name string in
+                            // null-terminated ANSI character set format and is used along with the
+                            // ClientMachineName BLOB to keep track of licenses issued to clients.
+
+                            stream.out_uint16_le(LICENCE_TAG_USER);
+                            stream.out_uint16_le(userlen);
+                            stream.out_copy_bytes(username, userlen);
+
+                            // ClientMachineName (variable): A Licensing Binary BLOB structure (see
+                            // [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_CLIENT_MACHINE_NAME_BLOB
+                            // (0x0010). This BLOB contains the client machine name string in
+                            // null-terminated ANSI character set format and is used along with the
+                            // ClientUserName BLOB to keep track of licenses issued to clients.
+
+                            stream.out_uint16_le(LICENCE_TAG_HOST);
+                            stream.out_uint16_le(hostlen);
+                            stream.out_copy_bytes(hostname, hostlen);
+
+                            sec.emit_end();
+                            stream.mark_end();
+                        }
 
                         this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
                     }
@@ -1287,17 +1454,130 @@ struct mod_rdp : public client_mod {
                     {
                         BStream stream(65535);
 
-                        this->lic_layer.rdp_lic_process_authreq(stream, payload, hostname, licence_issued, this->encrypt, this->use_rdp5);
+                        ssllib ssl;
+
+                        const uint8_t* in_token;
+                        uint8_t out_token[LICENCE_TOKEN_SIZE];
+                        uint8_t decrypt_token[LICENCE_TOKEN_SIZE];
+                        uint8_t hwid[LICENCE_HWID_SIZE];
+                        uint8_t crypt_hwid[LICENCE_HWID_SIZE];
+                        uint8_t out_sig[LICENCE_SIGNATURE_SIZE];
+
+                        in_token = 0;
+                        /* Parse incoming packet and save the encrypted token */
+                        payload.in_skip_bytes(6); /* unknown: f8 3d 15 00 04 f6 */
+
+                        int tokenlen = payload.in_uint16_le();
+                        if (tokenlen != LICENCE_TOKEN_SIZE) {
+                            LOG(LOG_ERR, "token len = %d, expected %d", tokenlen, LICENCE_TOKEN_SIZE);
+                        }
+                        else{
+                            in_token = payload.in_uint8p(tokenlen);
+                            payload.in_uint8p(LICENCE_SIGNATURE_SIZE); // in_sig
+                            payload.check_end();
+                        }
+
+                        memcpy(out_token, in_token, LICENCE_TOKEN_SIZE);
+                        /* Decrypt the token. It should read TEST in Unicode. */
+                        RC4_KEY crypt_key;
+                        ssl.rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
+                        memcpy(decrypt_token, in_token, LICENCE_TOKEN_SIZE);
+                        ssl.rc4_crypt(crypt_key, decrypt_token, decrypt_token, LICENCE_TOKEN_SIZE);
+
+                        hexdump((const char*)decrypt_token, LICENCE_TOKEN_SIZE);
+                        /* Generate a signature for a buffer of token and HWID */
+                        buf_out_uint32(hwid, 2);
+                        memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
+                //        memcpy(hwid, "\x00\x00\x00\x00\x73\x19\x46\x88\x47\xd7\xb1\xae\xe4\x0d\xbf\x5d\xd9\x63\xc9\x99", LICENCE_HWID_SIZE);
+                        hexdump((const char*)hwid, LICENCE_HWID_SIZE);
+
+                        uint8_t sealed_buffer[LICENCE_TOKEN_SIZE + LICENCE_HWID_SIZE];
+                        memcpy(sealed_buffer, decrypt_token, LICENCE_TOKEN_SIZE);
+                        memcpy(sealed_buffer + LICENCE_TOKEN_SIZE, hwid, LICENCE_HWID_SIZE);
+                        ssl.sign(out_sig, 16, this->lic_layer.licence_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
+
+                        /* Now encrypt the HWID */
+                        ssl.rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
+                        memcpy(crypt_hwid, hwid, LICENCE_HWID_SIZE);
+                        ssl.rc4_crypt(crypt_key, crypt_hwid, crypt_hwid, LICENCE_HWID_SIZE);
+
+                        int length = 58;
+
+                        Sec sec(stream, this->encrypt);
+                        sec.emit_begin(SEC::SEC_LICENSE_PKT );
+
+                        stream.out_uint8(PLATFORM_CHALLENGE_RESPONSE);
+                        stream.out_uint8(this->use_rdp5?3:2); /* version */
+                        stream.out_uint16_le(length);
+
+
+                        // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
+                        // the binary information. If wBlobLen is set to 0, then the contents
+                        // of this field SHOULD be ignored.
+                        stream.out_uint16_le(BB_DATA_BLOB);
+
+                        // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+                        // the binary information in the blobData field. If wBlobLen is set to 0,
+                        // then the blobData field is not included in the Licensing Binary BLOB
+                        // structure and the contents of the wBlobType field SHOULD be ignored.
+                        stream.out_uint16_le(LICENCE_TOKEN_SIZE);
+                        stream.out_copy_bytes(out_token, LICENCE_TOKEN_SIZE);
+
+                        // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
+                        // the binary information. If wBlobLen is set to 0, then the contents
+                        // of this field SHOULD be ignored.
+                        stream.out_uint16_le(BB_DATA_BLOB);
+
+                        // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+                        // the binary information in the blobData field. If wBlobLen is set to 0,
+                        // then the blobData field is not included in the Licensing Binary BLOB
+                        // structure and the contents of the wBlobType field SHOULD be ignored.
+                        stream.out_uint16_le(LICENCE_HWID_SIZE);
+                        stream.out_copy_bytes(crypt_hwid, LICENCE_HWID_SIZE);
+
+                        stream.out_copy_bytes(out_sig, LICENCE_SIGNATURE_SIZE);
+
+                        sec.emit_end();
+                        stream.mark_end();
 
                         this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
                     }
                     break;
                 case NEW_LICENSE:
+                {
                     if (this->verbose){
                         LOG(LOG_INFO, "Rdp::New License");
                     }
-                    res = this->lic_layer.rdp_lic_process_issue(payload, hostname, licence_issued, this->use_rdp5);
-                    break;
+
+                    payload.in_skip_bytes(2); /* 3d 45 - unknown */
+                    int length = payload.in_uint16_le();
+                    ssllib ssl;
+                    RC4_KEY crypt_key;
+                    ssl.rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
+                    ssl.rc4_crypt(crypt_key, payload.p, payload.p, length);
+                    int check = payload.in_uint16_le();
+                    licence_issued = 1;
+
+                    payload.in_skip_bytes(2); /* pad */
+
+                    length = payload.in_uint32_le();
+                    payload.in_skip_bytes(length);
+
+                    length = payload.in_uint32_le();
+                    payload.in_skip_bytes(length);
+
+                    length = payload.in_uint32_le();
+                    payload.in_skip_bytes(length);
+
+                    length = payload.in_uint32_le();
+
+                    TODO("Save licence to keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that")
+                    res = 1;
+
+                    LOG(LOG_INFO, "Temporary exit to ensure that this suspicious licence_issue code is really called... after some testing it looks like this code is indeed never called");
+                    exit(0);
+                }
+                break;
                 case UPGRADE_LICENSE:
                     if (this->verbose){
                         LOG(LOG_INFO, "Rdp::Upgrade License");
