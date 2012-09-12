@@ -1342,13 +1342,11 @@ public:
             MCS::SendDataRequest_Recv mcs(mcs_data, MCS::PER_ENCODING);
             TODO("We should also manage the DisconnectRequest case as it can also happen")
 
-            SubStream & payload = mcs.payload;
-
             if (this->verbose >= 256){
                 this->decrypt.dump();
             }
-            Sec sec(payload, this->decrypt);
-            sec.recv_begin(true);
+            SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
+            SubStream & payload = sec.payload;
 
             if (!sec.flags & SEC::SEC_INFO_PKT) {
                 throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
@@ -1357,7 +1355,6 @@ public:
             /* this is the first test that the decrypt is working */
             TODO("Use sec.payload")
             this->client_info.process_logon_info(payload, (uint16_t)(payload.end - payload.p));
-            sec.recv_end();
 
             TODO("check all data are consumed as expected")
             if (payload.end != payload.p){
@@ -1506,14 +1503,12 @@ public:
             MCS::SendDataRequest_Recv mcs(mcs_data, MCS::PER_ENCODING);
             TODO("We should also manage the DisconnectRequest case as it can also happen")
 
-            SubStream & payload = mcs.payload;
-
             if (this->verbose >= 256){
                 this->decrypt.dump();
             }
 
-            Sec sec(payload, this->decrypt);
-            sec.recv_begin(true);
+            SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
+            SubStream & payload = sec.payload;
 
             // Licensing
             // ---------
@@ -1693,7 +1688,6 @@ public:
                 sctrl.recv_end();
             }
             sec.payload.p = sec.payload.end;
-            sec.recv_end();
         }
         break;
 
@@ -1759,10 +1753,8 @@ public:
             MCS::SendDataRequest_Recv mcs(mcs_data, MCS::PER_ENCODING);
             TODO("We should also manage the DisconnectRequest case as it can also happen")
 
-            SubStream & payload = mcs.payload;
-
-            Sec sec(payload, this->decrypt);
-            sec.recv_begin(true);
+            SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
+            SubStream & payload = sec.payload;
 
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
@@ -1876,7 +1868,6 @@ public:
                     sctrl.recv_end();
                 }
             }
-            sec.recv_end();
             TODO("check all data have been consumed")
         }
         break;

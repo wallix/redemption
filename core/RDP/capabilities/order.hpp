@@ -357,7 +357,7 @@ struct OrderCaps : public Capability {
                               //                   SC : is ignored by client and SHOULD be set to 0
         , pad2octetsE (0) //...................... MUST be ignored
     {
-        memset(this->terminalDescriptor, 0, 16); // 16 bits array ALWAYS filled with 0
+        memset(this->terminalDescriptor, 0, 16); // 16 bytes array ALWAYS filled with 0
         memset(this->orderSupport, 0, NB_ORDER_SUPPORT); // 32 bits array filled with 0 BY DEFAULT
     }
 
@@ -407,7 +407,7 @@ struct OrderCaps : public Capability {
 
     void log(const char * msg){
         LOG(LOG_INFO, "%s Order caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "Order caps::terminalDescriptor %u", this->terminalDescriptor);
+        LOG(LOG_INFO, "Order caps::terminalDescriptor %u", this->terminalDescriptor[0]);
         LOG(LOG_INFO, "Order caps::pad4octetsA %u", this->pad4octetsA);
         LOG(LOG_INFO, "Order caps::desktopSaveXGranularity %u", this->desktopSaveXGranularity);
         LOG(LOG_INFO, "Order caps::desktopSaveYGranularity %u", this->desktopSaveYGranularity);
