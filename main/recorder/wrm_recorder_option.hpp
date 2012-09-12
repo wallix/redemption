@@ -26,6 +26,7 @@
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/variables_map.hpp>
 
+#include "relative_time_point.hpp"
 #include "range_time_point.hpp"
 #include "input_type.hpp"
 #include "cipher.hpp"
@@ -104,7 +105,7 @@ public:
     range_time_point range;
     uint frame;
     time_point time;
-    std::vector<time_point> time_list;
+    std::vector<relative_time_point> time_list;
     std::string in_filename;
     uint idx_start;
     std::string base_path;
