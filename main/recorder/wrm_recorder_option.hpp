@@ -21,6 +21,8 @@
 #if !defined(__MAIN_RECORDER_WRM_RECORDER_OPTION__)
 #define __MAIN_RECORDER_WRM_RECORDER_OPTION__
 
+#include <vector>
+
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/variables_map.hpp>
 
@@ -102,6 +104,7 @@ public:
     range_time_point range;
     uint frame;
     time_point time;
+    std::vector<time_point> time_list;
     std::string in_filename;
     uint idx_start;
     std::string base_path;

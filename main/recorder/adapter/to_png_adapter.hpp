@@ -51,4 +51,25 @@ public:
     }
 };
 
+class ToPngListAdapter
+: public RecorderAdapter
+{
+    RecorderOption& _option;
+
+public:
+    ToPngListAdapter(RecorderOption& option)
+    : _option(option)
+    {}
+
+    virtual void operator()(WRMRecorder& recorder, const char* outfile)
+    {
+        to_png(recorder, outfile,
+               this->_option.time_list,
+               this->_option.png_scale_width,
+               this->_option.png_scale_height,
+               this->_option.no_screenshot_stop
+        );
+    }
+};
+
 #endif
