@@ -436,15 +436,15 @@ struct RDPSerializer : public RDPGraphicDevice
     // if not send previous orders we got and init a new packet
     void reserve_order(size_t asked_size)
     {
-        size_t max_packet_size = std::min(this->pstream->capacity, (size_t)4096);
+        size_t max_packet_size = std::min(this->pstream->capacity, (size_t)16384);
         TODO("this magic +12 constant is here because it has some effect on the way orders batch are packaged, changing it wont break the code but all client side tests will break and should be fixed")
-        size_t used_size = this->pstream->get_offset() + 12;
+        size_t used_size = this->pstream->get_offset();
         if (this->ini && this->ini->globals.debug.primary_orders > 63){
             LOG(LOG_INFO, "GraphicsUpdatePDU::reserve_order[%u](%u) remains=%u", this->order_count, asked_size, max_packet_size - used_size - 100);
         }
         if (asked_size + 100 > max_packet_size){
-            LOG(LOG_ERR, "asked_size (%u) > this->pstream->capacity (%u)", asked_size, this->pstream->capacity);
-            assert(asked_size <= this->pstream->capacity);
+            LOG(LOG_ERR, "asked size (%u) > order batch capacity (%u)", asked_size + 100, max_packet_size);
+            throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
         const size_t max_order_batch = 4096;
         if ((this->order_count >= max_order_batch) || (used_size + asked_size + 100) > max_packet_size) {
