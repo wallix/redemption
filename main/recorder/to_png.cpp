@@ -84,3 +84,45 @@ void to_png(WRMRecorder& recorder, const char* outfile,
     }
     //return frame;
 }
+
+void to_png(WRMRecorder& recorder, const char* outfile,
+            const std::vector<time_point>& capture_points,
+            unsigned resize_width, unsigned resize_height,
+            bool no_screenshot_stop)
+{
+    StaticCapture capture(recorder.meta().width,
+                          recorder.meta().height,
+                          outfile,
+                          resize_width, resize_height);
+    recorder.consumer(&capture);
+    load_png_context(recorder, capture.drawable);
+
+    std::vector<time_point>::const_iterator it = capture_points.begin();
+
+    TimerCompute timercompute(recorder);
+    if (it->time && !timercompute.advance_second(it->time))
+        return;
+
+    capture.dump_png();
+    std::vector<time_point>::const_iterator end = capture_points.end();
+    if (++it == end)
+        return;
+
+    while (recorder.selected_next_order())
+    {
+        if (timercompute.interpret_is_time_chunk()){
+            uint64_t usec = timercompute.usec();
+            if (usec >= it->time){
+                capture.dump_png();
+                if (++it == end)
+                    return;
+                timercompute.reset();
+            }
+        } else {
+            recorder.interpret_order();
+        }
+    }
+    if (!no_screenshot_stop){
+        capture.dump_png();
+    }
+}
