@@ -123,7 +123,7 @@ public:
         , orders(NULL)
         , up_and_running(0)
         , share_id(65538)
-        , client_info(ini->globals.crypt_level, ini->globals.channel_code, ini->globals.bitmap_compression, ini->globals.bitmap_cache)
+        , client_info(ini->globals.encryptionLevel, ini->globals.channel_code, ini->globals.bitmap_compression, ini->globals.bitmap_cache)
         , packet_number(1)
         , trans(trans)
         , userid(0)
@@ -153,18 +153,18 @@ public:
         memset(this->encrypt.key, 0, 16);
         memset(this->decrypt.update_key, 0, 16);
         memset(this->encrypt.update_key, 0, 16);
-        switch (this->client_info.crypt_level) {
+        switch (this->client_info.encryptionLevel) {
         case 1:
         case 2:
-            this->decrypt.rc4_key_size = 1; /* 40 bits */
-            this->encrypt.rc4_key_size = 1; /* 40 bits */
+            this->decrypt.encryptionMethod = 1; /* 40 bits */
+            this->encrypt.encryptionMethod = 1; /* 40 bits */
             this->decrypt.rc4_key_len = 8; /* 8 = 40 bit */
             this->encrypt.rc4_key_len = 8; /* 8 = 40 bit */
         break;
         default:
         case 3:
-            this->decrypt.rc4_key_size = 2; /* 128 bits */
-            this->encrypt.rc4_key_size = 2; /* 128 bits */
+            this->decrypt.encryptionMethod = 2; /* 128 bits */
+            this->encrypt.encryptionMethod = 2; /* 128 bits */
             this->decrypt.rc4_key_len = 16; /* 16 = 128 bit */
             this->encrypt.rc4_key_len = 16; /* 16 = 128 bit */
         break;
@@ -374,7 +374,7 @@ public:
         this->orders = new GraphicsUpdatePDU(trans,
                         this->userid,
                         this->share_id,
-                        this->client_info.crypt_level,
+                        this->client_info.encryptionLevel,
                         this->encrypt,
                         this->ini,
                         this->client_info.bpp,
@@ -472,8 +472,6 @@ public:
         }
 
         BStream stream(65536);
-        Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
 
         stream.out_uint32_le(length);
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -481,11 +479,20 @@ public:
         }
         stream.out_uint32_le(flags);
         stream.out_copy_bytes(data, chunk_size);
-
-        sec.emit_end();
         stream.mark_end();
 
-        this->send_data_indication(channel.chanid, stream);
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, channel.chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+        trans->send(x224_header.data, x224_header.size());
+        trans->send(mcs_header.data, mcs_header.size());
+        trans->send(sec_header.data, sec_header.size());
+        trans->send(stream.data, stream.size());
 
         if (this->verbose){
             LOG(LOG_INFO, "Front::send_to_channel done");
@@ -515,8 +522,6 @@ public:
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
             BStream stream(65536);
-            Sec sec(stream, this->encrypt);
-            sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
             ShareControl sctrl(stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareData sdata(stream);
@@ -535,14 +540,24 @@ public:
                 stream.out_uint8(g);
                 stream.out_uint8(r);
             }
+            stream.mark_end();
 
             // Packet trailer
             sdata.emit_end();
             sctrl.emit_end();
-            sec.emit_end();
-            stream.mark_end();
 
-            this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+            BStream x224_header(256);
+            BStream mcs_header(256);
+            BStream sec_header(256);
+
+            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+            MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+            X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+            trans->send(x224_header.data, x224_header.size());
+            trans->send(mcs_header.data, mcs_header.size());
+            trans->send(sec_header.data, sec_header.size());
+            trans->send(stream.data, stream.size());
 
             this->palette_sent = true;
         }
@@ -665,8 +680,6 @@ public:
         }
 
         BStream stream(65536);
-        Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -738,14 +751,24 @@ public:
 
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
+        stream.mark_end();
 
         // Packet trailer
         sdata.emit_end();
         sctrl.emit_end();
-        sec.emit_end();
-        stream.mark_end();
 
-        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+        trans->send(x224_header.data, x224_header.size());
+        trans->send(mcs_header.data, mcs_header.size());
+        trans->send(sec_header.data, sec_header.size());
+        trans->send(stream.data, stream.size());
 
         if (this->verbose){
             LOG(LOG_INFO, "Front::send_pointer done");
@@ -789,8 +812,6 @@ public:
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
         }
         BStream stream(65536);
-        Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -800,14 +821,24 @@ public:
         stream.out_uint16_le(RDP_POINTER_CACHED);
         stream.out_uint16_le(0); /* pad */
         stream.out_uint16_le(cache_idx);
+        stream.mark_end();
 
         // Packet trailer
         sdata.emit_end();
         sctrl.emit_end();
-        sec.emit_end();
-        stream.mark_end();
 
-        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+        trans->send(x224_header.data, x224_header.size());
+        trans->send(mcs_header.data, mcs_header.size());
+        trans->send(sec_header.data, sec_header.size());
+        trans->send(stream.data, stream.size());
 
         if (this->verbose){
             LOG(LOG_INFO, "Front::set_pointer done");
@@ -933,9 +964,9 @@ public:
                     break;
                     case CS_SECURITY:
                     {
-                        uint16_t tag = f.payload.in_uint16_le();
-                        uint16_t length = f.payload.in_uint16_le();
-                        parse_mcs_data_cs_security(f.payload);
+                        GCC::UserData::CSSecurity cs_sec;
+                        cs_sec.recv(f.payload);
+                        cs_sec.log("Received from Client");
                     }
                     break;
                     case CS_NET:
@@ -1035,8 +1066,8 @@ public:
                 0x01,0x00,0x01,0x00
             };
 
-            sc_sec1.encryptionMethod = this->encrypt.rc4_key_size;
-            sc_sec1.encryptionLevel = client_info.crypt_level;
+            sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
+            sc_sec1.encryptionLevel = client_info.encryptionLevel;
             sc_sec1.serverRandomLen = 32;
             this->gen->random(this->server_random, 32);
             memcpy(sc_sec1.serverRandom, this->server_random, 32);
@@ -1277,12 +1308,12 @@ public:
                 uint8_t key_block[48];
                 ssl.rdp_sec_generate_keyblock(key_block, client_random, this->server_random);
                 memcpy(this->encrypt.sign_key, key_block, 16);
-                if (this->encrypt.rc4_key_size == 1){
+                if (this->encrypt.encryptionMethod == 1){
                     ssl.sec_make_40bit(this->encrypt.sign_key);
                 }
 
-                this->decrypt.generate_key(&key_block[32], client_random, this->server_random, this->encrypt.rc4_key_size);
-                this->encrypt.generate_key(&key_block[16], client_random, this->server_random, this->encrypt.rc4_key_size);
+                this->decrypt.generate_key(&key_block[32], client_random, this->server_random, this->encrypt.encryptionMethod);
+                this->encrypt.generate_key(&key_block[16], client_random, this->server_random, this->encrypt.encryptionMethod);
             }
             this->state = WAITING_FOR_LOGON_INFO;
         }
@@ -1341,9 +1372,28 @@ public:
                 {
                     BStream stream(65535);
 
-                    send_media_lic_response(stream);
+                    /* mce */
+                    /* some compilers need unsigned char to avoid warnings */
+                    static uint8_t lic3[16] = { 0xff, 0x03, 0x10, 0x00,
+                                             0x07, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
+                                             0xf3, 0x99, 0x00, 0x00
+                                             };
 
-                    this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+                    stream.out_copy_bytes((char*)lic3, 16);
+                    stream.mark_end();
+
+                    BStream x224_header(256);
+                    BStream mcs_header(256);
+                    BStream sec_header(256);
+
+                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0, 0);
+                    MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+                    X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+                    trans->send(x224_header.data, x224_header.size());
+                    trans->send(mcs_header.data, mcs_header.size());
+                    trans->send(sec_header.data, sec_header.size());
+                    trans->send(stream.data, stream.size());
                 }
                 // proceed with capabilities exchange
 
@@ -1369,12 +1419,73 @@ public:
                 LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
                 LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
 
-
                 BStream stream(65535);
 
-                send_lic_initial(stream);
+                stream.out_uint8(LIC::LICENSE_REQUEST);
+                stream.out_uint8(2); // preamble flags : PREAMBLE_VERSION_2_0 (RDP 4.0)
+                stream.out_uint16_le(318); // wMsgSize = 318 including preamble
 
-                this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+                /* some compilers need unsigned char to avoid warnings */
+                static uint8_t lic1[314] = {
+                    // SEC_RANDOM ?
+                    0x7b, 0x3c, 0x31, 0xa6, 0xae, 0xe8, 0x74, 0xf6,
+                    0xb4, 0xa5, 0x03, 0x90, 0xe7, 0xc2, 0xc7, 0x39,
+                    0xba, 0x53, 0x1c, 0x30, 0x54, 0x6e, 0x90, 0x05,
+                    0xd0, 0x05, 0xce, 0x44, 0x18, 0x91, 0x83, 0x81,
+                    //
+                    0x00, 0x00, 0x04, 0x00, 0x2c, 0x00, 0x00, 0x00,
+                    0x4d, 0x00, 0x69, 0x00, 0x63, 0x00, 0x72, 0x00,
+                    0x6f, 0x00, 0x73, 0x00, 0x6f, 0x00, 0x66, 0x00,
+                    0x74, 0x00, 0x20, 0x00, 0x43, 0x00, 0x6f, 0x00,
+                    0x72, 0x00, 0x70, 0x00, 0x6f, 0x00, 0x72, 0x00,
+                    0x61, 0x00, 0x74, 0x00, 0x69, 0x00, 0x6f, 0x00,
+                    0x6e, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
+                    0x32, 0x00, 0x33, 0x00, 0x36, 0x00, 0x00, 0x00,
+                    0x0d, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00,
+                    0x03, 0x00, 0xb8, 0x00, 0x01, 0x00, 0x00, 0x00,
+                    0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+                    0x06, 0x00, 0x5c, 0x00, 0x52, 0x53, 0x41, 0x31,
+                    0x48, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00,
+                    0x3f, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
+                    0x01, 0xc7, 0xc9, 0xf7, 0x8e, 0x5a, 0x38, 0xe4,
+                    0x29, 0xc3, 0x00, 0x95, 0x2d, 0xdd, 0x4c, 0x3e,
+                    0x50, 0x45, 0x0b, 0x0d, 0x9e, 0x2a, 0x5d, 0x18,
+                    0x63, 0x64, 0xc4, 0x2c, 0xf7, 0x8f, 0x29, 0xd5,
+                    0x3f, 0xc5, 0x35, 0x22, 0x34, 0xff, 0xad, 0x3a,
+                    0xe6, 0xe3, 0x95, 0x06, 0xae, 0x55, 0x82, 0xe3,
+                    0xc8, 0xc7, 0xb4, 0xa8, 0x47, 0xc8, 0x50, 0x71,
+                    0x74, 0x29, 0x53, 0x89, 0x6d, 0x9c, 0xed, 0x70,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x08, 0x00, 0x48, 0x00, 0xa8, 0xf4, 0x31, 0xb9,
+                    0xab, 0x4b, 0xe6, 0xb4, 0xf4, 0x39, 0x89, 0xd6,
+                    0xb1, 0xda, 0xf6, 0x1e, 0xec, 0xb1, 0xf0, 0x54,
+                    0x3b, 0x5e, 0x3e, 0x6a, 0x71, 0xb4, 0xf7, 0x75,
+                    0xc8, 0x16, 0x2f, 0x24, 0x00, 0xde, 0xe9, 0x82,
+                    0x99, 0x5f, 0x33, 0x0b, 0xa9, 0xa6, 0x94, 0xaf,
+                    0xcb, 0x11, 0xc3, 0xf2, 0xdb, 0x09, 0x42, 0x68,
+                    0x29, 0x56, 0x58, 0x01, 0x56, 0xdb, 0x59, 0x03,
+                    0x69, 0xdb, 0x7d, 0x37, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+                    0x0e, 0x00, 0x0e, 0x00, 0x6d, 0x69, 0x63, 0x72,
+                    0x6f, 0x73, 0x6f, 0x66, 0x74, 0x2e, 0x63, 0x6f,
+                    0x6d, 0x00
+                };
+
+                stream.out_copy_bytes((char*)lic1, 314);
+                stream.mark_end();
+
+                BStream x224_header(256);
+                BStream mcs_header(256);
+                BStream sec_header(256);
+
+                SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
+                MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+                X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+                trans->send(x224_header.data, x224_header.size());
+                trans->send(mcs_header.data, mcs_header.size());
+                trans->send(sec_header.data, sec_header.size());
+                trans->send(stream.data, stream.size());
 
                 LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
                 this->state = WAITING_FOR_ANSWER_TO_LICENCE;
@@ -1430,41 +1541,81 @@ public:
                 LOG(LOG_INFO, "Front::WAITING_FOR_ANSWER_TO_LICENCE sec_flags=%x %u %u %u", sec.flags, tag, version, length);
 
                 switch (tag) {
-                case LICENSE_REQUEST:
+                case LIC::LICENSE_REQUEST:
                     LOG(LOG_INFO, "Front::LICENSE_REQUEST");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
                     {
                         BStream stream(65535);
-                        send_lic_response(stream);
-                        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+
+                        /* some compilers need unsigned char to avoid warnings */
+                        static uint8_t lic2[20] = { 0x80, 0x00, 0x10, 0x00, 0xff, 0x02, 0x10, 0x00,
+                                                 0x07, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
+                                                 0x28, 0x14, 0x00, 0x00
+                                               };
+
+                        stream.out_copy_bytes((char*)lic2, 20);
+                        stream.mark_end();
+
+                        BStream x224_header(256);
+                        BStream mcs_header(256);
+                        BStream sec_header(256);
+
+                        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+                        MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+                        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+                        trans->send(x224_header.data, x224_header.size());
+                        trans->send(mcs_header.data, mcs_header.size());
+                        trans->send(sec_header.data, sec_header.size());
+                        trans->send(stream.data, stream.size());
                     }
                     break;
-                case LICENSE_INFO:
+                case LIC::LICENSE_INFO:
                     LOG(LOG_INFO, "Front::LICENSE_INFO");
                     break;
-                case PLATFORM_CHALLENGE:
+                case LIC::PLATFORM_CHALLENGE:
                     LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE");
                     break;
-                case NEW_LICENSE:
+                case LIC::NEW_LICENSE:
                     LOG(LOG_INFO, "Front::NEW_LICENSE");
                     break;
-                case UPGRADE_LICENSE:
+                case LIC::UPGRADE_LICENSE:
                     LOG(LOG_INFO, "Front::UPGRADE_LICENSE");
                     break;
-                case ERROR_ALERT:
+                case LIC::ERROR_ALERT:
                     LOG(LOG_INFO, "Front::ERROR_ALERT");
                     break;
-                case NEW_LICENSE_REQUEST:
+                case LIC::NEW_LICENSE_REQUEST:
                     LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
                     {
                         BStream stream(65535);
-                        send_lic_response(stream);
-                        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+
+                        /* some compilers need unsigned char to avoid warnings */
+                        static uint8_t lic2[16] = { 0xff, 0x02, 0x10, 0x00,
+                                                 0x07, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
+                                                 0x28, 0x14, 0x00, 0x00
+                                               };
+
+                        stream.out_copy_bytes((char*)lic2, 16);
+                        stream.mark_end();
+
+                        BStream x224_header(256);
+                        BStream mcs_header(256);
+                        BStream sec_header(256);
+
+                        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0, 0);
+                        MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+                        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+                        trans->send(x224_header.data, x224_header.size());
+                        trans->send(mcs_header.data, mcs_header.size());
+                        trans->send(sec_header.data, sec_header.size());
+                        trans->send(stream.data, stream.size());
 
                     }
                     break;
-                case PLATFORM_CHALLENGE_RESPONSE:
+                case LIC::PLATFORM_CHALLENGE_RESPONSE:
                     LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE_RESPONSE");
                     break;
                 default:
@@ -1752,8 +1903,6 @@ public:
             LOG(LOG_INFO, "send_data_update_sync");
         }
         BStream stream(65536);
-        Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -1762,14 +1911,24 @@ public:
         // Payload
         stream.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
         stream.out_clear_bytes(2);
+        stream.mark_end();
 
         // Packet trailer
         sdata.emit_end();
         sctrl.emit_end();
-        sec.emit_end();
-        stream.mark_end();
 
-        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+        trans->send(x224_header.data, x224_header.size());
+        trans->send(mcs_header.data, mcs_header.size());
+        trans->send(sec_header.data, sec_header.size());
+        trans->send(stream.data, stream.size());
     }
 
 
@@ -1780,8 +1939,6 @@ public:
         LOG(LOG_INFO, "Front::send_demand_active");
 
         BStream stream(65536);
-        Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DEMANDACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
 
@@ -1847,7 +2004,7 @@ public:
         pointer_caps.pointerCacheSize = 0x19;
         pointer_caps.log("Sending to client");
         pointer_caps.emit(stream);
-         caps_count++;
+        caps_count++;
 
         ShareCaps share_caps;
         share_caps.nodeId = this->userid + MCS_USERCHANNEL_BASE;
@@ -1879,13 +2036,23 @@ public:
         caps_count_ptr[1] = caps_count >> 8;
         caps_count_ptr[2] = caps_count >> 16;
         caps_count_ptr[3] = caps_count >> 24;
+        stream.mark_end();
 
         // Packet trailer
         sctrl.emit_end();
-        sec.emit_end();
-        stream.mark_end();
 
-        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+        trans->send(x224_header.data, x224_header.size());
+        trans->send(mcs_header.data, mcs_header.size());
+        trans->send(sec_header.data, sec_header.size());
+        trans->send(stream.data, stream.size());
     }
 
 
@@ -2122,8 +2289,6 @@ public:
         LOG(LOG_INFO, "send_synchronize");
 
         BStream stream(65536);
-        Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -2132,14 +2297,24 @@ public:
         // Payload
         stream.out_uint16_le(1); /* messageType */
         stream.out_uint16_le(1002); /* control id */
+        stream.mark_end();
 
         // Packet trailer
         sdata.emit_end();
         sctrl.emit_end();
-        sec.emit_end();
-        stream.mark_end();
 
-        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+        trans->send(x224_header.data, x224_header.size());
+        trans->send(mcs_header.data, mcs_header.size());
+        trans->send(sec_header.data, sec_header.size());
+        trans->send(stream.data, stream.size());
     }
 
 // 2.2.1.15.1 Control PDU Data (TS_CONTROL_PDU)
@@ -2169,8 +2344,6 @@ public:
         LOG(LOG_INFO, "send_control action=%u", action);
 
         BStream stream(65536);
-        Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -2180,14 +2353,24 @@ public:
         stream.out_uint16_le(action);
         stream.out_uint16_le(0); /* userid */
         stream.out_uint32_le(1002); /* control id */
+        stream.mark_end();
 
         // Packet trailer
         sdata.emit_end();
         sctrl.emit_end();
-        sec.emit_end();
-        stream.mark_end();
 
-        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+        trans->send(x224_header.data, x224_header.size());
+        trans->send(mcs_header.data, mcs_header.size());
+        trans->send(sec_header.data, sec_header.size());
+        trans->send(stream.data, stream.size());
     }
 
 
@@ -2222,8 +2405,6 @@ public:
                               };
 
         BStream stream(65536);
-        Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
@@ -2231,14 +2412,24 @@ public:
 
         // Payload
         stream.out_copy_bytes((char*)g_fontmap, 172);
+        stream.mark_end();
 
         // Packet trailer
         sdata.emit_end();
         sctrl.emit_end();
-        sec.emit_end();
-        stream.mark_end();
 
-        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+        trans->send(x224_header.data, x224_header.size());
+        trans->send(mcs_header.data, mcs_header.size());
+        trans->send(sec_header.data, sec_header.size());
+        trans->send(stream.data, stream.size());
     }
 
     /* PDUTYPE_DATAPDU */
@@ -2415,20 +2606,28 @@ public:
                 // if user really wants to disconnect */
 
                 BStream stream(65536);
-                Sec sec(stream, this->encrypt);
-                sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
                 ShareControl sctrl(stream);
                 sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
                 ShareData sdata_out(stream);
                 sdata_out.emit_begin(PDUTYPE2_SHUTDOWN_DENIED, this->share_id, RDP::STREAM_MED);
+                stream.mark_end();
 
                 // Packet trailer
                 sdata_out.emit_end();
                 sctrl.emit_end();
-                sec.emit_end();
-                stream.mark_end();
 
-                this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+                BStream x224_header(256);
+                BStream mcs_header(256);
+                BStream sec_header(256);
+
+                SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+                MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+                X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+                trans->send(x224_header.data, x224_header.size());
+                trans->send(mcs_header.data, mcs_header.size());
+                trans->send(sec_header.data, sec_header.size());
+                trans->send(stream.data, stream.size());
             }
         break;
         case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
@@ -2567,17 +2766,24 @@ public:
         LOG(LOG_INFO, "send_deactive");
 
         BStream stream(65536);
-        Sec sec(stream, this->encrypt);
-        sec.emit_begin(this->client_info.crypt_level?SEC::SEC_ENCRYPT:0);
-        ShareControl sctrl(stream);
-        sctrl.emit_begin(PDUTYPE_DEACTIVATEALLPDU, this->userid + MCS_USERCHANNEL_BASE);
-
-        // Packet trailer
-        sctrl.emit_end();
-        sec.emit_end();
         stream.mark_end();
 
-        this->send_data_indication(MCS_GLOBAL_CHANNEL, stream);
+        ShareControl sctrl(stream);
+        sctrl.emit_begin(PDUTYPE_DEACTIVATEALLPDU, this->userid + MCS_USERCHANNEL_BASE);
+        sctrl.emit_end();
+
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+        trans->send(x224_header.data, x224_header.size());
+        trans->send(mcs_header.data, mcs_header.size());
+        trans->send(sec_header.data, sec_header.size());
+        trans->send(stream.data, stream.size());
     }
 
 

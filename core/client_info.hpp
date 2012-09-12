@@ -61,7 +61,7 @@ struct ClientInfo {
     char directory[512];
     int rdp_compression;
     int rdp_autologin;
-    int crypt_level; /* 1, 2, 3 = low, medium, high */
+    int encryptionLevel; /* 1, 2, 3 = low, medium, high */
     int channel_code; /* 0 = no channels 1 = channels */
     int sound_code; /* 1 = leave sound at server */
     int is_mce;
@@ -70,7 +70,7 @@ struct ClientInfo {
                            2 = arbitrary dimensions */
     bool console_session;
 
-    ClientInfo(const int crypt_level, const int channel_code, const bool bitmap_compression, const bool bitmap_cache) {
+    ClientInfo(const int encryptionLevel, const int channel_code, const bool bitmap_compression, const bool bitmap_cache) {
         this->bpp = 0;
         this->width = 0;
         this->height = 0;
@@ -124,8 +124,8 @@ struct ClientInfo {
 
         this->use_bitmap_comp = bitmap_compression?1:0;
 
-        /*crypt_level: 1, 2, 3 = low, medium, high */
-        this->crypt_level = crypt_level + 1; // ini->globals.crypt_level + 1;
+        /*encryptionLevel: 1, 2, 3 = low, medium, high */
+        this->encryptionLevel = encryptionLevel + 1; // ini->globals.encryptionLevel + 1;
 
         /* channel_code : 0 = no channels 1 = channels */
         this->channel_code = channel_code; // ini->globals.channel_code;

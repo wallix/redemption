@@ -21,7 +21,7 @@ rule defines ( properties * )
     defs += <define>SHARE_PATH='\"/usr/local/share/rdpproxy\"' ;
     defs += <define>CFG_PATH='\"/etc/rdpproxy\"' ;
     defs += <define>FIXTURES_PATH='\"./tests/fixtures\"' ;
-    defs += <define>LICENCE_PATH='\"/var/certs/redemption\"' ;
+    defs += <define>LICENSE_PATH='\"/var/certs/redemption\"' ;
     if [ os.environ VERBOSE ]
     {
         defs += <define>VERBOSE ;
@@ -194,11 +194,11 @@ unit-test test_compact_to_aligned : tests/test_compact_to_aligned.cpp libboost_u
 unit-test test_region : tests/test_region.cpp libboost_unit_test ;
 unit-test test_strings : tests/test_strings.cpp libboost_unit_test ;
 unit-test test_transport : tests/test_transport.cpp libboost_unit_test ;
-unit-test test_RDP_graphic_to_file : tests/test_RDP_graphic_to_file.cpp png z libboost_unit_test z d3des openssl crypto ;
-unit-test test_RDP_graphic_to_file_2 : tests/test_RDP_graphic_to_file_2.cpp png z libboost_unit_test z d3des openssl crypto ;
-unit-test test_RDP_graphic_to_file_3 : tests/test_RDP_graphic_to_file_3.cpp png z libboost_unit_test z d3des openssl crypto ;
-unit-test test_RDP_graphic_to_file_4 : tests/test_RDP_graphic_to_file_4.cpp png z libboost_unit_test z d3des openssl crypto ;
-unit-test test_RDP_graphic_to_file_5 : tests/test_RDP_graphic_to_file_5.cpp png z libboost_unit_test z d3des openssl crypto ;
+unit-test test_RDP_graphic_to_file : tests/test_RDP_graphic_to_file.cpp png z libboost_unit_test z openssl crypto ;
+unit-test test_RDP_graphic_to_file_2 : tests/test_RDP_graphic_to_file_2.cpp png z libboost_unit_test z openssl crypto ;
+unit-test test_RDP_graphic_to_file_3 : tests/test_RDP_graphic_to_file_3.cpp png z libboost_unit_test z openssl crypto ;
+unit-test test_RDP_graphic_to_file_4 : tests/test_RDP_graphic_to_file_4.cpp png z libboost_unit_test z openssl crypto ;
+unit-test test_RDP_graphic_to_file_5 : tests/test_RDP_graphic_to_file_5.cpp png z libboost_unit_test z openssl crypto ;
 
 unit-test test_primary_order_opaque_rect : tests/orders/primary/opaque_rect.cpp libboost_unit_test ;
 unit-test test_primary_order_scr_blt : tests/orders/primary/scr_blt.cpp libboost_unit_test ;
@@ -212,7 +212,7 @@ unit-test test_secondary_order_bmp_cache : tests/orders/secondary/bmp_cache.cpp 
 
 unit-test test_x224 : tests/test_x224.cpp libboost_unit_test ;
 unit-test test_mcs : tests/test_mcs.cpp libboost_unit_test ;
-unit-test test_gcc : tests/test_gcc.cpp libboost_unit_test ;
+unit-test test_gcc : tests/test_gcc.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_sec : tests/test_sec.cpp openssl crypto libboost_unit_test ;
 unit-test test_rdp : tests/test_rdp.cpp libboost_unit_test ;
 unit-test test_payload : tests/test_payload.cpp libboost_unit_test ;
@@ -222,8 +222,8 @@ unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test : 
 unit-test test_dico : tests/test_dico.cpp libboost_unit_test : ;
 unit-test test_colors : tests/test_colors.cpp libboost_unit_test : ;
 unit-test test_libpng : tests/test_libpng.cpp libboost_unit_test png z : ;
-unit-test test_capture : tests/test_capture.cpp libboost_unit_test png z d3des openssl crypto ;
-#unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp libboost_unit_test png z d3des openssl crypto ;
+unit-test test_capture : tests/test_capture.cpp libboost_unit_test png z openssl crypto ;
+#unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp libboost_unit_test png z openssl crypto ;
 
 unit-test test_timer_capture : tests/test_timer_capture.cpp libboost_unit_test ;
 

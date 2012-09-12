@@ -2154,6 +2154,18 @@ namespace GCC
             , serverRandomLen(32)
             , serverCertLen(184)
             {
+                for (size_t i = 0 ; i < sizeof(this->x509.cert) / sizeof(this->x509.cert[0]) ; i++){
+                    this->x509.cert[i].cert = NULL;
+                }
+            }
+
+            ~SCSecurity(){
+                for (size_t i = 0 ; i < sizeof(this->x509.cert) / sizeof(this->x509.cert[0]) ; i++){
+                    if (this->x509.cert[i].cert){
+                        X509_free(this->x509.cert[i].cert);
+                        this->x509.cert[i].cert = NULL;
+                    }
+                }
             }
 
             void emit(Stream & stream)
@@ -2348,9 +2360,103 @@ namespace GCC
             }
         };
 
+
+        // 2.2.1.3.3 Client Security Data (TS_UD_CS_SEC)
+        // ---------------------------------------------
+        // The TS_UD_CS_SEC data block contains security-related information used to
+        // advertise client cryptographic support. This information is only relevant
+        // when Standard RDP Security mechanisms (section 5.3) will be used. See
+        // sections 3 and 5.3.2 for a detailed discussion of how this information is
+        // used.
+
+        // header (4 bytes): GCC user data block header as described in User Data
+        //                   Header (section 2.2.1.3.1). The User Data Header type
+        //                   field MUST be set to CS_SECURITY (0xC002).
+
+        // encryptionMethods (4 bytes): A 32-bit, unsigned integer. Cryptographic
+        //                              encryption methods supported by the client
+        //                              and used in conjunction with Standard RDP
+        //                              Security The server MUST select one of these
+        //                              methods. Section 5.3.2 describes how the
+        //                              client and server negotiate the security
+        //                              parameters for a given connection.
+        //
+        //           Value                           Meaning
+        // -------------------------------------------------------------------------
+        //    40BIT_ENCRYPTION_FLAG   40-bit session keys MUST be used to encrypt
+        //       0x00000001           data (with RC4) and generate Message
+        //                            Authentication Codes (MAC).
+        // -------------------------------------------------------------------------
+        //    128BIT_ENCRYPTION_FLAG  128-bit session keys MUST be used to encrypt
+        //       0x00000002           data (with RC4) and generate MACs.
+        // -------------------------------------------------------------------------
+        //    56BIT_ENCRYPTION_FLAG   56-bit session keys MUST be used to encrypt
+        //       0x00000008           data (with RC4) and generate MACs.
+        // -------------------------------------------------------------------------
+        //   FIPS_ENCRYPTION_FLAG All encryption and Message Authentication Code
+        //                            generation routines MUST be Federal
+        //       0x00000010           Information Processing Standard (FIPS) 140-1
+        //                            compliant.
+
+        // extEncryptionMethods (4 bytes): A 32-bit, unsigned integer. This field is
+        //                               used exclusively for the French locale.
+        //                               In French locale clients, encryptionMethods
+        //                               MUST be set to 0 and extEncryptionMethods
+        //                               MUST be set to the value to which
+        //                               encryptionMethods would have been set.
+        //                               For non-French locale clients, this field
+        //                               MUST be set to 0
+
+        struct CSSecurity {
+            enum {
+                  _40BIT_ENCRYPTION_FLAG = 0x01
+                , _128BIT_ENCRYPTION_FLAG = 0x02
+                , _56BIT_ENCRYPTION_FLAG = 0x08
+                , FIPS_ENCRYPTION_FLAG = 0x10
+            };
+
+            uint16_t userDataType;
+            uint16_t length;
+            uint32_t encryptionMethods;
+            uint32_t extEncryptionMethods;
+
+            CSSecurity()
+            : userDataType(CS_SECURITY)
+            , length(12)
+            , encryptionMethods(_40BIT_ENCRYPTION_FLAG | _128BIT_ENCRYPTION_FLAG)
+            , extEncryptionMethods(0)
+            {
+            }
+
+            void emit(Stream & stream)
+            {
+                stream.out_uint16_le(this->userDataType);
+                stream.out_uint16_le(this->length);
+                stream.out_uint32_le(this->encryptionMethods);
+                stream.out_uint32_le(this->extEncryptionMethods);
+                stream.mark_end();
+            }
+
+            void recv(Stream & stream)
+            {
+                this->userDataType         = stream.in_uint16_le();
+                this->length               = stream.in_uint16_le();
+                this->encryptionMethods    = stream.in_uint32_le();
+                this->extEncryptionMethods = stream.in_uint32_le();
+            }
+
+            void log(const char * msg)
+            {
+                // --------------------- Base Fields ---------------------------------------
+                LOG(LOG_INFO, "%s GCC User Data CS_SECURITY (%u bytes)", msg, this->length);
+                LOG(LOG_INFO, "CSSecGccUserData::encryptionMethods %u", this->encryptionMethods);
+                LOG(LOG_INFO, "CSSecGccUserData::extEncryptionMethods %u", this->extEncryptionMethods);
+
+            }
+        };
+
+
     }; /* namespace UserData */
 }; /* namespace GCC */
-
-#include "gcc_conference_user_data/cs_sec.hpp"
 
 #endif

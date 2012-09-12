@@ -43,8 +43,8 @@
 #define PID_PATH "/var/run"
 #endif
 
-#if !defined(LICENCE_PATH)
-#define LICENCE_PATH "/var/certs/redemption"
+#if !defined(LICENSE_PATH)
+#define LICENSE_PATH "/var/certs/redemption"
 #endif
 
 #if !defined(SBIN_PATH)
@@ -85,14 +85,6 @@ enum {
     SEC_MAX_MODULUS_SIZE  = 256,
     SEC_PADDING_SIZE  =  8,
     SEC_EXPONENT_SIZE =  4
-};
-
-
-
-
-enum {
-    LICENCE_TAG_USER               = 0x000f,
-    LICENCE_TAG_HOST               = 0x0010,
 };
 
 /* RDP PDU codes */
