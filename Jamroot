@@ -21,7 +21,7 @@ rule defines ( properties * )
     defs += <define>SHARE_PATH='\"/usr/local/share/rdpproxy\"' ;
     defs += <define>CFG_PATH='\"/etc/rdpproxy\"' ;
     defs += <define>FIXTURES_PATH='\"./tests/fixtures\"' ;
-    defs += <define>LICENCE_PATH='\"/var/certs/redemption\"' ;
+    defs += <define>LICENSE_PATH='\"/var/certs/redemption\"' ;
     if [ os.environ VERBOSE ]
     {
         defs += <define>VERBOSE ;

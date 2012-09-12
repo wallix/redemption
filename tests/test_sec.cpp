@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
     t.recv(&stream.end, length);
 
     CryptContext decrypt;
-    decrypt.rc4_key_size = 1;
+    decrypt.encryptionMethod = 1;
     decrypt.rc4_key_len = 8;
     memcpy(decrypt.key, "\xd1\x26\x9e\x63\xec\x51\x65\x1d\x89\x5c\x5a\x2a\x29\xef\x08\x4c", 16);
     memcpy(decrypt.update_key, decrypt.key, 16);
@@ -356,83 +356,95 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 
 BOOST_AUTO_TEST_CASE(TestSend_SecLicensePacket)
 {
-//    BStream stream(1024);
+    const char sec_pkt[] = 
+    "\x80\x00\x00\x00" // SEC::SEC_LICENSE_PKT
+    "\x01"             // LICENSE_REQUEST
+    "\x02"             // PREAMBLE_VERSION_2_0 (RDP 4.0)
+    "\x3e\x01"         // wMsgSize = 318 including preamble
+    // 32 bytes Server Random
+    "\x7b\x3c\x31\xa6\xae\xe8\x74\xf6\xb4\xa5\x03\x90\xe7\xc2\xc7\x39"
+    "\xba\x53\x1c\x30\x54\x6e\x90\x05\xd0\x05\xce\x44\x18\x91\x83\x81"
+    // ProductInfo::dwVersion (4 bytes): A 32-bit unsigned integer that contains the license version information.
+    // The high-order word contains the major version of the operating system on which the terminal
+    // server is running, while the low-order word contains the minor version.<6>
+    "\x00\x00\x04\x00"
+    // ProductInfo::cbCompanyName (4 bytes): An unsigned 32-bit integer that contains the number of bytes in
+    // the pbCompanyName field, including the terminating null character. This value MUST be
+    // greater than zero.
+    "\x2c\x00\x00\x00" // len = 44
+    // ProductInfo::pbCompanyName (variable): Contains a null-terminated Unicode string that specifies the
+    // company name.<7>
+    "\x4d\x00\x69\x00\x63\x00\x72\x00\x6f\x00\x73\x00\x6f\x00\x66\x00" //M.i.c.r.o.s.o.f.
+    "\x74\x00\x20\x00\x43\x00\x6f\x00\x72\x00\x70\x00\x6f\x00\x72\x00" //t. .C.o.r.p.o.r.
+    "\x61\x00\x74\x00\x69\x00\x6f\x00\x6e\x00\x00\x00"                 //a.t.i.o.n...
+    // ProductInfo::cbProductId (4 bytes): An unsigned 32-bit integer that contains the number of bytes in the
+    // pbProductId field, including the terminating null character. This value MUST be greater than
+    // zero.
+    "\x08\x00\x00\x00" // len = 8
+    // ProductInfo::pbProductId (variable): Contains a null-terminated Unicode string that identifies the type of
+    // the license that is required by the terminal server. It MAY have the following string value. 
+    // "A02" Per device or per user license
+    "\x32\x00\x33\x00\x36\x00\x00\x00" //2.3.6...
 
-//    const char sec_pkt[] = 
-//    "\x80\x00\x00\x00" // SEC::SEC_LICENSE_PKT
-//    "\x01"             // LICENSE_REQUEST
-//    "\x02"             // PREAMBLE_VERSION_2_0 (RDP 4.0)
-//    "\x3e\x01"         // wMsgSize = 318 including preamble
-//    // 32 bytes Server Random
-//    "\x7b\x3c\x31\xa6\xae\xe8\x74\xf6\xb4\xa5\x03\x90\xe7\xc2\xc7\x39"
-//    "\xba\x53\x1c\x30\x54\x6e\x90\x05\xd0\x05\xce\x44\x18\x91\x83\x81"
-//    // ProductInfo::dwVersion (4 bytes): A 32-bit unsigned integer that contains the license version information.
-//    // The high-order word contains the major version of the operating system on which the terminal
-//    // server is running, while the low-order word contains the minor version.<6>
-//    "\x00\x00\x04\x00"
-//    // ProductInfo::cbCompanyName (4 bytes): An unsigned 32-bit integer that contains the number of bytes in
-//    // the pbCompanyName field, including the terminating null character. This value MUST be
-//    // greater than zero.
-//    "\x2c\x00\x00\x00" // len = 44
-//    // ProductInfo::pbCompanyName (variable): Contains a null-terminated Unicode string that specifies the
-//    // company name.<7>
-//    "\x4d\x00\x69\x00\x63\x00\x72\x00\x6f\x00\x73\x00\x6f\x00\x66\x00" //M.i.c.r.o.s.o.f.
-//    "\x74\x00\x20\x00\x43\x00\x6f\x00\x72\x00\x70\x00\x6f\x00\x72\x00" //t. .C.o.r.p.o.r.
-//    "\x61\x00\x74\x00\x69\x00\x6f\x00\x6e\x00\x00\x00"                 //a.t.i.o.n...
-//    // ProductInfo::cbProductId (4 bytes): An unsigned 32-bit integer that contains the number of bytes in the
-//    // pbProductId field, including the terminating null character. This value MUST be greater than
-//    // zero.
-//    "\x08\x00\x00\x00" // len = 8
-//    // ProductInfo::pbProductId (variable): Contains a null-terminated Unicode string that identifies the type of
-//    // the license that is required by the terminal server. It MAY have the following string value. 
-//    // "A02" Per device or per user license
-//    "\x32\x00\x33\x00\x36\x00\x00\x00" //2.3.6...
+    // KeyExchangeList (variable): A Licensing Binary BLOB structure (see [MS-RDPBCGR] section
+    //  2.2.1.12.1.2) of type BB_KEY_EXCHG_ALG_BLOB (0x000D). This BLOB contains the list of 32-
+    //  bit unsigned integers specifying key exchange algorithms that the server supports. The
+    //  terminal server supports only one key exchange algorithm as of now, so the BLOB contains
+    //  the following value.
 
-//    // KeyExchangeList (variable): A Licensing Binary BLOB structure (see [MS-RDPBCGR] section
-//    //  2.2.1.12.1.2) of type BB_KEY_EXCHG_ALG_BLOB (0x000D). This BLOB contains the list of 32-
-//    //  bit unsigned integers specifying key exchange algorithms that the server supports. The
-//    //  terminal server supports only one key exchange algorithm as of now, so the BLOB contains
-//    //  the following value.
+    // 0x00000001 KEY_EXCHANGE_ALG_RSA Indicates RSA key exchange algorithm with a 512-bit asymmetric key.<3>
 
-//    // 0x00000001 KEY_EXCHANGE_ALG_RSA Indicates RSA key exchange algorithm with a 512-bit asymmetric key.<3>
+    "\x0d\x00"         // KeyExchangeList::wBlobType = BB_KEY_EXCHG_ALG_BLOB (0x000D)
+    "\x04\x00"         // KeyExchangeList::wBlobLen = 4
+    "\x01\x00\x00\x00" // KEY_EXCHANGE_ALG_RSA
 
-//    "\x0d\x00"         // KeyExchangeList::wBlobType = BB_KEY_EXCHG_ALG_BLOB (0x000D)
-//    "\x04\x00"         // KeyExchangeList::wBlobLen = 4
-//    "\x01\x00\x00\x00" // KEY_EXCHANGE_ALG_RSA
+    // ServerCertificate (variable): A Licensing Binary BLOB structure (see [MS-RDPBCGR] section
+    //  2.2.1.12.1.2) of type BB_CERTIFICATE_BLOB (0x0003). This BLOB contains the terminal
+    //  server certificate (see section 2.2.1.4). The terminal server can choose not to send the
+    //  certificate by setting the wblobLen field in the Licensing Binary BLOB structure to 0. If
+    //  encryption is in effect and is already protecting RDP traffic, the licensing protocol MAY<4>
+    //  choose not to send the server certificate (for RDP security measures, see [MS-RDPBCGR]
+    //  sections 5.3 and 5.4). If the licensing protocol chooses not to send the server certificate, then
+    //  the client uses the public key obtained from the server certificate sent as part of Server
+    //  Security Data in the Server MCS Connect Response PDU (see [MS-RDPBCGR] section 2.2.1.4).
 
-//    // ServerCertificate (variable): A Licensing Binary BLOB structure (see [MS-RDPBCGR] section
-//    //  2.2.1.12.1.2) of type BB_CERTIFICATE_BLOB (0x0003). This BLOB contains the terminal
-//    //  server certificate (see section 2.2.1.4). The terminal server can choose not to send the
-//    //  certificate by setting the wblobLen field in the Licensing Binary BLOB structure to 0. If
-//    //  encryption is in effect and is already protecting RDP traffic, the licensing protocol MAY<4>
-//    //  choose not to send the server certificate (for RDP security measures, see [MS-RDPBCGR]
-//    //  sections 5.3 and 5.4). If the licensing protocol chooses not to send the server certificate, then
-//    //  the client uses the public key obtained from the server certificate sent as part of Server
-//    //  Security Data in the Server MCS Connect Response PDU (see [MS-RDPBCGR] section 2.2.1.4).
+    "\x03\x00" // ServerCertificate::wBlobType = BB_CERTIFICATE_BLOB (0x0003)
+    "\xb8\x00" // ServerCertificate::wBlobLen = 184
+    "\x01\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x06\x00\x5c\x00"
+    "\x52\x53\x41\x31\x48\x00\x00\x00\x00\x02\x00\x00\x3f\x00\x00\x00"
+    "\x01\x00\x01\x00\x01\xc7\xc9\xf7\x8e\x5a\x38\xe4\x29\xc3\x00\x95"
+    "\x2d\xdd\x4c\x3e\x50\x45\x0b\x0d\x9e\x2a\x5d\x18\x63\x64\xc4\x2c"
+    "\xf7\x8f\x29\xd5\x3f\xc5\x35\x22\x34\xff\xad\x3a\xe6\xe3\x95\x06"
+    "\xae\x55\x82\xe3\xc8\xc7\xb4\xa8\x47\xc8\x50\x71\x74\x29\x53\x89"
+    "\x6d\x9c\xed\x70\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x48\x00"
+    "\xa8\xf4\x31\xb9\xab\x4b\xe6\xb4\xf4\x39\x89\xd6\xb1\xda\xf6\x1e"
+    "\xec\xb1\xf0\x54\x3b\x5e\x3e\x6a\x71\xb4\xf7\x75\xc8\x16\x2f\x24"
+    "\x00\xde\xe9\x82\x99\x5f\x33\x0b\xa9\xa6\x94\xaf\xcb\x11\xc3\xf2"
+    "\xdb\x09\x42\x68\x29\x56\x58\x01\x56\xdb\x59\x03\x69\xdb\x7d\x37"
+    "\x00\x00\x00\x00\x00\x00\x00\x00"
 
-//    "\x03\x00" // ServerCertificate::wBlobType = BB_CERTIFICATE_BLOB (0x0003)
-//    "\xb8\x00" // ServerCertificate::wBlobLen = 184
-//    "\x01\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x06\x00\x5c\x00"
-//    "\x52\x53\x41\x31\x48\x00\x00\x00\x00\x02\x00\x00\x3f\x00\x00\x00"
-//    "\x01\x00\x01\x00\x01\xc7\xc9\xf7\x8e\x5a\x38\xe4\x29\xc3\x00\x95"
-//    "\x2d\xdd\x4c\x3e\x50\x45\x0b\x0d\x9e\x2a\x5d\x18\x63\x64\xc4\x2c"
-//    "\xf7\x8f\x29\xd5\x3f\xc5\x35\x22\x34\xff\xad\x3a\xe6\xe3\x95\x06"
-//    "\xae\x55\x82\xe3\xc8\xc7\xb4\xa8\x47\xc8\x50\x71\x74\x29\x53\x89"
-//    "\x6d\x9c\xed\x70\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x48\x00"
-//    "\xa8\xf4\x31\xb9\xab\x4b\xe6\xb4\xf4\x39\x89\xd6\xb1\xda\xf6\x1e"
-//    "\xec\xb1\xf0\x54\x3b\x5e\x3e\x6a\x71\xb4\xf7\x75\xc8\x16\x2f\x24"
-//    "\x00\xde\xe9\x82\x99\x5f\x33\x0b\xa9\xa6\x94\xaf\xcb\x11\xc3\xf2"
-//    "\xdb\x09\x42\x68\x29\x56\x58\x01\x56\xdb\x59\x03\x69\xdb\x7d\x37"
-//    "\x00\x00\x00\x00\x00\x00\x00\x00"
+    // ScopeList (variable): A variable-length Scope List structure that contains a list of entities that
+    //  issued the client license. This list is used by the client in conjunction with ProductInfo to
+    //  search for an appropriate license in its license store.<5>
+    "\x01\x00\x00\x00" // ScopeList::ScopeCount = 1
+    "\x0e\x00"         // ScopeArray[0]::wBlobType = BB_SCOPE_BLOB
+    "\x0e\x00"         // // ScopeArray[0]::wBlobLen = 14
+    "\x6d\x69\x63\x72\x6f\x73\x6f\x66\x74\x2e\x63\x6f\x6d\x00" //....microsoft.com.
+    ;
 
-//    // ScopeList (variable): A variable-length Scope List structure that contains a list of entities that
-//    //  issued the client license. This list is used by the client in conjunction with ProductInfo to
-//    //  search for an appropriate license in its license store.<5>
-//    "\x01\x00\x00\x00" // ScopeList::ScopeCount = 1
-//    "\x0e\x00"         // ScopeArray[0]::wBlobType = BB_SCOPE_BLOB
-//    "\x0e\x00"         // // ScopeArray[0]::wBlobLen = 14
-//    "\x6d\x69\x63\x72\x6f\x73\x6f\x66\x74\x2e\x63\x6f\x6d\x00" //....microsoft.com.
-//    ;
+    BStream stream(2048);
+    size_t datalen = sizeof(sec_pkt) - 1;
+    memcpy(stream.data, sec_pkt, datalen);
+    stream.end = stream.data + datalen;
+    BOOST_CHECK_EQUAL(datalen, stream.size());
+    BOOST_CHECK_EQUAL((uint32_t)322, stream.size()); 
+
+    SEC::Sec_Recv sec(stream);
+    BOOST_CHECK_EQUAL((uint32_t)SEC::SEC_LICENSE_PKT, sec.flags);
+    BOOST_CHECK_EQUAL((uint32_t)(datalen - 4), sec.payload.size());
+    BOOST_CHECK_EQUAL((uint32_t)318, sec.payload.size());
+    BOOST_CHECK_EQUAL(0, memcmp(sec.payload.data, sec_pkt + 4, 318));
+
 
 //    size_t length = sizeof(sec_pkt);
 //    SEC::SecLicenseRequest_Send sec(stream);

@@ -30,8 +30,16 @@ int recorder_app(RecorderOption& opt, int argc, char** argv,
     opt.accept_output_type<>(RecorderActionStringIterator(actions),
                              RecorderActionStringIterator(actions + n));
 
-    if (!parse_command_line(opt, argc, argv)){
-        return 0;
+    try
+    {
+        if (!parse_command_line(opt, argc, argv)){
+            return 0;
+        }
+    }
+    catch(boost::program_options::error& error)
+    {
+        std::cerr << "parse command line: " << error.what() << std::endl;
+        return -1;
     }
 
     InputType::enum_t itype;

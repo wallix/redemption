@@ -973,7 +973,7 @@ const char outdata[] =
 // Order caps::textANSICodePage 0 |
 // Order caps::pad2octetsE 0 |
 // Sending confirm active PDU |
-// sec_out crypt_level=2 |
+// sec_out encryptionLevel=2 |
 // 0000 08 00 00 00 15 03 3a 00 01 00 0a 00             ......:..... |
 // ShareControlOut |
 // 0000 00 00 13 00 ec 03                               ...... |
@@ -8165,7 +8165,7 @@ const char indata[] =
 // Order caps::textANSICodePage 0 |
 // Order caps::pad2octetsE 0 |
 // Sending confirm active PDU |
-// sec_out crypt_level=2 |
+// sec_out encryptionLevel=2 |
 // 0000 08 00 00 00 15 03 3a 00 01 00 0a 00             ......:..... |
 // ShareControlOut |
 // 0000 00 00 13 00 ec 03                               ...... |

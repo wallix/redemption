@@ -264,7 +264,36 @@ struct CryptContext
     uint8_t update_key[16];
     int rc4_key_len;
     RC4_KEY rc4_info;
-    int rc4_key_size; /* 1 = 40-bit, 2 = 128-bit */
+
+    // encryptionMethod (4 bytes): A 32-bit, unsigned integer. The selected
+    // cryptographic method to use for the session. When Enhanced RDP Security
+    // (section 5.4) is being used, this field MUST be set to ENCRYPTION_METHOD_NONE
+    // (0).
+
+    // +-------------------------------------+-------------------------------------+
+    // | 0x00000000 ENCRYPTION_METHOD_NONE   | No encryption or Message            |
+    // |                                     | Authentication Codes (MACs) will be |
+    // |                                     | used.                               |
+    // +-------------------------------------+-------------------------------------+
+    // | 0x00000001 ENCRYPTION_METHOD_40BIT  | 40-bit session keys will be used to |
+    // |                                     | encrypt data (with RC4) and generate|
+    // |                                     | MACs.                               |
+    // +-------------------------------------+-------------------------------------+
+    // | 0x00000002 ENCRYPTION_METHOD_128BIT | 128-bit session keys will be used   |
+    // |                                     | to encrypt data (with RC4) and      |
+    // |                                     | generate MACs.                      |
+    // +-------------------------------------+-------------------------------------+
+    // | 0x00000008 ENCRYPTION_METHOD_56BIT  | 56-bit session keys will be used to |
+    // |                                     | encrypt data (with RC4) and generate|
+    // |                                     | MACs.                               |
+    // +-------------------------------------+-------------------------------------+
+    // | 0x00000010 ENCRYPTION_METHOD_FIPS   | All encryption and Message          |
+    // |                                     | Authentication Code                 |
+    // |                                     | generation routines will            |
+    // |                                     | be FIPS 140-1 compliant.            |
+    // +-------------------------------------+-------------------------------------+
+    uint32_t encryptionMethod;
+
 
     CryptContext() : use_count(0)
     {
@@ -273,10 +302,10 @@ struct CryptContext
         memset(this->update_key, 0, 16);
         this->rc4_key_len = 0;
         memset(&rc4_info, 0, sizeof(rc4_info));
-        this->rc4_key_size = 0;
+        this->encryptionMethod = 0;
     }
 
-    void generate_key(uint8_t * key_block, const uint8_t* salt1, const uint8_t* salt2, uint32_t rc4_key_size)
+    void generate_key(uint8_t * key_block, const uint8_t* salt1, const uint8_t* salt2, uint32_t encryptionMethod)
     {
         // 16-byte transformation used to generate export keys (6.2.2).
         ssllib ssl;
@@ -287,13 +316,13 @@ struct CryptContext
         md5.update(salt2, 32);
         md5.final(this->key);
 
-        if (rc4_key_size == 1) {
+        if (encryptionMethod == 1) {
             // LOG(LOG_DEBUG, "40-bit encryption enabled");
             ssl.sec_make_40bit(this->key);
             this->rc4_key_len = 8;
         }
         else {
-            //LOG(LOG_DEBUG, "rc_4_key_size == %d, 128-bit encryption enabled", rc4_key_size);
+            //LOG(LOG_DEBUG, "rc_4_key_size == %d, 128-bit encryption enabled", encryptionMethod);
             this->rc4_key_len = 16;
         }
 
@@ -332,7 +361,7 @@ struct CryptContext
             this->key[12],this->key[13],this->key[14],this->key[15]);
         LOG(LOG_INFO, "cc.rc4_key_len=%u;", this->rc4_key_len);
         this->rc4dump((const char *)(&this->rc4_info), sizeof(this->rc4_info));
-        LOG(LOG_INFO, "cc.rc4_key_size=%u;", this->rc4_key_size);
+        LOG(LOG_INFO, "cc.encryptionMethod=%u;", this->encryptionMethod);
     }
 
     /* Encrypt data using RC4 */

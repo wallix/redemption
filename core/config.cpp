@@ -218,7 +218,7 @@ TODO(" find a more generic way to read this struct with any number of account li
     ("globals.bitmap_cache", po::value<string>()->default_value("yes"), "")
     ("globals.bitmap_compression", po::value<string>()->default_value("yes"), "")
     ("globals.port", po::value<int>(&this->globals.port)->default_value(3389), "")
-    ("globals.crypt_level", po::value<string>()->default_value("low"), "")
+    ("globals.encryptionLevel", po::value<string>()->default_value("low"), "")
     ("globals.channel_code", po::value<unsigned>()->default_value(1), "")
     ("globals.autologin", po::value<string>()->default_value("no"), "")
     ("globals.authversion", po::value<unsigned>()->default_value(2), "Version of Wallix Authentication Protocol")
@@ -335,8 +335,8 @@ TODO(" find a more generic way to read this struct with any number of account li
             bool_from_string(vm["globals.notimestamp"].as<string>());
         this->globals.bitmap_compression =
             bool_from_string(vm["globals.bitmap_compression"].as<string>());
-        this->globals.crypt_level =
-            level_from_string(vm["globals.crypt_level"].as<string>());
+        this->globals.encryptionLevel =
+            level_from_string(vm["globals.encryptionLevel"].as<string>());
         this->globals.channel_code =
             channel_code_from_int(vm["globals.channel_code"].as<unsigned>());
         this->globals.autologin =
