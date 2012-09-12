@@ -26,10 +26,15 @@
 #include <boost/any.hpp>
 #include "cipher.hpp"
 
-template<std::size_t>
-class HexadecimalOption;
 class time_point;
 class range_time_point;
+class relative_time_point;
+template<std::size_t>
+class HexadecimalOption;
+
+void validate(boost::any& v,
+              const std::vector<std::string>& values,
+              relative_time_point* rtime, int);
 
 void validate(boost::any& v,
               const std::vector<std::string>& values,

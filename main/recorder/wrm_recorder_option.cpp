@@ -9,27 +9,43 @@
 
 namespace po = boost::program_options;
 
-void validate(boost::any& v,
-              const std::vector<std::string>& values,
-              range_time_point* /*range*/, int)
+template<typename _T>
+void validate_time_or_throw_invalid_option_value(boost::any& v,
+                                                 const std::vector<std::string>& values,
+                                                 _T*)
 {
     po::validators::check_first_occurrence(v);
     // Extract the first string from 'values'. If there is more than
     // one string, it's an error, and exception will be thrown.
     const std::string& s = po::validators::get_single_string(values);
-    v = boost::any(range_time_point(s));
+    try
+    {
+        v = boost::any(_T(s));
+    } catch (std::runtime_error& e) {
+        std::cout << e.what() << std::endl;
+        throw po::validation_error(po::validation_error::invalid_option_value);
+    }
 }
 
 void validate(boost::any& v,
               const std::vector<std::string>& values,
-              time_point* /*time*/, int)
+              relative_time_point* target_type, int)
 {
-    // Make sure no previous assignment to 'a' was made.
-    po::validators::check_first_occurrence(v);
-    // Extract the first string from 'values'. If there is more than
-    // one string, it's an error, and exception will be thrown.
-    const std::string& s = po::validators::get_single_string(values);
-    v = boost::any(time_point(s));
+    validate_time_or_throw_invalid_option_value(v, values, target_type);
+}
+
+void validate(boost::any& v,
+              const std::vector<std::string>& values,
+              range_time_point* target_type, int)
+{
+    validate_time_or_throw_invalid_option_value(v, values, target_type);
+}
+
+void validate(boost::any& v,
+              const std::vector<std::string>& values,
+              time_point* target_type, int)
+{
+    validate_time_or_throw_invalid_option_value(v, values, target_type);
 }
 
 template<std::size_t _N>
@@ -352,6 +368,36 @@ int WrmRecorderOption::normalize_options()
         std::size_t pos = this->in_filename.find_last_of('/');
         if (std::string::npos != pos)
             this->base_path = this->in_filename.substr(0, pos+1);
+    }
+
+    if (this->options.find("time-list") != end)
+    {
+        typedef std::vector<relative_time_point>::iterator iterator;
+        if (this->time_list.size() >= 1)
+        {
+            iterator first = this->time_list.begin();
+            if ('-' == first->symbol)
+                first->point.time = -first->point.time;
+            first->symbol = 0;
+
+            if (this->time_list.size() > 1)
+            {
+                for (iterator prev = first++, last = this->time_list.end();
+                     first != last; ++first, ++prev)
+                {
+                    if (first->symbol)
+                    {
+                        if ('+' == first->symbol)
+                            first->point += prev->point;
+                        else
+                            first->point = prev->point - first->point;
+                        first->symbol = 0;
+                    }
+                }
+            }
+        }
+        std::sort<>(this->time_list.begin(), this->time_list.end(),
+                    relative_time_point_less_only_point());
     }
 
     return SUCCESS;
