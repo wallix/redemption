@@ -780,10 +780,34 @@ enum {
         public:
         uint32_t flags;
         SubStream payload;
-        Sec_Recv(Stream & stream) : flags(0), payload(stream)
+        uint32_t verbose;
+        Sec_Recv(Stream & stream, bool specialPacket, CryptContext & crypt, uint32_t encryptionLevel, uint32_t encryptionMethod) 
+            : flags(0), payload(stream), verbose(0)
         {
-            this->flags = stream.in_uint32_le();
-            this->payload.resize(stream, stream.end - stream.p);
+            if (specialPacket || encryptionLevel | encryptionMethod){
+                this->flags = stream.in_uint32_le();
+            }
+            if (this->flags & SEC::SEC_ENCRYPT){
+                TODO(" shouldn't we check signature ?")
+                stream.in_skip_bytes(8); /* signature */
+                this->payload.resize(stream, stream.end - stream.p);
+                if (this->verbose >= 0x200){
+                    LOG(LOG_DEBUG, "Receiving encrypted TPDU");
+                    hexdump_c((char*)payload.data, payload.size());
+                }
+                if (this->verbose >= 0x100){
+                    LOG(LOG_DEBUG, "Crypt context is:");
+                    crypt.dump();
+                }
+                crypt.decrypt(payload.data, payload.size());
+                if (this->verbose >= 0x80){
+                    LOG(LOG_DEBUG, "Decrypted %u bytes", payload.size());
+                    hexdump_c((char*)payload.data, payload.size());
+                }
+            }
+            else {
+                this->payload.resize(stream, stream.end - stream.p);
+            }
         }
     };
 
@@ -885,42 +909,6 @@ class Sec
 
     } // END METHOD recv_end
 
-
-    //==============================================================================
-    void emit_begin( uint32_t flags )
-    //==============================================================================
-    {
-        if (this->verbose) {
-            LOG(LOG_INFO, "Sec Emit Start(flags=%u)", flags);
-        }
-        this->flags = flags;
-        pdata = stream.p + 12;
-        if (flags) {
-            this->stream.out_uint32_le(flags);
-
-            if ((flags & SEC::SEC_ENCRYPT)
-            ||  (flags & SEC::SEC_REDIRECTION_PKT))
-            {
-                this->stream.out_skip_bytes(8); // skip crypt signature, filled later
-            }
-        }
-    } // END METHOD emit_start
-
-    //==============================================================================
-    void emit_end()
-    //==============================================================================
-    {
-        if ( (this->flags & SEC::SEC_ENCRYPT)||(this->flags & SEC::SEC_REDIRECTION_PKT) )
-        {
-            int datalen = this->stream.p - this->pdata;
-            if (this->verbose >= 0x80){
-                LOG(LOG_INFO, "Encrypting %u bytes", datalen);
-                hexdump((char*)this->pdata, datalen);
-            }
-            this->crypt.sign(this->pdata - 8, 8, this->pdata, datalen);
-            this->crypt.encrypt(this->pdata, datalen);
-        }
-    } // END METHOD emit_end
 
 }; // END CLASS Sec
 

@@ -1148,8 +1148,7 @@ struct mod_rdp : public client_mod {
             MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
             SubStream & payload = mcs.payload;
 
-            Sec sec(payload, this->decrypt);
-            sec.recv_begin(true);
+            SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->encryptionLevel, this->encryptionMethod);
 
             if (sec.flags & SEC::SEC_LICENSE_PKT) {
 
@@ -1266,6 +1265,7 @@ struct mod_rdp : public client_mod {
                 // BB_ERROR_BLOB (0x0004) that includes information relevant to
                 // the error code specified in dwErrorCode.
 
+                SubStream & payload = sec.payload;
                 uint8_t tag = payload.in_uint8();
                 uint8_t version = payload.in_uint8();
                 uint16_t length = payload.in_uint16_le();
@@ -1759,42 +1759,8 @@ struct mod_rdp : public client_mod {
             X224::DT_TPDU_Recv x224(*this->nego.trans, stream);
             SubStream & mcs_data = x224.payload;
             MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
-            SubStream & payload = mcs.payload;
-
-//            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");
-            Sec sec(payload, this->decrypt);
-            sec.recv_begin(this->encryptionLevel);
-            if (sec.flags & SEC::SEC_LICENSE_PKT) { /* 0x80 */
-                LOG(LOG_ERR, "Error: unexpected license negotiation sec packet flags=%04x", sec.flags);
-                throw Error(ERR_SEC_UNEXPECTED_LICENSE_NEGOTIATION_PDU);
-            }
-
-            if (sec.flags & 0x0400){ /* SEC::SEC_REDIRECT_ENCRYPT */
-                LOG(LOG_ERR, "sec redirect encrypt not supported");
-                throw Error(ERR_SEC_UNEXPECTED_LICENSE_NEGOTIATION_PDU);
-//                /* Check for a redirect packet, starts with 00 04 */
-//                if (payload.p[0] == 0 && payload.p[1] == 4){
-//                /* for some reason the PDU and the length seem to be swapped.
-//                   This isn't good, but we're going to do a byte for byte
-//                   swap.  So the first four value appear as: 00 04 XX YY,
-//                   where XX YY is the little endian length. We're going to
-//                   use 04 00 as the PDU type, so after our swap this will look
-//                   like: XX YY 04 00 */
-
-//                    uint8_t swapbyte1 = payload.p[0];
-//                    payload.p[0] = payload.p[2];
-//                    payload.p[2] = swapbyte1;
-
-//                    uint8_t swapbyte2 = payload.p[1];
-//                    payload.p[1] = payload.p[3];
-//                    payload.p[3] = swapbyte2;
-
-//                    uint8_t swapbyte3 = payload.p[2];
-//                    payload.p[2] = payload.p[3];
-//                    payload.p[3] = swapbyte3;
-//                }
-            }
-
+            SEC::Sec_Recv sec(mcs.payload, false, this->decrypt, this->encryptionLevel, this->encryptionMethod);
+            SubStream & payload = sec.payload;
             if (mcs.channelId != MCS_GLOBAL_CHANNEL){
 //                LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:Channel");
                 size_t num_channel_src = this->mod_channel_list.size();
