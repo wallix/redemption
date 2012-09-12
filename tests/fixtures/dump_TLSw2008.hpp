@@ -977,7 +977,7 @@ const char outdata[] =
 // Order caps::textANSICodePage 0 |
 // Order caps::pad2octetsE 0 |
 // Sending confirm active PDU |
-// sec_out crypt_level=0 |
+// sec_out encryptionLevel=0 |
 // ShareControlOut |
 // 0000 00 00 13 00 ec 03                               ...... |
 // Sending to server General caps (24 bytes) |
@@ -5046,7 +5046,7 @@ const char outdata[] =
 // Order caps::textANSICodePage 0 |
 // Order caps::pad2octetsE 0 |
 // Sending confirm active PDU |
-// sec_out crypt_level=0 |
+// sec_out encryptionLevel=0 |
 // ShareControlOut |
 // 0000 00 00 13 00 ec 03                               ...... |
 // Sending to server General caps (24 bytes) |
@@ -10031,7 +10031,7 @@ const char indata[] =
 // Order caps::textANSICodePage 0 |
 // Order caps::pad2octetsE 0 |
 // Sending confirm active PDU |
-// sec_out crypt_level=0 |
+// sec_out encryptionLevel=0 |
 // ShareControlOut |
 // 0000 00 00 13 00 ec 03                               ...... |
 // Sending to server General caps (24 bytes) |
@@ -14100,7 +14100,7 @@ const char indata[] =
 // Order caps::textANSICodePage 0 |
 // Order caps::pad2octetsE 0 |
 // Sending confirm active PDU |
-// sec_out crypt_level=0 |
+// sec_out encryptionLevel=0 |
 // ShareControlOut |
 // 0000 00 00 13 00 ec 03                               ...... |
 // Sending to server General caps (24 bytes) |

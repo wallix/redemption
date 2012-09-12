@@ -21,7 +21,7 @@ rule defines ( properties * )
     defs += <define>SHARE_PATH='\"/usr/local/share/rdpproxy\"' ;
     defs += <define>CFG_PATH='\"/etc/rdpproxy\"' ;
     defs += <define>FIXTURES_PATH='\"./tests/fixtures\"' ;
-    defs += <define>LICENCE_PATH='\"/var/certs/redemption\"' ;
+    defs += <define>LICENSE_PATH='\"/var/certs/redemption\"' ;
     if [ os.environ VERBOSE ]
     {
         defs += <define>VERBOSE ;
@@ -237,7 +237,7 @@ unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w200
 
 unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp libboost_unit_test ini_config openssl crypto d3des z dl libboost_program_options ;
 
-unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp libboost_unit_test ini_config libboost_program_options 
+unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp libboost_unit_test ini_config libboost_program_options
         widget
 
         d3des
@@ -303,3 +303,5 @@ unit-test test_hexadecimal_option : tests/test_hexadecimal_option.cpp libboost_u
 unit-test test_bitfu : tests/test_bitfu.cpp libboost_unit_test ;
 
 unit-test test_zlib : tests/test_zlib.cpp libboost_unit_test z ;
+
+unit-test test_parse_username : tests/test_parse_username.cpp libboost_unit_test : ;

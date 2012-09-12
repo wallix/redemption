@@ -31,23 +31,31 @@
 
 #include "RDP/sec.hpp"
 
-enum {
-    LICENCE_TOKEN_SIZE             = 10,
-    LICENCE_HWID_SIZE              = 20,
-    LICENCE_SIGNATURE_SIZE         = 16,
-};
+namespace LIC 
+{
+    enum {
+        LICENSE_TOKEN_SIZE             = 10,
+        LICENSE_HWID_SIZE              = 20,
+        LICENSE_SIGNATURE_SIZE         = 16,
+    };
 
-enum {
-    LICENSE_REQUEST             = 0x01,
-    PLATFORM_CHALLENGE          = 0x02,
-    NEW_LICENSE                 = 0x03,
-    UPGRADE_LICENSE             = 0x04,
-    LICENSE_INFO                = 0x12,
-    NEW_LICENSE_REQUEST         = 0x13,
-    PLATFORM_CHALLENGE_RESPONSE = 0x15,
-    ERROR_ALERT                 = 0xff
-};
+    enum {
+        LICENSE_REQUEST             = 0x01,
+        PLATFORM_CHALLENGE          = 0x02,
+        NEW_LICENSE                 = 0x03,
+        UPGRADE_LICENSE             = 0x04,
+        LICENSE_INFO                = 0x12,
+        NEW_LICENSE_REQUEST         = 0x13,
+        PLATFORM_CHALLENGE_RESPONSE = 0x15,
+        ERROR_ALERT                 = 0xff
+    };
 
+    enum {
+        LICENSE_TAG_USER            = 0x000f,
+        LICENSE_TAG_HOST            = 0x0010,
+    };
+
+};
 
 enum {
     KEY_EXCHANGE_ALG_RSA        = 0x01,
@@ -189,28 +197,28 @@ enum {
 
 
 struct RdpLicence {
-    uint8_t licence_key[16];
-    uint8_t licence_sign_key[16];
-    int licence_issued;
-    uint8_t * licence_data;
-    size_t licence_size;
+    uint8_t license_key[16];
+    uint8_t license_sign_key[16];
+    int license_issued;
+    uint8_t * license_data;
+    size_t license_size;
 
-    RdpLicence(const char * hostname) : licence_issued(0), licence_size(0) {
-        memset(this->licence_key, 0, 16);
-        memset(this->licence_sign_key, 0, 16);
+    RdpLicence(const char * hostname) : license_issued(0), license_size(0) {
+        memset(this->license_key, 0, 16);
+        memset(this->license_sign_key, 0, 16);
         TODO(" licence loading should be done before creating protocol layers")
         struct stat st;
         char path[256];
-        sprintf(path, LICENCE_PATH "/licence.%s", hostname);
+        sprintf(path, LICENSE_PATH "/licence.%s", hostname);
         int fd = open(path, O_RDONLY);
         if (fd != -1 && fstat(fd, &st) != 0){
-            this->licence_data = (uint8_t *)malloc(this->licence_size);
+            this->license_data = (uint8_t *)malloc(this->license_size);
             TODO(" check error code here")
-            if (this->licence_data){
+            if (this->license_data){
                 close(fd);
                 return;
             }
-            if (((int)this->licence_size) != read(fd, this->licence_data, this->licence_size)){
+            if (((int)this->license_size) != read(fd, this->license_data, this->license_size)){
                 close(fd);
                 return;
             }
@@ -296,67 +304,6 @@ struct RdpLicence {
     // MACData field to verify the integrity of the Client Hardware Identification
     // and the Platform Challenge Response Data, see section 3.1.5.1.
 
-    void set_licence_keys(const uint8_t * server_random)
-    {
-        uint8_t null_data[SEC_MODULUS_SIZE];
-
-        /* We currently use null client keys. This is a bit naughty but, hey,
-           the security of licence negotiation isn't exactly paramount. */
-        memset(null_data, 0, sizeof(null_data));
-        uint8_t* client_random = null_data;
-        uint8_t* pre_master_secret = null_data;
-        uint8_t master_secret[48];
-        uint8_t key_block[48];
-
-        /* Generate master secret and then key material */
-        for (int i = 0; i < 3; i++) {
-            uint8_t shasig[20];
-            uint8_t pad[4];
-
-            memset(pad, 'A' + i, i + 1);
-
-            SslSha1 sha1;
-            sha1.update(pad, i + 1);
-            sha1.update(pre_master_secret, 48);
-            sha1.update(client_random, 32);
-            sha1.update(server_random, 32);
-            sha1.final(shasig);
-
-            SslMd5 md5;
-            md5.update(pre_master_secret, 48);
-            md5.update(shasig, 20);
-            md5.final(&master_secret[i * 16]);
-        }
-
-        for (int i = 0; i < 3; i++) {
-            uint8_t shasig[20];
-            uint8_t pad[4];
-            memset(pad, 'A' + i, i + 1);
-
-            SslSha1 sha1;
-            sha1.update(pad, i + 1);
-            sha1.update(master_secret, 48);
-            sha1.update(server_random, 32);
-            sha1.update(client_random, 32);
-            sha1.final(shasig);
-
-            SslMd5 md5;
-            md5.update(master_secret, 48);
-            md5.update(shasig, 20);
-            md5.final(&key_block[i * 16]);
-        }
-
-        /* Store first 16 bytes of session key as MAC secret */
-        memcpy(this->licence_sign_key, key_block, 16);
-
-        // Generate RC4 key from next 16 bytes
-        // 16-byte transformation used to generate export keys (6.2.2).
-        SslMd5 md5;
-        md5.update(key_block + 16, 16);
-        md5.update(client_random, 32);
-        md5.update(server_random, 32);
-        md5.final(this->licence_key);
-    }
 
     // 2.2.2.2 Client New License Request (CLIENT_NEW_LICENSE_REQUEST)
     // ===============================================================
