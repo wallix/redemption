@@ -258,8 +258,6 @@ struct close_mod : public internal_mod {
     // module got an internal event (like incoming data) and want to sent it outside
     virtual BackEvent_t draw_event()
     {
-        LOG(LOG_INFO, "============================== close::DRAW_EVENT =================================");
-
         this->front.begin_update();
         this->screen.refresh(this->get_screen_rect().wh());
         this->front.end_update();

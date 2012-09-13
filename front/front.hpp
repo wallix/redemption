@@ -1293,11 +1293,6 @@ public:
                 SubStream & payload = mcs.payload;
                 SEC::SecExchangePacket_Recv sec(payload, mcs.payload_size);
 
-                if (sec.payload.size() != 64 + 8){
-                    LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %u", sec.payload.size());
-                    throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
-                }
-
                 ssllib ssl;
                 uint8_t client_random[64];
                 memset(client_random, 0, 64);
