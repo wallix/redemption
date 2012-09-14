@@ -25,7 +25,9 @@
 
 inline void load_png_context(WRMRecorder& recorder, Drawable& drawable)
 {
-    if (recorder.idx_file > 1)
+    if (recorder.idx_file > 1 &&
+        recorder.meta().files.size() >= recorder.idx_file &&
+        !recorder.meta().files[recorder.idx_file - 1].png_filename.empty())
     {
         recorder.redraw_consumer(&drawable);
         recorder.load_context(

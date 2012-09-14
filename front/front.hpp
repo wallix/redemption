@@ -31,8 +31,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <sys/time.h>
-#include <deque>
-#include <algorithm>
 
 #include "constants.hpp"
 #include "stream.hpp"
@@ -1019,7 +1017,7 @@ public:
             // ------------------------------------------------------------------
             GCC::UserData::SCNet sc_net;
             const uint8_t num_channels = this->channel_list.size();
-            sc_net.MCSChannelId = MCS_GLOBAL_CHANNEL; 
+            sc_net.MCSChannelId = MCS_GLOBAL_CHANNEL;
             sc_net.channelCount = num_channels;
             for (int index = 0; index < num_channels; index++) {
                  sc_net.channelDefArray[index].id = MCS_GLOBAL_CHANNEL + index + 1;
@@ -1075,10 +1073,10 @@ public:
             sc_sec1.temporary = false;
             memcpy(sc_sec1.proprietaryCertificate.RSAPK.pubExp, rsa_keys_pub_exp, SEC_EXPONENT_SIZE);
             memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus, this->pub_mod, 64);
-            memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus + 64, 
+            memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus + 64,
                 "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
             memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob, rsa_keys_pub_sig, 64);
-            memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob + 64, 
+            memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob + 64,
                 "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
 
             sc_sec1.log("Sending to client");

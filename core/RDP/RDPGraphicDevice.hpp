@@ -171,7 +171,8 @@ struct RDPUnserializer
             }
             catch (Error & e){
                 TODO(" check specific error and return 0 only if actual EOF is reached or rethrow the error")
-                return (e.id == ERR_TRANSPORT_READ_FAILED) ? false : true;
+                return (e.id == ERR_TRANSPORT_READ_FAILED
+                || ERR_SOCKET_CLOSED == e.id) ? false : true;
             }
             const uint16_t stream_size = this->chunk_size - 8;
             if (stream_size > 32768){

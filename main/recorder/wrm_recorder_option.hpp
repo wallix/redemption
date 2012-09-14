@@ -117,6 +117,7 @@ public:
     HexadecimalKey in_crypt_key;
     HexadecimalIV in_crypt_iv;
     CipherInfo in_cipher_info;
+    bool force_interpret_breakpoint;
 
     WrmRecorderOption();
 

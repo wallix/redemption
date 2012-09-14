@@ -225,6 +225,7 @@ WrmRecorderOption::WrmRecorderOption()
 , in_crypt_key()
 , in_crypt_iv()
 , in_cipher_info()
+, force_interpret_breakpoint(false)
 {
     this->add_default_options();
 }
@@ -255,6 +256,7 @@ void WrmRecorderOption::add_default_options()
     ("ignore-dir,N", "ignore directory for meta in the wrm file")
     ("deduce-dir,d", "use --ignore-dir and set --path with the directory of --input-file")
     ("times-in-meta-file-are-false", "")
+    ("force-interpret-breakpoint", po::value(&this->force_interpret_breakpoint), "interpret always breakpoint chunk if exists")
     ("output-meta-name,m", po::value(&this->metaname), "specified name of meta file")
     ("input-type,I", po::value(&this->input_type), "accept 'mwrm' or 'wrm'")
     ("in-crypt-key", po::value(&this->in_crypt_key), "key in hexadecimal base")
