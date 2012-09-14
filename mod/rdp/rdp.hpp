@@ -1961,7 +1961,6 @@ struct mod_rdp : public client_mod {
                         LOG(LOG_INFO, "unknown PDU %u", sctrl.pdu_type1);
                         break;
                     }
-                    LOG(LOG_INFO, "sctrl recv_end");
                     sctrl.recv_end();
                 }
             }

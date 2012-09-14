@@ -461,14 +461,16 @@ class RDPGlyphIndex {
     }
 
     void log(int level, const Rect & clip) const {
-        char buffer[1024];
-        this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
+        buffer[sizeof(buffer)-1] = 0;
         LOG(level, buffer);
     }
 
     void print(const Rect & clip) const {
-        char buffer[1024];
-        this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
+        buffer[sizeof(buffer)-1] = 0;
         printf("%s", buffer);
     }
 
