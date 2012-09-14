@@ -663,7 +663,7 @@ enum {
         SubStream payload;
 
         SecExchangePacket_Recv(Stream & stream, uint16_t available_len) 
-        : payload(stream, 8)
+            : payload(stream)
         {
             this->basicSecurityHeader = stream.in_uint32_le() & 0xFFFF;
 
@@ -674,6 +674,11 @@ enum {
             uint32_t length = stream.in_uint32_le();
             if (length + 8 != available_len){
                 LOG(LOG_ERR, "Bad SEC_EXCHANGE_PKT length, header say length=%u available=%u", length, available_len-8);
+            }
+            this->payload.resize(stream, stream.end - stream.p);
+            if (this->payload.size() != 64 + 8){
+                LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %u", this->payload.size());
+                throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
             }
         }
     };

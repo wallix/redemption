@@ -125,24 +125,29 @@ struct ShareControl
     //==============================================================================
     {
         this->len = stream.in_uint16_le();
+
         this->pdu_type1 = stream.in_uint16_le() & 0xF;
         if (this->pdu_type1 == PDUTYPE_DEACTIVATEALLPDU && len == 4){
             // should not happen
             // but DEACTIVATEALLPDU seems to be broken on windows 2000
+            this->payload.resize(this->stream, 0);
             return;
         }
         this->mcs_channel = stream.in_uint16_le();
-        this->payload.reset(this->stream, this->stream.get_offset());
+        if (this->len < 6){
+            LOG(LOG_ERR, "ShareControl packet too short len=%u", this->len);
+            throw Error(ERR_SEC);
+        }
+        this->payload.resize(this->stream, this->len - 6);
     } // END METHOD recv_begin
 
     //==============================================================================
     void recv_end()
     //==============================================================================
     {
-        if (this->stream.p != this->stream.end
-        && this->payload.p != this->payload.end){
-            LOG(LOG_ERR, "all data should have been consumed : remains %d", stream.end - stream.p);
-//            exit(0);
+        if (this->payload.p != this->payload.end){
+            LOG(LOG_ERR, "ShareControl: all payload data should have been consumed : len = %u size=%u remains %d", this->len, this->payload.size(), stream.end - stream.p);
+            throw Error(ERR_SEC);      
         }
     } // END METHOD recv_end
 
@@ -393,6 +398,10 @@ struct ShareData
     void recv_begin()
     //==============================================================================
     {
+        if (this->stream.end < this->stream.p + 12){
+            LOG(LOG_ERR, "sdata packet len too short: need 12, remains", this->stream.end - this->stream.p);
+            throw Error(ERR_SEC);
+        }
         this->share_id = stream.in_uint32_le();
         stream.in_uint8();
         this->streamid = stream.in_uint8();
@@ -400,18 +409,18 @@ struct ShareData
         this->pdutype2 = stream.in_uint8();
         this->compressedType = stream.in_uint8();
         this->compressedLen = stream.in_uint16_le();
-        this->payload.reset(this->stream, this->stream.get_offset());
+        this->payload.resize(this->stream, this->stream.end - this->stream.p);
     } // END METHOD recv_begin
 
     //==============================================================================
     void recv_end()
     //==============================================================================
     {
-        if (stream.p != stream.end
-        &&  payload.p != payload.end){
-            LOG(LOG_INFO, "some data were not consumed len=%u compressedLen=%u remains=%u", 
-                this->len, this->compressedLen, stream.end - stream.p);
-        }
+        if (this->payload.p != this->payload.end){
+            LOG(LOG_INFO, "ShareData : some payload data were not consumed len=%u compressedLen=%u remains1=%u remains=%u", 
+                this->len, this->compressedLen, payload.end - payload.p, stream.end - stream.p);
+                throw Error(ERR_SEC);      
+      }
     } // END METHOD recv_end
 
 

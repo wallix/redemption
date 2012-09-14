@@ -70,6 +70,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 //    Listen listener(one_shot_server, 3389, true, 5); // 25 seconds to connect, or timeout
 
     Inifile ini;
+    int verbose = 511;
     ini.globals.debug.front = 511;
 
 //    int nodelay = 1;
@@ -91,7 +92,6 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
         #include "trace_rdesktop_client_outdata.hpp"
     };
 
-    int verbose = 511;
     const char * name = "Test Front Transport";
     TestTransport front_trans(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 

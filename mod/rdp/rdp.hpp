@@ -563,15 +563,15 @@ struct mod_rdp : public client_mod {
     virtual BackEvent_t draw_event(void)
     {
         static uint32_t count = 0;
-        LOG(LOG_INFO, "============================== mod_rdp::DRAW_EVENT %u =================================", count++);
-
         try{
 
         char * hostname = this->hostname;
 
         switch (this->state){
         case MOD_RDP_NEGO:
-            LOG(LOG_INFO, "draw_event::MOD_RDP_NEGO");
+            if (this->verbose){
+                LOG(LOG_INFO, "mod_rdp::Early TLS Security Exchange");
+            }
             switch (this->nego.state){
                 default:
                     this->nego.server_event();
@@ -686,7 +686,6 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
-            LOG(LOG_INFO, "draw_event::MOD_RDP_BASIC_SETTINGS_EXCHANGE");
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
             }
@@ -716,10 +715,9 @@ struct mod_rdp : public client_mod {
                     break;
                     case SC_SECURITY:
                     {
-                        LOG(LOG_INFO, "Receiving SC_Security from server");
-
                         GCC::UserData::SCSecurity sc_sec1;
                         sc_sec1.recv(f.payload);
+                        sc_sec1.log("Received from server");
 
                         this->encryptionLevel = sc_sec1.encryptionLevel;
                         this->encryptionMethod = sc_sec1.encryptionMethod; 
@@ -751,34 +749,20 @@ struct mod_rdp : public client_mod {
                             }
                             else {
 
-                                // ---------------------------------------------------------------------
-                                LOG(LOG_DEBUG, "We're going for the RDP5-style encryption");
-
-                                // structure of certificate chain is : certcount [certlen cert]*
-
                                 uint32_t certcount = sc_sec1.x509.certCount;
-                                LOG(LOG_DEBUG, "Certcount = %u", certcount);
-
                                 if (certcount < 2){
-                                    LOG(LOG_DEBUG, "Server didn't send enough X509 certificates");
-                                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CERT_NOK);
+                                    LOG(LOG_WARNING, "Server didn't send enough X509 certificates");
+                                    throw Error(ERR_SEC);
                                 }
 
-//                                uint32_t cacert_len = sc_sec1.x509.cert[certcount - 2].len;
-//                                LOG(LOG_DEBUG, "CA Certificate length is %d", cacert_len);
-//                                X509 *cacert =  sc_sec1.x509.cert[certcount - 2].cert;
-
                                 uint32_t cert_len = sc_sec1.x509.cert[certcount - 1].len;
-                                LOG(LOG_DEBUG, "CA Certificate length is %d", cert_len);
                                 X509 *cert =  sc_sec1.x509.cert[certcount - 1].cert;
 
-                                /* Matching certificates */
                                 TODO("Currently, we don't use the CA Certificate, we should"
                                      "*) Verify the server certificate (server_cert) with the CA certificate."
                                      "*) Store the CA Certificate with the hostname of the server we are connecting"
                                      " to as key, and compare it when we connect the next time, in order to prevent"
                                      " MITM-attacks.")
-                                // ---------------------------------------------------------------------
 
                                 /* By some reason, Microsoft sets the OID of the Public RSA key to
                                 the oid for "MD5 with RSA Encryption" instead of "RSA Encryption"
@@ -794,36 +778,29 @@ struct mod_rdp : public client_mod {
 
                                 EVP_PKEY * epk = X509_get_pubkey(cert);
                                 if (NULL == epk){
-                                    printf("Failed to extract public key from certificate\n");
-                                    throw Error(ERR_GCC);
+                                    LOG(LOG_WARNING, "Failed to extract public key from certificate\n");
+                                    throw Error(ERR_SEC);
                                 }
 
                                 RSA * server_public_key = RSAPublicKey_dup((RSA *) epk->pkey.ptr);
                                 EVP_PKEY_free(epk);
                                 this->server_public_key_len = RSA_size(server_public_key);
 
-                                LOG(LOG_DEBUG, "Server public key length=%u", (unsigned)this->server_public_key_len);
-
                                 if (NULL == server_public_key){
-                                    LOG(LOG_DEBUG, "Didn't parse X509 correctly");
-                                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_X509_NOT_PARSED);
+                                    LOG(LOG_WARNING, "Failed to parse X509 server key");
+                                    throw Error(ERR_SEC);
                                 }
-
-                                LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d",
-                                    this->server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
 
                                 if ((this->server_public_key_len < SEC_MODULUS_SIZE) ||
                                     (this->server_public_key_len > SEC_MAX_MODULUS_SIZE)){
-                                    LOG(LOG_WARNING, "Bad server public key size (%u bits)", this->server_public_key_len * 8);
-                                    RSA_free(server_public_key);
+                                    LOG(LOG_WARNING, "Wrong server public key size (%u bits)", this->server_public_key_len * 8);
                                     throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
                                 }
 
                                 if ((BN_num_bytes(server_public_key->e) > SEC_EXPONENT_SIZE) 
                                 ||  (BN_num_bytes(server_public_key->n) > SEC_MAX_MODULUS_SIZE)){
-                                    LOG(LOG_WARNING, "Problem extracting RSA exponent, modulus");
-                                    RSA_free(server_public_key);
-                                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_RSA_EXP_NOT_OK);
+                                    LOG(LOG_WARNING, "Failed to extract RSA exponent and modulus");
+                                    throw Error(ERR_SEC);
                                 }
                                 int len_e = BN_bn2bin(server_public_key->e, (unsigned char*)exponent);
                                 reverseit(exponent, len_e);
@@ -872,13 +849,13 @@ struct mod_rdp : public client_mod {
                     }
                     break;
                     default:
-                        LOG(LOG_WARNING, "unsupported response tag 0x%x", f.tag);
-                        break;
+                        LOG(LOG_WARNING, "unsupported GCC UserData response tag 0x%x", f.tag);
+                        throw Error(ERR_GCC);
                     }
                 }
                 if (gcc_cr.payload.check_rem(1)) {
-                    LOG(LOG_ERR, "recv connect response parsing gcc data : short header");
-                    throw Error(ERR_MCS_DATA_SHORT_HEADER);
+                    LOG(LOG_WARNING, "Error while parsing GCC UserData : short header");
+                    throw Error(ERR_GCC);
                 }
 
             }
@@ -922,7 +899,9 @@ struct mod_rdp : public client_mod {
             //    |-------MCS Channel Join Request PDU--------------------> |
             //    | <-----MCS Channel Join Confirm PDU--------------------- |
 
-            LOG(LOG_INFO, "Send MCS::ErectDomainRequest");
+            if (this->verbose){
+                LOG(LOG_INFO, "Send MCS::ErectDomainRequest");
+            }
             {
                 BStream x224_header(256);
                 BStream mcs_data(256);
@@ -932,7 +911,9 @@ struct mod_rdp : public client_mod {
                 this->nego.trans->send(x224_header.data, x224_header.size());
                 this->nego.trans->send(mcs_data.data, mcs_data.size());
             }
-            LOG(LOG_INFO, "Send MCS::AttachUserRequest");
+            if (this->verbose){
+                LOG(LOG_INFO, "Send MCS::AttachUserRequest");
+            }
             {
                 BStream x224_header(256);
                 BStream mcs_data(256);
@@ -949,7 +930,6 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
-        LOG(LOG_INFO, "draw_event::MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER");
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User");
         }
@@ -1056,7 +1036,6 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_GET_LICENSE:
-        LOG(LOG_INFO, "draw_event::MOD_RDP_GET_LICENSE");
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::Licensing");
         }
@@ -1270,430 +1249,438 @@ struct mod_rdp : public client_mod {
                 uint8_t version = payload.in_uint8();
                 uint16_t length = payload.in_uint16_le();
                 switch (tag) {
-                case LIC::LICENSE_REQUEST:
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Rdp:: License Request");
-                    }
-                    {
-                        /* Retrieve the server random from the incoming packet */
-                        const uint8_t * server_random = payload.in_uint8p(SEC_RANDOM_SIZE);
-
-                        uint8_t null_data[SEC_MODULUS_SIZE];
-
-                        /* We currently use null client keys. This is a bit naughty but, hey,
-                           the security of licence negotiation isn't exactly paramount. */
-                        memset(null_data, 0, sizeof(null_data));
-                        uint8_t* client_random = null_data;
-                        uint8_t* pre_master_secret = null_data;
-                        uint8_t master_secret[48];
-                        uint8_t key_block[48];
-
-                        /* Generate master secret and then key material */
-                        for (int i = 0; i < 3; i++) {
-                            uint8_t shasig[20];
-                            uint8_t pad[4];
-
-                            memset(pad, 'A' + i, i + 1);
-
-                            SslSha1 sha1;
-                            sha1.update(pad, i + 1);
-                            sha1.update(pre_master_secret, 48);
-                            sha1.update(client_random, 32);
-                            sha1.update(server_random, 32);
-                            sha1.final(shasig);
-
-                            SslMd5 md5;
-                            md5.update(pre_master_secret, 48);
-                            md5.update(shasig, 20);
-                            md5.final(&master_secret[i * 16]);
+                    case LIC::LICENSE_REQUEST:
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Rdp::License Request");
                         }
+                        {
+                         
+                           /* Retrieve the server random from the incoming packet */
+                            const uint8_t * server_random = payload.in_uint8p(SEC_RANDOM_SIZE);
+                            if (payload.p != payload.end){
+                                LOG(LOG_ERR, "Rdp::License Request : unparsed data %d", stream.end - stream.p);
+                            }
+                            payload.p = payload.end;
 
-                        for (int i = 0; i < 3; i++) {
-                            uint8_t shasig[20];
-                            uint8_t pad[4];
-                            memset(pad, 'A' + i, i + 1);
+                            uint8_t null_data[SEC_MODULUS_SIZE];
 
-                            SslSha1 sha1;
-                            sha1.update(pad, i + 1);
-                            sha1.update(master_secret, 48);
-                            sha1.update(server_random, 32);
-                            sha1.update(client_random, 32);
-                            sha1.final(shasig);
+                            /* We currently use null client keys. This is a bit naughty but, hey,
+                               the security of licence negotiation isn't exactly paramount. */
+                            memset(null_data, 0, sizeof(null_data));
+                            uint8_t* client_random = null_data;
+                            uint8_t* pre_master_secret = null_data;
+                            uint8_t master_secret[48];
+                            uint8_t key_block[48];
 
+                            /* Generate master secret and then key material */
+                            for (int i = 0; i < 3; i++) {
+                                uint8_t shasig[20];
+                                uint8_t pad[4];
+
+                                memset(pad, 'A' + i, i + 1);
+
+                                SslSha1 sha1;
+                                sha1.update(pad, i + 1);
+                                sha1.update(pre_master_secret, 48);
+                                sha1.update(client_random, 32);
+                                sha1.update(server_random, 32);
+                                sha1.final(shasig);
+
+                                SslMd5 md5;
+                                md5.update(pre_master_secret, 48);
+                                md5.update(shasig, 20);
+                                md5.final(&master_secret[i * 16]);
+                            }
+
+                            for (int i = 0; i < 3; i++) {
+                                uint8_t shasig[20];
+                                uint8_t pad[4];
+                                memset(pad, 'A' + i, i + 1);
+
+                                SslSha1 sha1;
+                                sha1.update(pad, i + 1);
+                                sha1.update(master_secret, 48);
+                                sha1.update(server_random, 32);
+                                sha1.update(client_random, 32);
+                                sha1.final(shasig);
+
+                                SslMd5 md5;
+                                md5.update(master_secret, 48);
+                                md5.update(shasig, 20);
+                                md5.final(&key_block[i * 16]);
+                            }
+
+                            /* Store first 16 bytes of session key as MAC secret */
+                            memcpy(this->lic_layer.license_sign_key, key_block, 16);
+
+                            // Generate RC4 key from next 16 bytes
+                            // 16-byte transformation used to generate export keys (6.2.2).
                             SslMd5 md5;
-                            md5.update(master_secret, 48);
-                            md5.update(shasig, 20);
-                            md5.final(&key_block[i * 16]);
+                            md5.update(key_block + 16, 16);
+                            md5.update(client_random, 32);
+                            md5.update(server_random, 32);
+                            md5.final(this->lic_layer.license_key);
+
+                            BStream stream(65535);
+
+                            if (this->lic_layer.license_size > 0) {
+                                uint8_t hwid[LIC::LICENSE_HWID_SIZE];
+                                buf_out_uint32(hwid, 2);
+                                memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
+
+                                ssllib ssl;
+                                /* Generate a signature for the HWID buffer */
+                                uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
+                                ssl.sign(signature, 16, this->lic_layer.license_sign_key, 16, hwid, sizeof(hwid));
+                                /* Now encrypt the HWID */
+
+                                RC4_KEY crypt_key;
+                                ssl.rc4_set_key(crypt_key, this->lic_layer.license_key, 16);
+                                ssl.rc4_crypt(crypt_key, hwid, hwid, sizeof(hwid));
+
+                                uint8_t null_data[SEC_MODULUS_SIZE];
+                                memset(null_data, 0, sizeof(null_data));
+
+                                int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
+                                         this->lic_layer.license_size + LIC::LICENSE_HWID_SIZE + LIC::LICENSE_SIGNATURE_SIZE;
+
+                                stream.out_uint8(LIC::LICENSE_INFO);
+                                stream.out_uint8(this->use_rdp5?3:2); /* version */
+                                stream.out_uint16_le(length);
+                                stream.out_uint32_le(1);
+                                stream.out_uint16_le(0);
+                                stream.out_uint16_le(0x0201);
+                                stream.out_copy_bytes(null_data, SEC_RANDOM_SIZE); // client_random
+                                stream.out_uint16_le(0);
+                                stream.out_uint16_le(SEC_MODULUS_SIZE + SEC_PADDING_SIZE);
+                                stream.out_copy_bytes(null_data, SEC_MODULUS_SIZE); // rsa_data
+                                stream.out_clear_bytes( SEC_PADDING_SIZE);
+                                stream.out_uint16_le(1);
+                                stream.out_uint16_le(this->lic_layer.license_size);
+                                stream.out_copy_bytes(this->lic_layer.license_data, this->lic_layer.license_size);
+                                stream.out_uint16_le(1);
+                                stream.out_uint16_le(LIC::LICENSE_HWID_SIZE);
+                                stream.out_copy_bytes(hwid, LIC::LICENSE_HWID_SIZE);
+                                stream.out_copy_bytes(signature, LIC::LICENSE_SIGNATURE_SIZE);
+                                stream.mark_end();
+                            }
+                            else {
+                                uint8_t null_data[SEC_MODULUS_SIZE];
+                                memset(null_data, 0, sizeof(null_data));
+
+                                int userlen = strlen(username) + 1;
+                                int hostlen = strlen(hostname) + 1;
+                                int length = 128 + userlen + hostlen;
+
+                                stream.out_uint8(LIC::NEW_LICENSE_REQUEST);
+                                stream.out_uint8(this->use_rdp5?3:2);
+                                stream.out_uint16_le(length);
+
+                                // PreferredKeyExchangeAlg (4 bytes): A 32-bit unsigned integer that
+                                // indicates the key exchange algorithm chosen by the client. It MUST be set
+                                // to KEY_EXCHANGE_ALG_RSA (0x00000001), which indicates an RSA-based key
+                                // exchange with a 512-bit asymmetric key.<9>
+
+                                stream.out_uint32_le(KEY_EXCHANGE_ALG_RSA);
+
+                                // PlatformId (4 bytes): A 32-bit unsigned integer. This field is composed
+                                // of two identifiers: the operating system identifier and the independent
+                                // software vendor (ISV) identifier. The platform ID is composed of the
+                                // logical OR of these two values.
+
+                                // The most significant byte of the PlatformId field contains the operating
+                                // system version of the client.<10>
+
+                                // The second most significant byte of the PlatformId field identifies the
+                                // ISV that provided the client image.<11>
+
+                                // The remaining two bytes in the PlatformId field are used by the ISV to
+                                // identify the build number of the operating system.<12>
+
+                                stream.out_uint32_le(0);
+
+                                // ClientRandom (32 bytes): A 32-byte random number generated by the client
+                                // using a cryptographically secure pseudo-random number generator. The
+                                // ClientRandom and ServerRandom (see section 2.2.2.1) values, along with
+                                // the data in the EncryptedPreMasterSecret field, are used to generate
+                                // licensing encryption keys (see section 5.1.3). These keys are used to
+                                // encrypt licensing protocol messages (see sections 5.1.4 and 5.1.5).
+
+                                stream.out_copy_bytes(null_data, SEC_RANDOM_SIZE); // client_random
+
+                                // EncryptedPreMasterSecret (variable): A Licensing Binary BLOB structure
+                                // (see [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_RANDOM_BLOB (0x0002).
+                                // This BLOB contains an encrypted 48-byte random number. For instructions
+                                // on how to encrypt this random number, see section 5.1.2.1.
+
+                                // 2.2.1.12.1.2 Licensing Binary Blob (LICENSE_BINARY_BLOB)
+                                // --------------------------------------------------------
+                                // The LICENSE_BINARY_BLOB structure is used to encapsulate arbitrary
+                                // length binary licensing data.
+
+                                // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
+                                // the binary information. If wBlobLen is set to 0, then the contents
+                                // of this field SHOULD be ignored.
+
+                                // +------------------------------------+-------------------------------------+
+                                // | 0x0001 BB_DATA_BLOB                | Used by License Information PDU and |
+                                // |                                    | Platform Challenge Response PDU     |
+                                // |                                    | ([MS-RDPELE] sections 2.2.2.3 and   |
+                                // |                                    | 2.2.2.5).                           |
+                                // +------------------------------------+-------------------------------------+
+                                // | 0x0002 BB_RANDOM_BLOB              | Used by License Information PDU and |
+                                // |                                    | New License Request PDU ([MS-RDPELE]|
+                                // |                                    | sections 2.2.2.3 and 2.2.2.2).      |
+                                // +------------------------------------+-------------------------------------+
+                                // | 0x0003 BB_CERTIFICATE_BLOB         | Used by License Request PDU         |
+                                // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+                                // +------------------------------------+-------------------------------------+
+                                // | 0x0004 BB_ERROR_BLOB               | Used by License Error PDU (section  |
+                                // |                                    | 2.2.1.12).                          |
+                                // +------------------------------------+-------------------------------------+
+                                // | 0x0009 BB_ENCRYPTED_DATA_BLOB      | Used by Platform Challenge Response |
+                                // |                                    | PDU and Upgrade License PDU         |
+                                // |                                    | ([MS-RDPELE] sections 2.2.2.5 and   |
+                                // |                                    | 2.2.2.6).                           |
+                                // +------------------------------------+-------------------------------------+
+                                // | 0x000D BB_KEY_EXCHG_ALG_BLOB       | Used by License Request PDU         |
+                                // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+                                // +------------------------------------+-------------------------------------+
+                                // | 0x000E BB_SCOPE_BLOB               | Used by License Request PDU         |
+                                // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+                                // +------------------------------------+-------------------------------------+
+                                // | 0x000F BB_CLIENT_USER_NAME_BLOB    | Used by New License Request PDU     |
+                                // |                                    | ([MS-RDPELE] section 2.2.2.2).      |
+                                // +------------------------------------+-------------------------------------+
+                                // | 0x0010 BB_CLIENT_MACHINE_NAME_BLOB | Used by New License Request PDU     |
+                                // |                                    | ([MS-RDPELE] section 2.2.2.2).      |
+                                // +------------------------------------+-------------------------------------+
+
+                                // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of the 
+                                // binary information in the blobData field. If wBlobLen is set to 0, then the
+                                // blobData field is not included in the Licensing Binary BLOB structure and the
+                                // contents of the wBlobType field SHOULD be ignored.
+
+                                // blobData (variable): Variable-length binary data. The size of this data in 
+                                // bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field
+                                // is not included in the Licensing Binary BLOB structure.
+
+                                stream.out_uint16_le(BB_RANDOM_BLOB);
+                                stream.out_uint16_le((SEC_MODULUS_SIZE + SEC_PADDING_SIZE));
+                                stream.out_copy_bytes(null_data, SEC_MODULUS_SIZE); // rsa_data
+                                stream.out_clear_bytes(SEC_PADDING_SIZE);
+
+                                // ClientUserName (variable): A Licensing Binary BLOB structure (see
+                                // [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_CLIENT_USER_NAME_BLOB
+                                // (0x000F). This BLOB contains the client user name string in
+                                // null-terminated ANSI character set format and is used along with the
+                                // ClientMachineName BLOB to keep track of licenses issued to clients.
+
+                                stream.out_uint16_le(LIC::LICENSE_TAG_USER);
+                                stream.out_uint16_le(userlen);
+                                stream.out_copy_bytes(username, userlen);
+
+                                // ClientMachineName (variable): A Licensing Binary BLOB structure (see
+                                // [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_CLIENT_MACHINE_NAME_BLOB
+                                // (0x0010). This BLOB contains the client machine name string in
+                                // null-terminated ANSI character set format and is used along with the
+                                // ClientUserName BLOB to keep track of licenses issued to clients.
+
+                                stream.out_uint16_le(LIC::LICENSE_TAG_HOST);
+                                stream.out_uint16_le(hostlen);
+                                stream.out_copy_bytes(hostname, hostlen);
+                                stream.mark_end();
+                            }
+
+                            BStream x224_header(256);
+                            BStream mcs_header(256);
+                            BStream sec_header(256);
+
+                            SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
+                            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, 
+                                                          sec_header.size() + stream.size() , MCS::PER_ENCODING);
+                            X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
+
+                            this->nego.trans->send(x224_header.data, x224_header.size());
+                            this->nego.trans->send(mcs_header.data, mcs_header.size());
+                            this->nego.trans->send(sec_header.data, sec_header.size());
+                            this->nego.trans->send(stream.data, stream.size());
                         }
-
-                        /* Store first 16 bytes of session key as MAC secret */
-                        memcpy(this->lic_layer.license_sign_key, key_block, 16);
-
-                        // Generate RC4 key from next 16 bytes
-                        // 16-byte transformation used to generate export keys (6.2.2).
-                        SslMd5 md5;
-                        md5.update(key_block + 16, 16);
-                        md5.update(client_random, 32);
-                        md5.update(server_random, 32);
-                        md5.final(this->lic_layer.license_key);
-
-                        BStream stream(65535);
-
-                        if (this->lic_layer.license_size > 0) {
-                            uint8_t hwid[LIC::LICENSE_HWID_SIZE];
-                            buf_out_uint32(hwid, 2);
-                            memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
+                        break;
+                    case LIC::PLATFORM_CHALLENGE:
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Rdp::Platform Challenge");
+                        }
+                        {
+                            BStream stream(65535);
 
                             ssllib ssl;
-                            /* Generate a signature for the HWID buffer */
-                            uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
-                            ssl.sign(signature, 16, this->lic_layer.license_sign_key, 16, hwid, sizeof(hwid));
-                            /* Now encrypt the HWID */
 
+                            const uint8_t* in_token;
+                            uint8_t out_token[LIC::LICENSE_TOKEN_SIZE];
+                            uint8_t decrypt_token[LIC::LICENSE_TOKEN_SIZE];
+                            uint8_t hwid[LIC::LICENSE_HWID_SIZE];
+                            uint8_t crypt_hwid[LIC::LICENSE_HWID_SIZE];
+                            uint8_t out_sig[LIC::LICENSE_SIGNATURE_SIZE];
+
+                            in_token = 0;
+                            /* Parse incoming packet and save the encrypted token */
+                            payload.in_skip_bytes(6); /* unknown: f8 3d 15 00 04 f6 */
+
+                            int tokenlen = payload.in_uint16_le();
+                            if (tokenlen != LIC::LICENSE_TOKEN_SIZE) {
+                                LOG(LOG_ERR, "token len = %d, expected %d", tokenlen, LIC::LICENSE_TOKEN_SIZE);
+                                throw Error(ERR_SEC);
+                            }
+                            else{
+                                in_token = payload.in_uint8p(tokenlen);
+                                payload.in_uint8p(LIC::LICENSE_SIGNATURE_SIZE); // in_sig
+                                payload.check_end();
+                            }
+
+                            memcpy(out_token, in_token, LIC::LICENSE_TOKEN_SIZE);
+                            /* Decrypt the token. It should read TEST in Unicode. */
                             RC4_KEY crypt_key;
                             ssl.rc4_set_key(crypt_key, this->lic_layer.license_key, 16);
-                            ssl.rc4_crypt(crypt_key, hwid, hwid, sizeof(hwid));
+                            memcpy(decrypt_token, in_token, LIC::LICENSE_TOKEN_SIZE);
+                            ssl.rc4_crypt(crypt_key, decrypt_token, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
 
-                            uint8_t null_data[SEC_MODULUS_SIZE];
-                            memset(null_data, 0, sizeof(null_data));
+                            hexdump((const char*)decrypt_token, LIC::LICENSE_TOKEN_SIZE);
+                            /* Generate a signature for a buffer of token and HWID */
+                            buf_out_uint32(hwid, 2);
+                            memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
+                    //        memcpy(hwid, "\x00\x00\x00\x00\x73\x19\x46\x88\x47\xd7\xb1\xae\xe4\x0d\xbf\x5d\xd9\x63\xc9\x99", LIC::LICENSE_HWID_SIZE);
+                            hexdump((const char*)hwid, LIC::LICENSE_HWID_SIZE);
 
-                            int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
-                                     this->lic_layer.license_size + LIC::LICENSE_HWID_SIZE + LIC::LICENSE_SIGNATURE_SIZE;
+                            uint8_t sealed_buffer[LIC::LICENSE_TOKEN_SIZE + LIC::LICENSE_HWID_SIZE];
+                            memcpy(sealed_buffer, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
+                            memcpy(sealed_buffer + LIC::LICENSE_TOKEN_SIZE, hwid, LIC::LICENSE_HWID_SIZE);
+                            ssl.sign(out_sig, 16, this->lic_layer.license_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
 
-                            stream.out_uint8(LIC::LICENSE_INFO);
+                            /* Now encrypt the HWID */
+                            ssl.rc4_set_key(crypt_key, this->lic_layer.license_key, 16);
+                            memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
+                            ssl.rc4_crypt(crypt_key, crypt_hwid, crypt_hwid, LIC::LICENSE_HWID_SIZE);
+
+                            int length = 58;
+
+                            stream.out_uint8(LIC::PLATFORM_CHALLENGE_RESPONSE);
                             stream.out_uint8(this->use_rdp5?3:2); /* version */
                             stream.out_uint16_le(length);
-                            stream.out_uint32_le(1);
-                            stream.out_uint16_le(0);
-                            stream.out_uint16_le(0x0201);
-                            stream.out_copy_bytes(null_data, SEC_RANDOM_SIZE); // client_random
-                            stream.out_uint16_le(0);
-                            stream.out_uint16_le(SEC_MODULUS_SIZE + SEC_PADDING_SIZE);
-                            stream.out_copy_bytes(null_data, SEC_MODULUS_SIZE); // rsa_data
-                            stream.out_clear_bytes( SEC_PADDING_SIZE);
-                            stream.out_uint16_le(1);
-                            stream.out_uint16_le(this->lic_layer.license_size);
-                            stream.out_copy_bytes(this->lic_layer.license_data, this->lic_layer.license_size);
-                            stream.out_uint16_le(1);
-                            stream.out_uint16_le(LIC::LICENSE_HWID_SIZE);
-                            stream.out_copy_bytes(hwid, LIC::LICENSE_HWID_SIZE);
-                            stream.out_copy_bytes(signature, LIC::LICENSE_SIGNATURE_SIZE);
-                            stream.mark_end();
-                        }
-                        else {
-                            uint8_t null_data[SEC_MODULUS_SIZE];
-                            memset(null_data, 0, sizeof(null_data));
-
-                            LOG(LOG_INFO, "rdp_lic_send_request");
-
-                            int userlen = strlen(username) + 1;
-                            int hostlen = strlen(hostname) + 1;
-                            int length = 128 + userlen + hostlen;
-
-                            stream.out_uint8(LIC::NEW_LICENSE_REQUEST);
-                            stream.out_uint8(this->use_rdp5?3:2);
-                            stream.out_uint16_le(length);
-
-                            // PreferredKeyExchangeAlg (4 bytes): A 32-bit unsigned integer that
-                            // indicates the key exchange algorithm chosen by the client. It MUST be set
-                            // to KEY_EXCHANGE_ALG_RSA (0x00000001), which indicates an RSA-based key
-                            // exchange with a 512-bit asymmetric key.<9>
-
-                            stream.out_uint32_le(KEY_EXCHANGE_ALG_RSA);
-
-                            // PlatformId (4 bytes): A 32-bit unsigned integer. This field is composed
-                            // of two identifiers: the operating system identifier and the independent
-                            // software vendor (ISV) identifier. The platform ID is composed of the
-                            // logical OR of these two values.
-
-                            // The most significant byte of the PlatformId field contains the operating
-                            // system version of the client.<10>
-
-                            // The second most significant byte of the PlatformId field identifies the
-                            // ISV that provided the client image.<11>
-
-                            // The remaining two bytes in the PlatformId field are used by the ISV to
-                            // identify the build number of the operating system.<12>
-
-                            stream.out_uint32_le(0);
-
-                            // ClientRandom (32 bytes): A 32-byte random number generated by the client
-                            // using a cryptographically secure pseudo-random number generator. The
-                            // ClientRandom and ServerRandom (see section 2.2.2.1) values, along with
-                            // the data in the EncryptedPreMasterSecret field, are used to generate
-                            // licensing encryption keys (see section 5.1.3). These keys are used to
-                            // encrypt licensing protocol messages (see sections 5.1.4 and 5.1.5).
-
-                            stream.out_copy_bytes(null_data, SEC_RANDOM_SIZE); // client_random
-
-                            // EncryptedPreMasterSecret (variable): A Licensing Binary BLOB structure
-                            // (see [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_RANDOM_BLOB (0x0002).
-                            // This BLOB contains an encrypted 48-byte random number. For instructions
-                            // on how to encrypt this random number, see section 5.1.2.1.
-
-                            // 2.2.1.12.1.2 Licensing Binary Blob (LICENSE_BINARY_BLOB)
-                            // --------------------------------------------------------
-                            // The LICENSE_BINARY_BLOB structure is used to encapsulate arbitrary
-                            // length binary licensing data.
 
                             // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
                             // the binary information. If wBlobLen is set to 0, then the contents
                             // of this field SHOULD be ignored.
+                            stream.out_uint16_le(BB_DATA_BLOB);
 
-                            // +------------------------------------+-------------------------------------+
-                            // | 0x0001 BB_DATA_BLOB                | Used by License Information PDU and |
-                            // |                                    | Platform Challenge Response PDU     |
-                            // |                                    | ([MS-RDPELE] sections 2.2.2.3 and   |
-                            // |                                    | 2.2.2.5).                           |
-                            // +------------------------------------+-------------------------------------+
-                            // | 0x0002 BB_RANDOM_BLOB              | Used by License Information PDU and |
-                            // |                                    | New License Request PDU ([MS-RDPELE]|
-                            // |                                    | sections 2.2.2.3 and 2.2.2.2).      |
-                            // +------------------------------------+-------------------------------------+
-                            // | 0x0003 BB_CERTIFICATE_BLOB         | Used by License Request PDU         |
-                            // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
-                            // +------------------------------------+-------------------------------------+
-                            // | 0x0004 BB_ERROR_BLOB               | Used by License Error PDU (section  |
-                            // |                                    | 2.2.1.12).                          |
-                            // +------------------------------------+-------------------------------------+
-                            // | 0x0009 BB_ENCRYPTED_DATA_BLOB      | Used by Platform Challenge Response |
-                            // |                                    | PDU and Upgrade License PDU         |
-                            // |                                    | ([MS-RDPELE] sections 2.2.2.5 and   |
-                            // |                                    | 2.2.2.6).                           |
-                            // +------------------------------------+-------------------------------------+
-                            // | 0x000D BB_KEY_EXCHG_ALG_BLOB       | Used by License Request PDU         |
-                            // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
-                            // +------------------------------------+-------------------------------------+
-                            // | 0x000E BB_SCOPE_BLOB               | Used by License Request PDU         |
-                            // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
-                            // +------------------------------------+-------------------------------------+
-                            // | 0x000F BB_CLIENT_USER_NAME_BLOB    | Used by New License Request PDU     |
-                            // |                                    | ([MS-RDPELE] section 2.2.2.2).      |
-                            // +------------------------------------+-------------------------------------+
-                            // | 0x0010 BB_CLIENT_MACHINE_NAME_BLOB | Used by New License Request PDU     |
-                            // |                                    | ([MS-RDPELE] section 2.2.2.2).      |
-                            // +------------------------------------+-------------------------------------+
+                            // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+                            // the binary information in the blobData field. If wBlobLen is set to 0,
+                            // then the blobData field is not included in the Licensing Binary BLOB
+                            // structure and the contents of the wBlobType field SHOULD be ignored.
+                            stream.out_uint16_le(LIC::LICENSE_TOKEN_SIZE);
+                            stream.out_copy_bytes(out_token, LIC::LICENSE_TOKEN_SIZE);
 
-                            // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of the 
-                            // binary information in the blobData field. If wBlobLen is set to 0, then the
-                            // blobData field is not included in the Licensing Binary BLOB structure and the
-                            // contents of the wBlobType field SHOULD be ignored.
+                            // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
+                            // the binary information. If wBlobLen is set to 0, then the contents
+                            // of this field SHOULD be ignored.
+                            stream.out_uint16_le(BB_DATA_BLOB);
 
-                            // blobData (variable): Variable-length binary data. The size of this data in 
-                            // bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field
-                            // is not included in the Licensing Binary BLOB structure.
+                            // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+                            // the binary information in the blobData field. If wBlobLen is set to 0,
+                            // then the blobData field is not included in the Licensing Binary BLOB
+                            // structure and the contents of the wBlobType field SHOULD be ignored.
+                            stream.out_uint16_le(LIC::LICENSE_HWID_SIZE);
+                            stream.out_copy_bytes(crypt_hwid, LIC::LICENSE_HWID_SIZE);
 
-                            stream.out_uint16_le(BB_RANDOM_BLOB);
-                            stream.out_uint16_le((SEC_MODULUS_SIZE + SEC_PADDING_SIZE));
-                            stream.out_copy_bytes(null_data, SEC_MODULUS_SIZE); // rsa_data
-                            stream.out_clear_bytes(SEC_PADDING_SIZE);
-
-                            // ClientUserName (variable): A Licensing Binary BLOB structure (see
-                            // [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_CLIENT_USER_NAME_BLOB
-                            // (0x000F). This BLOB contains the client user name string in
-                            // null-terminated ANSI character set format and is used along with the
-                            // ClientMachineName BLOB to keep track of licenses issued to clients.
-
-                            stream.out_uint16_le(LIC::LICENSE_TAG_USER);
-                            stream.out_uint16_le(userlen);
-                            stream.out_copy_bytes(username, userlen);
-
-                            // ClientMachineName (variable): A Licensing Binary BLOB structure (see
-                            // [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_CLIENT_MACHINE_NAME_BLOB
-                            // (0x0010). This BLOB contains the client machine name string in
-                            // null-terminated ANSI character set format and is used along with the
-                            // ClientUserName BLOB to keep track of licenses issued to clients.
-
-                            stream.out_uint16_le(LIC::LICENSE_TAG_HOST);
-                            stream.out_uint16_le(hostlen);
-                            stream.out_copy_bytes(hostname, hostlen);
+                            stream.out_copy_bytes(out_sig, LIC::LICENSE_SIGNATURE_SIZE);
                             stream.mark_end();
+
+                            BStream x224_header(256);
+                            BStream mcs_header(256);
+                            BStream sec_header(256);
+                            SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
+                            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, 
+                                                          sec_header.size() + stream.size() , MCS::PER_ENCODING);
+                            X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
+
+                            this->nego.trans->send(x224_header.data, x224_header.size());
+                            this->nego.trans->send(mcs_header.data, mcs_header.size());
+                            this->nego.trans->send(sec_header.data, sec_header.size());
+                            this->nego.trans->send(stream.data, stream.size());
                         }
-
-                        BStream x224_header(256);
-                        BStream mcs_header(256);
-                        BStream sec_header(256);
-
-                        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
-                        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, 
-                                                      sec_header.size() + stream.size() , MCS::PER_ENCODING);
-                        X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
-
-                        this->nego.trans->send(x224_header.data, x224_header.size());
-                        this->nego.trans->send(mcs_header.data, mcs_header.size());
-                        this->nego.trans->send(sec_header.data, sec_header.size());
-                        this->nego.trans->send(stream.data, stream.size());
-                    }
-                    break;
-                case LIC::PLATFORM_CHALLENGE:
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Rdp::Platform Challenge");
-                    }
+                        break;
+                    case LIC::NEW_LICENSE:
                     {
-                        BStream stream(65535);
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Rdp::New License");
+                        }
 
+                        payload.in_skip_bytes(2); /* 3d 45 - unknown */
+                        int length = payload.in_uint16_le();
                         ssllib ssl;
-
-                        const uint8_t* in_token;
-                        uint8_t out_token[LIC::LICENSE_TOKEN_SIZE];
-                        uint8_t decrypt_token[LIC::LICENSE_TOKEN_SIZE];
-                        uint8_t hwid[LIC::LICENSE_HWID_SIZE];
-                        uint8_t crypt_hwid[LIC::LICENSE_HWID_SIZE];
-                        uint8_t out_sig[LIC::LICENSE_SIGNATURE_SIZE];
-
-                        in_token = 0;
-                        /* Parse incoming packet and save the encrypted token */
-                        payload.in_skip_bytes(6); /* unknown: f8 3d 15 00 04 f6 */
-
-                        int tokenlen = payload.in_uint16_le();
-                        if (tokenlen != LIC::LICENSE_TOKEN_SIZE) {
-                            LOG(LOG_ERR, "token len = %d, expected %d", tokenlen, LIC::LICENSE_TOKEN_SIZE);
-                        }
-                        else{
-                            in_token = payload.in_uint8p(tokenlen);
-                            payload.in_uint8p(LIC::LICENSE_SIGNATURE_SIZE); // in_sig
-                            payload.check_end();
-                        }
-
-                        memcpy(out_token, in_token, LIC::LICENSE_TOKEN_SIZE);
-                        /* Decrypt the token. It should read TEST in Unicode. */
                         RC4_KEY crypt_key;
                         ssl.rc4_set_key(crypt_key, this->lic_layer.license_key, 16);
-                        memcpy(decrypt_token, in_token, LIC::LICENSE_TOKEN_SIZE);
-                        ssl.rc4_crypt(crypt_key, decrypt_token, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
+                        ssl.rc4_crypt(crypt_key, payload.p, payload.p, length);
+                        int check = payload.in_uint16_le();
+                        license_issued = 1;
 
-                        hexdump((const char*)decrypt_token, LIC::LICENSE_TOKEN_SIZE);
-                        /* Generate a signature for a buffer of token and HWID */
-                        buf_out_uint32(hwid, 2);
-                        memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
-                //        memcpy(hwid, "\x00\x00\x00\x00\x73\x19\x46\x88\x47\xd7\xb1\xae\xe4\x0d\xbf\x5d\xd9\x63\xc9\x99", LIC::LICENSE_HWID_SIZE);
-                        hexdump((const char*)hwid, LIC::LICENSE_HWID_SIZE);
+                        payload.in_skip_bytes(2); /* pad */
 
-                        uint8_t sealed_buffer[LIC::LICENSE_TOKEN_SIZE + LIC::LICENSE_HWID_SIZE];
-                        memcpy(sealed_buffer, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
-                        memcpy(sealed_buffer + LIC::LICENSE_TOKEN_SIZE, hwid, LIC::LICENSE_HWID_SIZE);
-                        ssl.sign(out_sig, 16, this->lic_layer.license_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
+                        length = payload.in_uint32_le();
+                        payload.in_skip_bytes(length);
 
-                        /* Now encrypt the HWID */
-                        ssl.rc4_set_key(crypt_key, this->lic_layer.license_key, 16);
-                        memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
-                        ssl.rc4_crypt(crypt_key, crypt_hwid, crypt_hwid, LIC::LICENSE_HWID_SIZE);
+                        length = payload.in_uint32_le();
+                        payload.in_skip_bytes(length);
 
-                        int length = 58;
+                        length = payload.in_uint32_le();
+                        payload.in_skip_bytes(length);
 
-                        stream.out_uint8(LIC::PLATFORM_CHALLENGE_RESPONSE);
-                        stream.out_uint8(this->use_rdp5?3:2); /* version */
-                        stream.out_uint16_le(length);
+                        length = payload.in_uint32_le();
 
-                        // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
-                        // the binary information. If wBlobLen is set to 0, then the contents
-                        // of this field SHOULD be ignored.
-                        stream.out_uint16_le(BB_DATA_BLOB);
+                        TODO("Save licence to keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that")
+                        res = 1;
 
-                        // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
-                        // the binary information in the blobData field. If wBlobLen is set to 0,
-                        // then the blobData field is not included in the Licensing Binary BLOB
-                        // structure and the contents of the wBlobType field SHOULD be ignored.
-                        stream.out_uint16_le(LIC::LICENSE_TOKEN_SIZE);
-                        stream.out_copy_bytes(out_token, LIC::LICENSE_TOKEN_SIZE);
-
-                        // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
-                        // the binary information. If wBlobLen is set to 0, then the contents
-                        // of this field SHOULD be ignored.
-                        stream.out_uint16_le(BB_DATA_BLOB);
-
-                        // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
-                        // the binary information in the blobData field. If wBlobLen is set to 0,
-                        // then the blobData field is not included in the Licensing Binary BLOB
-                        // structure and the contents of the wBlobType field SHOULD be ignored.
-                        stream.out_uint16_le(LIC::LICENSE_HWID_SIZE);
-                        stream.out_copy_bytes(crypt_hwid, LIC::LICENSE_HWID_SIZE);
-
-                        stream.out_copy_bytes(out_sig, LIC::LICENSE_SIGNATURE_SIZE);
-                        stream.mark_end();
-
-                        BStream x224_header(256);
-                        BStream mcs_header(256);
-                        BStream sec_header(256);
-                        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
-                        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, 
-                                                      sec_header.size() + stream.size() , MCS::PER_ENCODING);
-                        X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
-
-                        this->nego.trans->send(x224_header.data, x224_header.size());
-                        this->nego.trans->send(mcs_header.data, mcs_header.size());
-                        this->nego.trans->send(sec_header.data, sec_header.size());
-                        this->nego.trans->send(stream.data, stream.size());
+                        LOG(LOG_INFO, "New licence saving failed");
+                        throw Error(ERR_SEC);
                     }
                     break;
-                case LIC::NEW_LICENSE:
-                {
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Rdp::New License");
+                    case LIC::UPGRADE_LICENSE:
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Rdp::Upgrade License");
+                        }
+                        break;
+                    case LIC::ERROR_ALERT:
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Rdp::Get licence status");
+                        }
+                    TODO("This should be moved to RDP/lic.hpp (and probably the switch should also move there)")
+                    {
+                        uint32_t dwErrorCode = payload.in_uint32_le();
+                        uint32_t dwStateTransition = payload.in_uint32_le();
+                        uint32_t bbErrorInfo = payload.in_uint32_le();
+                        if (this->verbose){
+                            LOG(LOG_INFO, "%u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u",
+                                version, length, dwErrorCode, dwStateTransition, bbErrorInfo);
+                        }
+                        res = 1;
                     }
-
-                    payload.in_skip_bytes(2); /* 3d 45 - unknown */
-                    int length = payload.in_uint16_le();
-                    ssllib ssl;
-                    RC4_KEY crypt_key;
-                    ssl.rc4_set_key(crypt_key, this->lic_layer.license_key, 16);
-                    ssl.rc4_crypt(crypt_key, payload.p, payload.p, length);
-                    int check = payload.in_uint16_le();
-                    license_issued = 1;
-
-                    payload.in_skip_bytes(2); /* pad */
-
-                    length = payload.in_uint32_le();
-                    payload.in_skip_bytes(length);
-
-                    length = payload.in_uint32_le();
-                    payload.in_skip_bytes(length);
-
-                    length = payload.in_uint32_le();
-                    payload.in_skip_bytes(length);
-
-                    length = payload.in_uint32_le();
-
-                    TODO("Save licence to keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that")
-                    res = 1;
-
-                    LOG(LOG_INFO, "Temporary exit to ensure that this suspicious LICENSE_issue code is really called... after some testing it looks like this code is indeed never called");
-                    exit(0);
+                    break;
+                    default:
+                    {
+                        LOG(LOG_WARNING, "Unexpected license tag sent from server (tag = %x)", tag);
+                        throw Error(ERR_SEC);
+                    }
+                    break;
                 }
-                break;
-                case LIC::UPGRADE_LICENSE:
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Rdp::Upgrade License");
-                    }
-                    break;
-                case LIC::ERROR_ALERT:
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Rdp::Get licence status");
-                    }
-                TODO("This should be moved to RDP/lic.hpp (and probably the switch should also move there)")
-                {
-                    uint32_t dwErrorCode = payload.in_uint32_le();
-                    uint32_t dwStateTransition = payload.in_uint32_le();
-                    uint32_t bbErrorInfo = payload.in_uint32_le();
-                    if (this->verbose){
-                        LOG(LOG_INFO, "%u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u",
-                            version, length, dwErrorCode, dwStateTransition, bbErrorInfo);
-                    }
-                    res = 1;
-                }
-                break;
-                default:
-                    LOG(LOG_WARNING, "Error: unexpected license tag %x", tag);
-                    break;
+                TODO("check if moving end is still necessary all data should have been consumed")
+                if (payload.p != payload.end){
+                    LOG(LOG_ERR, "all data should have been consumed %s:%u tag = %x", __FILE__, __LINE__, tag);
+                    throw Error(ERR_SEC);
                 }
             }
             else {
-                LOG(LOG_INFO, "ERR_SEC_EXPECTED_LICENSE_NEGOTIATION_PDU");
-                throw Error(ERR_SEC_EXPECTED_LICENSE_NEGOTIATION_PDU);
-            }
-            TODO("check if moving end is still necessary all data should have been consumed")
-            if (payload.p != payload.end){
-                LOG(LOG_ERR, "all data should have been consumed %s:%u ", __FILE__, __LINE__);
+                LOG(LOG_ERR, "Failed to get expected licence negotiation PDU");
+                throw Error(ERR_SEC);
             }
             if (res){
                 this->state = MOD_RDP_CONNECTED;
@@ -1750,7 +1737,9 @@ struct mod_rdp : public client_mod {
 
         case MOD_RDP_CONNECTED:
         {
-            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED bpp=%u", this->bpp);
+            if (this->verbose){
+                LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED bpp=%u", this->bpp);
+            }
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
@@ -1760,9 +1749,8 @@ struct mod_rdp : public client_mod {
             SubStream & mcs_data = x224.payload;
             MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
             SEC::Sec_Recv sec(mcs.payload, false, this->decrypt, this->encryptionLevel, this->encryptionMethod);
-            SubStream & payload = sec.payload;
+
             if (mcs.channelId != MCS_GLOBAL_CHANNEL){
-//                LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:Channel");
                 size_t num_channel_src = this->mod_channel_list.size();
                 for (size_t index = 0; index < num_channel_src; index++){
                     const ChannelDef & mod_channel_item = this->mod_channel_list[index];
@@ -1771,7 +1759,6 @@ struct mod_rdp : public client_mod {
                         break;
                     }
                 }
-
                 if (num_channel_src >= this->mod_channel_list.size()) {
                     LOG(LOG_WARNING, "mod::rdp::MOD_RDP_CONNECTED::Unknown Channel");
                     throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
@@ -1779,62 +1766,66 @@ struct mod_rdp : public client_mod {
 
                 const ChannelDef & mod_channel = this->mod_channel_list[num_channel_src];
 
-                uint32_t length = payload.in_uint32_le();
-                int flags = payload.in_uint32_le();
-                size_t chunk_size = payload.end - payload.p;
+                uint32_t length = sec.payload.in_uint32_le();
+                int flags = sec.payload.in_uint32_le();
+                size_t chunk_size = sec.payload.end - sec.payload.p;
 
-                this->send_to_front_channel(mod_channel.name, payload.p, length, chunk_size, flags);
+                this->send_to_front_channel(mod_channel.name, sec.payload.p, length, chunk_size, flags);
 
-                payload.p = payload.end;
+                sec.payload.p = sec.payload.end;
             }
             else {
 
-                uint8_t * next_packet = payload.p;
-                while (next_packet < payload.end) {
-                    payload.p = next_packet;
-                    ShareControl sctrl(payload);
+                uint8_t * next_packet = sec.payload.p;
+                while (next_packet < sec.payload.end) {
+                    sec.payload.p = next_packet;
+                    ShareControl sctrl(sec.payload);
                     sctrl.recv_begin();
-                    if (this->verbose){
-//                        LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:len = %u pdu_type = %u",
-//                            sctrl.len, sctrl.pdu_type1);
-                    }
                     next_packet += sctrl.len;
                     switch (sctrl.pdu_type1) {
                     case PDUTYPE_DATAPDU:
+                        LOG(LOG_WARNING, "PDUTYPE_DATAPDU");
                         switch (this->connection_finalization_state){
                         case EARLY:
                             LOG(LOG_WARNING, "Rdp::finalization is early");
+                            throw Error(ERR_SEC);
                         break;
                         case WAITING_SYNCHRONIZE:
-                            LOG(LOG_INFO, "Receiving Synchronize");
+                            LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
 //                            this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
+                            TODO("Data should actually be consumed")
+                            sctrl.payload.p = sctrl.payload.end;
                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
                         break;
                         case WAITING_CTL_COOPERATE:
+                            LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
+                            TODO("Data should actually be consumed")
+                            sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_CONTROL);
-                            LOG(LOG_INFO, "Receiving Control Cooperate");
                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                         break;
                         case WAITING_GRANT_CONTROL_COOPERATE:
+                            LOG(LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
+                            TODO("Data should actually be consumed")
+                            sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_CONTROL);
-                            LOG(LOG_INFO, "Receiving Granted Control");
                             this->connection_finalization_state = WAITING_FONT_MAP;
                         break;
                         case WAITING_FONT_MAP:
-                            LOG(LOG_INFO, "Receiving Font Map");
+                            LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
+                            TODO("Data should actually be consumed")
+                            sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_FONTMAP);
-                            LOG(LOG_INFO, "process demand active ok");
                             this->connection_finalization_state = UP_AND_RUNNING;
                         break;
                         case UP_AND_RUNNING:
                         {
-//                            LOG(LOG_INFO, "Up and running bpp=%u", this->bpp);
-                            ShareData sdata(payload);
+                            ShareData sdata(sctrl.payload);
                             sdata.recv_begin();
-//                            LOG(LOG_INFO, "Up and running");
                             switch (sdata.pdutype2) {
                             case PDUTYPE2_UPDATE:
                             {
+                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_UPDATE"); }
                                 // MS-RDPBCGR: 1.3.6
                                 // -----------------
                                 // The most fundamental output that a server can send to a connected client
@@ -1843,93 +1834,98 @@ struct mod_rdp : public client_mod {
                                 // interact with the session running on the server. The global palette
                                 // information for a session is sent to the client in the Update Palette PDU.
 
-                                int update_type = payload.in_uint16_le();
-                                LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:update_type = %u", update_type);
+                                int update_type = sdata.payload.in_uint16_le();
                                 switch (update_type) {
                                 case RDP_UPDATE_ORDERS:
+                                    if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS");}
                                     {
-                                        LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_ORDERS");
-                                        payload.in_skip_bytes(2); /* pad */
-                                        int count = payload.in_uint16_le();
-                                        payload.in_skip_bytes(2); /* pad */
+                                        sdata.payload.in_skip_bytes(2); /* pad */
+                                        int count = sdata.payload.in_uint16_le();
+                                        sdata.payload.in_skip_bytes(2); /* pad */
                                         this->front.begin_update();
-                                        this->orders.process_orders(this->bpp, payload, count, this);
+                                        this->orders.process_orders(this->bpp, sdata.payload, count, this);
                                         this->front.end_update();
                                     }
                                     break;
                                 case RDP_UPDATE_BITMAP:
-                                    LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_BITMAP");
+                                    if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_BITMAP");}
                                     this->front.begin_update();
-                                    this->process_bitmap_updates(payload, this);
+                                    this->process_bitmap_updates(sdata.payload, this);
                                     this->front.end_update();
                                     break;
                                 case RDP_UPDATE_PALETTE:
-                                    LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_PALETTE");
+                                    if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_PALETTE");}
                                     this->front.begin_update();
-                                    this->process_palette(payload, this);
+                                    this->process_palette(sdata.payload, this);
                                     this->front.end_update();
                                     break;
                                 case RDP_UPDATE_SYNCHRONIZE:
-                                    LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_SYNCHRONIZE");
-                                    TODO("Replace moving end pointer by actual parsing of update synchronize");
+                                    if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_SYNCHRONIZE");}
+                                    sdata.payload.in_skip_bytes(2);
                                     break;
                                 default:
-                                    LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_UNKNOWN");
+                                    if (this->verbose & 8){ LOG(LOG_WARNING, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_UNKNOWN");}
                                     break;
                                 }
                             }
-                            sdata.recv_end();
                             break;
                             case PDUTYPE2_CONTROL:
-                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_CONTROL");
+                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_CONTROL");}
+                                TODO("Data should actually be consumed")
+                                sdata.payload.p = sdata.payload.end;
                             break;
                             case PDUTYPE2_SYNCHRONIZE:
-                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_SYNCHRONIZE");
+                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");}
+                                TODO("Data should actually be consumed")
+                                sdata.payload.p = sdata.payload.end;
                             break;
                             case PDUTYPE2_POINTER:
-                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_POINTER");
-                                this->process_pointer_pdu(payload, this);
+                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_POINTER");}
+                                this->process_pointer_pdu(sdata.payload, this);
+                                TODO("Data should actually be consumed")
+                                sdata.payload.p = sdata.payload.end;
                             break;
                             case PDUTYPE2_PLAY_SOUND:
-                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_PLAY_SOUND");
+                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");}
+                                TODO("Data should actually be consumed")
+                                sdata.payload.p = sdata.payload.end;
                             break;
                             case PDUTYPE2_SAVE_SESSION_INFO:
-                                LOG(LOG_INFO, "DATA PDU LOGON");
+                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");}
+                                TODO("Data should actually be consumed")
+                                sdata.payload.p = sdata.payload.end;
                             break;
                             case PDUTYPE2_SET_ERROR_INFO_PDU:
-                                LOG(LOG_INFO, "DATA PDU DISCONNECT");
-                                this->process_disconnect_pdu(payload);
+                                if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
+                                this->process_disconnect_pdu(sdata.payload);
                             break;
                             default:
-                                LOG(LOG_INFO, "mod_rdp::unknown PDUTYPE2");
+                                LOG(LOG_INFO, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
+                                TODO("Data should actually be consumed")
+                                sdata.payload.p = sdata.payload.end;
                             break;
                             }
+                            sdata.recv_end();
+                            sctrl.payload.p = sdata.payload.end;
                         }
                         break;
                     }
                     break;
                     case PDUTYPE_DEMANDACTIVEPDU:
-                        LOG(LOG_INFO, "Received demand active PDU");
                         {
                             client_mod * mod = this;
-                            this->share_id = payload.in_uint32_le();
-                            uint16_t lengthSourceDescriptor = payload.in_uint16_le();
-                            uint16_t lengthCombinedCapabilities = payload.in_uint16_le();
-                            payload.in_skip_bytes(lengthSourceDescriptor);
-                            this->process_server_caps(payload, lengthCombinedCapabilities);
-//                            uint32_t sessionId = payload.in_uint32_le();
-                            TODO(" we should be able to pack all the following sends to the same X224 TPDU  instead of creating a different one for each send")
-                            LOG(LOG_INFO, "Sending confirm active PDU");
+                            this->share_id = sctrl.payload.in_uint32_le();
+                            uint16_t lengthSourceDescriptor = sctrl.payload.in_uint16_le();
+                            uint16_t lengthCombinedCapabilities = sctrl.payload.in_uint16_le();
+                            sctrl.payload.in_skip_bytes(lengthSourceDescriptor);
+                            this->process_server_caps(sctrl.payload, lengthCombinedCapabilities);
+                            uint32_t sessionId = sctrl.payload.in_uint32_le();
+
                             this->send_confirm_active(mod);
-                            LOG(LOG_INFO, "Sending synchronize");
                             this->send_synchronise();
-                            LOG(LOG_INFO, "Sending control cooperate");
                             this->send_control(RDP_CTL_COOPERATE);
-                            LOG(LOG_INFO, "Sending request control");
                             this->send_control(RDP_CTL_REQUEST_CONTROL);
-                            LOG(LOG_INFO, "Sending input synchronize");
                             this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
-                            LOG(LOG_INFO, "Sending font List");
                             /* Including RDP 5.0 capabilities */
                             if (this->use_rdp5){
                                 LOG(LOG_INFO, "use rdp5");
@@ -1941,8 +1937,7 @@ struct mod_rdp : public client_mod {
                                 this->send_fonts(1);
                                 this->send_fonts(2);
                             }
-                            LOG(LOG_INFO, "Resizing to %ux%ux%u",
-                                this->front_width, this->front_height, this->bpp);
+                            LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->bpp);
                             if (-1 == this->front.server_resize(this->front_width, this->front_height, this->bpp)){
                                 LOG(LOG_WARNING, "Resize not available on older clients,"
                                                  " change client resolution to match server resolution");
@@ -1954,11 +1949,13 @@ struct mod_rdp : public client_mod {
                     break;
                     case PDUTYPE_DEACTIVATEALLPDU:
                         LOG(LOG_INFO, "Deactivate All PDU");
+                        TODO("Data should actually be consumed")
+                        sctrl.payload.p = sctrl.payload.end;
+                        sctrl.recv_end();
                         TODO("Check we are indeed expecting Synchronize... dubious")
                         this->connection_finalization_state = WAITING_SYNCHRONIZE;
                     break;
                     case PDUTYPE_SERVER_REDIR_PKT:
-                        LOG(LOG_INFO, "PDUTYPE_SERVER_REDIR_PKT");
                     break;
                     default:
                         LOG(LOG_INFO, "unknown PDU %u", sctrl.pdu_type1);
@@ -1971,15 +1968,14 @@ struct mod_rdp : public client_mod {
         }
         }
         catch(Error e){
-            LOG(LOG_DEBUG, "mod_rdp::draw_event::Exception!!!Closing connection (status=%u)", e.id);
             BStream stream(256);
             X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
             try {
                 this->nego.trans->send(stream.data, stream.size());
-                LOG(LOG_DEBUG, "Connection closed (status=0)");
+                LOG(LOG_INFO, "Connection to server closed");
             }
             catch(Error e){
-                LOG(LOG_DEBUG, "Connection Already closed (status=%u)", e.id);
+                LOG(LOG_INFO, "Connection to server Already closed", e.id);
                 return (e.id == ERR_SOCKET_CLOSED)?BACK_EVENT_2:BACK_EVENT_1;
             };
             return BACK_EVENT_1;
@@ -2209,10 +2205,7 @@ struct mod_rdp : public client_mod {
             stream.out_uint32_le(0);
             stream.mark_end();    
 
-//            stream.set_out_uint16_le(stream.get_offset() - (offset_caplen + 47), offset_caplen); // caplen
-//            stream.set_out_uint16_le(caplen, offset_caplen); // caplen
             stream.set_out_uint16_le(total_caplen + 4, offset_caplen); // caplen
-//            LOG(LOG_INFO, "total_caplen = %u, caplen=%u computed caplen=%u offset_here = %u offset_caplen=%u", total_caplen, 388, stream.get_offset() - offset_caplen, stream.get_offset(), offset_caplen);
             stream.set_out_uint16_le(capscount, offset_capscount); // caplen
 
             // Packet trailer
@@ -2236,16 +2229,6 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_INFO, "Waiting for answer to confirm active");
             }
         }
-
-
-        void out_unknown_caps(Stream & stream, int id, int length, const char * caps)
-        {
-//            LOG(LOG_INFO, "Sending unknown caps to server");
-            stream.out_uint16_le(id);
-            stream.out_uint16_le(length);
-            stream.out_copy_bytes(caps, length - 4);
-        }
-
 
         void process_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
         {
@@ -2989,9 +2972,6 @@ struct mod_rdp : public client_mod {
             int ncapsets = stream.in_uint16_le();
             stream.in_skip_bytes(2); /* pad */
             for (int n = 0; n < ncapsets; n++) {
-                if (stream.p + 4 > start + len) {
-                    return;
-                }
                 uint16_t capset_type = stream.in_uint16_le();
                 uint16_t capset_length = stream.in_uint16_le();
                 uint8_t * next = (stream.p + capset_length) - 4;
@@ -3212,7 +3192,6 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
             }
             if (UP_AND_RUNNING == this->connection_finalization_state) {
-//                LOG(LOG_INFO, "rdp_input_invalidate");
                 if (!r.isempty()){
                     BStream stream(65536);
                     ShareControl sctrl(stream);
@@ -3359,7 +3338,9 @@ struct mod_rdp : public client_mod {
         // numberRectangles (2 bytes): A 16-bit, unsigned integer.
         // The number of screen rectangles present in the rectangles field.
         size_t numberRectangles = stream.in_uint16_le();
-        LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */", numberRectangles);
+        if (this->verbose){
+            LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */", numberRectangles);
+        }
         for (size_t i = 0; i < numberRectangles; i++) {
             // rectangles (variable): Variable-length array of TS_BITMAP_DATA
             // (section 2.2.9.1.1.3.1.2.2) structures, each of which contains a
@@ -3432,7 +3413,10 @@ struct mod_rdp : public client_mod {
             // that the bitmapComprHdr field is present if the
             // NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not set.
 
-            LOG(LOG_INFO, "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */", i, bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
+            if (this->verbose){
+                LOG(LOG_INFO, "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */", 
+                    i, bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
+            }
 
             bool compressed = false;
             uint16_t line_size = 0;
@@ -3454,7 +3438,10 @@ struct mod_rdp : public client_mod {
                 }
 
                 if (width <= 0 || height <= 0){
-                    LOG(LOG_ERR, "unexpected bitmap size : width=%u height=%u size=%u left=%u, top=%u, right=%u, bottom=%u", width, height, size, left, top, right, bottom);
+                    if (this->verbose){
+                        LOG(LOG_ERR, "Unexpected bitmap size : width=%d height=%d size=%u left=%u, top=%u, right=%u, bottom=%u", 
+                            width, height, size, left, top, right, bottom);
+                    }
                 }
                 compressed = true;
             }
@@ -3467,13 +3454,17 @@ struct mod_rdp : public client_mod {
             const uint8_t * data = stream.in_uint8p(size);
             Bitmap bitmap(bpp, &this->orders.global_palette, width, height, data, size, compressed);
             if (line_size && (line_size - bitmap.line_size)>= nbbytes(bitmap.original_bpp)){
-                LOG(LOG_WARNING, "Bad line size: line_size=%u width=%u height=%u bpp=%u",
-                    line_size, width, height, bpp);
+                if (this->verbose){
+                    LOG(LOG_WARNING, "Bad line size: line_size=%u width=%u height=%u bpp=%u",
+                       line_size, width, height, bpp);
+                }
             }
 
             if (final_size && final_size != bitmap.bmp_size){
-                LOG(LOG_WARNING, "final_size should be size of decompressed bitmap [%u != %u] width=%u height=%u bpp=%u",
-                    final_size, bitmap.bmp_size, width, height, bpp);
+                if (this->verbose){
+                    LOG(LOG_WARNING, "final_size should be size of decompressed bitmap [%u != %u] width=%u height=%u bpp=%u",
+                        final_size, bitmap.bmp_size, width, height, bpp);
+                }
             }
             mod->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
         }
@@ -3503,12 +3494,13 @@ struct mod_rdp : public client_mod {
         infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG
                                                                                                    | PERF_DISABLE_MENUANIMATIONS );
         infoPacket.log("Sending to server: ");
-        infoPacket.emit( stream );
+        infoPacket.emit(stream);
         stream.mark_end();        
 
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
+
         SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel, this->encryptionMethod);
         MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, 
                                       sec_header.size() + stream.size() , MCS::PER_ENCODING);
@@ -3519,7 +3511,6 @@ struct mod_rdp : public client_mod {
         this->nego.trans->send(sec_header.data, sec_header.size());
         this->nego.trans->send(stream.data, stream.size());
 
-        LOG(LOG_INFO, "send login info ok");
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu done");
         }

@@ -1291,11 +1291,6 @@ public:
                 SubStream & payload = mcs.payload;
                 SEC::SecExchangePacket_Recv sec(payload, mcs.payload_size);
 
-                if (sec.payload.size() != 64 + 8){
-                    LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %u", sec.payload.size());
-                    throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
-                }
-
                 ssllib ssl;
                 uint8_t client_random[64];
                 memset(client_random, 0, 64);
@@ -1506,7 +1501,6 @@ public:
             }
 
             SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
-            SubStream & payload = sec.payload;
 
             // Licensing
             // ---------
@@ -1639,7 +1633,7 @@ public:
                 if (this->verbose){
                     LOG(LOG_INFO, "non licence packet: still waiting for licence");
                 }
-                ShareControl sctrl(payload);
+                ShareControl sctrl(sec.payload);
                 sctrl.recv_begin();
 
                 switch (sctrl.pdu_type1) {
@@ -1653,9 +1647,9 @@ public:
                         LOG(LOG_INFO, "Unexpected CONFIRMACTIVE PDU");
                     }
                     {
-                        uint32_t share_id = payload.in_uint32_le();
-                        uint16_t originatorId = payload.in_uint16_le();
-                        this->process_confirm_active(payload);
+                        uint32_t share_id = sctrl.payload.in_uint32_le();
+                        uint16_t originatorId = sctrl.payload.in_uint16_le();
+                        this->process_confirm_active(sctrl.payload);
                     }
 
                     break;
@@ -1663,11 +1657,14 @@ public:
                     if (this->verbose & 4){
                         LOG(LOG_INFO, "unexpected DATA PDU while in licence negociation");
                     }
+                    TODO("See what happens here")
+                    sctrl.payload.p = sctrl.payload.end;
                     // at this point licence negociation is still ongoing
                     // most data packets should not be received
                     // actually even input is dubious,
                     // but rdesktop actually sends input data
-                    this->process_data(payload, cb);
+                    // also processing this is a problem because input data packets are broken
+//                    this->process_data(sctrl.payload, cb);
                     break;
                 case PDUTYPE_DEACTIVATEALLPDU:
                     if (this->verbose){
@@ -1684,6 +1681,7 @@ public:
                     break;
                 }
                 sctrl.recv_end();
+                sec.payload.p = sctrl.payload.p;
             }
             sec.payload.p = sec.payload.end;
         }
@@ -1752,38 +1750,9 @@ public:
             TODO("We should also manage the DisconnectRequest case as it can also happen")
 
             SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
-            SubStream & payload = sec.payload;
 
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
-            }
-
-            if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
-                if (this->verbose){
-                    LOG(LOG_INFO, "Front::incoming::SEC_REDIRECT_ENCRYPT not supported");
-                    throw Error(ERR_X224_EXPECTED_DATA_PDU);
-                }
-//                /* Check for a redirect packet, starts with 00 04 */
-//                if (stream.p[0] == 0 && stream.p[1] == 4){
-//                /* for some reason the PDU and the length seem to be swapped.
-//                   This isn't good, but we're going to do a byte for byte
-//                   swap.  So the first four value appear as: 00 04 XX YY,
-//                   where XX YY is the little endian length. We're going to
-//                   use 04 00 as the PDU type, so after our swap this will look
-//                   like: XX YY 04 00 */
-
-//                    uint8_t swapbyte1 = stream.p[0];
-//                    stream.p[0] = stream.p[2];
-//                    stream.p[2] = swapbyte1;
-
-//                    uint8_t swapbyte2 = stream.p[1];
-//                    stream.p[1] = stream.p[3];
-//                    stream.p[3] = swapbyte2;
-
-//                    uint8_t swapbyte3 = stream.p[2];
-//                    stream.p[2] = stream.p[3];
-//                    stream.p[3] = swapbyte3;
-//                }
             }
 
             if (mcs.channelId != MCS_GLOBAL_CHANNEL) {
@@ -1802,19 +1771,19 @@ public:
 
                 const ChannelDef & channel = channel_list[num_channel_src];
 
-                int length = payload.in_uint32_le();
-                int flags = payload.in_uint32_le();
+                int length = sec.payload.in_uint32_le();
+                int flags = sec.payload.in_uint32_le();
 
-                size_t chunk_size = payload.end - payload.p;
+                size_t chunk_size = sec.payload.end - sec.payload.p;
 
                 if (this->up_and_running){
-                    cb.send_to_mod_channel(channel.name, payload.p, length, chunk_size, flags);
+                    cb.send_to_mod_channel(channel.name, sec.payload.p, length, chunk_size, flags);
                 }
-                payload.p += chunk_size;
+                sec.payload.p += chunk_size;
             }
             else {
-                while (payload.p < payload.end) {
-                    ShareControl sctrl(payload);
+                while (sec.payload.p < sec.payload.end) {
+                    ShareControl sctrl(sec.payload);
                     sctrl.recv_begin();
 
                     switch (sctrl.pdu_type1) {
@@ -1828,9 +1797,9 @@ public:
                             LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU");
                         }
                         {
-                            uint32_t share_id = payload.in_uint32_le();
-                            uint16_t originatorId = payload.in_uint16_le();
-                            this->process_confirm_active(payload);
+                            uint32_t share_id = sctrl.payload.in_uint32_le();
+                            uint16_t originatorId = sctrl.payload.in_uint16_le();
+                            this->process_confirm_active(sctrl.payload);
                         }
                         // reset caches, etc.
                         this->reset();
@@ -1847,7 +1816,8 @@ public:
                         // this is rdp_process_data that will set up_and_running to 1
                         // when fonts have been received
                         // we will not exit this loop until we are in this state.
-                        this->process_data(payload, cb);
+                        LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
+                        this->process_data(sctrl.payload, cb);
                         break;
                     case PDUTYPE_DEACTIVATEALLPDU:
                         if (this->verbose){
@@ -1864,6 +1834,7 @@ public:
                         break;
                     }
                     sctrl.recv_end();
+                    sec.payload.p = sctrl.payload.p;
                 }
             }
             TODO("check all data have been consumed")
@@ -2433,11 +2404,13 @@ public:
             LOG(LOG_INFO, "sdata_in.pdutype2=%u"
                           " sdata_in.len=%u"
                           " sdata_in.compressedLen=%u"
-                          " remains=%u",
+                          " remains=%u"
+                          " payload_len=%u",
                 (unsigned)sdata_in.pdutype2,
                 (unsigned)sdata_in.len,
                 (unsigned)sdata_in.compressedLen,
-                (unsigned)(stream.end - stream.p)
+                (unsigned)(stream.end - stream.p),
+                (unsigned)(sdata_in.payload.size())
             );
         }
 
@@ -2452,9 +2425,9 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_CONTROL");
             }
             {
-                int action = stream.in_uint16_le();
-                stream.in_skip_bytes(2); /* user id */
-                stream.in_skip_bytes(4); /* control id */
+                int action = sdata_in.payload.in_uint16_le();
+                sdata_in.payload.in_skip_bytes(2); /* user id */
+                sdata_in.payload.in_skip_bytes(4); /* control id */
                 switch (action){
                     case RDP_CTL_REQUEST_CONTROL:
                         this->send_control(RDP_CTL_GRANT_CONTROL);
@@ -2474,19 +2447,19 @@ public:
         break;
         case PDUTYPE2_INPUT:   // 28(0x1c) Input PDU (section 2.2.8.1.1.3)
             {
-                int num_events = stream.in_uint16_le();
+                int num_events = sdata_in.payload.in_uint16_le();
 
                 if (this->verbose & 2){
-                    LOG(LOG_INFO, "PDUTYPE2_INPUT num_events=%u", num_events);
+                    LOG(LOG_INFO, "PDUTYPE2_INPUT num_events=%u ", num_events);
                 }
 
-                stream.in_skip_bytes(2); /* pad */
+                sdata_in.payload.in_skip_bytes(2); /* pad */
                 for (int index = 0; index < num_events; index++) {
-                    int time = stream.in_uint32_le();
-                    uint16_t msg_type = stream.in_uint16_le();
-                    uint16_t device_flags = stream.in_uint16_le();
-                    int16_t param1 = stream.in_sint16_le();
-                    int16_t param2 = stream.in_sint16_le();
+                    int time = sdata_in.payload.in_uint32_le();
+                    uint16_t msg_type = sdata_in.payload.in_uint16_le();
+                    uint16_t device_flags = sdata_in.payload.in_uint16_le();
+                    int16_t param1 = sdata_in.payload.in_sint16_le();
+                    int16_t param2 = sdata_in.payload.in_sint16_le();
 
                     TODO(" we should always call send_input with original data  if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it")
                     TODO(" with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.")
@@ -2529,6 +2502,9 @@ public:
                         break;
                     }
                 }
+                if (this->verbose & 2){
+                    LOG(LOG_INFO, "PDUTYPE2_INPUT done");
+                }
             }
         break;
         case PDUTYPE2_SYNCHRONIZE:  // Synchronize PDU (section 2.2.1.14.1)
@@ -2536,8 +2512,8 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");
             }
             {
-                uint16_t messageType = stream.in_uint16_le();
-                uint16_t controlId = stream.in_uint16_le();
+                uint16_t messageType = sdata_in.payload.in_uint16_le();
+                uint16_t controlId = sdata_in.payload.in_uint16_le();
                 if (this->verbose){
                     LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE"
                                   " messageType=%u controlId=%u",
@@ -2552,11 +2528,11 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT");
             }
             {
-                /* int op = */ stream.in_uint32_le();
-                int left = stream.in_uint16_le();
-                int top = stream.in_uint16_le();
-                int right = stream.in_uint16_le();
-                int bottom = stream.in_uint16_le();
+                /* int op = */ sdata_in.payload.in_uint32_le();
+                int left = sdata_in.payload.in_uint16_le();
+                int top = sdata_in.payload.in_uint16_le();
+                int right = sdata_in.payload.in_uint16_le();
+                int bottom = sdata_in.payload.in_uint16_le();
                 int cx = (right - left) + 1;
                 int cy = (bottom - top) + 1;
                 if (this->verbose){
@@ -2659,10 +2635,10 @@ public:
         // entrySize (2 bytes): A 16-bit, unsigned integer. The entry size. This
         // field SHOULD be set to 0x0032 (50 bytes).
 
-            stream.in_uint16_le(); /* numberFont -> 0*/
-            stream.in_uint16_le(); /* totalNumFonts -> 0 */
-            int seq = stream.in_uint16_le();
-            stream.in_uint16_le(); /* entrySize -> 50 */
+            sdata_in.payload.in_uint16_le(); /* numberFont -> 0*/
+            sdata_in.payload.in_uint16_le(); /* totalNumFonts -> 0 */
+            int seq = sdata_in.payload.in_uint16_le();
+            sdata_in.payload.in_uint16_le(); /* entrySize -> 50 */
 
             /* 419 client sends Seq 1, then 2 */
             /* 2600 clients sends only Seq 3 */
@@ -2700,7 +2676,7 @@ public:
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST");
             }
-            stream.in_skip_bytes(sdata_in.len);
+            sdata_in.payload.in_skip_bytes(sdata_in.len);
         break;
         case PDUTYPE2_BITMAPCACHE_ERROR_PDU: // Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.1)
             if (this->verbose){
@@ -2744,6 +2720,7 @@ public:
         }
 
         sdata_in.recv_end();
+        stream.p = sdata_in.payload.p;
 
         if (this->verbose & 4){
             LOG(LOG_INFO, "process_data done");
