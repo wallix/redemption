@@ -1784,24 +1784,37 @@ struct mod_rdp : public client_mod {
                     next_packet += sctrl.len;
                     switch (sctrl.pdu_type1) {
                     case PDUTYPE_DATAPDU:
+                        LOG(LOG_WARNING, "PDUTYPE_DATAPDU");
                         switch (this->connection_finalization_state){
                         case EARLY:
                             LOG(LOG_WARNING, "Rdp::finalization is early");
                             throw Error(ERR_SEC);
                         break;
                         case WAITING_SYNCHRONIZE:
+                            LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
 //                            this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
+                            TODO("Data should actually be consumed")
+                            sctrl.payload.p = sctrl.payload.end;
                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
                         break;
                         case WAITING_CTL_COOPERATE:
+                            LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
+                            TODO("Data should actually be consumed")
+                            sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                         break;
                         case WAITING_GRANT_CONTROL_COOPERATE:
+                            LOG(LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
+                            TODO("Data should actually be consumed")
+                            sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                             this->connection_finalization_state = WAITING_FONT_MAP;
                         break;
                         case WAITING_FONT_MAP:
+                            LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
+                            TODO("Data should actually be consumed")
+                            sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_FONTMAP);
                             this->connection_finalization_state = UP_AND_RUNNING;
                         break;
@@ -1858,30 +1871,42 @@ struct mod_rdp : public client_mod {
                             break;
                             case PDUTYPE2_CONTROL:
                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_CONTROL");}
+                                TODO("Data should actually be consumed")
+                                sdata.payload.p = sdata.payload.end;
                             break;
                             case PDUTYPE2_SYNCHRONIZE:
                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");}
+                                TODO("Data should actually be consumed")
+                                sdata.payload.p = sdata.payload.end;
                             break;
                             case PDUTYPE2_POINTER:
                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_POINTER");}
-                                this->process_pointer_pdu(sec.payload, this);
+                                this->process_pointer_pdu(sdata.payload, this);
+                                TODO("Data should actually be consumed")
+                                sdata.payload.p = sdata.payload.end;
                             break;
                             case PDUTYPE2_PLAY_SOUND:
                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");}
+                                TODO("Data should actually be consumed")
+                                sdata.payload.p = sdata.payload.end;
                             break;
                             case PDUTYPE2_SAVE_SESSION_INFO:
                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");}
+                                TODO("Data should actually be consumed")
+                                sdata.payload.p = sdata.payload.end;
                             break;
                             case PDUTYPE2_SET_ERROR_INFO_PDU:
                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
-                                this->process_disconnect_pdu(sec.payload);
+                                this->process_disconnect_pdu(sdata.payload);
                             break;
                             default:
                                 LOG(LOG_INFO, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
+                                TODO("Data should actually be consumed")
+                                sdata.payload.p = sdata.payload.end;
                             break;
                             }
-                        sdata.recv_end();
-                        sctrl.payload.p = sdata.payload.p;
+                            sdata.recv_end();
+                            sctrl.payload.p = sdata.payload.end;
                         }
                         break;
                     }
@@ -1894,8 +1919,8 @@ struct mod_rdp : public client_mod {
                             uint16_t lengthCombinedCapabilities = sctrl.payload.in_uint16_le();
                             sctrl.payload.in_skip_bytes(lengthSourceDescriptor);
                             this->process_server_caps(sctrl.payload, lengthCombinedCapabilities);
-//                            uint32_t sessionId = sctrl.payload.in_uint32_le();
-                            TODO(" we should be able to pack all the following sends to the same X224 TPDU  instead of creating a different one for each send")
+                            uint32_t sessionId = sctrl.payload.in_uint32_le();
+
                             this->send_confirm_active(mod);
                             this->send_synchronise();
                             this->send_control(RDP_CTL_COOPERATE);
@@ -1924,6 +1949,9 @@ struct mod_rdp : public client_mod {
                     break;
                     case PDUTYPE_DEACTIVATEALLPDU:
                         LOG(LOG_INFO, "Deactivate All PDU");
+                        TODO("Data should actually be consumed")
+                        sctrl.payload.p = sctrl.payload.end;
+                        sctrl.recv_end();
                         TODO("Check we are indeed expecting Synchronize... dubious")
                         this->connection_finalization_state = WAITING_SYNCHRONIZE;
                     break;
@@ -2945,9 +2973,6 @@ struct mod_rdp : public client_mod {
             int ncapsets = stream.in_uint16_le();
             stream.in_skip_bytes(2); /* pad */
             for (int n = 0; n < ncapsets; n++) {
-                if (stream.p + 4 > start + len) {
-                    return;
-                }
                 uint16_t capset_type = stream.in_uint16_le();
                 uint16_t capset_length = stream.in_uint16_le();
                 uint8_t * next = (stream.p + capset_length) - 4;

@@ -134,6 +134,10 @@ struct ShareControl
             return;
         }
         this->mcs_channel = stream.in_uint16_le();
+        if (this->len < 6){
+            LOG(LOG_ERR, "ShareControl packet too short len=%u", this->len);
+            throw Error(ERR_SEC);
+        }
         this->payload.resize(this->stream, this->len - 6);
     } // END METHOD recv_begin
 
@@ -143,7 +147,7 @@ struct ShareControl
     {
         if (this->payload.p != this->payload.end){
             LOG(LOG_ERR, "ShareControl: all payload data should have been consumed : len = %u size=%u remains %d", this->len, this->payload.size(), stream.end - stream.p);
-//            exit(0);
+            throw Error(ERR_SEC);      
         }
     } // END METHOD recv_end
 
@@ -394,6 +398,10 @@ struct ShareData
     void recv_begin()
     //==============================================================================
     {
+        if (this->stream.end < this->stream.p + 12){
+            LOG(LOG_ERR, "sdata packet len too short: need 12, remains", this->stream.end - this->stream.p);
+            throw Error(ERR_SEC);
+        }
         this->share_id = stream.in_uint32_le();
         stream.in_uint8();
         this->streamid = stream.in_uint8();
@@ -401,7 +409,7 @@ struct ShareData
         this->pdutype2 = stream.in_uint8();
         this->compressedType = stream.in_uint8();
         this->compressedLen = stream.in_uint16_le();
-        this->payload.resize(this->stream, this->len - 18);
+        this->payload.resize(this->stream, this->stream.end - this->stream.p);
     } // END METHOD recv_begin
 
     //==============================================================================
@@ -411,7 +419,7 @@ struct ShareData
         if (this->payload.p != this->payload.end){
             LOG(LOG_INFO, "ShareData : some payload data were not consumed len=%u compressedLen=%u remains1=%u remains=%u", 
                 this->len, this->compressedLen, payload.end - payload.p, stream.end - stream.p);
-//                exit(0);      
+                throw Error(ERR_SEC);      
       }
     } // END METHOD recv_end
 
