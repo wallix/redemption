@@ -19,6 +19,7 @@
  */
 
 #include "to_one_wrm.hpp"
+#include "wrm_recorder.hpp"
 #include "timer_compute.hpp"
 #include "nativecapture.hpp"
 #include "urt.hpp"

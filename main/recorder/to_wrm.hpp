@@ -21,7 +21,8 @@
 #if !defined(__MAIN_RECORDER_TO_WRM__)
 #define __MAIN_RECORDER_TO_WRM__
 
-#include "wrm_recorder.hpp"
+#include "cipher.hpp"
+class WRMRecorder;
 
 void to_wrm(WRMRecorder& recorder, const char* outfile,
             std::size_t start, std::size_t stop, std::size_t interval,

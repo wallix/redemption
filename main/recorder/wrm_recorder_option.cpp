@@ -27,9 +27,11 @@ void validate_time_or_throw_invalid_option_value(boost::any& v,
     }
 }
 
+
+template<typename _T>
 void validate(boost::any& v,
               const std::vector<std::string>& values,
-              relative_time_point* target_type, int)
+              basic_relative_point<_T>* target_type, int)
 {
     validate_time_or_throw_invalid_option_value(v, values, target_type);
 }

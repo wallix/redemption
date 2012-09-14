@@ -19,6 +19,7 @@
  */
 
 #include "to_png.hpp"
+#include "wrm_recorder.hpp"
 #include "timer_compute.hpp"
 #include "staticcapture.hpp"
 #include "load_png_context.hpp"
@@ -98,6 +99,9 @@ void to_png(WRMRecorder& recorder, const char* outfile,
             unsigned resize_width, unsigned resize_height,
             bool no_screenshot_stop)
 {
+    if (capture_points.empty())
+        return ;
+
     StaticCapture capture(recorder.meta().width,
                           recorder.meta().height,
                           outfile,

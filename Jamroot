@@ -289,6 +289,7 @@ unit-test test_absolute_primary_order_opaque_rect : tests/test_absolute_primary_
 
 unit-test test_time_point : tests/test_time_point.cpp libboost_unit_test ;
 unit-test test_range_time_point : tests/test_range_time_point.cpp libboost_unit_test ;
+unit-test test_relative_point : tests/test_relative_point.cpp libboost_unit_test ;
 
 unit-test test_filename_generator : tests/test_filename_generator.cpp libboost_unit_test ;
 
@@ -305,3 +306,5 @@ unit-test test_bitfu : tests/test_bitfu.cpp libboost_unit_test ;
 unit-test test_zlib : tests/test_zlib.cpp libboost_unit_test z ;
 
 unit-test test_parse_username : tests/test_parse_username.cpp libboost_unit_test : ;
+
+unit-test test_recorder_by_socket : tests/test_recorder_by_socket.cpp libboost_unit_test crypto png z openssl crypto ini_config libboost_program_options dl : ;

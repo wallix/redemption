@@ -21,19 +21,20 @@
 #if !defined(__UTILS_RELATIVE_TIME_POINT_HPP__)
 #define __UTILS_RELATIVE_TIME_POINT_HPP__
 
-#include "time_point.hpp"
+#include "range_time_point.hpp"
 
-struct relative_time_point
+template<typename _T>
+struct basic_relative_point
 {
     char symbol;
-    time_point point;
+    _T point;
 
-    relative_time_point()
+    basic_relative_point()
     : symbol(0)
     , point()
     {}
 
-    relative_time_point(const std::string& s)
+    basic_relative_point(const std::string& s)
     : symbol(0)
     {
         bool is_minus = false;
@@ -55,17 +56,32 @@ struct relative_time_point
     }
 };
 
-inline bool operator==(const relative_time_point& a,
-                       const relative_time_point& b)
+template<typename _T>
+bool operator==(const basic_relative_point<_T>& a,
+                       const basic_relative_point<_T>& b)
 {
-    return a.point == b.point && a.symbol == b.symbol;
+    return a.symbol == b.symbol && a.point == b.point;
 }
 
-inline bool operator!=(const relative_time_point& a,
-                       const relative_time_point& b)
+template<typename _T>
+bool operator!=(const basic_relative_point<_T>& a,
+                       const basic_relative_point<_T>& b)
 {
     return !(a == b);
 }
+
+template<typename _T, typename _CharT, typename _TypeTraits>
+std::basic_ostream<_CharT, _TypeTraits>&
+operator<<(std::basic_ostream<_CharT, _TypeTraits>& os,
+           const basic_relative_point<_T>& rtime)
+{
+    if (rtime.symbol)
+        os << rtime.symbol;
+    return os << rtime.point;
+}
+
+
+typedef basic_relative_point<time_point> relative_time_point;
 
 struct relative_time_point_less_only_point
 {
@@ -76,14 +92,16 @@ struct relative_time_point_less_only_point
     }
 };
 
-template<typename _CharT, typename _TypeTraits>
-inline std::basic_ostream<_CharT, _TypeTraits>&
-operator<<(std::basic_ostream<_CharT, _TypeTraits>& os,
-           const relative_time_point& rtime)
+
+typedef basic_relative_point<range_time_point> relative_range_time_point;
+
+struct relative_range_time_point_less_only_point
 {
-    if (rtime.symbol)
-        os << rtime.symbol;
-    return os << rtime.point;
-}
+    bool operator()(const relative_range_time_point& a,
+                    const relative_range_time_point& b)
+    {
+        return a.point.left < b.point.left;
+    }
+};
 
 #endif

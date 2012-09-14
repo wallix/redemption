@@ -28,13 +28,15 @@
 
 class time_point;
 class range_time_point;
-class relative_time_point;
+template<typename _T>
+struct basic_relative_point;
 template<std::size_t>
 class HexadecimalOption;
 
+template<typename _T>
 void validate(boost::any& v,
               const std::vector<std::string>& values,
-              relative_time_point* rtime, int);
+              basic_relative_point<_T>* relative_point, int);
 
 void validate(boost::any& v,
               const std::vector<std::string>& values,
