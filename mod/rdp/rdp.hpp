@@ -320,7 +320,12 @@ struct mod_rdp : public client_mod {
     bool dev_redirection_enable;
     int use_rdp5;
     int keylayout;
-    struct RdpLicence lic_layer;
+
+    uint8_t lic_layer_license_key[16];
+    uint8_t lic_layer_license_sign_key[16];
+    int lic_layer_license_issued;
+    uint8_t * lic_layer_license_data;
+    size_t lic_layer_license_size;
 
     rdp_orders orders;
     int share_id;
@@ -384,7 +389,6 @@ struct mod_rdp : public client_mod {
                     in_stream(65536),
                     use_rdp5(1),
                     keylayout(info.keylayout),
-                    lic_layer(hostname),
                     orders(0),
                     share_id(0),
                     bitmap_compression(1),
@@ -403,6 +407,27 @@ struct mod_rdp : public client_mod {
                     nego(tls, trans, target_user)
     {
         LOG(LOG_INFO, "Creation of new mod 'RDP'");
+
+        this->lic_layer_license_issued = 0;
+        this->lic_layer_license_size = 0;
+        memset(this->lic_layer_license_key, 0, 16);
+        memset(this->lic_layer_license_sign_key, 0, 16);
+        TODO(" licence loading should be done before creating protocol layers")
+        struct stat st;
+        char path[256];
+        sprintf(path, LICENSE_PATH "/licence.%s", hostname);
+        int fd = open(path, O_RDONLY);
+        if (fd != -1 && fstat(fd, &st) != 0){
+            this->lic_layer_license_data = (uint8_t *)malloc(this->lic_layer_license_size);
+            if (this->lic_layer_license_data){
+                size_t lic_size = read(fd, this->lic_layer_license_data, this->lic_layer_license_size);
+                if (lic_size != this->lic_layer_license_size){
+                    LOG(LOG_ERR, "licence file truncated : expected %u, got %u", this->lic_layer_license_size, lic_size);
+                }
+            }
+            close(fd);
+        }
+
         // from rdp_sec
         memset(this->client_crypt_random, 0, 512);
 
@@ -1115,7 +1140,7 @@ struct mod_rdp : public client_mod {
         {
             const char * hostname = this->hostname;
             const char * username = this->username;
-            int & license_issued = this->lic_layer.license_issued;
+            int & license_issued = this->lic_layer_license_issued;
             int res = 0;
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
@@ -1141,60 +1166,6 @@ struct mod_rdp : public client_mod {
 
                 // preamble (4 bytes): Licensing Preamble (section 2.2.1.12.1.1) structure containing header
                 // information. The bMsgType field of the preamble structure MUST be set to ERROR_ALERT (0xFF).
-
-
-                // 2.2.1.12.1.1 Licensing Preamble (LICENSE_PREAMBLE)
-                // --------------------------------------------------
-
-                // Note: Some of the information in this section is subject to
-                // change because it applies to a preliminary implementation of the
-                // protocol or structure. For information about specific differences
-                // between versions, see the behavior notes that are provided in the
-                // Product Behavior appendix.
-
-                // The LICENSE_PREAMBLE structure precedes every licensing packet
-                // sent on the wire.
-
-                // bMsgType (1 byte): An 8-bit, unsigned integer. A type of the
-                // licensing packet. For more details about the different licensing
-                // packets, see [MS-RDPELE] section 2.2.2.
-
-                // Sent by server:
-                // 0x01 LICENSE_REQUEST Indicates a License Request PDU ([MS-RDPELE] section 2.2.2.1).
-                // 0x02 PLATFORM_CHALLENGE Indicates a Platform Challenge PDU ([MS-RDPELE] section 2.2.2.4).
-                // 0x03 NEW_LICENSE Indicates a New License PDU ([MS-RDPELE] section 2.2.2.7).
-                // 0x04 UPGRADE_LICENSE Indicates an Upgrade License PDU ([MS-RDPELE] section 2.2.2.6).
-
-                // Sent by client:
-                // 0x12 LICENSE_INFO Indicates a License Information PDU ([MS-RDPELE] section 2.2.2.3).
-                // 0x13 NEW_LICENSE_REQUEST Indicates a New License Request PDU ([MS-RDPELE] section 2.2.2.2).
-                // 0x15 PLATFORM_CHALLENGE_RESPONSE Indicates a Platform Challenge Response PDU ([MS-RDPELE] section 2.2.2.5).
-
-                // Sent by either client or server:
-                // 0xFF ERROR_ALERT Indicates a Licensing Error Message PDU (section 2.2.1.12.1.3).
-
-                // flags (1 byte): An 8-bit unsigned integer. License preamble flags.
-
-                // +-----------------------------------+------------------------------------------------------+
-                // | 0x0F LicenseProtocolVersionMask   | The license protocol version. See the discussion     |
-                // |                                   | which follows this table for more information.       |
-                // +-----------------------------------+------------------------------------------------------+
-                // | 0x80 EXTENDED_ERROR_MSG_SUPPORTED | Indicates that extended error information using the  |
-                // |                                   | License Error Message (section 2.2.1.12.1.3) is      |
-                // |                                   | supported.                                           |
-                // +-----------------------------------+------------------------------------------------------+
-
-                // The LicenseProtocolVersionMask is a 4-bit value containing the supported license protocol version. The following are possible version values.
-                // +--------------------------+------------------------------------------------+
-                // | 0x2 PREAMBLE_VERSION_2_0 | RDP 4.0                                        |
-                // +--------------------------+------------------------------------------------+
-                // | 0x3 PREAMBLE_VERSION_3_0 | RDP 5.0, 5.1, 5.2, 6.0, 6.1, 7.0, 7.1, and 8.0 |
-                // +--------------------------+------------------------------------------------+
-
-
-                // wMsgSize (2 bytes): An 16-bit, unsigned integer. The size in
-                // bytes of the licensing packet (including the size of the preamble).
-                // --------------------------------------------------
 
                 // validClientMessage (variable): A Licensing Error Message (section
                 // 2.2.1.12.1.3) structure. The dwErrorCode field of the error message
@@ -1245,15 +1216,17 @@ struct mod_rdp : public client_mod {
                 // the error code specified in dwErrorCode.
 
                 SubStream & payload = sec.payload;
-                uint8_t tag = payload.in_uint8();
-                uint8_t version = payload.in_uint8();
-                uint16_t length = payload.in_uint16_le();
-                switch (tag) {
+                LIC::RecvFactory flic(sec.payload);
+
+                switch (flic.tag) {
                     case LIC::LICENSE_REQUEST:
                         if (this->verbose){
                             LOG(LOG_INFO, "Rdp::License Request");
                         }
                         {
+                            uint8_t tag = payload.in_uint8();
+                            uint8_t flags = payload.in_uint8();
+                            uint16_t wMsgSize = payload.in_uint16_le();
                          
                            /* Retrieve the server random from the incoming packet */
                             const uint8_t * server_random = payload.in_uint8p(SEC_RANDOM_SIZE);
@@ -1311,7 +1284,7 @@ struct mod_rdp : public client_mod {
                             }
 
                             /* Store first 16 bytes of session key as MAC secret */
-                            memcpy(this->lic_layer.license_sign_key, key_block, 16);
+                            memcpy(this->lic_layer_license_sign_key, key_block, 16);
 
                             // Generate RC4 key from next 16 bytes
                             // 16-byte transformation used to generate export keys (6.2.2).
@@ -1319,11 +1292,11 @@ struct mod_rdp : public client_mod {
                             md5.update(key_block + 16, 16);
                             md5.update(client_random, 32);
                             md5.update(server_random, 32);
-                            md5.final(this->lic_layer.license_key);
+                            md5.final(this->lic_layer_license_key);
 
                             BStream stream(65535);
 
-                            if (this->lic_layer.license_size > 0) {
+                            if (this->lic_layer_license_size > 0) {
                                 uint8_t hwid[LIC::LICENSE_HWID_SIZE];
                                 buf_out_uint32(hwid, 2);
                                 memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
@@ -1331,18 +1304,18 @@ struct mod_rdp : public client_mod {
                                 ssllib ssl;
                                 /* Generate a signature for the HWID buffer */
                                 uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
-                                ssl.sign(signature, 16, this->lic_layer.license_sign_key, 16, hwid, sizeof(hwid));
+                                ssl.sign(signature, 16, this->lic_layer_license_sign_key, 16, hwid, sizeof(hwid));
                                 /* Now encrypt the HWID */
 
                                 RC4_KEY crypt_key;
-                                ssl.rc4_set_key(crypt_key, this->lic_layer.license_key, 16);
+                                ssl.rc4_set_key(crypt_key, this->lic_layer_license_key, 16);
                                 ssl.rc4_crypt(crypt_key, hwid, hwid, sizeof(hwid));
 
                                 uint8_t null_data[SEC_MODULUS_SIZE];
                                 memset(null_data, 0, sizeof(null_data));
 
                                 int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
-                                         this->lic_layer.license_size + LIC::LICENSE_HWID_SIZE + LIC::LICENSE_SIGNATURE_SIZE;
+                                         this->lic_layer_license_size + LIC::LICENSE_HWID_SIZE + LIC::LICENSE_SIGNATURE_SIZE;
 
                                 stream.out_uint8(LIC::LICENSE_INFO);
                                 stream.out_uint8(this->use_rdp5?3:2); /* version */
@@ -1356,8 +1329,8 @@ struct mod_rdp : public client_mod {
                                 stream.out_copy_bytes(null_data, SEC_MODULUS_SIZE); // rsa_data
                                 stream.out_clear_bytes( SEC_PADDING_SIZE);
                                 stream.out_uint16_le(1);
-                                stream.out_uint16_le(this->lic_layer.license_size);
-                                stream.out_copy_bytes(this->lic_layer.license_data, this->lic_layer.license_size);
+                                stream.out_uint16_le(this->lic_layer_license_size);
+                                stream.out_copy_bytes(this->lic_layer_license_data, this->lic_layer_license_size);
                                 stream.out_uint16_le(1);
                                 stream.out_uint16_le(LIC::LICENSE_HWID_SIZE);
                                 stream.out_copy_bytes(hwid, LIC::LICENSE_HWID_SIZE);
@@ -1381,7 +1354,7 @@ struct mod_rdp : public client_mod {
                                 // to KEY_EXCHANGE_ALG_RSA (0x00000001), which indicates an RSA-based key
                                 // exchange with a 512-bit asymmetric key.<9>
 
-                                stream.out_uint32_le(KEY_EXCHANGE_ALG_RSA);
+                                stream.out_uint32_le(LIC::KEY_EXCHANGE_ALG_RSA);
 
                                 // PlatformId (4 bytes): A 32-bit unsigned integer. This field is composed
                                 // of two identifiers: the operating system identifier and the independent
@@ -1465,7 +1438,7 @@ struct mod_rdp : public client_mod {
                                 // bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field
                                 // is not included in the Licensing Binary BLOB structure.
 
-                                stream.out_uint16_le(BB_RANDOM_BLOB);
+                                stream.out_uint16_le(LIC::BB_RANDOM_BLOB);
                                 stream.out_uint16_le((SEC_MODULUS_SIZE + SEC_PADDING_SIZE));
                                 stream.out_copy_bytes(null_data, SEC_MODULUS_SIZE); // rsa_data
                                 stream.out_clear_bytes(SEC_PADDING_SIZE);
@@ -1512,6 +1485,11 @@ struct mod_rdp : public client_mod {
                             LOG(LOG_INFO, "Rdp::Platform Challenge");
                         }
                         {
+
+                            uint8_t tag = payload.in_uint8();
+                            uint8_t flags = payload.in_uint8();
+                            uint16_t wMsgSize = payload.in_uint16_le();
+
                             BStream stream(65535);
 
                             ssllib ssl;
@@ -1541,7 +1519,7 @@ struct mod_rdp : public client_mod {
                             memcpy(out_token, in_token, LIC::LICENSE_TOKEN_SIZE);
                             /* Decrypt the token. It should read TEST in Unicode. */
                             RC4_KEY crypt_key;
-                            ssl.rc4_set_key(crypt_key, this->lic_layer.license_key, 16);
+                            ssl.rc4_set_key(crypt_key, this->lic_layer_license_key, 16);
                             memcpy(decrypt_token, in_token, LIC::LICENSE_TOKEN_SIZE);
                             ssl.rc4_crypt(crypt_key, decrypt_token, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
 
@@ -1555,10 +1533,10 @@ struct mod_rdp : public client_mod {
                             uint8_t sealed_buffer[LIC::LICENSE_TOKEN_SIZE + LIC::LICENSE_HWID_SIZE];
                             memcpy(sealed_buffer, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
                             memcpy(sealed_buffer + LIC::LICENSE_TOKEN_SIZE, hwid, LIC::LICENSE_HWID_SIZE);
-                            ssl.sign(out_sig, 16, this->lic_layer.license_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
+                            ssl.sign(out_sig, 16, this->lic_layer_license_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
 
                             /* Now encrypt the HWID */
-                            ssl.rc4_set_key(crypt_key, this->lic_layer.license_key, 16);
+                            ssl.rc4_set_key(crypt_key, this->lic_layer_license_key, 16);
                             memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
                             ssl.rc4_crypt(crypt_key, crypt_hwid, crypt_hwid, LIC::LICENSE_HWID_SIZE);
 
@@ -1571,7 +1549,7 @@ struct mod_rdp : public client_mod {
                             // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
                             // the binary information. If wBlobLen is set to 0, then the contents
                             // of this field SHOULD be ignored.
-                            stream.out_uint16_le(BB_DATA_BLOB);
+                            stream.out_uint16_le(LIC::BB_DATA_BLOB);
 
                             // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
                             // the binary information in the blobData field. If wBlobLen is set to 0,
@@ -1583,7 +1561,7 @@ struct mod_rdp : public client_mod {
                             // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
                             // the binary information. If wBlobLen is set to 0, then the contents
                             // of this field SHOULD be ignored.
-                            stream.out_uint16_le(BB_DATA_BLOB);
+                            stream.out_uint16_le(LIC::BB_DATA_BLOB);
 
                             // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
                             // the binary information in the blobData field. If wBlobLen is set to 0,
@@ -1615,11 +1593,15 @@ struct mod_rdp : public client_mod {
                             LOG(LOG_INFO, "Rdp::New License");
                         }
 
+                        uint8_t tag = payload.in_uint8();
+                        uint8_t flags = payload.in_uint8();
+                        uint16_t wMsgSize = payload.in_uint16_le();
+
                         payload.in_skip_bytes(2); /* 3d 45 - unknown */
                         int length = payload.in_uint16_le();
                         ssllib ssl;
                         RC4_KEY crypt_key;
-                        ssl.rc4_set_key(crypt_key, this->lic_layer.license_key, 16);
+                        ssl.rc4_set_key(crypt_key, this->lic_layer_license_key, 16);
                         ssl.rc4_crypt(crypt_key, payload.p, payload.p, length);
                         int check = payload.in_uint16_le();
                         license_issued = 1;
@@ -1645,36 +1627,48 @@ struct mod_rdp : public client_mod {
                     }
                     break;
                     case LIC::UPGRADE_LICENSE:
+                    {
                         if (this->verbose){
                             LOG(LOG_INFO, "Rdp::Upgrade License");
                         }
-                        break;
+                        uint8_t tag = payload.in_uint8();
+                        uint8_t flags = payload.in_uint8();
+                        uint16_t wMsgSize = payload.in_uint16_le();
+                    }
+                    break;
                     case LIC::ERROR_ALERT:
                         if (this->verbose){
                             LOG(LOG_INFO, "Rdp::Get licence status");
                         }
                     TODO("This should be moved to RDP/lic.hpp (and probably the switch should also move there)")
                     {
+                        uint8_t tag = payload.in_uint8();
+                        uint8_t flags = payload.in_uint8();
+                        uint16_t wMsgSize = payload.in_uint16_le();
+
                         uint32_t dwErrorCode = payload.in_uint32_le();
                         uint32_t dwStateTransition = payload.in_uint32_le();
                         uint32_t bbErrorInfo = payload.in_uint32_le();
                         if (this->verbose){
                             LOG(LOG_INFO, "%u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u",
-                                version, length, dwErrorCode, dwStateTransition, bbErrorInfo);
+                                version, flic.wMsgSize, dwErrorCode, dwStateTransition, bbErrorInfo);
                         }
                         res = 1;
                     }
                     break;
                     default:
                     {
-                        LOG(LOG_WARNING, "Unexpected license tag sent from server (tag = %x)", tag);
+                        uint8_t tag = payload.in_uint8();
+                        uint8_t flags = payload.in_uint8();
+                        uint16_t wMsgSize = payload.in_uint16_le();
+                        LOG(LOG_WARNING, "Unexpected license tag sent from server (tag = %x)", flic.tag);
                         throw Error(ERR_SEC);
                     }
                     break;
                 }
                 TODO("check if moving end is still necessary all data should have been consumed")
                 if (payload.p != payload.end){
-                    LOG(LOG_ERR, "all data should have been consumed %s:%u tag = %x", __FILE__, __LINE__, tag);
+                    LOG(LOG_ERR, "all data should have been consumed %s:%u tag = %x", __FILE__, __LINE__, flic.tag);
                     throw Error(ERR_SEC);
                 }
             }

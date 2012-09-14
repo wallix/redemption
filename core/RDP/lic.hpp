@@ -55,11 +55,134 @@ namespace LIC
         LICENSE_TAG_HOST            = 0x0010,
     };
 
+
+    // +------------------------------------+-------------------------------------+
+    // | 0x0001 BB_DATA_BLOB                | Used by License Information PDU and |
+    // |                                    | Platform Challenge Response PDU     |
+    // |                                    | ([MS-RDPELE] sections 2.2.2.3 and   |
+    // |                                    | 2.2.2.5).                           |
+    // +------------------------------------+-------------------------------------+
+    // | 0x0002 BB_RANDOM_BLOB              | Used by License Information PDU and |
+    // |                                    | New License Request PDU ([MS-RDPELE]|
+    // |                                    | sections 2.2.2.3 and 2.2.2.2).      |
+    // +------------------------------------+-------------------------------------+
+    // | 0x0003 BB_CERTIFICATE_BLOB         | Used by License Request PDU         |
+    // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+    // +------------------------------------+-------------------------------------+
+    // | 0x0004 BB_ERROR_BLOB               | Used by License Error PDU (section  |
+    // |                                    | 2.2.1.12).                          |
+    // +------------------------------------+-------------------------------------+
+    // | 0x0009 BB_ENCRYPTED_DATA_BLOB      | Used by Platform Challenge Response |
+    // |                                    | PDU and Upgrade License PDU         |
+    // |                                    | ([MS-RDPELE] sections 2.2.2.5 and   |
+    // |                                    | 2.2.2.6).                           |
+    // +------------------------------------+-------------------------------------+
+    // | 0x000D BB_KEY_EXCHG_ALG_BLOB       | Used by License Request PDU         |
+    // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+    // +------------------------------------+-------------------------------------+
+    // | 0x000E BB_SCOPE_BLOB               | Used by License Request PDU         |
+    // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+    // +------------------------------------+-------------------------------------+
+    // | 0x000F BB_CLIENT_USER_NAME_BLOB    | Used by New License Request PDU     |
+    // |                                    | ([MS-RDPELE] section 2.2.2.2).      |
+    // +------------------------------------+-------------------------------------+
+    // | 0x0010 BB_CLIENT_MACHINE_NAME_BLOB | Used by New License Request PDU     |
+    // |                                    | ([MS-RDPELE] section 2.2.2.2).      |
+    // +------------------------------------+-------------------------------------+
+
+    enum {
+        BB_DATA_BLOB                = 0x0001,
+        BB_RANDOM_BLOB              = 0x0002,
+        BB_CERTIFICATE_BLOB         = 0x0003,
+        BB_ERROR_BLOB               = 0x0004,
+        BB_ENCRYPTED_DATA_BLOB      = 0x0009,
+        BB_KEY_EXCHG_ALG_BLOB       = 0x000D,
+        BB_SCOPE_BLOB               = 0x000E,
+        BB_CLIENT_USER_NAME_BLOB    = 0x000F,
+        BB_CLIENT_MACHINE_NAME_BLOB = 0x0010,
+    };
+
+    enum {
+        KEY_EXCHANGE_ALG_RSA        = 0x01,
+    };
+
+    // 2.2.1.12.1.1 Licensing Preamble (LICENSE_PREAMBLE)
+    // --------------------------------------------------
+
+    // Note: Some of the information in this section is subject to
+    // change because it applies to a preliminary implementation of the
+    // protocol or structure. For information about specific differences
+    // between versions, see the behavior notes that are provided in the
+    // Product Behavior appendix.
+
+    // The LICENSE_PREAMBLE structure precedes every licensing packet
+    // sent on the wire.
+
+    // bMsgType (1 byte): An 8-bit, unsigned integer. A type of the
+    // licensing packet. For more details about the different licensing
+    // packets, see [MS-RDPELE] section 2.2.2.
+
+    // Sent by server:
+    // 0x01 LICENSE_REQUEST Indicates a License Request PDU ([MS-RDPELE] section 2.2.2.1).
+    // 0x02 PLATFORM_CHALLENGE Indicates a Platform Challenge PDU ([MS-RDPELE] section 2.2.2.4).
+    // 0x03 NEW_LICENSE Indicates a New License PDU ([MS-RDPELE] section 2.2.2.7).
+    // 0x04 UPGRADE_LICENSE Indicates an Upgrade License PDU ([MS-RDPELE] section 2.2.2.6).
+
+    // Sent by client:
+    // 0x12 LICENSE_INFO Indicates a License Information PDU ([MS-RDPELE] section 2.2.2.3).
+    // 0x13 NEW_LICENSE_REQUEST Indicates a New License Request PDU ([MS-RDPELE] section 2.2.2.2).
+    // 0x15 PLATFORM_CHALLENGE_RESPONSE Indicates a Platform Challenge Response PDU ([MS-RDPELE] section 2.2.2.5).
+
+    // Sent by either client or server:
+    // 0xFF ERROR_ALERT Indicates a Licensing Error Message PDU (section 2.2.1.12.1.3).
+
+    // flags (1 byte): An 8-bit unsigned integer. License preamble flags.
+
+    // +-----------------------------------+------------------------------------------------------+
+    // | 0x0F LicenseProtocolVersionMask   | The license protocol version. See the discussion     |
+    // |                                   | which follows this table for more information.       |
+    // +-----------------------------------+------------------------------------------------------+
+    // | 0x80 EXTENDED_ERROR_MSG_SUPPORTED | Indicates that extended error information using the  |
+    // |                                   | License Error Message (section 2.2.1.12.1.3) is      |
+    // |                                   | supported.                                           |
+    // +-----------------------------------+------------------------------------------------------+
+
+    // The LicenseProtocolVersionMask is a 4-bit value containing the supported license protocol version. The following are possible version values.
+    // +--------------------------+------------------------------------------------+
+    // | 0x2 PREAMBLE_VERSION_2_0 | RDP 4.0                                        |
+    // +--------------------------+------------------------------------------------+
+    // | 0x3 PREAMBLE_VERSION_3_0 | RDP 5.0, 5.1, 5.2, 6.0, 6.1, 7.0, 7.1, and 8.0 |
+    // +--------------------------+------------------------------------------------+
+
+
+    // wMsgSize (2 bytes): An 16-bit, unsigned integer. The size in
+    // bytes of the licensing packet (including the size of the preamble).
+    // -------------------------------------------------------------------
+
+    struct RecvFactory
+    {
+        uint8_t tag;
+        uint8_t flags;
+        uint16_t wMsgSize;
+        RecvFactory(Stream & stream)
+        {
+            if (!stream.check_rem(4)){
+                LOG(LOG_ERR, "Not enough data to read licence info header, need %u, got %u", 4, stream.end - stream.p);
+                throw Error(ERR_LIC);
+            }
+            this->tag = stream.in_uint8();
+            this->flags = stream.in_uint8();
+            this->wMsgSize = stream.in_uint16_le();
+            if (this->wMsgSize > stream.size()){
+                LOG(LOG_ERR, "Not enough data to read licence data, need %u, got %u", 4, this->wMsgSize, stream.size());
+                throw Error(ERR_LIC);
+            }
+            stream.p -= 4;
+        }
+    };
+
 };
 
-enum {
-    KEY_EXCHANGE_ALG_RSA        = 0x01,
-};
 
 // 2.2.1.12 Server License Error PDU - Valid Client
 // =============================================
@@ -142,89 +265,6 @@ enum {
 // =======================================================
 
 // See MS-RDPELE for details
-
-
-
-// +------------------------------------+-------------------------------------+
-// | 0x0001 BB_DATA_BLOB                | Used by License Information PDU and |
-// |                                    | Platform Challenge Response PDU     |
-// |                                    | ([MS-RDPELE] sections 2.2.2.3 and   |
-// |                                    | 2.2.2.5).                           |
-// +------------------------------------+-------------------------------------+
-// | 0x0002 BB_RANDOM_BLOB              | Used by License Information PDU and |
-// |                                    | New License Request PDU ([MS-RDPELE]|
-// |                                    | sections 2.2.2.3 and 2.2.2.2).      |
-// +------------------------------------+-------------------------------------+
-// | 0x0003 BB_CERTIFICATE_BLOB         | Used by License Request PDU         |
-// |                                    | ([MS-RDPELE] section 2.2.2.1).      |
-// +------------------------------------+-------------------------------------+
-// | 0x0004 BB_ERROR_BLOB               | Used by License Error PDU (section  |
-// |                                    | 2.2.1.12).                          |
-// +------------------------------------+-------------------------------------+
-// | 0x0009 BB_ENCRYPTED_DATA_BLOB      | Used by Platform Challenge Response |
-// |                                    | PDU and Upgrade License PDU         |
-// |                                    | ([MS-RDPELE] sections 2.2.2.5 and   |
-// |                                    | 2.2.2.6).                           |
-// +------------------------------------+-------------------------------------+
-// | 0x000D BB_KEY_EXCHG_ALG_BLOB       | Used by License Request PDU         |
-// |                                    | ([MS-RDPELE] section 2.2.2.1).      |
-// +------------------------------------+-------------------------------------+
-// | 0x000E BB_SCOPE_BLOB               | Used by License Request PDU         |
-// |                                    | ([MS-RDPELE] section 2.2.2.1).      |
-// +------------------------------------+-------------------------------------+
-// | 0x000F BB_CLIENT_USER_NAME_BLOB    | Used by New License Request PDU     |
-// |                                    | ([MS-RDPELE] section 2.2.2.2).      |
-// +------------------------------------+-------------------------------------+
-// | 0x0010 BB_CLIENT_MACHINE_NAME_BLOB | Used by New License Request PDU     |
-// |                                    | ([MS-RDPELE] section 2.2.2.2).      |
-// +------------------------------------+-------------------------------------+
-
-enum {
-    BB_DATA_BLOB                = 0x0001,
-    BB_RANDOM_BLOB              = 0x0002,
-    BB_CERTIFICATE_BLOB         = 0x0003,
-    BB_ERROR_BLOB               = 0x0004,
-    BB_ENCRYPTED_DATA_BLOB      = 0x0009,
-    BB_KEY_EXCHG_ALG_BLOB       = 0x000D,
-    BB_SCOPE_BLOB               = 0x000E,
-    BB_CLIENT_USER_NAME_BLOB    = 0x000F,
-    BB_CLIENT_MACHINE_NAME_BLOB = 0x0010,
-};
-
-
-
-
-
-
-struct RdpLicence {
-    uint8_t license_key[16];
-    uint8_t license_sign_key[16];
-    int license_issued;
-    uint8_t * license_data;
-    size_t license_size;
-
-    RdpLicence(const char * hostname) : license_issued(0), license_size(0) {
-        memset(this->license_key, 0, 16);
-        memset(this->license_sign_key, 0, 16);
-        TODO(" licence loading should be done before creating protocol layers")
-        struct stat st;
-        char path[256];
-        sprintf(path, LICENSE_PATH "/licence.%s", hostname);
-        int fd = open(path, O_RDONLY);
-        if (fd != -1 && fstat(fd, &st) != 0){
-            this->license_data = (uint8_t *)malloc(this->license_size);
-            TODO(" check error code here")
-            if (this->license_data){
-                close(fd);
-                return;
-            }
-            if (((int)this->license_size) != read(fd, this->license_data, this->license_size)){
-                close(fd);
-                return;
-            }
-            close(fd);
-        }
-    }
 
 
     // 2.2.2.5 Client Platform Challenge Response (CLIENT_PLATFORM_CHALLENGE_RESPONSE)
@@ -356,7 +396,6 @@ struct RdpLicence {
     // null-terminated ANSI character set format and is used along with the
     // ClientUserName BLOB to keep track of licenses issued to clients.
 
-};
 
 // GLOSSARY
 // ========
