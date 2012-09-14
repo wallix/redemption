@@ -41,8 +41,8 @@ struct RecorderOption
     unsigned png_scale_width;
     unsigned png_scale_height;
     CipherMode::enum_t out_crypt_mode;
-    HexadecimalKey out_crypt_key;
-    HexadecimalIV out_crypt_iv;
+    HexadecimalKeyOption out_crypt_key;
+    HexadecimalIVOption out_crypt_iv;
     CipherInfo out_cipher_info;
 
     RecorderOption();
