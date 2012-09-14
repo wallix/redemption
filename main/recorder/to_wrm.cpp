@@ -20,6 +20,7 @@
 
 #include "to_wrm.hpp"
 #include "timer_compute.hpp"
+#include "wrm_recorder.hpp"
 #include "capture.hpp"
 
 void to_wrm(WRMRecorder& recorder, const char* outfile,

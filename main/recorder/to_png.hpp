@@ -22,8 +22,10 @@
 #define __MAIN_RECORDER_TO_PNG__
 
 #include <vector>
+
 #include "relative_time_point.hpp"
-#include "wrm_recorder.hpp"
+
+class WRMRecorder;
 
 void to_png(WRMRecorder& recorder, const char* outfile,
             std::size_t start, std::size_t stop, std::size_t interval,
