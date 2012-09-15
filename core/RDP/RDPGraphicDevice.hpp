@@ -171,7 +171,8 @@ struct RDPUnserializer
             }
             catch (Error & e){
                 TODO(" check specific error and return 0 only if actual EOF is reached or rethrow the error")
-                return (e.id == ERR_TRANSPORT_READ_FAILED) ? false : true;
+                return (e.id == ERR_TRANSPORT_READ_FAILED
+                || ERR_SOCKET_CLOSED == e.id) ? false : true;
             }
             const uint16_t stream_size = this->chunk_size - 8;
             if (stream_size > 32768){
@@ -436,18 +437,17 @@ struct RDPSerializer : public RDPGraphicDevice
     // if not send previous orders we got and init a new packet
     void reserve_order(size_t asked_size)
     {
-        if (this->ini && this->ini->globals.debug.primary_orders > 63){
-            LOG(LOG_INFO, "GraphicsUpdatePDU::reserve_order[%u](%u) remains=%u", this->order_count, asked_size, std::min(this->pstream->capacity, (size_t)32768) - this->pstream->get_offset());
-        }
-        if (asked_size > this->pstream->capacity){
-            LOG(LOG_ERR, "asked_size (%u) > this->pstream->capacity (%u)", asked_size, this->pstream->capacity);
-            assert(asked_size <= this->pstream->capacity);
-        }
-        size_t max_packet_size = std::min(this->pstream->capacity, (size_t)4096);
+        size_t max_packet_size = std::min(this->pstream->capacity, (size_t)16384);
         size_t used_size = this->pstream->get_offset();
+        if (this->ini && this->ini->globals.debug.primary_orders > 63){
+            LOG(LOG_INFO, "GraphicsUpdatePDU::reserve_order[%u](%u) remains=%u", this->order_count, asked_size, max_packet_size - used_size - 100);
+        }
+        if (asked_size + 100 > max_packet_size){
+            LOG(LOG_ERR, "asked size (%u) > order batch capacity (%u)", asked_size + 100, max_packet_size);
+            throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
+        }
         const size_t max_order_batch = 4096;
-        if ((this->order_count >= max_order_batch)
-        || (used_size + asked_size + 100) > max_packet_size) {
+        if ((this->order_count >= max_order_batch) || (used_size + asked_size + 100) > max_packet_size) {
             this->flush();
         }
         this->order_count++;

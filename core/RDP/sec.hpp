@@ -663,7 +663,7 @@ enum {
         SubStream payload;
 
         SecExchangePacket_Recv(Stream & stream, uint16_t available_len) 
-        : payload(stream, 8)
+            : payload(stream)
         {
             this->basicSecurityHeader = stream.in_uint32_le() & 0xFFFF;
 
@@ -674,6 +674,11 @@ enum {
             uint32_t length = stream.in_uint32_le();
             if (length + 8 != available_len){
                 LOG(LOG_ERR, "Bad SEC_EXCHANGE_PKT length, header say length=%u available=%u", length, available_len-8);
+            }
+            this->payload.resize(stream, stream.end - stream.p);
+            if (this->payload.size() != 64 + 8){
+                LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %u", this->payload.size());
+                throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
             }
         }
     };
@@ -708,82 +713,46 @@ enum {
 
             // skip signature
             stream.in_skip_bytes(8);
+            this->payload.resize(stream, stream.end - stream.p);
             
             // decrypting to the end of tpdu
-            crypt.decrypt(stream.p, stream.end - stream.p);
+            crypt.decrypt(this->payload.data, this->payload.end - this->payload.p);
         }
     };
-
-
-    struct SecLicenseRequest_Send
-    {
-        SecLicenseRequest_Send(Stream & stream){
-            stream.out_uint32_le(SEC::SEC_LICENSE_PKT);
-            stream.out_uint8(/* LIC::LICENSE_REQUEST */ 0x01);
-            stream.out_uint8(2); // preamble flags : PREAMBLE_VERSION_2_0 (RDP 4.0)
-            stream.out_uint16_le(318); // wMsgSize = 318 including preamble
-
-            /* some compilers need unsigned char to avoid warnings */
-            static uint8_t lic1[314] = {
-                // SEC_RANDOM ?
-                0x7b, 0x3c, 0x31, 0xa6, 0xae, 0xe8, 0x74, 0xf6,
-                0xb4, 0xa5, 0x03, 0x90, 0xe7, 0xc2, 0xc7, 0x39,
-                0xba, 0x53, 0x1c, 0x30, 0x54, 0x6e, 0x90, 0x05,
-                0xd0, 0x05, 0xce, 0x44, 0x18, 0x91, 0x83, 0x81,
-                //
-                0x00, 0x00, 0x04, 0x00, 0x2c, 0x00, 0x00, 0x00,
-                0x4d, 0x00, 0x69, 0x00, 0x63, 0x00, 0x72, 0x00,
-                0x6f, 0x00, 0x73, 0x00, 0x6f, 0x00, 0x66, 0x00,
-                0x74, 0x00, 0x20, 0x00, 0x43, 0x00, 0x6f, 0x00,
-                0x72, 0x00, 0x70, 0x00, 0x6f, 0x00, 0x72, 0x00,
-                0x61, 0x00, 0x74, 0x00, 0x69, 0x00, 0x6f, 0x00,
-                0x6e, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
-                0x32, 0x00, 0x33, 0x00, 0x36, 0x00, 0x00, 0x00,
-                0x0d, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00,
-                0x03, 0x00, 0xb8, 0x00, 0x01, 0x00, 0x00, 0x00,
-                0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-                0x06, 0x00, 0x5c, 0x00, 0x52, 0x53, 0x41, 0x31,
-                0x48, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00,
-                0x3f, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
-                0x01, 0xc7, 0xc9, 0xf7, 0x8e, 0x5a, 0x38, 0xe4,
-                0x29, 0xc3, 0x00, 0x95, 0x2d, 0xdd, 0x4c, 0x3e,
-                0x50, 0x45, 0x0b, 0x0d, 0x9e, 0x2a, 0x5d, 0x18,
-                0x63, 0x64, 0xc4, 0x2c, 0xf7, 0x8f, 0x29, 0xd5,
-                0x3f, 0xc5, 0x35, 0x22, 0x34, 0xff, 0xad, 0x3a,
-                0xe6, 0xe3, 0x95, 0x06, 0xae, 0x55, 0x82, 0xe3,
-                0xc8, 0xc7, 0xb4, 0xa8, 0x47, 0xc8, 0x50, 0x71,
-                0x74, 0x29, 0x53, 0x89, 0x6d, 0x9c, 0xed, 0x70,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x08, 0x00, 0x48, 0x00, 0xa8, 0xf4, 0x31, 0xb9,
-                0xab, 0x4b, 0xe6, 0xb4, 0xf4, 0x39, 0x89, 0xd6,
-                0xb1, 0xda, 0xf6, 0x1e, 0xec, 0xb1, 0xf0, 0x54,
-                0x3b, 0x5e, 0x3e, 0x6a, 0x71, 0xb4, 0xf7, 0x75,
-                0xc8, 0x16, 0x2f, 0x24, 0x00, 0xde, 0xe9, 0x82,
-                0x99, 0x5f, 0x33, 0x0b, 0xa9, 0xa6, 0x94, 0xaf,
-                0xcb, 0x11, 0xc3, 0xf2, 0xdb, 0x09, 0x42, 0x68,
-                0x29, 0x56, 0x58, 0x01, 0x56, 0xdb, 0x59, 0x03,
-                0x69, 0xdb, 0x7d, 0x37, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-                0x0e, 0x00, 0x0e, 0x00, 0x6d, 0x69, 0x63, 0x72,
-                0x6f, 0x73, 0x6f, 0x66, 0x74, 0x2e, 0x63, 0x6f,
-                0x6d, 0x00
-            };
-
-            stream.out_copy_bytes((char*)lic1, 314);
-            stream.mark_end();
-        }
-    };
-
 
     class Sec_Recv
     {
         public:
         uint32_t flags;
         SubStream payload;
-        Sec_Recv(Stream & stream) : flags(0), payload(stream)
+        uint32_t verbose;
+        Sec_Recv(Stream & stream, bool specialPacket, CryptContext & crypt, uint32_t encryptionLevel, uint32_t encryptionMethod) 
+            : flags(0), payload(stream), verbose(0)
         {
-            this->flags = stream.in_uint32_le();
-            this->payload.resize(stream, stream.end - stream.p);
+            if (specialPacket || encryptionLevel | encryptionMethod){
+                this->flags = stream.in_uint32_le();
+            }
+            if (this->flags & SEC::SEC_ENCRYPT){
+                TODO(" shouldn't we check signature ?")
+                stream.in_skip_bytes(8); /* signature */
+                this->payload.resize(stream, stream.end - stream.p);
+                if (this->verbose >= 0x200){
+                    LOG(LOG_DEBUG, "Receiving encrypted TPDU");
+                    hexdump_c((char*)payload.data, payload.size());
+                }
+                if (this->verbose >= 0x100){
+                    LOG(LOG_DEBUG, "Crypt context is:");
+                    crypt.dump();
+                }
+                crypt.decrypt(payload.data, payload.size());
+                if (this->verbose >= 0x80){
+                    LOG(LOG_DEBUG, "Decrypted %u bytes", payload.size());
+                    hexdump_c((char*)payload.data, payload.size());
+                }
+            }
+            else {
+                this->payload.resize(stream, stream.end - stream.p);
+            }
         }
     };
 
@@ -802,126 +771,6 @@ enum {
             stream.mark_end();
         }
     };
-
 };
-
-//##############################################################################
-class Sec
-//##############################################################################
-{
-    Stream & stream;
-    public:
-    SubStream payload;
-    private:
-    uint8_t * pdata;
-    CryptContext & crypt;
-
-    public:
-    uint32_t flags;
-    bool enabled;
-    uint32_t verbose;
-    int count;
-
-
-    // CONSTRUCTOR
-    //==============================================================================
-    Sec ( Stream & stream
-        , CryptContext & crypt
-        , uint32_t verbose = 0
-        )
-    //==============================================================================
-    : stream(stream)
-    , payload(this->stream, 0)
-    , pdata(0)
-    , crypt(crypt)
-    , flags(0)
-    , enabled(0)
-    , verbose(verbose)
-    , count(0)
-    {
-    } // END CONSTRUCTOR
-
-
-    //==============================================================================
-    void recv_begin(bool enabled)
-    //==============================================================================
-    {
-//        LOG(LOG_INFO, "sec_recv exit enabled=%u", enabled);
-
-//        this->verbose = 0x380;
-        this->enabled = enabled;
-        if (enabled){
-            this->flags = stream.in_uint32_le();
-            if ((this->flags & SEC::SEC_ENCRYPT)  || (this->flags & SEC::SEC_REDIRECTION_PKT)){
-                uint8_t * pdata = stream.p + 8;
-                uint16_t datalen = stream.end - pdata;
-                TODO(" shouldn't we check signature ?")
-                stream.in_skip_bytes(8); /* signature */
-                // decrypting to the end of tpdu
-                if (this->verbose >= 0x200){
-                    LOG(LOG_DEBUG, "Receiving encrypted TPDU");
-                    hexdump_c((char*)stream.data, stream.size());
-                }
-                if (this->verbose >= 0x100){
-                    LOG(LOG_DEBUG, "Crypt context is:");
-                    crypt.dump();
-                }
-                crypt.decrypt(stream.p, stream.end - stream.p);
-                if (this->verbose >= 0x80){
-                    LOG(LOG_DEBUG, "Decrypted %u bytes", datalen);
-                    hexdump_c((char*)pdata, datalen);
-                }
-            }
-        }
-
-        this->payload.reset(this->stream, this->stream.get_offset());
-    } // END METHOD recv_begin
-
-
-    //==============================================================================
-    void recv_end(){
-    //==============================================================================
-        TODO(" put some assertion here to ensure all data has been consumed")
-
-    } // END METHOD recv_end
-
-
-    //==============================================================================
-    void emit_begin( uint32_t flags )
-    //==============================================================================
-    {
-        if (this->verbose) {
-            LOG(LOG_INFO, "Sec Emit Start(flags=%u)", flags);
-        }
-        this->flags = flags;
-        pdata = stream.p + 12;
-        if (flags) {
-            this->stream.out_uint32_le(flags);
-
-            if ((flags & SEC::SEC_ENCRYPT)
-            ||  (flags & SEC::SEC_REDIRECTION_PKT))
-            {
-                this->stream.out_skip_bytes(8); // skip crypt signature, filled later
-            }
-        }
-    } // END METHOD emit_start
-
-    //==============================================================================
-    void emit_end()
-    //==============================================================================
-    {
-        if ( (this->flags & SEC::SEC_ENCRYPT)||(this->flags & SEC::SEC_REDIRECTION_PKT) )
-        {
-            int datalen = this->stream.p - this->pdata;
-            if (this->verbose >= 0x80){
-                LOG(LOG_INFO, "Encrypting %u bytes", datalen);
-                hexdump((char*)this->pdata, datalen);
-            }
-            this->crypt.sign(this->pdata - 8, 8, this->pdata, datalen);
-            this->crypt.encrypt(this->pdata, datalen);
-        }
-    } // END METHOD emit_end
-
-}; // END CLASS Sec
 
 #endif

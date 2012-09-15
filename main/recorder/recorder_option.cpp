@@ -102,5 +102,10 @@ int RecorderOption::normalize_options()
         }
     }
 
+    if (this->options.find("time-list") != end && this->options.find("output-type") == end)
+    {
+        this->output_type = "png.list";
+    }
+
     return SUCCESS;
 }

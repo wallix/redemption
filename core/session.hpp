@@ -481,7 +481,7 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of new mod 'INTERNAL::Close'");
                         }
                         if (this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
-                            this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection to server failed");
+                            this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection to server ended");
                         }
                         this->mod = new close_mod(*this->context,
                                                   *this->front,

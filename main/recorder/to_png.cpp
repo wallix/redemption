@@ -19,6 +19,7 @@
  */
 
 #include "to_png.hpp"
+#include "wrm_recorder.hpp"
 #include "timer_compute.hpp"
 #include "staticcapture.hpp"
 #include "load_png_context.hpp"
@@ -51,9 +52,11 @@ void to_png(WRMRecorder& recorder, const char* outfile,
 
     while (recorder.selected_next_order())
     {
-        if (timercompute.interpret_is_time_chunk()){
+        if (timercompute.interpret_is_time_chunk())
+        {
             uint64_t usec = timercompute.usec();
-            if (usec >= mtime){
+            if (usec >= mtime)
+            {
                 capture.dump_png();
                 timercompute.reset();
                 if (++frame == frame_limit)
@@ -61,20 +64,26 @@ void to_png(WRMRecorder& recorder, const char* outfile,
                 if (screenshot_all)
                 {
                     minterval += usec - mtime;
-                    while (minterval >= mtime){
+                    while (minterval >= mtime)
+                    {
                         capture.dump_png();
                         minterval -= mtime;
                     }
                 }
             }
 
-            if (msecond <= usec){
+            if (msecond <= usec)
+            {
                 msecond = 0;
                 break;
-            } else {
+            }
+            else
+            {
                 msecond -= usec;
             }
-        } else {
+        }
+        else
+        {
             recorder.interpret_order();
         }
     }
@@ -83,4 +92,55 @@ void to_png(WRMRecorder& recorder, const char* outfile,
         //++frame;
     }
     //return frame;
+}
+
+void to_png(WRMRecorder& recorder, const char* outfile,
+            const std::vector<relative_time_point>& capture_points,
+            unsigned resize_width, unsigned resize_height,
+            bool no_screenshot_stop)
+{
+    if (capture_points.empty())
+        return ;
+
+    StaticCapture capture(recorder.meta().width,
+                          recorder.meta().height,
+                          outfile,
+                          resize_width, resize_height);
+    recorder.consumer(&capture);
+    load_png_context(recorder, capture.drawable);
+
+    typedef std::vector<relative_time_point>::const_iterator iterator;
+    iterator it = capture_points.begin();
+
+    TimerCompute timercompute(recorder);
+    if (it->point.time && !timercompute.advance_second(it->point.time))
+        return;
+
+    capture.dump_png();
+    iterator end = capture_points.end();
+    if (++it == end)
+        return;
+    uint64_t mtime = 0;
+
+    while (recorder.selected_next_order())
+    {
+        if (timercompute.interpret_is_time_chunk())
+        {
+            mtime += timercompute.usec();
+            while (mtime >= TimerCompute::coeff_sec_to_usec * it->point.time)
+            {
+                capture.dump_png();
+                if (++it == end)
+                    return;
+            }
+            timercompute.reset();
+        }
+        else
+        {
+            recorder.interpret_order();
+        }
+    }
+    if (!no_screenshot_stop){
+        capture.dump_png();
+    }
 }

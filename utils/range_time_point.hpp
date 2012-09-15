@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Jonathan Poelen
  */
 
-#if !defined(__RECORDER_RANGE_TIME_POINT_HPP__)
-#define __RECORDER_RANGE_TIME_POINT_HPP__
+#if !defined(__UTILS_RANGE_TIME_POINT_HPP__)
+#define __UTILS_RANGE_TIME_POINT_HPP__
 
 #include <limits>
 #include "time_point.hpp"
@@ -55,13 +55,6 @@ struct range_time_point
     : left(l)
     , right(r)
     {}
-
-    /*range_time_point& operator=(const range_time_point& other)
-    {
-        this->left = other.left;
-        this->right = other.right;
-        return *this;
-    }*/
 
     /**
      * "+30m"

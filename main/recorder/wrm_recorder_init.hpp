@@ -165,6 +165,7 @@ int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt, InputType::
                 return 2000;
         }
         recorder.idx_file = opt.idx_start + 1;
+        recorder.force_interpret_breakpoint = opt.force_interpret_breakpoint;
     }
     catch (Error& error)
     {

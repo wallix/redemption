@@ -307,7 +307,7 @@ class SessionManager {
                 this->context.nextmod = ModContext::INTERNAL_BOUNCER2;
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
-            else if (0 == strncmp(target, "wabautotest", 11)){
+            else if (0 == strncmp(target, "autotest", 11)){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL test");
                 }

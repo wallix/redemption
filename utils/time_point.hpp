@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Jonathan Poelen
  */
 
-#if !defined(__RECORDER_TIME_POINT_HPP__)
-#define __RECORDER_TIME_POINT_HPP__
+#if !defined(__UTILS_TIME_POINT_HPP__)
+#define __UTILS_TIME_POINT_HPP__
 
 #include <iosfwd>
 #include <string>
@@ -169,30 +169,30 @@ public:
     }
 };
 
-/*bool operator==(const time_point& t, const time_point& other)
+inline bool operator==(const time_point& t, const time_point& other)
 {
     return t.time == other.time;
 }
-bool operator<(const time_point& t, const time_point& other)
+inline bool operator<(const time_point& t, const time_point& other)
 {
     return t.time < other.time;
 }
-bool operator<=(const time_point& t, const time_point& other)
+inline bool operator<=(const time_point& t, const time_point& other)
 {
     return t.time <= other.time;
 }
-bool operator>(const time_point& t, const time_point& other)
+inline bool operator>(const time_point& t, const time_point& other)
 {
     return t.time > other.time;
 }
-bool operator>=(const time_point& t, const time_point& other)
+inline bool operator>=(const time_point& t, const time_point& other)
 {
     return t.time >= other.time;
 }
-bool operator!=(const time_point& t, const time_point& other)
+inline bool operator!=(const time_point& t, const time_point& other)
 {
     return t.time != other.time;
-}*/
+}
 
 inline time_point& operator+=(time_point& t, std::size_t n)
 {

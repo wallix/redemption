@@ -9,194 +9,13 @@
 
 namespace po = boost::program_options;
 
-void validate(boost::any& v,
-              const std::vector<std::string>& values,
-              range_time_point* /*range*/, int)
-{
-    po::validators::check_first_occurrence(v);
-    // Extract the first string from 'values'. If there is more than
-    // one string, it's an error, and exception will be thrown.
-    const std::string& s = po::validators::get_single_string(values);
-    v = boost::any(range_time_point(s));
-}
-
-void validate(boost::any& v,
-              const std::vector<std::string>& values,
-              time_point* /*time*/, int)
-{
-    // Make sure no previous assignment to 'a' was made.
-    po::validators::check_first_occurrence(v);
-    // Extract the first string from 'values'. If there is more than
-    // one string, it's an error, and exception will be thrown.
-    const std::string& s = po::validators::get_single_string(values);
-    v = boost::any(time_point(s));
-}
-
-template<std::size_t _N>
-void validate(boost::any& v,
-              const std::vector<std::string>& values,
-              HexadecimalOption<_N>* /*binary_string*/, int)
-{
-    // Make sure no previous assignment to 'a' was made.
-    po::validators::check_first_occurrence(v);
-    // Extract the first string from 'values'. If there is more than
-    // one string, it's an error, and exception will be thrown.
-    const std::string& s = po::validators::get_single_string(values);
-    HexadecimalOption<_N> bs;
-    if (!bs.parse(s))
-        throw po::validation_error(po::validation_error::invalid_option_value);
-    v = boost::any(bs);
-}
-
-CipherMode::enum_t get_enum_mode(boost::any& v,
-                                 const std::vector<std::string>& values)
-{
-    po::validators::check_first_occurrence(v);
-    // Extract the first string from 'values'. If there is more than
-    // one string, it's an error, and exception will be thrown.
-    const std::string& s = po::validators::get_single_string(values);
-
-    CipherMode::enum_t mode = CipherMode::NO_MODE;
-
-    if (s == "bf")
-        mode = CipherMode::BLOWFISH_CBC;
-    else if (s == "bf-cbc")
-        mode = CipherMode::BLOWFISH_CBC;
-    else if (s == "bf-ecb")
-        mode = CipherMode::BLOWFISH_ECB;
-    else if (s == "bf-ofb")
-        mode = CipherMode::BLOWFISH_OFB;
-
-    else if (s == "cast5")
-        mode = CipherMode::CAST5_CBC;
-    else if (s == "cast5-cbc")
-        mode = CipherMode::CAST5_CBC;
-    else if (s == "cast5-cfb")
-        mode = CipherMode::CAST5_CFB;
-    else if (s == "cast5-ofb")
-        mode = CipherMode::CAST5_OFB;
-    else if (s == "cast5-ecb")
-        mode = CipherMode::CAST5_ECB;
-
-    else if (s == "des")
-        mode = CipherMode::DES_CBC;
-    else if (s == "des-cbc")
-        mode = CipherMode::DES_CBC;
-    else if (s == "des-cfb")
-        mode = CipherMode::DES_CFB;
-    else if (s == "des-ofb")
-        mode = CipherMode::DES_OFB;
-    else if (s == "des-ecb")
-        mode = CipherMode::DES_ECB;
-
-    else if (s == "des3")
-        mode = CipherMode::DES_EDE3_CBC;
-    else if (s == "des3-ecb")
-        mode = CipherMode::DES_EDE3_ECB;
-    else if (s == "des-ede3-cbc")
-        mode = CipherMode::DES_EDE3_CBC;
-    else if (s == "des-ede3-ecb")
-        mode = CipherMode::DES_EDE3_ECB;
-    else if (s == "des-ede3-cfb-1")
-        mode = CipherMode::DES_EDE3_CFB_1;
-    else if (s == "des-ede3-cfb-8")
-        mode = CipherMode::DES_EDE3_CFB_8;
-    else if (s == "des-ede3-cfb-64")
-        mode = CipherMode::DES_EDE3_CFB_64;
-    else if (s == "des-ede3-ofb")
-        mode = CipherMode::DES_EDE3_OFB;
-
-    else if (s == "rc2")
-        mode = CipherMode::RC2_CBC;
-    else if (s == "rc2-cbc")
-        mode = CipherMode::RC2_CBC;
-    else if (s == "rc2-cfb")
-        mode = CipherMode::RC2_CFB;
-    else if (s == "rc2-ecb")
-        mode = CipherMode::RC2_ECB;
-    else if (s == "rc2-ofb")
-        mode = CipherMode::RC2_OFB;
-    else if (s == "rc2-64-cbc")
-        mode = CipherMode::RC2_64_CBC;
-    else if (s == "rc2-40-cbc")
-        mode = CipherMode::RC2_40_CBC;
-
-    else if (s == "rc4")
-        mode = CipherMode::RC4;
-    else if (s == "rc4-40")
-        mode = CipherMode::RC4_40;
-
-    else if (s == "aes-128")
-        mode = CipherMode::AES_128_CBC;
-    else if (s == "aes-128-cbc")
-        mode = CipherMode::AES_128_CBC;
-    else if (s == "aes-128-cfb")
-        mode = CipherMode::AES_128_CFB;
-    else if (s == "aes-128-cfb1")
-        mode = CipherMode::AES_128_CFB1;
-    else if (s == "aes-128-cfb8")
-        mode = CipherMode::AES_128_CFB8;
-    else if (s == "aes-128-ecb")
-        mode = CipherMode::AES_128_ECB;
-    else if (s == "aes-128-ofb")
-        mode = CipherMode::AES_128_OFB;
-
-    else if (s == "aes-192")
-        mode = CipherMode::AES_192_CBC;
-    else if (s == "aes-192-cbc")
-        mode = CipherMode::AES_192_CBC;
-    else if (s == "aes-192-cfb")
-        mode = CipherMode::AES_192_CFB;
-    else if (s == "aes-192-cfb1")
-        mode = CipherMode::AES_192_CFB1;
-    else if (s == "aes-192-cfb8")
-        mode = CipherMode::AES_192_CFB8;
-    else if (s == "aes-192-ecb")
-        mode = CipherMode::AES_192_ECB;
-    else if (s == "aes-192-ofb")
-        mode = CipherMode::AES_192_OFB;
-
-    else if (s == "aes-256")
-        mode = CipherMode::AES_256_CBC;
-    else if (s == "aes-256-cbc")
-        mode = CipherMode::AES_256_CBC;
-    else if (s == "aes-256-cfb")
-        mode = CipherMode::AES_256_CFB;
-    else if (s == "aes-256-cfb1")
-        mode = CipherMode::AES_256_CFB1;
-    else if (s == "aes-256-cfb8")
-        mode = CipherMode::AES_256_CFB8;
-    else if (s == "aes-256-ecb")
-        mode = CipherMode::AES_256_ECB;
-    else if (s == "aes-256-ofb")
-        mode = CipherMode::AES_256_OFB;
-
-    if (!mode)
-        throw po::validation_error(po::validation_error::invalid_option_value);
-
-    return mode;
-}
-
-void validate(boost::any& v,
-              const std::vector<std::string>& values,
-              CipherMode::enum_t* /*mode*/, int)
-{
-    v = boost::any(get_enum_mode(v, values));
-}
-
-void validate(boost::any& v,
-              const std::vector<std::string>& values,
-              const EVP_CIPHER** /*mode*/, int)
-{
-    v = boost::any(CipherMode::to_evp_cipher(get_enum_mode(v, values)));
-}
-
 WrmRecorderOption::WrmRecorderOption()
 : desc("Options")
 , options()
 , range()
 , frame(std::numeric_limits<uint>::max())
 , time(60*2)
+, time_list()
 , in_filename()
 , idx_start(0)
 , base_path()
@@ -208,6 +27,7 @@ WrmRecorderOption::WrmRecorderOption()
 , in_crypt_key()
 , in_crypt_iv()
 , in_cipher_info()
+, force_interpret_breakpoint(false)
 {
     this->add_default_options();
 }
@@ -229,6 +49,8 @@ void WrmRecorderOption::add_default_options()
     ("frame,f", po::value(&this->frame), "maximum number of frames in the interval")
     ("time,t", po::value(&this->time), "duration between each capture"
     "\nformat: [+|-]time[h|m|s][...]")
+    ("time-list,l", po::value(&this->time_list)->multitoken(), "points of capture. Set --output-type with 'png.list' if not done"
+    "\nformat: [+|-]time[h|m|s][...] ...")
     ("input-file,i", po::value(&this->in_filename), "input filename (see --input-type)")
     ("in", po::value(&this->in_filename), "alias for --input-file")
     ("index-start,x", po::value(&this->idx_start), "index file in the meta")
@@ -236,6 +58,7 @@ void WrmRecorderOption::add_default_options()
     ("ignore-dir,N", "ignore directory for meta in the wrm file")
     ("deduce-dir,d", "use --ignore-dir and set --path with the directory of --input-file")
     ("times-in-meta-file-are-false", "")
+    ("force-interpret-breakpoint", po::value(&this->force_interpret_breakpoint), "interpret always breakpoint chunk if exists")
     ("output-meta-name,m", po::value(&this->metaname), "specified name of meta file")
     ("input-type,I", po::value(&this->input_type), "accept 'mwrm' or 'wrm'")
     ("in-crypt-key", po::value(&this->in_crypt_key), "key in hexadecimal base")
@@ -349,6 +172,36 @@ int WrmRecorderOption::normalize_options()
         std::size_t pos = this->in_filename.find_last_of('/');
         if (std::string::npos != pos)
             this->base_path = this->in_filename.substr(0, pos+1);
+    }
+
+    if (this->options.find("time-list") != end)
+    {
+        typedef std::vector<relative_time_point>::iterator iterator;
+        if (this->time_list.size() >= 1)
+        {
+            iterator first = this->time_list.begin();
+            if ('-' == first->symbol)
+                first->point.time = -first->point.time;
+            first->symbol = 0;
+
+            if (this->time_list.size() > 1)
+            {
+                for (iterator prev = first++, last = this->time_list.end();
+                     first != last; ++first, ++prev)
+                {
+                    if (first->symbol)
+                    {
+                        if ('+' == first->symbol)
+                            first->point += prev->point;
+                        else
+                            first->point = prev->point - first->point;
+                        first->symbol = 0;
+                    }
+                }
+            }
+        }
+        std::sort<>(this->time_list.begin(), this->time_list.end(),
+                    relative_time_point_less_only_point());
     }
 
     return SUCCESS;
