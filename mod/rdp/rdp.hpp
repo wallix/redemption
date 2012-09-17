@@ -1563,30 +1563,7 @@ struct mod_rdp : public client_mod {
                             LOG(LOG_INFO, "Rdp::New License");
                         }
 
-                        uint8_t tag = payload.in_uint8();
-                        uint8_t flags = payload.in_uint8();
-                        uint16_t wMsgSize = payload.in_uint16_le();
-
-                        payload.in_skip_bytes(2); /* 3d 45 - unknown */
-                        int length = payload.in_uint16_le();
-                        RC4_KEY crypt_key;
-                        RC4_set_key(&crypt_key, 16, this->lic_layer_license_key);
-                        RC4(&crypt_key, length, payload.p, payload.p);
-                        int check = payload.in_uint16_le();
-                        license_issued = 1;
-
-                        payload.in_skip_bytes(2); /* pad */
-
-                        length = payload.in_uint32_le();
-                        payload.in_skip_bytes(length);
-
-                        length = payload.in_uint32_le();
-                        payload.in_skip_bytes(length);
-
-                        length = payload.in_uint32_le();
-                        payload.in_skip_bytes(length);
-
-                        length = payload.in_uint32_le();
+                        LIC::NewLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
                         TODO("Save licence to keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that")
                         res = 1;

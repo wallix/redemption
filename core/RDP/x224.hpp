@@ -31,7 +31,6 @@
 #include "stream.hpp"
 #include "log.hpp"
 #include "error.hpp"
-#include "payload.hpp"
 
 //##############################################################################
 namespace X224
