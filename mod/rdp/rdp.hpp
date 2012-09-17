@@ -1224,16 +1224,7 @@ struct mod_rdp : public client_mod {
                             LOG(LOG_INFO, "Rdp::License Request");
                         }
                         {
-                            uint8_t tag = payload.in_uint8();
-                            uint8_t flags = payload.in_uint8();
-                            uint16_t wMsgSize = payload.in_uint16_le();
-                         
-                           /* Retrieve the server random from the incoming packet */
-                            const uint8_t * server_random = payload.in_uint8p(SEC_RANDOM_SIZE);
-                            if (payload.p != payload.end){
-                                LOG(LOG_ERR, "Rdp::License Request : unparsed data %d", stream.end - stream.p);
-                            }
-                            payload.p = payload.end;
+                            LIC::LicenseRequest_Recv lic(sec.payload);
 
                             uint8_t null_data[SEC_MODULUS_SIZE];
 
@@ -1256,7 +1247,7 @@ struct mod_rdp : public client_mod {
                                 sha1.update(pad, i + 1);
                                 sha1.update(pre_master_secret, 48);
                                 sha1.update(client_random, 32);
-                                sha1.update(server_random, 32);
+                                sha1.update(lic.server_random, 32);
                                 sha1.final(shasig);
 
                                 SslMd5 md5;
@@ -1273,7 +1264,7 @@ struct mod_rdp : public client_mod {
                                 SslSha1 sha1;
                                 sha1.update(pad, i + 1);
                                 sha1.update(master_secret, 48);
-                                sha1.update(server_random, 32);
+                                sha1.update(lic.server_random, 32);
                                 sha1.update(client_random, 32);
                                 sha1.final(shasig);
 
@@ -1291,7 +1282,7 @@ struct mod_rdp : public client_mod {
                             SslMd5 md5;
                             md5.update(key_block + 16, 16);
                             md5.update(client_random, 32);
-                            md5.update(server_random, 32);
+                            md5.update(lic.server_random, 32);
                             md5.final(this->lic_layer_license_key);
 
                             BStream stream(65535);

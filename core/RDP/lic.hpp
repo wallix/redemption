@@ -181,6 +181,29 @@ namespace LIC
         }
     };
 
+
+    struct LicenseRequest_Recv
+    {
+        uint8_t tag;
+        uint8_t flags;
+        uint16_t wMsgSize;
+        uint8_t server_random[SEC_RANDOM_SIZE];
+
+        LicenseRequest_Recv(Stream & stream){
+            this->tag = stream.in_uint8();
+            this->flags = stream.in_uint8();
+            this->wMsgSize = stream.in_uint16_le();
+         
+            stream.in_copy_bytes(this->server_random, SEC_RANDOM_SIZE);
+            if (stream.p != stream.end){
+                LOG(LOG_ERR, "License Request_Recv : unparsed data %d", stream.end - stream.p);
+//                throw Error(ERR_LIC);
+            }
+            stream.end = stream.p;
+        }
+    };
+
+
 };
 
 
