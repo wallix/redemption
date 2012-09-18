@@ -1586,6 +1586,9 @@ struct mod_rdp : public client_mod {
                         uint8_t tag = payload.in_uint8();
                         uint8_t flags = payload.in_uint8();
                         uint16_t wMsgSize = payload.in_uint16_le();
+
+                        LOG(LOG_INFO, "Upgraded licence saving failed");
+                        throw Error(ERR_SEC);
                     }
                     break;
                     case LIC::ERROR_ALERT:
