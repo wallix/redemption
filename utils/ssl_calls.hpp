@@ -89,16 +89,6 @@ class SslMd5
 class ssllib
 {
     public:
-    static void rc4_set_key(RC4_KEY & rc4, uint8_t * key, int len)
-    {
-        RC4_set_key(&rc4, len, key);
-    }
-
-    static void rc4_crypt(RC4_KEY & rc4, uint8_t * in_data, uint8_t * out_data, int len)
-    {
-        RC4(&rc4, len, in_data, out_data);
-    }
-
     static void rsa_encrypt(uint8_t * out, uint8_t * in, int len, uint32_t modulus_size, uint8_t * modulus, uint8_t * exponent)
     {
         BN_CTX *ctx;
@@ -328,8 +318,7 @@ struct CryptContext
 
         /* Save initial RC4 keys as update keys */
         memcpy(this->update_key, this->key, 16);
-
-        ssl.rc4_set_key(this->rc4_info, this->key, this->rc4_key_len);
+        RC4_set_key(&this->rc4_info, this->rc4_key_len, this->key);
     }
 
     void rc4dump(const char * data, size_t size){
@@ -374,10 +363,10 @@ struct CryptContext
             if (this->rc4_key_len == 8) {
                 ssl.sec_make_40bit(this->key);
             }
-            ssl.rc4_set_key(this->rc4_info, this->key, this->rc4_key_len);
+            RC4_set_key(&this->rc4_info, this->rc4_key_len, this->key);
             this->use_count = 0;
         }
-        ssl.rc4_crypt(this->rc4_info, data, data, length);
+        RC4(&this->rc4_info, length, data, data);
         this->use_count++;
     }
 
@@ -391,10 +380,10 @@ struct CryptContext
             if (this->rc4_key_len == 8) {
                 ssl.sec_make_40bit(this->key);
             }
-            ssl.rc4_set_key(this->rc4_info, this->key, this->rc4_key_len);
+            RC4_set_key(&this->rc4_info, this->rc4_key_len, this->key);
             this->use_count = 0;
         }
-        ssl.rc4_crypt(this->rc4_info, data, data, len);
+        RC4(&this->rc4_info, len, data, data);
         this->use_count++;
     }
 
@@ -432,10 +421,9 @@ struct CryptContext
         md5.update(shasig, 20);
         md5.final(this->key);
 
-        ssllib ssl;
         RC4_KEY update;
-        ssl.rc4_set_key(update, this->key, this->rc4_key_len);
-        ssl.rc4_crypt(update, this->key, this->key, this->rc4_key_len);
+        RC4_set_key(&update, this->rc4_key_len, this->key);
+        RC4(&update, this->rc4_key_len, this->key, this->key);
     }
 
 };

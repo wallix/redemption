@@ -119,9 +119,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
     memcpy(decrypt.key, "\xd1\x26\x9e\x63\xec\x51\x65\x1d\x89\x5c\x5a\x2a\x29\xef\x08\x4c", 16);
     memcpy(decrypt.update_key, decrypt.key, 16);
 
-    ssllib ssl;
-
-    ssl.rc4_set_key(decrypt.rc4_info, decrypt.key, decrypt.rc4_key_len);
+    RC4_set_key(&decrypt.rc4_info, decrypt.rc4_key_len, decrypt.key);
 
     SEC::SecInfoPacket_Recv sec(stream, length, decrypt);
 
@@ -236,123 +234,6 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 
 //// wMsgSize (2 bytes): An 16-bit, unsigned integer. The size in bytes of the licensing packet (including the size of the preamble).
 
-//// 2.2.2.1 Server License Request (SERVER_LICENSE_REQUEST)
-//// =======================================================
-
-//// The Server License Request packet is sent to the client to initiate the RDP licensing handshake.
-
-//// ServerRandom (32 bytes): A 32-byte array containing a random number. This random
-////  number is created using a cryptographically secure pseudo-random number generator and is
-////  used to generate licensing encryption keys (see section 5.1.3). These keys are used to
-////  encrypt licensing data in subsequent licensing messages (see sections 5.1.4 and 5.1.5).
-
-//// ProductInfo (variable): A variable-length Product Information structure. This structure
-////  contains the details of the product license required for connecting to the terminal server.
-
-//// 2.2.2.1.1 Product Information (PRODUCT_INFO)
-//// ============================================
-//// The Product Information packet contains the details of the product license that is required for
-//// connecting to the terminal server. The client uses this structure together with the scope list to
-//// search for and identify an appropriate license in its license store. Depending on the outcome of the
-//// search, the client sends a Client New License Request (section 2.2.2.2), Client License Information
-//// packet (section 2.2.2.3), or license error message (section 2.2.2.7.1) to the server.
-
-//// ProductInfo::dwVersion (4 bytes): A 32-bit unsigned integer that contains the license version information.
-//// The high-order word contains the major version of the operating system on which the terminal
-//// server is running, while the low-order word contains the minor version.<6>
-
-//// ProductInfo::cbCompanyName (4 bytes): An unsigned 32-bit integer that contains the number of bytes in
-//// the pbCompanyName field, including the terminating null character. This value MUST be
-//// greater than zero.
-
-//// ProductInfo::pbCompanyName (variable): Contains a null-terminated Unicode string that specifies the
-//// company name.<7>
-
-//// ProductInfo::cbProductId (4 bytes): An unsigned 32-bit integer that contains the number of bytes in the
-//// pbProductId field, including the terminating null character. This value MUST be greater than
-//// zero.
-
-//// ProductInfo::pbProductId (variable): Contains a null-terminated Unicode string that identifies the type of
-//// the license that is required by the terminal server. It MAY have the following string value. 
-//// "A02" Per device or per user license
-//// ------------------------------------------------------------------
-
-//// KeyExchangeList (variable): A Licensing Binary BLOB structure (see [MS-RDPBCGR] section
-////  2.2.1.12.1.2) of type BB_KEY_EXCHG_ALG_BLOB (0x000D). This BLOB contains the list of 32-
-////  bit unsigned integers specifying key exchange algorithms that the server supports. The
-////  terminal server supports only one key exchange algorithm as of now, so the BLOB contains
-////  the following value.
-
-//// 0x00000001 KEY_EXCHANGE_ALG_RSA Indicates RSA key exchange algorithm with a 512-bit asymmetric key.<3>
-
-//// ServerCertificate (variable): A Licensing Binary BLOB structure (see [MS-RDPBCGR] section
-////  2.2.1.12.1.2) of type BB_CERTIFICATE_BLOB (0x0003). This BLOB contains the terminal
-////  server certificate (see section 2.2.1.4). The terminal server can choose not to send the
-////  certificate by setting the wblobLen field in the Licensing Binary BLOB structure to 0. If
-////  encryption is in effect and is already protecting RDP traffic, the licensing protocol MAY<4>
-////  choose not to send the server certificate (for RDP security measures, see [MS-RDPBCGR]
-////  sections 5.3 and 5.4). If the licensing protocol chooses not to send the server certificate, then
-////  the client uses the public key obtained from the server certificate sent as part of Server
-////  Security Data in the Server MCS Connect Response PDU (see [MS-RDPBCGR] section 2.2.1.4).
-
-//// ScopeList (variable): A variable-length Scope List structure that contains a list of entities that
-////  issued the client license. This list is used by the client in conjunction with ProductInfo to
-////  search for an appropriate license in its license store.<5>
-
-//// 2.2.2.1.2 Scope List (SCOPE_LIST)
-//// =================================
-//// The Scope List packet contains a list of entities that issued a client license. The client uses the name
-//// of the issuers in the Scope structures of this list in conjunction with the Product Information
-//// structure to search the license store for a matching client license.
-
-//// ScopeList::ScopeCount (4 bytes): A 32-bit unsigned integer containing the number of elements in the ScopeArray field.
-
-//// ScopeList::ScopeArray (variable): An array of Scope structures containing ScopeCount elements. <8>
-
-//// 2.2.2.1.2.1 Scope (SCOPE)
-//// =========================
-//// The Scope packet contains the name of an entity that issued a client license.
-
-//// Scope (variable): A Licensing Binary BLOB structure (see [MS-RDPBCGR] section 2.2.1.12.1.2)
-//// of type BB_SCOPE_BLOB (0x000E). This BLOB contains the name of a license issuer in null-
-//// terminated ANSI characters, as specified in [ISO/IEC-8859-1], string format, with an
-//// implementation-specific valid code page.
-
-//// ------------------------------------------------------------------
-
-//// +------------------------------------+-------------------------------------+
-//// | 0x0001 BB_DATA_BLOB                | Used by License Information PDU and |
-//// |                                    | Platform Challenge Response PDU     |
-//// |                                    | ([MS-RDPELE] sections 2.2.2.3 and   |
-//// |                                    | 2.2.2.5).                           |
-//// +------------------------------------+-------------------------------------+
-//// | 0x0002 BB_RANDOM_BLOB              | Used by License Information PDU and |
-//// |                                    | New License Request PDU ([MS-RDPELE]|
-//// |                                    | sections 2.2.2.3 and 2.2.2.2).      |
-//// +------------------------------------+-------------------------------------+
-//// | 0x0003 BB_CERTIFICATE_BLOB         | Used by License Request PDU         |
-//// |                                    | ([MS-RDPELE] section 2.2.2.1).      |
-//// +------------------------------------+-------------------------------------+
-//// | 0x0004 BB_ERROR_BLOB               | Used by License Error PDU (section  |
-//// |                                    | 2.2.1.12).                          |
-//// +------------------------------------+-------------------------------------+
-//// | 0x0009 BB_ENCRYPTED_DATA_BLOB      | Used by Platform Challenge Response |
-//// |                                    | PDU and Upgrade License PDU         |
-//// |                                    | ([MS-RDPELE] sections 2.2.2.5 and   |
-//// |                                    | 2.2.2.6).                           |
-//// +------------------------------------+-------------------------------------+
-//// | 0x000D BB_KEY_EXCHG_ALG_BLOB       | Used by License Request PDU         |
-//// |                                    | ([MS-RDPELE] section 2.2.2.1).      |
-//// +------------------------------------+-------------------------------------+
-//// | 0x000E BB_SCOPE_BLOB               | Used by License Request PDU         |
-//// |                                    | ([MS-RDPELE] section 2.2.2.1).      |
-//// +------------------------------------+-------------------------------------+
-//// | 0x000F BB_CLIENT_USER_NAME_BLOB    | Used by New License Request PDU     |
-//// |                                    | ([MS-RDPELE] section 2.2.2.2).      |
-//// +------------------------------------+-------------------------------------+
-//// | 0x0010 BB_CLIENT_MACHINE_NAME_BLOB | Used by New License Request PDU     |
-//// |                                    | ([MS-RDPELE] section 2.2.2.2).      |
-//// +------------------------------------+-------------------------------------+
 
 ////BOOST_AUTO_TEST_CASE(TestSend_SecLicensePacket)
 ////{

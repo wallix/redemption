@@ -406,7 +406,9 @@ struct mod_rdp : public client_mod {
                     verbose(verbose),
                     nego(tls, trans, target_user)
     {
-        LOG(LOG_INFO, "Creation of new mod 'RDP'");
+        if (this->verbose){
+            LOG(LOG_INFO, "Creation of new mod 'RDP'");
+        }
 
         this->lic_layer_license_issued = 0;
         this->lic_layer_license_size = 0;
@@ -751,7 +753,6 @@ struct mod_rdp : public client_mod {
                             LOG(LOG_INFO, "No encryption");
                         }
                         else {
-                            ssllib ssl;
 
                             uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
                             uint8_t modulus[SEC_MAX_MODULUS_SIZE];
@@ -839,6 +840,8 @@ struct mod_rdp : public client_mod {
 
                             /* Generate a client random, and determine encryption keys */	
                             this->gen->random(client_random, SEC_RANDOM_SIZE);
+
+                            ssllib ssl;
 
                             ssl.rsa_encrypt(client_crypt_random, client_random, 
                                     SEC_RANDOM_SIZE, this->server_public_key_len, modulus, exponent);
@@ -1150,8 +1153,6 @@ struct mod_rdp : public client_mod {
             X224::DT_TPDU_Recv x224(*this->nego.trans, stream);
             SubStream & mcs_data = x224.payload;
             MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
-            SubStream & payload = mcs.payload;
-
             SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->encryptionLevel, this->encryptionMethod);
 
             if (sec.flags & SEC::SEC_LICENSE_PKT) {
@@ -1224,16 +1225,7 @@ struct mod_rdp : public client_mod {
                             LOG(LOG_INFO, "Rdp::License Request");
                         }
                         {
-                            uint8_t tag = payload.in_uint8();
-                            uint8_t flags = payload.in_uint8();
-                            uint16_t wMsgSize = payload.in_uint16_le();
-                         
-                           /* Retrieve the server random from the incoming packet */
-                            const uint8_t * server_random = payload.in_uint8p(SEC_RANDOM_SIZE);
-                            if (payload.p != payload.end){
-                                LOG(LOG_ERR, "Rdp::License Request : unparsed data %d", stream.end - stream.p);
-                            }
-                            payload.p = payload.end;
+                            LIC::LicenseRequest_Recv lic(sec.payload);
 
                             uint8_t null_data[SEC_MODULUS_SIZE];
 
@@ -1256,7 +1248,7 @@ struct mod_rdp : public client_mod {
                                 sha1.update(pad, i + 1);
                                 sha1.update(pre_master_secret, 48);
                                 sha1.update(client_random, 32);
-                                sha1.update(server_random, 32);
+                                sha1.update(lic.server_random, 32);
                                 sha1.final(shasig);
 
                                 SslMd5 md5;
@@ -1273,7 +1265,7 @@ struct mod_rdp : public client_mod {
                                 SslSha1 sha1;
                                 sha1.update(pad, i + 1);
                                 sha1.update(master_secret, 48);
-                                sha1.update(server_random, 32);
+                                sha1.update(lic.server_random, 32);
                                 sha1.update(client_random, 32);
                                 sha1.final(shasig);
 
@@ -1291,7 +1283,7 @@ struct mod_rdp : public client_mod {
                             SslMd5 md5;
                             md5.update(key_block + 16, 16);
                             md5.update(client_random, 32);
-                            md5.update(server_random, 32);
+                            md5.update(lic.server_random, 32);
                             md5.final(this->lic_layer_license_key);
 
                             BStream stream(65535);
@@ -1308,8 +1300,8 @@ struct mod_rdp : public client_mod {
                                 /* Now encrypt the HWID */
 
                                 RC4_KEY crypt_key;
-                                ssl.rc4_set_key(crypt_key, this->lic_layer_license_key, 16);
-                                ssl.rc4_crypt(crypt_key, hwid, hwid, sizeof(hwid));
+                                RC4_set_key(&crypt_key, 16, this->lic_layer_license_key);
+                                RC4(&crypt_key, sizeof(hwid), hwid, hwid);
 
                                 uint8_t null_data[SEC_MODULUS_SIZE];
                                 memset(null_data, 0, sizeof(null_data));
@@ -1485,43 +1477,24 @@ struct mod_rdp : public client_mod {
                             LOG(LOG_INFO, "Rdp::Platform Challenge");
                         }
                         {
-
-                            uint8_t tag = payload.in_uint8();
-                            uint8_t flags = payload.in_uint8();
-                            uint16_t wMsgSize = payload.in_uint16_le();
+                            LIC::PlatformChallenge_Recv lic(sec.payload);
 
                             BStream stream(65535);
 
                             ssllib ssl;
 
-                            const uint8_t* in_token;
                             uint8_t out_token[LIC::LICENSE_TOKEN_SIZE];
                             uint8_t decrypt_token[LIC::LICENSE_TOKEN_SIZE];
                             uint8_t hwid[LIC::LICENSE_HWID_SIZE];
                             uint8_t crypt_hwid[LIC::LICENSE_HWID_SIZE];
                             uint8_t out_sig[LIC::LICENSE_SIGNATURE_SIZE];
 
-                            in_token = 0;
-                            /* Parse incoming packet and save the encrypted token */
-                            payload.in_skip_bytes(6); /* unknown: f8 3d 15 00 04 f6 */
-
-                            int tokenlen = payload.in_uint16_le();
-                            if (tokenlen != LIC::LICENSE_TOKEN_SIZE) {
-                                LOG(LOG_ERR, "token len = %d, expected %d", tokenlen, LIC::LICENSE_TOKEN_SIZE);
-                                throw Error(ERR_SEC);
-                            }
-                            else{
-                                in_token = payload.in_uint8p(tokenlen);
-                                payload.in_uint8p(LIC::LICENSE_SIGNATURE_SIZE); // in_sig
-                                payload.check_end();
-                            }
-
-                            memcpy(out_token, in_token, LIC::LICENSE_TOKEN_SIZE);
+                            memcpy(out_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
                             /* Decrypt the token. It should read TEST in Unicode. */
                             RC4_KEY crypt_key;
-                            ssl.rc4_set_key(crypt_key, this->lic_layer_license_key, 16);
-                            memcpy(decrypt_token, in_token, LIC::LICENSE_TOKEN_SIZE);
-                            ssl.rc4_crypt(crypt_key, decrypt_token, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
+                            RC4_set_key(&crypt_key, 16, this->lic_layer_license_key);
+                            memcpy(decrypt_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
+                            RC4(&crypt_key, LIC::LICENSE_TOKEN_SIZE, decrypt_token, decrypt_token);
 
                             hexdump((const char*)decrypt_token, LIC::LICENSE_TOKEN_SIZE);
                             /* Generate a signature for a buffer of token and HWID */
@@ -1536,9 +1509,9 @@ struct mod_rdp : public client_mod {
                             ssl.sign(out_sig, 16, this->lic_layer_license_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
 
                             /* Now encrypt the HWID */
-                            ssl.rc4_set_key(crypt_key, this->lic_layer_license_key, 16);
+                            RC4_set_key(&crypt_key, 16, this->lic_layer_license_key);
                             memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
-                            ssl.rc4_crypt(crypt_key, crypt_hwid, crypt_hwid, LIC::LICENSE_HWID_SIZE);
+                            RC4(&crypt_key, LIC::LICENSE_HWID_SIZE, crypt_hwid, crypt_hwid);
 
                             int length = 58;
 
@@ -1593,31 +1566,7 @@ struct mod_rdp : public client_mod {
                             LOG(LOG_INFO, "Rdp::New License");
                         }
 
-                        uint8_t tag = payload.in_uint8();
-                        uint8_t flags = payload.in_uint8();
-                        uint16_t wMsgSize = payload.in_uint16_le();
-
-                        payload.in_skip_bytes(2); /* 3d 45 - unknown */
-                        int length = payload.in_uint16_le();
-                        ssllib ssl;
-                        RC4_KEY crypt_key;
-                        ssl.rc4_set_key(crypt_key, this->lic_layer_license_key, 16);
-                        ssl.rc4_crypt(crypt_key, payload.p, payload.p, length);
-                        int check = payload.in_uint16_le();
-                        license_issued = 1;
-
-                        payload.in_skip_bytes(2); /* pad */
-
-                        length = payload.in_uint32_le();
-                        payload.in_skip_bytes(length);
-
-                        length = payload.in_uint32_le();
-                        payload.in_skip_bytes(length);
-
-                        length = payload.in_uint32_le();
-                        payload.in_skip_bytes(length);
-
-                        length = payload.in_uint32_le();
+                        LIC::NewLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
                         TODO("Save licence to keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that")
                         res = 1;
@@ -1778,35 +1727,45 @@ struct mod_rdp : public client_mod {
                     next_packet += sctrl.len;
                     switch (sctrl.pdu_type1) {
                     case PDUTYPE_DATAPDU:
-                        LOG(LOG_WARNING, "PDUTYPE_DATAPDU");
+                        if (this->verbose){
+                            LOG(LOG_WARNING, "PDUTYPE_DATAPDU");
+                        }
                         switch (this->connection_finalization_state){
                         case EARLY:
                             LOG(LOG_WARNING, "Rdp::finalization is early");
                             throw Error(ERR_SEC);
                         break;
                         case WAITING_SYNCHRONIZE:
-                            LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
+                            if (this->verbose){
+                                LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
+                            }
 //                            this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
                             TODO("Data should actually be consumed")
                             sctrl.payload.p = sctrl.payload.end;
                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
                         break;
                         case WAITING_CTL_COOPERATE:
-                            LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
+                            if (this->verbose){
+                                LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
+                            }
                             TODO("Data should actually be consumed")
                             sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                         break;
                         case WAITING_GRANT_CONTROL_COOPERATE:
-                            LOG(LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
+                            if (this->verbose){
+                                LOG(LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
+                            }
                             TODO("Data should actually be consumed")
                             sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                             this->connection_finalization_state = WAITING_FONT_MAP;
                         break;
                         case WAITING_FONT_MAP:
-                            LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
+                            if (this->verbose){
+                                LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
+                            }
                             TODO("Data should actually be consumed")
                             sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_FONTMAP);
@@ -1894,7 +1853,7 @@ struct mod_rdp : public client_mod {
                                 this->process_disconnect_pdu(sdata.payload);
                             break;
                             default:
-                                LOG(LOG_INFO, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
+                                LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
                                 TODO("Data should actually be consumed")
                                 sdata.payload.p = sdata.payload.end;
                             break;
