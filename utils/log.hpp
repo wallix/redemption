@@ -130,7 +130,7 @@ static inline void hexdump(const char * data, size_t size)
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
             unsigned char tmp = (unsigned)(data[j+i]);
-            if ((tmp < ' ') || (tmp > '~')){
+            if ((tmp < ' ') || (tmp > '~')  || (tmp == '\\')){
                 tmp = '.';
             }
             line += sprintf(line, "%c", tmp);
@@ -149,6 +149,45 @@ static inline void hexdump(const unsigned char * data, size_t size)
     hexdump((const char*)data, size);
 }
 
+
+static inline void hexdump_d(const char * data, size_t size)
+{
+    char buffer[2048];
+    for (size_t j = 0 ; j < size ; j += 16){
+        char * line = buffer;
+        line += sprintf(line, "/* %.4x */ ", (unsigned)j);
+        size_t i = 0;
+        for (i = 0; i < 16; i++){
+            if (j+i >= size){ break; }
+            line += sprintf(line, "0x%.2x, ", (unsigned char)data[j+i]);
+        }
+        if (i < 16){
+            line += sprintf(line, "%*c", (unsigned)((16-i)*3), ' ');
+        }
+
+        line += sprintf(line, " // ");
+
+        for (i = 0; i < 16; i++){
+            if (j+i >= size){ break; }
+            unsigned char tmp = (unsigned)(data[j+i]);
+            if ((tmp < ' ') || (tmp > '~') || (tmp == '\\')){
+                tmp = '.';
+            }
+            line += sprintf(line, "%c", tmp);
+        }
+
+        if (line != buffer){
+            line[0] = 0;
+            LOG(LOG_INFO, "%s", buffer);
+            buffer[0]=0;
+        }
+    }
+}
+
+static inline void hexdump_d(const unsigned char * data, size_t size)
+{
+    hexdump_d((const char*)data, size);
+}
 
 static inline void hexdump_c(const char * data, size_t size)
 {
@@ -169,7 +208,7 @@ static inline void hexdump_c(const char * data, size_t size)
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
             unsigned char tmp = (unsigned)(data[j+i]);
-            if ((tmp < ' ') || (tmp > '~')){
+            if ((tmp < ' ') || (tmp > '~') || (tmp == '\\')){
                 tmp = '.';
             }
             line += sprintf(line, "%c", tmp);
