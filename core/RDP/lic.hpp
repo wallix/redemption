@@ -1370,9 +1370,9 @@ namespace LIC
             this->licenseInfo.wBlobLen = stream.in_uint16_le();
 
             // following data is encrypted using license_key
-            RC4_KEY crypt_key;
-            RC4_set_key(&crypt_key, 16, license_key);
-            RC4(&crypt_key, this->licenseInfo.wBlobLen, stream.p, stream.p);
+            SslRC4 rc4;
+            rc4.set_key(16, license_key);
+            rc4.crypt(this->licenseInfo.wBlobLen, stream.p);
 
             // now it's unencrypted, we can read it
             this->licenseInfo.dwVersion = stream.in_uint32_le();

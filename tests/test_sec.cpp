@@ -115,11 +115,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 
     CryptContext decrypt;
     decrypt.encryptionMethod = 1;
-    decrypt.rc4_key_len = 8;
     memcpy(decrypt.key, "\xd1\x26\x9e\x63\xec\x51\x65\x1d\x89\x5c\x5a\x2a\x29\xef\x08\x4c", 16);
     memcpy(decrypt.update_key, decrypt.key, 16);
 
-    RC4_set_key(&decrypt.rc4_info, decrypt.rc4_key_len, decrypt.key);
+    decrypt.rc4.set_key((decrypt.encryptionMethod==1)?8:16, decrypt.key);
 
     SEC::SecInfoPacket_Recv sec(stream, length, decrypt);
 
