@@ -406,7 +406,9 @@ struct mod_rdp : public client_mod {
                     verbose(verbose),
                     nego(tls, trans, target_user)
     {
-        LOG(LOG_INFO, "Creation of new mod 'RDP'");
+        if (this->verbose){
+            LOG(LOG_INFO, "Creation of new mod 'RDP'");
+        }
 
         this->lic_layer_license_issued = 0;
         this->lic_layer_license_size = 0;
@@ -751,7 +753,6 @@ struct mod_rdp : public client_mod {
                             LOG(LOG_INFO, "No encryption");
                         }
                         else {
-                            ssllib ssl;
 
                             uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
                             uint8_t modulus[SEC_MAX_MODULUS_SIZE];
@@ -839,6 +840,8 @@ struct mod_rdp : public client_mod {
 
                             /* Generate a client random, and determine encryption keys */	
                             this->gen->random(client_random, SEC_RANDOM_SIZE);
+
+                            ssllib ssl;
 
                             ssl.rsa_encrypt(client_crypt_random, client_random, 
                                     SEC_RANDOM_SIZE, this->server_public_key_len, modulus, exponent);
@@ -1724,35 +1727,45 @@ struct mod_rdp : public client_mod {
                     next_packet += sctrl.len;
                     switch (sctrl.pdu_type1) {
                     case PDUTYPE_DATAPDU:
-                        LOG(LOG_WARNING, "PDUTYPE_DATAPDU");
+                        if (this->verbose){
+                            LOG(LOG_WARNING, "PDUTYPE_DATAPDU");
+                        }
                         switch (this->connection_finalization_state){
                         case EARLY:
                             LOG(LOG_WARNING, "Rdp::finalization is early");
                             throw Error(ERR_SEC);
                         break;
                         case WAITING_SYNCHRONIZE:
-                            LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
+                            if (this->verbose){
+                                LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
+                            }
 //                            this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
                             TODO("Data should actually be consumed")
                             sctrl.payload.p = sctrl.payload.end;
                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
                         break;
                         case WAITING_CTL_COOPERATE:
-                            LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
+                            if (this->verbose){
+                                LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
+                            }
                             TODO("Data should actually be consumed")
                             sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                         break;
                         case WAITING_GRANT_CONTROL_COOPERATE:
-                            LOG(LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
+                            if (this->verbose){
+                                LOG(LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
+                            }
                             TODO("Data should actually be consumed")
                             sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                             this->connection_finalization_state = WAITING_FONT_MAP;
                         break;
                         case WAITING_FONT_MAP:
-                            LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
+                            if (this->verbose){
+                                LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
+                            }
                             TODO("Data should actually be consumed")
                             sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_FONTMAP);
@@ -1840,7 +1853,7 @@ struct mod_rdp : public client_mod {
                                 this->process_disconnect_pdu(sdata.payload);
                             break;
                             default:
-                                LOG(LOG_INFO, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
+                                LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
                                 TODO("Data should actually be consumed")
                                 sdata.payload.p = sdata.payload.end;
                             break;

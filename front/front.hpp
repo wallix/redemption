@@ -188,7 +188,7 @@ public:
         || this->client_info.height != height) {
             /* older client can't resize */
             if (client_info.build <= 419) {
-                LOG(LOG_ERR, "Resizing is not available on older RDP clients");
+                LOG(LOG_WARNING, "Resizing is not available on older RDP clients");
                 // resizing needed but not available
                 res = -1;
             }
@@ -998,7 +998,7 @@ public:
                     }
                     break;
                     default:
-                        LOG(LOG_INFO, "Unexpected data block tag %x\n", f.tag);
+                        LOG(LOG_WARNING, "Unexpected data block tag %x\n", f.tag);
                     break;
                 }
             }
@@ -1204,7 +1204,7 @@ public:
                 X224::DT_TPDU_Recv x224(*this->trans, x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 if (mcs.initiator != this->userid){
-                    LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
+                    LOG(LOG_ERR, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
                     throw Error(ERR_MCS_BAD_USERID);
                 }
 
@@ -1228,7 +1228,7 @@ public:
                 SubStream & mcs_data = x224.payload;
                 MCS::ChannelJoinRequest_Recv mcs(mcs_data, MCS::PER_ENCODING);
                 if (mcs.initiator != this->userid){
-                    LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
+                    LOG(LOG_ERR, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
                     throw Error(ERR_MCS_BAD_USERID);
                 }
 
@@ -1406,8 +1406,10 @@ public:
                 this->state = ACTIVATE_AND_PROCESS_DATA;
             }
             else {
-                LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
-                LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
+                if (this->verbose){
+                    LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
+                    LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
+                }
 
                 BStream stream(65535);
 
@@ -1477,7 +1479,9 @@ public:
                 trans->send(sec_header.data, sec_header.size());
                 trans->send(stream.data, stream.size());
 
-                LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
+                if (this->verbose){
+                    LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
+                }
                 this->state = WAITING_FOR_ANSWER_TO_LICENCE;
             }
         }
@@ -1525,12 +1529,16 @@ public:
                 uint8_t tag = sec.payload.in_uint8();
                 uint8_t version = sec.payload.in_uint8();
                 uint16_t length = sec.payload.in_uint16_le();
-                LOG(LOG_INFO, "Front::WAITING_FOR_ANSWER_TO_LICENCE sec_flags=%x %u %u %u", sec.flags, tag, version, length);
+                if (this->verbose){
+                    LOG(LOG_INFO, "Front::WAITING_FOR_ANSWER_TO_LICENCE sec_flags=%x %u %u %u", sec.flags, tag, version, length);
+                }
 
                 switch (tag) {
                 case LIC::LICENSE_REQUEST:
-                    LOG(LOG_INFO, "Front::LICENSE_REQUEST");
-                    LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::LICENSE_REQUEST");
+                        LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
+                    }
                     {
                         BStream stream(65535);
 
@@ -1558,23 +1566,35 @@ public:
                     }
                     break;
                 case LIC::LICENSE_INFO:
-                    LOG(LOG_INFO, "Front::LICENSE_INFO");
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::LICENSE_INFO");
+                    }
                     break;
                 case LIC::PLATFORM_CHALLENGE:
-                    LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE");
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE");
+                    }
                     break;
                 case LIC::NEW_LICENSE:
-                    LOG(LOG_INFO, "Front::NEW_LICENSE");
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::NEW_LICENSE");
+                    }
                     break;
                 case LIC::UPGRADE_LICENSE:
-                    LOG(LOG_INFO, "Front::UPGRADE_LICENSE");
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::UPGRADE_LICENSE");
+                    }
                     break;
                 case LIC::ERROR_ALERT:
-                    LOG(LOG_INFO, "Front::ERROR_ALERT");
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::ERROR_ALERT");
+                    }
                     break;
                 case LIC::NEW_LICENSE_REQUEST:
-                    LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");
-                    LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");
+                        LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
+                    }
                     {
                         BStream stream(65535);
 
@@ -1603,10 +1623,14 @@ public:
                     }
                     break;
                 case LIC::PLATFORM_CHALLENGE_RESPONSE:
-                    LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE_RESPONSE");
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE_RESPONSE");
+                    }
                     break;
                 default:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_UNKNOWN %u", tag);
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::LICENCE_TAG_UNKNOWN %u", tag);
+                    }
                     break;
                 }
                 // licence received, proceed with capabilities exchange
@@ -1739,7 +1763,7 @@ public:
                 throw Error(ERR_X224_EXPECTED_DATA_PDU);
             }
             else if (fx224.type != X224::DT_TPDU){
-                LOG(LOG_INFO, "Front::Unexpected non data PDU (got %u)", fx224.type);
+                LOG(LOG_ERR, "Front::Unexpected non data PDU (got %u)", fx224.type);
                 throw Error(ERR_X224_EXPECTED_DATA_PDU);
             }
 
@@ -1816,7 +1840,7 @@ public:
                         // this is rdp_process_data that will set up_and_running to 1
                         // when fonts have been received
                         // we will not exit this loop until we are in this state.
-                        LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
+//                        LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
                         this->process_data(sctrl.payload, cb);
                         break;
                     case PDUTYPE_DEACTIVATEALLPDU:
@@ -1896,7 +1920,9 @@ public:
     /*****************************************************************************/
     void send_demand_active() throw (Error)
     {
-        LOG(LOG_INFO, "Front::send_demand_active");
+        if (this->verbose){
+            LOG(LOG_INFO, "Front::send_demand_active");
+        }
 
         BStream stream(65536);
         ShareControl sctrl(stream);
@@ -2019,19 +2045,25 @@ public:
     /* store the number of client cursor cache in client_info */
     void capset_pointercache(Stream & stream, int len)
     {
-        LOG(LOG_INFO, "capset_pointercache");
+        if (this->verbose){
+            LOG(LOG_INFO, "capset_pointercache");
+        }
     }
 
 
     void process_confirm_active(Stream & stream)
     {
-        LOG(LOG_INFO, "process_confirm_active");
+        if (this->verbose){
+            LOG(LOG_INFO, "process_confirm_active");
+        }
         uint16_t lengthSourceDescriptor = stream.in_uint16_le(); /* sizeof RDP_SOURCE */
         uint16_t lengthCombinedCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(lengthSourceDescriptor);
 
-        LOG(LOG_INFO, "lengthSourceDescriptor = %u", lengthSourceDescriptor);
-        LOG(LOG_INFO, "lengthCombinedCapabilities = %u", lengthCombinedCapabilities);
+        if (this->verbose){
+            LOG(LOG_INFO, "lengthSourceDescriptor = %u", lengthSourceDescriptor);
+            LOG(LOG_INFO, "lengthCombinedCapabilities = %u", lengthCombinedCapabilities);
+        }
 
 
         uint8_t * start = stream.p;
@@ -2042,7 +2074,6 @@ public:
         stream.in_skip_bytes(2); /* pad */
 
         for (int n = 0; n < numberCapabilities; n++) {
-            LOG(LOG_INFO, "capability %u", n);
             if (stream.p + 4 > theoricCapabilitiesEnd) {
                 LOG(LOG_ERR, "Incomplete capabilities received (bad length): expected length=%d need=%d available=%d",
                     lengthCombinedCapabilities,
@@ -2246,7 +2277,9 @@ public:
     TODO(" duplicated code in mod/rdp")
     void send_synchronize()
     {
-        LOG(LOG_INFO, "send_synchronize");
+        if (this->verbose){
+            LOG(LOG_INFO, "send_synchronize");
+        }
 
         BStream stream(65536);
         ShareControl sctrl(stream);
@@ -2301,7 +2334,9 @@ public:
 
     void send_control(int action)
     {
-        LOG(LOG_INFO, "send_control action=%u", action);
+        if (this->verbose){
+            LOG(LOG_INFO, "send_control action=%u", action);
+        }
 
         BStream stream(65536);
         ShareControl sctrl(stream);
@@ -2338,7 +2373,9 @@ public:
     /*****************************************************************************/
     void send_fontmap() throw (Error)
     {
-        LOG(LOG_INFO, "send_fontmap");
+        if (this->verbose){
+            LOG(LOG_INFO, "send_fontmap");
+        }
 
     static uint8_t g_fontmap[172] = { 0xff, 0x02, 0xb6, 0x00, 0x28, 0x00, 0x00, 0x00,
                                 0x27, 0x00, 0x27, 0x00, 0x03, 0x00, 0x04, 0x00,
@@ -2498,7 +2535,7 @@ public:
                         }
                         break;
                     default:
-                        LOG(LOG_INFO, "unsupported PDUTYPE2_INPUT msg %u", msg_type);
+                        LOG(LOG_WARNING, "unsupported PDUTYPE2_INPUT msg %u", msg_type);
                         break;
                     }
                 }
@@ -2655,7 +2692,7 @@ public:
                 }
                 this->init_pointers();
 
-                if (1 || this->verbose){
+                if (this->verbose){
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
                 }
                 this->up_and_running = 1;
@@ -2729,7 +2766,9 @@ public:
 
     void send_deactive() throw (Error)
     {
-        LOG(LOG_INFO, "send_deactive");
+        if (this->verbose){
+            LOG(LOG_INFO, "send_deactive");
+        }
 
         BStream stream(65536);
         stream.mark_end();
