@@ -57,7 +57,7 @@ alias instexe : install-bin install-test ;
 alias install : install-bin install-etc install-share ;
 
 install install-bin
-    : rdpproxy redrec drawtest
+    : rdpproxy redrec
     : <install-type>EXE <install-dependencies>on
     : <location>/usr/local/bin
     ;

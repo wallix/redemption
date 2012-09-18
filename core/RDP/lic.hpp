@@ -1399,11 +1399,134 @@ namespace LIC
         }
     };
 
+//    4.7 SERVER UPGRADE LICENSE
+//    --------------------------
+
+//    The Server Upgrade License message is sent to the client to upgrade a license in its license store.
+//    The message type is UPGRADE_LICENSE (0x04) in the licensing preamble. See section 2.2.2.7 for more information.
+
+//    Basically it's the same message format as NEW LICENSE
+
+//    0x00: LICENSE_PREAMBLE (4 bytes)
+//       04 -> LICENSE_PREAMBLE::bMsgType = SERVER_UPGRADE_LICENSE
+//     
+//    03 -> LICENSE_PREAMBLE::bVersion = 3 (RPD 5.0, 5.2, 6.0)
+//     
+//    95 -\|
+//    1b -/ LICENSE_PREAMBLE::wMsgSize = 0x1b95 bytes
+
+//    0x04: EncryptedLicenseInfo (2 + 2 + 0x1b7d = 0x1b81 bytes)
+//    09 -\|
+//    00 -/ EncryptedLicenseInfo::wBlobType = BB_ENCRYPTED_DATA_BLOB
+//     
+//    7d -\|
+//    1b -/ EncryptedLicenseInfo::wBlobLen = 0x1b7d bytes
+//     
+//    The remaining part of this blob is the EncryptedLicenseInfo. The decrypted
+//            LicenseInfo blob and data fields can be seen in section 4.1.6: Protocol
+//            Examples, SERVER_NEW_LICENSE.
+//    0x1b85: MACData
+//    73 da-36 1e 92 c8 d0 78 12 c3 1c d3 68 a5 c6 00 -> MACData
+
     struct UpgradeLicense_Recv
     {
         uint8_t wMsgType;
         uint8_t bVersion;
         uint16_t wMsgSize;
+
+        struct LicenseInfo {
+            uint16_t wBlobType;
+            uint16_t wBlobLen;
+
+            // Following Data in encrypted using licence key
+
+            //    LicenseInfo::dwVersion (4 bytes): The content and format of this field are the same 
+            // as the dwVersion field of the Product Information (section 2.2.2.1.1) structure.
+            // it's a 32-bit unsigned integer that contains the license version information. The high-order word
+            // contains the major version of the operating system on which the terminal server is running, while
+            // the low-order word contains the minor version.<6>
+            uint32_t dwVersion;
+
+            //     LicenseInfo::cbScope (4 bytes): A 32-bit unsigned integer that contains the number of 
+            // bytes in the string contained in the pbScope field.
+            uint32_t cbScope;
+
+            //     LicenseInfo::pbScope (variable): Contains the NULL-terminated ANSI character set string
+            // giving the name of the issuer of this license. For example, for licenses issued
+            // by TailSpin Toys, this field contains the string "TailSpin Toys".
+            uint8_t pbScope[128]; // check the actual size is not too large for what we provide
+
+            //     LicenseInfo::cbCompanyName (4 bytes): The content and format of this field are the same as
+            // the cbCompanyName field of the Product Information structure. An unsigned 32-bit integer that contains
+            // the number of bytes in the pbCompanyName field, including the terminating null character. 
+            // This value MUST be greater than zero.
+            uint32_t cbCompanyName;
+
+            //     LicenseInfo::pbCompanyName (variable): The content and format of this field are the same as
+            // the pbCompanyName field of the Product Information structure. Contains a null-terminated Unicode string
+            // that specifies the company name.<7> 
+            uint8_t pbCompanyName[128]; // check the actual size is not too large for what we provide
+
+            //     LicenseInfo::cbProductId (4 bytes): The content and format of this field are the same as 
+            // the cbProductId field of the Product Information structure. An unsigned 32-bit integer that contains 
+            // the number of bytes in the pbProductId field, including the terminating null character. This value MUST
+            // be greater than zero.
+            uint32_t cbProductId;
+
+            //     LicenseInfo::pbProductId (variable): The content and format of this field are the same as
+            // the pbProductId field of the Product Information structure. Contains a null-terminated Unicode string 
+            // that identifies the type of the license that is required by the terminal server. 
+            // It MAY have the following string value. "A02" Per device or per user license
+            uint8_t pbProductId[128]; // check the actual size is not too large for what we provide
+
+            //     LicenseInfo::cbLicenseInfo (4 bytes): A 32-bit unsigned integer that contains the number
+            // of bytes of binary data in the pbLicenseInfo field.
+            uint32_t cbLicenseInfo;
+
+            //     LicenseInfo::pbLicenseInfo (variable): This field contains the CAL issued to the client by
+            // the license server. This license consists of an X.509 certificate chain generated 
+            // by the license server. The binary data contained in this field is opaque to the 
+            // client. The client sends this information back to the server in the Client License 
+            // Information message.
+            uint8_t pbLicenseInfo[65535];
+        } licenseInfo;
+
+        uint8_t MACData[16];
+
+        UpgradeLicense_Recv(Stream & stream, uint8_t license_key[]){
+            this->wMsgType = stream.in_uint8();
+            this->bVersion = stream.in_uint8();
+            this->wMsgSize = stream.in_uint16_le();
+
+            this->licenseInfo.wBlobType = stream.in_uint16_le();
+            this->licenseInfo.wBlobLen = stream.in_uint16_le();
+
+            // following data is encrypted using license_key
+            SslRC4 rc4;
+            rc4.set_key(16, license_key);
+            rc4.crypt(this->licenseInfo.wBlobLen, stream.p);
+
+            // now it's unencrypted, we can read it
+            this->licenseInfo.dwVersion = stream.in_uint32_le();
+            this->licenseInfo.cbScope = stream.in_uint32_le();
+
+
+            stream.in_copy_bytes(this->licenseInfo.pbScope, this->licenseInfo.cbScope);
+            this->licenseInfo.cbCompanyName = stream.in_uint32_le();
+            stream.in_copy_bytes(this->licenseInfo.pbCompanyName, this->licenseInfo.cbCompanyName);
+            this->licenseInfo.cbProductId = stream.in_uint32_le();
+            stream.in_copy_bytes(this->licenseInfo.pbProductId, this->licenseInfo.cbProductId);
+            this->licenseInfo.cbLicenseInfo = stream.in_uint32_le();
+            stream.in_copy_bytes(this->licenseInfo.pbLicenseInfo, this->licenseInfo.cbLicenseInfo);
+
+            stream.in_copy_bytes(this->MACData, LICENSE_SIGNATURE_SIZE);
+
+            if (stream.p != stream.end){
+                LOG(LOG_ERR, "PlatformChallenge_Recv : unparsed data %d", stream.end - stream.p);
+                throw Error(ERR_LIC);
+            }
+
+        }
     };
 
 };

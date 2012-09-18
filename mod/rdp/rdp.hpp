@@ -1583,9 +1583,7 @@ struct mod_rdp : public client_mod {
                         if (this->verbose){
                             LOG(LOG_INFO, "Rdp::Upgrade License");
                         }
-                        uint8_t tag = payload.in_uint8();
-                        uint8_t flags = payload.in_uint8();
-                        uint16_t wMsgSize = payload.in_uint16_le();
+                        LIC::UpgradeLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
                         LOG(LOG_INFO, "Upgraded licence saving failed");
                         throw Error(ERR_SEC);
