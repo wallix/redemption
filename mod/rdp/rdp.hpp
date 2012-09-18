@@ -440,8 +440,6 @@ struct mod_rdp : public client_mod {
         memset(this->encrypt.update_key, 0, 16);
         this->decrypt.encryptionMethod = 2; /* 128 bits */
         this->encrypt.encryptionMethod = 2; /* 128 bits */
-        this->decrypt.rc4_key_len = 16; /* 16 = 128 bit */
-        this->encrypt.rc4_key_len = 16; /* 16 = 128 bit */
 
         TODO(" and if hostname is really larger  what happens ? We should at least emit a warning log")
         strncpy(this->hostname, hostname, 15);
@@ -1299,9 +1297,9 @@ struct mod_rdp : public client_mod {
                                 ssl.sign(signature, 16, this->lic_layer_license_sign_key, 16, hwid, sizeof(hwid));
                                 /* Now encrypt the HWID */
 
-                                RC4_KEY crypt_key;
-                                RC4_set_key(&crypt_key, 16, this->lic_layer_license_key);
-                                RC4(&crypt_key, sizeof(hwid), hwid, hwid);
+                                SslRC4 rc4;
+                                rc4.set_key(16, this->lic_layer_license_key);
+                                rc4.crypt(sizeof(hwid), hwid);
 
                                 uint8_t null_data[SEC_MODULUS_SIZE];
                                 memset(null_data, 0, sizeof(null_data));
@@ -1491,10 +1489,12 @@ struct mod_rdp : public client_mod {
 
                             memcpy(out_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
                             /* Decrypt the token. It should read TEST in Unicode. */
-                            RC4_KEY crypt_key;
-                            RC4_set_key(&crypt_key, 16, this->lic_layer_license_key);
                             memcpy(decrypt_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
-                            RC4(&crypt_key, LIC::LICENSE_TOKEN_SIZE, decrypt_token, decrypt_token);
+                            {
+                                SslRC4 rc4;
+                                rc4.set_key(16, this->lic_layer_license_key);
+                                rc4.crypt(LIC::LICENSE_TOKEN_SIZE, decrypt_token);
+                            }
 
                             hexdump((const char*)decrypt_token, LIC::LICENSE_TOKEN_SIZE);
                             /* Generate a signature for a buffer of token and HWID */
@@ -1509,9 +1509,12 @@ struct mod_rdp : public client_mod {
                             ssl.sign(out_sig, 16, this->lic_layer_license_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
 
                             /* Now encrypt the HWID */
-                            RC4_set_key(&crypt_key, 16, this->lic_layer_license_key);
                             memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
-                            RC4(&crypt_key, LIC::LICENSE_HWID_SIZE, crypt_hwid, crypt_hwid);
+                            {
+                                SslRC4 rc4;
+                                rc4.set_key(16, this->lic_layer_license_key);
+                                rc4.crypt(LIC::LICENSE_HWID_SIZE, crypt_hwid);
+                            }
 
                             int length = 58;
 
@@ -1580,9 +1583,10 @@ struct mod_rdp : public client_mod {
                         if (this->verbose){
                             LOG(LOG_INFO, "Rdp::Upgrade License");
                         }
-                        uint8_t tag = payload.in_uint8();
-                        uint8_t flags = payload.in_uint8();
-                        uint16_t wMsgSize = payload.in_uint16_le();
+                        LIC::UpgradeLicense_Recv lic(sec.payload, this->lic_layer_license_key);
+
+                        LOG(LOG_INFO, "Upgraded licence saving failed");
+                        throw Error(ERR_SEC);
                     }
                     break;
                     case LIC::ERROR_ALERT:

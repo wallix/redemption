@@ -156,15 +156,11 @@ public:
         case 2:
             this->decrypt.encryptionMethod = 1; /* 40 bits */
             this->encrypt.encryptionMethod = 1; /* 40 bits */
-            this->decrypt.rc4_key_len = 8; /* 8 = 40 bit */
-            this->encrypt.rc4_key_len = 8; /* 8 = 40 bit */
         break;
         default:
         case 3:
             this->decrypt.encryptionMethod = 2; /* 128 bits */
             this->encrypt.encryptionMethod = 2; /* 128 bits */
-            this->decrypt.rc4_key_len = 16; /* 16 = 128 bit */
-            this->encrypt.rc4_key_len = 16; /* 16 = 128 bit */
         break;
         }
     }

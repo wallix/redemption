@@ -86,6 +86,23 @@ class SslMd5
     }
 };
 
+class SslRC4
+{
+    RC4_KEY rc4;
+
+    public:
+    SslRC4(){}    
+
+    void set_key(size_t key_len, uint8_t * key)
+    {
+        RC4_set_key(&this->rc4, key_len, key);
+    }
+
+    void crypt(size_t len, uint8_t * data){
+        RC4(&this->rc4, len, data, data);
+    }
+};
+
 class ssllib
 {
     public:
@@ -132,32 +149,32 @@ class ssllib
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
     static void sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen, uint8_t* data, int datalen)
     {
-        const uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                                     54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                                     54, 54, 54, 54, 54, 54, 54, 54
-                                   };
-        const uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-                               };
-
-        uint8_t shasig[20];
-        uint8_t md5sig[16];
         uint8_t lenhdr[4];
-
         buf_out_uint32(lenhdr, datalen);
 
         SslSha1 sha1;
         sha1.update(session_key, keylen);
+        const uint8_t pad_54[40] = { 
+                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                54, 54, 54, 54, 54, 54, 54, 54
+        };
         sha1.update(pad_54, 40);
         sha1.update(lenhdr, 4);
         sha1.update(data, datalen);
+        uint8_t shasig[20];
         sha1.final(shasig);
 
         SslMd5 md5;
         md5.update(session_key, keylen);
+        const uint8_t pad_92[48] = { 
+                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
+        };
         md5.update(pad_92, 48);
         md5.update(shasig, 20);
+        uint8_t md5sig[16];
         md5.final(md5sig);
 
         memcpy(signature, md5sig, siglen);
@@ -249,11 +266,10 @@ class ssllib
 struct CryptContext
 {
     int use_count;
-    uint8_t sign_key[16]; // should I call it session_key ?
+    uint8_t sign_key[16];
     uint8_t key[16];
     uint8_t update_key[16];
-    int rc4_key_len;
-    RC4_KEY rc4_info;
+    SslRC4 rc4;
 
     // encryptionMethod (4 bytes): A 32-bit, unsigned integer. The selected
     // cryptographic method to use for the session. When Enhanced RDP Security
@@ -284,21 +300,18 @@ struct CryptContext
     // +-------------------------------------+-------------------------------------+
     uint32_t encryptionMethod;
 
-
     CryptContext() : use_count(0)
     {
         memset(this->sign_key, 0, 16);
         memset(this->key, 0, 16);
         memset(this->update_key, 0, 16);
-        this->rc4_key_len = 0;
-        memset(&rc4_info, 0, sizeof(rc4_info));
         this->encryptionMethod = 0;
     }
 
     void generate_key(uint8_t * key_block, const uint8_t* salt1, const uint8_t* salt2, uint32_t encryptionMethod)
     {
         // 16-byte transformation used to generate export keys (6.2.2).
-        ssllib ssl;
+        this->encryptionMethod = encryptionMethod;
 
         SslMd5 md5;
         md5.update(key_block, 16);
@@ -306,19 +319,18 @@ struct CryptContext
         md5.update(salt2, 32);
         md5.final(this->key);
 
+        // 40 bits encryption
         if (encryptionMethod == 1) {
-            // LOG(LOG_DEBUG, "40-bit encryption enabled");
+            ssllib ssl;
             ssl.sec_make_40bit(this->key);
-            this->rc4_key_len = 8;
+            memcpy(this->update_key, this->key, 16);
+            this->rc4.set_key(8, this->key);
         }
         else {
-            //LOG(LOG_DEBUG, "rc_4_key_size == %d, 128-bit encryption enabled", encryptionMethod);
-            this->rc4_key_len = 16;
+        // 128 bits encryption
+            memcpy(this->update_key, this->key, 16);
+            this->rc4.set_key(16, this->key);
         }
-
-        /* Save initial RC4 keys as update keys */
-        memcpy(this->update_key, this->key, 16);
-        RC4_set_key(&this->rc4_info, this->rc4_key_len, this->key);
     }
 
     void rc4dump(const char * data, size_t size){
@@ -348,26 +360,8 @@ struct CryptContext
             this->key[4],this->key[5],this->key[6],this->key[7],
             this->key[8],this->key[9],this->key[10],this->key[11],
             this->key[12],this->key[13],this->key[14],this->key[15]);
-        LOG(LOG_INFO, "cc.rc4_key_len=%u;", this->rc4_key_len);
-        this->rc4dump((const char *)(&this->rc4_info), sizeof(this->rc4_info));
+        this->rc4dump((const char *)(&this->rc4), sizeof(this->rc4));
         LOG(LOG_INFO, "cc.encryptionMethod=%u;", this->encryptionMethod);
-    }
-
-    /* Encrypt data using RC4 */
-    void encrypt(uint8_t* data, int length)
-    {
-        ssllib ssl;
-
-        if (this->use_count == 4096){
-            this->update();
-            if (this->rc4_key_len == 8) {
-                ssl.sec_make_40bit(this->key);
-            }
-            RC4_set_key(&this->rc4_info, this->rc4_key_len, this->key);
-            this->use_count = 0;
-        }
-        RC4(&this->rc4_info, length, data, data);
-        this->use_count++;
     }
 
     /* Decrypt data using RC4 */
@@ -376,56 +370,79 @@ struct CryptContext
         ssllib ssl;
 
         if (this->use_count == 4096) {
-            this->update();
-            if (this->rc4_key_len == 8) {
+            size_t keylen = (this->encryptionMethod==1)?8:16;
+
+            SslSha1 sha1;
+            sha1.update(this->update_key, keylen);
+            const uint8_t pad_54[40] = {
+                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                54, 54, 54, 54, 54, 54, 54, 54
+            };
+            sha1.update(pad_54, 40);
+            sha1.update(this->key, keylen);
+            uint8_t shasig[20];
+            sha1.final(shasig);
+
+            SslMd5 md5;
+            md5.update(this->update_key, keylen);
+            const uint8_t pad_92[48] = {
+                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
+            };
+            md5.update(pad_92, 48);
+            md5.update(shasig, 20);
+            md5.final(this->key);
+
+            this->rc4.set_key(keylen, this->key);
+            this->rc4.crypt(keylen, this->key);
+
+            if (this->encryptionMethod == 1){
                 ssl.sec_make_40bit(this->key);
             }
-            RC4_set_key(&this->rc4_info, this->rc4_key_len, this->key);
+            this->rc4.set_key(keylen, this->key);
             this->use_count = 0;
         }
-        RC4(&this->rc4_info, len, data, data);
+        this->rc4.crypt(len, data);
         this->use_count++;
     }
 
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
     void sign(uint8_t* signature, int siglen, uint8_t* data, int datalen)
     {
-        ssllib ssl;
-        ssl.sign(signature, siglen, this->sign_key, this->rc4_key_len, data, datalen);
-    }
-
-    void update()
-    {
-        const uint8_t pad_54[40] = {
-            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-            54, 54, 54, 54, 54, 54, 54, 54
-        };
-
-        const uint8_t pad_92[48] = {
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-        };
+        size_t keylen = (this->encryptionMethod==1)?8:16;
+ 
+       uint8_t lenhdr[4];
+        buf_out_uint32(lenhdr, datalen);
 
         SslSha1 sha1;
-        sha1.update(this->update_key, this->rc4_key_len);
+        sha1.update(this->sign_key, keylen);
+        const uint8_t pad_54[40] = { 
+                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                54, 54, 54, 54, 54, 54, 54, 54
+        };
         sha1.update(pad_54, 40);
-        sha1.update(this->key, this->rc4_key_len);
+        sha1.update(lenhdr, 4);
+        sha1.update(data, datalen);
         uint8_t shasig[20];
         sha1.final(shasig);
 
         SslMd5 md5;
-        md5.update(this->update_key, this->rc4_key_len);
+        md5.update(this->sign_key, keylen);
+        const uint8_t pad_92[48] = { 
+                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
+        };
         md5.update(pad_92, 48);
         md5.update(shasig, 20);
-        md5.final(this->key);
+        uint8_t md5sig[16];
+        md5.final(md5sig);
 
-        RC4_KEY update;
-        RC4_set_key(&update, this->rc4_key_len, this->key);
-        RC4(&update, this->rc4_key_len, this->key, this->key);
+        memcpy(signature, md5sig, siglen);
     }
-
 };
 
 

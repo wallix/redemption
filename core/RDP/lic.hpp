@@ -802,35 +802,35 @@ namespace LIC
     // connections. The dwVersion, pbScope, pbCompanyName, and pbProductId fields
     // are used by the client to index the licenses in the client's license store.
 
-    //    EncryptedLicenseInfo::dwVersion (4 bytes): The content and format of this field are the same 
+    //    LicenseInfo::dwVersion (4 bytes): The content and format of this field are the same 
     // as the dwVersion field of the Product Information (section 2.2.2.1.1) structure.
     // it's a 32-bit unsigned integer that contains the license version information. The high-order word
     // contains the major version of the operating system on which the terminal server is running, while
     // the low-order word contains the minor version.<6>
 
-    //     EncryptedLicenseInfo::cbScope (4 bytes): A 32-bit unsigned integer that contains the number of 
+    //     LicenseInfo::cbScope (4 bytes): A 32-bit unsigned integer that contains the number of 
     // bytes in the string contained in the pbScope field.
 
-    //     EncryptedLicenseInfo::pbScope (variable): Contains the NULL-terminated ANSI character set string
+    //     LicenseInfo::pbScope (variable): Contains the NULL-terminated ANSI character set string
     // giving the name of the issuer of this license. For example, for licenses issued
     // by TailSpin Toys, this field contains the string "TailSpin Toys".
 
-    //     EncryptedLicenseInfo::cbCompanyName (4 bytes): The content and format of this field are the same as
+    //     LicenseInfo::cbCompanyName (4 bytes): The content and format of this field are the same as
     // the cbCompanyName field of the Product Information structure.
 
-    //     EncryptedLicenseInfo::pbCompanyName (variable): The content and format of this field are the same as
+    //     LicenseInfo::pbCompanyName (variable): The content and format of this field are the same as
     // the pbCompanyName field of the Product Information structure.
 
-    //     EncryptedLicenseInfo::cbProductId (4 bytes): The content and format of this field are the same as 
+    //     LicenseInfo::cbProductId (4 bytes): The content and format of this field are the same as 
     // the cbProductId field of the Product Information structure.
 
-    //     EncryptedLicenseInfo::pbProductId (variable): The content and format of this field are the same as
+    //     LicenseInfo::pbProductId (variable): The content and format of this field are the same as
     // the pbProductId field of the Product Information structure.
 
-    //     EncryptedLicenseInfo::cbLicenseInfo (4 bytes): A 32-bit unsigned integer that contains the number
+    //     LicenseInfo::cbLicenseInfo (4 bytes): A 32-bit unsigned integer that contains the number
     // of bytes of binary data in the pbLicenseInfo field.
 
-    //     EncryptedLicenseInfo::pbLicenseInfo (variable): This field contains the CAL issued to the client by
+    //     LicenseInfo::pbLicenseInfo (variable): This field contains the CAL issued to the client by
     // the license server. This license consists of an X.509 certificate chain generated 
     // by the license server. The binary data contained in this field is opaque to the 
     // client. The client sends this information back to the server in the Client License 
@@ -852,136 +852,140 @@ namespace LIC
     //    The server sends the license to the client in the Server New License message. 
     // See sections 2.2.2.7 and 3.2.5.7 for more information.
 
-    //    00000000:  03 03 07 08 09 00 ef 07-db a3 13 30 79 a3 cd 9e  ...........0y...
-    //    00000010:  48 f4 8f 06 37 1b 45 dd-60 a9 2e 29 26 bf c1 96  H...7.E.`..)&...
-    //    00000020:  5e 07 93 9d f2 2d 3e a3-3a ff d5 6d f5 85 30 28  ^....->.:..m..0(
-    //    00000030:  e1 46 fd 56 d1 20 41 33-94 88 0c 27 23 a0 61 38  .F.V. A3...'#.a8
-    //    00000040:  60 db 86 d6 ce 2c cd 40-39 55 23 39 12 b9 fd c2  `....,.@9U#9....
-    //    00000050:  8d 58 0a 37 33 42 5c 61-d7 c8 a0 11 66 e2 45 ba  .X.73B\a....f.E.
-    //    00000060:  41 39 ea 85 2a 6e 7a b3-e7 27 75 fc 4d c0 fb 0d  A9..*nz..'u.M...
-    //    00000070:  e8 67 90 b3 3a 40 f0 15-8a 15 8e 2c 99 0f 1c bd  .g..:@.....,....
-    //    00000080:  d2 08 66 51 9e 6a e6 2c-f7 1f d0 c0 8e 89 76 64  ..fQ.j.,......vd
-    //    00000090:  18 58 a1 94 bd ce b1 2d-96 ab 53 cf f8 bf d0 c9  .X.....-..S.....
-    //    000000A0:  c0 2e e6 a4 0b 50 31 4a-4e d8 47 4b af b8 21 78  .....P1JN.GK..!x
-    //    000000B0:  bf 09 ac 7f 2d 2d 88 f6-d8 c7 45 33 9f ac 69 f5  ....--....E3..i.
-    //    000000C0:  88 9d 5c 6e c9 d0 ca 8c-bc a9 d6 07 36 ed 40 95  ..\n........6.@.
-    //    000000D0:  8a c1 3f 04 41 b3 c9 b3-18 9d 33 1b 04 55 cd 41  ..?.A.....3..U.A
-    //    000000E0:  df 19 e1 cd a0 a4 35 6e-b7 0a f3 ec 48 10 4f 28  ......5n....H.O(
-    //    000000F0:  c6 35 f3 9b a2 d5 f7 58-03 4d 9a 16 34 fb 96 0c  .5.....X.M..4...
-    //    00000100:  d5 3a ae 52 1b 2f 1f 1f-31 b2 d9 14 3b 73 0f e3  .:.R./..1...;s..
-    //    00000110:  04 e0 a5 52 89 68 ba 0f-99 9d 24 a6 f3 e8 9f cc  ...R.h....$.....
-    //    00000120:  d2 44 9f 08 8b 0a 24 89-f7 c9 07 0d 25 07 ed 3e  .D....$.....%..>
-    //    00000130:  75 21 19 65 dc 98 41 9d-05 12 18 88 86 16 43 49  u!.e..A.......CI
-    //    00000140:  29 f2 e8 26 16 1e ce cd-32 e7 36 74 51 27 fd a2  )..&....2.6tQ'..
-    //    00000150:  a9 62 57 60 28 e4 64 02-06 6b ff 01 ab c5 1c 25  .bW`(.d..k.....%
-    //    00000160:  98 07 e1 40 ad 19 b7 68-66 12 4e 80 bc 83 d2 de  ...@...hf.N.....
-    //    00000170:  cb 7e c2 32 c7 b8 4d d6-7d dd 63 a9 95 45 c1 90  .~.2..M.}.c..E..
-    //    00000180:  c7 99 3c 0a 24 62 fc 24-15 db d3 d2 9b 5d 78 04  ..<.$b.$.....]x.
-    //    00000190:  78 d5 40 1d e3 4e e8 30-9f 56 91 71 00 86 2c 6a  x.@..N.0.V.q..,j
-    //    000001A0:  b2 78 ec 70 d9 71 e6 aa-b1 ad 18 f9 a6 84 b7 4b  .x.p.q.........K
-    //    000001B0:  5f 32 b8 e3 c7 84 ef 37-fe ae 99 b5 f2 34 84 82  _2.....7.....4..
-    //    000001C0:  4a b3 d0 7c 5e 25 71 89-8b 7d 6f 5f 96 7a 1d 84  J..|^%q..}o_.z..
-    //    000001D0:  96 56 34 30 ce 09 d5 00-a8 ac 15 72 21 c4 71 57  .V40.......r!.qW
-    //    000001E0:  e5 2a 3d df 82 b8 b8 63-dc 3f 2e 99 6c c3 e3 fd  .*=....c.?..l...
-    //    000001F0:  92 e0 26 e1 27 b8 04 71-b0 a8 d1 df 7e 24 23 b9  ..&.'..q....~$#.
-    //    00000200:  82 01 77 dc 8f 77 54 e6-93 c8 6c 66 87 b7 aa 9d  ..w..wT...lf....
-    //    00000210:  66 d4 c6 2f 5e 9e e1 cf-db b2 74 0e ea a5 e0 f7  f../^.....t.....
-    //    00000220:  00 f1 76 f7 45 2c f8 a9-3b d9 81 59 52 0f fe d9  ..v.E,..;..YR...
-    //    00000230:  28 02 59 82 39 51 6e b9-ac f9 6a 48 73 6f 2c 4d  (.Y.9Qn...jHso,M
-    //    00000240:  7b c0 bf be 69 ae 0e dc-8b e6 d8 9f 66 30 1e 45  {...i.......f0.E
-    //    00000250:  1d 85 23 eb a8 02 b5 ba-c2 fd a1 ff c5 55 2b a0  ..#..........U+.
-    //    00000260:  f7 5b 24 ee 81 d8 e1 b8-02 06 85 6e 41 5a b8 07  .[$........nAZ..
-    //    00000270:  ff 65 db b4 59 89 71 95-d5 0c 2a 67 4d 57 fd 4a  .e..Y.q...*gMW.J
-    //    00000280:  e8 07 02 42 20 d9 f1 c6-d5 4c 53 b0 32 68 c0 dc  ...B ....LS.2h..
-    //    00000290:  d7 5d 8f ec 24 29 00 4f-46 8d d2 99 b2 f4 06 99  .]..$).OF.......
-    //    000002A0:  9a a6 31 f1 49 16 fe 94-bb 8e 15 55 06 93 16 a3  ..1.I......U....
-    //    000002B0:  2d 10 b7 b1 cf 61 78 af-93 66 5a 75 5e 97 c0 97  -....ax..fZu^...
-    //    000002C0:  4c ba a9 50 ac 1b d6 92-2a ac 0a 21 12 9e 4a f0  L..P....*..!..J.
-    //    000002D0:  40 39 4b e5 78 88 86 17-b9 eb a0 33 8a 9a fc 7c  @9K.x......3...|
-    //    000002E0:  91 16 d7 52 ec 05 7e 4e-90 78 5e 45 4a dd f6 f4  ...R..~N.x^EJ...
-    //    000002F0:  2e 68 f7 8e fc 60 95 aa-6a 07 9c ea ce c1 d9 55  .h...`..j......U
-    //    00000300:  3a 78 54 9a 2a 5f 47 87-18 4a 8c 6c 34 f5 b8 e2  :xT.*_G..J.l4...
-    //    00000310:  84 36 ef 0d 2e 9d 42 d9-ff 56 e2 87 0b 2f 4d 0e  .6....B..V.../M.
-    //    00000320:  c0 60 35 06 9f 61 9e 4e-7b 49 41 b4 fa 04 10 bd  .`5..a.N{IA.....
-    //    00000330:  f6 ad 02 d9 7c ba 06 68-bb a7 a6 8a ab ab b1 2d  ....|..h.......-
-    //    00000340:  69 2a f1 c6 7b 1b 71 b9-d0 91 82 6f a8 3c e1 a3  i*..{.q....o.<..
-    //    00000350:  23 3d 4e 48 74 e5 c9 c5-95 31 ad e7 a9 db 35 cd  #=NHt....1....5.
-    //    00000360:  02 08 2c 29 5f f9 17 86-69 8f 13 d1 ca 83 fc ac  ..,)_...i.......
-    //    00000370:  55 cf 5a e6 45 af e5 bb-e7 b5 53 4e f0 63 fc 9a  U.Z.E.....SN.c..
-    //    00000380:  49 f6 45 93 c6 bf d5 b3-25 e2 93 b0 a6 a7 14 80  I.E.....%.......
-    //    00000390:  6d b2 03 15 6a ad e8 25-f1 80 d4 ba 9a 88 bc 56  m...j..%.......V
-    //    000003A0:  14 7a 4d ad c3 24 3f 4d-35 8b f6 59 5b fd c9 32  .zM..$?M5..Y[..2
-    //    000003B0:  1d f5 a5 53 b5 fb ba 83-29 0b 9c 62 9b 56 4b 44  ...S....)..b.VKD
-    //    000003C0:  bc cc 19 59 7c 0b 74 d9-04 28 b3 67 ab 82 36 39  ...Y|.t..(.g..69
-    //    000003D0:  55 5f 7c ed 84 c1 16 d3-9e 9c 90 9d 55 bc 3e b9  U_|.........U.>.
-    //    000003E0:  63 12 f2 26 6d d7 cc 4f-01 a2 0b d9 66 60 ad ed  c..&m..O....f`..
-    //    000003F0:  2e bd be 28 5f 4a 33 c8-e8 d4 a6 23 8a fd 66 f5  ...(_J3....#..f.
-    //    00000400:  28 90 81 27 a9 44 93 68-57 44 5e ba 90 12 03 15  (..'.D.hWD^.....
-    //    00000410:  2f 69 80 55 e8 32 63 88-30 85 50 9b b6 bc bb c6  /i.U.2c.0.P.....
-    //    00000420:  fe a2 e7 32 9d 3d 7d e2-31 93 a6 4e a0 dc 11 44  ...2.=}.1..N...D
-    //    00000430:  d2 93 32 94 1e c6 4c 28-de a2 a6 0d 14 02 74 8a  ..2...L(......t.
-    //    00000440:  84 2a 03 67 35 1d 66 3e-e9 68 4a b2 92 1a 69 48  .*.g5.f>.hJ...iH
-    //    00000450:  bd 23 fd 70 5a fd fe 74-39 c5 fa 11 ac 04 c9 94  .#.pZ..t9.......
-    //    00000460:  fc 12 2e 06 04 61 8e 32-f4 f8 3b d1 d8 09 b3 e4  .....a.2..;.....
-    //    00000470:  ac 0f 3e 92 f7 75 0b 32-9b d4 8a 13 99 6a 26 77  ..>..u.2.....j&w
-    //    00000480:  9f 34 08 a8 eb b3 3e 2a-5b 4a 44 f9 21 89 2a 09  .4....>*[JD.!.*.
-    //    00000490:  9c c7 0d 2a d8 d6 27 30-25 39 84 14 11 47 ff 60  ...*..'0%9...G.`
-    //    000004A0:  e4 7c c3 41 fd d5 34 dd-b1 1c f2 eb b1 67 04 fa  .|.A..4......g..
-    //    000004B0:  fd 65 5b 20 6e 28 75 a9-74 8e c4 2f f7 b2 f5 9f  .e[ n(u.t../....
-    //    000004C0:  13 44 ff b0 f0 68 b0 69-15 a6 16 a8 ac c3 06 14  .D...h.i........
-    //    000004D0:  8e 51 99 a9 4c 19 d1 25-34 b5 79 c2 a7 bf d8 3d  .Q..L..%4.y....=
-    //    000004E0:  2d 4c 33 ac 1b 6c af 10-42 41 14 02 e6 87 2b e9  -L3..l..BA....+.
-    //    000004F0:  ec c6 b1 eb 97 d4 35 49-97 fc e2 73 f9 98 46 7c  ......5I...s..F|
-    //    00000500:  f6 17 2d b5 43 07 8b 19-95 9b 65 d3 05 7e b0 68  ..-.C.....e..~.h
-    //    00000510:  0d 6e 4b 60 ad 5c 47 6e-37 fd 3f 60 43 da b2 34  .nK`.\Gn7.?`C..4
-    //    00000520:  00 d6 9c 6d 46 7f 41 e2-c1 1a d0 53 72 81 0b 3f  ...mF.A....Sr..?
-    //    00000530:  77 e1 bc cc 09 0f a1 1d-73 8c ac a4 48 90 80 a8  w.......s...H...
-    //    00000540:  50 63 6a b7 76 91 91 2f-1a 5e 83 80 e6 ae 66 77  Pcj.v../.^....fw
-    //    00000550:  44 e0 0f 14 70 c9 d3 91-e8 d2 c4 89 a8 45 c0 3d  D...p........E.=
-    //    00000560:  bd 09 58 e0 cd e6 5c 9e-02 94 d2 be df 94 35 f7  ..X...\.......5.
-    //    00000570:  67 96 75 88 08 59 d9 19-21 da d0 a2 74 2d 22 87  g.u..Y..!...t-".
-    //    00000580:  37 27 6e 58 dc 8e 9f 50-d5 62 f3 4a a4 b2 fb f9  7'nX...P.b.J....
-    //    00000590:  3e d5 da 57 56 5c cb 0e-d1 62 4f ea 42 4a 62 b2  >..WV\...bO.BJb.
-    //    000005A0:  4e 1c d1 cc 24 1b dc ac-d4 b0 2f 5d 62 87 56 3d  N...$...../]b.V=
-    //    000005B0:  e4 03 ae 4a 7e 7d 05 fe-85 33 da 5f 36 cb 56 a1  ...J~}...3._6.V.
-    //    000005C0:  14 80 63 26 75 3a c2 1f-9c dd 8a d6 f8 a9 1a f6  ..c&u:..........
-    //    000005D0:  c2 57 e0 7b 80 55 d5 12-f1 b4 e7 1d 95 68 02 f1  .W.{.U.......h..
-    //    000005E0:  19 ff 74 72 32 db 6c c9-a0 2d 69 fc c0 e8 27 11  ..tr2.l..-i...'.
-    //    000005F0:  b8 e0 f5 83 60 3f b4 94-e5 9d b8 fd c5 9e 50 76  ....`?........Pv
-    //    00000600:  92 c7 33 6b e0 7e 9b 2c-3b 27 d8 a6 da b3 a1 45  ..3k.~.,;'.....E
-    //    00000610:  ef 3b 3d 76 1d 5a 43 a4-e1 82 5f 7d 0b 10 28 1c  .;=v.ZC..._}..(.
-    //    00000620:  b9 8f 2b cd f9 c5 93 e3-65 a5 5b 50 a9 07 16 b3  ..+.....e.[P....
-    //    00000630:  45 4a 69 fc 58 12 7b 58-34 9f 6f 5e 7a c2 9f 7b  EJi.X.{X4.o^z..{
-    //    00000640:  cf 62 62 6c 1e 7d d9 72-ca 98 1e d4 e5 c7 98 27  .bbl.}.r.......'
-    //    00000650:  e3 9f c5 3c 90 9e 26 ed-7e 38 2b cf c4 99 f5 b4  ...<..&.~8+.....
-    //    00000660:  78 48 7c 08 99 bc 80 47-b1 c5 58 60 17 84 11 f8  xH|....G..X`....
-    //    00000670:  70 a1 26 95 94 77 f4 8d-1d 47 96 df 95 1d 97 37  p.&..w...G.....7
-    //    00000680:  5a 12 fb 3f cd a0 fb ac-61 62 1f ee dc 6d 2c 45  Z..?....ab...m,E
-    //    00000690:  5f c0 80 7d 99 62 38 f7-6d 88 d5 e2 24 9d ed a7  _..}.b8.m...$...
-    //    000006A0:  d5 e7 1c 8a 75 9b 67 0c-64 fe e7 e2 e9 a0 94 60  ....u.g.d......`
-    //    000006B0:  26 46 d8 c9 59 43 17 85-07 32 8b 0c 5a 1e 35 48  &F..YC...2..Z.5H
-    //    000006C0:  46 e5 44 5b c7 07 cd 30-97 80 fa f9 eb 0d af af  F.D[...0........
-    //    000006D0:  3e be 27 43 8e 4a f2 60-eb 2b 4d 11 9a e1 d7 59  >.'C.J.`.+M....Y
-    //    000006E0:  78 29 26 3e 9b da 61 15-ab e8 6f 81 73 ac 9f 43  x)&>..a...o.s..C
-    //    000006F0:  c6 b1 81 73 36 4a 1e 57-2b d9 7a 06 4f b6 37 11  ...s6J.W+.z.O.7.
-    //    00000700:  e6 c6 90 41 a4 a6 b7 3a-7e c9 ce 50 2f 8c 07 db  ...A...:~..P/...
-    //    00000710:  9a 19 38 51 35 50 f3 09-33 20 62 36 a8 6c 8e f2  ..8Q5P..3 b6.l..
-    //    00000720:  56 8c 82 d3 fa 16 b5 3d-74 28 dc 2a e5 ae ab 77  V......=t(.*...w
-    //    00000730:  e5 22 3d 69 92 b8 56 c5-06 6b 8b da 46 18 af 93  ."=i..V..k..F...
-    //    00000740:  a2 0c b5 d3 d6 94 4a 29-fd 4b 48 48 a1 73 bc de  ......J).KHH.s..
-    //    00000750:  cb 3a 35 27 d5 40 3a 1d-5b e3 62 a5 22 a2 7b b5  .:5'.@:.[.b.".{.
-    //    00000760:  6a f0 5e 0a 96 5c e8 3b-41 58 a1 d5 11 2c 36 9e  j.^..\.;AX...,6.
-    //    00000770:  e5 2b c9 fb 1b 37 d0 8e-cf c2 01 6f b6 21 96 9c  .+...7.....o.!..
-    //    00000780:  14 2f 76 19 b0 6a 9d ef-69 fd d0 03 d9 eb b7 86  ./v..j..i.......
-    //    00000790:  76 20 d3 20 6a d8 cb c8-9e b7 82 28 b2 25 a7 a2  v . j......(.%..
-    //    000007A0:  6b fd 60 b0 11 09 53 5f-79 6b 72 d7 1b 21 73 f7  k.`...S_ykr..!s.
-    //    000007B0:  21 d5 5c c4 e5 52 82 73-1f 9c 95 e1 21 bf 12 67  !.\..R.s....!..g
-    //    000007C0:  c9 41 e5 64 c4 d4 f9 a2-9b 29 df e5 a4 f3 b4 69  .A.d.....).....i
-    //    000007D0:  6d 2c b0 42 e3 e6 25 a7-8f f5 12 99 8c bf bb d8  m,.B..%.........
-    //    000007E0:  a8 23 db 8e ec 37 b0 8e-4f ed 67 aa 3e f6 24 56  .#...7..O.g.>.$V
-    //    000007F0:  96 e3 d4 bc 25 0b 56 ed-e8 bf d6 13 a0 f5 80 4a  ....%.V........J
-    //    00000800:  e5 ff 85 16 fa cb 1f                             .......
+    // clear text header
+    //    03 03 07 08 09 00 ef 07
+    // here begins encrypted data
+    ///* 0000 */ de 18 8f 41 ad 37 5d 3a e7 6f 7d 15 38 1d fd 0b,  // ...A.7]:.o}.8...
+    ///* 0010 */ b3 34 1c cc 9d cc c7 97 45 2b 00 32 4e 96 3c 9e,  // .4......E+.2N.<.
+    ///* 0020 */ da cc 1a 07 1e 9f d6 c5 27 7a d1 cb 10 fc 61 19,  // ........'z....a.
+    ///* 0030 */ e4 34 ea 2d cb 62 f1 c0 39 4f ea 05 d4 71 61 50,  // .4.-.b..9O...qaP
+    ///* 0040 */ fd a0 ad 58 4a 48 ec a3 0a 39 3a 8a fd 1d 32 9e,  // ...XJH...9:...2.
+    ///* 0050 */ c8 7d f1 16 f2 2c c4 1e a4 70 95 5d 93 c3 5d b3,  // .}...,...p.]..].
+    ///* 0060 */ 55 15 7b 81 40 cc 48 7a d8 b2 bc bd 82 46 13 66,  // U.{.@.Hz.....F.f
+    ///* 0070 */ 23 57 88 d3 66 a7 66 3b 04 cf f1 b6 c4 32 ee 41,  // #W..f.f;.....2.A
+    ///* 0080 */ da 78 62 eb b1 97 ad eb 49 ac 46 b0 f6 3d c5 e7,  // .xb.....I.F..=..
+    ///* 0090 */ 2e 51 14 fb 76 c9 ef 52 e5 6d 3e 36 05 db 97 c7,  // .Q..v..R.m>6....
+    ///* 00a0 */ d9 1e f4 08 08 6c 1f bb 29 e8 24 36 85 43 32 91,  // .....l..).$6.C2.
+    ///* 00b0 */ 0a 27 d8 ae 5d 35 73 0d 6a cb 59 a0 7e 9b 5b 8d,  // .'..]5s.j.Y.~.[.
+    ///* 00c0 */ 00 60 a1 a2 b9 f8 49 d2 9f 5c 09 98 3e 1b a4 34,  // .`....I.....>..4
+    ///* 00d0 */ d7 d3 29 38 95 85 86 2e c7 09 d5 34 47 1c d7 70,  // ..)8.......4G..p
+    ///* 00e0 */ de 3b b9 07 11 aa 99 fd 0a d9 42 94 39 76 b9 ce,  // .;........B.9v..
+    ///* 00f0 */ 50 f3 d5 61 47 9a 55 75 1d 32 75 0e a7 e1 8e 64,  // P..aG.Uu.2u....d
+    ///* 0100 */ 38 6a ac 3c cd 59 e2 14 27 a8 11 10 c4 16 ca 0b,  // 8j.<.Y..'.......
+    ///* 0110 */ d2 8a 7f 59 8e 64 37 2d df ac 17 c7 76 d2 76 42,  // ...Y.d7-....v.vB
+    ///* 0120 */ 33 eb f5 9e 00 ce 02 30 0e 15 bf 58 32 11 38 2e,  // 3......0...X2.8.
+    ///* 0130 */ 04 16 7a 8b b2 e0 93 89 7e 8e dc 74 06 fe a7 77,  // ..z.....~..t...w
+    ///* 0140 */ 11 48 90 ae 67 a5 9d c1 99 32 3d 08 6e b5 fa 94,  // .H..g....2=.n...
+    ///* 0150 */ d5 9b 85 2e ed 1e 8e 8e f7 6b 0d 1b b6 e4 b7 df,  // .........k......
+    ///* 0160 */ 46 de 93 f7 ce 1e 91 ce 96 27 5a 55 93 bb f2 c1,  // F........'ZU....
+    ///* 0170 */ af e3 90 81 08 5e c1 e9 12 23 ee 56 a3 55 31 00,  // .....^...#.V.U1.
+    ///* 0180 */ e1 7c 54 a5 65 be db e0 45 c3 28 48 d7 cb 88 ae,  // .|T.e...E.(H....
+    ///* 0190 */ 3d 91 3e c8 6c f0 4a ec 5a 3e 6f ac f6 cb de a7,  // =.>.l.J.Z>o.....
+    ///* 01a0 */ 03 7e 5b 8d ab 94 75 12 fa 87 5e c2 d2 13 ad 5e,  // .~[...u...^....^
+    ///* 01b0 */ cb a8 1a 71 b5 b5 62 cf f7 6a 10 81 d1 ba 57 8b,  // ...q..b..j....W.
+    ///* 01c0 */ e1 a5 d1 99 fb 5c d4 2f 13 63 92 2e 83 49 12 ec,  // ......./.c...I..
+    ///* 01d0 */ f7 1d 9f 19 d6 45 6b 6b 4c 0a a5 e7 ff e5 93 63,  // .....EkkL......c
+    ///* 01e0 */ 63 33 14 48 7a 0d 8a e6 5c ab a6 54 bf 94 2b dc,  // c3.Hz......T..+.
+    ///* 01f0 */ 1c 95 32 f2 07 fe 35 77 bf 41 27 18 5b 76 0d e9,  // ..2...5w.A'.[v..
+    ///* 0200 */ 4e 69 93 11 ca 8f 53 7d aa f1 48 34 81 ff ae 43,  // Ni....S}..H4...C
+    ///* 0210 */ ca 60 4e 01 95 e3 f1 e5 fe c1 f9 b7 24 38 5b cd,  // .`N.........$8[.
+    ///* 0220 */ bb fb b5 ef 90 ff 63 8d 16 ca ec b2 55 5e a0 3e,  // ......c.....U^.>
+    ///* 0230 */ 41 a5 61 89 d4 b1 57 2c 00 c6 18 44 68 2d fb 54,  // A.a...W,...Dh-.T
+    ///* 0240 */ 68 aa 50 51 5f f0 40 64 36 c7 a9 99 91 95 31 39,  // h.PQ_.@d6.....19
+    ///* 0250 */ 0d 25 a1 23 f9 ad a2 5d cf 34 29 db 97 fc d7 3a,  // .%.#...].4)....:
+    ///* 0260 */ b7 16 df 41 19 15 17 3d 67 09 62 1c 82 ac 44 80,  // ...A...=g.b...D.
+    ///* 0270 */ 37 d1 39 81 4e 56 ff 66 14 a5 b9 53 60 be 9c 1b,  // 7.9.NV.f...S`...
+    ///* 0280 */ 01 b7 d8 3e 41 ff d1 8c 9f 3f 5a b2 05 95 2e 45,  // ...>A....?Z....E
+    ///* 0290 */ 72 c6 a9 9b ce 31 84 c0 d9 e5 96 22 d3 34 28 2a,  // r....1.....".4(*
+    ///* 02a0 */ 06 85 1f b2 5b f9 48 64 0c 73 71 b0 b7 cf 79 75,  // ....[.Hd.sq...yu
+    ///* 02b0 */ 4b 89 09 7d ea 76 a7 72 0b 0c db 56 a6 e8 11 4c,  // K..}.v.r...V...L
+    ///* 02c0 */ 3e a3 de c9 0a 87 37 24 2b 5a 26 95 d3 72 e4 43,  // >.....7$+Z&..r.C
+    ///* 02d0 */ 20 1d c0 9b 85 69 f4 89 b6 4b eb 67 3d 9d 21 3e,  //  ....i...K.g=.!>
+    ///* 02e0 */ 36 fa 0a fb c9 e7 b3 36 de 66 bc f7 01 23 7b 3f,  // 6......6.f...#{?
+    ///* 02f0 */ a4 8c 68 a9 70 1d 6c d2 bb 53 97 1e b0 aa 9c 2d,  // ..h.p.l..S.....-
+    ///* 0300 */ 3a b7 18 fe 01 c5 cf 67 ba 6d e1 06 8d 9d 8f 46,  // :......g.m.....F
+    ///* 0310 */ 8c 17 53 5b 88 81 48 05 18 48 5e 8a f5 82 93 47,  // ..S[..H..H^....G
+    ///* 0320 */ 5d 1c ba 83 79 68 07 c2 2f 05 a7 81 52 c1 40 73,  // ]...yh../...R.@s
+    ///* 0330 */ a5 8d 1e 25 74 78 09 09 f9 4a 24 39 31 2f 48 b4,  // ...%tx...J$91/H.
+    ///* 0340 */ 5d 9b 52 76 dc 6a b7 3b 58 0b 1d fe e3 f6 af 58,  // ].Rv.j.;X......X
+    ///* 0350 */ 83 57 4b b3 55 31 bb 7e 1c 49 52 35 d1 ed bb 49,  // .WK.U1.~.IR5...I
+    ///* 0360 */ 05 9e a8 d6 4c 70 7b 8c 05 95 ec f4 ce 06 55 78,  // ....Lp{.......Ux
+    ///* 0370 */ fa 19 07 d9 93 0b f7 38 c9 21 16 54 5a 54 4d a4,  // .......8.!.TZTM.
+    ///* 0380 */ ba d6 3e b9 e0 05 9d 95 43 5b 3b b2 7b c3 a8 df,  // ..>.....C[;.{...
+    ///* 0390 */ 9d 09 db d1 ee 79 d7 56 52 49 a5 08 f6 8e 8a 4a,  // .....y.VRI.....J
+    ///* 03a0 */ e1 77 a2 98 04 1a b0 a4 3e b5 44 dc ba bf cd 0c,  // .w......>.D.....
+    ///* 03b0 */ 62 75 67 49 05 0d c8 73 53 d7 8d 7d 35 0d ea 8e,  // bugI...sS..}5...
+    ///* 03c0 */ 09 81 41 66 d6 5f 45 06 45 07 eb e7 51 09 0e 2f,  // ..Af._E.E...Q../
+    ///* 03d0 */ 55 7c 02 88 d3 8c 55 1a 27 73 5b b2 06 54 3f 81,  // U|....U.'s[..T?.
+    ///* 03e0 */ f5 1f 3b 66 3f 88 d4 98 8a 55 9e 4b ff e8 22 c0,  // ..;f?....U.K..".
+    ///* 03f0 */ 35 f4 6c 7b 5f 47 b2 bc 97 8c 89 bc bd f9 fc 65,  // 5.l{_G.........e
+    ///* 0400 */ 9a c6 98 bf dd 04 8f 50 63 aa 16 84 ff 03 8b d6,  // .......Pc.......
+    ///* 0410 */ b8 72 46 18 04 2b e4 cc 3d 2c 18 c6 9c 35 84 7d,  // .rF..+..=,...5.}
+    ///* 0420 */ 8f a6 43 48 88 9f e7 f7 3b 1f 4a f5 e6 84 95 5e,  // ..CH....;.J....^
+    ///* 0430 */ 40 5b f1 49 00 46 52 d3 18 8a 01 fd 98 d5 af 8c,  // @[.I.FR.........
+    ///* 0440 */ 29 b8 59 d6 92 40 e7 52 eb 5c 8e da 45 ea 18 74,  // ).Y..@.R....E..t
+    ///* 0450 */ a0 ed b5 ab 96 a0 77 5e 86 6e 2d e4 ab b7 d5 a1,  // ......w^.n-.....
+    ///* 0460 */ 6a 73 92 81 f6 1c 24 22 e8 58 9d f4 c8 e6 3c 18,  // js....$".X....<.
+    ///* 0470 */ 85 9f 60 e7 78 5a 03 ed f7 23 20 d9 41 6a 32 0c,  // ..`.xZ...# .Aj2.
+    ///* 0480 */ c6 5d 95 18 68 79 b6 fd 94 7f 98 d2 40 a4 9a c2,  // .]..hy......@...
+    ///* 0490 */ 25 2c 9e a5 ac b1 a5 5e 8c 62 d7 15 53 e1 f3 c7,  // %,.....^.b..S...
+    ///* 04a0 */ 45 6a a1 81 71 75 66 17 8f 2a 1e cf cd d4 dd 0f,  // Ej..quf..*......
+    ///* 04b0 */ 87 66 2d ad 18 5b 8e 41 f4 25 c0 18 22 58 99 fb,  // .f-..[.A.%.."X..
+    ///* 04c0 */ 07 4a 73 93 ea 92 13 fd 79 ff 4d af 4f a4 c0 c6,  // .Js.....y.M.O...
+    ///* 04d0 */ ea 7b 6b b8 a7 fe 7d 6f ea 9c 80 42 5c 6d 6e 1d,  // .{k...}o...B.mn.
+    ///* 04e0 */ e8 e3 04 02 03 dc 54 65 06 ee c1 c8 f8 f4 37 6c,  // ......Te......7l
+    ///* 04f0 */ 8b 35 82 20 0b 56 44 e6 15 8b d4 9b 35 fe 1f 0e,  // .5. .VD.....5...
+    ///* 0500 */ 1d f2 a9 f5 c3 93 60 e6 21 0d 59 10 0f ea eb 5e,  // ......`.!.Y....^
+    ///* 0510 */ 38 2d b9 8a f5 25 d3 91 11 d6 3a 33 2c f8 15 e3,  // 8-...%....:3,...
+    ///* 0520 */ 4b eb 1c 89 4c 16 29 72 02 85 38 19 e3 6c 26 2f,  // K...L.)r..8..l&/
+    ///* 0530 */ 6a b4 a4 0b a8 d3 d0 22 91 62 63 40 da 26 0a 33,  // j......".bc@.&.3
+    ///* 0540 */ 8e a2 dc 34 90 05 78 ec cd 0e d7 7a 60 54 e1 c7,  // ...4..x....z`T..
+    ///* 0550 */ 51 e2 6e ae 90 ae ed 00 a4 e0 a6 b2 1d 14 45 27,  // Q.n...........E'
+    ///* 0560 */ b6 b2 14 36 f0 60 87 9e 2e 0f bf 42 8e c7 3d c7,  // ...6.`.....B..=.
+    ///* 0570 */ af d1 e8 19 af e7 47 5c c2 cc f5 2a d1 9c 74 47,  // ......G....*..tG
+    ///* 0580 */ ae 2c cf ca a2 ed 38 26 83 70 d6 dd 15 3e b1 71,  // .,....8&.p...>.q
+    ///* 0590 */ 92 1b e5 5b c5 ae 0a a4 4f 3c 81 1b 00 36 02 0c,  // ...[....O<...6..
+    ///* 05a0 */ c4 ce 45 3f 0a 15 df 72 06 02 de 69 8c e0 02 f0,  // ..E?...r...i....
+    ///* 05b0 */ a4 06 21 43 f8 f7 b4 79 09 7b 43 46 1a e4 71 3d,  // ..!C...y.{CF..q=
+    ///* 05c0 */ c3 e7 c2 d4 36 1e 61 cd 19 1b 7e 20 8a 92 ec 58,  // ....6.a...~ ...X
+    ///* 05d0 */ aa b2 db b5 71 8f 65 52 09 57 98 50 2a 03 c5 be,  // ....q.eR.W.P*...
+    ///* 05e0 */ e4 d1 58 40 b8 ba b0 0f d8 bb 6f c6 df 9a 4f 60,  // ..X@......o...O`
+    ///* 05f0 */ be 28 28 7e b4 36 bc bb ed 20 6c 7d 8f cd d5 f5,  // .((~.6... l}....
+    ///* 0600 */ 1e 5e 1e 6d 0a ba 59 89 75 42 59 4c ce 7a 4c e4,  // .^.m..Y.uBYL.zL.
+    ///* 0610 */ 21 7e 32 06 8a 5e 9d 66 3c 7a 25 67 e2 f9 28 a8,  // !~2..^.f<z%g..(.
+    ///* 0620 */ 71 ad 08 b3 e4 ff de de 8d 35 6b f4 67 fd 53 65,  // q........5k.g.Se
+    ///* 0630 */ e2 36 ab 38 a8 51 37 9e b5 f7 0a de 17 22 cb 03,  // .6.8.Q7......"..
+    ///* 0640 */ 15 f2 9d 2a 6d 42 5d 54 95 5b 92 91 d6 db 66 aa,  // ...*mB]T.[....f.
+    ///* 0650 */ 78 6d 61 00 9e 8a b7 a7 23 7f d9 b0 a5 7d 03 83,  // xma.....#....}..
+    ///* 0660 */ af 26 8b bb 3d 40 be 14 08 dc 48 c2 dc 03 20 e0,  // .&..=@....H... .
+    ///* 0670 */ 95 c0 ad 67 79 ed 09 c6 c3 a2 7d 3b 08 82 1c 15,  // ...gy.....};....
+    ///* 0680 */ 5c ae 1d 1f e3 64 e3 9e ab 14 56 c9 9f fb c8 b8,  // .....d....V.....
+    ///* 0690 */ f4 31 0d d7 92 80 8f db 7e 78 d4 d9 79 c0 52 a8,  // .1......~x..y.R.
+    ///* 06a0 */ 9f 8c 48 a1 88 ed 78 c8 c6 76 4a 4f a5 a5 a6 ac,  // ..H...x..vJO....
+    ///* 06b0 */ 7d 3f 41 88 ae df fa db c0 dc 61 f9 56 52 ac f6,  // }?A.......a.VR..
+    ///* 06c0 */ c9 25 03 74 d7 2c 22 ee a9 b6 27 66 8b 12 09 4e,  // .%.t.,"...'f...N
+    ///* 06d0 */ 6e 7a 9f be 4e e4 af c1 da 6b 04 c5 dd 79 10 32,  // nz..N....k...y.2
+    ///* 06e0 */ cb bd 12 7b d9 3c 92 3b 2a 7d 52 f7 d6 73 5a 06,  // ...{.<.;*}R..sZ.
+    ///* 06f0 */ d1 f9 5f a9 69 8c 04 23 b8 e6 2e ce 0d ea 07 30,  // .._.i..#.......0
+    ///* 0700 */ fd 00 3a 0b 61 dd b1 b4 96 9a a9 0e a6 ce ee 98,  // ..:.a...........
+    ///* 0710 */ 1c d5 58 40 1b 34 4a 56 b3 f6 a7 bc 97 e9 85 9b,  // ..X@.4JV........
+    ///* 0720 */ 10 43 df a6 35 b4 0e 41 a5 ae 56 28 2c cc 10 1b,  // .C..5..A..V(,...
+    ///* 0730 */ 71 36 60 1f fc 4b c3 4a 1e b5 51 d9 de b7 5b 9f,  // q6`..K.J..Q...[.
+    ///* 0740 */ 73 b2 a6 6d a0 df ad c6 be 73 a5 4f 90 13 08 b3,  // s..m.....s.O....
+    ///* 0750 */ cf eb 5e 7e 5c 6e 99 5a a0 36 75 03 82 20 a5 74,  // ..^~.n.Z.6u.. .t
+    ///* 0760 */ 8c 1e e4 4b cb 77 97 4d 33 55 fb 2d cb 09 d2 57,  // ...K.w.M3U.-...W
+    ///* 0770 */ dd 69 e9 37 55 c6 f5 0c 54 02 c4 7c e7 9f c6 1f,  // .i.7U...T..|....
+    ///* 0780 */ 9d 20 2d 4a 7a 47 b2 8f 4e 17 88 1e a1 29 ee 26,  // . -JzG..N....).&
+    ///* 0790 */ 79 53 2a 2f 8b 38 de 29 f2 a4 cd 39 29 c2 0a 01,  // yS*/.8.)...9)...
+    ///* 07a0 */ 7f b0 5e 79 84 8d b7 9c 2e 15 40 35 17 d0 ea 7e,  // ..^y......@5...~
+    ///* 07b0 */ 8e a4 ba f9 06 a1 fc a8 dc 74 db 99 5e da bd ff,  // .........t..^...
+    ///* 07c0 */ 43 b9 d7 5c c0 62 be ae 16 be 60 7c 2c 8f bd 53,  // C....b....`|,..S
+    ///* 07d0 */ 42 8c 98 57 73 de a0 94 6f 7a d1 30 ce 26 e2 bf,  // B..Ws...oz.0.&..
+    ///* 07e0 */ de 9f 6f 6c 8f 8c 0c 89 2f 7d ce 1f 2f af 37,     // ..ol..../}../.7
+    // MAC Data
+    //   ed e8 bf d6 13 a0 f5 80 4a e5 ff 85 16 fa cb 1f
 
+    // --------------------------------------------------------------------------------
     //    0x00: LICENSE_PREAMBLE    (4 bytes)
     //    03 -> LICENSE_PREAMBLE::bMsgType = SERVER_NEW_LICENSE
     //     
@@ -996,137 +1000,139 @@ namespace LIC
     //    ef -\|
     //    07 -/ EncryptedLicenseInfo::wBlobLen = 0x7ef bytes
     //       
-    //                            db a3 13 30 79 a3 cd 9e -\|
-    //    48 f4 8f 06 37 1b 45 dd-60 a9 2e 29 26 bf c1 96 -|
-    //    5e 07 93 9d f2 2d 3e a3-3a ff d5 6d f5 85 30 28 -|
-    //    e1 46 fd 56 d1 20 41 33-94 88 0c 27 23 a0 61 38 -|
-    //    60 db 86 d6 ce 2c cd 40-39 55 23 39 12 b9 fd c2 -|
-    //    8d 58 0a 37 33 42 5c 61-d7 c8 a0 11 66 e2 45 ba -|
-    //    41 39 ea 85 2a 6e 7a b3-e7 27 75 fc 4d c0 fb 0d -|
-    //    e8 67 90 b3 3a 40 f0 15-8a 15 8e 2c 99 0f 1c bd -|
-    //    d2 08 66 51 9e 6a e6 2c-f7 1f d0 c0 8e 89 76 64 -|
-    //    18 58 a1 94 bd ce b1 2d-96 ab 53 cf f8 bf d0 c9 -|
-    //    c0 2e e6 a4 0b 50 31 4a-4e d8 47 4b af b8 21 78 -|
-    //    bf 09 ac 7f 2d 2d 88 f6-d8 c7 45 33 9f ac 69 f5 -|
-    //    88 9d 5c 6e c9 d0 ca 8c-bc a9 d6 07 36 ed 40 95 -|
-    //    8a c1 3f 04 41 b3 c9 b3-18 9d 33 1b 04 55 cd 41 -|
-    //    df 19 e1 cd a0 a4 35 6e-b7 0a f3 ec 48 10 4f 28 -|
-    //    c6 35 f3 9b a2 d5 f7 58-03 4d 9a 16 34 fb 96 0c -|
-    //    d5 3a ae 52 1b 2f 1f 1f-31 b2 d9 14 3b 73 0f e3 -|
-    //    04 e0 a5 52 89 68 ba 0f-99 9d 24 a6 f3 e8 9f cc -|
-    //    d2 44 9f 08 8b 0a 24 89-f7 c9 07 0d 25 07 ed 3e -|
-    //    75 21 19 65 dc 98 41 9d-05 12 18 88 86 16 43 49 -|
-    //    29 f2 e8 26 16 1e ce cd-32 e7 36 74 51 27 fd a2 -|
-    //    a9 62 57 60 28 e4 64 02-06 6b ff 01 ab c5 1c 25 -|
-    //    98 07 e1 40 ad 19 b7 68-66 12 4e 80 bc 83 d2 de -|
-    //    cb 7e c2 32 c7 b8 4d d6-7d dd 63 a9 95 45 c1 90 -|
-    //    c7 99 3c 0a 24 62 fc 24-15 db d3 d2 9b 5d 78 04 -|
-    //    78 d5 40 1d e3 4e e8 30-9f 56 91 71 00 86 2c 6a -|
-    //    b2 78 ec 70 d9 71 e6 aa-b1 ad 18 f9 a6 84 b7 4b -|
-    //    5f 32 b8 e3 c7 84 ef 37-fe ae 99 b5 f2 34 84 82 -|
-    //    4a b3 d0 7c 5e 25 71 89-8b 7d 6f 5f 96 7a 1d 84 -|
-    //    96 56 34 30 ce 09 d5 00-a8 ac 15 72 21 c4 71 57 -|
-    //    e5 2a 3d df 82 b8 b8 63-dc 3f 2e 99 6c c3 e3 fd -|
-    //    92 e0 26 e1 27 b8 04 71-b0 a8 d1 df 7e 24 23 b9 -|
-    //    82 01 77 dc 8f 77 54 e6-93 c8 6c 66 87 b7 aa 9d -|
-    //    66 d4 c6 2f 5e 9e e1 cf-db b2 74 0e ea a5 e0 f7 -|
-    //    00 f1 76 f7 45 2c f8 a9-3b d9 81 59 52 0f fe d9 -|
-    //    28 02 59 82 39 51 6e b9-ac f9 6a 48 73 6f 2c 4d -|
-    //    7b c0 bf be 69 ae 0e dc-8b e6 d8 9f 66 30 1e 45 -|
-    //    1d 85 23 eb a8 02 b5 ba-c2 fd a1 ff c5 55 2b a0 -|
-    //    f7 5b 24 ee 81 d8 e1 b8-02 06 85 6e 41 5a b8 07 -|
-    //    ff 65 db b4 59 89 71 95-d5 0c 2a 67 4d 57 fd 4a -|
-    //    e8 07 02 42 20 d9 f1 c6-d5 4c 53 b0 32 68 c0 dc -|
-    //    d7 5d 8f ec 24 29 00 4f-46 8d d2 99 b2 f4 06 99 -|
-    //    9a a6 31 f1 49 16 fe 94-bb 8e 15 55 06 93 16 a3 -|
-    //    2d 10 b7 b1 cf 61 78 af-93 66 5a 75 5e 97 c0 97 -|
-    //    4c ba a9 50 ac 1b d6 92-2a ac 0a 21 12 9e 4a f0 -|
-    //    40 39 4b e5 78 88 86 17-b9 eb a0 33 8a 9a fc 7c -|
-    //    91 16 d7 52 ec 05 7e 4e-90 78 5e 45 4a dd f6 f4 -|
-    //    2e 68 f7 8e fc 60 95 aa-6a 07 9c ea ce c1 d9 55 -|
-    //    3a 78 54 9a 2a 5f 47 87-18 4a 8c 6c 34 f5 b8 e2 -|
-    //    84 36 ef 0d 2e 9d 42 d9-ff 56 e2 87 0b 2f 4d 0e -|
-    //    c0 60 35 06 9f 61 9e 4e-7b 49 41 b4 fa 04 10 bd -|
-    //    f6 ad 02 d9 7c ba 06 68-bb a7 a6 8a ab ab b1 2d -|
-    //    69 2a f1 c6 7b 1b 71 b9-d0 91 82 6f a8 3c e1 a3 -|
-    //    23 3d 4e 48 74 e5 c9 c5-95 31 ad e7 a9 db 35 cd -|
-    //    02 08 2c 29 5f f9 17 86-69 8f 13 d1 ca 83 fc ac -|
-    //    55 cf 5a e6 45 af e5 bb-e7 b5 53 4e f0 63 fc 9a -|
-    //    49 f6 45 93 c6 bf d5 b3-25 e2 93 b0 a6 a7 14 80 -|
-    //    6d b2 03 15 6a ad e8 25-f1 80 d4 ba 9a 88 bc 56 -|
-    //    14 7a 4d ad c3 24 3f 4d-35 8b f6 59 5b fd c9 32 -|
-    //    1d f5 a5 53 b5 fb ba 83-29 0b 9c 62 9b 56 4b 44 -|
-    //    bc cc 19 59 7c 0b 74 d9-04 28 b3 67 ab 82 36 39 -|
-    //    55 5f 7c ed 84 c1 16 d3-9e 9c 90 9d 55 bc 3e b9 -|
-    //    63 12 f2 26 6d d7 cc 4f-01 a2 0b d9 66 60 ad ed -|
-    //    2e bd be 28 5f 4a 33 c8-e8 d4 a6 23 8a fd 66 f5 -|
-    //    28 90 81 27 a9 44 93 68-57 44 5e ba 90 12 03 15 -|
-    //    2f 69 80 55 e8 32 63 88-30 85 50 9b b6 bc bb c6 -|
-    //    fe a2 e7 32 9d 3d 7d e2-31 93 a6 4e a0 dc 11 44 -|
-    //    d2 93 32 94 1e c6 4c 28-de a2 a6 0d 14 02 74 8a -|
-    //    84 2a 03 67 35 1d 66 3e-e9 68 4a b2 92 1a 69 48 -|
-    //    bd 23 fd 70 5a fd fe 74-39 c5 fa 11 ac 04 c9 94 -|
-    //    fc 12 2e 06 04 61 8e 32-f4 f8 3b d1 d8 09 b3 e4 -|
-    //    ac 0f 3e 92 f7 75 0b 32-9b d4 8a 13 99 6a 26 77 -|
-    //    9f 34 08 a8 eb b3 3e 2a-5b 4a 44 f9 21 89 2a 09 -|
-    //    9c c7 0d 2a d8 d6 27 30-25 39 84 14 11 47 ff 60 -|
-    //    e4 7c c3 41 fd d5 34 dd-b1 1c f2 eb b1 67 04 fa -|
-    //    fd 65 5b 20 6e 28 75 a9-74 8e c4 2f f7 b2 f5 9f -|
-    //    13 44 ff b0 f0 68 b0 69-15 a6 16 a8 ac c3 06 14 -|
-    //    8e 51 99 a9 4c 19 d1 25-34 b5 79 c2 a7 bf d8 3d -|
-    //    2d 4c 33 ac 1b 6c af 10-42 41 14 02 e6 87 2b e9 -|
-    //    ec c6 b1 eb 97 d4 35 49-97 fc e2 73 f9 98 46 7c -|
-    //    f6 17 2d b5 43 07 8b 19-95 9b 65 d3 05 7e b0 68 -|
-    //    0d 6e 4b 60 ad 5c 47 6e-37 fd 3f 60 43 da b2 34 -|
-    //    00 d6 9c 6d 46 7f 41 e2-c1 1a d0 53 72 81 0b 3f -|
-    //    77 e1 bc cc 09 0f a1 1d-73 8c ac a4 48 90 80 a8 -|
-    //    50 63 6a b7 76 91 91 2f-1a 5e 83 80 e6 ae 66 77 -|
-    //    44 e0 0f 14 70 c9 d3 91-e8 d2 c4 89 a8 45 c0 3d -|
-    //    bd 09 58 e0 cd e6 5c 9e-02 94 d2 be df 94 35 f7 -|
-    //    67 96 75 88 08 59 d9 19-21 da d0 a2 74 2d 22 87 -|
-    //    37 27 6e 58 dc 8e 9f 50-d5 62 f3 4a a4 b2 fb f9 -|
-    //    3e d5 da 57 56 5c cb 0e-d1 62 4f ea 42 4a 62 b2 -|
-    //    4e 1c d1 cc 24 1b dc ac-d4 b0 2f 5d 62 87 56 3d -|
-    //    e4 03 ae 4a 7e 7d 05 fe-85 33 da 5f 36 cb 56 a1 -|
-    //    14 80 63 26 75 3a c2 1f-9c dd 8a d6 f8 a9 1a f6 -|
-    //    c2 57 e0 7b 80 55 d5 12-f1 b4 e7 1d 95 68 02 f1 -|
-    //    19 ff 74 72 32 db 6c c9-a0 2d 69 fc c0 e8 27 11 -|
-    //    b8 e0 f5 83 60 3f b4 94-e5 9d b8 fd c5 9e 50 76 -|
-    //    92 c7 33 6b e0 7e 9b 2c-3b 27 d8 a6 da b3 a1 45 -|
-    //    ef 3b 3d 76 1d 5a 43 a4-e1 82 5f 7d 0b 10 28 1c -|
-    //    b9 8f 2b cd f9 c5 93 e3-65 a5 5b 50 a9 07 16 b3 -|
-    //    45 4a 69 fc 58 12 7b 58-34 9f 6f 5e 7a c2 9f 7b -|
-    //    cf 62 62 6c 1e 7d d9 72-ca 98 1e d4 e5 c7 98 27 -|
-    //    e3 9f c5 3c 90 9e 26 ed-7e 38 2b cf c4 99 f5 b4 -|
-    //    78 48 7c 08 99 bc 80 47-b1 c5 58 60 17 84 11 f8 -|
-    //    70 a1 26 95 94 77 f4 8d-1d 47 96 df 95 1d 97 37 -|
-    //    5a 12 fb 3f cd a0 fb ac-61 62 1f ee dc 6d 2c 45 -|
-    //    5f c0 80 7d 99 62 38 f7-6d 88 d5 e2 24 9d ed a7 -|
-    //    d5 e7 1c 8a 75 9b 67 0c-64 fe e7 e2 e9 a0 94 60 -|
-    //    26 46 d8 c9 59 43 17 85-07 32 8b 0c 5a 1e 35 48 -|
-    //    46 e5 44 5b c7 07 cd 30-97 80 fa f9 eb 0d af af -|
-    //    3e be 27 43 8e 4a f2 60-eb 2b 4d 11 9a e1 d7 59 -|
-    //    78 29 26 3e 9b da 61 15-ab e8 6f 81 73 ac 9f 43 -|
-    //    c6 b1 81 73 36 4a 1e 57-2b d9 7a 06 4f b6 37 11 -|
-    //    e6 c6 90 41 a4 a6 b7 3a-7e c9 ce 50 2f 8c 07 db -|
-    //    9a 19 38 51 35 50 f3 09-33 20 62 36 a8 6c 8e f2 -|
-    //    56 8c 82 d3 fa 16 b5 3d-74 28 dc 2a e5 ae ab 77 -|
-    //    e5 22 3d 69 92 b8 56 c5-06 6b 8b da 46 18 af 93 -|
-    //    a2 0c b5 d3 d6 94 4a 29-fd 4b 48 48 a1 73 bc de -|
-    //    cb 3a 35 27 d5 40 3a 1d-5b e3 62 a5 22 a2 7b b5 -|
-    //    6a f0 5e 0a 96 5c e8 3b-41 58 a1 d5 11 2c 36 9e -|
-    //    e5 2b c9 fb 1b 37 d0 8e-cf c2 01 6f b6 21 96 9c -|
-    //    14 2f 76 19 b0 6a 9d ef-69 fd d0 03 d9 eb b7 86 -|
-    //    76 20 d3 20 6a d8 cb c8-9e b7 82 28 b2 25 a7 a2 -|
-    //    6b fd 60 b0 11 09 53 5f-79 6b 72 d7 1b 21 73 f7 -|
-    //    21 d5 5c c4 e5 52 82 73-1f 9c 95 e1 21 bf 12 67 -|
-    //    c9 41 e5 64 c4 d4 f9 a2-9b 29 df e5 a4 f3 b4 69 -|
-    //    6d 2c b0 42 e3 e6 25 a7-8f f5 12 99 8c bf bb d8 -|
-    //    a8 23 db 8e ec 37 b0 8e-4f ed 67 aa 3e f6 24 56 -|
-    //    96 e3 d4 bc 25 0b 56                            -/ 
+    ///* 0000 */ de 18 8f 41 ad 37 5d 3a e7 6f 7d 15 38 1d fd 0b,  // ...A.7]:.o}.8...
+    ///* 0010 */ b3 34 1c cc 9d cc c7 97 45 2b 00 32 4e 96 3c 9e,  // .4......E+.2N.<.
+    ///* 0020 */ da cc 1a 07 1e 9f d6 c5 27 7a d1 cb 10 fc 61 19,  // ........'z....a.
+    ///* 0030 */ e4 34 ea 2d cb 62 f1 c0 39 4f ea 05 d4 71 61 50,  // .4.-.b..9O...qaP
+    ///* 0040 */ fd a0 ad 58 4a 48 ec a3 0a 39 3a 8a fd 1d 32 9e,  // ...XJH...9:...2.
+    ///* 0050 */ c8 7d f1 16 f2 2c c4 1e a4 70 95 5d 93 c3 5d b3,  // .}...,...p.]..].
+    ///* 0060 */ 55 15 7b 81 40 cc 48 7a d8 b2 bc bd 82 46 13 66,  // U.{.@.Hz.....F.f
+    ///* 0070 */ 23 57 88 d3 66 a7 66 3b 04 cf f1 b6 c4 32 ee 41,  // #W..f.f;.....2.A
+    ///* 0080 */ da 78 62 eb b1 97 ad eb 49 ac 46 b0 f6 3d c5 e7,  // .xb.....I.F..=..
+    ///* 0090 */ 2e 51 14 fb 76 c9 ef 52 e5 6d 3e 36 05 db 97 c7,  // .Q..v..R.m>6....
+    ///* 00a0 */ d9 1e f4 08 08 6c 1f bb 29 e8 24 36 85 43 32 91,  // .....l..).$6.C2.
+    ///* 00b0 */ 0a 27 d8 ae 5d 35 73 0d 6a cb 59 a0 7e 9b 5b 8d,  // .'..]5s.j.Y.~.[.
+    ///* 00c0 */ 00 60 a1 a2 b9 f8 49 d2 9f 5c 09 98 3e 1b a4 34,  // .`....I.....>..4
+    ///* 00d0 */ d7 d3 29 38 95 85 86 2e c7 09 d5 34 47 1c d7 70,  // ..)8.......4G..p
+    ///* 00e0 */ de 3b b9 07 11 aa 99 fd 0a d9 42 94 39 76 b9 ce,  // .;........B.9v..
+    ///* 00f0 */ 50 f3 d5 61 47 9a 55 75 1d 32 75 0e a7 e1 8e 64,  // P..aG.Uu.2u....d
+    ///* 0100 */ 38 6a ac 3c cd 59 e2 14 27 a8 11 10 c4 16 ca 0b,  // 8j.<.Y..'.......
+    ///* 0110 */ d2 8a 7f 59 8e 64 37 2d df ac 17 c7 76 d2 76 42,  // ...Y.d7-....v.vB
+    ///* 0120 */ 33 eb f5 9e 00 ce 02 30 0e 15 bf 58 32 11 38 2e,  // 3......0...X2.8.
+    ///* 0130 */ 04 16 7a 8b b2 e0 93 89 7e 8e dc 74 06 fe a7 77,  // ..z.....~..t...w
+    ///* 0140 */ 11 48 90 ae 67 a5 9d c1 99 32 3d 08 6e b5 fa 94,  // .H..g....2=.n...
+    ///* 0150 */ d5 9b 85 2e ed 1e 8e 8e f7 6b 0d 1b b6 e4 b7 df,  // .........k......
+    ///* 0160 */ 46 de 93 f7 ce 1e 91 ce 96 27 5a 55 93 bb f2 c1,  // F........'ZU....
+    ///* 0170 */ af e3 90 81 08 5e c1 e9 12 23 ee 56 a3 55 31 00,  // .....^...#.V.U1.
+    ///* 0180 */ e1 7c 54 a5 65 be db e0 45 c3 28 48 d7 cb 88 ae,  // .|T.e...E.(H....
+    ///* 0190 */ 3d 91 3e c8 6c f0 4a ec 5a 3e 6f ac f6 cb de a7,  // =.>.l.J.Z>o.....
+    ///* 01a0 */ 03 7e 5b 8d ab 94 75 12 fa 87 5e c2 d2 13 ad 5e,  // .~[...u...^....^
+    ///* 01b0 */ cb a8 1a 71 b5 b5 62 cf f7 6a 10 81 d1 ba 57 8b,  // ...q..b..j....W.
+    ///* 01c0 */ e1 a5 d1 99 fb 5c d4 2f 13 63 92 2e 83 49 12 ec,  // ......./.c...I..
+    ///* 01d0 */ f7 1d 9f 19 d6 45 6b 6b 4c 0a a5 e7 ff e5 93 63,  // .....EkkL......c
+    ///* 01e0 */ 63 33 14 48 7a 0d 8a e6 5c ab a6 54 bf 94 2b dc,  // c3.Hz......T..+.
+    ///* 01f0 */ 1c 95 32 f2 07 fe 35 77 bf 41 27 18 5b 76 0d e9,  // ..2...5w.A'.[v..
+    ///* 0200 */ 4e 69 93 11 ca 8f 53 7d aa f1 48 34 81 ff ae 43,  // Ni....S}..H4...C
+    ///* 0210 */ ca 60 4e 01 95 e3 f1 e5 fe c1 f9 b7 24 38 5b cd,  // .`N.........$8[.
+    ///* 0220 */ bb fb b5 ef 90 ff 63 8d 16 ca ec b2 55 5e a0 3e,  // ......c.....U^.>
+    ///* 0230 */ 41 a5 61 89 d4 b1 57 2c 00 c6 18 44 68 2d fb 54,  // A.a...W,...Dh-.T
+    ///* 0240 */ 68 aa 50 51 5f f0 40 64 36 c7 a9 99 91 95 31 39,  // h.PQ_.@d6.....19
+    ///* 0250 */ 0d 25 a1 23 f9 ad a2 5d cf 34 29 db 97 fc d7 3a,  // .%.#...].4)....:
+    ///* 0260 */ b7 16 df 41 19 15 17 3d 67 09 62 1c 82 ac 44 80,  // ...A...=g.b...D.
+    ///* 0270 */ 37 d1 39 81 4e 56 ff 66 14 a5 b9 53 60 be 9c 1b,  // 7.9.NV.f...S`...
+    ///* 0280 */ 01 b7 d8 3e 41 ff d1 8c 9f 3f 5a b2 05 95 2e 45,  // ...>A....?Z....E
+    ///* 0290 */ 72 c6 a9 9b ce 31 84 c0 d9 e5 96 22 d3 34 28 2a,  // r....1.....".4(*
+    ///* 02a0 */ 06 85 1f b2 5b f9 48 64 0c 73 71 b0 b7 cf 79 75,  // ....[.Hd.sq...yu
+    ///* 02b0 */ 4b 89 09 7d ea 76 a7 72 0b 0c db 56 a6 e8 11 4c,  // K..}.v.r...V...L
+    ///* 02c0 */ 3e a3 de c9 0a 87 37 24 2b 5a 26 95 d3 72 e4 43,  // >.....7$+Z&..r.C
+    ///* 02d0 */ 20 1d c0 9b 85 69 f4 89 b6 4b eb 67 3d 9d 21 3e,  //  ....i...K.g=.!>
+    ///* 02e0 */ 36 fa 0a fb c9 e7 b3 36 de 66 bc f7 01 23 7b 3f,  // 6......6.f...#{?
+    ///* 02f0 */ a4 8c 68 a9 70 1d 6c d2 bb 53 97 1e b0 aa 9c 2d,  // ..h.p.l..S.....-
+    ///* 0300 */ 3a b7 18 fe 01 c5 cf 67 ba 6d e1 06 8d 9d 8f 46,  // :......g.m.....F
+    ///* 0310 */ 8c 17 53 5b 88 81 48 05 18 48 5e 8a f5 82 93 47,  // ..S[..H..H^....G
+    ///* 0320 */ 5d 1c ba 83 79 68 07 c2 2f 05 a7 81 52 c1 40 73,  // ]...yh../...R.@s
+    ///* 0330 */ a5 8d 1e 25 74 78 09 09 f9 4a 24 39 31 2f 48 b4,  // ...%tx...J$91/H.
+    ///* 0340 */ 5d 9b 52 76 dc 6a b7 3b 58 0b 1d fe e3 f6 af 58,  // ].Rv.j.;X......X
+    ///* 0350 */ 83 57 4b b3 55 31 bb 7e 1c 49 52 35 d1 ed bb 49,  // .WK.U1.~.IR5...I
+    ///* 0360 */ 05 9e a8 d6 4c 70 7b 8c 05 95 ec f4 ce 06 55 78,  // ....Lp{.......Ux
+    ///* 0370 */ fa 19 07 d9 93 0b f7 38 c9 21 16 54 5a 54 4d a4,  // .......8.!.TZTM.
+    ///* 0380 */ ba d6 3e b9 e0 05 9d 95 43 5b 3b b2 7b c3 a8 df,  // ..>.....C[;.{...
+    ///* 0390 */ 9d 09 db d1 ee 79 d7 56 52 49 a5 08 f6 8e 8a 4a,  // .....y.VRI.....J
+    ///* 03a0 */ e1 77 a2 98 04 1a b0 a4 3e b5 44 dc ba bf cd 0c,  // .w......>.D.....
+    ///* 03b0 */ 62 75 67 49 05 0d c8 73 53 d7 8d 7d 35 0d ea 8e,  // bugI...sS..}5...
+    ///* 03c0 */ 09 81 41 66 d6 5f 45 06 45 07 eb e7 51 09 0e 2f,  // ..Af._E.E...Q../
+    ///* 03d0 */ 55 7c 02 88 d3 8c 55 1a 27 73 5b b2 06 54 3f 81,  // U|....U.'s[..T?.
+    ///* 03e0 */ f5 1f 3b 66 3f 88 d4 98 8a 55 9e 4b ff e8 22 c0,  // ..;f?....U.K..".
+    ///* 03f0 */ 35 f4 6c 7b 5f 47 b2 bc 97 8c 89 bc bd f9 fc 65,  // 5.l{_G.........e
+    ///* 0400 */ 9a c6 98 bf dd 04 8f 50 63 aa 16 84 ff 03 8b d6,  // .......Pc.......
+    ///* 0410 */ b8 72 46 18 04 2b e4 cc 3d 2c 18 c6 9c 35 84 7d,  // .rF..+..=,...5.}
+    ///* 0420 */ 8f a6 43 48 88 9f e7 f7 3b 1f 4a f5 e6 84 95 5e,  // ..CH....;.J....^
+    ///* 0430 */ 40 5b f1 49 00 46 52 d3 18 8a 01 fd 98 d5 af 8c,  // @[.I.FR.........
+    ///* 0440 */ 29 b8 59 d6 92 40 e7 52 eb 5c 8e da 45 ea 18 74,  // ).Y..@.R....E..t
+    ///* 0450 */ a0 ed b5 ab 96 a0 77 5e 86 6e 2d e4 ab b7 d5 a1,  // ......w^.n-.....
+    ///* 0460 */ 6a 73 92 81 f6 1c 24 22 e8 58 9d f4 c8 e6 3c 18,  // js....$".X....<.
+    ///* 0470 */ 85 9f 60 e7 78 5a 03 ed f7 23 20 d9 41 6a 32 0c,  // ..`.xZ...# .Aj2.
+    ///* 0480 */ c6 5d 95 18 68 79 b6 fd 94 7f 98 d2 40 a4 9a c2,  // .]..hy......@...
+    ///* 0490 */ 25 2c 9e a5 ac b1 a5 5e 8c 62 d7 15 53 e1 f3 c7,  // %,.....^.b..S...
+    ///* 04a0 */ 45 6a a1 81 71 75 66 17 8f 2a 1e cf cd d4 dd 0f,  // Ej..quf..*......
+    ///* 04b0 */ 87 66 2d ad 18 5b 8e 41 f4 25 c0 18 22 58 99 fb,  // .f-..[.A.%.."X..
+    ///* 04c0 */ 07 4a 73 93 ea 92 13 fd 79 ff 4d af 4f a4 c0 c6,  // .Js.....y.M.O...
+    ///* 04d0 */ ea 7b 6b b8 a7 fe 7d 6f ea 9c 80 42 5c 6d 6e 1d,  // .{k...}o...B.mn.
+    ///* 04e0 */ e8 e3 04 02 03 dc 54 65 06 ee c1 c8 f8 f4 37 6c,  // ......Te......7l
+    ///* 04f0 */ 8b 35 82 20 0b 56 44 e6 15 8b d4 9b 35 fe 1f 0e,  // .5. .VD.....5...
+    ///* 0500 */ 1d f2 a9 f5 c3 93 60 e6 21 0d 59 10 0f ea eb 5e,  // ......`.!.Y....^
+    ///* 0510 */ 38 2d b9 8a f5 25 d3 91 11 d6 3a 33 2c f8 15 e3,  // 8-...%....:3,...
+    ///* 0520 */ 4b eb 1c 89 4c 16 29 72 02 85 38 19 e3 6c 26 2f,  // K...L.)r..8..l&/
+    ///* 0530 */ 6a b4 a4 0b a8 d3 d0 22 91 62 63 40 da 26 0a 33,  // j......".bc@.&.3
+    ///* 0540 */ 8e a2 dc 34 90 05 78 ec cd 0e d7 7a 60 54 e1 c7,  // ...4..x....z`T..
+    ///* 0550 */ 51 e2 6e ae 90 ae ed 00 a4 e0 a6 b2 1d 14 45 27,  // Q.n...........E'
+    ///* 0560 */ b6 b2 14 36 f0 60 87 9e 2e 0f bf 42 8e c7 3d c7,  // ...6.`.....B..=.
+    ///* 0570 */ af d1 e8 19 af e7 47 5c c2 cc f5 2a d1 9c 74 47,  // ......G....*..tG
+    ///* 0580 */ ae 2c cf ca a2 ed 38 26 83 70 d6 dd 15 3e b1 71,  // .,....8&.p...>.q
+    ///* 0590 */ 92 1b e5 5b c5 ae 0a a4 4f 3c 81 1b 00 36 02 0c,  // ...[....O<...6..
+    ///* 05a0 */ c4 ce 45 3f 0a 15 df 72 06 02 de 69 8c e0 02 f0,  // ..E?...r...i....
+    ///* 05b0 */ a4 06 21 43 f8 f7 b4 79 09 7b 43 46 1a e4 71 3d,  // ..!C...y.{CF..q=
+    ///* 05c0 */ c3 e7 c2 d4 36 1e 61 cd 19 1b 7e 20 8a 92 ec 58,  // ....6.a...~ ...X
+    ///* 05d0 */ aa b2 db b5 71 8f 65 52 09 57 98 50 2a 03 c5 be,  // ....q.eR.W.P*...
+    ///* 05e0 */ e4 d1 58 40 b8 ba b0 0f d8 bb 6f c6 df 9a 4f 60,  // ..X@......o...O`
+    ///* 05f0 */ be 28 28 7e b4 36 bc bb ed 20 6c 7d 8f cd d5 f5,  // .((~.6... l}....
+    ///* 0600 */ 1e 5e 1e 6d 0a ba 59 89 75 42 59 4c ce 7a 4c e4,  // .^.m..Y.uBYL.zL.
+    ///* 0610 */ 21 7e 32 06 8a 5e 9d 66 3c 7a 25 67 e2 f9 28 a8,  // !~2..^.f<z%g..(.
+    ///* 0620 */ 71 ad 08 b3 e4 ff de de 8d 35 6b f4 67 fd 53 65,  // q........5k.g.Se
+    ///* 0630 */ e2 36 ab 38 a8 51 37 9e b5 f7 0a de 17 22 cb 03,  // .6.8.Q7......"..
+    ///* 0640 */ 15 f2 9d 2a 6d 42 5d 54 95 5b 92 91 d6 db 66 aa,  // ...*mB]T.[....f.
+    ///* 0650 */ 78 6d 61 00 9e 8a b7 a7 23 7f d9 b0 a5 7d 03 83,  // xma.....#....}..
+    ///* 0660 */ af 26 8b bb 3d 40 be 14 08 dc 48 c2 dc 03 20 e0,  // .&..=@....H... .
+    ///* 0670 */ 95 c0 ad 67 79 ed 09 c6 c3 a2 7d 3b 08 82 1c 15,  // ...gy.....};....
+    ///* 0680 */ 5c ae 1d 1f e3 64 e3 9e ab 14 56 c9 9f fb c8 b8,  // .....d....V.....
+    ///* 0690 */ f4 31 0d d7 92 80 8f db 7e 78 d4 d9 79 c0 52 a8,  // .1......~x..y.R.
+    ///* 06a0 */ 9f 8c 48 a1 88 ed 78 c8 c6 76 4a 4f a5 a5 a6 ac,  // ..H...x..vJO....
+    ///* 06b0 */ 7d 3f 41 88 ae df fa db c0 dc 61 f9 56 52 ac f6,  // }?A.......a.VR..
+    ///* 06c0 */ c9 25 03 74 d7 2c 22 ee a9 b6 27 66 8b 12 09 4e,  // .%.t.,"...'f...N
+    ///* 06d0 */ 6e 7a 9f be 4e e4 af c1 da 6b 04 c5 dd 79 10 32,  // nz..N....k...y.2
+    ///* 06e0 */ cb bd 12 7b d9 3c 92 3b 2a 7d 52 f7 d6 73 5a 06,  // ...{.<.;*}R..sZ.
+    ///* 06f0 */ d1 f9 5f a9 69 8c 04 23 b8 e6 2e ce 0d ea 07 30,  // .._.i..#.......0
+    ///* 0700 */ fd 00 3a 0b 61 dd b1 b4 96 9a a9 0e a6 ce ee 98,  // ..:.a...........
+    ///* 0710 */ 1c d5 58 40 1b 34 4a 56 b3 f6 a7 bc 97 e9 85 9b,  // ..X@.4JV........
+    ///* 0720 */ 10 43 df a6 35 b4 0e 41 a5 ae 56 28 2c cc 10 1b,  // .C..5..A..V(,...
+    ///* 0730 */ 71 36 60 1f fc 4b c3 4a 1e b5 51 d9 de b7 5b 9f,  // q6`..K.J..Q...[.
+    ///* 0740 */ 73 b2 a6 6d a0 df ad c6 be 73 a5 4f 90 13 08 b3,  // s..m.....s.O....
+    ///* 0750 */ cf eb 5e 7e 5c 6e 99 5a a0 36 75 03 82 20 a5 74,  // ..^~.n.Z.6u.. .t
+    ///* 0760 */ 8c 1e e4 4b cb 77 97 4d 33 55 fb 2d cb 09 d2 57,  // ...K.w.M3U.-...W
+    ///* 0770 */ dd 69 e9 37 55 c6 f5 0c 54 02 c4 7c e7 9f c6 1f,  // .i.7U...T..|....
+    ///* 0780 */ 9d 20 2d 4a 7a 47 b2 8f 4e 17 88 1e a1 29 ee 26,  // . -JzG..N....).&
+    ///* 0790 */ 79 53 2a 2f 8b 38 de 29 f2 a4 cd 39 29 c2 0a 01,  // yS*/.8.)...9)...
+    ///* 07a0 */ 7f b0 5e 79 84 8d b7 9c 2e 15 40 35 17 d0 ea 7e,  // ..^y......@5...~
+    ///* 07b0 */ 8e a4 ba f9 06 a1 fc a8 dc 74 db 99 5e da bd ff,  // .........t..^...
+    ///* 07c0 */ 43 b9 d7 5c c0 62 be ae 16 be 60 7c 2c 8f bd 53,  // C....b....`|,..S
+    ///* 07d0 */ 42 8c 98 57 73 de a0 94 6f 7a d1 30 ce 26 e2 bf,  // B..Ws...oz.0.&..
+    ///* 07e0 */ de 9f 6f 6c 8f 8c 0c 89 2f 7d ce 1f 2f af 37,     // ..ol..../}../.7
     //    EncryptedLicenseInfo::pBlob
 
-    //    The decrypted LicenseInfo for the above data is 
+    //   (for tests purpose the above data should be decrypted 
+    //   with RC4 key = 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0) 
+
+    //    The decrypted LicenseInfo for the above data is
     //    00 -\|
     //    00 -|
     //    06 -|
@@ -1292,151 +1298,6 @@ namespace LIC
     //    ed-e8 bf d6 13 a0 f5 80 -\|
     //    4a e5 ff 85 16 fa cb 1f -/ MACData
 
-//    //    The decrypted LicenseInfo for the above data is 
-
-
-//, 0x00, 0x00, 0x06, 0x00
-//, 0x0e, 0x00, 0x00, 0x00
-//, 0x6d, 0x69, 0x63, 0x72, 0x6f, 0x73, 0x6f, 0x66, 0x74, 0x2e, 0x63, 0x6f, 0x6d, 0x00
-//, 0x2c, 0x00, 0x00, 0x00
-//, 0x4d, 0x00, 0x69, 0x00, 0x63, 0x00, 0x72, 0x00
-//, 0x6f, 0x00, 0x73, 0x00, 0x6f, 0x00, 0x66, 0x00
-//, 0x74, 0x00, 0x20, 0x00, 0x43, 0x00, 0x6f, 0x00
-//, 0x72, 0x00, 0x70, 0x00, 0x6f, 0x00, 0x72, 0x00
-//, 0x61, 0x00, 0x74, 0x00, 0x69, 0x00, 0x6f, 0x00
-//, 0x6e, 0x00, 0x00, 0x00
-//, 0x08, 0x00, 0x00, 0x00
-//, 0x41, 0x00, 0x30, 0x00, 0x32, 0x00, 0x00, 0x00
-//, 0x99, 0x07, 0x00, 0x00
-//, 0x30, 0x82, 0x07, 0x95, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86
-//, 0xf7, 0x0d, 0x01, 0x07, 0x02, 0xa0, 0x82, 0x07, 0x86, 0x30, 0x82, 0x07, 0x82, 0x02, 0x01, 0x01
-//, 0x31, 0x00, 0x30, 0x0b, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x01, 0xa0
-//, 0x82, 0x07, 0x6a, 0x30, 0x82, 0x02, 0xf1, 0x30, 0x82, 0x01, 0xdd, 0xa0, 0x03, 0x02, 0x01, 0x02
-//, 0x02, 0x08, 0x01, 0x9e, 0x27, 0x4d, 0x68, 0xac, 0xed, 0x20, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e
-//, 0x03, 0x02, 0x1d, 0x05, 0x00, 0x30, 0x32, 0x31, 0x30, 0x30, 0x13, 0x06, 0x03, 0x55, 0x04, 0x03
-//, 0x1e, 0x0c, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x44, 0x00, 0x45, 0x00, 0x4e, 0x00, 0x54, 0x30, 0x19
-//, 0x06, 0x03, 0x55, 0x04, 0x07, 0x1e, 0x12, 0x00, 0x57, 0x00, 0x4f, 0x00, 0x52, 0x00, 0x4b, 0x00
-//, 0x47, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x55, 0x00, 0x50, 0x30, 0x1e, 0x17, 0x0d, 0x37, 0x30, 0x30
-//, 0x35, 0x33, 0x30, 0x31, 0x30, 0x33, 0x36, 0x31, 0x38, 0x5a, 0x17, 0x0d, 0x34, 0x39, 0x30, 0x35
-//, 0x33, 0x30, 0x31, 0x30, 0x33, 0x36, 0x31, 0x38, 0x5a, 0x30, 0x32, 0x31, 0x30, 0x30, 0x13, 0x06
-//, 0x03, 0x55, 0x04, 0x03, 0x1e, 0x0c, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x44, 0x00, 0x45, 0x00, 0x4e
-//, 0x00, 0x54, 0x30, 0x19, 0x06, 0x03, 0x55, 0x04, 0x07, 0x1e, 0x12, 0x00, 0x57, 0x00, 0x4f, 0x00
-//, 0x52, 0x00, 0x4b, 0x00, 0x47, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x55, 0x00, 0x50, 0x30, 0x82, 0x01
-//, 0x22, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00
-//, 0x03, 0x82, 0x01, 0x0f, 0x00, 0x30, 0x82, 0x01, 0x0a, 0x02, 0x82, 0x01, 0x01, 0x00, 0x88, 0xad
-//, 0x7c, 0x8f, 0x8b, 0x82, 0x76, 0x5a, 0xbd, 0x8f, 0x6f, 0x62, 0x18, 0xe1, 0xd9, 0xaa, 0x41, 0xfd
-//, 0xed, 0x68, 0x01, 0xc6, 0x34, 0x35, 0xb0, 0x29, 0x04, 0xca, 0x4a, 0x4a, 0x1c, 0x7e, 0x80, 0x14
-//, 0xf7, 0x8e, 0x77, 0xb8, 0x25, 0xff, 0x16, 0x47, 0x6f, 0xbd, 0xe2, 0x34, 0x3d, 0x2e, 0x02, 0xb9
-//, 0x53, 0xe4, 0x33, 0x75, 0xad, 0x73, 0x28, 0x80, 0xa0, 0x4d, 0xfc, 0x6c, 0xc0, 0x22, 0x53, 0x1b
-//, 0x2c, 0xf8, 0xf5, 0x01, 0x60, 0x19, 0x7e, 0x79, 0x19, 0x39, 0x8d, 0xb5, 0xce, 0x39, 0x58, 0xdd
-//, 0x55, 0x24, 0x3b, 0x55, 0x7b, 0x43, 0xc1, 0x7f, 0x14, 0x2f, 0xb0, 0x64, 0x3a, 0x54, 0x95, 0x2b
-//, 0x88, 0x49, 0x0c, 0x61, 0x2d, 0xac, 0xf8, 0x45, 0xf5, 0xda, 0x88, 0x18, 0x5f, 0xae, 0x42, 0xf8
-//, 0x75, 0xc7, 0x26, 0x6d, 0xb5, 0xbb, 0x39, 0x6f, 0xcc, 0x55, 0x1b, 0x32, 0x11, 0x38, 0x8d, 0xe4
-//, 0xe9, 0x44, 0x84, 0x11, 0x36, 0xa2, 0x61, 0x76, 0xaa, 0x4c, 0xb4, 0xe3, 0x55, 0x0f, 0xe4, 0x77
-//, 0x8e, 0xde, 0xe3, 0xa9, 0xea, 0xb7, 0x41, 0x94, 0x00, 0x58, 0xaa, 0xc9, 0x34, 0xa2, 0x98, 0xc6
-//, 0x01, 0x1a, 0x76, 0x14, 0x01, 0xa8, 0xdc, 0x30, 0x7c, 0x77, 0x5a, 0x20, 0x71, 0x5a, 0xa2, 0x3f
-//, 0xaf, 0x13, 0x7e, 0xe8, 0xfd, 0x84, 0xa2, 0x5b, 0xcf, 0x25, 0xe9, 0xc7, 0x8f, 0xa8, 0xf2, 0x8b
-//, 0x84, 0xc7, 0x04, 0x5e, 0x53, 0x73, 0x4e, 0x0e, 0x89, 0xa3, 0x3c, 0xe7, 0x68, 0x5c, 0x24, 0xb7
-//, 0x80, 0x53, 0x3c, 0x54, 0xc8, 0xc1, 0x53, 0xaa, 0x71, 0x71, 0x3d, 0x36, 0x15, 0xd6, 0x6a, 0x9d
-//, 0x7d, 0xde, 0xae, 0xf9, 0xe6, 0xaf, 0x57, 0xae, 0xb9, 0x01, 0x96, 0x5d, 0xe0, 0x4d, 0xcd, 0xed
-//, 0xc8, 0xd7, 0xf3, 0x01, 0x03, 0x38, 0x10, 0xbe, 0x7c, 0x42, 0x67, 0x01, 0xa7, 0x23, 0x02, 0x03
-//, 0x01, 0x00, 0x01, 0xa3, 0x13, 0x30, 0x11, 0x30, 0x0f, 0x06, 0x03, 0x55, 0x1d, 0x13, 0x04, 0x08
-//, 0x30, 0x06, 0x01, 0x01, 0xff, 0x02, 0x01, 0x00, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02
-//, 0x1d, 0x05, 0x00, 0x03, 0x82, 0x01, 0x01, 0x00, 0x70, 0xdb, 0x21, 0x2b, 0x84, 0x9a, 0x7a, 0xc3
-//, 0xb1, 0x68, 0xfa, 0xc0, 0x00, 0x8b, 0x71, 0xab, 0x43, 0x9f, 0xb6, 0x7b, 0xb7, 0x1f, 0x20, 0x83
-//, 0xac, 0x0a, 0xb5, 0x0e, 0xad, 0xb6, 0x36, 0xef, 0x65, 0x17, 0x99, 0x86, 0x8a, 0x3d, 0xba, 0x0c
-//, 0x53, 0x2e, 0xa3, 0x75, 0xa0, 0xf3, 0x11, 0x3d, 0xe7, 0x65, 0x4b, 0xae, 0x3c, 0x42, 0x70, 0x11
-//, 0xdc, 0xca, 0x83, 0xc0, 0xbe, 0x3e, 0x97, 0x71, 0x84, 0x69, 0xd6, 0xa8, 0x27, 0x33, 0x9b, 0x3e
-//, 0x17, 0x3c, 0xa0, 0x4c, 0x64, 0xca, 0x20, 0x37, 0xa4, 0x11, 0xa9, 0x28, 0x8f, 0xb7, 0x18, 0x96
-//, 0x69, 0x15, 0x0d, 0x74, 0x04, 0x75, 0x2a, 0x00, 0xc7, 0xa6, 0x6a, 0xbe, 0xac, 0xb3, 0xf2, 0xfb
-//, 0x06, 0x1b, 0x6c, 0x11, 0xbd, 0x96, 0xe2, 0x34, 0x74, 0x5d, 0xf5, 0x98, 0x8f, 0x3a, 0x8d, 0x69
-//, 0x08, 0x6f, 0x53, 0x12, 0x4e, 0x39, 0x80, 0x90, 0xce, 0x8b, 0x5e, 0x88, 0x23, 0x2d, 0xfd, 0x55
-//, 0xfd, 0x58, 0x3d, 0x39, 0x27, 0xb3, 0x7c, 0x57, 0xfe, 0x3b, 0xab, 0x62, 0x26, 0x60, 0xe2, 0xd0
-//, 0xc8, 0xf4, 0x02, 0x23, 0x16, 0xc3, 0x52, 0x5d, 0x9f, 0x05, 0x49, 0xa2, 0x71, 0x2d, 0x6d, 0x5b
-//, 0x90, 0xdd, 0xbf, 0xe5, 0xa9, 0x2e, 0xf1, 0x85, 0x8a, 0x8a, 0xb8, 0xa9, 0x6b, 0x13, 0xcc, 0x8d
-//, 0x4c, 0x22, 0x41, 0xad, 0x32, 0x1e, 0x3b, 0x4b, 0x89, 0x37, 0x66, 0xdf, 0x1e, 0xa5, 0x4a, 0x03
-//, 0x52, 0x1c, 0xd9, 0x19, 0x79, 0x22, 0xd4, 0xa7, 0x3b, 0x47, 0x93, 0xa9, 0x0c, 0x03, 0x6a, 0xd8
-//, 0x5f, 0xfc, 0xc0, 0x75, 0x33, 0xe5, 0x26, 0xda, 0xf7, 0x4a, 0x77, 0xd8, 0xf1, 0x30, 0x80, 0x39
-//, 0x38, 0x1e, 0x86, 0x1d, 0x97, 0x00, 0x9c, 0x0e, 0xba, 0x00, 0x54, 0x8a, 0xc0, 0x12, 0x32, 0x6f
-//, 0x3d, 0xc4, 0x15, 0xf9, 0x50, 0xf8, 0xce, 0x95, 0x30, 0x82, 0x04, 0x71, 0x30, 0x82, 0x03, 0x5d
-//, 0xa0, 0x03, 0x02, 0x01, 0x02, 0x02, 0x05, 0x03, 0x00, 0x00, 0x00, 0x0f, 0x30, 0x09, 0x06, 0x05
-//, 0x2b, 0x0e, 0x03, 0x02, 0x1d, 0x05, 0x00, 0x30, 0x32, 0x31, 0x30, 0x30, 0x13, 0x06, 0x03, 0x55
-//, 0x04, 0x03, 0x1e, 0x0c, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x44, 0x00, 0x45, 0x00, 0x4e, 0x00, 0x54
-//, 0x30, 0x19, 0x06, 0x03, 0x55, 0x04, 0x07, 0x1e, 0x12, 0x00, 0x57, 0x00, 0x4f, 0x00, 0x52, 0x00
-//, 0x4b, 0x00, 0x47, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x55, 0x00, 0x50, 0x30, 0x1e, 0x17, 0x0d, 0x30
-//, 0x37, 0x30, 0x36, 0x32, 0x30, 0x31, 0x34, 0x35, 0x31, 0x33, 0x35, 0x5a, 0x17, 0x0d, 0x30, 0x37
-//, 0x30, 0x39, 0x31, 0x38, 0x31, 0x34, 0x35, 0x31, 0x33, 0x35, 0x5a, 0x30, 0x7f, 0x31, 0x7d, 0x30
-//, 0x13, 0x06, 0x03, 0x55, 0x04, 0x03, 0x1e, 0x0c, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x44, 0x00, 0x45
-//, 0x00, 0x4e, 0x00, 0x54, 0x30, 0x21, 0x06, 0x03, 0x55, 0x04, 0x07, 0x1e, 0x1a, 0x00, 0x41, 0x00
-//, 0x64, 0x00, 0x6d, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x69, 0x00, 0x73, 0x00, 0x74, 0x00, 0x72, 0x00
-//, 0x61, 0x00, 0x74, 0x00, 0x6f, 0x00, 0x72, 0x30, 0x43, 0x06, 0x03, 0x55, 0x04, 0x05, 0x1e, 0x3c
-//, 0x00, 0x31, 0x00, 0x42, 0x00, 0x63, 0x00, 0x4b, 0x00, 0x65, 0x00, 0x64, 0x00, 0x79, 0x00, 0x32
-//, 0x00, 0x6b, 0x00, 0x72, 0x00, 0x4f, 0x00, 0x34, 0x00, 0x2f, 0x00, 0x4d, 0x00, 0x43, 0x00, 0x44
-//, 0x00, 0x4c, 0x00, 0x49, 0x00, 0x31, 0x00, 0x41, 0x00, 0x48, 0x00, 0x5a, 0x00, 0x63, 0x00, 0x50
-//, 0x00, 0x69, 0x00, 0x61, 0x00, 0x73, 0x00, 0x3d, 0x00, 0x0d, 0x00, 0x0a, 0x30, 0x82, 0x01, 0x22
-//, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00, 0x03
-//, 0x82, 0x01, 0x0f, 0x00, 0x30, 0x82, 0x01, 0x0a, 0x02, 0x82, 0x01, 0x01, 0x00, 0x88, 0xad, 0x7c
-//, 0x8f, 0x8b, 0x82, 0x76, 0x5a, 0xbd, 0x8f, 0x6f, 0x62, 0x18, 0xe1, 0xd9, 0xaa, 0x41, 0xfd, 0xed
-//, 0x68, 0x01, 0xc6, 0x34, 0x35, 0xb0, 0x29, 0x04, 0xca, 0x4a, 0x4a, 0x1c, 0x7e, 0x80, 0x14, 0xf7
-//, 0x8e, 0x77, 0xb8, 0x25, 0xff, 0x16, 0x47, 0x6f, 0xbd, 0xe2, 0x34, 0x3d, 0x2e, 0x02, 0xb9, 0x53
-//, 0xe4, 0x33, 0x75, 0xad, 0x73, 0x28, 0x80, 0xa0, 0x4d, 0xfc, 0x6c, 0xc0, 0x22, 0x53, 0x1b, 0x2c
-//, 0xf8, 0xf5, 0x01, 0x60, 0x19, 0x7e, 0x79, 0x19, 0x39, 0x8d, 0xb5, 0xce, 0x39, 0x58, 0xdd, 0x55
-//, 0x24, 0x3b, 0x55, 0x7b, 0x43, 0xc1, 0x7f, 0x14, 0x2f, 0xb0, 0x64, 0x3a, 0x54, 0x95, 0x2b, 0x88
-//, 0x49, 0x0c, 0x61, 0x2d, 0xac, 0xf8, 0x45, 0xf5, 0xda, 0x88, 0x18, 0x5f, 0xae, 0x42, 0xf8, 0x75
-//, 0xc7, 0x26, 0x6d, 0xb5, 0xbb, 0x39, 0x6f, 0xcc, 0x55, 0x1b, 0x32, 0x11, 0x38, 0x8d, 0xe4, 0xe9
-//, 0x44, 0x84, 0x11, 0x36, 0xa2, 0x61, 0x76, 0xaa, 0x4c, 0xb4, 0xe3, 0x55, 0x0f, 0xe4, 0x77, 0x8e
-//, 0xde, 0xe3, 0xa9, 0xea, 0xb7, 0x41, 0x94, 0x00, 0x58, 0xaa, 0xc9, 0x34, 0xa2, 0x98, 0xc6, 0x01
-//, 0x1a, 0x76, 0x14, 0x01, 0xa8, 0xdc, 0x30, 0x7c, 0x77, 0x5a, 0x20, 0x71, 0x5a, 0xa2, 0x3f, 0xaf
-//, 0x13, 0x7e, 0xe8, 0xfd, 0x84, 0xa2, 0x5b, 0xcf, 0x25, 0xe9, 0xc7, 0x8f, 0xa8, 0xf2, 0x8b, 0x84
-//, 0xc7, 0x04, 0x5e, 0x53, 0x73, 0x4e, 0x0e, 0x89, 0xa3, 0x3c, 0xe7, 0x68, 0x5c, 0x24, 0xb7, 0x80
-//, 0x53, 0x3c, 0x54, 0xc8, 0xc1, 0x53, 0xaa, 0x71, 0x71, 0x3d, 0x36, 0x15, 0xd6, 0x6a, 0x9d, 0x7d
-//, 0xde, 0xae, 0xf9, 0xe6, 0xaf, 0x57, 0xae, 0xb9, 0x01, 0x96, 0x5d, 0xe0, 0x4d, 0xcd, 0xed, 0xc8
-//, 0xd7, 0xf3, 0x01, 0x03, 0x38, 0x10, 0xbe, 0x7c, 0x42, 0x67, 0x01, 0xa7, 0x23, 0x02, 0x03, 0x01
-//, 0x00, 0x01, 0xa3, 0x82, 0x01, 0x47, 0x30, 0x82, 0x01, 0x43, 0x30, 0x14, 0x06, 0x09, 0x2b, 0x06
-//, 0x01, 0x04, 0x01, 0x82, 0x37, 0x12, 0x04, 0x01, 0x01, 0xff, 0x04, 0x04, 0x01, 0x00, 0x05, 0x00
-//, 0x30, 0x3c, 0x06, 0x09, 0x2b, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x12, 0x02, 0x01, 0x01, 0xff
-//, 0x04, 0x2c, 0x4d, 0x00, 0x69, 0x00, 0x63, 0x00, 0x72, 0x00, 0x6f, 0x00, 0x73, 0x00, 0x6f, 0x00
-//, 0x66, 0x00, 0x74, 0x00, 0x20, 0x00, 0x43, 0x00, 0x6f, 0x00, 0x72, 0x00, 0x70, 0x00, 0x6f, 0x00
-//, 0x72, 0x00, 0x61, 0x00, 0x74, 0x00, 0x69, 0x00, 0x6f, 0x00, 0x6e, 0x00, 0x00, 0x00, 0x30, 0x56
-//, 0x06, 0x09, 0x2b, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x12, 0x05, 0x01, 0x01, 0xff, 0x04, 0x46
-//, 0x00, 0x30, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00
-//, 0x1c, 0x00, 0x08, 0x00, 0x24, 0x00, 0x16, 0x00, 0x3a, 0x00, 0x01, 0x00, 0x41, 0x00, 0x30, 0x00
-//, 0x32, 0x00, 0x00, 0x00, 0x41, 0x00, 0x30, 0x00, 0x32, 0x00, 0x2d, 0x00, 0x36, 0x00, 0x2e, 0x00
-//, 0x30, 0x00, 0x30, 0x00, 0x2d, 0x00, 0x53, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x80
-//, 0x64, 0x80, 0x00, 0x00, 0x00, 0x00, 0x30, 0x6e, 0x06, 0x09, 0x2b, 0x06, 0x01, 0x04, 0x01, 0x82
-//, 0x37, 0x12, 0x06, 0x01, 0x01, 0xff, 0x04, 0x5e, 0x00, 0x30, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x00
-//, 0x3e, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x44, 0x00, 0x45, 0x00, 0x4e, 0x00, 0x54, 0x00, 0x00, 0x00
-//, 0x37, 0x00, 0x38, 0x00, 0x34, 0x00, 0x34, 0x00, 0x30, 0x00, 0x2d, 0x00, 0x30, 0x00, 0x30, 0x00
-//, 0x36, 0x00, 0x2d, 0x00, 0x35, 0x00, 0x38, 0x00, 0x36, 0x00, 0x37, 0x00, 0x30, 0x00, 0x34, 0x00
-//, 0x35, 0x00, 0x2d, 0x00, 0x37, 0x00, 0x30, 0x00, 0x33, 0x00, 0x34, 0x00, 0x37, 0x00, 0x00, 0x00
-//, 0x57, 0x00, 0x4f, 0x00, 0x52, 0x00, 0x4b, 0x00, 0x47, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x55, 0x00
-//, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x30, 0x25, 0x06, 0x03, 0x55, 0x1d, 0x23, 0x01, 0x01, 0xff
-//, 0x04, 0x1b, 0x30, 0x19, 0xa1, 0x10, 0xa4, 0x0e, 0x52, 0x00, 0x4f, 0x00, 0x44, 0x00, 0x45, 0x00
-//, 0x4e, 0x00, 0x54, 0x00, 0x00, 0x00, 0x82, 0x05, 0x03, 0x00, 0x00, 0x00, 0x0f, 0x30, 0x09, 0x06
-//, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1d, 0x05, 0x00, 0x03, 0x82, 0x01, 0x01, 0x00, 0x13, 0x1b, 0xdc
-//, 0x89, 0xd2, 0xfc, 0x54, 0x0c, 0xee, 0x82, 0x45, 0x68, 0x6a, 0x72, 0xc3, 0x3e, 0x17, 0x73, 0x96
-//, 0x53, 0x44, 0x39, 0x50, 0x0e, 0x0b, 0x9f, 0x95, 0xd6, 0x2c, 0x6b, 0x53, 0x14, 0x9c, 0xe5, 0x55
-//, 0xed, 0x65, 0xdf, 0x2a, 0xeb, 0x5c, 0x64, 0x85, 0x70, 0x1f, 0xbc, 0x96, 0xcf, 0xa3, 0x76, 0xb1
-//, 0x72, 0x3b, 0xe1, 0xf6, 0xad, 0xad, 0xad, 0x2a, 0x14, 0xaf, 0xba, 0xd0, 0xd6, 0xd5, 0x6d, 0x55
-//, 0xec, 0x1e, 0xc3, 0x4b, 0xba, 0x06, 0x9c, 0x59, 0x78, 0x93, 0x64, 0x87, 0x4b, 0x03, 0xf9, 0xee
-//, 0x4c, 0xdd, 0x36, 0x5b, 0xbd, 0xd4, 0xe5, 0x4c, 0x4e, 0xda, 0x7b, 0xc1, 0xae, 0x23, 0x28, 0x9e
-//, 0x77, 0x6f, 0x0f, 0xe6, 0x94, 0xfe, 0x05, 0x22, 0x00, 0xab, 0x63, 0x5b, 0xe1, 0x82, 0x45, 0xa6
-//, 0xec, 0x1f, 0x6f, 0x2c, 0x7b, 0x56, 0xde, 0x78, 0x25, 0x7d, 0x10, 0x60, 0x0e, 0x53, 0x42, 0x4b
-//, 0x6c, 0x7a, 0x6b, 0x5d, 0xc9, 0xd5, 0xa6, 0xae, 0xc8, 0xc8, 0x52, 0x29, 0xd6, 0x42, 0x56, 0x02
-//, 0xec, 0xf9, 0x23, 0xa8, 0x8c, 0x8d, 0x89, 0xc9, 0x7c, 0x84, 0x07, 0xfc, 0x33, 0xe1, 0x1e, 0xea
-//, 0xe2, 0x8f, 0x2b, 0xbe, 0x8f, 0xa9, 0xd3, 0xd1, 0xe1, 0x5e, 0x0b, 0xdc, 0xb6, 0x43, 0x6e, 0x33
-//, 0x0a, 0xf4, 0x2e, 0x9d, 0x0c, 0xc9, 0x58, 0x54, 0x34, 0xaa, 0xe1, 0xd2, 0xa2, 0xe4, 0x90, 0x02
-//, 0x23, 0x26, 0xa0, 0x92, 0x26, 0x26, 0x0a, 0x83, 0xb4, 0x4d, 0xd9, 0x4b, 0xef, 0xeb, 0x9d, 0xa9
-//, 0x24, 0x3f, 0x92, 0x8b, 0xdb, 0x04, 0x7b, 0x9d, 0x64, 0x91, 0xa4, 0x4b, 0xd2, 0x6e, 0x51, 0x05
-//, 0x08, 0xc9, 0x91, 0xaf, 0x31, 0x26, 0x55, 0x21, 0xb1, 0xea, 0xce, 0xa3, 0xa4, 0x0d, 0x5e, 0x4c
-//, 0x46, 0xdb, 0x16, 0x2d, 0x98, 0xdc, 0x60, 0x19, 0xb8, 0x1b, 0xb9, 0xcd, 0xfb, 0x31, 0x00
-
-//    //    LicenseInfo::pbLicenseInfo
-//    //    0x7f7: MACData (0x10 bytes)
-//    //    ed-e8 bf d6 13 a0 f5 80 -\|
-//    //    4a e5 ff 85 16 fa cb 1f -/ MACData
-
-
     struct NewLicense_Recv
     {
         uint8_t wMsgType;
@@ -1511,9 +1372,9 @@ namespace LIC
             this->licenseInfo.wBlobLen = stream.in_uint16_le();
 
             // following data is encrypted using license_key
-            RC4_KEY crypt_key;
-            RC4_set_key(&crypt_key, 16, license_key);
-            RC4(&crypt_key, this->licenseInfo.wBlobLen, stream.p, stream.p);
+            SslRC4 rc4;
+            rc4.set_key(16, license_key);
+            rc4.crypt(this->licenseInfo.wBlobLen, stream.p);
 
             // now it's unencrypted, we can read it
             this->licenseInfo.dwVersion = stream.in_uint32_le();
@@ -1524,44 +1385,152 @@ namespace LIC
             this->licenseInfo.cbCompanyName = stream.in_uint32_le();
             stream.in_copy_bytes(this->licenseInfo.pbCompanyName, this->licenseInfo.cbCompanyName);
             this->licenseInfo.cbProductId = stream.in_uint32_le();
-//            stream.in_copy_bytes(this->licenseInfo.pbProductId, this->licenseInfo.cbProductId);
-//            this->LicenseInfo.cbLicenseInfo = stream.in_uint32_le();
-//            stream.in_copy_bytes(this->LicenseInfo.pbLicenseInfo, this->LicenseInfo.cbLicenseInfo);
+            stream.in_copy_bytes(this->licenseInfo.pbProductId, this->licenseInfo.cbProductId);
+            this->licenseInfo.cbLicenseInfo = stream.in_uint32_le();
+            stream.in_copy_bytes(this->licenseInfo.pbLicenseInfo, this->licenseInfo.cbLicenseInfo);
 
-//            stream.in_copy_bytes(this->MACData, LICENSE_SIGNATURE_SIZE);
+            stream.in_copy_bytes(this->MACData, LICENSE_SIGNATURE_SIZE);
 
-            stream.end = stream.p;
             if (stream.p != stream.end){
                 LOG(LOG_ERR, "PlatformChallenge_Recv : unparsed data %d", stream.end - stream.p);
                 throw Error(ERR_LIC);
             }
 
-//                        stream.in_skip_bytes(2); /* 3d 45 - unknown */
-//                        int len1 = stream.in_uint16_le();
-//                        RC4_KEY crypt_key;
-//                        RC4_set_key(&crypt_key, 16, this->lic_layer_license_key);
-//                        RC4(&crypt_key, len1, stream.p, stream.p);
-//                        int check = stream.in_uint16_le();
-//                        license_issued = 1;
+        }
+    };
 
-//                        stream.in_skip_bytes(2); /* pad */
+//    4.7 SERVER UPGRADE LICENSE
+//    --------------------------
 
-//                        uint32_t len2 = stream.in_uint32_le();
-//                        stream.in_skip_bytes(len2);
+//    The Server Upgrade License message is sent to the client to upgrade a license in its license store.
+//    The message type is UPGRADE_LICENSE (0x04) in the licensing preamble. See section 2.2.2.7 for more information.
 
-//                        uint32_t len3 = stream.in_uint32_le();
-//                        stream.in_skip_bytes(len3);
+//    Basically it's the same message format as NEW LICENSE
 
-//                        uint32_t len4 = stream.in_uint32_le();
-//                        stream.in_skip_bytes(len4);
+//    0x00: LICENSE_PREAMBLE (4 bytes)
+//       04 -> LICENSE_PREAMBLE::bMsgType = SERVER_UPGRADE_LICENSE
+//     
+//    03 -> LICENSE_PREAMBLE::bVersion = 3 (RPD 5.0, 5.2, 6.0)
+//     
+//    95 -\|
+//    1b -/ LICENSE_PREAMBLE::wMsgSize = 0x1b95 bytes
 
-//                        uint32_t len5 = stream.in_uint32_le();
+//    0x04: EncryptedLicenseInfo (2 + 2 + 0x1b7d = 0x1b81 bytes)
+//    09 -\|
+//    00 -/ EncryptedLicenseInfo::wBlobType = BB_ENCRYPTED_DATA_BLOB
+//     
+//    7d -\|
+//    1b -/ EncryptedLicenseInfo::wBlobLen = 0x1b7d bytes
+//     
+//    The remaining part of this blob is the EncryptedLicenseInfo. The decrypted
+//            LicenseInfo blob and data fields can be seen in section 4.1.6: Protocol
+//            Examples, SERVER_NEW_LICENSE.
+//    0x1b85: MACData
+//    73 da-36 1e 92 c8 d0 78 12 c3 1c d3 68 a5 c6 00 -> MACData
 
+    struct UpgradeLicense_Recv
+    {
+        uint8_t wMsgType;
+        uint8_t bVersion;
+        uint16_t wMsgSize;
+
+        struct LicenseInfo {
+            uint16_t wBlobType;
+            uint16_t wBlobLen;
+
+            // Following Data in encrypted using licence key
+
+            //    LicenseInfo::dwVersion (4 bytes): The content and format of this field are the same 
+            // as the dwVersion field of the Product Information (section 2.2.2.1.1) structure.
+            // it's a 32-bit unsigned integer that contains the license version information. The high-order word
+            // contains the major version of the operating system on which the terminal server is running, while
+            // the low-order word contains the minor version.<6>
+            uint32_t dwVersion;
+
+            //     LicenseInfo::cbScope (4 bytes): A 32-bit unsigned integer that contains the number of 
+            // bytes in the string contained in the pbScope field.
+            uint32_t cbScope;
+
+            //     LicenseInfo::pbScope (variable): Contains the NULL-terminated ANSI character set string
+            // giving the name of the issuer of this license. For example, for licenses issued
+            // by TailSpin Toys, this field contains the string "TailSpin Toys".
+            uint8_t pbScope[128]; // check the actual size is not too large for what we provide
+
+            //     LicenseInfo::cbCompanyName (4 bytes): The content and format of this field are the same as
+            // the cbCompanyName field of the Product Information structure. An unsigned 32-bit integer that contains
+            // the number of bytes in the pbCompanyName field, including the terminating null character. 
+            // This value MUST be greater than zero.
+            uint32_t cbCompanyName;
+
+            //     LicenseInfo::pbCompanyName (variable): The content and format of this field are the same as
+            // the pbCompanyName field of the Product Information structure. Contains a null-terminated Unicode string
+            // that specifies the company name.<7> 
+            uint8_t pbCompanyName[128]; // check the actual size is not too large for what we provide
+
+            //     LicenseInfo::cbProductId (4 bytes): The content and format of this field are the same as 
+            // the cbProductId field of the Product Information structure. An unsigned 32-bit integer that contains 
+            // the number of bytes in the pbProductId field, including the terminating null character. This value MUST
+            // be greater than zero.
+            uint32_t cbProductId;
+
+            //     LicenseInfo::pbProductId (variable): The content and format of this field are the same as
+            // the pbProductId field of the Product Information structure. Contains a null-terminated Unicode string 
+            // that identifies the type of the license that is required by the terminal server. 
+            // It MAY have the following string value. "A02" Per device or per user license
+            uint8_t pbProductId[128]; // check the actual size is not too large for what we provide
+
+            //     LicenseInfo::cbLicenseInfo (4 bytes): A 32-bit unsigned integer that contains the number
+            // of bytes of binary data in the pbLicenseInfo field.
+            uint32_t cbLicenseInfo;
+
+            //     LicenseInfo::pbLicenseInfo (variable): This field contains the CAL issued to the client by
+            // the license server. This license consists of an X.509 certificate chain generated 
+            // by the license server. The binary data contained in this field is opaque to the 
+            // client. The client sends this information back to the server in the Client License 
+            // Information message.
+            uint8_t pbLicenseInfo[65535];
+        } licenseInfo;
+
+        uint8_t MACData[16];
+
+        UpgradeLicense_Recv(Stream & stream, uint8_t license_key[]){
+            this->wMsgType = stream.in_uint8();
+            this->bVersion = stream.in_uint8();
+            this->wMsgSize = stream.in_uint16_le();
+
+            this->licenseInfo.wBlobType = stream.in_uint16_le();
+            this->licenseInfo.wBlobLen = stream.in_uint16_le();
+
+            // following data is encrypted using license_key
+            SslRC4 rc4;
+            rc4.set_key(16, license_key);
+            rc4.crypt(this->licenseInfo.wBlobLen, stream.p);
+
+            // now it's unencrypted, we can read it
+            this->licenseInfo.dwVersion = stream.in_uint32_le();
+            this->licenseInfo.cbScope = stream.in_uint32_le();
+
+
+            stream.in_copy_bytes(this->licenseInfo.pbScope, this->licenseInfo.cbScope);
+            this->licenseInfo.cbCompanyName = stream.in_uint32_le();
+            stream.in_copy_bytes(this->licenseInfo.pbCompanyName, this->licenseInfo.cbCompanyName);
+            this->licenseInfo.cbProductId = stream.in_uint32_le();
+            stream.in_copy_bytes(this->licenseInfo.pbProductId, this->licenseInfo.cbProductId);
+            this->licenseInfo.cbLicenseInfo = stream.in_uint32_le();
+            stream.in_copy_bytes(this->licenseInfo.pbLicenseInfo, this->licenseInfo.cbLicenseInfo);
+
+            stream.in_copy_bytes(this->MACData, LICENSE_SIGNATURE_SIZE);
+
+            if (stream.p != stream.end){
+                LOG(LOG_ERR, "PlatformChallenge_Recv : unparsed data %d", stream.end - stream.p);
+                throw Error(ERR_LIC);
+            }
 
         }
     };
 
 };
+
 
 
 // 2.2.1.12 Server License Error PDU - Valid Client
