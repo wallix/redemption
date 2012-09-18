@@ -107,5 +107,13 @@ int RecorderOption::normalize_options()
         this->output_type = "png.list";
     }
 
+    if (!this->time_list.empty() && this->output_type == "png.list")
+    {
+        if (this->range.left < this->time_list.front().point)
+        {
+            this->range.left = std::min(this->time_list.front().point, this->range.right);
+        }
+    }
+
     return SUCCESS;
 }
