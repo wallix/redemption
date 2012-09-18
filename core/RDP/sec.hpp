@@ -766,7 +766,7 @@ enum {
             if (flags & SEC_ENCRYPT){
                 crypt.sign(stream.p, 8, data.data, data.size());
                 stream.p += 8;
-                crypt.encrypt(data.data, data.size());
+                crypt.decrypt(data.data, data.size());
             }
             stream.mark_end();
         }

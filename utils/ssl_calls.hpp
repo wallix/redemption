@@ -353,23 +353,6 @@ struct CryptContext
         LOG(LOG_INFO, "cc.encryptionMethod=%u;", this->encryptionMethod);
     }
 
-    /* Encrypt data using RC4 */
-    void encrypt(uint8_t* data, int length)
-    {
-        ssllib ssl;
-
-        if (this->use_count == 4096){
-            this->update();
-            if (this->rc4_key_len == 8) {
-                ssl.sec_make_40bit(this->key);
-            }
-            RC4_set_key(&this->rc4_info, this->rc4_key_len, this->key);
-            this->use_count = 0;
-        }
-        RC4(&this->rc4_info, length, data, data);
-        this->use_count++;
-    }
-
     /* Decrypt data using RC4 */
     void decrypt(uint8_t* data, int len)
     {
