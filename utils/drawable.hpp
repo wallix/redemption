@@ -81,6 +81,11 @@ struct Drawable
         return this->data;
     }
 
+    const uint8_t * first_pixel() const
+    {
+        return this->data;
+    }
+
     uint8_t * first_pixel(const Rect & rect)
     {
         return this->data + (rect.y * this->width + rect.x) * Bpp;
@@ -92,6 +97,11 @@ struct Drawable
     }
 
     uint8_t * first_pixel(int x, int y)
+    {
+        return this->data + (y * this->width + x) * Bpp;
+    }
+
+    const uint8_t * first_pixel(int x, int y) const
     {
         return this->data + (y * this->width + x) * Bpp;
     }
@@ -1006,7 +1016,7 @@ struct Drawable
     void line(const int mix_mode, const int startx, const int starty, const int endx, const int endy, const uint32_t color, const Rect & clip)
     {
         // Color handling
-        uint8_t col[3] = 
+        uint8_t col[3] =
             { static_cast<uint8_t>(color)
             , static_cast<uint8_t>(color >> 8)
             , static_cast<uint8_t>(color >> 16)
@@ -1050,7 +1060,7 @@ struct Drawable
     void vertical_line(const uint8_t mix_mode, const uint16_t x, const uint16_t starty, const uint16_t endy, const uint32_t color)
     {
         // Color handling
-        uint8_t col[3] = 
+        uint8_t col[3] =
             { static_cast<uint8_t>(color)
             , static_cast<uint8_t>(color >> 8)
             , static_cast<uint8_t>(color >> 16)};
@@ -1066,7 +1076,7 @@ struct Drawable
 
     void horizontal_line(const uint8_t mix_mode, const uint16_t startx, const uint16_t y, const uint16_t endx, const uint32_t color)
     {
-        uint8_t col[3] = 
+        uint8_t col[3] =
             { static_cast<uint8_t>(color)
             , static_cast<uint8_t>(color >> 8)
             , static_cast<uint8_t>(color >> 16)
