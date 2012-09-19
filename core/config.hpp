@@ -31,6 +31,7 @@
 #include <istream>
 #include <string>
 #include <stdint.h>
+#include <boost/program_options.hpp>
 
 typedef enum{
     AUTHID_UNKNOWN = 0,
@@ -175,7 +176,6 @@ struct IniAccounts {
     // get it from configuration file and if it's empty use command line
     // ... it's getting quite complicated and obviously too complicated
     // to be managed by a poor lone boolean...
-    bool askport;        // true if port should be asked interactively
     bool askusername;    // true if username should be asked interactively
     bool askip;          // true if ip should be asked interactively
     bool askpassword;    // true if password should be asked interactively
@@ -274,13 +274,15 @@ struct Inifile {
     } globals;
 
     struct IniAccounts account[6];
+    boost::program_options::options_description Inifile_desc;
 
     Inifile();
     Inifile(const char * filename);
     Inifile(std::istream & Inifile_stream);
 
-    private:
-        void init(std::istream & Inifile_stream);
+    void init();
+    void parse(std::istream & Inifile_stream, bool getdefault = false);
+    void parse(const char * filename, bool getdefault = false);
 
 };
 

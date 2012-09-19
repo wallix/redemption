@@ -28,6 +28,7 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <stdio.h>
 
+#define LOGPRINT
 #include "config.hpp"
 #include <sstream>
 #include <string>
@@ -61,7 +62,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL(false, ini.account[0].accountdefined);
     BOOST_CHECK_EQUAL(0,     ini.account[0].accountname[0]);
-    BOOST_CHECK_EQUAL(false, ini.account[0].askport);
     BOOST_CHECK_EQUAL(0,     ini.account[0].port);
     BOOST_CHECK_EQUAL(false, ini.account[0].askusername);
     BOOST_CHECK_EQUAL(0,     ini.account[0].username[0]);
@@ -97,7 +97,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
 
     BOOST_CHECK_EQUAL(false, ini.account[0].accountdefined);
     BOOST_CHECK_EQUAL(0,     ini.account[0].accountname[0]);
-    BOOST_CHECK_EQUAL(false, ini.account[0].askport);
     BOOST_CHECK_EQUAL(0,     ini.account[0].port);
     BOOST_CHECK_EQUAL(false, ini.account[0].askusername);
     BOOST_CHECK_EQUAL(0,     ini.account[0].username[0]);
@@ -141,7 +140,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(ID_LIB_VNC, acc.idlib);
     BOOST_CHECK_EQUAL(std::string("config1"), std::string(acc.accountname));
     BOOST_CHECK_EQUAL(true, acc.accountdefined);
-    BOOST_CHECK_EQUAL(false, acc.askport);
     BOOST_CHECK_EQUAL(5900,  acc.port);
     BOOST_CHECK_EQUAL(false, acc.askusername);
     BOOST_CHECK_EQUAL(std::string("myname"), std::string(acc.username));
@@ -219,7 +217,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     // test we can read a config file with a global section
     std::stringstream oss(
     "[globals]\n"
-    "bitmap_cache=yes\n"
+    "bitmap_cache=no\n"
     "bitmap_compression=TRuE\n"
     "port=3390\n"
     "encryptionLevel=low\n"
@@ -257,7 +255,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     );
 
     Inifile ini(oss);
-    BOOST_CHECK_EQUAL(true, ini.globals.bitmap_cache);
+    BOOST_CHECK_EQUAL(false, ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3390, ini.globals.port);
     BOOST_CHECK_EQUAL(1,    ini.globals.channel_code);
@@ -267,7 +265,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(ID_LIB_VNC,  acc.idlib);
     BOOST_CHECK_EQUAL(std::string("config1"), std::string(acc.accountname));
     BOOST_CHECK_EQUAL(true, acc.accountdefined);
-    BOOST_CHECK_EQUAL(false, acc.askport);
     BOOST_CHECK_EQUAL(5900,  acc.port);
     BOOST_CHECK_EQUAL(false, acc.askusername);
     BOOST_CHECK_EQUAL(std::string("myname"), std::string(acc.username));
@@ -307,6 +304,15 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(ID_LIB_AUTH, acc.idlib);
     BOOST_CHECK_EQUAL(std::string("config4"), std::string(acc.accountname));
     BOOST_CHECK_EQUAL(true, acc.accountdefined);
+
+    // see we can change configuration using parse without default setting of existing ini
+    std::stringstream oss2(
+    "[globals]\n"
+    "bitmap_compression=no\n"
+    );
+    ini.parse(oss2, false);
+//    BOOST_CHECK_EQUAL(false, ini.globals.bitmap_cache);
+    BOOST_CHECK_EQUAL(false, ini.globals.bitmap_compression);
 
 }
 
