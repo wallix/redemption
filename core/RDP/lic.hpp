@@ -760,15 +760,15 @@ namespace LIC
     //    83 -> LICENSE_PREAMBLE::bVersion = 0x80
     //               (ExtendedError supported) | 0x3 (RDP 5.0,5.2,6.0)
     //     
-    //    55 -\
+    //    55 -\|
     //    01 -/ LICENSE_PREAMBLE::wMsgSize = 0x155
     //    0x04: PreferredKeyGenAlgo (4 bytes)
-    //    01 -\
+    //    01 -\|
     //    00 -|
     //    00 -|
     //    00 -/ PreferredKeyGenAlgo = 0x01
     //    0x08: PlatformId (4 bytes)
-    //    00 -\
+    //    00 -\|
     //    00 -|
     //    01 -|
     //    04 -/ PlatformId = CLIENT_OS_ID_WINNT_POST_52 |
@@ -779,13 +779,13 @@ namespace LIC
     //    8b bc 0d cc a3 95 b7 b9 
     //    eb 81 5d be 0a 10 9c d8
     //    0x2c: EncryptedPreMaster (2 + 2 + 0x108 = 0x10c bytes)
-    //    02 -\
+    //    02 -\|
     //    00 -/ EncryptedPreMaster::wBlobType
     //     
-    //    08 -\
+    //    08 -\|
     //    01 -/ EncryptedPreMaster::wBlobLen = 0x108 bytes 
 
-    //    da 9c 5d a6 68 9d a3 90-67 24 f3 3a ea a1 e2 68 -\
+    //    da 9c 5d a6 68 9d a3 90-67 24 f3 3a ea a1 e2 68 -\|
     //    ad 12 f5 f6 0b 7a ac 92-b1 69 6f 42 55 8a a0 e2 -|
     //    9b 2c d0 c7 ee 33 6c 47-79 c3 1e bf 03 8b 95 70 -|
     //    07 a2 be ee 54 02 68 f8-90 d7 fe 2c 08 e1 6b 2d -|
@@ -809,19 +809,19 @@ namespace LIC
     //    bb d2 56 bd d8 f7 f3 16-cc 35 3b e1 93 42 78 dd
     //    92 9a e4 7a e2 99 d4 73-b1 aa 6f 55 94 3b c9 bc
     //    0x138: ClientUserName (2 + 2 + 0xe = 0x12 bytes)
-    //    0f -\
+    //    0f -\|
     //    00 -/ ClientUserName::wBlobType = BB_CLIENT_USER_NAME
 
-    //    0e -\
+    //    0e -\|
     //    00 -/ ClientUserName::wBlobLen = 0xe bytes
 
-    //    41 64 6d 69 6e 69 73 74 -\
+    //    41 64 6d 69 6e 69 73 74 -\|
     //    72 61 74 6f 72 00       -/ ClientUserName::pBlob
     //    0x14a: ClientMachineName (2 + 2 + 7 = 0xb bytes)
-    //    10 -\
+    //    10 -\|
     //    00 -/ ClientMachineName::wBlobType = BB_CLIENT_MACHINE_NAME
 
-    //    07 -\
+    //    07 -\|
     //    00 -/ ClientMachineName::wBlobLen = 7 bytes
 
     //    52 4f 44 45 4e 54 00 -> ClientMachineName::pBlob
@@ -1003,33 +1003,33 @@ namespace LIC
     //    83 -> LICENSE_PREAMBE::bVersion = 0x80 | 0x3
     //     
 
-    //    fd -\
+    //    fd -\|
     //    08 -/ LICENSE_PREAMBLE::wMsgSize = 0x8fd bytes 
     //     
     //    0x04: PreferredKeyExchgAlg (4 bytes)
-    //    01 -\
+    //    01 -\|
     //    00 -|
     //    00 -|
     //    00 -/ CLIENT_LICENSE_INFO::dwPrefKeyExchangeAlg = 1
     //     
     //    0x08: PlatformId (4 bytes)
-    //    00 -\
+    //    00 -\|
     //    00 -|
     //    01 -|
     //    04 -/ CLIENT_LICENSE_INFO::dwPlatformId = 0x04010000
     //    0x0c: Client Random (0x20 bytes)
-    //             26 c9 32 34 7d 2b e1 75 -\
+    //             26 c9 32 34 7d 2b e1 75 -\|
     //    50 5e 47 7e-76 8d 78 7b -|
     //    bb 21 aa b7 b0 b8 ea 6c -|
     //    dd c1 b0 01-e6 13 be d8 -/ CLIENT_LICENSE_INFO::ClientRandom
     //    0x2c: EncryptedPreMaster (2 + 2 + 0x108 = 0x10c bytes)
-    //    02 -\
+    //    02 -\|
     //    00 -/ EncryptedPreMasterSecret::wBlobType
 
-    //    08 -\
+    //    08 -\|
     //    01 -/ EncryptedPreMasterSecret::wBlobLen
 
-    //    b1 fa 1c 25 d9 5e 9d 04-cd d2 d4 34 c6 a2 e6 f3 -\
+    //    b1 fa 1c 25 d9 5e 9d 04-cd d2 d4 34 c6 a2 e6 f3 -\|
     //    a2 bf bc 53 8a 0e 15 cf-1c 1a 99 bb 49 dc 9e 71 -|
     //    39 03 78 ce 5d 72 29 09-3a 86 b1 1d e8 b1 38 07 -|
     //    29 62 87 84 1e cc 95 b0-49 19 a0 cf 27 90 9a ef -|
@@ -1048,13 +1048,13 @@ namespace LIC
     //    00 00 00 00 00 00 00 00                         -/
     //    EncryptedPreMasterSecret::pBlob
     //    0x138: LicenseInfo (2 + 2 + 0x0799 = 0x79d bytes)
-    //    01 -\
+    //    01 -\|
     //    00 -/ LicenseInfo::wBlobType = BB_DATA_BLOB
 
-    //    99 -\
+    //    99 -\|
     //    07 -/ LicenseInfo::wBlobLen = 0x799
 
-    //                                        30 82 07 95 -\
+    //                                        30 82 07 95 -\|
     //    06 09 2a 86 48 86 f7 0d-01 07 02 a0 82 07 86 30 -|
     //    82 07 82 02 01 01 31 00-30 0b 06 09 2a 86 48 86 -|
     //    f7 0d 01 07 01 a0 82 07-6a 30 82 02 f1 30 82 01 -|
@@ -1178,18 +1178,18 @@ namespace LIC
     //    ce a3 a4 0d 5e 4c 46 db-16 2d 98 dc 60 19 b8 1b -|
     //    b9 cd fb 31 00                                  -/
     //    0x8d5: EncryptedHWID (2 + 2 + 0x14 = 0x18 bytes)
-    //    01 -\
+    //    01 -\|
     //    00 -/ EncryptedHWID::wBlobType
     //     
-    //    14 -\
+    //    14 -\|
     //    00 -/ EncryptedHWID::wBlobLen
     //     
-    //    b9 30 59 3b 93 61 c9 f6 -\
+    //    b9 30 59 3b 93 61 c9 f6 -\|
     //    b6 0b 1f dc 1a 85 67 39 -|
     //    dc 29 65 62             -/ EncryptedHWID::pBlob
 
     //    0x:8ed: MACData (0x10 bytes)
-    //    42 a2 13 c7 54 ae b5 d5 -\
+    //    42 a2 13 c7 54 ae b5 d5 -\|
     //    24 66 54 f3 1b af 8d fb -/ MACData
 
  
@@ -1378,36 +1378,36 @@ namespace LIC
     //     
     //    83 -> LICENSE_PREAMBLE::bVersion = 0x80 | 0x3
     //     
-    //    42 -\
+    //    42 -\|
     //    00 -/ LICENSE_PREAMBLE::wMsgSize = 0x42 bytes
     //    0x04: EncryptedPlatformChallengeResponse
     //       (2 + 2 + 0x12 = 0x16 bytes)
-    //    01 -\
+    //    01 -\|
     //    00 -/ EncryptedPlatformChallengeResponse::wBlobType (ignored)
     //     
-    //    12 -\
+    //    12 -\|
     //    00 -/ EncryptedPlatformChallengeResponse::wBlobLen = 0x12
     //     
-    //    fa b4 e8 24 cf 56 b2 4e -\
+    //    fa b4 e8 24 cf 56 b2 4e -\|
     //    80 02 bd b6 61 fc df e9 -|
     //    6c 44                   -/
     //    EncryptedPlatformChallengeResponse::pBlob
 
     //    The corresponding decrypted platform challenge response data
     //    for the above is
-    //    00 -\
+    //    00 -\|
     //    01 -/ PLATFORM_CHALLENGE_RESPONSE_DATA::wVersion
 
-    //    00 -\
+    //    00 -\|
     //    01 -/ PLATFORM_CHALLENGE_RESPONSE_DATA::wClientType
 
-    //    03 -\
+    //    03 -\|
     //    00 -/ PLATFORM_CHALLENGE_RESPONSE_DATA::wLicenseDetailLevel
 
-    //    0a -\
+    //    0a -\|
     //    00 -/ PLATFORM_CHALLENGE_RESPONSE_DATA::cbChallenge
 
-    //    54 -\
+    //    54 -\|
     //    00 -|
     //    45 -|
     //    00 -|
@@ -1419,44 +1419,44 @@ namespace LIC
     //    00 -/ PLATFORM_CHALLENGE_RESPONSE_DATA::pbChallenge
 
     //    0x1a: EncryptedHWID (2 + 2 + 0x14 = 0x18 bytes)
-    //    01 -\
+    //    01 -\|
     //    00 -/ EncryptedHWID::wBlobType (ignored)
     //     
-    //    14 -\
+    //    14 -\|
     //    00 -/ EncryptedHWID::wBlobLen
     //     
-    //    f8 b5 e8 25 3d 0f 3f 70 -\
+    //    f8 b5 e8 25 3d 0f 3f 70 -\|
     //    1d da-60 19 16 fe 73 1a -|
     //    45 7e 02 71             -/ EncryptedHWID::pBlob
 
     //    The corresponding decrypted HWID for the above is
-    //    02 -\
+    //    02 -\|
     //    00 -|
     //    00 -|
     //    00 -/ CLIENT_HARDWARE_ID::PlatformId
 
-    //    f1 -\
+    //    f1 -\|
     //    59 -|
     //    87 -|
     //    3e -/ CLIENT_HARDWARE_ID::Data1
 
-    //    c9 -\
+    //    c9 -\|
     //    d8 -|
     //    98 -|
     //    af -/ CLIENT_HARDWARE_ID::Data2
 
-    //    24 -\
+    //    24 -\|
     //    02 -|
     //    f8 -|
     //    f3 -/ CLIENT_HARDWARE_ID::Data3
 
-    //    29 -\
+    //    29 -\|
     //    3a -|
     //    f0 -|
     //    26 -/ CLIENT_HARDWARE_ID::Data4
 
     //    0x32: MACData (0x10 bytes)
-    //    38 23 62 5d 10 8b-93 c3 -\
+    //    38 23 62 5d 10 8b-93 c3 -\|
     //    f1 e4 67 1f 4a b6 00 0a -/ MACData
 
 
