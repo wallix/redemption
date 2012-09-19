@@ -64,6 +64,13 @@ void sigchld(int sig)
     LOG(LOG_INFO, "Ignoring SIGCHLD : signal %d pid %d\n", sig, getpid());
 }
 
+int refreshconf;
+
+void sighup(int sig)
+{
+    refreshconf = 1;
+}
+
 void init_signals(void)
 {
     struct sigaction sa;
@@ -91,7 +98,7 @@ void init_signals(void)
     sa.sa_handler = shutdown;
     sigaction(SIGTERM, &sa, NULL);
 
-    sa.sa_handler = shutdown;
+    sa.sa_handler = sighup;
     sigaction(SIGHUP, &sa, NULL);
 
     sa.sa_handler = shutdown;
@@ -170,7 +177,7 @@ void redemption_new_session()
         wait_obj front_event(sck);
         SocketTransport front_trans("RDP Client", sck, ini.globals.debug.front);
 
-        Session session(front_event, front_trans, ip_source, &ini);
+        Session session(front_event, front_trans, ip_source, &refreshconf, &ini);
 
         if (ini.globals.debug.session){
             LOG(LOG_INFO, "Session::end of Session(%u)", sck);
@@ -189,7 +196,7 @@ void redemption_main_loop()
 {
     init_signals();
 
-    SessionServer ss;
+    SessionServer ss(&refreshconf);
     Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     int port = ini.globals.port;
     Listen listener(ss, port);

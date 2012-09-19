@@ -91,6 +91,8 @@ enum {
 
 struct Session {
 
+    int * refreshconf;
+
     wait_obj & front_event;
     SocketTransport & front_trans;
 
@@ -111,8 +113,8 @@ struct Session {
     SessionManager * sesman;
     UdevRandom gen;
 
-    Session(wait_obj & front_event, SocketTransport & front_trans, const char * ip_source, Inifile * ini)
-        : front_event(front_event), front_trans(front_trans), ini(ini), verbose(this->ini->globals.debug.session)
+    Session(wait_obj & front_event, SocketTransport & front_trans, const char * ip_source, int * refreshconf, Inifile * ini)
+        : refreshconf(refreshconf), front_event(front_event), front_trans(front_trans), ini(ini), verbose(this->ini->globals.debug.session)
     {
         try {
             this->context = new ModContext();
@@ -147,6 +149,11 @@ struct Session {
             int previous_state = SESSION_STATE_STOP;
             struct timeval time_mark = { 0, 0 };
             while (1) {
+                if (*this->refreshconf == 1){
+                    *this->refreshconf = 0;
+                    LOG(LOG_INFO, "received signal SIGHUP, rereading configuration file");
+                }
+
                 if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500){
                     time_mark.tv_sec = 0;
                     time_mark.tv_usec = 50000;
@@ -170,6 +177,9 @@ struct Session {
                     this->mod->event.add_to_fd_set(rfds, max);
                 }
                 int num = select(max + 1, &rfds, &wfds, 0, &timeout);
+                if (num < 0 && errno == EINTR){
+                    continue;
+                }
                 
                 if (this->front_event.is_set(rfds)) {
                     try {

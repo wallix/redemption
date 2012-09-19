@@ -28,6 +28,12 @@
 
 class SessionServer : public Server
 {
+    int * refreshconf ;
+
+    public:
+    SessionServer(int * refreshconf) : refreshconf(refreshconf) {
+    }
+
     virtual Server_status start(int incoming_sck)
     {
         struct sockaddr_in sin;
@@ -54,7 +60,7 @@ class SessionServer : public Server
                 wait_obj front_event(sck);
                 SocketTransport front_trans("RDP Client", sck, ini.globals.debug.front);
 
-                Session session(front_event, front_trans, ip_source, &ini);
+                Session session(front_event, front_trans, ip_source, this->refreshconf, &ini);
 
                 if (ini.globals.debug.session){
                     LOG(LOG_INFO, "Session::end of Session(%u)", sck);
@@ -64,7 +70,7 @@ class SessionServer : public Server
                 close(sck);
             }
             else {
-                LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
+                LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
             }
             return START_WANT_STOP;
         }
@@ -76,7 +82,7 @@ class SessionServer : public Server
         break;
         case -1:
             // error forking
-            LOG(LOG_INFO, "Error creating process for new session : %s\n", strerror(errno));
+            LOG(LOG_ERR, "Error creating process for new session : %s\n", strerror(errno));
         break;
         }
         return START_FAILED;
