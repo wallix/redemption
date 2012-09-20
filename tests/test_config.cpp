@@ -62,15 +62,12 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL(false, ini.account[0].accountdefined);
     BOOST_CHECK_EQUAL(0,     ini.account[0].accountname[0]);
-    BOOST_CHECK_EQUAL(0,     ini.account[0].port);
     BOOST_CHECK_EQUAL(false, ini.account[0].askusername);
     BOOST_CHECK_EQUAL(0,     ini.account[0].username[0]);
     BOOST_CHECK_EQUAL(false, ini.account[0].askpassword);
     BOOST_CHECK_EQUAL(0,     ini.account[0].password[0]);
     BOOST_CHECK_EQUAL(false, ini.account[0].askip);
     BOOST_CHECK_EQUAL(0,     ini.account[0].ip[0]);
-    BOOST_CHECK_EQUAL(0,     ini.account[0].authip[0]);
-    BOOST_CHECK_EQUAL(3350,  ini.account[0].authport);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigDefault)
@@ -97,15 +94,12 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
 
     BOOST_CHECK_EQUAL(false, ini.account[0].accountdefined);
     BOOST_CHECK_EQUAL(0,     ini.account[0].accountname[0]);
-    BOOST_CHECK_EQUAL(0,     ini.account[0].port);
     BOOST_CHECK_EQUAL(false, ini.account[0].askusername);
     BOOST_CHECK_EQUAL(0,     ini.account[0].username[0]);
     BOOST_CHECK_EQUAL(false, ini.account[0].askpassword);
     BOOST_CHECK_EQUAL(0,     ini.account[0].password[0]);
     BOOST_CHECK_EQUAL(false, ini.account[0].askip);
     BOOST_CHECK_EQUAL(0,     ini.account[0].ip[0]);
-    BOOST_CHECK_EQUAL(0,     ini.account[0].authip[0]);
-    BOOST_CHECK_EQUAL(3350,  ini.account[0].authport);
 
 }
 
@@ -140,7 +134,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(ID_LIB_VNC, acc.idlib);
     BOOST_CHECK_EQUAL(std::string("config1"), std::string(acc.accountname));
     BOOST_CHECK_EQUAL(true, acc.accountdefined);
-    BOOST_CHECK_EQUAL(5900,  acc.port);
     BOOST_CHECK_EQUAL(false, acc.askusername);
     BOOST_CHECK_EQUAL(std::string("myname"), std::string(acc.username));
     BOOST_CHECK_EQUAL(false, acc.askpassword);
@@ -265,7 +258,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(ID_LIB_VNC,  acc.idlib);
     BOOST_CHECK_EQUAL(std::string("config1"), std::string(acc.accountname));
     BOOST_CHECK_EQUAL(true, acc.accountdefined);
-    BOOST_CHECK_EQUAL(5900,  acc.port);
     BOOST_CHECK_EQUAL(false, acc.askusername);
     BOOST_CHECK_EQUAL(std::string("myname"), std::string(acc.username));
     BOOST_CHECK_EQUAL(false, ini.account[0].askpassword);
@@ -296,8 +288,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string(""), std::string(acc.password));
     BOOST_CHECK_EQUAL(false, acc.askip);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"), std::string(acc.ip));
-    BOOST_CHECK_EQUAL(3350,  acc.authport);
-    BOOST_CHECK_EQUAL(std::string("127.0.0.1"), std::string(acc.authip));
 
     acc = ini.account[5];
 
@@ -310,11 +300,27 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     "[globals]\n"
     "bitmap_compression=no\n"
     );
-    ini.parse(oss2, false);
+    ini.cparse(oss2, false);
 //    BOOST_CHECK_EQUAL(false, ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(false, ini.globals.bitmap_compression);
 
 }
+
+BOOST_AUTO_TEST_CASE(TestNewConf)
+{
+    Inifile ini;
+
+    std::stringstream ifs(
+    "[globals]\n"
+    "bitmap_compression=no no no no no no no no no no no no no on no nono n ono no\n"
+    "bitmap_compression=yes\n"
+    "yyy\n"
+    "zzz"
+    );
+
+    ini.cparse(ifs, true);
+}
+
 
 BOOST_AUTO_TEST_CASE(TestAuthentificationKeywordRecognition)
 {

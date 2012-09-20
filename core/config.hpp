@@ -180,14 +180,11 @@ struct IniAccounts {
     bool askip;          // true if ip should be asked interactively
     bool askpassword;    // true if password should be asked interactively
 
-    int port;
     char username[255]; // should use string
     char password[255]; // should use string
     // do we want to allow asking ip to dns using hostname ?
     char ip[255];          // should use string
     // if remote authentication is on below is address of authentication server
-    char authip[255];      // should use string
-    int authport;
     int maxtick;
 };
 
@@ -274,15 +271,17 @@ struct Inifile {
     } globals;
 
     struct IniAccounts account[6];
-    boost::program_options::options_description Inifile_desc;
 
     Inifile();
     Inifile(const char * filename);
     Inifile(std::istream & Inifile_stream);
 
     void init();
-    void parse(std::istream & Inifile_stream, bool getdefault = false);
-    void parse(const char * filename, bool getdefault = false);
+    void cparse(std::istream & Inifile_stream, bool getdefault = false);
+    void cparse(const char * filename, bool getdefault = false);
+    void parseline(const char * line, char * context, bool getdefault);
+    void setglobal(const char * key, const char * value, const char * context, bool getdefault);
+
 
 };
 

@@ -51,18 +51,25 @@ bool bool_from_string(string str)
         || (boost::iequals(string("true"),str));
 }
 
-unsigned level_from_string(string str)
+bool bool_from_cstr(const char * str)
+{
+    return (0 == strcasecmp("1",str))
+        || (0 == strcasecmp("yes",str))
+        || (0 == strcasecmp("on",str))
+        || (0 == strcasecmp("true",str));
+}
+
+unsigned level_from_string(const char * str)
 { // low = 0, medium = 1, high = 2
     unsigned res = 0;
-    if (0 == string("medium").compare(str)) { res = 1; }
-    else if (0 == string("high").compare(str)) { res = 2; }
-TODO(" should throw an exeption for unrecognised values")
+    if (0 == strcmp("medium", str)) { res = 1; }
+    else if (0 == strcmp("high", str)) { res = 2; }
     return res;
 }
 
-bool check_name(string str)
+bool check_name(const char * str)
 {
-    return ((str.length() > 0) && (str.length() < 250));
+    return ((strlen(str) > 0) && (strlen(str) < 250));
 }
 
 bool check_ask(const char * str)
@@ -192,405 +199,338 @@ void ask_string(const char * str, char buffer[], bool & flag)
     }
 }
 
-Inifile::Inifile() : Inifile_desc("rdpproxy.ini configuration file:"){
+Inifile::Inifile() {
     std::stringstream oss("");
     this->init();
-    this->parse(oss, true);
+    this->cparse(oss, true);
 }
 
-Inifile::Inifile(const char * filename) : Inifile_desc("rdpproxy.ini configuration file:") {
+Inifile::Inifile(const char * filename) {
     this->init();
-    this->parse(filename, true);
+    this->cparse(filename, true);
 }
 
 
-Inifile::Inifile(istream & Inifile_stream) : Inifile_desc("rdpproxy.ini configuration file:") {
+Inifile::Inifile(istream & Inifile_stream) {
     this->init();
-    this->parse(Inifile_stream, true);
+    this->cparse(Inifile_stream, true);
 }
 
 void Inifile::init(){
-TODO(" find a more generic way to read this struct with any number of account lines")
-    this->Inifile_desc.add_options()
-    ("globals.bitmap_cache", boost::program_options::value<string>()->default_value("yes"), "")
-    ("globals.bitmap_compression", boost::program_options::value<string>()->default_value("yes"), "")
-    ("globals.port", boost::program_options::value<int>(&this->globals.port)->default_value(3389), "")
-    ("globals.encryptionLevel", boost::program_options::value<string>()->default_value("low"), "")
-    ("globals.channel_code", boost::program_options::value<unsigned>()->default_value(1), "")
-    ("globals.autologin", boost::program_options::value<string>()->default_value("no"), "")
-    ("globals.authversion", boost::program_options::value<unsigned>()->default_value(2), "Version of Wallix Authentication Protocol")
-    ("globals.authip", boost::program_options::value<string>()->default_value("127.0.0.1"), "")
-    ("globals.authport", boost::program_options::value<int>()->default_value(3350), "")
-    ("globals.nomouse", boost::program_options::value<string>()->default_value("false"), "")
-    ("globals.notimestamp", boost::program_options::value<string>()->default_value("false"), "")
-    ("globals.autovalidate", boost::program_options::value<string>()->default_value("false"), "")
-    ("globals.l_bitrate", boost::program_options::value<int>()->default_value(20000), "")
-    ("globals.l_framerate", boost::program_options::value<int>()->default_value(1), "")
-    ("globals.l_height", boost::program_options::value<int>()->default_value(480), "")
-    ("globals.l_width", boost::program_options::value<int>()->default_value(640), "")
-    ("globals.l_qscale", boost::program_options::value<int>()->default_value(25), "")
-    ("globals.m_bitrate", boost::program_options::value<int>()->default_value(40000), "")
-    ("globals.m_framerate", boost::program_options::value<int>()->default_value(1), "")
-    ("globals.m_height", boost::program_options::value<int>()->default_value(768), "")
-    ("globals.m_width", boost::program_options::value<int>()->default_value(1024), "")
-    ("globals.m_qscale", boost::program_options::value<int>()->default_value(15), "")
-    ("globals.h_bitrate", boost::program_options::value<int>()->default_value(200000), "")
-    ("globals.h_framerate", boost::program_options::value<int>()->default_value(5), "")
-    ("globals.h_height", boost::program_options::value<int>()->default_value(1024), "")
-    ("globals.h_width", boost::program_options::value<int>()->default_value(1280), "")
-    ("globals.h_qscale", boost::program_options::value<int>()->default_value(15), "")
+        this->globals.bitmap_cache = true;
+        this->globals.bitmap_compression = true;
+        this->globals.port = 3389;
+        this->globals.nomouse = false;
+        this->globals.notimestamp = false;
 
-    ("globals.max_tick", boost::program_options::value<int>()->default_value(30), "")
-    ("globals.keepalive_grace_delay", boost::program_options::value<int>()->default_value(30), "")
+        this->globals.encryptionLevel = level_from_string("low");
+        this->globals.channel_code = 1;
+        this->globals.autologin = false;
+        strcpy(this->globals.authip, "127.0.0.1");
+        this->globals.authport = 3350;
+        this->globals.authversion = 2;
+        this->globals.autovalidate = false;
+        this->globals.l_bitrate   = 20000;
+        this->globals.l_framerate = 1;
+        this->globals.l_height    = 480;
+        this->globals.l_width     = 640;
+        this->globals.l_qscale    = 25;
+        this->globals.m_bitrate   = 40000;
+        this->globals.m_framerate = 1;
+        this->globals.m_height    = 768;
+        this->globals.m_width     = 1024;
+        this->globals.m_qscale    = 15;
+        this->globals.h_bitrate   = 200000;
+        this->globals.h_framerate = 5;
+        this->globals.h_height    = 1024;
+        this->globals.h_width     = 1280;
+        this->globals.h_qscale    = 15;
+        this->globals.max_tick    = 30;
+        this->globals.keepalive_grace_delay = 30;
+        strcpy(this->globals.movie_path, "/tmp/");
+        this->globals.internal_domain = false;
+        this->globals.debug.x224              = 0;
+        this->globals.debug.mcs               = 0;
+        this->globals.debug.sec               = 0;
+        this->globals.debug.rdp               = 0;
+        this->globals.debug.primary_orders    = 0;
+        this->globals.debug.secondary_orders  = 0;
+        this->globals.debug.bitmap            = 0;
+        this->globals.debug.capture           = 0;
+        this->globals.debug.auth              = 0;
+        this->globals.debug.session           = 0;
+        this->globals.debug.front             = 0;
+        this->globals.debug.mod_rdp           = 0;
+        this->globals.debug.mod_vnc           = 0;
+        this->globals.debug.mod_int           = 0;
+        this->globals.debug.mod_xup           = 0;
+        this->globals.debug.widget            = 0;
+        this->globals.debug.input             = 0;
 
-    ("globals.movie_path", boost::program_options::value<string>()->default_value("/tmp/"), "")
-    ("globals.internal_domain", boost::program_options::value<string>()->default_value("no"), "")
-
-    ("globals.debug_x224", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_mcs", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_sec", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_rdp", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_primary_orders", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_secondary_orders", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_bitmap", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_capture", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_auth", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_session", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_front", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_mod_rdp", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_mod_vnc", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_mod_int", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_mod_xup", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_widget", boost::program_options::value<uint32_t>()->default_value(0), "")
-    ("globals.debug_input", boost::program_options::value<uint32_t>()->default_value(0), "")
-
-    ("xrdp1.name", boost::program_options::value<string>()->default_value(""), "Entry name in the account select box")
-    ("xrdp1.lib", boost::program_options::value<string>()->default_value("unknown"), "back-end module : vnc, rdp, xup, mc")
-    ("xrdp1.port", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp1.username", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp1.password", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp1.ip", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp1.authip", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp1.authport", boost::program_options::value<int>()->default_value(3350), "")
-
-    ("xrdp2.name", boost::program_options::value<string>()->default_value(""), "Entry name in the account select box")
-    ("xrdp2.lib", boost::program_options::value<string>()->default_value("unknown"), "back-end module : vnc, rdp, xup, mc")
-    ("xrdp2.port", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp2.username", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp2.password", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp2.ip", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp2.authip", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp2.authport", boost::program_options::value<int>()->default_value(3350), "")
-
-    ("xrdp3.name", boost::program_options::value<string>()->default_value(""), "Entry name in the account select box")
-    ("xrdp3.lib", boost::program_options::value<string>()->default_value("unknown"), "back-end module : vnc, rdp, xup, mc")
-    ("xrdp3.port", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp3.username", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp3.password", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp3.ip", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp3.authip", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp3.authport", boost::program_options::value<int>()->default_value(3350), "")
-
-    ("xrdp4.name", boost::program_options::value<string>()->default_value(""), "Entry name in the account select box")
-    ("xrdp4.lib", boost::program_options::value<string>()->default_value("unknown"), "back-end module : vnc, rdp, xup, mc")
-    ("xrdp4.port", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp4.username", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp4.password", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp4.ip", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp4.authip", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp4.authport", boost::program_options::value<int>()->default_value(3350), "")
-
-    ("xrdp5.name", boost::program_options::value<string>()->default_value(""), "Entry name in the account select box")
-    ("xrdp5.lib", boost::program_options::value<string>()->default_value("unknown"), "back-end module : vnc, rdp, xup, mc")
-    ("xrdp5.port", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp5.username", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp5.password", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp5.ip", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp5.authip", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp5.authport", boost::program_options::value<int>()->default_value(3350), "")
-
-    ("xrdp6.name", boost::program_options::value<string>()->default_value(""), "Entry name in the account select box")
-    ("xrdp6.lib", boost::program_options::value<string>()->default_value("unknown"), "back-end module : vnc, rdp, xup, mc")
-    ("xrdp6.port", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp6.username", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp6.password", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp6.ip", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp6.authip", boost::program_options::value<string>()->default_value(""), "")
-    ("xrdp6.authport", boost::program_options::value<int>()->default_value(3350), "")
-    ;
+        for (size_t i=0; i< 6; i++){
+            this->account[i].idlib = idlib_from_string("UNKNOWN");
+            this->account[i].accountdefined = false;
+            strcpy(this->account[i].accountname, "");
+            this->account[i].askusername = false;
+            strcpy(this->account[i].username, "");
+            this->account[i].askpassword = false;
+            strcpy(this->account[i].password, "");
+            this->account[i].askip = false;
+            strcpy(this->account[i].ip, "");
+        }
 };
 
-void Inifile::parse(istream & Inifile_stream, bool getdefault){
-
-    try{
-        boost::program_options::variables_map vm;
-        boost::program_options::store(boost::program_options::parse_config_file(Inifile_stream, this->Inifile_desc), vm);
-        boost::program_options::notify(vm);
-
-        if (getdefault||vm.count("globals.bitmap_cache")){
-            LOG(LOG_INFO, "bitmap_cache count = %u", vm.count("globals.bitmap_cache"));
-            this->globals.bitmap_cache =
-                bool_from_string(vm["globals.bitmap_cache"].as<string>());
-        }
-
-        if (getdefault||vm.count("globals.nomouse")){
-            this->globals.nomouse =
-                bool_from_string(vm["globals.nomouse"].as<string>());
-        }
-        if (getdefault||vm.count("globals.notimestamp")){
-            this->globals.notimestamp =
-                bool_from_string(vm["globals.notimestamp"].as<string>());
-        }
-        if (getdefault||vm.count("globals.bitmap_compression")){
-            this->globals.bitmap_compression =
-                bool_from_string(vm["globals.bitmap_compression"].as<string>());
-        }
-
-        if (getdefault||vm.count("globals.encryptionLevel")){
-            this->globals.encryptionLevel =
-                level_from_string(vm["globals.encryptionLevel"].as<string>());
-        }
-        if (getdefault||vm.count("globals.channel_code")){
-            this->globals.channel_code =
-                channel_code_from_int(vm["globals.channel_code"].as<unsigned>());
-        }
-
-        if (getdefault||vm.count("globals.autologin")){
-            LOG(LOG_INFO, "autologin count = %u", vm.count("globals.autologin"));
-            this->globals.autologin =
-                bool_from_string(vm["globals.autologin"].as<string>());
-        }
-
-        if (getdefault||vm.count("globals.authip")){
-            strncpy(this->globals.authip, vm["globals.authip"].as<string>().data(), 255);
-        }
-        if (getdefault||vm.count("globals.authport")){
-            this->globals.authport = vm["globals.authport"].as<int>();
-        }
-
-        if (getdefault||vm.count("globals.authversion")){
-            this->globals.authversion = vm["globals.authversion"].as<unsigned>();
-        }    
-        if (getdefault||vm.count("globals.autovalidate")){
-            this->globals.autovalidate =
-                bool_from_string(vm["globals.autovalidate"].as<string>());
-        }
-        if (getdefault||vm.count("globals.l_bitrate")){
-            this->globals.l_bitrate   = vm["globals.l_bitrate"].as<int>();
-        }
-
-        if (getdefault||vm.count("globals.l_framerate")){
-             this->globals.l_framerate = vm["globals.l_framerate"].as<int>();
-        }
-        if (getdefault||vm.count("globals.l_height")){
-            this->globals.l_height    = vm["globals.l_height"].as<int>();
-        }
-        if (getdefault||vm.count("globals.l_width")){
-            this->globals.l_width     = vm["globals.l_width"].as<int>();
-        }
-        if (getdefault||vm.count("globals.l_qscale")){
-            this->globals.l_qscale    = vm["globals.l_qscale"].as<int>();
-        }
-        if (getdefault||vm.count("globals.m_bitrate")){
-            this->globals.m_bitrate   = vm["globals.m_bitrate"].as<int>();
-        }
-        if (getdefault||vm.count("globals.m_framerate")){
-            this->globals.m_framerate = vm["globals.m_framerate"].as<int>();
-        }
-        if (getdefault||vm.count("globals.m_height")){
-            this->globals.m_height    = vm["globals.m_height"].as<int>();
-        }
-
-        if (getdefault||vm.count("globals.m_width")){
-            this->globals.m_width     = vm["globals.m_width"].as<int>();
-        }
-        if (getdefault||vm.count("globals.m_qscale")){
-            this->globals.m_qscale    = vm["globals.m_qscale"].as<int>();
-        }
-        if (getdefault||vm.count("globals.h_bitrate")){
-            this->globals.h_bitrate   = vm["globals.h_bitrate"].as<int>();
-        }
-        if (getdefault||vm.count("globals.h_framerate")){
-            this->globals.h_framerate = vm["globals.h_framerate"].as<int>();
-        }
-        if (getdefault||vm.count("globals.h_height")){
-            this->globals.h_height    = vm["globals.h_height"].as<int>();
-        }
-        if (getdefault||vm.count("globals.h_width")){
-            this->globals.h_width     = vm["globals.h_width"].as<int>();
-        }
-        if (getdefault||vm.count("globals.h_qscale")){
-            this->globals.h_qscale    = vm["globals.h_qscale"].as<int>();
-        }
-
-        if (getdefault||vm.count("globals.max_tick")){
-            this->globals.max_tick              = vm["globals.max_tick"].as<int>();
-        }
-        if (getdefault||vm.count("globals.keepalive_grace_delay")){
-            this->globals.keepalive_grace_delay = vm["globals.keepalive_grace_delay"].as<int>();
-        }
-
-        if (getdefault||vm.count("globals.movie_path")){
-            strncpy(this->globals.movie_path, vm["globals.movie_path"].as<string>().data(), vm["globals.movie_path"].as<string>().length());
-            this->globals.movie_path[vm["globals.movie_path"].as<string>().length()] = 0;
-        }
-
-        if (getdefault||vm.count("globals.internal_domain")){
-            this->globals.internal_domain =
-                bool_from_string(vm["globals.internal_domain"].as<string>());
-        }
-
-
-        if (getdefault||vm.count("globals.debug_x224")){
-            this->globals.debug.x224              = vm["globals.debug_x224"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_mcs")){
-            this->globals.debug.mcs               = vm["globals.debug_mcs"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_sec")){
-            this->globals.debug.sec               = vm["globals.debug_sec"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_rdp")){
-            this->globals.debug.rdp               = vm["globals.debug_rdp"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_primary_orders")){
-            this->globals.debug.primary_orders    = vm["globals.debug_primary_orders"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_secondary_orders")){
-            this->globals.debug.secondary_orders  = vm["globals.debug_secondary_orders"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_bitmap")){
-            this->globals.debug.bitmap            = vm["globals.debug_bitmap"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_capture")){
-            this->globals.debug.capture           = vm["globals.debug_capture"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_auth")){
-            this->globals.debug.auth              = vm["globals.debug_auth"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_session")){
-            this->globals.debug.session           = vm["globals.debug_session"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_front")){
-            this->globals.debug.front             = vm["globals.debug_front"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_mod_rdp")){
-            this->globals.debug.mod_rdp           = vm["globals.debug_mod_rdp"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_mod_vnc")){
-            this->globals.debug.mod_vnc           = vm["globals.debug_mod_vnc"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_mod_int")){
-            this->globals.debug.mod_int           = vm["globals.debug_mod_int"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_mod_xup")){
-            this->globals.debug.mod_xup           = vm["globals.debug_mod_xup"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_widget")){
-            this->globals.debug.widget            = vm["globals.debug_widget"].as<uint32_t>();
-        }
-        if (getdefault||vm.count("globals.debug_input")){
-            this->globals.debug.input             = vm["globals.debug_input"].as<uint32_t>();
-        }
-
-        string keylib("xrdp1.lib");
-        string keyname("xrdp1.name");
-        string keyusername("xrdp1.username");
-        string keypassword("xrdp1.password");
-        string keyport("xrdp1.port");
-        string keyip("xrdp1.ip");
-        string keyauthport("xrdp1.authport");
-        string keyauthip("xrdp1.authip");
-
-        for (unsigned account_num = 0; account_num < 6; account_num++){
-
-            keylib[4] = '1' + account_num;
-            if (getdefault||vm.count(keylib)){
-                this->account[account_num].idlib =
-                    idlib_from_string(vm[keylib].as<string>());
+void Inifile::cparse(istream & ifs, bool getdefault){
+    
+    const size_t maxlen = 256;
+    char line[maxlen];
+    char context[128] = {0};
+    bool truncated = false;
+    while (ifs.good()){
+        ifs.getline(line, maxlen);
+        if (ifs.fail() && ifs.gcount() == (maxlen-1)){
+            if (!truncated){
+                LOG(LOG_INFO, "Line too long in configuration file");
+                hexdump(line, maxlen-1);
             }
-
-            keyname[4] = '1' + account_num;
-            if (getdefault||vm.count(keyname)){
-                string account = vm[keyname].as<string>();
-                this->account[account_num].accountdefined = check_name(account);
-                if (this->account[account_num].accountdefined){
-                    strncpy(this->account[account_num].accountname, account.data(), account.length());
-                    this->account[account_num].accountname[account.length()] = 0;
-                }
-                else {
-                    this->account[account_num].accountname[0] = 0;
-                }
-            }
-
-            keyport[4] = '1' + account_num;
-            if (getdefault||vm.count(keyport)){
-                int int_port;
-                if (std::istringstream(vm[keyport].as<string>()) >> int_port){
-                    this->account[account_num].port = int_port;
-                }
-                else {
-                    switch (this->account[account_num].idlib){
-                    case ID_LIB_RDP:
-                        this->account[account_num].port = 3389;
-                    break;
-                    case ID_LIB_VNC:
-                        this->account[account_num].port = 5900;
-                    break;
-                    case ID_LIB_XUP:
-                        this->account[account_num].port = 6200;
-                    break;
-                    default:
-                        this->account[account_num].port = 0;
-                    break;
-                    }
-                }
-            }
-
-            keyauthport[4] = '1' + account_num;
-            if (getdefault||vm.count(keyauthport)){
-                this->account[account_num].authport = vm[keyauthport].as<int>();
-            }
-
-            keyusername[4] = '1' + account_num;
-            if (getdefault||vm.count(keyusername)){
-                ask_string(vm[keyusername].as<string>().c_str(),
-                    this->account[account_num].username,
-                    this->account[account_num].askusername);
-            }
-
-            keypassword[4] = '1' + account_num;
-            if (getdefault||vm.count(keypassword)){
-                ask_string(vm[keypassword].as<string>().c_str(),
-                    this->account[account_num].password,
-                    this->account[account_num].askpassword);
-            }
-
-            keyip[4] = '1' + account_num;
-            if (getdefault||vm.count(keyip)){
-                ask_string(vm[keyip].as<string>().c_str(),
-                    this->account[account_num].ip,
-                    this->account[account_num].askip);
-            }
-
-            keyauthip[4] = '1' + account_num;
-            if (getdefault||vm.count(keyauthip)){
-                string str = vm[keyauthip].as<string>();
-                strncpy(this->account[account_num].authip, str.data(), str.length());
-                this->account[account_num].authip[str.length()] = 0;
-            }
+            ifs.clear();
+            truncated = true;
+            continue;
         }
-    } catch (exception& e){
-TODO(" TODO some cleaner syntax error management. I could define a testconf target in command line and show errors. Catching all errors at once would also be handy.")
-        clog << "Exception raised reading config, check configuration file :" << e.what();
-        _exit(1);
+        if (truncated){
+            truncated = false;
+            continue;
+        }
+        this->parseline(line, context, getdefault);
     };
 }
 
-void Inifile::parse(const char * filename, bool getdefault){
-    ifstream inifile(filename);
-    this->parse(inifile, getdefault);
+
+
+void Inifile::parseline(const char * line, char * context, bool getdefault)
+{
+    char key[128];
+    char value[128];
+
+    const char * startkey = line;
+    for (; *startkey ; startkey++) {
+        if (!isspace(*startkey)){
+            if (*startkey == '['){
+                const char * startcontext = startkey + 1;
+                const char * endcontext = strchr(startcontext, ']');
+                if (endcontext){
+                    memcpy(context, startcontext, endcontext - startcontext);
+                    context[endcontext - startcontext] = 0;
+                }
+                return;
+            }
+            break;
+        }
+    }
+    const char * endkey = strchr(startkey, '=');
+    if (endkey && endkey != startkey){
+        const char * sep = endkey;
+        for (--endkey; endkey >= startkey ; endkey--) {
+            if (!isspace(*endkey)){
+                memcpy(key, startkey, endkey - startkey + 1);
+                key[endkey - startkey + 1] = 0;
+
+                const char * startvalue = sep + 1;
+                for ( ; *startvalue ; startvalue++) {
+                    if (!isspace(*startvalue)){
+                        break;
+                    }
+                }
+                const char * endvalue;
+                for (endvalue = startvalue; *endvalue ; endvalue++) {
+                    if (isspace(*endvalue) || *endvalue == '#'){
+                        break;
+                    }
+                }
+                memcpy(value, startvalue, endvalue - startvalue + 1);
+                value[endvalue - startvalue + 1] = 0;
+                this->setglobal(key, value, context, getdefault);
+                break;
+            }
+        }
+    }
 }
 
+void Inifile::setglobal(const char * key, const char * value, const char * context, bool getdefault)
+{
+    if (0 == strcmp(context, "globals")){ 
+        if (0 == strcmp(key, "bitmap_cache")){
+            this->globals.bitmap_cache = bool_from_cstr(value);
+        }
+        else if (0 == strcmp(key, "bitmap_compression")){
+            this->globals.bitmap_compression = bool_from_cstr(value);
+        }
+        else if (0 == strcmp(key, "port")){
+            this->globals.port = atol(value);
+        }
+        else if (0 == strcmp(key, "nomouse")){
+            this->globals.nomouse = bool_from_cstr(value);
+        }
+        else if (0 == strcmp(key, "notimestamp")){
+            this->globals.notimestamp = bool_from_cstr(value);
+        }
+        else if (0 == strcmp(key, "encryptionLevel")){
+            this->globals.encryptionLevel = level_from_string(value);
+        }
+        else if (0 == strcmp(key, "channel_code")){
+            this->globals.channel_code = atol(value);
+        }
+        else if (0 == strcmp(key, "autologin")){
+            this->globals.autologin = bool_from_cstr(value);
+        }
+        else if (0 == strcmp(key, "authip")){
+            strcpy(this->globals.authip, value);
+        }
+        else if (0 == strcmp(key, "authport")){
+            this->globals.authport = atol(value);
+        }
+        else if (0 == strcmp(key, "authversion")){
+            this->globals.authversion = atol(value);
+        }
+        else if (0 == strcmp(key, "autovalidate")){
+            this->globals.autovalidate = bool_from_cstr(value);
+        }
+        else if (0 == strcmp(key, "l_bitrate")){
+            this->globals.l_bitrate   = atol(value);
+        }
+        else if (0 == strcmp(key, "l_framerate")){
+            this->globals.l_framerate = atol(value);
+        }
+        else if (0 == strcmp(key, "l_height")){
+            this->globals.l_height    = atol(value);
+        }
+        else if (0 == strcmp(key, "l_width")){
+            this->globals.l_width     = atol(value);
+        }
+        else if (0 == strcmp(key, "l_qscale")){
+            this->globals.l_qscale    = atol(value);
+        }
+        else if (0 == strcmp(key, "m_bitrate")){
+            this->globals.m_bitrate   = atol(value);
+        }
+        else if (0 == strcmp(key, "m_framerate")){
+            this->globals.m_framerate = atol(value);
+        }
+        else if (0 == strcmp(key, "m_height")){
+            this->globals.m_height    = atol(value);
+        }
+        else if (0 == strcmp(key, "m_width")){
+            this->globals.m_width     = atol(value);
+        }
+        else if (0 == strcmp(key, "m_qscale")){
+            this->globals.m_qscale    = atol(value);
+        }
+        else if (0 == strcmp(key, "h_bitrate")){
+            this->globals.h_bitrate   = atol(value);
+        }
+        else if (0 == strcmp(key, "h_framerate")){
+            this->globals.h_framerate = atol(value);
+        }
+        else if (0 == strcmp(key, "h_height")){
+            this->globals.h_height    = atol(value);
+        }
+        else if (0 == strcmp(key, "h_width")){
+            this->globals.h_width     = atol(value);
+        }
+        else if (0 == strcmp(key, "h_qscale")){
+            this->globals.h_qscale    = atol(value);
+        }
+        else if (0 == strcmp(key, "max_tick")){
+            this->globals.max_tick    = atol(value);
+        }
+        else if (0 == strcmp(key, "keepalive_grace_delay")){
+            this->globals.keepalive_grace_delay = atol(value);
+        }
+        else if (0 == strcmp(key, "movie_path")){
+            strcpy(this->globals.movie_path, value);
+        }
+        else if (0 == strcmp(key, "internal_domain")){
+            this->globals.internal_domain = bool_from_cstr(value);
+        }
+        else if (0 == strcmp(key, "debug_x224")){
+            this->globals.debug.x224              = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_mcs")){
+            this->globals.debug.mcs               = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_sec")){
+            this->globals.debug.sec               = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_rdp")){
+            this->globals.debug.rdp               = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_primary_orders")){
+            this->globals.debug.primary_orders    = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_secondary_orders")){
+            this->globals.debug.secondary_orders  = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_bitmap")){
+            this->globals.debug.bitmap            = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_capture")){
+            this->globals.debug.capture           = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_auth")){
+            this->globals.debug.auth              = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_session")){
+            this->globals.debug.session           = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_front")){
+            this->globals.debug.front             = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_mod_rdp")){
+            this->globals.debug.mod_rdp           = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_mod_vnc")){
+            this->globals.debug.mod_vnc           = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_mod_int")){
+            this->globals.debug.mod_int           = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_mod_xup")){
+            this->globals.debug.mod_xup           = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_widget")){
+            this->globals.debug.widget            = atol(value);
+        }
+        else if (0 == strcmp(key, "debug_input")){
+            this->globals.debug.input            = atol(value);
+        }
+    }
+    else if (0 == strncmp("xrdp", context, 4) && context[4] >= '1' && context[4] <= '6' && context[5] == 0){
+        int i = context[4] - '1';
+        if (0 == strcmp(key, "lib")){
+            this->account[i].idlib = idlib_from_string(value);
+        }
+        else if (0 == strcmp(key, "name")){
+            if (strlen(value) > 0) {
+                strcpy(this->account[i].accountname, value);
+                this->account[i].accountdefined = true;
+            }
+        }
+        else if (0 == strcmp(key, "username")){
+            ask_string(value, this->account[i].username, this->account[i].askusername);
+        }
+        else if (0 == strcmp(key, "password")){
+            ask_string(value, this->account[i].password, this->account[i].askpassword);
+        }
+        else if (0 == strcmp(key, "ip")){
+            ask_string(value, this->account[i].ip, this->account[i].askip);
+        }
+    }
+}
+
+
+void Inifile::cparse(const char * filename, bool getdefault){
+    ifstream inifile(filename);
+    this->cparse(inifile, getdefault);
+}
 
 

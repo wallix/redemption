@@ -94,7 +94,6 @@ struct window_login : public window
             }
             this->context.cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
             this->context.cpy(STRAUTHID_TARGET_DEVICE, acc.ip);
-            this->context.cpy(STRAUTHID_TARGET_PORT, acc.port);
         }
 
         count = 0;
