@@ -65,9 +65,9 @@ bool check_name(string str)
     return ((str.length() > 0) && (str.length() < 250));
 }
 
-bool check_ask(string str)
+bool check_ask(const char * str)
 {
-    return (0 == str.compare("ask"));
+    return (0 == strcmp(str, "ask"));
 }
 
 authid_t authid_from_string(const char * kw)
@@ -180,13 +180,12 @@ TODO(" should throw an exeption for illegal values")
 }
 
 
-void ask_string(boost::program_options::variables_map & vm, string & key, char buffer[], bool & flag)
+void ask_string(const char * str, char buffer[], bool & flag)
 {
-    string str = vm[key].as<string>();
     flag = check_ask(str);
     if (!flag){
-        strncpy(buffer, str.data(), str.length());
-        buffer[str.length()] = 0;
+        strncpy(buffer, str, strlen(str));
+        buffer[strlen(str)] = 0;
     }
     else {
         buffer[0] = 0;
@@ -555,21 +554,21 @@ void Inifile::parse(istream & Inifile_stream, bool getdefault){
 
             keyusername[4] = '1' + account_num;
             if (getdefault||vm.count(keyusername)){
-                ask_string(vm, keyusername,
+                ask_string(vm[keyusername].as<string>().c_str(),
                     this->account[account_num].username,
                     this->account[account_num].askusername);
             }
 
             keypassword[4] = '1' + account_num;
             if (getdefault||vm.count(keypassword)){
-                ask_string(vm, keypassword,
+                ask_string(vm[keypassword].as<string>().c_str(),
                     this->account[account_num].password,
                     this->account[account_num].askpassword);
             }
 
             keyip[4] = '1' + account_num;
             if (getdefault||vm.count(keyip)){
-                ask_string(vm, keyip,
+                ask_string(vm[keyip].as<string>().c_str(),
                     this->account[account_num].ip,
                     this->account[account_num].askip);
             }
