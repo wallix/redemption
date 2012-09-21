@@ -109,6 +109,10 @@ struct Inifile {
         bool autovalidate;      // dialog autovalidation for test
         char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
 
+        unsigned capture_flags; // 1 PNG capture, 2 WRM
+        unsigned png_interval;  // time between 2 png captures (in seconds)
+        unsigned png_limit;     // number of png captures to keep
+
         int l_bitrate;         // bitrate for low quality
         int l_framerate;       // framerate for low quality
         int l_height;          // height for low quality

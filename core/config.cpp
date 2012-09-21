@@ -149,6 +149,9 @@ void Inifile::init(){
         this->globals.autovalidate = false;
         strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
 
+        this->globals.capture_flags = 3;
+        this->globals.png_interval = 3;
+        this->globals.png_limit = 3;
         this->globals.l_bitrate   = 20000;
         this->globals.l_framerate = 1;
         this->globals.l_height    = 480;
@@ -324,7 +327,16 @@ void Inifile::setglobal(const char * key, const char * value, const char * conte
         }
     }
     else if (0 == strcmp(context, "video")){ 
-        if (0 == strcmp(key, "movie_path")){
+        if (0 == strcmp(key, "capture_flags")){
+            this->globals.capture_flags   = atol(value);
+        }
+        else if (0 == strcmp(key, "png_interval")){
+            this->globals.png_interval   = atol(value);
+        }
+        else if (0 == strcmp(key, "png_limit")){
+            this->globals.png_limit   = atol(value);
+        }
+        else if (0 == strcmp(key, "movie_path")){
             strcpy(this->globals.movie_path, value);
         }
         else if (0 == strcmp(key, "l_bitrate")){

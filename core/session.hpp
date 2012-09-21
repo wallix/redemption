@@ -406,7 +406,10 @@ struct Session {
                                                 this->context->get(STRAUTHID_AUTH_USER),
                                                 this->context->get(STRAUTHID_HOST),
                                                 this->context->get(STRAUTHID_TARGET_USER),
-                                                this->context->get(STRAUTHID_TARGET_DEVICE)
+                                                this->context->get(STRAUTHID_TARGET_DEVICE),
+                                                this->ini->globals.capture_flags,
+                                                this->ini->globals.png_interval,
+                                                this->ini->globals.png_limit
                                                 );
                                         }
                                         else {

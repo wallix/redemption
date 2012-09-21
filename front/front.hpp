@@ -322,14 +322,14 @@ public:
 
     void start_capture(int width, int height, bool flag, char * path,
                 const char * codec_id, const char * quality,
-                const char * user, const char * ip_source, const char * target_user, const char * target_device)
+                const char * user, const char * ip_source, const char * target_user, const char * target_device, unsigned capture_flags, unsigned png_interval, unsigned png_limit)
     {
         if (flag){
             this->stop_capture();
             char buffer[256];
             snprintf(buffer, 256, "type='OCR title bar' username='%s' client_ip='%s' ressource='%s' account='%s'", user, ip_source, target_device, target_user);
             buffer[255] = 0;
-            this->capture = new Capture(width, height, path, codec_id, quality);
+            this->capture = new Capture(width, height, path, path, codec_id, quality, capture_flags, png_interval, png_limit);
             this->capture->set_prefix(buffer, strlen(buffer));
             this->capture->start();
         }
