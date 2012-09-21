@@ -62,7 +62,6 @@ struct ClientInfo {
     int rdp_compression;
     int rdp_autologin;
     int encryptionLevel; /* 1, 2, 3 = low, medium, high */
-    int channel_code; /* 0 = no channels 1 = channels */
     int sound_code; /* 1 = leave sound at server */
     int is_mce;
     uint32_t rdp5_performanceflags;
@@ -70,7 +69,7 @@ struct ClientInfo {
                            2 = arbitrary dimensions */
     bool console_session;
 
-    ClientInfo(const int encryptionLevel, const int channel_code, const bool bitmap_compression, const bool bitmap_cache) {
+    ClientInfo(const int encryptionLevel, const bool bitmap_compression, const bool bitmap_cache) {
         this->bpp = 0;
         this->width = 0;
         this->height = 0;
@@ -107,28 +106,11 @@ struct ClientInfo {
         this->brush_cache_code = 0; /* 0 = no cache 1 = 8x8 standard cache
                                2 = arbitrary dimensions */
         this->console_session = false;
-
-        /* read ini settings */
-//        this->use_bitmap_cache = 0;
-//        if (ini->globals.bitmap_cache){
-//            this->use_bitmap_cache = 1;
-//        }
-
         this->use_bitmap_cache = bitmap_cache?1:0;
-
-
-//        this->use_bitmap_comp = 0;
-//        if (ini->globals.bitmap_compression){
-//            this->use_bitmap_comp = 1;
-//        }
-
         this->use_bitmap_comp = bitmap_compression?1:0;
 
         /*encryptionLevel: 1, 2, 3 = low, medium, high */
         this->encryptionLevel = encryptionLevel + 1; // ini->globals.encryptionLevel + 1;
-
-        /* channel_code : 0 = no channels 1 = channels */
-        this->channel_code = channel_code; // ini->globals.channel_code;
     }
 
     void process_logon_info(Stream & stream, uint32_t length) throw (Error)

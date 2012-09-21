@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
 
     {
         BStream stream;
-        ClientInfo ci(1, 1, true, true);
+        ClientInfo ci(1, true, true);
         ci.bitmap_cache_version = 1;
         ci.use_bitmap_comp = 0;
 

@@ -149,9 +149,11 @@ struct Session {
             int previous_state = SESSION_STATE_STOP;
             struct timeval time_mark = { 0, 0 };
             while (1) {
-                if (*this->refreshconf == 1){
-                    *this->refreshconf = 0;
-                    LOG(LOG_INFO, "received signal SIGHUP, rereading configuration file");
+                if (*this->refreshconf){
+                    if (*this->refreshconf & 1){
+                        *this->refreshconf ^= 1;
+                        ini->cparse(CFG_PATH "/" RDPPROXY_INI);
+                    }
                 }
 
                 if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500){

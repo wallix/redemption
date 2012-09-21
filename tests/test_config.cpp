@@ -51,7 +51,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3389, ini.globals.port);
     BOOST_CHECK_EQUAL(0,    ini.globals.encryptionLevel);
-    BOOST_CHECK_EQUAL(1,    ini.globals.channel_code);
     BOOST_CHECK_EQUAL(0,    ini.globals.autologin);
     BOOST_CHECK_EQUAL(2,    ini.globals.authversion);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"), std::string(ini.globals.authip));
@@ -83,7 +82,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3389, ini.globals.port);
     BOOST_CHECK_EQUAL(0,    ini.globals.encryptionLevel);
-    BOOST_CHECK_EQUAL(1,    ini.globals.channel_code);
     BOOST_CHECK_EQUAL(0,    ini.globals.autologin);
     BOOST_CHECK_EQUAL(2,    ini.globals.authversion);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"), std::string(ini.globals.authip));
@@ -112,7 +110,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     "bitmap_compression=true\n"
     "port=3390\n"
     "encryptionLevel=low\n"
-    "channel_code=1\n"
     "\n"
     "[xrdp1]\n"
     "lib=libvnc.so\n"
@@ -127,7 +124,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3390, ini.globals.port);
-    BOOST_CHECK_EQUAL(1,    ini.globals.channel_code);
 
     struct IniAccounts & acc = ini.account[0];
 
@@ -187,7 +183,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     "bitmap_cache=no\n"
     "bitmap_compression=false\n"
     "encryptionLevel=high\n"
-    "channel_code=0\n"
     "\n"
     "[xrdp1]\n"
     "lib=auth\n"
@@ -197,7 +192,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false, ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(false, ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(2, ini.globals.encryptionLevel);
-    BOOST_CHECK_EQUAL(0, ini.globals.channel_code);
 
     struct IniAccounts & acc = ini.account[0];
 
@@ -214,7 +208,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     "bitmap_compression=TRuE\n"
     "port=3390\n"
     "encryptionLevel=low\n"
-    "channel_code=1\n"
     "\n"
     "[xrdp1]\n"
     "lib=libvnc.so\n"
@@ -251,7 +244,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false, ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3390, ini.globals.port);
-    BOOST_CHECK_EQUAL(1,    ini.globals.channel_code);
 
     struct IniAccounts & acc = ini.account[0];
 
@@ -300,7 +292,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     "[globals]\n"
     "bitmap_compression=no\n"
     );
-    ini.cparse(oss2, false);
+    ini.cparse(oss2);
 //    BOOST_CHECK_EQUAL(false, ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(false, ini.globals.bitmap_compression);
 
@@ -308,17 +300,35 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
 BOOST_AUTO_TEST_CASE(TestNewConf)
 {
+    // new behavior:
+    // init() load default values from main configuration file
+    // - options with multiple occurences get the last value
+    // - unrecognized lines are ignored
+    // - every characters following # are ignored until end of line (comments)
     Inifile ini;
 
-    std::stringstream ifs(
+    BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
+
+    std::stringstream ifs2(
+    "# Here we put global values\n"
     "[globals]\n"
-    "bitmap_compression=no no no no no no no no no no no no no on no nono n ono no\n"
-    "bitmap_compression=yes\n"
+    "bitmap_compression=no # here we have a comment to end of line\n"
+    "# below we have lines with syntax errors, but they are just ignored\n"
     "yyy\n"
-    "zzz"
+    "zzz\n"
+    "# unknwon keys are also ignored\n"
+    "yyy=1\n"
     );
 
-    ini.cparse(ifs, true);
+    ini.cparse(ifs2);
+
+    BOOST_CHECK_EQUAL(false, ini.globals.bitmap_compression);
+
+    // back to default values
+    ini.init();
+
+    BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
+
 }
 
 
