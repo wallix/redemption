@@ -137,7 +137,7 @@ struct Session {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
             }
 
-            const char * state_names[] = 
+            const char * state_names[] =
             { "Initializing client session"                         // SESSION_STATE_ENTRY
             , "Waiting for authentifier"                            // SESSION_STATE_WAITING_FOR_NEXT_MODULE
             , "Waiting for authentifier (context refresh required)" // SESSION_STATE_WAITING_FOR_CONTEXT
@@ -180,7 +180,7 @@ struct Session {
                 if (num < 0 && errno == EINTR){
                     continue;
                 }
-                
+
                 if (this->front_event.is_set(rfds)) {
                     try {
                         this->front->incoming(*this->mod);
@@ -282,7 +282,7 @@ struct Session {
                         }
 
                         // data incoming from server module
-                        if (this->front->up_and_running 
+                        if (this->front->up_and_running
                         &&  this->mod->event.is_set(rfds)){
                             this->mod->event.reset();
                             if (this->verbose){
@@ -435,6 +435,18 @@ struct Session {
         }
         delete this->no_mod;
         delete this->sesman;
+        // Suppress Session file from disk (original name with PID or renamed with session_id)
+        if ( this->context->get(STRAUTHID_SESSION_ID)[0] != 0 ) {
+            char new_session_file[256];
+            sprintf(new_session_file, "%s/session_%s.pid", PID_PATH, this->context->get(STRAUTHID_SESSION_ID));
+            unlink(new_session_file);
+        }
+        else {
+            int child_pid = getpid();
+            char old_session_file[256];
+            sprintf(old_session_file, "%s/session_%d.pid", PID_PATH, child_pid);
+            unlink(old_session_file);
+        }
         delete this->context;
     }
 

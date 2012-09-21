@@ -159,7 +159,7 @@ class SessionManager {
                             if ((strncasecmp((char*)value, "ask", 3) != 0)
                             && ((strncasecmp("password", (char*)keyword, 8) == 0)
                             || (strncasecmp("target_password", (char*)keyword, 15) == 0))){
-                               LOG(LOG_INFO, "receiving '%s'=<hidden>\n", (char*)keyword);
+                                LOG(LOG_INFO, "receiving '%s'=<hidden>\n", (char*)keyword);
                             }
                             else{
                                 LOG(LOG_INFO, "receiving '%s'=%s\n", keyword, this->context.get((char*)keyword));
@@ -600,7 +600,19 @@ class SessionManager {
             stream.init(size);
         }
         this->auth_trans_t->recv((char**)&(stream.end), size - 4);
+
+        bool flag = (this->context.get(STRAUTHID_SESSION_ID)[0] == 0);
         this->in_items(stream);
+        if (flag && (this->context.get(STRAUTHID_SESSION_ID)[0] != 0) ) {
+            int child_pid = getpid();
+            char old_session_file[256];
+            sprintf(old_session_file, "%s/session_%d.pid", PID_PATH, child_pid);
+            char new_session_file[256];
+            sprintf(new_session_file, "%s/session_%s.pid", PID_PATH, this->context.get(STRAUTHID_SESSION_ID));
+            rename(old_session_file, new_session_file);
+        }
+
+        LOG(LOG_DEBUG, "SESSION_ID = %s", this->context.get(STRAUTHID_SESSION_ID) );
     }
 
     void receive_next_module()

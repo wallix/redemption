@@ -41,6 +41,10 @@ class SessionServer : public Server
         memset(&sin, 0, sin_size);
         TODO("We should manage accept errors")
         int sck = accept(incoming_sck, (struct sockaddr*)&sin, &sin_size);
+        int fd;
+        char text[256];
+        size_t lg;
+        int child_pid;
         char ip_source[256];
         strcpy(ip_source, inet_ntoa(sin.sin_addr));
         /* start new process */
@@ -60,7 +64,28 @@ class SessionServer : public Server
                 wait_obj front_event(sck);
                 SocketTransport front_trans("RDP Client", sck, ini.globals.debug.front);
 
+                // Create session file
+                child_pid = getpid();
+                char session_file[256];
+                sprintf(session_file, "%s/session_%d.pid", PID_PATH, child_pid);
+                fd = open(session_file, O_WRONLY | O_CREAT, S_IRWXU);
+                if (fd == -1) {
+                    LOG(LOG_ERR, "Writing process id to SESSION ID FILE failed. Maybe no rights ?:%d:%d\n", errno, strerror(errno));
+                    _exit(1);
+                }
+                lg = snprintf(text, 255, "%d", child_pid);
+                LOG(LOG_DEBUG, "PID TEXTE : %s", text);
+                if (write(fd, text, lg) == -1) {
+                    LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/session_<pid>.pid", strerror(errno));
+                    _exit(1);
+                }
+                close(fd);
+
+                // Launch session
                 Session session(front_event, front_trans, ip_source, this->refreshconf, &ini);
+
+                // Suppress session file
+                unlink(session_file);
 
                 if (ini.globals.debug.session){
                     LOG(LOG_INFO, "Session::end of Session(%u)", sck);
