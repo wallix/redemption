@@ -34,6 +34,7 @@
 #include <string.h>
 #include <assert.h>
 #include <sys/time.h>
+#include <dirent.h>
 
 #include "server.hpp"
 #include "colors.hpp"
@@ -149,9 +150,49 @@ struct Session {
             int previous_state = SESSION_STATE_STOP;
             struct timeval time_mark = { 0, 0 };
             while (1) {
-                if (*this->refreshconf == 1){
-                    *this->refreshconf = 0;
-                    LOG(LOG_INFO, "received signal SIGHUP, rereading configuration file");
+                if (*this->refreshconf){
+                    if (*this->refreshconf & 1){
+                        *this->refreshconf ^= 1;
+                        DIR * d = opendir(ini->globals.dynamic_conf_path);
+                        if (d){
+                            
+                            size_t path_len = strlen(ini->globals.dynamic_conf_path);
+                            size_t file_len = pathconf(ini->globals.dynamic_conf_path, _PC_NAME_MAX) + 1;
+                            char * buffer = (char*)malloc(file_len + path_len);
+                            strcpy(buffer, ini->globals.dynamic_conf_path);
+                            size_t len = offsetof(struct dirent, d_name) + file_len;
+                            struct dirent * entryp = (struct dirent *)malloc(len);
+                            struct dirent * result;
+                            for (readdir_r(d, entryp, &result) ; result ; readdir_r(d, entryp, &result)) {
+                                strcpy(buffer + path_len, entryp->d_name);
+                                struct stat st;
+                                if (stat(buffer, &st) < 0){
+                                    LOG(LOG_INFO, "Failed to read dynamic configuration file %s [%u: %s]",
+                                        buffer, errno, strerror(errno));
+                                    continue;
+                                }
+                                try {
+                                    ini->cparse(buffer);
+                                }
+                                catch(...){
+                                    LOG(LOG_INFO, "Error reading conf file %s", buffer);
+                                    continue;
+                                }
+                                LOG(LOG_INFO, "reading conf file %s", buffer);
+                                if (unlink(buffer) < 0){
+                                    LOG(LOG_INFO, "Failed to remove dynamic configuration file %s after parsing [%u: %s]",
+                                        buffer, errno, strerror(errno));
+                                }
+                            }
+                            closedir(d);
+                            free(entryp);
+                            free(buffer);
+                        }
+                        else {
+                            LOG(LOG_INFO, "Failed to open dynamic configuration directory %s [%u: %s]",
+                                ini->globals.dynamic_conf_path, errno, strerror(errno));
+                        }
+                    }
                 }
 
                 if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500){
@@ -365,7 +406,10 @@ struct Session {
                                                 this->context->get(STRAUTHID_AUTH_USER),
                                                 this->context->get(STRAUTHID_HOST),
                                                 this->context->get(STRAUTHID_TARGET_USER),
-                                                this->context->get(STRAUTHID_TARGET_DEVICE)
+                                                this->context->get(STRAUTHID_TARGET_DEVICE),
+                                                this->ini->globals.capture_flags,
+                                                this->ini->globals.png_interval,
+                                                this->ini->globals.png_limit
                                                 );
                                         }
                                         else {

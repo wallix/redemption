@@ -280,7 +280,7 @@ unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test : ;
 unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test ;
 
 unit-test test_file_to_png : tests/test_file_to_png.cpp libboost_unit_test png z d3des openssl crypto dl ;
-unit-test test_breakpoint : tests/test_breakpoint.cpp libboost_unit_test png z d3des openssl dl crypto ;
+#unit-test test_breakpoint : tests/test_breakpoint.cpp libboost_unit_test png z d3des openssl dl crypto ;
 
 unit-test test_wrm_recorder : tests/test_wrm_recorder.cpp libboost_unit_test png z d3des openssl crypto dl ;
 

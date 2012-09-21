@@ -34,8 +34,8 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
 {
     Capture capture(recorder.meta().width,
                     recorder.meta().height,
-                    outfile, metaname,
-                    0, 0, true,
+                    outfile, metaname, "", "", 15, 60, 100,
+                    true,
                     mode, key, iv);
     recorder.consumer(&capture);
     TimerCompute timercompute(recorder);
@@ -60,11 +60,11 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
 
     if (mtime){
         capture.timestamp(mtime);
-        capture.timer() += mtime;
+        capture.nc.recorder.timer += mtime;
     }
 
     if (screenshot_wrm && screenshot_start)
-        capture.dump_png();
+        capture.sc.dump_png();
 
     //uint64_t chunk_time = 0;
     timercompute.usec() = mtime - start;
@@ -80,7 +80,7 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
                 //chunk_time += timercompute.chunk_time_value;
                 //std::cout << "chunk_time: " << chunk_time << '\n';
                 capture.timestamp(timercompute.chunk_time_value);
-                capture.timer() += timercompute.chunk_time_value;
+                capture.nc.recorder.timer += timercompute.chunk_time_value;
             }
 
             if (usec >= mtime) {
@@ -89,9 +89,9 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
                     capture.timestamp(chunk_time);
                     chunk_time = 0;
                 }*/
-                capture.breakpoint(capture.timer().time());
+                capture.breakpoint(capture.nc.recorder.timer.time());
                 if (screenshot_wrm)
-                    capture.dump_png();
+                    capture.sc.dump_png();
                 timercompute.reset();
                 if (++frame == frame_limit)
                     break;

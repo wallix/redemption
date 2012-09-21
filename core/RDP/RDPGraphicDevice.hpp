@@ -167,12 +167,12 @@ struct RDPUnserializer
                 this->chunk_type = this->stream.in_uint16_le();
                 this->chunk_size = this->stream.in_uint16_le();
                 this->remaining_order_count = this->order_count = this->stream.in_uint16_le();
+                
                 uint16_t pad = this->stream.in_uint16_le(); (void)pad;
             }
             catch (Error & e){
                 TODO(" check specific error and return 0 only if actual EOF is reached or rethrow the error")
-                return (e.id == ERR_TRANSPORT_READ_FAILED
-                || ERR_SOCKET_CLOSED == e.id) ? false : true;
+                return (e.id == ERR_TRANSPORT_READ_FAILED || ERR_SOCKET_CLOSED == e.id) ? false : true;
             }
             const uint16_t stream_size = this->chunk_size - 8;
             if (stream_size > 32768){

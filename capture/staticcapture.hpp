@@ -70,7 +70,7 @@ private:
     }
 
 public:
-    StaticCapture(int width, int height, const char * path, const char * codec_id, const char * video_quality, bool bgr = true)
+    StaticCapture(int width, int height, const char * path, const char * codec_id, const char * video_quality, unsigned png_limit, bool bgr = true)
     : RDPDrawable(width, height, bgr)
     , framenb(0)
     , scale_width(width)

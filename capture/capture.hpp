@@ -37,11 +37,34 @@ class Capture : public RDPGraphicDevice
     struct timeval start_break_capture;
     uint64_t inter_frame_interval_start_break_capture;
 
+public:
     StaticCapture sc;
     NativeCapture nc;
 
-private:
-    void _init()
+    enum {
+        STATIC_CAPTURE = 1,
+        NATIVE_CAPTURE = 2
+    };
+
+    uint32_t enabled;
+
+public:
+    TODO(" fat interface : ugly  find another way")
+    Capture(int width, 
+            int height, 
+            const char * path, 
+            const char * path_meta, 
+            const char * codec_id, 
+            const char * video_quality, 
+            unsigned capture_flags, 
+            unsigned png_interval, 
+            unsigned png_limit, 
+            bool bgr = true, 
+            CipherMode::enum_t mode = CipherMode::NO_MODE, 
+            const unsigned char * key = 0, 
+            const unsigned char * iv = 0) :
+    sc(width, height, path, codec_id, video_quality, png_limit, bgr),
+    nc(width, height, path, path_meta, mode, key, iv)
     {
         this->log_prefix[0] = 0;
         struct timeval now;
@@ -49,32 +72,10 @@ private:
         this->start_static_capture = now;
         this->start_native_capture = now;
         this->start_break_capture = now;
-        this->inter_frame_interval_static_capture       = 5000000; // 1 000 000 us is 1 sec (default)
-        this->inter_frame_interval_native_capture       =  400000; // 1 000 000 us is 1 sec (default)
+         // 1 000 000 us is 1 sec (default)
+        this->inter_frame_interval_static_capture = png_interval * 1000000;
+        this->inter_frame_interval_native_capture =   40000; // 1 000 000 us is 1 sec (default)
         this->inter_frame_interval_start_break_capture  = 1000000 * 60 * 10; // 1 000 000 us is 1 sec (default)
-    }
-
-public:
-    TODO(" fat interface : ugly  find another way")
-    Capture(int width, int height, const char * path, const char * codec_id, const char * video_quality, bool bgr = true) :
-        sc(width, height, path, codec_id, video_quality, bgr),
-        nc(width, height, path)
-    {
-        this->_init();
-    }
-
-    Capture(int width, int height, const char * path, const char * path_meta, const char * codec_id, const char * video_quality, bool bgr = true) :
-    sc(width, height, path, codec_id, video_quality, bgr),
-    nc(width, height, path, path_meta)
-    {
-        this->_init();
-    }
-
-    Capture(int width, int height, const char * path, const char * path_meta, const char * codec_id, const char * video_quality, bool bgr, CipherMode::enum_t mode = CipherMode::NO_MODE, const unsigned char * key = 0, const unsigned char * iv = 0) :
-    sc(width, height, path, codec_id, video_quality, bgr),
-    nc(width, height, path, path_meta, mode, key, iv)
-    {
-        this->_init();
     }
 
     ~Capture(){
@@ -87,7 +88,7 @@ public:
 
     void start_with_invalid_now()
     {
-        struct timeval now = {0,0};
+        struct timeval now = {0, 0};
         this->nc.send_time_start(now);
     }
 
@@ -120,7 +121,20 @@ public:
     {
         struct timeval now;
         gettimeofday(&now, NULL);
-        if (difftimeval(now, this->start_static_capture) >= this->inter_frame_interval_static_capture){
+
+        time_t rawtime;
+        time(&rawtime);
+        tm *ptm = localtime(&rawtime);
+
+        if ((this->enabled & NATIVE_CAPTURE)
+        && (difftimeval(now, this->start_native_capture) >= this->inter_frame_interval_native_capture)){
+            this->nc.recorder.timestamp(now);
+            this->nc.recorder.flush();
+            this->start_native_capture = now;
+        }
+
+        if ((this->enabled & STATIC_CAPTURE)
+        && (difftimeval(now, this->start_static_capture) >= this->inter_frame_interval_static_capture)){
             TODO("change code below, it would be better to provide now to drawable instead of tm struct");
             time_t rawtime;
             time(&rawtime);
@@ -129,73 +143,68 @@ public:
             this->sc.flush();
             this->sc.drawable.clear_timestamp();
             this->start_static_capture = now;
-        }
-        if (difftimeval(now, this->start_native_capture) >= this->inter_frame_interval_native_capture){
-            this->nc.recorder.timestamp(now);
-            this->start_native_capture = now;
-            if (difftimeval(now, this->start_break_capture) >= this->inter_frame_interval_start_break_capture){
-                this->breakpoint();
-                this->start_break_capture = now;
-            }
-        }
-        this->nc.recorder.flush();
+         }
     }
 
-    void flush()
-    {}
+    void flush(){
+    }
 
+    TODO("use a template to factorize code below")
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
-        this->sc.draw(cmd, clip);
-        this->nc.draw(cmd, clip);
+        if (this->enabled & STATIC_CAPTURE){ this->sc.draw(cmd, clip);}
+        if (this->enabled & NATIVE_CAPTURE){ this->nc.draw(cmd, clip);}
     }
 
     void draw(const RDPDestBlt & cmd, const Rect &clip)
     {
-        this->sc.draw(cmd, clip);
-        this->nc.draw(cmd, clip);
+        if (this->enabled & STATIC_CAPTURE){ this->sc.draw(cmd, clip);}
+        if (this->enabled & NATIVE_CAPTURE){ this->nc.draw(cmd, clip);}
     }
 
     void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
-        this->sc.draw(cmd, clip);
-        this->nc.draw(cmd, clip);
+        if (this->enabled & STATIC_CAPTURE){ this->sc.draw(cmd, clip);}
+        if (this->enabled & NATIVE_CAPTURE){ this->nc.draw(cmd, clip);}
     }
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        this->sc.draw(cmd, clip, bmp);
-        this->nc.draw(cmd, clip, bmp);
+        if (this->enabled & STATIC_CAPTURE){ this->sc.draw(cmd, clip, bmp);}
+        if (this->enabled & NATIVE_CAPTURE){ this->nc.draw(cmd, clip, bmp);}
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        this->sc.draw(cmd, clip);
-        this->nc.draw(cmd, clip);
+        if (this->enabled & STATIC_CAPTURE){ this->sc.draw(cmd, clip);}
+        if (this->enabled & NATIVE_CAPTURE){ this->nc.draw(cmd, clip);}
     }
-
 
     void draw(const RDPLineTo & cmd, const Rect & clip)
     {
-        this->sc.draw(cmd, clip);
-        this->nc.draw(cmd, clip);
+        if (this->enabled & STATIC_CAPTURE){ this->sc.draw(cmd, clip);}
+        if (this->enabled & NATIVE_CAPTURE){ this->nc.draw(cmd, clip);}
     }
 
     void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
-//        this->sc.glyph_index(cmd, clip);
-//        this->nc.glyph_index(cmd, clip);
+//        if (this->enabled & STATIC_CAPTURE){ this->oc.draw(cmd, clip);}
+//        if (this->enabled & NATIVE_CAPTURE){ this->oc.draw(cmd, clip);}
     }
 
     void breakpoint(const timeval& now)
     {
-        this->nc.recorder.timestamp(now);
-        this->nc.breakpoint(this->sc.drawable.data,
+        if (this->enabled & NATIVE_CAPTURE){ 
+            this->nc.recorder.timestamp(now); 
+        }
+        if (this->enabled & STATIC_CAPTURE){ 
+            this->nc.breakpoint(this->sc.drawable.data,
                             24,
                             this->sc.drawable.width,
                             this->sc.drawable.height,
                             this->sc.drawable.rowsize,
                             now);
+        }
     }
 
     void breakpoint()
@@ -205,15 +214,10 @@ public:
         this->breakpoint(now);
     }
 
-    void dump_png()
-    {
-        this->sc.dump_png();
-    }
-
-    TimerCapture& timer()
-    {
-        return this->nc.recorder.timer;
-    }
+//    TimerCapture& timer()
+//    {
+//        return this->nc.recorder.timer;
+//    }
 
     /*Stream& stream()
     {

@@ -19,8 +19,7 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    configuration file,
-   parsing config file xrdp.ini values and names helped by
-   lib_boost and saved in Inifile object.
+   parsing config file rdpproxy.ini
 
 */
 
@@ -84,8 +83,6 @@ struct Inifile {
         bool bitmap_compression; // default true
         int port;                // default 3389
         int encryptionLevel;   // 0=low, 1=medium, 2=high
-        // TODO: CGR : didn't changed it to boolean as I don't know if it shouldn't be a number of channel
-        unsigned channel_code; /* 0 = no channels 1 = channels */
         bool autologin;      // true if we should bypass login box and go directly
                              // to server with credentials provided by rdp client
                              // obviously, to do so we need some target address
@@ -110,6 +107,11 @@ struct Inifile {
         bool nomouse;
         bool notimestamp;
         bool autovalidate;      // dialog autovalidation for test
+        char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
+
+        unsigned capture_flags; // 1 PNG capture, 2 WRM
+        unsigned png_interval;  // time between 2 png captures (in seconds)
+        unsigned png_limit;     // number of png captures to keep
 
         int l_bitrate;         // bitrate for low quality
         int l_framerate;       // framerate for low quality
@@ -167,10 +169,10 @@ struct Inifile {
     Inifile(std::istream & Inifile_stream);
 
     void init();
-    void cparse(std::istream & Inifile_stream, bool getdefault = false);
-    void cparse(const char * filename, bool getdefault = false);
-    void parseline(const char * line, char * context, bool getdefault);
-    void setglobal(const char * key, const char * value, const char * context, bool getdefault);
+    void cparse(std::istream & Inifile_stream);
+    void cparse(const char * filename);
+    void parseline(const char * line, char * context);
+    void setglobal(const char * key, const char * value, const char * context);
 
 
 };

@@ -68,7 +68,7 @@ int refreshconf;
 
 void sighup(int sig)
 {
-    refreshconf = 1;
+    refreshconf |= 1;
 }
 
 void init_signals(void)

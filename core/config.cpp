@@ -19,19 +19,12 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    configuration file,
-   parsing config file xrdp.ini values and names helped by
-   lib_boost and saved in Inifile object.
+   parsing config file rdproxy.ini
 
 */
 #include "config.hpp"
 #include "log.hpp"
 
-#include <boost/program_options.hpp>
-#include <boost/program_options/options_description.hpp>
-#include <boost/program_options/parsers.hpp>
-#include <boost/program_options/variables_map.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/token_functions.hpp>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -113,15 +106,6 @@ idlib_t idlib_from_string(string str)
 
 
 
-unsigned channel_code_from_int(unsigned val)
-{ // 0 no channels, 1 channels
-    unsigned res = 1;
-TODO(" should throw an exeption for illegal values")
-    if (val <= 1) { res = val; }
-    return res;
-}
-
-
 void ask_string(const char * str, char buffer[], bool & flag)
 {
     flag = check_ask(str);
@@ -137,18 +121,18 @@ void ask_string(const char * str, char buffer[], bool & flag)
 Inifile::Inifile() {
     std::stringstream oss("");
     this->init();
-    this->cparse(oss, true);
+    this->cparse(oss);
 }
 
 Inifile::Inifile(const char * filename) {
     this->init();
-    this->cparse(filename, true);
+    this->cparse(filename);
 }
 
 
 Inifile::Inifile(istream & Inifile_stream) {
     this->init();
-    this->cparse(Inifile_stream, true);
+    this->cparse(Inifile_stream);
 }
 
 void Inifile::init(){
@@ -157,14 +141,17 @@ void Inifile::init(){
         this->globals.port = 3389;
         this->globals.nomouse = false;
         this->globals.notimestamp = false;
-
         this->globals.encryptionLevel = level_from_string("low");
-        this->globals.channel_code = 1;
         this->globals.autologin = false;
         strcpy(this->globals.authip, "127.0.0.1");
         this->globals.authport = 3350;
         this->globals.authversion = 2;
         this->globals.autovalidate = false;
+        strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
+
+        this->globals.capture_flags = 3;
+        this->globals.png_interval = 3;
+        this->globals.png_limit = 3;
         this->globals.l_bitrate   = 20000;
         this->globals.l_framerate = 1;
         this->globals.l_height    = 480;
@@ -215,8 +202,7 @@ void Inifile::init(){
         }
 };
 
-void Inifile::cparse(istream & ifs, bool getdefault){
-
+void Inifile::cparse(istream & ifs){
     const size_t maxlen = 256;
     char line[maxlen];
     char context[128] = {0};
@@ -236,13 +222,13 @@ void Inifile::cparse(istream & ifs, bool getdefault){
             truncated = false;
             continue;
         }
-        this->parseline(line, context, getdefault);
+        this->parseline(line, context);
     };
 }
 
 
 
-void Inifile::parseline(const char * line, char * context, bool getdefault)
+void Inifile::parseline(const char * line, char * context)
 {
     char key[128];
     char value[128];
@@ -284,14 +270,14 @@ void Inifile::parseline(const char * line, char * context, bool getdefault)
                 }
                 memcpy(value, startvalue, endvalue - startvalue + 1);
                 value[endvalue - startvalue + 1] = 0;
-                this->setglobal(key, value, context, getdefault);
+                this->setglobal(key, value, context);
                 break;
             }
         }
     }
 }
 
-void Inifile::setglobal(const char * key, const char * value, const char * context, bool getdefault)
+void Inifile::setglobal(const char * key, const char * value, const char * context)
 {
     if (0 == strcmp(context, "globals")){
         if (0 == strcmp(key, "bitmap_cache")){
@@ -312,9 +298,6 @@ void Inifile::setglobal(const char * key, const char * value, const char * conte
         else if (0 == strcmp(key, "encryptionLevel")){
             this->globals.encryptionLevel = level_from_string(value);
         }
-        else if (0 == strcmp(key, "channel_code")){
-            this->globals.channel_code = atol(value);
-        }
         else if (0 == strcmp(key, "autologin")){
             this->globals.autologin = bool_from_cstr(value);
         }
@@ -329,6 +312,32 @@ void Inifile::setglobal(const char * key, const char * value, const char * conte
         }
         else if (0 == strcmp(key, "autovalidate")){
             this->globals.autovalidate = bool_from_cstr(value);
+        }
+        else if (0 == strcmp(key, "max_tick")){
+            this->globals.max_tick    = atol(value);
+        }
+        else if (0 == strcmp(key, "keepalive_grace_delay")){
+            this->globals.keepalive_grace_delay = atol(value);
+        }
+        else if (0 == strcmp(key, "internal_domain")){
+            this->globals.internal_domain = bool_from_cstr(value);
+        }
+        else if (0 == strcmp(key, "dynamic_conf_path")){
+            strcpy(this->globals.dynamic_conf_path, value);
+        }
+    }
+    else if (0 == strcmp(context, "video")){ 
+        if (0 == strcmp(key, "capture_flags")){
+            this->globals.capture_flags   = atol(value);
+        }
+        else if (0 == strcmp(key, "png_interval")){
+            this->globals.png_interval   = atol(value);
+        }
+        else if (0 == strcmp(key, "png_limit")){
+            this->globals.png_limit   = atol(value);
+        }
+        else if (0 == strcmp(key, "movie_path")){
+            strcpy(this->globals.movie_path, value);
         }
         else if (0 == strcmp(key, "l_bitrate")){
             this->globals.l_bitrate   = atol(value);
@@ -375,67 +384,57 @@ void Inifile::setglobal(const char * key, const char * value, const char * conte
         else if (0 == strcmp(key, "h_qscale")){
             this->globals.h_qscale    = atol(value);
         }
-        else if (0 == strcmp(key, "max_tick")){
-            this->globals.max_tick    = atol(value);
-        }
-        else if (0 == strcmp(key, "keepalive_grace_delay")){
-            this->globals.keepalive_grace_delay = atol(value);
-        }
-        else if (0 == strcmp(key, "movie_path")){
-            strcpy(this->globals.movie_path, value);
-        }
-        else if (0 == strcmp(key, "internal_domain")){
-            this->globals.internal_domain = bool_from_cstr(value);
-        }
-        else if (0 == strcmp(key, "debug_x224")){
+    }
+    else if (0 == strcmp(context, "debug")){ 
+        if (0 == strcmp(key, "x224")){
             this->globals.debug.x224              = atol(value);
         }
-        else if (0 == strcmp(key, "debug_mcs")){
+        else if (0 == strcmp(key, "mcs")){
             this->globals.debug.mcs               = atol(value);
         }
-        else if (0 == strcmp(key, "debug_sec")){
+        else if (0 == strcmp(key, "sec")){
             this->globals.debug.sec               = atol(value);
         }
-        else if (0 == strcmp(key, "debug_rdp")){
+        else if (0 == strcmp(key, "rdp")){
             this->globals.debug.rdp               = atol(value);
         }
-        else if (0 == strcmp(key, "debug_primary_orders")){
+        else if (0 == strcmp(key, "primary_orders")){
             this->globals.debug.primary_orders    = atol(value);
         }
-        else if (0 == strcmp(key, "debug_secondary_orders")){
+        else if (0 == strcmp(key, "secondary_orders")){
             this->globals.debug.secondary_orders  = atol(value);
         }
-        else if (0 == strcmp(key, "debug_bitmap")){
+        else if (0 == strcmp(key, "bitmap")){
             this->globals.debug.bitmap            = atol(value);
         }
-        else if (0 == strcmp(key, "debug_capture")){
+        else if (0 == strcmp(key, "capture")){
             this->globals.debug.capture           = atol(value);
         }
-        else if (0 == strcmp(key, "debug_auth")){
+        else if (0 == strcmp(key, "auth")){
             this->globals.debug.auth              = atol(value);
         }
-        else if (0 == strcmp(key, "debug_session")){
+        else if (0 == strcmp(key, "session")){
             this->globals.debug.session           = atol(value);
         }
-        else if (0 == strcmp(key, "debug_front")){
+        else if (0 == strcmp(key, "front")){
             this->globals.debug.front             = atol(value);
         }
-        else if (0 == strcmp(key, "debug_mod_rdp")){
+        else if (0 == strcmp(key, "mod_rdp")){
             this->globals.debug.mod_rdp           = atol(value);
         }
-        else if (0 == strcmp(key, "debug_mod_vnc")){
+        else if (0 == strcmp(key, "mod_vnc")){
             this->globals.debug.mod_vnc           = atol(value);
         }
-        else if (0 == strcmp(key, "debug_mod_int")){
+        else if (0 == strcmp(key, "mod_int")){
             this->globals.debug.mod_int           = atol(value);
         }
-        else if (0 == strcmp(key, "debug_mod_xup")){
+        else if (0 == strcmp(key, "mod_xup")){
             this->globals.debug.mod_xup           = atol(value);
         }
-        else if (0 == strcmp(key, "debug_widget")){
+        else if (0 == strcmp(key, "widget")){
             this->globals.debug.widget            = atol(value);
         }
-        else if (0 == strcmp(key, "debug_input")){
+        else if (0 == strcmp(key, "input")){
             this->globals.debug.input            = atol(value);
         }
     }
@@ -463,7 +462,7 @@ void Inifile::setglobal(const char * key, const char * value, const char * conte
 }
 
 
-void Inifile::cparse(const char * filename, bool getdefault){
+void Inifile::cparse(const char * filename){
     ifstream inifile(filename);
-    this->cparse(inifile, getdefault);
+    this->cparse(inifile);
 }

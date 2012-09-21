@@ -49,8 +49,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 
     uint breakpoint = 0;
     {
-        Capture consumer(recorder.meta().width, recorder.meta().height,
-                        "/tmp/replay_part", 0, 0, false);
+        Capture consumer(recorder.meta().width, recorder.meta().height, "/tmp/replay_part", "/tmp/replay_part", "", "", 15, 100, 60);
 
         recorder.consumer(&consumer);
 

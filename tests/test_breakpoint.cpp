@@ -36,11 +36,17 @@
 BOOST_AUTO_TEST_CASE(TestBreakpoint)
 {
     const char * filename_base = "/tmp/test_breakpoint";
+    BOOST_CHECK(1);
+    std::string mwrm_filename = filename_base;
+    mwrm_filename += '-';
+    mwrm_filename += boost::lexical_cast<std::string>(getpid());
+    mwrm_filename += ".mwrm";
+
 
     BOOST_CHECK(1);
     {
         int w = 1024, h = 912;
-        Capture cap(w, h, filename_base, 0, 0);
+        Capture cap(w, h, filename_base, mwrm_filename.c_str(), "", "", 15, 10000, 60);
         cap.start();
         Rect clip(0, 0, w, h);
         cap.draw(RDPOpaqueRect(Rect(10,844,500,42), RED), clip);
@@ -56,11 +62,6 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     }
 
     WRMRecorder recorder;
-    BOOST_CHECK(1);
-    std::string mwrm_filename = filename_base;
-    mwrm_filename += '-';
-    mwrm_filename += boost::lexical_cast<std::string>(getpid());
-    mwrm_filename += ".mwrm";
     recorder.open_meta_followed_wrm(mwrm_filename.c_str());
     StaticCapture consumer(recorder.meta().width,
                            recorder.meta().height,
