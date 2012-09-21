@@ -29,6 +29,7 @@
 #include "colors.hpp"
 
 struct selector_mod : public internal_mod {
+
     struct TargetDevice {
         char group[256];
         char target[256];
@@ -46,6 +47,7 @@ struct selector_mod : public internal_mod {
     char filter[256];
 
     size_t focus_line;
+
     enum {
         FOCUS_ON_FILTER_GROUP = 0,
         FOCUS_ON_FILTER_DEVICE,
@@ -111,17 +113,18 @@ struct selector_mod : public internal_mod {
     Bitmap * last_page_inactive;
 
 
-    selector_mod(ModContext & context, FrontAPI & front, uint16_t width, uint16_t height):
-            internal_mod(front, width, height), focus_line(0),
-            focus_item(context.selector_focus),
-            click_focus(NO_FOCUS),
-            state(BUTTON_STATE_UP),
-            filter_group_edit_pos(0),
-            filter_device_edit_pos(0),
-            showed_page(0),
-            total_page(1),
-            context(context)
-    {
+    selector_mod( ModContext & context, FrontAPI & front, uint16_t width, uint16_t height)
+        : internal_mod(front, width, height)
+        , focus_line(0)
+        , focus_item(context.selector_focus)
+        , click_focus(NO_FOCUS)
+        , state(BUTTON_STATE_UP)
+        , filter_group_edit_pos(0)
+        , filter_device_edit_pos(0)
+        , showed_page(0)
+        , total_page(1)
+        , context(context)
+{
 
         LOG(LOG_INFO, "Creating selector");
 
@@ -3541,6 +3544,7 @@ struct selector_mod : public internal_mod {
         this->context.cpy(STRAUTHID_SELECTOR_DEVICE_FILTER, this->filter_device_text);
         this->context.ask(STRAUTHID_TARGET_USER);
         this->context.ask(STRAUTHID_TARGET_DEVICE);
+        this->context.ask(STRAUTHID_TARGET_PROTOCOL);
         this->context.ask(STRAUTHID_SELECTOR);
         this->signal = BACK_EVENT_REFRESH;
         this->event.set();
@@ -3581,10 +3585,17 @@ struct selector_mod : public internal_mod {
         {
 //            LOG(LOG_INFO, "Connect");
             char buffer[1024];
-            sprintf(buffer, "%s:%s",
-                this->grid[this->focus_line].target,
-                this->context.get(STRAUTHID_AUTH_USER));
+            sprintf( buffer, "%s:%s:%s"
+                   , this->grid[this->focus_line].target
+                   , this->grid[this->focus_line].protocol
+                   , this->context.get(STRAUTHID_AUTH_USER)
+                   );
+            printf ("BUFFER : %s\n", buffer);
             this->context.parse_username(buffer);
+            printf ("CONTEXT TARGET_USER : %s\n", this->context.get(STRAUTHID_TARGET_USER));
+            printf ("CONTEXT TARGET_DEVICE : %s\n", this->context.get(STRAUTHID_TARGET_DEVICE));
+            printf ("CONTEXT TARGET_PROTOCOL : %s\n", this->context.get(STRAUTHID_TARGET_PROTOCOL));
+            printf ("CONTEXT AUTH_USER : %s\n", this->context.get(STRAUTHID_AUTH_USER));
             this->signal = BACK_EVENT_2;
             this->event.set();
         }
@@ -3596,6 +3607,7 @@ struct selector_mod : public internal_mod {
             this->context.ask(STRAUTHID_PASSWORD);
             this->context.ask(STRAUTHID_TARGET_USER);
             this->context.ask(STRAUTHID_TARGET_DEVICE);
+            this->context.ask(STRAUTHID_TARGET_PROTOCOL);
             this->context.ask(STRAUTHID_SELECTOR);
             this->signal = BACK_EVENT_2;
             this->event.set();

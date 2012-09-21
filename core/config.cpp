@@ -77,71 +77,6 @@ bool check_ask(const char * str)
     return (0 == strcmp(str, "ask"));
 }
 
-authid_t authid_from_string(const char * kw)
-{
-    static const string authstr[MAX_AUTHID-1] = {
-    STRAUTHID_TARGET_USER,
-    STRAUTHID_TARGET_PASSWORD,
-    STRAUTHID_HOST,
-    STRAUTHID_PASSWORD,
-    STRAUTHID_AUTH_USER,
-    STRAUTHID_TARGET_DEVICE,
-    STRAUTHID_TARGET_PORT,
-    STRAUTHID_TARGET_PROTOCOL,
-    STRAUTHID_END_TIME,
-    STRAUTHID_SELECTOR_GROUP_FILTER,
-    STRAUTHID_SELECTOR_DEVICE_FILTER,
-    STRAUTHID_SELECTOR_LINES_PER_PAGE,
-    STRAUTHID_SELECTOR_NUMBER_OF_PAGES,
-    STRAUTHID_SELECTOR_CURRENT_PAGE,
-    STRAUTHID_REJECTED,
-    STRAUTHID_OPT_MOVIE,
-    STRAUTHID_OPT_MOVIE_PATH,
-    STRAUTHID_OPT_CLIPBOARD,
-    STRAUTHID_OPT_DEVICEREDIRECTION,
-    STRAUTHID_END_DATE_CNX,
-    STRAUTHID_MESSAGE,
-    STRAUTHID_OPT_BITRATE,
-    STRAUTHID_OPT_FRAMERATE,
-    STRAUTHID_OPT_QSCALE,
-    STRAUTHID_OPT_CODEC_ID,
-    STRAUTHID_OPT_WIDTH,
-    STRAUTHID_OPT_HEIGHT,
-    STRAUTHID_OPT_BPP,
-    STRAUTHID_DISPLAY_MESSAGE,
-    STRAUTHID_ACCEPT_MESSAGE,
-    STRAUTHID_AUTH_ERROR_MESSAGE,
-    STRAUTHID_PROXY_TYPE,
-    STRAUTHID_AUTHENTICATED,
-    STRAUTHID_SELECTOR,
-    STRAUTHID_KEEPALIVE,
-    STRAUTHID_TRANS_BUTTON_OK,
-    STRAUTHID_TRANS_BUTTON_CANCEL,
-    STRAUTHID_TRANS_BUTTON_HELP,
-    STRAUTHID_TRANS_BUTTON_CLOSE,
-    STRAUTHID_TRANS_BUTTON_REFUSED,
-    STRAUTHID_TRANS_LOGIN,
-    STRAUTHID_TRANS_USERNAME,
-    STRAUTHID_TRANS_PASSWORD,
-    STRAUTHID_TRANS_TARGET,
-    STRAUTHID_TRANS_DIAGNOSTIC,
-    STRAUTHID_TRANS_CONNECTION_CLOSED,
-    STRAUTHID_TRANS_HELP_MESSAGE,
-    STRAUTHID_MODE_CONSOLE,
-    STRAUTHID_VIDEO_QUALITY,
-    STRAUTHID_TIMEZONE,
-    };
-
-    string str = string(kw);
-    authid_t res = AUTHID_UNKNOWN;
-    for (int i = 0; i < MAX_AUTHID-1 ; i++){
-        if (0 == authstr[i].compare(str)){
-            res = (authid_t)(i+1);
-            break;
-        }
-    }
-    return res;
-}
 
 idlib_t idlib_from_string(string str)
 {
@@ -281,7 +216,7 @@ void Inifile::init(){
 };
 
 void Inifile::cparse(istream & ifs, bool getdefault){
-    
+
     const size_t maxlen = 256;
     char line[maxlen];
     char context[128] = {0};
@@ -358,7 +293,7 @@ void Inifile::parseline(const char * line, char * context, bool getdefault)
 
 void Inifile::setglobal(const char * key, const char * value, const char * context, bool getdefault)
 {
-    if (0 == strcmp(context, "globals")){ 
+    if (0 == strcmp(context, "globals")){
         if (0 == strcmp(key, "bitmap_cache")){
             this->globals.bitmap_cache = bool_from_cstr(value);
         }
@@ -532,5 +467,3 @@ void Inifile::cparse(const char * filename, bool getdefault){
     ifstream inifile(filename);
     this->cparse(inifile, getdefault);
 }
-
-
