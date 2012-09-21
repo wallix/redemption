@@ -306,4 +306,4 @@ unit-test test_zlib : tests/test_zlib.cpp libboost_unit_test z ;
 
 unit-test test_parse_username : tests/test_parse_username.cpp libboost_unit_test : ;
 
-unit-test test_recorder_by_socket : tests/test_recorder_by_socket.cpp libboost_unit_test crypto png z openssl crypto ini_config libboost_program_options dl : ;
+# unit-test test_recorder_by_socket : tests/test_recorder_by_socket.cpp libboost_unit_test crypto png z openssl crypto ini_config libboost_program_options dl : ;

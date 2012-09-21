@@ -63,7 +63,7 @@ class SessionManager {
         , context(context)
         , tick_count(0)
         , auth_trans_t(NULL)
-        , auth_event(NULL)        
+        , auth_event(NULL)
         , keepalive_grace_delay(keepalive_grace_delay)
         , max_tick(max_tick)
         , internal_domain(internal_domain)
@@ -121,7 +121,7 @@ class SessionManager {
             LOG(LOG_INFO, "auth::in_items");
         }
         for (; stream.p < stream.end ; this->in_item(stream)){
-                    ;
+            ;
         }
 
     }
@@ -316,7 +316,7 @@ class SessionManager {
                 strcpy(this->context.movie, user);
                 if (0 != strcmp(".wrm", user + len_user - 4)){
                     strcpy(this->context.movie + len_user, ".wrm");
-                } 
+                }
                 this->context.nextmod = ModContext::INTERNAL_TEST;
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
@@ -551,6 +551,7 @@ class SessionManager {
             this->out_item(stream, STRAUTHID_PASSWORD);
             this->out_item(stream, STRAUTHID_TARGET_USER);
             this->out_item(stream, STRAUTHID_TARGET_DEVICE);
+            this->out_item(stream, STRAUTHID_TARGET_PROTOCOL);
             this->out_item(stream, STRAUTHID_SELECTOR);
             this->out_item(stream, STRAUTHID_SELECTOR_GROUP_FILTER);
             this->out_item(stream, STRAUTHID_SELECTOR_DEVICE_FILTER);

@@ -22,9 +22,123 @@
 #if !defined(__ACL_MODCONTEXT_HPP__)
 #define __ACL_MODCONTEXT_HPP__
 
+#include <string>
+
 #include "config.hpp"
 #include "log.hpp"
 #include "dico.hpp"
+
+using namespace std;
+
+typedef enum{
+    AUTHID_UNKNOWN = 0,
+    AUTHID_TARGET_USER,     // target_login
+    AUTHID_TARGET_PASSWORD, // target_password
+    AUTHID_HOST,            // ip_client
+    AUTHID_PASSWORD,        // password
+    AUTHID_AUTH_USER,       // login
+    AUTHID_TARGET_DEVICE,   // target_device
+    AUTHID_TARGET_PORT,     // target_port
+    AUTHID_TARGET_PROTOCOL, // proto_dest
+    AUTHID_END_TIME,        // end time as text
+    AUTHID_SELECTOR_GROUP_FILTER, // group filter text
+    AUTHID_SELECTOR_DEVICE_FILTER, // device filter text
+    AUTHID_SELECTOR_LINES_PER_PAGE, // number of lines per page
+    AUTHID_SELECTOR_NUMBER_OF_PAGES, // number of pages
+    AUTHID_SELECTOR_CURRENT_PAGE, // current page
+    AUTHID_REJECTED,        // rejected
+    AUTHID_SESSION_ID,      // session_id
+    AUTHID_OPT_MOVIE,       // is_rec
+    AUTHID_OPT_MOVIE_PATH,  // rec_path
+    AUTHID_OPT_CLIPBOARD,   // clipboard
+    AUTHID_OPT_DEVICEREDIRECTION, // device_redirection
+    AUTHID_END_DATE_CNX,    // timeclose
+    AUTHID_MESSAGE, // warning_message
+    AUTHID_OPT_BITRATE,     // Bit rate for video encoding
+    AUTHID_OPT_FRAMERATE,   // Frame rate for video encoding
+    AUTHID_OPT_QSCALE,      // QScale parameter for vdeo encoding
+    AUTHID_OPT_CODEC_ID,    // CODEC_ID for video encoding
+    AUTHID_OPT_WIDTH,       // client width
+    AUTHID_OPT_HEIGHT,      // client height
+    AUTHID_OPT_BPP,         // bits per planes (number of colors)
+    AUTHID_DISPLAY_MESSAGE, // display a dialog box with a message
+    AUTHID_ACCEPT_MESSAGE,  // display a dialog to valid a message
+    AUTHID_AUTH_ERROR_MESSAGE,
+    AUTHID_PROXY_TYPE,
+    AUTHID_AUTHENTICATED,
+    AUTHID_SELECTOR,
+    AUTHID_KEEPALIVE,
+    // Translation Text
+    AUTHID_TRANS_BUTTON_OK,
+    AUTHID_TRANS_BUTTON_CANCEL,
+    AUTHID_TRANS_BUTTON_HELP,
+    AUTHID_TRANS_BUTTON_CLOSE,
+    AUTHID_TRANS_BUTTON_REFUSED,
+    AUTHID_TRANS_LOGIN,
+    AUTHID_TRANS_USERNAME,
+    AUTHID_TRANS_PASSWORD,
+    AUTHID_TRANS_TARGET,
+    AUTHID_TRANS_DIAGNOSTIC,
+    AUTHID_TRANS_CONNECTION_CLOSED,
+    AUTHID_TRANS_HELP_MESSAGE,
+    AUTHID_MODE_CONSOLE,
+    AUTHID_VIDEO_QUALITY,
+    AUTHID_TIMEZONE,
+    MAX_AUTHID
+} authid_t;
+
+
+#define STRAUTHID_TARGET_USER      "target_login"
+#define STRAUTHID_TARGET_PASSWORD  "target_password"
+#define STRAUTHID_HOST             "ip_client"
+#define STRAUTHID_PASSWORD         "password"
+#define STRAUTHID_AUTH_USER        "login"
+#define STRAUTHID_TARGET_DEVICE    "target_device"
+#define STRAUTHID_TARGET_PORT      "target_port"
+#define STRAUTHID_TARGET_PROTOCOL  "proto_dest"
+#define STRAUTHID_END_TIME         "end_time"
+#define STRAUTHID_SELECTOR_GROUP_FILTER "selector_group_filter"
+#define STRAUTHID_SELECTOR_DEVICE_FILTER "selector_device_filter"
+#define STRAUTHID_SELECTOR_LINES_PER_PAGE "selector_lines_per_page"
+#define STRAUTHID_SELECTOR_NUMBER_OF_PAGES "selector_number_of_pages"
+#define STRAUTHID_SELECTOR_CURRENT_PAGE "selector_current_page"
+#define STRAUTHID_REJECTED         "rejected"
+#define STRAUTHID_SESSION_ID                "session_id"
+#define STRAUTHID_OPT_MOVIE        "is_rec"
+#define STRAUTHID_OPT_MOVIE_PATH   "rec_path"
+#define STRAUTHID_OPT_CLIPBOARD    "clipboard"
+#define STRAUTHID_OPT_DEVICEREDIRECTION "device_redirection"
+#define STRAUTHID_END_DATE_CNX     "timeclose"
+#define STRAUTHID_MESSAGE          "message"
+#define STRAUTHID_OPT_BITRATE      "bitrate"
+#define STRAUTHID_OPT_FRAMERATE    "framerate"
+#define STRAUTHID_OPT_QSCALE       "qscale"
+#define STRAUTHID_OPT_CODEC_ID     "codec_id"
+#define STRAUTHID_OPT_WIDTH        "width"
+#define STRAUTHID_OPT_HEIGHT       "height"
+#define STRAUTHID_OPT_BPP          "bpp"
+#define STRAUTHID_DISPLAY_MESSAGE  "display_message"
+#define STRAUTHID_ACCEPT_MESSAGE   "accept_message"
+#define STRAUTHID_AUTH_ERROR_MESSAGE "error_message"
+#define STRAUTHID_PROXY_TYPE        "proxy_type"
+#define STRAUTHID_AUTHENTICATED     "authenticated"
+#define STRAUTHID_SELECTOR         "selector"
+#define STRAUTHID_KEEPALIVE         "keepalive"
+#define STRAUTHID_TRANS_BUTTON_OK   "trans_ok"
+#define STRAUTHID_TRANS_BUTTON_CANCEL "trans_cancel"
+#define STRAUTHID_TRANS_BUTTON_HELP   "trans_help"
+#define STRAUTHID_TRANS_BUTTON_CLOSE  "trans_close"
+#define STRAUTHID_TRANS_BUTTON_REFUSED  "trans_refused"
+#define STRAUTHID_TRANS_LOGIN         "trans_login"
+#define STRAUTHID_TRANS_USERNAME      "trans_username"
+#define STRAUTHID_TRANS_PASSWORD      "trans_password"
+#define STRAUTHID_TRANS_TARGET        "trans_target"
+#define STRAUTHID_TRANS_DIAGNOSTIC    "trans_diagnostic"
+#define STRAUTHID_TRANS_CONNECTION_CLOSED   "trans_connection_closed"
+#define STRAUTHID_TRANS_HELP_MESSAGE  "trans_help_message"
+#define STRAUTHID_MODE_CONSOLE        "mode_console"
+#define STRAUTHID_VIDEO_QUALITY       "video_quality"
+#define STRAUTHID_TIMEZONE            "timezone"
 
 enum {
     MCTX_STATUS_EXIT,
@@ -89,6 +203,7 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     {STRAUTHID_OPT_QSCALE, TYPE_INTEGER, "!15"},
     {STRAUTHID_OPT_CODEC_ID, TYPE_TEXT, "!flv"},
     {STRAUTHID_REJECTED, TYPE_TEXT, "!Connection refused by authentifier."},
+    {STRAUTHID_SESSION_ID, TYPE_TEXT, "!"},
     // password or AuthenticationInteractive
     {"authentication_challenge", TYPE_TEXT, "!password"},
     // Translation
@@ -108,6 +223,73 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     {STRAUTHID_VIDEO_QUALITY, TYPE_TEXT, "!medium"},
     {STRAUTHID_TIMEZONE, TYPE_INTEGER, "!-3600"},
 };
+
+
+static inline authid_t authid_from_string(const char * kw)
+{
+    static const string authstr[MAX_AUTHID-1] = {
+    STRAUTHID_TARGET_USER,
+    STRAUTHID_TARGET_PASSWORD,
+    STRAUTHID_HOST,
+    STRAUTHID_PASSWORD,
+    STRAUTHID_AUTH_USER,
+    STRAUTHID_TARGET_DEVICE,
+    STRAUTHID_TARGET_PORT,
+    STRAUTHID_TARGET_PROTOCOL,
+    STRAUTHID_END_TIME,
+    STRAUTHID_SELECTOR_GROUP_FILTER,
+    STRAUTHID_SELECTOR_DEVICE_FILTER,
+    STRAUTHID_SELECTOR_LINES_PER_PAGE,
+    STRAUTHID_SELECTOR_NUMBER_OF_PAGES,
+    STRAUTHID_SELECTOR_CURRENT_PAGE,
+    STRAUTHID_REJECTED,
+    STRAUTHID_OPT_MOVIE,
+    STRAUTHID_OPT_MOVIE_PATH,
+    STRAUTHID_OPT_CLIPBOARD,
+    STRAUTHID_OPT_DEVICEREDIRECTION,
+    STRAUTHID_END_DATE_CNX,
+    STRAUTHID_MESSAGE,
+    STRAUTHID_OPT_BITRATE,
+    STRAUTHID_OPT_FRAMERATE,
+    STRAUTHID_OPT_QSCALE,
+    STRAUTHID_OPT_CODEC_ID,
+    STRAUTHID_OPT_WIDTH,
+    STRAUTHID_OPT_HEIGHT,
+    STRAUTHID_OPT_BPP,
+    STRAUTHID_DISPLAY_MESSAGE,
+    STRAUTHID_ACCEPT_MESSAGE,
+    STRAUTHID_AUTH_ERROR_MESSAGE,
+    STRAUTHID_PROXY_TYPE,
+    STRAUTHID_AUTHENTICATED,
+    STRAUTHID_SELECTOR,
+    STRAUTHID_KEEPALIVE,
+    STRAUTHID_TRANS_BUTTON_OK,
+    STRAUTHID_TRANS_BUTTON_CANCEL,
+    STRAUTHID_TRANS_BUTTON_HELP,
+    STRAUTHID_TRANS_BUTTON_CLOSE,
+    STRAUTHID_TRANS_BUTTON_REFUSED,
+    STRAUTHID_TRANS_LOGIN,
+    STRAUTHID_TRANS_USERNAME,
+    STRAUTHID_TRANS_PASSWORD,
+    STRAUTHID_TRANS_TARGET,
+    STRAUTHID_TRANS_DIAGNOSTIC,
+    STRAUTHID_TRANS_CONNECTION_CLOSED,
+    STRAUTHID_TRANS_HELP_MESSAGE,
+    STRAUTHID_MODE_CONSOLE,
+    STRAUTHID_VIDEO_QUALITY,
+    STRAUTHID_TIMEZONE,
+    };
+
+    string str = string(kw);
+    authid_t res = AUTHID_UNKNOWN;
+    for (int i = 0; i < MAX_AUTHID-1 ; i++){
+        if (0 == authstr[i].compare(str)){
+            res = (authid_t)(i+1);
+            break;
+        }
+    }
+    return res;
+}
 
 
 struct ModContext : public Dico {
@@ -147,6 +329,7 @@ struct ModContext : public Dico {
         char auth_user[256];
         target_user[0] = 0;
         target_device[0] = 0;
+        target_protocol[0] = 0;
         auth_user[0] = 0;
 
         this->ask(STRAUTHID_SELECTOR);
@@ -201,9 +384,6 @@ struct ModContext : public Dico {
                          break;
                     }
                 break;
-//                case COPY_PROTOCOL:
-//                     auth_user[iauthuser++] = c;
-//                break;
                 case COPY_AUTHUSER:
                     switch (c){
                         case ':':
@@ -227,6 +407,7 @@ struct ModContext : public Dico {
                 target_user[0] = 0;
             }
         }
+
         if (!*target_user)
         {
             this->ask(STRAUTHID_TARGET_USER);
