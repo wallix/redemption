@@ -25,7 +25,6 @@
 #define __UTILS_LOG_HPP__
 
 #include <string.h>
-#define LOGPRINT
 #ifndef VERBOSE
 #define TODO(x)
 #else
