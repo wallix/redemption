@@ -220,7 +220,7 @@ BOOST_AUTO_TEST_CASE(TestCryptWRMFileOpenSSL)
         InFileTransport in_file(fd, false);
         InCipherTransport trans(&in_file);
         RaiiInCipherTransport raii(trans, cipher_mode(), key, iv);
-        StaticCapture pngcap(800,600,"/tmp/decrypt.png");
+        StaticCapture pngcap(800,600,"/tmp/decrypt.png", NULL, NULL, 10);
         RDPUnserializer unserializer(&trans, &pngcap, Rect(0,0,800,600));
 
         char message[1024];
@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         recorder.open_meta_followed_wrm(filename_mwrm.c_str());
         /*WRMRecorder recorder(filename_mwrm, "",
                              CipherMode::BLOWFISH_CBC, key, iv);*/
-        StaticCapture pngcap(800,600,"/tmp/decrypt-cap");
+        StaticCapture pngcap(800,600,"/tmp/decrypt-cap", NULL, NULL, 10);
         recorder.consumer(&pngcap);
         BOOST_REQUIRE(true);
 
@@ -391,7 +391,7 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
         WRMRecorder recorder(make_pid_filename_generator("/tmp/wrm-encrypt.mwrm")().c_str(), "",
                              CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC), key, iv);
         BOOST_CHECK(true);
-        StaticCapture cap(800, 600, "/tmp/wrm-encrypt");
+        StaticCapture cap(800, 600, "/tmp/wrm-encrypt", NULL, NULL, 10);
         BOOST_CHECK(true);
         recorder.consumer(&cap);
 

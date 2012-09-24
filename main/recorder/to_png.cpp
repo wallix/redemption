@@ -33,8 +33,8 @@ void to_png(WRMRecorder& recorder, const char* outfile,
 {
     StaticCapture capture(recorder.meta().width,
                           recorder.meta().height,
-                          outfile,
-                          resize_width, resize_height);
+                          outfile, NULL, NULL, 10,
+                          resize_width, resize_height, true);
     recorder.consumer(&capture);
     load_png_context(recorder, capture.drawable);
 
@@ -104,7 +104,7 @@ void to_png(WRMRecorder& recorder, const char* outfile,
 
     StaticCapture capture(recorder.meta().width,
                           recorder.meta().height,
-                          outfile,
+                          outfile, NULL, NULL, 10,
                           resize_width, resize_height);
     recorder.consumer(&capture);
     load_png_context(recorder, capture.drawable);

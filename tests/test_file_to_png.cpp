@@ -104,8 +104,7 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
 
     std::cout << "cipher is active: " << reader.cipher_is_active() << std::endl;
 
-    StaticCapture consumer(meta.width, meta.height,
-                           "/tmp/test_replay_to_png");
+    StaticCapture consumer(meta.width, meta.height, "/tmp/test_replay_to_png", NULL, NULL, 10);
 
     bool is_chunk_time = false;
     uint count_img = 0;
@@ -120,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
             reader.interpret_order();
             if (is_chunk_time)
             {
-                //consumer.dump_png();
+                consumer.dump_png();
                 ++count_img;
                 is_chunk_time = false;
             }

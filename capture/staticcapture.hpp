@@ -70,37 +70,17 @@ private:
     }
 
 public:
-    StaticCapture(int width, int height, const char * path, const char * codec_id, const char * video_quality, unsigned png_limit, bool bgr = true)
+    StaticCapture(unsigned width, unsigned height, const char * path, const char * codec_id, const char * video_quality, unsigned png_limit, 
+                  unsigned resize_width = 0, unsigned resize_height = 0, bool bgr = true)
     : RDPDrawable(width, height, bgr)
     , framenb(0)
-    , scale_width(width)
-    , scale_height(height)
-    , data_scale(0)
-    {
-        this->__init(path);
-    }
-
-    StaticCapture(int width, int height, const char * path, bool bgr = true)
-    : RDPDrawable(width, height, bgr)
-    , framenb(0)
-    , scale_width(width)
-    , scale_height(height)
-    , data_scale(0)
-    {
-        this->__init(path);
-    }
-
-    StaticCapture(int width, int height, const char * path, unsigned resize_width, unsigned resize_height, bool bgr = true)
-    : RDPDrawable(width, height, bgr)
-    , framenb(0)
-    , scale_width(std::min<unsigned>(width, resize_width))
-    , scale_height(std::min<unsigned>(height, resize_height))
+    , scale_width(resize_width?resize_width:width)
+    , scale_height(resize_height?resize_height:height)
     , data_scale(
-        (scale_width == this->drawable.width
-        && scale_height == this->drawable.height)
-        || 0 == scale_width * scale_height
-        ? 0 : new uint8_t[scale_width * scale_height * 3]
-    )
+        ((scale_width == width && scale_height == height)
+            ||(scale_width == 0) 
+            || (scale_height == 0)) ?
+            0 : new uint8_t[scale_width * scale_height * 3])
     {
         this->__init(path);
     }
@@ -122,10 +102,7 @@ public:
 
     void set_resize(unsigned resize_width, unsigned resize_height)
     {
-        resize_width = std::min<unsigned>(this->drawable.height, resize_width);
-        resize_height = std::min<unsigned>(this->drawable.height, resize_height);
-        if (resize_width == this->drawable.width
-            && resize_height == this->drawable.height)
+        if (resize_width == this->drawable.width && resize_height == this->drawable.height)
         {
             delete this->data_scale;
             this->data_scale = 0;
@@ -150,7 +127,7 @@ public:
     void dump_png(void)
     {
         sprintf(this->image_path + this->image_basepath_len, "%u.png", this->framenb++);
-//        LOG(LOG_INFO, "Dumping to file %s", rawImagePath);
+        LOG(LOG_INFO, "Dumping to file %s", this->image_path);
         if (FILE * fd = fopen(this->image_path, "w"))
         {
             if (this->data_scale)
