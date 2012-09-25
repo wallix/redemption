@@ -125,6 +125,11 @@ public:
     void dump_png(void)
     {
         if (this->png_limit > 0){
+            if (this->png_limit <= (sizeof(this->to_remove)/sizeof(unsigned))){
+                LOG(LOG_INFO, "Png files won't be removed"); 
+            }
+                
+
             if (this->png_limit < (sizeof(this->to_remove)/sizeof(unsigned)) && this->framenb >= this->png_limit){
                 sprintf(this->image_path + this->image_basepath_len, "%u.png", 
                     this->to_remove[(this->framenb - this->png_limit) % this->png_limit]);           
