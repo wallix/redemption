@@ -606,9 +606,9 @@ class SessionManager {
         if (flag && (this->context.get(STRAUTHID_SESSION_ID)[0] != 0) ) {
             int child_pid = getpid();
             char old_session_file[256];
-            sprintf(old_session_file, "%s/session_%d.pid", PID_PATH, child_pid);
+            sprintf(old_session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);
             char new_session_file[256];
-            sprintf(new_session_file, "%s/session_%s.pid", PID_PATH, this->context.get(STRAUTHID_SESSION_ID));
+            sprintf(new_session_file, "%s/redemption/session_%s.pid", PID_PATH, this->context.get(STRAUTHID_SESSION_ID));
             rename(old_session_file, new_session_file);
         }
 

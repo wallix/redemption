@@ -67,7 +67,7 @@ class SessionServer : public Server
                 // Create session file
                 child_pid = getpid();
                 char session_file[256];
-                sprintf(session_file, "%s/session_%d.pid", PID_PATH, child_pid);
+                sprintf(session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);
                 fd = open(session_file, O_WRONLY | O_CREAT, S_IRWXU);
                 if (fd == -1) {
                     LOG(LOG_ERR, "Writing process id to SESSION ID FILE failed. Maybe no rights ?:%d:%d\n", errno, strerror(errno));
@@ -76,7 +76,7 @@ class SessionServer : public Server
                 lg = snprintf(text, 255, "%d", child_pid);
                 LOG(LOG_DEBUG, "PID TEXTE : %s", text);
                 if (write(fd, text, lg) == -1) {
-                    LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/session_<pid>.pid", strerror(errno));
+                    LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/redemption/session_<pid>.pid", strerror(errno));
                     _exit(1);
                 }
                 close(fd);

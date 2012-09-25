@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
-// #include <sys/stat.h>
+ #include <sys/stat.h>
 #include <fcntl.h>
 
 #include "version.hpp"
@@ -253,35 +253,40 @@ int main(int argc, char** argv)
     // don't check if it fails (proxy may be allready stopped)
     // and try to continue normal start process afterward
 
+    mkdir(PID_PATH "/redemption", 700);
+    chown(PID_PATH "/redemption", uid, gid);
+
     if (options.count("force")){
-        shutdown(PID_PATH  "/" LOCKFILE);
+        shutdown(PID_PATH  "/redemption/" LOCKFILE);
     }
 
-    if (0 == access(PID_PATH "/" LOCKFILE, F_OK)) {
+    if (0 == access(PID_PATH "/redemption/" LOCKFILE, F_OK)) {
         clog <<
-        "File " << PID_PATH "/" LOCKFILE << " already exists. "
+        "File " << PID_PATH "/redemption/" LOCKFILE << " already exists. "
         "It looks like rdpproxy is already running, "
-        "if not delete the " LOCKFILE " file and try again\n";
-        _exit(0);
+        "if not delete the " PID_PATH "/redemption/" LOCKFILE " file and try again\n";
+        _exit(1);
     }
+
+
     /* write the pid to file */
-    fd = open(PID_PATH "/" LOCKFILE, O_WRONLY | O_CREAT, S_IRWXU);
+    fd = open(PID_PATH "/redemption/" LOCKFILE, O_WRONLY | O_CREAT, S_IRWXU);
     if (fd == -1) {
         clog
-        <<  "Writing process id to " LOCKFILE " failed. Maybe no rights ?"
+        <<  "Writing process id to " PID_PATH "/redemption/" LOCKFILE " failed. Maybe no rights ?"
         << " : " << errno << ":'" << strerror(errno) << "'\n";
         _exit(1);
     }
     pid = getpid();
     size_t lg = snprintf(text, 255, "%d", pid);
     if (write(fd, text, lg) == -1) {
-        LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/" LOCKFILE, strerror(errno));
+        LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/redemption/" LOCKFILE, strerror(errno));
         _exit(1);
     }
     close(fd);
 
     if (!options.count("nodaemon")) {
-        daemonize(PID_PATH "/" LOCKFILE);
+        daemonize(PID_PATH "/redemption/" LOCKFILE);
     }
 
     setuid(uid);
@@ -294,7 +299,7 @@ int main(int argc, char** argv)
     /* don't care about errors. */
     /* If we are not in daemon mode this file will not exists, */
     /* hence some errors are expected */
-    unlink(PID_PATH "/" LOCKFILE);
+    unlink(PID_PATH "/redemption/" LOCKFILE);
 
     return 0;
 }
