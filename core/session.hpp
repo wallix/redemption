@@ -151,6 +151,7 @@ struct Session {
             struct timeval time_mark = { 0, 0 };
             while (1) {
                 if (*this->refreshconf){
+                    LOG(LOG_INFO, "refresh conf: reading directory %s", ini->globals.dynamic_conf_path);
                     if (*this->refreshconf & 1){
                         *this->refreshconf ^= 1;
                         DIR * d = opendir(ini->globals.dynamic_conf_path);

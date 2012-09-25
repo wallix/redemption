@@ -53,26 +53,23 @@
 class StaticCapture : public RDPDrawable
 {
 public:
-    int framenb;
+    unsigned png_limit;
+    unsigned framenb;
     char path[1024];
     char image_path[1024];
     uint16_t image_basepath_len;
 
 private:
+    unsigned to_remove[32768];
     unsigned int scale_width;
     unsigned int scale_height;
     uint8_t * data_scale;
-
-    void __init(const char * path)
-    {
-        strcpy(this->path, path);
-        this->image_basepath_len = sprintf(this->image_path, "%s-%u-", path, getpid());
-    }
 
 public:
     StaticCapture(unsigned width, unsigned height, const char * path, const char * codec_id, const char * video_quality, unsigned png_limit, 
                   unsigned resize_width = 0, unsigned resize_height = 0, bool bgr = true)
     : RDPDrawable(width, height, bgr)
+    , png_limit(png_limit)
     , framenb(0)
     , scale_width(resize_width?resize_width:width)
     , scale_height(resize_height?resize_height:height)
@@ -82,7 +79,8 @@ public:
             || (scale_height == 0)) ?
             0 : new uint8_t[scale_width * scale_height * 3])
     {
-        this->__init(path);
+        strcpy(this->path, path);
+        this->image_basepath_len = sprintf(this->image_path, "%s-%u-", path, getpid());
     }
 
     ~StaticCapture()
@@ -126,30 +124,46 @@ public:
 
     void dump_png(void)
     {
-        sprintf(this->image_path + this->image_basepath_len, "%u.png", this->framenb++);
-        LOG(LOG_INFO, "Dumping to file %s", this->image_path);
-        if (FILE * fd = fopen(this->image_path, "w"))
-        {
-            if (this->data_scale)
-            {
-                scale_data(this->data_scale, this->drawable.data,
-                           this->scale_width, this->drawable.width,
-                           this->scale_height, this->drawable.height,
-                           this->drawable.rowsize);
-                ::dump_png24(fd, this->data_scale,
-                             this->scale_width,
-                             this->scale_height,
-                             this->scale_width * 3
-                            );
+        if (this->png_limit > 0){
+            if (this->png_limit < (sizeof(this->to_remove)/sizeof(unsigned)) && this->framenb >= this->png_limit){
+                sprintf(this->image_path + this->image_basepath_len, "%u.png", 
+                    this->to_remove[(this->framenb - this->png_limit) % this->png_limit]);           
+                LOG(LOG_INFO, "Removing file %s framenb=%u limit=%u", 
+                    this->image_path, this->framenb, this->png_limit);
+                unlink(this->image_path);
             }
-            else
+
+            sprintf(this->image_path + this->image_basepath_len, "%u.png", this->framenb++);
+            LOG(LOG_INFO, "Dumping to file %s %ux%u (%ux%u) framenb=%u limit=%u", 
+                this->image_path, this->drawable.width, this->drawable.height, 
+                this->scale_width, this->scale_height,
+                this->framenb, this->png_limit);
+            if (FILE * fd = fopen(this->image_path, "w"))
             {
-                ::dump_png24(fd, this->drawable.data,
-                             this->drawable.width, this->drawable.height,
-                             this->drawable.rowsize
-                            );
+                if (this->data_scale)
+                {
+                    scale_data(this->data_scale, this->drawable.data,
+                               this->scale_width, this->drawable.width,
+                               this->scale_height, this->drawable.height,
+                               this->drawable.rowsize);
+                    ::dump_png24(fd, this->data_scale,
+                                 this->scale_width,
+                                 this->scale_height,
+                                 this->scale_width * 3
+                                );
+                }
+                else
+                {
+                    ::dump_png24(fd, this->drawable.data,
+                                 this->drawable.width, this->drawable.height,
+                                 this->drawable.rowsize
+                                );
+                }
+                fclose(fd);
             }
-            fclose(fd);
+            if (this->png_limit < (sizeof(this->to_remove)/sizeof(unsigned))){
+                this->to_remove[(this->framenb-1) % this->png_limit] = this->framenb-1;
+            }
         }
     }
 

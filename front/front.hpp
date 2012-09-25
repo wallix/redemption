@@ -339,7 +339,6 @@ public:
     void periodic_snapshot(bool pointer_is_displayed)
     {
         if (this->capture){
-            LOG(LOG_INFO, "periodic_snapshot___________________________________");
             this->capture->snapshot(this->mouse_x, this->mouse_y,
                     pointer_is_displayed|this->nomouse, this->notimestamp);
         }

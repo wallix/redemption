@@ -63,7 +63,7 @@ public:
             CipherMode::enum_t mode = CipherMode::NO_MODE, 
             const unsigned char * key = 0, 
             const unsigned char * iv = 0) :
-    sc(width, height, path, codec_id, video_quality, png_limit, bgr),
+    sc(width, height, path, codec_id, video_quality, png_limit, width, height, bgr),
     nc(width, height, path, path_meta, mode, key, iv)
     {
         this->log_prefix[0] = 0;
