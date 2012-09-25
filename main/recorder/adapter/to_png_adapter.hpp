@@ -65,8 +65,8 @@ public:
     {
         to_png(recorder, outfile,
                this->_option.time_list,
-               this->_option.png_scale_width,
-               this->_option.png_scale_height,
+               ((this->_option.png_scale_width>1024)||(this->_option.png_scale_height>768))?0:this->_option.png_scale_width,
+               ((this->_option.png_scale_width>1024)||(this->_option.png_scale_height>768))?0:this->_option.png_scale_height,
                this->_option.no_screenshot_stop
         );
     }

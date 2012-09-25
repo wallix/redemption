@@ -253,7 +253,7 @@ int main(int argc, char** argv)
     // don't check if it fails (proxy may be allready stopped)
     // and try to continue normal start process afterward
 
-    mkdir(PID_PATH "/redemption", 700);
+    mkdir(PID_PATH "/redemption", 0700);
     chown(PID_PATH "/redemption", uid, gid);
 
     if (options.count("force")){

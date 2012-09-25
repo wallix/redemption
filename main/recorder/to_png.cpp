@@ -108,7 +108,7 @@ void to_png(WRMRecorder& recorder, const char* outfile,
     if (capture_points.empty())
         return ;
 
-    unsigned png_limit = 10;
+    unsigned png_limit = 32769;
     StaticCapture capture(recorder.meta().width,
                           recorder.meta().height,
                           outfile, NULL, NULL, png_limit,
