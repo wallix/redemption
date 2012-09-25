@@ -322,7 +322,7 @@ public:
 
     void start_capture(int width, int height, bool flag, char * path,
                 const char * codec_id, const char * quality,
-                const char * user, const char * ip_source, const char * target_user, const char * target_device, unsigned capture_flags, unsigned png_interval, unsigned png_limit)
+                const char * user, const char * ip_source, const char * target_user, const char * target_device, unsigned & capture_flags, unsigned & png_interval, unsigned & png_limit)
     {
         if (flag){
             this->stop_capture();

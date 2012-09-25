@@ -27,9 +27,13 @@
 class Capture : public RDPGraphicDevice
 {
     char log_prefix[256];
+    unsigned & png_interval;
 
     struct timeval start_static_capture;
-    uint64_t inter_frame_interval_static_capture;
+    uint64_t inter_frame_interval_static_capture(void)
+    {
+        return this->png_interval * 1000000;
+    }
 
     struct timeval start_native_capture;
     uint64_t inter_frame_interval_native_capture;
@@ -57,12 +61,13 @@ public:
             const char * codec_id, 
             const char * video_quality, 
             unsigned capture_flags, 
-            unsigned png_interval, 
-            unsigned png_limit, 
+            unsigned & png_interval, 
+            unsigned & png_limit, 
             bool bgr = true, 
             CipherMode::enum_t mode = CipherMode::NO_MODE, 
             const unsigned char * key = 0, 
             const unsigned char * iv = 0) :
+    png_interval(png_interval),
     sc(width, height, path, codec_id, video_quality, png_limit, width, height, bgr),
     nc(width, height, path, path_meta, mode, key, iv)
     {
@@ -73,7 +78,6 @@ public:
         this->start_native_capture = now;
         this->start_break_capture = now;
          // 1 000 000 us is 1 sec (default)
-        this->inter_frame_interval_static_capture = png_interval * 1000000;
         this->inter_frame_interval_native_capture =   40000; // 1 000 000 us is 1 sec (default)
         this->inter_frame_interval_start_break_capture  = 1000000 * 60 * 10; // 1 000 000 us is 1 sec (default)
         this->enabled = capture_flags;
@@ -135,7 +139,7 @@ public:
         }
 
         if ((this->enabled & STATIC_CAPTURE)
-        && (difftimeval(now, this->start_static_capture) >= this->inter_frame_interval_static_capture)){
+        && (difftimeval(now, this->start_static_capture) >= this->inter_frame_interval_static_capture())){
             TODO("change code below, it would be better to provide now to drawable instead of tm struct");
             time_t rawtime;
             time(&rawtime);

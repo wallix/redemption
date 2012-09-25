@@ -32,9 +32,12 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
             const unsigned char * key, const unsigned char * iv
 )
 {
+    unsigned capture_flags = 15;
+    unsigned png_interval = 100;
+    unsigned png_limit = 60;
     Capture capture(recorder.meta().width,
                     recorder.meta().height,
-                    outfile, metaname, "", "", 15, 60, 100,
+                    outfile, metaname, "", "", capture_flags, png_limit, png_interval,
                     true,
                     mode, key, iv);
     recorder.consumer(&capture);
