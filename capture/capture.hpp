@@ -69,7 +69,8 @@ public:
             const unsigned char * iv = 0) :
     png_interval(png_interval),
     sc(width, height, path, codec_id, video_quality, png_limit, width, height, bgr),
-    nc(width, height, path, path_meta, mode, key, iv)
+    nc(width, height, path, path_meta, mode, key, iv),
+    enabled(capture_flags)
     {
         this->log_prefix[0] = 0;
         struct timeval now;
@@ -80,7 +81,6 @@ public:
          // 1 000 000 us is 1 sec (default)
         this->inter_frame_interval_native_capture =   40000; // 1 000 000 us is 1 sec (default)
         this->inter_frame_interval_start_break_capture  = 1000000 * 60 * 10; // 1 000 000 us is 1 sec (default)
-        this->enabled = capture_flags;
     }
 
     ~Capture(){
