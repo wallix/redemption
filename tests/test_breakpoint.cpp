@@ -46,7 +46,10 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     BOOST_CHECK(1);
     {
         int w = 1024, h = 912;
-        Capture cap(w, h, filename_base, mwrm_filename.c_str(), "", "", 15, 10000, 60);
+        unsigned capture_flags = 15;
+        unsigned png_limit = 10000;
+        unsigned png_interval = 60;
+        Capture cap(w, h, filename_base, mwrm_filename.c_str(), "", "", capture_flags, png_limit, png_interval);
         cap.start();
         Rect clip(0, 0, w, h);
         cap.draw(RDPOpaqueRect(Rect(10,844,500,42), RED), clip);
@@ -63,9 +66,10 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
 
     WRMRecorder recorder;
     recorder.open_meta_followed_wrm(mwrm_filename.c_str());
+    unsigned png_limit = 10000;
     StaticCapture consumer(recorder.meta().width,
                            recorder.meta().height,
-                           "/tmp/test.png");
+                           "/tmp/test.png", "", "", png_limit);
     recorder.consumer(&consumer);
 
     const uint16_t next_file_id   = WRMChunk::NEXT_FILE_ID;

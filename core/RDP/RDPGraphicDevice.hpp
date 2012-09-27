@@ -353,7 +353,7 @@ struct RDPUnserializer
 
     bool load_data(const char * filename)
     {
-        if (!read_meta_file(this->data_meta, filename))
+        if (!this->data_meta.read_meta_file(filename))
         {
             LOG(LOG_ERR, "meta %s: %s", filename, strerror(errno));
             return false;

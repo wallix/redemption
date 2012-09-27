@@ -32,8 +32,10 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
- #include <sys/stat.h>
+#include <sys/stat.h>
 #include <fcntl.h>
+#include <dirent.h>
+#include <stddef.h>
 
 #include "version.hpp"
 
@@ -132,6 +134,48 @@ int shutdown(const char * pid_file)
     TODO("exit with a correct error status if something failed")
     close(fd);
     unlink(pid_file);
+
+    // remove all other pid files
+    DIR * d = opendir("/var/run/redemption");
+    if (d){    
+        size_t path_len = strlen("/var/run/redemption");
+        size_t file_len = pathconf("/var/run/redemption", _PC_NAME_MAX) + 1;
+        char * buffer = (char*)malloc(file_len + path_len);
+        strcpy(buffer, "/var/run/redemption");
+        size_t len = offsetof(struct dirent, d_name) + file_len;
+        struct dirent * entryp = (struct dirent *)malloc(len);
+        struct dirent * result;
+        for (readdir_r(d, entryp, &result) ; result ; readdir_r(d, entryp, &result)) {
+            strcpy(buffer + path_len, entryp->d_name);
+            struct stat st;
+            if (stat(buffer, &st) < 0){
+                LOG(LOG_INFO, "Failed to read dynamic configuration file %s [%u: %s]",
+                    buffer, errno, strerror(errno));
+                continue;
+            }
+            try {
+                unlink(buffer);
+            }
+            catch(...){
+                LOG(LOG_INFO, "Error reading conf file %s", buffer);
+                continue;
+            }
+            LOG(LOG_INFO, "removing pid file %s", buffer);
+            if (unlink(buffer) < 0){
+                LOG(LOG_INFO, "Failed to remove dynamic configuration file %s after parsing [%u: %s]",
+                    buffer, errno, strerror(errno));
+            }
+        }
+        closedir(d);
+        free(entryp);
+        free(buffer);
+    }
+    else {
+        LOG(LOG_INFO, "Failed to open dynamic configuration directory %s [%u: %s]",
+            "/var/run/redemption" , errno, strerror(errno));
+    }
+
+
     return 0;
 }
 

@@ -23,6 +23,7 @@
 
 */
 #include "config.hpp"
+#include <dirent.h>
 #include "log.hpp"
 
 #include <iostream>
@@ -325,6 +326,9 @@ void Inifile::setglobal(const char * key, const char * value, const char * conte
         else if (0 == strcmp(key, "dynamic_conf_path")){
             strcpy(this->globals.dynamic_conf_path, value);
         }
+        else {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
     }
     else if (0 == strcmp(context, "video")){ 
         if (0 == strcmp(key, "capture_flags")){
@@ -384,6 +388,9 @@ void Inifile::setglobal(const char * key, const char * value, const char * conte
         else if (0 == strcmp(key, "h_qscale")){
             this->globals.h_qscale    = atol(value);
         }
+        else {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
     }
     else if (0 == strcmp(context, "debug")){ 
         if (0 == strcmp(key, "x224")){
@@ -437,6 +444,9 @@ void Inifile::setglobal(const char * key, const char * value, const char * conte
         else if (0 == strcmp(key, "input")){
             this->globals.debug.input            = atol(value);
         }
+        else {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
     }
     else if (0 == strncmp("xrdp", context, 4) && context[4] >= '1' && context[4] <= '6' && context[5] == 0){
         int i = context[4] - '1';
@@ -458,6 +468,12 @@ void Inifile::setglobal(const char * key, const char * value, const char * conte
         else if (0 == strcmp(key, "ip")){
             ask_string(value, this->account[i].ip, this->account[i].askip);
         }
+        else {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
+    else {
+        LOG(LOG_ERR, "unknown section [%s]", context);
     }
 }
 
