@@ -116,10 +116,10 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFileReadBogus)
 
     InFileTransport in_trans(fd);
 
-    RDPUnserializer reader(&in_trans, &consumer, Rect(0, 0, 800, 600));
+    RDPUnserializer reader(&in_trans, &consumer, Rect(0, 0, 800, 600), 100);
     size_t i = 0;
     for (i = 0; ; i++){
-        if (!reader.next()){
+        if (!reader.next(100+i)){
             break;
         }
     }

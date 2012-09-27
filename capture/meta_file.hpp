@@ -175,7 +175,7 @@ struct DataMetaFile
 
 
 
-inline std::ostream& operator<<(std::ostream& os, DataMetaFile& data)
+inline void write_meta_file_stream(std::ostream& os, DataMetaFile& data)
 {
     os << data.width << ' ' << data.height << "\n"
     << data.crypt_mode;
@@ -195,7 +195,6 @@ inline std::ostream& operator<<(std::ostream& os, DataMetaFile& data)
         os << info.wrm_filename << ',' << info.png_filename
         << ' ' << info.start_sec << ' ' << info.start_usec << '\n';
     }
-    return os;
 }
 
 inline bool write_meta_file(DataMetaFile& data, const char * filename)
@@ -203,7 +202,7 @@ inline bool write_meta_file(DataMetaFile& data, const char * filename)
     std::ofstream file(filename);
     if (!file.is_open())
         return false;
-    file << data;
+    write_meta_file_stream(file, data);
     return true;
 }
 

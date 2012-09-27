@@ -48,7 +48,6 @@
 #include "transport.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
-#include "timer_capture.hpp"
 #include "stream.hpp"
 #include "rect.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"
@@ -71,6 +70,8 @@ struct RDPGraphicDevice
     virtual void draw(const RDPColCache & cmd) {};
     virtual void draw(const RDPGlyphCache & cmd) {};
 
+    virtual void timestamp(const uint64_t epoch_usec) {};
+
 protected:
     // this to avoid calling constructor of base abstract class
     RDPGraphicDevice() {}
@@ -82,12 +83,16 @@ public:
     virtual ~RDPGraphicDevice() {};
 };
 
-struct WRMChunk {
-    static const uint16_t TIMESTAMP = 1001;
-    static const uint16_t BREAKPOINT = 1005;
-    static const uint16_t META_FILE = 1006;
-    static const uint16_t NEXT_FILE_ID = 1007;
-    static const uint16_t TIME_START = 1008;
+namespace WRMChunk {
+    enum {
+        CHUNK_RDP_UPDATE_ORDERS = 0,
+        CHUNK_TIMESTAMP = 1001,
+        CHUNK_BREAKPOINT = 1005,
+        CHUNK_META_FILE = 1006,
+        CHUNK_NEXT_FILE_ID = 1007,
+        CHUNK_TIME_START = 1008,
+        CHUNK_EMPTY = 2000
+    };
 };
 
 struct RDPUnserializer
@@ -113,6 +118,10 @@ struct RDPUnserializer
     RDPGlyphIndex glyphindex;
 
     BmpCache bmp_cache;
+    
+    uint64_t last_live_timestamp;
+    uint64_t last_playback_timestamp;
+    uint64_t next_playback_timestamp;
 
     // variables used to read batch of orders "chunks"
     uint16_t chunk_size;
@@ -120,32 +129,30 @@ struct RDPUnserializer
     uint16_t remaining_order_count;
     uint16_t order_count;
 
-    TimerCapture timer_cap;
-
     DataMetaFile data_meta;
 
-    RDPUnserializer(Transport * trans, RDPGraphicDevice * consumer, const Rect screen_rect)
-     : stream(4096), consumer(consumer), trans(trans), screen_rect(screen_rect),
-     // Internal state of orders
-    common(RDP::PATBLT, Rect(0, 0, 1, 1)),
-    destblt(Rect(), 0),
-    patblt(Rect(), 0, 0, 0, RDPBrush()),
-    scrblt(Rect(), 0, 0, 0),
-    opaquerect(Rect(), 0),
-    memblt(0, Rect(), 0, 0, 0, 0),
-    lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
-    glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
-
-    bmp_cache(24),
-
-    // variables used to read batch of orders "chunks"
-    chunk_size(0),
-    chunk_type(0),
-    remaining_order_count(0),
-    order_count(0),
-    timer_cap(),
-
-    data_meta()
+    RDPUnserializer(Transport * trans, RDPGraphicDevice * consumer, const Rect screen_rect, uint64_t now)
+        : stream(4096)
+        , consumer(consumer)
+        , trans(trans)
+        , screen_rect(screen_rect)
+        , common(RDP::PATBLT, Rect(0, 0, 1, 1))
+        , destblt(Rect(), 0)
+        , patblt(Rect(), 0, 0, 0, RDPBrush())
+        , scrblt(Rect(), 0, 0, 0)
+        , opaquerect(Rect(), 0)
+        , memblt(0, Rect(), 0, 0, 0, 0)
+        , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
+        , glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"")
+        , bmp_cache(24)
+        , last_live_timestamp(now)
+        , last_playback_timestamp(0)
+        , next_playback_timestamp(0)
+        , chunk_size(0)
+        , chunk_type(0)
+        , remaining_order_count(0)
+        , order_count(0)
+        , data_meta()
     {
     }
 
@@ -185,8 +192,10 @@ struct RDPUnserializer
 
     void interpret_order()
     {
+        // not yet time to read next following orders
+        
         switch (this->chunk_type){
-        case RDP_UPDATE_ORDERS:
+        case WRMChunk::CHUNK_RDP_UPDATE_ORDERS:
         {
             uint8_t control = this->stream.in_uint8();
             this->remaining_order_count--;
@@ -283,50 +292,30 @@ struct RDPUnserializer
             }
             }
             break;
-            case WRMChunk::TIMESTAMP:
+            case WRMChunk::CHUNK_TIMESTAMP:
             {
-                uint64_t micro_sec = this->stream.in_uint64_be();
-                uint64_t elapsed = this->timer_cap.elapsed();
-                if (elapsed <= micro_sec)
-                {
-                    struct timespec wtime =
-                        { static_cast<uint32_t>((micro_sec - elapsed) / 1000000)
-                        , static_cast<uint32_t>((micro_sec - elapsed) % 1000000 * 1000)
-                        };
-                    nanosleep(&wtime, NULL);
+                printf("last_pb_ts=%lu next_pb_ts=%lu live_pb_ts=%lu\n", 
+                    this->last_playback_timestamp, this->next_playback_timestamp, this->last_live_timestamp);
+                if (this->next_playback_timestamp == 0){                
+                    this->last_playback_timestamp = this->next_playback_timestamp = this->stream.in_uint64_be();
                 }
-                --this->remaining_order_count;
+                else {
+                    this->last_playback_timestamp = this->next_playback_timestamp;
+                    this->next_playback_timestamp = this->stream.in_uint64_be();
+                }
+                consumer->timestamp(this->next_playback_timestamp);
+                this->remaining_order_count = 0;
             }
             break;
-            case WRMChunk::TIME_START:
+            case WRMChunk::CHUNK_TIME_START:
             {
                 this->stream.p = this->stream.end;
-                --this->remaining_order_count;
+                this->remaining_order_count = 0;
             }
             break;
-            /*case WRMChunk::BPP:
+            case WRMChunk::CHUNK_META_FILE:
             {
-                uint8_t bpp;
-                this->stream.in_skip_bytes(this->remaining_order_count - 1);
-                this->remaining_order_count = 0;
-                this->stream.in_copy_bytes(&bpp, 1);
-                this->bmp_cache.set_bpp(bpp);
-                this->consumer.set_bpp(bpp);
-            }
-            break;
-            case WRMChunk::RESIZE:
-            {
-                uint16_t width;
-                uint16_t height;
-                this->stream.in_skip_bytes((this->remaining_order_count - 1) * (sizeof(width) * 2));
-                this->remaining_order_count = 0;
-                this->stream.in_copy_bytes((uint8_t*)&width, sizeof(width));
-                this->stream.in_copy_bytes((uint8_t*)&height, sizeof(height));
-                this->consumer.resize(width, height);
-            }
-            break;*/
-            case WRMChunk::META_FILE:
-            {
+                TODO("This is not nice, chunks should not now about metafiles")
                 if (this->data_meta.loaded)
                 {
                     LOG(LOG_INFO, "ignore chunk type META_FILE");
@@ -346,6 +335,7 @@ struct RDPUnserializer
             break;
             default:
                 LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
+                this->stream.p = this->stream.end;
                 this->remaining_order_count = 0;
             break;
         }
@@ -363,7 +353,14 @@ struct RDPUnserializer
         return true;
     }
 
-    bool next(){
+    bool next(uint64_t now){
+        printf("last_pb_ts=%lu next_pb_ts=%lu live_pb_ts=%lu now=%lu\n", 
+                this->last_playback_timestamp, this->next_playback_timestamp, this->last_live_timestamp, now);
+        if ((now - this->last_live_timestamp) < (this->next_playback_timestamp - this->last_playback_timestamp)){
+            return true;
+        }
+        this->last_live_timestamp = now;
+
         if (selected_next_order()) {
             interpret_order();
             return true;

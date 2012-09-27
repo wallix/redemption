@@ -53,10 +53,13 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
             urt += mstart;
             mstart = urt.tv;
         }
-        capture.send_time_start(mstart);
+        capture.send_time_start_order(mstart);
+        fprintf(capture.meta_file, "%s, %ld %ld\n", capture.filename, mstart.tv_sec, mstart.tv_usec);
     }
-    else
-        capture.write_start_in_meta(mstart);
+    else {
+        fprintf(capture.meta_file, "%s, %ld %ld\n",
+                capture.filename, mstart.tv_sec, mstart.tv_usec);
+    }
 
     if (mtime){
         caprecorder.timestamp(mtime);

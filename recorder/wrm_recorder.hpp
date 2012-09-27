@@ -340,7 +340,7 @@ public:
     }
 
     bool is_meta_chunk() const
-    { return this->reader.chunk_type == WRMChunk::META_FILE; }
+    { return this->reader.chunk_type == WRMChunk::CHUNK_META_FILE; }
 
     const DataMetaFile& meta() const
     {
@@ -744,7 +744,7 @@ public:
 
     void safe_ignore_chunks()
     {
-        if (WRMChunk::BREAKPOINT == this->reader.chunk_type)
+        if (WRMChunk::CHUNK_BREAKPOINT == this->reader.chunk_type)
             this->ignore_breakpoint();
         else
             this->ignore_chunks();
@@ -754,19 +754,19 @@ public:
     {
         switch (this->reader.chunk_type)
         {
-            case WRMChunk::TIME_START:
+            case WRMChunk::CHUNK_TIME_START:
             {
                 this->ignore_chunks();
             }
             break;
-            case WRMChunk::META_FILE:
+            case WRMChunk::CHUNK_META_FILE:
             {
                 this->ignore_chunks();
                 //this->reader.stream.p += this->reader.stream.in_uint32_le();
                 //--this->reader.remaining_order_count;
             }
             break;
-            case WRMChunk::NEXT_FILE_ID:
+            case WRMChunk::CHUNK_NEXT_FILE_ID:
             {
                 this->idx_file = this->reader.stream.in_uint32_le();
                 this->check_idx_wrm(this->idx_file);
@@ -775,7 +775,7 @@ public:
                 this->load_context(this->meta().files[this->idx_file].png_filename.c_str());
             }
             break;
-            case WRMChunk::BREAKPOINT:
+            case WRMChunk::CHUNK_BREAKPOINT:
             {
                 if (!this->interpret_breakpoint_is_passed || this->force_interpret_breakpoint)
                 {

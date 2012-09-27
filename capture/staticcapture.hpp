@@ -142,6 +142,9 @@ public:
             {
                 if (this->data_scale)
                 {
+                    LOG(LOG_INFO, "Dump scale png %ux%u (%u) -> %ux%u", this->drawable.width, this->drawable.height,
+                                 this->drawable.rowsize, this->scale_width, this->scale_height);
+
                     scale_data(this->data_scale, this->drawable.data,
                                this->scale_width, this->drawable.width,
                                this->scale_height, this->drawable.height,
@@ -154,6 +157,9 @@ public:
                 }
                 else
                 {
+                    LOG(LOG_INFO, "Dump png %ux%u", this->drawable.width, this->drawable.height,
+                                 this->drawable.rowsize);
+                    
                     ::dump_png24(fd, this->drawable.data,
                                  this->drawable.width, this->drawable.height,
                                  this->drawable.rowsize

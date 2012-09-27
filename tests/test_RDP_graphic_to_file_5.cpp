@@ -99,10 +99,8 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
         BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
         BStream stream(65536);
-        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
-        now.tv_sec += 5;
-        now.tv_usec += 1100;
-        gtf.timestamp(now);
+        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
+        gtf.timestamp(5001100);
         gtf.flush();
         ::close(fd);
     }
@@ -127,7 +125,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
         BOOST_CHECK_EQUAL(pad, (uint16_t)0); // really we don't care
 
         uint64_t micro_sec = stream.in_uint64_be();
-        BOOST_CHECK_EQUAL(micro_sec, uint64_t(5ull * 1000000ull + 1100ull));
+        BOOST_CHECK_EQUAL(micro_sec, 5001100ull);
 
         BOOST_CHECK_EQUAL(stream.p, stream.end);
 

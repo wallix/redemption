@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
         in_trans.recv(&stream.end, 8);
         BOOST_CHECK_EQUAL(stream.end - stream.p, 8);
         uint16_t chunk_type = stream.in_uint16_le();
-        BOOST_CHECK_EQUAL(chunk_type, (uint16_t)RDP_UPDATE_ORDERS);
+        BOOST_CHECK_EQUAL(chunk_type, (uint16_t)WRMChunk::CHUNK_RDP_UPDATE_ORDERS);
         uint16_t chunk_size = stream.in_uint16_le();
         BOOST_CHECK_EQUAL(chunk_size, (uint16_t)15);
         uint16_t order_count = stream.in_uint16_le();
@@ -194,8 +194,8 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk_reading_with_unserializ
             }
         } consumer(screen_rect);
 
-        RDPUnserializer reader(&in_trans, &consumer, screen_rect);
-        reader.next();
+        RDPUnserializer reader(&in_trans, &consumer, screen_rect, 1000000);
+        reader.next(1000100);
         consumer.check_end();
         // check we have read everything
         BOOST_CHECK_EQUAL(stream.end - stream.p, 0);
@@ -257,11 +257,11 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         BStream stream(4096);
         InFileTransport in_trans(fd);
 
-        RDPUnserializer reader(&in_trans, &consumer, screen_rect);
+        RDPUnserializer reader(&in_trans, &consumer, screen_rect, 1000000);
 
         size_t i = 0;
         for (i = 0; ; i++){
-            if (!reader.next()){
+            if (!reader.next(1000000+i*100)){
                 break;
             }
         }
@@ -456,11 +456,11 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
 
         } consumer(screen_rect);
 
-        RDPUnserializer reader(&in_trans, &consumer, screen_rect);
-        reader.next();
-        reader.next();
-        reader.next();
-        reader.next();
+        RDPUnserializer reader(&in_trans, &consumer, screen_rect, 1000000);
+        reader.next(1000100);
+        reader.next(1000200);
+        reader.next(1000300);
+        reader.next(1000400);
         consumer.dump_png();
         // check we have read everything
         BOOST_CHECK_EQUAL(stream.end - stream.p, 0);

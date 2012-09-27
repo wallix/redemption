@@ -266,7 +266,8 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         NativeCapture cap(800, 600, "/tmp/encrypt-cap", 0,
                           CipherMode::BLOWFISH_CBC, key, iv);
         timeval tm = {0,0};
-        cap.send_time_start(tm);
+        cap.send_time_start_order(tm);
+        fprintf(cap.meta_file, "%s, %ld %ld\n", cap.filename, tm.tv_sec, tm.tv_usec);
         BOOST_REQUIRE(true);
         cap.draw(RDPOpaqueRect(Rect(300,150,100,200), RED), clip);
         BOOST_REQUIRE(true);
@@ -371,13 +372,15 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
                           CipherMode::BLOWFISH_CBC, key, iv);
         timeval now;
         gettimeofday(&now, 0);
-        cap.send_time_start(now);
+        cap.send_time_start_order(now);
+        fprintf(cap.meta_file, "%s, %ld %ld\n", cap.filename, now.tv_sec, now.tv_usec);
+
         BOOST_CHECK(true);
         recorder.consumer(&cap);
 
         while (recorder.selected_next_order())
         {
-            if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
+            if (recorder.chunk_type() == WRMChunk::CHUNK_TIMESTAMP)
             {
                 recorder.ignore_chunks();
                 cap.recorder.timestamp();
@@ -400,7 +403,7 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
 
         while (recorder.selected_next_order())
         {
-            if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
+            if (recorder.chunk_type() == WRMChunk::CHUNK_TIMESTAMP)
             {
                 recorder.ignore_chunks();
                 continue;

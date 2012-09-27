@@ -41,86 +41,9 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
                     true,
                     mode, key, iv);
     recorder.consumer(&capture);
-    TimerCompute timercompute(recorder);
-    timeval mstart = timercompute.start();
-    uint64_t mtime = timercompute.advance_second(start);
 
-    if (start && !mtime)
-        return /*0*/;
-
-    if (mstart.tv_sec != 0)
-    {
-        if (mtime)
-        {
-            URT urt(mtime);
-            urt += mstart;
-            mstart = urt.tv;
-        }
-        capture.start(mstart);
-    }
-    else
-        capture.start_with_invalid_now();
-
-    if (mtime){
-        capture.timestamp(mtime);
-        capture.nc.recorder.timer += mtime;
-    }
-
-    if (screenshot_wrm && screenshot_start)
-        capture.sc.dump_png();
-
-    //uint64_t chunk_time = 0;
-    timercompute.usec() = mtime - start;
     uint frame = 0;
-    uint64_t msecond = TimerCompute::coeff_sec_to_usec * (stop - start);
-    mtime = TimerCompute::coeff_sec_to_usec * interval;
 
-    while (recorder.selected_next_order())
-    {
-        if (timercompute.interpret_is_time_chunk()) {
-            uint64_t usec = timercompute.usec();
-            if (timercompute.chunk_time_value) {
-                //chunk_time += timercompute.chunk_time_value;
-                //std::cout << "chunk_time: " << chunk_time << '\n';
-                capture.timestamp(timercompute.chunk_time_value);
-                capture.nc.recorder.timer += timercompute.chunk_time_value;
-            }
-
-            if (usec >= mtime) {
-                /*if (chunk_time) {
-                    std::cout << "timestamp + breakpoint chunk_time: " <<   chunk_time  << '\n';
-                    capture.timestamp(chunk_time);
-                    chunk_time = 0;
-                }*/
-                capture.breakpoint(capture.nc.recorder.timer.time());
-                if (screenshot_wrm)
-                    capture.sc.dump_png();
-                timercompute.reset();
-                if (++frame == frame_limit)
-                    break;
-            }
-
-            if (msecond <= usec){
-                msecond = 0;
-                break;
-            } else {
-                msecond -= usec;
-            }
-        }
-        else {
-            /*if (chunk_time) {
-                 std::cout << "timestamp chunk_time: " << chunk_time  << '\n';
-                 capture.timestamp(chunk_time);
-                 chunk_time = 0;
-            }*/
-
-            recorder.interpret_order();
-        }
-    }
-
-    /*if (chunk_time) {
-         capture.timestamp(chunk_time);
-    }*/
-
-    //return frame;
+    uint64_t i = 0; // 20 images per second
+    while (recorder.next(recorder.next_playback_timestamp)){}
 }

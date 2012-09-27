@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TestMetaFile)
     ));
 
     std::stringstream ss;
-    ss << data;
+    write_meta_file_stream(ss, data);
 
     DataMetaFile data2;
     data2.read_meta_file_stream(ss);

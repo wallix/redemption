@@ -224,8 +224,6 @@ unit-test test_libpng : tests/test_libpng.cpp libboost_unit_test png z : ;
 unit-test test_capture : tests/test_capture.cpp libboost_unit_test png z openssl crypto ;
 #unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp libboost_unit_test png z openssl crypto ;
 
-unit-test test_timer_capture : tests/test_timer_capture.cpp libboost_unit_test ;
-
 unit-test test_countdown_ptr : tests/test_countdown_ptr.cpp libboost_unit_test ;
 
 unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp widget libboost_unit_test ini_config libboost_program_options ;

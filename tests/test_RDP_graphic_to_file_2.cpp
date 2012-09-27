@@ -255,9 +255,9 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ReadCapture)
 
     } consumer(screen_rect);
 
-    RDPUnserializer reader(&in_trans, &consumer, screen_rect);
+    RDPUnserializer reader(&in_trans, &consumer, screen_rect, 100);
     size_t i = 0;
-    while (reader.next()){i++;}
+    while (reader.next(100+i)){i++;}
     consumer.dump_png();
     // our test_card recording contains 659 orders
     BOOST_CHECK_EQUAL(659, i);

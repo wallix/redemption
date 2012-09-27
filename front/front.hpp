@@ -331,7 +331,9 @@ public:
             buffer[255] = 0;
             this->capture = new Capture(width, height, path, path, codec_id, quality, capture_flags, png_interval, png_limit);
             this->capture->set_prefix(buffer, strlen(buffer));
-            this->capture->start();
+            struct timeval now;
+            gettimeofday(&now, NULL);
+            this->capture->start(now);
         }
     }
 

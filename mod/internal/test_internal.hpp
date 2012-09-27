@@ -74,10 +74,22 @@ struct test_internal_mod : public internal_mod {
         int fd = ::open(this->movie, O_RDONLY);
         assert(fd > 0);
         InFileTransport in_trans(fd);
-        RDPUnserializer reader(&in_trans, &this->front, this->get_screen_rect());
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        RDPUnserializer reader(&in_trans, &this->front, this->get_screen_rect(), now.tv_sec * 1000000ull + now.tv_usec);
         this->front.send_global_palette();
         this->front.begin_update();
-        while (reader.next()){
+        uint64_t nowusec = now.tv_sec * 1000000ull + now.tv_usec;
+        while (reader.next(nowusec)){
+            gettimeofday(&now, NULL);
+            nowusec = now.tv_sec * 1000000ull + now.tv_usec;
+            uint64_t timetowait = (reader.next_playback_timestamp - reader.last_playback_timestamp)
+                - (nowusec - reader.last_live_timestamp);
+            struct timespec wtime =
+                { static_cast<uint32_t>(timetowait / 1000000ull)
+                , static_cast<uint32_t>((timetowait % 1000000ull) * 1000)
+                };
+            nanosleep(&wtime, NULL);
         }
         this->front.end_update();
         return BACK_EVENT_NONE;

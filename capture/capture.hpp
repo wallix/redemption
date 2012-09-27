@@ -39,7 +39,7 @@ class Capture : public RDPGraphicDevice
     uint64_t inter_frame_interval_native_capture;
 
     struct timeval start_break_capture;
-    uint64_t inter_frame_interval_start_break_capture;
+    uint64_t inter_frame_interval_break_capture;
 
 public:
     StaticCapture sc;
@@ -80,7 +80,7 @@ public:
         this->start_break_capture = now;
          // 1 000 000 us is 1 sec (default)
         this->inter_frame_interval_native_capture =   40000; // 1 000 000 us is 1 sec (default)
-        this->inter_frame_interval_start_break_capture  = 1000000 * 60 * 10; // 1 000 000 us is 1 sec (default)
+        this->inter_frame_interval_break_capture  = 1000000 * 30; // 1 000 000 us is 1 sec (default)
     }
 
     ~Capture(){
@@ -88,25 +88,21 @@ public:
 
     void start(const timeval& now)
     {
-        this->nc.send_time_start(now);
+        LOG(LOG_INFO, "start");
+        if (this->enabled & NATIVE_CAPTURE){
+            LOG(LOG_INFO, "send time start");
+            this->nc.send_time_start_order(now);
+            fprintf(this->nc.meta_file, "%s, %ld %ld\n", this->nc.filename, now.tv_sec, now.tv_usec);
+        }
     }
 
     void start_with_invalid_now()
     {
-        struct timeval now = {0, 0};
-        this->nc.send_time_start(now);
-    }
-
-    void start()
-    {
-        struct timeval now;
-        gettimeofday(&now, NULL);
-        this->start(now);
-    }
-
-    void timestamp()
-    {
-        this->nc.recorder.timestamp();
+        if (this->enabled & NATIVE_CAPTURE){
+            struct timeval now = {0, 0};
+            this->nc.send_time_start_order(now);
+            fprintf(this->nc.meta_file, "%s, %ld %ld\n", this->nc.filename, now.tv_sec, now.tv_usec);
+        }
     }
 
     void set_prefix(const char * prefix, size_t len_prefix)
@@ -116,10 +112,11 @@ public:
         this->log_prefix[len] = 0;
     }
 
-    TODO("looks better to have some function in capture returning native recorder if any and perform meta.emit outside this class. Or some other strategy not implying capture having a dependance on MetaWRM. Logicaly dependence should be between MetaWRM and native recorder")
     void timestamp(uint64_t usecond)
     {
-        this->nc.recorder.timestamp(usecond);
+        if (this->enabled & NATIVE_CAPTURE){
+            this->nc.recorder.timestamp(usecond);
+        }
     }
 
     void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
@@ -127,13 +124,9 @@ public:
         struct timeval now;
         gettimeofday(&now, NULL);
 
-        time_t rawtime;
-        time(&rawtime);
-        tm *ptm = localtime(&rawtime);
-
         if ((this->enabled & NATIVE_CAPTURE)
         && (difftimeval(now, this->start_native_capture) >= this->inter_frame_interval_native_capture)){
-            this->nc.recorder.timestamp(now);
+            this->nc.recorder.timestamp(now.tv_sec * 1000000ull + now.tv_usec);
             this->nc.recorder.flush();
             this->start_native_capture = now;
         }
@@ -149,6 +142,20 @@ public:
             this->sc.drawable.clear_timestamp();
             this->start_static_capture = now;
          }
+         
+        if ((this->enabled & STATIC_CAPTURE) && (this->enabled & NATIVE_CAPTURE)
+        && (difftimeval(now, this->start_break_capture) >= this->inter_frame_interval_break_capture)){
+            LOG(LOG_INFO, "Breakpoint...");
+            this->start_break_capture = now;
+            this->nc.recorder.timestamp(now.tv_sec * 1000000ull + now.tv_usec); 
+            this->start_native_capture = now;
+            this->nc.breakpoint(this->sc.drawable.data,
+                            24,
+                            this->sc.drawable.width,
+                            this->sc.drawable.height,
+                            this->sc.drawable.rowsize,
+                            now);
+        }
     }
 
     void flush(){
@@ -196,38 +203,6 @@ public:
 //        if (this->enabled & STATIC_CAPTURE){ this->oc.draw(cmd, clip);}
 //        if (this->enabled & NATIVE_CAPTURE){ this->oc.draw(cmd, clip);}
     }
-
-    void breakpoint(const timeval& now)
-    {
-        if (this->enabled & NATIVE_CAPTURE){ 
-            this->nc.recorder.timestamp(now); 
-        }
-        if (this->enabled & STATIC_CAPTURE){ 
-            this->nc.breakpoint(this->sc.drawable.data,
-                            24,
-                            this->sc.drawable.width,
-                            this->sc.drawable.height,
-                            this->sc.drawable.rowsize,
-                            now);
-        }
-    }
-
-    void breakpoint()
-    {
-        struct timeval now;
-        gettimeofday(&now, NULL);
-        this->breakpoint(now);
-    }
-
-//    TimerCapture& timer()
-//    {
-//        return this->nc.recorder.timer;
-//    }
-
-    /*Stream& stream()
-    {
-        return this->nc.recorder.stream;
-    }*/
 
 };
 
