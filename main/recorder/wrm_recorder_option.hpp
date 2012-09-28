@@ -20,6 +20,7 @@
 
 #if !defined(__MAIN_RECORDER_WRM_RECORDER_OPTION__)
 #define __MAIN_RECORDER_WRM_RECORDER_OPTION__
+#include "version.hpp"
 
 #include <vector>
 
@@ -69,7 +70,7 @@ public:
 
     virtual const char * version() const
     {
-        return "0.1";
+        return VERSION;
     };
 
     enum Error {

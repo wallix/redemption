@@ -176,7 +176,10 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
     sprintf(filename_consumer, "/tmp/test_wrm_recorder_to_png%u-%d", numtest, nframe);
     StaticCapture *consumer = new StaticCapture(recorder->meta().width,
                                                 recorder->meta().height,
-                                                filename_consumer);
+                                                filename_consumer,
+                                                recorder->meta().width,
+                                                recorder->meta().height,
+                                                true);
     BOOST_CHECK(1);
 
     recorder->consumer(consumer);
@@ -207,7 +210,10 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
                 sprintf(filename_consumer, "/tmp/test_wrm_recorder_to_png%u-%d", numtest, ++nframe);
                 consumer = new StaticCapture(recorder->meta().width,
                                              recorder->meta().height,
-                                             filename_consumer);
+                                             filename_consumer,
+                                             recorder->meta().width,
+                                             recorder->meta().height,
+                                             true);
             }
             recorder->consumer(consumer);
             recorder->redraw_consumer(&consumer->drawable);

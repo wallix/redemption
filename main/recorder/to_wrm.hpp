@@ -26,10 +26,18 @@ class WRMRecorder;
 
 void to_wrm(WRMRecorder& recorder, const char* outfile,
             std::size_t start, std::size_t stop, std::size_t interval,
-            uint frame_limit = -1,
-            bool screenshot_start = false, bool screenshot_wrm = false,
-            const char* metaname = 0,
-            CipherMode::enum_t = CipherMode::NO_MODE,
-            const unsigned char * key = 0, const unsigned char * iv = 0);
+            uint frame_limit,
+            bool screenshot_start, bool screenshot_wrm,
+            const char* metaname,
+            CipherMode::enum_t,
+            const unsigned char * key, const unsigned char * iv);
+
+//void to_wrm(WRMRecorder& recorder, const char* outfile,
+//            std::size_t start, std::size_t stop, std::size_t interval,
+//            uint frame_limit = -1,
+//            bool screenshot_start = false, bool screenshot_wrm = false,
+//            const char* metaname = 0,
+//            CipherMode::enum_t = CipherMode::NO_MODE,
+//            const unsigned char * key = 0, const unsigned char * iv = 0);
 
 #endif

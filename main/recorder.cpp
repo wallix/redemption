@@ -21,8 +21,6 @@
  *
  */
 
-#define LOGPRINT
-
 #include "recorder/recorder_app.hpp"
 #include "recorder/recorder_option.hpp"
 #include "recorder/adapter/to_png_adapter.hpp"

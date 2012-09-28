@@ -149,7 +149,6 @@ namespace SEC
 // |                                | ignored.                                 |
 // +--------------------------------+------------------------------------------+
 
-
 enum {
     SEC_EXCHANGE_PKT       = 0x0001,
     SEC_TRANSPORT_REQ      = 0x0002,

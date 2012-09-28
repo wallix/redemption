@@ -1151,6 +1151,7 @@ struct mod_rdp : public client_mod {
             X224::DT_TPDU_Recv x224(*this->nego.trans, stream);
             SubStream & mcs_data = x224.payload;
             MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
+
             SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->encryptionLevel, this->encryptionMethod);
 
             if (sec.flags & SEC::SEC_LICENSE_PKT) {
@@ -1214,7 +1215,6 @@ struct mod_rdp : public client_mod {
                 // BB_ERROR_BLOB (0x0004) that includes information relevant to
                 // the error code specified in dwErrorCode.
 
-                SubStream & payload = sec.payload;
                 LIC::RecvFactory flic(sec.payload);
 
                 switch (flic.tag) {
@@ -1595,13 +1595,13 @@ struct mod_rdp : public client_mod {
                         }
                     TODO("This should be moved to RDP/lic.hpp (and probably the switch should also move there)")
                     {
-                        uint8_t tag = payload.in_uint8();
-                        uint8_t flags = payload.in_uint8();
-                        uint16_t wMsgSize = payload.in_uint16_le();
+                        uint8_t tag = sec.payload.in_uint8();
+                        uint8_t flags = sec.payload.in_uint8();
+                        uint16_t wMsgSize = sec.payload.in_uint16_le();
 
-                        uint32_t dwErrorCode = payload.in_uint32_le();
-                        uint32_t dwStateTransition = payload.in_uint32_le();
-                        uint32_t bbErrorInfo = payload.in_uint32_le();
+                        uint32_t dwErrorCode = sec.payload.in_uint32_le();
+                        uint32_t dwStateTransition = sec.payload.in_uint32_le();
+                        uint32_t bbErrorInfo = sec.payload.in_uint32_le();
                         if (this->verbose){
                             LOG(LOG_INFO, "%u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u",
                                 version, flic.wMsgSize, dwErrorCode, dwStateTransition, bbErrorInfo);
@@ -1611,23 +1611,27 @@ struct mod_rdp : public client_mod {
                     break;
                     default:
                     {
-                        uint8_t tag = payload.in_uint8();
-                        uint8_t flags = payload.in_uint8();
-                        uint16_t wMsgSize = payload.in_uint16_le();
+                        uint8_t tag = sec.payload.in_uint8();
+                        uint8_t flags = sec.payload.in_uint8();
+                        uint16_t wMsgSize = sec.payload.in_uint16_le();
                         LOG(LOG_WARNING, "Unexpected license tag sent from server (tag = %x)", flic.tag);
                         throw Error(ERR_SEC);
                     }
                     break;
                 }
                 TODO("check if moving end is still necessary all data should have been consumed")
-                if (payload.p != payload.end){
+                if (sec.payload.p != sec.payload.end){
                     LOG(LOG_ERR, "all data should have been consumed %s:%u tag = %x", __FILE__, __LINE__, flic.tag);
                     throw Error(ERR_SEC);
                 }
             }
             else {
                 LOG(LOG_ERR, "Failed to get expected licence negotiation PDU");
-                throw Error(ERR_SEC);
+                hexdump(x224.payload.data, x224.payload.size());
+//                throw Error(ERR_SEC);
+                this->state = MOD_RDP_CONNECTED;
+                sec.payload.p = sec.payload.end;
+                hexdump(sec.payload.data, sec.payload.size());
             }
             if (res){
                 this->state = MOD_RDP_CONNECTED;

@@ -66,7 +66,7 @@ private:
     uint8_t * data_scale;
 
 public:
-    StaticCapture(unsigned width, unsigned height, const char * path, unsigned resize_width = 0, unsigned resize_height = 0, bool bgr = true)
+    StaticCapture(unsigned width, unsigned height, const char * path, unsigned resize_width, unsigned resize_height, bool bgr)
     : RDPDrawable(width, height, bgr)
     , png_limit(10)
     , framenb(0)

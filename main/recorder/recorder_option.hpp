@@ -23,7 +23,7 @@
 
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/variables_map.hpp>
-
+#include "version.hpp"
 #include "wrm_recorder_option.hpp"
 #include "range_time_point.hpp"
 #include "cipher.hpp"
@@ -78,7 +78,7 @@ struct RecorderOption
 
     virtual const char * version() const
     {
-        return "0.1";
+        return VERSION;
     };
 
     enum Error {

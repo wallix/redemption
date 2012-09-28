@@ -66,7 +66,10 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     recorder.open_meta_followed_wrm(mwrm_filename.c_str());
     StaticCapture consumer(recorder.meta().width,
                            recorder.meta().height,
-                           "/tmp/test.png");
+                           "/tmp/test.png",
+                           recorder.meta().width,
+                           recorder.meta().height,
+                           true);
     recorder.consumer(&consumer);
 
     const uint16_t next_file_id   = WRMChunk::NEXT_FILE_ID;
