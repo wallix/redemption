@@ -21,6 +21,8 @@
 #if !defined(__CAPTURE_META_FILE_HPP__)
 #define __CAPTURE_META_FILE_HPP__
 
+#include "log.hpp"
+
 #include <vector>
 #include <string>
 #include <fstream>
@@ -169,6 +171,7 @@ inline bool read_meta_file(DataMetaFile& data, const char * filename)
 
 inline std::ostream& operator<<(std::ostream& os, DataMetaFile& data)
 {
+    TODO("looks likes the meta file is rewritten entirely each time... instead of appended with new content. Looks not like a good idea even if this file should not become very large in most cases");
     os << data.width << ' ' << data.height << "\n"
     << data.crypt_mode;
     if (data.crypt_mode)
@@ -184,9 +187,9 @@ inline std::ostream& operator<<(std::ostream& os, DataMetaFile& data)
     for (std::size_t i = 0, last = data.files.size(); i < last; ++i)
     {
         DataFile& info = data.files[i];
-        os << info.wrm_filename << ',' << info.png_filename
-        << ' ' << info.start_sec << ' ' << info.start_usec << '\n';
+        os << info.wrm_filename << ',' << info.png_filename << ' ' << info.start_sec << ' ' << info.start_usec << '\n';
     }
+    os.flush();
     return os;
 }
 
@@ -196,6 +199,7 @@ inline bool write_meta_file(DataMetaFile& data, const char * filename)
     if (!file.is_open())
         return false;
     file << data;
+    file.flush();
     return true;
 }
 

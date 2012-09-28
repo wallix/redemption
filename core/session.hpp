@@ -165,6 +165,9 @@ struct Session {
                             struct dirent * entryp = (struct dirent *)malloc(len);
                             struct dirent * result;
                             for (readdir_r(d, entryp, &result) ; result ; readdir_r(d, entryp, &result)) {
+                                if ((0 == strcmp(entryp->d_name, ".")) || (0 == strcmp(entryp->d_name, ".."))){
+                                    continue;
+                                }
                                 strcpy(buffer + path_len, entryp->d_name);
                                 struct stat st;
                                 if (stat(buffer, &st) < 0){
@@ -174,6 +177,9 @@ struct Session {
                                 }
                                 try {
                                     ini->cparse(buffer);
+                                    struct timeval now;
+                                    gettimeofday(&now, NULL);
+                                    this->front->update_config(now, *ini);
                                 }
                                 catch(...){
                                     LOG(LOG_INFO, "Error reading conf file %s", buffer);
@@ -400,17 +406,8 @@ struct Session {
                                             this->front->start_capture(
                                                 this->front->client_info.width,
                                                 this->front->client_info.height,
-                                                this->context->get_bool(STRAUTHID_OPT_MOVIE),
-                                                this->context->get(STRAUTHID_OPT_MOVIE_PATH),
-                                                this->context->get(STRAUTHID_OPT_CODEC_ID),
-                                                this->context->get(STRAUTHID_VIDEO_QUALITY),
-                                                this->context->get(STRAUTHID_AUTH_USER),
-                                                this->context->get(STRAUTHID_HOST),
-                                                this->context->get(STRAUTHID_TARGET_USER),
-                                                this->context->get(STRAUTHID_TARGET_DEVICE),
-                                                this->ini->globals.capture_flags,
-                                                this->ini->globals.png_interval,
-                                                this->ini->globals.png_limit
+                                                *this->ini,
+                                                *this->context
                                                 );
                                         }
                                         else {

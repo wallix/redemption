@@ -59,6 +59,9 @@ private:
         this->start_break_capture = now;
         this->break_interval = 60 * 10; // break interval is in s, default value 1 break every 10 minutes
         this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
+
+        LOG(LOG_INFO, "update configuration png_interval=%u frame_interval=%u break_interval=%u",
+            this->png_interval, this->frame_interval, this->break_interval);
     }
 
 public:
@@ -97,6 +100,8 @@ public:
             this->break_interval = ini.globals.break_interval; // break interval is in s, default value 1 break every 10 minutes
             this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
         }
+        LOG(LOG_INFO, "update configuration png_interval=%u frame_interval=%u break_interval=%u",
+            this->png_interval, this->frame_interval, this->break_interval);
     }
 
     ~Capture(){
@@ -111,13 +116,6 @@ public:
     {
         struct timeval now = {0,0};
         this->nc.send_time_start(now);
-    }
-
-    void start()
-    {
-        struct timeval now;
-        gettimeofday(&now, NULL);
-        this->start(now);
     }
 
     void timestamp()

@@ -26,6 +26,7 @@
 #define __FRONT_FRONT_HPP__
 
 #include "log.hpp"
+#include "../acl/modcontext.hpp"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -320,24 +321,43 @@ public:
         delete [] data;
     }
 
-    void start_capture(int width, int height, bool flag, char * path,
-                const char * codec_id, const char * quality,
-                const char * user, const char * ip_source, const char * target_user, const char * target_device, unsigned & capture_flags, unsigned & png_interval, unsigned & png_limit)
+    void start_capture(int width, int height, Inifile & ini, ModContext & context)
     {
-        if (flag){
+        TODO("we should copy what is relevant from context into ini configuration structure, this way we could pass only ini structure to consumer modules instead of full context. Any update should go through update_config.")
+        TODO("width and height should be parameters as others, nothing special")
+        if (context.get_bool(STRAUTHID_OPT_MOVIE)){
             this->stop_capture();
-            char buffer[256];
-            snprintf(buffer, 256, "type='OCR title bar' username='%s' client_ip='%s' ressource='%s' account='%s'", user, ip_source, target_device, target_user);
-            buffer[255] = 0;
             struct timeval now;
             gettimeofday(&now, NULL);
-            this->capture = new Capture(now, width, height, path, path, codec_id, quality);
+            this->capture = new Capture(now, width, height, 
+                context.get(STRAUTHID_OPT_MOVIE_PATH), 
+                context.get(STRAUTHID_OPT_MOVIE_PATH), 
+                context.get(STRAUTHID_OPT_CODEC_ID), 
+                context.get(STRAUTHID_VIDEO_QUALITY));
+
+            char buffer[256];
+            snprintf(buffer, 256, "type='OCR title bar' "
+                                  "username='%s' "
+                                  "client_ip='%s' "
+                                  "ressource='%s' "
+                                  "account='%s'", 
+                    context.get(STRAUTHID_AUTH_USER), 
+                    context.get(STRAUTHID_HOST), 
+                    context.get(STRAUTHID_TARGET_DEVICE),
+                    context.get(STRAUTHID_TARGET_USER));
+            buffer[255] = 0;
             this->capture->set_prefix(buffer, strlen(buffer));
+
+            this->capture->update_config(now, ini);
             this->capture->start(now);
         }
     }
 
-
+    void update_config(const timeval & now, const Inifile & ini){
+        if (this->capture){
+            this->capture->update_config(now, ini);
+        }
+    }
     void periodic_snapshot(bool pointer_is_displayed)
     {
         if (this->capture){
