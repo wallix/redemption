@@ -49,10 +49,8 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 
     uint breakpoint = 0;
     {
-        unsigned png_interval = 60;
-        unsigned png_limit = 100;
-        unsigned capture_flags = 15;
-        Capture consumer(recorder.meta().width, recorder.meta().height, "/tmp/replay_part", "/tmp/replay_part", "", "", capture_flags, png_limit, png_interval);
+        Capture consumer(recorder.meta().width, recorder.meta().height,
+                        "/tmp/replay_part", 0, 0, false);
 
         recorder.consumer(&consumer);
 
@@ -174,10 +172,9 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
     char filename_consumer[50];
     int nframe = 0;
     sprintf(filename_consumer, "/tmp/test_wrm_recorder_to_png%u-%d", numtest, nframe);
-    unsigned png_limit = 10;
     StaticCapture *consumer = new StaticCapture(recorder->meta().width,
                                                 recorder->meta().height,
-                                                filename_consumer, NULL, NULL, png_limit);
+                                                filename_consumer);
     BOOST_CHECK(1);
 
     recorder->consumer(consumer);
@@ -206,10 +203,9 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
             {
                 delete consumer;
                 sprintf(filename_consumer, "/tmp/test_wrm_recorder_to_png%u-%d", numtest, ++nframe);
-                unsigned png_limit;
                 consumer = new StaticCapture(recorder->meta().width,
                                              recorder->meta().height,
-                                             filename_consumer, NULL, NULL, png_limit);
+                                             filename_consumer);
             }
             recorder->consumer(consumer);
             recorder->redraw_consumer(&consumer->drawable);

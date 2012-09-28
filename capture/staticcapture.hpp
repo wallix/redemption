@@ -53,7 +53,7 @@
 class StaticCapture : public RDPDrawable
 {
 public:
-    unsigned & png_limit;
+    unsigned png_limit;
     unsigned framenb;
     char path[1024];
     char image_path[1024];
@@ -66,10 +66,9 @@ private:
     uint8_t * data_scale;
 
 public:
-    StaticCapture(unsigned width, unsigned height, const char * path, const char * codec_id, const char * video_quality, unsigned & png_limit, 
-                  unsigned resize_width = 0, unsigned resize_height = 0, bool bgr = true)
+    StaticCapture(unsigned width, unsigned height, const char * path, unsigned resize_width = 0, unsigned resize_height = 0, bool bgr = true)
     : RDPDrawable(width, height, bgr)
-    , png_limit(png_limit)
+    , png_limit(10)
     , framenb(0)
     , scale_width(resize_width?resize_width:width)
     , scale_height(resize_height?resize_height:height)

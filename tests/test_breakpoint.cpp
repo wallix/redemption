@@ -21,9 +21,6 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestBreakpoint
-
-#include <sys/time.h>
-
 #include <boost/test/auto_unit_test.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -39,62 +36,43 @@
 BOOST_AUTO_TEST_CASE(TestBreakpoint)
 {
     const char * filename_base = "/tmp/test_breakpoint";
+
+    BOOST_CHECK(1);
+    {
+        int w = 1024, h = 912;
+        Capture cap(w, h, filename_base, 0, 0);
+        cap.start();
+        Rect clip(0, 0, w, h);
+        cap.draw(RDPOpaqueRect(Rect(10,844,500,42), RED), clip);
+        BOOST_CHECK(1);
+        cap.breakpoint();
+        BOOST_CHECK(1);
+        cap.draw(RDPOpaqueRect(Rect(777,110,144,188), GREEN), clip);
+        cap.breakpoint();
+        BOOST_CHECK(1);
+        cap.draw(RDPOpaqueRect(Rect(200,400,60,60), BLUE), clip);
+        cap.timestamp();
+        BOOST_CHECK(1);
+    }
+
+    WRMRecorder recorder;
     BOOST_CHECK(1);
     std::string mwrm_filename = filename_base;
     mwrm_filename += '-';
     mwrm_filename += boost::lexical_cast<std::string>(getpid());
     mwrm_filename += ".mwrm";
-
-
-    BOOST_CHECK(1);
-    {
-        int w = 1024, h = 912;
-        unsigned capture_flags = 15;
-        unsigned png_limit = 10000;
-        unsigned png_interval = 60;
-        Capture cap(w, h, filename_base, mwrm_filename.c_str(), "", "", capture_flags, png_limit, png_interval);
-        struct timeval now = {0, 0};
-        cap.start(now);
-        Rect clip(0, 0, w, h);
-        cap.draw(RDPOpaqueRect(Rect(10,844,500,42), RED), clip);
-        BOOST_CHECK(1);
-        cap.nc.recorder.timestamp(1000000); 
-        cap.nc.breakpoint(cap.sc.drawable.data,
-                        24,
-                        cap.sc.drawable.width,
-                        cap.sc.drawable.height,
-                        cap.sc.drawable.rowsize,
-                        now);
-        BOOST_CHECK(1);
-        cap.draw(RDPOpaqueRect(Rect(777,110,144,188), GREEN), clip);
-        cap.nc.recorder.timestamp(2000000); 
-        cap.nc.breakpoint(cap.sc.drawable.data,
-                        24,
-                        cap.sc.drawable.width,
-                        cap.sc.drawable.height,
-                        cap.sc.drawable.rowsize,
-                        now);
-        BOOST_CHECK(1);
-        cap.draw(RDPOpaqueRect(Rect(200,400,60,60), BLUE), clip);
-        cap.timestamp(3000000);
-        BOOST_CHECK(1);
-    }
-
-    WRMRecorder recorder;
     recorder.open_meta_followed_wrm(mwrm_filename.c_str());
-    unsigned png_limit = 10000;
     StaticCapture consumer(recorder.meta().width,
                            recorder.meta().height,
-                           "/tmp/test.png", "", "", png_limit);
+                           "/tmp/test.png");
     recorder.consumer(&consumer);
 
-    const uint16_t next_file_id   = WRMChunk::CHUNK_NEXT_FILE_ID;
-    const uint16_t meta_file      = WRMChunk::CHUNK_META_FILE;
-    const uint16_t breakpoint     = WRMChunk::CHUNK_BREAKPOINT;
-    const uint16_t timestamp      = WRMChunk::CHUNK_TIMESTAMP;
-    const uint16_t time_start     = WRMChunk::CHUNK_TIME_START;
+    const uint16_t next_file_id   = WRMChunk::NEXT_FILE_ID;
+    const uint16_t meta_file      = WRMChunk::META_FILE;
+    const uint16_t breakpoint     = WRMChunk::BREAKPOINT;
+    const uint16_t timestamp      = WRMChunk::TIMESTAMP;
+    const uint16_t time_start     = WRMChunk::TIME_START;
 
-    printf("reading file ");
     BOOST_REQUIRE(recorder.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), time_start);
     recorder.interpret_order();

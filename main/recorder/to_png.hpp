@@ -29,14 +29,14 @@ class WRMRecorder;
 
 void to_png(WRMRecorder& recorder, const char* outfile,
             std::size_t start, std::size_t stop, std::size_t interval,
-            unsigned resize_width, unsigned resize_height,
-            uint frame_limit,
+            unsigned resize_width = -1, unsigned resize_height = -1,
+            uint frame_limit = -1,
             bool screenshot_start = true, bool no_screenshot_stop = false,
             bool screenshot_all = false);
 
 void to_png(WRMRecorder& recorder, const char* outfile,
             const std::vector<relative_time_point>& capture_points,
-            unsigned resize_width, unsigned resize_height,
+            unsigned resize_width = -1, unsigned resize_height = -1,
             bool no_screenshot_stop = false);
 
 #endif

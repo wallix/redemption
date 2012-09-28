@@ -38,6 +38,8 @@
 
 #include "check_sig.hpp"
 
+TODO("This test does not behave properly if another process is already using the socket asked for. Change it so that it fails nicely. (change to be done is probably inside Server class")
+
 class SessionRecorderTest : public Server
 {
     virtual Server_status start(int incoming_sck)
@@ -101,14 +103,14 @@ BOOST_AUTO_TEST_CASE(TestSocket)
         {
             SessionRecorderTest ss;
             //Inifile ini(CFG_PATH "/" RDPPROXY_INI);
-            int port = 3389;
+            int port = 13389;
             Listen listener(ss, port);
         }
         break;
         default: /* father */
         {
             sleep(1);
-            ClientSocketTransport t("test", "127.0.0.1", 3389);
+            ClientSocketTransport t("test", "127.0.0.1", 13389);
             if (t.connect())
             {
                 StaticCapture consumer(800, 600, "/tmp/socket_test.png");

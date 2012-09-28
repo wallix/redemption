@@ -100,7 +100,7 @@ private:
 
     void send_meta_path()
     {
-        this->recorder.chunk_type = WRMChunk::CHUNK_META_FILE;
+        this->recorder.chunk_type = WRMChunk::META_FILE;
         this->recorder.order_count = 1;
         {
             this->stream.out_uint32_le(this->meta_name_len);
@@ -281,25 +281,36 @@ private:
         this->stream.out_uint8(pen.width);
     }
 
-public:
+private:
     void send_time_start_order(const timeval& now)
     {
-        this->recorder.chunk_type = WRMChunk::CHUNK_TIME_START;
+        this->recorder.chunk_type = WRMChunk::TIME_START;
         this->recorder.order_count = 1;
         this->stream.out_uint64_be(now.tv_sec);
         this->stream.out_uint64_be(now.tv_usec);
         this->recorder.flush();
     }
 
+public:
+    void write_start_in_meta(const timeval& now)
+    {
+        fprintf(this->meta_file, "%s, %ld %ld\n",
+                this->filename, now.tv_sec, now.tv_usec);
+    }
+
+    void send_time_start(const timeval& now)
+    {
+        this->send_time_start_order(now);
+        this->write_start_in_meta(now);
+    }
 
     void breakpoint(const uint8_t* data_drawable, uint8_t bpp,
                     uint16_t width, uint16_t height, size_t rowsize,
                     const timeval& now)
     {
-        LOG(LOG_INFO, "breakpoint start");
         this->recorder.flush();
 
-        this->recorder.chunk_type = WRMChunk::CHUNK_NEXT_FILE_ID;
+        this->recorder.chunk_type = WRMChunk::NEXT_FILE_ID;
         this->recorder.order_count = 1;
         this->stream.out_uint32_le(this->nb_file);
         this->next_filename();
@@ -318,13 +329,13 @@ public:
         }
         this->send_meta_path();
 
-        this->recorder.chunk_type = WRMChunk::CHUNK_BREAKPOINT;
+        this->recorder.chunk_type = WRMChunk::BREAKPOINT;
         this->recorder.order_count = 1;
         this->stream.out_uint16_le(this->width);
         this->stream.out_uint16_le(this->height);
         this->stream.out_uint8(this->bpp);
-        this->stream.out_uint64_le(now.tv_sec);
-        this->stream.out_uint64_le(now.tv_usec);
+        this->stream.out_uint64_le(this->recorder.timer.sec());
+        this->stream.out_uint64_le(this->recorder.timer.usec());
         this->recorder.send_order();
 
         // write screen
@@ -404,7 +415,7 @@ public:
 
         this->recorder.init();
         this->recorder.order_count = 1;
-        this->recorder.chunk_type = WRMChunk::CHUNK_BREAKPOINT;
+        this->recorder.chunk_type = WRMChunk::BREAKPOINT;
 
         this->stream.out_uint8(this->recorder.common.order);
         this->send_rect(this->recorder.common.clip);
@@ -469,7 +480,7 @@ public:
         this->recorder.send_order();
 
         this->stream.init(14);
-        this->recorder.chunk_type = WRMChunk::CHUNK_BREAKPOINT;
+        this->recorder.chunk_type = WRMChunk::BREAKPOINT;
         AutoBuffer buffer;
         z_stream zstrm;
         zstrm.zalloc = 0;
@@ -531,15 +542,12 @@ public:
         this->recorder.trans->send(this->stream.data, 14);
 
         this->recorder.init();
-        
-        LOG(LOG_INFO, "send time start");
         this->send_time_start_order(now);
         fprintf(this->meta_file, "%s,%s.%s %ld %ld\n",
                 this->filename, this->filename,
                 this->cipher_is_active() ? "ctx" : "png",
                 now.tv_sec, now.tv_usec);
-        this->recorder.chunk_type = WRMChunk::CHUNK_RDP_UPDATE_ORDERS;
-        LOG(LOG_INFO, "breakpoint done");
+        this->recorder.chunk_type = RDP_UPDATE_ORDERS;
     }
 };
 

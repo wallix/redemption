@@ -98,7 +98,7 @@ int main(int argc, char** argv)
 
         switch (recorder.chunk_type())
         {
-            case  WRMChunk::CHUNK_BREAKPOINT:
+            case  WRMChunk::BREAKPOINT:
             {
                 ulong start_weight = breakpoint_info.weight;
                 ++breakpoint_info.number;
@@ -145,7 +145,7 @@ int main(int argc, char** argv)
                 std::cout << "\ttotal: " << (breakpoint_info.weight - start_weight) << '\n';
             }
                 break;
-            case WRMChunk::CHUNK_META_FILE:
+            case WRMChunk::META_FILE:
             {
                 ++meta_file_info.number;
                 meta_file_info.weight += weight;
@@ -158,7 +158,7 @@ int main(int argc, char** argv)
                 recorder.ignore_chunks();
             }
                 break;
-            case WRMChunk::CHUNK_TIME_START:
+            case WRMChunk::TIME_START:
             {
                 ++time_start_info.number;
                 time_start_info.weight += weight;
@@ -169,7 +169,7 @@ int main(int argc, char** argv)
                 --remaining_order_count;
             }
                 break;
-            case WRMChunk::CHUNK_TIMESTAMP:
+            case WRMChunk::TIMESTAMP:
             {
                 ++timestamp_info.number;
                 timestamp_info.weight += weight;
@@ -182,7 +182,7 @@ int main(int argc, char** argv)
                 //unserializer.wait_cap.timer.usec() = usec;
             }
                 break;
-            case WRMChunk::CHUNK_NEXT_FILE_ID:
+            case WRMChunk::NEXT_FILE_ID:
             {
                 ++next_file_id_info.number;
                 next_file_id_info.weight += weight;

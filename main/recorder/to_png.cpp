@@ -31,16 +31,10 @@ void to_png(WRMRecorder& recorder, const char* outfile,
             bool screenshot_start, bool no_screenshot_stop,
             bool screenshot_all)
 {
-    unsigned png_limit = 32769;
-
-    LOG(LOG_INFO, "%ux%u %ux%u limit=%u outfile=%s", 
-            recorder.meta().width, recorder.meta().height, 
-            resize_width, resize_height, png_limit, outfile);
-
     StaticCapture capture(recorder.meta().width,
                           recorder.meta().height,
-                          outfile, NULL, NULL, png_limit,
-                          resize_width, resize_height, true);
+                          outfile,
+                          resize_width, resize_height);
     recorder.consumer(&capture);
     load_png_context(recorder, capture.drawable);
 
@@ -108,10 +102,9 @@ void to_png(WRMRecorder& recorder, const char* outfile,
     if (capture_points.empty())
         return ;
 
-    unsigned png_limit = 32769;
     StaticCapture capture(recorder.meta().width,
                           recorder.meta().height,
-                          outfile, NULL, NULL, png_limit,
+                          outfile,
                           resize_width, resize_height);
     recorder.consumer(&capture);
     load_png_context(recorder, capture.drawable);

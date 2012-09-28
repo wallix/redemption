@@ -220,8 +220,7 @@ BOOST_AUTO_TEST_CASE(TestCryptWRMFileOpenSSL)
         InFileTransport in_file(fd, false);
         InCipherTransport trans(&in_file);
         RaiiInCipherTransport raii(trans, cipher_mode(), key, iv);
-        unsigned png_limit = 10;
-        StaticCapture pngcap(800,600,"/tmp/decrypt.png", NULL, NULL, png_limit);
+        StaticCapture pngcap(800,600,"/tmp/decrypt.png");
         RDPUnserializer unserializer(&trans, &pngcap, Rect(0,0,800,600));
 
         char message[1024];
@@ -266,8 +265,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         NativeCapture cap(800, 600, "/tmp/encrypt-cap", 0,
                           CipherMode::BLOWFISH_CBC, key, iv);
         timeval tm = {0,0};
-        cap.send_time_start_order(tm);
-        fprintf(cap.meta_file, "%s, %ld %ld\n", cap.filename, tm.tv_sec, tm.tv_usec);
+        cap.send_time_start(tm);
         BOOST_REQUIRE(true);
         cap.draw(RDPOpaqueRect(Rect(300,150,100,200), RED), clip);
         BOOST_REQUIRE(true);
@@ -291,8 +289,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         recorder.open_meta_followed_wrm(filename_mwrm.c_str());
         /*WRMRecorder recorder(filename_mwrm, "",
                              CipherMode::BLOWFISH_CBC, key, iv);*/
-        unsigned png_limit = 10;
-        StaticCapture pngcap(800,600,"/tmp/decrypt-cap", NULL, NULL, png_limit);
+        StaticCapture pngcap(800,600,"/tmp/decrypt-cap");
         recorder.consumer(&pngcap);
         BOOST_REQUIRE(true);
 
@@ -372,15 +369,13 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
                           CipherMode::BLOWFISH_CBC, key, iv);
         timeval now;
         gettimeofday(&now, 0);
-        cap.send_time_start_order(now);
-        fprintf(cap.meta_file, "%s, %ld %ld\n", cap.filename, now.tv_sec, now.tv_usec);
-
+        cap.send_time_start(now);
         BOOST_CHECK(true);
         recorder.consumer(&cap);
 
         while (recorder.selected_next_order())
         {
-            if (recorder.chunk_type() == WRMChunk::CHUNK_TIMESTAMP)
+            if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
             {
                 recorder.ignore_chunks();
                 cap.recorder.timestamp();
@@ -396,14 +391,13 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
         WRMRecorder recorder(make_pid_filename_generator("/tmp/wrm-encrypt.mwrm")().c_str(), "",
                              CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC), key, iv);
         BOOST_CHECK(true);
-        unsigned png_limit = 10;
-        StaticCapture cap(800, 600, "/tmp/wrm-encrypt", NULL, NULL, png_limit);
+        StaticCapture cap(800, 600, "/tmp/wrm-encrypt");
         BOOST_CHECK(true);
         recorder.consumer(&cap);
 
         while (recorder.selected_next_order())
         {
-            if (recorder.chunk_type() == WRMChunk::CHUNK_TIMESTAMP)
+            if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
             {
                 recorder.ignore_chunks();
                 continue;

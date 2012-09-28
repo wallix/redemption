@@ -55,10 +55,10 @@ BOOST_AUTO_TEST_CASE(TestMetaFile)
     ));
 
     std::stringstream ss;
-    write_meta_file_stream(ss, data);
+    ss << data;
 
     DataMetaFile data2;
-    data2.read_meta_file_stream(ss);
+    ss >> data2;
 
     BOOST_REQUIRE_EQUAL(data.files.size(), data2.files.size());
     BOOST_REQUIRE(data.files == data2.files);
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TestMetaFile)
     "khifeza.wrm, \n"
     "ldehgmzg.wrm,cceds.png 46767\n"
     "ezpiuze.wrm,jz.png\n");
-    data.read_meta_file_stream(ss);
+    ss >> data;
     data2.files[0].start_sec = 0;
     data2.files[0].start_usec = 0;
     data2.files[1].start_sec = 46767;

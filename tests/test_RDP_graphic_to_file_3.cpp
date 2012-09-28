@@ -40,7 +40,7 @@ protected:
 public:
         TestConsumer(const Rect & screen_rect)
         : icount(0), screen_rect(screen_rect) {}
-        bool check_end() { return false; }
+        void check_end() { BOOST_CHECK(false); }
 private:
     virtual void flush() {};
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
@@ -98,9 +98,8 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         OutFileTransport trans(fd);
         BStream stream(65536);
         GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
-        gtf.timestamp(5);
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), screen_rect);
-        gtf.timestamp(10);
+        gtf.timestamp();
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), Rect(10, 10, 100, 100));
         gtf.flush();
         ::close(fd);
@@ -115,19 +114,13 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         class Consumer : public TestConsumer {
         public:
             Consumer(const Rect & screen_rect) : TestConsumer(screen_rect){}
-            bool check_end()
+            void check_end()
             {
-                return icount == 2;
+                BOOST_CHECK_EQUAL(icount, 2);
             }
         private:
-            virtual void timestamp(const uint64_t epoch_usec) 
-            {
-                printf("timestamp %lu\n", epoch_usec);
-            }
-
             virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
             {
-                printf("opaquerect\n");
                 icount++;
                 switch (icount){
                 case 1:
@@ -144,16 +137,11 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
             }
         } consumer(screen_rect);
 
-
-        // next wait for the same elapsed time than original play stream
-        RDPUnserializer reader(&in_trans, &consumer, screen_rect, 100);
-        reader.next(101);
-        reader.next(102);
-        reader.next(103);
-        reader.next(107);
-        BOOST_CHECK_EQUAL(false, consumer.check_end());
-        reader.next(108);
-        BOOST_CHECK_EQUAL(true, consumer.check_end());
+        RDPUnserializer reader(&in_trans, &consumer, screen_rect);
+        reader.next();
+        reader.next();
+        reader.next();
+        consumer.check_end();
         // check we have read everything
         BOOST_CHECK_EQUAL(stream.end - stream.p, 0);
         ::close(fd);

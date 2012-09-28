@@ -29,8 +29,6 @@
 #include <sys/types.h>
 #include <stdint.h>
 
-#include "log.hpp"
-
 struct DataFile
 {
     std::string wrm_filename;
@@ -63,21 +61,6 @@ inline bool operator!=(const DataFile& a, const DataFile& b)
     return !(a == b);
 }
 
-inline bool __meta_get_c_hex(std::istream& is, int& c)
-{
-    c = is.get();
-    if (!is.good())
-        return false;
-    if (!(('A' <= c && c <= 'Z') || ('0' <= c && c <= '9')))
-        return false;
-
-    if ('A' <= c && c <= 'Z')
-        c -= 'A' - 0xa;
-    else
-        c -= '0';
-    return true;
-}
-
 struct DataMetaFile
 {
     std::vector<DataFile> files;
@@ -99,83 +82,92 @@ struct DataMetaFile
     , crypt_iv()
     , loaded(false)
     {}
-
-    /**
-    width height
-    crypt_mode
-
-    wrm_filename,[png_filename] [start_sec [start_usec]]
-    */
-    inline bool read_meta_file_stream(std::istream & is)
-    {
-        this->files.clear();
-        is >> this->width >> this->height >> this->crypt_mode;
-        if (this->crypt_mode)
-        {
-            std::ws(is);
-            int c;
-            std::size_t n = 0;
-            for (; n < 16; ++n)
-            {
-                if (!__meta_get_c_hex(is, c))
-                    break;
-                this->crypt_iv[n] = c << 4;
-                if (!__meta_get_c_hex(is, c))
-                    break;
-                this->crypt_iv[n] += c;
-            }
-            for (; n < 16; ++n)
-                this->crypt_iv[n] = 0;
-        }
-        else
-            is.ignore(-1u, '\n');
-
-        std::string line;
-        while (std::getline(is, line))
-        {
-            if (!line.empty()){
-                std::size_t p1 = line.find(',', 1);
-
-                DataFile info(line.substr(0, p1));
-
-                if (std::string::npos != p1){
-                    std::size_t p2 = line.find(' ', p1 + 1);
-                    info.png_filename = line.substr(p1 + 1, p2 - p1 - 1);
-
-                    if (std::string::npos != p2){
-                        std::size_t p3 = line.find(' ', p2 + 1);
-                        std::istringstream(line.substr(p2 + 1, p3 - p2 - 1)) >> info.start_sec;
-
-                        if (std::string::npos != p3){
-                            std::istringstream(line.substr(p3 + 1, line.find(' ', p3 + 1) - p3 - 1)) >> info.start_usec;
-                        }
-                    }
-                }
-
-                this->files.push_back(info);
-            }
-        }
-        this->loaded = true;
-        return true;
-    }
-
-
-    inline bool read_meta_file(const char * filename)
-    {
-        std::ifstream is(filename);
-        if (!is.is_open()){
-            LOG(LOG_ERR, "failed to open metafile %s\n", filename);
-            return false;
-        }
-        return this->read_meta_file_stream(is);
-    }
-
-
 };
 
+inline bool __meta_get_c_hex(std::istream& is, int& c)
+{
+    c = is.get();
+    if (!is.good())
+        return false;
+    if (!(('A' <= c && c <= 'Z') || ('0' <= c && c <= '9')))
+        return false;
 
+    if ('A' <= c && c <= 'Z')
+        c -= 'A' - 0xa;
+    else
+        c -= '0';
+    return true;
+}
 
-inline void write_meta_file_stream(std::ostream& os, DataMetaFile& data)
+inline std::istream& operator>>(std::istream& is, DataMetaFile& data)
+{
+    data.files.clear();
+    is >> data.width >> data.height >> data.crypt_mode;
+    if (data.crypt_mode)
+    {
+        std::ws(is);
+        int c;
+        std::size_t n = 0;
+        for (; n < 16; ++n)
+        {
+            if (!__meta_get_c_hex(is, c))
+                break;
+            data.crypt_iv[n] = c << 4;
+            if (!__meta_get_c_hex(is, c))
+                break;
+            data.crypt_iv[n] += c;
+        }
+        for (; n < 16; ++n)
+            data.crypt_iv[n] = 0;
+    }
+    else
+        is.ignore(-1u, '\n');
+
+    std::string line;
+    while (std::getline(is, line))
+    {
+        if (!line.empty()){
+            std::size_t p1 = line.find(',', 1);
+
+            DataFile info(line.substr(0, p1));
+
+            if (std::string::npos != p1){
+                std::size_t p2 = line.find(' ', p1 + 1);
+                info.png_filename = line.substr(p1 + 1, p2 - p1 - 1);
+
+                if (std::string::npos != p2){
+                    std::size_t p3 = line.find(' ', p2 + 1);
+                    std::istringstream(line.substr(p2 + 1, p3 - p2 - 1)) >> info.start_sec;
+
+                    if (std::string::npos != p3){
+                        std::istringstream(line.substr(p3 + 1, line.find(' ', p3 + 1) - p3 - 1)) >> info.start_usec;
+                    }
+                }
+            }
+
+            data.files.push_back(info);
+        }
+    }
+    data.loaded = true;
+    return is;
+}
+
+/**
+width height
+crypt_mode
+
+wrm_filename,[png_filename] [start_sec [start_usec]]
+*/
+inline bool read_meta_file(DataMetaFile& data, const char * filename)
+{
+    std::ifstream file(filename);
+    if (!file.is_open())
+        return false;
+    file >> data;
+    return true;
+}
+
+inline std::ostream& operator<<(std::ostream& os, DataMetaFile& data)
 {
     os << data.width << ' ' << data.height << "\n"
     << data.crypt_mode;
@@ -195,6 +187,7 @@ inline void write_meta_file_stream(std::ostream& os, DataMetaFile& data)
         os << info.wrm_filename << ',' << info.png_filename
         << ' ' << info.start_sec << ' ' << info.start_usec << '\n';
     }
+    return os;
 }
 
 inline bool write_meta_file(DataMetaFile& data, const char * filename)
@@ -202,7 +195,7 @@ inline bool write_meta_file(DataMetaFile& data, const char * filename)
     std::ofstream file(filename);
     if (!file.is_open())
         return false;
-    write_meta_file_stream(file, data);
+    file << data;
     return true;
 }
 
