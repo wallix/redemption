@@ -14,9 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+   Copyright (C) Wallix 2012
+   Author(s): Christophe Grosjean
 
    configuration file,
    parsing config file rdpproxy.ini
@@ -24,8 +23,8 @@
 */
 
 
-#ifndef __CONFIG_HPP__
-#define __CONFIG_HPP__
+#ifndef __CORE_CONFIG_HPP__
+#define __CORE_CONFIG_HPP__
 
 #include <istream>
 #include <string>
@@ -110,7 +109,9 @@ struct Inifile {
         char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
 
         unsigned capture_flags; // 1 PNG capture, 2 WRM
-        unsigned png_interval;  // time between 2 png captures (in seconds)
+        unsigned png_interval;  // time between 2 png captures (in 1/10 seconds)
+        unsigned frame_interval;  // time between 2 frame captures (in 1/100 seconds)
+        unsigned break_interval;  // time between 2 png captures (in seconds)
         unsigned png_limit;     // number of png captures to keep
 
         int l_bitrate;         // bitrate for low quality

@@ -32,7 +32,9 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
             const unsigned char * key, const unsigned char * iv
 )
 {
-    Capture capture(recorder.meta().width,
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    Capture capture(now, recorder.meta().width,
                     recorder.meta().height,
                     outfile, metaname,
                     0, 0, true,

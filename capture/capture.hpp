@@ -28,12 +28,15 @@ class Capture : public RDPGraphicDevice
 {
     char log_prefix[256];
 
+    uint64_t png_interval;
     struct timeval start_static_capture;
     uint64_t inter_frame_interval_static_capture;
 
+    uint64_t frame_interval;
     struct timeval start_native_capture;
     uint64_t inter_frame_interval_native_capture;
 
+    uint64_t break_interval;
     struct timeval start_break_capture;
     uint64_t inter_frame_interval_start_break_capture;
 
@@ -41,40 +44,59 @@ class Capture : public RDPGraphicDevice
     NativeCapture nc;
 
 private:
-    void _init()
+    void _init(const timeval & now)
     {
         this->log_prefix[0] = 0;
-        struct timeval now;
-        gettimeofday(&now, NULL);
         this->start_static_capture = now;
+        this->png_interval = 3000; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
+        this->inter_frame_interval_static_capture       = this->png_interval * 100000; // 1 000 000 us is 1 sec
+
+        // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
         this->start_native_capture = now;
+        this->frame_interval = 40;
+        this->inter_frame_interval_native_capture       =  this->frame_interval * 10000; // 1 000 000 us is 1 sec
+
         this->start_break_capture = now;
-        this->inter_frame_interval_static_capture       = 5000000; // 1 000 000 us is 1 sec (default)
-        this->inter_frame_interval_native_capture       =  400000; // 1 000 000 us is 1 sec (default)
-        this->inter_frame_interval_start_break_capture  = 1000000 * 20; // * 10; // 1 000 000 us is 1 sec (default)
+        this->break_interval = 60 * 10; // break interval is in s, default value 1 break every 10 minutes
+        this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
     }
 
 public:
     TODO(" fat interface : ugly  find another way")
-    Capture(int width, int height, const char * path, const char * codec_id, const char * video_quality, bool bgr = true) :
+    Capture(const timeval & now, int width, int height, const char * path, const char * codec_id, const char * video_quality, bool bgr = true) :
         sc(width, height, path, bgr),
         nc(width, height, path)
     {
-        this->_init();
+        this->_init(now);
     }
 
-//    Capture(int width, int height, const char * path, const char * path_meta, const char * codec_id, const char * video_quality, bool bgr = true) :
-//    sc(width, height, path, codec_id, video_quality, bgr),
-//    nc(width, height, path, path_meta)
-//    {
-//        this->_init();
-//    }
-
-    Capture(int width, int height, const char * path, const char * path_meta, const char * codec_id, const char * video_quality, bool bgr, CipherMode::enum_t mode = CipherMode::NO_MODE, const unsigned char * key = 0, const unsigned char * iv = 0) :
+    Capture(const timeval & now, int width, int height, const char * path, const char * path_meta, const char * codec_id, const char * video_quality, bool bgr, CipherMode::enum_t mode = CipherMode::NO_MODE, const unsigned char * key = 0, const unsigned char * iv = 0) :
     sc(width, height, path, bgr),
     nc(width, height, path, path_meta, mode, key, iv)
     {
-        this->_init();
+        this->_init(now);
+    }
+
+    void update_config(const timeval & now, const Inifile & ini){
+        this->sc.update_config(ini);
+        if (ini.globals.png_interval != this->png_interval){
+            this->start_static_capture = now;
+            this->png_interval = ini.globals.png_interval; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
+            this->inter_frame_interval_static_capture       = this->png_interval * 100000; // 1 000 000 us is 1 sec
+        }
+
+        if (ini.globals.frame_interval != this->frame_interval){
+            // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
+            this->start_native_capture = now;
+            this->frame_interval = ini.globals.frame_interval;
+            this->inter_frame_interval_native_capture       =  this->frame_interval * 10000; // 1 000 000 us is 1 sec
+        }
+
+        if (ini.globals.break_interval != this->break_interval){
+            this->start_break_capture = now;
+            this->break_interval = ini.globals.break_interval; // break interval is in s, default value 1 break every 10 minutes
+            this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
+        }
     }
 
     ~Capture(){

@@ -40,7 +40,9 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     BOOST_CHECK(1);
     {
         int w = 1024, h = 912;
-        Capture cap(w, h, filename_base, 0, 0);
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        Capture cap(now, w, h, filename_base, 0, 0);
         cap.start();
         Rect clip(0, 0, w, h);
         cap.draw(RDPOpaqueRect(Rect(10,844,500,42), RED), clip);

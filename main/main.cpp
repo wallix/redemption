@@ -138,31 +138,27 @@ int shutdown(const char * pid_file)
     // remove all other pid files
     DIR * d = opendir("/var/run/redemption");
     if (d){    
-        size_t path_len = strlen("/var/run/redemption");
-        size_t file_len = pathconf("/var/run/redemption", _PC_NAME_MAX) + 1;
+        size_t path_len = strlen("/var/run/redemption/");
+        size_t file_len = pathconf("/var/run/redemption/", _PC_NAME_MAX) + 1;
         char * buffer = (char*)malloc(file_len + path_len);
-        strcpy(buffer, "/var/run/redemption");
+        strcpy(buffer, "/var/run/redemption/");
         size_t len = offsetof(struct dirent, d_name) + file_len;
         struct dirent * entryp = (struct dirent *)malloc(len);
         struct dirent * result;
         for (readdir_r(d, entryp, &result) ; result ; readdir_r(d, entryp, &result)) {
+            if ((0 == strcmp(entryp->d_name, ".")) || (0 == strcmp(entryp->d_name, ".."))){
+                continue;
+            }
             strcpy(buffer + path_len, entryp->d_name);
             struct stat st;
             if (stat(buffer, &st) < 0){
-                LOG(LOG_INFO, "Failed to read dynamic configuration file %s [%u: %s]",
+                LOG(LOG_INFO, "Failed to read pid directory %s [%u: %s]",
                     buffer, errno, strerror(errno));
                 continue;
             }
-            try {
-                unlink(buffer);
-            }
-            catch(...){
-                LOG(LOG_INFO, "Error reading conf file %s", buffer);
-                continue;
-            }
-            LOG(LOG_INFO, "removing pid file %s", buffer);
+            LOG(LOG_INFO, "removing old pid file %s", buffer);
             if (unlink(buffer) < 0){
-                LOG(LOG_INFO, "Failed to remove dynamic configuration file %s after parsing [%u: %s]",
+                LOG(LOG_INFO, "Failed to remove old session pid file %s [%u: %s]",
                     buffer, errno, strerror(errno));
             }
         }
@@ -297,8 +293,14 @@ int main(int argc, char** argv)
     // don't check if it fails (proxy may be allready stopped)
     // and try to continue normal start process afterward
 
-    mkdir(PID_PATH "/redemption", 0700);
-    chown(PID_PATH "/redemption", uid, gid);
+    if (mkdir(PID_PATH "/redemption", 0700) < 0){
+        TODO("check only for relevant errors (exists with expected permissions is OK)");
+    }
+     
+    if (chown(PID_PATH "/redemption", uid, gid) < 0){
+        LOG(LOG_INFO, "Failed to set owner %u.%u to " PID_PATH "/redemption", uid, gid);
+        exit(1);
+    }
 
     if (options.count("force")){
         shutdown(PID_PATH  "/redemption/" LOCKFILE);

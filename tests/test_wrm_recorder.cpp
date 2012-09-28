@@ -49,7 +49,9 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 
     uint breakpoint = 0;
     {
-        Capture consumer(recorder.meta().width, recorder.meta().height,
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        Capture consumer(now, recorder.meta().width, recorder.meta().height,
                         "/tmp/replay_part", 0, 0, false);
 
         recorder.consumer(&consumer);

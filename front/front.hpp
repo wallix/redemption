@@ -329,10 +329,10 @@ public:
             char buffer[256];
             snprintf(buffer, 256, "type='OCR title bar' username='%s' client_ip='%s' ressource='%s' account='%s'", user, ip_source, target_device, target_user);
             buffer[255] = 0;
-            this->capture = new Capture(width, height, path, path, codec_id, quality);
-            this->capture->set_prefix(buffer, strlen(buffer));
             struct timeval now;
             gettimeofday(&now, NULL);
+            this->capture = new Capture(now, width, height, path, path, codec_id, quality);
+            this->capture->set_prefix(buffer, strlen(buffer));
             this->capture->start(now);
         }
     }

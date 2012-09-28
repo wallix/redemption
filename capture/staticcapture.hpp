@@ -87,6 +87,15 @@ public:
         delete [] this->data_scale;
     }
 
+    void update_config(const Inifile & ini){
+        if (ini.globals.png_limit != this->png_limit){
+            if (ini.globals.png_limit < this->png_limit){
+                TODO("remove old images if there is too many of them")
+            }
+            this->png_limit = ini.globals.png_limit;
+        }
+    }
+
     unsigned get_resize_width() const
     {
         return this->scale_width;
