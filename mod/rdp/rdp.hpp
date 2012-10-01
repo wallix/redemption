@@ -770,6 +770,9 @@ struct mod_rdp : public client_mod {
                                 memcpy(exponent, sc_sec1.proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
                                 memcpy(modulus, sc_sec1.proprietaryCertificate.RSAPK.modulus, 
                                     sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE);
+
+                                this->server_public_key_len = sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE;
+
                             }
                             else {
 
@@ -1036,6 +1039,9 @@ struct mod_rdp : public client_mod {
             }
 
             if (this->encryptionLevel){
+                if (this->verbose){
+                    LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u", this->server_public_key_len);
+                }
                 BStream stream(this->server_public_key_len + 32);
                 SEC::SecExchangePacket_Send mcs(stream, client_crypt_random, this->server_public_key_len);
                 this->send_data_request(MCS_GLOBAL_CHANNEL, stream);
