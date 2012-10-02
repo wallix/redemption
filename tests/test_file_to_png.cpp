@@ -26,7 +26,7 @@
 
 #define LOGPRINT
 
-#include "wrm_recorder.hpp"
+#include "recorder/wrm_recorder_option.hpp"
 #include "staticcapture.hpp"
 #include "transport.hpp"
 

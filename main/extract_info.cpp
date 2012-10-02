@@ -27,7 +27,6 @@
 #include <string>
 
 #include "recorder/wrm_recorder_option.hpp"
-#include "wrm_recorder.hpp"
 
 #include "meta_file.hpp"
 

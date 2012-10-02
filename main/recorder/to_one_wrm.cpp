@@ -37,10 +37,28 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
                           mode, key, iv
                          );
     recorder.consumer(&capture);
-    TimerCompute timercompute(recorder);
+    TimerCompute timer_compute(recorder);
 
-    timeval mstart = timercompute.start();
-    uint64_t mtime = timercompute.advance_second(start);
+    timeval ret = {0,0};
+    while (recorder.reader.selected_next_order())
+    {
+        if (recorder.chunk_type() == WRMChunk::TIME_START)
+        {
+            ret = recorder.get_start_time_order();
+            break;
+        }
+        if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
+        {
+            timer_compute.interpret_time();
+            ret.tv_sec = 0;
+            ret.tv_usec = 0;
+            break;
+        }
+        recorder.interpret_order();
+    }
+    timeval mstart = ret;
+
+    uint64_t mtime = timer_compute.advance_second(start);
     GraphicsToFile& caprecorder = capture.recorder;
 
     if (start && !mtime)
@@ -64,19 +82,20 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
         caprecorder.timer += mtime;
     }
 
-    timercompute.usec() = mtime - start;
-    mtime = TimerCompute::coeff_sec_to_usec * (stop - start);
+    timer_compute.usec() = mtime - start;
+    const uint64_t coeff_sec_to_usec = 1000000;
+    mtime = coeff_sec_to_usec * (stop - start);
     BStream& stream = recorder.reader.stream;
 
     while (recorder.reader.selected_next_order())
     {
-        if (timercompute.interpret_is_time_chunk()) {
-            if (timercompute.chunk_time_value) {
-                caprecorder.timestamp(timercompute.chunk_time_value);
-                caprecorder.timer += timercompute.chunk_time_value;
+        if (timer_compute.interpret_is_time_chunk()) {
+            if (timer_compute.chunk_time_value) {
+                caprecorder.timestamp(timer_compute.chunk_time_value);
+                caprecorder.timer += timer_compute.chunk_time_value;
             }
 
-            if (mtime <= timercompute.usec()){
+            if (mtime <= timer_compute.usec()){
                 break;
             }
         }

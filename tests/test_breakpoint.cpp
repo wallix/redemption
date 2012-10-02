@@ -28,7 +28,7 @@
 
 #include "capture.hpp"
 #include "transport.hpp"
-#include "wrm_recorder.hpp"
+#include "recorder/wrm_recorder_option.hpp"
 
 #include "unlink.hpp"
 #include "check_sig.hpp"

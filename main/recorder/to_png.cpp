@@ -19,7 +19,7 @@
  */
 
 #include "to_png.hpp"
-#include "wrm_recorder.hpp"
+#include "wrm_recorder_option.hpp"
 #include "timer_compute.hpp"
 #include "staticcapture.hpp"
 
@@ -46,8 +46,9 @@ void to_png(WRMRecorder& recorder, const char* outfile,
         capture.dump_png();
 
     uint frame = 0;
-    uint64_t mtime = TimerCompute::coeff_sec_to_usec * interval;
-    uint64_t msecond = TimerCompute::coeff_sec_to_usec * (stop - start);
+    const uint64_t coeff_sec_to_usec = 1000000;
+    uint64_t mtime = coeff_sec_to_usec * interval;
+    uint64_t msecond = coeff_sec_to_usec * (stop - start);
     uint64_t minterval = 0;
 
     while (recorder.reader.selected_next_order())
@@ -118,13 +119,14 @@ void to_png_2(WRMRecorder& recorder, const char* outfile,
     if (++it == end)
         return;
     uint64_t mtime = 0;
+    const uint64_t coeff_sec_to_usec = 1000000;
 
     while (recorder.reader.selected_next_order())
     {
         if (timercompute.interpret_is_time_chunk())
         {
             mtime += timercompute.usec();
-            while (mtime >= TimerCompute::coeff_sec_to_usec * it->point.time)
+            while (mtime >= coeff_sec_to_usec * it->point.time)
             {
                 capture.dump_png();
                 if (++it == end)

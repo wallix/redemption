@@ -30,7 +30,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "wrm_recorder.hpp"
+#include "recorder/wrm_recorder_option.hpp"
 #include "nativecapture.hpp"
 #include "staticcapture.hpp"
 #include "GraphicToFile.hpp"

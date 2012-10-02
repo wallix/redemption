@@ -26,8 +26,6 @@
 class TimerCompute {
     uint64_t micro_sec;
 
-public:
-    static const uint64_t coeff_sec_to_usec = 1000000;
 
 public:
     WRMRecorder& recorder;
@@ -49,7 +47,10 @@ public:
     { return this->micro_sec; }
 
     uint64_t sec()
-    { return this->micro_sec / coeff_sec_to_usec; }
+    { 
+        static const uint64_t coeff_sec_to_usec = 1000000;
+        return this->micro_sec / coeff_sec_to_usec; 
+    }
 
     void interpret_time()
     {
@@ -60,7 +61,7 @@ public:
 
     bool interpret_is_time_chunk()
     {
-        if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
+        if (this->recorder.chunk_type() == WRMChunk::TIMESTAMP)
         {
             //std::cout << this->micro_sec << " -> ";
             this->interpret_time();
@@ -70,28 +71,10 @@ public:
         return false;
     }
 
-    timeval start()
+    uint64_t advance_second(uint second)
     {
-        while (this->recorder.reader.selected_next_order())
-        {
-            if (this->recorder.chunk_type() == WRMChunk::TIME_START)
-            {
-                return this->recorder.get_start_time_order();
-            }
-            if (this->recorder.chunk_type() == WRMChunk::TIMESTAMP)
-            {
-                this->interpret_time();
-                timeval ret = {0,0};
-                return ret;
-            }
-            this->recorder.interpret_order();
-        }
-        timeval ret = {0,0};
-        return ret;
-    }
-
-    uint64_t advance_usecond(uint msec)
-    {
+        static const uint64_t coeff_sec_to_usec = 1000000;
+        uint msec = coeff_sec_to_usec * second;
         if (!msec)
             return 0;
 
@@ -117,11 +100,6 @@ public:
                 this->recorder.interpret_order();
         }
         return 0;
-    }
-
-    uint64_t advance_second(uint second)
-    {
-        return this->advance_usecond(coeff_sec_to_usec * second);
     }
 };
 

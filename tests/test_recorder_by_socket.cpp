@@ -28,7 +28,7 @@
 
 #include <netinet/tcp.h>
 #include "transport.hpp"
-#include "wrm_recorder.hpp"
+#include "recorder/wrm_recorder_option.hpp"
 #include "GraphicToFile.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 #include "staticcapture.hpp"

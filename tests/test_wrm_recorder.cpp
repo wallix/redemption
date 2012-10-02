@@ -28,7 +28,7 @@
 #define LOGPRINT
 
 // #include <iostream>
-#include "wrm_recorder.hpp"
+#include "recorder/wrm_recorder_option.hpp"
 #include "transport.hpp"
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
