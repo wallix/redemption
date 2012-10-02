@@ -74,7 +74,7 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
     uint64_t msecond = TimerCompute::coeff_sec_to_usec * (stop - start);
     mtime = TimerCompute::coeff_sec_to_usec * interval;
 
-    while (recorder.selected_next_order())
+    while (recorder.reader.selected_next_order())
     {
         if (timercompute.interpret_is_time_chunk()) {
             uint64_t usec = timercompute.usec();

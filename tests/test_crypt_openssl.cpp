@@ -296,11 +296,11 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         char message[1024];
         bool b;
 
-        b = recorder.selected_next_order();
+        b = recorder.reader.selected_next_order();
         BOOST_REQUIRE_EQUAL(b, true);
         BOOST_REQUIRE_EQUAL(recorder.chunk_type(), 1008);
         recorder.interpret_order();
-        b = recorder.selected_next_order();
+        b = recorder.reader.selected_next_order();
         BOOST_REQUIRE_EQUAL(b, true);
         BOOST_REQUIRE_EQUAL(recorder.chunk_type(), 0);
         recorder.interpret_order();
@@ -310,7 +310,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         {
             BOOST_REQUIRE_MESSAGE(false, message);
         }
-        b = recorder.selected_next_order();
+        b = recorder.reader.selected_next_order();
         BOOST_REQUIRE_EQUAL(b, true);
         recorder.interpret_order();
         if (!check_sig(pngcap.drawable, message,
@@ -319,7 +319,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         {
             BOOST_REQUIRE_MESSAGE(false, message);
         }
-        b = recorder.selected_next_order();
+        b = recorder.reader.selected_next_order();
         BOOST_REQUIRE_EQUAL(b, true);
         recorder.interpret_order();
         if (!check_sig(pngcap.drawable, message,
@@ -328,7 +328,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         {
             BOOST_REQUIRE_MESSAGE(false, message);
         }
-        b = recorder.selected_next_order();
+        b = recorder.reader.selected_next_order();
         BOOST_REQUIRE_EQUAL(b, true);
         recorder.interpret_order();
         if (!check_sig(pngcap.drawable, message,
@@ -337,7 +337,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         {
             BOOST_REQUIRE_MESSAGE(false, message);
         }
-        b = recorder.selected_next_order();
+        b = recorder.reader.selected_next_order();
         BOOST_REQUIRE_EQUAL(b, true);
         recorder.interpret_order();
         if (!check_sig(pngcap.drawable, message,
@@ -347,7 +347,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
             BOOST_REQUIRE_MESSAGE(false, message);
         }
 
-        b = recorder.selected_next_order();
+        b = recorder.reader.selected_next_order();
         BOOST_REQUIRE_EQUAL(b, false);
     }
 
@@ -373,7 +373,7 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
         BOOST_CHECK(true);
         recorder.consumer(&cap);
 
-        while (recorder.selected_next_order())
+        while (recorder.reader.selected_next_order())
         {
             if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
             {
@@ -396,7 +396,7 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
         BOOST_CHECK(true);
         recorder.consumer(&cap);
 
-        while (recorder.selected_next_order())
+        while (recorder.reader.selected_next_order())
         {
             if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
             {
@@ -404,7 +404,7 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
                 recorder.reader.remaining_order_count = 0;
                 continue;
             }
-            recorder.interpret_order();
+            recorder.reader.interpret_order();
             BOOST_CHECK(true);
         }
 

@@ -115,7 +115,7 @@ int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt,
                     return 3000;
                 wrm_filename = opt.in_filename.c_str();
                 recorder.open_wrm_only(wrm_filename);
-                if (!recorder.selected_next_order())
+                if (!recorder.reader.selected_next_order())
                 {
                     std::cerr << opt.in_filename << " is invalid wrm file" << std::endl;
                     return 2001;
@@ -157,7 +157,7 @@ int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt,
                 if (!_wrm_recorder_init_init_crypt(recorder, opt))
                     return 3000;
                 recorder.open_wrm_only(wrm_filename);
-                if (recorder.selected_next_order() && recorder.is_meta_chunk()){
+                if (recorder.reader.selected_next_order() && recorder.is_meta_chunk()){
                     recorder.reader.stream.p = recorder.reader.stream.end;
                     recorder.reader.remaining_order_count = 0;
                 }

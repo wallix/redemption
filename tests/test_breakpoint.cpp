@@ -78,55 +78,55 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     const uint16_t timestamp      = WRMChunk::TIMESTAMP;
     const uint16_t time_start     = WRMChunk::TIME_START;
 
-    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE(recorder.reader.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), time_start);
     recorder.interpret_order();
-    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE(recorder.reader.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), 0);
     recorder.interpret_order();
-    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE(recorder.reader.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), timestamp);
     recorder.interpret_order();
-    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE(recorder.reader.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), next_file_id);
     recorder.interpret_order();
-    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE(recorder.reader.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), meta_file);
     recorder.interpret_order();
-    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE(recorder.reader.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), breakpoint);
     recorder.interpret_order();
 
-    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE(recorder.reader.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), time_start);
     recorder.interpret_order();
-    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE(recorder.reader.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), 0);
     recorder.interpret_order();
-    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE(recorder.reader.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), timestamp);
     recorder.interpret_order();
-    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE(recorder.reader.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), next_file_id);
     recorder.interpret_order();
-    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE(recorder.reader.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), meta_file);
     recorder.interpret_order();
-    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE(recorder.reader.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), breakpoint);
     recorder.interpret_order();
 
-    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE(recorder.reader.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), time_start);
     recorder.interpret_order();
-    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE(recorder.reader.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), 0);
     recorder.interpret_order();
-    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE(recorder.reader.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), timestamp);
     recorder.interpret_order();
 
-    BOOST_REQUIRE(false == recorder.selected_next_order());
+    BOOST_REQUIRE(false == recorder.reader.selected_next_order());
 
 
     char message[1024];

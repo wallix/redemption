@@ -21,8 +21,55 @@
 #if !defined(__MAIN_RECORDER_RECORDER_APP__)
 #define __MAIN_RECORDER_RECORDER_APP__
 
-#include "recorder_run.hpp"
+#include <iostream>
+
+#include <boost/program_options/options_description.hpp>
+
 #include "parse_command_line.hpp"
+#include "adapter.hpp"
+#include "recorder_option.hpp"
+#include "wrm_recorder_init.hpp"
+
+int recorder_run(RecorderOption& opt,
+                 RecorderAction* actions, std::size_t n,
+                 InputType::enum_t itype)
+{
+    const std::size_t pos = opt.out_filename.find_last_of('.');
+    std::string extension = opt.output_type.empty()
+    ? (std::string::npos == pos ? "" : opt.out_filename.substr(pos + 1))
+    : opt.output_type;
+
+    RecorderAdapter* adapter = get_recorder_adapter(actions, actions + n,
+                                                    extension);
+    if (!adapter){
+        std::cerr
+        << "Incorrect output-type, "
+        << opt.desc.find("output-type", false).description() << std::endl;
+        return 1100;
+    }
+
+    WRMRecorder recorder;
+    if (int error = wrm_recorder_init(recorder, opt, itype)){
+        return error;
+    }
+
+    if (std::string::npos != pos)
+        opt.out_filename.erase(pos);
+    try
+    {
+        (*adapter)(recorder, opt.out_filename.c_str());
+    }
+    catch (Error& error)
+    {
+        std::cerr << "Error " << error.id;
+        if (error.errnum)
+            std::cerr << ": " << strerror(error.errnum);
+        std::cerr << std::endl;
+        return 100000 + error.errnum;
+    }
+    return 0;
+}
+
 
 int recorder_app(RecorderOption& opt, int argc, char** argv,
                  RecorderAction* actions, std::size_t n)

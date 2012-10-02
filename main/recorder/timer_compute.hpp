@@ -72,7 +72,7 @@ public:
 
     timeval start()
     {
-        while (this->recorder.selected_next_order())
+        while (this->recorder.reader.selected_next_order())
         {
             if (this->recorder.chunk_type() == WRMChunk::TIME_START)
             {
@@ -102,7 +102,7 @@ public:
             return tmp;
         }
 
-        while (this->recorder.selected_next_order())
+        while (this->recorder.reader.selected_next_order())
         {
             if (this->interpret_is_time_chunk())
             {

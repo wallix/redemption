@@ -62,7 +62,7 @@ class SessionRecorderTest : public Server
             SocketCapture consumer("test", sck);
             recorder.consumer(&consumer);
 
-            while (recorder.selected_next_order())
+            while (recorder.reader.selected_next_order())
             {
                 switch (recorder.chunk_type())
                 {

@@ -231,7 +231,7 @@ public:
         }
         this->open_wrm_only(this->get_cpath(this->meta().files[0].wrm_filename.c_str()));
         ++this->idx_file;
-        if (this->selected_next_order() && this->is_meta_chunk()){
+        if (this->reader.selected_next_order() && this->is_meta_chunk()){
             this->reader.stream.p = this->reader.stream.end;
             this->reader.remaining_order_count = 0;
         }
@@ -315,7 +315,7 @@ public:
     bool open_wrm_followed_meta(const char* filename)
     {
         this->open_wrm_only(filename);
-        if (!this->selected_next_order()){
+        if (!this->reader.selected_next_order()){
             return false;
         }
         if (this->is_meta_chunk()) {
@@ -327,7 +327,7 @@ public:
     bool open_wrm_followed_meta(const char* filename, const char* filename_meta)
     {
         this->open_wrm_only(filename);
-        if (!this->selected_next_order()){
+        if (!this->reader.selected_next_order()){
             return false;
         }
         if (this->is_meta_chunk()) {
@@ -513,11 +513,6 @@ public:
         return this->reader.consumer;
     }
 
-    bool selected_next_order()
-    {
-        return this->reader.selected_next_order();
-    }
-
     uint16_t& chunk_type()
     {
         return this->reader.chunk_type;
@@ -582,7 +577,7 @@ public:
         this->reader.timer_cap.usec() = this->reader.stream.in_uint64_le();
         --this->reader.remaining_order_count;
 
-        this->selected_next_order();
+        this->reader.selected_next_order();
 
         this->reader.common.order = this->reader.stream.in_uint8();
         this->recv_rect(this->reader.common.clip);
@@ -725,7 +720,7 @@ public:
         this->reader.stream.p = this->reader.stream.end;
         this->reader.remaining_order_count = 0;
 
-        this->selected_next_order();
+        this->reader.selected_next_order();
         this->reader.remaining_order_count = 0;
         while (1)
         {
@@ -777,14 +772,18 @@ public:
             break;
             case WRMChunk::BREAKPOINT:
             {
-                printf("WRMChunk::BREAKPOINT\n");
+                printf("WRMChunk::BREAKPOINT is_passed=%s force=%s\n", 
+                    this->interpret_breakpoint_is_passed?"Y":"N",
+                    this->force_interpret_breakpoint?"Y":"N");
                 if (!this->interpret_breakpoint_is_passed || this->force_interpret_breakpoint)
                 {
                     this->interpret_breakpoint_is_passed = true;
                     this->interpret_breakpoint();
                 }
-                else
+                else {
                     this->ignore_breakpoint();
+                }
+                printf("WRMChunk::BREAKPOINT done\n");
             }
             break;
             default:
@@ -798,8 +797,7 @@ public:
 
     bool next_order()
     {
-        if (this->selected_next_order())
-        {
+        if (this->reader.selected_next_order()){
             this->interpret_order();
             return true;
         }

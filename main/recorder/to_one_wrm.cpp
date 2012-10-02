@@ -68,7 +68,7 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
     mtime = TimerCompute::coeff_sec_to_usec * (stop - start);
     BStream& stream = recorder.reader.stream;
 
-    while (recorder.selected_next_order())
+    while (recorder.reader.selected_next_order())
     {
         if (timercompute.interpret_is_time_chunk()) {
             if (timercompute.chunk_time_value) {
@@ -94,7 +94,7 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
                 {
                     recorder.reader.stream.p = recorder.reader.stream.end;
                     recorder.reader.remaining_order_count = 0;
-                    recorder.selected_next_order();
+                    recorder.reader.selected_next_order();
 
                     while (1)
                     {

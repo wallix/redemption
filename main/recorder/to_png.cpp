@@ -51,7 +51,7 @@ void to_png(WRMRecorder& recorder, const char* outfile,
     uint64_t msecond = TimerCompute::coeff_sec_to_usec * (stop - start);
     uint64_t minterval = 0;
 
-    while (recorder.selected_next_order())
+    while (recorder.reader.selected_next_order())
     {
         if (timercompute.interpret_is_time_chunk())
         {
@@ -120,7 +120,7 @@ void to_png_2(WRMRecorder& recorder, const char* outfile,
         return;
     uint64_t mtime = 0;
 
-    while (recorder.selected_next_order())
+    while (recorder.reader.selected_next_order())
     {
         if (timercompute.interpret_is_time_chunk())
         {

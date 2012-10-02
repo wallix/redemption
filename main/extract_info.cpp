@@ -92,7 +92,7 @@ int main(int argc, char** argv)
     WrmInfo draw_info;
     WrmInfo other_info;
 
-    while (recorder.selected_next_order())
+    while (recorder.reader.selected_next_order())
     {
         weight = stream.end - stream.p;
 
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
 
                 --remaining_order_count;
 
-                recorder.selected_next_order();
+                recorder.reader.selected_next_order();
 
                 weight = stream.end - stream.p;
                 std::cout << "\torder size: " << weight;
