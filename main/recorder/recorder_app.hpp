@@ -25,7 +25,28 @@
 
 #include <boost/program_options/options_description.hpp>
 
-#include "parse_command_line.hpp"
+#include "wrm_recorder_option.hpp"
+#include "input_type.hpp"
+#include "get_type.hpp"
+
+bool parse_command_line(WrmRecorderOption& opt,
+                       int argc, char** argv)
+{
+    opt.parse_command_line(argc, argv);
+
+    if (opt.options.count("version")) {
+        std::cout << argv[0] << ' ' << opt.version() << std::endl;
+        return false;
+    }
+
+    if (opt.options.count("help")) {
+        std::cout << opt.desc;
+        return false;
+    }
+
+    return true;
+}
+
 #include "adapter.hpp"
 #include "recorder_option.hpp"
 #include "wrm_recorder_init.hpp"

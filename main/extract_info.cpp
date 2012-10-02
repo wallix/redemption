@@ -27,9 +27,32 @@
 
 #include "recorder/wrm_recorder_option.hpp"
 #include "wrm_recorder.hpp"
-#include "recorder/parse_command_line.hpp"
+
+#include "recorder/input_type.hpp"
+#include "recorder/get_type.hpp"
+
+
 #include "recorder/wrm_recorder_init.hpp"
 #include "meta_file.hpp"
+
+bool parse_command_line(WrmRecorderOption& opt,
+                       int argc, char** argv)
+{
+    opt.parse_command_line(argc, argv);
+
+    if (opt.options.count("version")) {
+        std::cout << argv[0] << ' ' << opt.version() << std::endl;
+        return false;
+    }
+
+    if (opt.options.count("help")) {
+        std::cout << opt.desc;
+        return false;
+    }
+
+    return true;
+}
+
 
 struct WrmInfo
 {
