@@ -30,9 +30,8 @@
 
 #include "relative_time_point.hpp"
 #include "range_time_point.hpp"
-
 #include "cipher.hpp"
-#include "hexadecimal_option.hpp"
+#include "validate.hpp"
 
 struct InputType {
     enum enum_t {
@@ -137,5 +136,88 @@ static inline InputType::enum_t get_input_type(const WrmRecorderOption& opt)
     return InputType::string_to_type(opt.in_filename.substr(pos + 1));
 }
 
+struct RecorderOption
+: WrmRecorderOption
+{
+    std::string out_filename;
+    std::string output_type;
+    bool screenshot_wrm;
+    bool screenshot_start;
+    bool no_screenshot_stop;
+    bool screenshot_all;
+    bool cat_wrm;
+    unsigned png_scale_width;
+    unsigned png_scale_height;
+    CipherMode::enum_t out_crypt_mode;
+    HexadecimalKeyOption out_crypt_key;
+    HexadecimalIVOption out_crypt_iv;
+    CipherInfo out_cipher_info;
+
+    RecorderOption();
+
+    template<typename _ForwardIterator>
+    void accept_output_type(_ForwardIterator first, _ForwardIterator last)
+    {
+        if (first == last){
+            throw std::runtime_error("output type is empty");
+        }
+        std::string output_type_desc = "accept ";
+        for (; first != last; ++first){
+            output_type_desc += '\'';
+            output_type_desc += *first;
+            output_type_desc += "', ";
+        }
+        output_type_desc.erase(output_type_desc.size() - 2);
+        std::size_t pos = output_type_desc.find_last_of(',');
+        if (pos != std::string::npos){
+            output_type_desc[pos] = ' ';
+            output_type_desc.insert(pos + 1, "or");
+        }
+        this->add_output_type(output_type_desc);
+    }
+
+    /**
+     * Return 0 if success.
+     * @{
+     */
+    virtual int notify_options();
+    virtual int normalize_options();
+    //@}
+
+    virtual const char * version() const
+    {
+        return VERSION;
+    };
+
+    enum Error {
+        SUCCESS                 = WrmRecorderOption::SUCCESS,
+        IN_FILENAME_IS_EMPTY    = WrmRecorderOption::IN_FILENAME_IS_EMPTY,
+        UNSPECIFIED_DECRIPT_KEY = WrmRecorderOption::UNSPECIFIED_DECRIPT_KEY,
+        INPUT_KEY_OVERLOAD      = WrmRecorderOption::INPUT_KEY_OVERLOAD,
+        INPUT_IV_OVERLOAD       = WrmRecorderOption::INPUT_IV_OVERLOAD,
+        UNSPECIFIED_ENCRIPT_KEY,
+        ENCRIPT_KEY_OR_IV_WITHOUT_MODE,
+        OUT_FILENAME_IS_EMPTY,
+        OUTPUT_KEY_OVERLOAD,
+        OUTPUT_IV_OVERLOAD
+    };
+
+    virtual const char * get_cerror(int error)
+    {
+        if (error == OUT_FILENAME_IS_EMPTY)
+            return "Not output-file";
+        if (error == ENCRIPT_KEY_OR_IV_WITHOUT_MODE)
+            return "Set --out-crypt-key or --out-crypt-iv without --out-crypt-mode";
+        if (error == OUTPUT_KEY_OVERLOAD)
+            return "Overload --out-crypt-key";
+        if (error == OUTPUT_IV_OVERLOAD)
+            return "Overload --out-crypt-iv";
+        return WrmRecorderOption::get_cerror(error);
+    }
+
+private:
+    void add_default_options();
+    void add_output_type(const std::string& desc);
+};
 
 #endif

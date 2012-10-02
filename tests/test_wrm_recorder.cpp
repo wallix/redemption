@@ -270,3 +270,59 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
 //                                  "\x69\x48\x48\x9c\xe7\x9b\x4e\x59\x1b\xa1",
 //                                  true);
 //}
+
+#include "recorder/wrm_recorder_option.hpp"
+
+BOOST_AUTO_TEST_CASE(TestHexadecimalOption)
+{
+    HexadecimalOption<20> hop;
+    bool b = hop.parse("0506070809000A");
+    BOOST_REQUIRE(b);
+    BOOST_REQUIRE_EQUAL(hop.size, 7);
+    BOOST_REQUIRE_EQUAL(hop.data[0], 0x05);
+    BOOST_REQUIRE_EQUAL(hop.data[1], 0x06);
+    BOOST_REQUIRE_EQUAL(hop.data[2], 0x07);
+    BOOST_REQUIRE_EQUAL(hop.data[3], 0x08);
+    BOOST_REQUIRE_EQUAL(hop.data[4], 0x09);
+    BOOST_REQUIRE_EQUAL(hop.data[5], 0x00);
+    BOOST_REQUIRE_EQUAL(hop.data[6], 0x0A);
+    BOOST_REQUIRE_EQUAL(hop.data[7], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[8], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[9], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[10], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[11], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[12], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[13], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[14], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[15], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[16], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[17], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[18], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[19], 0);
+
+    b = hop.parse("0506070809000a5");
+    BOOST_REQUIRE(b);
+    BOOST_REQUIRE_EQUAL(hop.size, 8);
+    BOOST_REQUIRE_EQUAL(hop.data[0], 0x05);
+    BOOST_REQUIRE_EQUAL(hop.data[1], 0x06);
+    BOOST_REQUIRE_EQUAL(hop.data[2], 0x07);
+    BOOST_REQUIRE_EQUAL(hop.data[3], 0x08);
+    BOOST_REQUIRE_EQUAL(hop.data[4], 0x09);
+    BOOST_REQUIRE_EQUAL(hop.data[5], 0x00);
+    BOOST_REQUIRE_EQUAL(hop.data[6], 0x0A);
+    BOOST_REQUIRE_EQUAL(hop.data[7], 0x50);
+    BOOST_REQUIRE_EQUAL(hop.data[8], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[9], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[10], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[11], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[12], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[13], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[14], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[15], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[16], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[17], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[18], 0);
+    BOOST_REQUIRE_EQUAL(hop.data[19], 0);
+
+    BOOST_REQUIRE(!HexadecimalOption<5>().parse("0506070809000A"));
+}

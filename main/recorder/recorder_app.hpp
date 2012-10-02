@@ -46,7 +46,6 @@ bool parse_command_line(WrmRecorderOption& opt,
 }
 
 #include "adapter.hpp"
-#include "recorder_option.hpp"
 #include "wrm_recorder_init.hpp"
 
 int recorder_run(RecorderOption& opt,

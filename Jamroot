@@ -142,7 +142,6 @@ exe redrec
     :
         main/recorder.cpp
         main/recorder/wrm_recorder_option.cpp
-        main/recorder/recorder_option.cpp
         main/recorder/to_png.cpp
         main/recorder/to_wrm.cpp
         main/recorder/to_one_wrm.cpp
@@ -297,8 +296,6 @@ unit-test test_meta_file : tests/test_meta_file.cpp libboost_unit_test ;
 unit-test test_png_scale : tests/test_png_scale.cpp libboost_unit_test png z crypto ;
 
 unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp libboost_unit_test z dl crypto png ;
-
-unit-test test_hexadecimal_option : tests/test_hexadecimal_option.cpp libboost_unit_test ;
 
 unit-test test_bitfu : tests/test_bitfu.cpp libboost_unit_test ;
 

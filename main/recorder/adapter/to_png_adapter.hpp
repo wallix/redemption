@@ -22,7 +22,7 @@
 #define __MAIN_RECORDER_ADAPTER_TO_PNG_ADAPTER_HPP__
 
 #include "recorder/adapter.hpp"
-#include "recorder/recorder_option.hpp"
+#include "recorder/wrm_recorder_option.hpp"
 #include "recorder/to_png.hpp"
 
 class ToPngAdapter
