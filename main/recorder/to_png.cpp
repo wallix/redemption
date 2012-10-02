@@ -22,7 +22,6 @@
 #include "wrm_recorder.hpp"
 #include "timer_compute.hpp"
 #include "staticcapture.hpp"
-#include "load_png_context.hpp"
 
 void to_png(WRMRecorder& recorder, const char* outfile,
             std::size_t start, std::size_t stop, std::size_t interval,
@@ -39,7 +38,7 @@ void to_png(WRMRecorder& recorder, const char* outfile,
                           resize_width, resize_height, true);
 
     recorder.consumer(&capture);
-    load_png_context(recorder, capture.drawable);
+    recorder.load_png_context(capture.drawable);
     TimerCompute timercompute(recorder);
     if (start && !timercompute.advance_second(start))
         return /*0*/;
@@ -105,7 +104,7 @@ void to_png_2(WRMRecorder& recorder, const char* outfile,
                           outfile,
                           resize_width, resize_height, true);
     recorder.consumer(&capture);
-    load_png_context(recorder, capture.drawable);
+    recorder.load_png_context(capture.drawable);
 
     typedef std::vector<relative_time_point>::const_iterator iterator;
     iterator it = capture_points.begin();

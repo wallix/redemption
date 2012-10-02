@@ -25,6 +25,9 @@
 #include <openssl/evp.h>
 #include <string.h>
 
+#include "log.hpp"
+
+TODO("suspicious, CipherInfo class looks like is is not doing enough (it should perform some cryptographic function, looks like it just pack some parameters together)")
 struct CipherInfo {
 private:
     unsigned char _key[EVP_MAX_KEY_LENGTH];

@@ -21,8 +21,6 @@
 #if !defined(__MAIN_RECORDER_ADAPTER_TO_WRM_ADAPTER_HPP__)
 #define __MAIN_RECORDER_ADAPTER_TO_WRM_ADAPTER_HPP__
 
-#include "recorder/adapter.hpp"
-#include "recorder/wrm_recorder_option.hpp"
 #include "recorder/to_wrm.hpp"
 #include "recorder/to_one_wrm.hpp"
 

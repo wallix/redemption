@@ -189,6 +189,23 @@ public:
         }
     }
 
+    void load_png_context(Drawable& drawable)
+    {
+        if (this->idx_file > 1 
+        && this->meta().files.size() >= this->idx_file
+        && !this->meta().files[this->idx_file - 1].png_filename.empty())
+        {
+            this->redraw_consumer(&drawable);
+            this->load_context(
+                this->meta()
+                .files[this->idx_file - 1]
+                .png_filename.c_str()
+            );
+            this->redraw_consumer(0);
+        }
+    }
+
+
     bool init_cipher(const EVP_CIPHER * mode,
                      const unsigned char* key = 0,
                      const unsigned char* iv = 0,

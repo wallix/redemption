@@ -26,6 +26,61 @@
 #include <boost/program_options/options_description.hpp>
 
 #include "wrm_recorder_option.hpp"
+#include <utility>
+#include <string>
+
+#include "wrm_recorder.hpp"
+
+struct RecorderAdapter
+{
+    virtual void operator()(WRMRecorder& recorder, const char* outfile) = 0;
+};
+
+typedef std::pair<std::string, RecorderAdapter*> RecorderAction;
+
+RecorderAdapter* get_recorder_adapter(RecorderAction* first,
+                                          RecorderAction* last,
+                                          const std::string& extension)
+{
+    for (; first != last; ++first)
+    {
+        if (first->first == extension)
+            return first->second;
+    }
+    return 0;
+}
+
+struct RecorderActionStringIterator
+{
+private:
+    RecorderAction* _base;
+
+public:
+    RecorderActionStringIterator(RecorderAction* it)
+    : _base(it)
+    {}
+
+    RecorderActionStringIterator& operator++()
+    {
+        ++this->_base;
+        return *this;
+    }
+
+    const std::string& operator*() const
+    {
+        return this->_base->first;
+    }
+
+    bool operator==(const RecorderActionStringIterator& other)
+    {
+        return this->_base == other._base;
+    }
+
+    bool operator!=(const RecorderActionStringIterator& other)
+    {
+        return !(*this == other);
+    }
+};
 
 bool parse_command_line(WrmRecorderOption& opt,
                        int argc, char** argv)
@@ -44,9 +99,6 @@ bool parse_command_line(WrmRecorderOption& opt,
 
     return true;
 }
-
-#include "adapter.hpp"
-#include "wrm_recorder_init.hpp"
 
 int recorder_run(RecorderOption& opt,
                  RecorderAction* actions, std::size_t n,
