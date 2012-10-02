@@ -115,7 +115,9 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     {
         if (reader.chunk_type() == WRMChunk::TIMESTAMP){
             is_chunk_time = true;
-            reader.ignore_chunks();
+            reader.reader.stream.p = reader.reader.stream.end;
+            reader.reader.remaining_order_count = 0;
+
         } else {
             reader.interpret_order();
             if (is_chunk_time)

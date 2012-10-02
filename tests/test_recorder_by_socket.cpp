@@ -72,7 +72,8 @@ class SessionRecorderTest : public Server
                     case WRMChunk::META_FILE:
                     case WRMChunk::TIME_START:
                     case WRMChunk::TIMESTAMP:
-                        recorder.ignore_chunks();
+                        recorder.reader.stream.p = recorder.reader.stream.end;
+                        recorder.reader.remaining_order_count = 0;
                         break;
                     default:
                         recorder.interpret_order();

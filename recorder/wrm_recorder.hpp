@@ -64,22 +64,13 @@ public:
 private:
     static int open(const char * filename)
     {
-        LOG(LOG_INFO, "Recording to file : %s", filename);
+        LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
         int fd = ::open(filename, O_RDONLY);
         if (-1 == fd){
             LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
            throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
         }
         return fd;
-    }
-
-    void check_idx_wrm(std::size_t idx_wrm)
-    {
-        if (this->meta().files.size() <= idx_wrm)
-        {
-            LOG(LOG_ERR, "WRMRecorder : idx(%d) not found in meta", (int)idx_wrm);
-            throw Error(ERR_RECORDER_META_REFERENCE_WRM);
-        }
     }
 
     bool _start_cipher(const unsigned char* key,
@@ -127,6 +118,7 @@ public:
     , force_interpret_breakpoint(false)
     , interpret_breakpoint_is_passed(false)
     {
+        LOG(LOG_INFO, "WRMRecorder 3");
         this->start_cipher_if_active();
     }
 
@@ -152,6 +144,7 @@ public:
     , force_interpret_breakpoint(false)
     , interpret_breakpoint_is_passed(false)
     {
+        LOG(LOG_INFO, "WRMRecorder 2");
         this->normalize_path();
         this->start_cipher_if_active();
     }
@@ -178,6 +171,7 @@ public:
     , force_interpret_breakpoint(false)
     , interpret_breakpoint_is_passed(false)
     {
+        LOG(LOG_INFO, "WRMRecorder 1");
         this->normalize_path();
         this->start_cipher_if_active();
         std::size_t pos = filename.find_last_not_of('.');
@@ -200,6 +194,7 @@ public:
                      const unsigned char* iv = 0,
                      ENGINE* impl = 0)
     {
+        LOG(LOG_INFO, "init_cipher");
         this->cipher_mode = mode;
         if (!this->cipher_mode)
             return false;
@@ -223,16 +218,23 @@ public:
 
     void open_meta_followed_wrm(const char * filename)
     {
-        if (!this->open_meta(filename))
+        printf("open_meta_followed_wrm(%s)", filename);
+
+        if (!this->open_meta(filename)){
             throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
-        if (this->meta().files.empty())
+        }
+        if (this->meta().files.empty()){
             throw Error(ERR_RECORDER_META_REFERENCE_WRM);
-        if (this->meta().crypt_mode && !this->cipher_mode)
+        }
+        if (this->meta().crypt_mode && !this->cipher_mode){
             throw Error(ERR_RECORDER_FILE_CRYPTED);
+        }
         this->open_wrm_only(this->get_cpath(this->meta().files[0].wrm_filename.c_str()));
         ++this->idx_file;
-        if (this->selected_next_order() && this->is_meta_chunk())
-            this->ignore_chunks();
+        if (this->selected_next_order() && this->is_meta_chunk()){
+            this->reader.stream.p = this->reader.stream.end;
+            this->reader.remaining_order_count = 0;
+        }
     }
 
     ~WRMRecorder()
@@ -295,12 +297,6 @@ public:
         this->trans.fd = WRMRecorder::open(filename);
     }
 
-    void ignore_chunks()
-    {
-        this->reader.stream.p = this->reader.stream.end;
-        this->reader.remaining_order_count = 0;
-    }
-
     bool interpret_meta_chunk()
     {
         char filename[1024];
@@ -311,7 +307,8 @@ public:
 
     bool interpret_meta_chunk_and_force_meta(const char* filename)
     {
-        this->ignore_chunks();
+        this->reader.stream.p = this->reader.stream.end;
+        this->reader.remaining_order_count = 0;
         return this->open_meta_with_path(filename);
     }
 
@@ -676,6 +673,7 @@ public:
         int ret;
         const int Bpp = 3;
         AutoBuffer buffer;
+        printf("interpret_breakpoint\n");
         while (1)
         {
             this->reader.stream.init(14);
@@ -719,11 +717,13 @@ public:
             this->reader.bmp_cache.stamps[cid][cidx] = stamp;
             this->reader.bmp_cache.cache[cid][cidx] = new Bitmap(24, 0, cx, cy, buffer.get(), cx*cy);
         }
+        printf("interpret_breakpoint loop done\n");
     }
 
     void ignore_breakpoint()
     {
-        this->ignore_chunks();
+        this->reader.stream.p = this->reader.stream.end;
+        this->reader.remaining_order_count = 0;
 
         this->selected_next_order();
         this->reader.remaining_order_count = 0;
@@ -742,34 +742,34 @@ public:
         }
     }
 
-    void safe_ignore_chunks()
-    {
-        if (WRMChunk::BREAKPOINT == this->reader.chunk_type)
-            this->ignore_breakpoint();
-        else
-            this->ignore_chunks();
-    }
-
     void interpret_order()
     {
         switch (this->reader.chunk_type)
         {
             case WRMChunk::TIME_START:
             {
-                this->ignore_chunks();
+                printf("WRMChunk::TIME_START\n");
+
+                this->reader.stream.p = this->reader.stream.end;
+                this->reader.remaining_order_count = 0;
             }
             break;
             case WRMChunk::META_FILE:
             {
-                this->ignore_chunks();
-                //this->reader.stream.p += this->reader.stream.in_uint32_le();
-                //--this->reader.remaining_order_count;
+                printf("WRMChunk::META_FILE\n");
+                this->reader.stream.p = this->reader.stream.end;
+                this->reader.remaining_order_count = 0;
             }
             break;
             case WRMChunk::NEXT_FILE_ID:
             {
+                printf("WRMChunk::NEXT_FILE_ID\n");
                 this->idx_file = this->reader.stream.in_uint32_le();
-                this->check_idx_wrm(this->idx_file);
+                if (this->meta().files.size() <= this->idx_file)
+                {
+                    LOG(LOG_ERR, "WRMRecorder : idx(%d) not found in meta", (int)this->idx_file);
+                    throw Error(ERR_RECORDER_META_REFERENCE_WRM);
+                }
                 this->next_file(this->meta().files[this->idx_file].wrm_filename.c_str());
                 --this->reader.remaining_order_count;
                 this->load_context(this->meta().files[this->idx_file].png_filename.c_str());
@@ -777,6 +777,7 @@ public:
             break;
             case WRMChunk::BREAKPOINT:
             {
+                printf("WRMChunk::BREAKPOINT\n");
                 if (!this->interpret_breakpoint_is_passed || this->force_interpret_breakpoint)
                 {
                     this->interpret_breakpoint_is_passed = true;
@@ -787,9 +788,12 @@ public:
             }
             break;
             default:
+                printf("WRMChunk::default\n");
                 this->reader.interpret_order();
                 break;
         }
+        printf("WRMChunk::interpret_order done\n");
+
     }
 
     bool next_order()

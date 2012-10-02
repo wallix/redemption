@@ -155,7 +155,9 @@ int main(int argc, char** argv)
                 uint32_t len = stream.in_uint32_le();
                 std::cout.write(reinterpret_cast<const char *>(stream.p),
                                 len) << '\n';
-                recorder.ignore_chunks();
+                recorder.reader.stream.p = recorder.reader.stream.end;
+                recorder.reader.remaining_order_count = 0;
+
             }
                 break;
             case WRMChunk::TIME_START:
@@ -204,7 +206,8 @@ int main(int argc, char** argv)
                 info.weight += weight;
                 std::cout << recorder.chunk_type() << ": number: " << remaining_order_count
                 << ", size: " << weight << " B\n";
-                recorder.ignore_chunks();
+                recorder.reader.stream.p = recorder.reader.stream.end;
+                recorder.reader.remaining_order_count = 0;
                 break;
         }
     }

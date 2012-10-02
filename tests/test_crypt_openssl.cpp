@@ -377,7 +377,8 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
         {
             if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
             {
-                recorder.ignore_chunks();
+                recorder.reader.stream.p = recorder.reader.stream.end;
+                recorder.reader.remaining_order_count = 0;
                 cap.recorder.timestamp();
                 continue;
             }
@@ -399,7 +400,8 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
         {
             if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
             {
-                recorder.ignore_chunks();
+                recorder.reader.stream.p = recorder.reader.stream.end;
+                recorder.reader.remaining_order_count = 0;
                 continue;
             }
             recorder.interpret_order();

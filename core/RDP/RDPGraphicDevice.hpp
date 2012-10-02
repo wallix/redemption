@@ -285,10 +285,10 @@ struct RDPUnserializer
             break;
             case WRMChunk::TIMESTAMP:
             {
+                LOG(LOG_INFO, "TIMESTAMP");
                 uint64_t micro_sec = this->stream.in_uint64_be();
                 uint64_t elapsed = this->timer_cap.elapsed();
-                if (elapsed <= micro_sec)
-                {
+                if (elapsed <= micro_sec){
                     struct timespec wtime =
                         { static_cast<uint32_t>((micro_sec - elapsed) / 1000000)
                         , static_cast<uint32_t>((micro_sec - elapsed) % 1000000 * 1000)
@@ -300,10 +300,14 @@ struct RDPUnserializer
             break;
             case WRMChunk::TIME_START:
             {
+                LOG(LOG_INFO, "TIMESTART");
                 this->stream.p = this->stream.end;
                 --this->remaining_order_count;
             }
             break;
+//            case WRMChunk::BREAKPOINT:
+//            break;
+
             /*case WRMChunk::BPP:
             {
                 uint8_t bpp;
@@ -327,6 +331,7 @@ struct RDPUnserializer
             break;*/
             case WRMChunk::META_FILE:
             {
+                LOG(LOG_INFO, "META");
                 if (this->data_meta.loaded)
                 {
                     LOG(LOG_INFO, "ignore chunk type META_FILE");

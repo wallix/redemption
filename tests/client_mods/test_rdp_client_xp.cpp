@@ -312,16 +312,16 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         LOG(LOG_INFO, "=======================> count=%u", count);
 
         if (count++ >= 25) break;
-        if (count == 10){
-            front.dump_png("trace_xp_10_");
-        }
-        if (count == 20){
-            front.dump_png("trace_xp_20_");
-        }
+//        if (count == 10){
+//            front.dump_png("trace_xp_10_");
+//        }
+//        if (count == 20){
+//            front.dump_png("trace_xp_20_");
+//        }
         res = mod->draw_event();
         BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
     }
 
-    front.dump_png("trace_xp_");
+//    front.dump_png("trace_xp_");
 
 }

@@ -157,10 +157,13 @@ int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt,
                 if (!_wrm_recorder_init_init_crypt(recorder, opt))
                     return 3000;
                 recorder.open_wrm_only(wrm_filename);
-                if (recorder.selected_next_order() && recorder.is_meta_chunk())
-                    recorder.ignore_chunks();
-                if (!recorder.is_meta_chunk())
+                if (recorder.selected_next_order() && recorder.is_meta_chunk()){
+                    recorder.reader.stream.p = recorder.reader.stream.end;
+                    recorder.reader.remaining_order_count = 0;
+                }
+                if (!recorder.is_meta_chunk()){
                     return _wrm_recorder_init_meta_not_found(recorder, wrm_filename);
+                }
                 break;
             default:
                 std::cerr << "Input type not found" << std::endl;

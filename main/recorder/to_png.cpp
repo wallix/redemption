@@ -31,17 +31,18 @@ void to_png(WRMRecorder& recorder, const char* outfile,
             bool screenshot_start, bool no_screenshot_stop,
             bool screenshot_all)
 {
+    LOG(LOG_INFO, "to png -> %s", outfile);
+
     StaticCapture capture(recorder.meta().width,
                           recorder.meta().height,
                           outfile,
                           resize_width, resize_height, true);
+
     recorder.consumer(&capture);
     load_png_context(recorder, capture.drawable);
-
     TimerCompute timercompute(recorder);
     if (start && !timercompute.advance_second(start))
         return /*0*/;
-
     if (screenshot_start)
         capture.dump_png();
 
@@ -59,31 +60,27 @@ void to_png(WRMRecorder& recorder, const char* outfile,
             {
                 capture.dump_png();
                 timercompute.reset();
-                if (++frame == frame_limit)
+                if (++frame == frame_limit){
                     break;
-                if (screenshot_all)
-                {
+                }
+                if (screenshot_all){
                     minterval += usec - mtime;
-                    while (minterval >= mtime)
-                    {
+                    while (minterval >= mtime){
                         capture.dump_png();
                         minterval -= mtime;
                     }
                 }
             }
 
-            if (msecond <= usec)
-            {
+            if (msecond <= usec){
                 msecond = 0;
                 break;
             }
-            else
-            {
+            else{
                 msecond -= usec;
             }
         }
-        else
-        {
+        else{
             recorder.interpret_order();
         }
     }
@@ -91,10 +88,11 @@ void to_png(WRMRecorder& recorder, const char* outfile,
         capture.dump_png();
         //++frame;
     }
+    LOG(LOG_INFO, "to png -> %s done", outfile);
     //return frame;
 }
 
-void to_png(WRMRecorder& recorder, const char* outfile,
+void to_png_2(WRMRecorder& recorder, const char* outfile,
             const std::vector<relative_time_point>& capture_points,
             unsigned resize_width, unsigned resize_height,
             bool no_screenshot_stop)

@@ -63,7 +63,7 @@ public:
 
     virtual void operator()(WRMRecorder& recorder, const char* outfile)
     {
-        to_png(recorder, outfile,
+        to_png_2(recorder, outfile,
                this->_option.time_list,
                this->_option.png_scale_width,
                this->_option.png_scale_height,

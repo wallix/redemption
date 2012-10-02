@@ -30,6 +30,7 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
                 const unsigned char * key, const unsigned char * iv
 )
 {
+    LOG(LOG_INFO, "to one wrm");
     NativeCapture capture(recorder.meta().width,
                           recorder.meta().height,
                           outfile, metaname,
@@ -86,11 +87,13 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
                     break;
                 case WRMChunk::META_FILE:
                 case WRMChunk::TIME_START:
-                    recorder.ignore_chunks();
+                    recorder.reader.stream.p = recorder.reader.stream.end;
+                    recorder.reader.remaining_order_count = 0;
                     break;
                 case WRMChunk::BREAKPOINT:
                 {
-                    recorder.ignore_chunks();
+                    recorder.reader.stream.p = recorder.reader.stream.end;
+                    recorder.reader.remaining_order_count = 0;
                     recorder.selected_next_order();
 
                     while (1)
@@ -106,13 +109,15 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
                         recorder.reader.trans->recv(&recorder.reader.stream.end, buffer_size);
                     }
 
-                    recorder.ignore_chunks();
+                    recorder.reader.stream.p = recorder.reader.stream.end;
+                    recorder.reader.remaining_order_count = 0;
                 }
                     break;
                 default:
                     caprecorder.trans->send(stream.data,
                                             stream.size());
-                    recorder.ignore_chunks();
+                    recorder.reader.stream.p = recorder.reader.stream.end;
+                    recorder.reader.remaining_order_count = 0;
                     break;
             }
         }
