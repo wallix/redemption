@@ -24,13 +24,10 @@
 #define LOGPRINT
 
 #include <iostream>
+#include <string>
 
 #include "recorder/wrm_recorder_option.hpp"
 #include "wrm_recorder.hpp"
-
-#include "recorder/input_type.hpp"
-#include "recorder/get_type.hpp"
-
 
 #include "recorder/wrm_recorder_init.hpp"
 #include "meta_file.hpp"

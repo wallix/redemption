@@ -23,15 +23,36 @@
 #include "version.hpp"
 
 #include <vector>
+#include <string>
 
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/variables_map.hpp>
 
 #include "relative_time_point.hpp"
 #include "range_time_point.hpp"
-#include "input_type.hpp"
+
 #include "cipher.hpp"
 #include "hexadecimal_option.hpp"
+
+struct InputType {
+    enum enum_t {
+        NOT_FOUND,
+        META_TYPE,
+        WRM_TYPE
+    };
+
+    typedef enum_t format_type;
+
+    static InputType::enum_t string_to_type(const std::string& s)
+    {
+        if (s == "mwrm")
+            return META_TYPE;
+        if (s == "wrm")
+            return WRM_TYPE;
+        return NOT_FOUND;
+    }
+};
+
 
 struct WrmRecorderOption
 {
@@ -106,5 +127,15 @@ public:
 private:
     void add_default_options();
 };
+
+static inline InputType::enum_t get_input_type(const WrmRecorderOption& opt)
+{
+    if (!opt.input_type.empty()){
+        return InputType::string_to_type(opt.input_type);
+    }
+    const std::size_t pos = opt.in_filename.find_last_of('.');
+    return InputType::string_to_type(opt.in_filename.substr(pos + 1));
+}
+
 
 #endif

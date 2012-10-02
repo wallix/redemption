@@ -4,7 +4,6 @@
 #include <boost/program_options/parsers.hpp>
 
 #include "wrm_recorder_option.hpp"
-#include "get_type.hpp"
 #include "validate.hpp"
 
 namespace po = boost::program_options;

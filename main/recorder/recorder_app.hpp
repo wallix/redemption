@@ -26,8 +26,6 @@
 #include <boost/program_options/options_description.hpp>
 
 #include "wrm_recorder_option.hpp"
-#include "input_type.hpp"
-#include "get_type.hpp"
 
 bool parse_command_line(WrmRecorderOption& opt,
                        int argc, char** argv)
