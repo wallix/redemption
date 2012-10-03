@@ -150,6 +150,8 @@ public:
             {
                 if (this->data_scale)
                 {
+                    printf("Dump scale png %u x %u (%u) -> %u x %u\n", this->drawable.width, this->drawable.height,
+                                 (unsigned)this->drawable.rowsize, this->scale_width, this->scale_height);
                     LOG(LOG_INFO, "Dump scale png %ux%u (%u) -> %ux%u", this->drawable.width, this->drawable.height,
                                  this->drawable.rowsize, this->scale_width, this->scale_height);
 
@@ -157,6 +159,10 @@ public:
                                this->scale_width, this->drawable.width,
                                this->scale_height, this->drawable.height,
                                this->drawable.rowsize);
+                               
+                    printf("Dump scale png %u x %u (%u) -> %u x %u", this->drawable.width, this->drawable.height,
+                                 (unsigned)this->drawable.rowsize, this->scale_width, this->scale_height);
+                               
                     ::dump_png24(fd, this->data_scale,
                                  this->scale_width,
                                  this->scale_height,

@@ -39,15 +39,13 @@ BOOST_AUTO_TEST_CASE(TestPngScale)
     const unsigned int dest_height = 160;
 
     char message[1024];
-    if (!check_sig(AutoScale(drawable.data,
-                             dest_width, drawable.width,
-                             dest_height, drawable.height,
-                             drawable.rowsize
-                            ).data(),
-                   dest_height, dest_width * 3, message,
+    uint8_t * data = (uint8_t*)malloc(dest_width * dest_height * 3);
+    scale_data(data, drawable.data, dest_width, drawable.width, dest_height, drawable.height, drawable.rowsize);
+    if (!check_sig(data, dest_height, dest_width * 3, message,
                    "\x56\x89\xdd\x66\x89\x3f\x74\xcf\x61\xbf"
                    "\xf1\xa8\x92\x2e\x7c\x32\x9f\xad\xfc\xfb"))
     {
         BOOST_REQUIRE_MESSAGE(false, message);
     }
+    free(data);
 }

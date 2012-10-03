@@ -36,6 +36,7 @@
 
 class WRMRecorder
 {
+    bool debug;
     const EVP_CIPHER * cipher_mode;
     const unsigned char* cipher_key;
     const unsigned char* cipher_iv;
@@ -101,7 +102,8 @@ public:
                 const unsigned char* key = 0,
                 const unsigned char* iv = 0,
                 ENGINE* impl = 0)
-    : cipher_mode(mode)
+    : debug(false)
+    , cipher_mode(mode)
     , cipher_key(key)
     , cipher_iv(iv)
     , cipher_impl(impl)
@@ -127,7 +129,8 @@ public:
                 const unsigned char* key = 0,
                 const unsigned char* iv = 0,
                 ENGINE* impl = 0)
-    : cipher_mode(mode)
+    : debug(false)
+    , cipher_mode(mode)
     , cipher_key(key)
     , cipher_iv(iv)
     , cipher_impl(impl)
@@ -154,7 +157,8 @@ public:
                 const unsigned char* key = 0,
                 const unsigned char* iv = 0,
                 ENGINE* impl = 0)
-    : cipher_mode(mode)
+    : debug(false)
+    , cipher_mode(mode)
     , cipher_key(key)
     , cipher_iv(iv)
     , cipher_impl(impl)
@@ -684,30 +688,29 @@ public:
         zstrm.opaque = 0;
         int ret;
         const int Bpp = 3;
-        AutoBuffer buffer;
-        printf("interpret_breakpoint\n");
+        uint8_t * buffer = NULL;
         while (1)
         {
-            this->reader.stream.init(14);
-            this->reader.trans->recv(&this->reader.stream.end, 14);
-            uint16_t idx = this->reader.stream.in_uint16_le();
-            uint32_t stamp = this->reader.stream.in_uint32_le();
-            uint16_t cx = this->reader.stream.in_uint16_le();
-            uint16_t cy = this->reader.stream.in_uint16_le();
-            uint32_t buffer_size = this->reader.stream.in_uint32_le();
+            BStream stream(14);
+            this->reader.trans->recv(&stream.end, 14);
+            uint16_t idx = stream.in_uint16_le();
+            uint32_t stamp = stream.in_uint32_le();
+            uint16_t cx = stream.in_uint16_le();
+            uint16_t cy = stream.in_uint16_le();
+            uint32_t buffer_size = stream.in_uint32_le();
             if (idx == 8192 * 3 + 1){
                 break;
             }
 
-            this->reader.stream.init(buffer_size);
-            this->reader.trans->recv(&this->reader.stream.end, buffer_size);
+            BStream image_stream(buffer_size);
+            this->reader.trans->recv(&image_stream.end, buffer_size);
 
             zstrm.avail_in = buffer_size;
-            zstrm.next_in = this->reader.stream.data;
+            zstrm.next_in = image_stream.data;
 
-            buffer.alloc(cx*cy * Bpp);
-            zstrm.avail_out = cx*cy * Bpp;
-            zstrm.next_out = buffer.get();
+            buffer = (uint8_t*)malloc(cx * cy * Bpp);
+            zstrm.avail_out = cx * cy * Bpp;
+            zstrm.next_out = buffer;
 
             if ((ret = inflateInit(&zstrm)) != Z_OK)
             {
@@ -727,9 +730,11 @@ public:
             uint cid = idx / 8192;
             uint cidx = idx % 8192;
             this->reader.bmp_cache.stamps[cid][cidx] = stamp;
-            this->reader.bmp_cache.cache[cid][cidx] = new Bitmap(24, 0, cx, cy, buffer.get(), cx*cy);
+            if (this->reader.bmp_cache.cache[cid][cidx] != 0){
+                LOG(LOG_ERR, "bmp_cache already used at %u:%u", cid, cidx);
+            }
+            this->reader.bmp_cache.cache[cid][cidx] = new Bitmap(24, 0, cx, cy, buffer, cx*cy);
         }
-        printf("interpret_breakpoint loop done\n");
     }
 
     void ignore_breakpoint()
@@ -756,6 +761,9 @@ public:
 
     void interpret_order()
     {
+        if (this->debug){
+            printf("WRMChunk::looping : chunk_type=%u\n", this->reader.chunk_type);
+        }
         switch (this->reader.chunk_type)
         {
             case WRMChunk::TIME_START:
@@ -796,20 +804,25 @@ public:
                 {
                     this->interpret_breakpoint_is_passed = true;
                     this->interpret_breakpoint();
+                    printf("out of interpret_breakpoint done\n");
                 }
                 else {
                     this->ignore_breakpoint();
                 }
+                this->debug = true;
                 printf("WRMChunk::BREAKPOINT done\n");
             }
             break;
             default:
-                printf("WRMChunk::default\n");
+                if (this->debug){
+                    printf("WRMChunk::default\n");
+                }
                 this->reader.interpret_order();
+                if (this->debug){
+                    printf("WRMChunk::default done\n");
+                }
                 break;
         }
-        printf("WRMChunk::interpret_order done\n");
-
     }
 
     bool next_order()
