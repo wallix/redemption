@@ -49,7 +49,9 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
         }
         if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
         {
-            timer_compute.interpret_time();
+            timer_compute.chunk_time_value = timer_compute.recorder.reader.stream.in_uint64_be();
+            timer_compute.micro_sec += timer_compute.chunk_time_value;
+            --timer_compute.recorder.remaining_order_count();
             ret.tv_sec = 0;
             ret.tv_usec = 0;
             break;
@@ -89,7 +91,10 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
 
     while (recorder.reader.selected_next_order())
     {
-        if (timer_compute.interpret_is_time_chunk()) {
+        if (recorder.chunk_type() == WRMChunk::TIMESTAMP) {
+            timer_compute.chunk_time_value = recorder.reader.stream.in_uint64_be();
+            timer_compute.micro_sec += timer_compute.chunk_time_value;
+            --timer_compute.recorder.remaining_order_count();
             if (timer_compute.chunk_time_value) {
                 caprecorder.timestamp(timer_compute.chunk_time_value);
                 caprecorder.timer += timer_compute.chunk_time_value;

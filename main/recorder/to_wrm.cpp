@@ -52,7 +52,9 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
         }
         if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
         {
-            timer_compute.interpret_time();
+            timer_compute.chunk_time_value = timer_compute.recorder.reader.stream.in_uint64_be();
+            timer_compute.micro_sec += timer_compute.chunk_time_value;
+            --timer_compute.recorder.remaining_order_count();
             ret.tv_sec = 0;
             ret.tv_usec = 0;
             break;
@@ -97,7 +99,11 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
 
     while (recorder.reader.selected_next_order())
     {
-        if (timer_compute.interpret_is_time_chunk()) {
+        if (recorder.chunk_type() == WRMChunk::TIMESTAMP) {
+            timer_compute.chunk_time_value = recorder.reader.stream.in_uint64_be();
+            timer_compute.micro_sec += timer_compute.chunk_time_value;
+            --timer_compute.recorder.remaining_order_count();
+
             uint64_t usec = timer_compute.usec();
             if (timer_compute.chunk_time_value) {
                 //chunk_time += timer_compute.chunk_time_value;
@@ -115,7 +121,7 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
                 capture.breakpoint(capture.timer().time());
                 if (screenshot_wrm)
                     capture.dump_png();
-                timer_compute.reset();
+                timer_compute.micro_sec = 0;
                 if (++frame == frame_limit)
                     break;
             }
