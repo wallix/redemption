@@ -28,49 +28,14 @@ class TimerCompute {
 
 public:
     uint64_t micro_sec;
-    WRMRecorder& recorder;
     uint64_t chunk_time_value;
 
 public:
-    TimerCompute(WRMRecorder& recorder)
+    TimerCompute()
     : micro_sec(0)
-    , recorder(recorder)
     , chunk_time_value(0)
     {}
 
-    uint64_t& usec()
-    { return this->micro_sec; }
-
-    uint64_t sec()
-    { 
-        static const uint64_t coeff_sec_to_usec = 1000000;
-        return this->micro_sec / coeff_sec_to_usec; 
-    }
-
-    uint64_t advance_second(uint second)
-    {
-        static const uint64_t coeff_sec_to_usec = 1000000;
-        uint64_t msec = coeff_sec_to_usec * second;
-        uint64_t tmp = 0;
-        if (msec > 0){
-            tmp = this->micro_sec;
-            if (this->micro_sec < msec){
-                while (this->recorder.reader.selected_next_order())
-                {
-                    if (this->recorder.chunk_type() == WRMChunk::TIMESTAMP && this->micro_sec < msec){
-                        this->chunk_time_value = this->recorder.reader.stream.in_uint64_be();
-                        this->micro_sec += this->chunk_time_value;
-                        --this->recorder.remaining_order_count();    
-                        tmp = this->micro_sec;
-                        break;
-                    }
-                    this->recorder.interpret_order();
-                }
-            }
-        }
-        this->micro_sec = 0;
-        return tmp;
-    }
 };
 
 #endif

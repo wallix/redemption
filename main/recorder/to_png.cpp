@@ -39,14 +39,36 @@ void to_png(WRMRecorder& recorder, const char* outfile,
 
     recorder.consumer(&capture);
     recorder.load_png_context(capture.drawable);
-    TimerCompute timercompute(recorder);
-    if (start && !timercompute.advance_second(start))
-        return /*0*/;
+    const uint64_t coeff_sec_to_usec = 1000000;
+    TimerCompute timercompute;
+    if (start){
+        uint64_t msec = coeff_sec_to_usec * start;
+        uint64_t tmp = 0;
+        if (msec > 0){
+            tmp = timercompute.micro_sec;
+            if (timercompute.micro_sec < msec){
+                while (recorder.reader.selected_next_order())
+                {
+                    if (recorder.chunk_type() == WRMChunk::TIMESTAMP && timercompute.micro_sec < msec){
+                        timercompute.chunk_time_value = recorder.reader.stream.in_uint64_be();
+                        timercompute.micro_sec += timercompute.chunk_time_value;
+                        --recorder.remaining_order_count();    
+                        tmp = timercompute.micro_sec;
+                        break;
+                    }
+                    recorder.interpret_order();
+                }
+            }
+        }
+        timercompute.micro_sec = 0;
+        if (tmp == 0){
+            return /*0*/;
+        }
+    }
     if (screenshot_start)
         capture.dump_png();
 
     uint frame = 0;
-    const uint64_t coeff_sec_to_usec = 1000000;
     uint64_t mtime = coeff_sec_to_usec * interval;
     uint64_t msecond = coeff_sec_to_usec * (stop - start);
     uint64_t minterval = 0;
@@ -57,7 +79,7 @@ void to_png(WRMRecorder& recorder, const char* outfile,
             timercompute.chunk_time_value = recorder.reader.stream.in_uint64_be();
             timercompute.micro_sec += timercompute.chunk_time_value;
             --recorder.remaining_order_count();
-            uint64_t usec = timercompute.usec();
+            uint64_t usec = timercompute.micro_sec;
             if (usec >= mtime)
             {
                 capture.dump_png();
@@ -112,16 +134,39 @@ void to_png_2(WRMRecorder& recorder, const char* outfile,
     typedef std::vector<relative_time_point>::const_iterator iterator;
     iterator it = capture_points.begin();
 
-    TimerCompute timercompute(recorder);
-    if (it->point.time && !timercompute.advance_second(it->point.time))
-        return;
+    static const uint64_t coeff_sec_to_usec = 1000000;
+    TimerCompute timercompute;
+    uint64_t start = it->point.time;
+    if (start){
+        uint64_t msec = coeff_sec_to_usec * start;
+        uint64_t tmp = 0;
+        if (msec > 0){
+            tmp = timercompute.micro_sec;
+            if (timercompute.micro_sec < msec){
+                while (recorder.reader.selected_next_order())
+                {
+                    if (recorder.chunk_type() == WRMChunk::TIMESTAMP && timercompute.micro_sec < msec){
+                        timercompute.chunk_time_value = recorder.reader.stream.in_uint64_be();
+                        timercompute.micro_sec += timercompute.chunk_time_value;
+                        --recorder.remaining_order_count();    
+                        tmp = timercompute.micro_sec;
+                        break;
+                    }
+                    recorder.interpret_order();
+                }
+            }
+        }
+        timercompute.micro_sec = 0;
+        if (tmp == 0){
+            return /*0*/;
+        }
+    }
 
     capture.dump_png();
     iterator end = capture_points.end();
     if (++it == end)
         return;
     uint64_t mtime = 0;
-    const uint64_t coeff_sec_to_usec = 1000000;
 
     while (recorder.reader.selected_next_order())
     {
@@ -129,7 +174,7 @@ void to_png_2(WRMRecorder& recorder, const char* outfile,
             timercompute.chunk_time_value = recorder.reader.stream.in_uint64_be();
             timercompute.micro_sec += timercompute.chunk_time_value;
             --recorder.remaining_order_count();
-            mtime += timercompute.usec();
+            mtime += timercompute.micro_sec;
             while (mtime >= coeff_sec_to_usec * it->point.time)
             {
                 capture.dump_png();
