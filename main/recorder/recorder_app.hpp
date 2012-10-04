@@ -30,6 +30,9 @@
 #include <string>
 
 #include "wrm_recorder.hpp"
+#include "recorder/to_png.hpp"
+#include "recorder/to_wrm.hpp"
+#include "recorder/to_one_wrm.hpp"
 
 struct RecorderAdapter
 {
@@ -182,5 +185,101 @@ int recorder_app(RecorderOption& opt, int argc, char** argv,
 
     return recorder_run(opt, actions, n, itype);
 }
+
+class ToPngAdapter
+: public RecorderAdapter
+{
+    RecorderOption& _option;
+
+public:
+    ToPngAdapter(RecorderOption& option)
+    : _option(option)
+    {}
+
+    virtual void operator()(WRMRecorder& recorder, const char* outfile)
+    {
+        to_png(recorder, outfile,
+               this->_option.range.left.time,
+               this->_option.range.right.time,
+               this->_option.time.time,
+               this->_option.png_scale_width,
+               this->_option.png_scale_height,
+               this->_option.frame,
+               this->_option.screenshot_start,
+               this->_option.no_screenshot_stop,
+               this->_option.screenshot_all
+        );
+    }
+};
+
+class ToPngListAdapter
+: public RecorderAdapter
+{
+    RecorderOption& _option;
+
+public:
+    ToPngListAdapter(RecorderOption& option)
+    : _option(option)
+    {}
+
+    virtual void operator()(WRMRecorder& recorder, const char* outfile)
+    {
+        to_png_2(recorder, outfile,
+               this->_option.time_list,
+               this->_option.png_scale_width,
+               this->_option.png_scale_height,
+               this->_option.no_screenshot_stop
+        );
+    }
+};
+
+class ToWrmAdapter
+: public RecorderAdapter
+{
+    RecorderOption& _option;
+
+public:
+    ToWrmAdapter(RecorderOption& option)
+    : _option(option)
+    {}
+
+    virtual void operator()(WRMRecorder& recorder, const char* outfile)
+    {
+        const char * metaname = this->_option.metaname.empty() ? 0 : this->_option.metaname.c_str();
+
+        const unsigned char * key = 0;
+        const unsigned char * iv = 0;
+        if (this->_option.out_crypt_mode)
+        {
+            if (this->_option.out_crypt_key.size)
+                key = this->_option.out_crypt_key.data;
+            if (this->_option.out_crypt_iv.size)
+                iv = this->_option.out_crypt_iv.data;
+        }
+
+        if (this->_option.cat_wrm) {
+            to_one_wrm(recorder, outfile,
+                       this->_option.range.left.time,
+                       this->_option.range.right.time,
+                       metaname,
+                       this->_option.out_crypt_mode,
+                       key, iv
+                      );
+        }
+        if (!this->_option.cat_wrm) {
+            to_wrm(recorder, outfile,
+                   this->_option.range.left.time,
+                   this->_option.range.right.time,
+                   this->_option.time.time,
+                   this->_option.frame,
+                   this->_option.screenshot_start,
+                   this->_option.screenshot_wrm,
+                   metaname,
+                   this->_option.out_crypt_mode,
+                   key, iv
+                  );
+        }
+    }
+};
 
 #endif
