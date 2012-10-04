@@ -25,7 +25,6 @@
 
 #include "relative_time_point.hpp"
 #include "wrm_recorder_option.hpp"
-#include "timer_compute.hpp"
 #include "staticcapture.hpp"
 
 static inline void to_png(WRMRecorder& recorder, const char* outfile,
@@ -50,25 +49,26 @@ static inline void to_png(WRMRecorder& recorder, const char* outfile,
     recorder.consumer(&capture);
     recorder.load_png_context(capture.drawable);
     const uint64_t coeff_sec_to_usec = 1000000;
-    TimerCompute timercompute;
+    uint64_t timercompute_microsec = 0;
+    uint64_t timercompute_chunk_time_value = 0;
     if (start > 0){
         uint64_t msec = coeff_sec_to_usec * start;
-        if (timercompute.micro_sec < msec){
+        if (timercompute_microsec < msec){
             while (recorder.reader.selected_next_order())
             {
-                if (recorder.chunk_type() == WRMChunk::TIMESTAMP && timercompute.micro_sec < msec){
-                    timercompute.chunk_time_value = recorder.reader.stream.in_uint64_be();
-                    timercompute.micro_sec += timercompute.chunk_time_value;
+                if (recorder.chunk_type() == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
+                    timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
+                    timercompute_microsec += timercompute_chunk_time_value;
                     --recorder.remaining_order_count();    
                     break;
                 }
                 recorder.interpret_order();
             }
         }
-        if (timercompute.micro_sec == 0){
+        if (timercompute_microsec == 0){
             return /*0*/;
         }
-        timercompute.micro_sec = 0;
+        timercompute_microsec = 0;
     }
     if (1 && screenshot_start){
         capture.dump_png();
@@ -82,14 +82,14 @@ static inline void to_png(WRMRecorder& recorder, const char* outfile,
     while (recorder.reader.selected_next_order())
     {
         if (recorder.chunk_type() == WRMChunk::TIMESTAMP) {
-            timercompute.chunk_time_value = recorder.reader.stream.in_uint64_be();
-            timercompute.micro_sec += timercompute.chunk_time_value;
+            timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
+            timercompute_microsec += timercompute_chunk_time_value;
             --recorder.remaining_order_count();
-            uint64_t usec = timercompute.micro_sec;
+            uint64_t usec = timercompute_microsec;
             if (usec >= mtime)
             {
                 capture.dump_png();
-                timercompute.micro_sec = 0;
+                timercompute_microsec = 0;
                 if (++frame == frame_limit){
                     break;
                 }
@@ -147,28 +147,29 @@ static inline void to_png_2(WRMRecorder& recorder, const char* outfile,
     iterator it = capture_points.begin();
 
     const uint64_t coeff_sec_to_usec = 1000000;
-    TimerCompute timercompute;
+    uint64_t timercompute_microsec = 0;
+    uint64_t timercompute_chunk_time_value = 0;
     uint64_t start = it->point.time;
     if (start){
         uint64_t msec = coeff_sec_to_usec * start;
         uint64_t tmp = 0;
         if (msec > 0){
-            tmp = timercompute.micro_sec;
-            if (timercompute.micro_sec < msec){
+            tmp = timercompute_microsec;
+            if (timercompute_microsec < msec){
                 while (recorder.reader.selected_next_order())
                 {
-                    if (recorder.chunk_type() == WRMChunk::TIMESTAMP && timercompute.micro_sec < msec){
-                        timercompute.chunk_time_value = recorder.reader.stream.in_uint64_be();
-                        timercompute.micro_sec += timercompute.chunk_time_value;
+                    if (recorder.chunk_type() == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
+                        timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
+                        timercompute_microsec += timercompute_chunk_time_value;
                         --recorder.remaining_order_count();    
-                        tmp = timercompute.micro_sec;
+                        tmp = timercompute_microsec;
                         break;
                     }
                     recorder.interpret_order();
                 }
             }
         }
-        timercompute.micro_sec = 0;
+        timercompute_microsec = 0;
         if (tmp == 0){
             return /*0*/;
         }
@@ -183,17 +184,17 @@ static inline void to_png_2(WRMRecorder& recorder, const char* outfile,
     while (recorder.reader.selected_next_order())
     {
         if (recorder.chunk_type() == WRMChunk::TIMESTAMP) {
-            timercompute.chunk_time_value = recorder.reader.stream.in_uint64_be();
-            timercompute.micro_sec += timercompute.chunk_time_value;
+            timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
+            timercompute_microsec += timercompute_chunk_time_value;
             --recorder.remaining_order_count();
-            mtime += timercompute.micro_sec;
+            mtime += timercompute_microsec;
             while (mtime >= coeff_sec_to_usec * it->point.time)
             {
                 capture.dump_png();
                 if (++it == end)
                     return;
             }
-            timercompute.micro_sec = 0;
+            timercompute_microsec = 0;
         }
         else
         {

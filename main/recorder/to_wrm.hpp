@@ -22,7 +22,6 @@
 #define __MAIN_RECORDER_TO_WRM__
 
 #include "cipher.hpp"
-#include "timer_compute.hpp"
 #include "wrm_recorder.hpp"
 #include "capture.hpp"
 
@@ -43,7 +42,8 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
                     0, 0, true,
                     mode, key, iv);
     recorder.consumer(&capture);
-    TimerCompute timer_compute;
+    uint64_t timercompute_microsec = 0;
+    uint64_t timercompute_chunk_time_value = 0;
     
     timeval mstart = {0,0};
     while (recorder.reader.selected_next_order())
@@ -54,8 +54,8 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
         }
         if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
         {
-            timer_compute.chunk_time_value = recorder.reader.stream.in_uint64_be();
-            timer_compute.micro_sec += timer_compute.chunk_time_value;
+            timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
+            timercompute_microsec += timercompute_chunk_time_value;
             --recorder.remaining_order_count();
             mstart.tv_sec = 0;
             mstart.tv_usec = 0;
@@ -68,22 +68,22 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
     uint64_t msec = coeff_sec_to_usec * start;
     uint64_t tmp = 0;
     if (msec > 0){
-        tmp = timer_compute.micro_sec;
-        if (timer_compute.micro_sec < msec){
+        tmp = timercompute_microsec;
+        if (timercompute_microsec < msec){
             while (recorder.reader.selected_next_order())
             {
-                if (recorder.chunk_type() == WRMChunk::TIMESTAMP && timer_compute.micro_sec < msec){
-                    timer_compute.chunk_time_value = recorder.reader.stream.in_uint64_be();
-                    timer_compute.micro_sec += timer_compute.chunk_time_value;
+                if (recorder.chunk_type() == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
+                    timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
+                    timercompute_microsec += timercompute_chunk_time_value;
                     --recorder.remaining_order_count();    
-                    tmp = timer_compute.micro_sec;
+                    tmp = timercompute_microsec;
                     break;
                 }
                 recorder.interpret_order();
             }
         }
     }
-    timer_compute.micro_sec = 0;
+    timercompute_microsec = 0;
     uint64_t mtime = tmp;
 
     if (start && !mtime){
@@ -100,8 +100,9 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
         }
         capture.start(mstart);
     }
-    else
+    else {
         capture.start_with_invalid_now();
+    }
 
     if (mtime){
         capture.timestamp(mtime);
@@ -112,7 +113,7 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
         capture.dump_png();
 
     //uint64_t chunk_time = 0;
-    timer_compute.micro_sec = mtime - start;
+    timercompute_microsec = mtime - start;
     uint frame = 0;
     uint64_t msecond = coeff_sec_to_usec * (stop - start);
     mtime = coeff_sec_to_usec * interval;
@@ -120,16 +121,16 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
     while (recorder.reader.selected_next_order())
     {
         if (recorder.chunk_type() == WRMChunk::TIMESTAMP) {
-            timer_compute.chunk_time_value = recorder.reader.stream.in_uint64_be();
-            timer_compute.micro_sec += timer_compute.chunk_time_value;
+            timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
+            timercompute_microsec += timercompute_chunk_time_value;
             --recorder.remaining_order_count();
 
-            uint64_t usec = timer_compute.micro_sec;
-            if (timer_compute.chunk_time_value) {
-                //chunk_time += timer_compute.chunk_time_value;
+            uint64_t usec = timercompute_microsec;
+            if (timercompute_chunk_time_value) {
+                //chunk_time += timercompute_chunk_time_value;
                 //std::cout << "chunk_time: " << chunk_time << '\n';
-                capture.timestamp(timer_compute.chunk_time_value);
-                capture.timer() += timer_compute.chunk_time_value;
+                capture.timestamp(timercompute_chunk_time_value);
+                capture.timer() += timercompute_chunk_time_value;
             }
 
             if (usec >= mtime) {
@@ -141,7 +142,7 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
                 capture.breakpoint(capture.timer().time());
                 if (screenshot_wrm)
                     capture.dump_png();
-                timer_compute.micro_sec = 0;
+                timercompute_microsec = 0;
                 if (++frame == frame_limit)
                     break;
             }
