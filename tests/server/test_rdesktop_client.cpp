@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     test_card_mod mod(front, front.client_info.width, front.client_info.height);
     mod.draw_event();
 
-    sleep(5);
+//    sleep(5);
 //    shutdown(one_shot_server.sck, 2);
 //    close(one_shot_server.sck);
 

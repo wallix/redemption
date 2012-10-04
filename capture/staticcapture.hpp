@@ -50,26 +50,46 @@
 #include "RDP/RDPDrawable.hpp"
 #include "scale.hpp"
 
+struct StaticCaptureConfig {
+    unsigned png_limit;
+    unsigned png_interval;
+    char path[1024];
+    bool bgr;
+
+    StaticCaptureConfig()
+    : png_limit(10000)
+    {
+    }
+};
+
+struct StaticCaptureState {
+    unsigned framenb;
+    unsigned to_remove[32768];
+    char image_path[1024];
+    uint16_t image_basepath_len;
+    
+    StaticCaptureState()
+    : framenb(0)
+    {
+    
+    }
+};
+
 class StaticCapture : public RDPDrawable
 {
 public:
-    unsigned png_limit;
-    unsigned framenb;
-    unsigned to_remove[32768];
-    char path[1024];
-    char image_path[1024];
-    uint16_t image_basepath_len;
+    StaticCaptureConfig conf;
+    StaticCaptureState state;
 
 private:
 
 public:
     StaticCapture(unsigned width, unsigned height, const char * path, bool bgr)
     : RDPDrawable(width, height, bgr)
-    , png_limit(10000)
-    , framenb(0)
     {
-        strcpy(this->path, path);
-        this->image_basepath_len = sprintf(this->image_path, "%s-%u-", path, getpid());
+        strcpy(this->conf.path, path);        
+        this->conf.bgr = bgr;
+        this->state.image_basepath_len = sprintf(this->state.image_path, "%s-%u-", conf.path, getpid());
     }
 
     ~StaticCapture()
@@ -77,11 +97,11 @@ public:
     }
 
     void update_config(const Inifile & ini){
-        if (ini.globals.png_limit != this->png_limit){
-            if (ini.globals.png_limit < this->png_limit){
+        if (ini.globals.png_limit != this->conf.png_limit){
+            if (ini.globals.png_limit < this->conf.png_limit){
                 TODO("remove old images if there is too many of them")
             }
-            this->png_limit = ini.globals.png_limit;
+            this->conf.png_limit = ini.globals.png_limit;
         }
     }
 
@@ -92,20 +112,20 @@ public:
 
     void dump_png(void)
     {
-        if (this->png_limit > 0){
-            if (this->png_limit < (sizeof(this->to_remove)/sizeof(unsigned)) && this->framenb >= this->png_limit){
-                sprintf(this->image_path + this->image_basepath_len, "%u.png", 
-                    this->to_remove[(this->framenb - this->png_limit) % this->png_limit]);           
+        if (this->conf.png_limit > 0){
+            if (this->conf.png_limit < (sizeof(this->state.to_remove)/sizeof(unsigned)) && this->state.framenb >= this->conf.png_limit){
+                sprintf(this->state.image_path + this->state.image_basepath_len, "%u.png", 
+                    this->state.to_remove[(this->state.framenb - this->conf.png_limit) % this->conf.png_limit]);           
                 LOG(LOG_INFO, "Removing file %s framenb=%u limit=%u", 
-                    this->image_path, this->framenb, this->png_limit);
-                unlink(this->image_path);
+                    this->state.image_path, this->state.framenb, this->conf.png_limit);
+                unlink(this->state.image_path);
             }
 
-            sprintf(this->image_path + this->image_basepath_len, "%u.png", this->framenb++);
+            sprintf(this->state.image_path + this->state.image_basepath_len, "%u.png", this->state.framenb++);
             LOG(LOG_INFO, "Dumping to file %s %ux%u framenb=%u limit=%u", 
-                this->image_path, this->drawable.width, this->drawable.height, 
-                this->framenb, this->png_limit);
-            if (FILE * fd = fopen(this->image_path, "w")){
+                this->state.image_path, this->drawable.width, this->drawable.height, 
+                this->state.framenb, this->conf.png_limit);
+            if (FILE * fd = fopen(this->state.image_path, "w")){
 //                    scale_data(this->data_scale, this->drawable.data,
 //                               this->scale_width, this->drawable.width,
 //                               this->scale_height, this->drawable.height,
@@ -125,8 +145,8 @@ public:
                             );
                 fclose(fd);
             }
-            if (this->png_limit < (sizeof(this->to_remove)/sizeof(unsigned))){
-                this->to_remove[(this->framenb-1) % this->png_limit] = this->framenb-1;
+            if (this->conf.png_limit < (sizeof(this->state.to_remove)/sizeof(unsigned))){
+                this->state.to_remove[(this->state.framenb-1) % this->conf.png_limit] = this->state.framenb-1;
             }
         }
     }
