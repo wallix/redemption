@@ -67,14 +67,14 @@ private:
 public:
     TODO(" fat interface : ugly  find another way")
     Capture(const timeval & now, int width, int height, const char * path, const char * codec_id, const char * video_quality, bool bgr = true) :
-        sc(width, height, path, width, height, bgr),
+        sc(width, height, path, bgr),
         nc(width, height, path)
     {
         this->_init(now);
     }
 
     Capture(const timeval & now, int width, int height, const char * path, const char * path_meta, const char * codec_id, const char * video_quality, bool bgr, CipherMode::enum_t mode = CipherMode::NO_MODE, const unsigned char * key = 0, const unsigned char * iv = 0) :
-    sc(width, height, path, width, height, bgr),
+    sc(width, height, path, bgr),
     nc(width, height, path, path_meta, mode, key, iv)
     {
         this->_init(now);

@@ -56,8 +56,7 @@
     DataMetaFile& meta = reader.data_meta;
     BOOST_CHECK_EQUAL(w, meta.width);
     BOOST_CHECK_EQUAL(h, meta.height);
-    StaticCapture consumer(meta.width, meta.height,
-                           "/tmp/test_file_to_png.png", 0, 0);
+    StaticCapture consumer(meta.width, meta.height, "/tmp/test_file_to_png.png", true);
     reader.consumer = &consumer;
     while (reader.next())
         ;
@@ -104,8 +103,7 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
 
     std::cout << "cipher is active: " << reader.cipher_is_active() << std::endl;
 
-    StaticCapture consumer(meta.width, meta.height,
-                           "/tmp/test_replay_to_png", 0, 0, true);
+    StaticCapture consumer(meta.width, meta.height, "/tmp/test_replay_to_png", true);
 
     bool is_chunk_time = false;
     uint count_img = 0;

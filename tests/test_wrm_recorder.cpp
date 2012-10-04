@@ -107,8 +107,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
     BOOST_CHECK_EQUAL(600, recorder.meta.height);
     BOOST_CHECK_EQUAL(24, recorder.meta.bpp);
 
-    StaticCapture consumer(recorder.meta.width, recorder.meta.height,
-                           "/tmp/test_wrm_recorder_to_png", 0, 0);
+    StaticCapture consumer(recorder.meta.width, recorder.meta.height, "/tmp/test_wrm_recorder_to_png", true);
     BOOST_CHECK(1);
 
     recorder.consumer(&consumer);
@@ -177,8 +176,6 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
     StaticCapture *consumer = new StaticCapture(recorder->meta().width,
                                                 recorder->meta().height,
                                                 filename_consumer,
-                                                recorder->meta().width,
-                                                recorder->meta().height,
                                                 true);
     BOOST_CHECK(1);
 
@@ -211,8 +208,6 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
                 consumer = new StaticCapture(recorder->meta().width,
                                              recorder->meta().height,
                                              filename_consumer,
-                                             recorder->meta().width,
-                                             recorder->meta().height,
                                              true);
             }
             recorder->consumer(consumer);

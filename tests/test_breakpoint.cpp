@@ -67,8 +67,6 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     StaticCapture consumer(recorder.meta().width,
                            recorder.meta().height,
                            "/tmp/test.png",
-                           recorder.meta().width,
-                           recorder.meta().height,
                            true);
     recorder.consumer(&consumer);
 

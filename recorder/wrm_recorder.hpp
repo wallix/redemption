@@ -200,11 +200,7 @@ public:
         && !this->meta().files[this->idx_file - 1].png_filename.empty())
         {
             this->redraw_consumer(&drawable);
-            this->load_context(
-                this->meta()
-                .files[this->idx_file - 1]
-                .png_filename.c_str()
-            );
+            this->load_context(this->meta().files[this->idx_file - 1].png_filename.c_str());
             this->redraw_consumer(0);
         }
     }

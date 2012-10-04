@@ -55,28 +55,18 @@ class StaticCapture : public RDPDrawable
 public:
     unsigned png_limit;
     unsigned framenb;
+    unsigned to_remove[32768];
     char path[1024];
     char image_path[1024];
     uint16_t image_basepath_len;
 
 private:
-    unsigned to_remove[32768];
-    unsigned int scale_width;
-    unsigned int scale_height;
-    uint8_t * data_scale;
 
 public:
-    StaticCapture(unsigned width, unsigned height, const char * path, unsigned resize_width, unsigned resize_height, bool bgr)
+    StaticCapture(unsigned width, unsigned height, const char * path, bool bgr)
     : RDPDrawable(width, height, bgr)
-    , png_limit(10)
+    , png_limit(10000)
     , framenb(0)
-    , scale_width(resize_width?resize_width:width)
-    , scale_height(resize_height?resize_height:height)
-    , data_scale(
-        ((scale_width == width && scale_height == height)
-            ||(scale_width == 0) 
-            || (scale_height == 0)) ?
-            0 : new uint8_t[scale_width * scale_height * 3])
     {
         strcpy(this->path, path);
         this->image_basepath_len = sprintf(this->image_path, "%s-%u-", path, getpid());
@@ -84,7 +74,6 @@ public:
 
     ~StaticCapture()
     {
-        delete [] this->data_scale;
     }
 
     void update_config(const Inifile & ini){
@@ -93,35 +82,6 @@ public:
                 TODO("remove old images if there is too many of them")
             }
             this->png_limit = ini.globals.png_limit;
-        }
-    }
-
-    unsigned get_resize_width() const
-    {
-        return this->scale_width;
-    }
-
-    unsigned get_resize_height() const
-    {
-        return this->scale_height;
-    }
-
-    void set_resize(unsigned resize_width, unsigned resize_height)
-    {
-        if (resize_width == this->drawable.width && resize_height == this->drawable.height)
-        {
-            delete this->data_scale;
-            this->data_scale = 0;
-        }
-        else
-        {
-            if (resize_width * resize_height > this->scale_width * this->scale_height)
-            {
-                delete [] this->data_scale;
-                this->data_scale = new uint8_t[resize_width * resize_height];
-            }
-            this->scale_width = resize_width;
-            this->scale_height = resize_height;
         }
     }
 
@@ -142,43 +102,27 @@ public:
             }
 
             sprintf(this->image_path + this->image_basepath_len, "%u.png", this->framenb++);
-            LOG(LOG_INFO, "Dumping to file %s %ux%u (%ux%u) framenb=%u limit=%u", 
+            LOG(LOG_INFO, "Dumping to file %s %ux%u framenb=%u limit=%u", 
                 this->image_path, this->drawable.width, this->drawable.height, 
-                this->scale_width, this->scale_height,
                 this->framenb, this->png_limit);
-            if (FILE * fd = fopen(this->image_path, "w"))
-            {
-                if (this->data_scale)
-                {
-                    printf("Dump scale png %u x %u (%u) -> %u x %u\n", this->drawable.width, this->drawable.height,
-                                 (unsigned)this->drawable.rowsize, this->scale_width, this->scale_height);
-                    LOG(LOG_INFO, "Dump scale png %ux%u (%u) -> %ux%u", this->drawable.width, this->drawable.height,
-                                 this->drawable.rowsize, this->scale_width, this->scale_height);
+            if (FILE * fd = fopen(this->image_path, "w")){
+//                    scale_data(this->data_scale, this->drawable.data,
+//                               this->scale_width, this->drawable.width,
+//                               this->scale_height, this->drawable.height,
+//                               this->drawable.rowsize);
+//                               
+//                    ::dump_png24(fd, this->data_scale,
+//                                 this->scale_width,
+//                                 this->scale_height,
+//                                 this->scale_width * 3
+//                                );
+                LOG(LOG_INFO, "Dump png %ux%u", this->drawable.width, this->drawable.height,
+                             this->drawable.rowsize);
 
-                    scale_data(this->data_scale, this->drawable.data,
-                               this->scale_width, this->drawable.width,
-                               this->scale_height, this->drawable.height,
-                               this->drawable.rowsize);
-                               
-                    printf("Dump scale png %u x %u (%u) -> %u x %u", this->drawable.width, this->drawable.height,
-                                 (unsigned)this->drawable.rowsize, this->scale_width, this->scale_height);
-                               
-                    ::dump_png24(fd, this->data_scale,
-                                 this->scale_width,
-                                 this->scale_height,
-                                 this->scale_width * 3
-                                );
-                }
-                else
-                {
-                    LOG(LOG_INFO, "Dump png %ux%u", this->drawable.width, this->drawable.height,
-                                 this->drawable.rowsize);
-                    
-                    ::dump_png24(fd, this->drawable.data,
-                                 this->drawable.width, this->drawable.height,
-                                 this->drawable.rowsize
-                                );
-                }
+                ::dump_png24(fd, this->drawable.data,
+                             this->drawable.width, this->drawable.height,
+                             this->drawable.rowsize
+                            );
                 fclose(fd);
             }
             if (this->png_limit < (sizeof(this->to_remove)/sizeof(unsigned))){

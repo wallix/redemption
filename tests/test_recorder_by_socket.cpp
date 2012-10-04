@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(TestSocket)
             ClientSocketTransport t("test", "127.0.0.1", 13389);
             if (t.connect())
             {
-                StaticCapture consumer(800, 600, "/tmp/socket_test.png", 0, 0, true);
+                StaticCapture consumer(800, 600, "/tmp/socket_test.png", true);
                 RDPUnserializer unserializer(&t, &consumer, Rect(0,0,800,600));
                 while (unserializer.next())
                     ;
