@@ -141,8 +141,6 @@ exe drawtest
 exe redrec
     :
         main/recorder.cpp
-        main/recorder/to_wrm.cpp
-        main/recorder/to_one_wrm.cpp
 
         openssl
         crypto

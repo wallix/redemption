@@ -22,12 +22,155 @@
 #define __MAIN_RECORDER_TO_ONE_WRM__
 
 #include "cipher.hpp"
+#include "wrm_recorder.hpp"
+#include "timer_compute.hpp"
+#include "nativecapture.hpp"
+#include "urt.hpp"
 
 class WRMRecorder;
 
 void to_one_wrm(WRMRecorder& recorder, const char* outfile,
-                std::size_t start, std::size_t stop, const char* metaname = 0,
-                CipherMode::enum_t = CipherMode::NO_MODE,
-                const unsigned char * key = 0, const unsigned char * iv = 0);
+                std::size_t start, std::size_t stop, const char* metaname,
+                CipherMode::enum_t mode,
+                const unsigned char * key, const unsigned char * iv
+)
+{
+    LOG(LOG_INFO, "to one wrm");
+    NativeCapture capture(recorder.meta().width,
+                          recorder.meta().height,
+                          outfile, metaname,
+                          mode, key, iv
+                         );
+    recorder.consumer(&capture);
+    TimerCompute timer_compute;
 
+    timeval ret = {0,0};
+    while (recorder.reader.selected_next_order())
+    {
+        if (recorder.chunk_type() == WRMChunk::TIME_START)
+        {
+            ret = recorder.get_start_time_order();
+            break;
+        }
+        if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
+        {
+            timer_compute.chunk_time_value = recorder.reader.stream.in_uint64_be();
+            timer_compute.micro_sec += timer_compute.chunk_time_value;
+            --recorder.remaining_order_count();
+            ret.tv_sec = 0;
+            ret.tv_usec = 0;
+            break;
+        }
+        recorder.interpret_order();
+    }
+    timeval mstart = ret;
+
+    static const uint64_t coeff_sec_to_usec = 1000000;
+    uint64_t msec = coeff_sec_to_usec * start;
+    uint64_t mtime = 0;
+    if (msec > 0){
+        mtime = timer_compute.micro_sec;
+        if (timer_compute.micro_sec < msec){
+            while (recorder.reader.selected_next_order())
+            {
+                if (recorder.chunk_type() == WRMChunk::TIMESTAMP && timer_compute.micro_sec < msec){
+                    timer_compute.chunk_time_value = recorder.reader.stream.in_uint64_be();
+                    timer_compute.micro_sec += timer_compute.chunk_time_value;
+                    --recorder.remaining_order_count();    
+                    mtime = timer_compute.micro_sec;
+                    break;
+                }
+                recorder.interpret_order();
+            }
+        }
+    }
+    timer_compute.micro_sec = 0;
+
+    GraphicsToFile& caprecorder = capture.recorder;
+
+    if (start && !mtime)
+        return /*0*/;
+
+    if (mstart.tv_sec != 0)
+    {
+        if (mtime)
+        {
+            URT urt(mtime);
+            urt += mstart;
+            mstart = urt.tv;
+        }
+        capture.send_time_start(mstart);
+    }
+    else
+        capture.write_start_in_meta(mstart);
+
+    if (mtime){
+        caprecorder.timestamp(mtime);
+        caprecorder.timer += mtime;
+    }
+
+    timer_compute.micro_sec = mtime - start;
+    mtime = coeff_sec_to_usec * (stop - start);
+    BStream& stream = recorder.reader.stream;
+
+    while (recorder.reader.selected_next_order())
+    {
+        if (recorder.chunk_type() == WRMChunk::TIMESTAMP) {
+            timer_compute.chunk_time_value = recorder.reader.stream.in_uint64_be();
+            timer_compute.micro_sec += timer_compute.chunk_time_value;
+            --recorder.remaining_order_count();
+            if (timer_compute.chunk_time_value) {
+                caprecorder.timestamp(timer_compute.chunk_time_value);
+                caprecorder.timer += timer_compute.chunk_time_value;
+            }
+
+            if (mtime <= timer_compute.micro_sec){
+                break;
+            }
+        }
+        else {
+            switch (recorder.chunk_type()) {
+                case WRMChunk::NEXT_FILE_ID:
+                    recorder.interpret_order();
+                    break;
+                case WRMChunk::META_FILE:
+                case WRMChunk::TIME_START:
+                    recorder.reader.stream.p = recorder.reader.stream.end;
+                    recorder.reader.remaining_order_count = 0;
+                    break;
+                case WRMChunk::BREAKPOINT:
+                {
+                    recorder.reader.stream.p = recorder.reader.stream.end;
+                    recorder.reader.remaining_order_count = 0;
+                    recorder.reader.selected_next_order();
+
+                    while (1)
+                    {
+                        recorder.reader.stream.init(14);
+                        recorder.reader.trans->recv(&recorder.reader.stream.end, 14);
+                        if (recorder.reader.stream.in_uint16_le() == 8192 * 3 + 1){
+                            break;
+                        }
+                        recorder.reader.stream.p += 8;
+                        uint32_t buffer_size = recorder.reader.stream.in_uint32_le();
+                        recorder.reader.stream.init(buffer_size);
+                        recorder.reader.trans->recv(&recorder.reader.stream.end, buffer_size);
+                    }
+
+                    recorder.reader.stream.p = recorder.reader.stream.end;
+                    recorder.reader.remaining_order_count = 0;
+                }
+                    break;
+                default:
+                    caprecorder.trans->send(stream.data,
+                                            stream.size());
+                    recorder.reader.stream.p = recorder.reader.stream.end;
+                    recorder.reader.remaining_order_count = 0;
+                    break;
+            }
+        }
+    }
+
+    //return frame;
+}
 #endif
