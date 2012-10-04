@@ -35,6 +35,8 @@ int main(int argc, char** argv)
         RecorderAction("png.list", &to_png_list),
     };
 
+    printf("running redrec\n");
+
     return recorder_app(opt, argc, argv, recorder_actions,
                         sizeof(recorder_actions) / sizeof(recorder_actions[0]));
 }

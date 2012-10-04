@@ -103,49 +103,7 @@ bool parse_command_line(WrmRecorderOption& opt,
     return true;
 }
 
-int recorder_run(RecorderOption& opt,
-                 RecorderAction* actions, std::size_t n,
-                 InputType::enum_t itype)
-{
-    const std::size_t pos = opt.out_filename.find_last_of('.');
-    std::string extension = opt.output_type.empty()
-    ? (std::string::npos == pos ? "" : opt.out_filename.substr(pos + 1))
-    : opt.output_type;
-
-    RecorderAdapter* adapter = get_recorder_adapter(actions, actions + n,
-                                                    extension);
-    if (!adapter){
-        std::cerr
-        << "Incorrect output-type, "
-        << opt.desc.find("output-type", false).description() << std::endl;
-        return 1100;
-    }
-
-    WRMRecorder recorder;
-    if (int error = wrm_recorder_init(recorder, opt, itype)){
-        return error;
-    }
-
-    if (std::string::npos != pos)
-        opt.out_filename.erase(pos);
-    try
-    {
-        (*adapter)(recorder, opt.out_filename.c_str());
-    }
-    catch (Error& error)
-    {
-        std::cerr << "Error " << error.id;
-        if (error.errnum)
-            std::cerr << ": " << strerror(error.errnum);
-        std::cerr << std::endl;
-        return 100000 + error.errnum;
-    }
-    return 0;
-}
-
-
-int recorder_app(RecorderOption& opt, int argc, char** argv,
-                 RecorderAction* actions, std::size_t n)
+int recorder_app(RecorderOption& opt, int argc, char** argv, RecorderAction* actions, std::size_t n)
 {
     opt.accept_output_type<>(RecorderActionStringIterator(actions),
                              RecorderActionStringIterator(actions + n));
@@ -183,7 +141,43 @@ int recorder_app(RecorderOption& opt, int argc, char** argv,
         return error;
     }
 
-    return recorder_run(opt, actions, n, itype);
+    printf("running recorder\n");
+    const std::size_t pos = opt.out_filename.find_last_of('.');
+    std::string extension = opt.output_type.empty()
+    ? (std::string::npos == pos ? "" : opt.out_filename.substr(pos + 1))
+    : opt.output_type;
+
+    RecorderAdapter* adapter = get_recorder_adapter(actions, actions + n,
+                                                    extension);
+    if (!adapter){
+        std::cerr
+        << "Incorrect output-type, "
+        << opt.desc.find("output-type", false).description() << std::endl;
+        return 1100;
+    }
+
+    WRMRecorder recorder;
+    if (int error = wrm_recorder_init(recorder, opt, itype)){
+        return error;
+    }
+
+    if (std::string::npos != pos){
+        opt.out_filename.erase(pos);
+    }
+
+    try
+    {
+        (*adapter)(recorder, opt.out_filename.c_str());
+    }
+    catch (Error& error)
+    {
+        std::cerr << "Error " << error.id;
+        if (error.errnum)
+            std::cerr << ": " << strerror(error.errnum);
+        std::cerr << std::endl;
+        return 100000 + error.errnum;
+    }
+    return 0;
 }
 
 class ToPngAdapter
@@ -198,6 +192,10 @@ public:
 
     virtual void operator()(WRMRecorder& recorder, const char* outfile)
     {
+        printf("to png adapter -> %s width=%u height=%u resize_width=%u resize_height=%u\n", 
+            outfile, 800, 600, 
+            this->_option.png_scale_width, this->_option.png_scale_height);
+
         to_png(recorder, outfile,
                this->_option.range.left.time,
                this->_option.range.right.time,
