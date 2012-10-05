@@ -30,7 +30,7 @@
 //#define LOGPRINT
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
-#include "RDP/RDPGraphicDevice.hpp"
+#include "RDP/RDPSerializer.hpp"
 #include "channel_list.hpp"
 #include "front_api.hpp"
 #include "wait_obj.hpp"

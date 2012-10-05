@@ -23,7 +23,7 @@
 
 #include <errno.h>
 #include "transport.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
+#include "RDP/RDPSerializer.hpp"
 #include "meta_file.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "bitmap.hpp"

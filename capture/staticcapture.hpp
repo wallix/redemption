@@ -85,7 +85,7 @@ private:
 
 public:
     StaticCapture(unsigned width, unsigned height, const char * path, bool bgr)
-    : RDPDrawable(width, height, bgr)
+    : RDPDrawable(width, height, RDPDrawableConfig(bgr))
     {
         strcpy(this->conf.path, path);        
         this->conf.bgr = bgr;

@@ -37,7 +37,7 @@
 #include "RDP/rdp.hpp"
 #include "RDP/sec.hpp"
 #include "RDP/lic.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
+#include "RDP/RDPSerializer.hpp"
 #include "timer_capture.hpp"
 
 // MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)

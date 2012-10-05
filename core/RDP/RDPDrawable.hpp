@@ -37,16 +37,25 @@
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 
 
+struct RDPDrawableConfig {
+    bool bgr;
+
+    RDPDrawableConfig(bool bgr = true) 
+    : bgr(bgr) 
+    {
+    }
+};
+
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
 class RDPDrawable : public RDPGraphicDevice {
 public:
-    bool bgr;
+    RDPDrawableConfig conf;
     Drawable drawable;
 
-    RDPDrawable(const uint16_t width, const uint16_t height, bool bgr=true)
-    : bgr(bgr),
-    drawable(width, height)
+    RDPDrawable(const uint16_t width, const uint16_t height, const RDPDrawableConfig & conf)
+    : conf(conf)
+    , drawable(width, height)
     {
     }
 
@@ -54,7 +63,7 @@ public:
     {
         const Rect & trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
         uint32_t color = cmd.color;
-        if (!this->bgr){
+        if (!this->conf.bgr){
             color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
         }
         this->drawable.opaquerect(trect, color);
@@ -82,7 +91,7 @@ public:
         const Rect trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
         TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.")
         uint32_t color = cmd.back_color;
-        if (!this->bgr){
+        if (!this->conf.bgr){
             color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
         }
         this->drawable.patblt(trect, cmd.rop, color);
@@ -102,10 +111,10 @@ public:
             this->drawable.white_color(rect);
         break;
         case 0x55:
-            this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->bgr);
+            this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->conf.bgr);
         break;
         case 0xCC:
-            this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0, this->bgr);
+            this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0, this->conf.bgr);
         break;
         default:
             // should not happen
@@ -145,7 +154,7 @@ public:
 
         // Color handling
         uint32_t color = lineto.pen.color;
-        if (!this->bgr){
+        if (!this->conf.bgr){
             color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
         }
 
