@@ -99,14 +99,21 @@ BOOST_AUTO_TEST_CASE(TestURT_test_addition)
     time1.tv.tv_sec = 1; time1.tv.tv_usec = 999997;
     time2.tv.tv_sec = 1; time2.tv.tv_usec = 2;
 
-    time3 = time1 + time2;
+    time3 = time1;
+    uint64_t tmp_usec = time1.tv.tv_usec + time2.tv.tv_usec;
+    uint64_t tmp_sec = time1.tv.tv_sec + time2.tv.tv_sec;
+    time3.tv.tv_usec = tmp_usec % 1000000;
+    time3.tv.tv_sec = tmp_sec + (tmp_usec / 1000000);
 
     BOOST_CHECK(time3.tv.tv_sec == 2);
     BOOST_CHECK(time3.tv.tv_usec == 999999);
 
     time2.tv.tv_sec = 1; time2.tv.tv_usec = 4;
 
-    time3 = time1 + time2;
+    uint64_t sum_usec = (time1.tv.tv_usec + time2.tv.tv_usec);
+    uint64_t sum_sec = (time1.tv.tv_sec + time2.tv.tv_sec);
+    time3.tv.tv_sec = sum_usec / 1000000 + sum_sec;
+    time3.tv.tv_usec = sum_usec % 1000000;
 
     BOOST_CHECK(time3.tv.tv_sec == 3);
     BOOST_CHECK(time3.tv.tv_usec == 1);

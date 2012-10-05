@@ -106,7 +106,10 @@ public:
         return *this;
     }
 
-    using URT::reset;
+    void reset()
+    {
+        gettimeofday(&(this->tv), NULL);
+    }
 };
 
 #endif

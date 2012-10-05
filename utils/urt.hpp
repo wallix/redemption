@@ -50,7 +50,7 @@ struct URT
 
     // Default constructor sets to time of the day
     URT() {
-        this->getTimeOfDay();
+        gettimeofday(&(this->tv), NULL);
     }
 
     URT(const URT& other)
@@ -120,29 +120,5 @@ struct URT
     bool operator>=(const URT & other) const {
         return !(*this < other);
     }
-
-    URT& operator+=(const URT & other) {
-        this->sec()  = (this->usec() + other.usec()) / 1000000 + this->sec() + other.sec();
-        this->usec() = (this->usec() + other.usec()) % 1000000;
-        return *this;
-    }
-
-    URT operator+(const URT & other) const {
-        URT local(*this);
-        local += other;
-        return local;
-    }
-
-private:
-    void getTimeOfDay() {
-        gettimeofday(&(this->tv), NULL);
-    }
-
-protected:
-    void reset()
-    {
-        this->getTimeOfDay();
-    }
-
 };
 #endif

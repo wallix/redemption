@@ -24,7 +24,6 @@
 #include "cipher.hpp"
 #include "wrm_recorder.hpp"
 #include "nativecapture.hpp"
-#include "urt.hpp"
 
 class WRMRecorder;
 
@@ -44,26 +43,23 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
     uint64_t timercompute_microsec = 0;
     uint64_t timercompute_chunk_time_value = 0;
 
-    timeval ret = {0,0};
+    timeval mstart = {0,0};
     while (recorder.reader.selected_next_order())
     {
-        if (recorder.chunk_type() == WRMChunk::TIME_START)
-        {
-            ret = recorder.get_start_time_order();
+        if (recorder.chunk_type() == WRMChunk::TIME_START){
+            mstart = recorder.get_start_time_order();
             break;
         }
-        if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
-        {
+        if (recorder.chunk_type() == WRMChunk::TIMESTAMP){
             timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
             timercompute_microsec += timercompute_chunk_time_value;
             --recorder.remaining_order_count();
-            ret.tv_sec = 0;
-            ret.tv_usec = 0;
+            mstart.tv_sec = 0;
+            mstart.tv_usec = 0;
             break;
         }
         recorder.interpret_order();
     }
-    timeval mstart = ret;
 
     const uint64_t coeff_sec_to_usec = 1000000;
     uint64_t msec = coeff_sec_to_usec * start;
@@ -91,13 +87,11 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
     if (start && !mtime)
         return /*0*/;
 
-    if (mstart.tv_sec != 0)
-    {
-        if (mtime)
-        {
-            URT urt(mtime);
-            urt += mstart;
-            mstart = urt.tv;
+    if (mstart.tv_sec != 0){
+        if (mtime){
+            uint64_t tmp_usec = mstart.tv_usec + mtime;
+            mstart.tv_sec += (tmp_usec / 1000000);
+            mstart.tv_usec = (tmp_usec % 1000000);
         }
         capture.send_time_start(mstart);
     }

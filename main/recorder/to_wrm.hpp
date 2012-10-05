@@ -92,11 +92,10 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
 
     if (mstart.tv_sec != 0)
     {
-        if (mtime)
-        {
-            URT urt(mtime);
-            urt += mstart;
-            mstart = urt.tv;
+        if (mtime){
+            uint64_t tmp_usec = mstart.tv_usec + mtime;
+            mstart.tv_sec += (tmp_usec / 1000000);
+            mstart.tv_usec = (tmp_usec % 1000000);
         }
         capture.start(mstart);
     }

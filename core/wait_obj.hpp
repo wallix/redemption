@@ -26,15 +26,21 @@
 #define __WAIT_OBJS_HPP__
 
 #include "error.hpp"
-#include "urt.hpp"
+#include <sys/time.h>
+#include <stdint.h>
 
 class wait_obj
 {
     public:
     int obj;
     bool set_state;
-    URT trigger_time;
-    wait_obj(int sck) : obj(sck), set_state(false), trigger_time(URT()) {}
+    struct timeval trigger_time;
+    wait_obj(int sck) 
+    : obj(sck)
+    , set_state(false) 
+    {
+        gettimeofday(&this->trigger_time, NULL);
+    }
 
     ~wait_obj()
     {
@@ -70,8 +76,11 @@ class wait_obj
         }
         else{
             if (this->set_state){
-                URT now;
-                if(now > this->trigger_time){
+                struct timeval now;
+                gettimeofday(&now, NULL);
+                if ((now.tv_sec > this->trigger_time.tv_sec) 
+                ||  ( (now.tv_sec == this->trigger_time.tv_usec)
+                    &&(now.tv_usec > this->trigger_time.tv_usec))){
                     return true;
                 }
             }
@@ -83,9 +92,12 @@ class wait_obj
     void set(uint64_t idle_usec = 0)
     {
         this->set_state = true;
-        URT idle_time(idle_usec);
-        URT now;
-        this->trigger_time = now + idle_time;
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        
+        uint64_t sum_usec = (now.tv_usec + idle_usec);
+        this->trigger_time.tv_sec = (sum_usec / 1000000) + now.tv_sec;
+        this->trigger_time.tv_usec = sum_usec % 1000000;
     }
 
     bool can_recv()
