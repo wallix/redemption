@@ -32,7 +32,8 @@
 #include "transport.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
-#include "timer_capture.hpp"
+#include "difftimeval.hpp"
+#include "urt.hpp"
 #include "stream.hpp"
 #include "rect.hpp"
 #include "colors.hpp"
@@ -76,7 +77,7 @@ struct RDPUnserializer
     uint16_t remaining_order_count;
     uint16_t order_count;
 
-    TimerCapture timer_cap;
+    URT timer_cap;
 
     DataMetaFile data_meta;
 

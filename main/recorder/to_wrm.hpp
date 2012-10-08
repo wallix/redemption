@@ -105,7 +105,7 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
 
     if (mtime){
         capture.timestamp(mtime);
-        TimerCapture & timer = capture.timer();
+        URT & timer = capture.timer();
         mtime += timer.usec();
         timer.sec() += mtime / 1000000;
         timer.usec() = mtime % 1000000;
@@ -132,7 +132,7 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
                 //chunk_time += timercompute_chunk_time_value;
                 //std::cout << "chunk_time: " << chunk_time << '\n';
                 capture.timestamp(timercompute_chunk_time_value);
-                TimerCapture & timer = capture.timer();
+                URT & timer = capture.timer();
                 timercompute_chunk_time_value += timer.usec();
                 timer.sec() += timercompute_chunk_time_value / 1000000;
                 timer.usec() = timercompute_chunk_time_value % 1000000;

@@ -230,7 +230,7 @@ public:
         this->sc.dump_png();
     }
 
-    TimerCapture& timer()
+    URT& timer()
     {
         return this->nc.recorder.timer;
     }

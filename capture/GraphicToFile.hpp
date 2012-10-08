@@ -38,7 +38,8 @@
 #include "RDP/sec.hpp"
 #include "RDP/lic.hpp"
 #include "RDP/RDPSerializer.hpp"
-#include "timer_capture.hpp"
+#include "difftimeval.hpp"
+#include "urt.hpp"
 
 // MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
 // ================================================================
@@ -107,7 +108,7 @@ struct GraphicsToFile : public RDPSerializer
     uint16_t offset_chunk_size;
     uint16_t offset_chunk_type;
     uint16_t chunk_type;
-    TimerCapture timer;
+    URT timer;
 
     GraphicsToFile(Transport * trans
                 , Stream * pstream
