@@ -77,48 +77,28 @@ struct URT
 
     ~URT(){}
 
-//    sec_type& sec()
-//    {
-//        return tv.tv_sec;
+//    bool operator==(const URT & other) const {
+//        return (this->tv.tv_sec == other.tv.tv_sec) && (this->tv.tv_usec == other.tv.tv_usec);
 //    }
 
-//    const sec_type& sec() const
-//    {
-//        return tv.tv_sec;
+//    bool operator!=(const URT & other) const {
+//        return !(*this == other);
 //    }
 
-//    usec_type& usec()
-//    {
-//        return tv.tv_usec;
+//    bool operator>(const URT & other) const {
+//        return (this->tv.tv_sec > other.tv.tv_sec) ||
+//               ((this->tv.tv_sec == other.tv.tv_sec) && (this->tv.tv_usec > other.tv.tv_usec));
+//    }
+//    bool operator<=(const URT & other) const {
+//        return !(*this > other);
 //    }
 
-//    const usec_type& usec() const
-//    {
-//        return tv.tv_usec;
+//    bool operator<(const URT & other) const {
+//        return (this->tv.tv_sec <  other.tv.tv_sec) ||
+//               ((this->tv.tv_sec == other.tv.tv_sec) && (this->tv.tv_usec < other.tv.tv_usec));
 //    }
-
-    bool operator==(const URT & other) const {
-        return (this->tv.tv_sec == other.tv.tv_sec) && (this->tv.tv_usec == other.tv.tv_usec);
-    }
-
-    bool operator!=(const URT & other) const {
-        return !(*this == other);
-    }
-
-    bool operator>(const URT & other) const {
-        return (this->tv.tv_sec > other.tv.tv_sec) ||
-               ((this->tv.tv_sec == other.tv.tv_sec) && (this->tv.tv_usec > other.tv.tv_usec));
-    }
-    bool operator<=(const URT & other) const {
-        return !(*this > other);
-    }
-
-    bool operator<(const URT & other) const {
-        return (this->tv.tv_sec <  other.tv.tv_sec) ||
-               ((this->tv.tv_sec == other.tv.tv_sec) && (this->tv.tv_usec < other.tv.tv_usec));
-    }
-    bool operator>=(const URT & other) const {
-        return !(*this < other);
-    }
+//    bool operator>=(const URT & other) const {
+//        return !(*this < other);
+//    }
 };
 #endif
