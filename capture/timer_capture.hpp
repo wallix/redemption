@@ -45,28 +45,11 @@ public:
     : URT(now)
     {}
 
-    TimerCapture& operator=(const timeval& other)
-    {
-        this->tv = other;
-        return *this;
-    }
-
-//    const timeval& time() const
+//    TimerCapture& operator=(const timeval& other)
 //    {
-//        return this->tv;
+//        this->tv = other;
+//        return *this;
 //    }
-
-//    timeval& impl()
-//    { return this->tv; }
-
-//    static TimerCapture invalid_timer()
-//    {
-//        return TimerCapture(0);
-//    }
-
-//    bool valid() const
-//    { return this->sec() != 0; }
-
 
     TimerCapture& operator += (uint64_t useconds)
     {
@@ -76,10 +59,10 @@ public:
         return *this;
     }
 
-    void reset()
-    {
-        gettimeofday(&(this->tv), NULL);
-    }
+//    void reset()
+//    {
+//        gettimeofday(&(this->tv), NULL);
+//    }
 };
 
 #endif
