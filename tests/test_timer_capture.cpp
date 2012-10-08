@@ -40,25 +40,37 @@ BOOST_AUTO_TEST_CASE(TestTimerCapture)
     timeval now = {1000, 0};
     TimerCapture timer(now);
     BOOST_CHECK_EQUAL(timer.valid(), true);
-    uint64_t elapsed = timer.elapsed(now);
+    uint64_t elapsed = difftimeval(now, timer.tv);
+    timer.tv = now;
     BOOST_CHECK_EQUAL(elapsed, 0);
 
     now.tv_sec += 4;
-    elapsed = timer.elapsed(now);
+    elapsed = difftimeval(now, timer.tv);
+    timer.tv = now;
     BOOST_CHECK_EQUAL(elapsed, 4 * 1000000);
 
     now.tv_usec += 80;
-    elapsed = timer.elapsed(now);
+    elapsed = difftimeval(now, timer.tv);
+    timer.tv = now;
     BOOST_CHECK_EQUAL(elapsed, 80);
 
     now.tv_usec += 80;
     now.tv_sec += 1;
-    elapsed = timer.elapsed(now);
+    elapsed = difftimeval(now, timer.tv);
+    timer.tv = now;
     BOOST_CHECK_EQUAL(elapsed, 1 * 1000000 + 80);
 
-    BOOST_CHECK_EQUAL(timer.elapsed_if_wait(now, 10), false);
+    if (difftimeval(now, timer.tv) > 10){
+        timer.tv = now;
+        BOOST_CHECK(false);
+    }
+
     now.tv_usec += 80;
-    BOOST_CHECK_EQUAL(timer.elapsed_if_wait(now, 10), true);
-    elapsed = timer.elapsed(now);
+    if (difftimeval(now, timer.tv) <= 10){
+        BOOST_CHECK(false);
+    }
+    timer.tv = now;
+    elapsed = difftimeval(now, timer.tv);
+    timer.tv = now;
     BOOST_CHECK_EQUAL(elapsed, 0);
 }

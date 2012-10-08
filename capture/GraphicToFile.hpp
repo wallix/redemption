@@ -177,14 +177,18 @@ struct GraphicsToFile : public RDPSerializer
 
     virtual void timestamp()
     {
-        struct timeval t;
-        gettimeofday(&t, 0);
-        this->timestamp(this->timer.elapsed(t));
+        struct timeval now;
+        gettimeofday(&now, 0);
+        uint64_t diff = difftimeval(now, this->timer.tv);
+        this->timer.tv = now;
+        this->timestamp(diff);
     }
 
     virtual void timestamp(const timeval& now)
     {
-        this->timestamp(this->timer.elapsed(now));
+        uint64_t diff = difftimeval(now, this->timer.tv);
+        this->timer.tv = now;
+        this->timestamp(diff);
     }
 
     virtual void timestamp(uint64_t usec)

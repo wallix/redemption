@@ -243,7 +243,11 @@ struct RDPUnserializer
             {
                 LOG(LOG_INFO, "TIMESTAMP");
                 uint64_t micro_sec = this->stream.in_uint64_be();
-                uint64_t elapsed = this->timer_cap.elapsed();
+                struct timeval now;
+                gettimeofday(&now, 0);
+                uint64_t elapsed = difftimeval(now, this->timer_cap.tv);
+                this->timer_cap.tv = now;
+                
                 if (elapsed <= micro_sec){
                     struct timespec wtime =
                         { static_cast<uint32_t>((micro_sec - elapsed) / 1000000)

@@ -67,36 +67,36 @@ public:
     bool valid() const
     { return this->sec() != 0; }
 
-    uint64_t elapsed(const struct timeval& now)
-    {
-        uint64_t diff = difftimeval(now, this->tv);
-        this->tv = now;
-        return diff;
-    }
+//    uint64_t elapsed(const struct timeval& now)
+//    {
+//        uint64_t diff = difftimeval(now, this->timer.tv);
+//        this->timer.tv = now;
+//        return diff;
+//    }
 
-    uint64_t elapsed()
-    {
-        struct timeval now;
-        gettimeofday(&now, 0);
-        return elapsed(now);
-    }
+//    uint64_t elapsed()
+//    {
+//        struct timeval now;
+//        gettimeofday(&now, 0);
+//        return elapsed(now);
+//    }
 
-    bool elapsed_if_wait(const struct timeval& now, uint64_t elapsed)
-    {
-        if (difftimeval(now, this->tv) > elapsed)
-        {
-            this->tv = now;
-            return true;
-        }
-        return false;
-    }
+//    bool elapsed_if_wait(const struct timeval& now, uint64_t elapsed)
+//    {
+//        if (difftimeval(now, this->tv) > elapsed)
+//        {
+//            this->tv = now;
+//            return true;
+//        }
+//        return false;
+//    }
 
-    bool elapsed_if_wait(uint64_t elapsed)
-    {
-        struct timeval now;
-        gettimeofday(&now, 0);
-        return elapsed_if_wait(now ,elapsed);
-    }
+//    bool elapsed_if_wait(uint64_t elapsed)
+//    {
+//        struct timeval now;
+//        gettimeofday(&now, 0);
+//        return elapsed_if_wait(now ,elapsed);
+//    }
 
     TimerCapture& operator += (uint64_t useconds)
     {
