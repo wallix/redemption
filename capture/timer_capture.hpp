@@ -51,52 +51,22 @@ public:
         return *this;
     }
 
-    const timeval& time() const
-    {
-        return this->tv;
-    }
-
-    timeval& impl()
-    { return this->tv; }
-
-    static TimerCapture invalid_timer()
-    {
-        return TimerCapture(0);
-    }
-
-    bool valid() const
-    { return this->sec() != 0; }
-
-//    uint64_t elapsed(const struct timeval& now)
+//    const timeval& time() const
 //    {
-//        uint64_t diff = difftimeval(now, this->timer.tv);
-//        this->timer.tv = now;
-//        return diff;
+//        return this->tv;
 //    }
 
-//    uint64_t elapsed()
+//    timeval& impl()
+//    { return this->tv; }
+
+//    static TimerCapture invalid_timer()
 //    {
-//        struct timeval now;
-//        gettimeofday(&now, 0);
-//        return elapsed(now);
+//        return TimerCapture(0);
 //    }
 
-//    bool elapsed_if_wait(const struct timeval& now, uint64_t elapsed)
-//    {
-//        if (difftimeval(now, this->tv) > elapsed)
-//        {
-//            this->tv = now;
-//            return true;
-//        }
-//        return false;
-//    }
+//    bool valid() const
+//    { return this->sec() != 0; }
 
-//    bool elapsed_if_wait(uint64_t elapsed)
-//    {
-//        struct timeval now;
-//        gettimeofday(&now, 0);
-//        return elapsed_if_wait(now ,elapsed);
-//    }
 
     TimerCapture& operator += (uint64_t useconds)
     {

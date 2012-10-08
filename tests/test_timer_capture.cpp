@@ -26,20 +26,11 @@ Author(s): Christophe Grosjean, Jonathan Poelen
 #include "timer_capture.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestInvalidTimerCapture)
-{
-    TimerCapture timer = TimerCapture::invalid_timer();
-    BOOST_CHECK_EQUAL(timer.valid(), false);
-    timer.reset();
-    BOOST_CHECK_EQUAL(timer.valid(), true);
-}
-
-
 BOOST_AUTO_TEST_CASE(TestTimerCapture)
 {
     timeval now = {1000, 0};
     TimerCapture timer(now);
-    BOOST_CHECK_EQUAL(timer.valid(), true);
+    BOOST_CHECK_EQUAL(timer.sec() != 0, true);
     uint64_t elapsed = difftimeval(now, timer.tv);
     timer.tv = now;
     BOOST_CHECK_EQUAL(elapsed, 0);

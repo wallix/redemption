@@ -138,7 +138,7 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
                     capture.timestamp(chunk_time);
                     chunk_time = 0;
                 }*/
-                capture.breakpoint(capture.timer().time());
+                capture.breakpoint(capture.timer().tv);
                 if (screenshot_wrm)
                     capture.dump_png();
                 timercompute_microsec = 0;
