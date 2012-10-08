@@ -100,7 +100,9 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
 
     if (mtime){
         caprecorder.timestamp(mtime);
-        caprecorder.timer += mtime;
+        mtime += caprecorder.timer.usec();
+        caprecorder.timer.sec() += mtime / 1000000;
+        caprecorder.timer.usec() = mtime % 1000000;
     }
 
     timercompute_microsec = mtime - start;
@@ -115,7 +117,9 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
             --recorder.remaining_order_count();
             if (timercompute_chunk_time_value) {
                 caprecorder.timestamp(timercompute_chunk_time_value);
-                caprecorder.timer += timercompute_chunk_time_value;
+                timercompute_chunk_time_value += caprecorder.timer.usec();
+                caprecorder.timer.sec() += timercompute_chunk_time_value / 1000000;
+                caprecorder.timer.usec() = timercompute_chunk_time_value % 1000000;
             }
 
             if (mtime <= timercompute_microsec){

@@ -45,24 +45,14 @@ public:
     : URT(now)
     {}
 
-//    TimerCapture& operator=(const timeval& other)
+//    TimerCapture& operator += (uint64_t useconds)
 //    {
-//        this->tv = other;
+//        useconds += this->usec();
+//        this->sec() += useconds / 1000000;
+//        this->usec() = useconds % 1000000;
 //        return *this;
 //    }
 
-    TimerCapture& operator += (uint64_t useconds)
-    {
-        useconds += this->usec();
-        this->sec() += useconds / 1000000;
-        this->usec() = useconds % 1000000;
-        return *this;
-    }
-
-//    void reset()
-//    {
-//        gettimeofday(&(this->tv), NULL);
-//    }
 };
 
 #endif
