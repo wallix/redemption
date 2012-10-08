@@ -98,7 +98,8 @@ private:
     }
 
 public:
-    WRMRecorder(const EVP_CIPHER * mode = 0,
+    WRMRecorder(const timeval & now,
+                const EVP_CIPHER * mode = 0,
                 const unsigned char* key = 0,
                 const unsigned char* iv = 0,
                 ENGINE* impl = 0)
@@ -109,8 +110,8 @@ public:
     , cipher_impl(impl)
     , trans(0, this->cipher_mode ? false : true)
     , cipher_trans(&trans)
-    , reader(this->cipher_mode
-             ? (Transport*)&this->cipher_trans : &this->trans,
+    , reader(this->cipher_mode ? (Transport*)&this->cipher_trans : &this->trans,
+             now,
              0, Rect())
     , redrawable(0)
     , idx_file(0)
@@ -124,7 +125,8 @@ public:
         this->start_cipher_if_active();
     }
 
-    WRMRecorder(int fd, const std::string basepath = "",
+    WRMRecorder(const timeval & now,
+                int fd, const std::string basepath = "",
                 const EVP_CIPHER * mode = 0,
                 const unsigned char* key = 0,
                 const unsigned char* iv = 0,
@@ -136,8 +138,8 @@ public:
     , cipher_impl(impl)
     , trans(0, this->cipher_mode ? false : true)
     , cipher_trans(&trans)
-    , reader(this->cipher_mode
-             ? (Transport*)&this->cipher_trans : &this->trans,
+    , reader(this->cipher_mode ? (Transport*)&this->cipher_trans : &this->trans,
+             now,
              0, Rect())
     , redrawable(0)
     , idx_file(0)
@@ -152,7 +154,8 @@ public:
         this->start_cipher_if_active();
     }
 
-    WRMRecorder(const std::string& filename, const std::string basepath = "",
+    WRMRecorder(const timeval & now,
+                const std::string& filename, const std::string basepath = "",
                 const EVP_CIPHER * mode = 0,
                 const unsigned char* key = 0,
                 const unsigned char* iv = 0,
@@ -166,6 +169,7 @@ public:
     , cipher_trans(&trans)
     , reader(this->cipher_mode
              ? (Transport*)&this->cipher_trans : &this->trans,
+             now,
              0, Rect())
     , redrawable(0)
     , idx_file(0)
@@ -590,8 +594,8 @@ public:
         /*uint16_t width = */this->reader.stream.in_uint16_le();
         /*uint16_t height = */this->reader.stream.in_uint16_le();
         /*uint8_t bpp = */this->reader.stream.in_uint8();
-        this->reader.timer_cap.tv.tv_sec = this->reader.stream.in_uint64_le();
-        this->reader.timer_cap.tv.tv_usec = this->reader.stream.in_uint64_le();
+        this->reader.timer_cap.tv_sec = this->reader.stream.in_uint64_le();
+        this->reader.timer_cap.tv_usec = this->reader.stream.in_uint64_le();
         --this->reader.remaining_order_count;
 
         this->reader.selected_next_order();

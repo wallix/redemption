@@ -48,7 +48,7 @@
         }
     }
     InFileTransport in_trans(fd);
-    RDPUnserializer reader(&in_trans, 0, Rect());
+    RDPUnserializer reader(&in_trans, now, 0, Rect());
     reader.selected_next_order();
     BOOST_REQUIRE(reader.chunk_type == WRMChunk::META_FILE);
     reader.interpret_order();
@@ -94,7 +94,10 @@ BOOST_AUTO_TEST_CASE(TestFileWithoutMetaToPng)
 BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
 {
     BOOST_CHECK(true);
-    WRMRecorder reader(FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
+    timeval now;
+    gettimeofday(&now, NULL);
+
+    WRMRecorder reader(now, FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
     BOOST_CHECK(true);
     DataMetaFile& meta = reader.meta();
     BOOST_CHECK_EQUAL(reader.is_meta_chunk(), true);

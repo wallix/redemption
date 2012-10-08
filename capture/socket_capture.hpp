@@ -31,11 +31,11 @@ struct SocketCapture
     GraphicsToFile recorder;
 
 public:
-    SocketCapture(const char * name, int sck, Inifile* ini = 0)
+    SocketCapture(const timeval & now, const char * name, int sck, Inifile* ini = 0)
     : stream(65536)
     , front_trans(name, sck, ini ? ini->globals.debug.mod_rdp : 0)
     , recorder(&this->front_trans, &this->stream, ini,
-               24, 8192, 768, 8192, 3072, 8192, 12288)
+               24, 8192, 768, 8192, 3072, 8192, 12288, now)
     {}
 
     virtual ~SocketCapture()

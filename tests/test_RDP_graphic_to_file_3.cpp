@@ -97,7 +97,9 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
         OutFileTransport trans(fd);
         BStream stream(65536);
-        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
+        timeval now;
+        gettimeofday(&now, NULL);
+        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), screen_rect);
         gtf.timestamp();
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), Rect(10, 10, 100, 100));
@@ -137,7 +139,10 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
             }
         } consumer(screen_rect);
 
-        RDPUnserializer reader(&in_trans, &consumer, screen_rect);
+        timeval now;
+        gettimeofday(&now, NULL);
+
+        RDPUnserializer reader(&in_trans, now, &consumer, screen_rect);
         reader.next();
         reader.next();
         reader.next();

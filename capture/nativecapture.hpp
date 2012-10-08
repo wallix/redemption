@@ -121,7 +121,7 @@ public:
     /**
      * @attention not copy \p key, \p iv and \p impl
      */
-    NativeCapture(int width, int height, const char * path,
+    NativeCapture(const timeval & now, int width, int height, const char * path,
                   const char * meta_filename = 0,
                   CipherMode::enum_t e = CipherMode::NO_MODE,
                   const unsigned char* key = 0,
@@ -139,7 +139,7 @@ public:
     , stream(65536)
     , recorder(this->cipher_mode
                ? (Transport*)&this->cipher_trans : &this->trans,
-               &this->stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288)
+               &this->stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now)
     , nb_file(0)
     {
         if (e && !this->cipher_mode)
@@ -334,8 +334,8 @@ public:
         this->stream.out_uint16_le(this->width);
         this->stream.out_uint16_le(this->height);
         this->stream.out_uint8(this->bpp);
-        this->stream.out_uint64_le(this->recorder.timer.tv.tv_sec);
-        this->stream.out_uint64_le(this->recorder.timer.tv.tv_usec);
+        this->stream.out_uint64_le(this->recorder.timer.tv_sec);
+        this->stream.out_uint64_le(this->recorder.timer.tv_usec);
         this->recorder.send_order();
 
         // write screen

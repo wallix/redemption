@@ -105,10 +105,10 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
 
     if (mtime){
         capture.timestamp(mtime);
-        URT & timer = capture.timer();
-        mtime += timer.tv.tv_usec;
-        timer.tv.tv_sec += mtime / 1000000;
-        timer.tv.tv_usec = mtime % 1000000;
+        timeval & timer = capture.timer();
+        mtime += timer.tv_usec;
+        timer.tv_sec += mtime / 1000000;
+        timer.tv_usec = mtime % 1000000;
     }
 
     if (screenshot_wrm && screenshot_start)
@@ -132,10 +132,12 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
                 //chunk_time += timercompute_chunk_time_value;
                 //std::cout << "chunk_time: " << chunk_time << '\n';
                 capture.timestamp(timercompute_chunk_time_value);
-                URT & timer = capture.timer();
-                timercompute_chunk_time_value += timer.tv.tv_usec;
-                timer.tv.tv_sec += timercompute_chunk_time_value / 1000000;
-                timer.tv.tv_usec = timercompute_chunk_time_value % 1000000;
+                timeval now;
+                gettimeofday(&now, NULL);
+                timeval & timer = capture.timer();
+                timercompute_chunk_time_value += timer.tv_usec;
+                timer.tv_sec += timercompute_chunk_time_value / 1000000;
+                timer.tv_usec = timercompute_chunk_time_value % 1000000;
             }
 
             if (usec >= mtime) {
@@ -144,7 +146,7 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
                     capture.timestamp(chunk_time);
                     chunk_time = 0;
                 }*/
-                capture.breakpoint(capture.timer().tv);
+                capture.breakpoint(capture.timer());
                 if (screenshot_wrm)
                     capture.dump_png();
                 timercompute_microsec = 0;

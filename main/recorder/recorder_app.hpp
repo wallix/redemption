@@ -156,7 +156,10 @@ int recorder_app(RecorderOption& opt, int argc, char** argv, RecorderAction* act
         return 1100;
     }
 
-    WRMRecorder recorder;
+    timeval now;
+    gettimeofday(&now, NULL);
+
+    WRMRecorder recorder(now);
     if (int error = wrm_recorder_init(recorder, opt, itype)){
         return error;
     }

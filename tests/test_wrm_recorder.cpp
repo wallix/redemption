@@ -41,7 +41,10 @@
 BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 {
     BOOST_CHECK(1);
-    WRMRecorder recorder(FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
+    timeval now;
+    gettimeofday(&now, NULL);
+
+    WRMRecorder recorder(now, FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
 
     BOOST_CHECK_EQUAL(800, recorder.meta().width);
     BOOST_CHECK_EQUAL(600, recorder.meta().height);
@@ -165,7 +168,10 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
     char filename[50];
     sprintf(filename, "/tmp/replay_part-%u-%u.wrm", getpid(), nfile);
     BOOST_CHECK(1);
-    WRMRecorder* recorder = new WRMRecorder(filename);
+    timeval now;
+    gettimeofday(&now, NULL);   
+
+    WRMRecorder* recorder = new WRMRecorder(now, filename);
     BOOST_CHECK_EQUAL(800, recorder->meta().width);
     BOOST_CHECK_EQUAL(600, recorder->meta().height);
     /*BOOST_CHECK_EQUAL(24, recorder->meta.bpp);*/
@@ -200,7 +206,10 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
             BOOST_CHECK(1);
             delete recorder;
             BOOST_CHECK(1);
-            recorder = new WRMRecorder(wrm_filename);
+            timeval now;
+            gettimeofday(&now, NULL);
+
+            recorder = new WRMRecorder(now, wrm_filename);
             if (realloc_consumer)
             {
                 delete consumer;

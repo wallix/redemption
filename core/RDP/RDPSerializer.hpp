@@ -33,7 +33,6 @@
 
 #include "RDP/caches/bmpcache.hpp"
 #include "difftimeval.hpp"
-#include "urt.hpp"
 #include "stream.hpp"
 #include "rect.hpp"
 #include "colors.hpp"
@@ -77,11 +76,11 @@ struct RDPUnserializer
     uint16_t remaining_order_count;
     uint16_t order_count;
 
-    URT timer_cap;
+    timeval timer_cap;
 
     DataMetaFile data_meta;
 
-    RDPUnserializer(Transport * trans, RDPGraphicDevice * consumer, const Rect screen_rect)
+    RDPUnserializer(Transport * trans, const timeval & now, RDPGraphicDevice * consumer, const Rect screen_rect)
      : stream(4096), consumer(consumer), trans(trans), screen_rect(screen_rect),
      // Internal state of orders
     common(RDP::PATBLT, Rect(0, 0, 1, 1)),
@@ -100,7 +99,7 @@ struct RDPUnserializer
     chunk_type(0),
     remaining_order_count(0),
     order_count(0),
-    timer_cap(),
+    timer_cap(now),
 
     data_meta()
     {
@@ -246,8 +245,8 @@ struct RDPUnserializer
                 uint64_t micro_sec = this->stream.in_uint64_be();
                 struct timeval now;
                 gettimeofday(&now, 0);
-                uint64_t elapsed = difftimeval(now, this->timer_cap.tv);
-                this->timer_cap.tv = now;
+                uint64_t elapsed = difftimeval(now, this->timer_cap);
+                this->timer_cap = now;
                 
                 if (elapsed <= micro_sec){
                     struct timespec wtime =

@@ -73,8 +73,10 @@ int main(int argc, char** argv)
     if (int error = opt.prepare(itype)){
         return error;
     }
+    timeval now;
+    gettimeofday(&now, NULL);
 
-    WRMRecorder recorder;
+    WRMRecorder recorder(now);
     if (int error = wrm_recorder_init(recorder, opt, itype)){
         return error;
     }

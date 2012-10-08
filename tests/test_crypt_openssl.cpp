@@ -201,8 +201,10 @@ BOOST_AUTO_TEST_CASE(TestCryptWRMFileOpenSSL)
         OutCipherTransport trans(&out_file);
         RaiiOutCipherTransport raii(trans, cipher_mode(), key, iv);
         BStream stream(65536);
+        timeval now;
+        gettimeofday(&now, NULL);
         GraphicsToFile gtof(&trans, &stream, 0, 24,
-                            8192, 768, 8192, 3072, 8192, 12288);
+                            8192, 768, 8192, 3072, 8192, 12288, now);
         BOOST_REQUIRE(true);
         gtof.draw(RDPOpaqueRect(Rect(300,150,100,200), RED), clip);
         BOOST_REQUIRE(true);
@@ -220,8 +222,10 @@ BOOST_AUTO_TEST_CASE(TestCryptWRMFileOpenSSL)
         InFileTransport in_file(fd, false);
         InCipherTransport trans(&in_file);
         RaiiInCipherTransport raii(trans, cipher_mode(), key, iv);
+        timeval now;
+        gettimeofday(&now, NULL);
         StaticCapture pngcap(800,600,"/tmp/decrypt.png", true);
-        RDPUnserializer unserializer(&trans, &pngcap, Rect(0,0,800,600));
+        RDPUnserializer unserializer(&trans, now, &pngcap, Rect(0,0,800,600));
 
         char message[1024];
 
@@ -262,7 +266,9 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
 
     Rect clip(0,0, 800,600);
     {
-        NativeCapture cap(800, 600, "/tmp/encrypt-cap", 0,
+        timeval now;
+        gettimeofday(&now, NULL);
+        NativeCapture cap(now, 800, 600, "/tmp/encrypt-cap", 0,
                           CipherMode::BLOWFISH_CBC, key, iv);
         timeval tm = {0,0};
         cap.send_time_start(tm);
@@ -284,7 +290,9 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
     std::string filename_mwrm = filename_to_pid_filename(
         "/tmp/encrypt-cap.mwrm");
     {
-        WRMRecorder recorder;
+        timeval now;
+        gettimeofday(&now, NULL);
+        WRMRecorder recorder(now);
         recorder.init_cipher(CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC), key, iv);
         recorder.open_meta_followed_wrm(filename_mwrm.c_str());
         /*WRMRecorder recorder(filename_mwrm, "",
@@ -363,11 +371,12 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
 
     BOOST_CHECK(true);
     {
-        WRMRecorder recorder(FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
-        BOOST_CHECK(true);
-        NativeCapture cap(800, 600, "/tmp/wrm-encrypt", 0,
-                          CipherMode::BLOWFISH_CBC, key, iv);
         timeval now;
+        gettimeofday(&now, NULL);
+        WRMRecorder recorder(now, FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
+        BOOST_CHECK(true);
+        NativeCapture cap(now, 800, 600, "/tmp/wrm-encrypt", 0,
+                          CipherMode::BLOWFISH_CBC, key, iv);
         gettimeofday(&now, 0);
         cap.send_time_start(now);
         BOOST_CHECK(true);
@@ -389,7 +398,9 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
     }
     BOOST_CHECK(true);
     {
-        WRMRecorder recorder(make_pid_filename_generator("/tmp/wrm-encrypt.mwrm")().c_str(), "",
+        timeval now;
+        gettimeofday(&now, NULL);
+        WRMRecorder recorder(now, make_pid_filename_generator("/tmp/wrm-encrypt.mwrm")().c_str(), "",
                              CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC), key, iv);
         BOOST_CHECK(true);
         StaticCapture cap(800, 600, "/tmp/wrm-encrypt", true);

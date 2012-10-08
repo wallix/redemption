@@ -58,8 +58,11 @@ class SessionRecorderTest : public Server
         int nodelay = 1;
         if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay)))
         {
-            WRMRecorder recorder(FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
-            SocketCapture consumer("test", sck);
+            timeval now;
+            gettimeofday(&now, NULL);
+            WRMRecorder recorder(now, FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
+
+            SocketCapture consumer(now, "test", sck);
             recorder.consumer(&consumer);
 
             while (recorder.reader.selected_next_order())
@@ -115,7 +118,9 @@ BOOST_AUTO_TEST_CASE(TestSocket)
             if (t.connect())
             {
                 StaticCapture consumer(800, 600, "/tmp/socket_test.png", true);
-                RDPUnserializer unserializer(&t, &consumer, Rect(0,0,800,600));
+                timeval now;
+                gettimeofday(&now, NULL);
+                RDPUnserializer unserializer(&t, now, &consumer, Rect(0,0,800,600));
                 while (unserializer.next())
                     ;
 

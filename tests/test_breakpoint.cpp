@@ -57,7 +57,10 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
         BOOST_CHECK(1);
     }
 
-    WRMRecorder recorder;
+    timeval now;
+    gettimeofday(&now, NULL);
+
+    WRMRecorder recorder(now);;
     BOOST_CHECK(1);
     std::string mwrm_filename = filename_base;
     mwrm_filename += '-';

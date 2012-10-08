@@ -48,10 +48,10 @@ struct URT
 //        this->tv.tv_usec = usec % 1000000; // rest of usec
 //    }
 
-    // Default constructor sets to time of the day
-    URT() {
-        gettimeofday(&(this->tv), NULL);
-    }
+//    // Default constructor sets to time of the day
+//    URT() {
+//        gettimeofday(&(this->tv), NULL);
+//    }
 
 //    URT(const URT& other)
 //    : tv(other.tv)
@@ -75,7 +75,7 @@ struct URT
 //        return *this;
 //    }
 
-    ~URT(){}
+//    ~URT(){}
 
 };
 #endif

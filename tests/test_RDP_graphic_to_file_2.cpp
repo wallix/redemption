@@ -254,8 +254,11 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ReadCapture)
         }
 
     } consumer(screen_rect);
+    
+    timeval now;
+    gettimeofday(&now, NULL);
 
-    RDPUnserializer reader(&in_trans, &consumer, screen_rect);
+    RDPUnserializer reader(&in_trans, now, &consumer, screen_rect);
     size_t i = 0;
     while (reader.next()){i++;}
     consumer.dump_png();

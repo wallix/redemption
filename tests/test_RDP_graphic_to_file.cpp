@@ -98,7 +98,9 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
         BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
         BStream stream(65536);
-        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
+        timeval now;
+        gettimeofday(&now, NULL);
+        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
         RDPOpaqueRect cmd(Rect(0, 0, 800, 600), 0);
         gtf.draw(cmd, screen_rect);
         gtf.flush();
@@ -163,7 +165,9 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk_reading_with_unserializ
         BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
         BStream stream(65536);
-        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
+        timeval now;
+        gettimeofday(&now, NULL);
+        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
         RDPOpaqueRect cmd(Rect(0, 0, 800, 600), 0);
         gtf.draw(cmd, screen_rect);
         gtf.flush();
@@ -194,7 +198,10 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk_reading_with_unserializ
             }
         } consumer(screen_rect);
 
-        RDPUnserializer reader(&in_trans, &consumer, screen_rect);
+        timeval now;
+        gettimeofday(&now, NULL);
+
+        RDPUnserializer reader(&in_trans, now, &consumer, screen_rect);
         reader.next();
         consumer.check_end();
         // check we have read everything
@@ -217,7 +224,9 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
         BStream stream(65536);
-        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
+        timeval now;
+        gettimeofday(&now, NULL);
+        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), screen_rect);
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), Rect(10, 10, 100, 100));
         gtf.flush();
@@ -257,7 +266,10 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         BStream stream(4096);
         InFileTransport in_trans(fd);
 
-        RDPUnserializer reader(&in_trans, &consumer, screen_rect);
+        timeval now;
+        gettimeofday(&now, NULL);
+
+        RDPUnserializer reader(&in_trans, now, &consumer, screen_rect);
 
         size_t i = 0;
         for (i = 0; ; i++){
@@ -286,7 +298,9 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
         BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
         BStream stream(65536);
-        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
+        timeval now;
+        gettimeofday(&now, NULL);
+        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
         BGRPalette palette332;
         init_palette332(palette332);
 
@@ -456,7 +470,10 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
 
         } consumer(screen_rect);
 
-        RDPUnserializer reader(&in_trans, &consumer, screen_rect);
+        timeval now;
+        gettimeofday(&now, NULL);
+
+        RDPUnserializer reader(&in_trans, now, &consumer, screen_rect);
         reader.next();
         reader.next();
         reader.next();
