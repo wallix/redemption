@@ -29,7 +29,7 @@ class TimerCapture
 : public URT
 {
 public:
-    typedef struct timeval time_type;
+//    typedef struct timeval time_type;
 
 private:
     TimerCapture(int)
@@ -44,14 +44,6 @@ public:
     TimerCapture(const timeval& now)
     : URT(now)
     {}
-
-//    TimerCapture& operator += (uint64_t useconds)
-//    {
-//        useconds += this->usec();
-//        this->sec() += useconds / 1000000;
-//        this->usec() = useconds % 1000000;
-//        return *this;
-//    }
 
 };
 
