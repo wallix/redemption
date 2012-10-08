@@ -590,8 +590,8 @@ public:
         /*uint16_t width = */this->reader.stream.in_uint16_le();
         /*uint16_t height = */this->reader.stream.in_uint16_le();
         /*uint8_t bpp = */this->reader.stream.in_uint8();
-        this->reader.timer_cap.sec() = this->reader.stream.in_uint64_le();
-        this->reader.timer_cap.usec() = this->reader.stream.in_uint64_le();
+        this->reader.timer_cap.tv.tv_sec = this->reader.stream.in_uint64_le();
+        this->reader.timer_cap.tv.tv_usec = this->reader.stream.in_uint64_le();
         --this->reader.remaining_order_count;
 
         this->reader.selected_next_order();

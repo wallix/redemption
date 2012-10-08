@@ -334,8 +334,8 @@ public:
         this->stream.out_uint16_le(this->width);
         this->stream.out_uint16_le(this->height);
         this->stream.out_uint8(this->bpp);
-        this->stream.out_uint64_le(this->recorder.timer.sec());
-        this->stream.out_uint64_le(this->recorder.timer.usec());
+        this->stream.out_uint64_le(this->recorder.timer.tv.tv_sec);
+        this->stream.out_uint64_le(this->recorder.timer.tv.tv_usec);
         this->recorder.send_order();
 
         // write screen

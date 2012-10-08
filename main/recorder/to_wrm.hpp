@@ -106,9 +106,9 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
     if (mtime){
         capture.timestamp(mtime);
         URT & timer = capture.timer();
-        mtime += timer.usec();
-        timer.sec() += mtime / 1000000;
-        timer.usec() = mtime % 1000000;
+        mtime += timer.tv.tv_usec;
+        timer.tv.tv_sec += mtime / 1000000;
+        timer.tv.tv_usec = mtime % 1000000;
     }
 
     if (screenshot_wrm && screenshot_start)
@@ -133,9 +133,9 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
                 //std::cout << "chunk_time: " << chunk_time << '\n';
                 capture.timestamp(timercompute_chunk_time_value);
                 URT & timer = capture.timer();
-                timercompute_chunk_time_value += timer.usec();
-                timer.sec() += timercompute_chunk_time_value / 1000000;
-                timer.usec() = timercompute_chunk_time_value % 1000000;
+                timercompute_chunk_time_value += timer.tv.tv_usec;
+                timer.tv.tv_sec += timercompute_chunk_time_value / 1000000;
+                timer.tv.tv_usec = timercompute_chunk_time_value % 1000000;
             }
 
             if (usec >= mtime) {

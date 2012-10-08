@@ -44,8 +44,8 @@ struct URT
     {}
 
     URT(uint64_t usec) {
-        this->sec()  = usec / 1000000; // usec to sec
-        this->usec() = usec % 1000000; // rest of usec
+        this->tv.tv_sec  = usec / 1000000; // usec to sec
+        this->tv.tv_usec = usec % 1000000; // rest of usec
     }
 
     // Default constructor sets to time of the day
@@ -59,8 +59,8 @@ struct URT
 
     URT(sec_type __sec, usec_type __usec)
     {
-        this->sec()  = __sec;
-        this->usec() = __usec;
+        this->tv.tv_sec  = __sec;
+        this->tv.tv_usec = __usec;
     }
 
     URT& operator=(const URT& other)
@@ -77,28 +77,28 @@ struct URT
 
     ~URT(){}
 
-    sec_type& sec()
-    {
-        return tv.tv_sec;
-    }
+//    sec_type& sec()
+//    {
+//        return tv.tv_sec;
+//    }
 
-    const sec_type& sec() const
-    {
-        return tv.tv_sec;
-    }
+//    const sec_type& sec() const
+//    {
+//        return tv.tv_sec;
+//    }
 
-    usec_type& usec()
-    {
-        return tv.tv_usec;
-    }
+//    usec_type& usec()
+//    {
+//        return tv.tv_usec;
+//    }
 
-    const usec_type& usec() const
-    {
-        return tv.tv_usec;
-    }
+//    const usec_type& usec() const
+//    {
+//        return tv.tv_usec;
+//    }
 
     bool operator==(const URT & other) const {
-        return (this->sec() == other.sec()) && (this->usec() == other.usec());
+        return (this->tv.tv_sec == other.tv.tv_sec) && (this->tv.tv_usec == other.tv.tv_usec);
     }
 
     bool operator!=(const URT & other) const {
@@ -106,16 +106,16 @@ struct URT
     }
 
     bool operator>(const URT & other) const {
-        return (this->sec() > other.sec()) ||
-               ((this->sec() == other.sec()) && (this->usec() > other.usec()));
+        return (this->tv.tv_sec > other.tv.tv_sec) ||
+               ((this->tv.tv_sec == other.tv.tv_sec) && (this->tv.tv_usec > other.tv.tv_usec));
     }
     bool operator<=(const URT & other) const {
         return !(*this > other);
     }
 
     bool operator<(const URT & other) const {
-        return (this->sec() <  other.sec()) ||
-               ((this->sec() == other.sec()) && (this->usec() < other.usec()));
+        return (this->tv.tv_sec <  other.tv.tv_sec) ||
+               ((this->tv.tv_sec == other.tv.tv_sec) && (this->tv.tv_usec < other.tv.tv_usec));
     }
     bool operator>=(const URT & other) const {
         return !(*this < other);
