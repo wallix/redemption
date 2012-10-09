@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
                 BOOST_REQUIRE(1);
                 recorder.interpret_order();
                 BOOST_REQUIRE(1);
-                if (50 < ++n/* && recorder.remaining_order_count() == 0*/)
+                if (50 < ++n/* && recorder.reader.remaining_order_count == 0*/)
                 {
                     n = 0;
                     //std::cout << "breakpoint start\n";
@@ -134,7 +134,7 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
         BOOST_CHECK(1);
         if (recorder->reader.chunk_type == WRMChunk::TIMESTAMP){
             is_chunk_time = true;
-            recorder->remaining_order_count() = 0;
+            recorder->reader.remaining_order_count = 0;
             ++n;
         } else if (recorder->reader.chunk_type == WRMChunk::NEXT_FILE_ID) {
             BOOST_CHECK(1);

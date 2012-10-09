@@ -51,7 +51,7 @@ static inline void to_png(WRMRecorder& recorder, const char* outfile,
                 if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
                     timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
                     timercompute_microsec += timercompute_chunk_time_value;
-                    --recorder.remaining_order_count();    
+                    --recorder.reader.remaining_order_count;    
                     break;
                 }
                 recorder.interpret_order();
@@ -76,7 +76,7 @@ static inline void to_png(WRMRecorder& recorder, const char* outfile,
         if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP) {
             timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
             timercompute_microsec += timercompute_chunk_time_value;
-            --recorder.remaining_order_count();
+            --recorder.reader.remaining_order_count;
             uint64_t usec = timercompute_microsec;
             if (usec >= mtime)
             {
@@ -145,7 +145,7 @@ static inline void to_png_2(WRMRecorder& recorder, const char* outfile,
                     if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
                         timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
                         timercompute_microsec += timercompute_chunk_time_value;
-                        --recorder.remaining_order_count();    
+                        --recorder.reader.remaining_order_count;    
                         tmp = timercompute_microsec;
                         break;
                     }
@@ -170,7 +170,7 @@ static inline void to_png_2(WRMRecorder& recorder, const char* outfile,
         if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP) {
             timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
             timercompute_microsec += timercompute_chunk_time_value;
-            --recorder.remaining_order_count();
+            --recorder.reader.remaining_order_count;
             mtime += timercompute_microsec;
             while (mtime >= coeff_sec_to_usec * it->point.time)
             {
