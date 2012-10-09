@@ -475,16 +475,6 @@ public:
         return i;
     }
 
-//    uint16_t& chunk_type()
-//    {
-//        return this->reader.chunk_type;
-//    }
-
-//    uint16_t chunk_type() const
-//    {
-//        return this->reader.chunk_type;
-//    }
-
     uint16_t& remaining_order_count()
     {
         return this->reader.remaining_order_count;
@@ -530,152 +520,152 @@ public:
         return time;
     }
 
-    void interpret_breakpoint()
-    {
-        /*uint16_t width = */this->reader.stream.in_uint16_le();
-        /*uint16_t height = */this->reader.stream.in_uint16_le();
-        /*uint8_t bpp = */this->reader.stream.in_uint8();
-        this->reader.timer_cap.tv_sec = this->reader.stream.in_uint64_le();
-        this->reader.timer_cap.tv_usec = this->reader.stream.in_uint64_le();
-        --this->reader.remaining_order_count;
+//    void interpret_breakpoint()
+//    {
+//        /*uint16_t width = */this->reader.stream.in_uint16_le();
+//        /*uint16_t height = */this->reader.stream.in_uint16_le();
+//        /*uint8_t bpp = */this->reader.stream.in_uint8();
+//        this->reader.timer_cap.tv_sec = this->reader.stream.in_uint64_le();
+//        this->reader.timer_cap.tv_usec = this->reader.stream.in_uint64_le();
+//        --this->reader.remaining_order_count;
 
-        this->reader.selected_next_order();
+//        this->reader.selected_next_order();
 
-        this->reader.common.order = this->reader.stream.in_uint8();
-        this->recv_rect(this->reader.common.clip);
-        //this->reader.common.str(texttest, 10000);
-        //std::cout << "interpret_order: " << texttest << '\n';
+//        this->reader.common.order = this->reader.stream.in_uint8();
+//        this->recv_rect(this->reader.common.clip);
+//        //this->reader.common.str(texttest, 10000);
+//        //std::cout << "interpret_order: " << texttest << '\n';
 
-        this->reader.opaquerect.color = this->reader.stream.in_uint32_le();
-        this->recv_rect(this->reader.opaquerect.rect);
-        //std::cout << "interpret_order: ";
-        //this->reader.opaquerect.print(Rect(0,0,0,0));
+//        this->reader.opaquerect.color = this->reader.stream.in_uint32_le();
+//        this->recv_rect(this->reader.opaquerect.rect);
+//        //std::cout << "interpret_order: ";
+//        //this->reader.opaquerect.print(Rect(0,0,0,0));
 
-        this->reader.destblt.rop = this->reader.stream.in_uint8();
-        this->recv_rect(this->reader.destblt.rect);
-        //std::cout << "interpret_order: ";
-        //this->reader.destblt.print(Rect(0,0,0,0));
+//        this->reader.destblt.rop = this->reader.stream.in_uint8();
+//        this->recv_rect(this->reader.destblt.rect);
+//        //std::cout << "interpret_order: ";
+//        //this->reader.destblt.print(Rect(0,0,0,0));
 
-        this->reader.patblt.rop = this->reader.stream.in_uint8();
-        this->reader.patblt.back_color = this->reader.stream.in_uint32_le();
-        this->reader.patblt.fore_color = this->reader.stream.in_uint32_le();
-        this->recv_brush(this->reader.patblt.brush);
-        this->recv_rect(this->reader.patblt.rect);
-        //std::cout << "interpret_order: ";
-        //this->reader.patblt.print(Rect(0,0,0,0));
+//        this->reader.patblt.rop = this->reader.stream.in_uint8();
+//        this->reader.patblt.back_color = this->reader.stream.in_uint32_le();
+//        this->reader.patblt.fore_color = this->reader.stream.in_uint32_le();
+//        this->recv_brush(this->reader.patblt.brush);
+//        this->recv_rect(this->reader.patblt.rect);
+//        //std::cout << "interpret_order: ";
+//        //this->reader.patblt.print(Rect(0,0,0,0));
 
-        this->reader.scrblt.rop = this->reader.stream.in_uint8();
-        this->reader.scrblt.srcx = this->reader.stream.in_uint16_le();
-        this->reader.scrblt.srcy = this->reader.stream.in_uint16_le();
-        this->recv_rect(this->reader.scrblt.rect);
-        //std::cout << "interpret_order: ";
-        //this->reader.scrblt.print(Rect(0,0,0,0));
+//        this->reader.scrblt.rop = this->reader.stream.in_uint8();
+//        this->reader.scrblt.srcx = this->reader.stream.in_uint16_le();
+//        this->reader.scrblt.srcy = this->reader.stream.in_uint16_le();
+//        this->recv_rect(this->reader.scrblt.rect);
+//        //std::cout << "interpret_order: ";
+//        //this->reader.scrblt.print(Rect(0,0,0,0));
 
-        this->reader.memblt.rop = this->reader.stream.in_uint8();
-        this->reader.memblt.srcx = this->reader.stream.in_uint16_le();
-        this->reader.memblt.srcy = this->reader.stream.in_uint16_le();
-        this->reader.memblt.cache_id = this->reader.stream.in_uint16_le();
-        this->reader.memblt.cache_idx = this->reader.stream.in_uint16_le();
-        this->recv_rect(this->reader.memblt.rect);
-        //std::cout << "interpret_order: ";
-        //this->reader.memblt.print(Rect(0,0,0,0));
+//        this->reader.memblt.rop = this->reader.stream.in_uint8();
+//        this->reader.memblt.srcx = this->reader.stream.in_uint16_le();
+//        this->reader.memblt.srcy = this->reader.stream.in_uint16_le();
+//        this->reader.memblt.cache_id = this->reader.stream.in_uint16_le();
+//        this->reader.memblt.cache_idx = this->reader.stream.in_uint16_le();
+//        this->recv_rect(this->reader.memblt.rect);
+//        //std::cout << "interpret_order: ";
+//        //this->reader.memblt.print(Rect(0,0,0,0));
 
-        this->reader.lineto.rop2 = this->reader.stream.in_uint8();
-        this->reader.lineto.startx = this->reader.stream.in_uint16_le();
-        this->reader.lineto.starty = this->reader.stream.in_uint16_le();
-        this->reader.lineto.endx = this->reader.stream.in_uint16_le();
-        this->reader.lineto.endy = this->reader.stream.in_uint16_le();
-        this->reader.lineto.back_mode = this->reader.stream.in_uint8();
-        this->reader.lineto.back_color = this->reader.stream.in_uint32_le();
-        this->recv_pen(this->reader.lineto.pen);
-        //std::cout << "interpret_order: ";
-        //this->reader.lineto.print(Rect(0,0,0,0));
+//        this->reader.lineto.rop2 = this->reader.stream.in_uint8();
+//        this->reader.lineto.startx = this->reader.stream.in_uint16_le();
+//        this->reader.lineto.starty = this->reader.stream.in_uint16_le();
+//        this->reader.lineto.endx = this->reader.stream.in_uint16_le();
+//        this->reader.lineto.endy = this->reader.stream.in_uint16_le();
+//        this->reader.lineto.back_mode = this->reader.stream.in_uint8();
+//        this->reader.lineto.back_color = this->reader.stream.in_uint32_le();
+//        this->recv_pen(this->reader.lineto.pen);
+//        //std::cout << "interpret_order: ";
+//        //this->reader.lineto.print(Rect(0,0,0,0));
 
-        this->reader.glyphindex.back_color = this->reader.stream.in_uint32_le();
-        this->reader.glyphindex.fore_color = this->reader.stream.in_uint32_le();
-        this->reader.glyphindex.f_op_redundant = this->reader.stream.in_uint16_le();
-        this->reader.glyphindex.fl_accel = this->reader.stream.in_uint16_le();
-        this->reader.glyphindex.glyph_x = this->reader.stream.in_uint16_le();
-        this->reader.glyphindex.glyph_y = this->reader.stream.in_uint16_le();
-        this->reader.glyphindex.ui_charinc = this->reader.stream.in_uint16_le();
-        this->reader.glyphindex.cache_id = this->reader.stream.in_uint8();
-        this->reader.glyphindex.data_len = this->reader.stream.in_uint8();
-        this->recv_rect(this->reader.glyphindex.bk);
-        this->recv_rect(this->reader.glyphindex.op);
-        this->recv_brush(this->reader.glyphindex.brush);
-        this->reader.glyphindex.data = (uint8_t*)malloc(this->reader.glyphindex.data_len);
-        this->reader.stream.in_copy_bytes(this->reader.glyphindex.data, this->reader.glyphindex.data_len);
-        //std::cout << "interpret_order: ";
-        //this->reader.glyphindex.print(Rect(0,0,0,0));
+//        this->reader.glyphindex.back_color = this->reader.stream.in_uint32_le();
+//        this->reader.glyphindex.fore_color = this->reader.stream.in_uint32_le();
+//        this->reader.glyphindex.f_op_redundant = this->reader.stream.in_uint16_le();
+//        this->reader.glyphindex.fl_accel = this->reader.stream.in_uint16_le();
+//        this->reader.glyphindex.glyph_x = this->reader.stream.in_uint16_le();
+//        this->reader.glyphindex.glyph_y = this->reader.stream.in_uint16_le();
+//        this->reader.glyphindex.ui_charinc = this->reader.stream.in_uint16_le();
+//        this->reader.glyphindex.cache_id = this->reader.stream.in_uint8();
+//        this->reader.glyphindex.data_len = this->reader.stream.in_uint8();
+//        this->recv_rect(this->reader.glyphindex.bk);
+//        this->recv_rect(this->reader.glyphindex.op);
+//        this->recv_brush(this->reader.glyphindex.brush);
+//        this->reader.glyphindex.data = (uint8_t*)malloc(this->reader.glyphindex.data_len);
+//        this->reader.stream.in_copy_bytes(this->reader.glyphindex.data, this->reader.glyphindex.data_len);
+//        //std::cout << "interpret_order: ";
+//        //this->reader.glyphindex.print(Rect(0,0,0,0));
 
-        this->reader.order_count = this->reader.stream.in_uint16_le();
-        //std::cout << "\ninterpret_order: "  << this->reader.order_count << '\n';
+//        this->reader.order_count = this->reader.stream.in_uint16_le();
+//        //std::cout << "\ninterpret_order: "  << this->reader.order_count << '\n';
 
-        this->reader.bmp_cache.small_entries = this->reader.stream.in_uint16_le();
-        this->reader.bmp_cache.small_size = this->reader.stream.in_uint16_le();
-        this->reader.bmp_cache.medium_entries = this->reader.stream.in_uint16_le();
-        this->reader.bmp_cache.medium_size = this->reader.stream.in_uint16_le();
-        this->reader.bmp_cache.big_entries = this->reader.stream.in_uint16_le();
-        this->reader.bmp_cache.big_size = this->reader.stream.in_uint16_le();
-        uint32_t stamp = this->reader.stream.in_uint32_le();
+//        this->reader.bmp_cache.small_entries = this->reader.stream.in_uint16_le();
+//        this->reader.bmp_cache.small_size = this->reader.stream.in_uint16_le();
+//        this->reader.bmp_cache.medium_entries = this->reader.stream.in_uint16_le();
+//        this->reader.bmp_cache.medium_size = this->reader.stream.in_uint16_le();
+//        this->reader.bmp_cache.big_entries = this->reader.stream.in_uint16_le();
+//        this->reader.bmp_cache.big_size = this->reader.stream.in_uint16_le();
+//        uint32_t stamp = this->reader.stream.in_uint32_le();
 
-        this->reader.bmp_cache.reset();
-        this->reader.bmp_cache.stamp = stamp;
-        this->reader.remaining_order_count = 0;
+//        this->reader.bmp_cache.reset();
+//        this->reader.bmp_cache.stamp = stamp;
+//        this->reader.remaining_order_count = 0;
 
-        z_stream zstrm;
-        zstrm.zalloc = 0;
-        zstrm.zfree = 0;
-        zstrm.opaque = 0;
-        int ret;
-        const int Bpp = 3;
-        uint8_t * buffer = NULL;
-        while (1){
-            BStream stream(14);
-            this->reader.trans->recv(&stream.end, 14);
-            uint16_t idx = stream.in_uint16_le();
-            uint32_t stamp = stream.in_uint32_le();
-            uint16_t cx = stream.in_uint16_le();
-            uint16_t cy = stream.in_uint16_le();
-            uint32_t buffer_size = stream.in_uint32_le();
-            if (idx == 8192 * 3 + 1){
-                break;
-            }
+//        z_stream zstrm;
+//        zstrm.zalloc = 0;
+//        zstrm.zfree = 0;
+//        zstrm.opaque = 0;
+//        int ret;
+//        const int Bpp = 3;
+//        uint8_t * buffer = NULL;
+//        while (1){
+//            BStream stream(14);
+//            this->reader.trans->recv(&stream.end, 14);
+//            uint16_t idx = stream.in_uint16_le();
+//            uint32_t stamp = stream.in_uint32_le();
+//            uint16_t cx = stream.in_uint16_le();
+//            uint16_t cy = stream.in_uint16_le();
+//            uint32_t buffer_size = stream.in_uint32_le();
+//            if (idx == 8192 * 3 + 1){
+//                break;
+//            }
 
-            BStream image_stream(buffer_size);
-            this->reader.trans->recv(&image_stream.end, buffer_size);
+//            BStream image_stream(buffer_size);
+//            this->reader.trans->recv(&image_stream.end, buffer_size);
 
-            zstrm.avail_in = buffer_size;
-            zstrm.next_in = image_stream.data;
+//            zstrm.avail_in = buffer_size;
+//            zstrm.next_in = image_stream.data;
 
-            buffer = (uint8_t*)malloc(cx * cy * Bpp);
-            zstrm.avail_out = cx * cy * Bpp;
-            zstrm.next_out = buffer;
+//            buffer = (uint8_t*)malloc(cx * cy * Bpp);
+//            zstrm.avail_out = cx * cy * Bpp;
+//            zstrm.next_out = buffer;
 
-            if ((ret = inflateInit(&zstrm)) != Z_OK)
-            {
-                LOG(LOG_ERR, "zlib: inflateInit: %d", ret);
-                throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
-            }
+//            if ((ret = inflateInit(&zstrm)) != Z_OK)
+//            {
+//                LOG(LOG_ERR, "zlib: inflateInit: %d", ret);
+//                throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
+//            }
 
-            ret = inflate(&zstrm, Z_FINISH);
-            inflateEnd(&zstrm);
+//            ret = inflate(&zstrm, Z_FINISH);
+//            inflateEnd(&zstrm);
 
-            if (ret != Z_STREAM_END)
-            {
-                LOG(LOG_ERR, "zlib: inflate: %d", ret);
-                throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
-            }
+//            if (ret != Z_STREAM_END)
+//            {
+//                LOG(LOG_ERR, "zlib: inflate: %d", ret);
+//                throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
+//            }
 
-            uint cid = idx / 8192;
-            uint cidx = idx % 8192;
-            this->reader.bmp_cache.stamps[cid][cidx] = stamp;
-            if (this->reader.bmp_cache.cache[cid][cidx] != 0){
-                LOG(LOG_ERR, "bmp_cache already used at %u:%u", cid, cidx);
-            }
-            this->reader.bmp_cache.cache[cid][cidx] = new Bitmap(24, 0, cx, cy, buffer, cx*cy);
-        }
-    }
+//            uint cid = idx / 8192;
+//            uint cidx = idx % 8192;
+//            this->reader.bmp_cache.stamps[cid][cidx] = stamp;
+//            if (this->reader.bmp_cache.cache[cid][cidx] != 0){
+//                LOG(LOG_ERR, "bmp_cache already used at %u:%u", cid, cidx);
+//            }
+//            this->reader.bmp_cache.cache[cid][cidx] = new Bitmap(24, 0, cx, cy, buffer, cx*cy);
+//        }
+//    }
 
     void interpret_order()
     {
@@ -708,10 +698,152 @@ public:
             break;
             case WRMChunk::BREAKPOINT:
             {
-                if (!this->interpret_breakpoint_is_passed || this->force_interpret_breakpoint)
-                {
+                if (!this->interpret_breakpoint_is_passed || this->force_interpret_breakpoint){
+                    /*uint16_t width = */this->reader.stream.in_uint16_le();
+                    /*uint16_t height = */this->reader.stream.in_uint16_le();
+                    /*uint8_t bpp = */this->reader.stream.in_uint8();
+                    this->reader.timer_cap.tv_sec = this->reader.stream.in_uint64_le();
+                    this->reader.timer_cap.tv_usec = this->reader.stream.in_uint64_le();
+                    --this->reader.remaining_order_count;
+
+                    this->reader.selected_next_order();
+
+                    this->reader.common.order = this->reader.stream.in_uint8();
+                    this->recv_rect(this->reader.common.clip);
+                    //this->reader.common.str(texttest, 10000);
+                    //std::cout << "interpret_order: " << texttest << '\n';
+
+                    this->reader.opaquerect.color = this->reader.stream.in_uint32_le();
+                    this->recv_rect(this->reader.opaquerect.rect);
+                    //std::cout << "interpret_order: ";
+                    //this->reader.opaquerect.print(Rect(0,0,0,0));
+
+                    this->reader.destblt.rop = this->reader.stream.in_uint8();
+                    this->recv_rect(this->reader.destblt.rect);
+                    //std::cout << "interpret_order: ";
+                    //this->reader.destblt.print(Rect(0,0,0,0));
+
+                    this->reader.patblt.rop = this->reader.stream.in_uint8();
+                    this->reader.patblt.back_color = this->reader.stream.in_uint32_le();
+                    this->reader.patblt.fore_color = this->reader.stream.in_uint32_le();
+                    this->recv_brush(this->reader.patblt.brush);
+                    this->recv_rect(this->reader.patblt.rect);
+                    //std::cout << "interpret_order: ";
+                    //this->reader.patblt.print(Rect(0,0,0,0));
+
+                    this->reader.scrblt.rop = this->reader.stream.in_uint8();
+                    this->reader.scrblt.srcx = this->reader.stream.in_uint16_le();
+                    this->reader.scrblt.srcy = this->reader.stream.in_uint16_le();
+                    this->recv_rect(this->reader.scrblt.rect);
+                    //std::cout << "interpret_order: ";
+                    //this->reader.scrblt.print(Rect(0,0,0,0));
+
+                    this->reader.memblt.rop = this->reader.stream.in_uint8();
+                    this->reader.memblt.srcx = this->reader.stream.in_uint16_le();
+                    this->reader.memblt.srcy = this->reader.stream.in_uint16_le();
+                    this->reader.memblt.cache_id = this->reader.stream.in_uint16_le();
+                    this->reader.memblt.cache_idx = this->reader.stream.in_uint16_le();
+                    this->recv_rect(this->reader.memblt.rect);
+                    //std::cout << "interpret_order: ";
+                    //this->reader.memblt.print(Rect(0,0,0,0));
+
+                    this->reader.lineto.rop2 = this->reader.stream.in_uint8();
+                    this->reader.lineto.startx = this->reader.stream.in_uint16_le();
+                    this->reader.lineto.starty = this->reader.stream.in_uint16_le();
+                    this->reader.lineto.endx = this->reader.stream.in_uint16_le();
+                    this->reader.lineto.endy = this->reader.stream.in_uint16_le();
+                    this->reader.lineto.back_mode = this->reader.stream.in_uint8();
+                    this->reader.lineto.back_color = this->reader.stream.in_uint32_le();
+                    this->recv_pen(this->reader.lineto.pen);
+                    //std::cout << "interpret_order: ";
+                    //this->reader.lineto.print(Rect(0,0,0,0));
+
+                    this->reader.glyphindex.back_color = this->reader.stream.in_uint32_le();
+                    this->reader.glyphindex.fore_color = this->reader.stream.in_uint32_le();
+                    this->reader.glyphindex.f_op_redundant = this->reader.stream.in_uint16_le();
+                    this->reader.glyphindex.fl_accel = this->reader.stream.in_uint16_le();
+                    this->reader.glyphindex.glyph_x = this->reader.stream.in_uint16_le();
+                    this->reader.glyphindex.glyph_y = this->reader.stream.in_uint16_le();
+                    this->reader.glyphindex.ui_charinc = this->reader.stream.in_uint16_le();
+                    this->reader.glyphindex.cache_id = this->reader.stream.in_uint8();
+                    this->reader.glyphindex.data_len = this->reader.stream.in_uint8();
+                    this->recv_rect(this->reader.glyphindex.bk);
+                    this->recv_rect(this->reader.glyphindex.op);
+                    this->recv_brush(this->reader.glyphindex.brush);
+                    this->reader.glyphindex.data = (uint8_t*)malloc(this->reader.glyphindex.data_len);
+                    this->reader.stream.in_copy_bytes(this->reader.glyphindex.data, this->reader.glyphindex.data_len);
+                    //std::cout << "interpret_order: ";
+                    //this->reader.glyphindex.print(Rect(0,0,0,0));
+
+                    this->reader.order_count = this->reader.stream.in_uint16_le();
+                    //std::cout << "\ninterpret_order: "  << this->reader.order_count << '\n';
+
+                    this->reader.bmp_cache.small_entries = this->reader.stream.in_uint16_le();
+                    this->reader.bmp_cache.small_size = this->reader.stream.in_uint16_le();
+                    this->reader.bmp_cache.medium_entries = this->reader.stream.in_uint16_le();
+                    this->reader.bmp_cache.medium_size = this->reader.stream.in_uint16_le();
+                    this->reader.bmp_cache.big_entries = this->reader.stream.in_uint16_le();
+                    this->reader.bmp_cache.big_size = this->reader.stream.in_uint16_le();
+                    uint32_t stamp = this->reader.stream.in_uint32_le();
+
+                    this->reader.bmp_cache.reset();
+                    this->reader.bmp_cache.stamp = stamp;
+                    this->reader.remaining_order_count = 0;
+
+                    z_stream zstrm;
+                    zstrm.zalloc = 0;
+                    zstrm.zfree = 0;
+                    zstrm.opaque = 0;
+                    int ret;
+                    const int Bpp = 3;
+                    uint8_t * buffer = NULL;
+                    while (1){
+                        BStream stream(14);
+                        this->reader.trans->recv(&stream.end, 14);
+                        uint16_t idx = stream.in_uint16_le();
+                        uint32_t stamp = stream.in_uint32_le();
+                        uint16_t cx = stream.in_uint16_le();
+                        uint16_t cy = stream.in_uint16_le();
+                        uint32_t buffer_size = stream.in_uint32_le();
+                        if (idx == 8192 * 3 + 1){
+                            break;
+                        }
+
+                        BStream image_stream(buffer_size);
+                        this->reader.trans->recv(&image_stream.end, buffer_size);
+
+                        zstrm.avail_in = buffer_size;
+                        zstrm.next_in = image_stream.data;
+
+                        buffer = (uint8_t*)malloc(cx * cy * Bpp);
+                        zstrm.avail_out = cx * cy * Bpp;
+                        zstrm.next_out = buffer;
+
+                        if ((ret = inflateInit(&zstrm)) != Z_OK)
+                        {
+                            LOG(LOG_ERR, "zlib: inflateInit: %d", ret);
+                            throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
+                        }
+
+                        ret = inflate(&zstrm, Z_FINISH);
+                        inflateEnd(&zstrm);
+
+                        if (ret != Z_STREAM_END)
+                        {
+                            LOG(LOG_ERR, "zlib: inflate: %d", ret);
+                            throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
+                        }
+
+                        uint cid = idx / 8192;
+                        uint cidx = idx % 8192;
+                        this->reader.bmp_cache.stamps[cid][cidx] = stamp;
+                        if (this->reader.bmp_cache.cache[cid][cidx] != 0){
+                            LOG(LOG_ERR, "bmp_cache already used at %u:%u", cid, cidx);
+                        }
+                        this->reader.bmp_cache.cache[cid][cidx] = new Bitmap(24, 0, cx, cy, buffer, cx*cy);
+                    }
                     this->interpret_breakpoint_is_passed = true;
-                    this->interpret_breakpoint();
+
                 }
                 else {
                     this->reader.stream.p = this->reader.stream.end;
