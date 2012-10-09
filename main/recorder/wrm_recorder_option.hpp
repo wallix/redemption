@@ -819,7 +819,7 @@ private:
 inline static int _wrm_recorder_init_meta_not_found(WRMRecorder& recorder,
                                                     const char * wrm_filename)
 {
-    std::cerr << recorder.meta() << '\n'
+    std::cerr << recorder.reader.data_meta << '\n'
     << "Chunk META not found in " << wrm_filename
     << "\n. Chunk is " << recorder.reader.chunk_type << std::endl;
     return 2004;
@@ -837,7 +837,7 @@ inline static void _wrm_recorder_init_set_good_idx(WRMRecorder& recorder,
 {
     if (opt.times_in_meta_are_false)
         return ;
-    const std::vector<DataFile>& files = recorder.meta().files;
+    const std::vector<DataFile>& files = recorder.reader.data_meta.files;
     if (!files[0].start_sec)
         return ;
     const timeval tm = {files[0].start_sec, files[0].start_usec};
@@ -869,13 +869,13 @@ inline static bool _wrm_recorder_init_init_crypt(WRMRecorder& recorder,
         {
             opt.in_crypt_iv.size = sizeof(opt.in_crypt_iv.data);
             memcpy(opt.in_crypt_iv.data,
-                   recorder.meta().crypt_iv,
+                   recorder.reader.data_meta.crypt_iv,
                    sizeof(opt.in_crypt_iv.data));
         }
         
         LOG(LOG_INFO, "init_cipher");
         recorder.cipher_mode = (opt.in_crypt_mode ? opt.in_crypt_mode 
-                            : CipherMode::to_evp_cipher((CipherMode::enum_t)recorder.meta().crypt_mode));
+                            : CipherMode::to_evp_cipher((CipherMode::enum_t)recorder.reader.data_meta.crypt_mode));
         if (!recorder.cipher_mode){
             return false;
         }
@@ -931,17 +931,17 @@ static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& op
                     std::cerr << "invalid meta chunck in " << opt.in_filename << std::endl;
                     return 2003;
                 }
-                if (!recorder.meta().files.empty())
+                if (!recorder.reader.data_meta.files.empty())
                 {
-                    if (opt.idx_start >= recorder.meta().files.size())
+                    if (opt.idx_start >= recorder.reader.data_meta.files.size())
                         return _wrm_recorder_init_idx_not_found(recorder, opt);
                     _wrm_recorder_init_set_good_idx(recorder, opt);
                 }
-                else  if (opt.idx_start >= recorder.meta().files.size())
+                else  if (opt.idx_start >= recorder.reader.data_meta.files.size())
                     return _wrm_recorder_init_idx_not_found(recorder, opt);
                 if (opt.idx_start != recorder.idx_file)
                 {
-                    recorder.next_file(recorder.meta().files[recorder.idx_file].wrm_filename.c_str());
+                    recorder.next_file(recorder.reader.data_meta.files[recorder.idx_file].wrm_filename.c_str());
                 }
             }
             break;
@@ -952,11 +952,11 @@ static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& op
                     std::cerr << "open " << opt.in_filename << ' ' << strerror(errno) << std::endl;
                     return 2005;
                 }
-                if (opt.idx_start >= recorder.meta().files.size())
+                if (opt.idx_start >= recorder.reader.data_meta.files.size())
                     return _wrm_recorder_init_idx_not_found(recorder, opt);
                 _wrm_recorder_init_set_good_idx(recorder, opt);
                 const char * wrm_filename = recorder.get_cpath(
-                    recorder.meta()
+                    recorder.reader.data_meta
                     .files[opt.idx_start]
                     .wrm_filename.c_str()
                 );

@@ -38,8 +38,8 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
     gettimeofday(&now, NULL);
 
     NativeCapture capture(now,
-                          recorder.meta().width,
-                          recorder.meta().height,
+                          recorder.reader.data_meta.width,
+                          recorder.reader.data_meta.height,
                           outfile, metaname,
                           mode, key, iv
                          );

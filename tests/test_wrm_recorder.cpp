@@ -46,15 +46,15 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 
     WRMRecorder recorder(now, FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
 
-    BOOST_CHECK_EQUAL(800, recorder.meta().width);
-    BOOST_CHECK_EQUAL(600, recorder.meta().height);
+    BOOST_CHECK_EQUAL(800, recorder.reader.data_meta.width);
+    BOOST_CHECK_EQUAL(600, recorder.reader.data_meta.height);
     /*BOOST_CHECK_EQUAL(24, recorder.meta.bpp);*/
 
     uint breakpoint = 0;
     {
         struct timeval now;
         gettimeofday(&now, NULL);
-        Capture consumer(now, recorder.meta().width, recorder.meta().height,
+        Capture consumer(now, recorder.reader.data_meta.width, recorder.reader.data_meta.height,
                         "/tmp/replay_part", 0, 0, false);
 
         recorder.reader.consumer = &consumer;
@@ -109,15 +109,15 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
     gettimeofday(&now, NULL);   
 
     WRMRecorder* recorder = new WRMRecorder(now, filename);
-    BOOST_CHECK_EQUAL(800, recorder->meta().width);
-    BOOST_CHECK_EQUAL(600, recorder->meta().height);
+    BOOST_CHECK_EQUAL(800, recorder->reader.data_meta.width);
+    BOOST_CHECK_EQUAL(600, recorder->reader.data_meta.height);
     /*BOOST_CHECK_EQUAL(24, recorder->meta.bpp);*/
 
     char filename_consumer[50];
     int nframe = 0;
     sprintf(filename_consumer, "/tmp/test_wrm_recorder_to_png%u-%d", numtest, nframe);
-    StaticCapture *consumer = new StaticCapture(recorder->meta().width,
-                                                recorder->meta().height,
+    StaticCapture *consumer = new StaticCapture(recorder->reader.data_meta.width,
+                                                recorder->reader.data_meta.height,
                                                 filename_consumer,
                                                 true);
     BOOST_CHECK(1);
@@ -139,7 +139,7 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
         } else if (recorder->reader.chunk_type == WRMChunk::NEXT_FILE_ID) {
             BOOST_CHECK(1);
             std::size_t n = recorder->reader.stream.in_uint32_le();
-            std::string wrm_filename = recorder->meta().files[n].wrm_filename;
+            std::string wrm_filename = recorder->reader.data_meta.files[n].wrm_filename;
             BOOST_CHECK(1);
             delete recorder;
             BOOST_CHECK(1);
@@ -151,8 +151,8 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
             {
                 delete consumer;
                 sprintf(filename_consumer, "/tmp/test_wrm_recorder_to_png%u-%d", numtest, ++nframe);
-                consumer = new StaticCapture(recorder->meta().width,
-                                             recorder->meta().height,
+                consumer = new StaticCapture(recorder->reader.data_meta.width,
+                                             recorder->reader.data_meta.height,
                                              filename_consumer,
                                              true);
             }

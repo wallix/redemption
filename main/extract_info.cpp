@@ -82,7 +82,7 @@ int main(int argc, char** argv)
     }
 
     {
-        const DataMetaFile& meta = recorder.meta();
+        const DataMetaFile& meta = recorder.reader.data_meta;
         std::cout << "meta v" << meta.version
         << "\nwidth: " << meta.width
         << "\nheight: " << meta.height
@@ -210,10 +210,10 @@ int main(int argc, char** argv)
                 next_file_id_info.weight += weight;
                 uint16_t tmp = remaining_order_count;
                 recorder.interpret_order();
-                DataFile& info = recorder.meta().files[recorder.idx_file];
+                DataFile& info = recorder.reader.data_meta.files[recorder.idx_file];
                 std::cout << "NEXT_FILE_ID: number: " << tmp
                 << ", size: " << weight << " B, idx: "
-                << recorder.idx_file << '/' << recorder.meta().files.size()
+                << recorder.idx_file << '/' << recorder.reader.data_meta.files.size()
                 << ", open: wrm: " << info.wrm_filename
                 << ", png: " << info.png_filename
                 << ", start_sec: " << info.start_sec

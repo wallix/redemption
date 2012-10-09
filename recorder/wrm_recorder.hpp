@@ -170,14 +170,14 @@ public:
             if (!this->reader.load_data(filename.c_str())){
                 throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
             }
-            if (this->meta().files.empty()){
+            if (this->reader.data_meta.files.empty()){
                 throw Error(ERR_RECORDER_META_REFERENCE_WRM);
             }
-            if (this->meta().crypt_mode && !this->cipher_mode){
+            if (this->reader.data_meta.crypt_mode && !this->cipher_mode){
                 throw Error(ERR_RECORDER_FILE_CRYPTED);
             }
 
-            const char * filename = this->get_cpath(this->meta().files[0].wrm_filename.c_str());
+            const char * filename = this->get_cpath(this->reader.data_meta.files[0].wrm_filename.c_str());
 
             LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
             int fd = ::open(filename, O_RDONLY);
@@ -196,7 +196,7 @@ public:
         else {
             if (!this->open_wrm_followed_meta(filename.c_str()))
                 throw Error(ERR_RECORDER_META_REFERENCE_WRM, errno);
-            if (this->meta().crypt_mode && !this->cipher_mode)
+            if (this->reader.data_meta.crypt_mode && !this->cipher_mode)
                 throw Error(ERR_RECORDER_FILE_CRYPTED);
         }
     }
@@ -204,11 +204,11 @@ public:
     void load_png_context(Drawable& drawable)
     {
         if (this->idx_file > 1 
-        && this->meta().files.size() >= this->idx_file
-        && !this->meta().files[this->idx_file - 1].png_filename.empty())
+        && this->reader.data_meta.files.size() >= this->idx_file
+        && !this->reader.data_meta.files[this->idx_file - 1].png_filename.empty())
         {
             this->redrawable = &drawable;
-            this->load_context(this->meta().files[this->idx_file - 1].png_filename.c_str());
+            this->load_context(this->reader.data_meta.files[this->idx_file - 1].png_filename.c_str());
             this->redrawable = 0;
         }
     }
@@ -314,15 +314,15 @@ public:
     bool is_meta_chunk() const
     { return this->reader.chunk_type == WRMChunk::META_FILE; }
 
-    const DataMetaFile& meta() const
-    {
-        return this->reader.data_meta;
-    }
+//    const DataMetaFile& meta() const
+//    {
+//        return this->reader.data_meta;
+//    }
 
-    DataMetaFile& meta()
-    {
-        return this->reader.data_meta;
-    }
+//    DataMetaFile& meta()
+//    {
+//        return this->reader.data_meta;
+//    }
 
 public:
     void next_file(const char * filename)
@@ -516,14 +516,14 @@ public:
             case WRMChunk::NEXT_FILE_ID:
             {
                 this->idx_file = this->reader.stream.in_uint32_le();
-                if (this->meta().files.size() <= this->idx_file)
+                if (this->reader.data_meta.files.size() <= this->idx_file)
                 {
                     LOG(LOG_ERR, "WRMRecorder : idx(%d) not found in meta", (int)this->idx_file);
                     throw Error(ERR_RECORDER_META_REFERENCE_WRM);
                 }
-                this->next_file(this->meta().files[this->idx_file].wrm_filename.c_str());
+                this->next_file(this->reader.data_meta.files[this->idx_file].wrm_filename.c_str());
                 --this->reader.remaining_order_count;
-                this->load_context(this->meta().files[this->idx_file].png_filename.c_str());
+                this->load_context(this->reader.data_meta.files[this->idx_file].png_filename.c_str());
             }
             break;
             case WRMChunk::BREAKPOINT:

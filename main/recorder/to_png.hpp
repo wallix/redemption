@@ -34,9 +34,9 @@ static inline void to_png(WRMRecorder& recorder, const char* outfile,
             bool screenshot_start, bool no_screenshot_stop,
             bool screenshot_all)
 {
-    printf("to png -> %s width=%u height=%u\n", outfile, recorder.meta().width, recorder.meta().height);
+    printf("to png -> %s width=%u height=%u\n", outfile, recorder.reader.data_meta.width, recorder.reader.data_meta.height);
 
-    StaticCapture capture(recorder.meta().width, recorder.meta().height, outfile, true);
+    StaticCapture capture(recorder.reader.data_meta.width, recorder.reader.data_meta.height, outfile, true);
 
     recorder.reader.consumer = &capture;
     recorder.load_png_context(capture.drawable);
@@ -123,7 +123,7 @@ static inline void to_png_2(WRMRecorder& recorder, const char* outfile,
         return ;
     }
 
-    StaticCapture capture(recorder.meta().width, recorder.meta().height, outfile, true);
+    StaticCapture capture(recorder.reader.data_meta.width, recorder.reader.data_meta.height, outfile, true);
     recorder.reader.consumer = &capture;
     recorder.load_png_context(capture.drawable);
 

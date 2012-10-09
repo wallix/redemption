@@ -314,14 +314,14 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         if (!recorder.reader.load_data(filename_mwrm.c_str())){
             throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
         }
-        if (recorder.meta().files.empty()){
+        if (recorder.reader.data_meta.files.empty()){
             throw Error(ERR_RECORDER_META_REFERENCE_WRM);
         }
-        if (recorder.meta().crypt_mode && !recorder.cipher_mode){
+        if (recorder.reader.data_meta.crypt_mode && !recorder.cipher_mode){
             throw Error(ERR_RECORDER_FILE_CRYPTED);
         }
         
-        const char * filename = recorder.get_cpath(recorder.meta().files[0].wrm_filename.c_str());
+        const char * filename = recorder.get_cpath(recorder.reader.data_meta.files[0].wrm_filename.c_str());
         LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
         int fd = ::open(filename, O_RDONLY);
         if (-1 == fd){
