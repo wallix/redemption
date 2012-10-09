@@ -287,13 +287,29 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         cap.recorder.flush();
     }
 
-    std::string filename_mwrm = filename_to_pid_filename(
-        "/tmp/encrypt-cap.mwrm");
+    std::string filename_mwrm = filename_to_pid_filename("/tmp/encrypt-cap.mwrm");
     {
         timeval now;
         gettimeofday(&now, NULL);
         WRMRecorder recorder(now);
-        recorder.init_cipher(CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC), key, iv);
+
+        LOG(LOG_INFO, "init_cipher");
+        recorder.cipher_mode = CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC);
+        if (!recorder.cipher_mode){
+            // false
+        }
+        else if (!recorder.cipher_trans.start(recorder.cipher_mode, key, iv, 0))
+        {
+            recorder.cipher_mode = 0;
+            // false
+        }
+        else {
+            recorder.cipher_key = key;
+            recorder.cipher_iv = iv;
+            recorder.cipher_impl = 0;
+            recorder.reader.trans = &recorder.cipher_trans;
+            recorder.trans.diff_size_is_error = false;
+        }
         
         if (!recorder.reader.load_data(filename_mwrm.c_str())){
             throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);

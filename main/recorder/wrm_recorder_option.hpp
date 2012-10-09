@@ -872,18 +872,27 @@ inline static bool _wrm_recorder_init_init_crypt(WRMRecorder& recorder,
                    recorder.meta().crypt_iv,
                    sizeof(opt.in_crypt_iv.data));
         }
-        if (!recorder.init_cipher(
-            (opt.in_crypt_mode
-            ? opt.in_crypt_mode
-            : CipherMode::to_evp_cipher(
-                (CipherMode::enum_t)recorder.meta().crypt_mode
-            )),
-            opt.in_crypt_key.data,
-            opt.in_crypt_iv.size ? opt.in_crypt_iv.data : 0))
-        {
+        
+        LOG(LOG_INFO, "init_cipher");
+        recorder.cipher_mode = (opt.in_crypt_mode ? opt.in_crypt_mode 
+                            : CipherMode::to_evp_cipher((CipherMode::enum_t)recorder.meta().crypt_mode));
+        if (!recorder.cipher_mode){
+            return false;
+        }
+        if (!recorder.cipher_trans.start(recorder.cipher_mode, 
+                                         opt.in_crypt_key.data,
+                                         opt.in_crypt_iv.size ? opt.in_crypt_iv.data : 0,
+                                         0)){
+            recorder.cipher_mode = 0;
             std::cerr << "Error in the initialization of the encryption" << std::endl;
             return false;
         }
+
+        recorder.cipher_key = opt.in_crypt_key.data;
+        recorder.cipher_iv = opt.in_crypt_iv.size ? opt.in_crypt_iv.data : 0;
+        recorder.cipher_impl = 0;
+        recorder.reader.trans = &recorder.cipher_trans;
+        recorder.trans.diff_size_is_error = false;
     }
     return true;
 }

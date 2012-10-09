@@ -214,27 +214,6 @@ public:
     }
 
 
-    bool init_cipher(const EVP_CIPHER * mode,
-                     const unsigned char* key = 0,
-                     const unsigned char* iv = 0,
-                     ENGINE* impl = 0)
-    {
-        LOG(LOG_INFO, "init_cipher");
-        this->cipher_mode = mode;
-        if (!this->cipher_mode)
-            return false;
-        if (!this->cipher_trans.start(this->cipher_mode, key, iv, impl))
-        {
-            this->cipher_mode = 0;
-            return false;
-        }
-        this->cipher_key = key;
-        this->cipher_iv = iv;
-        this->cipher_impl = impl;
-        this->reader.trans = &this->cipher_trans;
-        this->trans.diff_size_is_error = false;
-        return true;
-    }
 
     ~WRMRecorder()
     {
