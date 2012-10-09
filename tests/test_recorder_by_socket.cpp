@@ -67,7 +67,7 @@ class SessionRecorderTest : public Server
 
             while (recorder.reader.selected_next_order())
             {
-                switch (recorder.chunk_type())
+                switch (recorder.reader.chunk_type)
                 {
                     case WRMChunk::BREAKPOINT:
                         recorder.reader.stream.p = recorder.reader.stream.end;

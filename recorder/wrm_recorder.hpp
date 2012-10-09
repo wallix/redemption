@@ -475,15 +475,15 @@ public:
         return i;
     }
 
-    uint16_t& chunk_type()
-    {
-        return this->reader.chunk_type;
-    }
+//    uint16_t& chunk_type()
+//    {
+//        return this->reader.chunk_type;
+//    }
 
-    uint16_t chunk_type() const
-    {
-        return this->reader.chunk_type;
-    }
+//    uint16_t chunk_type() const
+//    {
+//        return this->reader.chunk_type;
+//    }
 
     uint16_t& remaining_order_count()
     {

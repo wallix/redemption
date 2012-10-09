@@ -347,11 +347,11 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
 
         b = recorder.reader.selected_next_order();
         BOOST_REQUIRE_EQUAL(b, true);
-        BOOST_REQUIRE_EQUAL(recorder.chunk_type(), 1008);
+        BOOST_REQUIRE_EQUAL(recorder.reader.chunk_type, 1008);
         recorder.interpret_order();
         b = recorder.reader.selected_next_order();
         BOOST_REQUIRE_EQUAL(b, true);
-        BOOST_REQUIRE_EQUAL(recorder.chunk_type(), 0);
+        BOOST_REQUIRE_EQUAL(recorder.reader.chunk_type, 0);
         recorder.interpret_order();
         if (!check_sig(pngcap.drawable, message,
             "\x2d\x26\x43\x36\x49\xe3\x03\xd2\xb7\xf9"
@@ -425,7 +425,7 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
 
         while (recorder.reader.selected_next_order())
         {
-            if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
+            if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP)
             {
                 recorder.reader.stream.p = recorder.reader.stream.end;
                 recorder.reader.remaining_order_count = 0;
@@ -450,7 +450,7 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
 
         while (recorder.reader.selected_next_order())
         {
-            if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
+            if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP)
             {
                 recorder.reader.stream.p = recorder.reader.stream.end;
                 recorder.reader.remaining_order_count = 0;

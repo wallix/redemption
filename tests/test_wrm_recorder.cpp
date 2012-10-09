@@ -66,9 +66,9 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 
         while (recorder.reader.selected_next_order())
         {
-            //std::cout << recorder.chunk_type() << std::endl;
-            //BOOST_CHECK(recorder.chunk_type() != WRMChunk::BREAKPOINT);
-            if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
+            //std::cout << recorder.reader.chunk_type << std::endl;
+            //BOOST_CHECK(recorder.reader.chunk_type != WRMChunk::BREAKPOINT);
+            if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP)
             {
                 ++ntime;
                 consumer.timestamp(recorder.reader.stream.in_uint64_be());
@@ -99,69 +99,6 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 
     unlink_full_wrm("/tmp/replay_part", breakpoint+1);
 }
-
-/*BOOST_AUTO_TEST_CASE(TestMultiWRMToPng)
-{
-    char filename[50];
-    sprintf(filename, "/tmp/replay_part-%u-0.wrm", getpid());
-    BOOST_CHECK(1);
-    WRMRecorder recorder(filename);
-    BOOST_CHECK_EQUAL(800, recorder.meta.width);
-    BOOST_CHECK_EQUAL(600, recorder.meta.height);
-    BOOST_CHECK_EQUAL(24, recorder.meta.bpp);
-
-    StaticCapture consumer(recorder.meta.width, recorder.meta.height, "/tmp/test_wrm_recorder_to_png", true);
-    BOOST_CHECK(1);
-
-    recorder.consumer(&consumer);
-    bool is_chunk_time = true;
-    BOOST_CHECK(1);
-
-    uint n = 0;
-    //std::cout << "TestMultiWRMToPng start\n";
-
-    while (recorder.reader.selected_next_order())
-    {
-        BOOST_CHECK(1);
-        if (recorder.chunk_type() == WRMChunk::TIMESTAMP){
-            is_chunk_time = true;
-            //std::cout << "timestamp\n";
-            recorder.remaining_order_count() = 0;
-            ++n;
-        } else {
-            //if (consumer.framenb == 39){
-            //    std::cout << recorder.chunk_type() << '\n';
-            //}
-            BOOST_CHECK(1);
-            if (is_chunk_time)
-            {
-                BOOST_CHECK(1);
-                consumer.flush();
-                is_chunk_time = false;
-            }
-            //bool is_breakpoint = recorder.chunk_type() == WRMChunk::BREAKPOINT;
-            //bool is_nextfile = recorder.chunk_type() == WRMChunk::NEXT_FILE;
-            //if (is_breakpoint){
-            //    bzero(consumer.drawable.data, consumer.drawable.pix_len);
-            //}
-            //if (is_nextfile)
-            //    std::cout << "NEXT_FILE" << std::endl;
-            //if (is_breakpoint)
-            //    std::cout << "BREAKPOINT" << std::endl;
-            recorder.interpret_order();
-            //if (is_breakpoint)
-            //    std::cout << "BREAKPOINT DONE" << std::endl;
-            //if (is_nextfile)
-            //    std::cout << "NEXT_FILE DONE" << std::endl;
-            BOOST_CHECK(1);
-        }
-        BOOST_CHECK(1);
-    }
-    BOOST_CHECK(1);
-    consumer.flush();
-
-    BOOST_CHECK(328 == n);
-}*/
 
 void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, const char * sigdata = 0, bool realloc_consumer = false)
 {
@@ -195,11 +132,11 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
     while (recorder->reader.selected_next_order())
     {
         BOOST_CHECK(1);
-        if (recorder->chunk_type() == WRMChunk::TIMESTAMP){
+        if (recorder->reader.chunk_type == WRMChunk::TIMESTAMP){
             is_chunk_time = true;
             recorder->remaining_order_count() = 0;
             ++n;
-        } else if (recorder->chunk_type() == WRMChunk::NEXT_FILE_ID) {
+        } else if (recorder->reader.chunk_type == WRMChunk::NEXT_FILE_ID) {
             BOOST_CHECK(1);
             std::size_t n = recorder->reader.stream.in_uint32_le();
             std::string wrm_filename = recorder->meta().files[n].wrm_filename;

@@ -50,11 +50,11 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
     timeval mstart = {0,0};
     while (recorder.reader.selected_next_order())
     {
-        if (recorder.chunk_type() == WRMChunk::TIME_START){
+        if (recorder.reader.chunk_type == WRMChunk::TIME_START){
             mstart = recorder.get_start_time_order();
             break;
         }
-        if (recorder.chunk_type() == WRMChunk::TIMESTAMP){
+        if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP){
             timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
             timercompute_microsec += timercompute_chunk_time_value;
             --recorder.remaining_order_count();
@@ -73,7 +73,7 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
         if (timercompute_microsec < msec){
             while (recorder.reader.selected_next_order())
             {
-                if (recorder.chunk_type() == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
+                if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
                     timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
                     timercompute_microsec += timercompute_chunk_time_value;
                     --recorder.remaining_order_count();    
@@ -115,7 +115,7 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
 
     while (recorder.reader.selected_next_order())
     {
-        if (recorder.chunk_type() == WRMChunk::TIMESTAMP) {
+        if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP) {
             timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
             timercompute_microsec += timercompute_chunk_time_value;
             --recorder.remaining_order_count();
@@ -131,7 +131,7 @@ void to_one_wrm(WRMRecorder& recorder, const char* outfile,
             }
         }
         else {
-            switch (recorder.chunk_type()) {
+            switch (recorder.reader.chunk_type) {
                 case WRMChunk::NEXT_FILE_ID:
                     recorder.interpret_order();
                     break;

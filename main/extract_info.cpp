@@ -116,7 +116,7 @@ int main(int argc, char** argv)
     {
         weight = stream.end - stream.p;
 
-        switch (recorder.chunk_type())
+        switch (recorder.reader.chunk_type)
         {
             case  WRMChunk::BREAKPOINT:
             {
@@ -221,10 +221,10 @@ int main(int argc, char** argv)
             }
                 break;
             default:
-                WrmInfo& info = recorder.chunk_type() ? other_info : draw_info;
+                WrmInfo& info = recorder.reader.chunk_type ? other_info : draw_info;
                 ++info.number;
                 info.weight += weight;
-                std::cout << recorder.chunk_type() << ": number: " << remaining_order_count
+                std::cout << recorder.reader.chunk_type << ": number: " << remaining_order_count
                 << ", size: " << weight << " B\n";
                 recorder.reader.stream.p = recorder.reader.stream.end;
                 recorder.reader.remaining_order_count = 0;

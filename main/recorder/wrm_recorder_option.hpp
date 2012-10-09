@@ -821,7 +821,7 @@ inline static int _wrm_recorder_init_meta_not_found(WRMRecorder& recorder,
 {
     std::cerr << recorder.meta() << '\n'
     << "Chunk META not found in " << wrm_filename
-    << "\n. Chunk is " << recorder.chunk_type() << std::endl;
+    << "\n. Chunk is " << recorder.reader.chunk_type << std::endl;
     return 2004;
 }
 

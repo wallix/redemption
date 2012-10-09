@@ -48,7 +48,7 @@ static inline void to_png(WRMRecorder& recorder, const char* outfile,
         if (timercompute_microsec < msec){
             while (recorder.reader.selected_next_order())
             {
-                if (recorder.chunk_type() == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
+                if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
                     timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
                     timercompute_microsec += timercompute_chunk_time_value;
                     --recorder.remaining_order_count();    
@@ -73,7 +73,7 @@ static inline void to_png(WRMRecorder& recorder, const char* outfile,
 
     while (recorder.reader.selected_next_order())
     {
-        if (recorder.chunk_type() == WRMChunk::TIMESTAMP) {
+        if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP) {
             timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
             timercompute_microsec += timercompute_chunk_time_value;
             --recorder.remaining_order_count();
@@ -142,7 +142,7 @@ static inline void to_png_2(WRMRecorder& recorder, const char* outfile,
             if (timercompute_microsec < msec){
                 while (recorder.reader.selected_next_order())
                 {
-                    if (recorder.chunk_type() == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
+                    if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
                         timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
                         timercompute_microsec += timercompute_chunk_time_value;
                         --recorder.remaining_order_count();    
@@ -167,7 +167,7 @@ static inline void to_png_2(WRMRecorder& recorder, const char* outfile,
 
     while (recorder.reader.selected_next_order())
     {
-        if (recorder.chunk_type() == WRMChunk::TIMESTAMP) {
+        if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP) {
             timercompute_chunk_time_value = recorder.reader.stream.in_uint64_be();
             timercompute_microsec += timercompute_chunk_time_value;
             --recorder.remaining_order_count();
