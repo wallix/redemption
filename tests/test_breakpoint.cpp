@@ -66,7 +66,24 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     mwrm_filename += '-';
     mwrm_filename += boost::lexical_cast<std::string>(getpid());
     mwrm_filename += ".mwrm";
-    recorder.open_meta_followed_wrm(mwrm_filename.c_str());
+   
+    if (!recorder.reader.load_data(mwrm_filename.c_str())){
+        throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
+    }
+    if (recorder.meta().files.empty()){
+        throw Error(ERR_RECORDER_META_REFERENCE_WRM);
+    }
+    if (recorder.meta().crypt_mode && !recorder.cipher_mode){
+        throw Error(ERR_RECORDER_FILE_CRYPTED);
+    }
+    recorder.open_wrm_only(recorder.get_cpath(recorder.meta().files[0].wrm_filename.c_str()));
+    ++recorder.idx_file;
+    if (recorder.reader.selected_next_order() && recorder.is_meta_chunk()){
+        recorder.reader.stream.p = recorder.reader.stream.end;
+        recorder.reader.remaining_order_count = 0;
+    }
+
+    
     StaticCapture consumer(recorder.meta().width,
                            recorder.meta().height,
                            "/tmp/test.png",

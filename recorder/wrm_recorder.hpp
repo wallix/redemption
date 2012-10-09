@@ -190,7 +190,21 @@ public:
             && pos < filename.size()
             && filename[pos] == 'm'
         ) {
-            this->open_meta_followed_wrm(filename.c_str());
+            if (!this->reader.load_data(filename.c_str())){
+                throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
+            }
+            if (this->meta().files.empty()){
+                throw Error(ERR_RECORDER_META_REFERENCE_WRM);
+            }
+            if (this->meta().crypt_mode && !this->cipher_mode){
+                throw Error(ERR_RECORDER_FILE_CRYPTED);
+            }
+            this->open_wrm_only(this->get_cpath(this->meta().files[0].wrm_filename.c_str()));
+            ++this->idx_file;
+            if (this->reader.selected_next_order() && this->is_meta_chunk()){
+                this->reader.stream.p = this->reader.stream.end;
+                this->reader.remaining_order_count = 0;
+            }
         }
         else {
             if (!this->open_wrm_followed_meta(filename.c_str()))
@@ -233,25 +247,6 @@ public:
         this->reader.trans = &this->cipher_trans;
         this->trans.diff_size_is_error = false;
         return true;
-    }
-
-    void open_meta_followed_wrm(const char * filename)
-    {
-        if (!this->reader.load_data(filename)){
-            throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
-        }
-        if (this->meta().files.empty()){
-            throw Error(ERR_RECORDER_META_REFERENCE_WRM);
-        }
-        if (this->meta().crypt_mode && !this->cipher_mode){
-            throw Error(ERR_RECORDER_FILE_CRYPTED);
-        }
-        this->open_wrm_only(this->get_cpath(this->meta().files[0].wrm_filename.c_str()));
-        ++this->idx_file;
-        if (this->reader.selected_next_order() && this->is_meta_chunk()){
-            this->reader.stream.p = this->reader.stream.end;
-            this->reader.remaining_order_count = 0;
-        }
     }
 
     ~WRMRecorder()
@@ -666,8 +661,7 @@ public:
         int ret;
         const int Bpp = 3;
         uint8_t * buffer = NULL;
-        while (1)
-        {
+        while (1){
             BStream stream(14);
             this->reader.trans->recv(&stream.end, 14);
             uint16_t idx = stream.in_uint16_le();
@@ -714,28 +708,6 @@ public:
         }
     }
 
-    void ignore_breakpoint()
-    {
-        this->reader.stream.p = this->reader.stream.end;
-        this->reader.remaining_order_count = 0;
-
-        this->reader.selected_next_order();
-        this->reader.remaining_order_count = 0;
-        while (1)
-        {
-            this->reader.stream.init(14);
-            this->reader.trans->recv(&this->reader.stream.end, 14);
-            uint16_t idx = this->reader.stream.in_uint16_le();
-            this->reader.stream.p += 8;
-            uint32_t buffer_size = this->reader.stream.in_uint32_le();
-            if (idx == 8192 * 3 + 1){
-                break;
-            }
-            this->reader.stream.init(buffer_size);
-            this->reader.trans->recv(&this->reader.stream.end, buffer_size);
-        }
-    }
-
     void interpret_order()
     {
         switch (this->reader.chunk_type)
@@ -773,7 +745,24 @@ public:
                     this->interpret_breakpoint();
                 }
                 else {
-                    this->ignore_breakpoint();
+                    this->reader.stream.p = this->reader.stream.end;
+                    this->reader.remaining_order_count = 0;
+
+                    this->reader.selected_next_order();
+                    this->reader.remaining_order_count = 0;
+                    while (1)
+                    {
+                        this->reader.stream.init(14);
+                        this->reader.trans->recv(&this->reader.stream.end, 14);
+                        uint16_t idx = this->reader.stream.in_uint16_le();
+                        this->reader.stream.p += 8;
+                        uint32_t buffer_size = this->reader.stream.in_uint32_le();
+                        if (idx == 8192 * 3 + 1){
+                            break;
+                        }
+                        this->reader.stream.init(buffer_size);
+                        this->reader.trans->recv(&this->reader.stream.end, buffer_size);
+                    }
                 }
             }
             break;

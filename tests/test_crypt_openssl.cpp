@@ -294,7 +294,23 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         gettimeofday(&now, NULL);
         WRMRecorder recorder(now);
         recorder.init_cipher(CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC), key, iv);
-        recorder.open_meta_followed_wrm(filename_mwrm.c_str());
+        
+        if (!recorder.reader.load_data(filename_mwrm.c_str())){
+            throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
+        }
+        if (recorder.meta().files.empty()){
+            throw Error(ERR_RECORDER_META_REFERENCE_WRM);
+        }
+        if (recorder.meta().crypt_mode && !recorder.cipher_mode){
+            throw Error(ERR_RECORDER_FILE_CRYPTED);
+        }
+        recorder.open_wrm_only(recorder.get_cpath(recorder.meta().files[0].wrm_filename.c_str()));
+        ++recorder.idx_file;
+        if (recorder.reader.selected_next_order() && recorder.is_meta_chunk()){
+            recorder.reader.stream.p = recorder.reader.stream.end;
+            recorder.reader.remaining_order_count = 0;
+        }
+        
         /*WRMRecorder recorder(filename_mwrm, "",
                              CipherMode::BLOWFISH_CBC, key, iv);*/
         StaticCapture pngcap(800,600,"/tmp/decrypt-cap", true);

@@ -70,7 +70,24 @@ class SessionRecorderTest : public Server
                 switch (recorder.chunk_type())
                 {
                     case WRMChunk::BREAKPOINT:
-                        recorder.ignore_breakpoint();
+                        recorder.reader.stream.p = recorder.reader.stream.end;
+                        recorder.reader.remaining_order_count = 0;
+
+                        recorder.reader.selected_next_order();
+                        recorder.reader.remaining_order_count = 0;
+                        while (1)
+                        {
+                            recorder.reader.stream.init(14);
+                            recorder.reader.trans->recv(&recorder.reader.stream.end, 14);
+                            uint16_t idx = recorder.reader.stream.in_uint16_le();
+                            recorder.reader.stream.p += 8;
+                            uint32_t buffer_size = recorder.reader.stream.in_uint32_le();
+                            if (idx == 8192 * 3 + 1){
+                                break;
+                            }
+                            recorder.reader.stream.init(buffer_size);
+                            recorder.reader.trans->recv(&recorder.reader.stream.end, buffer_size);
+                        }
                         break;
                     case WRMChunk::META_FILE:
                     case WRMChunk::TIME_START:
