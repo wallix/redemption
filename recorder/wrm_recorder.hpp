@@ -62,34 +62,10 @@ public:
     bool interpret_breakpoint_is_passed;
 
 private:
-    static int open(const char * filename)
-    {
-        LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
-        int fd = ::open(filename, O_RDONLY);
-        if (-1 == fd){
-            LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
-           throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
-        }
-        return fd;
-    }
-
-    bool _start_cipher(const unsigned char* key,
-                       const unsigned char* iv,
-                       ENGINE* impl)
-    {
-        return this->cipher_trans.start(this->cipher_mode, key, iv, impl);
-    }
-
-    bool _start_cipher()
-    {
-        return this->_start_cipher(this->cipher_key,
-                                   this->cipher_iv,
-                                   this->cipher_impl);
-    }
 
     void start_cipher_if_active()
     {
-        if (this->cipher_mode && !this->_start_cipher())
+        if (this->cipher_mode && !this->cipher_trans.start(this->cipher_mode, this->cipher_key, this->cipher_iv, this->cipher_impl))
         {
             LOG(LOG_ERR, "Error cipher start in NativeCapture");
             throw Error(ERR_CIPHER_START);
@@ -198,7 +174,17 @@ public:
             if (this->meta().crypt_mode && !this->cipher_mode){
                 throw Error(ERR_RECORDER_FILE_CRYPTED);
             }
-            this->trans.fd = WRMRecorder::open(this->get_cpath(this->meta().files[0].wrm_filename.c_str()));
+
+            const char * filename = this->get_cpath(this->meta().files[0].wrm_filename.c_str());
+
+            LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+            int fd = ::open(filename, O_RDONLY);
+            if (-1 == fd){
+                LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+               throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+            }
+            this->trans.fd = fd;
+
             ++this->idx_file;
             if (this->reader.selected_next_order() && this->is_meta_chunk()){
                 this->reader.stream.p = this->reader.stream.end;
@@ -235,7 +221,7 @@ public:
         this->cipher_mode = mode;
         if (!this->cipher_mode)
             return false;
-        if (!this->_start_cipher(key, iv, impl))
+        if (!this->cipher_trans.start(this->cipher_mode, key, iv, impl))
         {
             this->cipher_mode = 0;
             return false;
@@ -304,7 +290,15 @@ public:
 
     bool open_wrm_followed_meta(const char* filename)
     {
-        this->trans.fd = WRMRecorder::open(filename);
+    
+        LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+        int fd = ::open(filename, O_RDONLY);
+        if (-1 == fd){
+            LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+           throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+        }
+        this->trans.fd = fd;
+    
         if (!this->reader.selected_next_order()){
             return false;
         }
@@ -316,7 +310,15 @@ public:
 
     bool open_wrm_followed_meta(const char* filename, const char* filename_meta)
     {
-        this->trans.fd = WRMRecorder::open(filename);
+        LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+        int fd = ::open(filename, O_RDONLY);
+        if (-1 == fd){
+            LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+           throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+        }
+        this->trans.fd = fd;
+
+        
         if (!this->reader.selected_next_order()){
             return false;
         }
@@ -347,7 +349,15 @@ public:
             this->cipher_trans.stop();
         }
         this->trans.fd = -1;
-        this->trans.fd = open(this->get_cpath(filename)); //can throw exception
+        const char * wrm_filename = this->get_cpath(filename);
+        LOG(LOG_INFO, "WRMRecorder opening file : %s", wrm_filename);
+        int fd = ::open(wrm_filename, O_RDONLY);
+        if (-1 == fd){
+            LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+           throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+        }
+        this->trans.fd = fd;
+
         this->trans.total_received = 0;
         this->trans.last_quantum_received = 0;
         this->trans.total_sent = 0;
@@ -355,7 +365,6 @@ public:
         this->trans.quantum_count = 0;
         if (this->cipher_mode){
             this->cipher_trans.reset();
-            this->_start_cipher();
         }
     }
 
