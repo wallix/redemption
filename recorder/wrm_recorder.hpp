@@ -47,7 +47,6 @@ class WRMRecorder
 public:
     RDPUnserializer reader;
 
-private:
     Drawable * redrawable;
 
 public:
@@ -220,9 +219,9 @@ public:
         && this->meta().files.size() >= this->idx_file
         && !this->meta().files[this->idx_file - 1].png_filename.empty())
         {
-            this->redraw_consumer(&drawable);
+            this->redrawable = &drawable;
             this->load_context(this->meta().files[this->idx_file - 1].png_filename.c_str());
-            this->redraw_consumer(0);
+            this->redrawable = 0;
         }
     }
 
@@ -491,15 +490,15 @@ public:
         return i;
     }
 
-    void consumer(RDPGraphicDevice * consumer)
-    {
-        this->reader.consumer = consumer;
-    }
+//    void consumer(RDPGraphicDevice * consumer)
+//    {
+//        this->reader.consumer = consumer;
+//    }
 
-    void redraw_consumer(Drawable* consumer)
-    {
-        this->redrawable = consumer;
-    }
+//    void redraw_consumer(Drawable* consumer)
+//    {
+//        this->redrawable = consumer;
+//    }
 
     RDPGraphicDevice * consumer()
     {
@@ -750,8 +749,7 @@ public:
 
                     this->reader.selected_next_order();
                     this->reader.remaining_order_count = 0;
-                    while (1)
-                    {
+                    while (1){
                         this->reader.stream.init(14);
                         this->reader.trans->recv(&this->reader.stream.end, 14);
                         uint16_t idx = this->reader.stream.in_uint16_le();

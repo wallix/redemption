@@ -38,7 +38,7 @@ static inline void to_png(WRMRecorder& recorder, const char* outfile,
 
     StaticCapture capture(recorder.meta().width, recorder.meta().height, outfile, true);
 
-    recorder.consumer(&capture);
+    recorder.reader.consumer = &capture;
     recorder.load_png_context(capture.drawable);
     const uint64_t coeff_sec_to_usec = 1000000;
     uint64_t timercompute_microsec = 0;
@@ -124,7 +124,7 @@ static inline void to_png_2(WRMRecorder& recorder, const char* outfile,
     }
 
     StaticCapture capture(recorder.meta().width, recorder.meta().height, outfile, true);
-    recorder.consumer(&capture);
+    recorder.reader.consumer = &capture;
     recorder.load_png_context(capture.drawable);
 
     typedef std::vector<relative_time_point>::const_iterator iterator;

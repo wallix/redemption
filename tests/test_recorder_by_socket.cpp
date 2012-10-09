@@ -63,7 +63,7 @@ class SessionRecorderTest : public Server
             WRMRecorder recorder(now, FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
 
             SocketCapture consumer(now, "test", sck);
-            recorder.consumer(&consumer);
+            recorder.reader.consumer = &consumer;
 
             while (recorder.reader.selected_next_order())
             {

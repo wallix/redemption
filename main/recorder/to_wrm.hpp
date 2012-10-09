@@ -41,7 +41,7 @@ static inline void to_wrm(WRMRecorder& recorder, const char* outfile,
                     outfile, metaname,
                     0, 0, true,
                     mode, key, iv);
-    recorder.consumer(&capture);
+    recorder.reader.consumer = &capture;
     uint64_t timercompute_microsec = 0;
     uint64_t timercompute_chunk_time_value = 0;
     

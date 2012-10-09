@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
         Capture consumer(now, recorder.meta().width, recorder.meta().height,
                         "/tmp/replay_part", 0, 0, false);
 
-        recorder.consumer(&consumer);
+        recorder.reader.consumer = &consumer;
 
         uint n = 0;
         uint ntime = 0;
@@ -185,8 +185,8 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
                                                 true);
     BOOST_CHECK(1);
 
-    recorder->consumer(consumer);
-    recorder->redraw_consumer(&consumer->drawable);
+    recorder->reader.consumer = consumer;
+    recorder->redrawable = &consumer->drawable;
     bool is_chunk_time = true;
     BOOST_CHECK(1);
 
@@ -219,8 +219,8 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
                                              filename_consumer,
                                              true);
             }
-            recorder->consumer(consumer);
-            recorder->redraw_consumer(&consumer->drawable);
+            recorder->reader.consumer = consumer;
+            recorder->redrawable = &consumer->drawable;
             BOOST_CHECK(1);
         } else {
             BOOST_CHECK(1);

@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     bool is_chunk_time = false;
     uint count_img = 0;
 
-    reader.consumer(&consumer);
+    reader.reader.consumer = &consumer;
     while (reader.reader.selected_next_order())
     {
         if (reader.chunk_type() == WRMChunk::TIMESTAMP){

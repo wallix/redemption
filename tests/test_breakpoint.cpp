@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
                            recorder.meta().height,
                            "/tmp/test.png",
                            true);
-    recorder.consumer(&consumer);
+    recorder.reader.consumer = &consumer;
 
     const uint16_t next_file_id   = WRMChunk::NEXT_FILE_ID;
     const uint16_t meta_file      = WRMChunk::META_FILE;

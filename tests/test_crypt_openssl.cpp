@@ -314,7 +314,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         /*WRMRecorder recorder(filename_mwrm, "",
                              CipherMode::BLOWFISH_CBC, key, iv);*/
         StaticCapture pngcap(800,600,"/tmp/decrypt-cap", true);
-        recorder.consumer(&pngcap);
+        recorder.reader.consumer = &pngcap;
         BOOST_REQUIRE(true);
 
         char message[1024];
@@ -396,7 +396,7 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
         gettimeofday(&now, 0);
         cap.send_time_start(now);
         BOOST_CHECK(true);
-        recorder.consumer(&cap);
+        recorder.reader.consumer = &cap;
 
         while (recorder.reader.selected_next_order())
         {
@@ -421,7 +421,7 @@ BOOST_AUTO_TEST_CASE(TestWrmWithOpenSSL)
         BOOST_CHECK(true);
         StaticCapture cap(800, 600, "/tmp/wrm-encrypt", true);
         BOOST_CHECK(true);
-        recorder.consumer(&cap);
+        recorder.reader.consumer = &cap;
 
         while (recorder.reader.selected_next_order())
         {
