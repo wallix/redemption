@@ -475,21 +475,6 @@ public:
         return i;
     }
 
-//    void consumer(RDPGraphicDevice * consumer)
-//    {
-//        this->reader.consumer = consumer;
-//    }
-
-//    void redraw_consumer(Drawable* consumer)
-//    {
-//        this->redrawable = consumer;
-//    }
-
-    RDPGraphicDevice * consumer()
-    {
-        return this->reader.consumer;
-    }
-
     uint16_t& chunk_type()
     {
         return this->reader.chunk_type;
