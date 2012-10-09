@@ -198,7 +198,7 @@ public:
             if (this->meta().crypt_mode && !this->cipher_mode){
                 throw Error(ERR_RECORDER_FILE_CRYPTED);
             }
-            this->open_wrm_only(this->get_cpath(this->meta().files[0].wrm_filename.c_str()));
+            this->trans.fd = WRMRecorder::open(this->get_cpath(this->meta().files[0].wrm_filename.c_str()));
             ++this->idx_file;
             if (this->reader.selected_next_order() && this->is_meta_chunk()){
                 this->reader.stream.p = this->reader.stream.end;
@@ -287,11 +287,6 @@ public:
     }
 
 public:
-    void open_wrm_only(const char* filename)
-    {
-        this->trans.fd = WRMRecorder::open(filename);
-    }
-
     bool interpret_meta_chunk()
     {
         char filename[1024];
@@ -309,7 +304,7 @@ public:
 
     bool open_wrm_followed_meta(const char* filename)
     {
-        this->open_wrm_only(filename);
+        this->trans.fd = WRMRecorder::open(filename);
         if (!this->reader.selected_next_order()){
             return false;
         }
@@ -321,7 +316,7 @@ public:
 
     bool open_wrm_followed_meta(const char* filename, const char* filename_meta)
     {
-        this->open_wrm_only(filename);
+        this->trans.fd = WRMRecorder::open(filename);
         if (!this->reader.selected_next_order()){
             return false;
         }

@@ -897,20 +897,26 @@ static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& op
 
     try
     {
-        const char * wrm_filename;
         switch (itype) {
             case InputType::WRM_TYPE:
+            {
                 if (!_wrm_recorder_init_init_crypt(recorder, opt))
                     return 3000;
-                wrm_filename = opt.in_filename.c_str();
-                recorder.open_wrm_only(wrm_filename);
+                const char * filename = opt.in_filename.c_str();
+                LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+                int fd = ::open(filename, O_RDONLY);
+                if (-1 == fd){
+                    LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+                   throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+                }
+                recorder.trans.fd = fd;
                 if (!recorder.reader.selected_next_order())
                 {
                     std::cerr << opt.in_filename << " is invalid wrm file" << std::endl;
                     return 2001;
                 }
                 if (!recorder.is_meta_chunk())
-                    return _wrm_recorder_init_meta_not_found(recorder, wrm_filename);
+                    return _wrm_recorder_init_meta_not_found(recorder, filename);
                 if (!recorder.interpret_meta_chunk())
                 {
                     std::cerr << "invalid meta chunck in " << opt.in_filename << std::endl;
@@ -928,8 +934,10 @@ static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& op
                 {
                     recorder.next_file(recorder.meta().files[recorder.idx_file].wrm_filename.c_str());
                 }
+            }
             break;
             case InputType::META_TYPE:
+            {
                 if (!recorder.reader.load_data(opt.in_filename.c_str()))
                 {
                     std::cerr << "open " << opt.in_filename << ' ' << strerror(errno) << std::endl;
@@ -938,14 +946,22 @@ static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& op
                 if (opt.idx_start >= recorder.meta().files.size())
                     return _wrm_recorder_init_idx_not_found(recorder, opt);
                 _wrm_recorder_init_set_good_idx(recorder, opt);
-                wrm_filename = recorder.get_cpath(
+                const char * wrm_filename = recorder.get_cpath(
                     recorder.meta()
                     .files[opt.idx_start]
                     .wrm_filename.c_str()
                 );
                 if (!_wrm_recorder_init_init_crypt(recorder, opt))
                     return 3000;
-                recorder.open_wrm_only(wrm_filename);
+
+                const char * filename = wrm_filename;
+                LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+                int fd = ::open(filename, O_RDONLY);
+                if (-1 == fd){
+                    LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+                   throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+                }
+                recorder.trans.fd = fd;
                 if (recorder.reader.selected_next_order() && recorder.is_meta_chunk()){
                     recorder.reader.stream.p = recorder.reader.stream.end;
                     recorder.reader.remaining_order_count = 0;
@@ -953,7 +969,8 @@ static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& op
                 if (!recorder.is_meta_chunk()){
                     return _wrm_recorder_init_meta_not_found(recorder, wrm_filename);
                 }
-                break;
+            }
+            break;
             default:
                 std::cerr << "Input type not found" << std::endl;
                 return 2000;
