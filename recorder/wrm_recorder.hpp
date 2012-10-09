@@ -61,16 +61,6 @@ public:
     bool force_interpret_breakpoint;
     bool interpret_breakpoint_is_passed;
 
-private:
-
-    void start_cipher_if_active()
-    {
-        if (this->cipher_mode && !this->cipher_trans.start(this->cipher_mode, this->cipher_key, this->cipher_iv, this->cipher_impl))
-        {
-            LOG(LOG_ERR, "Error cipher start in NativeCapture");
-            throw Error(ERR_CIPHER_START);
-        }
-    }
 
 public:
     WRMRecorder(const timeval & now,
@@ -96,7 +86,11 @@ public:
     , interpret_breakpoint_is_passed(false)
     {
         LOG(LOG_INFO, "WRMRecorder 3");
-        this->start_cipher_if_active();
+        if (this->cipher_mode && !this->cipher_trans.start(this->cipher_mode, this->cipher_key, this->cipher_iv, this->cipher_impl))
+        {
+            LOG(LOG_ERR, "Error cipher start in NativeCapture");
+            throw Error(ERR_CIPHER_START);
+        }
     }
 
     WRMRecorder(const timeval & now,
@@ -127,7 +121,11 @@ public:
             this->path += '/';
             ++this->base_path_len;
         }
-        this->start_cipher_if_active();
+        if (this->cipher_mode && !this->cipher_trans.start(this->cipher_mode, this->cipher_key, this->cipher_iv, this->cipher_impl))
+        {
+            LOG(LOG_ERR, "Error cipher start in NativeCapture");
+            throw Error(ERR_CIPHER_START);
+        }
     }
 
     WRMRecorder(const timeval & now,
@@ -159,7 +157,11 @@ public:
             this->path += '/';
             ++this->base_path_len;
         }
-        this->start_cipher_if_active();
+        if (this->cipher_mode && !this->cipher_trans.start(this->cipher_mode, this->cipher_key, this->cipher_iv, this->cipher_impl))
+        {
+            LOG(LOG_ERR, "Error cipher start in NativeCapture");
+            throw Error(ERR_CIPHER_START);
+        }
         std::size_t pos = filename.find_last_not_of('.');
         if (pos != std::string::npos
             && pos < filename.size()
