@@ -36,7 +36,7 @@
 
 class WRMRecorder
 {
-    bool debug;
+    public:
     const EVP_CIPHER * cipher_mode;
     const unsigned char* cipher_key;
     const unsigned char* cipher_iv;
@@ -103,8 +103,7 @@ public:
                 const unsigned char* key = 0,
                 const unsigned char* iv = 0,
                 ENGINE* impl = 0)
-    : debug(false)
-    , cipher_mode(mode)
+    : cipher_mode(mode)
     , cipher_key(key)
     , cipher_iv(iv)
     , cipher_impl(impl)
@@ -131,8 +130,7 @@ public:
                 const unsigned char* key = 0,
                 const unsigned char* iv = 0,
                 ENGINE* impl = 0)
-    : debug(false)
-    , cipher_mode(mode)
+    : cipher_mode(mode)
     , cipher_key(key)
     , cipher_iv(iv)
     , cipher_impl(impl)
@@ -150,7 +148,10 @@ public:
     , interpret_breakpoint_is_passed(false)
     {
         LOG(LOG_INFO, "WRMRecorder 2");
-        this->normalize_path();
+        if (this->base_path_len && this->path[this->base_path_len - 1] != '/'){
+            this->path += '/';
+            ++this->base_path_len;
+        }
         this->start_cipher_if_active();
     }
 
@@ -160,8 +161,7 @@ public:
                 const unsigned char* key = 0,
                 const unsigned char* iv = 0,
                 ENGINE* impl = 0)
-    : debug(false)
-    , cipher_mode(mode)
+    : cipher_mode(mode)
     , cipher_key(key)
     , cipher_iv(iv)
     , cipher_impl(impl)
@@ -180,7 +180,10 @@ public:
     , interpret_breakpoint_is_passed(false)
     {
         LOG(LOG_INFO, "WRMRecorder 1");
-        this->normalize_path();
+        if (this->base_path_len && this->path[this->base_path_len - 1] != '/'){
+            this->path += '/';
+            ++this->base_path_len;
+        }
         this->start_cipher_if_active();
         std::size_t pos = filename.find_last_not_of('.');
         if (pos != std::string::npos
@@ -232,16 +235,9 @@ public:
         return true;
     }
 
-    bool cipher_is_active() const
-    {
-        return this->cipher_mode;
-    }
-
     void open_meta_followed_wrm(const char * filename)
     {
-        printf("open_meta_followed_wrm(%s)", filename);
-
-        if (!this->open_meta(filename)){
+        if (!this->reader.load_data(filename)){
             throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
         }
         if (this->meta().files.empty()){
@@ -263,32 +259,16 @@ public:
         ::close(this->trans.fd);
     }
 
-private:
-    void normalize_path()
-    {
-        if (this->base_path_len && this->path[this->base_path_len - 1] != '/')
-        {
-            this->path += '/';
-            ++this->base_path_len;
-        }
-    }
-
 public:
     void set_basepath(const std::string basepath)
     {
         this->base_path_len = basepath.length();
         this->path = basepath;
-        this->normalize_path();
-    }
-
-    bool open_meta(const char* filename)
-    {
-        return this->reader.load_data(filename);
-    }
-
-    bool open_meta_with_path(const char* filename)
-    {
-        return this->open_meta(this->get_cpath(filename));
+        if (this->base_path_len && this->path[this->base_path_len - 1] != '/')
+        {
+            this->path += '/';
+            ++this->base_path_len;
+        }
     }
 
     const char * get_cpath(const char * filename)
@@ -323,14 +303,14 @@ public:
         char filename[1024];
         this->get_order_file(filename);
         --this->reader.remaining_order_count;
-        return this->open_meta_with_path(filename);
+        return this->reader.load_data(this->get_cpath(filename));
     }
 
     bool interpret_meta_chunk_and_force_meta(const char* filename)
     {
         this->reader.stream.p = this->reader.stream.end;
         this->reader.remaining_order_count = 0;
-        return this->open_meta_with_path(filename);
+        return this->reader.load_data(this->get_cpath(filename));
     }
 
     bool open_wrm_followed_meta(const char* filename)
@@ -374,8 +354,7 @@ public:
     void next_file(const char * filename)
     {
         ::close(this->trans.fd);
-        if (this->cipher_is_active())
-        {
+        if (this->cipher_mode){
             this->cipher_trans.stop();
         }
         this->trans.fd = -1;
@@ -385,8 +364,7 @@ public:
         this->trans.total_sent = 0;
         this->trans.last_quantum_sent = 0;
         this->trans.quantum_count = 0;
-        if (this->cipher_is_active())
-        {
+        if (this->cipher_mode){
             this->cipher_trans.reset();
             this->_start_cipher();
         }
@@ -404,8 +382,7 @@ public:
                 throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
             }
 
-            if (this->cipher_is_active())
-            {
+            if (this->cipher_mode){
                 /*uint8_t crypt_buf[600*800*3];
                 uint8_t uncrypt_buf[sizeof(crypt_buf) + EVP_MAX_BLOCK_LENGTH];
                 CipherCryptData cipher_data(uncrypt_buf);
@@ -761,29 +738,22 @@ public:
 
     void interpret_order()
     {
-        if (this->debug){
-            printf("WRMChunk::looping : chunk_type=%u\n", this->reader.chunk_type);
-        }
         switch (this->reader.chunk_type)
         {
             case WRMChunk::TIME_START:
             {
-                printf("WRMChunk::TIME_START\n");
-
                 this->reader.stream.p = this->reader.stream.end;
                 this->reader.remaining_order_count = 0;
             }
             break;
             case WRMChunk::META_FILE:
             {
-                printf("WRMChunk::META_FILE\n");
                 this->reader.stream.p = this->reader.stream.end;
                 this->reader.remaining_order_count = 0;
             }
             break;
             case WRMChunk::NEXT_FILE_ID:
             {
-                printf("WRMChunk::NEXT_FILE_ID\n");
                 this->idx_file = this->reader.stream.in_uint32_le();
                 if (this->meta().files.size() <= this->idx_file)
                 {
@@ -797,30 +767,18 @@ public:
             break;
             case WRMChunk::BREAKPOINT:
             {
-                printf("WRMChunk::BREAKPOINT is_passed=%s force=%s\n", 
-                    this->interpret_breakpoint_is_passed?"Y":"N",
-                    this->force_interpret_breakpoint?"Y":"N");
                 if (!this->interpret_breakpoint_is_passed || this->force_interpret_breakpoint)
                 {
                     this->interpret_breakpoint_is_passed = true;
                     this->interpret_breakpoint();
-                    printf("out of interpret_breakpoint done\n");
                 }
                 else {
                     this->ignore_breakpoint();
                 }
-                this->debug = true;
-                printf("WRMChunk::BREAKPOINT done\n");
             }
             break;
             default:
-                if (this->debug){
-                    printf("WRMChunk::default\n");
-                }
                 this->reader.interpret_order();
-                if (this->debug){
-                    printf("WRMChunk::default done\n");
-                }
                 break;
         }
     }

@@ -178,7 +178,7 @@ public:
 
         fprintf(this->meta_file, "%d %d\n%d",
                 this->width, this->height, e);
-        if (this->cipher_is_active())
+        if (this->cipher_mode)
         {
             if (iv)
             {
@@ -198,18 +198,13 @@ public:
 
     ~NativeCapture(){
         this->recorder.flush();
-        if (this->cipher_is_active())
+        if (this->cipher_mode)
         {
             this->cipher_trans.stop();
         }
         close(this->trans.fd);
         fclose(this->meta_file);
         free(this->meta_name);
-    }
-
-    bool cipher_is_active() const
-    {
-        return this->cipher_mode;
     }
 
     virtual void flush()
@@ -315,14 +310,14 @@ public:
         this->stream.out_uint32_le(this->nb_file);
         this->next_filename();
         this->recorder.flush();
-        if (this->cipher_is_active())
+        if (this->cipher_mode)
         {
             this->cipher_trans.stop();
         }
 
         close(this->trans.fd);
         this->open_file();
-        if (this->cipher_is_active())
+        if (this->cipher_mode)
         {
             this->cipher_trans.reset();
             this->_start_cipher();
@@ -341,7 +336,7 @@ public:
         // write screen
         {
             this->filename[this->filename_len] = '.';
-            if (this->cipher_is_active())
+            if (this->cipher_mode)
             {
                 this->filename[this->filename_len+1] = 'c';
                 this->filename[this->filename_len+2] = 't';
@@ -545,7 +540,7 @@ public:
         this->send_time_start_order(now);
         fprintf(this->meta_file, "%s,%s.%s %ld %ld\n",
                 this->filename, this->filename,
-                this->cipher_is_active() ? "ctx" : "png",
+                this->cipher_mode ? "ctx" : "png",
                 now.tv_sec, now.tv_usec);
         this->recorder.chunk_type = RDP_UPDATE_ORDERS;
     }

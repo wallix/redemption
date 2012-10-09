@@ -930,7 +930,7 @@ static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& op
                 }
             break;
             case InputType::META_TYPE:
-                if (!recorder.open_meta(opt.in_filename.c_str()))
+                if (!recorder.reader.load_data(opt.in_filename.c_str()))
                 {
                     std::cerr << "open " << opt.in_filename << ' ' << strerror(errno) << std::endl;
                     return 2005;
