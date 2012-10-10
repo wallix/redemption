@@ -156,16 +156,18 @@ public:
             this->path += '/';
             ++this->base_path_len;
         }
-        if (this->cipher_mode && !this->cipher_trans.start(this->cipher_mode, this->cipher_key, this->cipher_iv, this->cipher_impl))
+        
+        if (this->cipher_mode 
+        && !this->cipher_trans.start(this->cipher_mode, this->cipher_key, this->cipher_iv, this->cipher_impl))
         {
             LOG(LOG_ERR, "Error cipher start in NativeCapture");
             throw Error(ERR_CIPHER_START);
         }
+        
         std::size_t pos = filename.find_last_not_of('.');
         if (pos != std::string::npos
-            && pos < filename.size()
-            && filename[pos] == 'm'
-        ) {
+        && pos < filename.size()
+        && filename[pos] == 'm'){
             if (!this->reader.load_data(filename.c_str())){
                 throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
             }
@@ -206,10 +208,47 @@ public:
             }
         }
         else {
-            if (!this->open_wrm_followed_meta(filename.c_str()))
+        
+            const char* tmp_filename = filename.c_str();
+            
+            LOG(LOG_INFO, "WRMRecorder opening file : %s", tmp_filename);
+            int fd = ::open(tmp_filename, O_RDONLY);
+            if (-1 == fd){
+                LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+               throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+            }
+            this->trans.fd = fd;
+        
+            if (!this->reader.selected_next_order()){
                 throw Error(ERR_RECORDER_META_REFERENCE_WRM, errno);
-            if (this->reader.data_meta.crypt_mode && !this->cipher_mode)
+            }
+            if (this->reader.chunk_type == WRMChunk::META_FILE) {
+                char tmp_filename2[1024];
+                size_t len = this->reader.stream.in_uint32_le();
+                this->reader.stream.in_copy_bytes((uint8_t*)tmp_filename2, len);
+                tmp_filename2[len] = 0;
+                --this->reader.remaining_order_count;
+                
+                const char * filename2 = tmp_filename2;
+                if (this->only_filename){
+                    const char * tmp = strrchr(filename2 + strlen(filename2), '/');
+                    if (tmp){
+                        filename2 = tmp+1;
+                    }
+                }
+                if (this->base_path_len){
+                    this->path.erase(this->base_path_len);
+                    this->path += filename2;
+                    filename2 = this->path.c_str();
+                }
+                if (!this->reader.load_data(filename2)){
+                    throw Error(ERR_RECORDER_META_REFERENCE_WRM, errno);
+                }
+            }
+            if (this->reader.data_meta.crypt_mode 
+            && !this->cipher_mode){
                 throw Error(ERR_RECORDER_FILE_CRYPTED);
+            }
         }
     }
 
@@ -242,81 +281,6 @@ public:
             this->path += '/';
             ++this->base_path_len;
         }
-    }
-
-public:
-
-
-    bool open_wrm_followed_meta(const char* filename)
-    {
-    
-        LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
-        int fd = ::open(filename, O_RDONLY);
-        if (-1 == fd){
-            LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
-           throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
-        }
-        this->trans.fd = fd;
-    
-        if (!this->reader.selected_next_order()){
-            return false;
-        }
-        if (this->reader.chunk_type == WRMChunk::META_FILE) {
-            char filename[1024];
-            size_t len = this->reader.stream.in_uint32_le();
-            this->reader.stream.in_copy_bytes((uint8_t*)filename, len);
-            filename[len] = 0;
-            --this->reader.remaining_order_count;
-            
-            const char * filename2 = filename;
-            if (this->only_filename){
-                const char * tmp = strrchr(filename2 + strlen(filename2), '/');
-                if (tmp){
-                    filename2 = tmp+1;
-                }
-            }
-            if (this->base_path_len){
-                this->path.erase(this->base_path_len);
-                this->path += filename2;
-                filename2 = this->path.c_str();
-            }
-            return this->reader.load_data(filename2);
-        }
-        return true;
-    }
-
-    bool open_wrm_followed_meta(const char* filename, const char* filename_meta)
-    {
-        LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
-        int fd = ::open(filename, O_RDONLY);
-        if (-1 == fd){
-            LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
-           throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
-        }
-        this->trans.fd = fd;
-
-        
-        if (!this->reader.selected_next_order()){
-            return false;
-        }
-        if (this->reader.chunk_type == WRMChunk::META_FILE) {
-            this->reader.stream.p = this->reader.stream.end;
-            this->reader.remaining_order_count = 0;
-            
-            if (this->only_filename){
-                const char * tmp = strrchr(filename_meta + strlen(filename_meta), '/');
-                if (tmp){
-                    filename_meta = tmp+1;
-                }
-            }
-            if (this->base_path_len){
-                this->path.erase(this->base_path_len);
-                this->path += filename_meta;
-                filename_meta = this->path.c_str();
-            }
-            return this->reader.load_data(filename_meta);
-        }
-        return true;
     }
 
 
