@@ -33,6 +33,9 @@
 #include "auto_buffer.hpp"
 #include "cipher_transport.hpp"
 #include "zlib.hpp"
+#include "range_time_point.hpp"
+
+
 template<std::size_t N>
 struct HexadecimalOption
 {
@@ -98,6 +101,25 @@ private:
 typedef HexadecimalOption<EVP_MAX_KEY_LENGTH> HexadecimalKeyOption;
 typedef HexadecimalOption<EVP_MAX_IV_LENGTH> HexadecimalIVOption;
 
+struct InputType {
+    enum enum_t {
+        NOT_FOUND,
+        META_TYPE,
+        WRM_TYPE
+    };
+
+    typedef enum_t format_type;
+
+    static InputType::enum_t string_to_type(const std::string& s)
+    {
+        if (s == "mwrm")
+            return META_TYPE;
+        if (s == "wrm")
+            return WRM_TYPE;
+        return NOT_FOUND;
+    }
+};
+
 
 class WRMRecorder
 {
@@ -160,6 +182,209 @@ public:
         }
         return true;
     }
+
+    int wrm_recorder_init(
+        InputType::enum_t itype,
+        std::string & base_path,
+        bool ignore_dir_for_meta_in_wrm,
+        bool times_in_meta_are_false,
+        bool force_interpret_breakpoint,
+        range_time_point & range,
+        const EVP_CIPHER* in_crypt_mode,
+        HexadecimalKeyOption & in_crypt_key, 
+        HexadecimalIVOption & in_crypt_iv,
+        std::string & in_filename,
+        uint idx_start)
+    {
+        this->set_basepath(base_path);
+        this->only_filename = ignore_dir_for_meta_in_wrm;
+
+        try
+        {
+            switch (itype) {
+                case InputType::WRM_TYPE:
+                {
+                    if (in_crypt_key.size && !in_crypt_iv.size){
+                        in_crypt_iv.size = sizeof(in_crypt_iv.data);
+                        memcpy(in_crypt_iv.data, this->reader.data_meta.crypt_iv, sizeof(in_crypt_iv.data));
+                    }
+                    if (!this->_init_init_crypt(in_crypt_mode, in_crypt_key, in_crypt_iv)){
+                        return 3000;
+                    }
+                    const char * filename = in_filename.c_str();
+                    LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+                    int fd = ::open(filename, O_RDONLY);
+                    if (-1 == fd){
+                        LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+                       throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+                    }
+                    this->trans.fd = fd;
+                    if (!this->reader.selected_next_order())
+                    {
+                        std::cerr << in_filename << " is invalid wrm file" << std::endl;
+                        return 2001;
+                    }
+                    if (!this->reader.chunk_type == WRMChunk::META_FILE){
+                        std::cerr << this->reader.data_meta << '\n'
+                         << "Chunk META not found in " << filename << '\n' 
+                         << ". Chunk is " << this->reader.chunk_type << std::endl;
+                        return 2004;
+                    }
+                        
+                    char tmp_filename[1024];
+                    size_t len = this->reader.stream.in_uint32_le();
+                    this->reader.stream.in_copy_bytes((uint8_t*)tmp_filename, len);
+                    tmp_filename[len] = 0;
+                    --this->reader.remaining_order_count;
+                    
+                    const char * filename2 = tmp_filename;
+                    if (this->only_filename)
+                    {
+                        const char * tmp = strrchr(filename2 + strlen(filename2), '/');
+                        if (tmp){
+                            filename2 = tmp+1;
+                        }
+                    }
+                    if (this->base_path_len){
+                        this->path.erase(this->base_path_len);
+                        this->path += filename2;
+                        filename2 = this->path.c_str();
+                    }
+                    
+                    if (!this->reader.load_data(filename2)){
+                        std::cerr << "invalid meta chunck in " << in_filename << std::endl;
+                        return 2003;
+                    }
+                    if (!this->reader.data_meta.files.empty())
+                    {
+                        if (idx_start >= this->reader.data_meta.files.size()){
+                            return this->_init_idx_not_found(idx_start);
+                        }
+                        if (!times_in_meta_are_false){
+                            const std::vector<DataFile>& files = this->reader.data_meta.files;
+                            if (files[0].start_sec){
+                                const timeval tm = {files[0].start_sec, files[0].start_usec};
+                                uint64_t time = 0;
+                                for (uint idx = idx_start + 1; idx != files.size(); ++idx)
+                                {
+                                    const DataFile& data_file = files[idx];
+                                    if (data_file.start_sec)
+                                    {
+                                        timeval tm2 = {data_file.start_sec, data_file.start_usec};
+                                        uint64_t elapsed = difftimeval(tm2, tm) / 1000000;
+                                        if (elapsed > range.left.time)
+                                        {
+                                            range.left.time -= time;
+                                            break;
+                                        }
+                                        time = elapsed;
+                                        idx_start = idx;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else  if (idx_start >= this->reader.data_meta.files.size())
+                        return this->_init_idx_not_found(idx_start);
+                    if (idx_start != this->idx_file)
+                    {
+                        this->next_file(this->reader.data_meta.files[this->idx_file].wrm_filename.c_str());
+                    }
+                }
+                break;
+                case InputType::META_TYPE:
+                {
+                    if (!this->reader.load_data(in_filename.c_str()))
+                    {
+                        std::cerr << "open " << in_filename << ' ' << strerror(errno) << std::endl;
+                        return 2005;
+                    }
+                    if (idx_start >= this->reader.data_meta.files.size()){
+                        return this->_init_idx_not_found(idx_start);
+                    }
+                    if (!times_in_meta_are_false){
+                        const std::vector<DataFile>& files = this->reader.data_meta.files;
+                        if (files[0].start_sec){
+                            const timeval tm = {files[0].start_sec, files[0].start_usec};
+                            uint64_t time = 0;
+                            for (uint idx = idx_start + 1; idx != files.size(); ++idx)
+                            {
+                                const DataFile& data_file = files[idx];
+                                if (data_file.start_sec)
+                                {
+                                    timeval tm2 = {data_file.start_sec, data_file.start_usec};
+                                    uint64_t elapsed = difftimeval(tm2, tm) / 1000000;
+                                    if (elapsed > range.left.time)
+                                    {
+                                        range.left.time -= time;
+                                        break;
+                                    }
+                                    time = elapsed;
+                                    idx_start = idx;
+                                }
+                            }
+                        }
+                    }
+                    const char * filename = this->reader.data_meta.files[idx_start].wrm_filename.c_str();
+                    
+                    if (this->only_filename)
+                    {
+                        const char * tmp = strrchr(filename + strlen(filename), '/');
+                        if (tmp){
+                            filename = tmp+1;
+                        }
+                    }
+                    if (this->base_path_len){
+                        this->path.erase(this->base_path_len);
+                        this->path += filename;
+                        filename = this->path.c_str();
+                    }
+                    
+                    if (in_crypt_key.size && !in_crypt_iv.size){
+                        in_crypt_iv.size = sizeof(in_crypt_iv.data);
+                        memcpy(in_crypt_iv.data, this->reader.data_meta.crypt_iv, sizeof(in_crypt_iv.data));
+                    }
+                    if (!this->_init_init_crypt(in_crypt_mode, in_crypt_key, in_crypt_iv)){
+                        return 3000;
+                    }
+
+                    LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+                    int fd = ::open(filename, O_RDONLY);
+                    if (-1 == fd){
+                        LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+                       throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+                    }
+                    this->trans.fd = fd;
+                    if (this->reader.selected_next_order() 
+                    && this->reader.chunk_type == WRMChunk::META_FILE){
+                        this->reader.stream.p = this->reader.stream.end;
+                        this->reader.remaining_order_count = 0;
+                    }
+                    if (!this->reader.chunk_type == WRMChunk::META_FILE){
+                        std::cerr << this->reader.data_meta << '\n'
+                         << "Chunk META not found in " << filename << '\n' 
+                         << ". Chunk is " << this->reader.chunk_type << std::endl;
+                        return 2004;
+                    }
+                }
+                break;
+                default:
+                    std::cerr << "Input type not found" << std::endl;
+                    return 2000;
+            }
+            this->idx_file = idx_start + 1;
+            this->force_interpret_breakpoint = force_interpret_breakpoint;
+        }
+        catch (Error& error)
+        {
+            std::cerr << "Error " << error.id << ": " << strerror(error.errnum) << std::endl;
+            return 100000 + error.errnum;
+        }
+
+        return 0;
+    }
+
+
 
 public:
     WRMRecorder(const timeval & now,
