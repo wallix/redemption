@@ -39,70 +39,6 @@
 #include "range_time_point.hpp"
 #include "cipher.hpp"
 
-template<std::size_t N>
-struct HexadecimalOption
-{
-    unsigned char data[N];
-    std::size_t size;
-
-    HexadecimalOption()
-    : size(0)
-    {}
-
-    /**
-     * \param s value in hexadecimal base
-     */
-    bool parse(const std::string& s)
-    {
-        std::size_t n = s.size() / 2 + (s.size() & 1);
-        if (n > N || !transform_string_hex_to_data(s, this->data))
-            return false;
-        this->size = n;
-        while (n != N)
-            this->data[n++] = 0;
-        return true;
-    }
-
-private:
-    static bool transform_string_hex_to_data(const std::string& s,
-                                             unsigned char * pdata)
-    {
-        std::string::const_iterator first = s.begin();
-        std::string::const_iterator last = s.end();
-        char c;
-        if (s.size() & 1)
-            --last;
-        for (; first != last; ++first, ++pdata)
-        {
-            if (0xf == (*pdata = transform_c_hex_to_c_data(*first)))
-                return false;
-            if (0xf == (c = transform_c_hex_to_c_data(*++first)))
-                return false;
-            *pdata = (*pdata << 4) + c;
-        }
-        if (s.size() & 1)
-        {
-            if (0xf == (*pdata = transform_c_hex_to_c_data(*first)))
-                return false;
-            *pdata <<= 4;
-        }
-        return true;
-    }
-
-    static unsigned char transform_c_hex_to_c_data(char c)
-    {
-        if ('a' <= c && c <= 'f')
-            return c - 'a' + 0xa;
-        if ('A' <= c && c <= 'F')
-            return c - 'A' + 0xa;
-        if ('0' > c || c > '9')
-            return 0xf;
-        return c - '0';
-    }
-};
-
-typedef HexadecimalOption<EVP_MAX_KEY_LENGTH> HexadecimalKeyOption;
-typedef HexadecimalOption<EVP_MAX_IV_LENGTH> HexadecimalIVOption;
 
 namespace po = boost::program_options;
 
@@ -825,15 +761,8 @@ inline static int _wrm_recorder_init_meta_not_found(WRMRecorder& recorder,
     return 2004;
 }
 
-inline static int _wrm_recorder_init_idx_not_found(WRMRecorder& recorder,
-                                                   WrmRecorderOption& opt)
-{
-    std::cerr << "idx " << opt.idx_start << " not found" << std::endl;
-    return 2002;
-}
 
-inline static void _wrm_recorder_init_set_good_idx(WRMRecorder& recorder,
-                                                   WrmRecorderOption& opt)
+inline static void _wrm_recorder_init_set_good_idx(WRMRecorder& recorder, WrmRecorderOption& opt)
 {
     if (opt.times_in_meta_are_false)
         return ;
@@ -860,42 +789,6 @@ inline static void _wrm_recorder_init_set_good_idx(WRMRecorder& recorder,
     }
 }
 
-inline static bool _wrm_recorder_init_init_crypt(WRMRecorder& recorder,
-                                                 WrmRecorderOption& opt)
-{
-    if (opt.in_crypt_key.size)
-    {
-        if (!opt.in_crypt_iv.size)
-        {
-            opt.in_crypt_iv.size = sizeof(opt.in_crypt_iv.data);
-            memcpy(opt.in_crypt_iv.data,
-                   recorder.reader.data_meta.crypt_iv,
-                   sizeof(opt.in_crypt_iv.data));
-        }
-        
-        LOG(LOG_INFO, "init_cipher");
-        recorder.cipher_mode = (opt.in_crypt_mode ? opt.in_crypt_mode 
-                            : CipherMode::to_evp_cipher((CipherMode::enum_t)recorder.reader.data_meta.crypt_mode));
-        if (!recorder.cipher_mode){
-            return false;
-        }
-        if (!recorder.cipher_trans.start(recorder.cipher_mode, 
-                                         opt.in_crypt_key.data,
-                                         opt.in_crypt_iv.size ? opt.in_crypt_iv.data : 0,
-                                         0)){
-            recorder.cipher_mode = 0;
-            std::cerr << "Error in the initialization of the encryption" << std::endl;
-            return false;
-        }
-
-        recorder.cipher_key = opt.in_crypt_key.data;
-        recorder.cipher_iv = opt.in_crypt_iv.size ? opt.in_crypt_iv.data : 0;
-        recorder.cipher_impl = 0;
-        recorder.reader.trans = &recorder.cipher_trans;
-        recorder.trans.diff_size_is_error = false;
-    }
-    return true;
-}
 
 
 static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt, InputType::enum_t itype)
@@ -908,8 +801,13 @@ static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& op
         switch (itype) {
             case InputType::WRM_TYPE:
             {
-                if (!_wrm_recorder_init_init_crypt(recorder, opt))
+                if (opt.in_crypt_key.size && !opt.in_crypt_iv.size){
+                    opt.in_crypt_iv.size = sizeof(opt.in_crypt_iv.data);
+                    memcpy(opt.in_crypt_iv.data, recorder.reader.data_meta.crypt_iv, sizeof(opt.in_crypt_iv.data));
+                }
+                if (!recorder._init_init_crypt(opt.in_crypt_mode, opt.in_crypt_key, opt.in_crypt_iv)){
                     return 3000;
+                }
                 const char * filename = opt.in_filename.c_str();
                 LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
                 int fd = ::open(filename, O_RDONLY);
@@ -953,11 +851,11 @@ static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& op
                 if (!recorder.reader.data_meta.files.empty())
                 {
                     if (opt.idx_start >= recorder.reader.data_meta.files.size())
-                        return _wrm_recorder_init_idx_not_found(recorder, opt);
+                        return recorder._init_idx_not_found(opt.idx_start);
                     _wrm_recorder_init_set_good_idx(recorder, opt);
                 }
                 else  if (opt.idx_start >= recorder.reader.data_meta.files.size())
-                    return _wrm_recorder_init_idx_not_found(recorder, opt);
+                    return recorder._init_idx_not_found(opt.idx_start);
                 if (opt.idx_start != recorder.idx_file)
                 {
                     recorder.next_file(recorder.reader.data_meta.files[recorder.idx_file].wrm_filename.c_str());
@@ -972,7 +870,7 @@ static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& op
                     return 2005;
                 }
                 if (opt.idx_start >= recorder.reader.data_meta.files.size())
-                    return _wrm_recorder_init_idx_not_found(recorder, opt);
+                    return recorder._init_idx_not_found(opt.idx_start);
                 _wrm_recorder_init_set_good_idx(recorder, opt);
                 const char * filename = recorder.reader.data_meta.files[opt.idx_start].wrm_filename.c_str();
                 
@@ -989,7 +887,11 @@ static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& op
                     filename = recorder.path.c_str();
                 }
                 
-                if (!_wrm_recorder_init_init_crypt(recorder, opt)){
+                if (opt.in_crypt_key.size && !opt.in_crypt_iv.size){
+                    opt.in_crypt_iv.size = sizeof(opt.in_crypt_iv.data);
+                    memcpy(opt.in_crypt_iv.data, recorder.reader.data_meta.crypt_iv, sizeof(opt.in_crypt_iv.data));
+                }
+                if (!recorder._init_init_crypt(opt.in_crypt_mode, opt.in_crypt_key, opt.in_crypt_iv)){
                     return 3000;
                 }
 

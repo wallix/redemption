@@ -33,6 +33,71 @@
 #include "auto_buffer.hpp"
 #include "cipher_transport.hpp"
 #include "zlib.hpp"
+template<std::size_t N>
+struct HexadecimalOption
+{
+    unsigned char data[N];
+    std::size_t size;
+
+    HexadecimalOption()
+    : size(0)
+    {}
+
+    /**
+     * \param s value in hexadecimal base
+     */
+    bool parse(const std::string& s)
+    {
+        std::size_t n = s.size() / 2 + (s.size() & 1);
+        if (n > N || !transform_string_hex_to_data(s, this->data))
+            return false;
+        this->size = n;
+        while (n != N)
+            this->data[n++] = 0;
+        return true;
+    }
+
+private:
+    static bool transform_string_hex_to_data(const std::string& s,
+                                             unsigned char * pdata)
+    {
+        std::string::const_iterator first = s.begin();
+        std::string::const_iterator last = s.end();
+        char c;
+        if (s.size() & 1)
+            --last;
+        for (; first != last; ++first, ++pdata)
+        {
+            if (0xf == (*pdata = transform_c_hex_to_c_data(*first)))
+                return false;
+            if (0xf == (c = transform_c_hex_to_c_data(*++first)))
+                return false;
+            *pdata = (*pdata << 4) + c;
+        }
+        if (s.size() & 1)
+        {
+            if (0xf == (*pdata = transform_c_hex_to_c_data(*first)))
+                return false;
+            *pdata <<= 4;
+        }
+        return true;
+    }
+
+    static unsigned char transform_c_hex_to_c_data(char c)
+    {
+        if ('a' <= c && c <= 'f')
+            return c - 'a' + 0xa;
+        if ('A' <= c && c <= 'F')
+            return c - 'A' + 0xa;
+        if ('0' > c || c > '9')
+            return 0xf;
+        return c - '0';
+    }
+};
+
+typedef HexadecimalOption<EVP_MAX_KEY_LENGTH> HexadecimalKeyOption;
+typedef HexadecimalOption<EVP_MAX_IV_LENGTH> HexadecimalIVOption;
+
 
 class WRMRecorder
 {
@@ -60,6 +125,41 @@ public:
     bool force_interpret_breakpoint;
     bool interpret_breakpoint_is_passed;
 
+    int _init_idx_not_found(uint idx_start)
+    {
+        std::cerr << "idx " << idx_start << " not found" << std::endl;
+        return 2002;
+    }
+
+    bool _init_init_crypt(const EVP_CIPHER* in_crypt_mode,
+                          const HexadecimalKeyOption & in_crypt_key, 
+                          const HexadecimalIVOption & in_crypt_iv)
+    {
+        if (in_crypt_key.size)
+        {
+            LOG(LOG_INFO, "init_cipher");
+            this->cipher_mode = (in_crypt_mode?in_crypt_mode
+                                   :CipherMode::to_evp_cipher((CipherMode::enum_t)this->reader.data_meta.crypt_mode));
+            if (!this->cipher_mode){
+                return false;
+            }
+            if (!this->cipher_trans.start(this->cipher_mode, 
+                                             in_crypt_key.data,
+                                             in_crypt_iv.size ? in_crypt_iv.data : 0,
+                                             0)){
+                this->cipher_mode = 0;
+                std::cerr << "Error in the initialization of the encryption" << std::endl;
+                return false;
+            }
+
+            this->cipher_key = in_crypt_key.data;
+            this->cipher_iv = in_crypt_iv.size ? in_crypt_iv.data : 0;
+            this->cipher_impl = 0;
+            this->reader.trans = &this->cipher_trans;
+            this->trans.diff_size_is_error = false;
+        }
+        return true;
+    }
 
 public:
     WRMRecorder(const timeval & now,
@@ -85,47 +185,13 @@ public:
     , interpret_breakpoint_is_passed(false)
     {
         LOG(LOG_INFO, "WRMRecorder 3");
-        if (this->cipher_mode && !this->cipher_trans.start(this->cipher_mode, this->cipher_key, this->cipher_iv, this->cipher_impl))
+        if (this->cipher_mode 
+        && !this->cipher_trans.start(this->cipher_mode, this->cipher_key, this->cipher_iv, this->cipher_impl))
         {
             LOG(LOG_ERR, "Error cipher start in NativeCapture");
             throw Error(ERR_CIPHER_START);
         }
     }
-
-//    WRMRecorder(const timeval & now,
-//                int fd, const std::string basepath = "",
-//                const EVP_CIPHER * mode = 0,
-//                const unsigned char* key = 0,
-//                const unsigned char* iv = 0,
-//                ENGINE* impl = 0)
-//    : cipher_mode(mode)
-//    , cipher_key(key)
-//    , cipher_iv(iv)
-//    , cipher_impl(impl)
-//    , trans(0, this->cipher_mode ? false : true)
-//    , cipher_trans(&trans)
-//    , reader(this->cipher_mode ? (Transport*)&this->cipher_trans : &this->trans,
-//             now,
-//             0, Rect())
-//    , redrawable(0)
-//    , idx_file(0)
-//    , path(basepath)
-//    , base_path_len(basepath.length())
-//    , only_filename(false)
-//    , force_interpret_breakpoint(false)
-//    , interpret_breakpoint_is_passed(false)
-//    {
-//        LOG(LOG_INFO, "WRMRecorder 2");
-//        if (this->base_path_len && this->path[this->base_path_len - 1] != '/'){
-//            this->path += '/';
-//            ++this->base_path_len;
-//        }
-//        if (this->cipher_mode && !this->cipher_trans.start(this->cipher_mode, this->cipher_key, this->cipher_iv, this->cipher_impl))
-//        {
-//            LOG(LOG_ERR, "Error cipher start in NativeCapture");
-//            throw Error(ERR_CIPHER_START);
-//        }
-//    }
 
     WRMRecorder(const timeval & now,
                 const std::string& filename, const std::string basepath = "",
