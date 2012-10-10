@@ -52,7 +52,6 @@ public:
 public:
     std::size_t idx_file;
 
-private:
     std::string path;
     std::size_t base_path_len;
 
@@ -177,7 +176,19 @@ public:
                 throw Error(ERR_RECORDER_FILE_CRYPTED);
             }
 
-            const char * filename = this->get_cpath(this->reader.data_meta.files[0].wrm_filename.c_str());
+            const char * filename = this->reader.data_meta.files[0].wrm_filename.c_str();
+            if (this->only_filename)
+            {
+                const char * tmp = strrchr(filename + strlen(filename), '/');
+                if (tmp){
+                    filename = tmp+1;
+                }
+            }
+            if (this->base_path_len){
+                this->path.erase(this->base_path_len);
+                this->path += filename;
+                filename = this->path.c_str();
+            }
 
             LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
             int fd = ::open(filename, O_RDONLY);
@@ -188,7 +199,8 @@ public:
             this->trans.fd = fd;
 
             ++this->idx_file;
-            if (this->reader.selected_next_order() && this->is_meta_chunk()){
+            if (this->reader.selected_next_order() 
+            && this->reader.chunk_type == WRMChunk::META_FILE){
                 this->reader.stream.p = this->reader.stream.end;
                 this->reader.remaining_order_count = 0;
             }
@@ -232,44 +244,8 @@ public:
         }
     }
 
-    const char * get_cpath(const char * filename)
-    {
-        if (this->only_filename)
-        {
-            const char * tmp = filename;
-            while (1)
-            {
-                while (*tmp && *tmp != '/')
-                    ++tmp;
-                if (!*tmp)
-                    break;
-                filename = ++tmp;
-            }
-        }
-        if (!this->base_path_len)
-            return filename;
-        this->path.erase(this->base_path_len);
-        this->path += filename;
-        return this->path.c_str();
-    }
-
 public:
-    bool interpret_meta_chunk()
-    {
-        char filename[1024];
-        size_t len = this->reader.stream.in_uint32_le();
-        this->reader.stream.in_copy_bytes((uint8_t*)filename, len);
-        filename[len] = 0;
-        --this->reader.remaining_order_count;
-        return this->reader.load_data(this->get_cpath(filename));
-    }
 
-    bool interpret_meta_chunk_and_force_meta(const char* filename)
-    {
-        this->reader.stream.p = this->reader.stream.end;
-        this->reader.remaining_order_count = 0;
-        return this->reader.load_data(this->get_cpath(filename));
-    }
 
     bool open_wrm_followed_meta(const char* filename)
     {
@@ -285,8 +261,26 @@ public:
         if (!this->reader.selected_next_order()){
             return false;
         }
-        if (this->is_meta_chunk()) {
-            return this->interpret_meta_chunk();
+        if (this->reader.chunk_type == WRMChunk::META_FILE) {
+            char filename[1024];
+            size_t len = this->reader.stream.in_uint32_le();
+            this->reader.stream.in_copy_bytes((uint8_t*)filename, len);
+            filename[len] = 0;
+            --this->reader.remaining_order_count;
+            
+            const char * filename2 = filename;
+            if (this->only_filename){
+                const char * tmp = strrchr(filename2 + strlen(filename2), '/');
+                if (tmp){
+                    filename2 = tmp+1;
+                }
+            }
+            if (this->base_path_len){
+                this->path.erase(this->base_path_len);
+                this->path += filename2;
+                filename2 = this->path.c_str();
+            }
+            return this->reader.load_data(filename2);
         }
         return true;
     }
@@ -305,24 +299,26 @@ public:
         if (!this->reader.selected_next_order()){
             return false;
         }
-        if (this->is_meta_chunk()) {
-            return this->interpret_meta_chunk_and_force_meta(filename_meta);
+        if (this->reader.chunk_type == WRMChunk::META_FILE) {
+            this->reader.stream.p = this->reader.stream.end;
+            this->reader.remaining_order_count = 0;
+            
+            if (this->only_filename){
+                const char * tmp = strrchr(filename_meta + strlen(filename_meta), '/');
+                if (tmp){
+                    filename_meta = tmp+1;
+                }
+            }
+            if (this->base_path_len){
+                this->path.erase(this->base_path_len);
+                this->path += filename_meta;
+                filename_meta = this->path.c_str();
+            }
+            return this->reader.load_data(filename_meta);
         }
         return true;
     }
 
-    bool is_meta_chunk() const
-    { return this->reader.chunk_type == WRMChunk::META_FILE; }
-
-//    const DataMetaFile& meta() const
-//    {
-//        return this->reader.data_meta;
-//    }
-
-//    DataMetaFile& meta()
-//    {
-//        return this->reader.data_meta;
-//    }
 
 public:
     void next_file(const char * filename)
@@ -332,9 +328,21 @@ public:
             this->cipher_trans.stop();
         }
         this->trans.fd = -1;
-        const char * wrm_filename = this->get_cpath(filename);
-        LOG(LOG_INFO, "WRMRecorder opening file : %s", wrm_filename);
-        int fd = ::open(wrm_filename, O_RDONLY);
+        if (this->only_filename)
+        {
+            const char * tmp = strrchr(filename + strlen(filename), '/');
+            if (tmp){
+                filename = tmp+1;
+            }
+        }
+        if (this->base_path_len){
+            this->path.erase(this->base_path_len);
+            this->path += filename;
+            filename = this->path.c_str();
+        }
+
+        LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+        int fd = ::open(filename, O_RDONLY);
         if (-1 == fd){
             LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
            throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
@@ -355,7 +363,18 @@ public:
     {
         if (this->redrawable)
         {
-            filename = this->get_cpath(filename);
+            if (this->only_filename)
+            {
+                const char * tmp = strrchr(filename + strlen(filename), '/');
+                if (tmp){
+                    filename = tmp+1;
+                }
+            }
+            if (this->base_path_len){
+                this->path.erase(this->base_path_len);
+                this->path += filename;
+                filename = this->path.c_str();
+            }
             std::FILE* fd = std::fopen(filename, "r");
             if (0 == fd)
             {

@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     WRMRecorder reader(now, FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
     BOOST_CHECK(true);
     DataMetaFile& meta = reader.reader.data_meta;
-    BOOST_CHECK_EQUAL(reader.is_meta_chunk(), true);
+    BOOST_CHECK_EQUAL(reader.reader.chunk_type == WRMChunk::META_FILE, true);
     BOOST_CHECK_EQUAL(800, meta.width);
     BOOST_CHECK_EQUAL(600, meta.height);
 

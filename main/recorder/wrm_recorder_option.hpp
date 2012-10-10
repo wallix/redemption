@@ -898,8 +898,7 @@ inline static bool _wrm_recorder_init_init_crypt(WRMRecorder& recorder,
 }
 
 
-static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt,
-                      InputType::enum_t itype)
+static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& opt, InputType::enum_t itype)
 {
     recorder.set_basepath(opt.base_path);
     recorder.only_filename = opt.ignore_dir_for_meta_in_wrm;
@@ -924,10 +923,30 @@ static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& op
                     std::cerr << opt.in_filename << " is invalid wrm file" << std::endl;
                     return 2001;
                 }
-                if (!recorder.is_meta_chunk())
+                if (!recorder.reader.chunk_type == WRMChunk::META_FILE)
                     return _wrm_recorder_init_meta_not_found(recorder, filename);
-                if (!recorder.interpret_meta_chunk())
+                    
+                char tmp_filename[1024];
+                size_t len = recorder.reader.stream.in_uint32_le();
+                recorder.reader.stream.in_copy_bytes((uint8_t*)tmp_filename, len);
+                tmp_filename[len] = 0;
+                --recorder.reader.remaining_order_count;
+                
+                const char * filename2 = tmp_filename;
+                if (recorder.only_filename)
                 {
+                    const char * tmp = strrchr(filename2 + strlen(filename2), '/');
+                    if (tmp){
+                        filename2 = tmp+1;
+                    }
+                }
+                if (recorder.base_path_len){
+                    recorder.path.erase(recorder.base_path_len);
+                    recorder.path += filename2;
+                    filename2 = recorder.path.c_str();
+                }
+                
+                if (!recorder.reader.load_data(filename2)){
                     std::cerr << "invalid meta chunck in " << opt.in_filename << std::endl;
                     return 2003;
                 }
@@ -955,15 +974,25 @@ static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& op
                 if (opt.idx_start >= recorder.reader.data_meta.files.size())
                     return _wrm_recorder_init_idx_not_found(recorder, opt);
                 _wrm_recorder_init_set_good_idx(recorder, opt);
-                const char * wrm_filename = recorder.get_cpath(
-                    recorder.reader.data_meta
-                    .files[opt.idx_start]
-                    .wrm_filename.c_str()
-                );
-                if (!_wrm_recorder_init_init_crypt(recorder, opt))
+                const char * filename = recorder.reader.data_meta.files[opt.idx_start].wrm_filename.c_str();
+                
+                if (recorder.only_filename)
+                {
+                    const char * tmp = strrchr(filename + strlen(filename), '/');
+                    if (tmp){
+                        filename = tmp+1;
+                    }
+                }
+                if (recorder.base_path_len){
+                    recorder.path.erase(recorder.base_path_len);
+                    recorder.path += filename;
+                    filename = recorder.path.c_str();
+                }
+                
+                if (!_wrm_recorder_init_init_crypt(recorder, opt)){
                     return 3000;
+                }
 
-                const char * filename = wrm_filename;
                 LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
                 int fd = ::open(filename, O_RDONLY);
                 if (-1 == fd){
@@ -971,12 +1000,13 @@ static inline int wrm_recorder_init(WRMRecorder& recorder, WrmRecorderOption& op
                    throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
                 }
                 recorder.trans.fd = fd;
-                if (recorder.reader.selected_next_order() && recorder.is_meta_chunk()){
+                if (recorder.reader.selected_next_order() 
+                && recorder.reader.chunk_type == WRMChunk::META_FILE){
                     recorder.reader.stream.p = recorder.reader.stream.end;
                     recorder.reader.remaining_order_count = 0;
                 }
-                if (!recorder.is_meta_chunk()){
-                    return _wrm_recorder_init_meta_not_found(recorder, wrm_filename);
+                if (!recorder.reader.chunk_type == WRMChunk::META_FILE){
+                    return _wrm_recorder_init_meta_not_found(recorder, filename);
                 }
             }
             break;

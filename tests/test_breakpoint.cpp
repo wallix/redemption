@@ -77,7 +77,21 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
         throw Error(ERR_RECORDER_FILE_CRYPTED);
     }
     
-    const char * filename = recorder.get_cpath(recorder.reader.data_meta.files[0].wrm_filename.c_str());
+    const char * filename = recorder.reader.data_meta.files[0].wrm_filename.c_str();
+    
+    if (recorder.only_filename)
+    {
+        const char * tmp = strrchr(filename + strlen(filename), '/');
+        if (tmp){
+            filename = tmp+1;
+        }
+    }
+    if (recorder.base_path_len){
+        recorder.path.erase(recorder.base_path_len);
+        recorder.path += filename;
+        filename = recorder.path.c_str();
+    }
+    
     LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
     int fd = ::open(filename, O_RDONLY);
     if (-1 == fd){
@@ -87,7 +101,8 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     recorder.trans.fd = fd;
     
     ++recorder.idx_file;
-    if (recorder.reader.selected_next_order() && recorder.is_meta_chunk()){
+    if (recorder.reader.selected_next_order() 
+    && recorder.reader.chunk_type == WRMChunk::META_FILE){
         recorder.reader.stream.p = recorder.reader.stream.end;
         recorder.reader.remaining_order_count = 0;
     }
