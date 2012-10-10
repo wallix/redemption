@@ -68,30 +68,32 @@ int main(int argc, char** argv)
     if (!parse_command_line(opt, argc, argv)){
         return 0;
     }
-
     InputType::enum_t itype;
-    if (int error = opt.prepare(itype)){
+    int error = opt.prepare(itype);
+    if (error){
         return error;
     }
     timeval now;
     gettimeofday(&now, NULL);
 
     WRMRecorder recorder(now);
-    if (int error = recorder.wrm_recorder_init(itype, 
-                    opt.base_path, 
-                    opt.ignore_dir_for_meta_in_wrm,
-                    opt.times_in_meta_are_false,
-                    opt.force_interpret_breakpoint,
-                    opt.range,
-                    opt.in_crypt_mode,
-                    opt.in_crypt_key, 
-                    opt.in_crypt_iv,
-                    opt.in_filename,
-                    opt.idx_start)){
-        return error;
+    try {
+        recorder.wrm_recorder_init(itype, 
+                        opt.base_path, 
+                        opt.ignore_dir_for_meta_in_wrm,
+                        opt.times_in_meta_are_false,
+                        opt.force_interpret_breakpoint,
+                        opt.range,
+                        opt.in_crypt_mode,
+                        opt.in_crypt_key, 
+                        opt.in_crypt_iv,
+                        opt.in_filename,
+                        opt.idx_start);
+    } catch(const Error & e) {
+        error = e.id;
     }
 
-    {
+    if (error){
         const DataMetaFile& meta = recorder.reader.data_meta;
         std::cout << "meta v" << meta.version
         << "\nwidth: " << meta.width

@@ -147,12 +147,6 @@ public:
     bool force_interpret_breakpoint;
     bool interpret_breakpoint_is_passed;
 
-    int _init_idx_not_found(uint idx_start)
-    {
-        std::cerr << "idx " << idx_start << " not found" << std::endl;
-        return 2002;
-    }
-
     bool _init_init_crypt(const EVP_CIPHER* in_crypt_mode,
                           const HexadecimalKeyOption & in_crypt_key, 
                           const HexadecimalIVOption & in_crypt_iv)
@@ -183,7 +177,7 @@ public:
         return true;
     }
 
-    int wrm_recorder_init(
+    void wrm_recorder_init(
         InputType::enum_t itype,
         std::string & base_path,
         bool ignore_dir_for_meta_in_wrm,
@@ -209,7 +203,7 @@ public:
                         memcpy(in_crypt_iv.data, this->reader.data_meta.crypt_iv, sizeof(in_crypt_iv.data));
                     }
                     if (!this->_init_init_crypt(in_crypt_mode, in_crypt_key, in_crypt_iv)){
-                        return 3000;
+                        throw Error(ERR_WRM_INVALID_INIT_CRYPT);
                     }
                     const char * filename = in_filename.c_str();
                     LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
@@ -222,13 +216,13 @@ public:
                     if (!this->reader.selected_next_order())
                     {
                         std::cerr << in_filename << " is invalid wrm file" << std::endl;
-                        return 2001;
+                        throw Error(ERR_WRM_INVALID_FILE);
                     }
                     if (!this->reader.chunk_type == WRMChunk::META_FILE){
                         std::cerr << this->reader.data_meta << '\n'
                          << "Chunk META not found in " << filename << '\n' 
                          << ". Chunk is " << this->reader.chunk_type << std::endl;
-                        return 2004;
+                        throw Error(ERR_WRM_CHUNK_META_NOT_FOUND);
                     }
                         
                     char tmp_filename[1024];
@@ -253,12 +247,13 @@ public:
                     
                     if (!this->reader.load_data(filename2)){
                         std::cerr << "invalid meta chunck in " << in_filename << std::endl;
-                        return 2003;
+                        throw Error(ERR_WRM_INVALID_META_CHUNK);
                     }
                     if (!this->reader.data_meta.files.empty())
                     {
                         if (idx_start >= this->reader.data_meta.files.size()){
-                            return this->_init_idx_not_found(idx_start);
+                            std::cerr << "idx " << idx_start << " not found" << std::endl;
+                            throw Error(ERR_WRM_IDX_NOT_FOUND);
                         }
                         if (!times_in_meta_are_false){
                             const std::vector<DataFile>& files = this->reader.data_meta.files;
@@ -284,8 +279,10 @@ public:
                             }
                         }
                     }
-                    else  if (idx_start >= this->reader.data_meta.files.size())
-                        return this->_init_idx_not_found(idx_start);
+                    else  if (idx_start >= this->reader.data_meta.files.size()){
+                        std::cerr << "idx " << idx_start << " not found" << std::endl;
+                        throw Error(ERR_WRM_IDX_NOT_FOUND);
+                    }
                     if (idx_start != this->idx_file)
                     {
                         this->next_file(this->reader.data_meta.files[this->idx_file].wrm_filename.c_str());
@@ -297,10 +294,11 @@ public:
                     if (!this->reader.load_data(in_filename.c_str()))
                     {
                         std::cerr << "open " << in_filename << ' ' << strerror(errno) << std::endl;
-                        return 2005;
+                        throw Error(ERR_WRM_FAILED_OPENING_META_FILENAME);
                     }
                     if (idx_start >= this->reader.data_meta.files.size()){
-                        return this->_init_idx_not_found(idx_start);
+                        std::cerr << "idx " << idx_start << " not found" << std::endl;
+                        throw Error(ERR_WRM_IDX_NOT_FOUND);
                     }
                     if (!times_in_meta_are_false){
                         const std::vector<DataFile>& files = this->reader.data_meta.files;
@@ -345,7 +343,7 @@ public:
                         memcpy(in_crypt_iv.data, this->reader.data_meta.crypt_iv, sizeof(in_crypt_iv.data));
                     }
                     if (!this->_init_init_crypt(in_crypt_mode, in_crypt_key, in_crypt_iv)){
-                        return 3000;
+                        throw Error(ERR_CIPHER_START);
                     }
 
                     LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
@@ -364,24 +362,22 @@ public:
                         std::cerr << this->reader.data_meta << '\n'
                          << "Chunk META not found in " << filename << '\n' 
                          << ". Chunk is " << this->reader.chunk_type << std::endl;
-                        return 2004;
+                        throw Error(ERR_WRM_CHUNK_META_NOT_FOUND);
                     }
                 }
                 break;
                 default:
                     std::cerr << "Input type not found" << std::endl;
-                    return 2000;
+                    throw Error(ERR_WRM);
             }
             this->idx_file = idx_start + 1;
             this->force_interpret_breakpoint = force_interpret_breakpoint;
         }
-        catch (Error& error)
+        catch (const Error& error)
         {
             std::cerr << "Error " << error.id << ": " << strerror(error.errnum) << std::endl;
-            return 100000 + error.errnum;
+            throw error;
         }
-
-        return 0;
     }
 
 
