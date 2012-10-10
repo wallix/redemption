@@ -92,40 +92,40 @@ public:
         }
     }
 
-    WRMRecorder(const timeval & now,
-                int fd, const std::string basepath = "",
-                const EVP_CIPHER * mode = 0,
-                const unsigned char* key = 0,
-                const unsigned char* iv = 0,
-                ENGINE* impl = 0)
-    : cipher_mode(mode)
-    , cipher_key(key)
-    , cipher_iv(iv)
-    , cipher_impl(impl)
-    , trans(0, this->cipher_mode ? false : true)
-    , cipher_trans(&trans)
-    , reader(this->cipher_mode ? (Transport*)&this->cipher_trans : &this->trans,
-             now,
-             0, Rect())
-    , redrawable(0)
-    , idx_file(0)
-    , path(basepath)
-    , base_path_len(basepath.length())
-    , only_filename(false)
-    , force_interpret_breakpoint(false)
-    , interpret_breakpoint_is_passed(false)
-    {
-        LOG(LOG_INFO, "WRMRecorder 2");
-        if (this->base_path_len && this->path[this->base_path_len - 1] != '/'){
-            this->path += '/';
-            ++this->base_path_len;
-        }
-        if (this->cipher_mode && !this->cipher_trans.start(this->cipher_mode, this->cipher_key, this->cipher_iv, this->cipher_impl))
-        {
-            LOG(LOG_ERR, "Error cipher start in NativeCapture");
-            throw Error(ERR_CIPHER_START);
-        }
-    }
+//    WRMRecorder(const timeval & now,
+//                int fd, const std::string basepath = "",
+//                const EVP_CIPHER * mode = 0,
+//                const unsigned char* key = 0,
+//                const unsigned char* iv = 0,
+//                ENGINE* impl = 0)
+//    : cipher_mode(mode)
+//    , cipher_key(key)
+//    , cipher_iv(iv)
+//    , cipher_impl(impl)
+//    , trans(0, this->cipher_mode ? false : true)
+//    , cipher_trans(&trans)
+//    , reader(this->cipher_mode ? (Transport*)&this->cipher_trans : &this->trans,
+//             now,
+//             0, Rect())
+//    , redrawable(0)
+//    , idx_file(0)
+//    , path(basepath)
+//    , base_path_len(basepath.length())
+//    , only_filename(false)
+//    , force_interpret_breakpoint(false)
+//    , interpret_breakpoint_is_passed(false)
+//    {
+//        LOG(LOG_INFO, "WRMRecorder 2");
+//        if (this->base_path_len && this->path[this->base_path_len - 1] != '/'){
+//            this->path += '/';
+//            ++this->base_path_len;
+//        }
+//        if (this->cipher_mode && !this->cipher_trans.start(this->cipher_mode, this->cipher_key, this->cipher_iv, this->cipher_impl))
+//        {
+//            LOG(LOG_ERR, "Error cipher start in NativeCapture");
+//            throw Error(ERR_CIPHER_START);
+//        }
+//    }
 
     WRMRecorder(const timeval & now,
                 const std::string& filename, const std::string basepath = "",
