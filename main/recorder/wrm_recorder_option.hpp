@@ -278,6 +278,11 @@ public:
     HexadecimalIVOption out_crypt_iv;
     CipherInfo out_cipher_info;
 
+    std::vector<relative_range_time_point> range_list;
+    std::string video_quality;
+    uint video_speed;
+    std::string video_screen_filename;
+    std::size_t video_screen_start;
 
     WrmRecorderOption()
     : desc("Options")
@@ -312,6 +317,12 @@ public:
     , out_crypt_key()
     , out_crypt_iv()
     , out_cipher_info()
+    
+    , range_list()
+    , video_quality("high")
+    , video_speed(1)
+    , video_screen_filename()
+    , video_screen_start(0)
     {
         this->add_default_options();
     }
@@ -355,7 +366,9 @@ public:
         ENCRIPT_KEY_OR_IV_WITHOUT_MODE,
         OUT_FILENAME_IS_EMPTY,
         OUTPUT_KEY_OVERLOAD,
-        OUTPUT_IV_OVERLOAD
+        OUTPUT_IV_OVERLOAD,
+        VIDEO_QUALITY_IS_UNKNOW,
+        SUPERPOSITION_RANGE_TIME_POINT,
     };
 
 
@@ -379,7 +392,11 @@ public:
             return "Overload --out-crypt-key";
         if (error == OUTPUT_IV_OVERLOAD)
             return "Overload --out-crypt-iv";
-        return WrmRecorderOption::get_cerror(error);
+        if (VIDEO_QUALITY_IS_UNKNOW == error)
+            return "Incorrect video quality";
+        if (SUPERPOSITION_RANGE_TIME_POINT == error)
+            return "Range list value is superposed";
+        return 0;
     }
 
 
@@ -516,6 +533,16 @@ public:
         ("out-crypt-iv", po::value(&this->out_crypt_iv), "IV in hexadecimal base")
         ("out-crypt-mode", po::value(&this->out_crypt_mode), "see --in-crypt-mode")
         ;
+        
+        this->desc.add_options()
+        ("range-list,L", po::value(&this->range_list)->multitoken(), 
+            "intervals of capture, see --range. Set --output-type with 'flv.list' if not done")
+        ("video-quality,q", po::value(&this->video_quality), "only with video format, accept 'high' or 'low'. Default is 'high'.")
+        ("video-speed,S", po::value(&this->video_speed), "only with video format, speed multiplier.")
+        ("video-screen-filename,P", po::value(&this->video_screen_filename), "only with --output-type 'png.flv'")
+        ("video-screen-start,A", po::value(&this->video_screen_start), "")
+        ;
+
     }
 
     template<typename _ForwardIterator>
@@ -584,6 +611,10 @@ public:
             if (this->out_crypt_iv.size > this->out_cipher_info.iv_len())
                 return OUTPUT_IV_OVERLOAD;
         }
+
+        if (this->video_quality != "high" 
+        && this->video_quality != "low")
+            return VIDEO_QUALITY_IS_UNKNOW;
 
         return SUCCESS;
     }
@@ -669,6 +700,66 @@ public:
             if (this->range.left < this->time_list.front().point)
             {
                 this->range.left = std::min(this->time_list.front().point, this->range.right);
+            }
+        }
+
+        if (this->options.find("range-list") != this->options.end())
+        {
+            typedef std::vector<relative_range_time_point>::iterator iterator;
+            if (this->range_list.size() >= 1)
+            {
+                iterator first = this->range_list.begin();
+                if ('-' == first->symbol)
+                    first->point.left.time = -first->point.left.time;
+                first->symbol = 0;
+
+                if (this->range_list.size() > 1)
+                {
+                    iterator last = this->range_list.end();
+                    for (iterator prev = first++; first != last; ++first, ++prev)
+                    {
+                        if (first->symbol)
+                        {
+                            if ('+' == first->symbol)
+                            {
+                                first->point.left.time += prev->point.right.time;
+                                first->point.right.time += prev->point.right.time;
+                            }
+                            else
+                            {
+                                first->point.left.time = prev->point.right.time - first->point.left.time;
+                                first->point.right.time = prev->point.right.time - first->point.left.time;
+                            }
+                            first->symbol = 0;
+                        }
+                    }
+                    for (first = this->range_list.begin(); first != last; ++first)
+                    {
+                        if (!first->point.valid())
+                            std::swap(first->point.right, first->point.left);
+                    }
+                    std::sort<>(this->range_list.begin(), this->range_list.end(),
+                                relative_range_time_point_less_only_point());
+                    first = this->range_list.begin();
+                    for (iterator prev = first++; first != last; ++first)
+                    {
+                        if (first->point.left < prev->point.right)
+                            return SUPERPOSITION_RANGE_TIME_POINT;
+                    }
+                }
+            }
+
+            if (this->options.find("time-list") == this->options.end() 
+            && this->options.find("output-type") == this->options.end()){
+                this->output_type = "flv.list";
+            }
+
+            if (!this->range_list.empty() && this->output_type == "flv.list")
+            {
+                if (this->range.left < this->range_list.front().point.left)
+                {
+                    this->range.left = std::min(this->range_list.front().point.left, this->range.right);
+                }
             }
         }
 
