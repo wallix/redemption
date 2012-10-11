@@ -42,9 +42,7 @@
 namespace po = boost::program_options;
 
 template<typename _T>
-void validate_time_or_throw_invalid_option_value(boost::any& v,
-                                                 const std::vector<std::string>& values,
-                                                 _T*)
+void validate_time_or_throw_invalid_option_value(boost::any& v, const std::vector<std::string>& values, _T*)
 {
     po::validators::check_first_occurrence(v);
     // Extract the first string from 'values'. If there is more than
@@ -324,118 +322,6 @@ public:
     , video_screen_filename()
     , video_screen_start(0)
     {
-        this->add_default_options();
-    }
-
-    bool parse_command_line(int argc, char** argv)
-    {
-        po::positional_options_description p;
-        p.add("input-file", -1);
-        po::store(
-            po::command_line_parser(argc, argv).options(
-                this->desc
-            ).positional(p).run(),
-            this->options
-        );
-
-        if (this->options.count("version")) {
-            std::cout << argv[0] << ' ' << this->version() << std::endl;
-            return false;
-        }
-
-        if (this->options.count("help")) {
-            std::cout << this->desc;
-            return false;
-        }
-
-        return true;
-    }
-
-    virtual const char * version() const
-    {
-        return VERSION;
-    };
-
-    enum Error {
-        SUCCESS,
-        IN_FILENAME_IS_EMPTY,
-        UNSPECIFIED_DECRIPT_KEY,
-        INPUT_KEY_OVERLOAD,
-        INPUT_IV_OVERLOAD,
-        UNSPECIFIED_ENCRIPT_KEY,
-        ENCRIPT_KEY_OR_IV_WITHOUT_MODE,
-        OUT_FILENAME_IS_EMPTY,
-        OUTPUT_KEY_OVERLOAD,
-        OUTPUT_IV_OVERLOAD,
-        VIDEO_QUALITY_IS_UNKNOW,
-        SUPERPOSITION_RANGE_TIME_POINT,
-    };
-
-
-    virtual const char * get_cerror(int error)
-    {
-        if (error == IN_FILENAME_IS_EMPTY)
-            return "Not input-file";
-        if (error == UNSPECIFIED_DECRIPT_KEY)
-            return "Unspecified decript key";
-        if (error == INPUT_KEY_OVERLOAD)
-            return "Overload --in-crypt-key";
-        if (error == INPUT_IV_OVERLOAD)
-            return "Overload --in-crypt-iv";
-        if (error == SUCCESS)
-            return "Success";
-        if (error == OUT_FILENAME_IS_EMPTY)
-            return "Not output-file";
-        if (error == ENCRIPT_KEY_OR_IV_WITHOUT_MODE)
-            return "Set --out-crypt-key or --out-crypt-iv without --out-crypt-mode";
-        if (error == OUTPUT_KEY_OVERLOAD)
-            return "Overload --out-crypt-key";
-        if (error == OUTPUT_IV_OVERLOAD)
-            return "Overload --out-crypt-iv";
-        if (VIDEO_QUALITY_IS_UNKNOW == error)
-            return "Incorrect video quality";
-        if (SUPERPOSITION_RANGE_TIME_POINT == error)
-            return "Range list value is superposed";
-        return 0;
-    }
-
-
-    InputType::enum_t get_input_type()
-    {
-        if (!this->input_type.empty()){
-            return InputType::string_to_type(this->input_type);
-        }
-        const std::size_t pos = this->in_filename.find_last_of('.');
-        return InputType::string_to_type(this->in_filename.substr(pos + 1));
-    }
-
-    int prepare(InputType::enum_t& itype)
-    {
-        int error = this->notify_options();
-        if (error){
-            std::cerr << this->get_cerror(error) << std::endl;
-            return error;
-        }
-
-        itype = this->get_input_type();
-        if (itype == InputType::NOT_FOUND){
-            std::cerr
-            << "Incorrect input-type, "
-            << this->desc.find("input-type", false).description() << std::endl;
-            return 1000;
-        }
-
-        error = this->normalize_options();
-        if (error){
-            std::cerr << this->get_cerror(error) << std::endl;
-            return error;
-        }
-
-        return 0;
-    }
-
-    void add_default_options()
-    {
         this->desc.add_options()
         // --help, -h
         ("help,h", "produce help message")
@@ -542,35 +428,91 @@ public:
         ("video-screen-filename,P", po::value(&this->video_screen_filename), "only with --output-type 'png.flv'")
         ("video-screen-start,A", po::value(&this->video_screen_start), "")
         ;
-
     }
 
-    template<typename _ForwardIterator>
-    void accept_output_type(_ForwardIterator first, _ForwardIterator last)
+    bool parse_command_line(int argc, char** argv)
     {
-        if (first == last){
-            throw std::runtime_error("output type is empty");
+        po::positional_options_description p;
+        p.add("input-file", -1);
+        po::store(
+            po::command_line_parser(argc, argv).options(
+                this->desc
+            ).positional(p).run(),
+            this->options
+        );
+
+        if (this->options.count("version")) {
+            std::cout << argv[0] << ' ' << this->version() << std::endl;
+            return false;
         }
-        std::string output_type_desc = "accept ";
-        for (; first != last; ++first){
-            output_type_desc += '\'';
-            output_type_desc += *first;
-            output_type_desc += "', ";
+
+        if (this->options.count("help")) {
+            std::cout << this->desc;
+            return false;
         }
-        output_type_desc.erase(output_type_desc.size() - 2);
-        std::size_t pos = output_type_desc.find_last_of(',');
-        if (pos != std::string::npos){
-            output_type_desc[pos] = ' ';
-            output_type_desc.insert(pos + 1, "or");
-        }
-        this->add_output_type(output_type_desc);
+
+        return true;
     }
 
-    /**
-     * Return 0 if success.
-     * @{
-     */
-    virtual int notify_options()
+    virtual const char * version() const
+    {
+        return VERSION;
+    };
+
+    enum Error {
+        SUCCESS,
+        IN_FILENAME_IS_EMPTY,
+        UNSPECIFIED_DECRIPT_KEY,
+        INPUT_KEY_OVERLOAD,
+        INPUT_IV_OVERLOAD,
+        UNSPECIFIED_ENCRIPT_KEY,
+        ENCRIPT_KEY_OR_IV_WITHOUT_MODE,
+        OUT_FILENAME_IS_EMPTY,
+        OUTPUT_KEY_OVERLOAD,
+        OUTPUT_IV_OVERLOAD,
+        VIDEO_QUALITY_IS_UNKNOW,
+        SUPERPOSITION_RANGE_TIME_POINT,
+    };
+
+
+    virtual const char * get_cerror(int error)
+    {
+        if (error == IN_FILENAME_IS_EMPTY)
+            return "Not input-file";
+        if (error == UNSPECIFIED_DECRIPT_KEY)
+            return "Unspecified decript key";
+        if (error == INPUT_KEY_OVERLOAD)
+            return "Overload --in-crypt-key";
+        if (error == INPUT_IV_OVERLOAD)
+            return "Overload --in-crypt-iv";
+        if (error == SUCCESS)
+            return "Success";
+        if (error == OUT_FILENAME_IS_EMPTY)
+            return "Not output-file";
+        if (error == ENCRIPT_KEY_OR_IV_WITHOUT_MODE)
+            return "Set --out-crypt-key or --out-crypt-iv without --out-crypt-mode";
+        if (error == OUTPUT_KEY_OVERLOAD)
+            return "Overload --out-crypt-key";
+        if (error == OUTPUT_IV_OVERLOAD)
+            return "Overload --out-crypt-iv";
+        if (VIDEO_QUALITY_IS_UNKNOW == error)
+            return "Incorrect video quality";
+        if (SUPERPOSITION_RANGE_TIME_POINT == error)
+            return "Range list value is superposed";
+        return 0;
+    }
+
+
+    InputType::enum_t get_input_type()
+    {
+        if (!this->input_type.empty()){
+            return InputType::string_to_type(this->input_type);
+        }
+        const std::size_t pos = this->in_filename.find_last_of('.');
+        return InputType::string_to_type(this->in_filename.substr(pos + 1));
+    }
+
+    int prepare(InputType::enum_t& itype)
     {
         po::notify(this->options);
 
@@ -578,15 +520,17 @@ public:
             return IN_FILENAME_IS_EMPTY;
         }
 
-        if (this->in_crypt_mode)
-        {
-            if (!this->in_crypt_key.size)
+        if (this->in_crypt_mode){
+            if (!this->in_crypt_key.size){
                 return UNSPECIFIED_DECRIPT_KEY;
+            }
             this->in_cipher_info.set_context(this->in_crypt_mode);
-            if (this->in_crypt_key.size > this->in_cipher_info.key_len())
+            if (this->in_crypt_key.size > this->in_cipher_info.key_len()){
                 return INPUT_KEY_OVERLOAD;
-            if (this->in_crypt_iv.size > this->in_cipher_info.iv_len())
+            }
+            if (this->in_crypt_iv.size > this->in_cipher_info.iv_len()){
                 return INPUT_IV_OVERLOAD;
+            }
         }
 
         if (this->out_filename.empty()){
@@ -594,33 +538,40 @@ public:
         }
 
         if ((this->out_crypt_iv.size || this->out_crypt_key.size)
-            && !this->out_crypt_mode)
+            && !this->out_crypt_mode){
             return ENCRIPT_KEY_OR_IV_WITHOUT_MODE;
+        }
 
         if (this->out_crypt_mode && !this->out_crypt_key.size){
             return UNSPECIFIED_ENCRIPT_KEY;
         }
 
-        if (this->out_crypt_mode)
-        {
-            if (!this->out_crypt_key.size)
+        if (this->out_crypt_mode){
+            if (!this->out_crypt_key.size){
                 return UNSPECIFIED_DECRIPT_KEY;
+            }
             this->out_cipher_info.set_context(CipherMode::to_evp_cipher(this->out_crypt_mode));
-            if (this->out_crypt_key.size > this->out_cipher_info.key_len())
+            if (this->out_crypt_key.size > this->out_cipher_info.key_len()){
                 return OUTPUT_KEY_OVERLOAD;
-            if (this->out_crypt_iv.size > this->out_cipher_info.iv_len())
+            }
+            if (this->out_crypt_iv.size > this->out_cipher_info.iv_len()){
                 return OUTPUT_IV_OVERLOAD;
+            }
         }
 
         if (this->video_quality != "high" 
-        && this->video_quality != "low")
+        && this->video_quality != "low"){
             return VIDEO_QUALITY_IS_UNKNOW;
+        }
 
-        return SUCCESS;
-    }
+        itype = this->get_input_type();
+        if (itype == InputType::NOT_FOUND){
+            std::cerr
+            << "Incorrect input-type, "
+            << this->desc.find("input-type", false).description() << std::endl;
+            return 1000;
+        }
 
-    virtual int normalize_options()
-    {
         if (!this->range.valid()){
             std::swap<>(this->range.left, this->range.right);
         }
@@ -633,31 +584,26 @@ public:
         if (this->options.find("times-in-meta-file-are-false") != end)
             this->times_in_meta_are_false = true;
 
-        if (this->options.find("deduce-dir") != end)
-        {
+        if (this->options.find("deduce-dir") != end){
             this->ignore_dir_for_meta_in_wrm = true;
             std::size_t pos = this->in_filename.find_last_of('/');
             if (std::string::npos != pos)
                 this->base_path = this->in_filename.substr(0, pos+1);
         }
 
-        if (this->options.find("time-list") != end)
-        {
+        if (this->options.find("time-list") != end){
             typedef std::vector<relative_time_point>::iterator iterator;
-            if (this->time_list.size() >= 1)
-            {
+            if (this->time_list.size() >= 1){
                 iterator first = this->time_list.begin();
-                if ('-' == first->symbol)
+                if ('-' == first->symbol){
                     first->point.time = -first->point.time;
+                }
                 first->symbol = 0;
 
-                if (this->time_list.size() > 1)
-                {
+                if (this->time_list.size() > 1){
                     for (iterator prev = first++, last = this->time_list.end();
-                         first != last; ++first, ++prev)
-                    {
-                        if (first->symbol)
-                        {
+                         first != last; ++first, ++prev){
+                        if (first->symbol){
                             if ('+' == first->symbol){
                                 first->point += prev->point;
                             }
@@ -683,8 +629,9 @@ public:
                 pair_type("concat-wrm",         this->cat_wrm),
             };
             for (std::size_t n = 0; n < sizeof(p)/sizeof(p[0]); ++n) {
-                if (this->options.find(p[n].first) != end)
+                if (this->options.find(p[n].first) != end){
                     p[n].second = true;
+                }
             }
         }
 
@@ -695,85 +642,64 @@ public:
         }
 
         if (!this->time_list.empty() 
-        && this->output_type == "png.list")
-        {
-            if (this->range.left < this->time_list.front().point)
-            {
+        && this->output_type == "png.list"){
+            if (this->range.left < this->time_list.front().point){
                 this->range.left = std::min(this->time_list.front().point, this->range.right);
             }
         }
 
-        if (this->options.find("range-list") != this->options.end())
-        {
+        if (this->options.find("range-list") != this->options.end()){
             typedef std::vector<relative_range_time_point>::iterator iterator;
-            if (this->range_list.size() >= 1)
-            {
+            if (this->range_list.size() >= 1){
                 iterator first = this->range_list.begin();
                 if ('-' == first->symbol)
                     first->point.left.time = -first->point.left.time;
                 first->symbol = 0;
 
-                if (this->range_list.size() > 1)
-                {
+                if (this->range_list.size() > 1){
                     iterator last = this->range_list.end();
-                    for (iterator prev = first++; first != last; ++first, ++prev)
-                    {
-                        if (first->symbol)
-                        {
-                            if ('+' == first->symbol)
-                            {
+                    for (iterator prev = first++; first != last; ++first, ++prev){
+                        if (first->symbol){
+                            if ('+' == first->symbol){
                                 first->point.left.time += prev->point.right.time;
                                 first->point.right.time += prev->point.right.time;
                             }
-                            else
-                            {
+                            else {
                                 first->point.left.time = prev->point.right.time - first->point.left.time;
                                 first->point.right.time = prev->point.right.time - first->point.left.time;
                             }
                             first->symbol = 0;
                         }
                     }
-                    for (first = this->range_list.begin(); first != last; ++first)
-                    {
-                        if (!first->point.valid())
+                    for (first = this->range_list.begin(); first != last; ++first){
+                        if (!first->point.valid()){
                             std::swap(first->point.right, first->point.left);
+                        }
                     }
-                    std::sort<>(this->range_list.begin(), this->range_list.end(),
-                                relative_range_time_point_less_only_point());
+                    std::sort<>(this->range_list.begin(), this->range_list.end(), relative_range_time_point_less_only_point());
                     first = this->range_list.begin();
-                    for (iterator prev = first++; first != last; ++first)
-                    {
-                        if (first->point.left < prev->point.right)
+                    for (iterator prev = first++; first != last; ++first){
+                        if (first->point.left < prev->point.right){
                             return SUPERPOSITION_RANGE_TIME_POINT;
+                        }
                     }
                 }
             }
 
-            if (this->options.find("time-list") == this->options.end() 
+            if (this->options.find("time-list") != this->options.end() 
             && this->options.find("output-type") == this->options.end()){
                 this->output_type = "flv.list";
             }
 
-            if (!this->range_list.empty() && this->output_type == "flv.list")
-            {
-                if (this->range.left < this->range_list.front().point.left)
-                {
+            if (!this->range_list.empty() && this->output_type == "flv.list"){
+                if (this->range.left < this->range_list.front().point.left){
                     this->range.left = std::min(this->range_list.front().point.left, this->range.right);
                 }
             }
         }
 
         return SUCCESS;
-    }    //@}
-    //@}
-
-    void add_output_type(const std::string& desc)
-    {
-        this->desc.add_options()
-        ("output-type,O", po::value(&this->output_type), desc.c_str())
-        ;
     }
-
 };
 
 

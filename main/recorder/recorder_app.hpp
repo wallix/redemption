@@ -24,71 +24,39 @@
 #include <iostream>
 
 #include <boost/program_options/options_description.hpp>
-
-#include "wrm_recorder_option.hpp"
 #include <utility>
 #include <string>
 
+#include "wrm_recorder_option.hpp"
 #include "wrm_recorder.hpp"
-#include "cipher.hpp"
-#include "wrm_recorder.hpp"
-#include "nativecapture.hpp"
 
 struct RecorderAdapter
 {
     virtual void operator()(WRMRecorder& recorder, const char* outfile) = 0;
 };
 
-typedef std::pair<std::string, RecorderAdapter*> RecorderAction;
+struct RecorderAction {
+    const char * key;
+    RecorderAdapter * action;
 
-RecorderAdapter* get_recorder_adapter(RecorderAction* first,
-                                          RecorderAction* last,
-                                          const std::string& extension)
-{
-    for (; first != last; ++first)
+    RecorderAction(const char * key, RecorderAdapter* action)
+    : key(key)
+    , action(action) 
     {
-        if (first->first == extension)
-            return first->second;
-    }
-    return 0;
-}
-
-struct RecorderActionStringIterator
-{
-private:
-    RecorderAction* _base;
-
-public:
-    RecorderActionStringIterator(RecorderAction* it)
-    : _base(it)
-    {}
-
-    RecorderActionStringIterator& operator++()
-    {
-        ++this->_base;
-        return *this;
-    }
-
-    const std::string& operator*() const
-    {
-        return this->_base->first;
-    }
-
-    bool operator==(const RecorderActionStringIterator& other)
-    {
-        return this->_base == other._base;
-    }
-
-    bool operator!=(const RecorderActionStringIterator& other)
-    {
-        return !(*this == other);
     }
 };
 
 int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* actions, std::size_t n)
 {
-    opt.accept_output_type<>(RecorderActionStringIterator(actions),
-                             RecorderActionStringIterator(actions + n));
+    timeval now;
+    gettimeofday(&now, NULL);
+
+    char buffer[128] = {};
+    size_t used = snprintf(buffer, 128, "accept ");
+    for (unsigned int i = 0 ; i < n ; i++){
+        used += snprintf(&buffer[used], 128-used, "%s'%s'", (i>0?(i!=n-1)?", ":" or ":""), actions[i].key);
+    }
+    opt.desc.add_options()("output-type,O", po::value(&opt.output_type), buffer);
 
     try
     {
@@ -129,16 +97,20 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
     ? (std::string::npos == pos ? "" : opt.out_filename.substr(pos + 1))
     : opt.output_type;
 
-    RecorderAdapter* adapter = get_recorder_adapter(actions, actions + n, extension);
-    if (!adapter){
+    unsigned int i = 0;
+    for (i = 0 ; i < n ; i++){
+        if (0 == strcasecmp(actions[i].key, extension.c_str())){
+            break;
+        }
+    }
+    if (i >= n){
         std::cerr
         << "Incorrect output-type, "
         << opt.desc.find("output-type", false).description() << std::endl;
         return 1100;
     }
 
-    timeval now;
-    gettimeofday(&now, NULL);
+    RecorderAdapter* adapter = actions[i].action;
 
     WRMRecorder recorder(now);
     recorder.wrm_recorder_init(itype, 
@@ -202,8 +174,7 @@ public:
     }
 };
 
-class ToPngListAdapter
-: public RecorderAdapter
+class ToPngListAdapter : public RecorderAdapter
 {
     WrmRecorderOption& _option;
 
@@ -223,8 +194,7 @@ public:
     }
 };
 
-class ToWrmAdapter
-: public RecorderAdapter
+class ToWrmAdapter : public RecorderAdapter
 {
     WrmRecorderOption& _option;
 
@@ -256,7 +226,7 @@ public:
                        key, iv
                       );
         }
-        if (!this->_option.cat_wrm) {
+        else {
             recorder.to_wrm(outfile,
                    this->_option.range.left.time,
                    this->_option.range.right.time,

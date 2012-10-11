@@ -29,6 +29,7 @@ int main(int argc, char** argv)
     ToPngAdapter to_png(opt);
     ToWrmAdapter to_wrm(opt);
     ToPngListAdapter to_png_list(opt);
+
     RecorderAction recorder_actions[] = {
         RecorderAction("png", &to_png),
         RecorderAction("wrm", &to_wrm),
