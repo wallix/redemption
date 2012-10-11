@@ -30,9 +30,9 @@
 #include <string>
 
 #include "wrm_recorder.hpp"
-#include "recorder/to_png.hpp"
-#include "recorder/to_wrm.hpp"
-#include "recorder/to_one_wrm.hpp"
+#include "cipher.hpp"
+#include "wrm_recorder.hpp"
+#include "nativecapture.hpp"
 
 struct RecorderAdapter
 {
@@ -188,7 +188,7 @@ public:
             outfile, 800, 600, 
             this->_option.png_scale_width, this->_option.png_scale_height);
 
-        to_png(recorder, outfile,
+        recorder.to_png(outfile,
                this->_option.range.left.time,
                this->_option.range.right.time,
                this->_option.time.time,
@@ -214,7 +214,7 @@ public:
 
     virtual void operator()(WRMRecorder& recorder, const char* outfile)
     {
-        to_png_2(recorder, outfile,
+        recorder.to_png_list(outfile,
                this->_option.time_list,
                this->_option.png_scale_width,
                this->_option.png_scale_height,
@@ -248,7 +248,7 @@ public:
         }
 
         if (this->_option.cat_wrm) {
-            to_one_wrm(recorder, outfile,
+            recorder.to_one_wrm(outfile,
                        this->_option.range.left.time,
                        this->_option.range.right.time,
                        metaname,
@@ -257,7 +257,7 @@ public:
                       );
         }
         if (!this->_option.cat_wrm) {
-            to_wrm(recorder, outfile,
+            recorder.to_wrm(outfile,
                    this->_option.range.left.time,
                    this->_option.range.right.time,
                    this->_option.time.time,
