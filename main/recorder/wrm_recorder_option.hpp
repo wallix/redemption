@@ -39,7 +39,6 @@
 #include "range_time_point.hpp"
 #include "cipher.hpp"
 
-
 namespace po = boost::program_options;
 
 template<typename _T>
@@ -265,6 +264,21 @@ public:
     CipherInfo in_cipher_info;
     bool force_interpret_breakpoint;
 
+    std::string out_filename;
+    std::string output_type;
+    bool screenshot_wrm;
+    bool screenshot_start;
+    bool no_screenshot_stop;
+    bool screenshot_all;
+    bool cat_wrm;
+    unsigned png_scale_width;
+    unsigned png_scale_height;
+    CipherMode::enum_t out_crypt_mode;
+    HexadecimalKeyOption out_crypt_key;
+    HexadecimalIVOption out_crypt_iv;
+    CipherInfo out_cipher_info;
+
+
     WrmRecorderOption()
     : desc("Options")
     , options()
@@ -284,11 +298,25 @@ public:
     , in_crypt_iv()
     , in_cipher_info()
     , force_interpret_breakpoint(false)
+
+    , out_filename()
+    , output_type()
+    , screenshot_wrm(false)
+    , screenshot_start(false)
+    , no_screenshot_stop(false)
+    , screenshot_all(false)
+    , cat_wrm(false)
+    , png_scale_width(0)
+    , png_scale_height(0)
+    , out_crypt_mode(CipherMode::NO_MODE)
+    , out_crypt_key()
+    , out_crypt_iv()
+    , out_cipher_info()
     {
         this->add_default_options();
     }
 
-    void parse_command_line(int argc, char** argv)
+    bool parse_command_line(int argc, char** argv)
     {
         po::positional_options_description p;
         p.add("input-file", -1);
@@ -298,89 +326,18 @@ public:
             ).positional(p).run(),
             this->options
         );
-    }
 
-    /**
-     * Return 0 if success.
-     * @{
-     */
-    virtual int notify_options()
-    {
-        po::notify(this->options);
-
-        if (this->in_filename.empty()){
-            return IN_FILENAME_IS_EMPTY;
+        if (this->options.count("version")) {
+            std::cout << argv[0] << ' ' << this->version() << std::endl;
+            return false;
         }
 
-        if (this->in_crypt_mode)
-        {
-            if (!this->in_crypt_key.size)
-                return UNSPECIFIED_DECRIPT_KEY;
-            this->in_cipher_info.set_context(this->in_crypt_mode);
-            if (this->in_crypt_key.size > this->in_cipher_info.key_len())
-                return INPUT_KEY_OVERLOAD;
-            if (this->in_crypt_iv.size > this->in_cipher_info.iv_len())
-                return INPUT_IV_OVERLOAD;
+        if (this->options.count("help")) {
+            std::cout << this->desc;
+            return false;
         }
 
-        return SUCCESS;
-    }
-
-    virtual int normalize_options()
-    {
-        if (!this->range.valid()){
-            std::swap<>(this->range.left, this->range.right);
-        }
-
-        po::variables_map::iterator end = this->options.end();
-
-        if (this->options.find("ignore-dir") != end)
-            this->ignore_dir_for_meta_in_wrm = true;
-
-        if (this->options.find("times-in-meta-file-are-false") != end)
-            this->times_in_meta_are_false = true;
-
-        if (this->options.find("deduce-dir") != end)
-        {
-            this->ignore_dir_for_meta_in_wrm = true;
-            std::size_t pos = this->in_filename.find_last_of('/');
-            if (std::string::npos != pos)
-                this->base_path = this->in_filename.substr(0, pos+1);
-        }
-
-        if (this->options.find("time-list") != end)
-        {
-            typedef std::vector<relative_time_point>::iterator iterator;
-            if (this->time_list.size() >= 1)
-            {
-                iterator first = this->time_list.begin();
-                if ('-' == first->symbol)
-                    first->point.time = -first->point.time;
-                first->symbol = 0;
-
-                if (this->time_list.size() > 1)
-                {
-                    for (iterator prev = first++, last = this->time_list.end();
-                         first != last; ++first, ++prev)
-                    {
-                        if (first->symbol)
-                        {
-                            if ('+' == first->symbol){
-                                first->point += prev->point;
-                            }
-                            else {
-                                first->point = prev->point - first->point;
-                            }
-                            first->symbol = 0;
-                        }
-                    }
-                }
-            }
-            std::sort<>(this->time_list.begin(), this->time_list.end(),
-                        relative_time_point_less_only_point());
-        }
-
-        return SUCCESS;
+        return true;
     }
 
     virtual const char * version() const
@@ -393,8 +350,14 @@ public:
         IN_FILENAME_IS_EMPTY,
         UNSPECIFIED_DECRIPT_KEY,
         INPUT_KEY_OVERLOAD,
-        INPUT_IV_OVERLOAD
+        INPUT_IV_OVERLOAD,
+        UNSPECIFIED_ENCRIPT_KEY,
+        ENCRIPT_KEY_OR_IV_WITHOUT_MODE,
+        OUT_FILENAME_IS_EMPTY,
+        OUTPUT_KEY_OVERLOAD,
+        OUTPUT_IV_OVERLOAD
     };
+
 
     virtual const char * get_cerror(int error)
     {
@@ -408,8 +371,17 @@ public:
             return "Overload --in-crypt-iv";
         if (error == SUCCESS)
             return "Success";
-        return "Unknow";
+        if (error == OUT_FILENAME_IS_EMPTY)
+            return "Not output-file";
+        if (error == ENCRIPT_KEY_OR_IV_WITHOUT_MODE)
+            return "Set --out-crypt-key or --out-crypt-iv without --out-crypt-mode";
+        if (error == OUTPUT_KEY_OVERLOAD)
+            return "Overload --out-crypt-key";
+        if (error == OUTPUT_IV_OVERLOAD)
+            return "Overload --out-crypt-iv";
+        return WrmRecorderOption::get_cerror(error);
     }
+
 
     InputType::enum_t get_input_type()
     {
@@ -420,11 +392,6 @@ public:
         return InputType::string_to_type(this->in_filename.substr(pos + 1));
     }
 
-    /**
-     * Normalize option and display error
-     * @param[out] itype
-     * Return 0 if success
-     */
     int prepare(InputType::enum_t& itype)
     {
         int error = this->notify_options();
@@ -450,7 +417,6 @@ public:
         return 0;
     }
 
-private:
     void add_default_options()
     {
         this->desc.add_options()
@@ -535,45 +501,21 @@ private:
          "aes-[128|192|256]-ecb     128/192/256 bit AES in ECB mode\n"
          "aes-[128|192|256]-ofb     128/192/256 bit AES in OFB mode\n")
         ;
-    }
-};
-
-namespace po = boost::program_options;
-
-struct RecorderOption
-: WrmRecorderOption
-{
-    std::string out_filename;
-    std::string output_type;
-    bool screenshot_wrm;
-    bool screenshot_start;
-    bool no_screenshot_stop;
-    bool screenshot_all;
-    bool cat_wrm;
-    unsigned png_scale_width;
-    unsigned png_scale_height;
-    CipherMode::enum_t out_crypt_mode;
-    HexadecimalKeyOption out_crypt_key;
-    HexadecimalIVOption out_crypt_iv;
-    CipherInfo out_cipher_info;
-
-    RecorderOption()
-    : WrmRecorderOption()
-    , out_filename()
-    , output_type()
-    , screenshot_wrm(false)
-    , screenshot_start(false)
-    , no_screenshot_stop(false)
-    , screenshot_all(false)
-    , cat_wrm(false)
-    , png_scale_width(0)
-    , png_scale_height(0)
-    , out_crypt_mode(CipherMode::NO_MODE)
-    , out_crypt_key()
-    , out_crypt_iv()
-    , out_cipher_info()
-    {
-        this->add_default_options();
+        
+        this->desc.add_options()
+        ("output-file,o", po::value(&this->out_filename), "output filename (see --output-type)")
+        ("out", po::value(&this->out_filename), "alias for --output-file")
+        ("screenshot-wrm,s", "capture the screen when a file wrm is create")
+        ("screenshot-start,0", "")
+        ("no-screenshot-stop,n", "")
+        ("screenshot-all,a", "")
+        ("png-scale-width,W", po::value(&this->png_scale_width), "")
+        ("png-scale-height,H", po::value(&this->png_scale_height), "")
+        ("concat-wrm,c", "concat each wrm in a single wrm")
+        ("out-crypt-key", po::value(&this->out_crypt_key), "key in hexadecimal base")
+        ("out-crypt-iv", po::value(&this->out_crypt_iv), "IV in hexadecimal base")
+        ("out-crypt-mode", po::value(&this->out_crypt_mode), "see --in-crypt-mode")
+        ;
     }
 
     template<typename _ForwardIterator>
@@ -603,8 +545,22 @@ struct RecorderOption
      */
     virtual int notify_options()
     {
-        if (int err = WrmRecorderOption::notify_options())
-            return err;
+        po::notify(this->options);
+
+        if (this->in_filename.empty()){
+            return IN_FILENAME_IS_EMPTY;
+        }
+
+        if (this->in_crypt_mode)
+        {
+            if (!this->in_crypt_key.size)
+                return UNSPECIFIED_DECRIPT_KEY;
+            this->in_cipher_info.set_context(this->in_crypt_mode);
+            if (this->in_crypt_key.size > this->in_cipher_info.key_len())
+                return INPUT_KEY_OVERLOAD;
+            if (this->in_crypt_iv.size > this->in_cipher_info.iv_len())
+                return INPUT_IV_OVERLOAD;
+        }
 
         if (this->out_filename.empty()){
             return OUT_FILENAME_IS_EMPTY;
@@ -634,10 +590,57 @@ struct RecorderOption
 
     virtual int normalize_options()
     {
-        if (int err = WrmRecorderOption::normalize_options())
-            return err;
+        if (!this->range.valid()){
+            std::swap<>(this->range.left, this->range.right);
+        }
 
         po::variables_map::iterator end = this->options.end();
+
+        if (this->options.find("ignore-dir") != end)
+            this->ignore_dir_for_meta_in_wrm = true;
+
+        if (this->options.find("times-in-meta-file-are-false") != end)
+            this->times_in_meta_are_false = true;
+
+        if (this->options.find("deduce-dir") != end)
+        {
+            this->ignore_dir_for_meta_in_wrm = true;
+            std::size_t pos = this->in_filename.find_last_of('/');
+            if (std::string::npos != pos)
+                this->base_path = this->in_filename.substr(0, pos+1);
+        }
+
+        if (this->options.find("time-list") != end)
+        {
+            typedef std::vector<relative_time_point>::iterator iterator;
+            if (this->time_list.size() >= 1)
+            {
+                iterator first = this->time_list.begin();
+                if ('-' == first->symbol)
+                    first->point.time = -first->point.time;
+                first->symbol = 0;
+
+                if (this->time_list.size() > 1)
+                {
+                    for (iterator prev = first++, last = this->time_list.end();
+                         first != last; ++first, ++prev)
+                    {
+                        if (first->symbol)
+                        {
+                            if ('+' == first->symbol){
+                                first->point += prev->point;
+                            }
+                            else {
+                                first->point = prev->point - first->point;
+                            }
+                            first->symbol = 0;
+                        }
+                    }
+                }
+            }
+            std::sort<>(this->time_list.begin(), this->time_list.end(),
+                        relative_time_point_less_only_point());
+        }
 
         {
             typedef std::pair<const char *, bool&> pair_type;
@@ -654,12 +657,14 @@ struct RecorderOption
             }
         }
 
-        if (this->options.find("time-list") != end && this->options.find("output-type") == end)
+        if (this->options.find("time-list") != end 
+        && this->options.find("output-type") == end)
         {
             this->output_type = "png.list";
         }
 
-        if (!this->time_list.empty() && this->output_type == "png.list")
+        if (!this->time_list.empty() 
+        && this->output_type == "png.list")
         {
             if (this->range.left < this->time_list.front().point)
             {
@@ -670,57 +675,6 @@ struct RecorderOption
         return SUCCESS;
     }    //@}
     //@}
-
-    virtual const char * version() const
-    {
-        return VERSION;
-    };
-
-    enum Error {
-        SUCCESS                 = WrmRecorderOption::SUCCESS,
-        IN_FILENAME_IS_EMPTY    = WrmRecorderOption::IN_FILENAME_IS_EMPTY,
-        UNSPECIFIED_DECRIPT_KEY = WrmRecorderOption::UNSPECIFIED_DECRIPT_KEY,
-        INPUT_KEY_OVERLOAD      = WrmRecorderOption::INPUT_KEY_OVERLOAD,
-        INPUT_IV_OVERLOAD       = WrmRecorderOption::INPUT_IV_OVERLOAD,
-        UNSPECIFIED_ENCRIPT_KEY,
-        ENCRIPT_KEY_OR_IV_WITHOUT_MODE,
-        OUT_FILENAME_IS_EMPTY,
-        OUTPUT_KEY_OVERLOAD,
-        OUTPUT_IV_OVERLOAD
-    };
-
-    virtual const char * get_cerror(int error)
-    {
-        if (error == OUT_FILENAME_IS_EMPTY)
-            return "Not output-file";
-        if (error == ENCRIPT_KEY_OR_IV_WITHOUT_MODE)
-            return "Set --out-crypt-key or --out-crypt-iv without --out-crypt-mode";
-        if (error == OUTPUT_KEY_OVERLOAD)
-            return "Overload --out-crypt-key";
-        if (error == OUTPUT_IV_OVERLOAD)
-            return "Overload --out-crypt-iv";
-        return WrmRecorderOption::get_cerror(error);
-    }
-
-private:
-
-    void add_default_options()
-    {
-        this->desc.add_options()
-        ("output-file,o", po::value(&this->out_filename), "output filename (see --output-type)")
-        ("out", po::value(&this->out_filename), "alias for --output-file")
-        ("screenshot-wrm,s", "capture the screen when a file wrm is create")
-        ("screenshot-start,0", "")
-        ("no-screenshot-stop,n", "")
-        ("screenshot-all,a", "")
-        ("png-scale-width,W", po::value(&this->png_scale_width), "")
-        ("png-scale-height,H", po::value(&this->png_scale_height), "")
-        ("concat-wrm,c", "concat each wrm in a single wrm")
-        ("out-crypt-key", po::value(&this->out_crypt_key), "key in hexadecimal base")
-        ("out-crypt-iv", po::value(&this->out_crypt_iv), "IV in hexadecimal base")
-        ("out-crypt-mode", po::value(&this->out_crypt_mode), "see --in-crypt-mode")
-        ;
-    }
 
     void add_output_type(const std::string& desc)
     {

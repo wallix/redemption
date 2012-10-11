@@ -85,32 +85,14 @@ public:
     }
 };
 
-bool parse_command_line(WrmRecorderOption& opt,
-                       int argc, char** argv)
-{
-    opt.parse_command_line(argc, argv);
-
-    if (opt.options.count("version")) {
-        std::cout << argv[0] << ' ' << opt.version() << std::endl;
-        return false;
-    }
-
-    if (opt.options.count("help")) {
-        std::cout << opt.desc;
-        return false;
-    }
-
-    return true;
-}
-
-int recorder_app(RecorderOption& opt, int argc, char** argv, RecorderAction* actions, std::size_t n)
+int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* actions, std::size_t n)
 {
     opt.accept_output_type<>(RecorderActionStringIterator(actions),
                              RecorderActionStringIterator(actions + n));
 
     try
     {
-        if (!parse_command_line(opt, argc, argv)){
+        if (!opt.parse_command_line(argc, argv)){
             return 0;
         }
     }
@@ -129,10 +111,10 @@ int recorder_app(RecorderOption& opt, int argc, char** argv, RecorderAction* act
             case WrmRecorderOption::INPUT_IV_OVERLOAD:
                 std::cerr << "Size IV is " << opt.in_cipher_info.iv_len() << " octets" << std::endl;
                 break;
-            case RecorderOption::OUTPUT_KEY_OVERLOAD:
+            case WrmRecorderOption::OUTPUT_KEY_OVERLOAD:
                 std::cerr << "Size key is " << opt.out_cipher_info.key_len() << " octets" << std::endl;
                 break;
-            case RecorderOption::OUTPUT_IV_OVERLOAD:
+            case WrmRecorderOption::OUTPUT_IV_OVERLOAD:
                 std::cerr << "Size IV is " << opt.out_cipher_info.iv_len() << " octets" << std::endl;
                 break;
             default:
@@ -147,8 +129,7 @@ int recorder_app(RecorderOption& opt, int argc, char** argv, RecorderAction* act
     ? (std::string::npos == pos ? "" : opt.out_filename.substr(pos + 1))
     : opt.output_type;
 
-    RecorderAdapter* adapter = get_recorder_adapter(actions, actions + n,
-                                                    extension);
+    RecorderAdapter* adapter = get_recorder_adapter(actions, actions + n, extension);
     if (!adapter){
         std::cerr
         << "Incorrect output-type, "
@@ -160,8 +141,7 @@ int recorder_app(RecorderOption& opt, int argc, char** argv, RecorderAction* act
     gettimeofday(&now, NULL);
 
     WRMRecorder recorder(now);
-    try {
-        recorder.wrm_recorder_init(itype, 
+    recorder.wrm_recorder_init(itype, 
                         opt.base_path, 
                         opt.ignore_dir_for_meta_in_wrm,
                         opt.times_in_meta_are_false,
@@ -172,9 +152,6 @@ int recorder_app(RecorderOption& opt, int argc, char** argv, RecorderAction* act
                         opt.in_crypt_iv,
                         opt.in_filename,
                         opt.idx_start);
-    } catch(const Error & e) {
-        return e.id;
-    }
 
     if (std::string::npos != pos){
         opt.out_filename.erase(pos);
@@ -198,10 +175,10 @@ int recorder_app(RecorderOption& opt, int argc, char** argv, RecorderAction* act
 class ToPngAdapter
 : public RecorderAdapter
 {
-    RecorderOption& _option;
+    WrmRecorderOption& _option;
 
 public:
-    ToPngAdapter(RecorderOption& option)
+    ToPngAdapter(WrmRecorderOption& option)
     : _option(option)
     {}
 
@@ -228,10 +205,10 @@ public:
 class ToPngListAdapter
 : public RecorderAdapter
 {
-    RecorderOption& _option;
+    WrmRecorderOption& _option;
 
 public:
-    ToPngListAdapter(RecorderOption& option)
+    ToPngListAdapter(WrmRecorderOption& option)
     : _option(option)
     {}
 
@@ -249,10 +226,10 @@ public:
 class ToWrmAdapter
 : public RecorderAdapter
 {
-    RecorderOption& _option;
+    WrmRecorderOption& _option;
 
 public:
-    ToWrmAdapter(RecorderOption& option)
+    ToWrmAdapter(WrmRecorderOption& option)
     : _option(option)
     {}
 

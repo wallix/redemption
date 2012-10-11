@@ -30,24 +30,6 @@
 
 #include "meta_file.hpp"
 
-bool parse_command_line(WrmRecorderOption& opt,
-                       int argc, char** argv)
-{
-    opt.parse_command_line(argc, argv);
-
-    if (opt.options.count("version")) {
-        std::cout << argv[0] << ' ' << opt.version() << std::endl;
-        return false;
-    }
-
-    if (opt.options.count("help")) {
-        std::cout << opt.desc;
-        return false;
-    }
-
-    return true;
-}
-
 
 struct WrmInfo
 {
@@ -64,10 +46,10 @@ struct WrmInfo
 int main(int argc, char** argv)
 {
     WrmRecorderOption opt;
-
-    if (!parse_command_line(opt, argc, argv)){
+    if (!opt.parse_command_line(argc, argv)){
         return 0;
     }
+    
     InputType::enum_t itype;
     int error = opt.prepare(itype);
     if (error){
@@ -77,8 +59,7 @@ int main(int argc, char** argv)
     gettimeofday(&now, NULL);
 
     WRMRecorder recorder(now);
-    try {
-        recorder.wrm_recorder_init(itype, 
+    recorder.wrm_recorder_init(itype, 
                         opt.base_path, 
                         opt.ignore_dir_for_meta_in_wrm,
                         opt.times_in_meta_are_false,
@@ -89,26 +70,6 @@ int main(int argc, char** argv)
                         opt.in_crypt_iv,
                         opt.in_filename,
                         opt.idx_start);
-    } catch(const Error & e) {
-        error = e.id;
-    }
-
-    if (error){
-        const DataMetaFile& meta = recorder.reader.data_meta;
-        std::cout << "meta v" << meta.version
-        << "\nwidth: " << meta.width
-        << "\nheight: " << meta.height
-        << "\ncrypt: " << meta.crypt_mode
-        << "\nfiles:";
-        for (uint i = 0; i != meta.files.size(); ++i){
-            std::cout << "\n\t" << (i+1)
-            << " wrm: " << meta.files[i].wrm_filename
-            << ", png: " << meta.files[i].png_filename
-            << ", start_sec: " << meta.files[i].start_sec
-            << ", start_usec: " << meta.files[i].start_usec;
-        }
-        std::cout << "\n\n";
-    }
 
     ulong weight;
     RDPUnserializer& unserializer = recorder.reader;

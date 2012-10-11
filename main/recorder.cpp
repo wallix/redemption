@@ -25,7 +25,7 @@
 
 int main(int argc, char** argv)
 {
-    RecorderOption opt;
+    WrmRecorderOption opt;
     ToPngAdapter to_png(opt);
     ToWrmAdapter to_wrm(opt);
     ToPngListAdapter to_png_list(opt);
