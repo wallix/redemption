@@ -58,16 +58,16 @@ int main(int argc, char** argv)
     timeval now;
     gettimeofday(&now, NULL);
 
-    WRMRecorder recorder(now);
-    recorder.wrm_recorder_init(itype, 
+    WRMRecorder recorder(now,
+                        opt.in_crypt_mode,
+                        opt.in_crypt_key, 
+                        opt.in_crypt_iv,
+                        itype, 
                         opt.base_path, 
                         opt.ignore_dir_for_meta_in_wrm,
                         opt.times_in_meta_are_false,
                         opt.force_interpret_breakpoint,
                         opt.range,
-                        opt.in_crypt_mode,
-                        opt.in_crypt_key, 
-                        opt.in_crypt_iv,
                         opt.in_filename,
                         opt.idx_start);
 

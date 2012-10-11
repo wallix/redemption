@@ -38,7 +38,13 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     timeval now;
     gettimeofday(&now, NULL);
 
-    WRMRecorder reader(now, FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
+    HexadecimalKeyOption in_crypt_key;
+    HexadecimalIVOption in_crypt_iv;
+    range_time_point range;
+    std::string path(FIXTURES_PATH);
+    std::string filename(FIXTURES_PATH "/test_w2008_2-880.mwrm");
+
+    WRMRecorder reader(now, 0, in_crypt_key, in_crypt_iv, InputType::META_TYPE, path, false, false, false, range, filename, 0);
     BOOST_CHECK(true);
     DataMetaFile& meta = reader.reader.data_meta;
     BOOST_CHECK_EQUAL(reader.reader.chunk_type == WRMChunk::META_FILE, true);

@@ -261,6 +261,8 @@ BOOST_AUTO_TEST_CASE(TestCryptWRMFileOpenSSL)
 
 BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
 {
+
+    const EVP_CIPHER * cipher_mode = CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC);
     unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
     unsigned char iv[] = {1,2,3,4,5,6,7,8};
 
@@ -268,8 +270,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
     {
         timeval now;
         gettimeofday(&now, NULL);
-        NativeCapture cap(now, 800, 600, "/tmp/encrypt-cap", 0,
-                          CipherMode::BLOWFISH_CBC, key, iv);
+        NativeCapture cap(now, 800, 600, "/tmp/encrypt-cap", 0, CipherMode::BLOWFISH_CBC, key, iv);
         timeval tm = {0,0};
         cap.send_time_start(tm);
         BOOST_REQUIRE(true);
@@ -291,14 +292,22 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
     {
         timeval now;
         gettimeofday(&now, NULL);
-        WRMRecorder recorder(now);
 
-        LOG(LOG_INFO, "init_cipher");
-        recorder.cipher_mode = CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC);
-        if (!recorder.cipher_mode){
-            // false
-        }
-        else if (!recorder.cipher_trans.start(recorder.cipher_mode, key, iv, 0))
+        HexadecimalKeyOption in_crypt_key;
+        in_crypt_key.parse("000102030405060708090A0B0C0D0E0F");
+        HexadecimalIVOption in_crypt_iv;
+        in_crypt_iv.parse("0102030405060708");
+        range_time_point range;
+        std::string path("/tmp");
+        std::string sfilename("/tmp/encrypt-cap.mwrm");
+
+//        WRMRecorder recorder(now, cipher_mode, key, iv);
+        
+        WRMRecorder recorder(now, 0, in_crypt_key, in_crypt_iv, InputType::META_TYPE, path, false, false, false, range, sfilename, 0);
+        const char * filename = sfilename.c_str();
+
+
+        if (!recorder.cipher_trans.start(recorder.cipher_mode, key, iv, 0))
         {
             recorder.cipher_mode = 0;
             // false
@@ -306,7 +315,6 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
         else {
             recorder.cipher_key = key;
             recorder.cipher_iv = iv;
-            recorder.cipher_impl = 0;
             recorder.reader.trans = &recorder.cipher_trans;
             recorder.trans.diff_size_is_error = false;
         }
@@ -321,7 +329,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureWithOpenSSL)
             throw Error(ERR_RECORDER_FILE_CRYPTED);
         }
         
-        const char * filename = recorder.reader.data_meta.files[0].wrm_filename.c_str();
+        filename = recorder.reader.data_meta.files[0].wrm_filename.c_str();
         
         if (recorder.only_filename)
         {

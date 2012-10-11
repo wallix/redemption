@@ -67,8 +67,7 @@ struct HexadecimalOption
     }
 
 private:
-    static bool transform_string_hex_to_data(const std::string& s,
-                                             unsigned char * pdata)
+    static bool transform_string_hex_to_data(const std::string& s, unsigned char * pdata)
     {
         std::string::const_iterator first = s.begin();
         std::string::const_iterator last = s.end();
@@ -133,7 +132,6 @@ class WRMRecorder
     const EVP_CIPHER * cipher_mode;
     const unsigned char* cipher_key;
     const unsigned char* cipher_iv;
-    ENGINE* cipher_impl;
     InFileTransport trans;
     InCipherTransport cipher_trans;
 
@@ -153,50 +151,43 @@ public:
     bool force_interpret_breakpoint;
     bool interpret_breakpoint_is_passed;
 
-    bool _init_init_crypt(const EVP_CIPHER* in_crypt_mode,
-                          const HexadecimalKeyOption & in_crypt_key, 
-                          const HexadecimalIVOption & in_crypt_iv)
+public:
+    WRMRecorder(const timeval & now,
+                const EVP_CIPHER* in_crypt_mode,
+                HexadecimalKeyOption & in_crypt_key, 
+                HexadecimalIVOption & in_crypt_iv,
+                InputType::enum_t itype,
+                std::string & base_path,
+                bool ignore_dir_for_meta_in_wrm,
+                bool times_in_meta_are_false,
+                bool force_interpret_breakpoint,
+                range_time_point & range,
+                std::string & in_filename,
+                uint idx_start)
+    : cipher_mode(in_crypt_mode)
+    , cipher_key(in_crypt_key.data)
+    , cipher_iv(in_crypt_iv.data)
+    , trans(0, true)
+    , cipher_trans(&trans)
+    , reader(&this->trans, now, 0, Rect())
+    , redrawable(0)
+    , idx_file(0)
+    , path()
+    , base_path_len(0)
+    , only_filename(false)
+    , force_interpret_breakpoint(false)
+    , interpret_breakpoint_is_passed(false)
     {
-        if (in_crypt_key.size)
+        RDPUnserializer & reader = this->reader;
+    
+        this->base_path_len = base_path.length();
+        this->path = base_path;
+        if (this->base_path_len && this->path[this->base_path_len - 1] != '/')
         {
-            LOG(LOG_INFO, "init_cipher");
-            this->cipher_mode = (in_crypt_mode?in_crypt_mode
-                                   :CipherMode::to_evp_cipher((CipherMode::enum_t)this->reader.data_meta.crypt_mode));
-            if (!this->cipher_mode){
-                return false;
-            }
-            if (!this->cipher_trans.start(this->cipher_mode, 
-                                             in_crypt_key.data,
-                                             in_crypt_iv.size ? in_crypt_iv.data : 0,
-                                             0)){
-                this->cipher_mode = 0;
-                std::cerr << "Error in the initialization of the encryption" << std::endl;
-                return false;
-            }
-
-            this->cipher_key = in_crypt_key.data;
-            this->cipher_iv = in_crypt_iv.size ? in_crypt_iv.data : 0;
-            this->cipher_impl = 0;
-            this->reader.trans = &this->cipher_trans;
-            this->trans.diff_size_is_error = false;
+            this->path += '/';
+            ++this->base_path_len;
         }
-        return true;
-    }
-
-    void wrm_recorder_init(
-        InputType::enum_t itype,
-        std::string & base_path,
-        bool ignore_dir_for_meta_in_wrm,
-        bool times_in_meta_are_false,
-        bool force_interpret_breakpoint,
-        range_time_point & range,
-        const EVP_CIPHER* in_crypt_mode,
-        HexadecimalKeyOption & in_crypt_key, 
-        HexadecimalIVOption & in_crypt_iv,
-        std::string & in_filename,
-        uint idx_start)
-    {
-        this->set_basepath(base_path);
+        
         this->only_filename = ignore_dir_for_meta_in_wrm;
 
         try
@@ -206,10 +197,28 @@ public:
                 {
                     if (in_crypt_key.size && !in_crypt_iv.size){
                         in_crypt_iv.size = sizeof(in_crypt_iv.data);
-                        memcpy(in_crypt_iv.data, this->reader.data_meta.crypt_iv, sizeof(in_crypt_iv.data));
+                        memcpy(in_crypt_iv.data, reader.data_meta.crypt_iv, sizeof(in_crypt_iv.data));
                     }
-                    if (!this->_init_init_crypt(in_crypt_mode, in_crypt_key, in_crypt_iv)){
-                        throw Error(ERR_WRM_INVALID_INIT_CRYPT);
+                    if (in_crypt_key.size){
+                        LOG(LOG_INFO, "init_cipher");
+                        this->cipher_mode = (in_crypt_mode ? in_crypt_mode :
+                            CipherMode::to_evp_cipher((CipherMode::enum_t)this->reader.data_meta.crypt_mode));
+                        if (!this->cipher_mode){
+                            throw Error(ERR_WRM_INVALID_INIT_CRYPT);
+                        }
+                        if (!this->cipher_trans.start(this->cipher_mode, 
+                                                         in_crypt_key.data,
+                                                         in_crypt_iv.size ? in_crypt_iv.data : 0,
+                                                         0)){
+                            this->cipher_mode = 0;
+                            std::cerr << "Error in the initialization of the encryption" << std::endl;
+                            throw Error(ERR_WRM_INVALID_INIT_CRYPT);
+                        }
+
+                        this->cipher_key = in_crypt_key.data;
+                        this->cipher_iv = in_crypt_iv.size ? in_crypt_iv.data : 0;
+                        this->reader.trans = &this->cipher_trans;
+                        this->trans.diff_size_is_error = false;
                     }
                     const char * filename = in_filename.c_str();
                     LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
@@ -219,23 +228,23 @@ public:
                        throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
                     }
                     this->trans.fd = fd;
-                    if (!this->reader.selected_next_order())
+                    if (!reader.selected_next_order())
                     {
                         std::cerr << in_filename << " is invalid wrm file" << std::endl;
                         throw Error(ERR_WRM_INVALID_FILE);
                     }
-                    if (!this->reader.chunk_type == WRMChunk::META_FILE){
-                        std::cerr << this->reader.data_meta << '\n'
+                    if (!reader.chunk_type == WRMChunk::META_FILE){
+                        std::cerr << reader.data_meta << '\n'
                          << "Chunk META not found in " << filename << '\n' 
-                         << ". Chunk is " << this->reader.chunk_type << std::endl;
+                         << ". Chunk is " << reader.chunk_type << std::endl;
                         throw Error(ERR_WRM_CHUNK_META_NOT_FOUND);
                     }
                         
                     char tmp_filename[1024];
-                    size_t len = this->reader.stream.in_uint32_le();
-                    this->reader.stream.in_copy_bytes((uint8_t*)tmp_filename, len);
+                    size_t len = reader.stream.in_uint32_le();
+                    reader.stream.in_copy_bytes((uint8_t*)tmp_filename, len);
                     tmp_filename[len] = 0;
-                    --this->reader.remaining_order_count;
+                    --reader.remaining_order_count;
                     
                     const char * filename2 = tmp_filename;
                     if (this->only_filename)
@@ -251,18 +260,18 @@ public:
                         filename2 = this->path.c_str();
                     }
                     
-                    if (!this->reader.load_data(filename2)){
+                    if (!reader.load_data(filename2)){
                         std::cerr << "invalid meta chunck in " << in_filename << std::endl;
                         throw Error(ERR_WRM_INVALID_META_CHUNK);
                     }
-                    if (!this->reader.data_meta.files.empty())
+                    if (!reader.data_meta.files.empty())
                     {
-                        if (idx_start >= this->reader.data_meta.files.size()){
+                        if (idx_start >= reader.data_meta.files.size()){
                             std::cerr << "idx " << idx_start << " not found" << std::endl;
                             throw Error(ERR_WRM_IDX_NOT_FOUND);
                         }
                         if (!times_in_meta_are_false){
-                            const std::vector<DataFile>& files = this->reader.data_meta.files;
+                            const std::vector<DataFile>& files = reader.data_meta.files;
                             if (files[0].start_sec){
                                 const timeval tm = {files[0].start_sec, files[0].start_usec};
                                 uint64_t time = 0;
@@ -285,29 +294,62 @@ public:
                             }
                         }
                     }
-                    else  if (idx_start >= this->reader.data_meta.files.size()){
+                    else  if (idx_start >= reader.data_meta.files.size()){
                         std::cerr << "idx " << idx_start << " not found" << std::endl;
                         throw Error(ERR_WRM_IDX_NOT_FOUND);
                     }
-                    if (idx_start != this->idx_file)
-                    {
-                        this->next_file(this->reader.data_meta.files[this->idx_file].wrm_filename.c_str());
+                    if (idx_start != this->idx_file){
+                        const char * filename = reader.data_meta.files[this->idx_file].wrm_filename.c_str();
+                        ::close(this->trans.fd);
+                        if (this->cipher_mode){
+                            this->cipher_trans.stop();
+                        }
+                        this->trans.fd = -1;
+                        if (this->only_filename)
+                        {
+                            const char * tmp = strrchr(filename + strlen(filename), '/');
+                            if (tmp){
+                                filename = tmp+1;
+                            }
+                        }
+                        if (this->base_path_len){
+                            this->path.erase(this->base_path_len);
+                            this->path += filename;
+                            filename = this->path.c_str();
+                        }
+
+                        LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+                        int fd = ::open(filename, O_RDONLY);
+                        if (-1 == fd){
+                            LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+                           throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+                        }
+                        this->trans.fd = fd;
+
+                        this->trans.total_received = 0;
+                        this->trans.last_quantum_received = 0;
+                        this->trans.total_sent = 0;
+                        this->trans.last_quantum_sent = 0;
+                        this->trans.quantum_count = 0;
+                        if (this->cipher_mode){
+                            this->cipher_trans.reset();
+                        }
                     }
                 }
                 break;
                 case InputType::META_TYPE:
                 {
-                    if (!this->reader.load_data(in_filename.c_str()))
+                    if (!reader.load_data(in_filename.c_str()))
                     {
                         std::cerr << "open " << in_filename << ' ' << strerror(errno) << std::endl;
                         throw Error(ERR_WRM_FAILED_OPENING_META_FILENAME);
                     }
-                    if (idx_start >= this->reader.data_meta.files.size()){
+                    if (idx_start >= reader.data_meta.files.size()){
                         std::cerr << "idx " << idx_start << " not found" << std::endl;
                         throw Error(ERR_WRM_IDX_NOT_FOUND);
                     }
                     if (!times_in_meta_are_false){
-                        const std::vector<DataFile>& files = this->reader.data_meta.files;
+                        const std::vector<DataFile>& files = reader.data_meta.files;
                         if (files[0].start_sec){
                             const timeval tm = {files[0].start_sec, files[0].start_usec};
                             uint64_t time = 0;
@@ -329,7 +371,7 @@ public:
                             }
                         }
                     }
-                    const char * filename = this->reader.data_meta.files[idx_start].wrm_filename.c_str();
+                    const char * filename = reader.data_meta.files[idx_start].wrm_filename.c_str();
                     
                     if (this->only_filename)
                     {
@@ -346,10 +388,28 @@ public:
                     
                     if (in_crypt_key.size && !in_crypt_iv.size){
                         in_crypt_iv.size = sizeof(in_crypt_iv.data);
-                        memcpy(in_crypt_iv.data, this->reader.data_meta.crypt_iv, sizeof(in_crypt_iv.data));
+                        memcpy(in_crypt_iv.data, reader.data_meta.crypt_iv, sizeof(in_crypt_iv.data));
                     }
-                    if (!this->_init_init_crypt(in_crypt_mode, in_crypt_key, in_crypt_iv)){
-                        throw Error(ERR_CIPHER_START);
+                    if (in_crypt_key.size){
+                        LOG(LOG_INFO, "init_cipher");
+                        this->cipher_mode = (in_crypt_mode ? in_crypt_mode :
+                            CipherMode::to_evp_cipher((CipherMode::enum_t)this->reader.data_meta.crypt_mode));
+                        if (!this->cipher_mode){
+                            throw Error(ERR_WRM_INVALID_INIT_CRYPT);
+                        }
+                        if (!this->cipher_trans.start(this->cipher_mode, 
+                                                         in_crypt_key.data,
+                                                         in_crypt_iv.size ? in_crypt_iv.data : 0,
+                                                         0)){
+                            this->cipher_mode = 0;
+                            std::cerr << "Error in the initialization of the encryption" << std::endl;
+                            throw Error(ERR_WRM_INVALID_INIT_CRYPT);
+                        }
+
+                        this->cipher_key = in_crypt_key.data;
+                        this->cipher_iv = in_crypt_iv.size ? in_crypt_iv.data : 0;
+                        this->reader.trans = &this->cipher_trans;
+                        this->trans.diff_size_is_error = false;
                     }
 
                     LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
@@ -359,15 +419,15 @@ public:
                        throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
                     }
                     this->trans.fd = fd;
-                    if (this->reader.selected_next_order() 
-                    && this->reader.chunk_type == WRMChunk::META_FILE){
-                        this->reader.stream.p = this->reader.stream.end;
-                        this->reader.remaining_order_count = 0;
+                    if (reader.selected_next_order() 
+                    && reader.chunk_type == WRMChunk::META_FILE){
+                        reader.stream.p = reader.stream.end;
+                        reader.remaining_order_count = 0;
                     }
-                    if (!this->reader.chunk_type == WRMChunk::META_FILE){
-                        std::cerr << this->reader.data_meta << '\n'
+                    if (!reader.chunk_type == WRMChunk::META_FILE){
+                        std::cerr << reader.data_meta << '\n'
                          << "Chunk META not found in " << filename << '\n' 
-                         << ". Chunk is " << this->reader.chunk_type << std::endl;
+                         << ". Chunk is " << reader.chunk_type << std::endl;
                         throw Error(ERR_WRM_CHUNK_META_NOT_FOUND);
                     }
                 }
@@ -386,164 +446,129 @@ public:
         }
     }
 
+//    WRMRecorder(const timeval & now,
+//                const std::string& filename,
+//                const std::string basepath = "",
+//                const EVP_CIPHER * mode = 0,
+//                const unsigned char* key = 0,
+//                const unsigned char* iv = 0)
+//    : cipher_mode(mode)
+//    , cipher_key(key)
+//    , cipher_iv(iv)
+//    , trans(0, this->cipher_mode ? false : true)
+//    , cipher_trans(&trans)
+//    , reader(this->cipher_mode
+//             ? (Transport*)&this->cipher_trans : &this->trans,
+//             now,
+//             0, Rect())
+//    , redrawable(0)
+//    , idx_file(0)
+//    , path(basepath)
+//    , base_path_len(basepath.length())
+//    , only_filename(false)
+//    , force_interpret_breakpoint(false)
+//    , interpret_breakpoint_is_passed(false)
+//    {
+//        LOG(LOG_INFO, "WRMRecorder 1");
+//        if (this->base_path_len && this->path[this->base_path_len - 1] != '/'){
+//            this->path += '/';
+//            ++this->base_path_len;
+//        }
+//        
+//        if (this->cipher_mode 
+//        && !this->cipher_trans.start(this->cipher_mode, this->cipher_key, this->cipher_iv, 0))
+//        {
+//            LOG(LOG_ERR, "Error cipher start in NativeCapture");
+//            throw Error(ERR_CIPHER_START);
+//        }
+//        
+//        std::size_t pos = filename.find_last_not_of('.');
+//        if (pos != std::string::npos
+//        && pos < filename.size()
+//        && filename[pos] == 'm'){
+//            if (!this->reader.load_data(filename.c_str())){
+//                throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
+//            }
+//            if (this->reader.data_meta.files.empty()){
+//                throw Error(ERR_RECORDER_META_REFERENCE_WRM);
+//            }
+//            if (this->reader.data_meta.crypt_mode && !this->cipher_mode){
+//                throw Error(ERR_RECORDER_FILE_CRYPTED);
+//            }
 
+//            const char * filename = this->reader.data_meta.files[0].wrm_filename.c_str();
+//            if (this->only_filename)
+//            {
+//                const char * tmp = strrchr(filename + strlen(filename), '/');
+//                if (tmp){
+//                    filename = tmp+1;
+//                }
+//            }
+//            if (this->base_path_len){
+//                this->path.erase(this->base_path_len);
+//                this->path += filename;
+//                filename = this->path.c_str();
+//            }
 
-public:
-    WRMRecorder(const timeval & now,
-                const EVP_CIPHER * mode = 0,
-                const unsigned char* key = 0,
-                const unsigned char* iv = 0,
-                ENGINE* impl = 0)
-    : cipher_mode(mode)
-    , cipher_key(key)
-    , cipher_iv(iv)
-    , cipher_impl(impl)
-    , trans(0, this->cipher_mode ? false : true)
-    , cipher_trans(&trans)
-    , reader(this->cipher_mode ? (Transport*)&this->cipher_trans : &this->trans,
-             now,
-             0, Rect())
-    , redrawable(0)
-    , idx_file(0)
-    , path()
-    , base_path_len(0)
-    , only_filename(false)
-    , force_interpret_breakpoint(false)
-    , interpret_breakpoint_is_passed(false)
-    {
-        LOG(LOG_INFO, "WRMRecorder 3");
-        if (this->cipher_mode 
-        && !this->cipher_trans.start(this->cipher_mode, this->cipher_key, this->cipher_iv, this->cipher_impl))
-        {
-            LOG(LOG_ERR, "Error cipher start in NativeCapture");
-            throw Error(ERR_CIPHER_START);
-        }
-    }
+//            LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+//            int fd = ::open(filename, O_RDONLY);
+//            if (-1 == fd){
+//                LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+//               throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+//            }
+//            this->trans.fd = fd;
 
-    WRMRecorder(const timeval & now,
-                const std::string& filename, const std::string basepath = "",
-                const EVP_CIPHER * mode = 0,
-                const unsigned char* key = 0,
-                const unsigned char* iv = 0,
-                ENGINE* impl = 0)
-    : cipher_mode(mode)
-    , cipher_key(key)
-    , cipher_iv(iv)
-    , cipher_impl(impl)
-    , trans(0, this->cipher_mode ? false : true)
-    , cipher_trans(&trans)
-    , reader(this->cipher_mode
-             ? (Transport*)&this->cipher_trans : &this->trans,
-             now,
-             0, Rect())
-    , redrawable(0)
-    , idx_file(0)
-    , path(basepath)
-    , base_path_len(basepath.length())
-    , only_filename(false)
-    , force_interpret_breakpoint(false)
-    , interpret_breakpoint_is_passed(false)
-    {
-        LOG(LOG_INFO, "WRMRecorder 1");
-        if (this->base_path_len && this->path[this->base_path_len - 1] != '/'){
-            this->path += '/';
-            ++this->base_path_len;
-        }
-        
-        if (this->cipher_mode 
-        && !this->cipher_trans.start(this->cipher_mode, this->cipher_key, this->cipher_iv, this->cipher_impl))
-        {
-            LOG(LOG_ERR, "Error cipher start in NativeCapture");
-            throw Error(ERR_CIPHER_START);
-        }
-        
-        std::size_t pos = filename.find_last_not_of('.');
-        if (pos != std::string::npos
-        && pos < filename.size()
-        && filename[pos] == 'm'){
-            if (!this->reader.load_data(filename.c_str())){
-                throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
-            }
-            if (this->reader.data_meta.files.empty()){
-                throw Error(ERR_RECORDER_META_REFERENCE_WRM);
-            }
-            if (this->reader.data_meta.crypt_mode && !this->cipher_mode){
-                throw Error(ERR_RECORDER_FILE_CRYPTED);
-            }
-
-            const char * filename = this->reader.data_meta.files[0].wrm_filename.c_str();
-            if (this->only_filename)
-            {
-                const char * tmp = strrchr(filename + strlen(filename), '/');
-                if (tmp){
-                    filename = tmp+1;
-                }
-            }
-            if (this->base_path_len){
-                this->path.erase(this->base_path_len);
-                this->path += filename;
-                filename = this->path.c_str();
-            }
-
-            LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
-            int fd = ::open(filename, O_RDONLY);
-            if (-1 == fd){
-                LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
-               throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
-            }
-            this->trans.fd = fd;
-
-            ++this->idx_file;
-            if (this->reader.selected_next_order() 
-            && this->reader.chunk_type == WRMChunk::META_FILE){
-                this->reader.stream.p = this->reader.stream.end;
-                this->reader.remaining_order_count = 0;
-            }
-        }
-        else {
-        
-            const char* tmp_filename = filename.c_str();
-            
-            LOG(LOG_INFO, "WRMRecorder opening file : %s", tmp_filename);
-            int fd = ::open(tmp_filename, O_RDONLY);
-            if (-1 == fd){
-                LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
-               throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
-            }
-            this->trans.fd = fd;
-        
-            if (!this->reader.selected_next_order()){
-                throw Error(ERR_RECORDER_META_REFERENCE_WRM, errno);
-            }
-            if (this->reader.chunk_type == WRMChunk::META_FILE) {
-                char tmp_filename2[1024];
-                size_t len = this->reader.stream.in_uint32_le();
-                this->reader.stream.in_copy_bytes((uint8_t*)tmp_filename2, len);
-                tmp_filename2[len] = 0;
-                --this->reader.remaining_order_count;
-                
-                const char * filename2 = tmp_filename2;
-                if (this->only_filename){
-                    const char * tmp = strrchr(filename2 + strlen(filename2), '/');
-                    if (tmp){
-                        filename2 = tmp+1;
-                    }
-                }
-                if (this->base_path_len){
-                    this->path.erase(this->base_path_len);
-                    this->path += filename2;
-                    filename2 = this->path.c_str();
-                }
-                if (!this->reader.load_data(filename2)){
-                    throw Error(ERR_RECORDER_META_REFERENCE_WRM, errno);
-                }
-            }
-            if (this->reader.data_meta.crypt_mode 
-            && !this->cipher_mode){
-                throw Error(ERR_RECORDER_FILE_CRYPTED);
-            }
-        }
-    }
+//            ++this->idx_file;
+//            if (this->reader.selected_next_order() 
+//            && this->reader.chunk_type == WRMChunk::META_FILE){
+//                this->reader.stream.p = this->reader.stream.end;
+//                this->reader.remaining_order_count = 0;
+//            }
+//        }
+//        else {
+//        
+//            const char* tmp_filename = filename.c_str();
+//            
+//            LOG(LOG_INFO, "WRMRecorder opening file : %s", tmp_filename);
+//            int fd = ::open(tmp_filename, O_RDONLY);
+//            if (-1 == fd){
+//                LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+//               throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+//            }
+//            this->trans.fd = fd;
+//        
+//            if (!this->reader.selected_next_order()){
+//                throw Error(ERR_RECORDER_META_REFERENCE_WRM, errno);
+//            }
+//            if (this->reader.chunk_type == WRMChunk::META_FILE) {
+//                char tmp_filename2[1024];
+//                size_t len = this->reader.stream.in_uint32_le();
+//                this->reader.stream.in_copy_bytes((uint8_t*)tmp_filename2, len);
+//                tmp_filename2[len] = 0;
+//                --this->reader.remaining_order_count;
+//                
+//                const char * filename2 = tmp_filename2;
+//                if (this->only_filename){
+//                    const char * tmp = strrchr(filename2 + strlen(filename2), '/');
+//                    if (tmp){
+//                        filename2 = tmp+1;
+//                    }
+//                }
+//                if (this->base_path_len){
+//                    this->path.erase(this->base_path_len);
+//                    this->path += filename2;
+//                    filename2 = this->path.c_str();
+//                }
+//                if (!this->reader.load_data(filename2)){
+//                    throw Error(ERR_RECORDER_META_REFERENCE_WRM, errno);
+//                }
+//            }
+//            if (this->reader.data_meta.crypt_mode 
+//            && !this->cipher_mode){
+//                throw Error(ERR_RECORDER_FILE_CRYPTED);
+//            }
+//        }
+//    }
 
     void load_png_context(Drawable& drawable)
     {
@@ -565,57 +590,6 @@ public:
     }
 
 public:
-    void set_basepath(const std::string basepath)
-    {
-        this->base_path_len = basepath.length();
-        this->path = basepath;
-        if (this->base_path_len && this->path[this->base_path_len - 1] != '/')
-        {
-            this->path += '/';
-            ++this->base_path_len;
-        }
-    }
-
-
-public:
-    void next_file(const char * filename)
-    {
-        ::close(this->trans.fd);
-        if (this->cipher_mode){
-            this->cipher_trans.stop();
-        }
-        this->trans.fd = -1;
-        if (this->only_filename)
-        {
-            const char * tmp = strrchr(filename + strlen(filename), '/');
-            if (tmp){
-                filename = tmp+1;
-            }
-        }
-        if (this->base_path_len){
-            this->path.erase(this->base_path_len);
-            this->path += filename;
-            filename = this->path.c_str();
-        }
-
-        LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
-        int fd = ::open(filename, O_RDONLY);
-        if (-1 == fd){
-            LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
-           throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
-        }
-        this->trans.fd = fd;
-
-        this->trans.total_received = 0;
-        this->trans.last_quantum_received = 0;
-        this->trans.total_sent = 0;
-        this->trans.last_quantum_sent = 0;
-        this->trans.quantum_count = 0;
-        if (this->cipher_mode){
-            this->cipher_trans.reset();
-        }
-    }
-
     void load_context(const char * filename)
     {
         if (this->redrawable)
@@ -797,7 +771,41 @@ public:
                     LOG(LOG_ERR, "WRMRecorder : idx(%d) not found in meta", (int)this->idx_file);
                     throw Error(ERR_RECORDER_META_REFERENCE_WRM);
                 }
-                this->next_file(this->reader.data_meta.files[this->idx_file].wrm_filename.c_str());
+                const char * filename = this->reader.data_meta.files[this->idx_file].wrm_filename.c_str();
+                ::close(this->trans.fd);
+                if (this->cipher_mode){
+                    this->cipher_trans.stop();
+                }
+                this->trans.fd = -1;
+                if (this->only_filename)
+                {
+                    const char * tmp = strrchr(filename + strlen(filename), '/');
+                    if (tmp){
+                        filename = tmp+1;
+                    }
+                }
+                if (this->base_path_len){
+                    this->path.erase(this->base_path_len);
+                    this->path += filename;
+                    filename = this->path.c_str();
+                }
+
+                LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+                int fd = ::open(filename, O_RDONLY);
+                if (-1 == fd){
+                    LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+                   throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+                }
+                this->trans.fd = fd;
+
+                this->trans.total_received = 0;
+                this->trans.last_quantum_received = 0;
+                this->trans.total_sent = 0;
+                this->trans.last_quantum_sent = 0;
+                this->trans.quantum_count = 0;
+                if (this->cipher_mode){
+                    this->cipher_trans.reset();
+                }
                 --this->reader.remaining_order_count;
                 this->load_context(this->reader.data_meta.files[this->idx_file].png_filename.c_str());
             }

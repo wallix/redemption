@@ -112,16 +112,19 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
 
     RecorderAdapter* adapter = actions[i].action;
 
-    WRMRecorder recorder(now);
-    recorder.wrm_recorder_init(itype, 
+    printf("base_path=%s in_filename=%s\n", opt.base_path.c_str(), opt.in_filename.c_str());
+    exit(0);
+
+    WRMRecorder recorder(now,
+                        opt.in_crypt_mode,
+                        opt.in_crypt_key, 
+                        opt.in_crypt_iv,
+                        itype, 
                         opt.base_path, 
                         opt.ignore_dir_for_meta_in_wrm,
                         opt.times_in_meta_are_false,
                         opt.force_interpret_breakpoint,
                         opt.range,
-                        opt.in_crypt_mode,
-                        opt.in_crypt_key, 
-                        opt.in_crypt_iv,
                         opt.in_filename,
                         opt.idx_start);
 
