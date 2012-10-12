@@ -91,7 +91,6 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
         return error;
     }
 
-    printf("running recorder\n");
     const std::size_t pos = opt.out_filename.find_last_of('.');
     std::string extension = opt.output_type.empty()
     ? (std::string::npos == pos ? "" : opt.out_filename.substr(pos + 1))
@@ -111,9 +110,6 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
     }
 
     RecorderAdapter* adapter = actions[i].action;
-
-    printf("base_path=%s in_filename=%s\n", opt.base_path.c_str(), opt.in_filename.c_str());
-    exit(0);
 
     WRMRecorder recorder(now,
                         opt.in_crypt_mode,
