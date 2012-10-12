@@ -367,47 +367,4 @@ private:
     }
 };
 
-
-class RaiiOutCipherTransport
-{
-    OutCipherTransport &ref_trans;
-
-public:
-    RaiiOutCipherTransport(OutCipherTransport& trans,
-                          const EVP_CIPHER * mode,
-                          const unsigned char* key = 0,
-                          const unsigned char* iv = 0,
-                          ENGINE* impl = 0)
-    : ref_trans(trans)
-    {
-        this->ref_trans.start(mode, key, iv, impl);
-    }
-
-    ~RaiiOutCipherTransport()
-    {
-        this->ref_trans.stop();
-    }
-};
-
-class RaiiInCipherTransport
-{
-    InCipherTransport &ref_trans;
-
-public:
-    RaiiInCipherTransport(InCipherTransport& trans,
-                          const EVP_CIPHER * mode,
-                          const unsigned char* key = 0,
-                          const unsigned char* iv = 0,
-                          ENGINE* impl = 0)
-    : ref_trans(trans)
-    {
-        this->ref_trans.start(mode, key, iv, impl);
-    }
-
-    ~RaiiInCipherTransport()
-    {
-        this->ref_trans.stop();
-    }
-};
-
 #endif

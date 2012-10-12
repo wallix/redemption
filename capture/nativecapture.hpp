@@ -63,6 +63,9 @@ public:
     int height;
     int bpp;
 
+    TODO("We shouldn't have two transports. That is looking for troubles."
+         "Also start and stop are not part (and should not be) part of transport API"
+         "Looks like we should have a BreakCapture object handling change of NativeCapture objects")
     OutFileTransport trans;
 
     OutCipherTransport cipher_trans;

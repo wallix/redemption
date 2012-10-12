@@ -282,6 +282,7 @@ class OutFileTransport : public Transport {
                     continue;
                 }
                 LOG(LOG_INFO, "Outfile transport write failed with error %s", strerror(errno));
+                *(int*)0 = 0;
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
             }
         }
