@@ -149,9 +149,6 @@ public:
 
 public:
     WRMRecorder(const timeval & now,
-                const EVP_CIPHER* in_crypt_mode,
-                HexadecimalKeyOption & in_crypt_key, 
-                HexadecimalIVOption & in_crypt_iv,
                 InputType::enum_t itype,
                 std::string & base_path,
                 bool ignore_dir_for_meta_in_wrm,

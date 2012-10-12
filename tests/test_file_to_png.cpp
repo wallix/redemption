@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     std::string path(FIXTURES_PATH);
     std::string filename(FIXTURES_PATH "/test_w2008_2-880.mwrm");
 
-    WRMRecorder reader(now, 0, in_crypt_key, in_crypt_iv, InputType::META_TYPE, path, false, false, false, range, filename, 0);
+    WRMRecorder reader(now, InputType::META_TYPE, path, false, false, false, range, filename, 0);
     BOOST_CHECK(true);
     DataMetaFile& meta = reader.reader.data_meta;
     BOOST_CHECK_EQUAL(reader.reader.chunk_type == WRMChunk::META_FILE, true);

@@ -59,9 +59,6 @@ int main(int argc, char** argv)
     gettimeofday(&now, NULL);
 
     WRMRecorder recorder(now,
-                        opt.in_crypt_mode,
-                        opt.in_crypt_key, 
-                        opt.in_crypt_iv,
                         itype, 
                         opt.base_path, 
                         opt.ignore_dir_for_meta_in_wrm,

@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
 
     std::string filename(mwrm_filename);
 
-    WRMRecorder recorder(now, 0, in_crypt_key, in_crypt_iv, InputType::META_TYPE, path, false, false, false, range, filename, 0);
+    WRMRecorder recorder(now, InputType::META_TYPE, path, false, false, false, range, filename, 0);
    
     const char * cfilename = recorder.reader.data_meta.files[0].wrm_filename.c_str();
     

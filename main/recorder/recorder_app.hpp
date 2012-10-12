@@ -112,9 +112,6 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
     RecorderAdapter* adapter = actions[i].action;
 
     WRMRecorder recorder(now,
-                        opt.in_crypt_mode,
-                        opt.in_crypt_key, 
-                        opt.in_crypt_iv,
                         itype, 
                         opt.base_path, 
                         opt.ignore_dir_for_meta_in_wrm,
