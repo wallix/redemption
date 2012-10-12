@@ -316,14 +316,13 @@ struct CipherMode
 
 class CipherCrypt
 {
+public:
     EVP_CIPHER_CTX _ctx;
     CipherCryptData* _data;
 
-    CipherCryptInit _init;
     CipherCryptUpdate _update;
     CipherCryptFinal _final;
 
-public:
     struct EncryptConstruct {};
     struct DecryptConstruct {};
 
@@ -337,7 +336,7 @@ public:
     CipherCrypt(const EncryptConstruct&, CipherCryptData* data = 0)
     : _ctx()
     , _data(data)
-    , _init(&EVP_EncryptInit_ex)
+//    , _init(&EVP_EncryptInit_ex)
     , _update(&EVP_EncryptUpdate)
     , _final(&EVP_EncryptFinal_ex)
     {
@@ -347,7 +346,7 @@ public:
     CipherCrypt(const DecryptConstruct&, CipherCryptData* data = 0)
     : _ctx()
     , _data(data)
-    , _init(&EVP_DecryptInit_ex)
+//    , _init(&EVP_DecryptInit_ex)
     , _update(&EVP_DecryptUpdate)
     , _final(&EVP_DecryptFinal_ex)
     {
@@ -369,29 +368,6 @@ public:
         EVP_CIPHER_CTX_cleanup(&this->_ctx);
     }
 
-    void init(const EncryptConstruct&)
-    {
-        _init = &EVP_EncryptInit_ex;
-        _update = &EVP_EncryptUpdate;
-        _final = &EVP_EncryptFinal_ex;
-    }
-
-    void init(const DecryptConstruct&)
-    {
-        _init = &EVP_DecryptInit_ex;
-        _update = &EVP_DecryptUpdate;
-        _final = &EVP_DecryptFinal_ex;
-    }
-
-    void init_encrypt()
-    {
-        this->init(EncryptConstruct());
-    }
-
-    void init_decrypt()
-    {
-        this->init(DecryptConstruct());
-    }
 
     CipherCryptData* data() const
     {
@@ -402,7 +378,7 @@ public:
                const unsigned char* key = 0, const unsigned char* iv = 0,
                ENGINE* impl = 0)
     {
-        return this->_init(&this->_ctx, mode, impl, key, iv);
+        return EVP_DecryptInit_ex(&this->_ctx, mode, impl, key, iv);
     }
 
     bool start(CipherCryptData* data, const EVP_CIPHER * mode,

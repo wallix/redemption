@@ -183,7 +183,6 @@ unit-test test_stream : tests/test_stream.cpp libboost_unit_test ;
 unit-test test_config : tests/test_config.cpp ini_config libboost_unit_test libboost_program_options ;
 unit-test test_font : tests/test_font.cpp libboost_unit_test ;
 unit-test test_rect : tests/test_rect.cpp libboost_unit_test ;
-#unit-test test_urt : tests/test_urt.cpp libboost_unit_test ;
 unit-test test_compact_to_aligned : tests/test_compact_to_aligned.cpp libboost_unit_test ;
 unit-test test_region : tests/test_region.cpp libboost_unit_test ;
 unit-test test_strings : tests/test_strings.cpp libboost_unit_test ;
@@ -272,9 +271,9 @@ unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test : ;
 unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test ;
 
 unit-test test_file_to_png : tests/test_file_to_png.cpp libboost_unit_test png z d3des openssl crypto dl ;
-#unit-test test_breakpoint : tests/test_breakpoint.cpp libboost_unit_test png z d3des openssl dl crypto ;
+unit-test test_breakpoint : tests/test_breakpoint.cpp libboost_unit_test png z d3des openssl dl crypto ;
 
-#unit-test test_wrm_recorder : tests/test_wrm_recorder.cpp libboost_unit_test png z d3des openssl crypto dl ;
+unit-test test_wrm_recorder : tests/test_wrm_recorder.cpp libboost_unit_test png z d3des openssl crypto dl ;
 
 unit-test test_absolute_primary_order_opaque_rect : tests/test_absolute_primary_order_opaque_rect.cpp libboost_unit_test png d3des openssl z crypto ;
 
@@ -288,7 +287,7 @@ unit-test test_meta_file : tests/test_meta_file.cpp libboost_unit_test ;
 
 unit-test test_png_scale : tests/test_png_scale.cpp libboost_unit_test png z crypto ;
 
-unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp libboost_unit_test z dl crypto png ;
+#unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp libboost_unit_test z dl crypto png ;
 unit-test test_cipher_transport : tests/test_cipher_transport.cpp libboost_unit_test z dl crypto png ;
 
 unit-test test_bitfu : tests/test_bitfu.cpp libboost_unit_test ;

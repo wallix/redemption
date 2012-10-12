@@ -44,7 +44,13 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
     timeval now;
     gettimeofday(&now, NULL);
 
-    WRMRecorder recorder(now, FIXTURES_PATH "/test_w2008_2-880.mwrm", FIXTURES_PATH);
+    HexadecimalKeyOption in_crypt_key;
+    HexadecimalIVOption in_crypt_iv;
+    range_time_point range;
+    std::string path(FIXTURES_PATH);
+    std::string filename(FIXTURES_PATH "/test_w2008_2-880.mwrm");
+
+    WRMRecorder recorder(now, 0, in_crypt_key, in_crypt_iv, InputType::META_TYPE, path, false, false, false, range, filename, 0);
 
     BOOST_CHECK_EQUAL(800, recorder.reader.data_meta.width);
     BOOST_CHECK_EQUAL(600, recorder.reader.data_meta.height);
@@ -102,62 +108,74 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 
 void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, const char * sigdata = 0, bool realloc_consumer = false)
 {
-    char filename[50];
-    sprintf(filename, "/tmp/replay_part-%u-%u.wrm", getpid(), nfile);
     BOOST_CHECK(1);
     timeval now;
     gettimeofday(&now, NULL);   
 
-    WRMRecorder* recorder = new WRMRecorder(now, filename);
-    BOOST_CHECK_EQUAL(800, recorder->reader.data_meta.width);
-    BOOST_CHECK_EQUAL(600, recorder->reader.data_meta.height);
-    /*BOOST_CHECK_EQUAL(24, recorder->meta.bpp);*/
+    HexadecimalKeyOption in_crypt_key;
+    HexadecimalIVOption in_crypt_iv;
+    range_time_point range;
+    std::string path("/tmp");
+    char cfilename[50];
+    sprintf(cfilename, "/tmp/replay_part-%u-%u.wrm", getpid(), nfile);
+    std::string filename(cfilename);
+
+    WRMRecorder recorder(now, 0, in_crypt_key, in_crypt_iv, InputType::META_TYPE, path, false, false, false, range, filename, 0);
+
+    BOOST_CHECK_EQUAL(800, recorder.reader.data_meta.width);
+    BOOST_CHECK_EQUAL(600, recorder.reader.data_meta.height);
+    /*BOOST_CHECK_EQUAL(24, recorder.meta.bpp);*/
 
     char filename_consumer[50];
     int nframe = 0;
     sprintf(filename_consumer, "/tmp/test_wrm_recorder_to_png%u-%d", numtest, nframe);
-    StaticCapture *consumer = new StaticCapture(recorder->reader.data_meta.width,
-                                                recorder->reader.data_meta.height,
+    StaticCapture *consumer = new StaticCapture(recorder.reader.data_meta.width,
+                                                recorder.reader.data_meta.height,
                                                 filename_consumer,
                                                 true);
     BOOST_CHECK(1);
 
-    recorder->reader.consumer = consumer;
-    recorder->redrawable = &consumer->drawable;
+    recorder.reader.consumer = consumer;
+    recorder.redrawable = &consumer->drawable;
     bool is_chunk_time = true;
     BOOST_CHECK(1);
 
     uint n = 0;
 
-    while (recorder->reader.selected_next_order())
+    while (recorder.reader.selected_next_order())
     {
         BOOST_CHECK(1);
-        if (recorder->reader.chunk_type == WRMChunk::TIMESTAMP){
+        if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP){
             is_chunk_time = true;
-            recorder->reader.remaining_order_count = 0;
+            recorder.reader.remaining_order_count = 0;
             ++n;
-        } else if (recorder->reader.chunk_type == WRMChunk::NEXT_FILE_ID) {
+        } else if (recorder.reader.chunk_type == WRMChunk::NEXT_FILE_ID) {
             BOOST_CHECK(1);
-            std::size_t n = recorder->reader.stream.in_uint32_le();
-            std::string wrm_filename = recorder->reader.data_meta.files[n].wrm_filename;
+            std::size_t n = recorder.reader.stream.in_uint32_le();
+            std::string wrm_filename = recorder.reader.data_meta.files[n].wrm_filename;
             BOOST_CHECK(1);
-            delete recorder;
             BOOST_CHECK(1);
             timeval now;
             gettimeofday(&now, NULL);
 
-            recorder = new WRMRecorder(now, wrm_filename);
+            HexadecimalKeyOption in_crypt_key;
+            HexadecimalIVOption in_crypt_iv;
+            range_time_point range;
+            std::string path("/tmp");
+
+            WRMRecorder recorder(now, 0, in_crypt_key, in_crypt_iv, InputType::META_TYPE, path, false, false, false, range, wrm_filename, 0);
+
             if (realloc_consumer)
             {
                 delete consumer;
                 sprintf(filename_consumer, "/tmp/test_wrm_recorder_to_png%u-%d", numtest, ++nframe);
-                consumer = new StaticCapture(recorder->reader.data_meta.width,
-                                             recorder->reader.data_meta.height,
+                consumer = new StaticCapture(recorder.reader.data_meta.width,
+                                             recorder.reader.data_meta.height,
                                              filename_consumer,
                                              true);
             }
-            recorder->reader.consumer = consumer;
-            recorder->redrawable = &consumer->drawable;
+            recorder.reader.consumer = consumer;
+            recorder.redrawable = &consumer->drawable;
             BOOST_CHECK(1);
         } else {
             BOOST_CHECK(1);
@@ -167,7 +185,7 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
                 consumer->flush();
                 is_chunk_time = false;
             }
-            recorder->interpret_order();
+            recorder.interpret_order();
             BOOST_CHECK(1);
         }
         BOOST_CHECK(1);
@@ -184,7 +202,6 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
     }
 
     BOOST_CHECK_EQUAL(n, totalframe);
-    delete recorder;
     delete consumer;
     //std::cout << n << '\n';
 }

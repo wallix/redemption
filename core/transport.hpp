@@ -282,7 +282,7 @@ class OutFileTransport : public Transport {
                     continue;
                 }
                 LOG(LOG_INFO, "Outfile transport write failed with error %s", strerror(errno));
-                *(int*)0 = 0;
+//                *(int*)0 = 0;
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
             }
         }
@@ -294,10 +294,9 @@ class InFileTransport : public Transport {
 
     public:
     int fd;
-    bool diff_size_is_error;
 
-    InFileTransport(int fd, bool diff_size_is_error = true)
-        : Transport(), fd(fd), diff_size_is_error(diff_size_is_error)
+    InFileTransport(int fd)
+        : Transport(), fd(fd)
     {
     }
 
@@ -319,9 +318,6 @@ class InFileTransport : public Transport {
             else {
                 if (errno == EINTR){
                     continue;
-                }
-                if (!this->diff_size_is_error && ret == 0) {
-                    break;
                 }
                 *pbuffer = buffer;
                 LOG(LOG_INFO, "Infile transport read failed with error %s", strerror(errno));

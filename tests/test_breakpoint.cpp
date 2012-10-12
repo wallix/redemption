@@ -60,40 +60,37 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     timeval now;
     gettimeofday(&now, NULL);
 
-    WRMRecorder recorder(now);;
-    BOOST_CHECK(1);
+    HexadecimalKeyOption in_crypt_key;
+    HexadecimalIVOption in_crypt_iv;
+    range_time_point range;
+    std::string path("");
+
     std::string mwrm_filename = filename_base;
     mwrm_filename += '-';
     mwrm_filename += boost::lexical_cast<std::string>(getpid());
     mwrm_filename += ".mwrm";
+
+    std::string filename(mwrm_filename);
+
+    WRMRecorder recorder(now, 0, in_crypt_key, in_crypt_iv, InputType::META_TYPE, path, false, false, false, range, filename, 0);
    
-    if (!recorder.reader.load_data(mwrm_filename.c_str())){
-        throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
-    }
-    if (recorder.reader.data_meta.files.empty()){
-        throw Error(ERR_RECORDER_META_REFERENCE_WRM);
-    }
-    if (recorder.reader.data_meta.crypt_mode && !recorder.cipher_mode){
-        throw Error(ERR_RECORDER_FILE_CRYPTED);
-    }
-    
-    const char * filename = recorder.reader.data_meta.files[0].wrm_filename.c_str();
+    const char * cfilename = recorder.reader.data_meta.files[0].wrm_filename.c_str();
     
     if (recorder.only_filename)
     {
-        const char * tmp = strrchr(filename + strlen(filename), '/');
+        const char * tmp = strrchr(cfilename + strlen(cfilename), '/');
         if (tmp){
-            filename = tmp+1;
+            cfilename = tmp+1;
         }
     }
     if (recorder.base_path_len){
         recorder.path.erase(recorder.base_path_len);
-        recorder.path += filename;
-        filename = recorder.path.c_str();
+        recorder.path += cfilename;
+        cfilename = recorder.path.c_str();
     }
     
-    LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
-    int fd = ::open(filename, O_RDONLY);
+    LOG(LOG_INFO, "WRMRecorder opening file : %s", cfilename);
+    int fd = ::open(cfilename, O_RDONLY);
     if (-1 == fd){
         LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
        throw Error(ERR_WRM_RECORDER_OPEN_FAILED);

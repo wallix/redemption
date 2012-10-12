@@ -42,37 +42,41 @@
 #include "filename_generator.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestCryptFileOpenSSL)
-{
-    unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
-    unsigned char iv[] = {1,2,3,4,5,6,7,8};
+//BOOST_AUTO_TEST_CASE(TestCryptFileOpenSSL)
+//{
+//    unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+//    unsigned char iv[] = {1,2,3,4,5,6,7,8};
 
-    //const char * mystr = "1234567890";
-    const char * mystr = "123456";
+//    const char * mystr = "123456";
 
-    unsigned char pDecryptedStr[1024] = {0};
+//    unsigned char pDecryptedStr[1024] = {0};
 
-    int fd = open("/tmp/encrypt.txt", O_WRONLY|O_CREAT, 0644);
-    BOOST_REQUIRE(fd != 0);
-    {
-        OutFileTransport out_file(fd);
-        OutCipherTransport trans(&out_file);
-        OutCipherTransport ctrans(trans);
-        trans.start(CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC), key, iv);
-        trans.send(mystr, strlen(mystr));
-    }
-    close(fd);
+//    int fd = open("/tmp/encrypt.txt", O_WRONLY|O_CREAT, 0644);
+//    BOOST_REQUIRE(fd != 0);
+//    {
+//        OutFileTransport out_file(fd);
+//        OutCipherTransport trans(&out_file);
+//        trans.start(CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC), key, iv);
+//        trans.send(mystr, strlen(mystr));
+//        trans.stop();
+//    }
+//    close(fd);
 
 //    fd = open("/tmp/encrypt.txt", O_RDONLY);
 //    BOOST_REQUIRE(fd != 0);
 //    std::size_t size_buf = 4;
 //    {
-//        InFileTransport in_file(fd, false);
+//        InFileTransport in_file(fd);
 //        InCipherTransport trans(&in_file);
-//        RaiiInCipherTransport raii(trans, CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC), key, iv);
-//        BOOST_REQUIRE(true);
+//        trans.start(CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC), key, iv);
 //        unsigned char * p = pDecryptedStr;
-//        trans.recv(&p, size_buf);
+//        try {
+//            trans.recv(&p, size_buf);
+//        }
+//        catch (const Error & e) {
+//            printf("error=%u\n", e.id);
+//        };
+        
 //        BOOST_REQUIRE_EQUAL(p - pDecryptedStr, 4);
 //        BOOST_REQUIRE(
 //            pDecryptedStr[0] == '1'
@@ -96,11 +100,12 @@ BOOST_AUTO_TEST_CASE(TestCryptFileOpenSSL)
 //        } catch (Error& err) {
 //            //throw std::runtime_error("normal error");
 //        }
+//        trans.stop();
 //    }
 //    close(fd);
 
 //    unlink("/tmp/encrypt.txt");
-}
+//}
 
 //BOOST_AUTO_TEST_CASE(TestCryptWRMFileOpenSSL)
 //{
