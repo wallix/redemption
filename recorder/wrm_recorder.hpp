@@ -129,11 +129,7 @@ struct InputType {
 class WRMRecorder
 {
     public:
-    const EVP_CIPHER * cipher_mode;
-    const unsigned char* cipher_key;
-    const unsigned char* cipher_iv;
     InFileTransport trans;
-    InCipherTransport cipher_trans;
 
 public:
     RDPUnserializer reader;
@@ -164,11 +160,7 @@ public:
                 range_time_point & range,
                 std::string & in_filename,
                 uint idx_start)
-    : cipher_mode(in_crypt_mode)
-    , cipher_key(in_crypt_key.data)
-    , cipher_iv(in_crypt_iv.data)
-    , trans(0)
-    , cipher_trans(&trans)
+    : trans(0)
     , reader(&this->trans, now, 0, Rect())
     , redrawable(0)
     , idx_file(0)
@@ -195,31 +187,6 @@ public:
             switch (itype) {
                 case InputType::WRM_TYPE:
                 {
-                    if (in_crypt_key.size && !in_crypt_iv.size){
-                        in_crypt_iv.size = sizeof(in_crypt_iv.data);
-                        memcpy(in_crypt_iv.data, reader.data_meta.crypt_iv, sizeof(in_crypt_iv.data));
-                    }
-                    if (in_crypt_key.size){
-                        LOG(LOG_INFO, "init_cipher");
-                        this->cipher_mode = (in_crypt_mode ? in_crypt_mode :
-                            CipherMode::to_evp_cipher((CipherMode::enum_t)this->reader.data_meta.crypt_mode));
-                        if (!this->cipher_mode){
-                            throw Error(ERR_WRM_INVALID_INIT_CRYPT);
-                        }
-                        if (!this->cipher_trans.start(this->cipher_mode, 
-                                                         in_crypt_key.data,
-                                                         in_crypt_iv.size ? in_crypt_iv.data : 0,
-                                                         0)){
-                            this->cipher_mode = 0;
-                            std::cerr << "Error in the initialization of the encryption" << std::endl;
-                            throw Error(ERR_WRM_INVALID_INIT_CRYPT);
-                        }
-
-                        this->cipher_key = in_crypt_key.data;
-                        this->cipher_iv = in_crypt_iv.size ? in_crypt_iv.data : 0;
-                        this->reader.trans = &this->cipher_trans;
-//                        this->trans.diff_size_is_error = false;
-                    }
                     const char * filename = in_filename.c_str();
                     LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
                     int fd = ::open(filename, O_RDONLY);
@@ -301,9 +268,6 @@ public:
                     if (idx_start != this->idx_file){
                         const char * filename = reader.data_meta.files[this->idx_file].wrm_filename.c_str();
                         ::close(this->trans.fd);
-                        if (this->cipher_mode){
-                            this->cipher_trans.stop();
-                        }
                         this->trans.fd = -1;
                         if (this->only_filename)
                         {
@@ -331,9 +295,6 @@ public:
                         this->trans.total_sent = 0;
                         this->trans.last_quantum_sent = 0;
                         this->trans.quantum_count = 0;
-                        if (this->cipher_mode){
-                            this->cipher_trans.reset();
-                        }
                     }
                 }
                 break;
@@ -386,31 +347,6 @@ public:
                         filename = this->path.c_str();
                     }
                     
-                    if (in_crypt_key.size && !in_crypt_iv.size){
-                        in_crypt_iv.size = sizeof(in_crypt_iv.data);
-                        memcpy(in_crypt_iv.data, reader.data_meta.crypt_iv, sizeof(in_crypt_iv.data));
-                    }
-                    if (in_crypt_key.size){
-                        LOG(LOG_INFO, "init_cipher");
-                        this->cipher_mode = (in_crypt_mode ? in_crypt_mode :
-                            CipherMode::to_evp_cipher((CipherMode::enum_t)this->reader.data_meta.crypt_mode));
-                        if (!this->cipher_mode){
-                            throw Error(ERR_WRM_INVALID_INIT_CRYPT);
-                        }
-                        if (!this->cipher_trans.start(this->cipher_mode, 
-                                                         in_crypt_key.data,
-                                                         in_crypt_iv.size ? in_crypt_iv.data : 0,
-                                                         0)){
-                            this->cipher_mode = 0;
-                            std::cerr << "Error in the initialization of the encryption" << std::endl;
-                            throw Error(ERR_WRM_INVALID_INIT_CRYPT);
-                        }
-
-                        this->cipher_key = in_crypt_key.data;
-                        this->cipher_iv = in_crypt_iv.size ? in_crypt_iv.data : 0;
-                        this->reader.trans = &this->cipher_trans;
-//                        this->trans.diff_size_is_error = false;
-                    }
 
                     LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
                     int fd = ::open(filename, O_RDONLY);
@@ -487,79 +423,11 @@ public:
                 throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
             }
 
-            if (this->cipher_mode){
-                z_stream zstrm;
-                zstrm.zalloc = 0;
-                zstrm.zfree = 0;
-                zstrm.opaque = 0;
-                int ret;
-                if ((ret = inflateInit(&zstrm)) != Z_OK)
-                {
-                    LOG(LOG_ERR, "zlib: inflateInit: %d", ret);
-                    throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
-                }
-                ZRaiiInflateEnd infliate_end(zstrm);
-                uint8_t crypt_buf[8192];
-                uint8_t uncrypt_buf[sizeof(crypt_buf) + EVP_MAX_BLOCK_LENGTH];
-                CipherCryptData cipher_data(uncrypt_buf);
-                CipherCrypt cipher_crypt(CipherCrypt::DecryptConstruct(), &cipher_data);
-                cipher_crypt.start(this->cipher_mode,
-                                   this->cipher_key,
-                                   this->cipher_iv);
-                std::size_t len = 0;
-                int flush;
-                std::size_t pixlen = this->redrawable->height * this->redrawable->rowsize;
-                do
-                {
-                    len = fread(crypt_buf, 1, sizeof(crypt_buf), fd);
-                    if (ferror(fd))
-                    {
-                        LOG(LOG_ERR, "read context error : %s",
-                            strerror(ferror(fd)));
-                        throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
-                    }
-                    cipher_data.reset();
-                    cipher_crypt.update(crypt_buf, len);
-                    if (feof(fd))
-                    {
-                        flush = Z_FINISH;
-                        cipher_crypt.stop();
-                    }
-                    else
-                    {
-                        flush = Z_NO_FLUSH;
-                    }
-                    zstrm.avail_in = cipher_data.size();
-                    zstrm.next_in = uncrypt_buf;
-                    do
-                    {
-                        zstrm.avail_out = pixlen - zstrm.total_out;
-                        zstrm.next_out = this->redrawable->data + zstrm.total_out;
-                        ret = inflate(&zstrm, flush);
-                        if (ret != Z_OK)
-                        {
-                            if (ret == Z_STREAM_END && flush == Z_FINISH)
-                                break;
-                            LOG(LOG_ERR, "zlib: inflate: %s", zError(ret));
-                            throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
-                        }
-                    } while(zstrm.avail_out == 0);
-                    if (zstrm.avail_in != 0)
-                    {
-                        LOG(LOG_ERR, "read context error : %s",
-                            strerror(ferror(fd)));
-                        throw Error(ERR_WRM_RECORDER_ZIP_UNCOMPRESS);
-                    }
-                } while (flush != Z_FINISH);
-            }
-            else
-            {
-                read_png24(fd,
-                           this->redrawable->data,
-                           this->redrawable->width,
-                           this->redrawable->height,
-                           this->redrawable->rowsize);
-            }
+            read_png24(fd,
+                       this->redrawable->data,
+                       this->redrawable->width,
+                       this->redrawable->height,
+                       this->redrawable->rowsize);
             fclose(fd);
         }
     }
@@ -631,9 +499,6 @@ public:
                 }
                 const char * filename = this->reader.data_meta.files[this->idx_file].wrm_filename.c_str();
                 ::close(this->trans.fd);
-                if (this->cipher_mode){
-                    this->cipher_trans.stop();
-                }
                 this->trans.fd = -1;
                 if (this->only_filename)
                 {
@@ -661,9 +526,6 @@ public:
                 this->trans.total_sent = 0;
                 this->trans.last_quantum_sent = 0;
                 this->trans.quantum_count = 0;
-                if (this->cipher_mode){
-                    this->cipher_trans.reset();
-                }
                 --this->reader.remaining_order_count;
                 this->load_context(this->reader.data_meta.files[this->idx_file].png_filename.c_str());
             }

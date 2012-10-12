@@ -335,8 +335,8 @@ int main(int argc, char** argv)
         daemonize(PID_PATH "/redemption/" LOCKFILE);
     }
 
-    setuid(uid);
     setgid(gid);
+    setuid(uid);
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
     redemption_main_loop();

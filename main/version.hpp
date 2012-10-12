@@ -26,6 +26,6 @@
 
 #ifndef __VERSION_HPP__
 
-#define VERSION "0.9.75"
+#define VERSION "0.9.77"
 
 #endif
