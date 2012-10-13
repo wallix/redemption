@@ -76,18 +76,9 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
    
     const char * cfilename = recorder.reader.data_meta.files[0].wrm_filename.c_str();
     
-    if (recorder.only_filename)
-    {
-        const char * tmp = strrchr(cfilename + strlen(cfilename), '/');
-        if (tmp){
-            cfilename = tmp+1;
-        }
-    }
-    if (recorder.base_path_len){
-        recorder.path.erase(recorder.base_path_len);
-        recorder.path += cfilename;
-        cfilename = recorder.path.c_str();
-    }
+    recorder.path.erase(recorder.base_path_len);
+    recorder.path += cfilename;
+    cfilename = recorder.path.c_str();
     
     LOG(LOG_INFO, "WRMRecorder opening file : %s", cfilename);
     int fd = ::open(cfilename, O_RDONLY);

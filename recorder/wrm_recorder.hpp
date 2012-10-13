@@ -143,7 +143,7 @@ public:
     std::size_t base_path_len;
 
 public:
-    bool only_filename;
+    bool ignore_dir_for_meta_in_wrm;
     bool force_interpret_breakpoint;
     bool interpret_breakpoint_is_passed;
 
@@ -163,8 +163,8 @@ public:
     , idx_file(0)
     , path()
     , base_path_len(0)
-    , only_filename(false)
-    , force_interpret_breakpoint(false)
+    , ignore_dir_for_meta_in_wrm(ignore_dir_for_meta_in_wrm)
+    , force_interpret_breakpoint(force_interpret_breakpoint)
     , interpret_breakpoint_is_passed(false)
     {
         RDPUnserializer & reader = this->reader;
@@ -177,8 +177,6 @@ public:
             ++this->base_path_len;
         }
         
-        this->only_filename = ignore_dir_for_meta_in_wrm;
-
         try
         {
             switch (itype) {
@@ -211,7 +209,7 @@ public:
                     --reader.remaining_order_count;
                     
                     const char * filename2 = tmp_filename;
-                    if (this->only_filename)
+                    if (this->ignore_dir_for_meta_in_wrm)
                     {
                         const char * tmp = strrchr(filename2 + strlen(filename2), '/');
                         if (tmp){
@@ -266,7 +264,7 @@ public:
                         const char * filename = reader.data_meta.files[this->idx_file].wrm_filename.c_str();
                         ::close(this->trans.fd);
                         this->trans.fd = -1;
-                        if (this->only_filename)
+                        if (this->ignore_dir_for_meta_in_wrm)
                         {
                             const char * tmp = strrchr(filename + strlen(filename), '/');
                             if (tmp){
@@ -331,7 +329,7 @@ public:
                     }
                     const char * filename = reader.data_meta.files[idx_start].wrm_filename.c_str();
                     
-                    if (this->only_filename)
+                    if (this->ignore_dir_for_meta_in_wrm)
                     {
                         const char * tmp = strrchr(filename + strlen(filename), '/');
                         if (tmp){
@@ -370,7 +368,6 @@ public:
                     throw Error(ERR_WRM);
             }
             this->idx_file = idx_start + 1;
-            this->force_interpret_breakpoint = force_interpret_breakpoint;
         }
         catch (const Error& error)
         {
@@ -401,7 +398,7 @@ public:
     {
         if (this->redrawable)
         {
-            if (this->only_filename)
+            if (this->ignore_dir_for_meta_in_wrm)
             {
                 const char * tmp = strrchr(filename + strlen(filename), '/');
                 if (tmp){
@@ -497,7 +494,7 @@ public:
                 const char * filename = this->reader.data_meta.files[this->idx_file].wrm_filename.c_str();
                 ::close(this->trans.fd);
                 this->trans.fd = -1;
-                if (this->only_filename)
+                if (this->ignore_dir_for_meta_in_wrm)
                 {
                     const char * tmp = strrchr(filename + strlen(filename), '/');
                     if (tmp){
