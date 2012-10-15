@@ -128,11 +128,9 @@ struct InputType {
 
 class WRMRecorder
 {
-    public:
-    InFileTransport trans;
-
 public:
-    RDPUnserializer reader;
+    InFileTransport & trans;
+    RDPUnserializer & reader;
 
     Drawable * redrawable;
 
@@ -149,6 +147,8 @@ public:
 
 public:
     WRMRecorder(const timeval & now,
+                InFileTransport & trans,
+                RDPUnserializer & reader,
                 InputType::enum_t itype,
                 std::string & base_path,
                 bool ignore_dir_for_meta_in_wrm,
@@ -157,8 +157,11 @@ public:
                 range_time_point & range,
                 std::string & in_filename,
                 uint idx_start)
-    : trans(0)
-    , reader(&this->trans, now, 0, Rect())
+    : trans(trans)
+    , reader(reader)
+    
+//      trans(0)
+//    , reader(&this->trans, now, 0, Rect())
     , redrawable(0)
     , idx_file(0)
     , path()
@@ -167,8 +170,6 @@ public:
     , force_interpret_breakpoint(force_interpret_breakpoint)
     , interpret_breakpoint_is_passed(false)
     {
-        RDPUnserializer & reader = this->reader;
-    
         this->base_path_len = base_path.length();
         this->path = base_path;
         if (this->base_path_len && this->path[this->base_path_len - 1] != '/')
@@ -209,6 +210,7 @@ public:
                     --reader.remaining_order_count;
                     
                     const char * filename2 = tmp_filename;
+                    // -----------------------------------------------------------
                     if (this->ignore_dir_for_meta_in_wrm)
                     {
                         const char * tmp = strrchr(filename2 + strlen(filename2), '/');
@@ -221,7 +223,7 @@ public:
                         this->path += filename2;
                         filename2 = this->path.c_str();
                     }
-                    
+                    // ------------------------------------------------------------
                     if (!reader.load_data(filename2)){
                         std::cerr << "invalid meta chunck in " << in_filename << std::endl;
                         throw Error(ERR_WRM_INVALID_META_CHUNK);
@@ -261,9 +263,9 @@ public:
                         throw Error(ERR_WRM_IDX_NOT_FOUND);
                     }
                     if (idx_start != this->idx_file){
+
+                        // --------------------------------------------------------------------------------
                         const char * filename = reader.data_meta.files[this->idx_file].wrm_filename.c_str();
-                        ::close(this->trans.fd);
-                        this->trans.fd = -1;
                         if (this->ignore_dir_for_meta_in_wrm)
                         {
                             const char * tmp = strrchr(filename + strlen(filename), '/');
@@ -276,8 +278,11 @@ public:
                             this->path += filename;
                             filename = this->path.c_str();
                         }
+                        // --------------------------------------------------------------------------------
 
                         LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+                        ::close(this->trans.fd);
+                        this->trans.fd = -1;
                         int fd = ::open(filename, O_RDONLY);
                         if (-1 == fd){
                             LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
@@ -398,6 +403,7 @@ public:
     {
         if (this->redrawable)
         {
+            // ----------------------------------------------------------------
             if (this->ignore_dir_for_meta_in_wrm)
             {
                 const char * tmp = strrchr(filename + strlen(filename), '/');
@@ -410,6 +416,8 @@ public:
                 this->path += filename;
                 filename = this->path.c_str();
             }
+            // ----------------------------------------------------------------
+            
             std::FILE* fd = std::fopen(filename, "r");
             if (0 == fd)
             {
@@ -491,7 +499,9 @@ public:
                     LOG(LOG_ERR, "WRMRecorder : idx(%d) not found in meta", (int)this->idx_file);
                     throw Error(ERR_RECORDER_META_REFERENCE_WRM);
                 }
+
                 const char * filename = this->reader.data_meta.files[this->idx_file].wrm_filename.c_str();
+                // ---------------------------------------------------------------------------------------
                 ::close(this->trans.fd);
                 this->trans.fd = -1;
                 if (this->ignore_dir_for_meta_in_wrm)
@@ -506,6 +516,7 @@ public:
                     this->path += filename;
                     filename = this->path.c_str();
                 }
+                // ----------------------------------------------------------------------------------------
 
                 LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
                 int fd = ::open(filename, O_RDONLY);

@@ -58,7 +58,12 @@ int main(int argc, char** argv)
     timeval now;
     gettimeofday(&now, NULL);
 
+    InFileTransport trans(-1);
+    RDPUnserializer reader(&trans, now, 0, Rect());
+
     WRMRecorder recorder(now,
+                        trans,
+                        reader,
                         itype, 
                         opt.base_path, 
                         opt.ignore_dir_for_meta_in_wrm,
@@ -68,11 +73,11 @@ int main(int argc, char** argv)
                         opt.in_filename,
                         opt.idx_start);
 
+
+
     ulong weight;
-    RDPUnserializer& unserializer = recorder.reader;
-    Stream& stream = unserializer.stream;
-    Transport* trans = unserializer.trans;
-    uint16_t& remaining_order_count = unserializer.remaining_order_count;
+    Stream& stream = recorder.reader.stream;
+    uint16_t& remaining_order_count = recorder.reader.remaining_order_count;
 
     WrmInfo timestamp_info;
     WrmInfo breakpoint_info;
@@ -118,7 +123,7 @@ int main(int argc, char** argv)
                 while (1)
                 {
                     stream.init(14);
-                    trans->recv(&stream.end, 14);
+                    trans.recv(&stream.end, 14);
                     uint16_t idx = stream.in_uint16_le();
                     stream.p += 4;
                     uint16_t cx = stream.in_uint16_le();
@@ -130,7 +135,7 @@ int main(int argc, char** argv)
                     }
                     std::cout << "\t\timage: width: " << cx << ", height: " << cy << ", size (zip compression): " << buffer_size << " B\n";
                     stream.init(buffer_size);
-                    trans->recv(&stream.end, buffer_size);
+                    trans.recv(&stream.end, buffer_size);
                 }
                 std::cout << "\ttotal: " << (breakpoint_info.weight - start_weight) << '\n';
             }
