@@ -247,7 +247,7 @@ namespace MCS
         int minThroughput;
         int maxHeight;
         int maxMCSPDUsize;
-        int protocolVersion;            
+        int protocolVersion;
 
         int in_ber_int(Stream & stream, int & v){
             uint8_t tag = stream.in_uint8();
@@ -327,7 +327,7 @@ namespace MCS
 
         bool upwardFlag;
 
-        CONNECT_INITIAL_PDU_Recv(Stream & stream, int encoding) 
+        CONNECT_INITIAL_PDU_Recv(Stream & stream, int encoding)
             : payload(stream, 0) // initialized later
         {
             if (encoding != BER_ENCODING){
@@ -366,7 +366,7 @@ namespace MCS
                 LOG(LOG_ERR, "Connect Initial::bad targetParameters");
                 throw Error(ERR_MCS);
             }
-            
+
             if (-1 == this->minimumParameters.recv(stream)){
                 LOG(LOG_ERR, "Connect Initial::bad minimumParameters");
                 throw Error(ERR_MCS);
@@ -578,7 +578,7 @@ namespace MCS
             if (1 != stream.in_ber_len()){
                 LOG(LOG_ERR, "result length should be 1");
                 throw Error(ERR_MCS);
-            }                
+            }
             this->result = stream.in_uint8();
 
             if (stream.in_uint8() != Stream::BER_TAG_INTEGER) {
@@ -1243,7 +1243,7 @@ namespace MCS
         uint8_t result;
         bool initiator_flag;
         uint16_t initiator;
-        
+
         AttachUserConfirm_Recv(Stream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
@@ -1515,7 +1515,7 @@ namespace MCS
                                , uint16_t initiator
                                , uint16_t requested
                                , bool channelId_flag
-                               , uint16_t channelId 
+                               , uint16_t channelId
                                , int encoding)
         {
             if (encoding != PER_ENCODING){
@@ -1840,7 +1840,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_SendDataRequest;
-            
+
             this->initiator = stream.in_uint16_be();
             this->channelId = stream.in_uint16_be();
             uint8_t magic = stream.in_uint8();
@@ -1909,7 +1909,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_SendDataIndication;
-            
+
             this->initiator = stream.in_uint16_be();
             this->channelId = stream.in_uint16_be();
             uint8_t magic = stream.in_uint8();
