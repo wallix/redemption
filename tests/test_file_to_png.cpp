@@ -50,7 +50,6 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     WRMRecorder recorder(now, trans, reader, InputType::META_TYPE, path, false, false, false, range, filename, 0);
     BOOST_CHECK(true);
     DataMetaFile& meta = recorder.reader.data_meta;
-    BOOST_CHECK_EQUAL(recorder.reader.chunk_type == WRMChunk::META_FILE, true);
     BOOST_CHECK_EQUAL(800, meta.width);
     BOOST_CHECK_EQUAL(600, meta.height);
 

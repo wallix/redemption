@@ -57,7 +57,8 @@ alias instexe : install-bin install-test ;
 alias install : install-bin install-etc install-share ;
 
 install install-bin
-    : rdpproxy redrec wrminfo
+#    : rdpproxy redrec wrminfo
+    : rdpproxy wrminfo
     : <install-type>EXE <install-dependencies>on
     : <location>/usr/local/bin
     ;
@@ -187,10 +188,9 @@ unit-test test_compact_to_aligned : tests/test_compact_to_aligned.cpp libboost_u
 unit-test test_region : tests/test_region.cpp libboost_unit_test ;
 unit-test test_strings : tests/test_strings.cpp libboost_unit_test ;
 unit-test test_transport : tests/test_transport.cpp libboost_unit_test ;
-unit-test test_RDP_graphic_to_file : tests/test_RDP_graphic_to_file.cpp png z libboost_unit_test z openssl crypto ;
-unit-test test_RDP_graphic_to_file_2 : tests/test_RDP_graphic_to_file_2.cpp png z libboost_unit_test z openssl crypto ;
-unit-test test_RDP_graphic_to_file_3 : tests/test_RDP_graphic_to_file_3.cpp png z libboost_unit_test z openssl crypto ;
-unit-test test_RDP_graphic_to_file_5 : tests/test_RDP_graphic_to_file_5.cpp png z libboost_unit_test z openssl crypto ;
+#unit-test test_RDP_graphic_to_file : tests/test_RDP_graphic_to_file.cpp png z libboost_unit_test z openssl crypto ;
+#unit-test test_RDP_graphic_to_file_3 : tests/test_RDP_graphic_to_file_3.cpp png z libboost_unit_test z openssl crypto ;
+#unit-test test_RDP_graphic_to_file_5 : tests/test_RDP_graphic_to_file_5.cpp png z libboost_unit_test z openssl crypto ;
 
 unit-test test_primary_order_opaque_rect : tests/orders/primary/opaque_rect.cpp libboost_unit_test ;
 unit-test test_primary_order_scr_blt : tests/orders/primary/scr_blt.cpp libboost_unit_test ;
@@ -270,10 +270,10 @@ unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test : ;
 unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test : ;
 unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test ;
 
-unit-test test_file_to_png : tests/test_file_to_png.cpp libboost_unit_test png z d3des openssl crypto dl ;
-unit-test test_breakpoint : tests/test_breakpoint.cpp libboost_unit_test png z d3des openssl dl crypto ;
+#unit-test test_file_to_png : tests/test_file_to_png.cpp libboost_unit_test png z d3des openssl crypto dl ;
+#unit-test test_breakpoint : tests/test_breakpoint.cpp libboost_unit_test png z d3des openssl dl crypto ;
 
-unit-test test_wrm_recorder : tests/test_wrm_recorder.cpp libboost_unit_test png z d3des openssl crypto dl ;
+#unit-test test_wrm_recorder : tests/test_wrm_recorder.cpp libboost_unit_test png z d3des openssl crypto dl ;
 
 unit-test test_absolute_primary_order_opaque_rect : tests/test_absolute_primary_order_opaque_rect.cpp libboost_unit_test png d3des openssl z crypto ;
 

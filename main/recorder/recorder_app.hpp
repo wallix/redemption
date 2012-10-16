@@ -27,6 +27,7 @@
 #include <utility>
 #include <string>
 
+#include "FileToGraphic.hpp"
 #include "wrm_recorder_option.hpp"
 #include "wrm_recorder.hpp"
 

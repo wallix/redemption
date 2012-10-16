@@ -101,7 +101,8 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         gettimeofday(&now, NULL);
         GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), screen_rect);
-        gtf.timestamp();
+        now.tv_sec+=1;
+        gtf.timestamp(now);
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), Rect(10, 10, 100, 100));
         gtf.flush();
         ::close(fd);

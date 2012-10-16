@@ -26,8 +26,11 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestGraphicsToFile2
 #include <boost/test/auto_unit_test.hpp>
+
+#define LOGPRINT
 #include "test_orders.hpp"
 
+#include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
 #include "constants.hpp"
 #include "RDP/caches/bmpcache.hpp"
@@ -260,15 +263,18 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ReadCapture)
 
     RDPUnserializer reader(&in_trans, now, &consumer, screen_rect);
     size_t i = 0;
-    while (reader.next()){i++;}
+    while (reader.next_order()){
+        reader.interpret_order();
+        i++;
+    }
     consumer.dump_png();
     // our test_card recording contains 659 orders
     BOOST_CHECK_EQUAL(659, i);
     ::close(fd);
     char rawImagePath[1024];
     snprintf(rawImagePath, 254, "/dev/shm/%d.png", getpid());
-    ::unlink(rawImagePath);
+//    ::unlink(rawImagePath);
     char metaImagePath[1024];
     snprintf(metaImagePath, 254, "/dev/shm/%d.png.meta", getpid());
-    ::unlink(metaImagePath);
+//    ::unlink(metaImagePath);
 }

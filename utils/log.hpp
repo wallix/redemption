@@ -26,6 +26,8 @@
 
 #include <string.h>
 
+#define REDOC(x)
+
 #ifndef VERBOSE
 #define TODO(x)
 #else

@@ -25,6 +25,7 @@
 #if !defined(__TEST_INTERNAL_HPP__)
 #define __TEST_INTERNAL_HPP__
 
+#include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 
@@ -70,16 +71,22 @@ struct test_internal_mod : public internal_mod {
     // non 0 if it wants to stop (to run another module)
     virtual BackEvent_t draw_event()
     {
+        static unsigned i = 0;
         this->event.reset();
         int fd = ::open(this->movie, O_RDONLY);
-        assert(fd > 0);
+        if(fd <= 0){
+            printf("failed to open replay file %s\n", this->movie);
+        }
+        
         InFileTransport in_trans(fd);
         timeval now;
         gettimeofday(&now, NULL);
         RDPUnserializer reader(&in_trans, now, &this->front, this->get_screen_rect());
         this->front.send_global_palette();
         this->front.begin_update();
-        while (reader.next()){
+        while (reader.next_order()){
+            printf("Reading order %u\n", i++);
+            reader.interpret_order();
         }
         this->front.end_update();
         return BACK_EVENT_NONE;

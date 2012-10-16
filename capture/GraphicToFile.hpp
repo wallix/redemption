@@ -107,6 +107,7 @@ struct GraphicsToFile : public RDPSerializer
     uint16_t offset_chunk_size;
     uint16_t offset_chunk_type;
     uint16_t chunk_type;
+    timeval last_sent_timer;
     timeval timer;
 
     GraphicsToFile(Transport * trans
@@ -128,6 +129,8 @@ struct GraphicsToFile : public RDPSerializer
     , chunk_type(RDP_UPDATE_ORDERS)
     , timer(now)
     {
+        last_sent_timer.tv_sec = 0;
+        last_sent_timer.tv_usec = 0;
         this->init();
     }
 
@@ -138,7 +141,7 @@ struct GraphicsToFile : public RDPSerializer
         if (this->ini && this->ini->globals.debug.primary_orders){
             LOG(LOG_INFO, "GraphicsToFile::init::Initializing orders batch");
         }
-        this->order_count = 0;
+        this->chunk_count = 0;
         this->pstream->init(allocate);
 
         // to keep things easy all chunks should have 8 bytes headers
@@ -153,38 +156,42 @@ struct GraphicsToFile : public RDPSerializer
         this->pstream->out_clear_bytes(2); /* pad */
     }
 
-    virtual void timestamp()
-    {
-        struct timeval now;
-        gettimeofday(&now, 0);
-        uint64_t diff = difftimeval(now, this->timer);
-        this->timer = now;
-        this->timestamp(diff);
-    }
-
     virtual void timestamp(const timeval& now)
     {
-        uint64_t diff = difftimeval(now, this->timer);
-        this->timer = now;
-        this->timestamp(diff);
+        uint64_t old_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
+        uint64_t current_timer = now.tv_sec * 1000000ULL + now.tv_usec;
+        if (old_timer < current_timer){
+            printf("timestamp to now %lu -> %lu\n", old_timer, current_timer); 
+            this->timer = now;
+        }
     }
 
-    virtual void timestamp(uint64_t usec)
+    void send_timestamp_chunk(void)
     {
-        this->flush();
-        this->chunk_type = WRMChunk::TIMESTAMP;
-        this->order_count = 1;
-        this->pstream->out_uint64_be(usec);
-        this->flush();
+        uint64_t old_timer = this->last_sent_timer.tv_sec * 1000000ULL + this->last_sent_timer.tv_usec;
+        uint64_t current_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
+        if (old_timer < current_timer){
+            printf("sending timestamp chunk %lu -> %lu \n", current_timer, old_timer); 
+            BStream stream(128);
+            stream.out_uint16_le(WRMChunk::TIMESTAMP);
+            stream.out_uint16_le(16); // chunk size
+            stream.out_uint16_le(1);  // chunk_count
+            stream.out_uint16_le(314);  // chunk_flags
+            stream.out_uint64_le(current_timer);
+            this->last_sent_timer = this->timer;
+            stream.end = stream.p;
+            this->trans->send(stream.data, stream.size());
+        }
     }
 
     virtual void flush()
     {
-        if (this->order_count > 0){
+        if (this->chunk_count > 0){
+            printf("%lu orders to send\n", this->chunk_count);
+            this->send_timestamp_chunk();
             if (this->ini && this->ini->globals.debug.primary_orders){
-                LOG(LOG_INFO, "GraphicsToFile::flush: order_count=%d", this->order_count);
+                LOG(LOG_INFO, "GraphicsToFile::flush: order_count=%d", this->chunk_count);
             }
-
             this->send_order();
             this->chunk_type = RDP_UPDATE_ORDERS;
             this->init();
@@ -196,7 +203,7 @@ struct GraphicsToFile : public RDPSerializer
         uint16_t chunk_size = (uint16_t)(this->pstream->p - this->pstream->data);
         this->pstream->set_out_uint16_le(this->chunk_type, this->offset_chunk_type);
         this->pstream->set_out_uint16_le(chunk_size, this->offset_chunk_size);
-        this->pstream->set_out_uint16_le(this->order_count, this->offset_order_count);
+        this->pstream->set_out_uint16_le(this->chunk_count, this->offset_order_count);
         this->trans->send(this->pstream->data, chunk_size);
     }
 
