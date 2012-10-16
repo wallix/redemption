@@ -72,7 +72,10 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
 
     std::string filename(mwrm_filename);
 
-    WRMRecorder recorder(now, InputType::META_TYPE, path, false, false, false, range, filename, 0);
+    InFileTransport trans(-1);
+    RDPUnserializer reader(&trans, now, 0, Rect());
+
+    WRMRecorder recorder(now, trans, reader, InputType::META_TYPE, path, false, false, false, range, filename, 0);
    
     const char * cfilename = recorder.reader.data_meta.files[0].wrm_filename.c_str();
     

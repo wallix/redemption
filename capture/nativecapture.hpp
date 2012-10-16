@@ -63,16 +63,7 @@ public:
     int height;
     int bpp;
 
-    TODO("We shouldn't have two transports. That is looking for troubles."
-         "Also start and stop are not part (and should not be) part of transport API"
-         "Looks like we should have a BreakCapture object handling change of NativeCapture objects")
     OutFileTransport trans;
-
-    OutCipherTransport cipher_trans;
-    const EVP_CIPHER * cipher_mode;
-    const unsigned char* cipher_key;
-    const unsigned char* cipher_iv;
-    ENGINE* cipher_impl;
 
     BStream stream;
     GraphicsToFile recorder;
@@ -104,7 +95,7 @@ private:
     void send_meta_path()
     {
         this->recorder.chunk_type = WRMChunk::META_FILE;
-        this->recorder.order_count = 1;
+        this->recorder.chunk_count = 1;
         {
             this->stream.out_uint32_le(this->meta_name_len);
             this->stream.out_copy_bytes(this->meta_name, this->meta_name_len);
@@ -112,49 +103,19 @@ private:
         this->recorder.flush();
     }
 
-    bool _start_cipher()
-    {
-        return this->cipher_trans.start(this->cipher_mode,
-                                        this->cipher_key,
-                                        this->cipher_iv,
-                                        this->cipher_impl);
-    }
-
 public:
     /**
      * @attention not copy \p key, \p iv and \p impl
      */
-    NativeCapture(const timeval & now, int width, int height, const char * path,
-                  const char * meta_filename = 0,
-                  CipherMode::enum_t e = CipherMode::NO_MODE,
-                  const unsigned char* key = 0,
-                  const unsigned char* iv = 0,
-                  ENGINE* impl = 0)
+    NativeCapture(const timeval & now, int width, int height, const char * path, const char * meta_filename = 0)
     : width(width)
     , height(height)
     , bpp(24)
     , trans(-1)
-    , cipher_trans(&trans)
-    , cipher_mode(CipherMode::to_evp_cipher(e))
-    , cipher_key(key)
-    , cipher_iv(iv)
-    , cipher_impl(impl)
     , stream(65536)
-    , recorder(this->cipher_mode
-               ? (Transport*)&this->cipher_trans : &this->trans,
-               &this->stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now)
+    , recorder(&this->trans, &this->stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now)
     , nb_file(0)
     {
-        if (e && !this->cipher_mode)
-        {
-            LOG(LOG_ERR, "Error selected cipher mode (%d) in NativeCapture", e);
-            throw Error(ERR_CIPHER_START);
-        }
-        if (this->cipher_mode && !this->_start_cipher())
-        {
-            LOG(LOG_ERR, "Error cipher start in NativeCapture");
-            throw Error(ERR_CIPHER_START);
-        }
         this->basepath_len = sprintf(this->filename, "%s-%u-", path, getpid());
         this->next_filename();
         this->open_file();
@@ -179,32 +140,12 @@ public:
             throw Error(ERR_NATIVE_CAPTURE_OPEN_FAILED);
         }
 
-        fprintf(this->meta_file, "%d %d\n%d",
-                this->width, this->height, e);
-        if (this->cipher_mode)
-        {
-            if (iv)
-            {
-                fputs(" ", this->meta_file);
-                for (int i = 0, n = EVP_CIPHER_CTX_iv_length(&this->cipher_trans.ctx()); i < n ; ++i)
-                {
-                    fprintf(this->meta_file, "%x%x", iv[i] >> 4, iv[i] & 0xf);
-                }
-            }
-            else
-            {
-                fputs(" 00000000000000000000000000000000", this->meta_file);
-            }
-        }
+        fprintf(this->meta_file, "%d %d\n", this->width, this->height);
         fputs("\n\n", this->meta_file);
     }
 
     ~NativeCapture(){
         this->recorder.flush();
-        if (this->cipher_mode)
-        {
-            this->cipher_trans.stop();
-        }
         close(this->trans.fd);
         fclose(this->meta_file);
         free(this->meta_name);
@@ -279,28 +220,7 @@ private:
         this->stream.out_uint8(pen.width);
     }
 
-private:
-    void send_time_start_order(const timeval& now)
-    {
-        this->recorder.chunk_type = WRMChunk::TIME_START;
-        this->recorder.order_count = 1;
-        this->stream.out_uint64_be(now.tv_sec);
-        this->stream.out_uint64_be(now.tv_usec);
-        this->recorder.flush();
-    }
-
 public:
-    void write_start_in_meta(const timeval& now)
-    {
-        fprintf(this->meta_file, "%s, %ld %ld\n",
-                this->filename, now.tv_sec, now.tv_usec);
-    }
-
-    void send_time_start(const timeval& now)
-    {
-        this->send_time_start_order(now);
-        this->write_start_in_meta(now);
-    }
 
     void breakpoint(const uint8_t* data_drawable, uint8_t bpp,
                     uint16_t width, uint16_t height, size_t rowsize,
@@ -309,26 +229,16 @@ public:
         this->recorder.flush();
 
         this->recorder.chunk_type = WRMChunk::NEXT_FILE_ID;
-        this->recorder.order_count = 1;
+        this->recorder.chunk_count = 1;
         this->stream.out_uint32_le(this->nb_file);
         this->next_filename();
         this->recorder.flush();
-        if (this->cipher_mode)
-        {
-            this->cipher_trans.stop();
-        }
-
         close(this->trans.fd);
         this->open_file();
-        if (this->cipher_mode)
-        {
-            this->cipher_trans.reset();
-            this->_start_cipher();
-        }
         this->send_meta_path();
 
         this->recorder.chunk_type = WRMChunk::BREAKPOINT;
-        this->recorder.order_count = 1;
+        this->recorder.chunk_count = 1;
         this->stream.out_uint16_le(this->width);
         this->stream.out_uint16_le(this->height);
         this->stream.out_uint8(this->bpp);
@@ -339,80 +249,25 @@ public:
         // write screen
         {
             this->filename[this->filename_len] = '.';
-            if (this->cipher_mode)
+            this->filename[this->filename_len+1] = 'p';
+            this->filename[this->filename_len+2] = 'n';
+            this->filename[this->filename_len+3] = 'g';
+            this->filename[this->filename_len+4] = 0;
+            if (std::FILE* fd = std::fopen(this->filename, "w+"))
             {
-                this->filename[this->filename_len+1] = 'c';
-                this->filename[this->filename_len+2] = 't';
-                this->filename[this->filename_len+3] = 'x';
-                this->filename[this->filename_len+4] = 0;
-                int fd = ::open(this->filename, O_WRONLY|O_CREAT, 0666);
-                if (fd < 0){
-                    LOG(LOG_ERR, "Error opening context file : %s", strerror(errno));
-                    throw Error(ERR_NATIVE_CAPTURE_OPEN_FAILED);
-                }
-                /*OutFileTransport file_trans(fd);
-                OutCipherTransport context_trans(&file_trans);
-                context_trans.start(this->cipher_mode,
-                                    this->cipher_key,
-                                    this->cipher_iv);
-                context_trans.send(data_drawable, rowsize * height);*/
-                OutFileTransport file_trans(fd);
-                OutCipherTransport context_trans(&file_trans);
-                z_stream zstrm;
-                zstrm.zalloc = 0;
-                zstrm.zfree = 0;
-                zstrm.opaque = 0;
-                int ret;
-                if ((ret = deflateInit(&zstrm, Z_DEFAULT_COMPRESSION)) != Z_OK)
-                {
-                    LOG(LOG_ERR, "zlib: deflateInit: %d", ret);
-                    throw Error(ERR_NATIVE_CAPTURE_ZIP_COMPRESS);
-                }
-                ZRaiiDeflateEnd deflate_end(zstrm);
-                uint8_t buffer[8192];
-                context_trans.start(this->cipher_mode,
-                                    this->cipher_key,
-                                    this->cipher_iv);
-                zstrm.next_in = (Bytef *)data_drawable;
-                zstrm.avail_in = rowsize * height;
-                int flush = Z_FINISH;
-                do {
-                    zstrm.next_out = buffer;
-                    zstrm.avail_out = sizeof buffer;
-                    if ((ret = deflate(&zstrm, flush)) != Z_OK)
-                    {
-                        if (Z_STREAM_END != ret)
-                        {
-                            LOG(LOG_ERR, "zlib: deflate: %s", zError(ret));
-                            throw Error(ERR_NATIVE_CAPTURE_ZIP_COMPRESS);
-                        }
-                    }
-                    context_trans.send(buffer, sizeof buffer - zstrm.avail_out);
-                } while (zstrm.avail_out == 0);
-                context_trans.stop();
+                dump_png24(fd, data_drawable, width, height, rowsize);
+                fclose(fd);
             }
             else
             {
-                this->filename[this->filename_len+1] = 'p';
-                this->filename[this->filename_len+2] = 'n';
-                this->filename[this->filename_len+3] = 'g';
-                this->filename[this->filename_len+4] = 0;
-                if (std::FILE* fd = std::fopen(this->filename, "w+"))
-                {
-                    dump_png24(fd, data_drawable, width, height, rowsize);
-                    fclose(fd);
-                }
-                else
-                {
-                    LOG(LOG_ERR, "Error opening context file : %s", strerror(errno));
-                    throw Error(ERR_NATIVE_CAPTURE_OPEN_FAILED);
-                }
+                LOG(LOG_ERR, "Error opening context file : %s", strerror(errno));
+                throw Error(ERR_NATIVE_CAPTURE_OPEN_FAILED);
             }
             this->filename[this->filename_len] = 0;
         }
 
         this->recorder.init();
-        this->recorder.order_count = 1;
+        this->recorder.chunk_count = 1;
         this->recorder.chunk_type = WRMChunk::BREAKPOINT;
 
         this->stream.out_uint8(this->recorder.common.order);
@@ -465,7 +320,7 @@ public:
         this->send_brush(this->recorder.glyphindex.brush);
         this->stream.out_copy_bytes(this->recorder.glyphindex.data, this->recorder.glyphindex.data_len);
 
-        this->stream.out_uint16_le(this->recorder.order_count);
+        this->stream.out_uint16_le(this->recorder.chunk_count);
 
         this->stream.out_uint16_le(this->recorder.bmp_cache.small_entries);
         this->stream.out_uint16_le(this->recorder.bmp_cache.small_size);
@@ -540,11 +395,8 @@ public:
         this->recorder.trans->send(this->stream.data, 14);
 
         this->recorder.init();
-        this->send_time_start_order(now);
-        fprintf(this->meta_file, "%s,%s.%s %ld %ld\n",
-                this->filename, this->filename,
-                this->cipher_mode ? "ctx" : "png",
-                now.tv_sec, now.tv_usec);
+        this->recorder.timer = now;
+        fprintf(this->meta_file, "%s,%s.%s %ld %ld\n", this->filename, this->filename, "png", now.tv_sec, now.tv_usec);
         this->recorder.chunk_type = RDP_UPDATE_ORDERS;
     }
 };

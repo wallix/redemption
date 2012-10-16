@@ -167,12 +167,12 @@ struct GraphicsUpdatePDU : public RDPSerializer
 
     virtual void flush()
     {
-        if (this->order_count > 0){
+        if (this->chunk_count > 0){
             if (this->ini->globals.debug.primary_orders > 63){
-                LOG(LOG_INFO, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
+                LOG(LOG_INFO, "GraphicsUpdatePDU::flush: chunk_count=%d", this->chunk_count);
             }
-            this->pstream->set_out_uint16_le(this->order_count, this->offset_order_count);
-            this->order_count = 0;
+            this->pstream->set_out_uint16_le(this->chunk_count, this->offset_order_count);
+            this->chunk_count = 0;
 
             this->sdata->emit_end();
             this->sctrl->emit_end();

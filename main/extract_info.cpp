@@ -45,20 +45,31 @@ struct WrmInfo
 
 int main(int argc, char** argv)
 {
+    
     WrmRecorderOption opt;
     if (!opt.parse_command_line(argc, argv)){
+        printf("parse command line failed\n");
         return 0;
     }
     
     InputType::enum_t itype;
-    int error = opt.prepare(itype);
-    if (error){
-        return error;
-    }
     timeval now;
     gettimeofday(&now, NULL);
 
+    const char * filename = opt.in_filename.c_str();;
+    printf("WRMRecorder opening file : %s", filename);
+    int fd = ::open(filename, O_RDONLY);
+    if (-1 == fd){
+       printf("Error opening wrm reader file : %s", strerror(errno));
+       exit(-1);
+    }
+
+    InFileTransport trans(fd);
+    RDPUnserializer reader(&trans, now, 0, Rect());
+
     WRMRecorder recorder(now,
+                        trans,
+                        reader,
                         itype, 
                         opt.base_path, 
                         opt.ignore_dir_for_meta_in_wrm,
@@ -68,11 +79,11 @@ int main(int argc, char** argv)
                         opt.in_filename,
                         opt.idx_start);
 
+
+
     ulong weight;
-    RDPUnserializer& unserializer = recorder.reader;
-    Stream& stream = unserializer.stream;
-    Transport* trans = unserializer.trans;
-    uint16_t& remaining_order_count = unserializer.remaining_order_count;
+    Stream& stream = reader.stream;
+    uint16_t& remaining_order_count = reader.remaining_order_count;
 
     WrmInfo timestamp_info;
     WrmInfo breakpoint_info;
@@ -82,93 +93,73 @@ int main(int argc, char** argv)
     WrmInfo draw_info;
     WrmInfo other_info;
 
-    while (recorder.reader.selected_next_order())
+    while (reader.next_order())
     {
         weight = stream.end - stream.p;
-
-        switch (recorder.reader.chunk_type)
+        switch (reader.chunk_type)
         {
-            case  WRMChunk::BREAKPOINT:
-            {
-                ulong start_weight = breakpoint_info.weight;
-                ++breakpoint_info.number;
-                uint16_t width = stream.in_uint16_le();
-                uint16_t height = stream.in_uint16_le();
-                /*uint8_t bpp = */stream.in_uint8();
-                uint64_t sec = stream.in_uint64_le();
-                uint64_t usec = stream.in_uint64_le();
-                //unserializer.wait_cap.timer.sec() = sec;
-                //unserializer.wait_cap.timer.usec() = usec;
+//            case  WRMChunk::BREAKPOINT:
+//            {
+//                ulong start_weight = breakpoint_info.weight;
+//                ++breakpoint_info.number;
+//                uint16_t width = stream.in_uint16_le();
+//                uint16_t height = stream.in_uint16_le();
+//                /*uint8_t bpp = */stream.in_uint8();
+//                uint64_t sec = stream.in_uint64_le();
+//                uint64_t usec = stream.in_uint64_le();
+//                //unserializer.wait_cap.timer.sec() = sec;
+//                //unserializer.wait_cap.timer.usec() = usec;
 
-                std::cout << "BREAKPOINT: number: " << remaining_order_count
-                << "\n\twidth: " << width << ", height: " << height
-                << "\n\tsec: " << sec << ", usec: " << usec << '\n';
-                breakpoint_info.weight += weight;
+//                std::cout << "BREAKPOINT: number: " << remaining_order_count
+//                << "\n\twidth: " << width << ", height: " << height
+//                << "\n\tsec: " << sec << ", usec: " << usec << '\n';
+//                breakpoint_info.weight += weight;
 
-                --remaining_order_count;
+//                --remaining_order_count;
 
-                recorder.reader.selected_next_order();
+//                reader.selected_next_order();
 
-                weight = stream.end - stream.p;
-                std::cout << "\torder size: " << weight;
-                breakpoint_info.weight += weight;
+//                weight = stream.end - stream.p;
+//                std::cout << "\torder size: " << weight;
+//                breakpoint_info.weight += weight;
 
-                remaining_order_count = 0;
-                std::cout << "\n\tcache: \n";
-                while (1)
-                {
-                    stream.init(14);
-                    trans->recv(&stream.end, 14);
-                    uint16_t idx = stream.in_uint16_le();
-                    stream.p += 4;
-                    uint16_t cx = stream.in_uint16_le();
-                    uint16_t cy = stream.in_uint16_le();
-                    uint32_t buffer_size = stream.in_uint32_le();
-                    breakpoint_info.weight += 14 + buffer_size;
-                    if (idx == 8192 * 3 + 1){
-                        break;
-                    }
-                    std::cout << "\t\timage: width: " << cx << ", height: " << cy << ", size (zip compression): " << buffer_size << " B\n";
-                    stream.init(buffer_size);
-                    trans->recv(&stream.end, buffer_size);
-                }
-                std::cout << "\ttotal: " << (breakpoint_info.weight - start_weight) << '\n';
-            }
-                break;
+//                remaining_order_count = 0;
+//                std::cout << "\n\tcache: \n";
+//                while (1)
+//                {
+//                    stream.init(14);
+//                    trans.recv(&stream.end, 14);
+//                    uint16_t idx = stream.in_uint16_le();
+//                    stream.p += 4;
+//                    uint16_t cx = stream.in_uint16_le();
+//                    uint16_t cy = stream.in_uint16_le();
+//                    uint32_t buffer_size = stream.in_uint32_le();
+//                    breakpoint_info.weight += 14 + buffer_size;
+//                    if (idx == 8192 * 3 + 1){
+//                        break;
+//                    }
+//                    std::cout << "\t\timage: width: " << cx << ", height: " << cy << ", size (zip compression): " << buffer_size << " B\n";
+//                    stream.init(buffer_size);
+//                    trans.recv(&stream.end, buffer_size);
+//                }
+//                std::cout << "\ttotal: " << (breakpoint_info.weight - start_weight) << '\n';
+//            }
+//                break;
             case WRMChunk::META_FILE:
             {
-                ++meta_file_info.number;
-                meta_file_info.weight += weight;
-                std::cout << "META_FILE: number: " << remaining_order_count
-                << ", size: " << weight
-                << " B, filename : ";
-                uint32_t len = stream.in_uint32_le();
-                std::cout.write(reinterpret_cast<const char *>(stream.p),
-                                len) << '\n';
-                recorder.reader.stream.p = recorder.reader.stream.end;
-                recorder.reader.remaining_order_count = 0;
+                reader.stream.p = reader.stream.end;
+                reader.remaining_order_count = 0;
 
-            }
-                break;
-            case WRMChunk::TIME_START:
-            {
-                ++time_start_info.number;
-                time_start_info.weight += weight;
-                timeval tv = recorder.get_start_time_order();
-                std::cout << "TIME_START: number: " << remaining_order_count
-                << ", size: " << weight
-                << " B, sec: " << tv.tv_sec << ", usec: " << tv.tv_usec << '\n';
-                --remaining_order_count;
             }
                 break;
             case WRMChunk::TIMESTAMP:
             {
                 ++timestamp_info.number;
                 timestamp_info.weight += weight;
-                uint64_t micro_sec = stream.in_uint64_be();
+                uint64_t micro_sec = stream.in_uint64_le();
                 std::cout << "TIMESTAMP: number: " << remaining_order_count
                 << ", size: " << weight
-                << " B, micro seconde: " << micro_sec << '\n';
+                << " B, usec: " << micro_sec << '\n';
                 --remaining_order_count;
                 //unserializer.wait_cap.timer.sec() = sec;
                 //unserializer.wait_cap.timer.usec() = usec;
@@ -180,10 +171,10 @@ int main(int argc, char** argv)
                 next_file_id_info.weight += weight;
                 uint16_t tmp = remaining_order_count;
                 recorder.interpret_order();
-                DataFile& info = recorder.reader.data_meta.files[recorder.idx_file];
+                DataFile& info = reader.data_meta.files[recorder.idx_file];
                 std::cout << "NEXT_FILE_ID: number: " << tmp
                 << ", size: " << weight << " B, idx: "
-                << recorder.idx_file << '/' << recorder.reader.data_meta.files.size()
+                << recorder.idx_file << '/' << reader.data_meta.files.size()
                 << ", open: wrm: " << info.wrm_filename
                 << ", png: " << info.png_filename
                 << ", start_sec: " << info.start_sec
@@ -191,13 +182,13 @@ int main(int argc, char** argv)
             }
                 break;
             default:
-                WrmInfo& info = recorder.reader.chunk_type ? other_info : draw_info;
+                WrmInfo& info = reader.chunk_type ? other_info : draw_info;
                 ++info.number;
                 info.weight += weight;
-                std::cout << recorder.reader.chunk_type << ": number: " << remaining_order_count
+                std::cout << reader.chunk_type << ": number: " << remaining_order_count
                 << ", size: " << weight << " B\n";
-                recorder.reader.stream.p = recorder.reader.stream.end;
-                recorder.reader.remaining_order_count = 0;
+                reader.stream.p = reader.stream.end;
+                reader.remaining_order_count = 0;
                 break;
         }
     }

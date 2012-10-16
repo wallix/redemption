@@ -27,6 +27,7 @@
 #include <utility>
 #include <string>
 
+#include "FileToGraphic.hpp"
 #include "wrm_recorder_option.hpp"
 #include "wrm_recorder.hpp"
 
@@ -110,8 +111,12 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
     }
 
     RecorderAdapter* adapter = actions[i].action;
+    InFileTransport trans(-1);
+    RDPUnserializer reader(&trans, now, 0, Rect());
 
     WRMRecorder recorder(now,
+                        trans,
+                        reader,
                         itype, 
                         opt.base_path, 
                         opt.ignore_dir_for_meta_in_wrm,

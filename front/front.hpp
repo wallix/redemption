@@ -349,7 +349,6 @@ public:
             this->capture->set_prefix(buffer, strlen(buffer));
 
             this->capture->update_config(now, ini);
-            this->capture->start(now);
         }
     }
 

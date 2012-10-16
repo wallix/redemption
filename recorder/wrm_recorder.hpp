@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "transport.hpp"
+#include "FileToGraphic.hpp"
 #include "RDP/RDPSerializer.hpp"
 #include "meta_file.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -128,11 +129,9 @@ struct InputType {
 
 class WRMRecorder
 {
-    public:
-    InFileTransport trans;
-
 public:
-    RDPUnserializer reader;
+    InFileTransport & trans;
+    RDPUnserializer & reader;
 
     Drawable * redrawable;
 
@@ -149,6 +148,8 @@ public:
 
 public:
     WRMRecorder(const timeval & now,
+                InFileTransport & trans,
+                RDPUnserializer & reader,
                 InputType::enum_t itype,
                 std::string & base_path,
                 bool ignore_dir_for_meta_in_wrm,
@@ -157,8 +158,8 @@ public:
                 range_time_point & range,
                 std::string & in_filename,
                 uint idx_start)
-    : trans(0)
-    , reader(&this->trans, now, 0, Rect())
+    : trans(trans)
+    , reader(reader)
     , redrawable(0)
     , idx_file(0)
     , path()
@@ -167,213 +168,219 @@ public:
     , force_interpret_breakpoint(force_interpret_breakpoint)
     , interpret_breakpoint_is_passed(false)
     {
-        RDPUnserializer & reader = this->reader;
-    
-        this->base_path_len = base_path.length();
-        this->path = base_path;
-        if (this->base_path_len && this->path[this->base_path_len - 1] != '/')
-        {
-            this->path += '/';
-            ++this->base_path_len;
-        }
-        
-        try
-        {
-            switch (itype) {
-                case InputType::WRM_TYPE:
-                {
-                    const char * filename = in_filename.c_str();
-                    LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
-                    int fd = ::open(filename, O_RDONLY);
-                    if (-1 == fd){
-                        LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
-                       throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
-                    }
-                    this->trans.fd = fd;
-                    if (!reader.selected_next_order())
-                    {
-                        std::cerr << in_filename << " is invalid wrm file" << std::endl;
-                        throw Error(ERR_WRM_INVALID_FILE);
-                    }
-                    if (!reader.chunk_type == WRMChunk::META_FILE){
-                        std::cerr << reader.data_meta << '\n'
-                         << "Chunk META not found in " << filename << '\n' 
-                         << ". Chunk is " << reader.chunk_type << std::endl;
-                        throw Error(ERR_WRM_CHUNK_META_NOT_FOUND);
-                    }
-                        
-                    char tmp_filename[1024];
-                    size_t len = reader.stream.in_uint32_le();
-                    reader.stream.in_copy_bytes((uint8_t*)tmp_filename, len);
-                    tmp_filename[len] = 0;
-                    --reader.remaining_order_count;
+//        this->base_path_len = base_path.length();
+//        this->path = base_path;
+//        if (this->base_path_len && this->path[this->base_path_len - 1] != '/')
+//        {
+//            this->path += '/';
+//            ++this->base_path_len;
+//        }
+//        
+//        try
+//        {
+//            switch (itype) {
+//                case InputType::WRM_TYPE:
+//                {
+//                    const char * filename = in_filename.c_str();
+//                    // ----------------------------------------------------------------------
+//                    LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+//                    int fd = ::open(filename, O_RDONLY);
+//                    if (-1 == fd){
+//                        LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+//                       throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+//                    }
+//                    this->trans.fd = fd;
+                    // ----------------------------------------------------------------------
                     
-                    const char * filename2 = tmp_filename;
-                    if (this->ignore_dir_for_meta_in_wrm)
-                    {
-                        const char * tmp = strrchr(filename2 + strlen(filename2), '/');
-                        if (tmp){
-                            filename2 = tmp+1;
-                        }
-                    }
-                    if (this->base_path_len){
-                        this->path.erase(this->base_path_len);
-                        this->path += filename2;
-                        filename2 = this->path.c_str();
-                    }
-                    
-                    if (!reader.load_data(filename2)){
-                        std::cerr << "invalid meta chunck in " << in_filename << std::endl;
-                        throw Error(ERR_WRM_INVALID_META_CHUNK);
-                    }
-                    if (!reader.data_meta.files.empty())
-                    {
-                        if (idx_start >= reader.data_meta.files.size()){
-                            std::cerr << "idx " << idx_start << " not found" << std::endl;
-                            throw Error(ERR_WRM_IDX_NOT_FOUND);
-                        }
-                        if (!times_in_meta_are_false){
-                            const std::vector<DataFile>& files = reader.data_meta.files;
-                            if (files[0].start_sec){
-                                const timeval tm = {files[0].start_sec, files[0].start_usec};
-                                uint64_t time = 0;
-                                for (uint idx = idx_start + 1; idx != files.size(); ++idx)
-                                {
-                                    const DataFile& data_file = files[idx];
-                                    if (data_file.start_sec)
-                                    {
-                                        timeval tm2 = {data_file.start_sec, data_file.start_usec};
-                                        uint64_t elapsed = difftimeval(tm2, tm) / 1000000;
-                                        if (elapsed > range.left.time)
-                                        {
-                                            range.left.time -= time;
-                                            break;
-                                        }
-                                        time = elapsed;
-                                        idx_start = idx;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else  if (idx_start >= reader.data_meta.files.size()){
-                        std::cerr << "idx " << idx_start << " not found" << std::endl;
-                        throw Error(ERR_WRM_IDX_NOT_FOUND);
-                    }
-                    if (idx_start != this->idx_file){
-                        const char * filename = reader.data_meta.files[this->idx_file].wrm_filename.c_str();
-                        ::close(this->trans.fd);
-                        this->trans.fd = -1;
-                        if (this->ignore_dir_for_meta_in_wrm)
-                        {
-                            const char * tmp = strrchr(filename + strlen(filename), '/');
-                            if (tmp){
-                                filename = tmp+1;
-                            }
-                        }
-                        if (this->base_path_len){
-                            this->path.erase(this->base_path_len);
-                            this->path += filename;
-                            filename = this->path.c_str();
-                        }
+//                    if (!reader.next_order())
+//                    {
+//                        std::cerr << in_filename << " is invalid wrm file" << std::endl;
+//                        throw Error(ERR_WRM_INVALID_FILE);
+//                    }
+//                    if (!reader.chunk_type == WRMChunk::META_FILE){
+//                        std::cerr << reader.data_meta << '\n'
+//                         << "Chunk META not found in " << filename << '\n' 
+//                         << ". Chunk is " << reader.chunk_type << std::endl;
+//                        throw Error(ERR_WRM_CHUNK_META_NOT_FOUND);
+//                    }
+//                        
+//                    char tmp_filename[1024];
+//                    size_t len = reader.stream.in_uint32_le();
+//                    reader.stream.in_copy_bytes((uint8_t*)tmp_filename, len);
+//                    tmp_filename[len] = 0;
+//                    
+//                    const char * filename2 = tmp_filename;
+//                    // -----------------------------------------------------------
+//                    if (this->ignore_dir_for_meta_in_wrm)
+//                    {
+//                        const char * tmp = strrchr(filename2 + strlen(filename2), '/');
+//                        if (tmp){
+//                            filename2 = tmp+1;
+//                        }
+//                    }
+//                    if (this->base_path_len){
+//                        this->path.erase(this->base_path_len);
+//                        this->path += filename2;
+//                        filename2 = this->path.c_str();
+//                    }
+//                    // ------------------------------------------------------------
+//                    if (!read_meta_file(reader.data_meta, filename2))
+//                    {
+//                        LOG(LOG_ERR, "meta %s: %s", filename, strerror(errno));
+//                        std::cerr << "invalid meta chunck in " << in_filename << std::endl;
+//                        throw Error(ERR_WRM_INVALID_META_CHUNK);
+//                    }
+//                    reader.screen_rect.cx = reader.data_meta.width;
+//                    reader.screen_rect.cy = reader.data_meta.height;
 
-                        LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
-                        int fd = ::open(filename, O_RDONLY);
-                        if (-1 == fd){
-                            LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
-                           throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
-                        }
-                        this->trans.fd = fd;
+//                    if (!reader.data_meta.files.empty())
+//                    {
+//                        if (idx_start >= reader.data_meta.files.size()){
+//                            std::cerr << "idx " << idx_start << " not found" << std::endl;
+//                            throw Error(ERR_WRM_IDX_NOT_FOUND);
+//                        }
+//                        if (!times_in_meta_are_false){
+//                            const std::vector<DataFile>& files = reader.data_meta.files;
+//                            if (files[0].start_sec){
+//                                const timeval tm = {files[0].start_sec, files[0].start_usec};
+//                                uint64_t time = 0;
+//                                
+//                                for (uint idx = idx_start + 1; idx != files.size(); ++idx){
+//                                    const DataFile& data_file = files[idx];
+//                                    if (data_file.start_sec){
+//                                        timeval tm2 = {data_file.start_sec, data_file.start_usec};
+//                                        uint64_t elapsed = difftimeval(tm2, tm) / 1000000;
+//                                        if (elapsed > range.left.time){
+//                                            range.left.time -= time;
+//                                            break;
+//                                        }
+//                                        time = elapsed;
+//                                        idx_start = idx;
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                    else  if (idx_start >= reader.data_meta.files.size()){
+//                        std::cerr << "idx " << idx_start << " not found" << std::endl;
+//                        throw Error(ERR_WRM_IDX_NOT_FOUND);
+//                    }
+//                    if (idx_start != this->idx_file){
 
-                        this->trans.total_received = 0;
-                        this->trans.last_quantum_received = 0;
-                        this->trans.total_sent = 0;
-                        this->trans.last_quantum_sent = 0;
-                        this->trans.quantum_count = 0;
-                    }
-                }
-                break;
-                case InputType::META_TYPE:
-                {
-                    if (!reader.load_data(in_filename.c_str()))
-                    {
-                        std::cerr << "open " << in_filename << ' ' << strerror(errno) << std::endl;
-                        throw Error(ERR_WRM_FAILED_OPENING_META_FILENAME);
-                    }
-                    if (idx_start >= reader.data_meta.files.size()){
-                        std::cerr << "idx " << idx_start << " not found" << std::endl;
-                        throw Error(ERR_WRM_IDX_NOT_FOUND);
-                    }
-                    if (!times_in_meta_are_false){
-                        const std::vector<DataFile>& files = reader.data_meta.files;
-                        if (files[0].start_sec){
-                            const timeval tm = {files[0].start_sec, files[0].start_usec};
-                            uint64_t time = 0;
-                            for (uint idx = idx_start + 1; idx != files.size(); ++idx)
-                            {
-                                const DataFile& data_file = files[idx];
-                                if (data_file.start_sec)
-                                {
-                                    timeval tm2 = {data_file.start_sec, data_file.start_usec};
-                                    uint64_t elapsed = difftimeval(tm2, tm) / 1000000;
-                                    if (elapsed > range.left.time)
-                                    {
-                                        range.left.time -= time;
-                                        break;
-                                    }
-                                    time = elapsed;
-                                    idx_start = idx;
-                                }
-                            }
-                        }
-                    }
-                    const char * filename = reader.data_meta.files[idx_start].wrm_filename.c_str();
-                    
-                    if (this->ignore_dir_for_meta_in_wrm)
-                    {
-                        const char * tmp = strrchr(filename + strlen(filename), '/');
-                        if (tmp){
-                            filename = tmp+1;
-                        }
-                    }
-                    if (this->base_path_len){
-                        this->path.erase(this->base_path_len);
-                        this->path += filename;
-                        filename = this->path.c_str();
-                    }
-                    
+//                        // --------------------------------------------------------------------------------
+//                        const char * filename = reader.data_meta.files[this->idx_file].wrm_filename.c_str();
+//                        if (this->ignore_dir_for_meta_in_wrm)
+//                        {
+//                            const char * tmp = strrchr(filename + strlen(filename), '/');
+//                            if (tmp){
+//                                filename = tmp+1;
+//                            }
+//                        }
+//                        if (this->base_path_len){
+//                            this->path.erase(this->base_path_len);
+//                            this->path += filename;
+//                            filename = this->path.c_str();
+//                        }
+//                        // --------------------------------------------------------------------------------
 
-                    LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
-                    int fd = ::open(filename, O_RDONLY);
-                    if (-1 == fd){
-                        LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
-                       throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
-                    }
-                    this->trans.fd = fd;
-                    if (reader.selected_next_order() 
-                    && reader.chunk_type == WRMChunk::META_FILE){
-                        reader.stream.p = reader.stream.end;
-                        reader.remaining_order_count = 0;
-                    }
-                    if (!reader.chunk_type == WRMChunk::META_FILE){
-                        std::cerr << reader.data_meta << '\n'
-                         << "Chunk META not found in " << filename << '\n' 
-                         << ". Chunk is " << reader.chunk_type << std::endl;
-                        throw Error(ERR_WRM_CHUNK_META_NOT_FOUND);
-                    }
-                }
-                break;
-                default:
-                    std::cerr << "Input type not found" << std::endl;
-                    throw Error(ERR_WRM);
-            }
-            this->idx_file = idx_start + 1;
-        }
-        catch (const Error& error)
-        {
-            std::cerr << "Error " << error.id << ": " << strerror(error.errnum) << std::endl;
-            throw error;
-        }
+//                        // --------------------------------------------------------------------------------
+//                        LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+//                        ::close(this->trans.fd);
+//                        this->trans.fd = -1;
+//                        int fd = ::open(filename, O_RDONLY);
+//                        if (-1 == fd){
+//                            LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+//                           throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+//                        }
+//                        this->trans.fd = fd;
+
+//                        this->trans.total_received = 0;
+//                        this->trans.last_quantum_received = 0;
+//                        this->trans.total_sent = 0;
+//                        this->trans.last_quantum_sent = 0;
+//                        this->trans.quantum_count = 0;
+//                        // --------------------------------------------------------------------------------
+//                        
+//                    }
+//                }
+//                break;
+//                case InputType::META_TYPE:
+//                {
+//                    if (!read_meta_file(reader.data_meta, in_filename.c_str()))
+//                    {
+//                        LOG(LOG_ERR, "meta %s: %s", in_filename.c_str(), strerror(errno));
+//                        std::cerr << "open " << in_filename << ' ' << strerror(errno) << std::endl;
+//                        throw Error(ERR_WRM_FAILED_OPENING_META_FILENAME);
+//                    }
+//                    reader.screen_rect.cx = reader.data_meta.width;
+//                    reader.screen_rect.cy = reader.data_meta.height;
+
+//                    if (idx_start >= reader.data_meta.files.size()){
+//                        std::cerr << "idx " << idx_start << " not found" << std::endl;
+//                        throw Error(ERR_WRM_IDX_NOT_FOUND);
+//                    }
+//                    if (!times_in_meta_are_false){
+//                        const std::vector<DataFile>& files = reader.data_meta.files;
+//                        if (files[0].start_sec){
+//                            const timeval tm = {files[0].start_sec, files[0].start_usec};
+//                            uint64_t time = 0;
+//                            for (uint idx = idx_start + 1; idx != files.size(); ++idx)
+//                            {
+//                                const DataFile& data_file = files[idx];
+//                                if (data_file.start_sec)
+//                                {
+//                                    timeval tm2 = {data_file.start_sec, data_file.start_usec};
+//                                    uint64_t elapsed = difftimeval(tm2, tm) / 1000000;
+//                                    if (elapsed > range.left.time)
+//                                    {
+//                                        range.left.time -= time;
+//                                        break;
+//                                    }
+//                                    time = elapsed;
+//                                    idx_start = idx;
+//                                }
+//                            }
+//                        }
+//                    }
+//                    const char * filename = reader.data_meta.files[idx_start].wrm_filename.c_str();
+//                    // --------------------------------------------------------------------------------
+
+//                    if (this->ignore_dir_for_meta_in_wrm)
+//                    {
+//                        const char * tmp = strrchr(filename + strlen(filename), '/');
+//                        if (tmp){
+//                            filename = tmp+1;
+//                        }
+//                    }
+//                    if (this->base_path_len){
+//                        this->path.erase(this->base_path_len);
+//                        this->path += filename;
+//                        filename = this->path.c_str();
+//                    }
+//                    // --------------------------------------------------------------------------------
+
+//                    LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+//                    // --------------------------------------------------------------------------------
+//                    int fd = ::open(filename, O_RDONLY);
+//                    if (-1 == fd){
+//                        LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
+//                       throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
+//                    }
+//                    this->trans.fd = fd;
+//                    // --------------------------------------------------------------------------------
+//                }
+//                break;
+//                default:
+//                    std::cerr << "Input type not found" << std::endl;
+//                    throw Error(ERR_WRM);
+//            }
+//            this->idx_file = idx_start + 1;
+//        }
+//        catch (const Error& error)
+//        {
+//            std::cerr << "Error " << error.id << ": " << strerror(error.errnum) << std::endl;
+//            throw error;
+//        }
     }
 
     void load_png_context(Drawable& drawable)
@@ -390,7 +397,9 @@ public:
 
     ~WRMRecorder()
     {
+        // --------------------------------------------------------------------------------
         ::close(this->trans.fd);
+        // --------------------------------------------------------------------------------
     }
 
 public:
@@ -398,6 +407,7 @@ public:
     {
         if (this->redrawable)
         {
+            // ----------------------------------------------------------------
             if (this->ignore_dir_for_meta_in_wrm)
             {
                 const char * tmp = strrchr(filename + strlen(filename), '/');
@@ -410,6 +420,8 @@ public:
                 this->path += filename;
                 filename = this->path.c_str();
             }
+            // ----------------------------------------------------------------
+            
             std::FILE* fd = std::fopen(filename, "r");
             if (0 == fd)
             {
@@ -471,16 +483,9 @@ public:
     {
         switch (this->reader.chunk_type)
         {
-            case WRMChunk::TIME_START:
-            {
-                this->reader.stream.p = this->reader.stream.end;
-                this->reader.remaining_order_count = 0;
-            }
-            break;
             case WRMChunk::META_FILE:
             {
                 this->reader.stream.p = this->reader.stream.end;
-                this->reader.remaining_order_count = 0;
             }
             break;
             case WRMChunk::NEXT_FILE_ID:
@@ -491,7 +496,9 @@ public:
                     LOG(LOG_ERR, "WRMRecorder : idx(%d) not found in meta", (int)this->idx_file);
                     throw Error(ERR_RECORDER_META_REFERENCE_WRM);
                 }
+
                 const char * filename = this->reader.data_meta.files[this->idx_file].wrm_filename.c_str();
+                // ---------------------------------------------------------------------------------------
                 ::close(this->trans.fd);
                 this->trans.fd = -1;
                 if (this->ignore_dir_for_meta_in_wrm)
@@ -506,8 +513,10 @@ public:
                     this->path += filename;
                     filename = this->path.c_str();
                 }
+                // ----------------------------------------------------------------------------------------
 
                 LOG(LOG_INFO, "WRMRecorder opening file : %s", filename);
+                // --------------------------------------------------------------------------------
                 int fd = ::open(filename, O_RDONLY);
                 if (-1 == fd){
                     LOG(LOG_ERR, "Error opening wrm reader file : %s", strerror(errno));
@@ -520,7 +529,8 @@ public:
                 this->trans.total_sent = 0;
                 this->trans.last_quantum_sent = 0;
                 this->trans.quantum_count = 0;
-                --this->reader.remaining_order_count;
+                // --------------------------------------------------------------------------------
+
                 this->load_context(this->reader.data_meta.files[this->idx_file].png_filename.c_str());
             }
             break;
@@ -532,9 +542,8 @@ public:
                     /*uint8_t bpp = */this->reader.stream.in_uint8();
                     this->reader.timer_cap.tv_sec = this->reader.stream.in_uint64_le();
                     this->reader.timer_cap.tv_usec = this->reader.stream.in_uint64_le();
-                    --this->reader.remaining_order_count;
 
-                    this->reader.selected_next_order();
+                    this->reader.next_order();
 
                     this->reader.common.order = this->reader.stream.in_uint8();
                     this->recv_rect(this->reader.common.clip);
@@ -603,7 +612,7 @@ public:
                     //std::cout << "interpret_order: ";
                     //this->reader.glyphindex.print(Rect(0,0,0,0));
 
-                    this->reader.order_count = this->reader.stream.in_uint16_le();
+                    this->reader.chunk_count = this->reader.stream.in_uint16_le();
                     //std::cout << "\ninterpret_order: "  << this->reader.order_count << '\n';
 
                     this->reader.bmp_cache.small_entries = this->reader.stream.in_uint16_le();
@@ -616,7 +625,6 @@ public:
 
                     this->reader.bmp_cache.reset();
                     this->reader.bmp_cache.stamp = stamp;
-                    this->reader.remaining_order_count = 0;
 
                     z_stream zstrm;
                     zstrm.zalloc = 0;
@@ -675,10 +683,8 @@ public:
                 }
                 else {
                     this->reader.stream.p = this->reader.stream.end;
-                    this->reader.remaining_order_count = 0;
 
-                    this->reader.selected_next_order();
-                    this->reader.remaining_order_count = 0;
+                    this->reader.next_order();
                     while (1){
                         this->reader.stream.init(14);
                         this->reader.trans->recv(&this->reader.stream.end, 14);
@@ -702,7 +708,7 @@ public:
 
     bool next_order()
     {
-        if (this->reader.selected_next_order()){
+        if (this->reader.next_order()){
             this->interpret_order();
             return true;
         }
@@ -716,84 +722,82 @@ public:
                 bool screenshot_start, bool no_screenshot_stop,
                 bool screenshot_all)
     {
-        printf("to png -> %s width=%u height=%u\n", outfile, this->reader.data_meta.width, this->reader.data_meta.height);
+//        printf("to png -> %s width=%u height=%u\n", outfile, this->reader.data_meta.width, this->reader.data_meta.height);
 
-        StaticCapture capture(this->reader.data_meta.width, this->reader.data_meta.height, outfile, true);
+//        StaticCapture capture(this->reader.data_meta.width, this->reader.data_meta.height, outfile, true);
 
-        this->reader.consumer = &capture;
-        this->load_png_context(capture.drawable);
-        const uint64_t coeff_sec_to_usec = 1000000;
-        uint64_t timercompute_microsec = 0;
-        uint64_t timercompute_chunk_time_value = 0;
-        if (start > 0){
-            uint64_t msec = coeff_sec_to_usec * start;
-            if (timercompute_microsec < msec){
-                while (this->reader.selected_next_order())
-                {
-                    if (this->reader.chunk_type == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
-                        timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
-                        timercompute_microsec += timercompute_chunk_time_value;
-                        --this->reader.remaining_order_count;    
-                        break;
-                    }
-                    this->interpret_order();
-                }
-            }
-            if (timercompute_microsec == 0){
-                return /*0*/;
-            }
-            timercompute_microsec = 0;
-        }
-        if (1 && screenshot_start){
-            capture.dump_png();
-        }
+//        this->reader.consumer = &capture;
+//        this->load_png_context(capture.drawable);
+//        const uint64_t coeff_sec_to_usec = 1000000;
+//        uint64_t timercompute_microsec = 0;
+//        uint64_t timercompute_chunk_time_value = 0;
+//        if (start > 0){
+//            uint64_t msec = coeff_sec_to_usec * start;
+//            if (timercompute_microsec < msec){
+//                while (this->reader.next_order())
+//                {
+//                    if (this->reader.chunk_type == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
+//                        timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
+//                        timercompute_microsec += timercompute_chunk_time_value;
+//                        break;
+//                    }
+//                    this->interpret_order();
+//                }
+//            }
+//            if (timercompute_microsec == 0){
+//                return /*0*/;
+//            }
+//            timercompute_microsec = 0;
+//        }
+//        if (1 && screenshot_start){
+//            capture.dump_png();
+//        }
 
-        uint frame = 0;
-        uint64_t mtime = coeff_sec_to_usec * interval;
-        uint64_t msecond = coeff_sec_to_usec * (stop - start);
-        uint64_t minterval = 0;
+//        uint frame = 0;
+//        uint64_t mtime = coeff_sec_to_usec * interval;
+//        uint64_t msecond = coeff_sec_to_usec * (stop - start);
+//        uint64_t minterval = 0;
 
-        while (this->reader.selected_next_order())
-        {
-            if (this->reader.chunk_type == WRMChunk::TIMESTAMP) {
-                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
-                timercompute_microsec += timercompute_chunk_time_value;
-                --this->reader.remaining_order_count;
-                uint64_t usec = timercompute_microsec;
-                if (usec >= mtime)
-                {
-                    capture.dump_png();
-                    timercompute_microsec = 0;
-                    if (++frame == frame_limit){
-                        break;
-                    }
-                    if (screenshot_all){
-                        minterval += usec - mtime;
-                        while (minterval >= mtime){
-                            capture.dump_png();
-                            minterval -= mtime;
-                        }
-                    }
-                }
+//        while (this->reader.next_order())
+//        {
+//            if (this->reader.chunk_type == WRMChunk::TIMESTAMP) {
+//                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
+//                timercompute_microsec += timercompute_chunk_time_value;
+//                uint64_t usec = timercompute_microsec;
+//                if (usec >= mtime)
+//                {
+//                    capture.dump_png();
+//                    timercompute_microsec = 0;
+//                    if (++frame == frame_limit){
+//                        break;
+//                    }
+//                    if (screenshot_all){
+//                        minterval += usec - mtime;
+//                        while (minterval >= mtime){
+//                            capture.dump_png();
+//                            minterval -= mtime;
+//                        }
+//                    }
+//                }
 
-                if (msecond <= usec){
-                    msecond = 0;
-                    break;
-                }
-                else{
-                    msecond -= usec;
-                }
-            }
-            else{
-                this->interpret_order();
-            }
-        }
-        if (!no_screenshot_stop && msecond && frame != frame_limit){
-            capture.dump_png();
-            //++frame;
-        }
-        LOG(LOG_INFO, "to png -> %s done", outfile);
-        //return frame;
+//                if (msecond <= usec){
+//                    msecond = 0;
+//                    break;
+//                }
+//                else{
+//                    msecond -= usec;
+//                }
+//            }
+//            else{
+//                this->interpret_order();
+//            }
+//        }
+//        if (!no_screenshot_stop && msecond && frame != frame_limit){
+//            capture.dump_png();
+//            //++frame;
+//        }
+//        LOG(LOG_INFO, "to png -> %s done", outfile);
+//        //return frame;
     }
 
     void to_png_list(const char* outfile,
@@ -801,75 +805,73 @@ public:
                 unsigned resize_width, unsigned resize_height,
                 bool no_screenshot_stop)
     {
-        if (capture_points.empty()){
-            return ;
-        }
+//        if (capture_points.empty()){
+//            return ;
+//        }
 
-        StaticCapture capture(this->reader.data_meta.width, this->reader.data_meta.height, outfile, true);
-        this->reader.consumer = &capture;
-        this->load_png_context(capture.drawable);
+//        StaticCapture capture(this->reader.data_meta.width, this->reader.data_meta.height, outfile, true);
+//        this->reader.consumer = &capture;
+//        this->load_png_context(capture.drawable);
 
-        typedef std::vector<relative_time_point>::const_iterator iterator;
-        iterator it = capture_points.begin();
+//        typedef std::vector<relative_time_point>::const_iterator iterator;
+//        iterator it = capture_points.begin();
 
-        const uint64_t coeff_sec_to_usec = 1000000;
-        uint64_t timercompute_microsec = 0;
-        uint64_t timercompute_chunk_time_value = 0;
-        uint64_t start = it->point.time;
-        if (start){
-            uint64_t msec = coeff_sec_to_usec * start;
-            uint64_t tmp = 0;
-            if (msec > 0){
-                tmp = timercompute_microsec;
-                if (timercompute_microsec < msec){
-                    while (this->reader.selected_next_order())
-                    {
-                        if (this->reader.chunk_type == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
-                            timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
-                            timercompute_microsec += timercompute_chunk_time_value;
-                            --this->reader.remaining_order_count;    
-                            tmp = timercompute_microsec;
-                            break;
-                        }
-                        this->interpret_order();
-                    }
-                }
-            }
-            timercompute_microsec = 0;
-            if (tmp == 0){
-                return /*0*/;
-            }
-        }
+//        const uint64_t coeff_sec_to_usec = 1000000;
+//        uint64_t timercompute_microsec = 0;
+//        uint64_t timercompute_chunk_time_value = 0;
+//        uint64_t start = it->point.time;
+//        if (start){
+//            uint64_t msec = coeff_sec_to_usec * start;
+//            uint64_t tmp = 0;
+//            if (msec > 0){
+//                tmp = timercompute_microsec;
+//                if (timercompute_microsec < msec){
+//                    while (this->reader.next_order())
+//                    {
+//                        if (this->reader.chunk_type == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
+//                            timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
+//                            timercompute_microsec += timercompute_chunk_time_value;
+//                            tmp = timercompute_microsec;
+//                            break;
+//                        }
+//                        this->interpret_order();
+//                    }
+//                }
+//            }
+//            timercompute_microsec = 0;
+//            if (tmp == 0){
+//                return /*0*/;
+//            }
+//        }
 
-        capture.dump_png();
-        iterator end = capture_points.end();
-        if (++it == end)
-            return;
-        uint64_t mtime = 0;
+//        capture.dump_png();
+//        iterator end = capture_points.end();
+//        if (++it == end)
+//            return;
+//        uint64_t mtime = 0;
 
-        while (this->reader.selected_next_order())
-        {
-            if (this->reader.chunk_type == WRMChunk::TIMESTAMP) {
-                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
-                timercompute_microsec += timercompute_chunk_time_value;
-                --this->reader.remaining_order_count;
-                mtime += timercompute_microsec;
-                while (mtime >= coeff_sec_to_usec * it->point.time)
-                {
-                    capture.dump_png();
-                    if (++it == end)
-                        return;
-                }
-                timercompute_microsec = 0;
-            }
-            else
-            {
-                this->interpret_order();
-            }
-        }
-        if (!no_screenshot_stop){
-            capture.dump_png();
-        }
+//        while (this->reader.next_order())
+//        {
+//            if (this->reader.chunk_type == WRMChunk::TIMESTAMP) {
+//                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
+//                timercompute_microsec += timercompute_chunk_time_value;
+//                mtime += timercompute_microsec;
+//                while (mtime >= coeff_sec_to_usec * it->point.time)
+//                {
+//                    capture.dump_png();
+//                    if (++it == end)
+//                        return;
+//                }
+//                timercompute_microsec = 0;
+//            }
+//            else
+//            {
+//                this->interpret_order();
+//            }
+//        }
+//        if (!no_screenshot_stop){
+//            capture.dump_png();
+//        }
     }
     
     void to_one_wrm(const char* outfile,
@@ -877,145 +879,133 @@ public:
                     CipherMode::enum_t mode,
                     const unsigned char * key, const unsigned char * iv)
     {
-        LOG(LOG_INFO, "to one wrm");
-        timeval now;
-        gettimeofday(&now, NULL);
+//        LOG(LOG_INFO, "to one wrm");
+//        timeval now;
+//        gettimeofday(&now, NULL);
 
-        NativeCapture capture(now,
-                              this->reader.data_meta.width,
-                              this->reader.data_meta.height,
-                              outfile, metaname,
-                              mode, key, iv
-                             );
-                             
-        this->reader.consumer = &capture;
-        uint64_t timercompute_microsec = 0;
-        uint64_t timercompute_chunk_time_value = 0;
+//        NativeCapture capture(now,
+//                              this->reader.data_meta.width,
+//                              this->reader.data_meta.height,
+//                              outfile, metaname
+//                             );
+//                             
+//        this->reader.consumer = &capture;
+//        uint64_t timercompute_microsec = 0;
+//        uint64_t timercompute_chunk_time_value = 0;
 
-        timeval mstart = {0,0};
-        while (this->reader.selected_next_order())
-        {
-            if (this->reader.chunk_type == WRMChunk::TIME_START){
-                mstart = this->get_start_time_order();
-                break;
-            }
-            if (this->reader.chunk_type == WRMChunk::TIMESTAMP){
-                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
-                timercompute_microsec += timercompute_chunk_time_value;
-                --this->reader.remaining_order_count;
-                mstart.tv_sec = 0;
-                mstart.tv_usec = 0;
-                break;
-            }
-            this->interpret_order();
-        }
+//        timeval mstart = {0,0};
+//        while (this->reader.next_order())
+//        {
+//            if (this->reader.chunk_type == WRMChunk::TIMESTAMP){
+//                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
+//                timercompute_microsec += timercompute_chunk_time_value;
+//                mstart.tv_sec = 0;
+//                mstart.tv_usec = 0;
+//                break;
+//            }
+//            this->interpret_order();
+//        }
 
-        const uint64_t coeff_sec_to_usec = 1000000;
-        uint64_t msec = coeff_sec_to_usec * start;
-        uint64_t mtime = 0;
-        if (msec > 0){
-            mtime = timercompute_microsec;
-            if (timercompute_microsec < msec){
-                while (this->reader.selected_next_order())
-                {
-                    if (this->reader.chunk_type == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
-                        timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
-                        timercompute_microsec += timercompute_chunk_time_value;
-                        --this->reader.remaining_order_count;    
-                        mtime = timercompute_microsec;
-                        break;
-                    }
-                    this->interpret_order();
-                }
-            }
-        }
-        timercompute_microsec = 0;
+//        const uint64_t coeff_sec_to_usec = 1000000;
+//        uint64_t msec = coeff_sec_to_usec * start;
+//        uint64_t mtime = 0;
+//        if (msec > 0){
+//            mtime = timercompute_microsec;
+//            if (timercompute_microsec < msec){
+//                while (this->reader.next_order())
+//                {
+//                    if (this->reader.chunk_type == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
+//                        timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
+//                        timercompute_microsec += timercompute_chunk_time_value;
+//                        mtime = timercompute_microsec;
+//                        break;
+//                    }
+//                    this->interpret_order();
+//                }
+//            }
+//        }
+//        timercompute_microsec = 0;
 
-        if (start && !mtime){
-            return /*0*/;
-        }
+//        if (start && !mtime){
+//            return /*0*/;
+//        }
 
-        if (mstart.tv_sec != 0){
-            if (mtime){
-                uint64_t tmp_usec = mstart.tv_usec + mtime;
-                mstart.tv_sec += (tmp_usec / 1000000);
-                mstart.tv_usec = (tmp_usec % 1000000);
-            }
-            capture.send_time_start(mstart);
-        }
-        else {
-            capture.write_start_in_meta(mstart);
-        }
+//        if (mstart.tv_sec != 0){
+//            if (mtime){
+//                uint64_t tmp_usec = mstart.tv_usec + mtime;
+//                mstart.tv_sec += (tmp_usec / 1000000);
+//                mstart.tv_usec = (tmp_usec % 1000000);
+//            }
+////            capture.send_time_start(mstart);
+//        }
+//        else {
+////            capture.write_start_in_meta(mstart);
+//        }
 
-        if (mtime){
-            capture.recorder.timestamp(mtime);
-            mtime += capture.recorder.timer.tv_usec;
-            capture.recorder.timer.tv_sec += mtime / 1000000;
-            capture.recorder.timer.tv_usec = mtime % 1000000;
-        }
+//        if (mtime){
+//            capture.recorder.timestamp(mtime);
+//            mtime += capture.recorder.timer.tv_usec;
+//            capture.recorder.timer.tv_sec += mtime / 1000000;
+//            capture.recorder.timer.tv_usec = mtime % 1000000;
+//        }
 
-        timercompute_microsec = mtime - start;
-        mtime = coeff_sec_to_usec * (stop - start);
-        BStream& stream = this->reader.stream;
+//        timercompute_microsec = mtime - start;
+//        mtime = coeff_sec_to_usec * (stop - start);
+//        BStream& stream = this->reader.stream;
 
-        while (this->reader.selected_next_order())
-        {
-            if (this->reader.chunk_type == WRMChunk::TIMESTAMP) {
-                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
-                timercompute_microsec += timercompute_chunk_time_value;
-                --this->reader.remaining_order_count;
-                if (timercompute_chunk_time_value) {
-                    capture.recorder.timestamp(timercompute_chunk_time_value);
-                    timercompute_chunk_time_value += capture.recorder.timer.tv_usec;
-                    capture.recorder.timer.tv_sec += timercompute_chunk_time_value / 1000000;
-                    capture.recorder.timer.tv_usec = timercompute_chunk_time_value % 1000000;
-                }
+//        while (this->reader.next_order())
+//        {
+//            if (this->reader.chunk_type == WRMChunk::TIMESTAMP) {
+//                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
+//                timercompute_microsec += timercompute_chunk_time_value;
+//                if (timercompute_chunk_time_value) {
+//                    capture.recorder.timestamp(timercompute_chunk_time_value);
+//                    timercompute_chunk_time_value += capture.recorder.timer.tv_usec;
+//                    capture.recorder.timer.tv_sec += timercompute_chunk_time_value / 1000000;
+//                    capture.recorder.timer.tv_usec = timercompute_chunk_time_value % 1000000;
+//                }
 
-                if (mtime <= timercompute_microsec){
-                    break;
-                }
-            }
-            else {
-                switch (this->reader.chunk_type) {
-                    case WRMChunk::NEXT_FILE_ID:
-                        this->interpret_order();
-                        break;
-                    case WRMChunk::META_FILE:
-                    case WRMChunk::TIME_START:
-                        this->reader.stream.p = this->reader.stream.end;
-                        this->reader.remaining_order_count = 0;
-                        break;
-                    case WRMChunk::BREAKPOINT:
-                    {
-                        this->reader.stream.p = this->reader.stream.end;
-                        this->reader.remaining_order_count = 0;
-                        this->reader.selected_next_order();
+//                if (mtime <= timercompute_microsec){
+//                    break;
+//                }
+//            }
+//            else {
+//                switch (this->reader.chunk_type) {
+//                    case WRMChunk::NEXT_FILE_ID:
+//                        this->interpret_order();
+//                        break;
+//                    case WRMChunk::META_FILE:
+//                    case WRMChunk::TIME_START:
+//                        this->reader.stream.p = this->reader.stream.end;
+//                        break;
+//                    case WRMChunk::BREAKPOINT:
+//                    {
+//                        this->reader.stream.p = this->reader.stream.end;
+//                        this->reader.next_order();
 
-                        while (1)
-                        {
-                            this->reader.stream.init(14);
-                            this->reader.trans->recv(&this->reader.stream.end, 14);
-                            if (this->reader.stream.in_uint16_le() == 8192 * 3 + 1){
-                                break;
-                            }
-                            this->reader.stream.p += 8;
-                            uint32_t buffer_size = this->reader.stream.in_uint32_le();
-                            this->reader.stream.init(buffer_size);
-                            this->reader.trans->recv(&this->reader.stream.end, buffer_size);
-                        }
+//                        while (1)
+//                        {
+//                            this->reader.stream.init(14);
+//                            this->reader.trans->recv(&this->reader.stream.end, 14);
+//                            if (this->reader.stream.in_uint16_le() == 8192 * 3 + 1){
+//                                break;
+//                            }
+//                            this->reader.stream.p += 8;
+//                            uint32_t buffer_size = this->reader.stream.in_uint32_le();
+//                            this->reader.stream.init(buffer_size);
+//                            this->reader.trans->recv(&this->reader.stream.end, buffer_size);
+//                        }
 
-                        this->reader.stream.p = this->reader.stream.end;
-                        this->reader.remaining_order_count = 0;
-                    }
-                        break;
-                    default:
-                        capture.recorder.trans->send(stream.data, stream.size());
-                        this->reader.stream.p = this->reader.stream.end;
-                        this->reader.remaining_order_count = 0;
-                        break;
-                }
-            }
-        }
+//                        this->reader.stream.p = this->reader.stream.end;
+//                    }
+//                        break;
+//                    default:
+//                        capture.recorder.trans->send(stream.data, stream.size());
+//                        this->reader.stream.p = this->reader.stream.end;
+//                        break;
+//                }
+//            }
+//        }
     } 
     
     
@@ -1028,149 +1018,107 @@ public:
                 const unsigned char * key, const unsigned char * iv
     )
     {
-        struct timeval now;
-        gettimeofday(&now, NULL);
-        Capture capture(now, this->reader.data_meta.width,
-                        this->reader.data_meta.height,
-                        outfile, metaname,
-                        0, 0, true,
-                        mode, key, iv);
-        this->reader.consumer = &capture;
-        uint64_t timercompute_microsec = 0;
-        uint64_t timercompute_chunk_time_value = 0;
-        
-        timeval mstart = {0,0};
-        while (this->reader.selected_next_order())
-        {
-            if (this->reader.chunk_type == WRMChunk::TIME_START){
-                mstart = this->get_start_time_order();
-                break;
-            }
-            if (this->reader.chunk_type == WRMChunk::TIMESTAMP)
-            {
-                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
-                timercompute_microsec += timercompute_chunk_time_value;
-                --this->reader.remaining_order_count;
-                mstart.tv_sec = 0;
-                mstart.tv_usec = 0;
-                break;
-            }
-            this->interpret_order();
-        }
+//        struct timeval now;
+//        gettimeofday(&now, NULL);
+//        Capture capture(now, this->reader.data_meta.width,
+//                        this->reader.data_meta.height,
+//                        outfile, metaname,
+//                        0, 0, true,
+//                        mode, key, iv);
 
-        static const uint64_t coeff_sec_to_usec = 1000000;
-        uint64_t msec = coeff_sec_to_usec * start;
-        uint64_t tmp = 0;
-        if (msec > 0){
-            tmp = timercompute_microsec;
-            if (timercompute_microsec < msec){
-                while (this->reader.selected_next_order())
-                {
-                    if (this->reader.chunk_type == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
-                        timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
-                        timercompute_microsec += timercompute_chunk_time_value;
-                        --this->reader.remaining_order_count;    
-                        tmp = timercompute_microsec;
-                        break;
-                    }
-                    this->interpret_order();
-                }
-            }
-        }
-        timercompute_microsec = 0;
-        uint64_t mtime = tmp;
+//        static const uint64_t coeff_sec_to_usec = 1000000;
 
-        if (start && !mtime){
-            return /*0*/;
-        }
+//        this->reader.consumer = &capture;
 
-        if (mstart.tv_sec != 0)
-        {
-            if (mtime){
-                uint64_t tmp_usec = mstart.tv_usec + mtime;
-                mstart.tv_sec += (tmp_usec / 1000000);
-                mstart.tv_usec = (tmp_usec % 1000000);
-            }
-            capture.start(mstart);
-        }
-        else {
-            capture.start_with_invalid_now();
-        }
+//        uint64_t usec_start_rec = 0;
+//        while (this->reader.next_order())
+//        {
+//            if (this->reader.chunk_type == WRMChunk::TIMESTAMP)
+//            {
+//                uint64_t usec_start = this->reader.stream.in_uint64_be();
+//                if (usec_start_rec == 0){
+//                    usec_start_rec = usec_start + start * coeff_sec_to_usec;
+//                }
+//                if (usec_start >= usec_start_rec){
+//                    break;
+//                }
+//            }
+//            this->interpret_order();
+//        }
 
-        if (mtime){
-            capture.timestamp(mtime);
-            timeval & timer = capture.timer();
-            mtime += timer.tv_usec;
-            timer.tv_sec += mtime / 1000000;
-            timer.tv_usec = mtime % 1000000;
-        }
+//        if (mtime){
+//            this->reader.consumer->timestamp(mtime);
+//            timeval & timer = this->reader.consumer->timer();
+//            mtime += timer.tv_usec;
+//            timer.tv_sec += mtime / 1000000;
+//            timer.tv_usec = mtime % 1000000;
+//        }
 
-        if (screenshot_wrm && screenshot_start)
-            capture.dump_png();
+//        if (screenshot_wrm && screenshot_start)
+//            this->reader.consumer->dump_png();
 
-        //uint64_t chunk_time = 0;
-        timercompute_microsec = mtime - start;
-        uint frame = 0;
-        uint64_t msecond = coeff_sec_to_usec * (stop - start);
-        mtime = coeff_sec_to_usec * interval;
+//        //uint64_t chunk_time = 0;
+//        timercompute_microsec = mtime - start;
+//        uint frame = 0;
+//        uint64_t msecond = coeff_sec_to_usec * (stop - start);
+//        mtime = coeff_sec_to_usec * interval;
 
-        while (this->reader.selected_next_order())
-        {
-            if (this->reader.chunk_type == WRMChunk::TIMESTAMP) {
-                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
-                timercompute_microsec += timercompute_chunk_time_value;
-                --this->reader.remaining_order_count;
+//        while (this->reader.next_order())
+//        {
+//            if (this->reader.chunk_type == WRMChunk::TIMESTAMP) {
+//                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
+//                timercompute_microsec += timercompute_chunk_time_value;
 
-                uint64_t usec = timercompute_microsec;
-                if (timercompute_chunk_time_value) {
-                    //chunk_time += timercompute_chunk_time_value;
-                    //std::cout << "chunk_time: " << chunk_time << '\n';
-                    capture.timestamp(timercompute_chunk_time_value);
-                    timeval now;
-                    gettimeofday(&now, NULL);
-                    timeval & timer = capture.timer();
-                    timercompute_chunk_time_value += timer.tv_usec;
-                    timer.tv_sec += timercompute_chunk_time_value / 1000000;
-                    timer.tv_usec = timercompute_chunk_time_value % 1000000;
-                }
+//                uint64_t usec = timercompute_microsec;
+//                if (timercompute_chunk_time_value) {
+//                    //chunk_time += timercompute_chunk_time_value;
+//                    //std::cout << "chunk_time: " << chunk_time << '\n';
+//                    capture.timestamp(timercompute_chunk_time_value);
+//                    timeval now;
+//                    gettimeofday(&now, NULL);
+//                    timeval & timer = capture.timer();
+//                    timercompute_chunk_time_value += timer.tv_usec;
+//                    timer.tv_sec += timercompute_chunk_time_value / 1000000;
+//                    timer.tv_usec = timercompute_chunk_time_value % 1000000;
+//                }
 
-                if (usec >= mtime) {
-                    /*if (chunk_time) {
-                        std::cout << "timestamp + breakpoint chunk_time: " <<   chunk_time  << '\n';
-                        capture.timestamp(chunk_time);
-                        chunk_time = 0;
-                    }*/
-                    capture.breakpoint(capture.timer());
-                    if (screenshot_wrm)
-                        capture.dump_png();
-                    timercompute_microsec = 0;
-                    if (++frame == frame_limit)
-                        break;
-                }
+//                if (usec >= mtime) {
+//                    /*if (chunk_time) {
+//                        std::cout << "timestamp + breakpoint chunk_time: " <<   chunk_time  << '\n';
+//                        capture.timestamp(chunk_time);
+//                        chunk_time = 0;
+//                    }*/
+//                    capture.breakpoint(capture.timer());
+//                    if (screenshot_wrm)
+//                        capture.dump_png();
+//                    timercompute_microsec = 0;
+//                    if (++frame == frame_limit)
+//                        break;
+//                }
 
-                if (msecond <= usec){
-                    msecond = 0;
-                    break;
-                } else {
-                    msecond -= usec;
-                }
-            }
-            else {
-                /*if (chunk_time) {
-                     std::cout << "timestamp chunk_time: " << chunk_time  << '\n';
-                     capture.timestamp(chunk_time);
-                     chunk_time = 0;
-                }*/
+//                if (msecond <= usec){
+//                    msecond = 0;
+//                    break;
+//                } else {
+//                    msecond -= usec;
+//                }
+//            }
+//            else {
+//                /*if (chunk_time) {
+//                     std::cout << "timestamp chunk_time: " << chunk_time  << '\n';
+//                     capture.timestamp(chunk_time);
+//                     chunk_time = 0;
+//                }*/
 
-                this->interpret_order();
-            }
-        }
+//                this->interpret_order();
+//            }
+//        }
 
-        /*if (chunk_time) {
-             capture.timestamp(chunk_time);
-        }*/
+//        /*if (chunk_time) {
+//             capture.timestamp(chunk_time);
+//        }*/
 
-        //return frame;
+//        //return frame;
     }
     
        

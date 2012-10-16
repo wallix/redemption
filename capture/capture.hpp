@@ -73,9 +73,9 @@ public:
         this->_init(now);
     }
 
-    Capture(const timeval & now, int width, int height, const char * path, const char * path_meta, const char * codec_id, const char * video_quality, bool bgr, CipherMode::enum_t mode = CipherMode::NO_MODE, const unsigned char * key = 0, const unsigned char * iv = 0) :
+    Capture(const timeval & now, int width, int height, const char * path, const char * path_meta, const char * codec_id, const char * video_quality, bool bgr) :
     sc(width, height, path, bgr),
-    nc(now, width, height, path, path_meta, mode, key, iv)
+    nc(now, width, height, path, path_meta)
     {
         this->_init(now);
     }
@@ -107,20 +107,11 @@ public:
     ~Capture(){
     }
 
-    void start(const timeval& now)
-    {
-        this->nc.send_time_start(now);
-    }
-
-    void start_with_invalid_now()
-    {
-        struct timeval now = {0,0};
-        this->nc.send_time_start(now);
-    }
-
     void timestamp()
     {
-        this->nc.recorder.timestamp();
+        struct timeval now;
+        gettimeofday(&now, 0);
+        this->nc.recorder.timestamp(now);
     }
 
     void set_prefix(const char * prefix, size_t len_prefix)
@@ -130,18 +121,14 @@ public:
         this->log_prefix[len] = 0;
     }
 
-    TODO("looks better to have some function in capture returning native recorder if any and perform meta.emit outside this class. Or some other strategy not implying capture having a dependance on MetaWRM. Logicaly dependence should be between MetaWRM and native recorder")
-    void timestamp(uint64_t usecond)
-    {
-        this->nc.recorder.timestamp(usecond);
-    }
-
     void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
         struct timeval now;
         gettimeofday(&now, NULL);
+        TODO("this must move to static capture ie: sc.snapshot(now)")
         if (difftimeval(now, this->start_static_capture) >= this->inter_frame_interval_static_capture){
             TODO("change code below, it would be better to provide now to drawable instead of tm struct");
+            LOG(LOG_INFO, "recorder static capture timestamp");
             time_t rawtime;
             time(&rawtime);
             tm *ptm = localtime(&rawtime);
@@ -150,7 +137,9 @@ public:
             this->sc.drawable.clear_timestamp();
             this->start_static_capture = now;
         }
+        TODO("this must move to native capture ie: nc.snapshot(now)")
         if (difftimeval(now, this->start_native_capture) >= this->inter_frame_interval_native_capture){
+            LOG(LOG_INFO, "recorder timestamp");
             this->nc.recorder.timestamp(now);
             this->start_native_capture = now;
             if (difftimeval(now, this->start_break_capture) >= this->inter_frame_interval_start_break_capture){

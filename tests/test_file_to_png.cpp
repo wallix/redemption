@@ -44,10 +44,12 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     std::string path(FIXTURES_PATH);
     std::string filename(FIXTURES_PATH "/test_w2008_2-880.mwrm");
 
-    WRMRecorder reader(now, InputType::META_TYPE, path, false, false, false, range, filename, 0);
+    InFileTransport trans(-1);
+    RDPUnserializer reader(&trans, now, 0, Rect());
+
+    WRMRecorder recorder(now, trans, reader, InputType::META_TYPE, path, false, false, false, range, filename, 0);
     BOOST_CHECK(true);
-    DataMetaFile& meta = reader.reader.data_meta;
-    BOOST_CHECK_EQUAL(reader.reader.chunk_type == WRMChunk::META_FILE, true);
+    DataMetaFile& meta = recorder.reader.data_meta;
     BOOST_CHECK_EQUAL(800, meta.width);
     BOOST_CHECK_EQUAL(600, meta.height);
 
@@ -56,16 +58,16 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     bool is_chunk_time = false;
     uint count_img = 0;
 
-    reader.reader.consumer = &consumer;
-    while (reader.reader.selected_next_order())
+    recorder.reader.consumer = &consumer;
+    while (recorder.reader.selected_next_order())
     {
-        if (reader.reader.chunk_type == WRMChunk::TIMESTAMP){
+        if (recorder.reader.chunk_type == WRMChunk::TIMESTAMP){
             is_chunk_time = true;
-            reader.reader.stream.p = reader.reader.stream.end;
-            reader.reader.remaining_order_count = 0;
+            recorder.reader.stream.p = recorder.reader.stream.end;
+            recorder.reader.remaining_order_count = 0;
 
         } else {
-            reader.interpret_order();
+            recorder.interpret_order();
             if (is_chunk_time)
             {
                 //consumer.dump_png();
