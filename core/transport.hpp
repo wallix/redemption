@@ -185,8 +185,9 @@ class CheckTransport : public Transport {
         }
         this->current += available_len;
         if (available_len != len){
-            LOG(LOG_INFO, "Check transport out of reference data");
-            TODO("Maybe we should expose it as a SOCKET CLOSE event ?");
+            LOG(LOG_INFO, "Check transport out of reference data available=%u len=%u", available_len, len);
+            LOG(LOG_INFO, "=============== Expected Missing ==========");
+            hexdump_c((const char *)(buffer + available_len), len - available_len);
             this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
@@ -272,6 +273,7 @@ class OutFileTransport : public Transport {
         size_t remaining_len = len;
         size_t total_sent = 0;
         while (remaining_len) {
+            printf("remaining_len=%u\n", (unsigned int)remaining_len);
             ret = ::write(this->fd, buffer + total_sent, remaining_len);
             if (ret > 0){
                 remaining_len -= ret;
@@ -282,7 +284,6 @@ class OutFileTransport : public Transport {
                     continue;
                 }
                 LOG(LOG_INFO, "Outfile transport write failed with error %s", strerror(errno));
-//                *(int*)0 = 0;
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
             }
         }

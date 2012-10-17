@@ -112,7 +112,6 @@ struct RDPUnserializer
           "It update chunk headers (merely remaining orders count) and"
           " reads the next chunk if necessary.") 
     {
-            this->remaining_order_count, (unsigned)(stream.p - stream.data), (unsigned)(stream.end-stream.p));
         if ((this->stream.p == this->stream.end) && (this->remaining_order_count)){
             LOG(LOG_ERR, "Incomplete order batch at chunk %u "
                          "order [%u/%u] "

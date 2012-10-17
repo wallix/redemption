@@ -24,6 +24,44 @@
 #include <stdint.h>
 #include <png.h>
 
+#include "transport.hpp"
+
+static inline void png_write_data(png_structp png_ptr, png_bytep data, png_size_t length){
+    ((Transport *)(png_ptr->io_ptr))->send(data, length);
+}
+
+static inline void png_flush_data(png_structp png_ptr){
+}
+
+static inline void transport_dump_png24(Transport * fd, const uint8_t * data,
+                            const size_t width,
+                            const size_t height,
+                            const size_t rowsize)
+{
+    png_struct * ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    png_set_write_fn(ppng, fd, &png_write_data, &png_flush_data);
+
+    png_info * pinfo = png_create_info_struct(ppng);
+    png_set_IHDR(ppng, pinfo, width, height, 8,
+                 PNG_COLOR_TYPE_RGB,
+                 PNG_INTERLACE_NONE,
+                 PNG_COMPRESSION_TYPE_BASE,
+                 PNG_FILTER_TYPE_BASE);
+    png_write_info(ppng, pinfo);
+
+    // send image buffer to file, one pixel row at once
+    const uint8_t * row = data;
+    for (size_t k = 0 ; k < height ; ++k) {
+        png_write_row(ppng, (unsigned char*)row);
+        row += rowsize;
+    }
+    png_write_end(ppng, pinfo);
+    png_destroy_write_struct(&ppng, &pinfo);
+    // commented line below it to create row capture
+    // fwrite(this->data, 3, this->width * this->height, fd);
+}
+
+
 static inline void dump_png24(FILE * fd, const uint8_t * data,
                             const size_t width,
                             const size_t height,
@@ -58,22 +96,10 @@ inline void read_png24(FILE * fd, const uint8_t * data,
                       const size_t height,
                       const size_t rowsize)
 {
-//     unsigned char sig[8];
-
-//     if (!fread(sig, 1, 8, fd) || !png_check_sig(sig, 8))
-//         throw std::runtime_error("bad signature");
-
-    png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING,
-                                               NULL, NULL, NULL);
+    png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     png_info * pinfo = png_create_info_struct(ppng);
     png_init_io(ppng, fd);
-//     png_set_sig_bytes(ppng, 8);
     png_read_info(ppng, pinfo);
-
-//     if (png_get_image_width(ppng, pinfo) != width ||
-//         png_get_image_height(ppng, pinfo) != height
-//     )
-//         throw std::runtime_error("bad size");
 
     unsigned char * row = (unsigned char*)data;
     for (size_t k = 0 ; k < height ; ++k) {
