@@ -41,6 +41,9 @@
 
 struct RDPUnserializer
 {
+    enum {
+        HEADER_SIZE = 8,
+    };
     BStream stream;
 
 //    uint8_t padding[65536];
@@ -109,6 +112,7 @@ struct RDPUnserializer
           "It update chunk headers (merely remaining orders count) and"
           " reads the next chunk if necessary.") 
     {
+            this->remaining_order_count, (unsigned)(stream.p - stream.data), (unsigned)(stream.end-stream.p));
         if ((this->stream.p == this->stream.end) && (this->remaining_order_count)){
             LOG(LOG_ERR, "Incomplete order batch at chunk %u "
                          "order [%u/%u] "
@@ -131,16 +135,16 @@ struct RDPUnserializer
 
         if (!this->remaining_order_count){
             try {
-                BStream header(8);
-                this->trans->recv(&header.end, 8);
+                BStream header(HEADER_SIZE);
+                this->trans->recv(&header.end, HEADER_SIZE);
                 this->chunk_type = header.in_uint16_le();
                 this->chunk_size = header.in_uint16_le();
                 this->remaining_order_count = this->chunk_count = header.in_uint16_le();
                 this->chunk_flags = header.in_uint16_le();
                 LOG(LOG_INFO, "reading chunk: type=%u size=%u count=%u flags=%u\n", 
                     this->chunk_type, this->chunk_size, this->chunk_count, this->chunk_flags);
-                this->stream.init(this->chunk_size);
-                this->trans->recv(&this->stream.end, this->chunk_size);
+                this->stream.init(this->chunk_size - HEADER_SIZE);
+                this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
             }
             catch (Error & e){
                 // receive error, end of transport
@@ -165,42 +169,42 @@ struct RDPUnserializer
             else if (control & RDP::SECONDARY) {
                 using namespace RDP;
                 RDPSecondaryOrderHeader header(this->stream);
-                    uint8_t *next_order = this->stream.p + header.length + 7;
-                    switch (header.type) {
-                    case TS_CACHE_BITMAP_COMPRESSED:
-                    case TS_CACHE_BITMAP_UNCOMPRESSED:
-                    {
-                        // we need color depth and palette
-                        RDPBmpCache cmd;
-                        BGRPalette palette;
-                        init_palette332(palette);
-                        cmd.receive(this->stream, control, header, palette);
-                        this->bmp_cache.put(cmd.id, cmd.idx, cmd.bmp);
-                    }
+                uint8_t *next_order = this->stream.p + header.length + 7;
+                switch (header.type) {
+                case TS_CACHE_BITMAP_COMPRESSED:
+                case TS_CACHE_BITMAP_UNCOMPRESSED:
+                {
+                    // we need color depth and palette
+                    RDPBmpCache cmd;
+                    BGRPalette palette;
+                    init_palette332(palette);
+                    cmd.receive(this->stream, control, header, palette);
+                    this->bmp_cache.put(cmd.id, cmd.idx, cmd.bmp);
+                }
+                break;
+                case TS_CACHE_COLOR_TABLE:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_COLOR_TABLE (%d)", header.type);
+//                    this->process_colormap(this->stream, control, header, mod);
                     break;
-                    case TS_CACHE_COLOR_TABLE:
-                        LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_COLOR_TABLE (%d)", header.type);
-    //                    this->process_colormap(this->stream, control, header, mod);
-                        break;
-                    case TS_CACHE_GLYPH:
-                        LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_GLYPH (%d)", header.type);
-    //                    this->rdp_orders_process_fontcache(this->stream, header.flags, mod);
-                        break;
-                    case TS_CACHE_BITMAP_COMPRESSED_REV2:
-                        LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)", header.type);
-                      break;
-                    case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
-                        LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_UNCOMPRESSED_REV2 (%d)", header.type);
-                      break;
-                    case TS_CACHE_BITMAP_COMPRESSED_REV3:
-                        LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%d)", header.type);
-                      break;
-                    default:
-                        LOG(LOG_ERR, "unsupported SECONDARY ORDER (%d)", header.type);
-                        /* error, unknown order */
-                        break;
-                    }
-                    stream.p = next_order;
+                case TS_CACHE_GLYPH:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_GLYPH (%d)", header.type);
+//                    this->rdp_orders_process_fontcache(this->stream, header.flags, mod);
+                    break;
+                case TS_CACHE_BITMAP_COMPRESSED_REV2:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)", header.type);
+                  break;
+                case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_UNCOMPRESSED_REV2 (%d)", header.type);
+                  break;
+                case TS_CACHE_BITMAP_COMPRESSED_REV3:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%d)", header.type);
+                  break;
+                default:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER (%d)", header.type);
+                    /* error, unknown order */
+                    break;
+                }
+                stream.p = next_order;
             }
             else {
                 RDPPrimaryOrderHeader header = this->common.receive(this->stream, control);
