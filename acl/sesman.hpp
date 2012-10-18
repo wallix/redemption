@@ -508,7 +508,7 @@ class SessionManager {
     void add_to_fd_set(fd_set & rfds, unsigned & max)
     {
         TODO(" look at concept behind wait_obj")
-        if (this->auth_event){
+        if (this->auth_event && this->auth_trans_t){
             this->auth_event->add_to_fd_set(rfds, max);
         }
     }

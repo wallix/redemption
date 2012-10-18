@@ -18,7 +18,7 @@
    Author(s): Christophe Grosjean, Javier Caverni
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
-   Unit test to check front-end behavior stays identical 
+   Unit test to check front-end behavior stays identical
    when connecting from rdesktop (mocked up)
 
 */
@@ -84,12 +84,12 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     const char outdata[] =
     {
-        #include "trace_rdesktop_client_indata.hpp"
+        #include "../tests/fixtures/trace_rdesktop_client_indata.hpp"
     };
 
     const char indata[] =
     {
-        #include "trace_rdesktop_client_outdata.hpp"
+        #include "../tests/fixtures/trace_rdesktop_client_outdata.hpp"
     };
 
     const char * name = "Test Front Transport";
