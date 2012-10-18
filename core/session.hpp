@@ -225,19 +225,23 @@ struct Session {
                     this->mod->event.add_to_fd_set(rfds, max);
                 }
                 int num = select(max + 1, &rfds, &wfds, 0, &timeout);
-                if (num < 0 && errno == EINTR){
-                    continue;
-                }
-
-                if (this->front_event.is_set(rfds)) {
-                    try {
-                        this->front->incoming(*this->mod);
+                if (num < 0){
+                    if (errno == EINTR){
+                        continue;
                     }
-                    catch(...){
-                        this->internal_state = previous_state = SESSION_STATE_STOP;
-                    };
+                    LOG(LOG_ERR, "Proxy data wait loop raised error %u : %s", errno, strerror(errno));
+                    this->internal_state = previous_state = SESSION_STATE_STOP;
                 }
-
+                else {
+                    if (this->front_event.is_set(rfds)) {
+                        try {
+                            this->front->incoming(*this->mod);
+                        }
+                        catch(...){
+                            this->internal_state = previous_state = SESSION_STATE_STOP;
+                        };
+                    }
+                }
                 switch (previous_state)
                 {
                     case SESSION_STATE_ENTRY:

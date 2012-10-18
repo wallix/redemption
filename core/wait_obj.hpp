@@ -79,7 +79,7 @@ class wait_obj
                 struct timeval now;
                 gettimeofday(&now, NULL);
                 if ((now.tv_sec > this->trigger_time.tv_sec) 
-                ||  ( (now.tv_sec == this->trigger_time.tv_usec)
+                ||  ( (now.tv_sec == this->trigger_time.tv_sec)
                     &&(now.tv_usec > this->trigger_time.tv_usec))){
                     return true;
                 }

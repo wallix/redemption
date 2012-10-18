@@ -278,21 +278,18 @@ class SessionManager {
                 LOG(LOG_INFO, "auth::get_mod_from_protocol RDP");
             }
             res = MCTX_STATUS_RDP;
-            this->mod_state = MOD_STATE_DONE_CONNECTED;
         }
         else if (strncasecmp(protocol, "VNC", 4) == 0){
             if (this->verbose & 0x4){
                 LOG(LOG_INFO, "auth::get_mod_from_protocol VNC");
             }
             res = MCTX_STATUS_VNC;
-            this->mod_state = MOD_STATE_DONE_CONNECTED;
         }
         else if (strncasecmp(protocol, "XUP", 4) == 0){
             if (this->verbose & 0x4){
                 LOG(LOG_INFO, "auth::get_mod_from_protocol XUP");
             }
             res = MCTX_STATUS_XUP;
-            this->mod_state = MOD_STATE_DONE_CONNECTED;
         }
         else if (strncasecmp(protocol, "INTERNAL", 8) == 0){
             char * target = this->context.get(STRAUTHID_TARGET_DEVICE);
@@ -305,7 +302,6 @@ class SessionManager {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL bouncer2");
                 }
                 this->context.nextmod = ModContext::INTERNAL_BOUNCER2;
-                this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
             else if (0 == strncmp(target, "autotest", 11)){
                 if (this->verbose & 0x4){
@@ -318,42 +314,36 @@ class SessionManager {
                     strcpy(this->context.movie + len_user, ".wrm");
                 }
                 this->context.nextmod = ModContext::INTERNAL_TEST;
-                this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
             else if (0 == strcmp(target, "selector")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL selector");
                 }
                 this->context.nextmod = ModContext::INTERNAL_SELECTOR;
-                this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
             else if (0 == strcmp(target, "login")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
                 }
                 this->context.nextmod = ModContext::INTERNAL_LOGIN;
-                this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
             else if (0 == strcmp(target, "close")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
                 }
                 this->context.nextmod = ModContext::INTERNAL_CLOSE;
-                this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
             else {
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL card");
                 }
                 this->context.nextmod = ModContext::INTERNAL_CARD;
-                this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
         }
         else {
             LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
                 protocol[0], protocol[1], protocol[2], protocol[3]);
             this->context.nextmod = ModContext::INTERNAL_CARD;
-            this->mod_state = MOD_STATE_DONE_CONNECTED;
             assert(false);
         }
         return res;
@@ -439,6 +429,7 @@ class SessionManager {
                 if (context.get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                     context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "End of connection");
                 }
+                this->mod_state = MOD_STATE_DONE_CONNECTED;
                 return this->get_mod_from_protocol();
             }
             else {
@@ -538,9 +529,7 @@ class SessionManager {
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
                 TODO(" create a realloc method")
-                if (this->auth_event){
-                    delete this->auth_event;
-                }
+                delete this->auth_event;
                 this->auth_event = new wait_obj(this->auth_trans_t->sck);
             }
             this->out_item(stream, STRAUTHID_PROXY_TYPE);
@@ -584,6 +573,8 @@ class SessionManager {
             this->context.cpy(STRAUTHID_REJECTED, "Authentifier service failed");
             delete this->auth_trans_t;
             this->auth_trans_t = NULL;
+            delete this->auth_event;
+            this->auth_event = NULL;
         }
     }
 
