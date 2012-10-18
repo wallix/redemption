@@ -25,6 +25,7 @@
 
 #include <sys/types.h> // recv, send
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/un.h>
@@ -40,6 +41,7 @@
 
 class Transport {
 public:
+    uint32_t seqno;
     uint64_t total_received;
     uint64_t last_quantum_received;
     uint64_t total_sent;
@@ -48,6 +50,7 @@ public:
     bool status;
 
     Transport() :
+        seqno(0),
         total_received(0),
         last_quantum_received(0),
         total_sent(0),
@@ -86,8 +89,10 @@ public:
     virtual bool next() 
     REDOC("Some transports are splitted between sequential discrete units"
           "(it may be block, chunk, numbered files, directory entries, whatever)."
-          "Calling next means flushing the current unit and start the next one.")
+          "Calling next means flushing the current unit and start the next one."
+          "seqno countains the current sequence number, starting from 0.")
     {
+        this->seqno++;
         return true;
     }
 
@@ -1065,21 +1070,21 @@ public:
     }
 };
 
-class OutByFilenameSequenceTransport : public OutFileTransport {
+class FileSequence
+{
     char format[64];
     char prefix[512];
     char filename[512];
     char extension[12];
-    uint32_t count;
     uint32_t pid;
-public:
-    char path[1024];
 
-    OutByFilenameSequenceTransport(const char * format, const char * prefix, const char * filename, const char * extension) 
-    : OutFileTransport(-1)
-    , count(0)
-    , pid(getpid())
-    
+public:
+    FileSequence(
+        const char * const format,
+        const char * const prefix, 
+        const char * const filename, 
+        const char * const extension)
+    : pid(getpid())
     {
         size_t len_format = std::min(strlen(format), sizeof(this->format));
         memcpy(this->format, format, len_format);
@@ -1097,11 +1102,42 @@ public:
         memcpy(this->extension, extension, len_extension);
         this->extension[len_extension] = 0;
 
-        this->count = 0;
         this->pid = getpid();
+    }
+    
+    void get_name(char * const buffer, size_t len, uint32_t count) const {
+        if (0 == strcmp(this->format, "path file pid count extension")){
+            snprintf(buffer, len, "%s%s-%u-%i.%s", 
+            this->prefix, this->filename, this->pid, count, this->extension);
+        }
+        else {
+            LOG(LOG_ERR, "Unsupported sequence format string");
+            throw Error(ERR_TRANSPORT);
+        }
+    }
+    
+    ssize_t filesize(uint32_t count){
+        char filename[1024];
+        this->get_name(filename, sizeof(filename), count);
+        struct stat sb;
+        int status = stat(filename, &sb);
+        if (status >= 0){
+            return sb.st_size;
+        }
+        return -1;
+    }
+};
 
-        this->next();
 
+class OutByFilenameSequenceTransport : public OutFileTransport {
+public:
+    const FileSequence & sequence;
+    char path[1024];
+
+    OutByFilenameSequenceTransport(const FileSequence & sequence) 
+    : OutFileTransport(-1)
+    , sequence(sequence)
+    {
     }
     
     ~OutByFilenameSequenceTransport()
@@ -1115,6 +1151,7 @@ public:
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         if (this->fd == -1){
+            this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
             this->fd = ::creat(this->path, 777);
             if (this->fd == -1){
                 LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
@@ -1130,14 +1167,7 @@ public:
             ::close(this->fd);
             this->fd = -1;
         }
-        if (0 == strcmp(this->format, "path file count pid extension")){
-            snprintf(this->path, sizeof(this->path), "%s%s-%u-%i.%s", 
-            this->prefix, this->filename, this->count++, this->pid, this->extension);
-        }
-        else {
-            LOG(LOG_ERR, "Unsupported OutByFilenameTransport format string");
-            throw Error(ERR_TRANSPORT);
-        }
+        this->OutFileTransport::next();
         return true;
     }
 

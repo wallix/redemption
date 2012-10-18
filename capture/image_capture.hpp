@@ -56,8 +56,9 @@
 
 class ImageCapture : public RDPDrawable
 {
-    Transport & trans;
 public:
+    Transport & trans;
+
     ImageCapture(Transport & trans, unsigned width, unsigned height, bool bgr)
     : RDPDrawable(width, height, bgr)
     , trans(trans)
@@ -70,6 +71,11 @@ public:
 
     virtual void flush()
     {
+//                    scale_data(this->data_scale, this->drawable.data,
+//                               this->scale_width, this->drawable.width,
+//                               this->scale_height, this->drawable.height,
+//                               this->drawable.rowsize);
+
         ::transport_dump_png24(&this->trans, this->drawable.data,
                      this->drawable.width, this->drawable.height,
                      this->drawable.rowsize

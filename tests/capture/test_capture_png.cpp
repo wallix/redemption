@@ -242,6 +242,17 @@ BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
     d.flush();
 }
 
+static inline int filesize(const char * path)
+{
+    char filename[1024];
+    strcpy(filename, path);
+    struct stat sb;
+    int status = stat(filename, &sb);
+    if (status >= 0){
+        return sb.st_size;
+    }
+    return -1;
+}
 
 BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 {
@@ -253,55 +264,101 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
     d.draw(cmd, screen_rect);
     d.flush();
     ::close(trans.fd);
-    struct stat sb;
-    int status = stat(filename, &sb);
-    BOOST_CHECK_EQUAL(0, status);
-    BOOST_CHECK_EQUAL(2786, sb.st_size);
+    BOOST_CHECK_EQUAL(2786, filesize(filename));
     ::unlink(filename);
 }
 
 
 BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 {
-    OutByFilenameSequenceTransport trans("path file count pid extension", "./", "test", "png");
+    const FileSequence sequence("path file pid count extension", "./", "test", "png");
+    OutByFilenameSequenceTransport trans(sequence);
     ImageCapture d(trans, 800, 600, true);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     d.draw(cmd, screen_rect);
     d.flush();
 
-    {
-        char filename[1024];
-        strcpy(filename, trans.path);
-        struct stat sb;
-        int status = stat(filename, &sb);
-        BOOST_CHECK_EQUAL(0, status);
-        BOOST_CHECK_EQUAL(2786, sb.st_size);
-        ::unlink(filename);
-    }
+    BOOST_CHECK_EQUAL(2786, filesize(trans.path));
+    ::unlink(trans.path);
 
     RDPOpaqueRect cmd2(Rect(50, 50, 100, 50), BLUE);
     d.draw(cmd2, screen_rect);
     trans.next();
     d.flush();
 
-    {
-        char filename[1024];
-        strcpy(filename, trans.path);
-        struct stat sb;
-        int status = stat(filename, &sb);
-        BOOST_CHECK_EQUAL(0, status);
-        BOOST_CHECK_EQUAL(2806, sb.st_size);
-        ::unlink(filename);
-    }
+    BOOST_CHECK_EQUAL(2806, filesize(trans.path));
+    ::unlink(trans.path);
 }
 
-//BOOST_AUTO_TEST_CASE(TestOneRedScreen)
-//{
-//    Rect screen_rect(0, 0, 800, 600);
-//    StaticCapture consumer(800, 600, "TestOneRedScreen.png", true);
-//    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
-//    consumer.draw(cmd, screen_rect);
-//    consumer.dump_png();
-//}
+
+BOOST_AUTO_TEST_CASE(TestOneRedScreen)
+{
+    Rect screen_rect(0, 0, 800, 600);
+    FileSequence sequence("path file pid count extension", "./", "test", "png");
+    OutByFilenameSequenceTransport trans(sequence);
+    StaticCapture consumer(trans, sequence, 800, 600, true);
+    Inifile ini;
+    consumer.update_config(ini);
+    ini.globals.png_limit = 3;
+
+    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
+    consumer.draw(cmd, screen_rect);
+
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(1));
+
+    consumer.flush();
+
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(1));
+
+    consumer.flush();
+
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(2));
+
+    consumer.flush();
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(2));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(3));
+
+    consumer.flush();
+
+    ::close(trans.fd);
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(2));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(3));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
+
+    ini.globals.png_limit = 10;
+    consumer.update_config(ini);
+
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(2));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(3));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
+
+    ini.globals.png_limit = 2;
+    consumer.update_config(ini);
+
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(2));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(3));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
+
+    ini.globals.png_limit = 0;
+    consumer.update_config(ini);
+
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(2));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(3));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
+    
+}
 

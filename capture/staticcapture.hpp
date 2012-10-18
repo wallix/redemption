@@ -21,6 +21,8 @@
 #if !defined(__CAPTURE_STATICCAPTURE_HPP__)
 #define __CAPTURE_STATICCAPTURE_HPP__
 
+#include "image_capture.hpp"
+
 #include <stdio.h>
 #include <sys/time.h>
 #include <time.h>
@@ -49,6 +51,7 @@
 
 #include "RDP/RDPDrawable.hpp"
 #include "scale.hpp"
+#include "config.hpp"
 
 struct StaticCaptureConfig {
     unsigned png_limit;
@@ -57,39 +60,21 @@ struct StaticCaptureConfig {
     bool bgr;
 
     StaticCaptureConfig()
-    : png_limit(10000)
+    : png_limit(3)
     {
     }
 };
 
-struct StaticCaptureState {
-    unsigned framenb;
-    unsigned to_remove[32768];
-    char image_path[1024];
-    uint16_t image_basepath_len;
-    
-    StaticCaptureState()
-    : framenb(0)
-    {
-    
-    }
-};
-
-class StaticCapture : public RDPDrawable
+class StaticCapture : public ImageCapture
 {
 public:
+    FileSequence & sequence;
     StaticCaptureConfig conf;
-    StaticCaptureState state;
 
-private:
-
-public:
-    StaticCapture(unsigned width, unsigned height, const char * path, bool bgr)
-    : RDPDrawable(width, height, RDPDrawableConfig(bgr))
+    StaticCapture(Transport & trans, FileSequence & sequence, unsigned width, unsigned height, bool bgr)
+    : ImageCapture(trans, width, height, bgr)
+    , sequence(sequence)
     {
-        strcpy(this->conf.path, path);        
-        this->conf.bgr = bgr;
-        this->state.image_basepath_len = sprintf(this->state.image_path, "%s-%u-", conf.path, getpid());
     }
 
     ~StaticCapture()
@@ -97,57 +82,28 @@ public:
     }
 
     void update_config(const Inifile & ini){
-        if (ini.globals.png_limit != this->conf.png_limit){
-            if (ini.globals.png_limit < this->conf.png_limit){
-                TODO("remove old images if there is too many of them")
+        if (ini.globals.png_limit < this->conf.png_limit){
+            for(size_t i = this->conf.png_limit ; i > ini.globals.png_limit ; i--){
+                char path[1024];
+                if (this->trans.seqno >= i){
+                    this->sequence.get_name(path, sizeof(path), this->trans.seqno - i );
+                    ::unlink(path);  // unlink may fail, for instance if file does not exist, just don't care
+                }
             }
-            this->conf.png_limit = ini.globals.png_limit;
         }
+        this->conf.png_limit = ini.globals.png_limit;
     }
 
     virtual void flush()
     {
-        this->dump_png();
-    }
-
-    void dump_png(void)
-    {
         if (this->conf.png_limit > 0){
-            if (this->conf.png_limit < (sizeof(this->state.to_remove)/sizeof(unsigned)) && this->state.framenb >= this->conf.png_limit){
-                sprintf(this->state.image_path + this->state.image_basepath_len, "%u.png", 
-                    this->state.to_remove[(this->state.framenb - this->conf.png_limit) % this->conf.png_limit]);           
-                LOG(LOG_INFO, "Removing file %s framenb=%u limit=%u", 
-                    this->state.image_path, this->state.framenb, this->conf.png_limit);
-                unlink(this->state.image_path);
+            if (this->trans.seqno >= this->conf.png_limit){
+                char path[1024];
+                this->sequence.get_name(path, sizeof(path), this->trans.seqno - this->conf.png_limit);
+                ::unlink(path); // unlink may fail, for instance if file does not exist, just don't care
             }
-
-            sprintf(this->state.image_path + this->state.image_basepath_len, "%u.png", this->state.framenb++);
-            LOG(LOG_INFO, "Dumping to file %s %ux%u framenb=%u limit=%u", 
-                this->state.image_path, this->drawable.width, this->drawable.height, 
-                this->state.framenb, this->conf.png_limit);
-            if (FILE * fd = fopen(this->state.image_path, "w")){
-//                    scale_data(this->data_scale, this->drawable.data,
-//                               this->scale_width, this->drawable.width,
-//                               this->scale_height, this->drawable.height,
-//                               this->drawable.rowsize);
-//                               
-//                    ::dump_png24(fd, this->data_scale,
-//                                 this->scale_width,
-//                                 this->scale_height,
-//                                 this->scale_width * 3
-//                                );
-                LOG(LOG_INFO, "Dump png %ux%u", this->drawable.width, this->drawable.height,
-                             this->drawable.rowsize);
-
-                ::dump_png24(fd, this->drawable.data,
-                             this->drawable.width, this->drawable.height,
-                             this->drawable.rowsize
-                            );
-                fclose(fd);
-            }
-            if (this->conf.png_limit < (sizeof(this->state.to_remove)/sizeof(unsigned))){
-                this->state.to_remove[(this->state.framenb-1) % this->conf.png_limit] = this->state.framenb-1;
-            }
+            this->ImageCapture::flush();
+            this->trans.next();
         }
     }
 

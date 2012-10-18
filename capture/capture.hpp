@@ -40,12 +40,15 @@ class Capture : public RDPGraphicDevice
     struct timeval start_break_capture;
     uint64_t inter_frame_interval_start_break_capture;
 
-    StaticCapture sc;
+    FileSequence * png_sequence;
+    OutByFilenameSequenceTransport * png_trans;
+    StaticCapture * psc;
     NativeCapture nc;
 
 private:
     void _init(const timeval & now)
     {
+    
         this->log_prefix[0] = 0;
         this->start_static_capture = now;
         this->png_interval = 3000; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
@@ -66,22 +69,62 @@ private:
 
 public:
     TODO(" fat interface : ugly  find another way")
-    Capture(const timeval & now, int width, int height, const char * path, const char * codec_id, const char * video_quality, bool bgr = true) :
-        sc(width, height, path, bgr),
-        nc(now, width, height, path)
+    Capture(const timeval & now, int width, int height, const char * fullpath, const char * codec_id, const char * video_quality, bool bgr = true) 
+      : png_sequence(NULL)
+      , png_trans(NULL)
+      , psc(NULL)
+      , nc(now, width, height, fullpath)
     {
+        char path[1024];
+        char basename[1024];
+        strcpy(path, "/tmp/"); 
+        strcpy(basename, "redemption"); 
+        const char * end_of_path = strrchr(fullpath, '/') + 1;
+        if (end_of_path){
+            memcpy(path, fullpath, end_of_path - fullpath);
+            path[end_of_path - fullpath] = 0;
+            const char * start_of_extension = strrchr(end_of_path, '.');
+            if (start_of_extension){
+                memcpy(basename, end_of_path, start_of_extension - end_of_path);
+                basename[start_of_extension - end_of_path] = 0;
+            }
+            else {
+                if (end_of_path[0]){
+                    strcpy(basename, end_of_path);
+                }
+            }
+        }
+        
+        LOG(LOG_INFO, "=======================================> Capture : path = %s basename=%s", path, basename);
+        this->png_sequence = new FileSequence("path file pid count extension", path, basename, "png");
+        this->png_trans = new OutByFilenameSequenceTransport(*this->png_sequence);
+        this->psc = new StaticCapture(*this->png_trans, *this->png_sequence, width, height, true);
         this->_init(now);
     }
 
-    Capture(const timeval & now, int width, int height, const char * path, const char * path_meta, const char * codec_id, const char * video_quality, bool bgr) :
-    sc(width, height, path, bgr),
-    nc(now, width, height, path, path_meta)
-    {
-        this->_init(now);
-    }
+//    Capture(const timeval & now, int width, int height, const char * path, const char * path_meta, const char * codec_id, const char * video_quality, bool bgr) 
+//      : png_sequence(NULL)
+//      , png_trans(NULL)
+//      , psc(NULL)
+//      , nc(now, width, height, path, path_meta)
+//    {
+//        TODO("Use a Closure to wrap these 3 fields, after stabilizing API")
+//        LOG(LOG_INFO, "======================================> Capture : path = %s path_meta=%s", path, path_meta);
+//        this->png_sequence = new FileSequence("path file pid count extension", "/tmp/", "test", "png");
+//        this->png_trans = new OutByFilenameSequenceTransport(*this->png_sequence);
+//        this->psc = new StaticCapture(*this->png_trans, *this->png_sequence, width, height, true);
+//        
+//        this->_init(now);
+//    }
 
+    ~Capture(){
+        TODO("Use a Closure to wrap these 3 fields, after stabilizing API")
+        delete this->psc;
+        delete this->png_sequence;
+        delete this->png_trans;
+    }
     void update_config(const timeval & now, const Inifile & ini){
-        this->sc.update_config(ini);
+        this->psc->update_config(ini);
         if (ini.globals.png_interval != this->png_interval){
             this->start_static_capture = now;
             this->png_interval = ini.globals.png_interval; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
@@ -102,9 +145,6 @@ public:
         }
         LOG(LOG_INFO, "update configuration png_interval=%u frame_interval=%u break_interval=%u",
             this->png_interval, this->frame_interval, this->break_interval);
-    }
-
-    ~Capture(){
     }
 
     void timestamp()
@@ -132,9 +172,9 @@ public:
             time_t rawtime;
             time(&rawtime);
             tm *ptm = localtime(&rawtime);
-            this->sc.drawable.trace_timestamp(*ptm);
-            this->sc.flush();
-            this->sc.drawable.clear_timestamp();
+            this->psc->drawable.trace_timestamp(*ptm);
+            this->psc->flush();
+            this->psc->drawable.clear_timestamp();
             this->start_static_capture = now;
         }
         TODO("this must move to native capture ie: nc.snapshot(now)")
@@ -155,55 +195,55 @@ public:
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
-        this->sc.draw(cmd, clip);
+        this->psc->draw(cmd, clip);
         this->nc.draw(cmd, clip);
     }
 
     void draw(const RDPDestBlt & cmd, const Rect &clip)
     {
-        this->sc.draw(cmd, clip);
+        this->psc->draw(cmd, clip);
         this->nc.draw(cmd, clip);
     }
 
     void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
-        this->sc.draw(cmd, clip);
+        this->psc->draw(cmd, clip);
         this->nc.draw(cmd, clip);
     }
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        this->sc.draw(cmd, clip, bmp);
+        this->psc->draw(cmd, clip, bmp);
         this->nc.draw(cmd, clip, bmp);
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        this->sc.draw(cmd, clip);
+        this->psc->draw(cmd, clip);
         this->nc.draw(cmd, clip);
     }
 
 
     void draw(const RDPLineTo & cmd, const Rect & clip)
     {
-        this->sc.draw(cmd, clip);
+        this->psc->draw(cmd, clip);
         this->nc.draw(cmd, clip);
     }
 
     void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
-//        this->sc.glyph_index(cmd, clip);
+//        this->psc->glyph_index(cmd, clip);
 //        this->nc.glyph_index(cmd, clip);
     }
 
     void breakpoint(const timeval& now)
     {
         this->nc.recorder.timestamp(now);
-        this->nc.breakpoint(this->sc.drawable.data,
+        this->nc.breakpoint(this->psc->drawable.data,
                             24,
-                            this->sc.drawable.width,
-                            this->sc.drawable.height,
-                            this->sc.drawable.rowsize,
+                            this->psc->drawable.width,
+                            this->psc->drawable.height,
+                            this->psc->drawable.rowsize,
                             now);
     }
 
@@ -214,20 +254,10 @@ public:
         this->breakpoint(now);
     }
 
-    void dump_png()
-    {
-        this->sc.dump_png();
-    }
-
     timeval& timer()
     {
         return this->nc.recorder.timer;
     }
-
-    /*Stream& stream()
-    {
-        return this->nc.recorder.stream;
-    }*/
 
 };
 
