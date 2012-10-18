@@ -156,7 +156,7 @@ struct Session {
                         *this->refreshconf ^= 1;
                         DIR * d = opendir(ini->globals.dynamic_conf_path);
                         if (d){
-                            
+
                             size_t path_len = strlen(ini->globals.dynamic_conf_path);
                             size_t file_len = pathconf(ini->globals.dynamic_conf_path, _PC_NAME_MAX) + 1;
                             char * buffer = (char*)malloc(file_len + path_len);
