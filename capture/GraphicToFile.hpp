@@ -103,10 +103,10 @@
 //   field of the Drawing Order identifies the type of drawing order.
 
 struct GraphicsToFile : public RDPSerializer
+REDOC("To keep things easy all chunks have 8 bytes headers"
+      " starting with chunk_type, chunk_size"
+      " and order_count (whatever it means, depending on chunks")
 {
-    uint16_t offset_chunk_size;
-    uint16_t offset_chunk_type;
-    uint16_t chunk_type;
     timeval last_sent_timer;
     timeval timer;
 
@@ -126,37 +126,18 @@ struct GraphicsToFile : public RDPSerializer
                     medium_entries, medium_size,
                     big_entries, big_size,
                     0, 1, 1)
-    , chunk_type(RDP_UPDATE_ORDERS)
     , timer(now)
     {
         last_sent_timer.tv_sec = 0;
         last_sent_timer.tv_usec = 0;
-        this->init();
+        this->order_count = 0;
     }
 
     ~GraphicsToFile(){
     }
 
-    void init(size_t allocate = 32768){
-        if (this->ini && this->ini->globals.debug.primary_orders){
-            LOG(LOG_INFO, "GraphicsToFile::init::Initializing orders batch");
-        }
-        this->chunk_count = 0;
-        this->pstream->init(allocate);
-
-        // to keep things easy all chunks should have 8 bytes headers
-        // starting with chunk_type, chunk_size
-        // and order_count (whatever it means, depending on chunks)
-        this->offset_chunk_type = this->pstream->get_offset();
-        this->pstream->out_uint16_le(0);
-        this->offset_chunk_size = this->pstream->get_offset();
-        this->pstream->out_clear_bytes(2); // 16 bits chunk size (stored in padding reserved zone)
-        this->offset_order_count = this->pstream->get_offset();
-        this->pstream->out_clear_bytes(2); /* number of orders, set later */
-        this->pstream->out_clear_bytes(2); /* pad */
-    }
-
     virtual void timestamp(const timeval& now)
+    REDOC("Update timestamp but send nothing, the timestamp will be sent later with the next effective event")
     {
         uint64_t old_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
         uint64_t current_timer = now.tv_sec * 1000000ULL + now.tv_usec;
@@ -166,45 +147,55 @@ struct GraphicsToFile : public RDPSerializer
         }
     }
 
+    class WRMChunk_Send
+    {
+        public:
+        WRMChunk_Send(Stream & stream, uint16_t chunktype, uint16_t data_size, uint16_t count)
+        {
+            stream.out_uint16_le(chunktype);
+            stream.out_uint16_le(8 + data_size);
+            stream.out_uint16_le(count);
+            stream.out_uint16_le(0);
+            stream.end = stream.p;
+        } 
+    };
+
     void send_timestamp_chunk(void)
     {
         uint64_t old_timer = this->last_sent_timer.tv_sec * 1000000ULL + this->last_sent_timer.tv_usec;
         uint64_t current_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
         if (old_timer < current_timer){
             printf("sending timestamp chunk %lu -> %lu \n", current_timer, old_timer); 
-            BStream stream(128);
-            stream.out_uint16_le(WRMChunk::TIMESTAMP);
-            stream.out_uint16_le(16); // chunk size
-            stream.out_uint16_le(1);  // chunk_count
-            stream.out_uint16_le(314);  // chunk_flags
+
+            BStream stream(8);
             stream.out_uint64_le(current_timer);
-            this->last_sent_timer = this->timer;
-            stream.end = stream.p;
+
+            BStream header(8);
+            WRMChunk_Send chunk(header, WRMChunk::TIMESTAMP, 8, 1);
+            this->trans->send(header.data, header.size());
             this->trans->send(stream.data, stream.size());
         }
     }
 
     virtual void flush()
     {
-        if (this->chunk_count > 0){
-            printf("%lu orders to send\n", this->chunk_count);
+        if (this->order_count > 0){
             this->send_timestamp_chunk();
             if (this->ini && this->ini->globals.debug.primary_orders){
-                LOG(LOG_INFO, "GraphicsToFile::flush: order_count=%d", this->chunk_count);
+                LOG(LOG_INFO, "GraphicsToFile::flush: order_count=%d", this->order_count);
             }
-            this->send_order();
-            this->chunk_type = RDP_UPDATE_ORDERS;
-            this->init();
+            this->send_orders();
         }
     }
 
-    void send_order()
+    void send_orders()
     {
-        uint16_t chunk_size = (uint16_t)(this->pstream->p - this->pstream->data);
-        this->pstream->set_out_uint16_le(this->chunk_type, this->offset_chunk_type);
-        this->pstream->set_out_uint16_le(chunk_size, this->offset_chunk_size);
-        this->pstream->set_out_uint16_le(this->chunk_count, this->offset_order_count);
-        this->trans->send(this->pstream->data, chunk_size);
+        BStream header(8);
+        WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->pstream->size(), this->order_count);
+        this->trans->send(header.data, header.size());
+        this->trans->send(this->pstream->data, this->pstream->size());
+        this->order_count = 0;
+        this->pstream->reset();
     }
 
 };

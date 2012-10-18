@@ -47,6 +47,7 @@ struct WRMChunk {
 
 struct RDPSerializer : public RDPGraphicDevice
 {
+    TODO("At this stage we have removed all headers from pstream and it could probably become a local buffer of serializer again")
     Stream * pstream;
 
 //    uint8_t padding[65536];
@@ -67,7 +68,7 @@ struct RDPSerializer : public RDPGraphicDevice
     RDPLineTo lineto;
     RDPGlyphIndex glyphindex;
     // state variables for gathering batch of orders
-    size_t chunk_count;
+    size_t order_count;
     size_t chunk_flags;
     uint32_t offset_order_count;
     BmpCache bmp_cache;
@@ -99,7 +100,7 @@ struct RDPSerializer : public RDPGraphicDevice
         lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
         glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
         // state variables for a batch of orders
-        chunk_count(0),
+        order_count(0),
         offset_order_count(0),
         bmp_cache(bpp, small_entries, small_size, medium_entries, medium_size, big_entries, big_size)
      {}
@@ -114,17 +115,17 @@ struct RDPSerializer : public RDPGraphicDevice
         size_t max_packet_size = std::min(this->pstream->capacity, (size_t)16384);
         size_t used_size = this->pstream->get_offset();
         if (this->ini && this->ini->globals.debug.primary_orders > 63){
-            LOG(LOG_INFO, "GraphicsUpdatePDU::reserve_order[%u](%u) remains=%u", this->chunk_count, asked_size, max_packet_size - used_size - 100);
+            LOG(LOG_INFO, "GraphicsUpdatePDU::reserve_order[%u](%u) remains=%u", this->order_count, asked_size, max_packet_size - used_size - 100);
         }
         if (asked_size + 100 > max_packet_size){
             LOG(LOG_ERR, "asked size (%u) > order batch capacity (%u)", asked_size + 100, max_packet_size);
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
         const size_t max_order_batch = 4096;
-        if ((this->chunk_count >= max_order_batch) || (used_size + asked_size + 100) > max_packet_size) {
+        if ((this->order_count >= max_order_batch) || (used_size + asked_size + 100) > max_packet_size) {
             this->flush();
         }
-        this->chunk_count++;
+        this->order_count++;
     }
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
@@ -252,7 +253,7 @@ struct RDPSerializer : public RDPGraphicDevice
 
     virtual void draw(const RDPGlyphCache & cmd)
     {
-        TODO(" compute actual size  instead of a majoration as below")
+        TODO(" compute actual size instead of a majoration as below")
         this->reserve_order(1000);
         cmd.emit(*this->pstream);
         if (this->ini && this->ini->globals.debug.secondary_orders){

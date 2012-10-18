@@ -83,6 +83,14 @@ public:
         return true;
     }
 
+    virtual bool next() 
+    REDOC("Some transports are splitted between sequential discrete units"
+          "(it may be block, chunk, numbered files, directory entries, whatever)."
+          "Calling next means flushing the current unit and start the next one.")
+    {
+        return true;
+    }
+
 };
 
 class GeneratorTransport : public Transport {
@@ -185,8 +193,9 @@ class CheckTransport : public Transport {
         }
         this->current += available_len;
         if (available_len != len){
-            LOG(LOG_INFO, "Check transport out of reference data");
-            TODO("Maybe we should expose it as a SOCKET CLOSE event ?");
+            LOG(LOG_INFO, "Check transport out of reference data available=%u len=%u", available_len, len);
+            LOG(LOG_INFO, "=============== Expected Missing ==========");
+            hexdump_c((const char *)(buffer + available_len), len - available_len);
             this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
@@ -282,7 +291,6 @@ class OutFileTransport : public Transport {
                     continue;
                 }
                 LOG(LOG_INFO, "Outfile transport write failed with error %s", strerror(errno));
-//                *(int*)0 = 0;
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
             }
         }
@@ -1025,5 +1033,114 @@ class ClientSocketTransport : public Transport {
     }
 };
 
+class OutByFilenameTransport : public OutFileTransport {
+    char path[1024];
+public:
+    OutByFilenameTransport(const char * path) 
+    : OutFileTransport(-1)
+    {
+        size_t len = strlen(path);
+        memcpy(this->path, path, len);
+        this->path[len] = 0;
+    }
+    
+    ~OutByFilenameTransport()
+    {
+        if (this->fd != -1){
+            ::close(this->fd);
+            this->fd = -1;
+        }
+    }
+    
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
+        if (this->fd == -1){
+            this->fd = ::creat(this->path, 777);
+            if (this->fd == -1){
+                LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        OutFileTransport::send(buffer, len);
+    }
+};
+
+class OutByFilenameSequenceTransport : public OutFileTransport {
+    char format[64];
+    char prefix[512];
+    char filename[512];
+    char extension[12];
+    uint32_t count;
+    uint32_t pid;
+public:
+    char path[1024];
+
+    OutByFilenameSequenceTransport(const char * format, const char * prefix, const char * filename, const char * extension) 
+    : OutFileTransport(-1)
+    , count(0)
+    , pid(getpid())
+    
+    {
+        size_t len_format = std::min(strlen(format), sizeof(this->format));
+        memcpy(this->format, format, len_format);
+        this->format[len_format] = 0;
+        
+        size_t len_prefix = std::min(strlen(prefix), sizeof(this->prefix));
+        memcpy(this->prefix, prefix, len_prefix);
+        this->prefix[len_prefix] = 0;
+
+        size_t len_filename = std::min(strlen(filename), sizeof(this->filename));
+        memcpy(this->filename, filename, len_filename);
+        this->filename[len_filename] = 0;
+
+        size_t len_extension = std::min(strlen(extension), sizeof(this->extension));
+        memcpy(this->extension, extension, len_extension);
+        this->extension[len_extension] = 0;
+
+        this->count = 0;
+        this->pid = getpid();
+
+        this->next();
+
+    }
+    
+    ~OutByFilenameSequenceTransport()
+    {
+        if (this->fd != -1){
+            ::close(this->fd);
+            this->fd = -1;
+        }
+    }
+    
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
+        if (this->fd == -1){
+            this->fd = ::creat(this->path, 777);
+            if (this->fd == -1){
+                LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        OutFileTransport::send(buffer, len);
+    }
+    
+    virtual bool next() 
+    {
+        if (this->fd != -1){
+            ::close(this->fd);
+            this->fd = -1;
+        }
+        if (0 == strcmp(this->format, "path file count pid extension")){
+            snprintf(this->path, sizeof(this->path), "%s%s-%u-%i.%s", 
+            this->prefix, this->filename, this->count++, this->pid, this->extension);
+        }
+        else {
+            LOG(LOG_ERR, "Unsupported OutByFilenameTransport format string");
+            throw Error(ERR_TRANSPORT);
+        }
+        return true;
+    }
+
+};
 
 #endif

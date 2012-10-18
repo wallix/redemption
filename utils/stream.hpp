@@ -53,6 +53,10 @@ class Stream {
 
     virtual void init(size_t capacity) = 0;
 
+    void reset(){
+        this->end = this->p = this->data;
+    }
+
     bool has_room(unsigned n) {
         return this->get_offset() + n <= this->capacity;
     }
@@ -1458,14 +1462,16 @@ class SubStream : public Stream {
 
     SubStream(const Stream & stream, size_t offset = 0)
     {
-        this->reset(stream, offset);
-    }
-
-    void reset(const Stream & stream, size_t offset = 0){
         this->p = this->data = stream.data + offset;
         this->capacity = stream.capacity - offset;
         this->end = stream.end;
     }
+
+//    void reset(const Stream & stream, size_t offset = 0){
+//        this->p = this->data = stream.data + offset;
+//        this->capacity = stream.capacity - offset;
+//        this->end = stream.end;
+//    }
 
     void resize(const Stream & stream, size_t new_size){
         this->data = this->p = stream.p;
