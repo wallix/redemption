@@ -242,32 +242,6 @@ BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
     d.flush();
 }
 
-class OutByFilenameTransport : public OutFileTransport {
-    char path[1024];
-public:
-    OutByFilenameTransport(const char * path) 
-    : OutFileTransport(-1)
-    {
-        size_t len = strlen(path);
-        memcpy(this->path, path, len);
-        this->path[len] = 0;
-    }
-    
-    ~OutByFilenameTransport(){}
-    
-    using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error) {
-        if (this->fd == -1){
-            this->fd = ::creat(this->path, 777);
-            if (this->fd == -1){
-                LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        OutFileTransport::send(buffer, len);
-    }
-};
-
 
 BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 {
@@ -281,10 +255,46 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
     ::close(trans.fd);
     struct stat sb;
     int status = stat(filename, &sb);
+    BOOST_CHECK_EQUAL(0, status);
     BOOST_CHECK_EQUAL(2786, sb.st_size);
     ::unlink(filename);
 }
 
+
+BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
+{
+    OutByFilenameSequenceTransport trans("path file count pid extension", "./", "test", "png");
+    ImageCapture d(trans, 800, 600, true);
+    Rect screen_rect(0, 0, 800, 600);
+    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
+    d.draw(cmd, screen_rect);
+    d.flush();
+
+    {
+        char filename[1024];
+        strcpy(filename, trans.path);
+        struct stat sb;
+        int status = stat(filename, &sb);
+        BOOST_CHECK_EQUAL(0, status);
+        BOOST_CHECK_EQUAL(2786, sb.st_size);
+        ::unlink(filename);
+    }
+
+    RDPOpaqueRect cmd2(Rect(50, 50, 100, 50), BLUE);
+    d.draw(cmd2, screen_rect);
+    trans.next();
+    d.flush();
+
+    {
+        char filename[1024];
+        strcpy(filename, trans.path);
+        struct stat sb;
+        int status = stat(filename, &sb);
+        BOOST_CHECK_EQUAL(0, status);
+        BOOST_CHECK_EQUAL(2806, sb.st_size);
+        ::unlink(filename);
+    }
+}
 
 //BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 //{
