@@ -142,7 +142,6 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         uint64_t old_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
         uint64_t current_timer = now.tv_sec * 1000000ULL + now.tv_usec;
         if (old_timer < current_timer){
-            printf("timestamp to now %lu -> %lu\n", old_timer, current_timer); 
             this->timer = now;
         }
     }
@@ -156,7 +155,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             stream.out_uint16_le(8 + data_size);
             stream.out_uint16_le(count);
             stream.out_uint16_le(0);
-            stream.end = stream.p;
+            stream.mark_end();
         } 
     };
 
@@ -165,10 +164,9 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         uint64_t old_timer = this->last_sent_timer.tv_sec * 1000000ULL + this->last_sent_timer.tv_usec;
         uint64_t current_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
         if (old_timer < current_timer){
-            printf("sending timestamp chunk %lu -> %lu \n", current_timer, old_timer); 
-
             BStream stream(8);
             stream.out_uint64_le(current_timer);
+            stream.mark_end();
 
             BStream header(8);
             WRMChunk_Send chunk(header, WRMChunk::TIMESTAMP, 8, 1);
@@ -190,6 +188,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void send_orders()
     {
+        this->pstream->mark_end();
         BStream header(8);
         WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->pstream->size(), this->order_count);
         this->trans->send(header.data, header.size());

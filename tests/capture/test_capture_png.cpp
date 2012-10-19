@@ -14,11 +14,10 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+   Copyright (C) Wallix 2012
+   Author(s): Christophe Grosjean
 
-   Unit test to writing RDP orders to file and rereading them
+   Unit test to conversion of RDP drawing orders to PNG images
 
 */
 
@@ -240,18 +239,6 @@ BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     d.draw(cmd, screen_rect);
     d.flush();
-}
-
-static inline int filesize(const char * path)
-{
-    char filename[1024];
-    strcpy(filename, path);
-    struct stat sb;
-    int status = stat(filename, &sb);
-    if (status >= 0){
-        return sb.st_size;
-    }
-    return -1;
 }
 
 BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)

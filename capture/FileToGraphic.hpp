@@ -112,6 +112,8 @@ struct RDPUnserializer
           "It update chunk headers (merely remaining orders count) and"
           " reads the next chunk if necessary.") 
     {
+        LOG(LOG_INFO,"Next_order stream.p=%p end=%p remdata=%lu remaining=%u count=%u\n", 
+            this->stream.p, this->stream.end, this->stream.end-stream.p, this->remaining_order_count, this->chunk_count);
         if ((this->stream.p == this->stream.end) && (this->remaining_order_count)){
             LOG(LOG_ERR, "Incomplete order batch at chunk %u "
                          "order [%u/%u] "
@@ -121,7 +123,7 @@ struct RDPUnserializer
                          (this->stream.end - this->stream.p), this->chunk_size);
             return false;
         }
-        if ((this->stream.p != this->stream.end) && (this->remaining_order_count == 0)){
+        if ((this->stream.p != this->stream.end) && (this->remaining_order_count == -1)){
             LOG(LOG_ERR, "Incomplete order batch at chunk %u "
                          "order [%u/%u] "
                          "remaining [%u/%u]",
@@ -130,7 +132,6 @@ struct RDPUnserializer
                          (this->stream.end - this->stream.p), this->chunk_size);
             return false;
         }
-
 
         if (!this->remaining_order_count){
             try {
@@ -146,18 +147,23 @@ struct RDPUnserializer
                 this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
             }
             catch (Error & e){
+                LOG(LOG_INFO,"receive error : end of transport\n");
                 // receive error, end of transport
                 return false;
             }
         }
         if (this->remaining_order_count > 0){this->remaining_order_count--;}
+        LOG(LOG_INFO,"Next_order exit stream.p=%p end=%p remdata=%lu remaining=%u count=%u\n", 
+            this->stream.p, this->stream.end, this->stream.end-stream.p, this->remaining_order_count, this->chunk_count);
         return true;
     }
 
     void interpret_order()
     {
+        LOG(LOG_INFO,"interpret_order\n");
         switch (this->chunk_type){
         case RDP_UPDATE_ORDERS:
+        LOG(LOG_INFO,"RDP_UPDATE_ORDERS\n");
         {
             uint8_t control = this->stream.in_uint8();
             if (!control & RDP::STANDARD){
@@ -254,6 +260,7 @@ struct RDPUnserializer
             }
             break;
             case WRMChunk::TIMESTAMP:
+            LOG(LOG_INFO,"WRMChunk::TIMESTAMP\n");
             {
                 if (!this->movie_usec){
                     LOG(LOG_INFO, "chunk timestamp reading first timestamp");
@@ -282,6 +289,7 @@ struct RDPUnserializer
             }
             break;
             case WRMChunk::META_FILE:
+            LOG(LOG_INFO,"WRMChunk::META_FILE\n");
             {
                 // DATA in metafile:
                 // 4 bytes   : len

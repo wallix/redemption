@@ -45,30 +45,7 @@ class Capture : public RDPGraphicDevice
     StaticCapture * psc;
     NativeCapture nc;
 
-private:
-    void _init(const timeval & now)
-    {
-    
-        this->log_prefix[0] = 0;
-        this->start_static_capture = now;
-        this->png_interval = 3000; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
-        this->inter_frame_interval_static_capture       = this->png_interval * 100000; // 1 000 000 us is 1 sec
-
-        // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
-        this->start_native_capture = now;
-        this->frame_interval = 40;
-        this->inter_frame_interval_native_capture       =  this->frame_interval * 10000; // 1 000 000 us is 1 sec
-
-        this->start_break_capture = now;
-        this->break_interval = 60 * 10; // break interval is in s, default value 1 break every 10 minutes
-        this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
-
-        LOG(LOG_INFO, "update configuration png_interval=%u frame_interval=%u break_interval=%u",
-            this->png_interval, this->frame_interval, this->break_interval);
-    }
-
 public:
-    TODO(" fat interface : ugly  find another way")
     Capture(const timeval & now, int width, int height, const char * fullpath, const char * codec_id, const char * video_quality, bool bgr = true) 
       : png_sequence(NULL)
       , png_trans(NULL)
@@ -99,23 +76,24 @@ public:
         this->png_sequence = new FileSequence("path file pid count extension", path, basename, "png");
         this->png_trans = new OutByFilenameSequenceTransport(*this->png_sequence);
         this->psc = new StaticCapture(*this->png_trans, *this->png_sequence, width, height, true);
-        this->_init(now);
-    }
 
-//    Capture(const timeval & now, int width, int height, const char * path, const char * path_meta, const char * codec_id, const char * video_quality, bool bgr) 
-//      : png_sequence(NULL)
-//      , png_trans(NULL)
-//      , psc(NULL)
-//      , nc(now, width, height, path, path_meta)
-//    {
-//        TODO("Use a Closure to wrap these 3 fields, after stabilizing API")
-//        LOG(LOG_INFO, "======================================> Capture : path = %s path_meta=%s", path, path_meta);
-//        this->png_sequence = new FileSequence("path file pid count extension", "/tmp/", "test", "png");
-//        this->png_trans = new OutByFilenameSequenceTransport(*this->png_sequence);
-//        this->psc = new StaticCapture(*this->png_trans, *this->png_sequence, width, height, true);
-//        
-//        this->_init(now);
-//    }
+        this->log_prefix[0] = 0;
+        this->start_static_capture = now;
+        this->png_interval = 3000; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
+        this->inter_frame_interval_static_capture       = this->png_interval * 100000; // 1 000 000 us is 1 sec
+
+        // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
+        this->start_native_capture = now;
+        this->frame_interval = 40;
+        this->inter_frame_interval_native_capture       =  this->frame_interval * 10000; // 1 000 000 us is 1 sec
+
+        this->start_break_capture = now;
+        this->break_interval = 60 * 10; // break interval is in s, default value 1 break every 10 minutes
+        this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
+
+        LOG(LOG_INFO, "update configuration png_interval=%u frame_interval=%u break_interval=%u",
+            this->png_interval, this->frame_interval, this->break_interval);
+    }
 
     ~Capture(){
         TODO("Use a Closure to wrap these 3 fields, after stabilizing API")

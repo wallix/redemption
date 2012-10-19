@@ -39,6 +39,18 @@
 #include "log.hpp"
 
 
+static inline int filesize(const char * path)
+{
+    char filename[1024];
+    strcpy(filename, path);
+    struct stat sb;
+    int status = stat(filename, &sb);
+    if (status >= 0){
+        return sb.st_size;
+    }
+    return -1;
+}
+
 class Transport {
 public:
     uint32_t seqno;
@@ -150,10 +162,11 @@ class CheckTransport : public Transport {
     size_t current;
     char * data;
     size_t len;
+    uint32_t verbose;
 
 
-    CheckTransport(const char * data, size_t len)
-        : Transport(), current(0), data(0), len(len)
+    CheckTransport(const char * data, size_t len, uint32_t verbose = 0)
+        : Transport(), current(0), data(0), len(len), verbose(verbose)
     {
         this->data = (char *)malloc(len);
         memcpy(this->data, data, len);
@@ -176,6 +189,11 @@ class CheckTransport : public Transport {
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
+        if (this->verbose & 0x100){
+            LOG(LOG_INFO, "Check Transport (Test Data) sending %u bytes", len);
+            hexdump_c(buffer, len);
+            LOG(LOG_INFO, "Dump done (Test Data) sending %u bytes", len);
+        }
         size_t available_len = (this->current + len > this->len)?this->len - this->current:len;
         if (0 != memcmp(buffer, (const char *)(&this->data[this->current]), available_len)){
             // data differs
@@ -189,9 +207,9 @@ class CheckTransport : public Transport {
                 }
             }
             LOG(LOG_INFO, "=============== Common Part =======");
-            hexdump(buffer, differs);
+            hexdump_c(buffer, differs);
             LOG(LOG_INFO, "=============== Expected ==========");
-            hexdump((const char *)(&this->data[this->current]) + differs, available_len - differs);
+            hexdump_c((const char *)(&this->data[this->current]) + differs, available_len - differs);
             LOG(LOG_INFO, "=============== Got ===============");
             hexdump(buffer+differs, available_len - differs);
             throw Error(ERR_TRANSPORT_DIFFERS, 0);
@@ -332,8 +350,12 @@ class InFileTransport : public Transport {
                 if (errno == EINTR){
                     continue;
                 }
+                if (ret == 0){
+                    LOG(LOG_INFO, "Infile transport read EOF");
+                    throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+                }
                 *pbuffer = buffer;
-                LOG(LOG_INFO, "Infile transport read failed with error %s", strerror(errno));
+                LOG(LOG_INFO, "Infile transport read failed with error %u %s ret=%u", errno, strerror(errno), ret);
                 throw Error(ERR_TRANSPORT_READ_FAILED, 0);
             }
         }
@@ -1062,11 +1084,44 @@ public:
         if (this->fd == -1){
             this->fd = ::creat(this->path, 777);
             if (this->fd == -1){
-                LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
+                LOG(LOG_INFO, "OutByFilename transport write failed with error : %s on %s", strerror(errno), this->path);
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
             }
         }
         OutFileTransport::send(buffer, len);
+    }
+};
+
+
+class InByFilenameTransport : public InFileTransport {
+    char path[1024];
+public:
+    InByFilenameTransport(const char * path) 
+    : InFileTransport(-1)
+    {
+        size_t len = strlen(path);
+        memcpy(this->path, path, len);
+        this->path[len] = 0;
+    }
+    
+    ~InByFilenameTransport()
+    {
+        if (this->fd != -1){
+            ::close(this->fd);
+            this->fd = -1;
+        }
+    }
+    
+    using Transport::recv;
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+        if (this->fd == -1){
+            this->fd = ::open(this->path, O_RDONLY);
+            if (this->fd == -1){
+                LOG(LOG_INFO, "InByFilename transport recv failed with error : %s", strerror(errno));
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+        }
+        InFileTransport::recv(pbuffer, len);
     }
 };
 
