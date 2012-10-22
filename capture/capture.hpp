@@ -43,15 +43,17 @@ class Capture : public RDPGraphicDevice
     FileSequence * png_sequence;
     OutByFilenameSequenceTransport * png_trans;
     StaticCapture * psc;
-    NativeCapture nc;
+    NativeCapture * pnc;
 
 public:
     Capture(const timeval & now, int width, int height, const char * fullpath, const char * codec_id, const char * video_quality, bool bgr = true) 
       : png_sequence(NULL)
       , png_trans(NULL)
       , psc(NULL)
-      , nc(now, width, height, fullpath)
     {
+        LOG(LOG_INFO, "=======================================> Capture : fullpath = %s", fullpath);
+
+
         char path[1024];
         char basename[1024];
         strcpy(path, "/tmp/"); 
@@ -93,11 +95,14 @@ public:
 
         LOG(LOG_INFO, "update configuration png_interval=%u frame_interval=%u break_interval=%u",
             this->png_interval, this->frame_interval, this->break_interval);
+
+        this->pnc = new NativeCapture(now, width, height, fullpath);
     }
 
     ~Capture(){
         TODO("Use a Closure to wrap these 3 fields, after stabilizing API")
         delete this->psc;
+        delete this->pnc;
         delete this->png_sequence;
         delete this->png_trans;
     }
@@ -129,7 +134,7 @@ public:
     {
         struct timeval now;
         gettimeofday(&now, 0);
-        this->nc.recorder.timestamp(now);
+        this->pnc->recorder.timestamp(now);
     }
 
     void set_prefix(const char * prefix, size_t len_prefix)
@@ -158,14 +163,14 @@ public:
         TODO("this must move to native capture ie: nc.snapshot(now)")
         if (difftimeval(now, this->start_native_capture) >= this->inter_frame_interval_native_capture){
             LOG(LOG_INFO, "recorder timestamp");
-            this->nc.recorder.timestamp(now);
+            this->pnc->recorder.timestamp(now);
             this->start_native_capture = now;
             if (difftimeval(now, this->start_break_capture) >= this->inter_frame_interval_start_break_capture){
                 this->breakpoint();
                 this->start_break_capture = now;
             }
         }
-        this->nc.recorder.flush();
+        this->pnc->recorder.flush();
     }
 
     void flush()
@@ -174,50 +179,50 @@ public:
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
         this->psc->draw(cmd, clip);
-        this->nc.draw(cmd, clip);
+        this->pnc->draw(cmd, clip);
     }
 
     void draw(const RDPDestBlt & cmd, const Rect &clip)
     {
         this->psc->draw(cmd, clip);
-        this->nc.draw(cmd, clip);
+        this->pnc->draw(cmd, clip);
     }
 
     void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
         this->psc->draw(cmd, clip);
-        this->nc.draw(cmd, clip);
+        this->pnc->draw(cmd, clip);
     }
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
         this->psc->draw(cmd, clip, bmp);
-        this->nc.draw(cmd, clip, bmp);
+        this->pnc->draw(cmd, clip, bmp);
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         this->psc->draw(cmd, clip);
-        this->nc.draw(cmd, clip);
+        this->pnc->draw(cmd, clip);
     }
 
 
     void draw(const RDPLineTo & cmd, const Rect & clip)
     {
         this->psc->draw(cmd, clip);
-        this->nc.draw(cmd, clip);
+        this->pnc->draw(cmd, clip);
     }
 
     void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
 //        this->psc->glyph_index(cmd, clip);
-//        this->nc.glyph_index(cmd, clip);
+//        this->pnc->glyph_index(cmd, clip);
     }
 
     void breakpoint(const timeval& now)
     {
-        this->nc.recorder.timestamp(now);
-        this->nc.breakpoint(this->psc->drawable.data,
+        this->pnc->recorder.timestamp(now);
+        this->pnc->breakpoint(this->psc->drawable.data,
                             24,
                             this->psc->drawable.width,
                             this->psc->drawable.height,
@@ -234,7 +239,7 @@ public:
 
     timeval& timer()
     {
-        return this->nc.recorder.timer;
+        return this->pnc->recorder.timer;
     }
 
 };

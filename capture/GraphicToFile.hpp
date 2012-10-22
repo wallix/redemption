@@ -163,6 +163,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void send_meta_chunk(void)
     {
+        printf("send meta chunk \n");
         BStream stream(8);
         stream.out_uint16_le(800);
         stream.out_uint16_le(600);

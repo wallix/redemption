@@ -406,7 +406,9 @@ struct Session {
                                     this->internal_state = SESSION_STATE_STOP;
                                     try {
                                         this->session_setup_mod(next_state, this->context);
+                                        printf("start_capture record_video=%u\n", record_video);
                                         if (record_video) {
+                                            printf(" ==============================> start_capture\n");
                                             this->front->start_capture(
                                                 this->front->client_info.width,
                                                 this->front->client_info.height,

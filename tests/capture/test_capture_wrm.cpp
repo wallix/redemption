@@ -168,17 +168,10 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     OutByFilenameSequenceTransport out_png_trans(sequence);
 
     now.tv_sec = 5000;
-    FileToGraphic player(&in_wrm_trans, now, screen_rect);
-    ImageCapture png_recorder(out_png_trans, 800, 600, true);
-    player.add_recorder(&png_recorder);
+    FileToGraphic player(&in_wrm_trans, now);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, true);
+    player.add_consumer(&png_recorder);
 
-    // META
-    BOOST_CHECK_EQUAL(true, player.next_order());
-    player.interpret_order();
-
-    // Timestamp
-    BOOST_CHECK_EQUAL(true, player.next_order());
-    player.interpret_order();
     png_recorder.flush();
     out_png_trans.next();
 

@@ -77,11 +77,14 @@ struct FileToGraphic
 
     uint16_t nbconsumers;
     RDPGraphicDevice * consumers[10];
+    
+    bool meta_ok;
+    bool timestamp_ok;
 
     DataMetaFile data_meta;
 
-    FileToGraphic(Transport * trans, const timeval & now, const Rect screen_rect)
-     : stream(4096), trans(trans), screen_rect(screen_rect),
+    FileToGraphic(Transport * trans, const timeval & now)
+     : stream(4096), trans(trans),
      // Internal state of orders
     common(RDP::PATBLT, Rect(0, 0, 1, 1)),
     destblt(Rect(), 0),
@@ -101,12 +104,20 @@ struct FileToGraphic
     timer_cap(now),
     movie_usec(0),
     nbconsumers(0),
+    meta_ok(false),
+    timestamp_ok(false),
     data_meta()
     {
+        while (this->next_order()){
+            this->interpret_order();
+            if (this->meta_ok && this->timestamp_ok){
+                break;
+            }
+        }
     }
 
 
-    void add_recorder(RDPGraphicDevice * consumer)
+    void add_consumer(RDPGraphicDevice * consumer)
     {
         this->consumers[this->nbconsumers++] = consumer;
     }
@@ -118,8 +129,6 @@ struct FileToGraphic
           "It update chunk headers (merely remaining orders count) and"
           " reads the next chunk if necessary.") 
     {
-        LOG(LOG_INFO,"Next_order stream.p=%p end=%p remdata=%lu remaining=%u count=%u\n", 
-            this->stream.p, this->stream.end, this->stream.end-stream.p, this->remaining_order_count, this->chunk_count);
         if ((this->stream.p == this->stream.end) && (this->remaining_order_count)){
             LOG(LOG_ERR, "Incomplete order batch at chunk %u "
                          "order [%u/%u] "
@@ -159,16 +168,21 @@ struct FileToGraphic
             }
         }
         if (this->remaining_order_count > 0){this->remaining_order_count--;}
-        LOG(LOG_INFO,"Next_order exit stream.p=%p end=%p remdata=%lu remaining=%u count=%u\n", 
-            this->stream.p, this->stream.end, this->stream.end-stream.p, this->remaining_order_count, this->chunk_count);
         return true;
     }
 
     void interpret_order()
     {
-        LOG(LOG_INFO,"interpret_order\n");
         switch (this->chunk_type){
         case RDP_UPDATE_ORDERS:
+        if (!this->meta_ok){
+            LOG(LOG_ERR,"Drawing orders chunk must be preceded by a META chunk to get drawing device size\n");
+            throw Error(ERR_WRM);
+        }
+        if (!this->timestamp_ok){
+            LOG(LOG_ERR,"Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing\n");
+            throw Error(ERR_WRM);
+        }
         LOG(LOG_INFO,"RDP_UPDATE_ORDERS\n");
         {
             uint8_t control = this->stream.in_uint8();
@@ -282,9 +296,10 @@ struct FileToGraphic
             case WRMChunk::TIMESTAMP:
             LOG(LOG_INFO,"WRMChunk::TIMESTAMP\n");
             {
-                if (!this->movie_usec){
+                if (!this->timestamp_ok){
                     LOG(LOG_INFO, "chunk timestamp reading first timestamp");
                     this->movie_usec = this->stream.in_uint64_le();
+                    this->timestamp_ok = true;
                 }
                 else {
                     LOG(LOG_INFO, "chunk timestamp reading other timestamps");
@@ -313,12 +328,19 @@ struct FileToGraphic
             {
                 uint16_t width = this->stream.in_uint16_le();
                 uint16_t height = this->stream.in_uint16_le();
-                uint16_t bpp = this->stream.in_uint16_le();
-                uint16_t pad = this->stream.in_uint16_le();
-                
-                this->screen_rect.cx = width;
-                this->screen_rect.cy = height;
+                this->stream.in_skip_bytes(4); // skip bpp and padding
                 this->stream.p = this->stream.end;
+
+                if (!this->meta_ok){
+                    this->screen_rect = Rect(0, 0, width, height);
+                    this->meta_ok = true;
+                }
+                else {
+                    if (this->screen_rect.cx != width || this->screen_rect.cy != height){
+                        LOG(LOG_ERR,"Inconsistant redundant meta chunk");
+                        throw Error(ERR_WRM);
+                    }
+                }
             }
             break;
             default:

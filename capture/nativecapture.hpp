@@ -72,12 +72,8 @@ public:
     unsigned int basepath_len;
     uint32_t nb_file;
 
-    char * meta_name;
-    uint32_t meta_name_len;
-    FILE* meta_file;
-
 public:
-    NativeCapture(const timeval & now, int width, int height, const char * path, const char * meta_filename = 0)
+    NativeCapture(const timeval & now, int width, int height, const char * path)
     : width(width)
     , height(height)
     , bpp(24)
@@ -86,52 +82,10 @@ public:
     , recorder(&this->trans, &this->stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now)
     , nb_file(0)
     {
-        this->basepath_len = sprintf(this->filename, "%s-%u-", path, getpid());
-        this->filename_len = this->basepath_len + sprintf(this->filename + this->basepath_len, "%u.wrm", this->nb_file++);
-
-        LOG(LOG_INFO, "Open to file : %s", this->filename);
-        this->trans.fd = open(this->filename, O_WRONLY|O_CREAT, 0666);
-        if (this->trans.fd < 0){
-            LOG(LOG_ERR, "Error opening native capture file : %s", strerror(errno));
-            throw Error(ERR_NATIVE_CAPTURE_OPEN_FAILED);
-        }
-
-        if (meta_filename) {
-            this->meta_name_len = strlen(meta_filename);
-            this->meta_name = (char*)malloc(this->meta_name_len + 1);
-            memcpy(this->meta_name, meta_filename, this->meta_name_len + 1);
-        }
-        else {
-            this->meta_name_len = this->basepath_len + 4;
-            this->meta_name = (char*)malloc(this->meta_name_len + 1);
-            memcpy(this->meta_name, this->filename, this->basepath_len - 1);
-            memcpy(this->meta_name + this->basepath_len - 1, ".mwrm", 6);
-        }
-
-//        this->recorder.chunk_type = WRMChunk::META_FILE;
-//        this->recorder.chunk_count = 1;
-//        {
-//            this->stream.out_uint32_le(this->meta_name_len);
-//            this->stream.out_copy_bytes(this->meta_name, this->meta_name_len);
-//        }
-//        this->recorder.flush();
-
-        this->meta_file = fopen(this->meta_name, "w+");
-        if (!this->meta_file) {
-            free(this->meta_name);
-            LOG(LOG_ERR, "error open meta: %s", strerror(errno));
-            throw Error(ERR_NATIVE_CAPTURE_OPEN_FAILED);
-        }
-
-        fprintf(this->meta_file, "%d %d\n", this->width, this->height);
-        fputs("\n\n", this->meta_file);
     }
 
     ~NativeCapture(){
         this->recorder.flush();
-        close(this->trans.fd);
-        fclose(this->meta_file);
-        free(this->meta_name);
     }
 
     virtual void flush()
@@ -392,7 +346,6 @@ public:
 
 //        this->recorder.init();
 //        this->recorder.timer = now;
-//        fprintf(this->meta_file, "%s,%s.%s %ld %ld\n", this->filename, this->filename, "png", now.tv_sec, now.tv_usec);
 //        this->recorder.chunk_type = RDP_UPDATE_ORDERS;
     }
 };

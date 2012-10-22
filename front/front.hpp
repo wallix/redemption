@@ -325,8 +325,12 @@ public:
     {
         TODO("we should copy what is relevant from context into ini configuration structure, this way we could pass only ini structure to consumer modules instead of full context. Any update should go through update_config.")
         TODO("width and height should be parameters as others, nothing special")
+        
+        printf("=================> start_capture A\n");
+
         if (context.get_bool(STRAUTHID_OPT_MOVIE)){
             this->stop_capture();
+            printf("=================> start_capture B\n");
             struct timeval now;
             gettimeofday(&now, NULL);
             this->capture = new Capture(now, width, height, 
@@ -334,6 +338,8 @@ public:
                 context.get(STRAUTHID_OPT_MOVIE_PATH), 
                 context.get(STRAUTHID_OPT_CODEC_ID), 
                 context.get(STRAUTHID_VIDEO_QUALITY));
+
+            printf("=================> start_capture running\n");
 
             char buffer[256];
             snprintf(buffer, 256, "type='OCR title bar' "
