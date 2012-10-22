@@ -131,7 +131,7 @@ class WRMRecorder
 {
 public:
     InFileTransport & trans;
-    RDPUnserializer & reader;
+    FileToGraphic & reader;
 
     Drawable * redrawable;
 
@@ -149,7 +149,7 @@ public:
 public:
     WRMRecorder(const timeval & now,
                 InFileTransport & trans,
-                RDPUnserializer & reader,
+                FileToGraphic & reader,
                 InputType::enum_t itype,
                 std::string & base_path,
                 bool ignore_dir_for_meta_in_wrm,

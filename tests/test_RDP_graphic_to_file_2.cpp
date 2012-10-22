@@ -261,7 +261,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ReadCapture)
     timeval now;
     gettimeofday(&now, NULL);
 
-    RDPUnserializer reader(&in_trans, now, &consumer, screen_rect);
+    FileToGraphic reader(&in_trans, now, &consumer, screen_rect);
     size_t i = 0;
     while (reader.next_order()){
         reader.interpret_order();

@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         timeval now;
         gettimeofday(&now, NULL);
 
-        RDPUnserializer reader(&in_trans, now, &consumer, screen_rect);
+        FileToGraphic reader(&in_trans, now, &consumer, screen_rect);
         reader.next();
         reader.next();
         reader.next();

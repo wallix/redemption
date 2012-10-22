@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk_reading_with_unserializ
         timeval now;
         gettimeofday(&now, NULL);
 
-        RDPUnserializer reader(&in_trans, now, &consumer, screen_rect);
+        FileToGraphic reader(&in_trans, now, &consumer, screen_rect);
         reader.next();
         consumer.check_end();
         // check we have read everything
@@ -269,7 +269,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         timeval now;
         gettimeofday(&now, NULL);
 
-        RDPUnserializer reader(&in_trans, now, &consumer, screen_rect);
+        FileToGraphic reader(&in_trans, now, &consumer, screen_rect);
 
         size_t i = 0;
         for (i = 0; ; i++){
@@ -473,7 +473,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
         timeval now;
         gettimeofday(&now, NULL);
 
-        RDPUnserializer reader(&in_trans, now, &consumer, screen_rect);
+        FileToGraphic reader(&in_trans, now, &consumer, screen_rect);
         reader.next();
         reader.next();
         reader.next();

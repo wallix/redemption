@@ -81,7 +81,8 @@ struct test_internal_mod : public internal_mod {
         InFileTransport in_trans(fd);
         timeval now;
         gettimeofday(&now, NULL);
-        RDPUnserializer reader(&in_trans, now, &this->front, this->get_screen_rect());
+        FileToGraphic reader(&in_trans, now, this->get_screen_rect());
+        reader.add_recorder(&this->front);
         this->front.send_global_palette();
         this->front.begin_update();
         while (reader.next_order()){

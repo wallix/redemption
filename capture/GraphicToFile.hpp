@@ -131,6 +131,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         last_sent_timer.tv_sec = 0;
         last_sent_timer.tv_usec = 0;
         this->order_count = 0;
+        
+        this->send_meta_chunk();
     }
 
     ~GraphicsToFile(){
@@ -158,6 +160,22 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             stream.mark_end();
         } 
     };
+
+    void send_meta_chunk(void)
+    {
+        BStream stream(8);
+        stream.out_uint16_le(800);
+        stream.out_uint16_le(600);
+        stream.out_uint16_le(24);
+        stream.out_uint16_le(0);
+        stream.mark_end();
+
+        BStream header(8);
+        WRMChunk_Send chunk(header, WRMChunk::META_FILE, 8, 1);
+        this->trans->send(header.data, header.size());
+        this->trans->send(stream.data, stream.size());
+    }
+
 
     void send_timestamp_chunk(void)
     {

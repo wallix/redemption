@@ -37,6 +37,8 @@
 #include "constants.hpp"
 
 const char expected_stripped_wrm[] = 
+/* 0000 */ "\xEE\x03\x10\x00\x01\x00\x00\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order 0000:flags=0
+           "\x20\x03\x58\x02\x18\x00\x00\x00" // width = 800, height=600, bpp=24 PAD: 2 bytes
 /* 0000 */ "\xf0\x03\x10\x00\x01\x00\x00\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order 0000:flags=0
 /* 0000 */ "\x40\x0C\xAA\x3B\x00\x00\x00\x00" // 0x3BAA0C40 = 1001000000
 /* 0000 */ "\x00\x00\x1A\x00\x02\x00\x00\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders 0000:flags=0
@@ -159,14 +161,20 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     consumer.flush();
     BOOST_CHECK_EQUAL(0, 0);
     ::close(trans.fd);
-    BOOST_CHECK_EQUAL(76, filesize("./testcap.wrm"));
+    BOOST_CHECK_EQUAL(92, filesize("./testcap.wrm"));
     
     InByFilenameTransport in_wrm_trans("./testcap.wrm");
     FileSequence sequence("path file pid count extension", "./", "testcap", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
+
     now.tv_sec = 5000;
+    FileToGraphic player(&in_wrm_trans, now, screen_rect);
     ImageCapture png_recorder(out_png_trans, 800, 600, true);
-    RDPUnserializer player(&in_wrm_trans, now, &png_recorder, screen_rect);
+    player.add_recorder(&png_recorder);
+
+    // META
+    BOOST_CHECK_EQUAL(true, player.next_order());
+    player.interpret_order();
 
     // Timestamp
     BOOST_CHECK_EQUAL(true, player.next_order());

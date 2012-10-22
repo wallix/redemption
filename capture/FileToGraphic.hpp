@@ -39,7 +39,7 @@
 #include "difftimeval.hpp"
 #include "meta_file.hpp"
 
-struct RDPUnserializer
+struct FileToGraphic
 {
     enum {
         HEADER_SIZE = 8,
@@ -48,7 +48,6 @@ struct RDPUnserializer
 
 //    uint8_t padding[65536];
 
-    RDPGraphicDevice * consumer;
     Transport * trans;
 
     TODO("This should be extracted from serialized data. Serializer should have some API function to set geometry width x height x bpp saved in native movie.")
@@ -76,10 +75,13 @@ struct RDPUnserializer
     timeval timer_cap;
     uint64_t movie_usec;
 
+    uint16_t nbconsumers;
+    RDPGraphicDevice * consumers[10];
+
     DataMetaFile data_meta;
 
-    RDPUnserializer(Transport * trans, const timeval & now, RDPGraphicDevice * consumer, const Rect screen_rect)
-     : stream(4096), consumer(consumer), trans(trans), screen_rect(screen_rect),
+    FileToGraphic(Transport * trans, const timeval & now, const Rect screen_rect)
+     : stream(4096), trans(trans), screen_rect(screen_rect),
      // Internal state of orders
     common(RDP::PATBLT, Rect(0, 0, 1, 1)),
     destblt(Rect(), 0),
@@ -89,9 +91,7 @@ struct RDPUnserializer
     memblt(0, Rect(), 0, 0, 0, 0),
     lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
     glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
-
     bmp_cache(24),
-
     // variables used to read batch of orders "chunks"
     chunk_size(0),
     chunk_type(0),
@@ -100,9 +100,15 @@ struct RDPUnserializer
     remaining_order_count(0),
     timer_cap(now),
     movie_usec(0),
-
+    nbconsumers(0),
     data_meta()
     {
+    }
+
+
+    void add_recorder(RDPGraphicDevice * consumer)
+    {
+        this->consumers[this->nbconsumers++] = consumer;
     }
 
     bool next_order()
@@ -217,27 +223,39 @@ struct RDPUnserializer
                 switch (this->common.order) {
                 case RDP::GLYPHINDEX:
                     this->glyphindex.receive(this->stream, header);
-                    consumer->draw(this->glyphindex, clip);
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->draw(this->glyphindex, clip);
+                    }
                     break;
                 case RDP::DESTBLT:
                     this->destblt.receive(this->stream, header);
-                    consumer->draw(this->destblt, clip);
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->draw(this->destblt, clip);
+                    }
                     break;
                 case RDP::PATBLT:
                     this->patblt.receive(this->stream, header);
-                    consumer->draw(this->patblt, clip);
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->draw(this->patblt, clip);
+                    }
                     break;
                 case RDP::SCREENBLT:
                     this->scrblt.receive(this->stream, header);
-                    consumer->draw(this->scrblt, clip);
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->draw(this->scrblt, clip);
+                    }
                     break;
                 case RDP::LINE:
                     this->lineto.receive(this->stream, header);
-                    consumer->draw(this->lineto, clip);
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->draw(this->lineto, clip);
+                    }
                     break;
                 case RDP::RECT:
                     this->opaquerect.receive(this->stream, header);
-                    consumer->draw(this->opaquerect, clip);
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->draw(this->opaquerect, clip);
+                    }
                     break;
                 case RDP::MEMBLT:
                     {
@@ -247,7 +265,9 @@ struct RDPUnserializer
                             LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)", this->memblt.cache_id, this->memblt.cache_idx);
                         }
                         else {
-                            this->consumer->draw(this->memblt, clip, *bmp);
+                            for (size_t i = 0; i < this->nbconsumers ; i++){
+                                this->consumers[i]->draw(this->memblt, clip, *bmp);
+                            }
                         }
                     }
                     break;
@@ -291,29 +311,13 @@ struct RDPUnserializer
             case WRMChunk::META_FILE:
             LOG(LOG_INFO,"WRMChunk::META_FILE\n");
             {
-                // DATA in metafile:
-                // 4 bytes   : len
-                // len bytes : reference filename
-                // 2 bytes width
-                // 2 bytes height
-                // 1 bytes BPP (bytes per plane)
-                LOG(LOG_INFO, "META");
-                if (this->data_meta.loaded)
-                {
-                    LOG(LOG_INFO, "ignore chunk type META_FILE");
-                }
-                else
-                {
-                    uint32_t len = this->stream.in_uint32_le();
-                    this->stream.p[len] = 0;
-                    if (!read_meta_file(this->data_meta, reinterpret_cast<const char*>(this->stream.p)))
-                    {
-                        LOG(LOG_ERR, "meta %s: %s", reinterpret_cast<const char*>(this->stream.p), strerror(errno));
-                        throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
-                    }
-                    this->screen_rect.cx = this->data_meta.width;
-                    this->screen_rect.cy = this->data_meta.height;
-                }
+                uint16_t width = this->stream.in_uint16_le();
+                uint16_t height = this->stream.in_uint16_le();
+                uint16_t bpp = this->stream.in_uint16_le();
+                uint16_t pad = this->stream.in_uint16_le();
+                
+                this->screen_rect.cx = width;
+                this->screen_rect.cy = height;
                 this->stream.p = this->stream.end;
             }
             break;

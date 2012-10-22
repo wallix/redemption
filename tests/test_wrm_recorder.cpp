@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
     std::string filename(FIXTURES_PATH "/test_w2008_2-880.mwrm");
 
     InFileTransport trans(-1);
-    RDPUnserializer reader(&trans, now, 0, Rect());
+    FileToGraphic reader(&trans, now, 0, Rect());
     WRMRecorder recorder(now, trans, reader, InputType::META_TYPE, path, false, false, false, range, filename, 0);
 
     BOOST_CHECK_EQUAL(800, recorder.reader.data_meta.width);
@@ -123,7 +123,7 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
     std::string filename(cfilename);
 
     InFileTransport trans(-1);
-    RDPUnserializer reader(&trans, now, 0, Rect());
+    FileToGraphic reader(&trans, now, 0, Rect());
 
     WRMRecorder recorder(now, trans, reader, InputType::META_TYPE, path, false, false, false, range, filename, 0);
 
@@ -169,7 +169,7 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
             std::string path("/tmp");
 
             InFileTransport trans(-1);
-            RDPUnserializer reader(&trans, now, 0, Rect());
+            FileToGraphic reader(&trans, now, 0, Rect());
             WRMRecorder recorder(now, trans, reader, InputType::META_TYPE, path, false, false, false, range, wrm_filename, 0);
 
             if (realloc_consumer)

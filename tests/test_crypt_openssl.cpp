@@ -141,7 +141,7 @@
 //    InCipherTransport trans_in(&in_file);
 //    RaiiInCipherTransport raii2(trans_in, CipherMode::to_evp_cipher(CipherMode::BLOWFISH_CBC), key, iv);
 //    StaticCapture pngcap(800,600,"/tmp/decrypt.png", true);
-//    RDPUnserializer unserializer(&trans_in, now, &pngcap, Rect(0,0,800,600));
+//    FileToGraphic unserializer(&trans_in, now, &pngcap, Rect(0,0,800,600));
 
 //    char message[1024];
 

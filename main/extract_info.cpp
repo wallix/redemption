@@ -65,7 +65,7 @@ int main(int argc, char** argv)
     }
 
     InFileTransport trans(fd);
-    RDPUnserializer reader(&trans, now, 0, Rect());
+    FileToGraphic reader(&trans, now, Rect());
 
     WRMRecorder recorder(now,
                         trans,

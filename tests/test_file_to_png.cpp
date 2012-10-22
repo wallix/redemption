@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     std::string filename(FIXTURES_PATH "/test_w2008_2-880.mwrm");
 
     InFileTransport trans(-1);
-    RDPUnserializer reader(&trans, now, 0, Rect());
+    FileToGraphic reader(&trans, now, 0, Rect());
 
     WRMRecorder recorder(now, trans, reader, InputType::META_TYPE, path, false, false, false, range, filename, 0);
     BOOST_CHECK(true);
