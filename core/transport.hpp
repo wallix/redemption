@@ -41,15 +41,14 @@
 
 static inline int filesize(const char * path)
 {
-    char filename[1024];
-    strcpy(filename, path);
     struct stat sb;
-    int status = stat(filename, &sb);
+    int status = stat(path, &sb);
     if (status >= 0){
         return sb.st_size;
     }
     return -1;
 }
+
 
 class Transport {
 public:
@@ -1174,12 +1173,13 @@ public:
     ssize_t filesize(uint32_t count){
         char filename[1024];
         this->get_name(filename, sizeof(filename), count);
-        struct stat sb;
-        int status = stat(filename, &sb);
-        if (status >= 0){
-            return sb.st_size;
-        }
-        return -1;
+        return ::filesize(filename);
+    }
+
+    ssize_t unlink(uint32_t count){
+        char filename[1024];
+        this->get_name(filename, sizeof(filename), count);
+        return ::unlink(filename);
     }
 };
 

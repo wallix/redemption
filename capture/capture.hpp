@@ -28,10 +28,6 @@ class Capture : public RDPGraphicDevice
 {
     char log_prefix[256];
 
-    uint64_t png_interval;
-    struct timeval start_static_capture;
-    uint64_t inter_frame_interval_static_capture;
-
     uint64_t frame_interval;
     struct timeval start_native_capture;
     uint64_t inter_frame_interval_native_capture;
@@ -56,7 +52,6 @@ public:
     {
         LOG(LOG_INFO, "=======================================> Capture : fullpath = %s", fullpath);
 
-
         char path[1024];
         char basename[1024];
         strcpy(path, "/tmp/"); 
@@ -80,12 +75,9 @@ public:
         LOG(LOG_INFO, "=======================================> Capture : path = %s basename=%s", path, basename);
         this->png_sequence = new FileSequence("path file pid count extension", path, basename, "png");
         this->png_trans = new OutByFilenameSequenceTransport(*this->png_sequence);
-        this->psc = new StaticCapture(*this->png_trans, *this->png_sequence, width, height, true);
+        this->psc = new StaticCapture(now, *this->png_trans, *this->png_sequence, width, height, true);
 
         this->log_prefix[0] = 0;
-        this->start_static_capture = now;
-        this->png_interval = 3000; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
-        this->inter_frame_interval_static_capture       = this->png_interval * 100000; // 1 000 000 us is 1 sec
 
         // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
         this->start_native_capture = now;
@@ -96,8 +88,8 @@ public:
         this->break_interval = 60 * 10; // break interval is in s, default value 1 break every 10 minutes
         this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
 
-        LOG(LOG_INFO, "update configuration png_interval=%u frame_interval=%u break_interval=%u",
-            this->png_interval, this->frame_interval, this->break_interval);
+        LOG(LOG_INFO, "update configuration frame_interval=%u break_interval=%u",
+            this->frame_interval, this->break_interval);
 
         // fullpath
         this->wrm_sequence = new FileSequence("path file pid count extension", path, basename, "wrm");
@@ -115,12 +107,6 @@ public:
     
     void update_config(const timeval & now, const Inifile & ini){
         this->psc->update_config(ini);
-        if (ini.globals.png_interval != this->png_interval){
-            this->start_static_capture = now;
-            this->png_interval = ini.globals.png_interval; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
-            this->inter_frame_interval_static_capture       = this->png_interval * 100000; // 1 000 000 us is 1 sec
-        }
-
         if (ini.globals.frame_interval != this->frame_interval){
             // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
             this->start_native_capture = now;
@@ -133,15 +119,8 @@ public:
             this->break_interval = ini.globals.break_interval; // break interval is in s, default value 1 break every 10 minutes
             this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
         }
-        LOG(LOG_INFO, "update configuration png_interval=%u frame_interval=%u break_interval=%u",
-            this->png_interval, this->frame_interval, this->break_interval);
-    }
-
-    void timestamp()
-    {
-        struct timeval now;
-        gettimeofday(&now, 0);
-        this->pnc->recorder.timestamp(now);
+        LOG(LOG_INFO, "update configuration frame_interval=%u break_interval=%u",
+            this->frame_interval, this->break_interval);
     }
 
     void set_prefix(const char * prefix, size_t len_prefix)
@@ -155,18 +134,7 @@ public:
     {
         struct timeval now;
         gettimeofday(&now, NULL);
-        TODO("this must move to static capture ie: sc.snapshot(now)")
-        if (difftimeval(now, this->start_static_capture) >= this->inter_frame_interval_static_capture){
-            TODO("change code below, it would be better to provide now to drawable instead of tm struct");
-            LOG(LOG_INFO, "recorder static capture timestamp");
-            time_t rawtime;
-            time(&rawtime);
-            tm *ptm = localtime(&rawtime);
-            this->psc->drawable.trace_timestamp(*ptm);
-            this->psc->flush();
-            this->psc->drawable.clear_timestamp();
-            this->start_static_capture = now;
-        }
+        this->psc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
         TODO("this must move to native capture ie: nc.snapshot(now)")
         if (difftimeval(now, this->start_native_capture) >= this->inter_frame_interval_native_capture){
             LOG(LOG_INFO, "recorder timestamp");

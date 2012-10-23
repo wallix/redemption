@@ -55,7 +55,7 @@
 
 struct StaticCaptureConfig {
     unsigned png_limit;
-    unsigned png_interval;
+    uint64_t png_interval;
     char path[1024];
     bool bgr;
 
@@ -71,10 +71,17 @@ public:
     FileSequence & sequence;
     StaticCaptureConfig conf;
 
-    StaticCapture(Transport & trans, FileSequence & sequence, unsigned width, unsigned height, bool bgr)
+    struct timeval start_static_capture;
+    uint64_t inter_frame_interval_static_capture;
+
+    StaticCapture(const timeval & now, Transport & trans, FileSequence & sequence, unsigned width, unsigned height, bool bgr)
     : ImageCapture(trans, width, height, bgr)
     , sequence(sequence)
     {
+        this->start_static_capture = now;
+        this->conf.png_interval = 3000; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
+        this->inter_frame_interval_static_capture       = this->conf.png_interval * 100000; // 1 000 000 us is 1 sec
+
     }
 
     ~StaticCapture()
@@ -92,6 +99,29 @@ public:
             }
         }
         this->conf.png_limit = ini.globals.png_limit;
+
+        if (ini.globals.png_interval != this->conf.png_interval){
+            // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
+            this->conf.png_interval = ini.globals.png_interval;
+            this->inter_frame_interval_static_capture = this->conf.png_interval * 100000; // 1 000 000 us is 1 sec
+        }
+    }
+
+    void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
+    {
+        printf("start=%lu now=%lu interval=%lu\n",
+             now.tv_sec * 1000000 + now.tv_usec,
+             this->start_static_capture.tv_sec * 1000000 + this->start_static_capture.tv_usec,
+             this->inter_frame_interval_static_capture);
+        if (difftimeval(now, this->start_static_capture) >= this->inter_frame_interval_static_capture){
+            time_t rawtime = now.tv_sec;
+            tm *ptm = localtime(&rawtime);
+            this->drawable.trace_timestamp(*ptm);
+            this->flush();
+            this->drawable.clear_timestamp();
+            this->start_static_capture = now;
+        }
+    
     }
 
     virtual void flush()

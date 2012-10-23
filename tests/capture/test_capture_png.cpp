@@ -281,10 +281,14 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 
 BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 {
+    struct timeval now;
+    now.tv_sec = 1000;
+    now.tv_usec = 0;
+
     Rect screen_rect(0, 0, 800, 600);
     FileSequence sequence("path file pid count extension", "./", "test", "png");
     OutByFilenameSequenceTransport trans(sequence);
-    StaticCapture consumer(trans, sequence, 800, 600, true);
+    StaticCapture consumer(now, trans, sequence, 800, 600, true);
     Inifile ini;
     consumer.update_config(ini);
     ini.globals.png_limit = 3;
