@@ -169,6 +169,14 @@ struct IniAccounts {
 
 struct Inifile {
     struct Inifile_globals {
+        char movie_path[512];
+        char codec_id[512];
+        char video_quality[512];
+        char auth_user[512];
+        char host[512];
+        char target_device[512];
+        char target_user[512];
+        
         bool bitmap_cache;       // default true
         bool bitmap_compression; // default true
         int port;                // default 3389
@@ -229,7 +237,7 @@ struct Inifile {
         int max_tick;
         int keepalive_grace_delay;
 
-        char movie_path[1024];
+        char replay_path[1024];
         bool internal_domain;
 
         struct {
@@ -309,7 +317,7 @@ struct Inifile {
             this->globals.h_qscale    = 15;
             this->globals.max_tick    = 30;
             this->globals.keepalive_grace_delay = 30;
-            strcpy(this->globals.movie_path, "/tmp/");
+            strcpy(this->globals.replay_path, "/tmp/");
             this->globals.internal_domain = false;
             this->globals.debug.x224              = 0;
             this->globals.debug.mcs               = 0;
@@ -485,8 +493,8 @@ struct Inifile {
             else if (0 == strcmp(key, "png_limit")){
                 this->globals.png_limit   = atol(value);
             }
-            else if (0 == strcmp(key, "movie_path")){
-                strcpy(this->globals.movie_path, value);
+            else if (0 == strcmp(key, "replay_path")){
+                strcpy(this->globals.replay_path, value);
             }
             else if (0 == strcmp(key, "l_bitrate")){
                 this->globals.l_bitrate   = atol(value);

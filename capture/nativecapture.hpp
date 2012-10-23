@@ -63,14 +63,19 @@ public:
     int height;
     int bpp;
 
-//    OutFileTransport trans;
+    uint64_t frame_interval;
+    struct timeval start_native_capture;
+    uint64_t inter_frame_interval_native_capture;
+
+    uint64_t break_interval;
+    struct timeval start_break_capture;
+    uint64_t inter_frame_interval_start_break_capture;
 
     BStream stream;
     GraphicToFile recorder;
     uint32_t nb_file;
 
-public:
-    NativeCapture(const timeval & now, int width, int height, Transport & trans)
+    NativeCapture(const timeval & now, Transport & trans, FileSequence & sequence, int width, int height)
     : width(width)
     , height(height)
     , bpp(24)
@@ -78,12 +83,54 @@ public:
     , recorder(&trans, &this->stream, NULL, width, height, 24, 8192, 768, 8192, 3072, 8192, 12288, now)
     , nb_file(0)
     {
+        // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
+        this->start_native_capture = now;
+        this->frame_interval = 40;
+        this->inter_frame_interval_native_capture       =  this->frame_interval * 10000; // 1 000 000 us is 1 sec
+
+        this->start_break_capture = now;
+        this->break_interval = 60 * 10; // break interval is in s, default value 1 break every 10 minutes
+        this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
+
+        LOG(LOG_INFO, "update configuration frame_interval=%u break_interval=%u",
+            this->frame_interval, this->break_interval);
     }
 
     ~NativeCapture(){
         this->recorder.flush();
     }
 
+    void update_config(const Inifile & ini)
+    {
+        if (ini.globals.frame_interval != this->frame_interval){
+            // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
+            this->frame_interval = ini.globals.frame_interval;
+            this->inter_frame_interval_native_capture       =  this->frame_interval * 10000; // 1 000 000 us is 1 sec
+        }
+
+        if (ini.globals.break_interval != this->break_interval){
+            this->break_interval = ini.globals.break_interval; // break interval is in s, default value 1 break every 10 minutes
+            this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
+        }
+        LOG(LOG_INFO, "update configuration frame_interval=%u break_interval=%u",
+            this->frame_interval, this->break_interval);
+    }
+        
+    void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
+    {
+        if (difftimeval(now, this->start_native_capture) >= this->inter_frame_interval_native_capture){
+            LOG(LOG_INFO, "recorder timestamp");
+            this->recorder.timestamp(now);
+            this->start_native_capture = now;
+            if (difftimeval(now, this->start_break_capture) >= this->inter_frame_interval_start_break_capture){
+//                this->breakpoint(now);
+                this->start_break_capture = now;
+            }
+        }
+        this->recorder.flush();
+
+    }
+    
     virtual void flush()
     {}
 
@@ -154,11 +201,18 @@ private:
     }
 
 public:
-
     void breakpoint(const uint8_t* data_drawable, uint8_t bpp,
                     uint16_t width, uint16_t height, size_t rowsize,
                     const timeval& now)
     {
+//        this->recorder.timestamp(now);
+//        this->breakpoint(this->psc->drawable.data,
+//                            24,
+//                            this->psc->drawable.width,
+//                            this->psc->drawable.height,
+//                            this->psc->drawable.rowsize,
+//                            now);
+
 //        this->recorder.flush();
 
 //        this->recorder.chunk_type = WRMChunk::NEXT_FILE_ID;

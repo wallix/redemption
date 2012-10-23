@@ -109,10 +109,6 @@ public:
 
     void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
-        printf("start=%lu now=%lu interval=%lu\n",
-             now.tv_sec * 1000000 + now.tv_usec,
-             this->start_static_capture.tv_sec * 1000000 + this->start_static_capture.tv_usec,
-             this->inter_frame_interval_static_capture);
         if (difftimeval(now, this->start_static_capture) >= this->inter_frame_interval_static_capture){
             time_t rawtime = now.tv_sec;
             tm *ptm = localtime(&rawtime);

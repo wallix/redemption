@@ -28,14 +28,6 @@ class Capture : public RDPGraphicDevice
 {
     char log_prefix[256];
 
-    uint64_t frame_interval;
-    struct timeval start_native_capture;
-    uint64_t inter_frame_interval_native_capture;
-
-    uint64_t break_interval;
-    struct timeval start_break_capture;
-    uint64_t inter_frame_interval_start_break_capture;
-
     FileSequence * png_sequence;
     OutByFilenameSequenceTransport * png_trans;
     StaticCapture * psc;
@@ -45,21 +37,19 @@ class Capture : public RDPGraphicDevice
     NativeCapture * pnc;
 
 public:
-    Capture(const timeval & now, int width, int height, const char * fullpath, const char * codec_id, const char * video_quality, bool bgr = true) 
+    Capture(const timeval & now, const Inifile & ini, int width, int height) 
       : png_sequence(NULL)
       , png_trans(NULL)
       , psc(NULL)
     {
-        LOG(LOG_INFO, "=======================================> Capture : fullpath = %s", fullpath);
-
         char path[1024];
         char basename[1024];
         strcpy(path, "/tmp/"); 
         strcpy(basename, "redemption"); 
-        const char * end_of_path = strrchr(fullpath, '/') + 1;
+        const char * end_of_path = strrchr(ini.globals.movie_path, '/') + 1;
         if (end_of_path){
-            memcpy(path, fullpath, end_of_path - fullpath);
-            path[end_of_path - fullpath] = 0;
+            memcpy(path, ini.globals.movie_path, end_of_path - ini.globals.movie_path);
+            path[end_of_path - ini.globals.movie_path] = 0;
             const char * start_of_extension = strrchr(end_of_path, '.');
             if (start_of_extension){
                 memcpy(basename, end_of_path, start_of_extension - end_of_path);
@@ -72,34 +62,36 @@ public:
             }
         }
         
-        LOG(LOG_INFO, "=======================================> Capture : path = %s basename=%s", path, basename);
         this->png_sequence = new FileSequence("path file pid count extension", path, basename, "png");
         this->png_trans = new OutByFilenameSequenceTransport(*this->png_sequence);
         this->psc = new StaticCapture(now, *this->png_trans, *this->png_sequence, width, height, true);
 
-        this->log_prefix[0] = 0;
-
-        // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
-        this->start_native_capture = now;
-        this->frame_interval = 40;
-        this->inter_frame_interval_native_capture       =  this->frame_interval * 10000; // 1 000 000 us is 1 sec
-
-        this->start_break_capture = now;
-        this->break_interval = 60 * 10; // break interval is in s, default value 1 break every 10 minutes
-        this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
-
-        LOG(LOG_INFO, "update configuration frame_interval=%u break_interval=%u",
-            this->frame_interval, this->break_interval);
-
-        // fullpath
         this->wrm_sequence = new FileSequence("path file pid count extension", path, basename, "wrm");
         this->wrm_trans = new OutByFilenameSequenceTransport(*this->wrm_sequence);
-        this->pnc = new NativeCapture(now, width, height, *wrm_trans);
-    }
+        this->pnc = new NativeCapture(now, *this->wrm_trans, *this->wrm_sequence, width, height);
+ 
+        this->log_prefix[0] = 0;
+        
+        char buffer[256];
+        snprintf(buffer, 256, "type='OCR title bar' "
+                              "username='%s' "
+                              "client_ip='%s' "
+                              "ressource='%s' "
+                              "account='%s'", 
+                ini.globals.auth_user, 
+                ini.globals.host, 
+                ini.globals.target_device,
+                ini.globals.target_user);
+        buffer[255] = 0;
+        this->set_prefix(buffer, strlen(buffer));
+        this->update_config(now, ini);
+   }
 
     ~Capture(){
         delete this->psc;
-        TODO("Use a Closure to wrap these 3 fields, after stabilizing API")
+        delete this->wrm_sequence;
+        delete this->wrm_trans;
+
         delete this->pnc;
         delete this->png_sequence;
         delete this->png_trans;
@@ -107,20 +99,7 @@ public:
     
     void update_config(const timeval & now, const Inifile & ini){
         this->psc->update_config(ini);
-        if (ini.globals.frame_interval != this->frame_interval){
-            // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
-            this->start_native_capture = now;
-            this->frame_interval = ini.globals.frame_interval;
-            this->inter_frame_interval_native_capture       =  this->frame_interval * 10000; // 1 000 000 us is 1 sec
-        }
-
-        if (ini.globals.break_interval != this->break_interval){
-            this->start_break_capture = now;
-            this->break_interval = ini.globals.break_interval; // break interval is in s, default value 1 break every 10 minutes
-            this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
-        }
-        LOG(LOG_INFO, "update configuration frame_interval=%u break_interval=%u",
-            this->frame_interval, this->break_interval);
+        this->pnc->update_config(ini);
     }
 
     void set_prefix(const char * prefix, size_t len_prefix)
@@ -135,21 +114,16 @@ public:
         struct timeval now;
         gettimeofday(&now, NULL);
         this->psc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
-        TODO("this must move to native capture ie: nc.snapshot(now)")
-        if (difftimeval(now, this->start_native_capture) >= this->inter_frame_interval_native_capture){
-            LOG(LOG_INFO, "recorder timestamp");
-            this->pnc->recorder.timestamp(now);
-            this->start_native_capture = now;
-            if (difftimeval(now, this->start_break_capture) >= this->inter_frame_interval_start_break_capture){
-                this->breakpoint();
-                this->start_break_capture = now;
-            }
-        }
-        this->pnc->recorder.flush();
+        this->pnc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
     }
 
     void flush()
     {}
+
+//    timeval& timer()
+//    {
+//        return this->pnc->recorder.timer;
+//    }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
@@ -192,29 +166,6 @@ public:
     {
 //        this->psc->glyph_index(cmd, clip);
 //        this->pnc->glyph_index(cmd, clip);
-    }
-
-    void breakpoint(const timeval& now)
-    {
-        this->pnc->recorder.timestamp(now);
-        this->pnc->breakpoint(this->psc->drawable.data,
-                            24,
-                            this->psc->drawable.width,
-                            this->psc->drawable.height,
-                            this->psc->drawable.rowsize,
-                            now);
-    }
-
-    void breakpoint()
-    {
-        struct timeval now;
-        gettimeofday(&now, NULL);
-        this->breakpoint(now);
-    }
-
-    timeval& timer()
-    {
-        return this->pnc->recorder.timer;
     }
 
 };

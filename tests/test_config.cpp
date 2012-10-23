@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(2,    ini.globals.authversion);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"), std::string(ini.globals.authip));
     BOOST_CHECK_EQUAL(3350, ini.globals.authport);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"), std::string(ini.globals.movie_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"), std::string(ini.globals.replay_path));
 
     BOOST_CHECK_EQUAL(ID_LIB_UNKNOWN, ini.account[0].idlib);
 
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(2,    ini.globals.authversion);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"), std::string(ini.globals.authip));
     BOOST_CHECK_EQUAL(3350, ini.globals.authport);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"), std::string(ini.globals.movie_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"), std::string(ini.globals.replay_path));
 
     BOOST_CHECK_EQUAL(ID_LIB_UNKNOWN, ini.account[0].idlib);
 
