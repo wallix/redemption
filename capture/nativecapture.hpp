@@ -63,23 +63,19 @@ public:
     int height;
     int bpp;
 
-    OutFileTransport trans;
+//    OutFileTransport trans;
 
     BStream stream;
-    GraphicsToFile recorder;
-    char filename[1024];
-    unsigned int filename_len;
-    unsigned int basepath_len;
+    GraphicToFile recorder;
     uint32_t nb_file;
 
 public:
-    NativeCapture(const timeval & now, int width, int height, const char * path)
+    NativeCapture(const timeval & now, int width, int height, Transport & trans)
     : width(width)
     , height(height)
     , bpp(24)
-    , trans(-1)
     , stream(65536)
-    , recorder(&this->trans, &this->stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now)
+    , recorder(&trans, &this->stream, NULL, width, height, 24, 8192, 768, 8192, 3072, 8192, 12288, now)
     , nb_file(0)
     {
     }

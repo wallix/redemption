@@ -24,7 +24,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestGraphicsToFile
+#define BOOST_TEST_MODULE TestGraphicToFile
 #include <boost/test/auto_unit_test.hpp>
 #include "test_orders.hpp"
 
@@ -87,7 +87,7 @@ private:
 
 
 
-BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
+BOOST_AUTO_TEST_CASE(TestGraphicToFile_one_simple_chunk)
 {
     Rect screen_rect(0, 0, 800, 600);
 
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
         BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
         BStream stream(65536);
-        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
+        GraphicToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
         now.tv_sec += 5;
         now.tv_usec += 1100;
         gtf.timestamp(now);

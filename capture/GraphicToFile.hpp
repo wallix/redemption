@@ -102,17 +102,23 @@
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-struct GraphicsToFile : public RDPSerializer
+struct GraphicToFile : public RDPSerializer
 REDOC("To keep things easy all chunks have 8 bytes headers"
       " starting with chunk_type, chunk_size"
       " and order_count (whatever it means, depending on chunks")
 {
     timeval last_sent_timer;
     timeval timer;
+    const uint16_t width;
+    const uint16_t height;
+    const uint8_t  bpp;
 
-    GraphicsToFile(Transport * trans
+
+    GraphicToFile(Transport * trans
                 , Stream * pstream
                 , const Inifile * ini
+                , const uint16_t width
+                , const uint16_t height
                 , const uint8_t  bpp
                 , uint32_t small_entries
                 , uint32_t small_size
@@ -127,6 +133,9 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
                     big_entries, big_size,
                     0, 1, 1)
     , timer(now)
+    , width(width)
+    , height(height)
+    , bpp(bpp)
     {
         last_sent_timer.tv_sec = 0;
         last_sent_timer.tv_usec = 0;
@@ -135,7 +144,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->send_meta_chunk();
     }
 
-    ~GraphicsToFile(){
+    ~GraphicToFile(){
     }
 
     virtual void timestamp(const timeval& now)
@@ -163,11 +172,10 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void send_meta_chunk(void)
     {
-        printf("send meta chunk \n");
         BStream stream(8);
-        stream.out_uint16_le(800);
-        stream.out_uint16_le(600);
-        stream.out_uint16_le(24);
+        stream.out_uint16_le(this->width);
+        stream.out_uint16_le(this->height);
+        stream.out_uint16_le(this->bpp);
         stream.out_uint16_le(0);
         stream.mark_end();
 
@@ -199,7 +207,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         if (this->order_count > 0){
             this->send_timestamp_chunk();
             if (this->ini && this->ini->globals.debug.primary_orders){
-                LOG(LOG_INFO, "GraphicsToFile::flush: order_count=%d", this->order_count);
+                LOG(LOG_INFO, "GraphicToFile::flush: order_count=%d", this->order_count);
             }
             this->send_orders();
         }

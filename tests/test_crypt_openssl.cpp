@@ -124,7 +124,7 @@
 //        timeval now;
 //        gettimeofday(&now, NULL);
 //        {
-//            GraphicsToFile gtof(&trans, &stream, 0, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
+//            GraphicToFile gtof(&trans, &stream, 0, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
 //            gtof.draw(RDPOpaqueRect(Rect(300,150,100,200), RED), clip);
 //            gtof.draw(RDPOpaqueRect(Rect(52,50,540,150), YELLOW), clip);
 //            gtof.draw(RDPOpaqueRect(Rect(500,400,50,18), GREEN), clip);

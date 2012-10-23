@@ -43,6 +43,9 @@ class Capture : public RDPGraphicDevice
     FileSequence * png_sequence;
     OutByFilenameSequenceTransport * png_trans;
     StaticCapture * psc;
+
+    FileSequence * wrm_sequence;
+    OutByFilenameSequenceTransport * wrm_trans;
     NativeCapture * pnc;
 
 public:
@@ -96,16 +99,20 @@ public:
         LOG(LOG_INFO, "update configuration png_interval=%u frame_interval=%u break_interval=%u",
             this->png_interval, this->frame_interval, this->break_interval);
 
-        this->pnc = new NativeCapture(now, width, height, fullpath);
+        // fullpath
+        this->wrm_sequence = new FileSequence("path file pid count extension", path, basename, "wrm");
+        this->wrm_trans = new OutByFilenameSequenceTransport(*this->wrm_sequence);
+        this->pnc = new NativeCapture(now, width, height, *wrm_trans);
     }
 
     ~Capture(){
-        TODO("Use a Closure to wrap these 3 fields, after stabilizing API")
         delete this->psc;
+        TODO("Use a Closure to wrap these 3 fields, after stabilizing API")
         delete this->pnc;
         delete this->png_sequence;
         delete this->png_trans;
     }
+    
     void update_config(const timeval & now, const Inifile & ini){
         this->psc->update_config(ini);
         if (ini.globals.png_interval != this->png_interval){

@@ -24,7 +24,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestGraphicsToFile3
+#define BOOST_TEST_MODULE TestGraphicToFile3
 #include <boost/test/auto_unit_test.hpp>
 #include "test_orders.hpp"
 
@@ -86,7 +86,7 @@ private:
 };
 
 
-BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
+BOOST_AUTO_TEST_CASE(TestGraphicToFile_several_chunks)
 {
     Rect screen_rect(0, 0, 800, 600);
 
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         BStream stream(65536);
         timeval now;
         gettimeofday(&now, NULL);
-        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
+        GraphicToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), screen_rect);
         now.tv_sec+=1;
         gtf.timestamp(now);

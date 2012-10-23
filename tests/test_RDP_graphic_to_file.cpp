@@ -24,7 +24,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestGraphicsToFile
+#define BOOST_TEST_MODULE TestGraphicToFile
 #include <boost/test/auto_unit_test.hpp>
 #include "test_orders.hpp"
 
@@ -87,7 +87,7 @@ private:
 
 
 
-BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
+BOOST_AUTO_TEST_CASE(TestGraphicToFile_one_simple_chunk)
 {
     Rect screen_rect(0, 0, 800, 600);
 
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
         BStream stream(65536);
         timeval now;
         gettimeofday(&now, NULL);
-        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
+        GraphicToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
         RDPOpaqueRect cmd(Rect(0, 0, 800, 600), 0);
         gtf.draw(cmd, screen_rect);
         gtf.flush();
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
 }
 
 
-BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk_reading_with_unserialize)
+BOOST_AUTO_TEST_CASE(TestGraphicToFile_one_simple_chunk_reading_with_unserialize)
 {
     Rect screen_rect(0, 0, 800, 600);
 
@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk_reading_with_unserializ
         BStream stream(65536);
         timeval now;
         gettimeofday(&now, NULL);
-        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
+        GraphicToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
         RDPOpaqueRect cmd(Rect(0, 0, 800, 600), 0);
         gtf.draw(cmd, screen_rect);
         gtf.flush();
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk_reading_with_unserializ
 }
 
 
-BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
+BOOST_AUTO_TEST_CASE(TestGraphicToFile_several_chunks)
 {
     Rect screen_rect(0, 0, 800, 600);
 
@@ -226,7 +226,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         BStream stream(65536);
         timeval now;
         gettimeofday(&now, NULL);
-        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
+        GraphicToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), screen_rect);
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), Rect(10, 10, 100, 100));
         gtf.flush();
@@ -287,7 +287,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
 
 }
 
-BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
+BOOST_AUTO_TEST_CASE(TestGraphicToFile_ActuallyDrawAnImage)
 {
     Rect screen_rect(0, 0, 800, 600);
 
@@ -300,7 +300,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
         BStream stream(65536);
         timeval now;
         gettimeofday(&now, NULL);
-        GraphicsToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
+        GraphicToFile gtf(&trans, &stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
         BGRPalette palette332;
         init_palette332(palette332);
 

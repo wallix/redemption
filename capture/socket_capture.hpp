@@ -28,7 +28,7 @@ struct SocketCapture
 {
     BStream stream;
     SocketTransport front_trans;
-    GraphicsToFile recorder;
+    GraphicToFile recorder;
 
 public:
     SocketCapture(const timeval & now, const char * name, int sck, Inifile* ini = 0)

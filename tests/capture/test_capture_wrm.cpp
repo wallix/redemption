@@ -33,6 +33,7 @@
 #include "transport.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
+#include "GraphicToFile.hpp"
 #include "image_capture.hpp"
 #include "constants.hpp"
 
@@ -61,8 +62,8 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     BStream stream(65536);
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
     Inifile ini;
-    GraphicsToFile consumer(&trans, &stream, &ini, 24, 600, 256, 300, 1024, 262, 4096, now);
-    RDPOpaqueRect cmd0(Rect(0, 0, 800, 600), GREEN);
+    GraphicToFile consumer(&trans, &stream, &ini, screen_rect.cx, screen_rect.cy, 24, 600, 256, 300, 1024, 262, 4096, now);
+    RDPOpaqueRect cmd0(screen_rect, GREEN);
     consumer.draw(cmd0, screen_rect);
     now.tv_sec++;
     consumer.timestamp(now);
@@ -107,9 +108,9 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     BStream stream(65536);
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
     Inifile ini;
-    GraphicsToFile consumer(&trans, &stream, &ini, 24, 600, 256, 300, 1024, 262, 4096, now);
+    GraphicToFile consumer(&trans, &stream, &ini, screen_rect.cx, screen_rect.cy, 24, 600, 256, 300, 1024, 262, 4096, now);
 
-    RDPOpaqueRect cmd0(Rect(0, 0, 800, 600), GREEN);
+    RDPOpaqueRect cmd0(screen_rect, GREEN);
     consumer.draw(cmd0, screen_rect);
     RDPOpaqueRect cmd1(Rect(0, 50, 700, 30), BLUE);
     consumer.draw(cmd1, screen_rect);
@@ -140,9 +141,9 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     OutByFilenameTransport trans("./testcap.wrm");
     BOOST_CHECK_EQUAL(0, 0);
     Inifile ini;
-    GraphicsToFile consumer(&trans, &stream, &ini, 24, 600, 256, 300, 1024, 262, 4096, now);
+    GraphicToFile consumer(&trans, &stream, &ini, screen_rect.cx, screen_rect.cy, 24, 600, 256, 300, 1024, 262, 4096, now);
     BOOST_CHECK_EQUAL(0, 0);
-    RDPOpaqueRect cmd0(Rect(0, 0, 800, 600), GREEN);
+    RDPOpaqueRect cmd0(screen_rect, GREEN);
     consumer.draw(cmd0, screen_rect);
     RDPOpaqueRect cmd1(Rect(0, 50, 700, 30), BLUE);
     consumer.draw(cmd1, screen_rect);

@@ -24,7 +24,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestGraphicsToFile2
+#define BOOST_TEST_MODULE TestGraphicToFile2
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
@@ -92,7 +92,7 @@ private:
     }
 };
 
-BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ReadCapture)
+BOOST_AUTO_TEST_CASE(TestGraphicToFile_ReadCapture)
 {
     Rect screen_rect(0, 0, 800, 600);
 
