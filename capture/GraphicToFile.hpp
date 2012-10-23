@@ -185,6 +185,22 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->trans->send(stream.data, stream.size());
     }
 
+    // this one is used to store some embedded image inside WRM
+    void send_image_chunk(void)
+    {
+        BStream stream(8);
+        stream.out_uint16_le(this->width);
+        stream.out_uint16_le(this->height);
+        stream.out_uint16_le(this->bpp);
+//        image_capture.flush();
+        stream.mark_end();
+
+        BStream header(8);
+//        WRMChunk_Send chunk(header, WRMChunk::IMAGE_PNG, 8, 1);
+        this->trans->send(header.data, header.size());
+        this->trans->send(stream.data, stream.size());
+    }
+
 
     void send_timestamp_chunk(void)
     {
