@@ -96,7 +96,7 @@ int main(int argc, char** argv)
         weight = reader.stream.end - reader.stream.p;
         switch (reader.chunk_type)
         {
-//            case  WRMChunk::BREAKPOINT:
+//            case  BREAKPOINT:
 //            {
 //                ulong start_weight = breakpoint_info.weight;
 //                ++breakpoint_info.number;
@@ -143,14 +143,14 @@ int main(int argc, char** argv)
 //                std::cout << "\ttotal: " << (breakpoint_info.weight - start_weight) << '\n';
 //            }
 //                break;
-            case WRMChunk::META_FILE:
+            case META_FILE:
             {
                 reader.stream.p = reader.stream.end;
                 reader.remaining_order_count = 0;
 
             }
                 break;
-            case WRMChunk::TIMESTAMP:
+            case TIMESTAMP:
             {
                 ++timestamp_info.number;
                 timestamp_info.weight += weight;
@@ -163,7 +163,7 @@ int main(int argc, char** argv)
                 //unserializer.wait_cap.timer.usec() = usec;
             }
                 break;
-            case WRMChunk::NEXT_FILE_ID:
+            case NEXT_FILE_ID:
             {
                 ++next_file_id_info.number;
                 next_file_id_info.weight += weight;

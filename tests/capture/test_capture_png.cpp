@@ -353,7 +353,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     
 }
 
-const char small png_image[] =
+const char small_png_image[] =
     "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
     "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
     "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00"             //.............
@@ -378,5 +378,5 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
     d.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     d.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     d.flush();
-//    sequence.unlink(0);
+    sequence.unlink(0);
 }

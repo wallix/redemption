@@ -183,7 +183,7 @@ class CheckTransport : public Transport {
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         // CheckTransport does never receive anything
-        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_RECV);
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
     }
 
     using Transport::send;
@@ -297,7 +297,7 @@ class OutFileTransport : public Transport {
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         LOG(LOG_INFO, "OutFileTransport used for recv");
-        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_RECV, 0);
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
 
     using Transport::send;
@@ -375,7 +375,7 @@ class InFileTransport : public Transport {
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         LOG(LOG_INFO, "InFileTransport used for writing");
-        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_SEND, 0);
+        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV, 0);
     }
 
 };
@@ -1180,13 +1180,13 @@ public:
         }
     }
     
-    ssize_t filesize(uint32_t count){
+    ssize_t filesize(uint32_t count) const {
         char filename[1024];
         this->get_name(filename, sizeof(filename), count);
         return ::filesize(filename);
     }
 
-    ssize_t unlink(uint32_t count){
+    ssize_t unlink(uint32_t count) const {
         char filename[1024];
         this->get_name(filename, sizeof(filename), count);
         return ::unlink(filename);

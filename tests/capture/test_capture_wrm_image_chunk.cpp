@@ -38,15 +38,15 @@
 #include "constants.hpp"
 
 const char expected_stripped_wrm[] = 
-/* 0000 */ "\xEE\x03\x10\x00\x01\x00\x00\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order 0000:flags=0
+/* 0000 */ "\xEE\x03\x10\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
            "\x14\x00\x0A\x00\x18\x00\x00\x00" // width = 20, height=10, bpp=24 PAD: 2 bytes
-/* 0000 */ "\xf0\x03\x10\x00\x01\x00\x00\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order 0000:flags=0
+/* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
 /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
-/* 0000 */ "\x00\x00\x1e\x00\x03\x00\x00\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders 0000:flags=0
+/* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
 /* 0000 */ "\x19\x0a\x1c\x14\x0a\xff"             // RED rect
 /* 0000 */ "\x11\x5f\x05\x05\xF6\xf9\x00\xFF\x11" // BLUE RECT
 /* 0000 */ "\x3f\x05\xfb\xf7\x07\xff\xff"         // WHITE RECT
-/* 0000 */ "\x00\x10\x73\x00\x01\x00\x00\x00" // 0x1000: IMAGE_CHUNK 0048: chunk_len=86 0001: 1 order 0000:flags=0
+/* 0000 */ "\x00\x10\x73\x00\x00\x00\x01\x00" // 0x1000: IMAGE_CHUNK 0048: chunk_len=86 0001: 1 order
     "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
     "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
     "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00"             //.............
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
     BStream stream(65536);
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
     Inifile ini;
-    GraphicToFile consumer(&trans, &stream, &ini, scr.cx, scr.cy, 24, 600, 256, 300, 1024, 262, 4096, now);
+    GraphicToFile consumer(now, &trans, &stream, &ini, scr.cx, scr.cy, 24, 600, 256, 300, 1024, 262, 4096);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);

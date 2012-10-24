@@ -66,10 +66,9 @@ struct FileToGraphic
     BmpCache bmp_cache;
 
     // variables used to read batch of orders "chunks"
-    uint16_t chunk_size;
     uint16_t chunk_type;
+    uint32_t chunk_size;
     uint16_t chunk_count;
-    uint16_t chunk_flags;
     uint16_t remaining_order_count;
 
     timeval timer_cap;
@@ -96,10 +95,9 @@ struct FileToGraphic
     glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
     bmp_cache(24),
     // variables used to read batch of orders "chunks"
-    chunk_size(0),
     chunk_type(0),
+    chunk_size(0),
     chunk_count(0),
-    chunk_flags(0),
     remaining_order_count(0),
     timer_cap(now),
     movie_usec(0),
@@ -153,11 +151,10 @@ struct FileToGraphic
                 BStream header(HEADER_SIZE);
                 this->trans->recv(&header.end, HEADER_SIZE);
                 this->chunk_type = header.in_uint16_le();
-                this->chunk_size = header.in_uint16_le();
+                this->chunk_size = header.in_uint32_le();
                 this->remaining_order_count = this->chunk_count = header.in_uint16_le();
-                this->chunk_flags = header.in_uint16_le();
-                LOG(LOG_INFO, "reading chunk: type=%u size=%u count=%u flags=%u\n", 
-                    this->chunk_type, this->chunk_size, this->chunk_count, this->chunk_flags);
+                LOG(LOG_INFO, "reading chunk: type=%u size=%u count=%u\n", 
+                    this->chunk_type, this->chunk_size, this->chunk_count);
                 this->stream.init(this->chunk_size - HEADER_SIZE);
                 this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
             }

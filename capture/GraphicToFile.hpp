@@ -39,70 +39,22 @@
 #include "RDP/lic.hpp"
 #include "RDP/RDPSerializer.hpp"
 #include "difftimeval.hpp"
+#include "image_capture.hpp"
 
-// MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
-// ================================================================
-// The TS_FP_UPDATE_ORDERS structure contains primary, secondary, and alternate
-// secondary drawing orders aligned on byte boundaries. This structure conforms
-// to the layout of a Fast-Path Update (see [MS-RDPBCGR] section 2.2.9.1.2.1)
-// and is encapsulated within a Fast-Path Update PDU (see [MS-RDPBCGR] section
-// 2.2.9.1.2.1.1).
-
-// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field
-//   is the same as the updateHeader byte field described in the Fast-Path
-//   Update structure (see [MS-RDPBCGR] section 2.2.9.1.2.1). The updateCode
-//   bitfield (4 bits in size) MUST be set to FASTPATH_UPDATETYPE_ORDERS (0x0).
-
-// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this
-//   optional field (as well as the possible values) is the same as the
-//   compressionFlags field described in the Fast-Path Update structure
-//   specified in [MS-RDPBCGR] section 2.2.9.1.2.1.
-
-// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well
-//   as the possible values) is the same as the size field described in the
-//   Fast-Path Update structure specified in [MS-RDPBCGR] section 2.2.9.1.2.1.
-
-// numberOrders (2 bytes): A 16-bit, unsigned integer. The number of Drawing
-//   Order (section 2.2.2.1.1) structures contained in the orderData field.
-
-// orderData (variable): A variable-sized array of Drawing Order (section
-//   2.2.2.1.1) structures packed on byte boundaries. Each structure contains a
-//   primary, secondary, or alternate secondary drawing order. The controlFlags
-//   field of the Drawing Order identifies the type of drawing order.
+class WRMChunk_Send
+{
+    public:
+    WRMChunk_Send(Stream & stream, uint16_t chunktype, uint16_t data_size, uint16_t count)
+    {
+        stream.out_uint16_le(chunktype);
+        stream.out_uint32_le(8 + data_size);
+        stream.out_uint16_le(count);
+        stream.mark_end();
+    } 
+};
 
 
-// MS-RDPECGI 2.2.2.1 Orders Update (TS_UPDATE_ORDERS_PDU_DATA)
-// ============================================================
-// The TS_UPDATE_ORDERS_PDU_DATA structure contains primary, secondary, and
-// alternate secondary drawing orders aligned on byte boundaries. This structure
-// conforms to the layout of a Slow Path Graphics Update (see [MS-RDPBCGR]
-// section 2.2.9.1.1.3.1) and is encapsulated within a Graphics Update PDU (see
-// [MS-RDPBCGR] section 2.2.9.1.1.3.1.1).
-
-// shareDataHeader (18 bytes): Share Data Header (see [MS-RDPBCGR], section
-//   2.2.8.1.1.1.2) containing information about the packet. The type subfield
-//   of the pduType field of the Share Control Header (section 2.2.8.1.1.1.1)
-//   MUST be set to PDUTYPE_DATAPDU (7). The pduType2 field of the Share Data
-//   Header MUST be set to PDUTYPE2_UPDATE (2).
-
-// updateType (2 bytes): A 16-bit, unsigned integer. The field contains the
-//   graphics update type. This field MUST be set to UPDATETYPE_ORDERS (0x0000).
-
-// pad2OctetsA (2 bytes): A 16-bit, unsigned integer used as a padding field.
-//   Values in this field are arbitrary and MUST be ignored.
-
-// numberOrders (2 bytes): A 16-bit, unsigned integer. The number of Drawing
-//   Order (section 2.2.2.1.1) structures contained in the orderData field.
-
-// pad2OctetsB (2 bytes): A 16-bit, unsigned integer used as a padding field.
-//   Values in this field are arbitrary and MUST be ignored.
-
-// orderData (variable): A variable-sized array of Drawing Order (section
-//   2.2.2.1.1) structures packed on byte boundaries. Each structure contains a
-//   primary, secondary, or alternate secondary drawing order. The controlFlags
-//   field of the Drawing Order identifies the type of drawing order.
-
-struct GraphicToFile : public RDPSerializer
+struct GraphicToFile : public RDPGraphicDevice
 REDOC("To keep things easy all chunks have 8 bytes headers"
       " starting with chunk_type, chunk_size"
       " and order_count (whatever it means, depending on chunks")
@@ -112,9 +64,12 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     const uint16_t width;
     const uint16_t height;
     const uint8_t  bpp;
+    ImageCapture * image;
+    RDPSerializer * serializer;
+    Transport * trans;
 
-
-    GraphicToFile(Transport * trans
+    GraphicToFile(const timeval& now
+                , Transport * trans
                 , Stream * pstream
                 , const Inifile * ini
                 , const uint16_t width
@@ -125,21 +80,24 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
                 , uint32_t medium_entries
                 , uint32_t medium_size
                 , uint32_t big_entries
-                , uint32_t big_size
-                , const timeval& now)
-    : RDPSerializer(trans, pstream, ini, bpp,
-                    small_entries, small_size,
-                    medium_entries, medium_size,
-                    big_entries, big_size,
-                    0, 1, 1)
-    , timer(now)
+                , uint32_t big_size)
+    : timer(now)
     , width(width)
     , height(height)
     , bpp(bpp)
+    , trans(trans)
     {
+        this->serializer = new RDPSerializer(trans, pstream, ini, bpp,
+                    small_entries, small_size,
+                    medium_entries, medium_size,
+                    big_entries, big_size,
+                    0, 1, 1);
+    
+        this->image = new ImageCapture(*trans, width, height, true);
+
         last_sent_timer.tv_sec = 0;
         last_sent_timer.tv_usec = 0;
-        this->order_count = 0;
+        this->serializer->order_count = 0;
         
         this->send_meta_chunk();
     }
@@ -156,19 +114,6 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             this->timer = now;
         }
     }
-
-    class WRMChunk_Send
-    {
-        public:
-        WRMChunk_Send(Stream & stream, uint16_t chunktype, uint16_t data_size, uint16_t count)
-        {
-            stream.out_uint16_le(chunktype);
-            stream.out_uint16_le(8 + data_size);
-            stream.out_uint16_le(count);
-            stream.out_uint16_le(0);
-            stream.mark_end();
-        } 
-    };
 
     void send_meta_chunk(void)
     {
@@ -230,24 +175,53 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     virtual void flush()
     {
-        if (this->order_count > 0){
+        if (this->serializer->order_count > 0){
             this->send_timestamp_chunk();
-            if (this->ini && this->ini->globals.debug.primary_orders){
-                LOG(LOG_INFO, "GraphicToFile::flush: order_count=%d", this->order_count);
-            }
             this->send_orders_chunk();
         }
     }
 
     void send_orders_chunk()
     {
-        this->pstream->mark_end();
+        this->serializer->pstream->mark_end();
         BStream header(8);
-        WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->pstream->size(), this->order_count);
+        WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->serializer->pstream->size(), this->serializer->order_count);
         this->trans->send(header.data, header.size());
-        this->trans->send(this->pstream->data, this->pstream->size());
-        this->order_count = 0;
-        this->pstream->reset();
+        this->serializer->flush();
+    }
+
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) 
+    {
+        this->serializer->draw(cmd, clip);
+    }
+    virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
+    {
+        this->serializer->draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPDestBlt & cmd, const Rect &clip)
+    {
+        this->serializer->draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
+    {
+        this->serializer->draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
+    {
+        this->serializer->draw(cmd, clip, bmp);
+    }
+
+    virtual void draw(const RDPLineTo& cmd, const Rect & clip)
+    {
+        this->serializer->draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
+    {
+        this->serializer->draw(cmd, clip);
     }
 
 };

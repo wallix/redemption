@@ -80,7 +80,7 @@ public:
     , height(height)
     , bpp(24)
     , stream(65536)
-    , recorder(&trans, &this->stream, NULL, width, height, 24, 8192, 768, 8192, 3072, 8192, 12288, now)
+    , recorder(now, &trans, &this->stream, NULL, width, height, 24, 8192, 768, 8192, 3072, 8192, 12288)
     , nb_file(0)
     {
         // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
