@@ -180,7 +180,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         stream.mark_end();
 
         BStream header(8);
-        WRMChunk_Send chunk(header, WRMChunk::META_FILE, 8, 1);
+        WRMChunk_Send chunk(header, META_FILE, 8, 1);
         this->trans->send(header.data, header.size());
         this->trans->send(stream.data, stream.size());
     }
@@ -188,15 +188,25 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     // this one is used to store some embedded image inside WRM
     void send_image_chunk(void)
     {
-        BStream stream(8);
-        stream.out_uint16_le(this->width);
-        stream.out_uint16_le(this->height);
-        stream.out_uint16_le(this->bpp);
-//        image_capture.flush();
+        BStream stream(107);
+        stream.out_copy_bytes(
+    "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
+    "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
+    "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00"             //.............
+    "\x3b\x37\xe9\xb1"                                                 //;7..
+    "\x00\x00\x00\x32\x49\x44\x41\x54"                                 //...2IDAT
+    "\x28\x91\x63\xfc\xcf\x80\x17\xfc\xff\xcf\xc0\xc8\x88\x4b\x92\x09" //(.c..........K..
+    "\xbf\x5e\xfc\x60\x88\x6a\x66\x41\xe3\x33\x32\xa0\x84\xe0\x7f\x54" //.^.`.jfA.32....T
+    "\x91\xff\x0c\x28\x81\x37\x70\xce\x66\x1c\xb0\x78\x06\x00\x69\xdc" //...(.7p.f..x..i.
+    "\x0a\x12"                                                         //..
+    "\x86\x4a\x0c\x44"                                                 //.J.D
+    "\x00\x00\x00\x00\x49\x45\x4e\x44"                                 //....IEND
+    "\xae\x42\x60\x82"                                                 //.B`.
+        , 107);
         stream.mark_end();
 
         BStream header(8);
-//        WRMChunk_Send chunk(header, WRMChunk::IMAGE_PNG, 8, 1);
+        WRMChunk_Send chunk(header, IMAGE_CHUNK, 107, 1);
         this->trans->send(header.data, header.size());
         this->trans->send(stream.data, stream.size());
     }
@@ -212,7 +222,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             stream.mark_end();
 
             BStream header(8);
-            WRMChunk_Send chunk(header, WRMChunk::TIMESTAMP, 8, 1);
+            WRMChunk_Send chunk(header, TIMESTAMP, 8, 1);
             this->trans->send(header.data, header.size());
             this->trans->send(stream.data, stream.size());
         }
@@ -225,11 +235,11 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             if (this->ini && this->ini->globals.debug.primary_orders){
                 LOG(LOG_INFO, "GraphicToFile::flush: order_count=%d", this->order_count);
             }
-            this->send_orders();
+            this->send_orders_chunk();
         }
     }
 
-    void send_orders()
+    void send_orders_chunk()
     {
         this->pstream->mark_end();
         BStream header(8);

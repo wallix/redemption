@@ -216,7 +216,7 @@ class CheckTransport : public Transport {
         this->current += available_len;
         if (available_len != len){
             LOG(LOG_INFO, "Check transport out of reference data available=%u len=%u", available_len, len);
-            LOG(LOG_INFO, "=============== Expected Missing ==========");
+            LOG(LOG_INFO, "=============== Unexpected Missing ==========");
             hexdump_c((const char *)(buffer + available_len), len - available_len);
             this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
@@ -282,11 +282,14 @@ class TestTransport : public Transport {
 };
 
 class OutFileTransport : public Transport {
-
     public:
     int fd;
+    uint32_t verbose;
 
-    OutFileTransport(int fd) : Transport(), fd(fd) {}
+    OutFileTransport(int fd, unsigned verbose = 0) 
+        : Transport()
+        , fd(fd)
+        , verbose(verbose) {}
 
     virtual ~OutFileTransport() {}
 
@@ -299,6 +302,10 @@ class OutFileTransport : public Transport {
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
+        if (this->verbose & 0x100){
+            LOG(LOG_INFO, "File (%u) sending %u bytes", this->fd, len);
+            hexdump_c(buffer, len);
+        }
         ssize_t ret = 0;
         size_t remaining_len = len;
         size_t total_sent = 0;
@@ -315,6 +322,9 @@ class OutFileTransport : public Transport {
                 LOG(LOG_INFO, "Outfile transport write failed with error %s", strerror(errno));
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
             }
+        }
+        if (this->verbose & 0x100){
+            LOG(LOG_INFO, "File (%u) sent %u bytes", this->fd, len);
         }
     }
 
@@ -1189,8 +1199,8 @@ public:
     const FileSequence & sequence;
     char path[1024];
 
-    OutByFilenameSequenceTransport(const FileSequence & sequence) 
-    : OutFileTransport(-1)
+    OutByFilenameSequenceTransport(const FileSequence & sequence, unsigned verbose = 0) 
+    : OutFileTransport(-1, verbose)
     , sequence(sequence)
     {
     }

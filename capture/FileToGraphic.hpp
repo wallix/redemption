@@ -293,8 +293,8 @@ struct FileToGraphic
             }
             }
             break;
-            case WRMChunk::TIMESTAMP:
-            LOG(LOG_INFO,"WRMChunk::TIMESTAMP\n");
+            case TIMESTAMP:
+            LOG(LOG_INFO,"TIMESTAMP\n");
             {
                 if (!this->timestamp_ok){
                     LOG(LOG_INFO, "chunk timestamp reading first timestamp");
@@ -323,8 +323,8 @@ struct FileToGraphic
                 }
             }
             break;
-            case WRMChunk::META_FILE:
-            LOG(LOG_INFO,"WRMChunk::META_FILE\n");
+            case META_FILE:
+            LOG(LOG_INFO,"META_FILE\n");
             {
                 uint16_t width = this->stream.in_uint16_le();
                 uint16_t height = this->stream.in_uint16_le();

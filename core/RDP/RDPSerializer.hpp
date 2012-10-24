@@ -38,11 +38,12 @@
 #include "colors.hpp"
 #include "meta_file.hpp"
 
-struct WRMChunk {
-    static const uint16_t TIMESTAMP = 1008;
-    static const uint16_t BREAKPOINT = 1005;
-    static const uint16_t META_FILE = 1006;
-    static const uint16_t NEXT_FILE_ID = 1007;
+enum {
+    TIMESTAMP = 1008,
+    BREAKPOINT = 1005,
+    META_FILE = 1006,
+    NEXT_FILE_ID = 1007,
+    IMAGE_CHUNK = 0x1000,
 };
 
 struct RDPSerializer : public RDPGraphicDevice
