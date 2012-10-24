@@ -97,6 +97,10 @@ public:
         return true;
     }
 
+    virtual void flush()
+    {
+    }
+
     virtual bool next() 
     REDOC("Some transports are splitted between sequential discrete units"
           "(it may be block, chunk, numbered files, directory entries, whatever)."

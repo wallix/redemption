@@ -39,7 +39,13 @@
 #include "RDP/lic.hpp"
 #include "RDP/RDPSerializer.hpp"
 #include "difftimeval.hpp"
-#include "image_capture.hpp"
+#include "png.hpp"
+#include "error.hpp"
+#include "config.hpp"
+#include "RDP/caches/bmpcache.hpp"
+#include "colors.hpp"
+
+#include "RDP/RDPDrawable.hpp"
 
 class WRMChunk_Send
 {
@@ -53,6 +59,61 @@ class WRMChunk_Send
     } 
 };
 
+template <size_t SZ>
+class OutChunkedBufferingTransport : public Transport
+{
+public:
+    Transport * trans;
+    BStream stream;
+    OutChunkedBufferingTransport(Transport * trans)
+        : trans(trans)
+        , stream(SZ-8)
+    {
+    }
+
+    using Transport::recv;
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+        // CheckTransport does never receive anything
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
+    }
+
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error)
+    {
+        printf("stream.capacity=%u used=%u remains=%u len=%u\n", 
+            (unsigned)stream.capacity, (unsigned)(stream.p - stream.data),
+            (unsigned)(stream.capacity - (stream.p - stream.data)),
+            (unsigned)len);
+
+        ssize_t used = (this->stream.p - this->stream.data);
+        if (used + len < this->stream.capacity){
+            stream.out_copy_bytes(buffer, this->stream.capacity - len);
+            stream.mark_end();
+            BStream header(8);
+            printf("sending %u bytes\n", (unsigned)(this->stream.size() + 8));
+            WRMChunk_Send chunk(header, PARTIAL_IMAGE_CHUNK, stream.size() + 8, 1);
+            this->trans->send(header.data, header.size());
+            this->trans->send(this->stream.data, stream.size());
+            this->stream.reset();
+            stream.out_copy_bytes(buffer + stream.capacity - used, len - (stream.capacity - used));
+        }
+        else {
+            printf("buffering stream.size()=%u\n", (unsigned)(stream.p - stream.data));
+            stream.out_copy_bytes(buffer, len);
+        }
+    }
+    virtual void flush() {
+        printf("flushing\n");
+        this->stream.mark_end();
+        if (stream.size() > 0){
+            printf("flushing %u bytes\n", (unsigned)(stream.size() + 8));
+            BStream header(8);
+            WRMChunk_Send chunk(header, LAST_IMAGE_CHUNK, stream.size(), 1);
+            this->trans->send(header.data, header.size());
+            this->trans->send(stream.data, this->stream.size());
+        }
+    }
+};
 
 struct GraphicToFile : public RDPGraphicDevice
 REDOC("To keep things easy all chunks have 8 bytes headers"
@@ -64,7 +125,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     const uint16_t width;
     const uint16_t height;
     const uint8_t  bpp;
-    ImageCapture * image;
+    RDPDrawable * drawable;
     RDPSerializer * serializer;
     Transport * trans;
 
@@ -93,7 +154,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
                     big_entries, big_size,
                     0, 1, 1);
     
-        this->image = new ImageCapture(*trans, width, height, true);
+        this->drawable = new RDPDrawable(width, height, true);
 
         last_sent_timer.tv_sec = 0;
         last_sent_timer.tv_usec = 0;
@@ -103,6 +164,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     }
 
     ~GraphicToFile(){
+        delete this->serializer;
+        delete this->drawable;
     }
 
     virtual void timestamp(const timeval& now)
@@ -133,29 +196,13 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     // this one is used to store some embedded image inside WRM
     void send_image_chunk(void)
     {
-        BStream stream(107);
-        stream.out_copy_bytes(
-    "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
-    "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
-    "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00"             //.............
-    "\x3b\x37\xe9\xb1"                                                 //;7..
-    "\x00\x00\x00\x32\x49\x44\x41\x54"                                 //...2IDAT
-    "\x28\x91\x63\xfc\xcf\x80\x17\xfc\xff\xcf\xc0\xc8\x88\x4b\x92\x09" //(.c..........K..
-    "\xbf\x5e\xfc\x60\x88\x6a\x66\x41\xe3\x33\x32\xa0\x84\xe0\x7f\x54" //.^.`.jfA.32....T
-    "\x91\xff\x0c\x28\x81\x37\x70\xce\x66\x1c\xb0\x78\x06\x00\x69\xdc" //...(.7p.f..x..i.
-    "\x0a\x12"                                                         //..
-    "\x86\x4a\x0c\x44"                                                 //.J.D
-    "\x00\x00\x00\x00\x49\x45\x4e\x44"                                 //....IEND
-    "\xae\x42\x60\x82"                                                 //.B`.
-        , 107);
-        stream.mark_end();
+        OutChunkedBufferingTransport<65536> png_trans(trans);
 
-        BStream header(8);
-        WRMChunk_Send chunk(header, IMAGE_CHUNK, 107, 1);
-        this->trans->send(header.data, header.size());
-        this->trans->send(stream.data, stream.size());
+        ::transport_dump_png24(&png_trans, this->drawable->drawable.data,
+                     this->drawable->drawable.width, this->drawable->drawable.height,
+                     this->drawable->drawable.rowsize
+                    );
     }
-
 
     void send_timestamp_chunk(void)
     {
@@ -193,35 +240,43 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) 
     {
         this->serializer->draw(cmd, clip);
+        this->drawable->draw(cmd, clip);
     }
+
     virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
     {
         this->serializer->draw(cmd, clip);
+        this->drawable->draw(cmd, clip);
     }
 
     virtual void draw(const RDPDestBlt & cmd, const Rect &clip)
     {
         this->serializer->draw(cmd, clip);
+        this->drawable->draw(cmd, clip);
     }
 
     virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
         this->serializer->draw(cmd, clip);
+        this->drawable->draw(cmd, clip);
     }
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
         this->serializer->draw(cmd, clip, bmp);
+        this->drawable->draw(cmd, clip, bmp);
     }
 
     virtual void draw(const RDPLineTo& cmd, const Rect & clip)
     {
         this->serializer->draw(cmd, clip);
+        this->drawable->draw(cmd, clip);
     }
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
         this->serializer->draw(cmd, clip);
+        this->drawable->draw(cmd, clip);
     }
 
 };
