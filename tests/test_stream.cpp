@@ -67,27 +67,27 @@ BOOST_AUTO_TEST_CASE(TestStream_uint8)
     memcpy(s->data, (uint8_t*)"\1\xFE\xFD\4\5", 5);
     s->end += 5;
     // 5 characters are availables
-    BOOST_CHECK(s->check_rem(5));
+    BOOST_CHECK(s->in_check_rem(5));
     // but not 6...
-    BOOST_CHECK(!s->check_rem(6));
+    BOOST_CHECK(!s->in_check_rem(6));
 
     // we read one unsigned char, it is 1
     BOOST_CHECK_EQUAL(1, s->in_uint8());
     // now we have only 4 char left
-    BOOST_CHECK(s->check_rem(4));
-    BOOST_CHECK(!s->check_rem(5));
+    BOOST_CHECK(s->in_check_rem(4));
+    BOOST_CHECK(!s->in_check_rem(5));
 
     // we read one unsigned char, it is 0xFE (254)
     BOOST_CHECK_EQUAL(254, s->in_uint8());
     // now we have only 3 char left
-    BOOST_CHECK(s->check_rem(3));
-    BOOST_CHECK(!s->check_rem(4));
+    BOOST_CHECK(s->in_check_rem(3));
+    BOOST_CHECK(!s->in_check_rem(4));
 
     // we read one signed char, it is 0xFD (-3)
     BOOST_CHECK_EQUAL(-3, s->in_sint8());
     // now we have only 3 char left
-    BOOST_CHECK(s->check_rem(2));
-    BOOST_CHECK(!s->check_rem(3));
+    BOOST_CHECK(s->in_check_rem(2));
+    BOOST_CHECK(!s->in_check_rem(3));
 
     BOOST_CHECK_EQUAL(4, s->in_sint8());
     BOOST_CHECK_EQUAL(5, s->in_sint8());
@@ -112,9 +112,9 @@ BOOST_AUTO_TEST_CASE(TestStream_uint16)
 
     uint8_t * oldp = s->p;
     // 12 characters are availables
-    BOOST_CHECK(s->check_rem(12));
+    BOOST_CHECK(s->in_check_rem(12));
     // but not 13...
-    BOOST_CHECK(!s->check_rem(13));
+    BOOST_CHECK(!s->in_check_rem(13));
 
     BOOST_CHECK_EQUAL(s->in_uint16_le(), 1);
     BOOST_CHECK_EQUAL((unsigned long)oldp+2, ((unsigned long)s->p));

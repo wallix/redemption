@@ -95,8 +95,8 @@ struct FileToGraphic
     glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
     bmp_cache(24),
     // variables used to read batch of orders "chunks"
-    chunk_type(0),
     chunk_size(0),
+    chunk_type(0),
     chunk_count(0),
     remaining_order_count(0),
     timer_cap(now),

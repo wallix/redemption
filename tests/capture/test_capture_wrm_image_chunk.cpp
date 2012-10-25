@@ -78,15 +78,15 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     consumer.flush();
-//    consumer.send_image_chunk();
+    consumer.send_image_chunk();
 }
 
-BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
+BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
 {
     // Same test as above but forcing use of small png chunks
     // Easier to do than write tests with huge pngs to force PNG chunking.
 
-    const char expected_wrm_with_chunked_png[] = 
+    const char expected[] = 
     /* 0000 */ "\xEE\x03\x10\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
                "\x14\x00\x0A\x00\x18\x00\x00\x00" // width = 20, height=10, bpp=24 PAD: 2 bytes
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
@@ -95,25 +95,26 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     /* 0000 */ "\x19\x0a\x1c\x14\x0a\xff"             // RED rect
     /* 0000 */ "\x11\x5f\x05\x05\xF6\xf9\x00\xFF\x11" // BLUE RECT
     /* 0000 */ "\x3f\x05\xfb\xf7\x07\xff\xff"         // WHITE RECT
-    /* 0000 */ "\x00\x10\x20\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=32 0001: 1 order
+    
+    /* 0000 */ "\x01\x10\x64\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
         "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
         "\x00\x00\x00\x14\x00\x00\x00\x0a"
-    /* 0000 */ "\x00\x10\x20\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=32 0001: 1 order
         "\x08\x02\x00\x00\x00"             //.............
         "\x3b\x37\xe9\xb1"                                                 //;7..
         "\x00\x00\x00\x32\x49\x44\x41\x54"                                 //...2IDAT
         "\x28\x91\x63\xfc\xcf\x80\x17"
-    /* 0000 */ "\x00\x10\x20\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=32 0001: 1 order
         "\xfc\xff\xcf\xc0\xc8\x88\x4b\x92"
         "\x09" //(.c..........K..
         "\xbf\x5e\xfc\x60\x88\x6a\x66\x41\xe3\x33\x32\xa0\x84\xe0\x7f"
         "\x54" //.^.`.jfA.32....T
         "\x91\xff\x0c\x28\x81\x37\x70\xce\x66\x1c\xb0\x78\x06\x00\x69\xdc" //...(.7p.f..x..i.
-//        "\x0a\x12"                                                         //..
-//        "\x86\x4a\x0c\x44"                                                 //.J.D
-//        "\x00\x00\x00\x00\x49\x45\x4e\x44"                                 //....IEND
-//        "\xae\x42\x60\x82"                                                 //.B`.
+        "\x0a\x12"                                                         //..
+        "\x86"
+        "\x00\x10\x17\x00\x00\x00\x01\x00"  // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x4a\x0c\x44"                                                 //.J.D
+        "\x00\x00\x00\x00\x49\x45\x4e\x44"                                 //....IEND
+        "\xae\x42\x60\x82"                                                 //.B`.
         ;
 
     // Timestamps are applied only when flushing
@@ -123,7 +124,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
 
     Rect scr(0, 0, 20, 10);
     BStream stream(65536);
-    CheckTransport trans(expected_wrm_with_chunked_png, sizeof(expected_wrm_with_chunked_png)-1, 511);
+    CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
     GraphicToFile consumer(now, &trans, &stream, &ini, scr.cx, scr.cy, 24, 600, 256, 300, 1024, 262, 4096);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
@@ -131,12 +132,79 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     consumer.flush();
 
-//    OutChunkedBufferingTransport<32> png_trans(&trans);
+    OutChunkedBufferingTransport<100> png_trans(&trans);
 
-//    ::transport_dump_png24(&png_trans, consumer.drawable->drawable.data,
-//                 consumer.drawable->drawable.width, consumer.drawable->drawable.height,
-//                 consumer.drawable->drawable.rowsize
-//                );
+    ::transport_dump_png24(&png_trans, consumer.drawable->drawable.data,
+                 consumer.drawable->drawable.width, consumer.drawable->drawable.height,
+                 consumer.drawable->drawable.rowsize
+                );
 }
 
+BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
+{
+    // Same test as above but forcing use of small png chunks
+    // Easier to do than write tests with huge pngs to force PNG chunking.
+
+    const char expected[] = 
+    /* 0000 */ "\xEE\x03\x10\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+               "\x14\x00\x0A\x00\x18\x00\x00\x00" // width = 20, height=10, bpp=24 PAD: 2 bytes
+    /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+    /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
+    /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
+    /* 0000 */ "\x19\x0a\x1c\x14\x0a\xff"             // RED rect
+    /* 0000 */ "\x11\x5f\x05\x05\xF6\xf9\x00\xFF\x11" // BLUE RECT
+    /* 0000 */ "\x3f\x05\xfb\xf7\x07\xff\xff"         // WHITE RECT
+    
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x00\x00\x00\x14\x00\x00\x00\x0a"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x08\x02\x00\x00\x00\x3b\x37\xe9"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\xb1\x00\x00\x00\x32\x49\x44\x41"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x54\x28\x91\x63\xfc\xcf\x80\x17"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\xfc\xff\xcf\xc0\xc8\x88\x4b\x92"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x09\xbf\x5e\xfc\x60\x88\x6a\x66"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x41\xe3\x33\x32\xa0\x84\xe0\x7f"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x54\x91\xff\x0c\x28\x81\x37\x70"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\xce\x66\x1c\xb0\x78\x06\x00\x69"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\xdc\x0a\x12\x86\x4a\x0c\x44\x00"
+    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x00\x00\x00\x49\x45\x4e\x44\xae"
+    /* 0000 */ "\x00\x10\x0b\x00\x00\x00\x01\x00" // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
+        "\x42\x60\x82"
+        ;
+
+    // Timestamps are applied only when flushing
+    struct timeval now;
+    now.tv_usec = 0;
+    now.tv_sec = 1000;
+
+    Rect scr(0, 0, 20, 10);
+    BStream stream(65536);
+    CheckTransport trans(expected, sizeof(expected)-1, 511);
+    Inifile ini;
+    GraphicToFile consumer(now, &trans, &stream, &ini, scr.cx, scr.cy, 24, 600, 256, 300, 1024, 262, 4096);
+    consumer.draw(RDPOpaqueRect(scr, RED), scr);
+    consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
+    consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
+    consumer.flush();
+
+    OutChunkedBufferingTransport<16> png_trans(&trans);
+
+    ::transport_dump_png24(&png_trans, consumer.drawable->drawable.data,
+                 consumer.drawable->drawable.width, consumer.drawable->drawable.height,
+                 consumer.drawable->drawable.rowsize
+                );
+}
 

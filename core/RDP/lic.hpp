@@ -166,7 +166,7 @@ namespace LIC
         uint16_t wMsgSize;
         RecvFactory(Stream & stream)
         {
-            if (!stream.check_rem(4)){
+            if (!stream.in_check_rem(4)){
                 LOG(LOG_ERR, "Not enough data to read licence info header, need %u, got %u", 4, stream.end - stream.p);
                 throw Error(ERR_LIC);
             }

@@ -106,8 +106,8 @@ enum {
     BREAKPOINT = 1005,
     META_FILE = 1006,
     NEXT_FILE_ID = 1007,
-    PARTIAL_IMAGE_CHUNK = 0x1000,
     LAST_IMAGE_CHUNK = 0x1000,
+    PARTIAL_IMAGE_CHUNK = 0x1001,
 };
 
 struct RDPSerializer : public RDPGraphicDevice

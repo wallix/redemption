@@ -64,10 +64,12 @@ class OutChunkedBufferingTransport : public Transport
 {
 public:
     Transport * trans;
+    size_t max;
     BStream stream;
     OutChunkedBufferingTransport(Transport * trans)
         : trans(trans)
-        , stream(SZ-8)
+        , max(SZ-8)
+        , stream(SZ)
     {
     }
 
@@ -79,38 +81,28 @@ public:
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error)
-    {
-        printf("stream.capacity=%u used=%u remains=%u len=%u\n", 
-            (unsigned)stream.capacity, (unsigned)(stream.p - stream.data),
-            (unsigned)(stream.capacity - (stream.p - stream.data)),
-            (unsigned)len);
-
-        ssize_t used = (this->stream.p - this->stream.data);
-        if (used + len < this->stream.capacity){
-            stream.out_copy_bytes(buffer, this->stream.capacity - len);
-            stream.mark_end();
+    {   
+        size_t to_buffer_len = len;
+        while (this->stream.size() + to_buffer_len > max){
             BStream header(8);
-            printf("sending %u bytes\n", (unsigned)(this->stream.size() + 8));
-            WRMChunk_Send chunk(header, PARTIAL_IMAGE_CHUNK, stream.size() + 8, 1);
+            WRMChunk_Send chunk(header, PARTIAL_IMAGE_CHUNK, max, 1);
             this->trans->send(header.data, header.size());
-            this->trans->send(this->stream.data, stream.size());
-            this->stream.reset();
-            stream.out_copy_bytes(buffer + stream.capacity - used, len - (stream.capacity - used));
+            this->trans->send(this->stream.data, this->stream.size());
+            size_t to_send = max - this->stream.size();
+            this->trans->send(buffer + len - to_buffer_len, to_send);
+            to_buffer_len -= to_send;
+            this->stream.reset();    
         }
-        else {
-            printf("buffering stream.size()=%u\n", (unsigned)(stream.p - stream.data));
-            stream.out_copy_bytes(buffer, len);
-        }
+        this->stream.out_copy_bytes(buffer + len - to_buffer_len, to_buffer_len);
+        this->stream.mark_end();
     }
     virtual void flush() {
-        printf("flushing\n");
         this->stream.mark_end();
-        if (stream.size() > 0){
-            printf("flushing %u bytes\n", (unsigned)(stream.size() + 8));
+        if (this->stream.size() > 0){
             BStream header(8);
-            WRMChunk_Send chunk(header, LAST_IMAGE_CHUNK, stream.size(), 1);
+            WRMChunk_Send chunk(header, LAST_IMAGE_CHUNK, this->stream.size(), 1);
             this->trans->send(header.data, header.size());
-            this->trans->send(stream.data, this->stream.size());
+            this->trans->send(this->stream.data, this->stream.size());
         }
     }
 };

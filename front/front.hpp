@@ -943,7 +943,7 @@ public:
             SubStream & gcc_data = mcs_ci.payload;
             GCC::Create_Request_Recv gcc_cr(gcc_data);
 
-            while (gcc_cr.payload.check_rem(4)) {
+            while (gcc_cr.payload.in_check_rem(4)) {
                 GCC::UserData::RecvFactory f(gcc_cr.payload);
                 switch (f.tag){
                     case CS_CORE:
@@ -1020,7 +1020,7 @@ public:
                     break;
                 }
             }
-            if (gcc_cr.payload.check_rem(1)) {
+            if (gcc_cr.payload.in_check_rem(1)) {
                 LOG(LOG_ERR, "recv connect request parsing gcc data : short header");
                 throw Error(ERR_MCS_DATA_SHORT_HEADER);
             }
