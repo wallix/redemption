@@ -35,9 +35,73 @@
 #include "transport.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
+#include "RDP/RDPDrawable.hpp"
 #include "RDP/RDPSerializer.hpp"
 #include "difftimeval.hpp"
+#include "png.hpp"
 #include "meta_file.hpp"
+
+
+class InChunkedImageTransport : public Transport {
+    uint16_t chunk_type; 
+    uint32_t chunk_size;
+    uint16_t chunk_count;
+    Transport * trans;
+    BStream stream;
+public:
+    InChunkedImageTransport(uint16_t chunk_type, uint32_t chunk_size, Transport * trans) 
+        : chunk_type(chunk_type)
+        , chunk_size(chunk_size)
+        , chunk_count(1)
+        , trans(trans) 
+    {
+        this->stream.init(this->chunk_size - 8);
+        this->trans->recv(&stream.end, this->chunk_size - 8);
+    }
+    
+    using Transport::recv;
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+        size_t total_len = 0;
+        while (total_len < len){
+            if (stream.end - stream.p >= len - total_len){
+                stream.in_copy_bytes(*pbuffer + total_len, len - total_len);
+                total_len += len - total_len;
+                *pbuffer += len;
+                return;
+            }
+            uint16_t remaining = stream.end - stream.p;
+            stream.in_copy_bytes(*pbuffer + total_len, remaining);
+            total_len += remaining;
+            switch (this->chunk_type){
+            case PARTIAL_IMAGE_CHUNK:
+            {
+                BStream header(8);
+                this->trans->recv(&header.end, 8);
+                this->chunk_type = header.in_uint16_le();
+                this->chunk_size = header.in_uint32_le();
+                this->chunk_count = header.in_uint16_le();
+                this->stream.init(this->chunk_size - 8);
+                this->trans->recv(&this->stream.end, this->chunk_size - 8);
+            }
+            break;
+            case LAST_IMAGE_CHUNK:
+                LOG(LOG_ERR, "Failed to read embedded image from WRM (transport closed)");
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+            break;
+            default:
+                LOG(LOG_ERR, "Failed to read embedded image from WRM");
+                throw Error(ERR_TRANSPORT_READ_FAILED);
+            break;
+            }
+        }
+    }
+
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error)
+    {
+        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
+    }
+};
 
 struct FileToGraphic
 {
@@ -50,7 +114,6 @@ struct FileToGraphic
 
     Transport * trans;
 
-    TODO("This should be extracted from serialized data. Serializer should have some API function to set geometry width x height x bpp saved in native movie.")
     Rect screen_rect;
 
     // Internal state of orders
@@ -66,8 +129,8 @@ struct FileToGraphic
     BmpCache bmp_cache;
 
     // variables used to read batch of orders "chunks"
-    uint16_t chunk_type;
     uint32_t chunk_size;
+    uint16_t chunk_type;
     uint16_t chunk_count;
     uint16_t remaining_order_count;
 
@@ -76,6 +139,9 @@ struct FileToGraphic
 
     uint16_t nbconsumers;
     RDPGraphicDevice * consumers[10];
+
+    uint16_t nbdrawables;
+    RDPDrawable * drawables[10];
     
     bool meta_ok;
     bool timestamp_ok;
@@ -102,6 +168,7 @@ struct FileToGraphic
     timer_cap(now),
     movie_usec(0),
     nbconsumers(0),
+    nbdrawables(0),
     meta_ok(false),
     timestamp_ok(false),
     data_meta()
@@ -114,10 +181,14 @@ struct FileToGraphic
         }
     }
 
-
     void add_consumer(RDPGraphicDevice * consumer)
     {
         this->consumers[this->nbconsumers++] = consumer;
+    }
+    TODO("I believe we should only have one shared drawable for all customers. If it's actually so it will be both simpler and more efficient")
+    void add_consumer(RDPDrawable * consumer)
+    {
+        this->drawables[this->nbdrawables++] = consumer;
     }
 
     bool next_order()
@@ -153,10 +224,13 @@ struct FileToGraphic
                 this->chunk_type = header.in_uint16_le();
                 this->chunk_size = header.in_uint32_le();
                 this->remaining_order_count = this->chunk_count = header.in_uint16_le();
-                LOG(LOG_INFO, "reading chunk: type=%u size=%u count=%u\n", 
-                    this->chunk_type, this->chunk_size, this->chunk_count);
-                this->stream.init(this->chunk_size - HEADER_SIZE);
-                this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
+                if (this->chunk_type != LAST_IMAGE_CHUNK
+                && this->chunk_type != PARTIAL_IMAGE_CHUNK){
+                    LOG(LOG_INFO, "reading chunk: type=%u size=%u count=%u\n", 
+                        this->chunk_type, this->chunk_size, this->chunk_count);
+                    this->stream.init(this->chunk_size - HEADER_SIZE);
+                    this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
+                }
             }
             catch (Error & e){
                 LOG(LOG_INFO,"receive error : end of transport\n");
@@ -237,11 +311,17 @@ struct FileToGraphic
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->glyphindex, clip);
                     }
+                    for (size_t i = 0; i < this->nbdrawables ; i++){
+                        this->drawables[i]->draw(this->glyphindex, clip);
+                    }
                     break;
                 case RDP::DESTBLT:
                     this->destblt.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->destblt, clip);
+                    }
+                    for (size_t i = 0; i < this->nbdrawables ; i++){
+                        this->drawables[i]->draw(this->destblt, clip);
                     }
                     break;
                 case RDP::PATBLT:
@@ -249,11 +329,17 @@ struct FileToGraphic
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->patblt, clip);
                     }
+                    for (size_t i = 0; i < this->nbdrawables ; i++){
+                        this->drawables[i]->draw(this->patblt, clip);
+                    }
                     break;
                 case RDP::SCREENBLT:
                     this->scrblt.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->scrblt, clip);
+                    }
+                    for (size_t i = 0; i < this->nbdrawables ; i++){
+                        this->drawables[i]->draw(this->scrblt, clip);
                     }
                     break;
                 case RDP::LINE:
@@ -261,11 +347,17 @@ struct FileToGraphic
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->lineto, clip);
                     }
+                    for (size_t i = 0; i < this->nbdrawables ; i++){
+                        this->drawables[i]->draw(this->lineto, clip);
+                    }
                     break;
                 case RDP::RECT:
                     this->opaquerect.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->opaquerect, clip);
+                    }
+                    for (size_t i = 0; i < this->nbdrawables ; i++){
+                        this->drawables[i]->draw(this->opaquerect, clip);
                     }
                     break;
                 case RDP::MEMBLT:
@@ -278,6 +370,9 @@ struct FileToGraphic
                         else {
                             for (size_t i = 0; i < this->nbconsumers ; i++){
                                 this->consumers[i]->draw(this->memblt, clip, *bmp);
+                            }
+                            for (size_t i = 0; i < this->nbdrawables ; i++){
+                                this->drawables[i]->draw(this->memblt, clip, *bmp);
                             }
                         }
                     }
@@ -338,6 +433,31 @@ struct FileToGraphic
                         throw Error(ERR_WRM);
                     }
                 }
+            }
+            break;
+            case LAST_IMAGE_CHUNK:
+            case PARTIAL_IMAGE_CHUNK:
+            {
+                LOG(LOG_INFO,"IMAGE_CHUNK\n");
+
+                InChunkedImageTransport chunk_trans(this->chunk_type, this->chunk_size, this->trans);
+
+                TODO("Temporary : if we have several drawables they should all receive image."
+                     "If we do not have any drawable we should skip unnecessary image chunks")
+                if (this->nbdrawables){
+                    ::transport_read_png24(&chunk_trans, this->drawables[0]->drawable.data,
+                                 this->drawables[0]->drawable.width, 
+                                 this->drawables[0]->drawable.height,
+                                 this->drawables[0]->drawable.rowsize
+                                );            
+                }
+                else {
+                    // in this case ignore chunks
+                    this->stream.init(this->chunk_size - HEADER_SIZE);
+                    this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
+                }
+                this->stream.reset();
+                this->remaining_order_count = 0;
             }
             break;
             default:

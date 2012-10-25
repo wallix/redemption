@@ -93,6 +93,7 @@ static inline void dump_png24(FILE * fd, const uint8_t * data,
     // fwrite(this->data, 3, this->width * this->height, fd);
 }
 
+
 inline void read_png24(FILE * fd, const uint8_t * data,
                       const size_t width,
                       const size_t height,
@@ -103,6 +104,33 @@ inline void read_png24(FILE * fd, const uint8_t * data,
     png_init_io(ppng, fd);
     png_read_info(ppng, pinfo);
 
+    unsigned char * row = (unsigned char*)data;
+    for (size_t k = 0 ; k < height ; ++k) {
+        png_read_row(ppng, row, NULL);
+        row += rowsize;
+    }
+    png_read_end(ppng, pinfo);
+    png_destroy_read_struct(&ppng, &pinfo, NULL);
+}
+
+static inline void png_read_data_fn(png_structp png_ptr, png_bytep data, png_size_t length) { 
+    uint8_t * tmp_data = data;
+    ((Transport *)(png_ptr->io_ptr))->recv(&tmp_data, length);
+
+}
+
+
+inline void transport_read_png24(Transport * trans, const uint8_t * data,
+                      const size_t width,
+                      const size_t height,
+                      const size_t rowsize)
+{
+    png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    png_set_read_fn(ppng, trans, &png_read_data_fn);
+    png_info * pinfo = png_create_info_struct(ppng);
+    png_read_info(ppng, pinfo);
+
+    TODO("this row should be sent to all drawables.")
     unsigned char * row = (unsigned char*)data;
     for (size_t k = 0 ; k < height ; ++k) {
         png_read_row(ppng, row, NULL);
