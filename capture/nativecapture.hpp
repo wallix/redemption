@@ -63,77 +63,74 @@ public:
     int height;
     int bpp;
 
-    OutFileTransport trans;
+    uint64_t frame_interval;
+    struct timeval start_native_capture;
+    uint64_t inter_frame_interval_native_capture;
+
+    uint64_t break_interval;
+    struct timeval start_break_capture;
+    uint64_t inter_frame_interval_start_break_capture;
 
     BStream stream;
-    GraphicsToFile recorder;
-    char filename[1024];
-    unsigned int filename_len;
-    unsigned int basepath_len;
+    GraphicToFile recorder;
     uint32_t nb_file;
 
-    char * meta_name;
-    uint32_t meta_name_len;
-    FILE* meta_file;
-
-public:
-    NativeCapture(const timeval & now, int width, int height, const char * path, const char * meta_filename = 0)
+    NativeCapture(const timeval & now, Transport & trans, FileSequence & sequence, int width, int height)
     : width(width)
     , height(height)
     , bpp(24)
-    , trans(-1)
     , stream(65536)
-    , recorder(&this->trans, &this->stream, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now)
+    , recorder(now, &trans, &this->stream, NULL, width, height, 24, 8192, 768, 8192, 3072, 8192, 12288)
     , nb_file(0)
     {
-        this->basepath_len = sprintf(this->filename, "%s-%u-", path, getpid());
-        this->filename_len = this->basepath_len + sprintf(this->filename + this->basepath_len, "%u.wrm", this->nb_file++);
+        // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
+        this->start_native_capture = now;
+        this->frame_interval = 40;
+        this->inter_frame_interval_native_capture       =  this->frame_interval * 10000; // 1 000 000 us is 1 sec
 
-        LOG(LOG_INFO, "Open to file : %s", this->filename);
-        this->trans.fd = open(this->filename, O_WRONLY|O_CREAT, 0666);
-        if (this->trans.fd < 0){
-            LOG(LOG_ERR, "Error opening native capture file : %s", strerror(errno));
-            throw Error(ERR_NATIVE_CAPTURE_OPEN_FAILED);
-        }
+        this->start_break_capture = now;
+        this->break_interval = 60 * 10; // break interval is in s, default value 1 break every 10 minutes
+        this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
 
-        if (meta_filename) {
-            this->meta_name_len = strlen(meta_filename);
-            this->meta_name = (char*)malloc(this->meta_name_len + 1);
-            memcpy(this->meta_name, meta_filename, this->meta_name_len + 1);
-        }
-        else {
-            this->meta_name_len = this->basepath_len + 4;
-            this->meta_name = (char*)malloc(this->meta_name_len + 1);
-            memcpy(this->meta_name, this->filename, this->basepath_len - 1);
-            memcpy(this->meta_name + this->basepath_len - 1, ".mwrm", 6);
-        }
-
-//        this->recorder.chunk_type = WRMChunk::META_FILE;
-//        this->recorder.chunk_count = 1;
-//        {
-//            this->stream.out_uint32_le(this->meta_name_len);
-//            this->stream.out_copy_bytes(this->meta_name, this->meta_name_len);
-//        }
-//        this->recorder.flush();
-
-        this->meta_file = fopen(this->meta_name, "w+");
-        if (!this->meta_file) {
-            free(this->meta_name);
-            LOG(LOG_ERR, "error open meta: %s", strerror(errno));
-            throw Error(ERR_NATIVE_CAPTURE_OPEN_FAILED);
-        }
-
-        fprintf(this->meta_file, "%d %d\n", this->width, this->height);
-        fputs("\n\n", this->meta_file);
+        LOG(LOG_INFO, "update configuration frame_interval=%u break_interval=%u",
+            this->frame_interval, this->break_interval);
     }
 
     ~NativeCapture(){
         this->recorder.flush();
-        close(this->trans.fd);
-        fclose(this->meta_file);
-        free(this->meta_name);
     }
 
+    void update_config(const Inifile & ini)
+    {
+        if (ini.globals.frame_interval != this->frame_interval){
+            // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
+            this->frame_interval = ini.globals.frame_interval;
+            this->inter_frame_interval_native_capture       =  this->frame_interval * 10000; // 1 000 000 us is 1 sec
+        }
+
+        if (ini.globals.break_interval != this->break_interval){
+            this->break_interval = ini.globals.break_interval; // break interval is in s, default value 1 break every 10 minutes
+            this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
+        }
+        LOG(LOG_INFO, "update configuration frame_interval=%u break_interval=%u",
+            this->frame_interval, this->break_interval);
+    }
+        
+    void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
+    {
+        if (difftimeval(now, this->start_native_capture) >= this->inter_frame_interval_native_capture){
+            LOG(LOG_INFO, "recorder timestamp");
+            this->recorder.timestamp(now);
+            this->start_native_capture = now;
+            if (difftimeval(now, this->start_break_capture) >= this->inter_frame_interval_start_break_capture){
+//                this->breakpoint(now);
+                this->start_break_capture = now;
+            }
+        }
+        this->recorder.flush();
+
+    }
+    
     virtual void flush()
     {}
 
@@ -204,11 +201,18 @@ private:
     }
 
 public:
-
     void breakpoint(const uint8_t* data_drawable, uint8_t bpp,
                     uint16_t width, uint16_t height, size_t rowsize,
                     const timeval& now)
     {
+//        this->recorder.timestamp(now);
+//        this->breakpoint(this->psc->drawable.data,
+//                            24,
+//                            this->psc->drawable.width,
+//                            this->psc->drawable.height,
+//                            this->psc->drawable.rowsize,
+//                            now);
+
 //        this->recorder.flush();
 
 //        this->recorder.chunk_type = WRMChunk::NEXT_FILE_ID;
@@ -392,7 +396,6 @@ public:
 
 //        this->recorder.init();
 //        this->recorder.timer = now;
-//        fprintf(this->meta_file, "%s,%s.%s %ld %ld\n", this->filename, this->filename, "png", now.tv_sec, now.tv_usec);
 //        this->recorder.chunk_type = RDP_UPDATE_ORDERS;
     }
 };

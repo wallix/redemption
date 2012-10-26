@@ -728,7 +728,7 @@ struct mod_rdp : public client_mod {
 
                 GCC::Create_Response_Recv gcc_cr(mcs.payload);
 
-                while (gcc_cr.payload.check_rem(4)) {
+                while (gcc_cr.payload.in_check_rem(4)) {
 
                     GCC::UserData::RecvFactory f(gcc_cr.payload);
                     switch (f.tag) {
@@ -886,7 +886,7 @@ struct mod_rdp : public client_mod {
                         throw Error(ERR_GCC);
                     }
                 }
-                if (gcc_cr.payload.check_rem(1)) {
+                if (gcc_cr.payload.in_check_rem(1)) {
                     LOG(LOG_WARNING, "Error while parsing GCC UserData : short header");
                     throw Error(ERR_GCC);
                 }

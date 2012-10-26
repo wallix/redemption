@@ -71,7 +71,6 @@ struct test_internal_mod : public internal_mod {
     // non 0 if it wants to stop (to run another module)
     virtual BackEvent_t draw_event()
     {
-        static unsigned i = 0;
         this->event.reset();
         int fd = ::open(this->movie, O_RDONLY);
         if(fd <= 0){
@@ -81,11 +80,11 @@ struct test_internal_mod : public internal_mod {
         InFileTransport in_trans(fd);
         timeval now;
         gettimeofday(&now, NULL);
-        RDPUnserializer reader(&in_trans, now, &this->front, this->get_screen_rect());
+        FileToGraphic reader(&in_trans, now);
+        reader.add_consumer(&this->front);
         this->front.send_global_palette();
         this->front.begin_update();
         while (reader.next_order()){
-            printf("Reading order %u\n", i++);
             reader.interpret_order();
         }
         this->front.end_update();

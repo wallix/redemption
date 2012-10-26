@@ -35,11 +35,75 @@
 #include "transport.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
+#include "RDP/RDPDrawable.hpp"
 #include "RDP/RDPSerializer.hpp"
 #include "difftimeval.hpp"
+#include "png.hpp"
 #include "meta_file.hpp"
 
-struct RDPUnserializer
+
+class InChunkedImageTransport : public Transport {
+    uint16_t chunk_type; 
+    uint32_t chunk_size;
+    uint16_t chunk_count;
+    Transport * trans;
+    BStream stream;
+public:
+    InChunkedImageTransport(uint16_t chunk_type, uint32_t chunk_size, Transport * trans) 
+        : chunk_type(chunk_type)
+        , chunk_size(chunk_size)
+        , chunk_count(1)
+        , trans(trans) 
+    {
+        this->stream.init(this->chunk_size - 8);
+        this->trans->recv(&stream.end, this->chunk_size - 8);
+    }
+    
+    using Transport::recv;
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+        size_t total_len = 0;
+        while (total_len < len){
+            if (stream.end - stream.p >= len - total_len){
+                stream.in_copy_bytes(*pbuffer + total_len, len - total_len);
+                total_len += len - total_len;
+                *pbuffer += len;
+                return;
+            }
+            uint16_t remaining = stream.end - stream.p;
+            stream.in_copy_bytes(*pbuffer + total_len, remaining);
+            total_len += remaining;
+            switch (this->chunk_type){
+            case PARTIAL_IMAGE_CHUNK:
+            {
+                BStream header(8);
+                this->trans->recv(&header.end, 8);
+                this->chunk_type = header.in_uint16_le();
+                this->chunk_size = header.in_uint32_le();
+                this->chunk_count = header.in_uint16_le();
+                this->stream.init(this->chunk_size - 8);
+                this->trans->recv(&this->stream.end, this->chunk_size - 8);
+            }
+            break;
+            case LAST_IMAGE_CHUNK:
+                LOG(LOG_ERR, "Failed to read embedded image from WRM (transport closed)");
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+            break;
+            default:
+                LOG(LOG_ERR, "Failed to read embedded image from WRM");
+                throw Error(ERR_TRANSPORT_READ_FAILED);
+            break;
+            }
+        }
+    }
+
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error)
+    {
+        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
+    }
+};
+
+struct FileToGraphic
 {
     enum {
         HEADER_SIZE = 8,
@@ -48,10 +112,8 @@ struct RDPUnserializer
 
 //    uint8_t padding[65536];
 
-    RDPGraphicDevice * consumer;
     Transport * trans;
 
-    TODO("This should be extracted from serialized data. Serializer should have some API function to set geometry width x height x bpp saved in native movie.")
     Rect screen_rect;
 
     // Internal state of orders
@@ -67,19 +129,27 @@ struct RDPUnserializer
     BmpCache bmp_cache;
 
     // variables used to read batch of orders "chunks"
-    uint16_t chunk_size;
+    uint32_t chunk_size;
     uint16_t chunk_type;
     uint16_t chunk_count;
-    uint16_t chunk_flags;
     uint16_t remaining_order_count;
 
     timeval timer_cap;
     uint64_t movie_usec;
 
+    uint16_t nbconsumers;
+    RDPGraphicDevice * consumers[10];
+
+    uint16_t nbdrawables;
+    RDPDrawable * drawables[10];
+    
+    bool meta_ok;
+    bool timestamp_ok;
+
     DataMetaFile data_meta;
 
-    RDPUnserializer(Transport * trans, const timeval & now, RDPGraphicDevice * consumer, const Rect screen_rect)
-     : stream(4096), consumer(consumer), trans(trans), screen_rect(screen_rect),
+    FileToGraphic(Transport * trans, const timeval & now)
+     : stream(4096), trans(trans),
      // Internal state of orders
     common(RDP::PATBLT, Rect(0, 0, 1, 1)),
     destblt(Rect(), 0),
@@ -89,20 +159,36 @@ struct RDPUnserializer
     memblt(0, Rect(), 0, 0, 0, 0),
     lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
     glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
-
     bmp_cache(24),
-
     // variables used to read batch of orders "chunks"
     chunk_size(0),
     chunk_type(0),
     chunk_count(0),
-    chunk_flags(0),
     remaining_order_count(0),
     timer_cap(now),
     movie_usec(0),
-
+    nbconsumers(0),
+    nbdrawables(0),
+    meta_ok(false),
+    timestamp_ok(false),
     data_meta()
     {
+        while (this->next_order()){
+            this->interpret_order();
+            if (this->meta_ok && this->timestamp_ok){
+                break;
+            }
+        }
+    }
+
+    void add_consumer(RDPGraphicDevice * consumer)
+    {
+        this->consumers[this->nbconsumers++] = consumer;
+    }
+    TODO("I believe we should only have one shared drawable for all customers. If it's actually so it will be both simpler and more efficient")
+    void add_consumer(RDPDrawable * consumer)
+    {
+        this->drawables[this->nbdrawables++] = consumer;
     }
 
     bool next_order()
@@ -121,7 +207,7 @@ struct RDPUnserializer
                          (this->stream.end - this->stream.p), this->chunk_size);
             return false;
         }
-        if ((this->stream.p != this->stream.end) && (this->remaining_order_count == 0)){
+        if ((this->stream.p != this->stream.end) && (this->remaining_order_count == -1)){
             LOG(LOG_ERR, "Incomplete order batch at chunk %u "
                          "order [%u/%u] "
                          "remaining [%u/%u]",
@@ -131,21 +217,23 @@ struct RDPUnserializer
             return false;
         }
 
-
         if (!this->remaining_order_count){
             try {
                 BStream header(HEADER_SIZE);
                 this->trans->recv(&header.end, HEADER_SIZE);
                 this->chunk_type = header.in_uint16_le();
-                this->chunk_size = header.in_uint16_le();
+                this->chunk_size = header.in_uint32_le();
                 this->remaining_order_count = this->chunk_count = header.in_uint16_le();
-                this->chunk_flags = header.in_uint16_le();
-                LOG(LOG_INFO, "reading chunk: type=%u size=%u count=%u flags=%u\n", 
-                    this->chunk_type, this->chunk_size, this->chunk_count, this->chunk_flags);
-                this->stream.init(this->chunk_size - HEADER_SIZE);
-                this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
+                if (this->chunk_type != LAST_IMAGE_CHUNK
+                && this->chunk_type != PARTIAL_IMAGE_CHUNK){
+                    LOG(LOG_INFO, "reading chunk: type=%u size=%u count=%u\n", 
+                        this->chunk_type, this->chunk_size, this->chunk_count);
+                    this->stream.init(this->chunk_size - HEADER_SIZE);
+                    this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
+                }
             }
             catch (Error & e){
+                LOG(LOG_INFO,"receive error : end of transport\n");
                 // receive error, end of transport
                 return false;
             }
@@ -158,6 +246,15 @@ struct RDPUnserializer
     {
         switch (this->chunk_type){
         case RDP_UPDATE_ORDERS:
+        if (!this->meta_ok){
+            LOG(LOG_ERR,"Drawing orders chunk must be preceded by a META chunk to get drawing device size\n");
+            throw Error(ERR_WRM);
+        }
+        if (!this->timestamp_ok){
+            LOG(LOG_ERR,"Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing\n");
+            throw Error(ERR_WRM);
+        }
+        LOG(LOG_INFO,"RDP_UPDATE_ORDERS\n");
         {
             uint8_t control = this->stream.in_uint8();
             if (!control & RDP::STANDARD){
@@ -211,27 +308,57 @@ struct RDPUnserializer
                 switch (this->common.order) {
                 case RDP::GLYPHINDEX:
                     this->glyphindex.receive(this->stream, header);
-                    consumer->draw(this->glyphindex, clip);
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->draw(this->glyphindex, clip);
+                    }
+                    for (size_t i = 0; i < this->nbdrawables ; i++){
+                        this->drawables[i]->draw(this->glyphindex, clip);
+                    }
                     break;
                 case RDP::DESTBLT:
                     this->destblt.receive(this->stream, header);
-                    consumer->draw(this->destblt, clip);
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->draw(this->destblt, clip);
+                    }
+                    for (size_t i = 0; i < this->nbdrawables ; i++){
+                        this->drawables[i]->draw(this->destblt, clip);
+                    }
                     break;
                 case RDP::PATBLT:
                     this->patblt.receive(this->stream, header);
-                    consumer->draw(this->patblt, clip);
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->draw(this->patblt, clip);
+                    }
+                    for (size_t i = 0; i < this->nbdrawables ; i++){
+                        this->drawables[i]->draw(this->patblt, clip);
+                    }
                     break;
                 case RDP::SCREENBLT:
                     this->scrblt.receive(this->stream, header);
-                    consumer->draw(this->scrblt, clip);
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->draw(this->scrblt, clip);
+                    }
+                    for (size_t i = 0; i < this->nbdrawables ; i++){
+                        this->drawables[i]->draw(this->scrblt, clip);
+                    }
                     break;
                 case RDP::LINE:
                     this->lineto.receive(this->stream, header);
-                    consumer->draw(this->lineto, clip);
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->draw(this->lineto, clip);
+                    }
+                    for (size_t i = 0; i < this->nbdrawables ; i++){
+                        this->drawables[i]->draw(this->lineto, clip);
+                    }
                     break;
                 case RDP::RECT:
                     this->opaquerect.receive(this->stream, header);
-                    consumer->draw(this->opaquerect, clip);
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->draw(this->opaquerect, clip);
+                    }
+                    for (size_t i = 0; i < this->nbdrawables ; i++){
+                        this->drawables[i]->draw(this->opaquerect, clip);
+                    }
                     break;
                 case RDP::MEMBLT:
                     {
@@ -241,7 +368,12 @@ struct RDPUnserializer
                             LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)", this->memblt.cache_id, this->memblt.cache_idx);
                         }
                         else {
-                            this->consumer->draw(this->memblt, clip, *bmp);
+                            for (size_t i = 0; i < this->nbconsumers ; i++){
+                                this->consumers[i]->draw(this->memblt, clip, *bmp);
+                            }
+                            for (size_t i = 0; i < this->nbdrawables ; i++){
+                                this->drawables[i]->draw(this->memblt, clip, *bmp);
+                            }
                         }
                     }
                     break;
@@ -253,11 +385,13 @@ struct RDPUnserializer
             }
             }
             break;
-            case WRMChunk::TIMESTAMP:
+            case TIMESTAMP:
+            LOG(LOG_INFO,"TIMESTAMP\n");
             {
-                if (!this->movie_usec){
+                if (!this->timestamp_ok){
                     LOG(LOG_INFO, "chunk timestamp reading first timestamp");
                     this->movie_usec = this->stream.in_uint64_le();
+                    this->timestamp_ok = true;
                 }
                 else {
                     LOG(LOG_INFO, "chunk timestamp reading other timestamps");
@@ -281,32 +415,49 @@ struct RDPUnserializer
                 }
             }
             break;
-            case WRMChunk::META_FILE:
+            case META_FILE:
+            LOG(LOG_INFO,"META_FILE\n");
             {
-                // DATA in metafile:
-                // 4 bytes   : len
-                // len bytes : reference filename
-                // 2 bytes width
-                // 2 bytes height
-                // 1 bytes BPP (bytes per plane)
-                LOG(LOG_INFO, "META");
-                if (this->data_meta.loaded)
-                {
-                    LOG(LOG_INFO, "ignore chunk type META_FILE");
-                }
-                else
-                {
-                    uint32_t len = this->stream.in_uint32_le();
-                    this->stream.p[len] = 0;
-                    if (!read_meta_file(this->data_meta, reinterpret_cast<const char*>(this->stream.p)))
-                    {
-                        LOG(LOG_ERR, "meta %s: %s", reinterpret_cast<const char*>(this->stream.p), strerror(errno));
-                        throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
-                    }
-                    this->screen_rect.cx = this->data_meta.width;
-                    this->screen_rect.cy = this->data_meta.height;
-                }
+                uint16_t width = this->stream.in_uint16_le();
+                uint16_t height = this->stream.in_uint16_le();
+                this->stream.in_skip_bytes(4); // skip bpp and padding
                 this->stream.p = this->stream.end;
+
+                if (!this->meta_ok){
+                    this->screen_rect = Rect(0, 0, width, height);
+                    this->meta_ok = true;
+                }
+                else {
+                    if (this->screen_rect.cx != width || this->screen_rect.cy != height){
+                        LOG(LOG_ERR,"Inconsistant redundant meta chunk");
+                        throw Error(ERR_WRM);
+                    }
+                }
+            }
+            break;
+            case LAST_IMAGE_CHUNK:
+            case PARTIAL_IMAGE_CHUNK:
+            {
+                LOG(LOG_INFO,"IMAGE_CHUNK\n");
+
+                InChunkedImageTransport chunk_trans(this->chunk_type, this->chunk_size, this->trans);
+
+                TODO("Temporary : if we have several drawables they should all receive image."
+                     "If we do not have any drawable we should skip unnecessary image chunks")
+                if (this->nbdrawables){
+                    ::transport_read_png24(&chunk_trans, this->drawables[0]->drawable.data,
+                                 this->drawables[0]->drawable.width, 
+                                 this->drawables[0]->drawable.height,
+                                 this->drawables[0]->drawable.rowsize
+                                );            
+                }
+                else {
+                    // in this case ignore chunks
+                    this->stream.init(this->chunk_size - HEADER_SIZE);
+                    this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
+                }
+                this->stream.reset();
+                this->remaining_order_count = 0;
             }
             break;
             default:

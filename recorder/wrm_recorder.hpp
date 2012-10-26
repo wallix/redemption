@@ -131,7 +131,7 @@ class WRMRecorder
 {
 public:
     InFileTransport & trans;
-    RDPUnserializer & reader;
+    FileToGraphic & reader;
 
     Drawable * redrawable;
 
@@ -149,7 +149,7 @@ public:
 public:
     WRMRecorder(const timeval & now,
                 InFileTransport & trans,
-                RDPUnserializer & reader,
+                FileToGraphic & reader,
                 InputType::enum_t itype,
                 std::string & base_path,
                 bool ignore_dir_for_meta_in_wrm,
@@ -197,7 +197,7 @@ public:
 //                        std::cerr << in_filename << " is invalid wrm file" << std::endl;
 //                        throw Error(ERR_WRM_INVALID_FILE);
 //                    }
-//                    if (!reader.chunk_type == WRMChunk::META_FILE){
+//                    if (!reader.chunk_type == META_FILE){
 //                        std::cerr << reader.data_meta << '\n'
 //                         << "Chunk META not found in " << filename << '\n' 
 //                         << ". Chunk is " << reader.chunk_type << std::endl;
@@ -483,12 +483,12 @@ public:
     {
         switch (this->reader.chunk_type)
         {
-            case WRMChunk::META_FILE:
+            case META_FILE:
             {
                 this->reader.stream.p = this->reader.stream.end;
             }
             break;
-            case WRMChunk::NEXT_FILE_ID:
+            case NEXT_FILE_ID:
             {
                 this->idx_file = this->reader.stream.in_uint32_le();
                 if (this->reader.data_meta.files.size() <= this->idx_file)
@@ -534,7 +534,7 @@ public:
                 this->load_context(this->reader.data_meta.files[this->idx_file].png_filename.c_str());
             }
             break;
-            case WRMChunk::BREAKPOINT:
+            case BREAKPOINT:
             {
                 if (!this->interpret_breakpoint_is_passed || this->force_interpret_breakpoint){
                     /*uint16_t width = */this->reader.stream.in_uint16_le();
@@ -736,7 +736,7 @@ public:
 //            if (timercompute_microsec < msec){
 //                while (this->reader.next_order())
 //                {
-//                    if (this->reader.chunk_type == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
+//                    if (this->reader.chunk_type == TIMESTAMP && timercompute_microsec < msec){
 //                        timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
 //                        timercompute_microsec += timercompute_chunk_time_value;
 //                        break;
@@ -760,7 +760,7 @@ public:
 
 //        while (this->reader.next_order())
 //        {
-//            if (this->reader.chunk_type == WRMChunk::TIMESTAMP) {
+//            if (this->reader.chunk_type == TIMESTAMP) {
 //                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
 //                timercompute_microsec += timercompute_chunk_time_value;
 //                uint64_t usec = timercompute_microsec;
@@ -828,7 +828,7 @@ public:
 //                if (timercompute_microsec < msec){
 //                    while (this->reader.next_order())
 //                    {
-//                        if (this->reader.chunk_type == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
+//                        if (this->reader.chunk_type == TIMESTAMP && timercompute_microsec < msec){
 //                            timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
 //                            timercompute_microsec += timercompute_chunk_time_value;
 //                            tmp = timercompute_microsec;
@@ -852,7 +852,7 @@ public:
 
 //        while (this->reader.next_order())
 //        {
-//            if (this->reader.chunk_type == WRMChunk::TIMESTAMP) {
+//            if (this->reader.chunk_type == TIMESTAMP) {
 //                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
 //                timercompute_microsec += timercompute_chunk_time_value;
 //                mtime += timercompute_microsec;
@@ -896,7 +896,7 @@ public:
 //        timeval mstart = {0,0};
 //        while (this->reader.next_order())
 //        {
-//            if (this->reader.chunk_type == WRMChunk::TIMESTAMP){
+//            if (this->reader.chunk_type == TIMESTAMP){
 //                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
 //                timercompute_microsec += timercompute_chunk_time_value;
 //                mstart.tv_sec = 0;
@@ -914,7 +914,7 @@ public:
 //            if (timercompute_microsec < msec){
 //                while (this->reader.next_order())
 //                {
-//                    if (this->reader.chunk_type == WRMChunk::TIMESTAMP && timercompute_microsec < msec){
+//                    if (this->reader.chunk_type == TIMESTAMP && timercompute_microsec < msec){
 //                        timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
 //                        timercompute_microsec += timercompute_chunk_time_value;
 //                        mtime = timercompute_microsec;
@@ -955,7 +955,7 @@ public:
 
 //        while (this->reader.next_order())
 //        {
-//            if (this->reader.chunk_type == WRMChunk::TIMESTAMP) {
+//            if (this->reader.chunk_type == TIMESTAMP) {
 //                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
 //                timercompute_microsec += timercompute_chunk_time_value;
 //                if (timercompute_chunk_time_value) {
@@ -971,14 +971,14 @@ public:
 //            }
 //            else {
 //                switch (this->reader.chunk_type) {
-//                    case WRMChunk::NEXT_FILE_ID:
+//                    case NEXT_FILE_ID:
 //                        this->interpret_order();
 //                        break;
-//                    case WRMChunk::META_FILE:
-//                    case WRMChunk::TIME_START:
+//                    case META_FILE:
+//                    case TIME_START:
 //                        this->reader.stream.p = this->reader.stream.end;
 //                        break;
-//                    case WRMChunk::BREAKPOINT:
+//                    case BREAKPOINT:
 //                    {
 //                        this->reader.stream.p = this->reader.stream.end;
 //                        this->reader.next_order();
@@ -1033,7 +1033,7 @@ public:
 //        uint64_t usec_start_rec = 0;
 //        while (this->reader.next_order())
 //        {
-//            if (this->reader.chunk_type == WRMChunk::TIMESTAMP)
+//            if (this->reader.chunk_type == TIMESTAMP)
 //            {
 //                uint64_t usec_start = this->reader.stream.in_uint64_be();
 //                if (usec_start_rec == 0){
@@ -1065,7 +1065,7 @@ public:
 
 //        while (this->reader.next_order())
 //        {
-//            if (this->reader.chunk_type == WRMChunk::TIMESTAMP) {
+//            if (this->reader.chunk_type == TIMESTAMP) {
 //                timercompute_chunk_time_value = this->reader.stream.in_uint64_be();
 //                timercompute_microsec += timercompute_chunk_time_value;
 

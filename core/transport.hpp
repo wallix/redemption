@@ -25,6 +25,7 @@
 
 #include <sys/types.h> // recv, send
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/un.h>
@@ -38,8 +39,20 @@
 #include "log.hpp"
 
 
+static inline int filesize(const char * path)
+{
+    struct stat sb;
+    int status = stat(path, &sb);
+    if (status >= 0){
+        return sb.st_size;
+    }
+    return -1;
+}
+
+
 class Transport {
 public:
+    uint32_t seqno;
     uint64_t total_received;
     uint64_t last_quantum_received;
     uint64_t total_sent;
@@ -48,6 +61,7 @@ public:
     bool status;
 
     Transport() :
+        seqno(0),
         total_received(0),
         last_quantum_received(0),
         total_sent(0),
@@ -83,11 +97,17 @@ public:
         return true;
     }
 
+    virtual void flush()
+    {
+    }
+
     virtual bool next() 
     REDOC("Some transports are splitted between sequential discrete units"
           "(it may be block, chunk, numbered files, directory entries, whatever)."
-          "Calling next means flushing the current unit and start the next one.")
+          "Calling next means flushing the current unit and start the next one."
+          "seqno countains the current sequence number, starting from 0.")
     {
+        this->seqno++;
         return true;
     }
 
@@ -145,10 +165,11 @@ class CheckTransport : public Transport {
     size_t current;
     char * data;
     size_t len;
+    uint32_t verbose;
 
 
-    CheckTransport(const char * data, size_t len)
-        : Transport(), current(0), data(0), len(len)
+    CheckTransport(const char * data, size_t len, uint32_t verbose = 0)
+        : Transport(), current(0), data(0), len(len), verbose(verbose)
     {
         this->data = (char *)malloc(len);
         memcpy(this->data, data, len);
@@ -166,11 +187,16 @@ class CheckTransport : public Transport {
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         // CheckTransport does never receive anything
-        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_RECV);
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
     }
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
+        if (this->verbose & 0x100){
+            LOG(LOG_INFO, "Check Transport (Test Data) sending %u bytes", len);
+            hexdump_c(buffer, len);
+            LOG(LOG_INFO, "Dump done (Test Data) sending %u bytes", len);
+        }
         size_t available_len = (this->current + len > this->len)?this->len - this->current:len;
         if (0 != memcmp(buffer, (const char *)(&this->data[this->current]), available_len)){
             // data differs
@@ -184,9 +210,9 @@ class CheckTransport : public Transport {
                 }
             }
             LOG(LOG_INFO, "=============== Common Part =======");
-            hexdump(buffer, differs);
+            hexdump_c(buffer, differs);
             LOG(LOG_INFO, "=============== Expected ==========");
-            hexdump((const char *)(&this->data[this->current]) + differs, available_len - differs);
+            hexdump_c((const char *)(&this->data[this->current]) + differs, available_len - differs);
             LOG(LOG_INFO, "=============== Got ===============");
             hexdump(buffer+differs, available_len - differs);
             throw Error(ERR_TRANSPORT_DIFFERS, 0);
@@ -194,7 +220,7 @@ class CheckTransport : public Transport {
         this->current += available_len;
         if (available_len != len){
             LOG(LOG_INFO, "Check transport out of reference data available=%u len=%u", available_len, len);
-            LOG(LOG_INFO, "=============== Expected Missing ==========");
+            LOG(LOG_INFO, "=============== Unexpected Missing ==========");
             hexdump_c((const char *)(buffer + available_len), len - available_len);
             this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
@@ -260,11 +286,14 @@ class TestTransport : public Transport {
 };
 
 class OutFileTransport : public Transport {
-
     public:
     int fd;
+    uint32_t verbose;
 
-    OutFileTransport(int fd) : Transport(), fd(fd) {}
+    OutFileTransport(int fd, unsigned verbose = 0) 
+        : Transport()
+        , fd(fd)
+        , verbose(verbose) {}
 
     virtual ~OutFileTransport() {}
 
@@ -272,11 +301,15 @@ class OutFileTransport : public Transport {
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         LOG(LOG_INFO, "OutFileTransport used for recv");
-        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_RECV, 0);
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
+        if (this->verbose & 0x100){
+            LOG(LOG_INFO, "File (%u) sending %u bytes", this->fd, len);
+            hexdump_c(buffer, len);
+        }
         ssize_t ret = 0;
         size_t remaining_len = len;
         size_t total_sent = 0;
@@ -293,6 +326,9 @@ class OutFileTransport : public Transport {
                 LOG(LOG_INFO, "Outfile transport write failed with error %s", strerror(errno));
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
             }
+        }
+        if (this->verbose & 0x100){
+            LOG(LOG_INFO, "File (%u) sent %u bytes", this->fd, len);
         }
     }
 
@@ -327,8 +363,12 @@ class InFileTransport : public Transport {
                 if (errno == EINTR){
                     continue;
                 }
+                if (ret == 0){
+                    LOG(LOG_INFO, "Infile transport read EOF");
+                    throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+                }
                 *pbuffer = buffer;
-                LOG(LOG_INFO, "Infile transport read failed with error %s", strerror(errno));
+                LOG(LOG_INFO, "Infile transport read failed with error %u %s ret=%u", errno, strerror(errno), ret);
                 throw Error(ERR_TRANSPORT_READ_FAILED, 0);
             }
         }
@@ -339,7 +379,7 @@ class InFileTransport : public Transport {
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         LOG(LOG_INFO, "InFileTransport used for writing");
-        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_SEND, 0);
+        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV, 0);
     }
 
 };
@@ -1057,7 +1097,7 @@ public:
         if (this->fd == -1){
             this->fd = ::creat(this->path, 777);
             if (this->fd == -1){
-                LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
+                LOG(LOG_INFO, "OutByFilename transport write failed with error : %s on %s", strerror(errno), this->path);
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
             }
         }
@@ -1065,21 +1105,54 @@ public:
     }
 };
 
-class OutByFilenameSequenceTransport : public OutFileTransport {
+
+class InByFilenameTransport : public InFileTransport {
+    char path[1024];
+public:
+    InByFilenameTransport(const char * path) 
+    : InFileTransport(-1)
+    {
+        size_t len = strlen(path);
+        memcpy(this->path, path, len);
+        this->path[len] = 0;
+    }
+    
+    ~InByFilenameTransport()
+    {
+        if (this->fd != -1){
+            ::close(this->fd);
+            this->fd = -1;
+        }
+    }
+    
+    using Transport::recv;
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+        if (this->fd == -1){
+            this->fd = ::open(this->path, O_RDONLY);
+            if (this->fd == -1){
+                LOG(LOG_INFO, "InByFilename transport recv failed with error : %s", strerror(errno));
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+        }
+        InFileTransport::recv(pbuffer, len);
+    }
+};
+
+class FileSequence
+{
     char format[64];
     char prefix[512];
     char filename[512];
     char extension[12];
-    uint32_t count;
     uint32_t pid;
-public:
-    char path[1024];
 
-    OutByFilenameSequenceTransport(const char * format, const char * prefix, const char * filename, const char * extension) 
-    : OutFileTransport(-1)
-    , count(0)
-    , pid(getpid())
-    
+public:
+    FileSequence(
+        const char * const format,
+        const char * const prefix, 
+        const char * const filename, 
+        const char * const extension)
+    : pid(getpid())
     {
         size_t len_format = std::min(strlen(format), sizeof(this->format));
         memcpy(this->format, format, len_format);
@@ -1097,11 +1170,43 @@ public:
         memcpy(this->extension, extension, len_extension);
         this->extension[len_extension] = 0;
 
-        this->count = 0;
         this->pid = getpid();
+    }
+    
+    void get_name(char * const buffer, size_t len, uint32_t count) const {
+        if (0 == strcmp(this->format, "path file pid count extension")){
+            snprintf(buffer, len, "%s%s-%u-%i.%s", 
+            this->prefix, this->filename, this->pid, count, this->extension);
+        }
+        else {
+            LOG(LOG_ERR, "Unsupported sequence format string");
+            throw Error(ERR_TRANSPORT);
+        }
+    }
+    
+    ssize_t filesize(uint32_t count) const {
+        char filename[1024];
+        this->get_name(filename, sizeof(filename), count);
+        return ::filesize(filename);
+    }
 
-        this->next();
+    ssize_t unlink(uint32_t count) const {
+        char filename[1024];
+        this->get_name(filename, sizeof(filename), count);
+        return ::unlink(filename);
+    }
+};
 
+
+class OutByFilenameSequenceTransport : public OutFileTransport {
+public:
+    const FileSequence & sequence;
+    char path[1024];
+
+    OutByFilenameSequenceTransport(const FileSequence & sequence, unsigned verbose = 0) 
+    : OutFileTransport(-1, verbose)
+    , sequence(sequence)
+    {
     }
     
     ~OutByFilenameSequenceTransport()
@@ -1115,6 +1220,7 @@ public:
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         if (this->fd == -1){
+            this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
             this->fd = ::creat(this->path, 777);
             if (this->fd == -1){
                 LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
@@ -1130,14 +1236,7 @@ public:
             ::close(this->fd);
             this->fd = -1;
         }
-        if (0 == strcmp(this->format, "path file count pid extension")){
-            snprintf(this->path, sizeof(this->path), "%s%s-%u-%i.%s", 
-            this->prefix, this->filename, this->count++, this->pid, this->extension);
-        }
-        else {
-            LOG(LOG_ERR, "Unsupported OutByFilenameTransport format string");
-            throw Error(ERR_TRANSPORT);
-        }
+        this->OutFileTransport::next();
         return true;
     }
 

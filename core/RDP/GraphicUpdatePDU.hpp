@@ -135,6 +135,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
         encryptionLevel(encryptionLevel),
         encrypt(encrypt)
     {
+        this->pstream = &this->stream;
         this->init();
     }
 
@@ -144,20 +145,17 @@ struct GraphicsUpdatePDU : public RDPSerializer
     }
 
     void init(){
-        this->stream.p = this->stream.end = this->stream.data;
         if (this->sctrl){ delete this->sctrl; }
         if (this->sdata){ delete this->sdata; }
 
         if (this->ini->globals.debug.primary_orders > 63){
             LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
         }
-        this->pstream = &this->stream;
-        this->pstream->p = this->pstream->end = this->pstream->data;
         this->sctrl = new ShareControl(*this->pstream);
         this->sctrl->emit_begin( PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE );
         this->sdata = new ShareData(*this->pstream);
         this->sdata->emit_begin( PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED );
-
+        TODO("this is to kind of header, to be treated like other headers")
         this->pstream->out_uint16_le(RDP_UPDATE_ORDERS);
         this->pstream->out_clear_bytes(2); /* pad */
         this->offset_order_count = this->pstream->get_offset();
@@ -172,7 +170,6 @@ struct GraphicsUpdatePDU : public RDPSerializer
                 LOG(LOG_INFO, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             }
             this->pstream->set_out_uint16_le(this->order_count, this->offset_order_count);
-            this->order_count = 0;
 
             this->sdata->emit_end();
             this->sctrl->emit_end();
@@ -189,7 +186,8 @@ struct GraphicsUpdatePDU : public RDPSerializer
             this->trans->send(x224_header.data, x224_header.size());
             this->trans->send(mcs_header.data, mcs_header.size());
             this->trans->send(sec_header.data, sec_header.size());
-            this->trans->send(pstream->data, this->pstream->size());
+            
+            this->RDPSerializer::flush();
             this->init();
         }
     }

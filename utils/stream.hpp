@@ -14,7 +14,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
+   Copyright (C) Wallix 2012
    Author(s): Christophe Grosjean, Javier Caverni
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
@@ -65,7 +65,7 @@ class Stream {
         return this->p - this->data;
     }
 
-    bool check_rem(unsigned n) {
+    bool in_check_rem(unsigned n) {
     // returns true if there is enough data available to read n bytes
         bool res = (this->p + n) <= this->end;
         return res;
@@ -80,41 +80,41 @@ class Stream {
     // =========================================================================
 
     signed char in_sint8(void) {
-        REDASSERT(check_rem(1));
+        REDASSERT(in_check_rem(1));
         return *((signed char*)(this->p++));
     }
 
     unsigned char in_uint8(void) {
-        REDASSERT(check_rem(1));
+        REDASSERT(in_check_rem(1));
         return *((unsigned char*)(this->p++));
     }
 
     int16_t in_sint16_be(void) {
-        REDASSERT(check_rem(2));
+        REDASSERT(in_check_rem(2));
         unsigned int v = this->in_uint16_be();
         return (int16_t)((v > 32767)?v - 65536:v);
     }
 
     int16_t in_sint16_le(void) {
-        REDASSERT(check_rem(2));
+        REDASSERT(in_check_rem(2));
         unsigned int v = this->in_uint16_le();
         return (int16_t)((v > 32767)?v - 65536:v);
     }
 
     uint16_t in_uint16_le(void) {
-        REDASSERT(check_rem(2));
+        REDASSERT(in_check_rem(2));
         this->p += 2;
         return (uint16_t)(this->p[-2] | (this->p[-1] << 8));
     }
 
     uint16_t in_uint16_be(void) {
-        REDASSERT(check_rem(2));
+        REDASSERT(in_check_rem(2));
         this->p += 2;
         return (uint16_t)(this->p[-1] | (this->p[-2] << 8)) ;
     }
 
     unsigned int in_uint32_le(void) {
-        REDASSERT(check_rem(4));
+        REDASSERT(in_check_rem(4));
         this->p += 4;
         return  this->p[-4]
              | (this->p[-3] << 8)
@@ -124,7 +124,7 @@ class Stream {
     }
 
     unsigned int in_uint32_be(void) {
-        REDASSERT(check_rem(4));
+        REDASSERT(in_check_rem(4));
         this->p += 4;
         return  this->p[-1]
              | (this->p[-2] << 8)
@@ -134,7 +134,7 @@ class Stream {
     }
 
     uint64_t in_uint64_le(void) {
-        REDASSERT(check_rem(8));
+        REDASSERT(in_check_rem(8));
         this->p += 8;
         return  this->p[-8]
         | (this->p[-7] << 8)
@@ -148,7 +148,7 @@ class Stream {
     }
 
     uint64_t in_uint64_be(void) {
-        REDASSERT(check_rem(8));
+        REDASSERT(in_check_rem(8));
         this->p += 8;
         return  this->p[-1]
         | (this->p[-2] << 8)
@@ -162,19 +162,19 @@ class Stream {
     }
 
     unsigned in_bytes_le(const uint8_t nb){
-        REDASSERT(check_rem(nb));
+        REDASSERT(in_check_rem(nb));
         this->p += nb;
         return ::in_bytes_le(nb, this->p - nb);
     }
 
     unsigned in_bytes_be(const uint8_t nb){
-        REDASSERT(check_rem(nb));
+        REDASSERT(in_check_rem(nb));
         this->p += nb;
         return ::in_bytes_be(nb, this->p - nb);
     }
 
     void in_copy_bytes(uint8_t * v, size_t n) {
-        REDASSERT(check_rem(n));
+        REDASSERT(in_check_rem(n));
         memcpy(v, this->p, n);
         this->p += n;
     }
@@ -184,13 +184,13 @@ class Stream {
     }
 
     const uint8_t *in_uint8p(unsigned int n) {
-        REDASSERT(check_rem(n));
+        REDASSERT(in_check_rem(n));
         this->p+=n;
         return this->p - n;
     }
 
     void in_skip_bytes(unsigned int n) {
-        REDASSERT(check_rem(n));
+        REDASSERT(in_check_rem(n));
         this->p+=n;
     }
 
@@ -955,7 +955,7 @@ TODO("check if implementation below is conforming to obfuscated text above (I ha
         if (mlength != std::min(length, min)){
             return false;
         }
-        if (!this->check_rem(length)){
+        if (!this->in_check_rem(length)){
             return false;
         }
         this->out_skip_bytes(mlength);

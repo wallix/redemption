@@ -24,7 +24,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestGraphicsToFile2
+#define BOOST_TEST_MODULE TestGraphicToFile2
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
@@ -92,7 +92,7 @@ private:
     }
 };
 
-BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ReadCapture)
+BOOST_AUTO_TEST_CASE(TestGraphicToFile_ReadCapture)
 {
     Rect screen_rect(0, 0, 800, 600);
 
@@ -261,7 +261,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ReadCapture)
     timeval now;
     gettimeofday(&now, NULL);
 
-    RDPUnserializer reader(&in_trans, now, &consumer, screen_rect);
+    FileToGraphic reader(&in_trans, now, &consumer, screen_rect);
     size_t i = 0;
     while (reader.next_order()){
         reader.interpret_order();

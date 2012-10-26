@@ -14,11 +14,10 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+   Copyright (C) Wallix 2012
+   Author(s): Christophe Grosjean
 
-   Unit test to writing RDP orders to file and rereading them
+   Unit test to conversion of RDP drawing orders to PNG images
 
 */
 
@@ -242,7 +241,6 @@ BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
     d.flush();
 }
 
-
 BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 {
     const char * filename = "test.png";
@@ -253,55 +251,132 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
     d.draw(cmd, screen_rect);
     d.flush();
     ::close(trans.fd);
-    struct stat sb;
-    int status = stat(filename, &sb);
-    BOOST_CHECK_EQUAL(0, status);
-    BOOST_CHECK_EQUAL(2786, sb.st_size);
+    BOOST_CHECK_EQUAL(2786, filesize(filename));
     ::unlink(filename);
 }
 
 
 BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 {
-    OutByFilenameSequenceTransport trans("path file count pid extension", "./", "test", "png");
+    const FileSequence sequence("path file pid count extension", "./", "test", "png");
+    OutByFilenameSequenceTransport trans(sequence);
     ImageCapture d(trans, 800, 600, true);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     d.draw(cmd, screen_rect);
     d.flush();
 
-    {
-        char filename[1024];
-        strcpy(filename, trans.path);
-        struct stat sb;
-        int status = stat(filename, &sb);
-        BOOST_CHECK_EQUAL(0, status);
-        BOOST_CHECK_EQUAL(2786, sb.st_size);
-        ::unlink(filename);
-    }
+    BOOST_CHECK_EQUAL(2786, filesize(trans.path));
+    ::unlink(trans.path);
 
     RDPOpaqueRect cmd2(Rect(50, 50, 100, 50), BLUE);
     d.draw(cmd2, screen_rect);
     trans.next();
     d.flush();
 
-    {
-        char filename[1024];
-        strcpy(filename, trans.path);
-        struct stat sb;
-        int status = stat(filename, &sb);
-        BOOST_CHECK_EQUAL(0, status);
-        BOOST_CHECK_EQUAL(2806, sb.st_size);
-        ::unlink(filename);
-    }
+    BOOST_CHECK_EQUAL(2806, filesize(trans.path));
+    ::unlink(trans.path);
 }
 
-//BOOST_AUTO_TEST_CASE(TestOneRedScreen)
-//{
-//    Rect screen_rect(0, 0, 800, 600);
-//    StaticCapture consumer(800, 600, "TestOneRedScreen.png", true);
-//    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
-//    consumer.draw(cmd, screen_rect);
-//    consumer.dump_png();
-//}
 
+BOOST_AUTO_TEST_CASE(TestOneRedScreen)
+{
+    struct timeval now;
+    now.tv_sec = 1000;
+    now.tv_usec = 0;
+
+    Rect screen_rect(0, 0, 800, 600);
+    FileSequence sequence("path file pid count extension", "./", "test", "png");
+    OutByFilenameSequenceTransport trans(sequence);
+    StaticCapture consumer(now, trans, sequence, 800, 600, true);
+    Inifile ini;
+    consumer.update_config(ini);
+    ini.globals.png_limit = 3;
+
+    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
+    consumer.draw(cmd, screen_rect);
+
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(1));
+
+    consumer.flush();
+
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(1));
+
+    consumer.flush();
+
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(2));
+
+    consumer.flush();
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(2));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(3));
+
+    consumer.flush();
+
+    ::close(trans.fd);
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(2));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(3));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
+
+    ini.globals.png_limit = 10;
+    consumer.update_config(ini);
+
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(2));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(3));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
+
+    ini.globals.png_limit = 2;
+    consumer.update_config(ini);
+
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(2));
+    BOOST_CHECK_EQUAL(2786, sequence.filesize(3));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
+
+    ini.globals.png_limit = 0;
+    consumer.update_config(ini);
+
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(2));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(3));
+    BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
+    
+}
+
+const char small_png_image[] =
+    "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
+    "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
+    "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00"             //.............
+    "\x3b\x37\xe9\xb1"                                                 //;7..
+    "\x00\x00\x00\x32\x49\x44\x41\x54"                                 //...2IDAT
+    "\x28\x91\x63\xfc\xcf\x80\x17\xfc\xff\xcf\xc0\xc8\x88\x4b\x92\x09" //(.c..........K..
+    "\xbf\x5e\xfc\x60\x88\x6a\x66\x41\xe3\x33\x32\xa0\x84\xe0\x7f\x54" //.^.`.jfA.32....T
+    "\x91\xff\x0c\x28\x81\x37\x70\xce\x66\x1c\xb0\x78\x06\x00\x69\xdc" //...(.7p.f..x..i.
+    "\x0a\x12"                                                         //..
+    "\x86\x4a\x0c\x44"                                                 //.J.D
+    "\x00\x00\x00\x00\x49\x45\x4e\x44"                                 //....IEND
+    "\xae\x42\x60\x82"                                                 //.B`.
+;
+
+BOOST_AUTO_TEST_CASE(TestSmallImage)
+{
+    const FileSequence sequence("path file pid count extension", "./", "sample", "png");
+    OutByFilenameSequenceTransport trans(sequence, 0x100);
+    Rect scr(0, 0, 20, 10);
+    ImageCapture d(trans, scr.cx, scr.cy, true);
+    d.draw(RDPOpaqueRect(scr, RED), scr);
+    d.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
+    d.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
+    d.flush();
+    sequence.unlink(0);
+}

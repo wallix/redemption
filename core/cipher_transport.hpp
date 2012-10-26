@@ -82,7 +82,7 @@ public:
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         LOG(LOG_INFO, "OutCipherTransport used for recv");
-        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_RECV, 0);
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
 
     virtual void send(const char * const buffer, size_t len) throw (Error)
@@ -218,7 +218,7 @@ public:
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         LOG(LOG_INFO, "InCipherTransport used for writing");
-        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_SEND, 0);
+        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV, 0);
     }
 
 private:

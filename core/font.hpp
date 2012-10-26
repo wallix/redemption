@@ -180,7 +180,7 @@ struct Font {
             stream.in_skip_bytes(8);
 
     TODO(" we can do something much cooler using C++ facilities and moving glyph building code to FontChar. Only problem : clean error management using exceptions implies a real exception object in FontChar. We will do that later.")
-            while (stream.check_rem(16)) {
+            while (stream.in_check_rem(16)) {
 //                LOG(LOG_INFO, "Reading definition for glyph %u", index);
                 int width = stream.in_sint16_le();
                 int height = stream.in_sint16_le();
@@ -203,7 +203,7 @@ TODO(" baseline is always -height (seen from the code of fontdump) looks strange
                     // one glyph is broken but we continue with other glyphs
                 }
                 else {
-                    if (!stream.check_rem(datasize)) {
+                    if (!stream.in_check_rem(datasize)) {
                         LOG(LOG_ERR, "Error loading font %s:"
                             " not enough data for definition of glyph %d"
                             " (expected %d, got %d)\n", file_path, index,

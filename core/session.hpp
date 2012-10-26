@@ -410,7 +410,9 @@ struct Session {
                                     this->internal_state = SESSION_STATE_STOP;
                                     try {
                                         this->session_setup_mod(next_state, this->context);
+                                        printf("start_capture record_video=%u\n", record_video);
                                         if (record_video) {
+                                            printf(" ==============================> start_capture\n");
                                             this->front->start_capture(
                                                 this->front->client_info.width,
                                                 this->front->client_info.height,
@@ -642,7 +644,7 @@ struct Session {
                         this->mod = new test_internal_mod(
                                         *this->context,
                                         *this->front,
-                                        this->ini->globals.movie_path,
+                                        this->ini->globals.replay_path,
                                         this->context->movie,
                                         this->front->client_info.width,
                                         this->front->client_info.height

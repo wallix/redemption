@@ -112,7 +112,7 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
 
     RecorderAdapter* adapter = actions[i].action;
     InFileTransport trans(-1);
-    RDPUnserializer reader(&trans, now, 0, Rect());
+    FileToGraphic reader(&trans, now);
 
     WRMRecorder recorder(now,
                         trans,

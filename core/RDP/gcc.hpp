@@ -525,14 +525,14 @@ namespace GCC
 
             RecvFactory(Stream & stream) : payload(stream, stream.get_offset())
             {
-                if (!stream.check_rem(4)){
+                if (!stream.in_check_rem(4)){
                     LOG(LOG_WARNING, "Incomplete GCC::UserData data block header");                      
                     throw Error(ERR_GCC);
                 }
                 this->tag = stream.in_uint16_le();
                 this->length = stream.in_uint16_le();
                 LOG(LOG_INFO, "GCC::UserData tag=%0.4x length=%u", tag, length);
-                if (!stream.check_rem(length - 4)){
+                if (!stream.in_check_rem(length - 4)){
                     LOG(LOG_WARNING, "Incomplete GCC::UserData data block"
                                      " tag=%u length=%u available_length=%u",
                                      tag, length, stream.size() - 4);                      
@@ -2238,7 +2238,7 @@ namespace GCC
                 // serverCertificate field MUST NOT be present.
 
                 this->serverCertLen = stream.in_uint32_le();
-                if (!stream.check_rem(this->serverCertLen)) {
+                if (!stream.in_check_rem(this->serverCertLen)) {
                     LOG(LOG_ERR, "SCSecutity recv: serverCertLen %d, not enough data available (%u)",
                          this->serverCertLen, stream.size() - stream.get_offset());
                     throw Error(ERR_GCC);

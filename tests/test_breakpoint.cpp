@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     std::string filename(mwrm_filename);
 
     InFileTransport trans(-1);
-    RDPUnserializer reader(&trans, now, 0, Rect());
+    FileToGraphic reader(&trans, now, 0, Rect());
 
     WRMRecorder recorder(now, trans, reader, InputType::META_TYPE, path, false, false, false, range, filename, 0);
    

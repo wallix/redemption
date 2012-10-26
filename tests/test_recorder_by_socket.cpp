@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(TestSocket)
                 StaticCapture consumer(800, 600, "/tmp/socket_test.png", true);
                 timeval now;
                 gettimeofday(&now, NULL);
-                RDPUnserializer unserializer(&t, now, &consumer, Rect(0,0,800,600));
+                FileToGraphic unserializer(&t, now, &consumer, Rect(0,0,800,600));
                 while (unserializer.next())
                     ;
 

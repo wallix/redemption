@@ -323,32 +323,33 @@ public:
 
     void start_capture(int width, int height, Inifile & ini, ModContext & context)
     {
-        TODO("we should copy what is relevant from context into ini configuration structure, this way we could pass only ini structure to consumer modules instead of full context. Any update should go through update_config.")
-        TODO("width and height should be parameters as others, nothing special")
         if (context.get_bool(STRAUTHID_OPT_MOVIE)){
             this->stop_capture();
             struct timeval now;
             gettimeofday(&now, NULL);
-            this->capture = new Capture(now, width, height, 
-                context.get(STRAUTHID_OPT_MOVIE_PATH), 
-                context.get(STRAUTHID_OPT_MOVIE_PATH), 
-                context.get(STRAUTHID_OPT_CODEC_ID), 
-                context.get(STRAUTHID_VIDEO_QUALITY));
+            
+            strncpy(ini.globals.movie_path, context.get(STRAUTHID_OPT_MOVIE_PATH), sizeof(ini.globals.movie_path)-1);
+            ini.globals.movie_path[sizeof(ini.globals.movie_path)-1] = 0;
+            
+            strncpy(ini.globals.codec_id, context.get(STRAUTHID_OPT_CODEC_ID), sizeof(ini.globals.codec_id)-1);
+            ini.globals.codec_id[sizeof(ini.globals.codec_id)-1] = 0;
+            
+            strncpy(ini.globals.video_quality, context.get(STRAUTHID_VIDEO_QUALITY), sizeof(ini.globals.video_quality)-1);
+            ini.globals.video_quality[sizeof(ini.globals.video_quality)-1] = 0;
 
-            char buffer[256];
-            snprintf(buffer, 256, "type='OCR title bar' "
-                                  "username='%s' "
-                                  "client_ip='%s' "
-                                  "ressource='%s' "
-                                  "account='%s'", 
-                    context.get(STRAUTHID_AUTH_USER), 
-                    context.get(STRAUTHID_HOST), 
-                    context.get(STRAUTHID_TARGET_DEVICE),
-                    context.get(STRAUTHID_TARGET_USER));
-            buffer[255] = 0;
-            this->capture->set_prefix(buffer, strlen(buffer));
+            strncpy(ini.globals.auth_user, context.get(STRAUTHID_AUTH_USER), sizeof(ini.globals.auth_user)-1);
+            ini.globals.auth_user[sizeof(ini.globals.auth_user)-1] = 0;
 
-            this->capture->update_config(now, ini);
+            strncpy(ini.globals.host, context.get(STRAUTHID_HOST), sizeof(ini.globals.host)-1);
+            ini.globals.host[sizeof(ini.globals.host)-1] = 0;
+
+            strncpy(ini.globals.target_device, context.get(STRAUTHID_TARGET_DEVICE), sizeof(ini.globals.target_device)-1);
+            ini.globals.target_device[sizeof(ini.globals.target_device)-1] = 0;
+
+            strncpy(ini.globals.target_user, context.get(STRAUTHID_TARGET_USER), sizeof(ini.globals.target_user)-1);
+            ini.globals.target_user[sizeof(ini.globals.target_user)-1] = 0;
+            
+            this->capture = new Capture(now, ini, width, height);
         }
     }
 
@@ -942,7 +943,7 @@ public:
             SubStream & gcc_data = mcs_ci.payload;
             GCC::Create_Request_Recv gcc_cr(gcc_data);
 
-            while (gcc_cr.payload.check_rem(4)) {
+            while (gcc_cr.payload.in_check_rem(4)) {
                 GCC::UserData::RecvFactory f(gcc_cr.payload);
                 switch (f.tag){
                     case CS_CORE:
@@ -1019,7 +1020,7 @@ public:
                     break;
                 }
             }
-            if (gcc_cr.payload.check_rem(1)) {
+            if (gcc_cr.payload.in_check_rem(1)) {
                 LOG(LOG_ERR, "recv connect request parsing gcc data : short header");
                 throw Error(ERR_MCS_DATA_SHORT_HEADER);
             }

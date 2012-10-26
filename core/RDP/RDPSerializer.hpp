@@ -27,6 +27,69 @@
 #if !defined(__RDP_SERIALIZER_HPP__)
 #define __RDP_SERIALIZER_HPP__
 
+// MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
+// ================================================================
+// The TS_FP_UPDATE_ORDERS structure contains primary, secondary, and alternate
+// secondary drawing orders aligned on byte boundaries. This structure conforms
+// to the layout of a Fast-Path Update (see [MS-RDPBCGR] section 2.2.9.1.2.1)
+// and is encapsulated within a Fast-Path Update PDU (see [MS-RDPBCGR] section
+// 2.2.9.1.2.1.1).
+
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field
+//   is the same as the updateHeader byte field described in the Fast-Path
+//   Update structure (see [MS-RDPBCGR] section 2.2.9.1.2.1). The updateCode
+//   bitfield (4 bits in size) MUST be set to FASTPATH_UPDATETYPE_ORDERS (0x0).
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this
+//   optional field (as well as the possible values) is the same as the
+//   compressionFlags field described in the Fast-Path Update structure
+//   specified in [MS-RDPBCGR] section 2.2.9.1.2.1.
+
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well
+//   as the possible values) is the same as the size field described in the
+//   Fast-Path Update structure specified in [MS-RDPBCGR] section 2.2.9.1.2.1.
+
+// numberOrders (2 bytes): A 16-bit, unsigned integer. The number of Drawing
+//   Order (section 2.2.2.1.1) structures contained in the orderData field.
+
+// orderData (variable): A variable-sized array of Drawing Order (section
+//   2.2.2.1.1) structures packed on byte boundaries. Each structure contains a
+//   primary, secondary, or alternate secondary drawing order. The controlFlags
+//   field of the Drawing Order identifies the type of drawing order.
+
+
+// MS-RDPECGI 2.2.2.1 Orders Update (TS_UPDATE_ORDERS_PDU_DATA)
+// ============================================================
+// The TS_UPDATE_ORDERS_PDU_DATA structure contains primary, secondary, and
+// alternate secondary drawing orders aligned on byte boundaries. This structure
+// conforms to the layout of a Slow Path Graphics Update (see [MS-RDPBCGR]
+// section 2.2.9.1.1.3.1) and is encapsulated within a Graphics Update PDU (see
+// [MS-RDPBCGR] section 2.2.9.1.1.3.1.1).
+
+// shareDataHeader (18 bytes): Share Data Header (see [MS-RDPBCGR], section
+//   2.2.8.1.1.1.2) containing information about the packet. The type subfield
+//   of the pduType field of the Share Control Header (section 2.2.8.1.1.1.1)
+//   MUST be set to PDUTYPE_DATAPDU (7). The pduType2 field of the Share Data
+//   Header MUST be set to PDUTYPE2_UPDATE (2).
+
+// updateType (2 bytes): A 16-bit, unsigned integer. The field contains the
+//   graphics update type. This field MUST be set to UPDATETYPE_ORDERS (0x0000).
+
+// pad2OctetsA (2 bytes): A 16-bit, unsigned integer used as a padding field.
+//   Values in this field are arbitrary and MUST be ignored.
+
+// numberOrders (2 bytes): A 16-bit, unsigned integer. The number of Drawing
+//   Order (section 2.2.2.1.1) structures contained in the orderData field.
+
+// pad2OctetsB (2 bytes): A 16-bit, unsigned integer used as a padding field.
+//   Values in this field are arbitrary and MUST be ignored.
+
+// orderData (variable): A variable-sized array of Drawing Order (section
+//   2.2.2.1.1) structures packed on byte boundaries. Each structure contains a
+//   primary, secondary, or alternate secondary drawing order. The controlFlags
+//   field of the Drawing Order identifies the type of drawing order.
+
+
 #include "RDP/RDPGraphicDevice.hpp"
 
 #include "transport.hpp"
@@ -38,11 +101,13 @@
 #include "colors.hpp"
 #include "meta_file.hpp"
 
-struct WRMChunk {
-    static const uint16_t TIMESTAMP = 1008;
-    static const uint16_t BREAKPOINT = 1005;
-    static const uint16_t META_FILE = 1006;
-    static const uint16_t NEXT_FILE_ID = 1007;
+enum {
+    TIMESTAMP = 1008,
+    BREAKPOINT = 1005,
+    META_FILE = 1006,
+    NEXT_FILE_ID = 1007,
+    LAST_IMAGE_CHUNK = 0x1000,
+    PARTIAL_IMAGE_CHUNK = 0x1001,
 };
 
 struct RDPSerializer : public RDPGraphicDevice
@@ -105,7 +170,13 @@ struct RDPSerializer : public RDPGraphicDevice
         bmp_cache(bpp, small_entries, small_size, medium_entries, medium_size, big_entries, big_size)
      {}
     ~RDPSerializer() {}
-    virtual void flush() = 0;
+    virtual void flush() 
+    {
+        this->trans->send(this->pstream->data, this->pstream->size());
+        this->order_count = 0;
+        this->pstream->reset();
+
+    }
 
     /*****************************************************************************/
     // check if the next order will fit in available packet size

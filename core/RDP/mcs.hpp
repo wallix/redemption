@@ -130,14 +130,14 @@ namespace MCS
         {
             switch (encoding){
             case PER_ENCODING:
-                if (!stream.check_rem(1)){
+                if (!stream.in_check_rem(1)){
                     throw Error(ERR_MCS);
                 }
                 this->type = (stream.data[0] >> 2);
             break;
             default:
             case BER_ENCODING:
-                if (!stream.check_rem(2)){
+                if (!stream.in_check_rem(2)){
                     throw Error(ERR_MCS);
                 }
                 TODO("getting to the type this way should works in our restricted use case,"
