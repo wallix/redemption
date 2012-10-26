@@ -190,6 +190,7 @@ unit-test test_capture_png : tests/capture/test_capture_png.cpp png z libboost_u
 unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp png z libboost_unit_test z openssl crypto ;
 unit-test test_capture_static : tests/capture/test_capture_static.cpp png z libboost_unit_test z openssl crypto ;
 unit-test test_capture_wrm_image_chunk : tests/capture/test_capture_wrm_image_chunk.cpp png z libboost_unit_test z openssl crypto ;
+unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp png z libboost_unit_test z openssl crypto ;
 
 #unit-test test_RDP_graphic_to_file : tests/test_RDP_graphic_to_file.cpp png z libboost_unit_test z openssl crypto ;
 #unit-test test_RDP_graphic_to_file_3 : tests/test_RDP_graphic_to_file_3.cpp png z libboost_unit_test z openssl crypto ;

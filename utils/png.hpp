@@ -130,7 +130,6 @@ inline void transport_read_png24(Transport * trans, const uint8_t * data,
     png_info * pinfo = png_create_info_struct(ppng);
     png_read_info(ppng, pinfo);
 
-    TODO("this row should be sent to all drawables.")
     unsigned char * row = (unsigned char*)data;
     for (size_t k = 0 ; k < height ; ++k) {
         png_read_row(ppng, row, NULL);

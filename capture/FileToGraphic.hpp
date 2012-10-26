@@ -63,7 +63,7 @@ public:
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         size_t total_len = 0;
         while (total_len < len){
-            if (stream.end - stream.p >= len - total_len){
+            if (static_cast<size_t>(stream.end - stream.p) >= static_cast<size_t>(len - total_len)){
                 stream.in_copy_bytes(*pbuffer + total_len, len - total_len);
                 total_len += len - total_len;
                 *pbuffer += len;
@@ -439,17 +439,22 @@ struct FileToGraphic
             case PARTIAL_IMAGE_CHUNK:
             {
                 LOG(LOG_INFO,"IMAGE_CHUNK\n");
-
                 InChunkedImageTransport chunk_trans(this->chunk_type, this->chunk_size, this->trans);
 
-                TODO("Temporary : if we have several drawables they should all receive image."
-                     "If we do not have any drawable we should skip unnecessary image chunks")
                 if (this->nbdrawables){
                     ::transport_read_png24(&chunk_trans, this->drawables[0]->drawable.data,
                                  this->drawables[0]->drawable.width, 
                                  this->drawables[0]->drawable.height,
                                  this->drawables[0]->drawable.rowsize
-                                );            
+                                );
+                    for (size_t i = 1 ; i < this->nbdrawables ; i++){
+                        unsigned char * row = this->drawables[0]->drawable.data;
+                        for (size_t k = 0 ; k < this->drawables[0]->drawable.height ; ++k) {
+                            this->drawables[i]->set_row(k, row);
+                            row += this->drawables[0]->drawable.rowsize;
+                        }
+                    }
+                                
                 }
                 else {
                     // in this case ignore chunks

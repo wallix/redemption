@@ -249,14 +249,8 @@ struct RDPSerializer : public RDPGraphicDevice
         }
     }
 
-
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & oldbmp)
+    void emit_bmp_cache(uint8_t cache_id, uint16_t cache_idx)
     {
-        uint32_t res = this->bmp_cache.cache_bitmap(oldbmp);
-        uint8_t cache_id = (res >> 16) & 0x3;
-        uint16_t cache_idx = res;
-
-        if ((res >> 24) == BITMAP_ADDED_TO_CACHE){
             const Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
             RDPBmpCache cmd_cache(bmp, cache_id, cache_idx, this->ini?this->ini->globals.debug.primary_orders:0);
             this->reserve_order(cmd_cache.bmp->bmp_size + 16);
@@ -265,6 +259,16 @@ struct RDPSerializer : public RDPGraphicDevice
             if (this->ini && this->ini->globals.debug.secondary_orders){
                 cmd_cache.log(LOG_INFO);
             }
+    }    
+
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & oldbmp)
+    {
+        uint32_t res = this->bmp_cache.cache_bitmap(oldbmp);
+        uint8_t cache_id = (res >> 16) & 0x3;
+        uint16_t cache_idx = res;
+
+        if ((res >> 24) == BITMAP_ADDED_TO_CACHE){
+            this->emit_bmp_cache(cache_id, cache_idx);
         }
 
         RDPMemBlt newcmd = cmd;

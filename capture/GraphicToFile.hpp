@@ -140,6 +140,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     , bpp(bpp)
     , trans(trans)
     {
+    
+        TODO("The serializers and the drawables should probably be provided by external call, not instanciated here")
         this->serializer = new RDPSerializer(trans, pstream, ini, bpp,
                     small_entries, small_size,
                     medium_entries, medium_size,

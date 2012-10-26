@@ -212,9 +212,9 @@ class CheckTransport : public Transport {
             LOG(LOG_INFO, "=============== Common Part =======");
             hexdump_c(buffer, differs);
             LOG(LOG_INFO, "=============== Expected ==========");
-            hexdump_c((const char *)(&this->data[this->current]) + differs, available_len - differs);
+            hexdump((const char *)(&this->data[this->current]) + differs, available_len - differs);
             LOG(LOG_INFO, "=============== Got ===============");
-            hexdump(buffer+differs, available_len - differs);
+            hexdump_c(buffer+differs, available_len - differs);
             throw Error(ERR_TRANSPORT_DIFFERS, 0);
         }
         this->current += available_len;
