@@ -18,7 +18,7 @@
    Author(s): Christophe Grosjean, Javier Caverni
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
-   Unit test to check back-end behavior stays identical 
+   Unit test to check back-end behavior stays identical
    when connecting to reference W2000 server (mocked up)
 
 */
@@ -30,7 +30,7 @@
 #include <errno.h>
 #include <algorithm>
 
-//#define LOGPRINT
+#define LOGPRINT
 #include "./test_orders.hpp"
 
 #include "stream.hpp"
@@ -51,6 +51,7 @@
 #include "staticcapture.hpp"
 
 
+
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
 
@@ -61,7 +62,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.bpp = 24;
     info.width = 800;
     info.height = 600;
-    int verbose = 1;
+    int verbose = 511;
 
     class Front : public FrontAPI {
         public:

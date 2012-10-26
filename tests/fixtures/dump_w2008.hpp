@@ -1173,6 +1173,12 @@ const char outdata[] =
 /* 0010 */ "\x00\x00\x00\x31\xb6\x24\xa6\x21\x92\x8c\x13\xef\xbb\x94\xd8\x6c" //...1.$.!.......l |
 /* 0020 */ "\xf3\x90\xe4\x3c\xfc\xf9\xa6\x32\xaf\x9a\xdb\x81\x42\x60\xfe\xb5" //...<...2....B`.. |
 /* 0030 */ "\x24\xc2\xf4\x3f\x39"                                             //$..?9 |
+/* 0000 */ "\x03\x00\x00\x3c\x02\xf0\x80"
+/* 0000 */ "\x64\x00\x03\x03\xeb\x70\x2e"
+/* 0000 */ "\x08\x00\x00\x00\xc9\xa1\x03\x83\x99\x96\xd9\x76"
+/* 0000 */ "\x70\x66\x99\x7f\x2c\x93\x6a\xc4\xff\x42\x6a\xb3\x91\x3c\xa1\xbe" //pf..,.j..Bj..<..
+/* 0010 */ "\xca\x2f\xeb\x46\xd6\x2d\x3b\xd2\x13\x9e\xbb\xc2\x25\x5f\x1f\xf5" //./.F.-;.....%_..
+/* 0020 */ "\x9b\x40"                                                         //.@
 // Dump done RDP W2008 Target (4) sending 53 bytes |
 // Send done on RDP W2008 Target (4) |
 // Resizing to 800x600x16 |
@@ -14381,4 +14387,3 @@ const char indata[] =
 // ===================> count = 38 |
 // Socket RDP W2008 Target (4) : closing connection |
 } /* end indata */;
-

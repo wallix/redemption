@@ -157,7 +157,8 @@ struct rdp_orders {
         }
         this->cache_bitmap[bmp.id][bmp.idx] = bmp.bmp;
         if (this->verbose & 64){
-            LOG(LOG_ERR, "rdp_orders_process_bmpcache bitmap id=%u idx=%u cx=%u cy=%u bmp_size=%u original_bpp=%u bpp=%u", bmp.id, bmp.idx, bmp.bmp->cx, bmp.bmp->cy, bmp.bmp->bmp_size, bmp.bmp->original_bpp, bpp);
+            LOG(LOG_ERR, "rdp_orders_process_bmpcache bitmap id=%u idx=%u cx=%u cy=%u bmp_size=%u original_bpp=%u bpp=%u"
+                       , bmp.id, bmp.idx, bmp.bmp->cx, bmp.bmp->cy, bmp.bmp->bmp_size, bmp.bmp->original_bpp, bpp);
         }
     }
 
@@ -343,6 +344,7 @@ struct mod_rdp : public client_mod {
 
     int encryptionLevel;
     int encryptionMethod;
+    int key_flags;
     uint32_t server_public_key_len;
     uint8_t client_crypt_random[512];
     CryptContext encrypt, decrypt;
@@ -383,6 +385,7 @@ struct mod_rdp : public client_mod {
             const bool tls,
             const ClientInfo & info,
             Random * gen,
+            int key_flags,
             uint32_t verbose = 0)
             :
                 client_mod(front, info.width, info.height),
@@ -410,6 +413,7 @@ struct mod_rdp : public client_mod {
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
         }
 
+        this->key_flags = key_flags;
         this->lic_layer_license_issued = 0;
         this->lic_layer_license_size = 0;
         memset(this->lic_layer_license_key, 0, 16);
@@ -551,13 +555,13 @@ struct mod_rdp : public client_mod {
             flags |= ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
         stream.out_copy_bytes(data, chunk_size);
-        stream.mark_end();    
+        stream.mark_end();
 
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, this->encryptionMethod);
-        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channel.chanid, 1, 3, 
+        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channel.chanid, 1, 3,
                                       sec_header.size() + stream.size() , MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
@@ -745,8 +749,8 @@ struct mod_rdp : public client_mod {
                         sc_sec1.log("Received from server");
 
                         this->encryptionLevel = sc_sec1.encryptionLevel;
-                        this->encryptionMethod = sc_sec1.encryptionMethod; 
-                        if (sc_sec1.encryptionLevel == 0 
+                        this->encryptionMethod = sc_sec1.encryptionMethod;
+                        if (sc_sec1.encryptionLevel == 0
                         &&  sc_sec1.encryptionMethod == 0) { /* no encryption */
                             LOG(LOG_INFO, "No encryption");
                         }
@@ -768,7 +772,7 @@ struct mod_rdp : public client_mod {
                             /* RSA info */
                             if (sc_sec1.dwVersion == GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {
                                 memcpy(exponent, sc_sec1.proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
-                                memcpy(modulus, sc_sec1.proprietaryCertificate.RSAPK.modulus, 
+                                memcpy(modulus, sc_sec1.proprietaryCertificate.RSAPK.modulus,
                                     sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE);
 
                                 this->server_public_key_len = sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE;
@@ -824,7 +828,7 @@ struct mod_rdp : public client_mod {
                                     throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
                                 }
 
-                                if ((BN_num_bytes(server_public_key->e) > SEC_EXPONENT_SIZE) 
+                                if ((BN_num_bytes(server_public_key->e) > SEC_EXPONENT_SIZE)
                                 ||  (BN_num_bytes(server_public_key->n) > SEC_MAX_MODULUS_SIZE)){
                                     LOG(LOG_WARNING, "Failed to extract RSA exponent and modulus");
                                     throw Error(ERR_SEC);
@@ -839,12 +843,12 @@ struct mod_rdp : public client_mod {
                             uint8_t client_random[SEC_RANDOM_SIZE];
                             memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
 
-                            /* Generate a client random, and determine encryption keys */	
+                            /* Generate a client random, and determine encryption keys */
                             this->gen->random(client_random, SEC_RANDOM_SIZE);
 
                             ssllib ssl;
 
-                            ssl.rsa_encrypt(client_crypt_random, client_random, 
+                            ssl.rsa_encrypt(client_crypt_random, client_random,
                                     SEC_RANDOM_SIZE, this->server_public_key_len, modulus, exponent);
                             uint8_t key_block[48];
                             ssl.rdp_sec_generate_keyblock(key_block, client_random, serverRandom);
@@ -1001,7 +1005,7 @@ struct mod_rdp : public client_mod {
                     X224::DT_TPDU_Recv x224(*this->nego.trans, x224_data);
                     SubStream & mcs_cjcf_data = x224.payload;
                     MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
-                    TODO("We should check channel confirmation worked, for now we just do like server said OK to everything... and that may not be the case, some channels may be closed for instance. We should also check requested chanid are some confirm may come out of order"); 
+                    TODO("We should check channel confirmation worked, for now we just do like server said OK to everything... and that may not be the case, some channels may be closed for instance. We should also check requested chanid are some confirm may come out of order");
                 }
             }
 
@@ -1425,12 +1429,12 @@ struct mod_rdp : public client_mod {
                                 // |                                    | ([MS-RDPELE] section 2.2.2.2).      |
                                 // +------------------------------------+-------------------------------------+
 
-                                // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of the 
+                                // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
                                 // binary information in the blobData field. If wBlobLen is set to 0, then the
                                 // blobData field is not included in the Licensing Binary BLOB structure and the
                                 // contents of the wBlobType field SHOULD be ignored.
 
-                                // blobData (variable): Variable-length binary data. The size of this data in 
+                                // blobData (variable): Variable-length binary data. The size of this data in
                                 // bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field
                                 // is not included in the Licensing Binary BLOB structure.
 
@@ -1466,7 +1470,7 @@ struct mod_rdp : public client_mod {
                             BStream sec_header(256);
 
                             SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
-                            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, 
+                            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3,
                                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
                             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
@@ -1559,7 +1563,7 @@ struct mod_rdp : public client_mod {
                             BStream mcs_header(256);
                             BStream sec_header(256);
                             SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
-                            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, 
+                            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3,
                                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
                             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
@@ -1784,6 +1788,11 @@ struct mod_rdp : public client_mod {
                             sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_FONTMAP);
                             this->connection_finalization_state = UP_AND_RUNNING;
+
+                            // Synchronize sent to indicate server the state of sticky keys (x-locks)
+                            // Must be sent at this point of the protocol (sent before, it xwould be ignored or replaced)
+                            rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
+
                         break;
                         case UP_AND_RUNNING:
                         {
@@ -1998,20 +2007,20 @@ struct mod_rdp : public client_mod {
 
             BStream stream(65536);
 
-            // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1) 
+            // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1)
             // containing information about the packet. The type subfield of the pduType
             // field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
             ShareControl sctrl(stream);
             sctrl.emit_begin(PDUTYPE_CONFIRMACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
 
-            // shareId (4 bytes): A 32-bit, unsigned integer. The share identifier for 
+            // shareId (4 bytes): A 32-bit, unsigned integer. The share identifier for
             // the packet (see [T128] section 8.4.2 for more information regarding share IDs).
 
             // Payload
             stream.out_uint32_le(this->share_id);
             stream.out_uint16_le(1002);
 
-            // lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The size in bytes 
+            // lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The size in bytes
             // of the sourceDescriptor field.
             stream.out_uint16_le(5);
 
@@ -2020,18 +2029,18 @@ struct mod_rdp : public client_mod {
             uint16_t offset_caplen = stream.get_offset();
             stream.out_uint16_le(0); // caplen
 
-            // sourceDescriptor (variable): A variable-length array of bytes containing a 
-            // source descriptor (see [T128] section 8.4.1 for more information regarding 
+            // sourceDescriptor (variable): A variable-length array of bytes containing a
+            // source descriptor (see [T128] section 8.4.1 for more information regarding
             // source descriptors).
             stream.out_copy_bytes("MSTSC", 5);
 
-            // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of 
+            // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of
             // capability sets included in the Demand Active PDU.
             uint16_t offset_capscount = stream.get_offset();
             uint16_t capscount = 0;
             stream.out_uint16_le(0); /* num_caps */
 
-            // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in 
+            // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in
             // this field MUST be ignored.
             stream.out_clear_bytes(2); /* pad */
 
@@ -2043,7 +2052,7 @@ struct mod_rdp : public client_mod {
             general_caps.extraflags = this->use_rdp5 ? NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:0;
             general_caps.log("Sending to server");
             general_caps.emit(stream);
-            stream.mark_end();    
+            stream.mark_end();
             capscount++;
 
             BitmapCaps bitmap_caps;
@@ -2053,7 +2062,7 @@ struct mod_rdp : public client_mod {
             bitmap_caps.bitmapCompressionFlag = this->bitmap_compression;
             bitmap_caps.log("Sending bitmap caps to server");
             bitmap_caps.emit(stream);
-            stream.mark_end();    
+            stream.mark_end();
             capscount++;
 
             OrderCaps order_caps;
@@ -2072,7 +2081,7 @@ struct mod_rdp : public client_mod {
             order_caps.textANSICodePage = 0x4e4; // Windows-1252 code"page is passed (latin-1)
             order_caps.log("Sending order caps to server");
             order_caps.emit(stream);
-            stream.mark_end();    
+            stream.mark_end();
             capscount++;
 
             BmpCacheCaps bmpcache_caps;
@@ -2084,7 +2093,7 @@ struct mod_rdp : public client_mod {
             bmpcache_caps.cache2MaximumCellSize = nbbytes(this->bpp) * 0x1000;
             bmpcache_caps.log("Sending bmpcache caps to server");
             bmpcache_caps.emit(stream);
-            stream.mark_end();    
+            stream.mark_end();
             capscount++;
 
 //            if(this->use_rdp5){
@@ -2094,75 +2103,75 @@ struct mod_rdp : public client_mod {
 //                bmpcache2_caps.bitmapCache1CellInfo = 2000;
 //                bmpcache2_caps.bitmapCache2CellInfo = 2000;
 //                bmpcache2_caps.emit(stream);
-//                stream.mark_end();    
+//                stream.mark_end();
 //                capscount++;
 //            }
 
             ColorCacheCaps colorcache_caps;
             colorcache_caps.log("Sending colorcache caps to server");
             colorcache_caps.emit(stream);
-            stream.mark_end();    
+            stream.mark_end();
             capscount++;
 
             ActivationCaps activation_caps;
             activation_caps.log("Sending activation caps to server");
             activation_caps.emit(stream);
-            stream.mark_end();    
+            stream.mark_end();
             capscount++;
 
             ControlCaps control_caps;
             control_caps.log("Sending control caps to server");
             control_caps.emit(stream);
-            stream.mark_end();    
+            stream.mark_end();
             capscount++;
 
             PointerCaps pointer_caps;
             pointer_caps.len = 8;
             pointer_caps.log("Sending pointer caps to server");
             pointer_caps.emit(stream);
-            stream.mark_end();    
+            stream.mark_end();
             capscount++;
 
             ShareCaps share_caps;
             share_caps.log("Sending share caps to server");
             share_caps.emit(stream);
-            stream.mark_end();    
+            stream.mark_end();
             capscount++;
 
             InputCaps input_caps;
             input_caps.log("Sending input caps to server");
             input_caps.emit(stream);
-            stream.mark_end();    
+            stream.mark_end();
             capscount++;
 
             SoundCaps sound_caps;
             sound_caps.log("Sending sound caps to server");
             sound_caps.emit(stream);
-            stream.mark_end();    
+            stream.mark_end();
             capscount++;
 
             FontCaps font_caps;
             font_caps.log("Sending font caps to server");
             font_caps.emit(stream);
-            stream.mark_end();    
+            stream.mark_end();
             capscount++;
 
             GlyphSupportCaps glyphsupport_caps;
             glyphsupport_caps.log("Sending glyphsupport caps to server");
             glyphsupport_caps.emit(stream);
-            stream.mark_end();    
+            stream.mark_end();
             capscount++;
 
 //            BrushCacheCaps brushcache_caps;
 //            brushcache_caps.log("Sending brushcache caps to server");
 //            brushcache_caps.emit(stream);
-//            stream.mark_end();    
+//            stream.mark_end();
 //            capscount++;
 
 //            CompDeskCaps compdesk_caps;
 //            compdesk_caps.log("Sending compdesk caps to server");
 //            compdesk_caps.emit(stream);
-//            stream.mark_end();    
+//            stream.mark_end();
 //            capscount++;
 
             TODO("Check caplen here")
@@ -2170,7 +2179,7 @@ struct mod_rdp : public client_mod {
 
             // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
             stream.out_uint32_le(0);
-            stream.mark_end();    
+            stream.mark_end();
 
             stream.set_out_uint16_le(total_caplen + 4, offset_caplen); // caplen
             stream.set_out_uint16_le(capscount, offset_capscount); // caplen
@@ -2182,7 +2191,7 @@ struct mod_rdp : public client_mod {
             BStream mcs_header(256);
             BStream sec_header(256);
             SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, this->encryptionMethod);
-            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, 
+            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3,
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
@@ -2993,7 +3002,7 @@ struct mod_rdp : public client_mod {
             stream.out_uint16_le(action);
             stream.out_uint16_le(0); /* userid */
             stream.out_uint32_le(0); /* control id */
-            stream.mark_end();    
+            stream.mark_end();
 
             // Packet trailer
             sdata.emit_end();
@@ -3003,7 +3012,7 @@ struct mod_rdp : public client_mod {
             BStream mcs_header(256);
             BStream sec_header(256);
             SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, this->encryptionMethod);
-            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, 
+            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3,
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
@@ -3032,7 +3041,7 @@ struct mod_rdp : public client_mod {
             // Payload
             stream.out_uint16_le(1); /* type */
             stream.out_uint16_le(1002);
-            stream.mark_end();    
+            stream.mark_end();
 
             // Packet trailer
             sdata.emit_end();
@@ -3042,7 +3051,7 @@ struct mod_rdp : public client_mod {
             BStream mcs_header(256);
             BStream sec_header(256);
             SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, this->encryptionMethod);
-            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, 
+            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3,
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
@@ -3072,7 +3081,7 @@ struct mod_rdp : public client_mod {
             stream.out_uint16_le(0); /* pad? */
             stream.out_uint16_le(seq); /* unknown */
             stream.out_uint16_le(0x32); /* entry size */
-            stream.mark_end();    
+            stream.mark_end();
 
             // Packet trailer
             sdata.emit_end();
@@ -3082,7 +3091,7 @@ struct mod_rdp : public client_mod {
             BStream mcs_header(256);
             BStream sec_header(256);
             SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, this->encryptionMethod);
-            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, 
+            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3,
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
@@ -3129,7 +3138,7 @@ struct mod_rdp : public client_mod {
             stream.out_uint16_le(device_flags);
             stream.out_uint16_le(param1);
             stream.out_uint16_le(param2);
-            stream.mark_end();    
+            stream.mark_end();
 
             // Packet trailer
             sdata.emit_end();
@@ -3139,7 +3148,7 @@ struct mod_rdp : public client_mod {
             BStream mcs_header(256);
             BStream sec_header(256);
             SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, this->encryptionMethod);
-            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, 
+            MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3,
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
@@ -3173,7 +3182,7 @@ struct mod_rdp : public client_mod {
                     TODO(" check this -1 (difference between rect and clip)")
                     stream.out_uint16_le(r.cx - 1);
                     stream.out_uint16_le(r.cy - 1);
-                    stream.mark_end();    
+                    stream.mark_end();
 
                     // Packet trailer
                     sdata.emit_end();
@@ -3183,7 +3192,7 @@ struct mod_rdp : public client_mod {
                     BStream mcs_header(256);
                     BStream sec_header(256);
                     SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, this->encryptionMethod);
-                    MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, 
+                    MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3,
                                                   sec_header.size() + stream.size() , MCS::PER_ENCODING);
                     X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
@@ -3381,7 +3390,7 @@ struct mod_rdp : public client_mod {
             // NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not set.
 
             if (this->verbose){
-                LOG(LOG_INFO, "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */", 
+                LOG(LOG_INFO, "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */",
                     i, bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
             }
 
@@ -3406,7 +3415,7 @@ struct mod_rdp : public client_mod {
 
                 if (width <= 0 || height <= 0){
                     if (this->verbose){
-                        LOG(LOG_ERR, "Unexpected bitmap size : width=%d height=%d size=%u left=%u, top=%u, right=%u, bottom=%u", 
+                        LOG(LOG_ERR, "Unexpected bitmap size : width=%d height=%d size=%u left=%u, top=%u, right=%u, bottom=%u",
                             width, height, size, left, top, right, bottom);
                     }
                 }
@@ -3462,14 +3471,14 @@ struct mod_rdp : public client_mod {
                                                                                                    | PERF_DISABLE_MENUANIMATIONS );
         infoPacket.log("Sending to server: ");
         infoPacket.emit(stream);
-        stream.mark_end();        
+        stream.mark_end();
 
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel, this->encryptionMethod);
-        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, 
+        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3,
                                       sec_header.size() + stream.size() , MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 

@@ -115,7 +115,11 @@ struct Session {
     UdevRandom gen;
 
     Session(wait_obj & front_event, SocketTransport & front_trans, const char * ip_source, int * refreshconf, Inifile * ini)
-        : refreshconf(refreshconf), front_event(front_event), front_trans(front_trans), ini(ini), verbose(this->ini->globals.debug.session)
+        : refreshconf(refreshconf)
+        , front_event(front_event)
+        , front_trans(front_trans)
+        , ini(ini)
+        , verbose(this->ini->globals.debug.session)
     {
         try {
             this->context = new ModContext();
@@ -761,6 +765,7 @@ struct Session {
                                     true,
                                     info,
                                     &this->gen,
+                                    this->front->keymap.key_flags,
                                     this->ini->globals.debug.mod_rdp);
                 this->mod->event.obj = t->sck;
 

@@ -133,11 +133,8 @@ struct Keymap2 {
     void update_keys_flags(int key_state)
     {}
 
-// ################################################################
     void update_chr_unicode(int key_state, int device_flags)
     {}
-
-// ################################################################
 
 // The TS_KEYBOARD_EVENT structure is a standard T.128 Keyboard Event (see [T128] section
 // 8.18.2). RDP keyboard input is restricted to keyboard scancodes, unlike the code-point or virtual
@@ -208,7 +205,7 @@ struct Keymap2 {
         // All other keys
         //================
             default: // all other codes
-                // This table translates the RDP scanodes to X11 scandodes :
+                // This table translates the RDP scancodes to X11 scancodes :
                 //  - the fist block (0-127) simply applies the +8 Windows to X11 translation and forces some 0 values
                 //  - the second block (128-255) give codes for the extended keys that have a meaningful one
                 uint8_t map[256] =  {

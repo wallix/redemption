@@ -623,6 +623,13 @@ const char outdata[] =
 /* 0010 */ "\x00\x00\x00\x5a\x96\xbc\xcf\x3b\x34\x5b\x6b\x94\xc0\xdf\x75\xe5" //...Z...;4[k...u. |
 /* 0020 */ "\xb9\xd9\x47\xf6\x00\xbd\x8a\x91\xcc\x5e\x7e\x04\x19\x69\xec\x7e" //..G......^~..i.~ |
 /* 0030 */ "\x32\xb9\xef\x9c\x1c"                                             //2.... |
+/* 0000 */ "\x03\x00\x00\x3c\x02\xf0\x80"
+/* 0000 */ "\x64\x00\x03\x03\xeb\x70\x2e"
+/* 0000 */ "\x08\x00\x00\x00\x11\x2e\x15\xaa\xb8\xed\x88\x00"
+/* 0000 */ "\xd1\xaf\x8d\x3d\x52\x01\x4f\xd4\x1d\xf4\xb2\xd4\xd1\xdc\x76\x6a" //...=R.O.......vj
+/* 0010 */ "\x8b\xd2\x26\xdf\xcb\xdc\x64\xd9\x36\x0d\x06\x7e\x90\xce\xbc\xcf" //..&...d.6..~....
+/* 0020 */ "\xbe\xbd"                                                         //..
+
 // Dump done RDP W2000 Target (4) sending 53 bytes |
 // Send done on RDP W2000 Target (4) |
 // Resizing to 800x600x8 |
@@ -10615,4 +10622,3 @@ const char indata[] =
 // =======================> count=25 |
 // Socket RDP W2000 Target (4) : closing connection |
 } /* end indata */;
-

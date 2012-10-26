@@ -1180,6 +1180,11 @@ const char outdata[] =
 // send_tls ERROR NONE ret=41 |
 // TLS Send done on RDP W2008 TLS Target (4) |
 // Resizing to 1024x768x16 |
+/* 0000 */ "\x03\x00\x00\x30\x02\xf0\x80"
+/* 0000 */ "\x64\x00\x03\x03\xeb\x70\x22"
+/* 0000 */ "\x22\x00\x17\x00\xec\x03\xea\x03\x01\x00\x00\x04\x14\x00\x1c\x00" //"...............
+/* 0010 */ "\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\x00" //................
+/* 0020 */ "\x00\x00"                                                         //..
 // --------- FRONT ------------------------ |
 // server_resize(width=1024, height=768, bpp=16 |
 // ======================================== |
@@ -5249,6 +5254,11 @@ const char outdata[] =
 // send_tls ERROR NONE ret=41 |
 // TLS Send done on RDP W2008 TLS Target (4) |
 // Resizing to 1024x768x16 |
+/* 0000 */ "\x03\x00\x00\x30\x02\xf0\x80"
+/* 0000 */ "\x64\x00\x03\x03\xeb\x70\x22"
+/* 0000 */ "\x22\x00\x17\x00\xec\x03\xea\x03\x02\x00\x00\x04\x14\x00\x1c\x00" //"...............
+/* 0010 */ "\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x07\x00" //................
+/* 0020 */ "\x00\x00"                                                         //..
 // --------- FRONT ------------------------ |
 // server_resize(width=1024, height=768, bpp=16 |
 // ======================================== |
@@ -18105,4 +18115,3 @@ const char indata[] =
 // ===================> count = 40 |
 // Socket RDP W2008 TLS Target (4) : closing connection |
 } /* end indata */;
-

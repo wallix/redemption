@@ -110,7 +110,6 @@ struct KeymapSym {
     KeyLayout_t keylayout_WORK_shiftcapslock_sym;
 
     // constructor
-// ################################################################
     KeymapSym(int verbose = 0)
             : ibuf(0)
             , nbuf(0)
@@ -119,7 +118,6 @@ struct KeymapSym {
             , dead_key(DEADKEY_NONE)
             , verbose(verbose)
     {
-// ################################################################
         memset(this->keys_down, 0, 256 * sizeof(int));
 
         memset(&this->keylayout_WORK_noshift_sym,       0, 128 * sizeof(int));
@@ -142,8 +140,6 @@ struct KeymapSym {
         this->keys_down[LEFT_ALT] = 0;
         this->keys_down[RIGHT_ALT] = 0;
     }
-
-// ################################################################
 
 // The TS_KEYBOARD_EVENT structure is a standard T.128 Keyboard Event (see [T128] section
 // 8.18.2). RDP keyboard input is restricted to keyboard scancodes, unlike the code-point or virtual
@@ -221,7 +217,7 @@ struct KeymapSym {
         // All other keys
         //================
             default: // all other codes
-                // This table translates the RDP scanodes to X11 scandodes :
+                // This table translates the RDP scancodes to X11 scancodes :
                 //  - the fist block (0-127) simply applies the +8 Windows to X11 translation and forces some 0 values
                 //  - the second block (128-255) give codes for the extended keys that have a meaningful one
                 uint8_t map[256] =  {

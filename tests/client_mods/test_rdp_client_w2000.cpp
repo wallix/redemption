@@ -18,7 +18,7 @@
    Author(s): Christophe Grosjean, Javier Caverni
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
-   Unit test to check back-end behavior stays identical 
+   Unit test to check back-end behavior stays identical
    when connecting to reference W2000 server (mocked up)
 
 */
@@ -280,6 +280,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
             }
 
+
     } front(info, verbose);
 
     const char * name = "RDP W2000 Target";
@@ -297,7 +298,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
-    struct client_mod * mod = new mod_rdp(&t, "administrateur@qa", "S3cur3!1nux", front, "test", false, info, &gen);
+    struct client_mod * mod = new mod_rdp(&t, "administrateur@qa", "S3cur3!1nux", front, "test", false, info, &gen, 2);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
