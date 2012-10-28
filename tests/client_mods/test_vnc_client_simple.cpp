@@ -27,7 +27,7 @@
 #define BOOST_TEST_MODULE TestVncClientSimple
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGPRINT
+#define LOGNULL
 #include "./test_orders.hpp"
 
 #include "stream.hpp"

@@ -25,6 +25,9 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <boost/current_function.hpp>
 
+#include "log.hpp"
+#define LOGNULL
+
 #include <sstream>
 #include "countdown_ptr.hpp"
 

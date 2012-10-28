@@ -29,9 +29,11 @@
 #define BOOST_TEST_MODULE TestKeymapSym
 #include <boost/test/auto_unit_test.hpp>
 
+#include "log.hpp"
+#define LOGNULL
+
 #include <stdint.h>
 
-#define LOGPRINT
 #include "keymapSym.hpp"
 
 BOOST_AUTO_TEST_CASE(TestKeymapSym)

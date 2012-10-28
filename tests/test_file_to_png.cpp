@@ -23,7 +23,8 @@
 #define BOOST_TEST_MODULE TestFileToPng
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#include "log.hpp"
+#define LOGNULL
 
 #include "recorder/wrm_recorder_option.hpp"
 #include "staticcapture.hpp"

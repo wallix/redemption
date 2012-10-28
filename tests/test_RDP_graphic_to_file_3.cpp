@@ -26,6 +26,10 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestGraphicToFile3
 #include <boost/test/auto_unit_test.hpp>
+
+#define LOGNULL
+#include "log.hpp"
+
 #include "test_orders.hpp"
 
 #include "GraphicToFile.hpp"

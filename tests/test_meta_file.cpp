@@ -23,7 +23,8 @@
 #define BOOST_TEST_MODULE TestFileToPng
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
+#include "log.hpp"
 
 #include "meta_file.hpp"
 

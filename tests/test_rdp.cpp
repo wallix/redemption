@@ -26,6 +26,9 @@
 #define BOOST_TEST_MODULE TestRDP
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGNULL
+#include "log.hpp"
+
 #include "stream.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/rdp.hpp"

@@ -27,6 +27,9 @@
 #define BOOST_TEST_MODULE TestBitFu
 #include <boost/test/auto_unit_test.hpp>
 
+#include "log.hpp"
+#define LOGNULL
+
 #include <sys/time.h>
 #include "bitfu.hpp"
 #include <stdio.h>

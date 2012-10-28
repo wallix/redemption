@@ -23,6 +23,9 @@
 #define BOOST_TEST_MODULE TestFilenameGenerator
 #include <boost/test/auto_unit_test.hpp>
 
+#include "log.hpp"
+#define LOGNULL
+
 #include "filename_generator.hpp"
 
 BOOST_AUTO_TEST_CASE(TestFilenameGenerator)

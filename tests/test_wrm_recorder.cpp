@@ -23,11 +23,11 @@
 #define BOOST_TEST_MODULE TestWRMRecorder
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGNULL
+#include "log.hpp"
+
 #include <unistd.h>
 
-#define LOGPRINT
-
-// #include <iostream>
 #include "recorder/wrm_recorder_option.hpp"
 #include "transport.hpp"
 #include "staticcapture.hpp"

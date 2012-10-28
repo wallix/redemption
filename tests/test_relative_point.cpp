@@ -23,6 +23,9 @@
 #define BOOST_TEST_MODULE TestRelativePoint
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGNULL
+#include "log.hpp"
+
 #include "relative_time_point.hpp"
 
 

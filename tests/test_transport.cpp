@@ -23,8 +23,11 @@
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestTransport
-
 #include <boost/test/auto_unit_test.hpp>
+
+#define LOGNULL
+#include "log.hpp"
+
 #include <stdlib.h>
 #include <unistd.h>
 

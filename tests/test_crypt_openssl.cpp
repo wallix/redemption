@@ -24,7 +24,8 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <boost/lexical_cast.hpp>
 
-#define LOGPRINT
+#include "log.hpp"
+#define LOGNULL
 
 #include <sys/types.h>
 #include <sys/stat.h>

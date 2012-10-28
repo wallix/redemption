@@ -26,7 +26,7 @@
 #define BOOST_TEST_MODULE TestCapabilityCompDesk
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 #include "RDP/capabilities.hpp"
 

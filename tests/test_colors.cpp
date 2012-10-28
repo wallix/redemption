@@ -25,6 +25,10 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestColors
 #include <boost/test/auto_unit_test.hpp>
+
+#include "log.hpp"
+#define LOGNULL
+
 #include <stdint.h>
 #include "colors.hpp"
 

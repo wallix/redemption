@@ -56,10 +56,12 @@ typedef struct _code {
 	int	c_val;
 } CODE;
 
-#ifndef LOGPRINT
-#define LOG LOGSYSLOG__REDEMPTION__INTERNAL
-#else
+#ifdef LOGPRINT
 #define LOG LOGPRINT__REDEMPTION__INTERNAL
+#elif defined(LOGNULL)
+#define LOG LOGNULL__REDEMPTION__INTERNAL
+#else
+#define LOG LOGSYSLOG__REDEMPTION__INTERNAL
 #endif
 
 // LOG_EMERG      system is unusable
@@ -114,6 +116,10 @@ static inline void LOGPRINT__REDEMPTION__INTERNAL(int priority, const char *form
     va_end(vl);
     printf("%s (%d/%d) -- %s\n", prioritynames[priority].c_name, getpid(), getpid(), message);
 };
+
+static inline void LOGNULL__REDEMPTION__INTERNAL(int priority, const char *format, ...)
+{
+}
 
 static inline void hexdump(const char * data, size_t size)
 {

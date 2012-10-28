@@ -27,6 +27,9 @@
 #define BOOST_TEST_MODULE TestBitmap
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGNULL
+#include "log.hpp"
+
 #include "internal/internal_mod.hpp"
 #include "internal/widget.hpp"
 #include "colors.hpp"

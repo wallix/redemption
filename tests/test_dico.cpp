@@ -25,7 +25,10 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestDico
 #include <boost/test/auto_unit_test.hpp>
-//#define LOGPRINT
+
+#include "log.hpp"
+#define LOGNULL
+
 #include "dico.hpp"
 
 static ProtocolKeyword KeywordsDefinitions[] = {

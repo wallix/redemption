@@ -27,6 +27,9 @@
 #define BOOST_TEST_MODULE TestALignedToCompact
 #include <boost/test/auto_unit_test.hpp>
 
+#include "log.hpp"
+#define LOGNULL
+
 #include "bitfu.hpp"
 
 

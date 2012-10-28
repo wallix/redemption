@@ -29,6 +29,9 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <boost/test/unit_test.hpp>
 
+#include "log.hpp"
+#define LOGNULL
+
 #include "bitmap.hpp"
 #include "colors.hpp"
 #include "config.hpp"

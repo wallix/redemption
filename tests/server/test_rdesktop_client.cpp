@@ -28,14 +28,16 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestFrontRdesktopClient
 #include <boost/test/auto_unit_test.hpp>
+
+#include "log.hpp"
+#define LOGNULL
+
 #include <errno.h>
 #include <algorithm>
 #include <sys/un.h>
 
 #define SHARE_PATH "./tests/fixtures"
 
-//#define LOGPRINT
-#include "log.hpp"
 #include "constants.hpp"
 #include "listen.hpp"
 #include "ssl_calls.hpp"

@@ -25,7 +25,7 @@
 #define BOOST_TEST_MODULE TestX224
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include "stream.hpp"

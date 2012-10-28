@@ -27,7 +27,7 @@
 #define BOOST_TEST_MODULE TestRdpClientTestCard
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGPRINT
+#define LOGNULL
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
 #include "RDP/RDPSerializer.hpp"

@@ -29,6 +29,9 @@
 #define BOOST_TEST_MODULE TestStrings
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGNULL
+#include "log.hpp"
+
 #include <string>
 
 BOOST_AUTO_TEST_CASE(TestString)

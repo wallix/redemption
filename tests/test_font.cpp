@@ -28,7 +28,8 @@
 #define BOOST_TEST_MODULE TestFont
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#include "log.hpp"
+#define LOGNULL
 
 #include "font.hpp"
 

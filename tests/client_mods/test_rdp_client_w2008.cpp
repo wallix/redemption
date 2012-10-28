@@ -28,7 +28,7 @@
 #include <errno.h>
 #include <algorithm>
 
-//#define LOGPRINT
+#define LOGNULL
 #include "./test_orders.hpp"
 
 #include "stream.hpp"

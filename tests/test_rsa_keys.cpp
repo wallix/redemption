@@ -29,6 +29,9 @@
 #define BOOST_TEST_MODULE TestRSAkeys
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGNULL
+#include "log.hpp"
+
 #include "rsa_keys.hpp"
 #include <sstream>
 

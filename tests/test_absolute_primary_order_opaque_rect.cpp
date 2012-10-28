@@ -26,6 +26,10 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestAbsoluteOrderOpaqueRect
 #include <boost/test/auto_unit_test.hpp>
+
+#include "log.hpp"
+#define LOGNULL
+
 #include <algorithm>
 
 #include "RDP/orders/RDPOrdersCommon.hpp"

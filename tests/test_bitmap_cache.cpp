@@ -28,6 +28,9 @@
 #define BOOST_TEST_MODULE TestBitmapCache
 #include <boost/test/auto_unit_test.hpp>
 
+#include "log.hpp"
+#define LOGNULL
+
 // #include <string>
 #include <stdint.h>
 #include "bitmap.hpp"

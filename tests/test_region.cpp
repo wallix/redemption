@@ -29,6 +29,9 @@
 #define BOOST_TEST_MODULE TestRegion
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGNULL
+#include "log.hpp"
+
 #include "rect.hpp"
 #include "region.hpp"
 //#include <boost/foreach.hpp>

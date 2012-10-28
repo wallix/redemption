@@ -23,6 +23,9 @@
 #define BOOST_TEST_MODULE TestZLibRaii
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGNULL
+#include "log.hpp"
+
 #include "zlib.hpp"
 
 #include <iostream>
