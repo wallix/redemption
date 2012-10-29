@@ -607,7 +607,6 @@ public:
                     this->recv_rect(this->reader.glyphindex.bk);
                     this->recv_rect(this->reader.glyphindex.op);
                     this->recv_brush(this->reader.glyphindex.brush);
-                    this->reader.glyphindex.data = (uint8_t*)malloc(this->reader.glyphindex.data_len);
                     this->reader.stream.in_copy_bytes(this->reader.glyphindex.data, this->reader.glyphindex.data_len);
                     //std::cout << "interpret_order: ";
                     //this->reader.glyphindex.print(Rect(0,0,0,0));

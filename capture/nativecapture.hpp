@@ -174,10 +174,6 @@ public:
 private:
     void send_rect(const Rect& rect)
     {
-        this->stream.out_uint16_le(rect.x);
-        this->stream.out_uint16_le(rect.y);
-        this->stream.out_uint16_le(rect.cx);
-        this->stream.out_uint16_le(rect.cy);
     }
 
     void send_brush(const RDPBrush& brush)
@@ -230,7 +226,6 @@ public:
 //            throw Error(ERR_NATIVE_CAPTURE_OPEN_FAILED);
 //        }
 
-
 //        this->recorder.chunk_type = WRMChunk::META_FILE;
 //        this->recorder.chunk_count = 1;
 //        {
@@ -239,65 +234,54 @@ public:
 //        }
 //        this->recorder.flush();
 
-//        this->recorder.chunk_type = WRMChunk::BREAKPOINT;
-//        this->recorder.chunk_count = 1;
-//        this->stream.out_uint16_le(this->width);
-//        this->stream.out_uint16_le(this->height);
-//        this->stream.out_uint8(this->bpp);
-//        this->stream.out_uint64_le(this->recorder.timer.tv_sec);
-//        this->stream.out_uint64_le(this->recorder.timer.tv_usec);
-//        this->recorder.send_order();
-
-//        // write screen
-//        {
-//            this->filename[this->filename_len] = '.';
-//            this->filename[this->filename_len+1] = 'p';
-//            this->filename[this->filename_len+2] = 'n';
-//            this->filename[this->filename_len+3] = 'g';
-//            this->filename[this->filename_len+4] = 0;
-//            if (std::FILE* fd = std::fopen(this->filename, "w+"))
-//            {
-//                dump_png24(fd, data_drawable, width, height, rowsize);
-//                fclose(fd);
-//            }
-//            else
-//            {
-//                LOG(LOG_ERR, "Error opening context file : %s", strerror(errno));
-//                throw Error(ERR_NATIVE_CAPTURE_OPEN_FAILED);
-//            }
-//            this->filename[this->filename_len] = 0;
-//        }
-
 //        this->recorder.init();
 //        this->recorder.chunk_count = 1;
 //        this->recorder.chunk_type = WRMChunk::BREAKPOINT;
 
 //        this->stream.out_uint8(this->recorder.common.order);
-//        this->send_rect(this->recorder.common.clip);
+//        this->stream.out_uint16_le(this->recorder.common.clip.x);
+//        this->stream.out_uint16_le(this->recorder.common.clip.y);
+//        this->stream.out_uint16_le(this->recorder.common.clip.cx);
+//        this->stream.out_uint16_le(this->recorder.common.clip.cy);
 
 //        this->stream.out_uint32_le(this->recorder.opaquerect.color);
-//        this->send_rect(this->recorder.opaquerect.rect);
+//        this->stream.out_uint16_le(this->recorder.opaquerect.rect.x);
+//        this->stream.out_uint16_le(this->recorder.opaquerect.rect.y);
+//        this->stream.out_uint16_le(this->recorder.opaquerect.rect.cx);
+//        this->stream.out_uint16_le(this->recorder.opaquerect.rect.cy);
 
 //        this->stream.out_uint8(this->recorder.destblt.rop);
-//        this->send_rect(this->recorder.destblt.rect);
+//        this->stream.out_uint16_le(this->recorder.destblt.rect.x);
+//        this->stream.out_uint16_le(this->recorder.destblt.rect.y);
+//        this->stream.out_uint16_le(this->recorder.destblt.rect.cx);
+//        this->stream.out_uint16_le(this->recorder.destblt.rect.cy);
 
 //        this->stream.out_uint8(this->recorder.patblt.rop);
 //        this->stream.out_uint32_le(this->recorder.patblt.back_color);
 //        this->stream.out_uint32_le(this->recorder.patblt.fore_color);
 //        this->send_brush(this->recorder.patblt.brush);
-//        this->send_rect(this->recorder.patblt.rect);
+//        this->stream.out_uint16_le(this->recorder.patblt.rect.x);
+//        this->stream.out_uint16_le(this->recorder.patblt.rect.y);
+//        this->stream.out_uint16_le(this->recorder.patblt.rect.cx);
+//        this->stream.out_uint16_le(this->recorder.patblt.rect.cy);
 
 //        this->stream.out_uint8(this->recorder.scrblt.rop);
 //        this->stream.out_uint16_le(this->recorder.scrblt.srcx);
 //        this->stream.out_uint16_le(this->recorder.scrblt.srcy);
-//        this->send_rect(this->recorder.scrblt.rect);
+//        this->stream.out_uint16_le(this->recorder.scrblt.rect.x);
+//        this->stream.out_uint16_le(this->recorder.scrblt.rect.y);
+//        this->stream.out_uint16_le(this->recorder.scrblt.rect.cx);
+//        this->stream.out_uint16_le(this->recorder.scrblt.rect.cy);
 
 //        this->stream.out_uint8(this->recorder.memblt.rop);
 //        this->stream.out_uint16_le(this->recorder.memblt.srcx);
 //        this->stream.out_uint16_le(this->recorder.memblt.srcy);
 //        this->stream.out_uint16_le(this->recorder.memblt.cache_id);
 //        this->stream.out_uint16_le(this->recorder.memblt.cache_idx);
-//        this->send_rect(this->recorder.memblt.rect);
+//        this->stream.out_uint16_le(this->recorder.memblt.rect.x);
+//        this->stream.out_uint16_le(this->recorder.memblt.rect.y);
+//        this->stream.out_uint16_le(this->recorder.memblt.rect.cx);
+//        this->stream.out_uint16_le(this->recorder.memblt.rect.cy);
 
 //        this->stream.out_uint8(this->recorder.lineto.rop2);
 //        this->stream.out_uint16_le(this->recorder.lineto.startx);
@@ -317,84 +301,17 @@ public:
 //        this->stream.out_uint16_le(this->recorder.glyphindex.ui_charinc);
 //        this->stream.out_uint8(this->recorder.glyphindex.cache_id);
 //        this->stream.out_uint8(this->recorder.glyphindex.data_len);
-//        this->send_rect(this->recorder.glyphindex.bk);
-//        this->send_rect(this->recorder.glyphindex.op);
+//        this->stream.out_uint16_le(this->recorder.glyphindex.bk.x);
+//        this->stream.out_uint16_le(this->recorder.glyphindex.bk.y);
+//        this->stream.out_uint16_le(this->recorder.glyphindex.bk.cx);
+//        this->stream.out_uint16_le(this->recorder.glyphindex.bk.cy);
+//        this->stream.out_uint16_le(this->recorder.glyphindex.op.x);
+//        this->stream.out_uint16_le(this->recorder.glyphindex.op.y);
+//        this->stream.out_uint16_le(this->recorder.glyphindex.op.cx);
+//        this->stream.out_uint16_le(this->recorder.glyphindex.op.cy);
+
 //        this->send_brush(this->recorder.glyphindex.brush);
 //        this->stream.out_copy_bytes(this->recorder.glyphindex.data, this->recorder.glyphindex.data_len);
-
-//        this->stream.out_uint16_le(this->recorder.chunk_count);
-
-//        this->stream.out_uint16_le(this->recorder.bmp_cache.small_entries);
-//        this->stream.out_uint16_le(this->recorder.bmp_cache.small_size);
-//        this->stream.out_uint16_le(this->recorder.bmp_cache.medium_entries);
-//        this->stream.out_uint16_le(this->recorder.bmp_cache.medium_size);
-//        this->stream.out_uint16_le(this->recorder.bmp_cache.big_entries);
-//        this->stream.out_uint16_le(this->recorder.bmp_cache.big_size);
-//        this->stream.out_uint32_le(this->recorder.bmp_cache.stamp);
-
-//        this->recorder.send_order();
-
-//        this->stream.init(14);
-//        this->recorder.chunk_type = WRMChunk::BREAKPOINT;
-//        AutoBuffer buffer;
-//        z_stream zstrm;
-//        zstrm.zalloc = 0;
-//        zstrm.zfree = 0;
-//        zstrm.opaque = 0;
-//        int ret;
-//        const int Bpp = 3;
-//        for (size_t cid = 0; cid != 3 ; ++cid){
-//            const Bitmap* (&bitmaps)[8192] = this->recorder.bmp_cache.cache[cid];
-//            const uint32_t (&stamps)[8192] = this->recorder.bmp_cache.stamps[cid];
-
-//            for (uint16_t cidx = 0; cidx < 8192 ; ++cidx){
-//                if (bitmaps[cidx]){
-//                    this->stream.out_uint16_le(8192 * cid + cidx);
-//                    this->stream.out_uint32_le(stamps[cidx]);
-//                    this->stream.out_uint16_le(bitmaps[cidx]->cx);
-//                    this->stream.out_uint16_le(bitmaps[cidx]->cy);
-
-//                    if ((ret = deflateInit(&zstrm, Z_DEFAULT_COMPRESSION)) != Z_OK)
-//                    {
-//                        LOG(LOG_ERR, "zlib: deflateInit: %d", ret);
-//                        throw Error(ERR_NATIVE_CAPTURE_ZIP_COMPRESS);
-//                    }
-//                    uint16_t y = 1;
-//                    int flush;
-//                    /*const*/ uint8_t *src = bitmaps[cidx]->data_bitmap.get();
-//                    uint size_x = bitmaps[cidx]->cx * Bpp;
-//                    uLong destlen = compressBound(size_x * bitmaps[cidx]->cy);
-//                    buffer.alloc(destlen);
-
-//                    do {
-//                        zstrm.next_in = src;
-//                        zstrm.avail_in = size_x;
-//                        zstrm.next_out = buffer.get() + zstrm.total_out;
-//                        zstrm.avail_out = destlen - zstrm.total_out;
-//                        flush = y == bitmaps[cidx]->cy ? Z_FINISH : Z_NO_FLUSH;
-//                        if ((ret = deflate(&zstrm, flush)) == Z_STREAM_ERROR)
-//                        {
-//                            deflateEnd(&zstrm);
-//                            LOG(LOG_ERR, "zlib: deflate: %d", ret);
-//                            throw Error(ERR_NATIVE_CAPTURE_ZIP_COMPRESS);
-//                        }
-//                        ++y;
-//                        src += bitmaps[cidx]->line_size;
-//                    } while (flush != Z_FINISH);
-//                    deflateEnd(&zstrm);
-//                    this->stream.out_uint32_le(zstrm.total_out);
-//                    this->recorder.trans->send(this->stream.data, 14);
-//                    this->recorder.trans->send(buffer.get(), zstrm.total_out);
-//                    this->stream.p = this->stream.data;
-//                }
-//            }
-//        }
-//        this->stream.out_uint16_le(8192 * 3 + 1);
-//        this->stream.out_uint32_le(0);
-//        this->stream.out_uint16_le(0);
-//        this->stream.out_uint16_le(0);
-//        this->stream.out_uint32_le(0);
-//        this->recorder.trans->send(this->stream.data, 14);
 
 //        this->recorder.init();
 //        this->recorder.timer = now;

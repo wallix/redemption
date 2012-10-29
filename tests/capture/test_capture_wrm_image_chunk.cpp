@@ -414,6 +414,8 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
         "\x00\x00\x00\x49\x45\x4e\x44\xae"
     /* 0000 */ "\x00\x10\x0b\x00\x00\x00\x01\x00" // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
         "\x42\x60\x82"
+        
+        
         ;
 
     GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);   

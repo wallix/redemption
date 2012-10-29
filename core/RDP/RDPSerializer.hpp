@@ -108,6 +108,7 @@ enum {
     NEXT_FILE_ID = 1007,
     LAST_IMAGE_CHUNK = 0x1000,
     PARTIAL_IMAGE_CHUNK = 0x1001,
+    SAVE_STATE = 0x1002,
 };
 
 struct RDPSerializer : public RDPGraphicDevice

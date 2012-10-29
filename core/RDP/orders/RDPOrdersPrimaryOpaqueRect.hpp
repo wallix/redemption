@@ -114,44 +114,6 @@ class RDPOpaqueRect {
         }
     }
 
-    // order to stream returns true if state clip must be changed
-    // it does not change state by itself
-    void emit(Stream & stream, RDPOrderCommon & common) const
-    {
-        using namespace RDP;
-        RDPPrimaryOrderHeader header(STANDARD, 0);
-
-        // OPAQUERECT fields bytes (1 byte)
-        // ------------------------------
-        // 0x01: x coordinate
-        // 0x02: y coordinate
-        // 0x04: cx coordinate
-        // 0x08: cy coordinate
-        // 0x10: red color byte
-        // 0x20: green color byte
-        // 0x40: blue color byte
-
-        header.fields =   0x01
-                        | 0x02
-                        | 0x04
-                        | 0x08
-                        | 0x10
-                        | 0x20
-                        | 0x40
-                        ;
-
-        common.emit(stream, header);
-
-        stream.out_uint16_le(rect.x);
-        stream.out_uint16_le(rect.y);
-        stream.out_uint16_le(rect.cx);
-        stream.out_uint16_le(rect.cy);
-
-        stream.out_uint8(this->color);
-        stream.out_uint8(this->color >> 8);
-        stream.out_uint8(this->color >> 16);
-    }
-
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
     {
         using namespace RDP;

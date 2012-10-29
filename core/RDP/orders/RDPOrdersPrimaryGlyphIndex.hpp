@@ -125,8 +125,6 @@
 
 //All fragment cache indices MUST be in the range 0 to 255 (inclusive).
 
-#include <malloc.h>
-
 class RDPGlyphIndex {
 // GLYPHINDEX_ORDER fields bytes
 // ------------------------------
@@ -168,7 +166,7 @@ class RDPGlyphIndex {
     int16_t glyph_x;
     int16_t glyph_y;
     uint8_t data_len;
-    uint8_t * data;
+    uint8_t data[256];
 
     static const uint8_t id(void)
     {
@@ -192,11 +190,9 @@ class RDPGlyphIndex {
             brush(brush),
             glyph_x(glyph_x),
             glyph_y(glyph_y),
-            data_len(data_len),
-            data(0)
+            data_len(data_len)
         {
             if (data_len > 0){
-                this->data = (uint8_t *)malloc(data_len);
                 memcpy(this->data, data, data_len);
             }
         }
@@ -213,20 +209,15 @@ class RDPGlyphIndex {
             brush(gi.brush),
             glyph_x(gi.glyph_x),
             glyph_y(gi.glyph_y),
-            data_len(gi.data_len),
-            data(0)
+            data_len(gi.data_len)
         {
             if (gi.data_len > 0){
-                this->data = (uint8_t *)malloc(gi.data_len);
                 memcpy(this->data, gi.data, gi.data_len);
             }
         }
 
     ~RDPGlyphIndex()
     {
-        if (this->data){
-//            free(this->data);
-        }
     }
     bool operator==(const RDPGlyphIndex &other) const {
         return  (this->cache_id == other.cache_id)
@@ -412,11 +403,7 @@ class RDPGlyphIndex {
 
         if (header.fields & 0x200000){
             this->data_len = stream.in_uint8();
-            if (this->data){
-                free(this->data);
-            }
-            this->data = (uint8_t *)malloc(this->data_len);
-            memcpy(this->data, stream.in_uint8p(this->data_len), this->data_len);
+            stream.in_copy_bytes(this->data, this->data_len);
         }
     }
 

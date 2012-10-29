@@ -37,7 +37,7 @@
 #include "image_capture.hpp"
 #include "constants.hpp"
 
-const char expected_stripped_wrm[] = 
+const char expected_Red_on_Blue_wrm[] = 
 /* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
            "\x64\x00\x64\x00\x18\x00" // width = 20, height=10, bpp=24 
            "\x02\x00\x00\x01\x02\x00\x00\x04\x02\x00\x00\x10"  // caches sizes
@@ -46,7 +46,7 @@ const char expected_stripped_wrm[] =
 /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
 
 /* 0000 */ "\x00\x00\x2d\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
-/* 0000 */ "\x19\x0a\x4c\x64\x64\xff"         // RED rect  // order 0A=opaque rect
+/* 0000 */ "\x19\x0a\x4c\x64\x64\xff"         // Blue rect  // order 0A=opaque rect
 // -----------------------------------------------------
 /* 0020 */ "\x03\x09\x00\x00\x04\x02"         // Secondary drawing order header. Order = 02: Compressed bitmap
            "\x01\x00\x14\x0a\x18\x07\x00\x00\x00" // 0x01=cacheId 0x00=pad 0x14=width(20) 0x0A=height(10) 0x18=24 bits
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
 
     Rect scr(0, 0, 100, 100);
     BStream stream(65536);
-    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
+    CheckTransport trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1, 511);
     Inifile ini;
     BmpCache bmp_cache(24, 2, 256, 2, 1024, 2, 4096);
     GraphicToFile consumer(now, &trans, &stream, &ini, scr.cx, scr.cy, 24, bmp_cache);
@@ -102,5 +102,96 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
     consumer.save_bmp_caches();
     
     consumer.flush();
+
+}
+
+BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
+{
+    GeneratorTransport in_wrm_trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1);   
+    timeval now;
+    gettimeofday(&now, NULL);
+    now.tv_usec = 0;
+    now.tv_sec = 5000;
+    FileToGraphic player(&in_wrm_trans, now);
+
+    FileSequence sequence("path file pid count extension", "./", "tttttt", "png");
+    OutByFilenameSequenceTransport out_png_trans(sequence);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, true);
+    
+    player.add_consumer(&png_recorder);
+    BOOST_CHECK_EQUAL(1, player.nbdrawables);
+    while (player.next_order()){
+        player.interpret_order();
+    }
+    png_recorder.flush();
+    BOOST_CHECK_EQUAL(298, sequence.filesize(0));
+    sequence.unlink(0);
+}
+
+const char expected_reset_rect_wrm[] = 
+/* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+           "\x64\x00\x64\x00\x18\x00" // width = 20, height=10, bpp=24 
+           "\x02\x00\x00\x01\x02\x00\x00\x04\x02\x00\x00\x10"  // caches sizes
+
+/* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+/* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
+
+/* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
+           "\x19\x0a\x1c\x64\x64\xff\x11"     // Red Rect 
+           "\x5f\x05\x05\xf6\xf6\x00\xff"     // Blue Rect
+           "\x11\x5f\x05\x05\xf6\xf6\xff\x00" // Red Rect
+           
+
+// -----------------------------------------------------
+
+           "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+           "\x40\x0C\xAA\x3B\x00\x00\x00\x00" // 0x000000003BAA0C40 = 1001000000
+           
+           "\x00\x00\x09\x00\x00\x00\x01\x00"
+           "\x51"
+           
+           "\x02\x10\x9e\x00\x00\x00\x01\x00"
+/* 0000 */ "\x0a\x00\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00" //................
+/* 0010 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+/* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+/* 0030 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0a\x00\x0a\x00\x50" //...............P
+/* 0040 */ "\x00\x50\x00\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //.P..............
+/* 0050 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+/* 0060 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+/* 0070 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x01\x00\x00" //................
+/* 0080 */ "\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+/* 0090 */ "\x00\x00\x00\x00\x00\x00"                                         //......
+           
+           ;
+
+BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
+{
+    // Timestamps are applied only when flushing
+    struct timeval now;
+    now.tv_usec = 0;
+    now.tv_sec = 1000;
+
+    Rect scr(0, 0, 100, 100);
+    BStream stream(65536);
+    CheckTransport trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1, 511);
+    Inifile ini;
+    ini.globals.debug.primary_orders = 1;
+    BmpCache bmp_cache(24, 2, 256, 2, 1024, 2, 4096);
+    GraphicToFile consumer(now, &trans, &stream, &ini, scr.cx, scr.cy, 24, bmp_cache);
+    consumer.timestamp(now);
+    
+    consumer.draw(RDPOpaqueRect(scr, RED), scr);
+    consumer.draw(RDPOpaqueRect(scr.shrink(5), BLUE), scr);
+    consumer.draw(RDPOpaqueRect(scr.shrink(10), RED), scr);
+
+    consumer.flush();
+        
+    now.tv_sec++;
+    consumer.timestamp(now);
+    consumer.draw(RDPOpaqueRect(scr.shrink(10), RED), scr);
+    consumer.flush();
+
+    consumer.send_save_state_chunk();
+
 }
 

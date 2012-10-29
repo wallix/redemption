@@ -268,6 +268,18 @@ class Stream {
         this->data[offset+1] = (v >> 8) & 0xFF;
     }
 
+    void out_sint16_le(signed int v) {
+        REDASSERT(has_room(2));
+        this->p[0] = v & 0xFF;
+        this->p[1] = (v >> 8) & 0xFF;
+        this->p+=2;
+    }
+
+    void set_out_sint16_le(signed int v, size_t offset) {
+        this->data[offset] = v & 0xFF;
+        this->data[offset+1] = (v >> 8) & 0xFF;
+    }
+
     void out_uint16_be(unsigned int v) {
         REDASSERT(has_room(2));
         this->p[1] = v & 0xFF;

@@ -450,6 +450,97 @@ struct FileToGraphic
                 }
             }
             break;
+            case SAVE_STATE:
+                // RDPOrderCommon common;
+                this->common.order = this->stream.in_uint8();
+                this->common.clip.x = this->stream.in_uint16_le();
+                this->common.clip.y = this->stream.in_uint16_le();
+                this->common.clip.cx = this->stream.in_uint16_le();
+                this->common.clip.cy = this->stream.in_uint16_le();
+                // RDPDestBlt destblt;
+                this->destblt.rect.x = this->stream.in_uint16_le();
+                this->destblt.rect.y = this->stream.in_uint16_le();
+                this->destblt.rect.cx = this->stream.in_uint16_le();
+                this->destblt.rect.cy = this->stream.in_uint16_le();
+                this->destblt.rop = this->stream.in_uint8();
+                // RDPDestBlt destblt;
+                this->patblt.rect.x = this->stream.in_uint16_le();
+                this->patblt.rect.y = this->stream.in_uint16_le();
+                this->patblt.rect.cx = this->stream.in_uint16_le();
+                this->patblt.rect.cy = this->stream.in_uint16_le();
+                this->patblt.rop = this->stream.in_uint8();
+                this->patblt.back_color = this->stream.in_uint32_le();
+                this->patblt.fore_color = this->stream.in_uint32_le();
+                this->patblt.brush.org_x = this->stream.in_uint8();
+                this->patblt.brush.org_y = this->stream.in_uint8();
+                this->patblt.brush.style = this->stream.in_uint8();
+                this->patblt.brush.hatch = this->stream.in_uint8();
+                this->stream.in_copy_bytes(this->patblt.brush.extra, 7);
+                // RDPScrBlt scrblt;
+                this->scrblt.rect.x = this->stream.in_uint16_le();
+                this->scrblt.rect.y = this->stream.in_uint16_le();
+                this->scrblt.rect.cx = this->stream.in_uint16_le();
+                this->scrblt.rect.cy = this->stream.in_uint16_le();
+                this->scrblt.rop = this->stream.in_uint8();
+                this->scrblt.srcx = this->stream.in_uint16_le();
+                this->scrblt.srcy = this->stream.in_uint16_le();
+                // RDPOpaqueRect opaquerect;
+                this->opaquerect.rect.x  = this->stream.in_uint16_le();
+                this->opaquerect.rect.y  = this->stream.in_uint16_le();
+                this->opaquerect.rect.cx = this->stream.in_uint16_le();
+                this->opaquerect.rect.cy = this->stream.in_uint16_le();
+                {
+                    uint8_t red              = this->stream.in_uint8();
+                    uint8_t green            = this->stream.in_uint8();
+                    uint8_t blue             = this->stream.in_uint8();
+                    this->opaquerect.color = red | green << 8 | blue << 16;
+                }
+                // RDPMemBlt memblt;
+                this->memblt.cache_id = this->stream.in_uint16_le();
+                this->memblt.rect.x  = this->stream.in_uint16_le();
+                this->memblt.rect.y  = this->stream.in_uint16_le();
+                this->memblt.rect.cx = this->stream.in_uint16_le();
+                this->memblt.rect.cy = this->stream.in_uint16_le();
+                this->memblt.srcx    = this->stream.in_uint8();
+                this->memblt.srcy    = this->stream.in_uint8();
+                this->memblt.cache_idx = this->stream.in_uint16_le();
+                // RDPLineTo lineto;
+                this->lineto.back_mode = this->stream.in_uint8();
+                this->lineto.startx = this->stream.in_uint16_le();
+                this->lineto.starty = this->stream.in_uint16_le();
+                this->lineto.endx = this->stream.in_uint16_le();
+                this->lineto.endy = this->stream.in_uint16_le();
+                this->lineto.back_color = this->stream.in_uint32_le();
+                this->lineto.rop2 = this->stream.in_uint8();
+                this->lineto.pen.style = this->stream.in_uint8();
+                this->lineto.pen.width = this->stream.in_sint8();
+                this->lineto.pen.color = this->stream.in_uint32_le();
+                // RDPGlyphIndex glyphindex;
+                this->glyphindex.cache_id  = this->stream.in_uint8();
+                this->glyphindex.fl_accel  = this->stream.in_sint16_le();
+                this->glyphindex.ui_charinc  = this->stream.in_sint16_le();
+                this->glyphindex.f_op_redundant = this->stream.in_sint16_le();
+                this->glyphindex.back_color = this->stream.in_uint32_le();
+                this->glyphindex.fore_color = this->stream.in_uint32_le();
+                this->glyphindex.bk.x  = this->stream.in_uint16_le();
+                this->glyphindex.bk.y  = this->stream.in_uint16_le();
+                this->glyphindex.bk.cx = this->stream.in_uint16_le();
+                this->glyphindex.bk.cy = this->stream.in_uint16_le();
+                this->glyphindex.op.x  = this->stream.in_uint16_le();
+                this->glyphindex.op.y  = this->stream.in_uint16_le();
+                this->glyphindex.op.cx = this->stream.in_uint16_le();
+                this->glyphindex.op.cy = this->stream.in_uint16_le();
+                this->glyphindex.brush.org_x = this->stream.in_uint8();
+                this->glyphindex.brush.org_y = this->stream.in_uint8();
+                this->glyphindex.brush.style = this->stream.in_uint8();
+                this->glyphindex.brush.hatch = this->stream.in_uint8();
+                this->stream.in_copy_bytes(this->glyphindex.brush.extra, 7);
+                this->glyphindex.glyph_x = this->stream.in_sint16_le();
+                this->glyphindex.glyph_y = this->stream.in_sint16_le();
+//                this->glyphindex.data_len = this->stream.in_uint8();
+                //------------------------------ missing variable length ---------------
+            break;
+
             case LAST_IMAGE_CHUNK:
             case PARTIAL_IMAGE_CHUNK:
             {
