@@ -72,6 +72,7 @@ public:
     uint64_t inter_frame_interval_start_break_capture;
 
     BStream stream;
+    BmpCache bmp_cache;
     GraphicToFile recorder;
     uint32_t nb_file;
 
@@ -80,7 +81,8 @@ public:
     , height(height)
     , bpp(24)
     , stream(65536)
-    , recorder(now, &trans, &this->stream, NULL, width, height, 24, 8192, 768, 8192, 3072, 8192, 12288)
+    , bmp_cache(24, 8192, 768, 8192, 3072, 8192, 12288)
+    , recorder(now, &trans, &this->stream, NULL, width, height, 24, bmp_cache)
     , nb_file(0)
     {
         // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s

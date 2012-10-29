@@ -120,7 +120,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     RDPDrawable * drawable;
     RDPSerializer * serializer;
     Transport * trans;
-    BmpCache * bmp_cache;
+    BmpCache & bmp_cache;
 
     GraphicToFile(const timeval& now
                 , Transport * trans
@@ -129,24 +129,17 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
                 , const uint16_t width
                 , const uint16_t height
                 , const uint8_t  bpp
-                , uint32_t small_entries
-                , uint32_t small_size
-                , uint32_t medium_entries
-                , uint32_t medium_size
-                , uint32_t big_entries
-                , uint32_t big_size)
+                , BmpCache & bmp_cache)
     : timer(now)
     , width(width)
     , height(height)
     , bpp(bpp)
     , trans(trans)
+    , bmp_cache(bmp_cache)
     {
     
-        this->bmp_cache = new BmpCache(bpp, small_entries, small_size, medium_entries, medium_size, big_entries, big_size);
-
         TODO("The serializers and the drawables should probably be provided by external call, not instanciated here")
-        this->serializer = new RDPSerializer(trans, pstream, ini, bpp, *this->bmp_cache,
-                    0, 1, 1);
+        this->serializer = new RDPSerializer(trans, pstream, ini, bpp, this->bmp_cache, 0, 1, 1);
     
         this->drawable = new RDPDrawable(width, height, true);
 

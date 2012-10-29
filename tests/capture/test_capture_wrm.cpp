@@ -62,7 +62,8 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     BStream stream(65536);
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
     Inifile ini;
-    GraphicToFile consumer(now, &trans, &stream, &ini, screen_rect.cx, screen_rect.cy, 24, 600, 256, 300, 1024, 262, 4096);
+    BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
+    GraphicToFile consumer(now, &trans, &stream, &ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache);
     RDPOpaqueRect cmd0(screen_rect, GREEN);
     consumer.draw(cmd0, screen_rect);
     now.tv_sec++;
@@ -108,7 +109,8 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     BStream stream(65536);
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
     Inifile ini;
-    GraphicToFile consumer(now, &trans, &stream, &ini, screen_rect.cx, screen_rect.cy, 24, 600, 256, 300, 1024, 262, 4096);
+    BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
+    GraphicToFile consumer(now, &trans, &stream, &ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache);
 
     RDPOpaqueRect cmd0(screen_rect, GREEN);
     consumer.draw(cmd0, screen_rect);
@@ -141,7 +143,8 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     OutByFilenameTransport trans("./testcap.wrm");
     BOOST_CHECK_EQUAL(0, 0);
     Inifile ini;
-    GraphicToFile consumer(now, &trans, &stream, &ini, screen_rect.cx, screen_rect.cy, 24, 600, 256, 300, 1024, 262, 4096);
+    BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
+    GraphicToFile consumer(now, &trans, &stream, &ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache);
     BOOST_CHECK_EQUAL(0, 0);
     RDPOpaqueRect cmd0(screen_rect, GREEN);
     consumer.draw(cmd0, screen_rect);

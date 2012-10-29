@@ -73,7 +73,8 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
     BStream stream(65536);
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
     Inifile ini;
-    GraphicToFile consumer(now, &trans, &stream, &ini, scr.cx, scr.cy, 24, 600, 256, 300, 1024, 262, 4096);
+    BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
+    GraphicToFile consumer(now, &trans, &stream, &ini, scr.cx, scr.cy, 24, bmp_cache);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
@@ -126,7 +127,8 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     BStream stream(65536);
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
-    GraphicToFile consumer(now, &trans, &stream, &ini, scr.cx, scr.cy, 24, 600, 256, 300, 1024, 262, 4096);
+    BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
+    GraphicToFile consumer(now, &trans, &stream, &ini, scr.cx, scr.cy, 24, bmp_cache);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
@@ -194,7 +196,8 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     BStream stream(65536);
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
-    GraphicToFile consumer(now, &trans, &stream, &ini, scr.cx, scr.cy, 24, 600, 256, 300, 1024, 262, 4096);
+    BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
+    GraphicToFile consumer(now, &trans, &stream, &ini, scr.cx, scr.cy, 24, bmp_cache);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);

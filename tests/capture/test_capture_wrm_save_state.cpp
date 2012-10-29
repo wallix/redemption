@@ -77,7 +77,8 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
     BStream stream(65536);
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
     Inifile ini;
-    GraphicToFile consumer(now, &trans, &stream, &ini, scr.cx, scr.cy, 24, 2, 256, 2, 1024, 2, 4096);
+    BmpCache bmp_cache(24, 2, 256, 2, 1024, 2, 4096);
+    GraphicToFile consumer(now, &trans, &stream, &ini, scr.cx, scr.cy, 24, bmp_cache);
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, BLUE), scr);
