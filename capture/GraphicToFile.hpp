@@ -120,6 +120,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     RDPDrawable * drawable;
     RDPSerializer * serializer;
     Transport * trans;
+    BmpCache * bmp_cache;
 
     GraphicToFile(const timeval& now
                 , Transport * trans
@@ -141,11 +142,10 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     , trans(trans)
     {
     
+        this->bmp_cache = new BmpCache(bpp, small_entries, small_size, medium_entries, medium_size, big_entries, big_size);
+
         TODO("The serializers and the drawables should probably be provided by external call, not instanciated here")
-        this->serializer = new RDPSerializer(trans, pstream, ini, bpp,
-                    small_entries, small_size,
-                    medium_entries, medium_size,
-                    big_entries, big_size,
+        this->serializer = new RDPSerializer(trans, pstream, ini, bpp, *this->bmp_cache,
                     0, 1, 1);
     
         this->drawable = new RDPDrawable(width, height, true);
@@ -174,6 +174,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void send_meta_chunk(void)
     {
+        TODO("meta should contain some WRM version identifier")
+        TODO("Cache meta_data (sizes, number of entries) should be put in META chunk")
         BStream stream(8);
         stream.out_uint16_le(this->width);
         stream.out_uint16_le(this->height);
@@ -229,6 +231,11 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->serializer->pstream->size(), this->serializer->order_count);
         this->trans->send(header.data, header.size());
         this->serializer->flush();
+    }
+
+    void save_bmp_caches()
+    {
+        this->serializer->emit_bmp_cache(1, 0);
     }
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) 

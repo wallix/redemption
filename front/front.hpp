@@ -76,6 +76,7 @@
 class Front : public FrontAPI {
 public:
     Capture * capture;
+    BmpCache * bmp_cache;
     GraphicsUpdatePDU * orders;
     Keymap2 keymap;
     ChannelDefArray channel_list;
@@ -119,6 +120,7 @@ public:
     Front(Transport * trans, Random * gen, Inifile * ini)
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
         , capture(NULL)
+        , bmp_cache(NULL)
         , orders(NULL)
         , up_and_running(0)
         , share_id(65538)
@@ -386,6 +388,16 @@ public:
         }
 
         // reset outgoing orders and reset caches
+        delete this->bmp_cache;
+        this->bmp_cache = new BmpCache(
+                        this->client_info.bpp,
+                        this->client_info.cache1_entries,
+                        this->client_info.cache1_size,
+                        this->client_info.cache2_entries,
+                        this->client_info.cache2_size,
+                        this->client_info.cache3_entries,
+                        this->client_info.cache3_size);
+
         delete this->orders;
         this->orders = new GraphicsUpdatePDU(trans,
                         this->userid,
@@ -394,12 +406,7 @@ public:
                         this->encrypt,
                         this->ini,
                         this->client_info.bpp,
-                        this->client_info.cache1_entries,
-                        this->client_info.cache1_size,
-                        this->client_info.cache2_entries,
-                        this->client_info.cache2_size,
-                        this->client_info.cache3_entries,
-                        this->client_info.cache3_size,
+                        *this->bmp_cache,
                         this->client_info.bitmap_cache_version,
                         this->client_info.use_bitmap_comp,
                         this->client_info.use_compact_packets);

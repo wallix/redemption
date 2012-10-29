@@ -97,8 +97,7 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
     now.tv_sec++;
     consumer.timestamp(now);
 
-    consumer.serializer->emit_bmp_cache(1, 0);
-    // consumer.save_bmp_cache() // send the full cache to serializer
+    consumer.save_bmp_caches();
     
     consumer.flush();
 }

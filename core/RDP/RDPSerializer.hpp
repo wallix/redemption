@@ -136,16 +136,14 @@ struct RDPSerializer : public RDPGraphicDevice
     size_t order_count;
     size_t chunk_flags;
     uint32_t offset_order_count;
-    BmpCache bmp_cache;
+    BmpCache & bmp_cache;
 
 
     RDPSerializer(Transport * trans
           , Stream * pstream
           , const Inifile * ini
           , const uint8_t  bpp
-          , uint32_t small_entries, uint32_t small_size
-          , uint32_t medium_entries, uint32_t medium_size
-          , uint32_t big_entries, uint32_t big_size
+          , BmpCache & bmp_cache
           , const int bitmap_cache_version
           , const int use_bitmap_comp
           , const int op2)
@@ -167,7 +165,7 @@ struct RDPSerializer : public RDPGraphicDevice
         // state variables for a batch of orders
         order_count(0),
         offset_order_count(0),
-        bmp_cache(bpp, small_entries, small_size, medium_entries, medium_size, big_entries, big_size)
+        bmp_cache(bmp_cache)
      {}
     ~RDPSerializer() {}
     virtual void flush() 

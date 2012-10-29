@@ -416,6 +416,8 @@ struct FileToGraphic
             }
             break;
             case META_FILE:
+            TODO("meta should contain some WRM version identifier")
+            TODO("Cache meta_data (sizes, number of entries) should be put in META chunk")
             LOG(LOG_INFO,"META_FILE\n");
             {
                 uint16_t width = this->stream.in_uint16_le();
