@@ -39,8 +39,10 @@
 
 
 const char expected_stripped_wrm[] = 
-/* 0000 */ "\xEE\x03\x10\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x14\x00\x0A\x00\x18\x00\x00\x00" // width = 20, height=10, bpp=24 PAD: 2 bytes
+/* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+           "\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
+           "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
+           
 /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
 /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
 /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
@@ -88,8 +90,10 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     // Easier to do than write tests with huge pngs to force PNG chunking.
 
     const char expected[] = 
-    /* 0000 */ "\xEE\x03\x10\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x14\x00\x0A\x00\x18\x00\x00\x00" // width = 20, height=10, bpp=24 PAD: 2 bytes
+    /* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+               "\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
+               "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
+               
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
     /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
@@ -148,8 +152,10 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     // Easier to do than write tests with huge pngs to force PNG chunking.
 
     const char expected[] = 
-    /* 0000 */ "\xEE\x03\x10\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x14\x00\x0A\x00\x18\x00\x00\x00" // width = 20, height=10, bpp=24 PAD: 2 bytes
+    /* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+               "\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
+               "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
+               
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
     /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
@@ -311,8 +317,11 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
 {
    const char source_wrm[] = 
-    /* 0000 */ "\xEE\x03\x10\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x14\x00\x0A\x00\x18\x00\x00\x00" // width = 20, height=10, bpp=24 PAD: 2 bytes
+    /* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+               "\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24 PAD: 2 bytes
+               "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
+
+
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
@@ -371,8 +380,10 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
 BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
 {
    const char source_wrm[] = 
-    /* 0000 */ "\xEE\x03\x10\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x14\x00\x0A\x00\x18\x00\x00\x00" // width = 20, height=10, bpp=24 PAD: 2 bytes
+    /* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+               "\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
+               "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
+
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
@@ -411,7 +422,6 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     now.tv_usec = 0;
     now.tv_sec = 5000;
     FileToGraphic player(&in_wrm_trans, now);
-
     FileSequence sequence("path file pid count extension", "./", "testimg", "png");
 
     OutByFilenameSequenceTransport out_png_trans(sequence);

@@ -247,9 +247,23 @@ struct RDPSerializer : public RDPGraphicDevice
         }
     }
 
+    void save_bmp_caches()
+    {
+        for (size_t i = 0; i < this->bmp_cache.small_entries ; i++){
+            this->emit_bmp_cache(0, i);
+        }
+        for (size_t i = 0; i < this->bmp_cache.medium_entries ; i++){
+            this->emit_bmp_cache(1, i);
+        }
+        for (size_t i = 0; i < this->bmp_cache.big_entries ; i++){
+            this->emit_bmp_cache(2, i);
+        }
+    }
+
     void emit_bmp_cache(uint8_t cache_id, uint16_t cache_idx)
     {
             const Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
+            if (!bmp) { return; }
             RDPBmpCache cmd_cache(bmp, cache_id, cache_idx, this->ini?this->ini->globals.debug.primary_orders:0);
             this->reserve_order(cmd_cache.bmp->bmp_size + 16);
             cmd_cache.emit(*this->pstream, this->bitmap_cache_version, this->use_bitmap_comp, this->op2);

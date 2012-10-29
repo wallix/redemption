@@ -168,16 +168,21 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     void send_meta_chunk(void)
     {
         TODO("meta should contain some WRM version identifier")
-        TODO("Cache meta_data (sizes, number of entries) should be put in META chunk")
-        BStream stream(8);
+        BStream header(8);
+        BStream stream(18);
         stream.out_uint16_le(this->width);
         stream.out_uint16_le(this->height);
         stream.out_uint16_le(this->bpp);
-        stream.out_uint16_le(0);
+        stream.out_uint16_le(this->bmp_cache.small_entries);
+        stream.out_uint16_le(this->bmp_cache.small_size);
+        stream.out_uint16_le(this->bmp_cache.medium_entries);
+        stream.out_uint16_le(this->bmp_cache.medium_size);
+        stream.out_uint16_le(this->bmp_cache.big_entries);
+        stream.out_uint16_le(this->bmp_cache.big_size);
         stream.mark_end();
 
-        BStream header(8);
-        WRMChunk_Send chunk(header, META_FILE, 8, 1);
+        WRMChunk_Send chunk(header, META_FILE, stream.size(), 1);
+
         this->trans->send(header.data, header.size());
         this->trans->send(stream.data, stream.size());
     }
@@ -226,9 +231,10 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->serializer->flush();
     }
 
+
     void save_bmp_caches()
     {
-        this->serializer->emit_bmp_cache(1, 0);
+        this->serializer->save_bmp_caches();
     }
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) 

@@ -38,8 +38,10 @@
 #include "constants.hpp"
 
 const char expected_stripped_wrm[] = 
-/* 0000 */ "\xEE\x03\x10\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x20\x03\x58\x02\x18\x00\x00\x00" // width = 800, height=600, bpp=24 PAD: 2 bytes
+/* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+           "\x20\x03\x58\x02\x18\x00" // width = 800, height=600, bpp=24
+           "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
+           
 /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
 /* 0000 */ "\x40\x0C\xAA\x3B\x00\x00\x00\x00" // 0x3BAA0C40 = 1001000000
 /* 0000 */ "\x00\x00\x1A\x00\x00\x00\x02\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
@@ -165,7 +167,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     consumer.flush();
     BOOST_CHECK_EQUAL(0, 0);
     ::close(trans.fd);
-    BOOST_CHECK_EQUAL(92, filesize("./testcap.wrm"));
+    BOOST_CHECK_EQUAL(102, filesize("./testcap.wrm"));
     
     InByFilenameTransport in_wrm_trans("./testcap.wrm");
     FileSequence sequence("path file pid count extension", "./", "testcap", "png");

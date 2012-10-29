@@ -38,8 +38,9 @@
 #include "constants.hpp"
 
 const char expected_stripped_wrm[] = 
-/* 0000 */ "\xEE\x03\x10\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x64\x00\x64\x00\x18\x00\x00\x00" // width = 20, height=10, bpp=24 PAD: 2 bytes
+/* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+           "\x64\x00\x64\x00\x18\x00" // width = 20, height=10, bpp=24 
+           "\x02\x00\x00\x01\x02\x00\x00\x04\x02\x00\x00\x10"  // caches sizes
 
 /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
 /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000

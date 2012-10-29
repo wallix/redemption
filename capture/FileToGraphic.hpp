@@ -126,7 +126,7 @@ struct FileToGraphic
     RDPLineTo lineto;
     RDPGlyphIndex glyphindex;
 
-    BmpCache bmp_cache;
+    BmpCache * bmp_cache;
 
     // variables used to read batch of orders "chunks"
     uint32_t chunk_size;
@@ -159,7 +159,7 @@ struct FileToGraphic
     memblt(0, Rect(), 0, 0, 0, 0),
     lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
     glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
-    bmp_cache(24),
+    bmp_cache(NULL),
     // variables used to read batch of orders "chunks"
     chunk_size(0),
     chunk_type(0),
@@ -179,6 +179,11 @@ struct FileToGraphic
                 break;
             }
         }
+    }
+
+    ~FileToGraphic()
+    {
+        delete this->bmp_cache;
     }
 
     void add_consumer(RDPGraphicDevice * consumer)
@@ -275,7 +280,7 @@ struct FileToGraphic
                     BGRPalette palette;
                     init_palette332(palette);
                     cmd.receive(this->stream, control, header, palette);
-                    this->bmp_cache.put(cmd.id, cmd.idx, cmd.bmp);
+                    this->bmp_cache->put(cmd.id, cmd.idx, cmd.bmp);
                 }
                 break;
                 case TS_CACHE_COLOR_TABLE:
@@ -363,7 +368,7 @@ struct FileToGraphic
                 case RDP::MEMBLT:
                     {
                         this->memblt.receive(this->stream, header);
-                        const Bitmap * bmp = this->bmp_cache.get(this->memblt.cache_id, this->memblt.cache_idx);
+                        const Bitmap * bmp = this->bmp_cache->get(this->memblt.cache_id, this->memblt.cache_idx);
                         if (!bmp){
                             LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)", this->memblt.cache_id, this->memblt.cache_idx);
                         }
@@ -422,10 +427,18 @@ struct FileToGraphic
             {
                 uint16_t width = this->stream.in_uint16_le();
                 uint16_t height = this->stream.in_uint16_le();
-                this->stream.in_skip_bytes(4); // skip bpp and padding
+                uint16_t bpp    =  this->stream.in_uint16_le();
+                uint16_t small_entries = this->stream.in_uint16_le();
+                uint16_t small_size = this->stream.in_uint16_le();
+                uint16_t medium_entries = this->stream.in_uint16_le();
+                uint16_t medium_size = this->stream.in_uint16_le();
+                uint16_t big_entries = this->stream.in_uint16_le();
+                uint16_t big_size = this->stream.in_uint16_le();
+
                 this->stream.p = this->stream.end;
 
                 if (!this->meta_ok){
+                    this->bmp_cache = new BmpCache(bpp, small_entries, small_size, medium_entries, medium_size, big_entries, big_size);
                     this->screen_rect = Rect(0, 0, width, height);
                     this->meta_ok = true;
                 }

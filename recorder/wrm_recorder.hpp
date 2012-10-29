@@ -615,16 +615,16 @@ public:
                     this->reader.chunk_count = this->reader.stream.in_uint16_le();
                     //std::cout << "\ninterpret_order: "  << this->reader.order_count << '\n';
 
-                    this->reader.bmp_cache.small_entries = this->reader.stream.in_uint16_le();
-                    this->reader.bmp_cache.small_size = this->reader.stream.in_uint16_le();
-                    this->reader.bmp_cache.medium_entries = this->reader.stream.in_uint16_le();
-                    this->reader.bmp_cache.medium_size = this->reader.stream.in_uint16_le();
-                    this->reader.bmp_cache.big_entries = this->reader.stream.in_uint16_le();
-                    this->reader.bmp_cache.big_size = this->reader.stream.in_uint16_le();
+                    this->reader.bmp_cache->small_entries = this->reader.stream.in_uint16_le();
+                    this->reader.bmp_cache->small_size = this->reader.stream.in_uint16_le();
+                    this->reader.bmp_cache->medium_entries = this->reader.stream.in_uint16_le();
+                    this->reader.bmp_cache->medium_size = this->reader.stream.in_uint16_le();
+                    this->reader.bmp_cache->big_entries = this->reader.stream.in_uint16_le();
+                    this->reader.bmp_cache->big_size = this->reader.stream.in_uint16_le();
                     uint32_t stamp = this->reader.stream.in_uint32_le();
 
-                    this->reader.bmp_cache.reset();
-                    this->reader.bmp_cache.stamp = stamp;
+                    this->reader.bmp_cache->reset();
+                    this->reader.bmp_cache->stamp = stamp;
 
                     z_stream zstrm;
                     zstrm.zalloc = 0;
@@ -672,11 +672,11 @@ public:
 
                         uint cid = idx / 8192;
                         uint cidx = idx % 8192;
-                        this->reader.bmp_cache.stamps[cid][cidx] = stamp;
-                        if (this->reader.bmp_cache.cache[cid][cidx] != 0){
+                        this->reader.bmp_cache->stamps[cid][cidx] = stamp;
+                        if (this->reader.bmp_cache->cache[cid][cidx] != 0){
                             LOG(LOG_ERR, "bmp_cache already used at %u:%u", cid, cidx);
                         }
-                        this->reader.bmp_cache.cache[cid][cidx] = new Bitmap(24, 0, cx, cy, buffer, cx*cy);
+                        this->reader.bmp_cache->cache[cid][cidx] = new Bitmap(24, 0, cx, cy, buffer, cx*cy);
                     }
                     this->interpret_breakpoint_is_passed = true;
 
