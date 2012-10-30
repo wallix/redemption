@@ -73,7 +73,6 @@ public:
 //                               this->scale_width, this->drawable.width,
 //                               this->scale_height, this->drawable.height,
 //                               this->drawable.rowsize);
-        printf("flush width=%u height=%u\n", this->drawable.width, this->drawable.height);
         ::transport_dump_png24(&this->trans, this->drawable.data,
                      this->drawable.width, this->drawable.height,
                      this->drawable.rowsize

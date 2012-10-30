@@ -161,6 +161,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         uint64_t old_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
         uint64_t current_timer = now.tv_sec * 1000000ULL + now.tv_usec;
         if (old_timer < current_timer){
+            this->flush();
             this->timer = now;
         }
     }

@@ -42,15 +42,29 @@ const char expected_stripped_wrm[] =
            "\x20\x03\x58\x02\x18\x00" // width = 800, height=600, bpp=24
            "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
            
-/* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-/* 0000 */ "\x40\x0C\xAA\x3B\x00\x00\x00\x00" // 0x3BAA0C40 = 1001000000
-/* 0000 */ "\x00\x00\x1A\x00\x00\x00\x02\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
-/* 0000 */ "\x09\x0a\x2c\x20\x03\x58\x02\xff"         // Green Rect(0, 0, 800, 600)
-           "\x01\x6e\x32\x00\xbc\x02\x1e\x00\x00\xff" // Blue  Rect(0, 50, 700, 80)
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-           "\xc0\x99\x05\x3c\x00\x00\x00\x00" // 0x3C0599C0 = 1007000000
-           "\x00\x00\x12\x00\x00\x00\x02\x00" // 0000: ORDERS  0012:chunk_len=18 0002: 2 orders
-           "\x11\x32\x32\xff\xff\x11\x62\x32\x00\x00" // White rect(0, 100, 700, 130), red rect(0, 150, 700, 180)
+/* 0000 */ "\x00\xca\x9a\x3B\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
+
+           "\x00\x00\x10\x00\x00\x00\x01\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
+/* 0000 */ "\x09\x0a\x2c\x20\x03\x58\x02\xff"         // Green Rect(0, 0, 800, 600)
+
+/* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+           "\x40\x0C\xAA\x3B\x00\x00\x00\x00" // 0x3BAA0C40 = 1001000000
+
+/* 0000 */ "\x00\x00\x12\x00\x00\x00\x01\x00" // 0000: ORDERS  0012:chunk_len=18 0002: 1 orders
+           "\x01\x6e\x32\x00\xbc\x02\x1e\x00\x00\xff"  // Blue  Rect(0, 50, 700, 80)
+           
+/* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+           "\x00\xd3\xd7\x3b\x00\x00\x00\x00" // time = 1004000000
+
+/* 0000 */ "\x00\x00\x0d\x00\x00\x00\x01\x00"
+           "\x11\x32\x32\xff\xff"
+
+/* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00"
+           "\x80\x57\xf6\x3b\x00\x00\x00\x00"
+
+/* 0000 */ "\x00\x00\x0d\x00\x00\x00\x01\x00"
+           "\x11\x62\x32\x00\x00"
     ;
 
 BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
@@ -63,16 +77,17 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     Rect screen_rect(0, 0, 800, 600);
     BStream stream(65536);
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
+    
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
     GraphicToFile consumer(now, &trans, &stream, &ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache);
-    RDPOpaqueRect cmd0(screen_rect, GREEN);
-    consumer.draw(cmd0, screen_rect);
+
+    consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
+
     now.tv_sec++;
     consumer.timestamp(now);
 
-    RDPOpaqueRect cmd1(Rect(0, 50, 700, 30), BLUE);
-    consumer.draw(cmd1, screen_rect);
+    consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), BLUE), screen_rect);
     consumer.flush();
 
     now.tv_sec++;
@@ -84,8 +99,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     now.tv_sec++;
     consumer.timestamp(now);
 
-    RDPOpaqueRect cmd2(Rect(0, 100, 700, 30), WHITE);
-    consumer.draw(cmd2, screen_rect);
+    consumer.draw(RDPOpaqueRect(Rect(0, 100, 700, 30), WHITE), screen_rect);
     now.tv_sec++;
     consumer.timestamp(now);
 
@@ -100,6 +114,33 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     consumer.flush();
 }
 
+const char expected_stripped_wrm2[] = 
+/* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+           "\x20\x03\x58\x02\x18\x00" // width = 800, height=600, bpp=24
+           "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
+           
+           "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+/* 0000 */ "\x00\xca\x9a\x3B\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
+
+           "\x00\x00\x1A\x00\x00\x00\x02\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
+/* 0000 */ "\x09\x0a\x2c\x20\x03\x58\x02\xff"         // Green Rect(0, 0, 800, 600)
+           "\x01\x6e\x32\x00\xbc\x02\x1e\x00\x00\xff"  // Blue  Rect(0, 50, 700, 80)
+           
+           "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+/* 0000 */ "\x40\x0c\xaa\x3b\x00\x00\x00\x00" // time = 1001000000
+
+           "\x00\x00\x12\x00\x00\x00\x02\x00"
+/* 0000 */ "\x11\x32\x32\xff\xff"             // WHITE rect
+           "\x11\x62\x32\x00\x00"             // RED rect
+
+           "\xf0\x03\x10\x00\x00\x00\x01\x00"
+/* 0000 */ "\xc0\x99\x05\x3c\x00\x00\x00\x00" // time 1007000000
+
+           "\x00\x00\x13\x00\x00\x00\x01\x00"
+/* 0000 */ "\x01\x1f\x05\x00\x05\x00\x0a\x00\x0a\x00\x00" // BLACK rect
+   ;
+
+
 BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
 {
     // Same as above, show timestamps are applied only when flushing
@@ -109,25 +150,23 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
 
     Rect screen_rect(0, 0, 800, 600);
     BStream stream(65536);
-    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
+    CheckTransport trans(expected_stripped_wrm2, sizeof(expected_stripped_wrm2)-1, 511);
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
     GraphicToFile consumer(now, &trans, &stream, &ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache);
 
-    RDPOpaqueRect cmd0(screen_rect, GREEN);
-    consumer.draw(cmd0, screen_rect);
-    RDPOpaqueRect cmd1(Rect(0, 50, 700, 30), BLUE);
-    consumer.draw(cmd1, screen_rect);
+    consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
+    consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), BLUE), screen_rect);
+
     now.tv_sec++;
     consumer.timestamp(now);
-    consumer.flush();
 
-    RDPOpaqueRect cmd2(Rect(0, 100, 700, 30), WHITE);
-    consumer.draw(cmd2, screen_rect);
-    RDPOpaqueRect cmd3(Rect(0, 150, 700, 30), RED);
-    consumer.draw(cmd3, screen_rect);
+    consumer.draw(RDPOpaqueRect(Rect(0, 100, 700, 30), WHITE), screen_rect);
+    consumer.draw(RDPOpaqueRect(Rect(0, 150, 700, 30), RED), screen_rect);
     now.tv_sec+=6;
     consumer.timestamp(now);
+
+    consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 10), BLACK), screen_rect);
  
     consumer.flush();
 }
