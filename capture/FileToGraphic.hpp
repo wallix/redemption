@@ -537,8 +537,8 @@ struct FileToGraphic
                 this->stream.in_copy_bytes(this->glyphindex.brush.extra, 7);
                 this->glyphindex.glyph_x = this->stream.in_sint16_le();
                 this->glyphindex.glyph_y = this->stream.in_sint16_le();
-//                this->glyphindex.data_len = this->stream.in_uint8();
-                //------------------------------ missing variable length ---------------
+                this->glyphindex.data_len = this->stream.in_uint8();
+                this->stream.in_copy_bytes(this->glyphindex.data, 256);
             break;
 
             case LAST_IMAGE_CHUNK:

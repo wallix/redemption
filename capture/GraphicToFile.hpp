@@ -301,7 +301,13 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         stream.out_copy_bytes(this->serializer->glyphindex.brush.extra, 7);
         stream.out_sint16_le(this->serializer->glyphindex.glyph_x);
         stream.out_sint16_le(this->serializer->glyphindex.glyph_y);
-//        this->serializer->stream.out_uint8(this->serializer->glyphindex.data_len);
+        stream.out_uint8(this->serializer->glyphindex.data_len);
+        memset(this->serializer->glyphindex.data 
+                + this->serializer->glyphindex.data_len, 0,
+            sizeof(this->serializer->glyphindex.data) 
+                - this->serializer->glyphindex.data_len);
+        stream.out_copy_bytes(this->serializer->glyphindex.data, 256);
+
         //------------------------------ missing variable length ---------------
         stream.mark_end();
 
