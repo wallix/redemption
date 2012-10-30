@@ -74,7 +74,7 @@ public:
     GraphicToFile recorder;
     uint32_t nb_file;
 
-    NativeCapture(const timeval & now, Transport & trans, FileSequence & sequence, int width, int height)
+    NativeCapture(const timeval & now, Transport & trans, int width, int height)
     : width(width)
     , height(height)
     , bpp(24)

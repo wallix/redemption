@@ -173,8 +173,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     FileSequence sequence("path file pid count extension", "./", "testcap", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
 
-    now.tv_sec = 5000;
-    FileToGraphic player(&in_wrm_trans, now);
+    FileToGraphic player(&in_wrm_trans);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, true);
     player.add_consumer(&png_recorder);
 

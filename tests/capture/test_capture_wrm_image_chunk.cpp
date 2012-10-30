@@ -355,11 +355,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
         ;
 
     GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);   
-    timeval now;
-    gettimeofday(&now, NULL);
-    now.tv_usec = 0;
-    now.tv_sec = 5000;
-    FileToGraphic player(&in_wrm_trans, now);
+    FileToGraphic player(&in_wrm_trans);
 
     FileSequence sequence("path file pid count extension", "./", "testimg", "png");
 
@@ -419,11 +415,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
         ;
 
     GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);   
-    timeval now;
-    gettimeofday(&now, NULL);
-    now.tv_usec = 0;
-    now.tv_sec = 5000;
-    FileToGraphic player(&in_wrm_trans, now);
+    FileToGraphic player(&in_wrm_trans);
     FileSequence sequence("path file pid count extension", "./", "testimg", "png");
 
     OutByFilenameSequenceTransport out_png_trans(sequence);

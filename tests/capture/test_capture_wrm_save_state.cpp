@@ -26,7 +26,7 @@
 #define BOOST_TEST_MODULE TestWrmImageChunk
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include <sys/time.h>
 
 #include "test_orders.hpp"
@@ -108,11 +108,7 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
 BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
 {
     GeneratorTransport in_wrm_trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1);   
-    timeval now;
-    gettimeofday(&now, NULL);
-    now.tv_usec = 0;
-    now.tv_sec = 5000;
-    FileToGraphic player(&in_wrm_trans, now);
+    FileToGraphic player(&in_wrm_trans);
 
     FileSequence sequence("path file pid count extension", "./", "TestReloadSaveCache", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
@@ -214,11 +210,7 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
 BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
 {
     GeneratorTransport in_wrm_trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1);   
-    timeval now;
-    gettimeofday(&now, NULL);
-    now.tv_usec = 0;
-    now.tv_sec = 5000;
-    FileToGraphic player(&in_wrm_trans, now);
+    FileToGraphic player(&in_wrm_trans);
 
     FileSequence sequence("path file pid count extension", "./", "TestReloadOrderStates", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
@@ -304,11 +296,7 @@ const char expected_continuation_wrm[] =
 BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
 {
     GeneratorTransport in_wrm_trans(expected_continuation_wrm, sizeof(expected_continuation_wrm)-1);   
-    timeval now;
-    gettimeofday(&now, NULL);
-    now.tv_usec = 0;
-    now.tv_sec = 5000;
-    FileToGraphic player(&in_wrm_trans, now);
+    FileToGraphic player(&in_wrm_trans);
 
     FileSequence sequence("path file pid count extension", "./", "TestContinuationOrderStates", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);

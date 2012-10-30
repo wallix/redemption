@@ -49,99 +49,82 @@ struct RecorderAction {
 
 int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* actions, std::size_t n)
 {
-    timeval now;
-    gettimeofday(&now, NULL);
+//    char buffer[128] = {};
+//    size_t used = snprintf(buffer, 128, "accept ");
+//    for (unsigned int i = 0 ; i < n ; i++){
+//        used += snprintf(&buffer[used], 128-used, "%s'%s'", (i>0?(i!=n-1)?", ":" or ":""), actions[i].key);
+//    }
+//    opt.desc.add_options()("output-type,O", po::value(&opt.output_type), buffer);
 
-    char buffer[128] = {};
-    size_t used = snprintf(buffer, 128, "accept ");
-    for (unsigned int i = 0 ; i < n ; i++){
-        used += snprintf(&buffer[used], 128-used, "%s'%s'", (i>0?(i!=n-1)?", ":" or ":""), actions[i].key);
-    }
-    opt.desc.add_options()("output-type,O", po::value(&opt.output_type), buffer);
+    std::string input_filename;
 
-    try
-    {
-        if (!opt.parse_command_line(argc, argv)){
-            return 0;
+    boost::program_options::options_description desc("Options");
+    desc.add_options()
+    // --help, -h
+    ("help,h", "produce help message")
+    // --version, -v
+    ("version,v", "show software version")
+    ("input-file,i", po::value(&input_filename), "input filename (see --input-type)")
+    ("in", po::value(&input_filename), "alias for --input-file")
+    ;
+
+    boost::program_options::positional_options_description p;
+    boost::program_options::variables_map options;
+    p.add("input-file", -1);
+    boost::program_options::store(
+        boost::program_options::command_line_parser(argc, argv).options(desc).positional(p).run(),
+        options
+    );
+    po::notify(options);
+
+    try {
+        InByFilenameTransport in_wrm_trans(input_filename.c_str());
+        FileToGraphic player(&in_wrm_trans);
+
+        FileSequence sequence("path file pid count extension", "./", "testxxx", "png");
+        OutByFilenameSequenceTransport out_png_trans(sequence);
+        StaticCapture png_recorder(player.replay_now, out_png_trans, sequence, player.screen_rect.cx, player.screen_rect.cy);
+        Inifile ini;
+        ini.globals.png_limit = 60;
+        ini.globals.png_interval = 1;
+        png_recorder.update_config(ini);
+        player.add_consumer(&png_recorder);
+
+        while (player.next_order()){
+            player.interpret_order();
+            png_recorder.snapshot(player.replay_now, 0, 0, true, false);
         }
+
     }
-    catch(boost::program_options::error& error)
+    catch(const Error & e)
     {
-        std::cerr << "parse command line: " << error.what() << std::endl;
-        return -1;
-    }
+        printf("error=%u", e.id);
+    };
 
-    InputType::enum_t itype;
-    if (int error = opt.prepare(itype)){
-        switch (error) {
-            case WrmRecorderOption::INPUT_KEY_OVERLOAD:
-                std::cerr << "Size key is " << opt.in_cipher_info.key_len() << " octets" << std::endl;
-                break;
-            case WrmRecorderOption::INPUT_IV_OVERLOAD:
-                std::cerr << "Size IV is " << opt.in_cipher_info.iv_len() << " octets" << std::endl;
-                break;
-            case WrmRecorderOption::OUTPUT_KEY_OVERLOAD:
-                std::cerr << "Size key is " << opt.out_cipher_info.key_len() << " octets" << std::endl;
-                break;
-            case WrmRecorderOption::OUTPUT_IV_OVERLOAD:
-                std::cerr << "Size IV is " << opt.out_cipher_info.iv_len() << " octets" << std::endl;
-                break;
-            default:
-                break;
-        }
-        return error;
-    }
 
-    const std::size_t pos = opt.out_filename.find_last_of('.');
-    std::string extension = opt.output_type.empty()
-    ? (std::string::npos == pos ? "" : opt.out_filename.substr(pos + 1))
-    : opt.output_type;
+//    RecorderAdapter* adapter = actions[i].action;
+//    InFileTransport trans(-1);
+//    FileToGraphic reader(&trans, now);
 
-    unsigned int i = 0;
-    for (i = 0 ; i < n ; i++){
-        if (0 == strcasecmp(actions[i].key, extension.c_str())){
-            break;
-        }
-    }
-    if (i >= n){
-        std::cerr
-        << "Incorrect output-type, "
-        << opt.desc.find("output-type", false).description() << std::endl;
-        return 1100;
-    }
+//    WRMRecorder recorder(now, trans, reader, opt.range);
 
-    RecorderAdapter* adapter = actions[i].action;
-    InFileTransport trans(-1);
-    FileToGraphic reader(&trans, now);
 
-    WRMRecorder recorder(now,
-                        trans,
-                        reader,
-                        itype, 
-                        opt.base_path, 
-                        opt.ignore_dir_for_meta_in_wrm,
-                        opt.times_in_meta_are_false,
-                        opt.force_interpret_breakpoint,
-                        opt.range,
-                        opt.in_filename,
-                        opt.idx_start);
+//    if (std::string::npos != pos){
+//        opt.out_filename.erase(pos);
+//    }
 
-    if (std::string::npos != pos){
-        opt.out_filename.erase(pos);
-    }
-
-    try
-    {
-        (*adapter)(recorder, opt.out_filename.c_str());
-    }
-    catch (Error& error)
-    {
-        std::cerr << "Error " << error.id;
-        if (error.errnum)
-            std::cerr << ": " << strerror(error.errnum);
-        std::cerr << std::endl;
-        return 100000 + error.errnum;
-    }
+//    try
+//    {
+//        (*adapter)(recorder, opt.out_filename.c_str());
+//    }
+//    catch (Error& error)
+//    {
+//        std::cerr << "Error " << error.id;
+//        if (error.errnum)
+//            std::cerr << ": " << strerror(error.errnum);
+//        std::cerr << std::endl;
+//        return 100000 + error.errnum;
+//    }
     return 0;
 }
 

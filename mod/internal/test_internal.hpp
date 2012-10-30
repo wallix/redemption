@@ -78,9 +78,7 @@ struct test_internal_mod : public internal_mod {
         }
         
         InFileTransport in_trans(fd);
-        timeval now;
-        gettimeofday(&now, NULL);
-        FileToGraphic reader(&in_trans, now);
+        FileToGraphic reader(&in_trans, true);
         reader.add_consumer(&this->front);
         this->front.send_global_palette();
         this->front.begin_update();

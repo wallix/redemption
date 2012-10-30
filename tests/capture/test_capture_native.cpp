@@ -23,58 +23,39 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestStaticCapture
+#define BOOST_TEST_MODULE TestNativeCapture
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
 #include "test_orders.hpp"
 #include "transport.hpp"
 #include "image_capture.hpp"
-#include "staticcapture.hpp"
+#include "nativecapture.hpp"
 #include "constants.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include <png.h>
 
 
-BOOST_AUTO_TEST_CASE(TestOneRedScreen)
+BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 {
-    Rect screen_rect(0, 0, 800, 600);
-    FileSequence sequence("path file pid count extension", "./", "test", "png");
+    Rect scr(0, 0, 800, 600);
+    FileSequence sequence("path file pid count extension", "./", "test", "wrm");
     OutByFilenameSequenceTransport trans(sequence);
 
     struct timeval now;
-//    gettimeofday(&now, NULL);
-    now.tv_sec = 1350998222;
+    now.tv_sec = 1000;
     now.tv_usec = 0;
     
-    StaticCapture consumer(now, trans, sequence, 800, 600);
+    NativeCapture consumer(now, trans, 800, 600);
     Inifile ini;
-    ini.globals.png_limit = 3;
-    ini.globals.png_interval = 20;
+    ini.globals.frame_interval = 100; // one snapshot by second
+    ini.globals.break_interval = 5;   // one WRM file every 5 seconds
     consumer.update_config(ini);
 
-    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
-    consumer.draw(cmd, screen_rect);
+    consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.snapshot(now, 10, 10, true, false);
-    now.tv_sec++;
+    now.tv_sec += 6;
     consumer.snapshot(now, 10, 10, true, false);
-    now.tv_sec++;
-    consumer.snapshot(now, 10, 10, true, false);
-    now.tv_sec++;
-    consumer.snapshot(now, 10, 10, true, false);
-    now.tv_sec++;
-
-    RDPOpaqueRect cmd1(Rect(100, 100, 200, 200), BLUE);
-    consumer.draw(cmd1, screen_rect);
-    consumer.snapshot(now, 10, 10, true, false);
-    now.tv_sec++;
-    consumer.snapshot(now, 10, 10, true, false);
-    now.tv_sec++;
     ::close(trans.fd);
-
-    BOOST_CHECK_EQUAL(3092, sequence.filesize(0));
-    BOOST_CHECK_EQUAL(3108, sequence.filesize(1));
-    sequence.unlink(0);
-    sequence.unlink(1);
 }
 

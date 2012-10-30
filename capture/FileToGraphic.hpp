@@ -134,8 +134,8 @@ struct FileToGraphic
     uint16_t chunk_count;
     uint16_t remaining_order_count;
 
-    timeval timer_cap;
-    uint64_t movie_usec;
+    timeval playtime_now;
+    timeval replay_now;
 
     uint16_t nbconsumers;
     RDPGraphicDevice * consumers[10];
@@ -145,10 +145,11 @@ struct FileToGraphic
     
     bool meta_ok;
     bool timestamp_ok;
+    bool real_time;
 
     DataMetaFile data_meta;
 
-    FileToGraphic(Transport * trans, const timeval & now)
+    FileToGraphic(Transport * trans, bool real_time = false)
      : stream(4096), trans(trans),
      // Internal state of orders
     common(RDP::PATBLT, Rect(0, 0, 1, 1)),
@@ -165,14 +166,14 @@ struct FileToGraphic
     chunk_type(0),
     chunk_count(0),
     remaining_order_count(0),
-    timer_cap(now),
-    movie_usec(0),
     nbconsumers(0),
     nbdrawables(0),
     meta_ok(false),
     timestamp_ok(false),
+    real_time(real_time),
     data_meta()
     {
+        gettimeofday(&this->playtime_now, 0);
         while (this->next_order()){
             this->interpret_order();
             if (this->meta_ok && this->timestamp_ok){
@@ -259,7 +260,6 @@ struct FileToGraphic
             LOG(LOG_ERR,"Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing\n");
             throw Error(ERR_WRM);
         }
-        LOG(LOG_INFO,"RDP_UPDATE_ORDERS\n");
         {
             uint8_t control = this->stream.in_uint8();
             if (!control & RDP::STANDARD){
@@ -395,28 +395,41 @@ struct FileToGraphic
             {
                 if (!this->timestamp_ok){
                     LOG(LOG_INFO, "chunk timestamp reading first timestamp");
-                    this->movie_usec = this->stream.in_uint64_le();
+                    uint64_t movie_usec = this->stream.in_uint64_le();
+                    this->replay_now.tv_sec  = movie_usec / 1000000; 
+                    this->replay_now.tv_usec = movie_usec % 1000000; 
+                    if (!this->real_time){
+                        this->playtime_now.tv_sec = movie_usec / 1000000; 
+                        this->playtime_now.tv_usec = movie_usec % 1000000; 
+                    }
                     this->timestamp_ok = true;
                 }
                 else {
                     LOG(LOG_INFO, "chunk timestamp reading other timestamps");
-                    uint64_t last_movie_usec = this->movie_usec;
-                    this->movie_usec = this->stream.in_uint64_le();
+                    uint64_t last_movie_usec = this->replay_now.tv_sec * 1000000 + this->replay_now.tv_usec;
+                    uint64_t movie_usec = this->stream.in_uint64_le();
                     uint64_t movie_elapsed = movie_usec - last_movie_usec;
-                    struct timeval now;
-                    gettimeofday(&now, 0);
-                    uint64_t elapsed = difftimeval(now, this->timer_cap);
-                    this->timer_cap = now;
-                    
-                    LOG(LOG_INFO, "elapsed=%lu movie_elapsed=%lu\n", elapsed, movie_elapsed);
-                    
-                    if (elapsed <= movie_elapsed){
-                        struct timespec wtime =
-                            { static_cast<uint32_t>((movie_elapsed - elapsed) / 1000000)
-                            , static_cast<uint32_t>((movie_elapsed - elapsed) % 1000000 * 1000)
-                            };
-                        nanosleep(&wtime, NULL);
+                    if (this->real_time){
+                        struct timeval now;
+                        gettimeofday(&now, 0);
+                        uint64_t elapsed = difftimeval(now, this->playtime_now);
+                        this->playtime_now = now;
+                        LOG(LOG_INFO, "elapsed=%lu movie_elapsed=%lu\n", elapsed, movie_elapsed);
+                        
+                        if (elapsed <= movie_elapsed){
+                            struct timespec wtime =
+                                { static_cast<uint32_t>((movie_elapsed - elapsed) / 1000000)
+                                , static_cast<uint32_t>((movie_elapsed - elapsed) % 1000000 * 1000)
+                                };
+                            nanosleep(&wtime, NULL);
+                        }
                     }
+                    else {
+                        this->playtime_now.tv_sec = movie_usec / 1000000; 
+                        this->playtime_now.tv_usec = movie_usec % 1000000; 
+                    }
+                    this->replay_now.tv_sec = movie_usec / 1000000; 
+                    this->replay_now.tv_usec = movie_usec % 1000000; 
                 }
             }
             break;
@@ -425,6 +438,7 @@ struct FileToGraphic
             TODO("Cache meta_data (sizes, number of entries) should be put in META chunk")
             LOG(LOG_INFO,"META_FILE\n");
             {
+//                uint16_t version = this->stream.in_uint16_le();
                 uint16_t width = this->stream.in_uint16_le();
                 uint16_t height = this->stream.in_uint16_le();
                 uint16_t bpp    =  this->stream.in_uint16_le();
@@ -560,7 +574,6 @@ struct FileToGraphic
                             row += this->drawables[0]->drawable.rowsize;
                         }
                     }
-                                
                 }
                 else {
                     // in this case ignore chunks

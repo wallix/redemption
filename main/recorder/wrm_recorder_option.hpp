@@ -41,6 +41,90 @@
 
 namespace po = boost::program_options;
 
+template<std::size_t N>
+struct HexadecimalOption
+{
+    unsigned char data[N];
+    std::size_t size;
+
+    HexadecimalOption()
+    : size(0)
+    {}
+
+    /**
+     * \param s value in hexadecimal base
+     */
+    bool parse(const std::string& s)
+    {
+        std::size_t n = s.size() / 2 + (s.size() & 1);
+        if (n > N || !transform_string_hex_to_data(s, this->data))
+            return false;
+        this->size = n;
+        while (n != N)
+            this->data[n++] = 0;
+        return true;
+    }
+
+private:
+    static bool transform_string_hex_to_data(const std::string& s, unsigned char * pdata)
+    {
+        std::string::const_iterator first = s.begin();
+        std::string::const_iterator last = s.end();
+        char c;
+        if (s.size() & 1)
+            --last;
+        for (; first != last; ++first, ++pdata)
+        {
+            if (0xf == (*pdata = transform_c_hex_to_c_data(*first)))
+                return false;
+            if (0xf == (c = transform_c_hex_to_c_data(*++first)))
+                return false;
+            *pdata = (*pdata << 4) + c;
+        }
+        if (s.size() & 1)
+        {
+            if (0xf == (*pdata = transform_c_hex_to_c_data(*first)))
+                return false;
+            *pdata <<= 4;
+        }
+        return true;
+    }
+
+    static unsigned char transform_c_hex_to_c_data(char c)
+    {
+        if ('a' <= c && c <= 'f')
+            return c - 'a' + 0xa;
+        if ('A' <= c && c <= 'F')
+            return c - 'A' + 0xa;
+        if ('0' > c || c > '9')
+            return 0xf;
+        return c - '0';
+    }
+};
+
+typedef HexadecimalOption<EVP_MAX_KEY_LENGTH> HexadecimalKeyOption;
+typedef HexadecimalOption<EVP_MAX_IV_LENGTH> HexadecimalIVOption;
+
+struct InputType {
+    enum enum_t {
+        NOT_FOUND,
+        META_TYPE,
+        WRM_TYPE
+    };
+
+    typedef enum_t format_type;
+
+    static InputType::enum_t string_to_type(const std::string& s)
+    {
+        if (s == "mwrm")
+            return META_TYPE;
+        if (s == "wrm")
+            return WRM_TYPE;
+        return NOT_FOUND;
+    }
+};
+
+
 template<typename _T>
 void validate_time_or_throw_invalid_option_value(boost::any& v, const std::vector<std::string>& values, _T*)
 {
@@ -249,7 +333,7 @@ public:
     uint frame;
     time_point time;
     std::vector<relative_time_point> time_list;
-    std::string in_filename;
+    std::string input_filename;
     uint idx_start;
     std::string base_path;
     std::string metaname;
@@ -289,7 +373,7 @@ public:
     , frame(std::numeric_limits<uint>::max())
     , time(60*2)
     , time_list()
-    , in_filename()
+    , input_filename()
     , idx_start(0)
     , base_path()
     , metaname()
@@ -339,8 +423,8 @@ public:
         "\nformat: [+|-]time[h|m|s][...]")
         ("time-list,l", po::value(&this->time_list)->multitoken(), "points of capture. Set --output-type with 'png.list' if not done"
         "\nformat: [+|-]time[h|m|s][...] ...")
-        ("input-file,i", po::value(&this->in_filename), "input filename (see --input-type)")
-        ("in", po::value(&this->in_filename), "alias for --input-file")
+        ("input-file,i", po::value(&this->input_filename), "input filename (see --input-type)")
+        ("in", po::value(&this->input_filename), "alias for --input-file")
         ("index-start,x", po::value(&this->idx_start), "index file in the meta")
         ("path,p", po::value(&this->base_path), "base path for the files presents in the meta")
         ("ignore-dir,N", "ignore directory for meta in the wrm file")
@@ -403,9 +487,6 @@ public:
          "aes-[128|192|256]-cfb8    128/192/256 bit AES in 8 bit CFB mode\n"
          "aes-[128|192|256]-ecb     128/192/256 bit AES in ECB mode\n"
          "aes-[128|192|256]-ofb     128/192/256 bit AES in OFB mode\n")
-        ;
-        
-        this->desc.add_options()
         ("output-file,o", po::value(&this->out_filename), "output filename (see --output-type)")
         ("out", po::value(&this->out_filename), "alias for --output-file")
         ("screenshot-wrm,s", "capture the screen when a file wrm is create")
@@ -418,9 +499,6 @@ public:
         ("out-crypt-key", po::value(&this->out_crypt_key), "key in hexadecimal base")
         ("out-crypt-iv", po::value(&this->out_crypt_iv), "IV in hexadecimal base")
         ("out-crypt-mode", po::value(&this->out_crypt_mode), "see --in-crypt-mode")
-        ;
-        
-        this->desc.add_options()
         ("range-list,L", po::value(&this->range_list)->multitoken(), 
             "intervals of capture, see --range. Set --output-type with 'flv.list' if not done")
         ("video-quality,q", po::value(&this->video_quality), "only with video format, accept 'high' or 'low'. Default is 'high'.")
@@ -441,6 +519,10 @@ public:
             this->options
         );
 
+        for (int i = 0 ; i < argc ; i++){
+            printf("argv[%u]=%s\n", i, argv[i]);
+        }
+        
         if (this->options.count("version")) {
             std::cout << argv[0] << ' ' << this->version() << std::endl;
             return false;
@@ -508,15 +590,15 @@ public:
         if (!this->input_type.empty()){
             return InputType::string_to_type(this->input_type);
         }
-        const std::size_t pos = this->in_filename.find_last_of('.');
-        return InputType::string_to_type(this->in_filename.substr(pos + 1));
+        const std::size_t pos = this->input_filename.find_last_of('.');
+        return InputType::string_to_type(this->input_filename.substr(pos + 1));
     }
 
     int prepare(InputType::enum_t& itype)
     {
         po::notify(this->options);
 
-        if (this->in_filename.empty()){
+        if (this->input_filename.empty()){
             return IN_FILENAME_IS_EMPTY;
         }
 
@@ -586,9 +668,9 @@ public:
 
         if (this->options.find("deduce-dir") != end){
             this->ignore_dir_for_meta_in_wrm = true;
-            std::size_t pos = this->in_filename.find_last_of('/');
+            std::size_t pos = this->input_filename.find_last_of('/');
             if (std::string::npos != pos)
-                this->base_path = this->in_filename.substr(0, pos+1);
+                this->base_path = this->input_filename.substr(0, pos+1);
         }
 
         if (this->options.find("time-list") != end){

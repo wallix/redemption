@@ -72,8 +72,8 @@ public:
     struct timeval start_static_capture;
     uint64_t inter_frame_interval_static_capture;
 
-    StaticCapture(const timeval & now, Transport & trans, FileSequence & sequence, unsigned width, unsigned height, bool bgr)
-    : ImageCapture(trans, width, height, bgr)
+    StaticCapture(const timeval & now, Transport & trans, FileSequence & sequence, unsigned width, unsigned height)
+    : ImageCapture(trans, width, height, true)
     , sequence(sequence)
     {
         this->start_static_capture = now;
@@ -107,7 +107,12 @@ public:
 
     void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
-        if (difftimeval(now, this->start_static_capture) >= this->inter_frame_interval_static_capture){
+        if ((unsigned)difftimeval(now, this->start_static_capture) >= (unsigned)this->inter_frame_interval_static_capture){
+//            printf("SNAPSHOT %u >= %u %u:%u\n" 
+//                , (unsigned)difftimeval(now, this->start_static_capture)
+//                , (unsigned)this->inter_frame_interval_static_capture
+//                , (unsigned)now.tv_sec, (unsigned)now.tv_usec);
+
             time_t rawtime = now.tv_sec;
             tm *ptm = localtime(&rawtime);
             this->drawable.trace_timestamp(*ptm);

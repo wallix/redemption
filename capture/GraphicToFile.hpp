@@ -216,7 +216,6 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void send_save_state_chunk()
     {
-        printf("send_save_state_chunk\n");
         BStream stream(2048);
         // RDPOrderCommon common;
         stream.out_uint8(this->serializer->common.order);
@@ -314,9 +313,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         BStream header(8);
         WRMChunk_Send chunk(header, SAVE_STATE, stream.size(), 1);
         this->trans->send(header.data, header.size());
-        printf("send_save_state_chunk sent header\n");
         this->trans->send(stream.data, stream.size());
-        printf("send_save_state_chunk send\n");
     }    
 
     void send_caches_chunk()
