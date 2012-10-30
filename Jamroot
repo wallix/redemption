@@ -272,8 +272,6 @@ unit-test test_relative_point : tests/test_relative_point.cpp libboost_unit_test
 
 unit-test test_filename_generator : tests/test_filename_generator.cpp libboost_unit_test ;
 
-unit-test test_meta_file : tests/test_meta_file.cpp libboost_unit_test ;
-
 unit-test test_png_scale : tests/test_png_scale.cpp libboost_unit_test png z crypto ;
 
 #unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp libboost_unit_test z dl crypto png ;
