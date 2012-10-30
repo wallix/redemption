@@ -319,6 +319,30 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         printf("send_save_state_chunk send\n");
     }    
 
+    void send_caches_chunk()
+    {
+        this->serializer->save_bmp_caches();
+        if (this->serializer->order_count > 0){
+            this->send_orders_chunk();
+        }
+    }
+
+    void save_bmp_caches()
+    {
+        this->serializer->save_bmp_caches();
+    }
+
+    void breakpoint()
+    {
+        this->flush();
+        this->trans->next();
+        this->send_meta_chunk();
+        this->send_timestamp_chunk();
+        this->send_save_state_chunk();
+        this->send_image_chunk();
+        this->send_caches_chunk();
+    }
+
 
     virtual void flush()
     {
@@ -337,11 +361,6 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->serializer->flush();
     }
 
-
-    void save_bmp_caches()
-    {
-        this->serializer->save_bmp_caches();
-    }
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) 
     {

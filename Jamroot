@@ -175,6 +175,7 @@ unit-test test_transport : tests/test_transport.cpp libboost_unit_test ;
 unit-test test_capture_png : tests/capture/test_capture_png.cpp png z libboost_unit_test z openssl crypto ;
 unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp png z libboost_unit_test z openssl crypto ;
 unit-test test_capture_static : tests/capture/test_capture_static.cpp png z libboost_unit_test z openssl crypto ;
+unit-test test_capture_native : tests/capture/test_capture_native.cpp png z libboost_unit_test z openssl crypto ;
 unit-test test_capture_wrm_image_chunk : tests/capture/test_capture_wrm_image_chunk.cpp png z libboost_unit_test z openssl crypto ;
 unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp png z libboost_unit_test z openssl crypto ;
 
