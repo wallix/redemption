@@ -56,6 +56,8 @@ struct RDPGraphicDevice
     virtual void draw(const RDPColCache & cmd) {};
     virtual void draw(const RDPGlyphCache & cmd) {};
 
+    virtual void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp) {}
+
 protected:
     // this to avoid calling constructor of base abstract class
     RDPGraphicDevice() {}

@@ -85,16 +85,11 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
         OutByFilenameSequenceTransport out_png_trans(sequence);
         StaticCapture png_recorder(player.replay_now, out_png_trans, sequence, player.screen_rect.cx, player.screen_rect.cy);
         Inifile ini;
-        ini.globals.png_limit = 60;
-        ini.globals.png_interval = 1;
+        ini.globals.png_limit = 30;
+        ini.globals.png_interval = 50;
         png_recorder.update_config(ini);
         player.add_consumer(&png_recorder);
-
-        while (player.next_order()){
-            player.interpret_order();
-            png_recorder.snapshot(player.replay_now, 0, 0, true, false);
-        }
-
+        player.play();
     }
     catch(const Error & e)
     {

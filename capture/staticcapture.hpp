@@ -105,7 +105,7 @@ public:
         }
     }
 
-    void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
+    virtual void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
         if ((unsigned)difftimeval(now, this->start_static_capture) >= (unsigned)this->inter_frame_interval_static_capture){
 //            printf("SNAPSHOT %u >= %u %u:%u\n" 

@@ -150,7 +150,7 @@ struct FileToGraphic
     DataMetaFile data_meta;
 
     FileToGraphic(Transport * trans, bool real_time = false)
-     : stream(4096), trans(trans),
+     : stream(65536), trans(trans),
      // Internal state of orders
     common(RDP::PATBLT, Rect(0, 0, 1, 1)),
     destblt(Rect(), 0),
@@ -452,6 +452,7 @@ struct FileToGraphic
                 this->stream.p = this->stream.end;
 
                 if (!this->meta_ok){
+                    printf("meta: create bmp cache\n");
                     this->bmp_cache = new BmpCache(bpp, small_entries, small_size, medium_entries, medium_size, big_entries, big_size);
                     this->screen_rect = Rect(0, 0, width, height);
                     this->meta_ok = true;
@@ -556,6 +557,7 @@ struct FileToGraphic
             break;
 
             case LAST_IMAGE_CHUNK:
+                printf("last image chunk\n");
             case PARTIAL_IMAGE_CHUNK:
             {
                 LOG(LOG_INFO,"IMAGE_CHUNK\n");
@@ -589,6 +591,21 @@ struct FileToGraphic
             break;
         }
     }
+    
+    void play()
+    {
+        while (this->next_order()){
+            this->interpret_order();
+            for (size_t i = 0; i < this->nbconsumers ; i++){
+                this->consumers[i]->snapshot(this->replay_now, 0, 0, true, false);
+            }
+            for (size_t i = 0; i < this->nbdrawables ; i++){
+                this->drawables[i]->snapshot(this->replay_now, 0, 0, true, false);
+            }
+        }
+    }
+
+    
 };
 
 #endif
