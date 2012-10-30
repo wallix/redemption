@@ -24,8 +24,7 @@
 #if !defined(__CORE_RDP_ORDERS_RDPORDERSPRIMARYOPAQUERECT_HPP__)
 #define __CORE_RDP_ORDERS_RDPORDERSPRIMARYOPAQUERECT_HPP__
 
-#include "RDPOrdersPrimaryHeader.hpp"
-
+#include "RDP/orders/RDPOrdersCommon.hpp"
 
 class RDPOpaqueRect {
     public:

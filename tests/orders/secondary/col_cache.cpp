@@ -29,7 +29,6 @@
 #include <algorithm>
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersSecondaryHeader.hpp"
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 
 #include "./test_orders.hpp"

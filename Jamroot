@@ -57,8 +57,8 @@ alias instexe : install-bin install-test ;
 alias install : install-bin install-etc install-share ;
 
 install install-bin
-#    : rdpproxy redrec wrminfo
-    : rdpproxy wrminfo
+#    : rdpproxy redrec 
+    : rdpproxy
     : <install-type>EXE <install-dependencies>on
     : <location>/usr/local/bin
     ;
@@ -152,20 +152,6 @@ exe redrec
         <link>static
     ;
 
-exe wrminfo
-    :
-        main/extract_info.cpp
-
-        openssl
-        crypto
-        png
-        z
-        dl
-
-        libboost_program_options
-    :
-        <link>static
-    ;
 
 #
 # Unit Tests

@@ -26,8 +26,6 @@
 
 #include "RDP/RDPGraphicDevice.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersPrimaryHeader.hpp"
-#include "RDP/orders/RDPOrdersSecondaryHeader.hpp"
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"

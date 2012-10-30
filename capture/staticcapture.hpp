@@ -35,11 +35,9 @@
 #include "difftimeval.hpp"
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersSecondaryHeader.hpp"
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 
-#include "RDP/orders/RDPOrdersPrimaryHeader.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 

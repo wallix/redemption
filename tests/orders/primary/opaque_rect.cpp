@@ -29,7 +29,6 @@
 #include <algorithm>
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersPrimaryHeader.hpp"
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
 #include "./test_orders.hpp"
