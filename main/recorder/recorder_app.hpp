@@ -84,7 +84,7 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
         FileSequence sequence("path file pid count extension", "./", "testxxx", "png");
         OutByFilenameSequenceTransport out_png_trans(sequence);
         StaticCapture png_recorder(player.replay_now, out_png_trans, sequence, player.screen_rect.cx, player.screen_rect.cy);
-        Inifile ini;
+        Inifile ini(CFG_PATH "/" RDPPROXY_INI);
         ini.globals.png_limit = 30;
         ini.globals.png_interval = 50;
         png_recorder.update_config(ini);

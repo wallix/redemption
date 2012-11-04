@@ -452,8 +452,9 @@ struct FileToGraphic
                 this->stream.p = this->stream.end;
 
                 if (!this->meta_ok){
-                    printf("meta: create bmp cache\n");
+                    printf("meta: create bmp cache %u %u %u %u %u %u\n", small_entries, small_size, medium_entries, medium_size, big_entries, big_size);
                     this->bmp_cache = new BmpCache(bpp, small_entries, small_size, medium_entries, medium_size, big_entries, big_size);
+                    printf("bmp_cache=%p\n", bmp_cache);
                     this->screen_rect = Rect(0, 0, width, height);
                     this->meta_ok = true;
                 }

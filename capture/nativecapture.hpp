@@ -79,7 +79,7 @@ public:
     , height(height)
     , bpp(24)
     , stream(65536)
-    , bmp_cache(24, 8192, 768, 8192, 3072, 8192, 12288)
+    , bmp_cache(24, 600, 768, 300, 3072, 262, 12288)
     , recorder(now, &trans, &this->stream, NULL, width, height, 24, bmp_cache)
     , nb_file(0)
     {
@@ -119,17 +119,17 @@ public:
     TODO("pointer_already_displayed and no_timestamp are constants, not need to pass then at every snapshot call")
     void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
-        if (difftimeval(now, this->start_native_capture) >= this->inter_frame_interval_native_capture){
+        if (difftimeval(now, this->start_native_capture) 
+                >= this->inter_frame_interval_native_capture){
             LOG(LOG_INFO, "recorder timestamp");
             this->recorder.timestamp(now);
             this->start_native_capture = now;
-            if (difftimeval(now, this->start_break_capture) >= this->inter_frame_interval_start_break_capture){
+            if (difftimeval(now, this->start_break_capture) 
+                >= this->inter_frame_interval_start_break_capture){
                 this->breakpoint();
                 this->start_break_capture = now;
             }
         }
-        this->recorder.flush();
-
     }
     
     virtual void flush()
@@ -174,6 +174,7 @@ private:
 
     void breakpoint()
     {
+        printf("breakpoint\n");
         this->recorder.breakpoint();
     }
 };

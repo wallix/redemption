@@ -341,7 +341,6 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->send_caches_chunk();
     }
 
-
     virtual void flush()
     {
         if (this->serializer->order_count > 0){
