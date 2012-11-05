@@ -56,6 +56,8 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
 //    }
 //    opt.desc.add_options()("output-type,O", po::value(&opt.output_type), buffer);
 
+    openlog("redrec", LOG_CONS | LOG_PERROR, LOG_USER);
+
     std::string input_filename;
 
     boost::program_options::options_description desc("Options");

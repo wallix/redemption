@@ -250,22 +250,23 @@ struct FileToGraphic
 
     void interpret_order()
     {
+        printf("interpret_order\n");
         switch (this->chunk_type){
         case RDP_UPDATE_ORDERS:
-        if (!this->meta_ok){
-            LOG(LOG_ERR,"Drawing orders chunk must be preceded by a META chunk to get drawing device size\n");
-            throw Error(ERR_WRM);
-        }
-        if (!this->timestamp_ok){
-            LOG(LOG_ERR,"Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing\n");
-            throw Error(ERR_WRM);
-        }
         {
+            if (!this->meta_ok){
+                LOG(LOG_ERR,"Drawing orders chunk must be preceded by a META chunk to get drawing device size\n");
+                throw Error(ERR_WRM);
+            }
+            if (!this->timestamp_ok){
+                LOG(LOG_ERR,"Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing\n");
+                throw Error(ERR_WRM);
+            }
             uint8_t control = this->stream.in_uint8();
             if (!control & RDP::STANDARD){
                 /* error, this should always be set */
                 LOG(LOG_ERR, "Non standard order detected : protocol error");
-                TODO(" throw some error")
+                throw Error(ERR_WRM);
             }
             else if (control & RDP::SECONDARY) {
                 using namespace RDP;

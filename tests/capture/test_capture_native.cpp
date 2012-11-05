@@ -46,7 +46,8 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     now.tv_sec = 1000;
     now.tv_usec = 0;
     
-    NativeCapture consumer(now, trans, 800, 600);
+    BmpCache bmp_cache(24, 600, 768, 300, 3072, 262, 12288); 
+    NativeCapture consumer(now, trans, 800, 600, bmp_cache);
     Inifile ini;
     ini.globals.frame_interval = 100; // one snapshot by second
     ini.globals.break_interval = 5;   // one WRM file every 5 seconds

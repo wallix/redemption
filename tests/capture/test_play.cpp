@@ -57,11 +57,23 @@ BOOST_AUTO_TEST_CASE(TestTranscodeWRM)
     OutByFilenameSequenceTransport out_wrm_trans(wrm_sequence);
     ini.globals.frame_interval = 10;
     ini.globals.break_interval = 10;
+    
+    BmpCache bmp_cache(
+        player.bmp_cache->bpp,
+        player.bmp_cache->small_entries,
+        player.bmp_cache->small_size,
+        player.bmp_cache->medium_entries,
+        player.bmp_cache->medium_size,
+        player.bmp_cache->big_entries,
+        player.bmp_cache->big_size); 
+
     NativeCapture wrm_recorder(
         player.replay_now,
         out_wrm_trans,
         player.screen_rect.cx,
-        player.screen_rect.cy);
+        player.screen_rect.cy,
+        bmp_cache);
+
     wrm_recorder.update_config(ini);
     player.add_consumer(&wrm_recorder);
 

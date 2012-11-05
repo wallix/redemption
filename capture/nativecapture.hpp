@@ -70,16 +70,16 @@ public:
     uint64_t inter_frame_interval_start_break_capture;
 
     BStream stream;
-    BmpCache bmp_cache;
+    BmpCache & bmp_cache;
     GraphicToFile recorder;
     uint32_t nb_file;
 
-    NativeCapture(const timeval & now, Transport & trans, int width, int height)
+    NativeCapture(const timeval & now, Transport & trans, int width, int height, BmpCache & bmp_cache)
     : width(width)
     , height(height)
     , bpp(24)
     , stream(65536)
-    , bmp_cache(24, 600, 768, 300, 3072, 262, 12288)
+    , bmp_cache(bmp_cache)
     , recorder(now, &trans, &this->stream, NULL, width, height, 24, bmp_cache)
     , nb_file(0)
     {

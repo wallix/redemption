@@ -34,6 +34,7 @@ class Capture : public RDPGraphicDevice
 
     FileSequence * wrm_sequence;
     OutByFilenameSequenceTransport * wrm_trans;
+    BmpCache * pnc_bmp_cache;
     NativeCapture * pnc;
 
 public:
@@ -68,7 +69,8 @@ public:
 
         this->wrm_sequence = new FileSequence("path file pid count extension", path, basename, "wrm");
         this->wrm_trans = new OutByFilenameSequenceTransport(*this->wrm_sequence);
-        this->pnc = new NativeCapture(now, *this->wrm_trans, width, height);
+        this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288); 
+        this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache);
  
         this->log_prefix[0] = 0;
         
@@ -89,12 +91,13 @@ public:
 
     ~Capture(){
         delete this->psc;
-        delete this->wrm_sequence;
-        delete this->wrm_trans;
-
-        delete this->pnc;
         delete this->png_sequence;
         delete this->png_trans;
+
+        delete this->pnc;
+        delete this->wrm_sequence;
+        delete this->wrm_trans;
+        delete this->pnc_bmp_cache;
     }
     
     void update_config(const timeval & now, const Inifile & ini){

@@ -31,7 +31,7 @@
 
 #include "test_orders.hpp"
 #include "transport.hpp"
-#include "nativecapture.hpp"
+//#include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
 #include "image_capture.hpp"
