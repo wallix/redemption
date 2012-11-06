@@ -133,32 +133,66 @@ class Stream {
              ;
     }
 
+    void out_uint64_le(uint64_t v) {
+        REDASSERT(has_room(8));
+        this->p[0] = v & 0xFF;
+        this->p[1] = (v >> 8) & 0xFF;
+        this->p[2] = (v >> 16) & 0xFF;
+        this->p[3] = (v >> 24) & 0xFF;
+        this->p[4] = (v >> 32) & 0xFF;
+        this->p[5] = (v >> 40) & 0xFF;
+        this->p[6] = (v >> 48) & 0xFF;
+        this->p[7] = (uint8_t)(v >> 56) & 0xFF;
+        this->p+=8;
+    }
+
+    void set_out_uint64_le(uint64_t v, size_t offset) {
+        this->data[offset+0] = v & 0xFF;
+        this->data[offset+1] = (v >> 8) & 0xFF;
+        this->data[offset+2] = (v >> 16) & 0xFF;
+        this->data[offset+3] = (v >> 24) & 0xFF;
+        this->data[offset+4] = (v >> 32) & 0xFF;
+        this->data[offset+5] = (v >> 40) & 0xFF;
+        this->data[offset+6] = (v >> 48) & 0xFF;
+        this->data[offset+7] = (uint8_t)(v >> 56) & 0xFF;
+    }
+
     uint64_t in_uint64_le(void) {
         REDASSERT(in_check_rem(8));
-        this->p += 8;
-        return  this->p[-8]
-        | (this->p[-7] << 8)
-        | (this->p[-6] << 16)
-        | (this->p[-5] << 24)
-        | (uint64_t(this->p[-4]) << 32)
-        | (uint64_t(this->p[-3]) << 40)
-        | (uint64_t(this->p[-2]) << 48)
-        | (uint64_t(this->p[-1]) << 56)
-        ;
+        uint64_t low = this->in_uint32_le();
+        uint64_t high = this->in_uint32_le();
+        return low + (high << 32);
     }
 
     uint64_t in_uint64_be(void) {
         REDASSERT(in_check_rem(8));
-        this->p += 8;
-        return  this->p[-1]
-        | (this->p[-2] << 8)
-        | (this->p[-3] << 16)
-        | (this->p[-4] << 24)
-        | (uint64_t(this->p[-5]) << 32)
-        | (uint64_t(this->p[-6]) << 40)
-        | (uint64_t(this->p[-7]) << 48)
-        | (uint64_t(this->p[-8]) << 56)
-        ;
+        uint64_t high = this->in_uint32_be();
+        uint64_t low = this->in_uint32_be();
+        return low + (high << 32);
+    }
+
+    void out_uint64_be(uint64_t v) {
+        REDASSERT(has_room(8));
+        this->p[0] = (uint8_t)(v >> 56) & 0xFF;
+        this->p[1] = (v >> 48) & 0xFF;
+        this->p[2] = (v >> 40) & 0xFF;
+        this->p[3] = (v >> 32) & 0xFF;
+        this->p[4] = (v >> 24) & 0xFF;
+        this->p[5] = (v >> 16) & 0xFF;
+        this->p[6] = (v >> 8) & 0xFF;
+        this->p[7] = v & 0xFF;
+        this->p+=8;
+    }
+
+    void set_out_uint64_be(uint64_t v, size_t offset) {
+        this->data[offset+0] = (uint8_t)(v >> 56) & 0xFF;
+        this->data[offset+1] = (v >> 48) & 0xFF;
+        this->data[offset+2] = (v >> 40) & 0xFF;
+        this->data[offset+3] = (v >> 32) & 0xFF;
+        this->data[offset+4] = (v >> 24) & 0xFF;
+        this->data[offset+5] = (v >> 16) & 0xFF;
+        this->data[offset+6] = (v >> 8) & 0xFF;
+        this->data[offset+7] = v & 0xFF;
     }
 
     unsigned in_bytes_le(const uint8_t nb){
@@ -324,55 +358,6 @@ class Stream {
         this->data[offset+2] = (v >> 8) & 0xFF;
         this->data[offset+3] = v & 0xFF;
     }
-
-    void out_uint64_le(uint64_t v) {
-        REDASSERT(has_room(8));
-        this->p[0] = v & 0xFF;
-        this->p[1] = (v >> 8) & 0xFF;
-        this->p[2] = (v >> 16) & 0xFF;
-        this->p[3] = (v >> 24) & 0xFF;
-        this->p[4] = (v >> 32) & 0xFF;
-        this->p[5] = (v >> 40) & 0xFF;
-        this->p[6] = (v >> 48) & 0xFF;
-        this->p[7] = (uint8_t)(v >> 56) & 0xFF;
-        this->p+=8;
-    }
-
-    void set_out_uint64_le(uint64_t v, size_t offset) {
-        this->data[offset+0] = v & 0xFF;
-        this->data[offset+1] = (v >> 8) & 0xFF;
-        this->data[offset+2] = (v >> 16) & 0xFF;
-        this->data[offset+3] = (v >> 24) & 0xFF;
-        this->data[offset+4] = (v >> 32) & 0xFF;
-        this->data[offset+5] = (v >> 40) & 0xFF;
-        this->data[offset+6] = (v >> 48) & 0xFF;
-        this->data[offset+7] = (uint8_t)(v >> 56) & 0xFF;
-    }
-
-    void out_uint64_be(uint64_t v) {
-        REDASSERT(has_room(8));
-        this->p[0] = (uint8_t)(v >> 56) & 0xFF;
-        this->p[1] = (v >> 48) & 0xFF;
-        this->p[2] = (v >> 40) & 0xFF;
-        this->p[3] = (v >> 32) & 0xFF;
-        this->p[4] = (v >> 24) & 0xFF;
-        this->p[5] = (v >> 16) & 0xFF;
-        this->p[6] = (v >> 8) & 0xFF;
-        this->p[7] = v & 0xFF;
-        this->p+=8;
-    }
-
-    void set_out_uint64_be(uint64_t v, size_t offset) {
-        this->data[offset+0] = (uint8_t)(v >> 56) & 0xFF;
-        this->data[offset+1] = (v >> 48) & 0xFF;
-        this->data[offset+2] = (v >> 40) & 0xFF;
-        this->data[offset+3] = (v >> 32) & 0xFF;
-        this->data[offset+4] = (v >> 24) & 0xFF;
-        this->data[offset+5] = (v >> 16) & 0xFF;
-        this->data[offset+6] = (v >> 8) & 0xFF;
-        this->data[offset+7] = v & 0xFF;
-    }
-
 
     void out_unistr(const char* text)
     {

@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     OutByFilenameSequenceTransport out_png_trans(sequence);
 
     FileToGraphic player(&in_wrm_trans);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, true);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     player.add_consumer(&png_recorder);
 
     png_recorder.flush();

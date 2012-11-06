@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
 
     FileSequence sequence("path file pid count extension", "./", "TestReloadSaveCache", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, true);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     
     player.add_consumer(&png_recorder);
     BOOST_CHECK_EQUAL(1, player.nbdrawables);
@@ -212,7 +212,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
 
     FileSequence sequence("path file pid count extension", "./", "TestReloadOrderStates", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, true);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     
     player.add_consumer(&png_recorder);
     BOOST_CHECK_EQUAL(1, player.nbdrawables);
@@ -298,7 +298,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
 
     FileSequence sequence("path file pid count extension", "./", "TestContinuationOrderStates", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, true);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     
     player.add_consumer(&png_recorder);
     BOOST_CHECK_EQUAL(1, player.nbdrawables);

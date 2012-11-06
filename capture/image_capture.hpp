@@ -57,8 +57,8 @@ class ImageCapture : public RDPDrawable
 public:
     Transport & trans;
 
-    ImageCapture(Transport & trans, unsigned width, unsigned height, bool bgr)
-    : RDPDrawable(width, height, bgr)
+    ImageCapture(Transport & trans, unsigned width, unsigned height)
+    : RDPDrawable(width, height, true)
     , trans(trans)
     {
     }
@@ -66,6 +66,8 @@ public:
     ~ImageCapture()
     {
     }
+
+    void update_config(const Inifile & ini){}
 
     virtual void flush()
     {

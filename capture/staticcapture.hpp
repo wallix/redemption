@@ -73,7 +73,7 @@ public:
     uint64_t inter_frame_interval_static_capture;
 
     StaticCapture(const timeval & now, Transport & trans, FileSequence & sequence, unsigned width, unsigned height)
-    : ImageCapture(trans, width, height, true)
+    : ImageCapture(trans, width, height)
     , sequence(sequence)
     {
         this->start_static_capture = now;
@@ -107,11 +107,12 @@ public:
 
     virtual void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
-        if ((unsigned)difftimeval(now, this->start_static_capture) >= (unsigned)this->inter_frame_interval_static_capture){
-//            printf("SNAPSHOT %u >= %u %u:%u\n" 
-//                , (unsigned)difftimeval(now, this->start_static_capture)
-//                , (unsigned)this->inter_frame_interval_static_capture
-//                , (unsigned)now.tv_sec, (unsigned)now.tv_usec);
+        if ((unsigned)difftimeval(now, this->start_static_capture) 
+         >= (unsigned)this->inter_frame_interval_static_capture){
+        LOG(LOG_INFO, "SNAPSHOT %u >= %u %u:%u\n" 
+            , (unsigned)difftimeval(now, this->start_static_capture)
+            , (unsigned)this->inter_frame_interval_static_capture
+            , (unsigned)now.tv_sec, (unsigned)now.tv_usec);
 
             time_t rawtime = now.tv_sec;
             tm *ptm = localtime(&rawtime);

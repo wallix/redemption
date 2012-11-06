@@ -234,7 +234,7 @@ BOOST_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
 BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
 {
     CheckTransport trans(expected_red, sizeof(expected_red)-1);;
-    ImageCapture d(trans, 800, 600, true);
+    ImageCapture d(trans, 800, 600);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     d.draw(cmd, screen_rect);
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 {
     const char * filename = "test.png";
     OutByFilenameTransport trans(filename);
-    ImageCapture d(trans, 800, 600, true);
+    ImageCapture d(trans, 800, 600);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     d.draw(cmd, screen_rect);
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 {
     const FileSequence sequence("path file pid count extension", "./", "test", "png");
     OutByFilenameSequenceTransport trans(sequence);
-    ImageCapture d(trans, 800, 600, true);
+    ImageCapture d(trans, 800, 600);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     d.draw(cmd, screen_rect);
@@ -373,7 +373,7 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
     const FileSequence sequence("path file pid count extension", "./", "sample", "png");
     OutByFilenameSequenceTransport trans(sequence, 0x100);
     Rect scr(0, 0, 20, 10);
-    ImageCapture d(trans, scr.cx, scr.cy, true);
+    ImageCapture d(trans, scr.cx, scr.cy);
     d.draw(RDPOpaqueRect(scr, RED), scr);
     d.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     d.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);

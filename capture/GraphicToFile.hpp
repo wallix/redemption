@@ -206,18 +206,14 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void send_timestamp_chunk(void)
     {
-        uint64_t old_timer = this->last_sent_timer.tv_sec * 1000000ULL + this->last_sent_timer.tv_usec;
-        uint64_t current_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
-        if (old_timer < current_timer){
-            BStream payload(8);
-            payload.out_uint64_le(current_timer);
-            payload.mark_end();
+        BStream payload(8);
+        payload.out_uint64_le(this->timer.tv_sec * 1000000ULL + this->timer.tv_usec);
+        payload.mark_end();
 
-            BStream header(8);
-            WRMChunk_Send chunk(header, TIMESTAMP, 8, 1);
-            this->trans->send(header.data, header.size());
-            this->trans->send(payload.data, payload.size());
-        }
+        BStream header(8);
+        WRMChunk_Send chunk(header, TIMESTAMP, 8, 1);
+        this->trans->send(header.data, header.size());
+        this->trans->send(payload.data, payload.size());
     }
 
     void send_save_state_chunk()
@@ -337,7 +333,6 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void breakpoint()
     {
-        LOG(LOG_INFO, "GraphicToFile::breakpoint");
         this->flush();
         this->trans->next();
         this->send_meta_chunk();
@@ -345,80 +340,66 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->send_save_state_chunk();
         this->send_image_chunk();
         this->send_caches_chunk();
-        LOG(LOG_INFO, "GraphicToFile::breakpoint done");
     }
 
     virtual void flush()
     {
-        LOG(LOG_INFO, "GraphicToFile::Flush");
         if (this->serializer->order_count > 0){
-            this->send_timestamp_chunk();
+            if (this->timer.tv_sec - this->last_sent_timer.tv_sec > 0){
+                this->send_timestamp_chunk();
+            }
             this->send_orders_chunk();
         }
-        LOG(LOG_INFO, "GraphicToFile::Flush done");
     }
 
     void send_orders_chunk()
     {
-        LOG(LOG_INFO, "GraphicToFile::send_orders_chunk");
         this->stream.mark_end();
         BStream header(8);
         WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->stream.size(), this->serializer->order_count);
-        LOG(LOG_INFO, "XXXSending Orders Chunk RDP_UPDATE_ORDERS size=%u count=%u",
-            this->stream.size(), this->serializer->order_count);
-        hexdump_c(header.data, header.size());
         this->trans->send(header.data, header.size());
-        hexdump_c(this->stream.data, this->stream.size());
         this->serializer->flush();
-        LOG(LOG_INFO, "GraphicToFile::send_orders_chunk done");
     }
 
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) 
     {
-        cmd.log(LOG_INFO, clip);
         this->serializer->draw(cmd, clip);
         this->drawable->draw(cmd, clip);
     }
 
     virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
     {
-        cmd.log(LOG_INFO, clip);
         this->serializer->draw(cmd, clip);
         this->drawable->draw(cmd, clip);
     }
 
     virtual void draw(const RDPDestBlt & cmd, const Rect &clip)
     {
-        cmd.log(LOG_INFO, clip);
         this->serializer->draw(cmd, clip);
         this->drawable->draw(cmd, clip);
     }
 
     virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
-        cmd.log(LOG_INFO, clip);
         this->serializer->draw(cmd, clip);
         this->drawable->draw(cmd, clip);
     }
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        cmd.log(LOG_INFO, clip);
         this->serializer->draw(cmd, clip, bmp);
         this->drawable->draw(cmd, clip, bmp);
     }
 
     virtual void draw(const RDPLineTo& cmd, const Rect & clip)
     {
-        cmd.log(LOG_INFO, clip);
         this->serializer->draw(cmd, clip);
         this->drawable->draw(cmd, clip);
     }
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
-        cmd.log(LOG_INFO, clip);
         this->serializer->draw(cmd, clip);
         this->drawable->draw(cmd, clip);
     }
