@@ -1479,12 +1479,6 @@ class SubStream : public Stream {
         this->end = stream.end;
     }
 
-//    void reset(const Stream & stream, size_t offset = 0){
-//        this->p = this->data = stream.data + offset;
-//        this->capacity = stream.capacity - offset;
-//        this->end = stream.end;
-//    }
-
     void resize(const Stream & stream, size_t new_size){
         this->data = this->p = stream.p;
         this->capacity = new_size;

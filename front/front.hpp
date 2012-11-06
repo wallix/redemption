@@ -404,7 +404,7 @@ public:
                         this->share_id,
                         this->client_info.encryptionLevel,
                         this->encrypt,
-                        this->ini,
+                        *this->ini,
                         this->client_info.bpp,
                         *this->bmp_cache,
                         this->client_info.bitmap_cache_version,

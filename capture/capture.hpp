@@ -70,7 +70,7 @@ public:
         this->wrm_sequence = new FileSequence("path file pid count extension", path, basename, "wrm");
         this->wrm_trans = new OutByFilenameSequenceTransport(*this->wrm_sequence);
         this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288); 
-        this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache);
+        this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, ini);
  
         this->log_prefix[0] = 0;
         

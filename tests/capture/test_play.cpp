@@ -26,7 +26,7 @@
 #define BOOST_TEST_MODULE TestWrmCapture
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include <sys/time.h>
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
@@ -39,6 +39,8 @@ BOOST_AUTO_TEST_CASE(TestTranscodeWRM)
     FileToGraphic player(&in_wrm_trans);
 
     Inifile ini;
+    ini.globals.debug.primary_orders = 127;
+    ini.globals.debug.secondary_orders = 127;
     ini.globals.png_limit = 30;
     ini.globals.png_interval = 50;
 
@@ -50,6 +52,7 @@ BOOST_AUTO_TEST_CASE(TestTranscodeWRM)
         png_sequence,
         player.screen_rect.cx,
         player.screen_rect.cy);
+        
     png_recorder.update_config(ini);
     player.add_consumer(&png_recorder);
 
@@ -72,7 +75,8 @@ BOOST_AUTO_TEST_CASE(TestTranscodeWRM)
         out_wrm_trans,
         player.screen_rect.cx,
         player.screen_rect.cy,
-        bmp_cache);
+        bmp_cache,
+	ini);
 
     wrm_recorder.update_config(ini);
     player.add_consumer(&wrm_recorder);

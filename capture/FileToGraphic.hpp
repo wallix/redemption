@@ -203,7 +203,7 @@ struct FileToGraphic
           "when remaining order count is 0."
           "It update chunk headers (merely remaining orders count) and"
           " reads the next chunk if necessary.") 
-    {
+    {   
         if ((this->stream.p == this->stream.end) && (this->remaining_order_count)){
             LOG(LOG_ERR, "Incomplete order batch at chunk %u "
                          "order [%u/%u] "
@@ -223,6 +223,7 @@ struct FileToGraphic
             return false;
         }
 
+        LOG(LOG_INFO, "remaining order_count=%u / %u\n", this->remaining_order_count, this->chunk_count);
         if (!this->remaining_order_count){
             try {
                 BStream header(HEADER_SIZE);
@@ -230,13 +231,20 @@ struct FileToGraphic
                 this->chunk_type = header.in_uint16_le();
                 this->chunk_size = header.in_uint32_le();
                 this->remaining_order_count = this->chunk_count = header.in_uint16_le();
-                if (this->chunk_type != LAST_IMAGE_CHUNK
-                && this->chunk_type != PARTIAL_IMAGE_CHUNK){
-                    LOG(LOG_INFO, "reading chunk: type=%u size=%u count=%u\n", 
-                        this->chunk_type, this->chunk_size, this->chunk_count);
+                if (this->chunk_type != LAST_IMAGE_CHUNK && this->chunk_type != PARTIAL_IMAGE_CHUNK){
+                    LOG(LOG_INFO, "reading chunk: type=%u size=%u count=%u\n", this->chunk_type, this->chunk_size, this->chunk_count);
+                    hexdump_c(header.data, header.size());
                     this->stream.init(this->chunk_size - HEADER_SIZE);
+                    if (stream.data != stream.end || stream.p != stream.data){
+                        LOG(LOG_ERR, "Stream Init failed data=%p p=%p end=%p", stream.data, stream.p, stream.end);
+                    }
                     this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
+                    LOG(LOG_INFO, "Receiving Chunk %u size=%u count=%u", 
+                        this->chunk_type, this->chunk_size - HEADER_SIZE, this->chunk_count);
+
+                    hexdump_c(this->stream.data, this->chunk_size - HEADER_SIZE);
                 }
+                
             }
             catch (Error & e){
                 LOG(LOG_INFO,"receive error : end of transport\n");
@@ -250,7 +258,6 @@ struct FileToGraphic
 
     void interpret_order()
     {
-        printf("interpret_order\n");
         switch (this->chunk_type){
         case RDP_UPDATE_ORDERS:
         {
@@ -269,8 +276,10 @@ struct FileToGraphic
                 throw Error(ERR_WRM);
             }
             else if (control & RDP::SECONDARY) {
+                LOG(LOG_INFO, "Secondary RDP order");
                 using namespace RDP;
                 RDPSecondaryOrderHeader header(this->stream);
+                LOG(LOG_INFO, "type=%u", header.type);
                 uint8_t *next_order = this->stream.p + header.length + 7;
                 switch (header.type) {
                 case TS_CACHE_BITMAP_COMPRESSED:
@@ -281,6 +290,7 @@ struct FileToGraphic
                     BGRPalette palette;
                     init_palette332(palette);
                     cmd.receive(this->stream, control, header, palette);
+                    cmd.log(LOG_INFO);
                     this->bmp_cache->put(cmd.id, cmd.idx, cmd.bmp);
                 }
                 break;
@@ -309,11 +319,15 @@ struct FileToGraphic
                 stream.p = next_order;
             }
             else {
+                LOG(LOG_INFO, "primary RDP order");
                 RDPPrimaryOrderHeader header = this->common.receive(this->stream, control);
                 const Rect & clip = (control & RDP::BOUNDS)?this->common.clip:this->screen_rect;
                 switch (this->common.order) {
                 case RDP::GLYPHINDEX:
+                    LOG(LOG_INFO, "old :");
+                    this->glyphindex.log(LOG_INFO, clip);
                     this->glyphindex.receive(this->stream, header);
+                    this->glyphindex.log(LOG_INFO, clip);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->glyphindex, clip);
                     }
@@ -322,6 +336,8 @@ struct FileToGraphic
                     }
                     break;
                 case RDP::DESTBLT:
+                    LOG(LOG_INFO, "old :");
+                    this->destblt.log(LOG_INFO, clip);
                     this->destblt.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->destblt, clip);
@@ -331,6 +347,8 @@ struct FileToGraphic
                     }
                     break;
                 case RDP::PATBLT:
+                    LOG(LOG_INFO, "old :");
+                    this->patblt.log(LOG_INFO, clip);
                     this->patblt.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->patblt, clip);
@@ -340,6 +358,8 @@ struct FileToGraphic
                     }
                     break;
                 case RDP::SCREENBLT:
+                    LOG(LOG_INFO, "old :");
+                    this->scrblt.log(LOG_INFO, clip);
                     this->scrblt.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->scrblt, clip);
@@ -349,6 +369,8 @@ struct FileToGraphic
                     }
                     break;
                 case RDP::LINE:
+                    LOG(LOG_INFO, "old :");
+                    this->lineto.log(LOG_INFO, clip);
                     this->lineto.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->lineto, clip);
@@ -358,6 +380,8 @@ struct FileToGraphic
                     }
                     break;
                 case RDP::RECT:
+                    LOG(LOG_INFO, "old :");
+                    this->opaquerect.log(LOG_INFO, clip);
                     this->opaquerect.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->opaquerect, clip);
@@ -368,6 +392,8 @@ struct FileToGraphic
                     break;
                 case RDP::MEMBLT:
                     {
+                        LOG(LOG_INFO, "old :");
+                        this->memblt.log(LOG_INFO, clip);
                         this->memblt.receive(this->stream, header);
                         const Bitmap * bmp = this->bmp_cache->get(this->memblt.cache_id, this->memblt.cache_idx);
                         if (!bmp){
@@ -384,6 +410,8 @@ struct FileToGraphic
                     }
                     break;
                 default:
+                    LOG(LOG_INFO, "old :");
+                    this->memblt.log(LOG_INFO, clip);
                     /* error unknown order */
                     LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->common.order);
                     break;
@@ -453,7 +481,7 @@ struct FileToGraphic
                 this->stream.p = this->stream.end;
 
                 if (!this->meta_ok){
-                    printf("meta: create bmp cache %u %u %u %u %u %u\n", small_entries, small_size, medium_entries, medium_size, big_entries, big_size);
+                    printf("meta: %ux%u:%u create bmp cache %u %u %u %u %u %u\n", width, height, bpp, small_entries, small_size, medium_entries, medium_size, big_entries, big_size);
                     this->bmp_cache = new BmpCache(bpp, small_entries, small_size, medium_entries, medium_size, big_entries, big_size);
                     printf("bmp_cache=%p\n", bmp_cache);
                     this->screen_rect = Rect(0, 0, width, height);
