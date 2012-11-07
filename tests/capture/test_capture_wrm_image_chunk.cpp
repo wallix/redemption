@@ -490,5 +490,5 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL((unsigned)1004, (unsigned)player.playtime_now.tv_sec);
+    BOOST_CHECK_EQUAL((unsigned)1004, (unsigned)player.synctime_now.tv_sec);
 }

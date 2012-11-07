@@ -134,8 +134,8 @@ struct FileToGraphic
     uint16_t chunk_count;
     uint16_t remaining_order_count;
 
-    timeval playtime_now;
-    timeval replay_now;
+    timeval synctime_now;
+    timeval record_now;
 
     uint16_t nbconsumers;
     RDPGraphicDevice * consumers[10];
@@ -173,9 +173,7 @@ struct FileToGraphic
     real_time(real_time),
     data_meta()
     {
-        gettimeofday(&this->playtime_now, 0);
         while (this->next_order()){
-            printf("playtime=%u replay_now=%u\n", (unsigned)this->playtime_now.tv_sec, (unsigned)this->replay_now.tv_sec);
             this->interpret_order();
             if (this->meta_ok && this->timestamp_ok){
                 break;
@@ -229,7 +227,7 @@ struct FileToGraphic
             }
         }
 
-        LOG(LOG_INFO, "remaining order_count=%u / %u\n", this->remaining_order_count, this->chunk_count);
+//        LOG(LOG_INFO, "remaining order_count=%u / %u\n", this->remaining_order_count, this->chunk_count);
 
         if (!this->remaining_order_count){
             try {
@@ -249,7 +247,7 @@ struct FileToGraphic
                     }
                     this->stream.reset();
                     this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
-                    hexdump_c(this->stream.data, this->chunk_size - HEADER_SIZE);
+//                    hexdump_c(this->stream.data, this->chunk_size - HEADER_SIZE);
                     LOG(LOG_INFO, "Receiving Chunk %u size=%u count=%u", 
                         this->chunk_type, this->chunk_size - HEADER_SIZE, this->chunk_count);
                 }
@@ -266,11 +264,9 @@ struct FileToGraphic
 
     void interpret_order()
     {
-        LOG(LOG_INFO, "interpret_order");
         switch (this->chunk_type){
         case RDP_UPDATE_ORDERS:
         {
-            LOG(LOG_INFO, "RDP_UPDATE_ORDERS");
             if (!this->meta_ok){
                 LOG(LOG_ERR,"Drawing orders chunk must be preceded by a META chunk to get drawing device size\n");
                 throw Error(ERR_WRM);
@@ -326,7 +322,6 @@ struct FileToGraphic
                 stream.p = next_order;
             }
             else {
-                LOG(LOG_INFO, "primary RDP order");
                 RDPPrimaryOrderHeader header = this->common.receive(this->stream, control);
                 const Rect & clip = (control & RDP::BOUNDS)?this->common.clip:this->screen_rect;
                 switch (this->common.order) {
@@ -413,29 +408,28 @@ struct FileToGraphic
             LOG(LOG_INFO,"TIMESTAMP\n");
             {
                 const uint64_t ucoeff = 1000000;
+                uint64_t last_movie_usec = this->record_now.tv_sec * ucoeff + this->record_now.tv_usec;
                 uint64_t movie_usec = this->stream.in_uint64_le();
+                this->record_now.tv_sec  = movie_usec / ucoeff; 
+                this->record_now.tv_usec = movie_usec % ucoeff;
+
                 if (!this->timestamp_ok){
-                    LOG(LOG_INFO, "chunk timestamp reading first timestamp");
-                    this->replay_now.tv_sec  = movie_usec / ucoeff; 
-                    this->replay_now.tv_usec = movie_usec % ucoeff;
-                    
-                    LOG(LOG_INFO, "TS:%llx %u %u", movie_usec, this->replay_now.tv_sec, this->replay_now.tv_sec);
-                    if (!this->real_time){
-                        this->playtime_now = this->replay_now;
+                    if (this->real_time) {
+                        gettimeofday(&this->synctime_now, 0);
+                    }
+                    else {
+                        this->synctime_now = this->record_now;
                     }
                     this->timestamp_ok = true;
                 }
                 else {
-                    LOG(LOG_INFO, "chunk timestamp reading other timestamp");
-                    uint64_t last_movie_usec = this->replay_now.tv_sec * ucoeff + this->replay_now.tv_usec;
-                    uint64_t movie_elapsed = movie_usec - last_movie_usec;
                     if (this->real_time){
                         struct timeval now;
                         gettimeofday(&now, 0);
-                        uint64_t elapsed = difftimeval(now, this->playtime_now);
-                        this->playtime_now = now;
-                        LOG(LOG_INFO, "elapsed=%lu movie_elapsed=%lu\n", elapsed, movie_elapsed);
+                        uint64_t elapsed = difftimeval(now, this->synctime_now);
+                        this->synctime_now = now;
                         
+                        uint64_t movie_elapsed = movie_usec - last_movie_usec;
                         if (elapsed <= movie_elapsed){
                             struct timespec wtime =
                                 { static_cast<uint32_t>((movie_elapsed - elapsed) / ucoeff)
@@ -445,12 +439,15 @@ struct FileToGraphic
                         }
                     }
                     else {
-                        this->playtime_now.tv_sec = movie_usec / ucoeff; 
-                        this->playtime_now.tv_usec = movie_usec % ucoeff; 
+                        this->synctime_now = this->record_now; 
                     }
-                    this->replay_now.tv_sec = movie_usec / ucoeff; 
-                    this->replay_now.tv_usec = movie_usec % ucoeff;
                 }
+                timeval now;
+                gettimeofday(&now, NULL);
+                LOG(LOG_INFO, "now=%u:%u record_now=%u:%u synctime_now=%u:%u", 
+                now.tv_sec, now.tv_usec,
+                this->record_now.tv_sec, this->record_now.tv_usec,
+                this->synctime_now.tv_sec, this->synctime_now.tv_usec);
             }
             break;
             case META_FILE:
@@ -472,7 +469,8 @@ struct FileToGraphic
                 this->stream.p = this->stream.end;
 
                 if (!this->meta_ok){
-                    printf("meta: %ux%u:%u create bmp cache %u %u %u %u %u %u\n", width, height, bpp, small_entries, small_size, medium_entries, medium_size, big_entries, big_size);
+                    printf("meta: %ux%u:%u create bmp cache %u %u %u %u %u %u", 
+                        width, height, bpp, small_entries, small_size, medium_entries, medium_size, big_entries, big_size);
                     this->bmp_cache = new BmpCache(bpp, small_entries, small_size, medium_entries, medium_size, big_entries, big_size);
                     printf("bmp_cache=%p\n", bmp_cache);
                     this->screen_rect = Rect(0, 0, width, height);
@@ -617,19 +615,13 @@ struct FileToGraphic
     
     void play()
     {
-        timeval now;
         while (this->next_order()){
-            gettimeofday(&now, NULL);
-            LOG(LOG_INFO, "now=%u:%u replay_now=%u:%u playtime_now=%u:%u", 
-                now.tv_sec, now.tv_usec,
-                this->replay_now.tv_sec, this->replay_now.tv_usec,
-                this->playtime_now.tv_sec, this->playtime_now.tv_usec);
             this->interpret_order();
             for (size_t i = 0; i < this->nbconsumers ; i++){
-                this->consumers[i]->snapshot(this->replay_now, 0, 0, true, false);
+                this->consumers[i]->snapshot(this->record_now, 0, 0, true, false);
             }
             for (size_t i = 0; i < this->nbdrawables ; i++){
-                this->drawables[i]->snapshot(this->replay_now, 0, 0, true, false);
+                this->drawables[i]->snapshot(this->record_now, 0, 0, true, false);
             }
         }
     }
