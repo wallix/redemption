@@ -40,8 +40,8 @@
 BOOST_AUTO_TEST_CASE(TestImageChunk)
 {
     const char expected_stripped_wrm[] = 
-    /* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
+    /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+               "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
                
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
@@ -88,8 +88,8 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     // Easier to do than write tests with huge pngs to force PNG chunking.
 
     const char expected[] = 
-    /* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
+    /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+               "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
                
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
@@ -150,8 +150,8 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     // Easier to do than write tests with huge pngs to force PNG chunking.
 
     const char expected[] = 
-    /* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
+    /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+               "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
                
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
@@ -314,8 +314,8 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
 {
    const char source_wrm[] = 
-    /* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24 PAD: 2 bytes
+    /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+               "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24 PAD: 2 bytes
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
 
@@ -373,8 +373,8 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
 BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
 {
    const char source_wrm[] = 
-    /* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
+    /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+               "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
@@ -440,8 +440,8 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
 BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
 {
    const char source_wrm[] = 
-    /* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
+    /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+               "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
@@ -491,4 +491,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     }
     png_recorder.flush();
     BOOST_CHECK_EQUAL((unsigned)1004, (unsigned)player.synctime_now.tv_sec);
+
+    BOOST_CHECK_EQUAL((unsigned)107, sequence.filesize(0));
+    sequence.unlink(0);
 }

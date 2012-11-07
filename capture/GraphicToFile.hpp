@@ -157,21 +157,19 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     virtual void timestamp(const timeval& now)
     REDOC("Update timestamp but send nothing, the timestamp will be sent later with the next effective event")
     {
-        LOG(LOG_INFO, "GraphicToFile::timestamp");
         uint64_t old_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
         uint64_t current_timer = now.tv_sec * 1000000ULL + now.tv_usec;
         if (old_timer < current_timer){
             this->flush();
             this->timer = now;
         }
-        LOG(LOG_INFO, "GraphicToFile::timestamp done");
     }
 
     void send_meta_chunk(void)
     {
-        TODO("meta should contain some WRM version identifier")
         BStream header(8);
-        BStream payload(18);
+        BStream payload(20);
+        payload.out_uint16_le(1); // WRM FORMAT VERSION1
         payload.out_uint16_le(this->width);
         payload.out_uint16_le(this->height);
         payload.out_uint16_le(this->bpp);
@@ -262,6 +260,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         payload.out_uint16_le(this->memblt.rect.y);
         payload.out_uint16_le(this->memblt.rect.cx);
         payload.out_uint16_le(this->memblt.rect.cy);
+        payload.out_uint8(this->memblt.rop);
         payload.out_uint8(this->memblt.srcx);
         payload.out_uint8(this->memblt.srcy);
         payload.out_uint16_le(this->memblt.cache_idx);

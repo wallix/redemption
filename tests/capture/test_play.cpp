@@ -26,85 +26,33 @@
 #define BOOST_TEST_MODULE TestWrmCapture
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include <sys/time.h>
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
 
-//BOOST_AUTO_TEST_CASE(TestTranscodeWRM)
-//{
-//    const char * input_filename = "./tests/fixtures/capture.wrm";
-//    InByFilenameTransport in_wrm_trans(input_filename);
-//    FileToGraphic player(&in_wrm_trans);
-
-//    Inifile ini;
-//    ini.globals.debug.primary_orders = 127;
-//    ini.globals.debug.secondary_orders = 127;
-//    ini.globals.png_limit = 3;
-//    ini.globals.png_interval = 1;
-
-//    FileSequence png_sequence("path file pid count extension", "./", "testxxx", "png");
-//    OutByFilenameSequenceTransport out_png_trans(png_sequence);
-//    StaticCapture png_recorder(
-//        player.replay_now,
-//        out_png_trans,
-//        png_sequence,
-//        player.screen_rect.cx,
-//        player.screen_rect.cy);
-//        
-//    png_recorder.update_config(ini);
-//    player.add_consumer(&png_recorder);
-
-//    FileSequence wrm_sequence("path file pid count extension", "./", "testxxx", "wrm");
-//    OutByFilenameSequenceTransport out_wrm_trans(wrm_sequence);
-//    ini.globals.frame_interval = 10;
-//    ini.globals.break_interval = 10;
-//    
-//    BmpCache bmp_cache(
-//        player.bmp_cache->bpp,
-//        player.bmp_cache->small_entries,
-//        player.bmp_cache->small_size,
-//        player.bmp_cache->medium_entries,
-//        player.bmp_cache->medium_size,
-//        player.bmp_cache->big_entries,
-//        player.bmp_cache->big_size); 
-
-//    NativeCapture wrm_recorder(
-//        player.replay_now,
-//        out_wrm_trans,
-//        player.screen_rect.cx,
-//        player.screen_rect.cy,
-//        bmp_cache,
-//        ini);
-
-//    wrm_recorder.update_config(ini);
-//    player.add_consumer(&wrm_recorder);
-
-//    player.play();
-//}
-
-BOOST_AUTO_TEST_CASE(TestBogusWRM)
+BOOST_AUTO_TEST_CASE(TestSample0WRM)
 {
     const char * input_filename = "./tests/fixtures/sample0.wrm";
     InByFilenameTransport in_wrm_trans(input_filename);
     FileToGraphic player(&in_wrm_trans);
 
     Inifile ini;
-    ini.globals.debug.primary_orders = 127;
-    ini.globals.debug.secondary_orders = 127;
+    ini.globals.debug.primary_orders = 0;
+    ini.globals.debug.secondary_orders = 0;
 
-    FileSequence png_sequence("path file pid count extension", "./", "bugbugbug", "png");
+    FileSequence png_sequence("path file pid count extension", "./", "first", "png");
     OutByFilenameSequenceTransport out_png_trans(png_sequence);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
         
     png_recorder.update_config(ini);
     player.add_consumer(&png_recorder);
 
-    FileSequence wrm_sequence("path file pid count extension", "./", "bogbogbog", "wrm");
+    FileSequence wrm_sequence("path file pid count extension", "./", "first", "wrm");
     OutByFilenameSequenceTransport out_wrm_trans(wrm_sequence);
     ini.globals.frame_interval = 10;
-    ini.globals.break_interval = 10;
+    ini.globals.break_interval = 20;
     
     BmpCache bmp_cache(
         player.bmp_cache->bpp,
@@ -125,18 +73,78 @@ BOOST_AUTO_TEST_CASE(TestBogusWRM)
     wrm_recorder.update_config(ini);
     player.add_consumer(&wrm_recorder);
 
-    BOOST_CHECK_EQUAL((unsigned)1352283071, (unsigned)player.record_now.tv_sec);
+    BOOST_CHECK_EQUAL((unsigned)1352304810, (unsigned)player.record_now.tv_sec);
     player.play();
+    
     png_recorder.flush();
-    BOOST_CHECK_EQUAL((unsigned)1352283131, (unsigned)player.record_now.tv_sec);
+    BOOST_CHECK_EQUAL((unsigned)1352304870, (unsigned)player.record_now.tv_sec);
 
-    BOOST_CHECK_EQUAL((unsigned)42965, (unsigned)png_sequence.filesize(0));
+    wrm_recorder.flush();
+    BOOST_CHECK_EQUAL((unsigned)21280, (unsigned)png_sequence.filesize(0));
     png_sequence.unlink(0);
-    BOOST_CHECK_EQUAL((unsigned)747191, (unsigned)wrm_sequence.filesize(0));
+
+    BOOST_CHECK_EQUAL((unsigned)499191, (unsigned)wrm_sequence.filesize(0));
     wrm_sequence.unlink(0);
+    BOOST_CHECK_EQUAL((unsigned)1265693, (unsigned)wrm_sequence.filesize(1));
     wrm_sequence.unlink(1);
+    BOOST_CHECK_EQUAL((unsigned)360488, (unsigned)wrm_sequence.filesize(2));
     wrm_sequence.unlink(2);
-    wrm_sequence.unlink(3);
-    wrm_sequence.unlink(4);
-    wrm_sequence.unlink(5);
+}
+
+BOOST_AUTO_TEST_CASE(TestSecondPart)
+{
+    const char * input_filename = "./tests/fixtures/sample1.wrm";
+    InByFilenameTransport in_wrm_trans(input_filename);
+    FileToGraphic player(&in_wrm_trans);
+
+    Inifile ini;
+    ini.globals.debug.primary_orders = 0;
+    ini.globals.debug.secondary_orders = 0;
+
+    FileSequence png_sequence("path file pid count extension", "./", "second_part", "png");
+    OutByFilenameSequenceTransport out_png_trans(png_sequence);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
+        
+    png_recorder.update_config(ini);
+    player.add_consumer(&png_recorder);
+
+    FileSequence wrm_sequence("path file pid count extension", "./", "second_part", "wrm");
+    OutByFilenameSequenceTransport out_wrm_trans(wrm_sequence);
+    ini.globals.frame_interval = 10;
+    ini.globals.break_interval = 20;
+    
+    BmpCache bmp_cache(
+        player.bmp_cache->bpp,
+        player.bmp_cache->small_entries,
+        player.bmp_cache->small_size,
+        player.bmp_cache->medium_entries,
+        player.bmp_cache->medium_size,
+        player.bmp_cache->big_entries,
+        player.bmp_cache->big_size);
+
+    NativeCapture wrm_recorder(
+        player.record_now,
+        out_wrm_trans,
+        player.screen_rect.cx,
+        player.screen_rect.cy,
+        bmp_cache, ini);
+
+    wrm_recorder.update_config(ini);
+    player.add_consumer(&wrm_recorder);
+
+    BOOST_CHECK_EQUAL((unsigned)1352304870, (unsigned)player.record_now.tv_sec);
+    player.play();
+    BOOST_CHECK_EQUAL((unsigned)1352304928, (unsigned)player.record_now.tv_sec);
+
+    png_recorder.flush();
+    BOOST_CHECK_EQUAL((unsigned)47483, (unsigned)png_sequence.filesize(0));
+    png_sequence.unlink(0);
+
+    wrm_recorder.flush();
+    BOOST_CHECK_EQUAL((unsigned)73319, (unsigned)wrm_sequence.filesize(0));
+    wrm_sequence.unlink(0);
+    BOOST_CHECK_EQUAL((unsigned)273774, (unsigned)wrm_sequence.filesize(1));
+    wrm_sequence.unlink(1);
+    BOOST_CHECK_EQUAL((unsigned)185108, (unsigned)wrm_sequence.filesize(2));
+    wrm_sequence.unlink(2);
 }

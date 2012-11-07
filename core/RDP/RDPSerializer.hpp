@@ -248,8 +248,8 @@ struct RDPSerializer : public RDPGraphicDevice
     {
         const Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
         if (!bmp) { 
-            LOG(LOG_INFO, "skipping RDPSerializer::emit_bmp_cache for %u:%u (entry not used)",
-                cache_id, cache_idx);
+//            LOG(LOG_INFO, "skipping RDPSerializer::emit_bmp_cache for %u:%u (entry not used)",
+//                cache_id, cache_idx);
             return; 
         }
         RDPBmpCache cmd_cache(bmp, cache_id, cache_idx, this->ini.globals.debug.primary_orders);

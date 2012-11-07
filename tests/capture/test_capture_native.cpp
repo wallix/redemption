@@ -59,5 +59,6 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     now.tv_sec += 6;
     consumer.snapshot(now, 10, 10, true, false);
     ::close(trans.fd);
+    sequence.unlink(0);
 }
 

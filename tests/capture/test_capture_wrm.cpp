@@ -26,7 +26,7 @@
 #define BOOST_TEST_MODULE TestWrmCapture
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include <sys/time.h>
 
 #include "test_orders.hpp"
@@ -38,8 +38,8 @@
 #include "constants.hpp"
 
 const char expected_stripped_wrm[] = 
-/* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x20\x03\x58\x02\x18\x00" // width = 800, height=600, bpp=24
+/* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+           "\x01\x00\x20\x03\x58\x02\x18\x00" // width = 800, height=600, bpp=24
            "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
            
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
@@ -115,8 +115,8 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
 }
 
 const char expected_stripped_wrm2[] = 
-/* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x20\x03\x58\x02\x18\x00" // width = 800, height=600, bpp=24
+/* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+           "\x01\x00\x20\x03\x58\x02\x18\x00" // width = 800, height=600, bpp=24
            "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
            
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     consumer.flush();
     BOOST_CHECK_EQUAL(0, 0);
     ::close(trans.fd);
-    BOOST_CHECK_EQUAL(102, filesize("./testcap.wrm"));
+    BOOST_CHECK_EQUAL(104, filesize("./testcap.wrm"));
     
     InByFilenameTransport in_wrm_trans("./testcap.wrm");
     FileSequence sequence("path file pid count extension", "./", "testcap", "png");
