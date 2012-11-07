@@ -100,7 +100,7 @@
 
 struct GraphicsUpdatePDU : public RDPSerializer
 {
-    BStream stream;
+    BStream buffer_stream;
     ShareControl * sctrl;
     ShareData * sdata;
     uint16_t & userid;
@@ -119,9 +119,9 @@ struct GraphicsUpdatePDU : public RDPSerializer
                       const int bitmap_cache_version,
                       const int use_bitmap_comp,
                       const int op2)
-        : RDPSerializer(trans, stream, ini,
+        : RDPSerializer(trans, this->buffer_stream, ini,
             bpp, bmp_cache, bitmap_cache_version, use_bitmap_comp, op2),
-        stream(65536),
+        buffer_stream(65536),
         sctrl(NULL),
         sdata(NULL),
         userid(userid),
@@ -181,7 +181,10 @@ struct GraphicsUpdatePDU : public RDPSerializer
             this->trans->send(mcs_header.data, mcs_header.size());
             this->trans->send(sec_header.data, sec_header.size());
             
-            this->RDPSerializer::flush();
+            this->stream.mark_end();
+            this->trans->send(this->stream.data, this->stream.size());
+            this->order_count = 0;
+            this->stream.reset();
             this->init();
         }
     }

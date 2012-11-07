@@ -121,12 +121,10 @@ public:
     }
 
     void flush()
-    {}
-
-//    timeval& timer()
-//    {
-//        return this->pnc->recorder.timer;
-//    }
+    {
+        this->psc->flush();
+        this->pnc->flush();
+    }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {

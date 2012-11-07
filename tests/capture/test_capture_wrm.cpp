@@ -26,7 +26,7 @@
 #define BOOST_TEST_MODULE TestWrmCapture
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include <sys/time.h>
 
 #include "test_orders.hpp"

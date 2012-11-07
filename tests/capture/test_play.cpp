@@ -86,52 +86,52 @@
 
 BOOST_AUTO_TEST_CASE(TestBogusWRM)
 {
-    const char * input_filename = "./bogus.wrm";
-    InByFilenameTransport in_wrm_trans(input_filename);
-    FileToGraphic player(&in_wrm_trans);
+//    const char * input_filename = "./bogus.wrm";
+//    InByFilenameTransport in_wrm_trans(input_filename);
+//    FileToGraphic player(&in_wrm_trans);
 
-    Inifile ini;
-    ini.globals.debug.primary_orders = 127;
-    ini.globals.debug.secondary_orders = 127;
+//    Inifile ini;
+//    ini.globals.debug.primary_orders = 127;
+//    ini.globals.debug.secondary_orders = 127;
 
-    FileSequence png_sequence("path file pid count extension", "./", "testxxx", "png");
-    OutByFilenameSequenceTransport out_png_trans(png_sequence);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
-        
-    png_recorder.update_config(ini);
-    player.add_consumer(&png_recorder);
+//    FileSequence png_sequence("path file pid count extension", "./", "testxxx", "png");
+//    OutByFilenameSequenceTransport out_png_trans(png_sequence);
+//    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
+//        
+//    png_recorder.update_config(ini);
+//    player.add_consumer(&png_recorder);
 
 
-//    FileSequence wrm_sequence("path file pid count extension", "./", "bogbogbog", "wrm");
-//    OutByFilenameSequenceTransport out_wrm_trans(wrm_sequence);
-//    ini.globals.frame_interval = 10;
-//    ini.globals.break_interval = 10;
-//    
-//    BmpCache bmp_cache(
-//        player.bmp_cache->bpp,
-//        player.bmp_cache->small_entries,
-//        player.bmp_cache->small_size,
-//        player.bmp_cache->medium_entries,
-//        player.bmp_cache->medium_size,
-//        player.bmp_cache->big_entries,
-//        player.bmp_cache->big_size); 
+////    FileSequence wrm_sequence("path file pid count extension", "./", "bogbogbog", "wrm");
+////    OutByFilenameSequenceTransport out_wrm_trans(wrm_sequence);
+////    ini.globals.frame_interval = 10;
+////    ini.globals.break_interval = 10;
+////    
+////    BmpCache bmp_cache(
+////        player.bmp_cache->bpp,
+////        player.bmp_cache->small_entries,
+////        player.bmp_cache->small_size,
+////        player.bmp_cache->medium_entries,
+////        player.bmp_cache->medium_size,
+////        player.bmp_cache->big_entries,
+////        player.bmp_cache->big_size); 
 
-//    NativeCapture wrm_recorder(
-//        player.replay_now,
-//        out_wrm_trans,
-//        player.screen_rect.cx,
-//        player.screen_rect.cy,
-//        bmp_cache, ini);
+////    NativeCapture wrm_recorder(
+////        player.replay_now,
+////        out_wrm_trans,
+////        player.screen_rect.cx,
+////        player.screen_rect.cy,
+////        bmp_cache, ini);
 
-//    wrm_recorder.update_config(ini);
-//    player.add_consumer(&wrm_recorder);
+////    wrm_recorder.update_config(ini);
+////    player.add_consumer(&wrm_recorder);
 
-//    BOOST_CHECK_EQUAL((unsigned)1352220800, (unsigned)player.playtime_now.tv_sec);
-    png_recorder.flush();
-    player.play();
-//    out_png_trans.next();
-    png_recorder.flush();
-//    BOOST_CHECK_EQUAL((unsigned)1352220800, (unsigned)player.playtime_now.tv_sec);
-   
+////    BOOST_CHECK_EQUAL((unsigned)1352220800, (unsigned)player.playtime_now.tv_sec);
+//    png_recorder.flush();
+//    player.play();
+////    out_png_trans.next();
+//    png_recorder.flush();
+////    BOOST_CHECK_EQUAL((unsigned)1352220800, (unsigned)player.playtime_now.tv_sec);
+//   
 
 }

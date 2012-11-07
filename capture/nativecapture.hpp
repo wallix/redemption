@@ -131,7 +131,7 @@ public:
     
     virtual void flush()
     {
-        LOG(LOG_INFO, "NativeCapture::flush");
+        this->recorder.flush();
     }
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip)
@@ -173,7 +173,6 @@ private:
 
     void breakpoint()
     {
-        printf("breakpoint\n");
         this->recorder.breakpoint();
     }
 };

@@ -109,21 +109,20 @@ public:
     }
 };
 
-struct GraphicToFile : public RDPGraphicDevice
+struct GraphicToFile : public RDPSerializer
 REDOC("To keep things easy all chunks have 8 bytes headers"
       " starting with chunk_type, chunk_size"
       " and order_count (whatever it means, depending on chunks")
 {
-    BStream stream;
+    BStream buffer_stream;
+
     timeval last_sent_timer;
     timeval timer;
     const uint16_t width;
     const uint16_t height;
     const uint8_t  bpp;
     RDPDrawable * drawable;
-    RDPSerializer * serializer;
     Transport * trans;
-    BmpCache & bmp_cache;
 
     GraphicToFile(const timeval& now
                 , Transport * trans
@@ -132,29 +131,26 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
                 , const uint16_t height
                 , const uint8_t  bpp
                 , BmpCache & bmp_cache)
-    : stream(65536)
-//    , last_sent_timer() 
+    : RDPSerializer(trans, this->buffer_stream, ini, bpp, bmp_cache, 0, 1, 1)
+    , buffer_stream(65536)
+    , last_sent_timer() 
     , timer(now)
     , width(width)
     , height(height)
     , bpp(bpp)
     , trans(trans)
-    , bmp_cache(bmp_cache)
     {
         TODO("The serializers and the drawables should probably be provided by external call, not instanciated here")
-        this->serializer = new RDPSerializer(trans, this->stream, ini, bpp, this->bmp_cache, 0, 1, 1);
-    
         this->drawable = new RDPDrawable(width, height, true);
 
         last_sent_timer.tv_sec = 0;
         last_sent_timer.tv_usec = 0;
-        this->serializer->order_count = 0;
+        this->order_count = 0;
         
         this->send_meta_chunk();
     }
 
     ~GraphicToFile(){
-        delete this->serializer;
         delete this->drawable;
     }
 
@@ -220,94 +216,94 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     {
         BStream payload(2048);
         // RDPOrderCommon common;
-        payload.out_uint8(this->serializer->common.order);
-        payload.out_uint16_le(this->serializer->common.clip.x);
-        payload.out_uint16_le(this->serializer->common.clip.y);
-        payload.out_uint16_le(this->serializer->common.clip.cx);
-        payload.out_uint16_le(this->serializer->common.clip.cy);
+        payload.out_uint8(this->common.order);
+        payload.out_uint16_le(this->common.clip.x);
+        payload.out_uint16_le(this->common.clip.y);
+        payload.out_uint16_le(this->common.clip.cx);
+        payload.out_uint16_le(this->common.clip.cy);
         // RDPDestBlt destblt;
-        payload.out_uint16_le(this->serializer->destblt.rect.x);
-        payload.out_uint16_le(this->serializer->destblt.rect.y);
-        payload.out_uint16_le(this->serializer->destblt.rect.cx);
-        payload.out_uint16_le(this->serializer->destblt.rect.cy);
-        payload.out_uint8(this->serializer->destblt.rop);
+        payload.out_uint16_le(this->destblt.rect.x);
+        payload.out_uint16_le(this->destblt.rect.y);
+        payload.out_uint16_le(this->destblt.rect.cx);
+        payload.out_uint16_le(this->destblt.rect.cy);
+        payload.out_uint8(this->destblt.rop);
         // RDPDestBlt destblt;
-        payload.out_uint16_le(this->serializer->patblt.rect.x);
-        payload.out_uint16_le(this->serializer->patblt.rect.y);
-        payload.out_uint16_le(this->serializer->patblt.rect.cx);
-        payload.out_uint16_le(this->serializer->patblt.rect.cy);
-        payload.out_uint8(this->serializer->patblt.rop);
-        payload.out_uint32_le(this->serializer->patblt.back_color);
-        payload.out_uint32_le(this->serializer->patblt.fore_color);
-        payload.out_uint8(this->serializer->patblt.brush.org_x);
-        payload.out_uint8(this->serializer->patblt.brush.org_y);
-        payload.out_uint8(this->serializer->patblt.brush.style);
-        payload.out_uint8(this->serializer->patblt.brush.hatch);
-        payload.out_copy_bytes(this->serializer->patblt.brush.extra, 7);
+        payload.out_uint16_le(this->patblt.rect.x);
+        payload.out_uint16_le(this->patblt.rect.y);
+        payload.out_uint16_le(this->patblt.rect.cx);
+        payload.out_uint16_le(this->patblt.rect.cy);
+        payload.out_uint8(this->patblt.rop);
+        payload.out_uint32_le(this->patblt.back_color);
+        payload.out_uint32_le(this->patblt.fore_color);
+        payload.out_uint8(this->patblt.brush.org_x);
+        payload.out_uint8(this->patblt.brush.org_y);
+        payload.out_uint8(this->patblt.brush.style);
+        payload.out_uint8(this->patblt.brush.hatch);
+        payload.out_copy_bytes(this->patblt.brush.extra, 7);
         // RDPScrBlt scrblt;
-        payload.out_uint16_le(this->serializer->scrblt.rect.x);
-        payload.out_uint16_le(this->serializer->scrblt.rect.y);
-        payload.out_uint16_le(this->serializer->scrblt.rect.cx);
-        payload.out_uint16_le(this->serializer->scrblt.rect.cy);
-        payload.out_uint8(this->serializer->scrblt.rop);
-        payload.out_uint16_le(this->serializer->scrblt.srcx);
-        payload.out_uint16_le(this->serializer->scrblt.srcy);
+        payload.out_uint16_le(this->scrblt.rect.x);
+        payload.out_uint16_le(this->scrblt.rect.y);
+        payload.out_uint16_le(this->scrblt.rect.cx);
+        payload.out_uint16_le(this->scrblt.rect.cy);
+        payload.out_uint8(this->scrblt.rop);
+        payload.out_uint16_le(this->scrblt.srcx);
+        payload.out_uint16_le(this->scrblt.srcy);
         // RDPOpaqueRect opaquerect;
-        payload.out_uint16_le(this->serializer->opaquerect.rect.x);
-        payload.out_uint16_le(this->serializer->opaquerect.rect.y);
-        payload.out_uint16_le(this->serializer->opaquerect.rect.cx);
-        payload.out_uint16_le(this->serializer->opaquerect.rect.cy);
-        payload.out_uint8(this->serializer->opaquerect.color);
-        payload.out_uint8(this->serializer->opaquerect.color >> 8);
-        payload.out_uint8(this->serializer->opaquerect.color >> 16);
+        payload.out_uint16_le(this->opaquerect.rect.x);
+        payload.out_uint16_le(this->opaquerect.rect.y);
+        payload.out_uint16_le(this->opaquerect.rect.cx);
+        payload.out_uint16_le(this->opaquerect.rect.cy);
+        payload.out_uint8(this->opaquerect.color);
+        payload.out_uint8(this->opaquerect.color >> 8);
+        payload.out_uint8(this->opaquerect.color >> 16);
         // RDPMemBlt memblt;
-        payload.out_uint16_le(this->serializer->memblt.cache_id);
-        payload.out_uint16_le(this->serializer->memblt.rect.x);
-        payload.out_uint16_le(this->serializer->memblt.rect.y);
-        payload.out_uint16_le(this->serializer->memblt.rect.cx);
-        payload.out_uint16_le(this->serializer->memblt.rect.cy);
-        payload.out_uint8(this->serializer->memblt.srcx);
-        payload.out_uint8(this->serializer->memblt.srcy);
-        payload.out_uint16_le(this->serializer->memblt.cache_idx);
+        payload.out_uint16_le(this->memblt.cache_id);
+        payload.out_uint16_le(this->memblt.rect.x);
+        payload.out_uint16_le(this->memblt.rect.y);
+        payload.out_uint16_le(this->memblt.rect.cx);
+        payload.out_uint16_le(this->memblt.rect.cy);
+        payload.out_uint8(this->memblt.srcx);
+        payload.out_uint8(this->memblt.srcy);
+        payload.out_uint16_le(this->memblt.cache_idx);
         //RDPLineTo lineto;
-        payload.out_uint8(this->serializer->lineto.back_mode);
-        payload.out_uint16_le(this->serializer->lineto.startx);
-        payload.out_uint16_le(this->serializer->lineto.starty);
-        payload.out_uint16_le(this->serializer->lineto.endx);
-        payload.out_uint16_le(this->serializer->lineto.endy);
-        payload.out_uint32_le(this->serializer->lineto.back_color);
-        payload.out_uint8(this->serializer->lineto.rop2);
-        payload.out_uint8(this->serializer->lineto.pen.style);
-        payload.out_sint8(this->serializer->lineto.pen.width);
-        payload.out_uint32_le(this->serializer->lineto.pen.color);
+        payload.out_uint8(this->lineto.back_mode);
+        payload.out_uint16_le(this->lineto.startx);
+        payload.out_uint16_le(this->lineto.starty);
+        payload.out_uint16_le(this->lineto.endx);
+        payload.out_uint16_le(this->lineto.endy);
+        payload.out_uint32_le(this->lineto.back_color);
+        payload.out_uint8(this->lineto.rop2);
+        payload.out_uint8(this->lineto.pen.style);
+        payload.out_sint8(this->lineto.pen.width);
+        payload.out_uint32_le(this->lineto.pen.color);
         // RDPGlyphIndex glyphindex;
-        payload.out_uint8(this->serializer->glyphindex.cache_id);
-        payload.out_sint16_le(this->serializer->glyphindex.fl_accel);
-        payload.out_sint16_le(this->serializer->glyphindex.ui_charinc);
-        payload.out_sint16_le(this->serializer->glyphindex.f_op_redundant);
-        payload.out_uint32_le(this->serializer->glyphindex.back_color);
-        payload.out_uint32_le(this->serializer->glyphindex.fore_color);
-        payload.out_uint16_le(this->serializer->glyphindex.bk.x);
-        payload.out_uint16_le(this->serializer->glyphindex.bk.y);
-        payload.out_uint16_le(this->serializer->glyphindex.bk.cx);
-        payload.out_uint16_le(this->serializer->glyphindex.bk.cy);
-        payload.out_uint16_le(this->serializer->glyphindex.op.x);
-        payload.out_uint16_le(this->serializer->glyphindex.op.y);
-        payload.out_uint16_le(this->serializer->glyphindex.op.cx);
-        payload.out_uint16_le(this->serializer->glyphindex.op.cy);
-        payload.out_uint8(this->serializer->glyphindex.brush.org_x);
-        payload.out_uint8(this->serializer->glyphindex.brush.org_y);
-        payload.out_uint8(this->serializer->glyphindex.brush.style);
-        payload.out_uint8(this->serializer->glyphindex.brush.hatch);
-        payload.out_copy_bytes(this->serializer->glyphindex.brush.extra, 7);
-        payload.out_sint16_le(this->serializer->glyphindex.glyph_x);
-        payload.out_sint16_le(this->serializer->glyphindex.glyph_y);
-        payload.out_uint8(this->serializer->glyphindex.data_len);
-        memset(this->serializer->glyphindex.data 
-                + this->serializer->glyphindex.data_len, 0,
-            sizeof(this->serializer->glyphindex.data) 
-                - this->serializer->glyphindex.data_len);
-        payload.out_copy_bytes(this->serializer->glyphindex.data, 256);
+        payload.out_uint8(this->glyphindex.cache_id);
+        payload.out_sint16_le(this->glyphindex.fl_accel);
+        payload.out_sint16_le(this->glyphindex.ui_charinc);
+        payload.out_sint16_le(this->glyphindex.f_op_redundant);
+        payload.out_uint32_le(this->glyphindex.back_color);
+        payload.out_uint32_le(this->glyphindex.fore_color);
+        payload.out_uint16_le(this->glyphindex.bk.x);
+        payload.out_uint16_le(this->glyphindex.bk.y);
+        payload.out_uint16_le(this->glyphindex.bk.cx);
+        payload.out_uint16_le(this->glyphindex.bk.cy);
+        payload.out_uint16_le(this->glyphindex.op.x);
+        payload.out_uint16_le(this->glyphindex.op.y);
+        payload.out_uint16_le(this->glyphindex.op.cx);
+        payload.out_uint16_le(this->glyphindex.op.cy);
+        payload.out_uint8(this->glyphindex.brush.org_x);
+        payload.out_uint8(this->glyphindex.brush.org_y);
+        payload.out_uint8(this->glyphindex.brush.style);
+        payload.out_uint8(this->glyphindex.brush.hatch);
+        payload.out_copy_bytes(this->glyphindex.brush.extra, 7);
+        payload.out_sint16_le(this->glyphindex.glyph_x);
+        payload.out_sint16_le(this->glyphindex.glyph_y);
+        payload.out_uint8(this->glyphindex.data_len);
+        memset(this->glyphindex.data 
+                + this->glyphindex.data_len, 0,
+            sizeof(this->glyphindex.data) 
+                - this->glyphindex.data_len);
+        payload.out_copy_bytes(this->glyphindex.data, 256);
 
         //------------------------------ missing variable length ---------------
         payload.mark_end();
@@ -318,17 +314,26 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->trans->send(payload.data, payload.size());
     }    
 
-    void send_caches_chunk()
-    {
-        this->serializer->save_bmp_caches();
-        if (this->serializer->order_count > 0){
-            this->send_orders_chunk();
-        }
-    }
 
     void save_bmp_caches()
     {
-        this->serializer->save_bmp_caches();
+        for (size_t i = 0; i < this->bmp_cache.small_entries ; i++){
+            this->emit_bmp_cache(0, i);
+        }
+        for (size_t i = 0; i < this->bmp_cache.medium_entries ; i++){
+            this->emit_bmp_cache(1, i);
+        }
+        for (size_t i = 0; i < this->bmp_cache.big_entries ; i++){
+            this->emit_bmp_cache(2, i);
+        }
+    }
+
+    void send_caches_chunk()
+    {
+        this->save_bmp_caches();
+        if (this->order_count > 0){
+            this->send_orders_chunk();
+        }
     }
 
     void breakpoint()
@@ -344,7 +349,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     virtual void flush()
     {
-        if (this->serializer->order_count > 0){
+        if (this->order_count > 0){
             if (this->timer.tv_sec - this->last_sent_timer.tv_sec > 0){
                 this->send_timestamp_chunk();
             }
@@ -356,52 +361,54 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     {
         this->stream.mark_end();
         BStream header(8);
-        WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->stream.size(), this->serializer->order_count);
+        WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->stream.size(), this->order_count);
         this->trans->send(header.data, header.size());
-        this->serializer->flush();
+        this->trans->send(this->stream.data, this->stream.size());
+        this->order_count = 0;
+        this->stream.reset();
     }
 
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) 
     {
-        this->serializer->draw(cmd, clip);
         this->drawable->draw(cmd, clip);
+        this->RDPSerializer::draw(cmd, clip);
     }
 
     virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
     {
-        this->serializer->draw(cmd, clip);
         this->drawable->draw(cmd, clip);
+        this->RDPSerializer::draw(cmd, clip);
     }
 
     virtual void draw(const RDPDestBlt & cmd, const Rect &clip)
     {
-        this->serializer->draw(cmd, clip);
         this->drawable->draw(cmd, clip);
+        this->RDPSerializer::draw(cmd, clip);
     }
 
     virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
-        this->serializer->draw(cmd, clip);
         this->drawable->draw(cmd, clip);
+        this->RDPSerializer::draw(cmd, clip);
     }
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        this->serializer->draw(cmd, clip, bmp);
         this->drawable->draw(cmd, clip, bmp);
+        this->RDPSerializer::draw(cmd, clip, bmp);
     }
 
     virtual void draw(const RDPLineTo& cmd, const Rect & clip)
     {
-        this->serializer->draw(cmd, clip);
         this->drawable->draw(cmd, clip);
+        this->RDPSerializer::draw(cmd, clip);
     }
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
-        this->serializer->draw(cmd, clip);
         this->drawable->draw(cmd, clip);
+        this->RDPSerializer::draw(cmd, clip);
     }
 
 };
