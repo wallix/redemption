@@ -72,14 +72,14 @@ public:
     struct timeval start_static_capture;
     uint64_t inter_frame_interval_static_capture;
 
-    StaticCapture(const timeval & now, Transport & trans, FileSequence & sequence, unsigned width, unsigned height)
+    StaticCapture(const timeval & now, Transport & trans, FileSequence & sequence, unsigned width, unsigned height, const Inifile & ini)
     : ImageCapture(trans, width, height)
     , sequence(sequence)
     {
         this->start_static_capture = now;
         this->conf.png_interval = 3000; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
         this->inter_frame_interval_static_capture       = this->conf.png_interval * 100000; // 1 000 000 us is 1 sec
-
+        this->update_config(ini);
     }
 
     ~StaticCapture()

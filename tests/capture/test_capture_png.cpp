@@ -288,9 +288,8 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     Rect screen_rect(0, 0, 800, 600);
     FileSequence sequence("path file pid count extension", "./", "test", "png");
     OutByFilenameSequenceTransport trans(sequence);
-    StaticCapture consumer(now, trans, sequence, 800, 600);
     Inifile ini;
-    consumer.update_config(ini);
+    StaticCapture consumer(now, trans, sequence, 800, 600, ini);
     ini.globals.png_limit = 3;
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);

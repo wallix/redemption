@@ -43,15 +43,13 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     OutByFilenameSequenceTransport trans(sequence);
 
     struct timeval now;
-//    gettimeofday(&now, NULL);
     now.tv_sec = 1350998222;
     now.tv_usec = 0;
     
-    StaticCapture consumer(now, trans, sequence, 800, 600);
     Inifile ini;
     ini.globals.png_limit = 3;
     ini.globals.png_interval = 20;
-    consumer.update_config(ini);
+    StaticCapture consumer(now, trans, sequence, 800, 600, ini);
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     consumer.draw(cmd, screen_rect);

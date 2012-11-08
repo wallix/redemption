@@ -92,6 +92,7 @@ public:
 
         LOG(LOG_INFO, "update configuration frame_interval=%u break_interval=%u",
             this->frame_interval, this->break_interval);
+        this->update_config(ini);
     }
 
     ~NativeCapture(){

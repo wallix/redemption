@@ -323,6 +323,8 @@ public:
         delete [] data;
     }
 
+
+    // ==============================================================================
     void start_capture(int width, int height, Inifile & ini, ModContext & context)
     {
         if (context.get_bool(STRAUTHID_OPT_MOVIE)){
@@ -351,13 +353,33 @@ public:
             strncpy(ini.globals.target_user, context.get(STRAUTHID_TARGET_USER), sizeof(ini.globals.target_user)-1);
             ini.globals.target_user[sizeof(ini.globals.target_user)-1] = 0;
             
-            this->capture = new Capture(now, ini, width, height);
+            char path[1024];
+            char basename[1024];
+            strcpy(path, "/tmp/"); // default value, actual one should come from movie_path
+            strcpy(basename, "redemption"); // default value actual one should come from movie_path
+            const char * end_of_path = strrchr(ini.globals.movie_path, '/') + 1;
+            if (end_of_path){
+                memcpy(path, ini.globals.movie_path, end_of_path - ini.globals.movie_path);
+                path[end_of_path - ini.globals.movie_path] = 0;
+                const char * start_of_extension = strrchr(end_of_path, '.');
+                if (start_of_extension){
+                    memcpy(basename, end_of_path, start_of_extension - end_of_path);
+                    basename[start_of_extension - end_of_path] = 0;
+                }
+                else {
+                    if (end_of_path[0]){
+                        strcpy(basename, end_of_path);
+                    }
+                }
+            }
+            
+            this->capture = new Capture(now, width, height, path, basename, ini);
         }
     }
 
-    void update_config(const timeval & now, const Inifile & ini){
+    void update_config(const Inifile & ini){
         if (this->capture){
-            this->capture->update_config(now, ini);
+            this->capture->update_config(ini);
         }
     }
     void periodic_snapshot(bool pointer_is_displayed)
@@ -369,7 +391,6 @@ public:
         }
     }
 
-
     void stop_capture()
     {
         if (this->capture){
@@ -377,6 +398,7 @@ public:
             this->capture = 0;
         }
     }
+    // ==============================================================================
 
 
     virtual void reset(){
