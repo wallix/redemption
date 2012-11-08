@@ -224,3 +224,11 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     };
     BOOST_CHECK_EQUAL(gt.status, false);
 }
+
+BOOST_AUTO_TEST_CASE(TestMetaFollowedTransport)
+{
+    // data is coming from a chain of WRM files, whose names are put in a MWRM file
+    FileSequence meta("path file pid extension", "./", "testmeta", "mwrm");
+    InByFilenameSequenceFromMetaTransport wrm_trans(meta);
+}
+

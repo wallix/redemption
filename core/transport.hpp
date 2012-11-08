@@ -1411,4 +1411,50 @@ public:
 
 };
 
+TODO("change code below when tests are OK")
+class InByFilenameSequenceFromMetaTransport : public InFileTransport {
+    const FileSequence & meta_sequence;
+    char path[1024];
+public:
+    InByFilenameSequenceFromMetaTransport(const FileSequence & meta_sequence)
+    : InFileTransport(-1)
+    , meta_sequence(meta_sequence)
+    {
+        size_t len = strlen(path);
+        memcpy(this->path, path, len);
+        this->path[len] = 0;
+    }
+    
+    ~InByFilenameSequenceFromMetaTransport()
+    {
+        if (this->fd != -1){
+            ::close(this->fd);
+            this->fd = -1;
+        }
+    }
+    
+    using Transport::recv;
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+        if (this->fd == -1){
+            this->meta_sequence.get_name(this->path, sizeof(this->path), this->seqno);
+            this->fd = ::open(this->path, O_RDONLY);
+            if (this->fd == -1){
+                LOG(LOG_INFO, "InByFilename transport recv failed with error : %s", strerror(errno));
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+        }
+        InFileTransport::recv(pbuffer, len);
+    }
+    
+    virtual bool next() 
+    {
+        if (this->fd != -1){
+            ::close(this->fd);
+            this->fd = -1;
+        }
+        this->InFileTransport::next();
+        return true;
+    }
+};
+
 #endif
