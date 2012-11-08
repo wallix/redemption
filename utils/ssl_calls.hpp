@@ -180,37 +180,6 @@ class ssllib
         memcpy(signature, md5sig, siglen);
     }
 
-    inline int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len,
-                    uint8_t* mod, int mod_len, uint8_t* exp, int exp_len)
-    {
-        int rv;
-        uint8_t l_out[out_len]; memset(l_out, 0, out_len);
-        uint8_t l_in[in_len];   rmemcpy(l_in, in, in_len);
-        uint8_t l_mod[mod_len]; rmemcpy(l_mod, mod, mod_len);
-        uint8_t l_exp[exp_len]; rmemcpy(l_exp, exp, exp_len);
-
-        BN_CTX* ctx;
-        ctx = BN_CTX_new();
-        BIGNUM lmod; BN_init(&lmod); BN_bin2bn((uint8_t*)l_mod, mod_len, &lmod);
-        BIGNUM lexp; BN_init(&lexp); BN_bin2bn((uint8_t*)l_exp, exp_len, &lexp);
-        BIGNUM lin; BN_init(&lin);  BN_bin2bn((uint8_t*)l_in, in_len, &lin);
-        BIGNUM lout; BN_init(&lout); BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
-
-        rv = BN_bn2bin(&lout, (uint8_t*)l_out);
-        if (rv <= out_len) {
-            reverseit(l_out, rv);
-            memcpy(out, l_out, out_len);
-        } else {
-            rv = 0;
-        }
-        BN_free(&lin);
-        BN_free(&lout);
-        BN_free(&lexp);
-        BN_free(&lmod);
-        BN_CTX_free(ctx);
-        return rv;
-    }
-
     static void rdp_sec_generate_keyblock(uint8_t (& key_block)[48], uint8_t *client_random, uint8_t *server_random)
     {
         uint8_t pre_master_secret[48];

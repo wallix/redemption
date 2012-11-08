@@ -88,7 +88,7 @@ static inline void remove_char_at(char* text, int text_size, int index)
     if (len <= 0) {
         return;
     }
-    wchar_t wstr[len + 16];
+    wchar_t wstr[1024 + 16];
     mbstowcs(wstr, text, len + 1);
     if ((index < (len - 1)) && (index >= 0)) {
         for (int i = index; i < (len - 1); i++) {

@@ -44,7 +44,7 @@ project redemption
     <conditional>@defines
 #    <cxxflags>-pedantic
 #     <cxxflags>-Wconversion
-#    <cxxflags>-Wvla
+    <cxxflags>-Wvla
 #    <cxxflags>-Wlong-long
     <cxxflags>-O3
     : default-build release

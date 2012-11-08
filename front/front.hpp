@@ -237,7 +237,7 @@ public:
         width = 0;
         if (text) {
             size_t len = mbstowcs(0, text, 0);
-            wchar_t wstr[len + 2];
+            wchar_t wstr[8192 + 2];
             mbstowcs(wstr, text, len + 1);
             for (size_t index = 0; index < len; index++) {
                 FontChar *font_item = this->font.font_items[wstr[index]];
@@ -363,8 +363,9 @@ public:
     void periodic_snapshot(bool pointer_is_displayed)
     {
         if (this->capture){
-            this->capture->snapshot(this->mouse_x, this->mouse_y,
-                    pointer_is_displayed|this->nomouse, this->notimestamp);
+            struct timeval now;
+            gettimeofday(&now, NULL);
+            this->capture->snapshot(now, this->mouse_x, this->mouse_y, pointer_is_displayed|this->nomouse, this->notimestamp);
         }
     }
 
@@ -1319,8 +1320,29 @@ public:
                 ssllib ssl;
                 uint8_t client_random[64];
                 memset(client_random, 0, 64);
+                {
+                    uint8_t l_out[64]; memset(l_out, 0, 64);
+                    uint8_t l_in[64];  rmemcpy(l_in, sec.payload.data, 64);
+                    uint8_t l_mod[64]; rmemcpy(l_mod, this->pub_mod, 64);
+                    uint8_t l_exp[64]; rmemcpy(l_exp, this->pri_exp, 64);
 
-                ssl.ssl_mod_exp(client_random, 64, sec.payload.data, 64, this->pub_mod, 64, this->pri_exp, 64);
+                    BN_CTX* ctx = BN_CTX_new();
+                    BIGNUM lmod; BN_init(&lmod); BN_bin2bn((uint8_t*)l_mod, 64, &lmod);
+                    BIGNUM lexp; BN_init(&lexp); BN_bin2bn((uint8_t*)l_exp, 64, &lexp);
+                    BIGNUM lin; BN_init(&lin);  BN_bin2bn((uint8_t*)l_in, 64, &lin);
+                    BIGNUM lout; BN_init(&lout); BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
+
+                    int rv = BN_bn2bin(&lout, (uint8_t*)l_out);
+                    if (rv <= 64) {
+                        reverseit(l_out, rv);
+                        memcpy(client_random, l_out, 64);
+                    }
+                    BN_free(&lin);
+                    BN_free(&lout);
+                    BN_free(&lexp);
+                    BN_free(&lmod);
+                    BN_CTX_free(ctx);
+                }
 
                 // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
                 uint8_t key_block[48];

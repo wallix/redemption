@@ -112,10 +112,8 @@ public:
         this->log_prefix[len] = 0;
     }
 
-    void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
+    void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
-        struct timeval now;
-        gettimeofday(&now, NULL);
         this->psc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
         this->pnc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
     }
