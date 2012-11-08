@@ -26,29 +26,36 @@
 
 class Capture : public RDPGraphicDevice
 {
-    char log_prefix[256];
-
+public:
+    FileSequence * meta_sequence;
+    FileSequence * wrm_sequence;
     FileSequence * png_sequence;
+
     OutByFilenameSequenceTransport * png_trans;
     StaticCapture * psc;
 
-    FileSequence * wrm_sequence;
-    OutByFilenameSequenceTransport * wrm_trans;
+    OutByFilenameSequenceWithMetaTransport * wrm_trans;
     BmpCache * pnc_bmp_cache;
     NativeCapture * pnc;
 
-public:
     Capture(const timeval & now, int width, int height, const char * path, const char * basename, const Inifile & ini) 
-      : png_sequence(NULL)
+      : meta_sequence(NULL)
+      , wrm_sequence(NULL)
+      , png_sequence(NULL)
       , png_trans(NULL)
       , psc(NULL)
+      , wrm_trans(NULL)
+      , pnc_bmp_cache(NULL)
+      , pnc(NULL)
     {
+        this->meta_sequence = new FileSequence("path file pid extension", path, basename, "mwrm");
+        this->wrm_sequence = new FileSequence("path file pid count extension", path, basename, "wrm");
         this->png_sequence = new FileSequence("path file pid count extension", path, basename, "png");
+
         this->png_trans = new OutByFilenameSequenceTransport(*this->png_sequence);
         this->psc = new StaticCapture(now, *this->png_trans, *this->png_sequence, width, height, ini);
 
-        this->wrm_sequence = new FileSequenceWithMeta("path file pid count extension", path, basename, "wrm");
-        this->wrm_trans = new OutByFilenameSequenceTransport(*this->wrm_sequence);
+        this->wrm_trans = new OutByFilenameSequenceWithMetaTransport(*this->meta_sequence, now, width, height, *this->wrm_sequence);
         this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288); 
         this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, ini);
    }
@@ -60,6 +67,7 @@ public:
 
         delete this->pnc;
         delete this->wrm_sequence;
+        delete this->meta_sequence;
         delete this->wrm_trans;
         delete this->pnc_bmp_cache;
     }
@@ -71,6 +79,7 @@ public:
 
     void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
+        this->wrm_trans->future = now;
         this->psc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
         this->pnc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
     }

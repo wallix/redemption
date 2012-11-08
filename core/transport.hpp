@@ -1095,7 +1095,7 @@ public:
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         if (this->fd == -1){
-            this->fd = ::creat(this->path, 777);
+            this->fd = ::creat(this->path, 0777);
             if (this->fd == -1){
                 LOG(LOG_INFO, "OutByFilename transport write failed with error : %s on %s", strerror(errno), this->path);
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
@@ -1178,6 +1178,10 @@ public:
             snprintf(buffer, len, "%s%s-%u-%i.%s", 
             this->prefix, this->filename, this->pid, count, this->extension);
         }
+        else if (0 == strcmp(this->format, "path file pid extension")){
+            snprintf(buffer, len, "%s%s-%u.%s", 
+            this->prefix, this->filename, this->pid, this->extension);
+        }
         else {
             LOG(LOG_ERR, "Unsupported sequence format string");
             throw Error(ERR_TRANSPORT);
@@ -1194,19 +1198,6 @@ public:
         char filename[1024];
         this->get_name(filename, sizeof(filename), count);
         return ::unlink(filename);
-    }
-};
-
-
-class FileSequenceWithMeta : public FileSequence {
-public:
-    FileSequenceWithMeta(
-        const char * const format,
-        const char * const prefix, 
-        const char * const filename, 
-        const char * const extension) 
-    : FileSequence(format, prefix, filename, extension) 
-    {
     }
 };
 
@@ -1233,7 +1224,7 @@ public:
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         if (this->fd == -1){
             this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
-            this->fd = ::creat(this->path, 777);
+            this->fd = ::creat(this->path, 0777);
             if (this->fd == -1){
                 LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
@@ -1251,8 +1242,128 @@ public:
         this->OutFileTransport::next();
         return true;
     }
-
 };
+
+
+class OutByFilenameSequenceWithMetaTransport : public OutFileTransport {
+public:
+    timeval future; 
+    timeval now;
+    const FileSequence & meta;
+    const FileSequence & sequence;
+    char meta_path[1024];
+    char path[1024];
+
+    OutByFilenameSequenceWithMetaTransport(const FileSequence & meta, timeval now, uint16_t width, uint16_t height, const FileSequence & sequence, unsigned verbose = 0) 
+    : OutFileTransport(-1, verbose)
+    , now(now)
+    , meta(meta)
+    , sequence(sequence)
+    {
+        this->meta.get_name(this->meta_path, sizeof(this->meta_path), 0);
+        int mfd = ::creat(this->meta_path, 0777);
+        char buffer[2048];
+        size_t len = sprintf(buffer, "%u %u\n0\n\n", width, height);
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            int ret = ::write(mfd, buffer + total_sent, remaining_len);
+            if (ret > 0){
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            else {
+                if (errno == EINTR){
+                    continue;
+                }
+                LOG(LOG_INFO, "Meta write to %s failed with error %s", this->meta_path, strerror(errno));
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        ::close(mfd);
+    }
+    
+    ~OutByFilenameSequenceWithMetaTransport()
+    {
+        if (this->fd != -1){
+            ::close(this->fd);
+            this->fd = -1;
+        }
+        int mfd = ::open(this->meta_path, O_APPEND|O_WRONLY, 0777);
+        if (mfd < 0){
+            LOG(LOG_ERR, "Failed to open meta_file %s : error %s", this->meta_path, strerror(errno));
+            throw Error(ERR_TRANSPORT);
+        }
+        char buffer[2048];
+        size_t len = sprintf(buffer, "%s, %lu %lu\n", this->path, now.tv_sec, now.tv_usec);
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            int ret = ::write(mfd, buffer + total_sent, remaining_len);
+            if (ret > 0){
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            else {
+                if (errno == EINTR){
+                    continue;
+                }
+                LOG(LOG_INFO, "Meta write to %s failed with error %s", this->meta_path, strerror(errno));
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        ::close(mfd);
+    }
+    
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
+        if (this->fd == -1){
+            this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
+            this->fd = ::creat(this->path, 0777);
+            if (this->fd == -1){
+                LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        OutFileTransport::send(buffer, len);
+    }
+    
+    virtual bool next() 
+    {
+        if (this->fd != -1){
+            ::close(this->fd);
+            this->fd = -1;
+        }
+        int mfd = ::open(this->meta_path, O_APPEND|O_WRONLY, 0777);
+        if (mfd < 0){
+            LOG(LOG_ERR, "Failed to open meta_file %s : error %s", this->meta_path, strerror(errno));
+            throw Error(ERR_TRANSPORT);
+        }
+        char buffer[2048];
+        size_t len = sprintf(buffer, "%s, %lu %lu\n", this->path, now.tv_sec, now.tv_usec);
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            int ret = ::write(mfd, buffer + total_sent, remaining_len);
+            if (ret > 0){
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            else {
+                if (errno == EINTR){
+                    continue;
+                }
+                LOG(LOG_INFO, "Meta write to %s failed with error %s", this->meta_path, strerror(errno));
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->now = this->future;
+        ::close(mfd);
+        this->OutFileTransport::next();
+        return true;
+    }
+};
+
 
 class InByFilenameSequenceTransport : public InFileTransport {
     const FileSequence & sequence;
