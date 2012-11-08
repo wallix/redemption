@@ -1198,6 +1198,18 @@ public:
 };
 
 
+class FileSequenceWithMeta : public FileSequence {
+public:
+    FileSequenceWithMeta(
+        const char * const format,
+        const char * const prefix, 
+        const char * const filename, 
+        const char * const extension) 
+    : FileSequence(format, prefix, filename, extension) 
+    {
+    }
+};
+
 class OutByFilenameSequenceTransport : public OutFileTransport {
 public:
     const FileSequence & sequence;

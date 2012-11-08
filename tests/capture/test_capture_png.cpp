@@ -289,8 +289,9 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     FileSequence sequence("path file pid count extension", "./", "test", "png");
     OutByFilenameSequenceTransport trans(sequence);
     Inifile ini;
-    StaticCapture consumer(now, trans, sequence, 800, 600, ini);
+    ini.globals.png_interval = 1;
     ini.globals.png_limit = 3;
+    StaticCapture consumer(now, trans, sequence, 800, 600, ini);
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     consumer.draw(cmd, screen_rect);
@@ -298,39 +299,40 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
     BOOST_CHECK_EQUAL(-1, sequence.filesize(1));
 
-    consumer.flush();
+    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
 
-    BOOST_CHECK_EQUAL(2786, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(3051, sequence.filesize(0));
     BOOST_CHECK_EQUAL(-1, sequence.filesize(1));
 
-    consumer.flush();
+    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
 
-    BOOST_CHECK_EQUAL(2786, sequence.filesize(0));
-    BOOST_CHECK_EQUAL(2786, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(3051, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(3065, sequence.filesize(1));
     BOOST_CHECK_EQUAL(-1, sequence.filesize(2));
 
-    consumer.flush();
-    BOOST_CHECK_EQUAL(2786, sequence.filesize(0));
-    BOOST_CHECK_EQUAL(2786, sequence.filesize(1));
-    BOOST_CHECK_EQUAL(2786, sequence.filesize(2));
+    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
+
+    BOOST_CHECK_EQUAL(3051, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(3065, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(3064, sequence.filesize(2));
     BOOST_CHECK_EQUAL(-1, sequence.filesize(3));
 
-    consumer.flush();
+    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
 
     ::close(trans.fd);
     BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
-    BOOST_CHECK_EQUAL(2786, sequence.filesize(1));
-    BOOST_CHECK_EQUAL(2786, sequence.filesize(2));
-    BOOST_CHECK_EQUAL(2786, sequence.filesize(3));
+    BOOST_CHECK_EQUAL(3065, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(3064, sequence.filesize(2));
+    BOOST_CHECK_EQUAL(3054, sequence.filesize(3));
     BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
 
     ini.globals.png_limit = 10;
     consumer.update_config(ini);
 
     BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
-    BOOST_CHECK_EQUAL(2786, sequence.filesize(1));
-    BOOST_CHECK_EQUAL(2786, sequence.filesize(2));
-    BOOST_CHECK_EQUAL(2786, sequence.filesize(3));
+    BOOST_CHECK_EQUAL(3065, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(3064, sequence.filesize(2));
+    BOOST_CHECK_EQUAL(3054, sequence.filesize(3));
     BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
 
     ini.globals.png_limit = 2;
@@ -338,8 +340,8 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
     BOOST_CHECK_EQUAL(-1, sequence.filesize(1));
-    BOOST_CHECK_EQUAL(2786, sequence.filesize(2));
-    BOOST_CHECK_EQUAL(2786, sequence.filesize(3));
+    BOOST_CHECK_EQUAL(3064, sequence.filesize(2));
+    BOOST_CHECK_EQUAL(3054, sequence.filesize(3));
     BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
 
     ini.globals.png_limit = 0;
@@ -349,7 +351,6 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     BOOST_CHECK_EQUAL(-1, sequence.filesize(2));
     BOOST_CHECK_EQUAL(-1, sequence.filesize(3));
     BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
-    
 }
 
 const char small_png_image[] =

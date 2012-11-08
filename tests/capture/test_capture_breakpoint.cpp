@@ -29,13 +29,7 @@
 #define LOGNULL
 #include <sys/time.h>
 
-#include "test_orders.hpp"
-#include "transport.hpp"
-#include "nativecapture.hpp"
-#include "FileToGraphic.hpp"
-#include "GraphicToFile.hpp"
-#include "image_capture.hpp"
-#include "constants.hpp"
+#include "capture.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 {
@@ -47,17 +41,47 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
     Rect scr(0, 0, 800, 600);
     
     Inifile ini;
-    BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
-    FileSequence wrm_sequence("path file pid count extension", "./", "capture", "wrm");
-    OutByFilenameSequenceTransport out_wrm_trans(wrm_sequence);
+    ini.globals.frame_interval = 100; // one timestamp every second
+    ini.globals.break_interval = 3;   // one WRM file every 5 seconds
 
-    GraphicToFile consumer(now, &out_wrm_trans, ini, scr.cx, scr.cy, 24, bmp_cache);
-    consumer.draw(RDPOpaqueRect(scr, GREEN), scr);
-    consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), BLUE), scr);
-    consumer.draw(RDPOpaqueRect(Rect(0, 100, 700, 30), WHITE), scr);
-    consumer.draw(RDPOpaqueRect(Rect(0, 150, 700, 30), RED), scr);
-    consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 10), BLACK), scr);
-    consumer.flush();
+    ini.globals.png_limit = 10; // one snapshot by second
+    ini.globals.png_interval = 10; // one snapshot by second
+
+    Capture capture(now, scr.cx, scr.cy, "./", "capture", ini);
+
+    capture.draw(RDPOpaqueRect(scr, GREEN), scr);
+    now.tv_sec++;
+    capture.snapshot(now, 0, 0, false, false);
+
+    capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr);
+    now.tv_sec++;
+    capture.snapshot(now, 0, 0, false, false);
+
+    capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr);
+    now.tv_sec++;
+    capture.snapshot(now, 0, 0, false, false);
+
+    // ------------------------------ BREAKPOINT ------------------------------
+
+    capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr);
+    now.tv_sec++;
+    capture.snapshot(now, 0, 0, false, false);
+
+    capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr);
+    now.tv_sec++;
+    capture.snapshot(now, 0, 0, false, false);
+
+    capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr);
+    now.tv_sec++;
+    capture.snapshot(now, 0, 0, false, false);
+
+    // ------------------------------ BREAKPOINT ------------------------------
+
+    capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr);
+    now.tv_sec++;
+    capture.snapshot(now, 0, 0, false, false);
+
+    capture.flush();
 }
 
 

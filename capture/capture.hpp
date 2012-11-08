@@ -47,7 +47,7 @@ public:
         this->png_trans = new OutByFilenameSequenceTransport(*this->png_sequence);
         this->psc = new StaticCapture(now, *this->png_trans, *this->png_sequence, width, height, ini);
 
-        this->wrm_sequence = new FileSequence("path file pid count extension", path, basename, "wrm");
+        this->wrm_sequence = new FileSequenceWithMeta("path file pid count extension", path, basename, "wrm");
         this->wrm_trans = new OutByFilenameSequenceTransport(*this->wrm_sequence);
         this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288); 
         this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, ini);
