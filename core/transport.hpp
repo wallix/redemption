@@ -101,7 +101,7 @@ public:
     {
     }
 
-    virtual bool next() 
+    virtual bool next()
     REDOC("Some transports are splitted between sequential discrete units"
           "(it may be block, chunk, numbered files, directory entries, whatever)."
           "Calling next means flushing the current unit and start the next one."
@@ -290,7 +290,7 @@ class OutFileTransport : public Transport {
     int fd;
     uint32_t verbose;
 
-    OutFileTransport(int fd, unsigned verbose = 0) 
+    OutFileTransport(int fd, unsigned verbose = 0)
         : Transport()
         , fd(fd)
         , verbose(verbose) {}
@@ -1074,14 +1074,14 @@ class ClientSocketTransport : public Transport {
 class OutByFilenameTransport : public OutFileTransport {
     char path[1024];
 public:
-    OutByFilenameTransport(const char * path) 
+    OutByFilenameTransport(const char * path)
     : OutFileTransport(-1)
     {
         size_t len = strlen(path);
         memcpy(this->path, path, len);
         this->path[len] = 0;
     }
-    
+
     ~OutByFilenameTransport()
     {
         if (this->fd != -1){
@@ -1089,7 +1089,7 @@ public:
             this->fd = -1;
         }
     }
-    
+
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         if (this->fd == -1){
@@ -1107,14 +1107,14 @@ public:
 class InByFilenameTransport : public InFileTransport {
     char path[1024];
 public:
-    InByFilenameTransport(const char * path) 
+    InByFilenameTransport(const char * path)
     : InFileTransport(-1)
     {
         size_t len = strlen(path);
         memcpy(this->path, path, len);
         this->path[len] = 0;
     }
-    
+
     ~InByFilenameTransport()
     {
         if (this->fd != -1){
@@ -1122,7 +1122,7 @@ public:
             this->fd = -1;
         }
     }
-    
+
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         if (this->fd == -1){
@@ -1147,15 +1147,15 @@ class FileSequence
 public:
     FileSequence(
         const char * const format,
-        const char * const prefix, 
-        const char * const filename, 
+        const char * const prefix,
+        const char * const filename,
         const char * const extension)
     : pid(getpid())
     {
         size_t len_format = std::min(strlen(format), sizeof(this->format));
         memcpy(this->format, format, len_format);
         this->format[len_format] = 0;
-        
+
         size_t len_prefix = std::min(strlen(prefix), sizeof(this->prefix));
         memcpy(this->prefix, prefix, len_prefix);
         this->prefix[len_prefix] = 0;
@@ -1170,14 +1170,14 @@ public:
 
         this->pid = getpid();
     }
-    
+
     void get_name(char * const buffer, size_t len, uint32_t count) const {
         if (0 == strcmp(this->format, "path file pid count extension")){
-            snprintf(buffer, len, "%s%s-%u-%i.%s", 
+            snprintf(buffer, len, "%s%s-%u-%i.%s",
             this->prefix, this->filename, this->pid, count, this->extension);
         }
         else if (0 == strcmp(this->format, "path file pid extension")){
-            snprintf(buffer, len, "%s%s-%u.%s", 
+            snprintf(buffer, len, "%s%s-%u.%s",
             this->prefix, this->filename, this->pid, this->extension);
         }
         else {
@@ -1185,7 +1185,7 @@ public:
             throw Error(ERR_TRANSPORT);
         }
     }
-    
+
     ssize_t filesize(uint32_t count) const {
         char filename[1024];
         this->get_name(filename, sizeof(filename), count);
@@ -1204,12 +1204,12 @@ public:
     const FileSequence & sequence;
     char path[1024];
 
-    OutByFilenameSequenceTransport(const FileSequence & sequence, unsigned verbose = 0) 
+    OutByFilenameSequenceTransport(const FileSequence & sequence, unsigned verbose = 0)
     : OutFileTransport(-1, verbose)
     , sequence(sequence)
     {
     }
-    
+
     ~OutByFilenameSequenceTransport()
     {
         if (this->fd != -1){
@@ -1217,7 +1217,7 @@ public:
             this->fd = -1;
         }
     }
-    
+
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         if (this->fd == -1){
@@ -1230,8 +1230,8 @@ public:
         }
         OutFileTransport::send(buffer, len);
     }
-    
-    virtual bool next() 
+
+    virtual bool next()
     {
         if (this->fd != -1){
             ::close(this->fd);
@@ -1245,14 +1245,14 @@ public:
 
 class OutByFilenameSequenceWithMetaTransport : public OutFileTransport {
 public:
-    timeval future; 
+    timeval future;
     timeval now;
     const FileSequence & meta;
     const FileSequence & sequence;
     char meta_path[1024];
     char path[1024];
 
-    OutByFilenameSequenceWithMetaTransport(const FileSequence & meta, timeval now, uint16_t width, uint16_t height, const FileSequence & sequence, unsigned verbose = 0) 
+    OutByFilenameSequenceWithMetaTransport(const FileSequence & meta, timeval now, uint16_t width, uint16_t height, const FileSequence & sequence, unsigned verbose = 0)
     : OutFileTransport(-1, verbose)
     , now(now)
     , meta(meta)
@@ -1280,7 +1280,7 @@ public:
         }
         ::close(mfd);
     }
-    
+
     ~OutByFilenameSequenceWithMetaTransport()
     {
         if (this->fd != -1){
@@ -1312,7 +1312,7 @@ public:
         }
         ::close(mfd);
     }
-    
+
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         if (this->fd == -1){
@@ -1325,8 +1325,8 @@ public:
         }
         OutFileTransport::send(buffer, len);
     }
-    
-    virtual bool next() 
+
+    virtual bool next()
     {
         if (this->fd != -1){
             ::close(this->fd);
@@ -1372,7 +1372,7 @@ public:
     , sequence(sequence)
     {
     }
-    
+
     ~InByFilenameSequenceTransport()
     {
         if (this->fd != -1){
@@ -1403,7 +1403,7 @@ public:
             try {
                 InFileTransport::recv(pbuffer, remaining_len);
                 remaining_len = 0;
-            } 
+            }
             catch (const Error & e) {
                 if (e.id == 1501){
                     size_t step = *pbuffer - oldpbuffer;
@@ -1419,8 +1419,8 @@ public:
             };
         }
     }
-    
-    virtual bool next() 
+
+    virtual bool next()
     {
         if (this->fd != -1){
             ::close(this->fd);
