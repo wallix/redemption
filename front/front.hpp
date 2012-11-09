@@ -241,6 +241,10 @@ public:
             mbstowcs(wstr, text, len + 1);
             for (size_t index = 0; index < len; index++) {
                 FontChar *font_item = this->font.font_items[wstr[index]];
+                if (!font_item) {
+                    LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", wstr[index]);
+                    font_item = this->font.font_items['?'];
+                }
                 width += font_item->incby;
                 height = std::max(height, font_item->height);
             }
@@ -329,13 +333,13 @@ public:
             this->stop_capture();
             struct timeval now;
             gettimeofday(&now, NULL);
-            
+
             strncpy(ini.globals.movie_path, context.get(STRAUTHID_OPT_MOVIE_PATH), sizeof(ini.globals.movie_path)-1);
             ini.globals.movie_path[sizeof(ini.globals.movie_path)-1] = 0;
-            
+
             strncpy(ini.globals.codec_id, context.get(STRAUTHID_OPT_CODEC_ID), sizeof(ini.globals.codec_id)-1);
             ini.globals.codec_id[sizeof(ini.globals.codec_id)-1] = 0;
-            
+
             strncpy(ini.globals.video_quality, context.get(STRAUTHID_VIDEO_QUALITY), sizeof(ini.globals.video_quality)-1);
             ini.globals.video_quality[sizeof(ini.globals.video_quality)-1] = 0;
 
@@ -350,7 +354,7 @@ public:
 
             strncpy(ini.globals.target_user, context.get(STRAUTHID_TARGET_USER), sizeof(ini.globals.target_user)-1);
             ini.globals.target_user[sizeof(ini.globals.target_user)-1] = 0;
-            
+
             this->capture = new Capture(now, ini, width, height);
         }
     }
@@ -1777,7 +1781,6 @@ public:
         // between client-side plug-ins and server-side applications).
         {
             ChannelDefArray & channel_list = this->channel_list;
-
             BStream stream(65536);
             X224::RecvFactory fx224(*this->trans, stream);
             TODO("We shall put a specific case when we get Disconnect Request")
@@ -3099,4 +3102,3 @@ public:
 };
 
 #endif
-
