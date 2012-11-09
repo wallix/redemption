@@ -103,17 +103,22 @@ struct Keymap2 {
         , DEADKEY_TILDE
     };
 
+    enum {
+          MAX_DEADKEYS = 5
+        , MAX_SECOND_KEYS = 15
+    };
+
     typedef struct dkk {    // Struture holding :
-        uint8_t secondKey;  // a char (second key)
-        uint8_t resultKey;  // the modified char (composition of char + deadkey) to emit
+        uint8_t secondKey;    // an unicode code point (the second key that comes after a deadkey)
+        uint8_t modifiedKey;  // the new unicode code point composed of the one above and the deadkey
     } dkey_key_t;
 
-    typedef struct dk { // Struture holding a deadkey and the rules to apply to second chars.
-         uint8_t    extendedKeyCode;
-         uint8_t    deadKeyTag;
-         uint8_t    shiftState;    // 0 = up ; 1 = down ; 2 = not significant
-         uint8_t    nbSecondKeys;
-         dkey_key_t secondKeys[15];
+    typedef struct dk { // Struture holding a deadkey and the rules to apply to available second keys.
+         uint32_t   uchar;                            // unicode code point
+         uint8_t    extendedKeyCode;                  // scancode + extended bit
+         uint8_t    deadKeyTag;                       // Deadkey tag from enum above
+         uint8_t    nbSecondKeys;                     // number of second keys available for that deadkey
+         dkey_key_t secondKeys[MAX_SECOND_KEYS];      // couples second key/modified key
     } dkey_t;
 
     dkey_t keylayout_WORK_deadkeys[5];
@@ -139,11 +144,11 @@ struct Keymap2 {
         memset(&this->keylayout_WORK_capslock,      0, 128 * sizeof(int));
         memset(&this->keylayout_WORK_shiftcapslock, 0, 128 * sizeof(int));
 
-        this->keylayout_WORK_deadkeys = { { 0x00, DEADKEY_NONE, 0, 0, {} }
-                                        , { 0x00, DEADKEY_NONE, 0, 0, {} }
-                                        , { 0x00, DEADKEY_NONE, 0, 0, {} }
-                                        , { 0x00, DEADKEY_NONE, 0, 0, {} }
-                                        , { 0x00, DEADKEY_NONE, 0, 0, {} }
+        this->keylayout_WORK_deadkeys = { { 0x00, 0x00, DEADKEY_NONE, 0, {} }
+                                        , { 0x00, 0x00, DEADKEY_NONE, 0, {} }
+                                        , { 0x00, 0x00, DEADKEY_NONE, 0, {} }
+                                        , { 0x00, 0x00, DEADKEY_NONE, 0, {} }
+                                        , { 0x00, 0x00, DEADKEY_NONE, 0, {} }
                                         };
 
         this->key_flags = 0;
@@ -388,9 +393,11 @@ struct Keymap2 {
                         if (this->verbose){
                             LOG(LOG_INFO, "nbevent in buffer: %u %u\n", this->nbuf, this->nbuf_kevent);
                         }
-
-                        if ((uchar >= 0x20) && (uchar != 0x7F) && (uchar != 0x5E || extendedKeyCode != 0x1A) && (uchar != 0xA8) && (uchar != 0x60) ){
-
+                        if (  (uchar >= 0x20)                            // Not an ASCII Control
+                           && (uchar != 0x7F)                            // Not the Backspace ASCII code
+                           && not isDeadkey(uchar, extendedKeyCode)      // Not a deadkey
+                           )
+                        {
                             if (this->verbose){
                                 LOG(LOG_INFO, "Printable key : uchar=%x", uchar);
                             }
@@ -402,18 +409,15 @@ struct Keymap2 {
                                 bool deadkeyTranslated = false;
 
                                 // Search for the current DEADKEY entry in current client keyboard layout
-printf (" ~~~~~~~~~~~~ DK >%u< - uchar >%x<~~~~~~~~~~~~\n", this->dead_key, uchar);
-                                for (uint8_t i=0; i<5 and keylayout_WORK_deadkeys[i].deadKeyTag != DEADKEY_NONE; i++) {
-printf (" ~~~~~~~~~~~~~~~~ LAYOUT DK >%u<  nbSecond >%u<~~~~~~~~~~~~\n", keylayout_WORK_deadkeys[i].deadKeyTag, keylayout_WORK_deadkeys[i].nbSecondKeys);
+                                for (uint8_t i = 0; i < MAX_DEADKEYS and keylayout_WORK_deadkeys[i].deadKeyTag != DEADKEY_NONE; i++) {
                                     if (keylayout_WORK_deadkeys[i].deadKeyTag == this->dead_key) {
 
                                         // Search for for uchar to translate in the current DEADKEY entry
-                                        for (uint8_t j=0; j<keylayout_WORK_deadkeys[i].nbSecondKeys; j++) {
-printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\n", keylayout_WORK_deadkeys[i].secondKeys[j].secondKey, keylayout_WORK_deadkeys[i].secondKeys[j].resultKey);
+                                        for (uint8_t j = 0; j < keylayout_WORK_deadkeys[i].nbSecondKeys; j++) {
                                             if (keylayout_WORK_deadkeys[i].secondKeys[j].secondKey == uchar) {
 
                                                 // push the translation into keyboard buffer
-                                                this->push(keylayout_WORK_deadkeys[i].secondKeys[j].resultKey);
+                                                this->push(keylayout_WORK_deadkeys[i].secondKeys[j].modifiedKey);
                                                 deadkeyTranslated = true;
                                                 break;
                                             }
@@ -439,29 +443,24 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
                         // uchar is NOT in Printable unicode character range
                         //--------------------------------------------------
                         else {
-                            if (this->verbose){
+                            if (this->verbose) {
                                 LOG(LOG_INFO, "pushing event extendedKeyCode=%x", extendedKeyCode);
                             }
 
-                            bool extCodeDone = false;
+                            bool extKeyCodeResolved = false;
                             // Test if the extendedKeyCode is a deadkey in the current keyboard layout
-                            for (int i=0; i< 5; i++) {
-                                if (keylayout_WORK_deadkeys[i].extendedKeyCode == extendedKeyCode) {
-                                    // if Shift State is not significant
-                                    // or Shift State must be "PRESSED" and it is
-                                    // or Shift State must be "RELEASED" and it is
-                                    if ( (keylayout_WORK_deadkeys[i].shiftState == 2 )
-                                    or   (keylayout_WORK_deadkeys[i].shiftState == 1 and this->is_shift_pressed() )
-                                    or   (keylayout_WORK_deadkeys[i].shiftState == 0 and not (this->is_shift_pressed()) )
-                                    ) {
-                                        this->dead_key = keylayout_WORK_deadkeys[i].deadKeyTag;
-                                        extCodeDone = true;
-                                    }
+                            for (int i=0; i < MAX_DEADKEYS; i++) {
+                                if (   (keylayout_WORK_deadkeys[i].uchar == uchar)
+                                   and (keylayout_WORK_deadkeys[i].extendedKeyCode == extendedKeyCode)
+                                   )
+                                {
+                                    this->dead_key = keylayout_WORK_deadkeys[i].deadKeyTag;
+                                    extKeyCodeResolved = true;
+                                    break;
                                 }
                             }
-                            printf(" ==========> DK = >%u<=========\n", this->dead_key);
 
-                            if (not extCodeDone) {
+                            if (not extKeyCodeResolved) {
                                 switch (extendedKeyCode){
                                 // LEFT ARROW
                                 case 0xCB:
@@ -495,7 +494,7 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
                                 case 0xCF:
                                     this->push_kevent(KEVENT_END);
                                     break;
-                                 // TAB
+                                // TAB
                                 case 0x0F:
                                     if (this->is_shift_pressed()){
                                         this->push_kevent(KEVENT_BACKTAB);
@@ -504,7 +503,7 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
                                         this->push_kevent(KEVENT_TAB);
                                     }
                                     break;
-                                 // backspace
+                                // backspace
                                 case 0x0E:
                                     this->push_kevent(KEVENT_BACKSPACE);
                                     break;
@@ -531,7 +530,28 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
 
         } // END SWITCH : ExtendedKeyCode
 
-    } // END FUNCT : event
+    } // END METHOD : event
+
+    //==============================================================================
+    bool isDeadkey(uint32_t uchar, uint8_t extendedKeyCode)
+    //==============================================================================
+    {
+        bool resu = false;
+        for (int i=0; i < MAX_DEADKEYS; i++) {
+            // Search if a make is a deadkey by its scancode AND by its utf8 translation.
+            // NB : utf8 alone is not enough. (e.g. french Circumflex Accent from scancode 'Ox1A' is a deadkey but
+            //      from scancode '0x0A' it isn't).
+            if (   (keylayout_WORK_deadkeys[i].extendedKeyCode == extendedKeyCode)
+               and (keylayout_WORK_deadkeys[i].uchar == uchar)
+               )
+            {
+                resu = true;
+            }
+        }
+        return resu;
+
+    } // END METHOD : notDeadkey
+
 
     //==============================================================================
     void push(uint32_t uchar)
@@ -539,7 +559,9 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
     {
         this->push_char(uchar);
         this->push_kevent(KEVENT_KEY);
-    }
+
+    } // END METHOD : push
+
 
     //==============================================================================
     void push_char(uint32_t uchar)
@@ -553,7 +575,9 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
             }
             this->nbuf++;
         }
-    }
+
+    } // END METHOD : push_char
+
 
     //==============================================================================
     uint32_t get_char()
@@ -572,7 +596,9 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
             return res;
         }
         return 0;
-    }
+
+    } // END METHOD : get_char
+
 
     // head of keyboard buffer (or keyboard buffer of size 1)
     //==============================================================================
@@ -580,14 +606,18 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
     //==============================================================================
     {
         return this->buffer[this->ibuf?this->ibuf-1:SIZE_KEYBUF-1];
-    }
+
+    } // END METHOD : top_char
+
 
     //==============================================================================
     uint32_t nb_char_available() const
     //==============================================================================
     {
         return this->nbuf;
-    }
+
+    } // END METHOD : nb_char_available
+
 
     //==============================================================================
     void push_kevent(uint32_t uevent)
@@ -601,7 +631,9 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
             }
             this->nbuf_kevent++;
         }
-    }
+
+    } // END METHOD : push_kevent
+
 
     //==============================================================================
     uint32_t get_kevent()
@@ -616,7 +648,9 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
             this->nbuf_kevent--;
         }
         return res;
-    }
+
+    } // END METHOD : get_kevent
+
 
     // head of keyboard buffer (or keyboard buffer of size 1)
     //==============================================================================
@@ -624,98 +658,125 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
     //==============================================================================
     {
         return this->buffer_kevent[this->ibuf_kevent?this->ibuf_kevent-1:SIZE_KEYBUF_KEVENT-1];
-    }
+
+    } // END METHOD : top_kevent
+
 
     //==============================================================================
     uint32_t nb_kevent_available() const
     //==============================================================================
     {
         return this->nbuf_kevent;
-    }
+
+    } // END METHOD : nb_kevent_available
+
 
     //==============================================================================
     bool is_caps_locked() const
     //==============================================================================
     {
         return this->key_flags & CAPSLOCK;
-    }
+
+    } // END METHOD : is_caps_locked
+
 
     //==============================================================================
     bool is_scroll_locked() const
     //==============================================================================
     {
         return this->key_flags & SCROLLLOCK;
-    }
+
+    } // END METHOD : is_scroll_locked
+
 
     //==============================================================================
     bool is_num_locked() const
     //==============================================================================
     {
         return this->key_flags & NUMLOCK;
-    }
+
+    } // END METHOD : is_num_locked
+
 
     //==============================================================================
     bool is_left_shift_pressed() const
     //==============================================================================
     {
         return this->keys_down[LEFT_SHIFT];
-    }
+
+    } // END METHOD : is_left_shift_pressed
+
 
     //==============================================================================
     bool is_right_shift_pressed() const
     //==============================================================================
     {
         return this->keys_down[RIGHT_SHIFT];
-    }
+
+    } // END METHOD : is_right_shift_pressed
+
 
     //==============================================================================
     bool is_shift_pressed() const
     //==============================================================================
     {
         return this->is_left_shift_pressed() || this->is_right_shift_pressed();
-    }
+
+    } // END METHOD : is_shift_pressed
+
 
     //==============================================================================
     bool is_left_ctrl_pressed() const
     //==============================================================================
     {
         return this->keys_down[LEFT_CTRL];
-    }
+
+    } // END METHOD : is_left_ctrl_pressed
+
 
     //==============================================================================
     bool is_right_ctrl_pressed() const
     //==============================================================================
     {
         return this->keys_down[RIGHT_CTRL];
-    }
+
+    } // END METHOD : is_right_ctrl_pressed
+
 
     //==============================================================================
     bool is_ctrl_pressed() const
     //==============================================================================
     {
         return is_right_ctrl_pressed() || is_left_ctrl_pressed();
-    }
+
+    } // END METHOD : is_ctrl_pressed
+
 
     //==============================================================================
     bool is_left_alt_pressed() const
     //==============================================================================
     {
         return this->keys_down[LEFT_ALT];
-    }
+
+    } // END METHOD : is_left_alt_pressed
+
 
     //==============================================================================
     bool is_right_alt_pressed() const // altgr
     //==============================================================================
     {
         return this->keys_down[RIGHT_ALT];
-    }
+
+    } // END METHOD : is_right_alt_pressed
+
 
     //==============================================================================
     bool is_alt_pressed() const
     //==============================================================================
     {
         return is_right_alt_pressed() || is_left_alt_pressed();
-    }
+
+    } // END METHOD : is_alt_pressed
 
 
     //==============================================================================
@@ -783,6 +844,7 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
             keylayout_WORK_capslock[i] = DEFAULT_capslock[i] ;
             keylayout_WORK_shiftcapslock[i] = DEFAULT_shiftcapslock[i];
         }
+        keyb = 0x0807;
         switch (keyb){
             case 0x0407: // GERMAN
             {
@@ -1101,34 +1163,39 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
                 };
 
                 const dkey_t x040c_deadkeys[5] = {
-                      { 0x1A, DEADKEY_CIRC,  0, 11, { {'a', 0xE2}, {'A', 0xC2}
-                                                    , {'e', 0xEA}, {'E', 0xCA}
-                                                    , {'i', 0xEE}, {'I', 0xCE}
-                                                    , {'o', 0xF4}, {'O', 0xD4}
-                                                    , {'u', 0xFB}, {'U', 0xDB}
-                                                    , {' ', 0x5E}
-                                                    }
+                      { 0x5E, 0x1A, DEADKEY_CIRC,  11, { {'a', 0xE2}, {'A', 0xC2}
+                                                       , {'e', 0xEA}, {'E', 0xCA}
+                                                       , {'i', 0xEE}, {'I', 0xCE}
+                                                       , {'o', 0xF4}, {'O', 0xD4}
+                                                       , {'u', 0xFB}, {'U', 0xDB}
+                                                       , {' ', 0x5E}
+                                                       }
                       }
-                    , { 0x1A, DEADKEY_UML,   1, 11, { {'a', 0xE4}, {'A', 0xC4}
-                                                    , {'e', 0xEB}, {'E', 0xCB}
-                                                    , {'i', 0xEF}, {'I', 0xCF}
-                                                    , {'o', 0xF6}, {'O', 0xD6}
-                                                    , {'u', 0xFC}, {'U', 0xDC}
-                                                    , {' ', 0xA8}
-                                                    }
+                    , { 0xA8, 0x1A, DEADKEY_UML,   11, { {'a', 0xE4}, {'A', 0xC4}
+                                                       , {'e', 0xEB}, {'E', 0xCB}
+                                                       , {'i', 0xEF}, {'I', 0xCF}
+                                                       , {'o', 0xF6}, {'O', 0xD6}
+                                                       , {'u', 0xFC}, {'U', 0xDC}
+                                                       , {' ', 0xA8}
+                                                       }
                       }
-                    , { 0x08, DEADKEY_GRAVE, 2, 11, { {'a', 0xE0}, {'A', 0xC0}
-                                                    , {'e', 0xE8}, {'E', 0xC8}
-                                                    , {'i', 0xEC}, {'I', 0xCC}
-                                                    , {'o', 0xF2}, {'O', 0xD2}
-                                                    , {'u', 0xF9}, {'U', 0xD9}
-                                                    , {' ', 0x60}
-                                                    }
+                    , { 0x60, 0x08, DEADKEY_GRAVE, 11, { {'a', 0xE0}, {'A', 0xC0}
+                                                       , {'e', 0xE8}, {'E', 0xC8}
+                                                       , {'i', 0xEC}, {'I', 0xCC}
+                                                       , {'o', 0xF2}, {'O', 0xD2}
+                                                       , {'u', 0xF9}, {'U', 0xD9}
+                                                       , {' ', 0x60}
+                                                       }
                       }
-                    , { 0x00, DEADKEY_NONE, 0, 0, {} }
-                    , { 0x00, DEADKEY_NONE, 0, 0, {} }
+                    , { 0x7E, 0x03, DEADKEY_TILDE,  7, { {'a', 0xE3}, {'A', 0xC3}
+                                                       , {'o', 0xF5}, {'O', 0xD5}
+                                                       , {'n', 0xF1}, {'N', 0xD1}
+                                                       , {' ', 0x7E}
+                                                       }
+                      }
+                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
                 };
-                for(size_t i = 0 ; i < 5 ; i++) {
+                for(size_t i = 0 ; i < MAX_DEADKEYS ; i++) {
                     keylayout_WORK_deadkeys[i] = x040c_deadkeys[i];
                 }
 
@@ -1471,7 +1538,6 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
                         keylayout_WORK_shiftcapslock[i] = x041d_shiftcapslock[i] ;
                     }
                 }
-
             }
             break;
             case 0x046e: // Luxemburgish
@@ -1606,9 +1672,9 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
                     /*   8 */     0x0,   0x1b,   0x21,   0x22,   0xa7,   0x24,   0x25,   0x26,
                     /*  16 */    0x2f,   0x28,   0x29,   0x3d,   0x3f,   0x60,    0x8,    0x0,
                     /*  24 */    0x51,   0x57,   0x45,   0x52,   0x54,   0x5a,   0x55,   0x49,
-                    /*  32 */    0x4f,   0x50,   0xdc,   0x21,    0xd,    0x0,   0x41,   0x53,
-                    /*  40 */    0x44,   0x46,   0x47,   0x48,   0x4a,   0x4b,   0x4c,   0xd6,
-                    /*  48 */    0xc4,   0xb0,    0x0,   0xa3,   0x59,   0x58,   0x43,   0x56,
+                    /*  32 */    0x4f,   0x50,   0xe8,   0x21,    0xd,    0x0,   0x41,   0x53,
+                    /*  40 */    0x44,   0x46,   0x47,   0x48,   0x4a,   0x4b,   0x4c,   0xe9,
+                    /*  48 */    0xe0,   0xb0,    0x0,   0xa3,   0x59,   0x58,   0x43,   0x56,
                     /*  56 */    0x42,   0x4e,   0x4d,   0x3b,   0x3a,   0x5f,    0x0,   0x2a,
                     /*  64 */     0x0,   0x20,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*  72 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,   0x37,
@@ -1637,8 +1703,8 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
                 };
                 const KeyLayout_t x0807_altgr = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
-                    /*   8 */     0x0,   0x1b,   0x7c,   0x40,   0x23,   0xb4,    0x0,    0x0,
-                    /*  16 */    0x7c,    0x0,    0x0,   0x5d,   0x60,   0x7e,    0x8,    0x9,
+                    /*   8 */     0x0,   0x1b,   0xa6,   0x40,   0x23,   0xb0,    0xa7,  0xac,
+                    /*  16 */    0x7c,   0xa2,   0x01,   0x01,   0xb4,   0x7e,    0x8,    0x9,
                     /*  24 */    0x40,  0x142, 0x20ac,   0xb6,  0x167, 0x2190, 0x2193, 0x2192,
                     /*  32 */    0x5b,   0x5b,   0x5b,   0x5d,    0xd,    0x0,   0xe6,   0xdf,
                     /*  40 */    0xf0,  0x111,  0x14b,  0x127,   0x6a,  0x138,  0x142,  0x2dd,
@@ -1671,49 +1737,49 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
                 };
 
                 const dkey_t x0807_deadkeys[5] = {
-                      { 0x0D, DEADKEY_CIRC,  0, 11, { {'a', 0xE2}, {'A', 0xC2}
-                                                    , {'e', 0xEA}, {'E', 0xCA}
-                                                    , {'i', 0xEE}, {'I', 0xCE}
-                                                    , {'o', 0xF4}, {'O', 0xD4}
-                                                    , {'u', 0xFB}, {'U', 0xDB}
-                                                    , {' ', 0x5E}
-                                                    }
+                      { 0x5E, 0x0D, DEADKEY_CIRC,  11, { {'a', 0xE2}, {'A', 0xC2}
+                                                       , {'e', 0xEA}, {'E', 0xCA}
+                                                       , {'i', 0xEE}, {'I', 0xCE}
+                                                       , {'o', 0xF4}, {'O', 0xD4}
+                                                       , {'u', 0xFB}, {'U', 0xDB}
+                                                       , {' ', 0x5E}
+                                                       }
                       }
-                    , { 0x1B, DEADKEY_UML,   0, 12, { {'a', 0xE4}, {'A', 0xC4}
-                                                    , {'e', 0xEB}, {'E', 0xCB}
-                                                    , {'i', 0xEF}, {'I', 0xCF}
-                                                    , {'o', 0xF6}, {'O', 0xD6}
-                                                    , {'u', 0xFC}, {'U', 0xDC}
-                                                    , {'y', 0xFF}
-                                                    , {' ', 0xA8}
-                                                    }
+                    , { 0xA8, 0x1B, DEADKEY_UML,   12, { {'a', 0xE4}, {'A', 0xC4}
+                                                       , {'e', 0xEB}, {'E', 0xCB}
+                                                       , {'i', 0xEF}, {'I', 0xCF}
+                                                       , {'o', 0xF6}, {'O', 0xD6}
+                                                       , {'u', 0xFC}, {'U', 0xDC}
+                                                       , {'y', 0xFF}
+                                                       , {' ', 0xA8}
+                                                       }
                       }
-                    , { 0x0D, DEADKEY_GRAVE, 1, 11, { {'a', 0xE0}, {'A', 0xC0}
-                                                    , {'e', 0xE8}, {'E', 0xC8}
-                                                    , {'i', 0xEC}, {'I', 0xCC}
-                                                    , {'o', 0xF2}, {'O', 0xD2}
-                                                    , {'u', 0xF9}, {'U', 0xD9}
-                                                    , {' ', 0x60}
-                                                    }
+                    , { 0x60, 0x0D, DEADKEY_GRAVE, 11, { {'a', 0xE0}, {'A', 0xC0}
+                                                       , {'e', 0xE8}, {'E', 0xC8}
+                                                       , {'i', 0xEC}, {'I', 0xCC}
+                                                       , {'o', 0xF2}, {'O', 0xD2}
+                                                       , {'u', 0xF9}, {'U', 0xD9}
+                                                       , {' ', 0x60}
+                                                       }
                       }
-                    , { 0x0C, DEADKEY_ACUTE, 2, 13, { {'a', 0xE1}, {'A', 0xC1}
-                                                    , {'e', 0xE9}, {'E', 0xC9}
-                                                    , {'i', 0xED}, {'I', 0xCD}
-                                                    , {'o', 0xF3}, {'O', 0xD3}
-                                                    , {'u', 0xFA}, {'U', 0xDA}
-                                                    , {'y', 0xFD}, {'Y', 0xDD}
-                                                    , {' ', 0xB4}
-                                                    }
+                    , { 0xB4, 0x0C, DEADKEY_ACUTE, 13, { {'a', 0xE1}, {'A', 0xC1}
+                                                       , {'e', 0xE9}, {'E', 0xC9}
+                                                       , {'i', 0xED}, {'I', 0xCD}
+                                                       , {'o', 0xF3}, {'O', 0xD3}
+                                                       , {'u', 0xFA}, {'U', 0xDA}
+                                                       , {'y', 0xFD}, {'Y', 0xDD}
+                                                       , {' ', 0xB4}
+                                                       }
                       }
-                    , { 0x0D, DEADKEY_TILDE, 2,  7, { {'a', 0xE3}, {'A', 0xC3}
-                                                    , {'o', 0xF5}, {'O', 0xD5}
-                                                    , {'n', 0xF1}, {'N', 0xD1}
-                                                    , {' ', 0x7E}
-                                                    }
+                    , { 0x7E, 0x0D, DEADKEY_TILDE,  7, { {'a', 0xE3}, {'A', 0xC3}
+                                                       , {'o', 0xF5}, {'O', 0xD5}
+                                                       , {'n', 0xF1}, {'N', 0xD1}
+                                                       , {' ', 0x7E}
+                                                       }
                       }
                 };
 
-                for(size_t i = 0 ; i < 5 ; i++) {
+                for(size_t i = 0 ; i < MAX_DEADKEYS ; i++) {
                     keylayout_WORK_deadkeys[i] = x0807_deadkeys[i];
                 }
                 for(size_t i = 0 ; i < 128 ; i++) {
@@ -2169,9 +2235,9 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
             break;
         }
 
-    } // Keymap::init_layout
+    } // END METHOD - init_layout
 
-};
+}; // END CLASS - Keymap2
 
 
 #endif
