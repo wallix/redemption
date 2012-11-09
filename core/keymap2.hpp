@@ -783,7 +783,6 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
             keylayout_WORK_capslock[i] = DEFAULT_capslock[i] ;
             keylayout_WORK_shiftcapslock[i] = DEFAULT_shiftcapslock[i];
         }
-        keyb = 0x0807;
         switch (keyb){
             case 0x0407: // GERMAN
             {
