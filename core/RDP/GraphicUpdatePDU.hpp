@@ -100,7 +100,7 @@
 
 struct GraphicsUpdatePDU : public RDPSerializer
 {
-    BStream stream;
+    BStream buffer_stream;
     ShareControl * sctrl;
     ShareData * sdata;
     uint16_t & userid;
@@ -113,15 +113,15 @@ struct GraphicsUpdatePDU : public RDPSerializer
                       int & shareid,
                       int & encryptionLevel,
                       CryptContext & encrypt,
-                      const Inifile * ini,
+                      const Inifile & ini,
                       const uint8_t bpp,
                       BmpCache & bmp_cache,
                       const int bitmap_cache_version,
                       const int use_bitmap_comp,
                       const int op2)
-        : RDPSerializer(trans, NULL, ini,
+        : RDPSerializer(trans, this->buffer_stream, ini,
             bpp, bmp_cache, bitmap_cache_version, use_bitmap_comp, op2),
-        stream(65536),
+        buffer_stream(65536),
         sctrl(NULL),
         sdata(NULL),
         userid(userid),
@@ -129,7 +129,6 @@ struct GraphicsUpdatePDU : public RDPSerializer
         encryptionLevel(encryptionLevel),
         encrypt(encrypt)
     {
-        this->pstream = &this->stream;
         this->init();
     }
 
@@ -142,46 +141,50 @@ struct GraphicsUpdatePDU : public RDPSerializer
         if (this->sctrl){ delete this->sctrl; }
         if (this->sdata){ delete this->sdata; }
 
-        if (this->ini->globals.debug.primary_orders > 63){
+        if (this->ini.globals.debug.primary_orders > 3){
             LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
         }
-        this->sctrl = new ShareControl(*this->pstream);
+        this->sctrl = new ShareControl(this->stream);
         this->sctrl->emit_begin( PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE );
-        this->sdata = new ShareData(*this->pstream);
-        this->sdata->emit_begin( PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED );
+        this->sdata = new ShareData(this->stream);
+        this->sdata->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED );
         TODO("this is to kind of header, to be treated like other headers")
-        this->pstream->out_uint16_le(RDP_UPDATE_ORDERS);
-        this->pstream->out_clear_bytes(2); /* pad */
-        this->offset_order_count = this->pstream->get_offset();
-        this->pstream->out_clear_bytes(2); /* number of orders, set later */
-        this->pstream->out_clear_bytes(2); /* pad */
+        this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
+        this->stream.out_clear_bytes(2); /* pad */
+        this->offset_order_count = this->stream.get_offset();
+        this->stream.out_clear_bytes(2); /* number of orders, set later */
+        this->stream.out_clear_bytes(2); /* pad */
     }
 
     virtual void flush()
     {
         if (this->order_count > 0){
-            if (this->ini->globals.debug.primary_orders > 63){
+            if (this->ini.globals.debug.primary_orders > 3){
                 LOG(LOG_INFO, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             }
-            this->pstream->set_out_uint16_le(this->order_count, this->offset_order_count);
+            this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
 
             this->sdata->emit_end();
             this->sctrl->emit_end();
-            this->pstream->mark_end();    
+            this->stream.mark_end();    
 
             BStream x224_header(256);
             BStream mcs_header(256);
             BStream sec_header(256);
 
-            SEC::Sec_Send sec(sec_header, *this->pstream, 0, this->encrypt, this->encryptionLevel, 0);
-            MCS::SendDataIndication_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + this->pstream->size(), MCS::PER_ENCODING);
-            X224::DT_TPDU_Send(x224_header, sec_header.size() + this->pstream->size() + mcs_header.size());
+            SEC::Sec_Send sec(sec_header, this->stream, 0, this->encrypt, this->encryptionLevel, 0);
+            MCS::SendDataIndication_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + this->stream.size(), MCS::PER_ENCODING);
+            X224::DT_TPDU_Send(x224_header, sec_header.size() + this->stream.size() + mcs_header.size());
+
 
             this->trans->send(x224_header.data, x224_header.size());
             this->trans->send(mcs_header.data, mcs_header.size());
             this->trans->send(sec_header.data, sec_header.size());
             
-            this->RDPSerializer::flush();
+            this->stream.mark_end();
+            this->trans->send(this->stream.data, this->stream.size());
+            this->order_count = 0;
+            this->stream.reset();
             this->init();
         }
     }

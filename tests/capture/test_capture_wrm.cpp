@@ -38,8 +38,8 @@
 #include "constants.hpp"
 
 const char expected_stripped_wrm[] = 
-/* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x20\x03\x58\x02\x18\x00" // width = 800, height=600, bpp=24
+/* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+           "\x01\x00\x20\x03\x58\x02\x18\x00" // width = 800, height=600, bpp=24
            "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
            
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
-    GraphicToFile consumer(now, &trans, &stream, &ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache);
+    GraphicToFile consumer(now, &trans, ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
 
@@ -115,8 +115,8 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
 }
 
 const char expected_stripped_wrm2[] = 
-/* 0000 */ "\xEE\x03\x1A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x20\x03\x58\x02\x18\x00" // width = 800, height=600, bpp=24
+/* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+           "\x01\x00\x20\x03\x58\x02\x18\x00" // width = 800, height=600, bpp=24
            "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
            
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     CheckTransport trans(expected_stripped_wrm2, sizeof(expected_stripped_wrm2)-1, 511);
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
-    GraphicToFile consumer(now, &trans, &stream, &ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache);
+    GraphicToFile consumer(now, &trans, ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
     consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), BLUE), screen_rect);
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     BOOST_CHECK_EQUAL(0, 0);
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
-    GraphicToFile consumer(now, &trans, &stream, &ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache);
+    GraphicToFile consumer(now, &trans, ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache);
     BOOST_CHECK_EQUAL(0, 0);
     RDPOpaqueRect cmd0(screen_rect, GREEN);
     consumer.draw(cmd0, screen_rect);
@@ -206,14 +206,14 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     consumer.flush();
     BOOST_CHECK_EQUAL(0, 0);
     ::close(trans.fd);
-    BOOST_CHECK_EQUAL(102, filesize("./testcap.wrm"));
+    BOOST_CHECK_EQUAL(104, filesize("./testcap.wrm"));
     
     InByFilenameTransport in_wrm_trans("./testcap.wrm");
     FileSequence sequence("path file pid count extension", "./", "testcap", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
 
     FileToGraphic player(&in_wrm_trans);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, true);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     player.add_consumer(&png_recorder);
 
     png_recorder.flush();

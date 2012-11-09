@@ -26,104 +26,69 @@
 
 class Capture : public RDPGraphicDevice
 {
-    char log_prefix[256];
-
+public:
+    FileSequence * meta_sequence;
+    FileSequence * wrm_sequence;
     FileSequence * png_sequence;
+
     OutByFilenameSequenceTransport * png_trans;
     StaticCapture * psc;
 
-    FileSequence * wrm_sequence;
-    OutByFilenameSequenceTransport * wrm_trans;
+    OutByFilenameSequenceWithMetaTransport * wrm_trans;
+    BmpCache * pnc_bmp_cache;
     NativeCapture * pnc;
 
-public:
-    Capture(const timeval & now, const Inifile & ini, int width, int height) 
-      : png_sequence(NULL)
+    Capture(const timeval & now, int width, int height, const char * path, const char * basename, const Inifile & ini) 
+      : meta_sequence(NULL)
+      , wrm_sequence(NULL)
+      , png_sequence(NULL)
       , png_trans(NULL)
       , psc(NULL)
+      , wrm_trans(NULL)
+      , pnc_bmp_cache(NULL)
+      , pnc(NULL)
     {
-        char path[1024];
-        char basename[1024];
-        strcpy(path, "/tmp/"); 
-        strcpy(basename, "redemption"); 
-        const char * end_of_path = strrchr(ini.globals.movie_path, '/') + 1;
-        if (end_of_path){
-            memcpy(path, ini.globals.movie_path, end_of_path - ini.globals.movie_path);
-            path[end_of_path - ini.globals.movie_path] = 0;
-            const char * start_of_extension = strrchr(end_of_path, '.');
-            if (start_of_extension){
-                memcpy(basename, end_of_path, start_of_extension - end_of_path);
-                basename[start_of_extension - end_of_path] = 0;
-            }
-            else {
-                if (end_of_path[0]){
-                    strcpy(basename, end_of_path);
-                }
-            }
-        }
-        
-        this->png_sequence = new FileSequence("path file pid count extension", path, basename, "png");
-        this->png_trans = new OutByFilenameSequenceTransport(*this->png_sequence);
-        this->psc = new StaticCapture(now, *this->png_trans, *this->png_sequence, width, height);
-
+        this->meta_sequence = new FileSequence("path file pid extension", path, basename, "mwrm");
         this->wrm_sequence = new FileSequence("path file pid count extension", path, basename, "wrm");
-        this->wrm_trans = new OutByFilenameSequenceTransport(*this->wrm_sequence);
-        this->pnc = new NativeCapture(now, *this->wrm_trans, width, height);
- 
-        this->log_prefix[0] = 0;
-        
-        char buffer[256];
-        snprintf(buffer, 256, "type='OCR title bar' "
-                              "username='%s' "
-                              "client_ip='%s' "
-                              "ressource='%s' "
-                              "account='%s'", 
-                ini.globals.auth_user, 
-                ini.globals.host, 
-                ini.globals.target_device,
-                ini.globals.target_user);
-        buffer[255] = 0;
-        this->set_prefix(buffer, strlen(buffer));
-        this->update_config(now, ini);
+        this->png_sequence = new FileSequence("path file pid count extension", path, basename, "png");
+
+        this->png_trans = new OutByFilenameSequenceTransport(*this->png_sequence);
+        this->psc = new StaticCapture(now, *this->png_trans, *this->png_sequence, width, height, ini);
+
+        this->wrm_trans = new OutByFilenameSequenceWithMetaTransport(*this->meta_sequence, now, width, height, *this->wrm_sequence);
+        this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288); 
+        this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, ini);
    }
 
     ~Capture(){
         delete this->psc;
-        delete this->wrm_sequence;
-        delete this->wrm_trans;
-
-        delete this->pnc;
         delete this->png_sequence;
         delete this->png_trans;
+
+        delete this->pnc;
+        delete this->wrm_sequence;
+        delete this->meta_sequence;
+        delete this->wrm_trans;
+        delete this->pnc_bmp_cache;
     }
     
-    void update_config(const timeval & now, const Inifile & ini){
+    void update_config(const Inifile & ini){
         this->psc->update_config(ini);
         this->pnc->update_config(ini);
     }
 
-    void set_prefix(const char * prefix, size_t len_prefix)
+    void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
-        size_t len = (len_prefix < sizeof(log_prefix))?len_prefix:(sizeof(log_prefix)-1);
-        memcpy(this->log_prefix, prefix, len);
-        this->log_prefix[len] = 0;
-    }
-
-    void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
-    {
-        struct timeval now;
-        gettimeofday(&now, NULL);
+        this->wrm_trans->future = now;
         this->psc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
         this->pnc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
     }
 
     void flush()
-    {}
-
-//    timeval& timer()
-//    {
-//        return this->pnc->recorder.timer;
-//    }
+    {
+        this->psc->flush();
+        this->pnc->flush();
+    }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {

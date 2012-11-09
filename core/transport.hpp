@@ -352,7 +352,7 @@ class InFileTransport : public Transport {
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         size_t ret = 0;
         size_t remaining_len = len;
-        char * buffer = *pbuffer;
+        char * & buffer = *pbuffer;
         while (remaining_len) {
             ret = ::read(this->fd, buffer, remaining_len);
             if (ret > 0){
@@ -367,12 +367,10 @@ class InFileTransport : public Transport {
                     LOG(LOG_INFO, "Infile transport read EOF");
                     throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
                 }
-                *pbuffer = buffer;
                 LOG(LOG_INFO, "Infile transport read failed with error %u %s ret=%u", errno, strerror(errno), ret);
                 throw Error(ERR_TRANSPORT_READ_FAILED, 0);
             }
         }
-        *pbuffer = buffer;
     }
 
     // send is not implemented for InFileTransport
@@ -1095,7 +1093,7 @@ public:
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         if (this->fd == -1){
-            this->fd = ::creat(this->path, 777);
+            this->fd = ::creat(this->path, 0777);
             if (this->fd == -1){
                 LOG(LOG_INFO, "OutByFilename transport write failed with error : %s on %s", strerror(errno), this->path);
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
@@ -1178,6 +1176,10 @@ public:
             snprintf(buffer, len, "%s%s-%u-%i.%s", 
             this->prefix, this->filename, this->pid, count, this->extension);
         }
+        else if (0 == strcmp(this->format, "path file pid extension")){
+            snprintf(buffer, len, "%s%s-%u.%s", 
+            this->prefix, this->filename, this->pid, this->extension);
+        }
         else {
             LOG(LOG_ERR, "Unsupported sequence format string");
             throw Error(ERR_TRANSPORT);
@@ -1196,7 +1198,6 @@ public:
         return ::unlink(filename);
     }
 };
-
 
 class OutByFilenameSequenceTransport : public OutFileTransport {
 public:
@@ -1221,7 +1222,7 @@ public:
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         if (this->fd == -1){
             this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
-            this->fd = ::creat(this->path, 777);
+            this->fd = ::creat(this->path, 0777);
             if (this->fd == -1){
                 LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
@@ -1239,8 +1240,128 @@ public:
         this->OutFileTransport::next();
         return true;
     }
-
 };
+
+
+class OutByFilenameSequenceWithMetaTransport : public OutFileTransport {
+public:
+    timeval future; 
+    timeval now;
+    const FileSequence & meta;
+    const FileSequence & sequence;
+    char meta_path[1024];
+    char path[1024];
+
+    OutByFilenameSequenceWithMetaTransport(const FileSequence & meta, timeval now, uint16_t width, uint16_t height, const FileSequence & sequence, unsigned verbose = 0) 
+    : OutFileTransport(-1, verbose)
+    , now(now)
+    , meta(meta)
+    , sequence(sequence)
+    {
+        this->meta.get_name(this->meta_path, sizeof(this->meta_path), 0);
+        int mfd = ::creat(this->meta_path, 0777);
+        char buffer[2048];
+        size_t len = sprintf(buffer, "%u %u\n0\n\n", width, height);
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            int ret = ::write(mfd, buffer + total_sent, remaining_len);
+            if (ret > 0){
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            else {
+                if (errno == EINTR){
+                    continue;
+                }
+                LOG(LOG_INFO, "Meta write to %s failed with error %s", this->meta_path, strerror(errno));
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        ::close(mfd);
+    }
+    
+    ~OutByFilenameSequenceWithMetaTransport()
+    {
+        if (this->fd != -1){
+            ::close(this->fd);
+            this->fd = -1;
+        }
+        int mfd = ::open(this->meta_path, O_APPEND|O_WRONLY, 0777);
+        if (mfd < 0){
+            LOG(LOG_ERR, "Failed to open meta_file %s : error %s", this->meta_path, strerror(errno));
+            throw Error(ERR_TRANSPORT);
+        }
+        char buffer[2048];
+        size_t len = sprintf(buffer, "%s, %lu %lu\n", this->path, now.tv_sec, now.tv_usec);
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            int ret = ::write(mfd, buffer + total_sent, remaining_len);
+            if (ret > 0){
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            else {
+                if (errno == EINTR){
+                    continue;
+                }
+                LOG(LOG_INFO, "Meta write to %s failed with error %s", this->meta_path, strerror(errno));
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        ::close(mfd);
+    }
+    
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
+        if (this->fd == -1){
+            this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
+            this->fd = ::creat(this->path, 0777);
+            if (this->fd == -1){
+                LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        OutFileTransport::send(buffer, len);
+    }
+    
+    virtual bool next() 
+    {
+        if (this->fd != -1){
+            ::close(this->fd);
+            this->fd = -1;
+        }
+        int mfd = ::open(this->meta_path, O_APPEND|O_WRONLY, 0777);
+        if (mfd < 0){
+            LOG(LOG_ERR, "Failed to open meta_file %s : error %s", this->meta_path, strerror(errno));
+            throw Error(ERR_TRANSPORT);
+        }
+        char buffer[2048];
+        size_t len = sprintf(buffer, "%s, %lu %lu\n", this->path, now.tv_sec, now.tv_usec);
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            int ret = ::write(mfd, buffer + total_sent, remaining_len);
+            if (ret > 0){
+                remaining_len -= ret;
+                total_sent += ret;
+            }
+            else {
+                if (errno == EINTR){
+                    continue;
+                }
+                LOG(LOG_INFO, "Meta write to %s failed with error %s", this->meta_path, strerror(errno));
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+        this->now = this->future;
+        ::close(mfd);
+        this->OutFileTransport::next();
+        return true;
+    }
+};
+
 
 class InByFilenameSequenceTransport : public InFileTransport {
     const FileSequence & sequence;
@@ -1250,9 +1371,6 @@ public:
     : InFileTransport(-1)
     , sequence(sequence)
     {
-        size_t len = strlen(path);
-        memcpy(this->path, path, len);
-        this->path[len] = 0;
     }
     
     ~InByFilenameSequenceTransport()
@@ -1262,18 +1380,44 @@ public:
             this->fd = -1;
         }
     }
-    
+
+    TODO("Code below looks insanely complicated for what it is doing. I should probably stop at some point"
+         "and *THINK* about the API that transport objects should really provide."
+         "For instance I strongly suspect that it should be allowed to stop returning only part of the asked datas"
+         "like the file system transport objects. There should also be an easy way to combine several layers of"
+         "transports (using templates ?) and clearly define the properties of objects providing the sources of datas"
+         "(some abstraction above file ?). The current sequences are easy to use, but somewhat limited")
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        if (this->fd == -1){
-            this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
-            this->fd = ::open(this->path, O_RDONLY);
+        size_t remaining_len = len;
+        while (remaining_len > 0){
             if (this->fd == -1){
-                LOG(LOG_INFO, "InByFilename transport recv failed with error : %s", strerror(errno));
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
+                this->fd = ::open(this->path, O_RDONLY);
+                if (this->fd == -1){
+                    LOG(LOG_INFO, "InByFilename transport recv failed with error : %s", strerror(errno));
+                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                }
             }
+            char * oldpbuffer = *pbuffer;
+            try {
+                InFileTransport::recv(pbuffer, remaining_len);
+                remaining_len = 0;
+            } 
+            catch (const Error & e) {
+                if (e.id == 1501){
+                    size_t step = *pbuffer - oldpbuffer;
+                    if (step == 0){
+                        throw;
+                    }
+                    remaining_len -= step;
+                    this->next();
+                }
+                else {
+                    throw;
+                }
+            };
         }
-        InFileTransport::recv(pbuffer, len);
     }
     
     virtual bool next() 
@@ -1285,7 +1429,6 @@ public:
         this->InFileTransport::next();
         return true;
     }
-
 };
 
 #endif

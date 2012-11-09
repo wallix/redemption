@@ -237,7 +237,7 @@ public:
         width = 0;
         if (text) {
             size_t len = mbstowcs(0, text, 0);
-            wchar_t wstr[len + 2];
+            wchar_t wstr[8192 + 2];
             mbstowcs(wstr, text, len + 1);
             for (size_t index = 0; index < len; index++) {
                 FontChar *font_item = this->font.font_items[wstr[index]];
@@ -327,6 +327,8 @@ public:
         delete [] data;
     }
 
+
+    // ==============================================================================
     void start_capture(int width, int height, Inifile & ini, ModContext & context)
     {
         if (context.get_bool(STRAUTHID_OPT_MOVIE)){
@@ -354,24 +356,49 @@ public:
 
             strncpy(ini.globals.target_user, context.get(STRAUTHID_TARGET_USER), sizeof(ini.globals.target_user)-1);
             ini.globals.target_user[sizeof(ini.globals.target_user)-1] = 0;
+<<<<<<< HEAD
 
             this->capture = new Capture(now, ini, width, height);
+=======
+            
+            char path[1024];
+            char basename[1024];
+            strcpy(path, "/tmp/"); // default value, actual one should come from movie_path
+            strcpy(basename, "redemption"); // default value actual one should come from movie_path
+            const char * end_of_path = strrchr(ini.globals.movie_path, '/') + 1;
+            if (end_of_path){
+                memcpy(path, ini.globals.movie_path, end_of_path - ini.globals.movie_path);
+                path[end_of_path - ini.globals.movie_path] = 0;
+                const char * start_of_extension = strrchr(end_of_path, '.');
+                if (start_of_extension){
+                    memcpy(basename, end_of_path, start_of_extension - end_of_path);
+                    basename[start_of_extension - end_of_path] = 0;
+                }
+                else {
+                    if (end_of_path[0]){
+                        strcpy(basename, end_of_path);
+                    }
+                }
+            }
+            
+            this->capture = new Capture(now, width, height, path, basename, ini);
+>>>>>>> 1878cfaaf7d7ffbbc71ccbba6e8125169e2d16b8
         }
     }
 
-    void update_config(const timeval & now, const Inifile & ini){
+    void update_config(const Inifile & ini){
         if (this->capture){
-            this->capture->update_config(now, ini);
+            this->capture->update_config(ini);
         }
     }
     void periodic_snapshot(bool pointer_is_displayed)
     {
         if (this->capture){
-            this->capture->snapshot(this->mouse_x, this->mouse_y,
-                    pointer_is_displayed|this->nomouse, this->notimestamp);
+            struct timeval now;
+            gettimeofday(&now, NULL);
+            this->capture->snapshot(now, this->mouse_x, this->mouse_y, pointer_is_displayed|this->nomouse, this->notimestamp);
         }
     }
-
 
     void stop_capture()
     {
@@ -380,6 +407,7 @@ public:
             this->capture = 0;
         }
     }
+    // ==============================================================================
 
 
     virtual void reset(){
@@ -408,7 +436,7 @@ public:
                         this->share_id,
                         this->client_info.encryptionLevel,
                         this->encrypt,
-                        this->ini,
+                        *this->ini,
                         this->client_info.bpp,
                         *this->bmp_cache,
                         this->client_info.bitmap_cache_version,
@@ -1323,8 +1351,29 @@ public:
                 ssllib ssl;
                 uint8_t client_random[64];
                 memset(client_random, 0, 64);
+                {
+                    uint8_t l_out[64]; memset(l_out, 0, 64);
+                    uint8_t l_in[64];  rmemcpy(l_in, sec.payload.data, 64);
+                    uint8_t l_mod[64]; rmemcpy(l_mod, this->pub_mod, 64);
+                    uint8_t l_exp[64]; rmemcpy(l_exp, this->pri_exp, 64);
 
-                ssl.ssl_mod_exp(client_random, 64, sec.payload.data, 64, this->pub_mod, 64, this->pri_exp, 64);
+                    BN_CTX* ctx = BN_CTX_new();
+                    BIGNUM lmod; BN_init(&lmod); BN_bin2bn((uint8_t*)l_mod, 64, &lmod);
+                    BIGNUM lexp; BN_init(&lexp); BN_bin2bn((uint8_t*)l_exp, 64, &lexp);
+                    BIGNUM lin; BN_init(&lin);  BN_bin2bn((uint8_t*)l_in, 64, &lin);
+                    BIGNUM lout; BN_init(&lout); BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
+
+                    int rv = BN_bn2bin(&lout, (uint8_t*)l_out);
+                    if (rv <= 64) {
+                        reverseit(l_out, rv);
+                        memcpy(client_random, l_out, 64);
+                    }
+                    BN_free(&lin);
+                    BN_free(&lout);
+                    BN_free(&lexp);
+                    BN_free(&lmod);
+                    BN_CTX_free(ctx);
+                }
 
                 // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
                 uint8_t key_block[48];

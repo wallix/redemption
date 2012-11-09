@@ -194,8 +194,6 @@ BOOST_AUTO_TEST_CASE(TestCheckTransportInputOverflow)
     BOOST_CHECK_EQUAL(gt.status, false);
 }
 
-
-
 BOOST_AUTO_TEST_CASE(TestTestTransport)
 {
     // TestTransport is bidirectional
@@ -224,3 +222,37 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     };
     BOOST_CHECK_EQUAL(gt.status, false);
 }
+
+BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransport)
+{
+    // setup beforetests
+    FileSequence parts("path file pid count extension", "./", "testmeta", "wrm");
+    {
+        OutByFilenameSequenceTransport setup_wrm(parts);
+        for (size_t i = 0 ; i < 10 ; i++){
+            char buffer[128];
+            sprintf(buffer, "%lu", i*3);
+            setup_wrm.send(buffer, strlen(buffer));
+            setup_wrm.next();
+        }
+    }
+
+    // This is whar we are actually testing, chaining of several files content
+    InByFilenameSequenceTransport wrm_trans1(parts);
+    char buffer[1024];
+    char * pbuffer = buffer;
+    try {
+        wrm_trans1.recv(&pbuffer, 1000);
+    } catch (const Error & e) {
+        TODO("Is it the right exception ? This one occurs because at some point we do not have another file to provide in the sequence from which to get more data");
+        BOOST_CHECK_EQUAL((unsigned)ERR_TRANSPORT_READ_FAILED, (unsigned)e.id);
+    };
+    *pbuffer = 0;
+    BOOST_CHECK(0 == strcmp(buffer, "0369121518212427"));
+
+    // cleanup after tests
+    for (size_t i = 0 ; i < 10 ; i++){
+        parts.unlink(i);
+    }
+}
+

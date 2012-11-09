@@ -130,7 +130,7 @@ struct widget_edit : public Widget {
                     }
 
                     if (num_chars < 120) {
-                        wchar_t wstr[num_chars + 16];
+                        wchar_t wstr[120 + 16];
                         mbstowcs(wstr, this->buffer, num_chars + 1);
                         // make room by moving the end
                         for (int i = (num_chars - 1); i >= this->edit_pos; i--) {

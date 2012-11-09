@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
         BOOST_CHECK_EQUAL(PNG_COMPRESSION_TYPE_BASE, compression_type);
         BOOST_CHECK_EQUAL(PNG_FILTER_TYPE_BASE, filter_type);
 
-        uint8_t * row_pointers[height];
+        uint8_t * row_pointers[128];
         for (uint32_t row = 0; row < height; row++){
             row_pointers[row] = (uint8_t*)png_malloc(ppng, png_get_rowbytes(ppng, pinfo));
         }

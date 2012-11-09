@@ -33,6 +33,7 @@
 #include "nativecapture.hpp"
 #include "constants.hpp"
 #include "RDP/caches/bmpcache.hpp"
+#include "config.hpp"
 #include <png.h>
 
 
@@ -46,8 +47,9 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     now.tv_sec = 1000;
     now.tv_usec = 0;
     
-    NativeCapture consumer(now, trans, 800, 600);
+    BmpCache bmp_cache(24, 600, 768, 300, 3072, 262, 12288); 
     Inifile ini;
+    NativeCapture consumer(now, trans, 800, 600, bmp_cache, ini);
     ini.globals.frame_interval = 100; // one snapshot by second
     ini.globals.break_interval = 5;   // one WRM file every 5 seconds
     consumer.update_config(ini);
@@ -57,5 +59,10 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     now.tv_sec += 6;
     consumer.snapshot(now, 10, 10, true, false);
     ::close(trans.fd);
+    
+    BOOST_CHECK_EQUAL((unsigned)60, (unsigned)sequence.filesize(0));
+    sequence.unlink(0);
+    BOOST_CHECK_EQUAL((unsigned)3254, (unsigned)sequence.filesize(1));
+    sequence.unlink(1);
 }
 

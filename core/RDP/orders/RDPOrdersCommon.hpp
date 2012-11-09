@@ -715,7 +715,7 @@ public:
 
         RDPPrimaryOrderHeader header(control, 0);
 
-//        LOG(LOG_INFO, "reading control (%p): %.2x %s%s%s%s%s%s%s%s\n", stream.p,
+//        LOG(LOG_INFO, "reading control (%p): %.2x %s%s%s%s%s%s%s%s", stream.p,
 //            control,
 //            (control & STANDARD  )?"STD ":"    ",
 //            (control & SECONDARY )?"SEC ":"    ",
@@ -764,7 +764,8 @@ public:
             header.fields |= bits << (i * 8);
         }
 
-//            LOG(LOG_INFO, "control=%.2x order=%d  size=%d fields=%.6x assert=%d\n", control, order, size, fields, (0 == (fields & ~0x3FF)));
+//        LOG(LOG_INFO, "control=%.2x order=%d  size=%d fields=%.6x assert=%d", 
+//            header.control, this->order, size, header.fields, (0 == (header.fields & ~0x3FF)));
 
         switch (this->order){
         case DESTBLT:

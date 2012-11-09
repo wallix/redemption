@@ -110,8 +110,6 @@ struct FileToGraphic
     };
     BStream stream;
 
-//    uint8_t padding[65536];
-
     Transport * trans;
 
     Rect screen_rect;
@@ -134,8 +132,8 @@ struct FileToGraphic
     uint16_t chunk_count;
     uint16_t remaining_order_count;
 
-    timeval playtime_now;
-    timeval replay_now;
+    timeval synctime_now;
+    timeval record_now;
 
     uint16_t nbconsumers;
     RDPGraphicDevice * consumers[10];
@@ -147,10 +145,12 @@ struct FileToGraphic
     bool timestamp_ok;
     bool real_time;
 
+    BGRPalette palette;
+
     DataMetaFile data_meta;
 
     FileToGraphic(Transport * trans, bool real_time = false)
-     : stream(65536), trans(trans),
+    : stream(65536), trans(trans),
      // Internal state of orders
     common(RDP::PATBLT, Rect(0, 0, 1, 1)),
     destblt(Rect(), 0),
@@ -173,7 +173,8 @@ struct FileToGraphic
     real_time(real_time),
     data_meta()
     {
-        gettimeofday(&this->playtime_now, 0);
+        init_palette332(this->palette); // We don't really care movies are always 24 bits for now
+        
         while (this->next_order()){
             this->interpret_order();
             if (this->meta_ok && this->timestamp_ok){
@@ -203,24 +204,29 @@ struct FileToGraphic
           "when remaining order count is 0."
           "It update chunk headers (merely remaining orders count) and"
           " reads the next chunk if necessary.") 
-    {
-        if ((this->stream.p == this->stream.end) && (this->remaining_order_count)){
-            LOG(LOG_ERR, "Incomplete order batch at chunk %u "
-                         "order [%u/%u] "
-                         "remaining [%u/%u]",
-                         this->chunk_type,
-                         (this->chunk_count-this->remaining_order_count), this->chunk_count,
-                         (this->stream.end - this->stream.p), this->chunk_size);
-            return false;
-        }
-        if ((this->stream.p != this->stream.end) && (this->remaining_order_count == -1)){
-            LOG(LOG_ERR, "Incomplete order batch at chunk %u "
-                         "order [%u/%u] "
-                         "remaining [%u/%u]",
-                         this->chunk_type,
-                         (this->chunk_count-this->remaining_order_count), this->chunk_count,
-                         (this->stream.end - this->stream.p), this->chunk_size);
-            return false;
+    {   
+        if (this->chunk_type != LAST_IMAGE_CHUNK 
+        && this->chunk_type != PARTIAL_IMAGE_CHUNK){
+            if ((this->stream.p == this->stream.end) 
+            && (this->remaining_order_count)){
+                LOG(LOG_ERR, "Incomplete order batch at chunk %u "
+                             "order [%u/%u] "
+                             "remaining [%u/%u]",
+                             this->chunk_type,
+                             (this->chunk_count-this->remaining_order_count), this->chunk_count,
+                             (this->stream.end - this->stream.p), this->chunk_size);
+                return false;
+            }
+            if ((this->stream.p != this->stream.end) 
+            && (this->remaining_order_count == -1)){
+                LOG(LOG_ERR, "Incomplete order batch at chunk %u "
+                             "order [%u/%u] "
+                             "remaining [%u/%u]",
+                             this->chunk_type,
+                             (this->chunk_count-this->remaining_order_count), this->chunk_count,
+                             (this->stream.end - this->stream.p), this->chunk_size);
+                return false;
+            }
         }
 
         if (!this->remaining_order_count){
@@ -230,16 +236,18 @@ struct FileToGraphic
                 this->chunk_type = header.in_uint16_le();
                 this->chunk_size = header.in_uint32_le();
                 this->remaining_order_count = this->chunk_count = header.in_uint16_le();
-                if (this->chunk_type != LAST_IMAGE_CHUNK
+
+                if (this->chunk_type != LAST_IMAGE_CHUNK 
                 && this->chunk_type != PARTIAL_IMAGE_CHUNK){
-                    LOG(LOG_INFO, "reading chunk: type=%u size=%u count=%u\n", 
-                        this->chunk_type, this->chunk_size, this->chunk_count);
-                    this->stream.init(this->chunk_size - HEADER_SIZE);
+                    if (this->chunk_size > 65536){
+                        return false;
+                    }
+                    this->stream.reset();
                     this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
                 }
             }
             catch (Error & e){
-                LOG(LOG_INFO,"receive error : end of transport\n");
+                LOG(LOG_INFO,"receive error %u : end of transport", e.id);
                 // receive error, end of transport
                 return false;
             }
@@ -252,20 +260,20 @@ struct FileToGraphic
     {
         switch (this->chunk_type){
         case RDP_UPDATE_ORDERS:
-        if (!this->meta_ok){
-            LOG(LOG_ERR,"Drawing orders chunk must be preceded by a META chunk to get drawing device size\n");
-            throw Error(ERR_WRM);
-        }
-        if (!this->timestamp_ok){
-            LOG(LOG_ERR,"Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing\n");
-            throw Error(ERR_WRM);
-        }
         {
+            if (!this->meta_ok){
+                LOG(LOG_ERR,"Drawing orders chunk must be preceded by a META chunk to get drawing device size");
+                throw Error(ERR_WRM);
+            }
+            if (!this->timestamp_ok){
+                LOG(LOG_ERR,"Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing\n");
+                throw Error(ERR_WRM);
+            }
             uint8_t control = this->stream.in_uint8();
             if (!control & RDP::STANDARD){
                 /* error, this should always be set */
                 LOG(LOG_ERR, "Non standard order detected : protocol error");
-                TODO(" throw some error")
+                throw Error(ERR_WRM);
             }
             else if (control & RDP::SECONDARY) {
                 using namespace RDP;
@@ -275,11 +283,8 @@ struct FileToGraphic
                 case TS_CACHE_BITMAP_COMPRESSED:
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
                 {
-                    // we need color depth and palette
                     RDPBmpCache cmd;
-                    BGRPalette palette;
-                    init_palette332(palette);
-                    cmd.receive(this->stream, control, header, palette);
+                    cmd.receive(this->stream, control, header, this->palette);
                     this->bmp_cache->put(cmd.id, cmd.idx, cmd.bmp);
                 }
                 break;
@@ -371,6 +376,7 @@ struct FileToGraphic
                         const Bitmap * bmp = this->bmp_cache->get(this->memblt.cache_id, this->memblt.cache_idx);
                         if (!bmp){
                             LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)", this->memblt.cache_id, this->memblt.cache_idx);
+                            throw Error(ERR_WRM);
                         }
                         else {
                             for (size_t i = 0; i < this->nbconsumers ; i++){
@@ -385,60 +391,56 @@ struct FileToGraphic
                 default:
                     /* error unknown order */
                     LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->common.order);
-                    break;
+                    throw Error(ERR_WRM);
                 }
             }
             }
             break;
             case TIMESTAMP:
-            LOG(LOG_INFO,"TIMESTAMP\n");
             {
+                const uint64_t ucoeff = 1000000;
+                uint64_t last_movie_usec = this->record_now.tv_sec * ucoeff + this->record_now.tv_usec;
+                uint64_t movie_usec = this->stream.in_uint64_le();
+                this->record_now.tv_sec  = movie_usec / ucoeff; 
+                this->record_now.tv_usec = movie_usec % ucoeff;
+
                 if (!this->timestamp_ok){
-                    LOG(LOG_INFO, "chunk timestamp reading first timestamp");
-                    uint64_t movie_usec = this->stream.in_uint64_le();
-                    this->replay_now.tv_sec  = movie_usec / 1000000; 
-                    this->replay_now.tv_usec = movie_usec % 1000000; 
-                    if (!this->real_time){
-                        this->playtime_now.tv_sec = movie_usec / 1000000; 
-                        this->playtime_now.tv_usec = movie_usec % 1000000; 
+                    if (this->real_time) {
+                        gettimeofday(&this->synctime_now, 0);
+                    }
+                    else {
+                        this->synctime_now = this->record_now;
                     }
                     this->timestamp_ok = true;
                 }
                 else {
-                    LOG(LOG_INFO, "chunk timestamp reading other timestamps");
-                    uint64_t last_movie_usec = this->replay_now.tv_sec * 1000000 + this->replay_now.tv_usec;
-                    uint64_t movie_usec = this->stream.in_uint64_le();
-                    uint64_t movie_elapsed = movie_usec - last_movie_usec;
                     if (this->real_time){
                         struct timeval now;
                         gettimeofday(&now, 0);
-                        uint64_t elapsed = difftimeval(now, this->playtime_now);
-                        this->playtime_now = now;
-                        LOG(LOG_INFO, "elapsed=%lu movie_elapsed=%lu\n", elapsed, movie_elapsed);
+                        uint64_t elapsed = difftimeval(now, this->synctime_now);
+                        this->synctime_now = now;
                         
+                        uint64_t movie_elapsed = movie_usec - last_movie_usec;
                         if (elapsed <= movie_elapsed){
                             struct timespec wtime =
-                                { static_cast<uint32_t>((movie_elapsed - elapsed) / 1000000)
-                                , static_cast<uint32_t>((movie_elapsed - elapsed) % 1000000 * 1000)
+                                { static_cast<uint32_t>((movie_elapsed - elapsed) / ucoeff)
+                                , static_cast<uint32_t>((movie_elapsed - elapsed) % ucoeff * 1000)
                                 };
                             nanosleep(&wtime, NULL);
                         }
                     }
                     else {
-                        this->playtime_now.tv_sec = movie_usec / 1000000; 
-                        this->playtime_now.tv_usec = movie_usec % 1000000; 
+                        this->synctime_now = this->record_now; 
                     }
-                    this->replay_now.tv_sec = movie_usec / 1000000; 
-                    this->replay_now.tv_usec = movie_usec % 1000000; 
                 }
             }
             break;
             case META_FILE:
             TODO("meta should contain some WRM version identifier")
             TODO("Cache meta_data (sizes, number of entries) should be put in META chunk")
-            LOG(LOG_INFO,"META_FILE\n");
             {
-//                uint16_t version = this->stream.in_uint16_le();
+                uint16_t version = this->stream.in_uint16_le();
+                (void)version; // for now there is only one, we do not yet have problems
                 uint16_t width = this->stream.in_uint16_le();
                 uint16_t height = this->stream.in_uint16_le();
                 uint16_t bpp    =  this->stream.in_uint16_le();
@@ -452,7 +454,6 @@ struct FileToGraphic
                 this->stream.p = this->stream.end;
 
                 if (!this->meta_ok){
-                    printf("meta: create bmp cache\n");
                     this->bmp_cache = new BmpCache(bpp, small_entries, small_size, medium_entries, medium_size, big_entries, big_size);
                     this->screen_rect = Rect(0, 0, width, height);
                     this->meta_ok = true;
@@ -472,13 +473,15 @@ struct FileToGraphic
                 this->common.clip.y = this->stream.in_uint16_le();
                 this->common.clip.cx = this->stream.in_uint16_le();
                 this->common.clip.cy = this->stream.in_uint16_le();
+
                 // RDPDestBlt destblt;
                 this->destblt.rect.x = this->stream.in_uint16_le();
                 this->destblt.rect.y = this->stream.in_uint16_le();
                 this->destblt.rect.cx = this->stream.in_uint16_le();
                 this->destblt.rect.cy = this->stream.in_uint16_le();
                 this->destblt.rop = this->stream.in_uint8();
-                // RDPDestBlt destblt;
+
+                // RDPPatBlt patblt;
                 this->patblt.rect.x = this->stream.in_uint16_le();
                 this->patblt.rect.y = this->stream.in_uint16_le();
                 this->patblt.rect.cx = this->stream.in_uint16_le();
@@ -491,6 +494,7 @@ struct FileToGraphic
                 this->patblt.brush.style = this->stream.in_uint8();
                 this->patblt.brush.hatch = this->stream.in_uint8();
                 this->stream.in_copy_bytes(this->patblt.brush.extra, 7);
+
                 // RDPScrBlt scrblt;
                 this->scrblt.rect.x = this->stream.in_uint16_le();
                 this->scrblt.rect.y = this->stream.in_uint16_le();
@@ -499,6 +503,7 @@ struct FileToGraphic
                 this->scrblt.rop = this->stream.in_uint8();
                 this->scrblt.srcx = this->stream.in_uint16_le();
                 this->scrblt.srcy = this->stream.in_uint16_le();
+
                 // RDPOpaqueRect opaquerect;
                 this->opaquerect.rect.x  = this->stream.in_uint16_le();
                 this->opaquerect.rect.y  = this->stream.in_uint16_le();
@@ -510,15 +515,18 @@ struct FileToGraphic
                     uint8_t blue             = this->stream.in_uint8();
                     this->opaquerect.color = red | green << 8 | blue << 16;
                 }
+
                 // RDPMemBlt memblt;
                 this->memblt.cache_id = this->stream.in_uint16_le();
                 this->memblt.rect.x  = this->stream.in_uint16_le();
                 this->memblt.rect.y  = this->stream.in_uint16_le();
                 this->memblt.rect.cx = this->stream.in_uint16_le();
                 this->memblt.rect.cy = this->stream.in_uint16_le();
+                this->memblt.rop = this->stream.in_uint8();
                 this->memblt.srcx    = this->stream.in_uint8();
                 this->memblt.srcy    = this->stream.in_uint8();
                 this->memblt.cache_idx = this->stream.in_uint16_le();
+
                 // RDPLineTo lineto;
                 this->lineto.back_mode = this->stream.in_uint8();
                 this->lineto.startx = this->stream.in_uint16_le();
@@ -530,6 +538,7 @@ struct FileToGraphic
                 this->lineto.pen.style = this->stream.in_uint8();
                 this->lineto.pen.width = this->stream.in_sint8();
                 this->lineto.pen.color = this->stream.in_uint32_le();
+
                 // RDPGlyphIndex glyphindex;
                 this->glyphindex.cache_id  = this->stream.in_uint8();
                 this->glyphindex.fl_accel  = this->stream.in_sint16_le();
@@ -557,10 +566,8 @@ struct FileToGraphic
             break;
 
             case LAST_IMAGE_CHUNK:
-                printf("last image chunk\n");
             case PARTIAL_IMAGE_CHUNK:
             {
-                LOG(LOG_INFO,"IMAGE_CHUNK\n");
                 InChunkedImageTransport chunk_trans(this->chunk_type, this->chunk_size, this->trans);
 
                 if (this->nbdrawables){
@@ -578,16 +585,16 @@ struct FileToGraphic
                     }
                 }
                 else {
-                    // in this case ignore chunks
+                    REDOC("If no drawable is available ignore images chunks");
                     this->stream.init(this->chunk_size - HEADER_SIZE);
                     this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
                 }
-                this->stream.reset();
                 this->remaining_order_count = 0;
             }
             break;
             default:
                 LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
+                throw Error(ERR_WRM);
             break;
         }
     }
@@ -597,15 +604,13 @@ struct FileToGraphic
         while (this->next_order()){
             this->interpret_order();
             for (size_t i = 0; i < this->nbconsumers ; i++){
-                this->consumers[i]->snapshot(this->replay_now, 0, 0, true, false);
+                this->consumers[i]->snapshot(this->record_now, 0, 0, true, false);
             }
             for (size_t i = 0; i < this->nbdrawables ; i++){
-                this->drawables[i]->snapshot(this->replay_now, 0, 0, true, false);
+                this->drawables[i]->snapshot(this->record_now, 0, 0, true, false);
             }
         }
     }
-
-    
 };
 
 #endif

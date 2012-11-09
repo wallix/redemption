@@ -181,9 +181,7 @@ struct Session {
                                 }
                                 try {
                                     ini->cparse(buffer);
-                                    struct timeval now;
-                                    gettimeofday(&now, NULL);
-                                    this->front->update_config(now, *ini);
+                                    this->front->update_config(*ini);
                                 }
                                 catch(...){
                                     LOG(LOG_INFO, "Error reading conf file %s", buffer);
@@ -410,9 +408,7 @@ struct Session {
                                     this->internal_state = SESSION_STATE_STOP;
                                     try {
                                         this->session_setup_mod(next_state, this->context);
-                                        printf("start_capture record_video=%u\n", record_video);
                                         if (record_video) {
-                                            printf(" ==============================> start_capture\n");
                                             this->front->start_capture(
                                                 this->front->client_info.width,
                                                 this->front->client_info.height,

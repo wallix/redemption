@@ -45,7 +45,6 @@
 #include "config.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "colors.hpp"
-#include "stream.hpp"
 
 #include "GraphicToFile.hpp"
 #include "png.hpp"
@@ -69,20 +68,19 @@ public:
     struct timeval start_break_capture;
     uint64_t inter_frame_interval_start_break_capture;
 
-    BStream stream;
-    BmpCache bmp_cache;
+    BmpCache & bmp_cache;
     GraphicToFile recorder;
     uint32_t nb_file;
 
-    NativeCapture(const timeval & now, Transport & trans, int width, int height)
+    NativeCapture(const timeval & now, Transport & trans, int width, int height, BmpCache & bmp_cache, const Inifile & ini)
     : width(width)
     , height(height)
     , bpp(24)
-    , stream(65536)
-    , bmp_cache(24, 8192, 768, 8192, 3072, 8192, 12288)
-    , recorder(now, &trans, &this->stream, NULL, width, height, 24, bmp_cache)
+    , bmp_cache(bmp_cache)
+    , recorder(now, &trans, ini, width, height, 24, bmp_cache)
     , nb_file(0)
     {
+        LOG(LOG_INFO, "Start Of NativeCapture");
         // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
         this->start_native_capture = now;
         this->frame_interval = 40;
@@ -94,6 +92,7 @@ public:
 
         LOG(LOG_INFO, "update configuration frame_interval=%u break_interval=%u",
             this->frame_interval, this->break_interval);
+        this->update_config(ini);
     }
 
     ~NativeCapture(){
@@ -119,21 +118,22 @@ public:
     TODO("pointer_already_displayed and no_timestamp are constants, not need to pass then at every snapshot call")
     void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
-        if (difftimeval(now, this->start_native_capture) >= this->inter_frame_interval_native_capture){
-            LOG(LOG_INFO, "recorder timestamp");
+        if (difftimeval(now, this->start_native_capture) 
+                >= this->inter_frame_interval_native_capture){
             this->recorder.timestamp(now);
             this->start_native_capture = now;
-            if (difftimeval(now, this->start_break_capture) >= this->inter_frame_interval_start_break_capture){
+            if (difftimeval(now, this->start_break_capture) 
+                >= this->inter_frame_interval_start_break_capture){
                 this->breakpoint();
                 this->start_break_capture = now;
             }
         }
-        this->recorder.flush();
-
     }
     
     virtual void flush()
-    {}
+    {
+        this->recorder.flush();
+    }
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip)
     {

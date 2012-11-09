@@ -72,14 +72,14 @@ public:
     struct timeval start_static_capture;
     uint64_t inter_frame_interval_static_capture;
 
-    StaticCapture(const timeval & now, Transport & trans, FileSequence & sequence, unsigned width, unsigned height)
-    : ImageCapture(trans, width, height, true)
+    StaticCapture(const timeval & now, Transport & trans, FileSequence & sequence, unsigned width, unsigned height, const Inifile & ini)
+    : ImageCapture(trans, width, height)
     , sequence(sequence)
     {
         this->start_static_capture = now;
         this->conf.png_interval = 3000; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
         this->inter_frame_interval_static_capture       = this->conf.png_interval * 100000; // 1 000 000 us is 1 sec
-
+        this->update_config(ini);
     }
 
     ~StaticCapture()
@@ -107,16 +107,23 @@ public:
 
     virtual void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
-        if ((unsigned)difftimeval(now, this->start_static_capture) >= (unsigned)this->inter_frame_interval_static_capture){
-//            printf("SNAPSHOT %u >= %u %u:%u\n" 
-//                , (unsigned)difftimeval(now, this->start_static_capture)
-//                , (unsigned)this->inter_frame_interval_static_capture
-//                , (unsigned)now.tv_sec, (unsigned)now.tv_usec);
+        if ((unsigned)difftimeval(now, this->start_static_capture) 
+         >= (unsigned)this->inter_frame_interval_static_capture){
 
             time_t rawtime = now.tv_sec;
             tm *ptm = localtime(&rawtime);
             this->drawable.trace_timestamp(*ptm);
-            this->flush();
+
+            if (this->conf.png_limit > 0){
+                if (this->trans.seqno >= this->conf.png_limit){
+                    char path[1024];
+                    this->sequence.get_name(path, sizeof(path), this->trans.seqno - this->conf.png_limit);
+                    ::unlink(path); // unlink may fail, for instance if file does not exist, just don't care
+                }
+                this->ImageCapture::flush();
+                this->trans.next();
+            }
+
             this->drawable.clear_timestamp();
             this->start_static_capture = now;
         }
@@ -125,15 +132,6 @@ public:
 
     virtual void flush()
     {
-        if (this->conf.png_limit > 0){
-            if (this->trans.seqno >= this->conf.png_limit){
-                char path[1024];
-                this->sequence.get_name(path, sizeof(path), this->trans.seqno - this->conf.png_limit);
-                ::unlink(path); // unlink may fail, for instance if file does not exist, just don't care
-            }
-            this->ImageCapture::flush();
-            this->trans.next();
-        }
     }
 
     void glyph_index(const RDPGlyphIndex & glyph_index, const Rect & clip)
