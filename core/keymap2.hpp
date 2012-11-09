@@ -127,7 +127,7 @@ struct Keymap2 {
 
     // constructor
     //==============================================================================
-    Keymap2(int verbose = 0)
+    Keymap2(uint32_t verbose = 0)
         : ibuf(0)
         , nbuf(0)
         , ibuf_kevent(0)
@@ -143,13 +143,7 @@ struct Keymap2 {
         memset(&this->keylayout_WORK_altgr,         0, 128 * sizeof(int));
         memset(&this->keylayout_WORK_capslock,      0, 128 * sizeof(int));
         memset(&this->keylayout_WORK_shiftcapslock, 0, 128 * sizeof(int));
-
-        this->keylayout_WORK_deadkeys = { { 0x00, 0x00, DEADKEY_NONE, 0, {} }
-                                        , { 0x00, 0x00, DEADKEY_NONE, 0, {} }
-                                        , { 0x00, 0x00, DEADKEY_NONE, 0, {} }
-                                        , { 0x00, 0x00, DEADKEY_NONE, 0, {} }
-                                        , { 0x00, 0x00, DEADKEY_NONE, 0, {} }
-                                        };
+        memset(&this->keylayout_WORK_deadkeys, 0, sizeof(this->keylayout_WORK_deadkeys));
 
         this->key_flags = 0;
         this->last_chr_unicode = 0;

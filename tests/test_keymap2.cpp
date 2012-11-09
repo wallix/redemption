@@ -218,14 +218,11 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
     key = keymap.get_char();
     BOOST_CHECK_EQUAL('/', key);
 
-
-
     keymap.event(0xC000, 0x03); // Tilde
     keymap.event(0xC100, 0x38); // ALT Right
     BOOST_CHECK_EQUAL(false, keymap.is_right_alt_pressed());
     keymap.event(0xC000, 0x1d); // CTRL
     BOOST_CHECK_EQUAL(false, keymap.is_ctrl_pressed());
-
 
     keymap.event(0x0100, 0x35); // '/' on keypad
     BOOST_CHECK_EQUAL(1, keymap.nb_char_available());

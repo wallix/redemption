@@ -21,7 +21,7 @@
  *
  */
 
-#include "recorder/recorder_app.hpp"
+#include "recorder_app.hpp"
 
 int main(int argc, char** argv)
 {
