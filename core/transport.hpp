@@ -352,7 +352,7 @@ class InFileTransport : public Transport {
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         size_t ret = 0;
         size_t remaining_len = len;
-        char * buffer = *pbuffer;
+        char * & buffer = *pbuffer;
         while (remaining_len) {
             ret = ::read(this->fd, buffer, remaining_len);
             if (ret > 0){
@@ -367,12 +367,10 @@ class InFileTransport : public Transport {
                     LOG(LOG_INFO, "Infile transport read EOF");
                     throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
                 }
-                *pbuffer = buffer;
                 LOG(LOG_INFO, "Infile transport read failed with error %u %s ret=%u", errno, strerror(errno), ret);
                 throw Error(ERR_TRANSPORT_READ_FAILED, 0);
             }
         }
-        *pbuffer = buffer;
     }
 
     // send is not implemented for InFileTransport
@@ -1373,9 +1371,6 @@ public:
     : InFileTransport(-1)
     , sequence(sequence)
     {
-        size_t len = strlen(path);
-        memcpy(this->path, path, len);
-        this->path[len] = 0;
     }
     
     ~InByFilenameSequenceTransport()
@@ -1385,65 +1380,44 @@ public:
             this->fd = -1;
         }
     }
-    
+
+    TODO("Code below looks insanely complicated for what it is doing. I should probably stop at some point"
+         "and *THINK* about the API that transport objects should really provide."
+         "For instance I strongly suspect that it should be allowed to stop returning only part of the asked datas"
+         "like the file system transport objects. There should also be an easy way to combine several layers of"
+         "transports (using templates ?) and clearly define the properties of objects providing the sources of datas"
+         "(some abstraction above file ?). The current sequences are easy to use, but somewhat limited")
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        if (this->fd == -1){
-            this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
-            this->fd = ::open(this->path, O_RDONLY);
+        size_t remaining_len = len;
+        while (remaining_len > 0){
             if (this->fd == -1){
-                LOG(LOG_INFO, "InByFilename transport recv failed with error : %s", strerror(errno));
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
+                this->fd = ::open(this->path, O_RDONLY);
+                if (this->fd == -1){
+                    LOG(LOG_INFO, "InByFilename transport recv failed with error : %s", strerror(errno));
+                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                }
             }
+            char * oldpbuffer = *pbuffer;
+            try {
+                InFileTransport::recv(pbuffer, remaining_len);
+                remaining_len = 0;
+            } 
+            catch (const Error & e) {
+                if (e.id == 1501){
+                    size_t step = *pbuffer - oldpbuffer;
+                    if (step == 0){
+                        throw;
+                    }
+                    remaining_len -= step;
+                    this->next();
+                }
+                else {
+                    throw;
+                }
+            };
         }
-        InFileTransport::recv(pbuffer, len);
-    }
-    
-    virtual bool next() 
-    {
-        if (this->fd != -1){
-            ::close(this->fd);
-            this->fd = -1;
-        }
-        this->InFileTransport::next();
-        return true;
-    }
-
-};
-
-TODO("change code below when tests are OK")
-class InByFilenameSequenceFromMetaTransport : public InFileTransport {
-    const FileSequence & meta_sequence;
-    char path[1024];
-public:
-    InByFilenameSequenceFromMetaTransport(const FileSequence & meta_sequence)
-    : InFileTransport(-1)
-    , meta_sequence(meta_sequence)
-    {
-        size_t len = strlen(path);
-        memcpy(this->path, path, len);
-        this->path[len] = 0;
-    }
-    
-    ~InByFilenameSequenceFromMetaTransport()
-    {
-        if (this->fd != -1){
-            ::close(this->fd);
-            this->fd = -1;
-        }
-    }
-    
-    using Transport::recv;
-    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        if (this->fd == -1){
-            this->meta_sequence.get_name(this->path, sizeof(this->path), this->seqno);
-            this->fd = ::open(this->path, O_RDONLY);
-            if (this->fd == -1){
-                LOG(LOG_INFO, "InByFilename transport recv failed with error : %s", strerror(errno));
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
-        }
-        InFileTransport::recv(pbuffer, len);
     }
     
     virtual bool next() 
