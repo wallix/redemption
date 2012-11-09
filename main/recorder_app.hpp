@@ -59,69 +59,66 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
     openlog("redrec", LOG_CONS | LOG_PERROR, LOG_USER);
 
     std::string input_filename;
+    std::string output_filename;
 
     boost::program_options::options_description desc("Options");
     desc.add_options()
-    // --help, -h
     ("help,h", "produce help message")
-    // --version, -v
     ("version,v", "show software version")
-    ("input-file,i", po::value(&input_filename), "input filename (see --input-type)")
+    ("output-file,o", po::value(&output_filename), "output base filename (see --output-type)")
+    ("input-file,i", po::value(&input_filename), "input base filename (see --input-type)")
     ("in", po::value(&input_filename), "alias for --input-file")
+    ("in", po::value(&output_filename), "alias for --output-file")
     ;
 
-    boost::program_options::positional_options_description p;
+//    boost::program_options::positional_options_description p;
+//    p.add("input-file", -2);
+//    p.add("input-file", -1);
+
     boost::program_options::variables_map options;
-    p.add("input-file", -1);
     boost::program_options::store(
-        boost::program_options::command_line_parser(argc, argv).options(desc).positional(p).run(),
+        boost::program_options::command_line_parser(argc, argv).options(desc)
+//            .positional(p)
+            .run(),
         options
     );
-    po::notify(options);
+    boost::program_options::notify(options);
 
-    try {
-        InByFilenameTransport in_wrm_trans(input_filename.c_str());
-        FileToGraphic player(&in_wrm_trans);
+    InByFilenameTransport in_wrm_trans(input_filename.c_str());
+    FileToGraphic player(&in_wrm_trans);
 
-        FileSequence sequence("path file pid count extension", "./", "testxxx", "png");
-        OutByFilenameSequenceTransport out_png_trans(sequence);
-        Inifile ini(CFG_PATH "/" RDPPROXY_INI);
-        StaticCapture png_recorder(player.record_now, out_png_trans, sequence, player.screen_rect.cx, player.screen_rect.cy, ini);
-        ini.globals.png_limit = 30;
-        ini.globals.png_interval = 50;
-        png_recorder.update_config(ini);
-        player.add_consumer(&png_recorder);
-        player.play();
+    Inifile ini;
+    ini.globals.debug.primary_orders = 0;
+    ini.globals.debug.secondary_orders = 0;
+    ini.globals.png_limit = 10;
+    ini.globals.png_interval = 10;
+    ini.globals.frame_interval = 10;
+    ini.globals.break_interval = 10000;
+
+    char path[1024];
+    char basename[1024];
+    strcpy(path, "./"); // default value, actual one should come from output_filename
+    strcpy(basename, "redemption"); // default value actual one should come from output_filename
+    const char * end_of_path = strrchr(output_filename.c_str(), '/') + 1;
+    if (end_of_path){
+        memcpy(path, ini.globals.movie_path, end_of_path - output_filename.c_str());
+        path[end_of_path - output_filename.c_str()] = 0;
+        const char * start_of_extension = strrchr(end_of_path, '.');
+        if (start_of_extension){
+            memcpy(basename, end_of_path, start_of_extension - end_of_path);
+            basename[start_of_extension - end_of_path] = 0;
+        }
+        else {
+            if (end_of_path[0]){
+                strcpy(basename, end_of_path);
+            }
+        }
     }
-    catch(const Error & e)
-    {
-        printf("error=%u", e.id);
-    };
 
+    Capture capture(player.record_now, player.screen_rect.cx, player.screen_rect.cy, path, basename, ini);
+    player.add_consumer(&capture);
+    player.play();
 
-//    RecorderAdapter* adapter = actions[i].action;
-//    InFileTransport trans(-1);
-//    FileToGraphic reader(&trans, now);
-
-//    WRMRecorder recorder(now, trans, reader, opt.range);
-
-
-//    if (std::string::npos != pos){
-//        opt.out_filename.erase(pos);
-//    }
-
-//    try
-//    {
-//        (*adapter)(recorder, opt.out_filename.c_str());
-//    }
-//    catch (Error& error)
-//    {
-//        std::cerr << "Error " << error.id;
-//        if (error.errnum)
-//            std::cerr << ": " << strerror(error.errnum);
-//        std::cerr << std::endl;
-//        return 100000 + error.errnum;
-//    }
     return 0;
 }
 

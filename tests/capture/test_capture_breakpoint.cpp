@@ -106,12 +106,13 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         capture.wrm_sequence->unlink(1);
         BOOST_CHECK_EQUAL((unsigned)3363, (unsigned)capture.wrm_sequence->filesize(2));
         capture.wrm_sequence->unlink(2);
-        
-        BOOST_CHECK_EQUAL((unsigned)71, (unsigned)capture.meta_sequence->filesize(0));
-        capture.meta_sequence->get_name(filename, sizeof(filename), 0);
+        // The destruction of capture object will finalize the metafile content
     }
-    TODO("This is not good, but to change it properly we will have to provide a customer architecture for capture (like in FileToGraphic) and this code is not yet ready");
-    ::unlink(filename);
+    // from here we do not have access to the file sequence used for the metafile inside capture
+    // so we recreate a sequence with the same name. Not really nice, but it will do
+    FileSequence meta_seq("path file pid extension", "./", "capture", "mwrm");
+    BOOST_CHECK_EQUAL((unsigned)98, (unsigned)meta_seq.filesize(0));
+    meta_seq.unlink(0);
 }
 
 
