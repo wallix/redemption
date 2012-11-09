@@ -356,11 +356,7 @@ public:
 
             strncpy(ini.globals.target_user, context.get(STRAUTHID_TARGET_USER), sizeof(ini.globals.target_user)-1);
             ini.globals.target_user[sizeof(ini.globals.target_user)-1] = 0;
-<<<<<<< HEAD
 
-            this->capture = new Capture(now, ini, width, height);
-=======
-            
             char path[1024];
             char basename[1024];
             strcpy(path, "/tmp/"); // default value, actual one should come from movie_path
@@ -382,7 +378,6 @@ public:
             }
             
             this->capture = new Capture(now, width, height, path, basename, ini);
->>>>>>> 1878cfaaf7d7ffbbc71ccbba6e8125169e2d16b8
         }
     }
 
