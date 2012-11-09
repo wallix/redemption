@@ -7,13 +7,15 @@
 
 // using namespace std;
 
+//##############################################################################
 struct KeymapSym {
+//##############################################################################
 
     enum {
            KBDFLAGS_EXTENDED = 0x0100
          , KBDFLAGS_DOWN     = 0x4000
          , KBDFLAGS_RELEASE  = 0x8000
-         };
+    };
 
 
     enum {
@@ -110,6 +112,7 @@ struct KeymapSym {
     KeyLayout_t keylayout_WORK_shiftcapslock_sym;
 
     // constructor
+    //==============================================================================
     KeymapSym(int verbose = 0)
             : ibuf(0)
             , nbuf(0)
@@ -117,6 +120,7 @@ struct KeymapSym {
             , nbuf_kevent(0)
             , dead_key(DEADKEY_NONE)
             , verbose(verbose)
+    //==============================================================================
     {
         memset(this->keys_down, 0, 256 * sizeof(int));
 
@@ -130,7 +134,9 @@ struct KeymapSym {
         this->last_sym = 0;
     }
 
+    //==============================================================================
     void synchronize(uint16_t param1){
+    //==============================================================================
         this->key_flags = param1 & 0x07;
         // non sticky keys are forced to be UP
         this->keys_down[LEFT_SHIFT] = 0;
@@ -171,7 +177,9 @@ struct KeymapSym {
 // keyCode (2 bytes): A 16-bit, unsigned integer. The scancode of the key which
 // triggered the event.
 
+    //==============================================================================
     void event(const uint16_t keyboardFlags, const uint16_t keyCode)
+    //==============================================================================
     {
 
         if (this->verbose){
@@ -184,9 +192,9 @@ struct KeymapSym {
         this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
 
         switch (extendedKeyCode){
-        //================
+        //----------------
         // Lock keys
-        //================
+        //----------------
             case 0x3A: // capslock
                 if (this->keys_down[extendedKeyCode]){
                     this->key_flags ^= CAPSLOCK;
@@ -202,20 +210,14 @@ struct KeymapSym {
                     this->key_flags ^= SCROLLLOCK;
                 }
                 break;
-        //================
+        //----------------
         // Modifier keys
-        //================
-//            case LEFT_SHIFT:   // left shift
-//            case RIGHT_SHIFT: // right shift
-//            case LEFT_CTRL:   // left ctrl
-//            case RIGHT_CTRL:  // right ctrl
-//            case LEFT_ALT:    // left alt
-//            case RIGHT_ALT:   // right alt
+        //----------------
+            // Not used (VNC server handles those keys state)
 
-                break;
-        //================
+        //----------------
         // All other keys
-        //================
+        //----------------
             default: // all other codes
                 // This table translates the RDP scancodes to X11 scancodes :
                 //  - the fist block (0-127) simply applies the +8 Windows to X11 translation and forces some 0 values
@@ -256,14 +258,14 @@ struct KeymapSym {
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  // 0xf8 - 0xff
                 } ;
                 const KeyLayout_t * layout = &keylayout_WORK_noshift_sym;
-//                        this->last_char_key = extendedKeyCode;
+
                 if ( ( (extendedKeyCode >= 0x47) && (extendedKeyCode <= 0x49) )
                   || ( (extendedKeyCode >= 0x4b) && (extendedKeyCode <= 0x4d) )
                   || ( (extendedKeyCode >= 0x4f) && (extendedKeyCode <= 0x53) )
                    ){
-                    //=========================================================================
-                    // KEYPAD : Keypad keys whose meanings depends on Numlock are handled apart
-                    //=========================================================================
+                    //------------------------------------------------------------------------
+                    // KEYPAD : Keypad keys whose meaning depends on Numlock are handled apart
+                    //------------------------------------------------------------------------
                     if ((this->key_flags & NUMLOCK)) {
                         // if numlock is activated, keys are printable characters (logical SHIFT mode)
                         layout = &this->keylayout_WORK_shift_sym;
@@ -314,16 +316,16 @@ struct KeymapSym {
                                 break;
                         }
 
-                    } // if numlock ON
+                    } // if numlock OFF
                 }
                 else {
-                    //========================================
+                    //--------------------
                     // NOT KEYPAD Specific
-                    //========================================
+                    //--------------------
                     if (this->verbose){
                         LOG(LOG_INFO, "Key not from keypad: %#x", extendedKeyCode);
                     }
-                    // SET Pointer on LAYOUT
+                    // SET the LAYOUT to use (depending on current keyboard state)
                     //----------------------------------------
                     if (this->is_ctrl_pressed() && this->is_alt_pressed()){
                         layout = &this->keylayout_WORK_altgr_sym;
@@ -345,9 +347,9 @@ struct KeymapSym {
                         LOG(LOG_INFO, "ksym=%x", ksym);
                     }
                     if ((ksym == 0xFE52 ) || (ksym == 0xFE57) || (ksym == 0x60) || (ksym == 0x7E)) {
-                        //=================================================
+                        //-------------------------------------------------
                         // ksym is NOT in Printable unicode character range
-                        //=================================================
+                        //-------------------------------------------------
                         // That is, A dead key (0xFE52 (^), 0xFE57 ("), 0x60 (`), 0x7E (~) )
                         // The flag is set accordingly
                         switch (extendedKeyCode){
@@ -365,9 +367,9 @@ struct KeymapSym {
                         } // Switch extendedKeyCode
                     }
                     else {
-                        //==============================================
+                        //-------------------------------------------------
                         // ksym is in Printable character range.
-                        //==============================================
+                        //-------------------------------------------------
                         if (this->dead_key != DEADKEY_NONE){
                             switch (dead_key){
                                 case DEADKEY_CIRC:
@@ -530,7 +532,9 @@ struct KeymapSym {
 
 
     // Push only sym
+    //==============================================================================
     void push_sym(uint32_t sym)
+    //==============================================================================
     {
         if (this->verbose & 2){
             LOG(LOG_INFO, "KeymapSym::push_sym(sym=%08x) nbuf_sym=%u", sym, this->nbuf_sym);
@@ -545,7 +549,9 @@ struct KeymapSym {
         }
     }
 
+    //==============================================================================
     uint32_t get_sym()
+    //==============================================================================
     {
         if (this->verbose & 2){
             LOG(LOG_INFO, "KeymapSym::get_sym() nbuf_sym=%u", this->nbuf_sym);
@@ -565,7 +571,9 @@ struct KeymapSym {
     }
 
     // head of keyboard buffer (or keyboard buffer of size 1)
+    //==============================================================================
     uint32_t top_sym() const
+    //==============================================================================
     {
         uint32_t res = this->buffer_sym[this->ibuf_sym?this->ibuf_sym-1:SIZE_KEYBUF_SYM-1];
         if (this->verbose & 2){
@@ -574,74 +582,101 @@ struct KeymapSym {
         return res;
     }
 
+    //==============================================================================
     uint32_t nb_sym_available() const
+    //==============================================================================
     {
         return this->nbuf_sym;
     }
 
+    //==============================================================================
     bool is_caps_locked() const
+    //==============================================================================
     {
         return this->key_flags & CAPSLOCK;
     }
 
+    //==============================================================================
     bool is_scroll_locked() const
+    //==============================================================================
     {
         return this->key_flags & SCROLLLOCK;
     }
 
+    //==============================================================================
     bool is_num_locked() const
+    //==============================================================================
     {
         return this->key_flags & NUMLOCK;
     }
 
+    //==============================================================================
     bool is_left_shift_pressed() const
+    //==============================================================================
     {
         return this->keys_down[LEFT_SHIFT];
     }
 
+    //==============================================================================
     bool is_right_shift_pressed() const
+    //==============================================================================
     {
         return this->keys_down[RIGHT_SHIFT];
     }
 
+    //==============================================================================
     bool is_shift_pressed() const
+    //==============================================================================
     {
         return this->is_left_shift_pressed() || this->is_right_shift_pressed();
     }
 
+    //==============================================================================
     bool is_left_ctrl_pressed() const
+    //==============================================================================
     {
         return this->keys_down[LEFT_CTRL];
     }
 
+    //==============================================================================
     bool is_right_ctrl_pressed() const
+    //==============================================================================
     {
         return this->keys_down[RIGHT_CTRL];
     }
 
+    //==============================================================================
     bool is_ctrl_pressed() const
+    //==============================================================================
     {
         return is_right_ctrl_pressed() || is_left_ctrl_pressed();
     }
 
+    //==============================================================================
     bool is_left_alt_pressed() const
+    //==============================================================================
     {
         return this->keys_down[LEFT_ALT];
     }
 
+    //==============================================================================
     bool is_right_alt_pressed() const // altgr
+    //==============================================================================
     {
         return this->keys_down[RIGHT_ALT];
     }
 
+    //==============================================================================
     bool is_alt_pressed() const
+    //==============================================================================
     {
         return is_right_alt_pressed() || is_left_alt_pressed();
     }
 
 
-// ################################################################
+    //==============================================================================
     void init_layout_sym(int keyb)
+    //==============================================================================
     {
         // %s/^[^"]*"[^"]*"[^"]*"\([^:]*\):.*$/\1/
 
@@ -2130,7 +2165,7 @@ struct KeymapSym {
 
     } // KeymapSym::init_layout
 
-};
+}; // STRUCT - KeymapSym
 
 
 #endif

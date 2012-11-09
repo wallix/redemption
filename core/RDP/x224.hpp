@@ -1074,7 +1074,7 @@ namespace X224
             }
             this->_header_size = stream.get_offset();
             this->payload_size = stream.size() - this->_header_size;
-            
+
             TODO("Factorize this")
             this->payload.data = this->payload.p = stream.p;
             this->payload.capacity = this->payload_size;

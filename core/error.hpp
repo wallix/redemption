@@ -234,9 +234,9 @@ enum {
     ERR_WRM_IDX_NOT_FOUND,
     ERR_WRM_INVALID_INIT_CRYPT,
     ERR_WRM_FAILED_OPENING_META_FILENAME,
-    
-    
-    
+
+
+
 
 };
 

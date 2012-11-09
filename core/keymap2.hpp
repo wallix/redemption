@@ -8,14 +8,15 @@
 
 using namespace std;
 
+//##############################################################################
 struct Keymap2 {
+//##############################################################################
 
     enum {
            KBDFLAGS_EXTENDED = 0x0100
          , KBDFLAGS_DOWN     = 0x4000
          , KBDFLAGS_RELEASE  = 0x8000
          };
-
 
     enum {
            SCROLLLOCK  = 0x01
@@ -78,17 +79,6 @@ struct Keymap2 {
     uint32_t nbuf_kevent; // number of char in char buffer
     uint32_t buffer_kevent[SIZE_KEYBUF_KEVENT]; // actual char buffer
 
-    uint8_t dead_key;
-
-    enum {
-        DEADKEY_NONE,
-        DEADKEY_CIRC,
-        DEADKEY_UML,
-        DEADKEY_GRAVE
-    };
-
-
-    uint32_t verbose;
     uint32_t last_char_key;
 
     int last_chr_unicode;
@@ -102,11 +92,45 @@ struct Keymap2 {
     KeyLayout_t keylayout_WORK_capslock;
     KeyLayout_t keylayout_WORK_shiftcapslock;
 
+    uint8_t dead_key;
+
+    enum {
+          DEADKEY_NONE
+        , DEADKEY_CIRC
+        , DEADKEY_UML
+        , DEADKEY_GRAVE
+        , DEADKEY_ACUTE
+        , DEADKEY_TILDE
+    };
+
+    typedef struct dkk {    // Struture holding :
+        uint8_t secondKey;  // a char (second key)
+        uint8_t resultKey;  // the modified char (composition of char + deadkey) to emit
+    } dkey_key_t;
+
+    typedef struct dk { // Struture holding a deadkey and the rules to apply to second chars.
+         uint8_t    extendedKeyCode;
+         uint8_t    deadKeyTag;
+         uint8_t    shiftState;    // 0 = up ; 1 = down ; 2 = not significant
+         uint8_t    nbSecondKeys;
+         dkey_key_t secondKeys[15];
+    } dkey_t;
+
+    dkey_t keylayout_WORK_deadkeys[5];
+
+    uint32_t verbose;
+
     // constructor
-// ################################################################
-    Keymap2(int verbose = 0) : ibuf(0), nbuf(0), ibuf_kevent(0), nbuf_kevent(0), dead_key(DEADKEY_NONE), verbose(verbose)
-    {
-// ################################################################
+    //==============================================================================
+    Keymap2(int verbose = 0)
+        : ibuf(0)
+        , nbuf(0)
+        , ibuf_kevent(0)
+        , nbuf_kevent(0)
+        , dead_key(DEADKEY_NONE)
+        , verbose(verbose) {
+    //==============================================================================
+
         memset(this->keys_down, 0, 256 * sizeof(int));
 
         memset(&this->keylayout_WORK_noshift,       0, 128 * sizeof(int));
@@ -115,11 +139,20 @@ struct Keymap2 {
         memset(&this->keylayout_WORK_capslock,      0, 128 * sizeof(int));
         memset(&this->keylayout_WORK_shiftcapslock, 0, 128 * sizeof(int));
 
+        this->keylayout_WORK_deadkeys = { { 0x00, DEADKEY_NONE, 0, 0, {} }
+                                        , { 0x00, DEADKEY_NONE, 0, 0, {} }
+                                        , { 0x00, DEADKEY_NONE, 0, 0, {} }
+                                        , { 0x00, DEADKEY_NONE, 0, 0, {} }
+                                        , { 0x00, DEADKEY_NONE, 0, 0, {} }
+                                        };
+
         this->key_flags = 0;
         this->last_chr_unicode = 0;
     }
 
+    //==============================================================================
     void synchronize(uint16_t param1){
+    //==============================================================================
         this->key_flags = param1 & 0x07;
         // non sticky keys are forced to be UP
         this->keys_down[LEFT_SHIFT] = 0;
@@ -130,10 +163,14 @@ struct Keymap2 {
         this->keys_down[RIGHT_ALT] = 0;
     }
 
+    //==============================================================================
     void update_keys_flags(int key_state)
+    //==============================================================================
     {}
 
+    //==============================================================================
     void update_chr_unicode(int key_state, int device_flags)
+    //==============================================================================
     {}
 
 // The TS_KEYBOARD_EVENT structure is a standard T.128 Keyboard Event (see [T128] section
@@ -166,16 +203,18 @@ struct Keymap2 {
 // keyCode (2 bytes): A 16-bit, unsigned integer. The scancode of the key which
 // triggered the event.
 
+    //==============================================================================
     void event(const uint16_t keyboardFlags, const uint16_t keyCode)
+    //==============================================================================
     {
         // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
         uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
         // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
         this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
         switch (extendedKeyCode){
-        //================
+        //----------------
         // Lock keys
-        //================
+        //----------------
             case 0x3A: // capslock
                 if (this->keys_down[extendedKeyCode]){
                     this->key_flags ^= CAPSLOCK;
@@ -191,19 +230,19 @@ struct Keymap2 {
                     this->key_flags ^= SCROLLLOCK;
                 }
                 break;
-        //================
+        //----------------
         // Modifier keys
-        //================
-            case LEFT_SHIFT:   // left shift
+        //----------------
+            case LEFT_SHIFT:  // left shift
             case RIGHT_SHIFT: // right shift
             case LEFT_CTRL:   // left ctrl
             case RIGHT_CTRL:  // right ctrl
             case LEFT_ALT:    // left alt
             case RIGHT_ALT:   // right alt
                 break;
-        //================
+        //----------------
         // All other keys
-        //================
+        //----------------
             default: // all other codes
                 // This table translates the RDP scancodes to X11 scancodes :
                 //  - the fist block (0-127) simply applies the +8 Windows to X11 translation and forces some 0 values
@@ -252,9 +291,9 @@ struct Keymap2 {
                         const KeyLayout_t * layout = &keylayout_WORK_noshift;
                         this->last_char_key = extendedKeyCode;
 
-                    //=========================================================================
+                    //-------------------------------------------------------------------------
                     // KEYPAD : Keypad keys whose meanings depends on Numlock are handled apart
-                    //=========================================================================
+                    //-------------------------------------------------------------------------
                     if ( ( (extendedKeyCode >= 0x47) && (extendedKeyCode <= 0x49) )
                       || ( (extendedKeyCode >= 0x4b) && (extendedKeyCode <= 0x4d) )
                       || ( (extendedKeyCode >= 0x4f) && (extendedKeyCode <= 0x53) )
@@ -314,9 +353,9 @@ struct Keymap2 {
                         }
                     }
 
-                    //========================================
+                    //--------------------
                     // NOT KEYPAD Specific
-                    //========================================
+                    //--------------------
                     else {
                         if (this->verbose){
                             LOG(LOG_INFO, "Key not from keypad: %#x", extendedKeyCode);
@@ -339,9 +378,9 @@ struct Keymap2 {
                         if (this->verbose){
                             LOG(LOG_INFO, "uchar=%x", uchar);
                         }
-                        //==============================================
-                        // uchar is in Printable unicode character range.
-                        //==============================================
+                        //----------------------------------------------
+                        // uchar is in Printable unicode character range
+                        //----------------------------------------------
                         // That is :
                         //  * > 0x20 is for ruling out NUL, but also TAB, ESC and BACKSPACE that has unicode values but
                         //           are not actually printable characters and that we don't want to track
@@ -351,6 +390,7 @@ struct Keymap2 {
                         }
 
                         if ((uchar >= 0x20) && (uchar != 0x7F) && (uchar != 0x5E || extendedKeyCode != 0x1A) && (uchar != 0xA8) && (uchar != 0x60) ){
+
                             if (this->verbose){
                                 LOG(LOG_INFO, "Printable key : uchar=%x", uchar);
                             }
@@ -359,130 +399,31 @@ struct Keymap2 {
                                 if (this->verbose){
                                     LOG(LOG_INFO, "Dead key : uchar=%x", uchar);
                                 }
-                                switch (dead_key){
-                                case DEADKEY_CIRC:
-                                    switch (uchar){
-                                    case 'a':
-                                        this->push(0xE2); // unicode for â (acirc)
-                                        break;
-                                    case 'A':
-                                        this->push(0xC2); // unicode for Â (Acirc)
-                                        break;
-                                    case 'e':
-                                        this->push(0xEA); // unicode for ê (ecirc)
-                                        break;
-                                    case 'E':
-                                        this->push(0xCA); // unicode for Ê (Ecirc)
-                                        break;
-                                    case 'i':
-                                        this->push(0xEE); // unicode for î (icirc)
-                                        break;
-                                    case 'I':
-                                        this->push(0xCE); // unicode for Î (Icirc)
-                                        break;
-                                    case 'o':
-                                        this->push(0xF4); // unicode for ô (ocirc)
-                                        break;
-                                    case 'O':
-                                        this->push(0xD4); // unicode for Ô (Ocirc)
-                                        break;
-                                    case 'u':
-                                        this->push(0xFB); // unicode for û (ucirc)
-                                        break;
-                                    case 'U':
-                                        this->push(0xDB); // unicode for Û (Ucirc)
-                                        break;
-                                    case ' ':
-                                        this->push(0x5E); // unicode for ^ (caret)
-                                        break;
-                                    default:
-                                        this->push(uchar); // unmodified unicode
-                                        break;
+                                bool deadkeyTranslated = false;
+
+                                // Search for the current DEADKEY entry in current client keyboard layout
+printf (" ~~~~~~~~~~~~ DK >%u< - uchar >%x<~~~~~~~~~~~~\n", this->dead_key, uchar);
+                                for (uint8_t i=0; i<5 and keylayout_WORK_deadkeys[i].deadKeyTag != DEADKEY_NONE; i++) {
+printf (" ~~~~~~~~~~~~~~~~ LAYOUT DK >%u<  nbSecond >%u<~~~~~~~~~~~~\n", keylayout_WORK_deadkeys[i].deadKeyTag, keylayout_WORK_deadkeys[i].nbSecondKeys);
+                                    if (keylayout_WORK_deadkeys[i].deadKeyTag == this->dead_key) {
+
+                                        // Search for for uchar to translate in the current DEADKEY entry
+                                        for (uint8_t j=0; j<keylayout_WORK_deadkeys[i].nbSecondKeys; j++) {
+printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\n", keylayout_WORK_deadkeys[i].secondKeys[j].secondKey, keylayout_WORK_deadkeys[i].secondKeys[j].resultKey);
+                                            if (keylayout_WORK_deadkeys[i].secondKeys[j].secondKey == uchar) {
+
+                                                // push the translation into keyboard buffer
+                                                this->push(keylayout_WORK_deadkeys[i].secondKeys[j].resultKey);
+                                                deadkeyTranslated = true;
+                                                break;
+                                            }
+                                        }
+                                        if (deadkeyTranslated) break;
                                     }
-                                break;
-                                case DEADKEY_UML:
-                                    switch (uchar){
-                                    case 'a':
-                                        this->push(0xE4); // unicode for ä (auml)
-                                        break;
-                                    case 'A':
-                                        this->push(0xC4); // unicode for Ä (Auml)
-                                        break;
-                                    case 'e':
-                                        this->push(0xEB); // unicode for ë (euml)
-                                        break;
-                                    case 'E':
-                                        this->push(0xCB); // unicode for Ë (Euml)
-                                        break;
-                                    case 'i':
-                                        this->push(0xEF); // unicode for ï (iuml)
-                                        break;
-                                    case 'I':
-                                        this->push(0xCF); // unicode for Ï (Iuml)
-                                        break;
-                                    case 'o':
-                                        this->push(0xF6); // unicode for ö (ouml)
-                                        break;
-                                    case 'O':
-                                        this->push(0xD6); // unicode for Ö (Ouml)
-                                        break;
-                                    case 'u':
-                                        this->push(0xFC); // unicode for ü (uuml)
-                                        break;
-                                    case 'U':
-                                        this->push(0xDC); // unicode for Ü (Uuml)
-                                        break;
-                                    case ' ':
-                                        this->push(0xA8); // unicode for " (umlaut)
-                                        break;
-                                    default:
-                                        this->push(uchar); // unmodified unicode
-                                        break;
-                                    }
-                                break;
-                                case DEADKEY_GRAVE:
-                                    switch (uchar){
-                                    case 'a':
-                                        this->push(0xE0); // unicode for à (agrave)
-                                        break;
-                                    case 'A':
-                                        this->push(0xC0); // unicode for À (Agrave)
-                                        break;
-                                    case 'e':
-                                        this->push(0xE8); // unicode for è (egrave)
-                                        break;
-                                    case 'E':
-                                        this->push(0xC8); // unicode for È (Egrave)
-                                        break;
-                                    case 'i':
-                                        this->push(0xEC); // unicode for ì (igrave)
-                                        break;
-                                    case 'I':
-                                        this->push(0xCC); // unicode for Ì (Igrave)
-                                        break;
-                                    case 'o':
-                                        this->push(0xF2); // unicode for ò (ograve)
-                                        break;
-                                    case 'O':
-                                        this->push(0xD2); // unicode for Ò (Ograve)
-                                        break;
-                                    case 'u':
-                                        this->push(0xF9); // unicode for ù (ugrave)
-                                        break;
-                                    case 'U':
-                                        this->push(0xD9); // unicode for Ù (Ugrave)
-                                        break;
-                                    case ' ':
-                                        this->push(0x60); // unicode for ` (backcote)
-                                        break;
-                                    default:
-                                        this->push(uchar); // unmodified unicode
-                                        break;
-                                    }
-                                break;
-                                default:
-                                    this->push(uchar); // unmodified unicode
-                                break;
+                                }
+                                // By default, push unmodified uchar in keyboard buffer
+                                if (not deadkeyTranslated) {
+                                    this->push(uchar);
                                 }
                                 this->dead_key = DEADKEY_NONE;
                             }
@@ -494,79 +435,94 @@ struct Keymap2 {
                                 this->push(uchar);
                             }
                         }
-                        //=================================================
+                        //--------------------------------------------------
                         // uchar is NOT in Printable unicode character range
-                        //=================================================
+                        //--------------------------------------------------
                         else {
                             if (this->verbose){
                                 LOG(LOG_INFO, "pushing event extendedKeyCode=%x", extendedKeyCode);
                             }
-                            switch (extendedKeyCode){
-                            case 0x1A:
-                                this->is_shift_pressed() ? this->dead_key = DEADKEY_UML : this->dead_key = DEADKEY_CIRC;
-                            break;
-                            case 0x08:
-                                this->dead_key = DEADKEY_GRAVE;
-                                break;
-                            /* LEFT ARROW */
-                            case 0xCB:
-                                this->push_kevent(KEVENT_LEFT_ARROW);
-                                break;
-                            /* UP ARROW */
-                            case 0xC8:
-                                this->push_kevent(KEVENT_UP_ARROW);
-                                break;
-                            /* RIGHT ARROW */
-                            case 0xCD:
-                                this->push_kevent(KEVENT_RIGHT_ARROW);
-                                break;
-                            /* DOWN ARROW */
-                            case 0xD0:
-                                this->push_kevent(KEVENT_DOWN_ARROW);
-                                break;
-                            /* HOME */
-                            case 0xC7:
-                                this->push_kevent(KEVENT_HOME);
-                                break;
-                            /* PGUP */
-                            case 0xC9:
-                                this->push_kevent(KEVENT_PGUP);
-                                break;
-                            /* PGDOWN */
-                            case 0xD1:
-                                this->push_kevent(KEVENT_PGDOWN);
-                                break;
-                            /* END */
-                            case 0xCF:
-                                this->push_kevent(KEVENT_END);
-                                break;
-                             /* TAB */
-                            case 0x0F:
-                                if (this->is_shift_pressed()){
-                                    this->push_kevent(KEVENT_BACKTAB);
+
+                            bool extCodeDone = false;
+                            // Test if the extendedKeyCode is a deadkey in the current keyboard layout
+                            for (int i=0; i< 5; i++) {
+                                if (keylayout_WORK_deadkeys[i].extendedKeyCode == extendedKeyCode) {
+                                    // if Shift State is not significant
+                                    // or Shift State must be "PRESSED" and it is
+                                    // or Shift State must be "RELEASED" and it is
+                                    if ( (keylayout_WORK_deadkeys[i].shiftState == 2 )
+                                    or   (keylayout_WORK_deadkeys[i].shiftState == 1 and this->is_shift_pressed() )
+                                    or   (keylayout_WORK_deadkeys[i].shiftState == 0 and not (this->is_shift_pressed()) )
+                                    ) {
+                                        this->dead_key = keylayout_WORK_deadkeys[i].deadKeyTag;
+                                        extCodeDone = true;
+                                    }
                                 }
-                                else {
-                                    this->push_kevent(KEVENT_TAB);
+                            }
+                            printf(" ==========> DK = >%u<=========\n", this->dead_key);
+
+                            if (not extCodeDone) {
+                                switch (extendedKeyCode){
+                                // LEFT ARROW
+                                case 0xCB:
+                                    this->push_kevent(KEVENT_LEFT_ARROW);
+                                    break;
+                                // UP ARROW
+                                case 0xC8:
+                                    this->push_kevent(KEVENT_UP_ARROW);
+                                    break;
+                                // RIGHT ARROW
+                                case 0xCD:
+                                    this->push_kevent(KEVENT_RIGHT_ARROW);
+                                    break;
+                                // DOWN ARROW
+                                case 0xD0:
+                                    this->push_kevent(KEVENT_DOWN_ARROW);
+                                    break;
+                                // HOME
+                                case 0xC7:
+                                    this->push_kevent(KEVENT_HOME);
+                                    break;
+                                // PGUP
+                                case 0xC9:
+                                    this->push_kevent(KEVENT_PGUP);
+                                    break;
+                                // PGDOWN
+                                case 0xD1:
+                                    this->push_kevent(KEVENT_PGDOWN);
+                                    break;
+                                // END
+                                case 0xCF:
+                                    this->push_kevent(KEVENT_END);
+                                    break;
+                                 // TAB
+                                case 0x0F:
+                                    if (this->is_shift_pressed()){
+                                        this->push_kevent(KEVENT_BACKTAB);
+                                    }
+                                    else {
+                                        this->push_kevent(KEVENT_TAB);
+                                    }
+                                    break;
+                                 // backspace
+                                case 0x0E:
+                                    this->push_kevent(KEVENT_BACKSPACE);
+                                    break;
+                                case 0xD3: // delete
+                                    this->push_kevent(KEVENT_DELETE);
+                                    break;
+                                case 0x53: // numpad delete
+                                    this->push_kevent(KEVENT_DELETE);
+                                    break;
+                                case 0x1C: // enter
+                                    this->push_kevent(KEVENT_ENTER);
+                                    break;
+                                case 0x9C: // numpad enter
+                                    this->push_kevent(KEVENT_ENTER);
+                                    break;
+                                default:
+                                    break;
                                 }
-                                break;
-                             /* backspace */
-                            case 0x0E:
-                                this->push_kevent(KEVENT_BACKSPACE);
-                                break;
-                            case 0xD3: // delete
-                                this->push_kevent(KEVENT_DELETE);
-                                break;
-                            case 0x53: // numpad delete
-                                this->push_kevent(KEVENT_DELETE);
-                                break;
-                            case 0x1C: // enter
-                                this->push_kevent(KEVENT_ENTER);
-                                break;
-                            case 0x9C: // numpad enter
-                                this->push_kevent(KEVENT_ENTER);
-                                break;
-                            default:
-                                break;
                             }
                         }
                     }
@@ -577,13 +533,17 @@ struct Keymap2 {
 
     } // END FUNCT : event
 
+    //==============================================================================
     void push(uint32_t uchar)
+    //==============================================================================
     {
         this->push_char(uchar);
         this->push_kevent(KEVENT_KEY);
     }
 
+    //==============================================================================
     void push_char(uint32_t uchar)
+    //==============================================================================
     {
         if (this->nbuf < SIZE_KEYBUF){
             this->buffer[this->ibuf] = uchar;
@@ -595,7 +555,9 @@ struct Keymap2 {
         }
     }
 
+    //==============================================================================
     uint32_t get_char()
+    //==============================================================================
     {
         if (this->nbuf > 0){
             // remove top KEY KEVENT if present and any event may have occured before it
@@ -613,17 +575,23 @@ struct Keymap2 {
     }
 
     // head of keyboard buffer (or keyboard buffer of size 1)
+    //==============================================================================
     uint32_t top_char() const
+    //==============================================================================
     {
         return this->buffer[this->ibuf?this->ibuf-1:SIZE_KEYBUF-1];
     }
 
+    //==============================================================================
     uint32_t nb_char_available() const
+    //==============================================================================
     {
         return this->nbuf;
     }
 
+    //==============================================================================
     void push_kevent(uint32_t uevent)
+    //==============================================================================
     {
         if (this->nbuf_kevent < SIZE_KEYBUF_KEVENT){
             this->buffer_kevent[this->ibuf_kevent] = uevent;
@@ -635,7 +603,9 @@ struct Keymap2 {
         }
     }
 
+    //==============================================================================
     uint32_t get_kevent()
+    //==============================================================================
     {
         uint32_t res = this->buffer_kevent[(SIZE_KEYBUF_KEVENT + this->ibuf_kevent - this->nbuf_kevent) % SIZE_KEYBUF_KEVENT];
 
@@ -649,78 +619,108 @@ struct Keymap2 {
     }
 
     // head of keyboard buffer (or keyboard buffer of size 1)
+    //==============================================================================
     uint32_t top_kevent() const
+    //==============================================================================
     {
         return this->buffer_kevent[this->ibuf_kevent?this->ibuf_kevent-1:SIZE_KEYBUF_KEVENT-1];
     }
 
+    //==============================================================================
     uint32_t nb_kevent_available() const
+    //==============================================================================
     {
         return this->nbuf_kevent;
     }
 
+    //==============================================================================
     bool is_caps_locked() const
+    //==============================================================================
     {
         return this->key_flags & CAPSLOCK;
     }
 
+    //==============================================================================
     bool is_scroll_locked() const
+    //==============================================================================
     {
         return this->key_flags & SCROLLLOCK;
     }
 
+    //==============================================================================
     bool is_num_locked() const
+    //==============================================================================
     {
         return this->key_flags & NUMLOCK;
     }
 
+    //==============================================================================
     bool is_left_shift_pressed() const
+    //==============================================================================
     {
         return this->keys_down[LEFT_SHIFT];
     }
+
+    //==============================================================================
     bool is_right_shift_pressed() const
+    //==============================================================================
     {
         return this->keys_down[RIGHT_SHIFT];
     }
 
+    //==============================================================================
     bool is_shift_pressed() const
+    //==============================================================================
     {
         return this->is_left_shift_pressed() || this->is_right_shift_pressed();
     }
 
+    //==============================================================================
     bool is_left_ctrl_pressed() const
+    //==============================================================================
     {
         return this->keys_down[LEFT_CTRL];
     }
 
+    //==============================================================================
     bool is_right_ctrl_pressed() const
+    //==============================================================================
     {
         return this->keys_down[RIGHT_CTRL];
     }
 
+    //==============================================================================
     bool is_ctrl_pressed() const
+    //==============================================================================
     {
         return is_right_ctrl_pressed() || is_left_ctrl_pressed();
     }
 
+    //==============================================================================
     bool is_left_alt_pressed() const
+    //==============================================================================
     {
         return this->keys_down[LEFT_ALT];
     }
 
+    //==============================================================================
     bool is_right_alt_pressed() const // altgr
+    //==============================================================================
     {
         return this->keys_down[RIGHT_ALT];
     }
 
+    //==============================================================================
     bool is_alt_pressed() const
+    //==============================================================================
     {
         return is_right_alt_pressed() || is_left_alt_pressed();
     }
 
 
-// ################################################################
+    //==============================================================================
     void init_layout(int keyb)
+    //==============================================================================
     {
         // DEFAULT KEYMAP
         const KeyLayout_t DEFAULT_noshift = {
@@ -781,9 +781,9 @@ struct Keymap2 {
             keylayout_WORK_shift[i] = DEFAULT_shift[i] ;
             keylayout_WORK_altgr[i] = DEFAULT_altgr[i] ;
             keylayout_WORK_capslock[i] = DEFAULT_capslock[i] ;
-            keylayout_WORK_shiftcapslock[i] = DEFAULT_shiftcapslock[i] ;
+            keylayout_WORK_shiftcapslock[i] = DEFAULT_shiftcapslock[i];
         }
-
+        keyb = 0x0807;
         switch (keyb){
             case 0x0407: // GERMAN
             {
@@ -1100,6 +1100,38 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,    0x0,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
+
+                const dkey_t x040c_deadkeys[5] = {
+                      { 0x1A, DEADKEY_CIRC,  0, 11, { {'a', 0xE2}, {'A', 0xC2}
+                                                    , {'e', 0xEA}, {'E', 0xCA}
+                                                    , {'i', 0xEE}, {'I', 0xCE}
+                                                    , {'o', 0xF4}, {'O', 0xD4}
+                                                    , {'u', 0xFB}, {'U', 0xDB}
+                                                    , {' ', 0x5E}
+                                                    }
+                      }
+                    , { 0x1A, DEADKEY_UML,   1, 11, { {'a', 0xE4}, {'A', 0xC4}
+                                                    , {'e', 0xEB}, {'E', 0xCB}
+                                                    , {'i', 0xEF}, {'I', 0xCF}
+                                                    , {'o', 0xF6}, {'O', 0xD6}
+                                                    , {'u', 0xFC}, {'U', 0xDC}
+                                                    , {' ', 0xA8}
+                                                    }
+                      }
+                    , { 0x08, DEADKEY_GRAVE, 2, 11, { {'a', 0xE0}, {'A', 0xC0}
+                                                    , {'e', 0xE8}, {'E', 0xC8}
+                                                    , {'i', 0xEC}, {'I', 0xCC}
+                                                    , {'o', 0xF2}, {'O', 0xD2}
+                                                    , {'u', 0xF9}, {'U', 0xD9}
+                                                    , {' ', 0x60}
+                                                    }
+                      }
+                    , { 0x00, DEADKEY_NONE, 0, 0, {} }
+                    , { 0x00, DEADKEY_NONE, 0, 0, {} }
+                };
+                for(size_t i = 0 ; i < 5 ; i++) {
+                    keylayout_WORK_deadkeys[i] = x040c_deadkeys[i];
+                }
 
                 for(size_t i = 0 ; i < 128 ; i++) {
                     if (x040c_noshift[i]){
@@ -1639,6 +1671,52 @@ struct Keymap2 {
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
 
+                const dkey_t x0807_deadkeys[5] = {
+                      { 0x0D, DEADKEY_CIRC,  0, 11, { {'a', 0xE2}, {'A', 0xC2}
+                                                    , {'e', 0xEA}, {'E', 0xCA}
+                                                    , {'i', 0xEE}, {'I', 0xCE}
+                                                    , {'o', 0xF4}, {'O', 0xD4}
+                                                    , {'u', 0xFB}, {'U', 0xDB}
+                                                    , {' ', 0x5E}
+                                                    }
+                      }
+                    , { 0x1B, DEADKEY_UML,   0, 12, { {'a', 0xE4}, {'A', 0xC4}
+                                                    , {'e', 0xEB}, {'E', 0xCB}
+                                                    , {'i', 0xEF}, {'I', 0xCF}
+                                                    , {'o', 0xF6}, {'O', 0xD6}
+                                                    , {'u', 0xFC}, {'U', 0xDC}
+                                                    , {'y', 0xFF}
+                                                    , {' ', 0xA8}
+                                                    }
+                      }
+                    , { 0x0D, DEADKEY_GRAVE, 1, 11, { {'a', 0xE0}, {'A', 0xC0}
+                                                    , {'e', 0xE8}, {'E', 0xC8}
+                                                    , {'i', 0xEC}, {'I', 0xCC}
+                                                    , {'o', 0xF2}, {'O', 0xD2}
+                                                    , {'u', 0xF9}, {'U', 0xD9}
+                                                    , {' ', 0x60}
+                                                    }
+                      }
+                    , { 0x0C, DEADKEY_ACUTE, 2, 13, { {'a', 0xE1}, {'A', 0xC1}
+                                                    , {'e', 0xE9}, {'E', 0xC9}
+                                                    , {'i', 0xED}, {'I', 0xCD}
+                                                    , {'o', 0xF3}, {'O', 0xD3}
+                                                    , {'u', 0xFA}, {'U', 0xDA}
+                                                    , {'y', 0xFD}, {'Y', 0xDD}
+                                                    , {' ', 0xB4}
+                                                    }
+                      }
+                    , { 0x0D, DEADKEY_TILDE, 2,  7, { {'a', 0xE3}, {'A', 0xC3}
+                                                    , {'o', 0xF5}, {'O', 0xD5}
+                                                    , {'n', 0xF1}, {'N', 0xD1}
+                                                    , {' ', 0x7E}
+                                                    }
+                      }
+                };
+
+                for(size_t i = 0 ; i < 5 ; i++) {
+                    keylayout_WORK_deadkeys[i] = x0807_deadkeys[i];
+                }
                 for(size_t i = 0 ; i < 128 ; i++) {
                     if (x0807_noshift[i]){
                         keylayout_WORK_noshift[i] = x0807_noshift[i] ;

@@ -98,7 +98,8 @@ struct mod_vnc : public client_mod {
         LOG(LOG_INFO, "Connecting to VNC Server");
         init_palette332(this->palette332);
         this->t = t;
-
+printf("===> KEY_LAYOUT %d <===\n", keylayout);
+printf("===> KEY_FLAGS %d <===\n", key_flags);
         keymapSym.init_layout_sym(keylayout);
         // Initial state of keys (at least lock keys) is copied from Keymap2
         keymapSym.key_flags = key_flags;
@@ -436,6 +437,7 @@ struct mod_vnc : public client_mod {
         memset(rdp_cursor_data + (32 * (32 * 3) - 2 * 32 * 3), 0xff, 9);
         memset(rdp_cursor_data + (32 * (32 * 3) - 3 * 32 * 3), 0xff, 9);
         memset(rdp_cursor_mask, 0xff, 32 * (32 / 8));
+
         this->front.server_set_pointer(3, 3, rdp_cursor_data, rdp_cursor_mask);
 
         if (error) {
@@ -525,6 +527,7 @@ struct mod_vnc : public client_mod {
     {
         keymapSym.event(device_flags, param1);
         int key = keymapSym.get_sym();
+printf("====== > KEY = %d <======\n", key);
         if (key > 0) {
             BStream stream(32768);
             stream.out_uint8(4);
