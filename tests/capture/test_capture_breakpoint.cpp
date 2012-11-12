@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
     // from here we do not have access to the file sequence used for the metafile inside capture
     // so we recreate a sequence with the same name. Not really nice, but it will do
     FileSequence meta_seq("path file pid extension", "./", "capture", "mwrm");
-    BOOST_CHECK_EQUAL((unsigned)101, (unsigned)meta_seq.filesize(0));
+    BOOST_CHECK_EQUAL((unsigned)113, (unsigned)meta_seq.filesize(0));
     meta_seq.unlink(0);
 }
 
