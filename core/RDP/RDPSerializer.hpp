@@ -139,12 +139,12 @@ struct RDPSerializer : public RDPGraphicDevice
 
     RDPSerializer(Transport * trans
           , Stream & stream
-          , const Inifile & ini
           , const uint8_t  bpp
           , BmpCache & bmp_cache
           , const int bitmap_cache_version
           , const int use_bitmap_comp
-          , const int op2)
+          , const int op2
+          , const Inifile & ini)
         : stream(stream),
         trans(trans),
         ini(ini),

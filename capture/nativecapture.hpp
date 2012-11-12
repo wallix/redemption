@@ -77,7 +77,7 @@ public:
     , height(height)
     , bpp(24)
     , bmp_cache(bmp_cache)
-    , recorder(now, &trans, ini, width, height, 24, bmp_cache, drawable)
+    , recorder(now, &trans, width, height, 24, bmp_cache, drawable, ini)
     , nb_file(0)
     {
         LOG(LOG_INFO, "Start Of NativeCapture");

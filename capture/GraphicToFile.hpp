@@ -126,13 +126,13 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     GraphicToFile(const timeval& now
                 , Transport * trans
-                , const Inifile & ini
                 , const uint16_t width
                 , const uint16_t height
                 , const uint8_t  bpp
                 , BmpCache & bmp_cache
-                , RDPDrawable * drawable)
-    : RDPSerializer(trans, this->buffer_stream, ini, bpp, bmp_cache, 0, 1, 1)
+                , RDPDrawable * drawable
+                , const Inifile & ini)
+    : RDPSerializer(trans, this->buffer_stream, bpp, bmp_cache, 0, 1, 1, ini)
     , trans(trans)
     , buffer_stream(65536)
     , last_sent_timer() 

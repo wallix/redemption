@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
     RDPDrawable drawable(scr.cx, scr.cy, true);
-    GraphicToFile consumer(now, &trans, ini, scr.cx, scr.cy, 24, bmp_cache, &drawable);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, &drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
     RDPDrawable drawable(scr.cx, scr.cy, true);
-    GraphicToFile consumer(now, &trans, ini, scr.cx, scr.cy, 24, bmp_cache, &drawable);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, &drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
     RDPDrawable drawable(scr.cx, scr.cy, true);
-    GraphicToFile consumer(now, &trans, ini, scr.cx, scr.cy, 24, bmp_cache, &drawable);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, &drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);

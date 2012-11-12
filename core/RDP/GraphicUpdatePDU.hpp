@@ -119,8 +119,8 @@ struct GraphicsUpdatePDU : public RDPSerializer
                       const int bitmap_cache_version,
                       const int use_bitmap_comp,
                       const int op2)
-        : RDPSerializer(trans, this->buffer_stream, ini,
-            bpp, bmp_cache, bitmap_cache_version, use_bitmap_comp, op2),
+        : RDPSerializer(trans, this->buffer_stream,
+            bpp, bmp_cache, bitmap_cache_version, use_bitmap_comp, op2, ini),
         buffer_stream(65536),
         sctrl(NULL),
         sdata(NULL),

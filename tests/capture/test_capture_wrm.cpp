@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, true);
-    GraphicToFile consumer(now, &trans, ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache, &drawable);
+    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, &drawable, ini);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
 
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, true);
-    GraphicToFile consumer(now, &trans, ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache, &drawable);
+    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, &drawable, ini);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
     consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), BLUE), screen_rect);
@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, true);
-    GraphicToFile consumer(now, &trans, ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache, &drawable);
+    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, &drawable, ini);
     BOOST_CHECK_EQUAL(0, 0);
     RDPOpaqueRect cmd0(screen_rect, GREEN);
     consumer.draw(cmd0, screen_rect);

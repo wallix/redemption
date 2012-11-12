@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
     Inifile ini;
     BmpCache bmp_cache(24, 2, 256, 2, 1024, 2, 4096);
     RDPDrawable drawable(scr.cx, scr.cy, true);
-    GraphicToFile consumer(now, &trans, ini, scr.cx, scr.cy, 24, bmp_cache, &drawable);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, &drawable, ini);
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, BLUE), scr);
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     ini.globals.debug.primary_orders = 1;
     BmpCache bmp_cache(24, 2, 256, 2, 1024, 2, 4096);
     RDPDrawable drawable(scr.cx, scr.cy, true);
-    GraphicToFile consumer(now, &trans, ini, scr.cx, scr.cy, 24, bmp_cache, &drawable);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, &drawable, ini);
     consumer.timestamp(now);
     
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
