@@ -80,7 +80,8 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
-    GraphicToFile consumer(now, &trans, ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache);
+    RDPDrawable drawable(screen_rect.cx, screen_rect.cy, true);
+    GraphicToFile consumer(now, &trans, ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache, &drawable);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
 
@@ -153,7 +154,8 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     CheckTransport trans(expected_stripped_wrm2, sizeof(expected_stripped_wrm2)-1, 511);
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
-    GraphicToFile consumer(now, &trans, ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache);
+    RDPDrawable drawable(screen_rect.cx, screen_rect.cy, true);
+    GraphicToFile consumer(now, &trans, ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache, &drawable);
 
     consumer.draw(RDPOpaqueRect(screen_rect, GREEN), screen_rect);
     consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), BLUE), screen_rect);
@@ -185,7 +187,8 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     BOOST_CHECK_EQUAL(0, 0);
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
-    GraphicToFile consumer(now, &trans, ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache);
+    RDPDrawable drawable(screen_rect.cx, screen_rect.cy, true);
+    GraphicToFile consumer(now, &trans, ini, screen_rect.cx, screen_rect.cy, 24, bmp_cache, &drawable);
     BOOST_CHECK_EQUAL(0, 0);
     RDPOpaqueRect cmd0(screen_rect, GREEN);
     consumer.draw(cmd0, screen_rect);
@@ -212,7 +215,11 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     FileSequence sequence("path file pid count extension", "./", "testcap", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
 
-    FileToGraphic player(&in_wrm_trans);
+    timeval begin_capture;
+    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
+    timeval end_capture;
+    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     player.add_consumer(&png_recorder);
 

@@ -78,7 +78,8 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
     CheckTransport trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1, 511);
     Inifile ini;
     BmpCache bmp_cache(24, 2, 256, 2, 1024, 2, 4096);
-    GraphicToFile consumer(now, &trans, ini, scr.cx, scr.cy, 24, bmp_cache);
+    RDPDrawable drawable(scr.cx, scr.cy, true);
+    GraphicToFile consumer(now, &trans, ini, scr.cx, scr.cy, 24, bmp_cache, &drawable);
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, BLUE), scr);
@@ -107,7 +108,11 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
 BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
 {
     GeneratorTransport in_wrm_trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1);   
-    FileToGraphic player(&in_wrm_trans);
+    timeval begin_capture;
+    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
+    timeval end_capture;
+    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
 
     FileSequence sequence("path file pid count extension", "./", "TestReloadSaveCache", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
@@ -185,7 +190,8 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     Inifile ini;
     ini.globals.debug.primary_orders = 1;
     BmpCache bmp_cache(24, 2, 256, 2, 1024, 2, 4096);
-    GraphicToFile consumer(now, &trans, ini, scr.cx, scr.cy, 24, bmp_cache);
+    RDPDrawable drawable(scr.cx, scr.cy, true);
+    GraphicToFile consumer(now, &trans, ini, scr.cx, scr.cy, 24, bmp_cache, &drawable);
     consumer.timestamp(now);
     
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
@@ -207,7 +213,11 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
 BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
 {
     GeneratorTransport in_wrm_trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1);   
-    FileToGraphic player(&in_wrm_trans);
+    timeval begin_capture;
+    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
+    timeval end_capture;
+    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
 
     FileSequence sequence("path file pid count extension", "./", "TestReloadOrderStates", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
@@ -293,7 +303,11 @@ const char expected_continuation_wrm[] =
 BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
 {
     GeneratorTransport in_wrm_trans(expected_continuation_wrm, sizeof(expected_continuation_wrm)-1);   
-    FileToGraphic player(&in_wrm_trans);
+    timeval begin_capture;
+    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
+    timeval end_capture;
+    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
 
     FileSequence sequence("path file pid count extension", "./", "TestContinuationOrderStates", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);

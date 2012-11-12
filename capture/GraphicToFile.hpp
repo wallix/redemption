@@ -114,6 +114,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
       " starting with chunk_type, chunk_size"
       " and order_count (whatever it means, depending on chunks")
 {
+    Transport * trans;
     BStream buffer_stream;
 
     timeval last_sent_timer;
@@ -122,7 +123,6 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     const uint16_t height;
     const uint8_t  bpp;
     RDPDrawable * drawable;
-    Transport * trans;
 
     GraphicToFile(const timeval& now
                 , Transport * trans
@@ -130,19 +130,18 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
                 , const uint16_t width
                 , const uint16_t height
                 , const uint8_t  bpp
-                , BmpCache & bmp_cache)
+                , BmpCache & bmp_cache
+                , RDPDrawable * drawable)
     : RDPSerializer(trans, this->buffer_stream, ini, bpp, bmp_cache, 0, 1, 1)
+    , trans(trans)
     , buffer_stream(65536)
     , last_sent_timer() 
     , timer(now)
     , width(width)
     , height(height)
     , bpp(bpp)
-    , trans(trans)
+    , drawable(drawable)
     {
-        TODO("The serializers and the drawables should probably be provided by external call, not instanciated here")
-        this->drawable = new RDPDrawable(width, height, true);
-
         last_sent_timer.tv_sec = 0;
         last_sent_timer.tv_usec = 0;
         this->order_count = 0;
@@ -151,7 +150,6 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     }
 
     ~GraphicToFile(){
-        delete this->drawable;
     }
 
     virtual void timestamp(const timeval& now)

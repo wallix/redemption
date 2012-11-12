@@ -396,14 +396,11 @@ struct Keymap2 {
                                 bool deadkeyTranslated = false;
 
                                 // Search for the current DEADKEY entry in current client keyboard layout
-printf (" ~~~~~~~~~~~~ DK >%u< - uchar >%x<~~~~~~~~~~~~\n", this->dead_key, uchar);
                                 for (uint8_t i=0; i<5 and keylayout_WORK_deadkeys[i].deadKeyTag != DEADKEY_NONE; i++) {
-printf (" ~~~~~~~~~~~~~~~~ LAYOUT DK >%u<  nbSecond >%u<~~~~~~~~~~~~\n", keylayout_WORK_deadkeys[i].deadKeyTag, keylayout_WORK_deadkeys[i].nbSecondKeys);
                                     if (keylayout_WORK_deadkeys[i].deadKeyTag == this->dead_key) {
 
                                         // Search for for uchar to translate in the current DEADKEY entry
                                         for (uint8_t j=0; j<keylayout_WORK_deadkeys[i].nbSecondKeys; j++) {
-printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\n", keylayout_WORK_deadkeys[i].secondKeys[j].secondKey, keylayout_WORK_deadkeys[i].secondKeys[j].resultKey);
                                             if (keylayout_WORK_deadkeys[i].secondKeys[j].secondKey == uchar) {
 
                                                 // push the translation into keyboard buffer
@@ -453,7 +450,6 @@ printf (" ~~~~~~~~~~~~~~~~~~~~ LAYOUT secondKey >%x< - resultK >%x<~~~~~~~~~~~~\
                                     }
                                 }
                             }
-                            printf(" ==========> DK = >%u<=========\n", this->dead_key);
 
                             if (not extCodeDone) {
                                 switch (extendedKeyCode){

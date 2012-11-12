@@ -148,8 +148,11 @@ struct FileToGraphic
     BGRPalette palette;
 
     DataMetaFile data_meta;
+    
+    const timeval begin_capture;
+    const timeval end_capture;
 
-    FileToGraphic(Transport * trans, bool real_time = false)
+    FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time = false)
     : stream(65536), trans(trans),
      // Internal state of orders
     common(RDP::PATBLT, Rect(0, 0, 1, 1)),
@@ -171,7 +174,9 @@ struct FileToGraphic
     meta_ok(false),
     timestamp_ok(false),
     real_time(real_time),
-    data_meta()
+    data_meta(),
+    begin_capture(begin_capture),
+    end_capture(end_capture)
     {
         init_palette332(this->palette); // We don't really care movies are always 24 bits for now
         
@@ -601,13 +606,32 @@ struct FileToGraphic
     
     void play()
     {
+        bool send_initial_image = true;
+        if ((begin_capture.tv_sec == 0) 
+            ||(begin_capture.tv_sec > this->record_now.tv_sec)
+            || (begin_capture.tv_sec == this->record_now.tv_sec && begin_capture.tv_usec > this->record_now.tv_usec)){
+                send_initial_image = false;
+        }
+
         while (this->next_order()){
             this->interpret_order();
-            for (size_t i = 0; i < this->nbconsumers ; i++){
-                this->consumers[i]->snapshot(this->record_now, 0, 0, true, false);
+            if ((begin_capture.tv_sec == 0) 
+            || (begin_capture.tv_sec > this->record_now.tv_sec)
+            || (begin_capture.tv_sec == this->record_now.tv_sec && begin_capture.tv_usec > this->record_now.tv_usec)){
+                if (send_initial_image){
+                    send_initial_image = false;
+                }
+                for (size_t i = 0; i < this->nbconsumers ; i++){
+                    this->consumers[i]->snapshot(this->record_now, 0, 0, true, false);
+                }
+                for (size_t i = 0; i < this->nbdrawables ; i++){
+                    this->drawables[i]->snapshot(this->record_now, 0, 0, true, false);
+                }
             }
-            for (size_t i = 0; i < this->nbdrawables ; i++){
-                this->drawables[i]->snapshot(this->record_now, 0, 0, true, false);
+            if (end_capture.tv_sec 
+            && ((end_capture.tv_sec > this->record_now.tv_sec)
+               || (begin_capture.tv_sec == this->record_now.tv_sec && begin_capture.tv_usec > this->record_now.tv_usec))){
+                break;
             }
         }
     }

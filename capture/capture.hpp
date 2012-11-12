@@ -36,8 +36,9 @@ public:
 
     OutByFilenameSequenceWithMetaTransport * wrm_trans;
     BmpCache * pnc_bmp_cache;
+    RDPDrawable * drawable;
     NativeCapture * pnc;
-
+    
     Capture(const timeval & now, int width, int height, const char * path, const char * basename, const Inifile & ini) 
       : meta_sequence(NULL)
       , wrm_sequence(NULL)
@@ -46,6 +47,7 @@ public:
       , psc(NULL)
       , wrm_trans(NULL)
       , pnc_bmp_cache(NULL)
+      , drawable(NULL)
       , pnc(NULL)
     {
         this->meta_sequence = new FileSequence("path file pid extension", path, basename, "mwrm");
@@ -57,7 +59,8 @@ public:
 
         this->wrm_trans = new OutByFilenameSequenceWithMetaTransport(*this->meta_sequence, now, width, height, *this->wrm_sequence);
         this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288); 
-        this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, ini);
+        this->drawable = new RDPDrawable(width, height, true);
+        this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
    }
 
     ~Capture(){
@@ -70,6 +73,7 @@ public:
         delete this->meta_sequence;
         delete this->wrm_trans;
         delete this->pnc_bmp_cache;
+        delete this->drawable;
     }
     
     void update_config(const Inifile & ini){

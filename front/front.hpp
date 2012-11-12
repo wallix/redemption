@@ -376,7 +376,6 @@ public:
                     }
                 }
             }
-            
             this->capture = new Capture(now, width, height, path, basename, ini);
         }
     }
