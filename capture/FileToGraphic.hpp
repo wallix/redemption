@@ -408,6 +408,7 @@ struct FileToGraphic
                 uint64_t movie_usec = this->stream.in_uint64_le();
                 this->record_now.tv_sec  = movie_usec / ucoeff; 
                 this->record_now.tv_usec = movie_usec % ucoeff;
+                printf("TIMESTAMP %u\n", (unsigned)this->record_now.tv_sec);
 
                 if (!this->timestamp_ok){
                     if (this->real_time) {

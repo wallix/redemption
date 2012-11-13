@@ -1512,7 +1512,6 @@ public:
             ::close(this->meta_fd);
             this->meta_fd = -1;
         }
-        
     }
 
     TODO("Code below looks insanely complicated for what it is doing. I should probably stop at some point"
@@ -1527,6 +1526,7 @@ public:
         while (remaining_len > 0){
             if (this->fd == -1){
                 char * eol = NULL;
+                printf("next wrm from metafile\n");
                 bool res = readline(this->meta_fd, &this->begin, &this->end, &eol, this->buffer, sizeof(this->buffer));
                 if (!res) {
                     LOG(LOG_INFO, "InByMetaSequenceTransport recv failed with error %s reading meta file", strerror(errno));
@@ -1536,6 +1536,7 @@ public:
                 if (eol2){
                     memcpy(this->path, this->begin, eol2 - this->begin);
                     this->path[eol2 - this->begin] = 0;
+                    printf("next wrm is %s\n", this->path);
                     this->begin = eol;
                     this->fd = ::open(this->path, O_RDONLY);
                     if (this->fd == -1){
@@ -1554,11 +1555,7 @@ public:
             }
             catch (const Error & e) {
                 if (e.id == ERR_TRANSPORT_NO_MORE_DATA){
-                    size_t step = *pbuffer - oldpbuffer;
-                    if (step == 0){
-                        throw Error(ERR_TRANSPORT_READ_FAILED);
-                    }
-                    remaining_len -= step;
+                    remaining_len -= *pbuffer - oldpbuffer;
                     this->next();
                 }
                 else {
