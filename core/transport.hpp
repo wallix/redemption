@@ -1380,12 +1380,6 @@ public:
         }
     }
 
-    TODO("Code below looks insanely complicated for what it is doing. I should probably stop at some point"
-         "and *THINK* about the API that transport objects should really provide."
-         "For instance I strongly suspect that it should be allowed to stop returning only part of the asked datas"
-         "like the file system transport objects. There should also be an easy way to combine several layers of"
-         "transports (using templates ?) and clearly define the properties of objects providing the sources of datas"
-         "(some abstraction above file ?). The current sequences are easy to use, but somewhat limited")
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         size_t remaining_len = len;
@@ -1400,15 +1394,12 @@ public:
             char * oldpbuffer = *pbuffer;
             try {
                 InFileTransport::recv(pbuffer, remaining_len);
+                // if recv returns it has read everything asked for, otherwise it will raise some exception
                 remaining_len = 0;
             }
             catch (const Error & e) {
                 if (e.id == 1501){
-                    size_t step = *pbuffer - oldpbuffer;
-                    if (step == 0){
-                        throw;
-                    }
-                    remaining_len -= step;
+                    remaining_len -= *pbuffer - oldpbuffer;
                     this->next();
                 }
                 else {
@@ -1526,7 +1517,6 @@ public:
         while (remaining_len > 0){
             if (this->fd == -1){
                 char * eol = NULL;
-                printf("next wrm from metafile\n");
                 bool res = readline(this->meta_fd, &this->begin, &this->end, &eol, this->buffer, sizeof(this->buffer));
                 if (!res) {
                     LOG(LOG_INFO, "InByMetaSequenceTransport recv failed with error %s reading meta file", strerror(errno));
@@ -1536,7 +1526,6 @@ public:
                 if (eol2){
                     memcpy(this->path, this->begin, eol2 - this->begin);
                     this->path[eol2 - this->begin] = 0;
-                    printf("next wrm is %s\n", this->path);
                     this->begin = eol;
                     this->fd = ::open(this->path, O_RDONLY);
                     if (this->fd == -1){
@@ -1551,6 +1540,7 @@ public:
             char * oldpbuffer = *pbuffer;
             try {
                 InFileTransport::recv(pbuffer, remaining_len);
+                // if recv returns it has read everything asked for, otherwise it will raise some exception
                 remaining_len = 0;
             }
             catch (const Error & e) {
@@ -1559,7 +1549,7 @@ public:
                     this->next();
                 }
                 else {
-                    throw Error(ERR_TRANSPORT_READ_FAILED);
+                    throw;
                 }
             };
         }
