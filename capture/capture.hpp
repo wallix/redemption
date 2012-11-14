@@ -84,42 +84,49 @@ public:
     void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
         this->psc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
+        this->drawable->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
         this->pnc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
     }
 
     void flush()
     {
         this->psc->flush();
+        this->drawable->flush();
         this->pnc->flush();
     }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
         this->psc->draw(cmd, clip);
+        this->drawable->draw(cmd, clip);
         this->pnc->draw(cmd, clip);
     }
 
     void draw(const RDPDestBlt & cmd, const Rect &clip)
     {
         this->psc->draw(cmd, clip);
+        this->drawable->draw(cmd, clip);
         this->pnc->draw(cmd, clip);
     }
 
     void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
         this->psc->draw(cmd, clip);
+        this->drawable->draw(cmd, clip);
         this->pnc->draw(cmd, clip);
     }
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
         this->psc->draw(cmd, clip, bmp);
+        this->drawable->draw(cmd, clip, bmp);
         this->pnc->draw(cmd, clip, bmp);
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         this->psc->draw(cmd, clip);
+        this->drawable->draw(cmd, clip);
         this->pnc->draw(cmd, clip);
     }
 
@@ -127,12 +134,14 @@ public:
     void draw(const RDPLineTo & cmd, const Rect & clip)
     {
         this->psc->draw(cmd, clip);
+        this->drawable->draw(cmd, clip);
         this->pnc->draw(cmd, clip);
     }
 
     void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
 //        this->psc->glyph_index(cmd, clip);
+        this->drawable->draw(cmd, clip);
 //        this->pnc->glyph_index(cmd, clip);
     }
 

@@ -149,6 +149,7 @@ int recorder_app(int argc, char** argv)
     }
 
     Capture capture(player.record_now, player.screen_rect.cx, player.screen_rect.cy, path, basename, ini);
+    player.add_consumer(capture.drawable);
     player.add_consumer(capture.pnc);
 //    player.add_consumer(capture.psc);
 

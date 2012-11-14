@@ -361,18 +361,31 @@ public:
             char basename[1024];
             strcpy(path, "/tmp/"); // default value, actual one should come from movie_path
             strcpy(basename, "redemption"); // default value actual one should come from movie_path
-            const char * end_of_path = strrchr(ini.globals.movie_path, '/') + 1;
+            const char * fullpath = ini.globals.movie_path;
+            const char * end_of_path = strrchr(fullpath, '/');
             if (end_of_path){
-                memcpy(path, ini.globals.movie_path, end_of_path - ini.globals.movie_path);
-                path[end_of_path - ini.globals.movie_path] = 0;
-                const char * start_of_extension = strrchr(end_of_path, '.');
+                memcpy(path, fullpath, end_of_path + 1 - fullpath);
+                path[end_of_path + 1 - fullpath] = 0;
+                const char * start_of_extension = strrchr(end_of_path + 1, '.');
                 if (start_of_extension){
-                    memcpy(basename, end_of_path, start_of_extension - end_of_path);
-                    basename[start_of_extension - end_of_path] = 0;
+                    memcpy(basename, end_of_path + 1, start_of_extension - end_of_path - 1);
+                    basename[start_of_extension - end_of_path - 1] = 0;
                 }
                 else {
                     if (end_of_path[0]){
-                        strcpy(basename, end_of_path);
+                        strcpy(basename, end_of_path + 1);
+                    }
+                }
+            }
+            else {
+                const char * start_of_extension = strrchr(fullpath, '.');
+                if (start_of_extension){
+                    memcpy(basename, fullpath, start_of_extension - fullpath);
+                    basename[start_of_extension - fullpath] = 0;
+                }
+                else {
+                    if (fullpath[0]){
+                        strcpy(basename, fullpath);
                     }
                 }
             }
