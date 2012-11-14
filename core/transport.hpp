@@ -364,7 +364,6 @@ class InFileTransport : public Transport {
                     continue;
                 }
                 if (ret == 0){
-                    LOG(LOG_INFO, "Infile transport read EOF");
                     throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
                 }
                 LOG(LOG_INFO, "Infile transport read failed with error %u %s ret=%u", errno, strerror(errno), ret);
@@ -1395,7 +1394,6 @@ public:
                 this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
                 this->fd = ::open(this->path, O_RDONLY);
                 if (this->fd == -1){
-                    LOG(LOG_INFO, "InByFilename transport recv failed with error : %s", strerror(errno));
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
             }
@@ -1415,6 +1413,153 @@ public:
                 }
                 else {
                     throw;
+                }
+            };
+        }
+    }
+
+    virtual bool next()
+    {
+        if (this->fd != -1){
+            ::close(this->fd);
+            this->fd = -1;
+        }
+        this->InFileTransport::next();
+        return true;
+    }
+};
+
+TODO("This readline function could probably move into stream to give some level of support for text oriented files")
+static inline bool readline(int fd, char ** begin, char **end, char **eol, char buffer[], size_t len)
+{
+    for (char * p = *begin; p < *end; p++){
+        if (*p == '\n'){
+            *eol = p+1;
+            return true;
+        }
+    }
+    size_t trailing_space = buffer + len - *end;
+    // reframe buffer if no trailing space left
+    if (trailing_space == 0){
+        size_t used_len = *end - *begin;
+        memmove(buffer, *begin, used_len);
+        *end = buffer + used_len;
+        *begin = buffer;
+    }
+    ssize_t rcvd = 0;
+    do {
+        rcvd = ::read(fd, *end, buffer + len - *end);
+    } while (rcvd < 0 && errno == EINTR);
+    if (rcvd < 0){
+        throw Error(ERR_TRANSPORT_READ_FAILED, 0);
+    }
+    if (rcvd == 0){
+        if (*begin != *end) {
+            *eol = *end;
+            return false;
+        }
+        throw Error(ERR_TRANSPORT_READ_FAILED, 0);
+    }
+    *end += rcvd;
+    for (char * p = *begin; p < *end; p++){
+        if (*p == '\n'){
+            *eol = p+1;
+            return true;
+        }
+    }
+    *eol = *end;
+    return false;
+}
+
+class InByMetaSequenceTransport : public InFileTransport {
+    int meta_fd;
+    char path[2048];
+    char buffer[2048];
+    char * begin;
+    char * end;
+public:
+    InByMetaSequenceTransport(const char * meta_filename)
+    : InFileTransport(-1)
+    , begin(this->buffer)
+    , end(this->buffer)
+    {
+        this->meta_fd = ::open(meta_filename, O_RDONLY);
+        char * eol = NULL;
+        if(!readline(this->meta_fd, &this->begin, &this->end, &eol, this->buffer, sizeof(this->buffer))){
+            LOG(LOG_INFO, "InByMetaSequenceTransport recv failed with error %s reading meta file line 0", strerror(errno));
+            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        };
+        this->begin = eol;
+        if(!readline(this->meta_fd, &this->begin, &this->end, &eol, this->buffer, sizeof(this->buffer))){
+            LOG(LOG_INFO, "InByMetaSequenceTransport recv failed with error %s reading meta file line 1", strerror(errno));
+            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        };
+        this->begin = eol;
+        if(!readline(this->meta_fd, &this->begin, &this->end, &eol, this->buffer, sizeof(this->buffer))){
+            LOG(LOG_INFO, "InByMetaSequenceTransport recv failed with error %s reading meta file line 2", strerror(errno));
+            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        };
+        this->begin = eol;
+    }
+
+    ~InByMetaSequenceTransport()
+    {
+        if (this->fd != -1){
+            ::close(this->fd);
+            this->fd = -1;
+        }
+        if (this->meta_fd != -1){
+            ::close(this->meta_fd);
+            this->meta_fd = -1;
+        }
+    }
+
+    TODO("Code below looks insanely complicated for what it is doing. I should probably stop at some point"
+         "and *THINK* about the API that transport objects should really provide."
+         "For instance I strongly suspect that it should be allowed to stop returning only part of the asked datas"
+         "like the file system transport objects. There should also be an easy way to combine several layers of"
+         "transports (using templates ?) and clearly define the properties of objects providing the sources of datas"
+         "(some abstraction above file ?). The current sequences are easy to use, but somewhat limited")
+    using Transport::recv;
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+        size_t remaining_len = len;
+        while (remaining_len > 0){
+            if (this->fd == -1){
+                char * eol = NULL;
+                printf("next wrm from metafile\n");
+                bool res = readline(this->meta_fd, &this->begin, &this->end, &eol, this->buffer, sizeof(this->buffer));
+                if (!res) {
+                    LOG(LOG_INFO, "InByMetaSequenceTransport recv failed with error %s reading meta file", strerror(errno));
+                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                }
+                char *eol2 = strchrnul(this->begin, ',');
+                if (eol2){
+                    memcpy(this->path, this->begin, eol2 - this->begin);
+                    this->path[eol2 - this->begin] = 0;
+                    printf("next wrm is %s\n", this->path);
+                    this->begin = eol;
+                    this->fd = ::open(this->path, O_RDONLY);
+                    if (this->fd == -1){
+                        LOG(LOG_INFO, "InByFilename transport recv failed with error : %s", strerror(errno));
+                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                    }
+                }
+                else {
+                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+                }
+            }
+            char * oldpbuffer = *pbuffer;
+            try {
+                InFileTransport::recv(pbuffer, remaining_len);
+                remaining_len = 0;
+            }
+            catch (const Error & e) {
+                if (e.id == ERR_TRANSPORT_NO_MORE_DATA){
+                    remaining_len -= *pbuffer - oldpbuffer;
+                    this->next();
+                }
+                else {
+                    throw Error(ERR_TRANSPORT_READ_FAILED);
                 }
             };
         }

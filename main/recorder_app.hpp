@@ -101,7 +101,8 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
     timeval end_capture;
     end_capture.tv_sec = end_cap; end_capture.tv_usec = 0;
     
-    InByFilenameTransport in_wrm_trans(input_filename.c_str());
+//    InByFilenameTransport in_wrm_trans(input_filename.c_str());
+    InByMetaSequenceTransport in_wrm_trans(input_filename.c_str());
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
 
     Inifile ini;
