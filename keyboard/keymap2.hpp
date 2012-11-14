@@ -92,15 +92,11 @@ struct Keymap2 {
     KeyLayout_t keylayout_WORK_capslock;
     KeyLayout_t keylayout_WORK_shiftcapslock;
 
-    uint8_t dead_key;
+    uint8_t deadkey;
 
     enum {
-          DEADKEY_NONE
-        , DEADKEY_CIRC
-        , DEADKEY_UML
-        , DEADKEY_GRAVE
-        , DEADKEY_ACUTE
-        , DEADKEY_TILDE
+          DEADKEY_NONE = 0
+        , DEADKEY_FOUND = 1
     };
 
     enum {
@@ -116,12 +112,14 @@ struct Keymap2 {
     typedef struct dk { // Struture holding a deadkey and the rules to apply to available second keys.
          uint32_t   uchar;                            // unicode code point
          uint8_t    extendedKeyCode;                  // scancode + extended bit
-         uint8_t    deadKeyTag;                       // Deadkey tag from enum above
+//         uint8_t    deadKeyTag;                       // Deadkey tag from enum above
          uint8_t    nbSecondKeys;                     // number of second keys available for that deadkey
          dkey_key_t secondKeys[MAX_SECOND_KEYS];      // couples second key/modified key
     } dkey_t;
 
     dkey_t keylayout_WORK_deadkeys[5];
+
+    dkey_t deadkey_pending_def;
 
     uint32_t verbose;
 
@@ -132,7 +130,7 @@ struct Keymap2 {
         , nbuf(0)
         , ibuf_kevent(0)
         , nbuf_kevent(0)
-        , dead_key(DEADKEY_NONE)
+        , deadkey(DEADKEY_NONE)
         , verbose(verbose) {
     //==============================================================================
 
@@ -289,7 +287,7 @@ struct Keymap2 {
                 // if event is a Make
                 if (this->keys_down[extendedKeyCode]){
                     if (this->verbose){
-                        LOG(LOG_INFO, "Event is Make for key: %#x", extendedKeyCode);
+                        LOG(LOG_INFO, "Event is Make for key: Ox%#02x", extendedKeyCode);
                     }
                         const KeyLayout_t * layout = &keylayout_WORK_noshift;
                         this->last_char_key = extendedKeyCode;
@@ -379,7 +377,7 @@ struct Keymap2 {
                         uint8_t sym = map[extendedKeyCode];
                         uint32_t uchar = (*layout)[sym];
                         if (this->verbose){
-                            LOG(LOG_INFO, "uchar=%x", uchar);
+                            LOG(LOG_INFO, "uchar=0x%02x", uchar);
                         }
                         //----------------------------------------------
                         // uchar is in Printable unicode character range
@@ -389,7 +387,7 @@ struct Keymap2 {
                         //           are not actually printable characters and that we don't want to track
                         //  * And not delete (0x7f) nor a dead key (0x5e, 0xa8, 0x60)
                         if (this->verbose){
-                            LOG(LOG_INFO, "nbevent in buffer: %u %u\n", this->nbuf, this->nbuf_kevent);
+                            LOG(LOG_INFO, "nb chars in buffer: %u nb events in buffer %u\n", this->nbuf, this->nbuf_kevent);
                         }
                         if (  (uchar >= 0x20)                            // Not an ASCII Control
                            && (uchar != 0x7F)                            // Not the Backspace ASCII code
@@ -397,38 +395,31 @@ struct Keymap2 {
                            )
                         {
                             if (this->verbose){
-                                LOG(LOG_INFO, "Printable key : uchar=%x", uchar);
+                                LOG(LOG_INFO, "Printable key : uchar=Ox%x02\n", uchar);
                             }
                             // If previous key was a dead key, push a translated unicode char
-                            if (this->dead_key != DEADKEY_NONE){
+                            if (this->deadkey == DEADKEY_FOUND){
                                 if (this->verbose){
-                                    LOG(LOG_INFO, "Dead key : uchar=%x", uchar);
+                                    LOG(LOG_INFO, "Dead key : uchar=0x%02x", uchar);
                                 }
                                 bool deadkeyTranslated = false;
+                                // Search for for uchar to translate in the current DEADKEY entry
+                                for (uint8_t i = 0; i < this->deadkey_pending_def.nbSecondKeys; i++) {
+                                     if (this->deadkey_pending_def.secondKeys[i].secondKey == uchar) {
 
-                                // Search for the current DEADKEY entry in current client keyboard layout
-                                for (uint8_t i = 0; i < MAX_DEADKEYS and keylayout_WORK_deadkeys[i].deadKeyTag != DEADKEY_NONE; i++) {
-                                    if (keylayout_WORK_deadkeys[i].deadKeyTag == this->dead_key) {
-
-                                        // Search for for uchar to translate in the current DEADKEY entry
-                                        for (uint8_t j = 0; j < keylayout_WORK_deadkeys[i].nbSecondKeys; j++) {
-                                            if (keylayout_WORK_deadkeys[i].secondKeys[j].secondKey == uchar) {
-
-                                                // push the translation into keyboard buffer
-                                                this->push(keylayout_WORK_deadkeys[i].secondKeys[j].modifiedKey);
-                                                deadkeyTranslated = true;
-                                                break;
-                                            }
-                                        }
-                                        if (deadkeyTranslated) break;
+                                        // push the translation into keyboard buffer
+                                        this->push(this->deadkey_pending_def.secondKeys[i].modifiedKey);
+                                        deadkeyTranslated = true;
+                                        break;
                                     }
                                 }
-                                // By default, push both active deadkey and unmodified uchar in keyboard buffer
+                                // If that second key is not associated with that deadkey,
+                                // push both deadkey and unmodified second key uchars in keyboard buffer
                                 if (not deadkeyTranslated) {
-                                    this->pushDeadkey();
+                                    this->push(this->deadkey_pending_def.uchar);
                                     this->push(uchar);
                                 }
-                                this->dead_key = DEADKEY_NONE;
+                                this->deadkey = DEADKEY_NONE;
                             }
                             // If previous key wasn't a dead key, simply push
                             else {
@@ -443,23 +434,23 @@ struct Keymap2 {
                         //--------------------------------------------------
                         else {
                             if (this->verbose) {
-                                LOG(LOG_INFO, "pushing event extendedKeyCode=%x", extendedKeyCode);
+                                LOG(LOG_INFO, "pushing event extendedKeyCode=0x%02x", extendedKeyCode);
                             }
 
-                            bool extKeyCodeResolved = false;
                             // Test if the extendedKeyCode is a deadkey in the current keyboard layout
                             for (int i=0; i < MAX_DEADKEYS; i++) {
                                 if (   (keylayout_WORK_deadkeys[i].uchar == uchar)
                                    and (keylayout_WORK_deadkeys[i].extendedKeyCode == extendedKeyCode)
                                    )
                                 {
-                                    this->dead_key = keylayout_WORK_deadkeys[i].deadKeyTag;
-                                    extKeyCodeResolved = true;
+                                    this->deadkey = DEADKEY_FOUND;
+                                    // set the deadkey definition pointer with the current deadkey definition
+                                    this->deadkey_pending_def = keylayout_WORK_deadkeys[i];
                                     break;
                                 }
                             }
 
-                            if (not extKeyCodeResolved) {
+                            if (this->deadkey == DEADKEY_NONE) {
                                 switch (extendedKeyCode){
                                 // LEFT ARROW
                                 case 0xCB:
@@ -550,22 +541,7 @@ struct Keymap2 {
         }
         return resu;
 
-    } // END METHOD : notDeadkey
-
-
-    //==============================================================================
-    void pushDeadkey()
-    //==============================================================================
-    {
-        switch(this->dead_key) {
-        case DEADKEY_CIRC  : push(0x5E); break;
-        case DEADKEY_UML   : push(0xA8); break;
-        case DEADKEY_GRAVE : push(0x60); break;
-        case DEADKEY_ACUTE : push(0xB4); break;
-        case DEADKEY_TILDE : push(0x7E); break;
-        default : break;
-        }
-    } // END METHOD : pushDeadkey
+    } // END METHOD : isDeadkey
 
 
     //==============================================================================
@@ -949,11 +925,11 @@ struct Keymap2 {
                 };
 
                 const dkey_t x040c_deadkeys[5] = {
-                      { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
+                      { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
                 };
                 for(size_t i = 0 ; i < MAX_DEADKEYS ; i++) {
                     keylayout_WORK_deadkeys[i] = x040c_deadkeys[i];
@@ -1067,11 +1043,11 @@ struct Keymap2 {
                 };
 
                 const dkey_t x040c_deadkeys[5] = {
-                      { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
+                      { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
                 };
                 for(size_t i = 0 ; i < MAX_DEADKEYS ; i++) {
                     keylayout_WORK_deadkeys[i] = x040c_deadkeys[i];
@@ -1199,7 +1175,7 @@ struct Keymap2 {
                 };
 
                 const dkey_t x040c_deadkeys[5] = {
-                      { 0x5E, 0x1A, DEADKEY_CIRC,  11, { {'a', 0xE2}, {'A', 0xC2}
+                      { 0x5E, 0x1A, 11, { {'a', 0xE2}, {'A', 0xC2}
                                                        , {'e', 0xEA}, {'E', 0xCA}
                                                        , {'i', 0xEE}, {'I', 0xCE}
                                                        , {'o', 0xF4}, {'O', 0xD4}
@@ -1207,7 +1183,7 @@ struct Keymap2 {
                                                        , {' ', 0x5E}
                                                        }
                       }
-                    , { 0xA8, 0x1A, DEADKEY_UML,   11, { {'a', 0xE4}, {'A', 0xC4}
+                    , { 0xA8, 0x1A, 11, { {'a', 0xE4}, {'A', 0xC4}
                                                        , {'e', 0xEB}, {'E', 0xCB}
                                                        , {'i', 0xEF}, {'I', 0xCF}
                                                        , {'o', 0xF6}, {'O', 0xD6}
@@ -1215,7 +1191,7 @@ struct Keymap2 {
                                                        , {' ', 0xA8}
                                                        }
                       }
-                    , { 0x60, 0x08, DEADKEY_GRAVE, 11, { {'a', 0xE0}, {'A', 0xC0}
+                    , { 0x60, 0x08, 11, { {'a', 0xE0}, {'A', 0xC0}
                                                        , {'e', 0xE8}, {'E', 0xC8}
                                                        , {'i', 0xEC}, {'I', 0xCC}
                                                        , {'o', 0xF2}, {'O', 0xD2}
@@ -1223,13 +1199,13 @@ struct Keymap2 {
                                                        , {' ', 0x60}
                                                        }
                       }
-                    , { 0x7E, 0x03, DEADKEY_TILDE,  7, { {'a', 0xE3}, {'A', 0xC3}
+                    , { 0x7E, 0x03, 7, { {'a', 0xE3}, {'A', 0xC3}
                                                        , {'o', 0xF5}, {'O', 0xD5}
                                                        , {'n', 0xF1}, {'N', 0xD1}
                                                        , {' ', 0x7E}
                                                        }
                       }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
+                    , { 0x00, 0x00, 0, {} }
                 };
                 for(size_t i = 0 ; i < MAX_DEADKEYS ; i++) {
                     keylayout_WORK_deadkeys[i] = x040c_deadkeys[i];
@@ -1343,11 +1319,11 @@ struct Keymap2 {
                 };
 
                 const dkey_t x040c_deadkeys[5] = {
-                      { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
+                      { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
                 };
                 for(size_t i = 0 ; i < MAX_DEADKEYS ; i++) {
                     keylayout_WORK_deadkeys[i] = x040c_deadkeys[i];
@@ -1461,11 +1437,11 @@ struct Keymap2 {
                 };
 
                 const dkey_t x040c_deadkeys[5] = {
-                      { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
+                      { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
                 };
                 for(size_t i = 0 ; i < MAX_DEADKEYS ; i++) {
                     keylayout_WORK_deadkeys[i] = x040c_deadkeys[i];
@@ -1580,11 +1556,11 @@ struct Keymap2 {
                 };
 
                 const dkey_t x040c_deadkeys[5] = {
-                      { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
+                      { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
                 };
                 for(size_t i = 0 ; i < MAX_DEADKEYS ; i++) {
                     keylayout_WORK_deadkeys[i] = x040c_deadkeys[i];
@@ -1698,11 +1674,11 @@ struct Keymap2 {
                 };
 
                 const dkey_t x040c_deadkeys[5] = {
-                      { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
+                      { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
                 };
                 for(size_t i = 0 ; i < MAX_DEADKEYS ; i++) {
                     keylayout_WORK_deadkeys[i] = x040c_deadkeys[i];
@@ -1817,7 +1793,7 @@ struct Keymap2 {
                 };
 
                 const dkey_t x0807_deadkeys[5] = {
-                      { 0x5E, 0x0D, DEADKEY_CIRC,  11, { {'a', 0xE2}, {'A', 0xC2}
+                      { 0x5E, 0x0D, 11, { {'a', 0xE2}, {'A', 0xC2}
                                                        , {'e', 0xEA}, {'E', 0xCA}
                                                        , {'i', 0xEE}, {'I', 0xCE}
                                                        , {'o', 0xF4}, {'O', 0xD4}
@@ -1825,7 +1801,7 @@ struct Keymap2 {
                                                        , {' ', 0x5E}
                                                        }
                       }
-                    , { 0xA8, 0x1B, DEADKEY_UML,   12, { {'a', 0xE4}, {'A', 0xC4}
+                    , { 0xA8, 0x1B, 12, { {'a', 0xE4}, {'A', 0xC4}
                                                        , {'e', 0xEB}, {'E', 0xCB}
                                                        , {'i', 0xEF}, {'I', 0xCF}
                                                        , {'o', 0xF6}, {'O', 0xD6}
@@ -1834,7 +1810,7 @@ struct Keymap2 {
                                                        , {' ', 0xA8}
                                                        }
                       }
-                    , { 0x60, 0x0D, DEADKEY_GRAVE, 11, { {'a', 0xE0}, {'A', 0xC0}
+                    , { 0x60, 0x0D, 11, { {'a', 0xE0}, {'A', 0xC0}
                                                        , {'e', 0xE8}, {'E', 0xC8}
                                                        , {'i', 0xEC}, {'I', 0xCC}
                                                        , {'o', 0xF2}, {'O', 0xD2}
@@ -1842,7 +1818,7 @@ struct Keymap2 {
                                                        , {' ', 0x60}
                                                        }
                       }
-                    , { 0xB4, 0x0C, DEADKEY_ACUTE, 13, { {'a', 0xE1}, {'A', 0xC1}
+                    , { 0xB4, 0x0C, 13, { {'a', 0xE1}, {'A', 0xC1}
                                                        , {'e', 0xE9}, {'E', 0xC9}
                                                        , {'i', 0xED}, {'I', 0xCD}
                                                        , {'o', 0xF3}, {'O', 0xD3}
@@ -1851,7 +1827,7 @@ struct Keymap2 {
                                                        , {' ', 0xB4}
                                                        }
                       }
-                    , { 0x7E, 0x0D, DEADKEY_TILDE,  7, { {'a', 0xE3}, {'A', 0xC3}
+                    , { 0x7E, 0x0D,  7, { {'a', 0xE3}, {'A', 0xC3}
                                                        , {'o', 0xF5}, {'O', 0xD5}
                                                        , {'n', 0xF1}, {'N', 0xD1}
                                                        , {' ', 0x7E}
@@ -1971,11 +1947,11 @@ struct Keymap2 {
                 };
 
                 const dkey_t x040c_deadkeys[5] = {
-                      { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
+                      { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
                 };
                 for(size_t i = 0 ; i < MAX_DEADKEYS ; i++) {
                     keylayout_WORK_deadkeys[i] = x040c_deadkeys[i];
@@ -2090,11 +2066,11 @@ struct Keymap2 {
                 };
 
                 const dkey_t x040c_deadkeys[5] = {
-                      { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
+                      { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
                 };
                 for(size_t i = 0 ; i < MAX_DEADKEYS ; i++) {
                     keylayout_WORK_deadkeys[i] = x040c_deadkeys[i];
@@ -2208,11 +2184,11 @@ struct Keymap2 {
                 };
 
                 const dkey_t x040c_deadkeys[5] = {
-                      { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
+                      { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
                 };
                 for(size_t i = 0 ; i < MAX_DEADKEYS ; i++) {
                     keylayout_WORK_deadkeys[i] = x040c_deadkeys[i];
@@ -2326,11 +2302,11 @@ struct Keymap2 {
                 };
 
                 const dkey_t x040c_deadkeys[5] = {
-                      { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
-                    , { 0x00, 0x00, DEADKEY_NONE,   0, {} }
+                      { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
+                    , { 0x00, 0x00, 0, {} }
                 };
                 for(size_t i = 0 ; i < MAX_DEADKEYS ; i++) {
                     keylayout_WORK_deadkeys[i] = x040c_deadkeys[i];
