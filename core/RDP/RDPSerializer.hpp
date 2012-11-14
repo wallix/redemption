@@ -99,7 +99,6 @@
 #include "stream.hpp"
 #include "rect.hpp"
 #include "colors.hpp"
-#include "meta_file.hpp"
 
 enum {
     TIMESTAMP = 1008,

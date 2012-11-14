@@ -39,7 +39,6 @@
 #include "RDP/RDPSerializer.hpp"
 #include "difftimeval.hpp"
 #include "png.hpp"
-#include "meta_file.hpp"
 
 
 class InChunkedImageTransport : public Transport {
