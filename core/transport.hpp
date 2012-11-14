@@ -1178,11 +1178,11 @@ public:
 
     void get_name(char * const buffer, size_t len, uint32_t count) const {
         if (0 == strcmp(this->format, "path file pid count extension")){
-            snprintf(buffer, len, "%s%s-%u-%i.%s",
+            snprintf(buffer, len, "%s%s-%06u-%i.%s",
             this->prefix, this->filename, this->pid, count, this->extension);
         }
         else if (0 == strcmp(this->format, "path file pid extension")){
-            snprintf(buffer, len, "%s%s-%u.%s",
+            snprintf(buffer, len, "%s%s-%06u.%s",
             this->prefix, this->filename, this->pid, this->extension);
         }
         else {

@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     BOOST_CHECK_EQUAL((unsigned)21280, (unsigned)png_sequence.filesize(0));
     png_sequence.unlink(0);
 
-    BOOST_CHECK_EQUAL((unsigned)499191, (unsigned)wrm_sequence.filesize(0));
+    BOOST_CHECK_EQUAL((unsigned)500675, (unsigned)wrm_sequence.filesize(0));
     wrm_sequence.unlink(0);
     BOOST_CHECK_EQUAL((unsigned)1265693, (unsigned)wrm_sequence.filesize(1));
     wrm_sequence.unlink(1);
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(TestSecondPart)
     png_sequence.unlink(0);
 
     wrm_recorder.flush();
-    BOOST_CHECK_EQUAL((unsigned)73319, (unsigned)wrm_sequence.filesize(0));
+    BOOST_CHECK_EQUAL((unsigned)74803, (unsigned)wrm_sequence.filesize(0));
     wrm_sequence.unlink(0);
     BOOST_CHECK_EQUAL((unsigned)273774, (unsigned)wrm_sequence.filesize(1));
     wrm_sequence.unlink(1);

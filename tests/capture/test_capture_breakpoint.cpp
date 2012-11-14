@@ -33,7 +33,6 @@
 
 BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 {
-    char filename[1024];
     {
         // Timestamps are applied only when flushing
         struct timeval now;
@@ -100,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         BOOST_CHECK_EQUAL((unsigned)3176, (unsigned)capture.png_sequence->filesize(6));
         capture.png_sequence->unlink(6);
 
-        BOOST_CHECK_EQUAL((unsigned)126, (unsigned)capture.wrm_sequence->filesize(0));
+        BOOST_CHECK_EQUAL((unsigned)1610, (unsigned)capture.wrm_sequence->filesize(0));
         capture.wrm_sequence->unlink(0);
         BOOST_CHECK_EQUAL((unsigned)3377, (unsigned)capture.wrm_sequence->filesize(1));
         capture.wrm_sequence->unlink(1);
@@ -111,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
     // from here we do not have access to the file sequence used for the metafile inside capture
     // so we recreate a sequence with the same name. Not really nice, but it will do
     FileSequence meta_seq("path file pid extension", "./", "capture", "mwrm");
-    BOOST_CHECK_EQUAL((unsigned)110, (unsigned)meta_seq.filesize(0));
+    BOOST_CHECK_EQUAL((unsigned)116, (unsigned)meta_seq.filesize(0));
     meta_seq.unlink(0);
 }
 
