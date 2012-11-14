@@ -72,8 +72,8 @@ int recorder_app(int argc, char** argv)
     ("input-file,i", boost::program_options::value(&input_filename), "input base filename (see --input-type)")
 //    ("in", boost::program_options::value(&input_filename), "alias for --input-file")
 //    ("out", boost::program_options::value(&output_filename), "alias for --output-file")
-    ("begin,b", boost::program_options::value(&begin_cap), "begin capture")
-    ("end,e", boost::program_options::value(&end_cap), "end capture")
+    ("begin,b", boost::program_options::value<uint32_t>(&begin_cap), "begin capture")
+    ("end,e", boost::program_options::value<uint32_t>(&end_cap), "end capture")
     ;
 
     boost::program_options::variables_map options;
@@ -97,12 +97,14 @@ int recorder_app(int argc, char** argv)
         exit(-1);
     }
 
+    printf("begin_cap = %u\n", begin_cap);
+    printf("end_cap = %u\n", end_cap);
+
     timeval begin_capture;
     begin_capture.tv_sec = begin_cap; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = end_cap; end_capture.tv_usec = 0;
     
-//    InByFilenameTransport in_wrm_trans(input_filename.c_str());
     InByMetaSequenceTransport in_wrm_trans(input_filename.c_str());
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
 
@@ -149,9 +151,11 @@ int recorder_app(int argc, char** argv)
     }
 
     Capture capture(player.record_now, player.screen_rect.cx, player.screen_rect.cy, path, basename, ini);
+
+TODO("Capture is not a drawable, this is a problem when replaying as it won't get the image chunks. We should change API to make both RDPGraphicDevice and RDPDrawable able to receive image chunks (structures that are not drawables won't do anything with it, that's all. Hence we can't set player using add_consumer(capture) or we won't get image chunks")
     player.add_consumer(capture.drawable);
     player.add_consumer(capture.pnc);
-//    player.add_consumer(capture.psc);
+    player.add_consumer(capture.psc);
 
     player.play();
 
