@@ -52,6 +52,7 @@ static inline int filesize(const char * path)
 
 class Transport {
 public:
+    timeval future;
     uint32_t seqno;
     uint64_t total_received;
     uint64_t last_quantum_received;
@@ -99,6 +100,11 @@ public:
 
     virtual void flush()
     {
+    }
+
+    virtual void timestamp(timeval now)
+    {
+        this->future = now;
     }
 
     virtual bool next()
@@ -1244,7 +1250,6 @@ public:
 
 class OutByFilenameSequenceWithMetaTransport : public OutFileTransport {
 public:
-    timeval future;
     timeval now;
     const FileSequence & meta;
     const FileSequence & sequence;
@@ -1257,6 +1262,7 @@ public:
     , meta(meta)
     , sequence(sequence)
     {
+        this->timestamp(now);
         this->meta.get_name(this->meta_path, sizeof(this->meta_path), 0);
         int mfd = ::creat(this->meta_path, 0777);
         char buffer[2048];
@@ -1527,6 +1533,7 @@ public:
                     memcpy(this->path, this->begin, eol2 - this->begin);
                     this->path[eol2 - this->begin] = 0;
                     this->begin = eol;
+                    printf("opening new source WRM %s\n", this->path);
                     this->fd = ::open(this->path, O_RDONLY);
                     if (this->fd == -1){
                         LOG(LOG_INFO, "InByFilename transport recv failed with error : %s", strerror(errno));

@@ -147,12 +147,10 @@ struct FileToGraphic
 
     BGRPalette palette;
 
-    DataMetaFile data_meta;
-    
     const timeval begin_capture;
     const timeval end_capture;
 
-    FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time = false)
+    FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time)
     : stream(65536), trans(trans),
      // Internal state of orders
     common(RDP::PATBLT, Rect(0, 0, 1, 1)),
@@ -174,7 +172,6 @@ struct FileToGraphic
     meta_ok(false),
     timestamp_ok(false),
     real_time(real_time),
-    data_meta(),
     begin_capture(begin_capture),
     end_capture(end_capture)
     {
@@ -242,8 +239,7 @@ struct FileToGraphic
                 this->chunk_size = header.in_uint32_le();
                 this->remaining_order_count = this->chunk_count = header.in_uint16_le();
 
-                if (this->chunk_type != LAST_IMAGE_CHUNK 
-                && this->chunk_type != PARTIAL_IMAGE_CHUNK){
+                if (this->chunk_type != LAST_IMAGE_CHUNK && this->chunk_type != PARTIAL_IMAGE_CHUNK){
                     if (this->chunk_size > 65536){
                         return false;
                     }
@@ -403,12 +399,13 @@ struct FileToGraphic
             break;
             case TIMESTAMP:
             {
+                LOG(LOG_INFO, "TIMESTAMP %u\n", (unsigned)this->record_now.tv_sec);
+
                 const uint64_t ucoeff = 1000000;
                 uint64_t last_movie_usec = this->record_now.tv_sec * ucoeff + this->record_now.tv_usec;
                 uint64_t movie_usec = this->stream.in_uint64_le();
                 this->record_now.tv_sec  = movie_usec / ucoeff; 
                 this->record_now.tv_usec = movie_usec % ucoeff;
-                printf("TIMESTAMP %u\n", (unsigned)this->record_now.tv_sec);
 
                 if (!this->timestamp_ok){
                     if (this->real_time) {
@@ -574,9 +571,8 @@ struct FileToGraphic
             case LAST_IMAGE_CHUNK:
             case PARTIAL_IMAGE_CHUNK:
             {
-                InChunkedImageTransport chunk_trans(this->chunk_type, this->chunk_size, this->trans);
-
                 if (this->nbdrawables){
+                    InChunkedImageTransport chunk_trans(this->chunk_type, this->chunk_size, this->trans);
                     ::transport_read_png24(&chunk_trans, this->drawables[0]->drawable.data,
                                  this->drawables[0]->drawable.width, 
                                  this->drawables[0]->drawable.height,
@@ -592,8 +588,9 @@ struct FileToGraphic
                 }
                 else {
                     REDOC("If no drawable is available ignore images chunks");
-                    this->stream.init(this->chunk_size - HEADER_SIZE);
+                    this->stream.reset();
                     this->trans->recv(&this->stream.end, this->chunk_size - HEADER_SIZE);
+                    this->stream.p = this->stream.end;
                 }
                 this->remaining_order_count = 0;
             }

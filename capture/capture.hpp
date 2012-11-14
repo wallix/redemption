@@ -83,7 +83,6 @@ public:
 
     void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
-        this->wrm_trans->future = now;
         this->psc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
         this->pnc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
     }

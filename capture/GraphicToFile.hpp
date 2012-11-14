@@ -160,6 +160,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         if (old_timer < current_timer){
             this->flush();
             this->timer = now;
+            this->trans->timestamp(now);
         }
     }
 

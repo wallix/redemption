@@ -103,7 +103,7 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
     
 //    InByFilenameTransport in_wrm_trans(input_filename.c_str());
     InByMetaSequenceTransport in_wrm_trans(input_filename.c_str());
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
 
     Inifile ini;
     ini.globals.debug.primary_orders = 0;
@@ -134,7 +134,9 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
     }
 
     Capture capture(player.record_now, player.screen_rect.cx, player.screen_rect.cy, path, basename, ini);
-    player.add_consumer(&capture);
+    player.add_consumer(capture.pnc);
+//    player.add_consumer(capture.psc);
+
     player.play();
 
     return 0;

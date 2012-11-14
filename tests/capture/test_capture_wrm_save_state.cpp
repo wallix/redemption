@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
 
     FileSequence sequence("path file pid count extension", "./", "TestReloadSaveCache", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
 
     FileSequence sequence("path file pid count extension", "./", "TestReloadOrderStates", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
@@ -307,7 +307,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
 
     FileSequence sequence("path file pid count extension", "./", "TestContinuationOrderStates", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);

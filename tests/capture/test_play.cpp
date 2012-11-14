@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
 
     Inifile ini;
     ini.globals.debug.primary_orders = 0;
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TestSecondPart)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
 
     Inifile ini;
     ini.globals.debug.primary_orders = 0;
