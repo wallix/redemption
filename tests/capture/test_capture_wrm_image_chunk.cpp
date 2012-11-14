@@ -74,7 +74,8 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
-    GraphicToFile consumer(now, &trans, ini, scr.cx, scr.cy, 24, bmp_cache);
+    RDPDrawable drawable(scr.cx, scr.cy, true);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, &drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
@@ -130,7 +131,8 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
-    GraphicToFile consumer(now, &trans, ini, scr.cx, scr.cy, 24, bmp_cache);
+    RDPDrawable drawable(scr.cx, scr.cy, true);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, &drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
@@ -200,7 +202,8 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
-    GraphicToFile consumer(now, &trans, ini, scr.cx, scr.cy, 24, bmp_cache);
+    RDPDrawable drawable(scr.cx, scr.cy, true);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, &drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
@@ -352,7 +355,11 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
         ;
 
     GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);   
-    FileToGraphic player(&in_wrm_trans);
+    timeval begin_capture;
+    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
+    timeval end_capture;
+    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
 
     FileSequence sequence("path file pid count extension", "./", "testimg", "png");
 
@@ -412,7 +419,11 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
         ;
 
     GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);   
-    FileToGraphic player(&in_wrm_trans);
+    timeval begin_capture;
+    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
+    timeval end_capture;
+    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
     FileSequence sequence("path file pid count extension", "./", "testimg", "png");
 
     OutByFilenameSequenceTransport out_png_trans(sequence);
@@ -479,7 +490,11 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
        ;
 
     GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);   
-    FileToGraphic player(&in_wrm_trans);
+    timeval begin_capture;
+    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
+    timeval end_capture;
+    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
     FileSequence sequence("path file pid count extension", "./", "testimg", "png");
 
     OutByFilenameSequenceTransport out_png_trans(sequence);

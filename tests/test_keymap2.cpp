@@ -202,9 +202,9 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
     BOOST_CHECK_EQUAL(true, keymap.is_ctrl_pressed());
     keymap.event(0x0100, 0x38); // ALT Right
     BOOST_CHECK_EQUAL(true, keymap.is_right_alt_pressed());
-    keymap.event(0x0000, 0x03); // Tilde
+    keymap.event(0x0000, 0x04); // Sharp
     BOOST_CHECK_EQUAL(1, keymap.nb_char_available());
-    BOOST_CHECK_EQUAL('~', keymap.get_char());
+    BOOST_CHECK_EQUAL('#', keymap.get_char());
 
     keymap.event(0xC000, 0x03); // Tilde
     keymap.event(0xC100, 0x38); // ALT Right
@@ -394,7 +394,7 @@ BOOST_AUTO_TEST_CASE(TestKeymapBuffer)
     keymap.event(0xc000, 0x10); // up
 
     keymap.event(0x0100, 0x35); // '/' on keypad
-    BOOST_CHECK_EQUAL('/', keymap.top_char());
+    BOOST_CHECK_EQUAL('a', keymap.top_char());
     BOOST_CHECK_EQUAL(2, keymap.nb_char_available());
     keymap.event(0xc100, 0x35); // '/' on keypad
 
@@ -415,7 +415,7 @@ BOOST_AUTO_TEST_CASE(TestKeymapBuffer)
     for(size_t i = 10; i < 20 ; i++){
         keymap.event(0, 0x11);
         BOOST_CHECK_EQUAL(i+1, keymap.nb_char_available());
-        BOOST_CHECK_EQUAL('z', keymap.top_char());
+        BOOST_CHECK_EQUAL('a', keymap.top_char());
         keymap.event(0xc000, 0x11); // up
     }
 

@@ -36,7 +36,11 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 {
     const char * input_filename = "./tests/fixtures/sample0.wrm";
     InByFilenameTransport in_wrm_trans(input_filename);
-    FileToGraphic player(&in_wrm_trans);
+    timeval begin_capture;
+    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
+    timeval end_capture;
+    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
 
     Inifile ini;
     ini.globals.debug.primary_orders = 0;
@@ -63,12 +67,13 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
         player.bmp_cache->big_entries,
         player.bmp_cache->big_size);
 
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, true);
     NativeCapture wrm_recorder(
         player.record_now,
         out_wrm_trans,
         player.screen_rect.cx,
         player.screen_rect.cy,
-        bmp_cache, ini);
+        bmp_cache, &drawable, ini);
 
     wrm_recorder.update_config(ini);
     player.add_consumer(&wrm_recorder);
@@ -95,7 +100,11 @@ BOOST_AUTO_TEST_CASE(TestSecondPart)
 {
     const char * input_filename = "./tests/fixtures/sample1.wrm";
     InByFilenameTransport in_wrm_trans(input_filename);
-    FileToGraphic player(&in_wrm_trans);
+    timeval begin_capture;
+    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
+    timeval end_capture;
+    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
 
     Inifile ini;
     ini.globals.debug.primary_orders = 0;
@@ -122,12 +131,13 @@ BOOST_AUTO_TEST_CASE(TestSecondPart)
         player.bmp_cache->big_entries,
         player.bmp_cache->big_size);
 
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, true);
     NativeCapture wrm_recorder(
         player.record_now,
         out_wrm_trans,
         player.screen_rect.cx,
         player.screen_rect.cy,
-        bmp_cache, ini);
+        bmp_cache, &drawable, ini);
 
     wrm_recorder.update_config(ini);
     player.add_consumer(&wrm_recorder);

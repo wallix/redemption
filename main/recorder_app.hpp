@@ -60,20 +60,20 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
 
     std::string input_filename;
     std::string output_filename;
+    uint32_t begin_cap = 0;
+    uint32_t end_cap = 0;
 
     boost::program_options::options_description desc("Options");
     desc.add_options()
     ("help,h", "produce help message")
     ("version,v", "show software version")
-    ("output-file,o", po::value(&output_filename), "output base filename (see --output-type)")
-    ("input-file,i", po::value(&input_filename), "input base filename (see --input-type)")
-    ("in", po::value(&input_filename), "alias for --input-file")
-    ("in", po::value(&output_filename), "alias for --output-file")
+    ("output-file,o", boost::program_options::value(&output_filename), "output base filename (see --output-type)")
+    ("input-file,i", boost::program_options::value(&input_filename), "input base filename (see --input-type)")
+//    ("in", boost::program_options::value(&input_filename), "alias for --input-file")
+//    ("out", boost::program_options::value(&output_filename), "alias for --output-file")
+    ("begin,b", boost::program_options::value(&begin_cap), "begin capture")
+    ("end,e", boost::program_options::value(&end_cap), "end capture")
     ;
-
-//    boost::program_options::positional_options_description p;
-//    p.add("input-file", -2);
-//    p.add("input-file", -1);
 
     boost::program_options::variables_map options;
     boost::program_options::store(
@@ -84,8 +84,25 @@ int recorder_app(WrmRecorderOption& opt, int argc, char** argv, RecorderAction* 
     );
     boost::program_options::notify(options);
 
+    if (input_filename.c_str()[0] == 0){
+        cout << desc << endl;
+        printf("Missing input filename\n");
+        exit(-1);
+    }
+
+    if (output_filename.c_str()[0] == 0){
+        printf("Missing output filename\n");
+        cout << desc << endl;
+        exit(-1);
+    }
+
+    timeval begin_capture;
+    begin_capture.tv_sec = begin_cap; begin_capture.tv_usec = 0;
+    timeval end_capture;
+    end_capture.tv_sec = end_cap; end_capture.tv_usec = 0;
+    
     InByFilenameTransport in_wrm_trans(input_filename.c_str());
-    FileToGraphic player(&in_wrm_trans);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
 
     Inifile ini;
     ini.globals.debug.primary_orders = 0;
