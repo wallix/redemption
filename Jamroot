@@ -41,6 +41,7 @@ project redemption
     <include>acl
     <include>capture
     <include>recorder
+    <include>keyboard
     <include>/usr/include
     <conditional>@defines
 #    <cxxflags>-pedantic
@@ -58,7 +59,7 @@ alias instexe : install-bin install-test ;
 alias install : install-bin install-etc install-share ;
 
 install install-bin
-    : rdpproxy redrec 
+    : rdpproxy redrec
     : <install-type>EXE <install-dependencies>on
     : <location>/usr/local/bin
     ;
@@ -122,7 +123,7 @@ exe rdpproxy
         png
 
         libboost_program_options
-        
+
     :
         <link>static
     ;
