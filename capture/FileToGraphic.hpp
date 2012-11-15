@@ -398,8 +398,6 @@ struct FileToGraphic
             break;
             case TIMESTAMP:
             {
-                LOG(LOG_INFO, "TIMESTAMP %u\n", (unsigned)this->record_now.tv_sec);
-
                 const uint64_t ucoeff = 1000000;
                 uint64_t last_movie_usec = this->record_now.tv_sec * ucoeff + this->record_now.tv_usec;
                 uint64_t movie_usec = this->stream.in_uint64_le();
@@ -407,16 +405,18 @@ struct FileToGraphic
                 this->record_now.tv_usec = movie_usec % ucoeff;
 
                 if (!this->timestamp_ok){
-                    if (this->real_time) {
+                   if (this->real_time) {
                         gettimeofday(&this->synctime_now, 0);
                     }
                     else {
                         this->synctime_now = this->record_now;
                     }
                     this->timestamp_ok = true;
+                    LOG(LOG_INFO, "replay TIMESTAMP (first timestamp) = %u\n", (unsigned)this->record_now.tv_sec);
                 }
                 else {
-                    if (this->real_time){
+                    LOG(LOG_INFO, "replay TIMESTAMP = %u\n", (unsigned)this->record_now.tv_sec);
+                   if (this->real_time){
                         struct timeval now;
                         gettimeofday(&now, 0);
                         uint64_t elapsed = difftimeval(now, this->synctime_now);
@@ -626,8 +626,8 @@ struct FileToGraphic
                 }
             }
             if (end_capture.tv_sec 
-            && ((end_capture.tv_sec > this->record_now.tv_sec)
-               || (begin_capture.tv_sec == this->record_now.tv_sec && begin_capture.tv_usec > this->record_now.tv_usec))){
+            && ((end_capture.tv_sec < this->record_now.tv_sec)
+               || ((begin_capture.tv_sec == this->record_now.tv_sec) && (begin_capture.tv_usec < this->record_now.tv_usec)))){
                 break;
             }
         }
