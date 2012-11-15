@@ -99,5 +99,13 @@ BOOST_AUTO_TEST_CASE(TestParseUsername)
     BOOST_CHECK_EQUAL("user12",    mc.get(STRAUTHID_AUTH_USER));
 
 
+    // TEST 6 (3 separators with an @ in wabuser)
+    char username_6[256] = "administrateur@qa@devwin1:RDP_1:administrateur@qa";
+    mc.parse_username(username_6);
+
+    BOOST_CHECK_EQUAL("administrateur@qa", mc.get(STRAUTHID_TARGET_USER));
+    BOOST_CHECK_EQUAL("devwin1",    mc.get(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK_EQUAL("RDP_1",     mc.get(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK_EQUAL("administrateur@qa",    mc.get(STRAUTHID_AUTH_USER));
 
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
