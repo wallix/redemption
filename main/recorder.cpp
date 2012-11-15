@@ -25,19 +25,20 @@
 
 int main(int argc, char** argv)
 {
-    WrmRecorderOption opt;
-    ToPngAdapter to_png(opt);
-    ToWrmAdapter to_wrm(opt);
-    ToPngListAdapter to_png_list(opt);
+//    WrmRecorderOption opt;
+//    ToPngAdapter to_png(opt);
+//    ToWrmAdapter to_wrm(opt);
+//    ToPngListAdapter to_png_list(opt);
 
-    RecorderAction recorder_actions[] = {
-        RecorderAction("png", &to_png),
-        RecorderAction("wrm", &to_wrm),
-        RecorderAction("png.list", &to_png_list),
-    };
+//    RecorderAction recorder_actions[] = {
+//        RecorderAction("png", &to_png),
+//        RecorderAction("wrm", &to_wrm),
+//        RecorderAction("png.list", &to_png_list),
+//    };
 
     printf("running redrec\n");
 
-    return recorder_app(opt, argc, argv, recorder_actions,
-                        sizeof(recorder_actions) / sizeof(recorder_actions[0]));
+    return recorder_app(argc, argv);
+//    , recorder_actions,
+//                        sizeof(recorder_actions) / sizeof(recorder_actions[0]));
 }

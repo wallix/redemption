@@ -36,6 +36,7 @@
 #include <algorithm>
 #include <sys/un.h>
 
+#undef SHARE_PATH
 #define SHARE_PATH "./tests/fixtures"
 
 #include "constants.hpp"

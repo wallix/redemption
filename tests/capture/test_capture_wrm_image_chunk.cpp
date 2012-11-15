@@ -43,7 +43,15 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
                "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
-               
+
+// Initial black PNG image               
+/* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
+/* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
+/* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
+/* 0020 */ "\xb1\x00\x00\x00\x0f\x49\x44\x41\x54\x28\x91\x63\x60\x18\x05\xa3" //.....IDAT(.c`...
+/* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
+/* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
+    
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
     /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
@@ -92,6 +100,15 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
                "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
+
+// Initial black PNG image               
+/* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
+/* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
+/* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
+/* 0020 */ "\xb1\x00\x00\x00\x0f\x49\x44\x41\x54\x28\x91\x63\x60\x18\x05\xa3" //.....IDAT(.c`...
+/* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
+/* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
+
                
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
@@ -155,6 +172,14 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
                "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
+
+// Initial black PNG image               
+/* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
+/* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
+/* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
+/* 0020 */ "\xb1\x00\x00\x00\x0f\x49\x44\x41\x54\x28\x91\x63\x60\x18\x05\xa3" //.....IDAT(.c`...
+/* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
+/* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
                
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
@@ -321,6 +346,13 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
                "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24 PAD: 2 bytes
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
+// Initial black PNG image               
+/* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
+/* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
+/* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
+/* 0020 */ "\xb1\x00\x00\x00\x0f\x49\x44\x41\x54\x28\x91\x63\x60\x18\x05\xa3" //.....IDAT(.c`...
+/* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
+/* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
 
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
@@ -359,7 +391,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
 
     FileSequence sequence("path file pid count extension", "./", "testimg", "png");
 
@@ -384,6 +416,15 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
                "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
+// Initial black PNG image               
+/* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
+/* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
+/* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
+/* 0020 */ "\xb1\x00\x00\x00\x0f\x49\x44\x41\x54\x28\x91\x63\x60\x18\x05\xa3" //.....IDAT(.c`...
+/* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
+/* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
+
+
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
@@ -423,7 +464,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
     FileSequence sequence("path file pid count extension", "./", "testimg", "png");
 
     OutByFilenameSequenceTransport out_png_trans(sequence);
@@ -454,6 +495,14 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
                "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
+
+// Initial black PNG image               
+/* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
+/* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
+/* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
+/* 0020 */ "\xb1\x00\x00\x00\x0f\x49\x44\x41\x54\x28\x91\x63\x60\x18\x05\xa3" //.....IDAT(.c`...
+/* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
+/* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
 
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
@@ -494,7 +543,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
     FileSequence sequence("path file pid count extension", "./", "testimg", "png");
 
     OutByFilenameSequenceTransport out_png_trans(sequence);

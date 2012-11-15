@@ -27,7 +27,6 @@
 #include "transport.hpp"
 #include "FileToGraphic.hpp"
 #include "RDP/RDPSerializer.hpp"
-#include "meta_file.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "bitmap.hpp"
 #include "stream.hpp"

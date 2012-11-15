@@ -80,7 +80,6 @@ public:
     , recorder(now, &trans, width, height, 24, bmp_cache, drawable, ini)
     , nb_file(0)
     {
-        LOG(LOG_INFO, "Start Of NativeCapture");
         // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
         this->start_native_capture = now;
         this->frame_interval = 40;
@@ -103,13 +102,11 @@ public:
             // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
             this->frame_interval = ini.globals.frame_interval;
             this->inter_frame_interval_native_capture       =  this->frame_interval * 10000; // 1 000 000 us is 1 sec
-            LOG(LOG_INFO, "updated native recording configuration frame_interval=%u", this->frame_interval);
         }
 
         if (ini.globals.break_interval != this->break_interval){
             this->break_interval = ini.globals.break_interval; // break interval is in s, default value 1 break every 10 minutes
             this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
-            LOG(LOG_INFO, "updated native recording configuration break_interval=%u", this->break_interval);
         }
     }
         

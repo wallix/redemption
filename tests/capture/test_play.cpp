@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
 
     Inifile ini;
     ini.globals.debug.primary_orders = 0;
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     BOOST_CHECK_EQUAL((unsigned)21280, (unsigned)png_sequence.filesize(0));
     png_sequence.unlink(0);
 
-    BOOST_CHECK_EQUAL((unsigned)499191, (unsigned)wrm_sequence.filesize(0));
+    BOOST_CHECK_EQUAL((unsigned)500675, (unsigned)wrm_sequence.filesize(0));
     wrm_sequence.unlink(0);
     BOOST_CHECK_EQUAL((unsigned)1265693, (unsigned)wrm_sequence.filesize(1));
     wrm_sequence.unlink(1);
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TestSecondPart)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
 
     Inifile ini;
     ini.globals.debug.primary_orders = 0;
@@ -151,10 +151,12 @@ BOOST_AUTO_TEST_CASE(TestSecondPart)
     png_sequence.unlink(0);
 
     wrm_recorder.flush();
-    BOOST_CHECK_EQUAL((unsigned)73319, (unsigned)wrm_sequence.filesize(0));
+    BOOST_CHECK_EQUAL((unsigned)74803, (unsigned)wrm_sequence.filesize(0));
     wrm_sequence.unlink(0);
     BOOST_CHECK_EQUAL((unsigned)273774, (unsigned)wrm_sequence.filesize(1));
     wrm_sequence.unlink(1);
     BOOST_CHECK_EQUAL((unsigned)185108, (unsigned)wrm_sequence.filesize(2));
     wrm_sequence.unlink(2);
 }
+
+TODO("need to add test for controlled replay between begin_time and end_time")

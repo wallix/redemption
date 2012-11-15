@@ -268,7 +268,7 @@ class SessionManager {
         const char * protocol = this->context.get(STRAUTHID_TARGET_PROTOCOL);
         if (this->internal_domain){
             char * target = this->context.get(STRAUTHID_TARGET_DEVICE);
-            if (0 == strncmp(target, "wabautotest", 11)){
+            if (0 == strncmp(target, "autotest", 8)){
                 protocol = "INTERNAL";
             }
         }
@@ -303,15 +303,15 @@ class SessionManager {
                 }
                 this->context.nextmod = ModContext::INTERNAL_BOUNCER2;
             }
-            else if (0 == strncmp(target, "autotest", 11)){
+            else if (0 == strncmp(target, "autotest", 8)){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL test");
                 }
                 char * user = this->context.get(STRAUTHID_TARGET_USER);
                 size_t len_user = strlen(user);
                 strcpy(this->context.movie, user);
-                if (0 != strcmp(".wrm", user + len_user - 4)){
-                    strcpy(this->context.movie + len_user, ".wrm");
+                if (0 != strcmp(".mwrm", user + len_user - 5)){
+                    strcpy(this->context.movie + len_user, ".mwrm");
                 }
                 this->context.nextmod = ModContext::INTERNAL_TEST;
             }

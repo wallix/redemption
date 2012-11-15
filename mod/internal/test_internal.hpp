@@ -72,12 +72,7 @@ struct test_internal_mod : public internal_mod {
     virtual BackEvent_t draw_event()
     {
         this->event.reset();
-        int fd = ::open(this->movie, O_RDONLY);
-        if(fd <= 0){
-            printf("failed to open replay file %s\n", this->movie);
-        }
-        
-        InFileTransport in_trans(fd);
+        InByMetaSequenceTransport in_trans(this->movie);
         timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
         timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
         FileToGraphic reader(&in_trans, begin_capture, end_capture, true);

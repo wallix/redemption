@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     consumer.snapshot(now, 10, 10, true, false);
     ::close(trans.fd);
     
-    BOOST_CHECK_EQUAL((unsigned)60, (unsigned)sequence.filesize(0));
+    BOOST_CHECK_EQUAL((unsigned)1544, (unsigned)sequence.filesize(0));
     sequence.unlink(0);
     BOOST_CHECK_EQUAL((unsigned)3254, (unsigned)sequence.filesize(1));
     sequence.unlink(1);

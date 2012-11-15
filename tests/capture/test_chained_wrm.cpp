@@ -47,17 +47,17 @@ BOOST_AUTO_TEST_CASE(TestChainedMWRM)
         "800 600\n",
         "0\n",
         "\n",
-        "./tests/fixtures/sample0.wrm, 1352304810 1352304870\n",
-        "./tests/fixtures/sample1.wrm, 1352304870 1352304930\n",
-        "./tests/fixtures/sample2.wrm, 1352304930 1352304990\n",
+        "./tests/fixtures/sample0.wrm, 1352304810, 1352304870\n",
+        "./tests/fixtures/sample1.wrm, 1352304870, 1352304930\n",
+        "./tests/fixtures/sample2.wrm, 1352304930, 1352304990\n",
     };
     const size_t expected_len[] = {
         8,
         2,
         1,
-        52,
-        52,
-        52,
+        53,
+        53,
+        53,
     };
     const bool has_eol[] = {
         true,
@@ -97,22 +97,22 @@ BOOST_AUTO_TEST_CASE(TestChainedMWRMShortBuffer)
         "0\n",
         "\n",
         "./tests/fixtures/sample0.wrm, ",
-        "1352304810 1352304870\n",
+        "1352304810, 1352304870\n",
         "./tests/fixtures/sample1.wrm, ",
-        "1352304870 1352304930\n",
+        "1352304870, 1352304930\n",
         "./tests/fixtures/sample2.wrm, ",
-        "1352304930 1352304990\n",
+        "1352304930, 1352304990\n",
     };
     const size_t expected_len[] = {
         8,
         2,
         1,
         30,
-        22,
+        23,
         30,
-        22,
+        23,
         30,
-        22
+        23
     };
     const bool has_eol[] = {
         true,
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransport)
         OutByFilenameSequenceTransport setup_wrm(parts);
         for (size_t i = 0 ; i < 10 ; i++){
             char buffer[128];
-            sprintf(buffer, "%lu", i*3);
+            sprintf(buffer, "%u", (unsigned)(i*3));
             setup_wrm.send(buffer, strlen(buffer));
             setup_wrm.next();
         }
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportExactPartRead)
         OutByFilenameSequenceTransport setup_wrm(parts);
         for (size_t i = 0 ; i < 10 ; i++){
             char buffer[128];
-            sprintf(buffer, "%lu", i*3);
+            sprintf(buffer, "%u", (unsigned)(i*3));
             setup_wrm.send(buffer, strlen(buffer));
             setup_wrm.next();
         }
@@ -186,16 +186,39 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportExactPartRead)
 
     // This is what we are actually testing, chaining of several files content
     InByFilenameSequenceTransport wrm_trans1(parts);
-    char buffer[1024];
+    char buffer[1024] = {};
     char * pbuffer = buffer;
 
+    bool got_exception = false;
     try {
         wrm_trans1.recv(&pbuffer, 1);
-//        wrm_trans1.recv(&pbuffer, 1);
+        BOOST_CHECK(0 == strcmp(buffer, "0"));
+        wrm_trans1.recv(&pbuffer, 1);
+        BOOST_CHECK(0 == strcmp(buffer, "03"));
+        wrm_trans1.recv(&pbuffer, 1);
+        BOOST_CHECK(0 == strcmp(buffer, "036"));
+        wrm_trans1.recv(&pbuffer, 1);
+        BOOST_CHECK(0 == strcmp(buffer, "0369"));
+        wrm_trans1.recv(&pbuffer, 2);
+        BOOST_CHECK(0 == strcmp(buffer, "036912"));
+        wrm_trans1.recv(&pbuffer, 2);
+        BOOST_CHECK(0 == strcmp(buffer, "03691215"));
+        wrm_trans1.recv(&pbuffer, 2);
+        BOOST_CHECK(0 == strcmp(buffer, "0369121518"));
+        wrm_trans1.recv(&pbuffer, 2);
+        BOOST_CHECK(0 == strcmp(buffer, "036912151821"));
+        wrm_trans1.recv(&pbuffer, 2);
+        BOOST_CHECK(0 == strcmp(buffer, "03691215182124"));
+        wrm_trans1.recv(&pbuffer, 2);
+        BOOST_CHECK(0 == strcmp(buffer, "0369121518212427"));
+        wrm_trans1.recv(&pbuffer, 1);
     } catch (const Error & e) {
-        TODO("Is it the right exception ? This one occurs because at some point we do not have another file to provide in the sequence from which to get more data");
         BOOST_CHECK_EQUAL((unsigned)ERR_TRANSPORT_READ_FAILED, (unsigned)e.id);
+        got_exception = true;
     };
+
+    BOOST_CHECK(0 == strcmp(buffer, "0369121518212427"));
+    BOOST_CHECK(got_exception);
 
     // cleanup after tests
     for (size_t i = 0 ; i < 10 ; i++){
@@ -212,7 +235,6 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM)
     size_t total = 0;
     try {
         for (size_t i = 0; i < 221 ; i++){
-//            printf("i=%u\n", (unsigned)i);
             pbuffer = buffer;
             wrm_trans.recv(&pbuffer, sizeof(buffer));
             total += pbuffer - buffer;
