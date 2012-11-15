@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransport)
         OutByFilenameSequenceTransport setup_wrm(parts);
         for (size_t i = 0 ; i < 10 ; i++){
             char buffer[128];
-            sprintf(buffer, "%lu", i*3);
+            sprintf(buffer, "%u", (unsigned)(i*3));
             setup_wrm.send(buffer, strlen(buffer));
             setup_wrm.next();
         }
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportExactPartRead)
         OutByFilenameSequenceTransport setup_wrm(parts);
         for (size_t i = 0 ; i < 10 ; i++){
             char buffer[128];
-            sprintf(buffer, "%lu", i*3);
+            sprintf(buffer, "%u", (unsigned)(i*3));
             setup_wrm.send(buffer, strlen(buffer));
             setup_wrm.next();
         }
