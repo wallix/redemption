@@ -28,6 +28,9 @@ TODO("Capture is not a drawable, this is a problem when replaying as it won't ge
 class Capture : public RDPGraphicDevice
 {
 public:
+    const bool capture_wrm;
+    const bool capture_drawable;
+    const bool capture_png;
     FileSequence * meta_sequence;
     FileSequence * wrm_sequence;
     FileSequence * png_sequence;
@@ -40,8 +43,12 @@ public:
     RDPDrawable * drawable;
     NativeCapture * pnc;
     
-    Capture(const timeval & now, int width, int height, const char * path, const char * basename, const Inifile & ini) 
-      : meta_sequence(NULL)
+    TODO("capture_wrm flag should be changed to some configuration parameter in inifile")
+    Capture(const timeval & now, int width, int height, const char * path, const char * basename, bool capture_wrm, const Inifile & ini) 
+      : capture_wrm(capture_wrm)
+      , capture_drawable(capture_wrm)
+      , capture_png(ini.globals.png_limit > 0)
+      , meta_sequence(NULL)
       , wrm_sequence(NULL)
       , png_sequence(NULL)
       , png_trans(NULL)
@@ -51,17 +58,29 @@ public:
       , drawable(NULL)
       , pnc(NULL)
     {
-        this->meta_sequence = new FileSequence("path file pid extension", path, basename, "mwrm");
-        this->wrm_sequence = new FileSequence("path file pid count extension", path, basename, "wrm");
-        this->png_sequence = new FileSequence("path file pid count extension", path, basename, "png");
+    
+        if (this->capture_wrm){
+            this->meta_sequence = new FileSequence("path file pid extension", path, basename, "mwrm");
+            this->wrm_sequence = new FileSequence("path file pid count extension", path, basename, "wrm");
+        }
 
-        this->png_trans = new OutByFilenameSequenceTransport(*this->png_sequence);
-        this->psc = new StaticCapture(now, *this->png_trans, *this->png_sequence, width, height, ini);
+        TODO("we could probably use the same drawable for png and wrm (and other targets)")
 
-        this->wrm_trans = new OutByFilenameSequenceWithMetaTransport(*this->meta_sequence, now, width, height, *this->wrm_sequence);
-        this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288); 
-        this->drawable = new RDPDrawable(width, height, true);
-        this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
+        if (this->capture_png){
+            this->png_sequence = new FileSequence("path file pid count extension", path, basename, "png");
+            this->png_trans = new OutByFilenameSequenceTransport(*this->png_sequence);
+            this->psc = new StaticCapture(now, *this->png_trans, *this->png_sequence, width, height, ini);
+        }
+
+        if (this->capture_drawable){
+            this->drawable = new RDPDrawable(width, height, true);
+        }
+
+        if (this->capture_wrm){
+            this->wrm_trans = new OutByFilenameSequenceWithMetaTransport(*this->meta_sequence, now, width, height, *this->wrm_sequence);
+            this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288); 
+            this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
+        }
    }
 
     ~Capture(){
@@ -78,71 +97,123 @@ public:
     }
     
     void update_config(const Inifile & ini){
-        this->psc->update_config(ini);
-        this->pnc->update_config(ini);
+        if (this->capture_png){ 
+            this->psc->update_config(ini);
+        }
+        if (this->capture_wrm){
+            this->pnc->update_config(ini);
+        }
     }
 
     void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
-        this->psc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
-        this->drawable->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
-        this->pnc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
+        if (this->capture_png){ 
+            this->psc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
+        }
+        if (this->capture_drawable){
+            this->drawable->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
+        }
+        if (this->capture_wrm){
+            this->pnc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
+        }
     }
 
     void flush()
     {
-        this->psc->flush();
-        this->drawable->flush();
-        this->pnc->flush();
+        if (this->capture_png){ 
+            this->psc->flush();
+        }
+        if (this->capture_drawable){
+            this->drawable->flush();
+        }
+        if (this->capture_wrm){
+            this->pnc->flush();
+        }
     }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
-        this->psc->draw(cmd, clip);
-        this->drawable->draw(cmd, clip);
-        this->pnc->draw(cmd, clip);
+        if (this->capture_png){ 
+            this->psc->draw(cmd, clip);
+        }
+        if (this->capture_drawable){
+            this->drawable->draw(cmd, clip);
+        }
+        if (this->capture_wrm){
+            this->pnc->draw(cmd, clip);
+        }
     }
 
     void draw(const RDPDestBlt & cmd, const Rect &clip)
     {
-        this->psc->draw(cmd, clip);
-        this->drawable->draw(cmd, clip);
-        this->pnc->draw(cmd, clip);
+        if (this->capture_png){ 
+            this->psc->draw(cmd, clip);
+        }
+        if (this->capture_drawable){
+            this->drawable->draw(cmd, clip);
+        }
+        if (this->capture_wrm){
+            this->pnc->draw(cmd, clip);
+        }
     }
 
     void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
-        this->psc->draw(cmd, clip);
-        this->drawable->draw(cmd, clip);
-        this->pnc->draw(cmd, clip);
+        if (this->capture_png){ 
+            this->psc->draw(cmd, clip);
+        }
+        if (this->capture_drawable){
+            this->drawable->draw(cmd, clip);
+        }
+        if (this->capture_wrm){
+            this->pnc->draw(cmd, clip);
+        }
     }
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        this->psc->draw(cmd, clip, bmp);
-        this->drawable->draw(cmd, clip, bmp);
-        this->pnc->draw(cmd, clip, bmp);
+        if (this->capture_png){ 
+            this->psc->draw(cmd, clip, bmp);
+        }
+        if (this->capture_drawable){
+            this->drawable->draw(cmd, clip, bmp);
+        }
+        if (this->capture_wrm){
+            this->pnc->draw(cmd, clip, bmp);
+        }
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        this->psc->draw(cmd, clip);
-        this->drawable->draw(cmd, clip);
-        this->pnc->draw(cmd, clip);
+        if (this->capture_png){ 
+            this->psc->draw(cmd, clip);
+        }
+        if (this->capture_drawable){
+            this->drawable->draw(cmd, clip);
+        }
+        if (this->capture_wrm){
+            this->pnc->draw(cmd, clip);
+        }
     }
 
 
     void draw(const RDPLineTo & cmd, const Rect & clip)
     {
-        this->psc->draw(cmd, clip);
-        this->drawable->draw(cmd, clip);
-        this->pnc->draw(cmd, clip);
+        if (this->capture_png){ 
+            this->psc->draw(cmd, clip);
+        }
+        if (this->capture_drawable){
+            this->drawable->draw(cmd, clip);
+        }
+        if (this->capture_wrm){
+            this->pnc->draw(cmd, clip);
+        }
     }
 
     void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
 //        this->psc->glyph_index(cmd, clip);
-        this->drawable->draw(cmd, clip);
+//        this->drawable->draw(cmd, clip);
 //        this->pnc->glyph_index(cmd, clip);
     }
 

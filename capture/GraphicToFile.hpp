@@ -147,8 +147,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->order_count = 0;
         
         this->send_meta_chunk();
-//        this->send_timestamp_chunk();
         this->send_image_chunk();
+//        this->send_timestamp_chunk();
     }
 
     ~GraphicToFile(){

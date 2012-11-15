@@ -158,3 +158,5 @@ BOOST_AUTO_TEST_CASE(TestSecondPart)
     BOOST_CHECK_EQUAL((unsigned)185108, (unsigned)wrm_sequence.filesize(2));
     wrm_sequence.unlink(2);
 }
+
+TODO("need to add test for controlled replay between begin_time and end_time")

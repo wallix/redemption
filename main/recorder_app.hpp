@@ -29,40 +29,19 @@
 
 #include "capture.hpp"
 #include "FileToGraphic.hpp"
-//#include "wrm_recorder_option.hpp"
-//#include "wrm_recorder.hpp"
-
-//struct RecorderAdapter
-//{
-//    virtual void operator()(int recorder, const char* outfile) = 0;
-//};
-
-//struct RecorderAction {
-//    const char * key;
-//    int action;
-
-//    RecorderAction(const char * key, RecorderAdapter* action)
-//    : key(key)
-//    , action(action) 
-//    {
-//    }
-//};
 
 int recorder_app(int argc, char** argv)
 {
-//    char buffer[128] = {};
-//    size_t used = snprintf(buffer, 128, "accept ");
-//    for (unsigned int i = 0 ; i < n ; i++){
-//        used += snprintf(&buffer[used], 128-used, "%s'%s'", (i>0?(i!=n-1)?", ":" or ":""), actions[i].key);
-//    }
-//    opt.desc.add_options()("output-type,O", po::value(&opt.output_type), buffer);
-
     openlog("redrec", LOG_CONS | LOG_PERROR, LOG_USER);
 
     std::string input_filename;
     std::string output_filename;
     uint32_t begin_cap = 0;
     uint32_t end_cap = 0;
+    uint32_t png_limit = 10;
+    uint32_t png_interval = 60;
+    uint32_t frame_interval = 100;
+    uint32_t break_interval = 86400;
 
     boost::program_options::options_description desc("Options");
     desc.add_options()
@@ -70,10 +49,13 @@ int recorder_app(int argc, char** argv)
     ("version,v", "show software version")
     ("output-file,o", boost::program_options::value(&output_filename), "output base filename (see --output-type)")
     ("input-file,i", boost::program_options::value(&input_filename), "input base filename (see --input-type)")
-//    ("in", boost::program_options::value(&input_filename), "alias for --input-file")
-//    ("out", boost::program_options::value(&output_filename), "alias for --output-file")
-    ("begin,b", boost::program_options::value<uint32_t>(&begin_cap), "begin capture")
-    ("end,e", boost::program_options::value<uint32_t>(&end_cap), "end capture")
+    ("begin,b", boost::program_options::value<uint32_t>(&begin_cap), "begin capture time (in seconds), default=none")
+    ("end,e", boost::program_options::value<uint32_t>(&end_cap), "end capture time (in seconds), default=none")
+    ("pnglimit,l", boost::program_options::value<uint32_t>(&png_limit), "maximum number of png files to create (remove older), default=10, 0 will disable png capture")
+    ("pnginterval,n", boost::program_options::value<uint32_t>(&png_interval), "time interval between png captures, default=60 seconds")
+    ("frameinterval,f", boost::program_options::value<uint32_t>(&frame_interval), "time between consecutive capture frames (in 100/th of seconds), default=100 one frame per second")
+    ("breakinterval,f", boost::program_options::value<uint32_t>(&break_interval), "number of seconds between splitting wrm files in seconds(default, one wrm every day)")
+    ("wrm,w", "enable wrm capture")
     ;
 
     boost::program_options::variables_map options;
@@ -97,26 +79,38 @@ int recorder_app(int argc, char** argv)
         exit(-1);
     }
 
-    printf("begin_cap = %u\n", begin_cap);
-    printf("end_cap = %u\n", end_cap);
+    Inifile ini;
+    ini.globals.png_limit = png_limit;
+    ini.globals.png_interval = png_interval;
+    ini.globals.frame_interval = frame_interval;
+    ini.globals.break_interval = break_interval;
 
     timeval begin_capture;
     begin_capture.tv_sec = begin_cap; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = end_cap; end_capture.tv_usec = 0;
-    
+
     InByMetaSequenceTransport in_wrm_trans(input_filename.c_str());
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
 
-    Inifile ini;
-    ini.globals.debug.primary_orders = 0;
-    ini.globals.debug.secondary_orders = 0;
-    ini.globals.png_limit = 10;
-    ini.globals.png_interval = 10;
-    ini.globals.frame_interval = 10;
-    ini.globals.break_interval = 10000;
+    TODO("we should manage direct choice of the right start chunk based on content of mwrm, passing start capture to mwrm start chunk should be enough.")
+    TODO("Also it should reject chunk change after end_capture point, but this is less critical as we must manage detecting stop from inside chunk anyway")
+    // less than 1 year means we a re given a time relatve to beginning of movie
+    if (begin_cap && (begin_cap < 31536000)){ // less than 1 year, it is relative not absolute timestamp
+        printf("relative capture\n");
+        // begin_capture.tv_usec is 0
+        player.begin_capture.tv_usec = player.record_now.tv_usec;
+        player.begin_capture.tv_sec = player.record_now.tv_sec + begin_cap;
+    }
 
+    if (end_cap && (end_cap < 31536000)){
+        printf("relative capture\n");
+         // begin_capture.tv_usec is 0
+        player.end_capture.tv_usec = player.record_now.tv_usec;
+        player.end_capture.tv_sec = player.record_now.tv_sec + end_cap;
+    }
 
+    TODO("Factorize this, see similar code in front, start_capture")
     const char * fullpath = output_filename.c_str();
     char path[1024];
     char basename[1024];
@@ -150,114 +144,23 @@ int recorder_app(int argc, char** argv)
         }
     }
 
-    Capture capture(player.record_now, player.screen_rect.cx, player.screen_rect.cy, path, basename, ini);
+    Capture capture(player.record_now, player.screen_rect.cx, player.screen_rect.cy, path, basename, options.count("wrm") > 0, ini);
 
 TODO("Capture is not a drawable, this is a problem when replaying as it won't get the image chunks. We should change API to make both RDPGraphicDevice and RDPDrawable able to receive image chunks (structures that are not drawables won't do anything with it, that's all. Hence we can't set player using add_consumer(capture) or we won't get image chunks")
-    player.add_consumer(capture.drawable);
-    player.add_consumer(capture.pnc);
-    player.add_consumer(capture.psc);
+
+    TODO("making change above woud be nice because the current state relies on many objects instanciated inside capture")
+    if (options.count("wrm") > 0){
+        player.add_consumer(capture.drawable);
+        player.add_consumer(capture.pnc);
+    }
+    if (ini.globals.png_limit > 0){
+        player.add_consumer(capture.psc);
+    }
 
     player.play();
 
     return 0;
 }
 
-//class ToPngAdapter
-//: public RecorderAdapter
-//{
-//    WrmRecorderOption& _option;
-
-//public:
-//    ToPngAdapter(WrmRecorderOption& option)
-//    : _option(option)
-//    {}
-
-//    virtual void operator()(WRMRecorder& recorder, const char* outfile)
-//    {
-//        printf("to png adapter -> %s width=%u height=%u resize_width=%u resize_height=%u\n", 
-//            outfile, 800, 600, 
-//            this->_option.png_scale_width, this->_option.png_scale_height);
-
-//        recorder.to_png(outfile,
-//               this->_option.range.left.time,
-//               this->_option.range.right.time,
-//               this->_option.time.time,
-//               this->_option.png_scale_width,
-//               this->_option.png_scale_height,
-//               this->_option.frame,
-//               this->_option.screenshot_start,
-//               this->_option.no_screenshot_stop,
-//               this->_option.screenshot_all
-//        );
-//    }
-//};
-
-//class ToPngListAdapter : public RecorderAdapter
-//{
-//    WrmRecorderOption& _option;
-
-//public:
-//    ToPngListAdapter(WrmRecorderOption& option)
-//    : _option(option)
-//    {}
-
-//    virtual void operator()(WRMRecorder& recorder, const char* outfile)
-//    {
-//        recorder.to_png_list(outfile,
-//               this->_option.time_list,
-//               this->_option.png_scale_width,
-//               this->_option.png_scale_height,
-//               this->_option.no_screenshot_stop
-//        );
-//    }
-//};
-
-//class ToWrmAdapter : public RecorderAdapter
-//{
-//    WrmRecorderOption& _option;
-
-//public:
-//    ToWrmAdapter(WrmRecorderOption& option)
-//    : _option(option)
-//    {}
-
-//    virtual void operator()(WRMRecorder& recorder, const char* outfile)
-//    {
-//        const char * metaname = this->_option.metaname.empty() ? 0 : this->_option.metaname.c_str();
-
-//        const unsigned char * key = 0;
-//        const unsigned char * iv = 0;
-//        if (this->_option.out_crypt_mode)
-//        {
-//            if (this->_option.out_crypt_key.size)
-//                key = this->_option.out_crypt_key.data;
-//            if (this->_option.out_crypt_iv.size)
-//                iv = this->_option.out_crypt_iv.data;
-//        }
-
-//        if (this->_option.cat_wrm) {
-//            recorder.to_one_wrm(outfile,
-//                       this->_option.range.left.time,
-//                       this->_option.range.right.time,
-//                       metaname,
-//                       this->_option.out_crypt_mode,
-//                       key, iv
-//                      );
-//        }
-//        else {
-//            recorder.to_wrm(outfile,
-//                   this->_option.range.left.time,
-//                   this->_option.range.right.time,
-//                   this->_option.time.time,
-//                   this->_option.frame,
-//                   this->_option.screenshot_start,
-//                   this->_option.screenshot_wrm,
-//                   metaname,
-//                   this->_option.out_crypt_mode,
-//                   key, iv
-//                  );
-//        }
-//    }
-//};
 
 #endif

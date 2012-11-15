@@ -38,69 +38,8 @@
 #include "RDP/RDPDrawable.hpp"
 #include "RDP/RDPSerializer.hpp"
 #include "difftimeval.hpp"
-#include "png.hpp"
 
-
-class InChunkedImageTransport : public Transport {
-    uint16_t chunk_type; 
-    uint32_t chunk_size;
-    uint16_t chunk_count;
-    Transport * trans;
-    BStream stream;
-public:
-    InChunkedImageTransport(uint16_t chunk_type, uint32_t chunk_size, Transport * trans) 
-        : chunk_type(chunk_type)
-        , chunk_size(chunk_size)
-        , chunk_count(1)
-        , trans(trans) 
-    {
-        this->stream.init(this->chunk_size - 8);
-        this->trans->recv(&stream.end, this->chunk_size - 8);
-    }
-    
-    using Transport::recv;
-    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        size_t total_len = 0;
-        while (total_len < len){
-            if (static_cast<size_t>(stream.end - stream.p) >= static_cast<size_t>(len - total_len)){
-                stream.in_copy_bytes(*pbuffer + total_len, len - total_len);
-                total_len += len - total_len;
-                *pbuffer += len;
-                return;
-            }
-            uint16_t remaining = stream.end - stream.p;
-            stream.in_copy_bytes(*pbuffer + total_len, remaining);
-            total_len += remaining;
-            switch (this->chunk_type){
-            case PARTIAL_IMAGE_CHUNK:
-            {
-                BStream header(8);
-                this->trans->recv(&header.end, 8);
-                this->chunk_type = header.in_uint16_le();
-                this->chunk_size = header.in_uint32_le();
-                this->chunk_count = header.in_uint16_le();
-                this->stream.init(this->chunk_size - 8);
-                this->trans->recv(&this->stream.end, this->chunk_size - 8);
-            }
-            break;
-            case LAST_IMAGE_CHUNK:
-                LOG(LOG_ERR, "Failed to read embedded image from WRM (transport closed)");
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-            break;
-            default:
-                LOG(LOG_ERR, "Failed to read embedded image from WRM");
-                throw Error(ERR_TRANSPORT_READ_FAILED);
-            break;
-            }
-        }
-    }
-
-    using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error)
-    {
-        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
-    }
-};
+#include "chunked_image_transport.hpp"
 
 struct FileToGraphic
 {
@@ -146,8 +85,8 @@ struct FileToGraphic
 
     BGRPalette palette;
 
-    const timeval begin_capture;
-    const timeval end_capture;
+    timeval begin_capture;
+    timeval end_capture;
 
     FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time)
     : stream(65536), trans(trans),
@@ -604,17 +543,17 @@ struct FileToGraphic
     void play()
     {
         bool send_initial_image = true;
-        if ((begin_capture.tv_sec == 0) 
-            ||(begin_capture.tv_sec > this->record_now.tv_sec)
-            || (begin_capture.tv_sec == this->record_now.tv_sec && begin_capture.tv_usec > this->record_now.tv_usec)){
+        if ((this->begin_capture.tv_sec == 0) 
+            ||(this->begin_capture.tv_sec > this->record_now.tv_sec)
+            || (this->begin_capture.tv_sec == this->record_now.tv_sec && this->begin_capture.tv_usec > this->record_now.tv_usec)){
                 send_initial_image = false;
         }
 
         while (this->next_order()){
             this->interpret_order();
-            if ((begin_capture.tv_sec == 0) 
-            || (begin_capture.tv_sec > this->record_now.tv_sec)
-            || (begin_capture.tv_sec == this->record_now.tv_sec && begin_capture.tv_usec > this->record_now.tv_usec)){
+            if ((this->begin_capture.tv_sec == 0) 
+            || (this->begin_capture.tv_sec < this->record_now.tv_sec)
+            || (this->begin_capture.tv_sec == this->record_now.tv_sec && this->begin_capture.tv_usec <= this->record_now.tv_usec)){
                 if (send_initial_image){
                     send_initial_image = false;
                 }
@@ -625,9 +564,9 @@ struct FileToGraphic
                     this->drawables[i]->snapshot(this->record_now, 0, 0, true, false);
                 }
             }
-            if (end_capture.tv_sec 
-            && ((end_capture.tv_sec < this->record_now.tv_sec)
-               || ((begin_capture.tv_sec == this->record_now.tv_sec) && (begin_capture.tv_usec < this->record_now.tv_usec)))){
+            if (this->end_capture.tv_sec 
+            && ((this->end_capture.tv_sec < this->record_now.tv_sec)
+               || ((this->end_capture.tv_sec == this->record_now.tv_sec) && (this->end_capture.tv_usec < this->record_now.tv_usec)))){
                 break;
             }
         }

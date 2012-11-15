@@ -389,7 +389,7 @@ public:
                     }
                 }
             }
-            this->capture = new Capture(now, width, height, path, basename, ini);
+            this->capture = new Capture(now, width, height, path, basename, true, ini);
         }
     }
 
