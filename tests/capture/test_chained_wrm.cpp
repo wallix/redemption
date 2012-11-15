@@ -47,17 +47,17 @@ BOOST_AUTO_TEST_CASE(TestChainedMWRM)
         "800 600\n",
         "0\n",
         "\n",
-        "./tests/fixtures/sample0.wrm, 1352304810 1352304870\n",
-        "./tests/fixtures/sample1.wrm, 1352304870 1352304930\n",
-        "./tests/fixtures/sample2.wrm, 1352304930 1352304990\n",
+        "./tests/fixtures/sample0.wrm, 1352304810, 1352304870\n",
+        "./tests/fixtures/sample1.wrm, 1352304870, 1352304930\n",
+        "./tests/fixtures/sample2.wrm, 1352304930, 1352304990\n",
     };
     const size_t expected_len[] = {
         8,
         2,
         1,
-        52,
-        52,
-        52,
+        53,
+        53,
+        53,
     };
     const bool has_eol[] = {
         true,
@@ -97,22 +97,22 @@ BOOST_AUTO_TEST_CASE(TestChainedMWRMShortBuffer)
         "0\n",
         "\n",
         "./tests/fixtures/sample0.wrm, ",
-        "1352304810 1352304870\n",
+        "1352304810, 1352304870\n",
         "./tests/fixtures/sample1.wrm, ",
-        "1352304870 1352304930\n",
+        "1352304870, 1352304930\n",
         "./tests/fixtures/sample2.wrm, ",
-        "1352304930 1352304990\n",
+        "1352304930, 1352304990\n",
     };
     const size_t expected_len[] = {
         8,
         2,
         1,
         30,
-        22,
+        23,
         30,
-        22,
+        23,
         30,
-        22
+        23
     };
     const bool has_eol[] = {
         true,
