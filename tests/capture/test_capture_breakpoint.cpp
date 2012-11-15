@@ -48,7 +48,8 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.globals.png_limit = 10; // one snapshot by second
         ini.globals.png_interval = 10; // one snapshot by second
 
-        Capture capture(now, scr.cx, scr.cy, "./", "capture", true, ini);
+        ini.globals.capture_wrm = true;
+        Capture capture(now, scr.cx, scr.cy, "./", "capture", ini);
 
         capture.draw(RDPOpaqueRect(scr, GREEN), scr);
         now.tv_sec++;

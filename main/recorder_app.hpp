@@ -119,7 +119,8 @@ int recorder_app(int argc, char** argv)
 
     canonical_path(fullpath, path, sizeof(path), basename, sizeof(basename));
 
-    Capture capture(player.record_now, player.screen_rect.cx, player.screen_rect.cy, path, basename, options.count("wrm") > 0, ini);
+    ini.globals.capture_wrm = options.count("wrm") > 0;
+    Capture capture(player.record_now, player.screen_rect.cx, player.screen_rect.cy, path, basename, ini);
 
 TODO("Capture is not a drawable, this is a problem when replaying as it won't get the image chunks. We should change API to make both RDPGraphicDevice and RDPDrawable able to receive image chunks (structures that are not drawables won't do anything with it, that's all. Hence we can't set player using add_consumer(capture) or we won't get image chunks")
 

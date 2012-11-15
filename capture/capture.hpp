@@ -44,9 +44,9 @@ public:
     NativeCapture * pnc;
     
     TODO("capture_wrm flag should be changed to some configuration parameter in inifile")
-    Capture(const timeval & now, int width, int height, const char * path, const char * basename, bool capture_wrm, const Inifile & ini) 
-      : capture_wrm(capture_wrm)
-      , capture_drawable(capture_wrm)
+    Capture(const timeval & now, int width, int height, const char * path, const char * basename, const Inifile & ini) 
+      : capture_wrm(ini.globals.capture_wrm)
+      , capture_drawable(ini.globals.capture_wrm)
       , capture_png(ini.globals.png_limit > 0)
       , meta_sequence(NULL)
       , wrm_sequence(NULL)

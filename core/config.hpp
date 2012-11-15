@@ -169,6 +169,9 @@ struct IniAccounts {
 
 struct Inifile {
     struct Inifile_globals {
+        bool capture_flv;
+        bool capture_wrm;
+        bool capture_png;
         char movie_path[512];
         char codec_id[512];
         char video_quality[512];
@@ -282,6 +285,9 @@ struct Inifile {
     }
 
     void init(){
+            this->globals.capture_wrm = false;
+            this->globals.capture_png = false;
+            this->globals.capture_flv = false;
             this->globals.bitmap_cache = true;
             this->globals.bitmap_compression = true;
             this->globals.port = 3389;
