@@ -49,6 +49,39 @@ static inline int filesize(const char * path)
     return -1;
 }
 
+static inline void canonical_path(const char * fullpath, char * path, size_t path_len, char * basename, size_t basename_len)
+{
+    TODO("add parameters values for default path and basename. From inifile ?")
+    TODO("add extraction of extension")
+    TODO("add overflow checking of path and basename len")
+    const char * end_of_path = strrchr(fullpath, '/');
+    if (end_of_path){
+        memcpy(path, fullpath, end_of_path + 1 - fullpath);
+        path[end_of_path + 1 - fullpath] = 0;
+        const char * start_of_extension = strrchr(end_of_path + 1, '.');
+        if (start_of_extension){
+            memcpy(basename, end_of_path + 1, start_of_extension - end_of_path - 1);
+            basename[start_of_extension - end_of_path - 1] = 0;
+        }
+        else {
+            if (end_of_path[0]){
+                strcpy(basename, end_of_path + 1);
+            }
+        }
+    }
+    else {
+        const char * start_of_extension = strrchr(fullpath, '.');
+        if (start_of_extension){
+            memcpy(basename, fullpath, start_of_extension - fullpath);
+            basename[start_of_extension - fullpath] = 0;
+        }
+        else {
+            if (fullpath[0]){
+                strcpy(basename, fullpath);
+            }
+        }
+    }
+}
 
 class Transport {
 public:
