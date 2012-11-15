@@ -294,6 +294,10 @@ struct Inifile {
             this->globals.authversion = 2;
             this->globals.autovalidate = false;
             strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
+            strcpy(this->globals.codec_id, "flv");
+            TODO("this could be some kind of enumeration")
+            strcpy(this->globals.video_quality, "medium");
+
 
             this->globals.capture_flags = 3;
             this->globals.png_interval = 3000;
