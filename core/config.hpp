@@ -169,9 +169,10 @@ struct IniAccounts {
 
 struct Inifile {
     struct Inifile_globals {
-        bool capture_flv;
-        bool capture_wrm;
         bool capture_png;
+        bool capture_wrm;
+        bool capture_flv;
+        bool capture_ocr;
         char movie_path[512];
         char codec_id[512];
         char video_quality[512];
@@ -213,7 +214,11 @@ struct Inifile {
         unsigned capture_flags; // 1 PNG capture, 2 WRM
         unsigned png_interval;  // time between 2 png captures (in 1/10 seconds)
         unsigned frame_interval;  // time between 2 frame captures (in 1/100 seconds)
-        unsigned break_interval;  // time between 2 png captures (in seconds)
+        unsigned break_interval;  // time between 2 wrm movies (in seconds)
+        uint64_t flv_break_interval; // time between 2 flv movies captures (in seconds)
+        unsigned flv_frame_interval; 
+        unsigned ocr_interval;
+
         unsigned png_limit;     // number of png captures to keep
 
         int l_bitrate;         // bitrate for low quality
@@ -288,6 +293,7 @@ struct Inifile {
             this->globals.capture_wrm = false;
             this->globals.capture_png = false;
             this->globals.capture_flv = false;
+            this->globals.capture_ocr = false;
             this->globals.bitmap_cache = true;
             this->globals.bitmap_compression = true;
             this->globals.port = 3389;
@@ -305,10 +311,14 @@ struct Inifile {
             strcpy(this->globals.video_quality, "medium");
 
 
-            this->globals.capture_flags = 3;
+            this->globals.capture_flags = 3; // 1 png, 2 wrm, 4 flv, 8 ocr
             this->globals.png_interval = 3000;
+            this->globals.ocr_interval = 100; // 1 every second
             this->globals.frame_interval = 40;
             this->globals.break_interval = 600;
+            this->globals.flv_break_interval = 600000000l;
+            this->globals.flv_frame_interval = 1000000L; 
+
             this->globals.png_limit = 3;
             this->globals.l_bitrate   = 20000;
             this->globals.l_framerate = 1;
@@ -490,6 +500,13 @@ struct Inifile {
         else if (0 == strcmp(context, "video")){ 
             if (0 == strcmp(key, "capture_flags")){
                 this->globals.capture_flags   = atol(value);
+                this->globals.capture_png = 0 != (this->globals.capture_flags & 1);
+                this->globals.capture_wrm = 0 != (this->globals.capture_flags & 2);
+                this->globals.capture_flv = 0 != (this->globals.capture_flags & 4);
+                this->globals.capture_ocr = 0 != (this->globals.capture_flags & 8);
+            }
+            else if (0 == strcmp(key, "ocr_interval")){
+                this->globals.ocr_interval   = atol(value);
             }
             else if (0 == strcmp(key, "png_interval")){
                 this->globals.png_interval   = atol(value);
