@@ -1166,7 +1166,7 @@ public:
         if (this->fd == -1){
             this->fd = ::open(this->path, O_RDONLY);
             if (this->fd == -1){
-                LOG(LOG_INFO, "InByFilename transport recv failed with error : %s", strerror(errno));
+                LOG(LOG_INFO, "InByFilename transport '%s' recv failed with error : %s", this->path, strerror(errno));
                 throw Error(ERR_TRANSPORT_READ_FAILED, errno);
             }
         }
