@@ -173,6 +173,8 @@ struct Inifile {
         bool capture_wrm;
         bool capture_flv;
         bool capture_ocr;
+        bool capture_chunk;
+        bool capture_drawable;
         char movie_path[512];
         char codec_id[512];
         char video_quality[512];
@@ -294,6 +296,8 @@ struct Inifile {
             this->globals.capture_png = false;
             this->globals.capture_flv = false;
             this->globals.capture_ocr = false;
+            this->globals.capture_chunk = false;
+            this->globals.capture_drawable = false;
             this->globals.bitmap_cache = true;
             this->globals.bitmap_compression = true;
             this->globals.port = 3389;
