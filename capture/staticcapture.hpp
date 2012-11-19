@@ -109,25 +109,29 @@ public:
     {
         if ((unsigned)difftimeval(now, this->start_static_capture) 
          >= (unsigned)this->inter_frame_interval_static_capture){
-
-            time_t rawtime = now.tv_sec;
-            tm *ptm = localtime(&rawtime);
-            this->drawable.trace_timestamp(*ptm);
-
-            if (this->conf.png_limit > 0){
-                if (this->trans.seqno >= this->conf.png_limit){
-                    char path[1024];
-                    this->sequence.get_name(path, sizeof(path), this->trans.seqno - this->conf.png_limit);
-                    ::unlink(path); // unlink may fail, for instance if file does not exist, just don't care
-                }
-                this->ImageCapture::flush();
-                this->trans.next();
-            }
-
-            this->drawable.clear_timestamp();
-            this->start_static_capture = now;
+            this->breakpoint(now);
         }
     
+    }
+
+    void breakpoint(const timeval & now)
+    {
+        time_t rawtime = now.tv_sec;
+        tm *ptm = localtime(&rawtime);
+        this->drawable.trace_timestamp(*ptm);
+
+        if (this->conf.png_limit > 0){
+            if (this->trans.seqno >= this->conf.png_limit){
+                char path[1024];
+                this->sequence.get_name(path, sizeof(path), this->trans.seqno - this->conf.png_limit);
+                ::unlink(path); // unlink may fail, for instance if file does not exist, just don't care
+            }
+            this->ImageCapture::flush();
+            this->trans.next();
+        }
+
+        this->drawable.clear_timestamp();
+        this->start_static_capture = now;
     }
 
     virtual void flush()
