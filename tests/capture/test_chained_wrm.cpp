@@ -27,7 +27,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include <sys/time.h>
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"

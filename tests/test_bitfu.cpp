@@ -30,7 +30,6 @@
 #include "log.hpp"
 #define LOGNULL
 
-#include <sys/time.h>
 #include "bitfu.hpp"
 #include <stdio.h>
 

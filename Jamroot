@@ -251,14 +251,6 @@ unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test  : ;
 unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test  : ;
 unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test  ;
 
-#unit-test test_file_to_png : tests/test_file_to_png.cpp png z d3des openssl crypto dl libboost_unit_test  ;
-
-#unit-test test_wrm_recorder : tests/test_wrm_recorder.cpp png z d3des openssl crypto dl libboost_unit_test  ;
-
-unit-test test_time_point : tests/test_time_point.cpp libboost_unit_test  ;
-unit-test test_range_time_point : tests/test_range_time_point.cpp libboost_unit_test  ;
-unit-test test_relative_point : tests/test_relative_point.cpp libboost_unit_test  ;
-
 unit-test test_filename_generator : tests/test_filename_generator.cpp libboost_unit_test  ;
 
 unit-test test_png_scale : tests/test_png_scale.cpp png z crypto libboost_unit_test  ;

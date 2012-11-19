@@ -27,7 +27,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include <sys/time.h>
 
 #include "test_orders.hpp"
 #include "transport.hpp"
