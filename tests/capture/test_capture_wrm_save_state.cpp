@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     
     player.add_consumer(&png_recorder);
-    BOOST_CHECK_EQUAL(1, player.nbdrawables);
+    BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
     }
@@ -241,7 +241,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     
     player.add_consumer(&png_recorder);
-    BOOST_CHECK_EQUAL(1, player.nbdrawables);
+    BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
     }
@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     
     player.add_consumer(&png_recorder);
-    BOOST_CHECK_EQUAL(1, player.nbdrawables);
+    BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
     }

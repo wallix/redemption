@@ -139,4 +139,5 @@ inline void transport_read_png24(Transport * trans, const uint8_t * data,
     png_destroy_read_struct(&ppng, &pinfo, NULL);
 }
 
+
 #endif

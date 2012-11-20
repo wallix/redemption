@@ -57,6 +57,16 @@ public:
     {
     }
 
+    virtual uint8_t * get_row(size_t rownum)
+    {
+        return this->drawable.data + this->drawable.rowsize * rownum;
+    }
+
+    virtual size_t get_rowsize() 
+    {
+        return this->drawable.rowsize; 
+    }
+
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         const Rect & trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);

@@ -398,7 +398,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
   
     player.add_consumer(&png_recorder);
-    BOOST_CHECK_EQUAL(1, player.nbdrawables);
+    BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
     }
@@ -475,7 +475,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     
     player.add_consumer(&png_recorder);
     player.add_consumer(&second_png_recorder);
-    BOOST_CHECK_EQUAL(2, player.nbdrawables);
+    BOOST_CHECK_EQUAL(2, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
     }

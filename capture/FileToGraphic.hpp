@@ -73,9 +73,6 @@ struct FileToGraphic
     uint16_t nbconsumers;
     RDPGraphicDevice * consumers[10];
 
-    uint16_t nbdrawables;
-    RDPDrawable * drawables[10];
-    
     bool meta_ok;
     bool timestamp_ok;
     bool real_time;
@@ -103,7 +100,6 @@ struct FileToGraphic
     chunk_count(0),
     remaining_order_count(0),
     nbconsumers(0),
-    nbdrawables(0),
     meta_ok(false),
     timestamp_ok(false),
     real_time(real_time),
@@ -128,11 +124,6 @@ struct FileToGraphic
     void add_consumer(RDPGraphicDevice * consumer)
     {
         this->consumers[this->nbconsumers++] = consumer;
-    }
-    TODO("I believe we should only have one shared drawable for all customers. If it's actually so it will be both simpler and more efficient")
-    void add_consumer(RDPDrawable * consumer)
-    {
-        this->drawables[this->nbdrawables++] = consumer;
     }
 
     bool next_order()
@@ -191,6 +182,45 @@ struct FileToGraphic
         if (this->remaining_order_count > 0){this->remaining_order_count--;}
         return true;
     }
+
+    void transport_read_png24_to_customer(Transport * trans)
+    {
+        png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+        png_set_read_fn(ppng, trans, &png_read_data_fn);
+        png_info * pinfo = png_create_info_struct(ppng);
+        png_read_info(ppng, pinfo);
+
+        size_t height = png_get_image_height(ppng, pinfo);
+        
+        size_t nb_drawable_customers = 0;
+        size_t drawable_customers[10]; 
+        for (size_t cu = 0 ; cu < this->nbconsumers ; cu++){
+            if (this->consumers[cu]->get_row(0) != NULL){
+                drawable_customers[nb_drawable_customers++] = cu;
+            }
+        }
+
+        if (nb_drawable_customers > 0){
+            for (size_t k = 0 ; k < height ; ++k) {
+                png_read_row(ppng, this->consumers[drawable_customers[0]]->get_row(k), NULL);
+                for (size_t c = 1 ; c < nb_drawable_customers ; c++){
+                    memcpy(
+                        this->consumers[drawable_customers[c]]->get_row(k),
+                        this->consumers[drawable_customers[0]]->get_row(k),
+                        this->consumers[drawable_customers[0]]->get_rowsize());
+                }
+            }
+        }
+        else {
+            uint8_t trash[8192*4];
+            for (size_t k = 0 ; k < height ; ++k) {
+                png_read_row(ppng, trash, NULL);
+            }
+        }
+        png_read_end(ppng, pinfo);
+        png_destroy_read_struct(&ppng, &pinfo, NULL);
+    }
+
 
     void interpret_order()
     {
@@ -257,17 +287,11 @@ struct FileToGraphic
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->glyphindex, clip);
                     }
-                    for (size_t i = 0; i < this->nbdrawables ; i++){
-                        this->drawables[i]->draw(this->glyphindex, clip);
-                    }
                     break;
                 case RDP::DESTBLT:
                     this->destblt.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->destblt, clip);
-                    }
-                    for (size_t i = 0; i < this->nbdrawables ; i++){
-                        this->drawables[i]->draw(this->destblt, clip);
                     }
                     break;
                 case RDP::PATBLT:
@@ -275,17 +299,11 @@ struct FileToGraphic
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->patblt, clip);
                     }
-                    for (size_t i = 0; i < this->nbdrawables ; i++){
-                        this->drawables[i]->draw(this->patblt, clip);
-                    }
                     break;
                 case RDP::SCREENBLT:
                     this->scrblt.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->scrblt, clip);
-                    }
-                    for (size_t i = 0; i < this->nbdrawables ; i++){
-                        this->drawables[i]->draw(this->scrblt, clip);
                     }
                     break;
                 case RDP::LINE:
@@ -293,17 +311,11 @@ struct FileToGraphic
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->lineto, clip);
                     }
-                    for (size_t i = 0; i < this->nbdrawables ; i++){
-                        this->drawables[i]->draw(this->lineto, clip);
-                    }
                     break;
                 case RDP::RECT:
                     this->opaquerect.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->opaquerect, clip);
-                    }
-                    for (size_t i = 0; i < this->nbdrawables ; i++){
-                        this->drawables[i]->draw(this->opaquerect, clip);
                     }
                     break;
                 case RDP::MEMBLT:
@@ -317,9 +329,6 @@ struct FileToGraphic
                         else {
                             for (size_t i = 0; i < this->nbconsumers ; i++){
                                 this->consumers[i]->draw(this->memblt, clip, *bmp);
-                            }
-                            for (size_t i = 0; i < this->nbdrawables ; i++){
-                                this->drawables[i]->draw(this->memblt, clip, *bmp);
                             }
                         }
                     }
@@ -505,20 +514,10 @@ struct FileToGraphic
             case LAST_IMAGE_CHUNK:
             case PARTIAL_IMAGE_CHUNK:
             {
-                if (this->nbdrawables){
+                if (this->nbconsumers){
                     InChunkedImageTransport chunk_trans(this->chunk_type, this->chunk_size, this->trans);
-                    ::transport_read_png24(&chunk_trans, this->drawables[0]->drawable.data,
-                                 this->drawables[0]->drawable.width, 
-                                 this->drawables[0]->drawable.height,
-                                 this->drawables[0]->drawable.rowsize
-                                );
-                    for (size_t i = 1 ; i < this->nbdrawables ; i++){
-                        unsigned char * row = this->drawables[0]->drawable.data;
-                        for (size_t k = 0 ; k < this->drawables[0]->drawable.height ; ++k) {
-                            this->drawables[i]->set_row(k, row);
-                            row += this->drawables[0]->drawable.rowsize;
-                        }
-                    }
+         
+                    this->transport_read_png24_to_customer(&chunk_trans);
                 }
                 else {
                     REDOC("If no drawable is available ignore images chunks");
@@ -555,9 +554,6 @@ struct FileToGraphic
                 }
                 for (size_t i = 0; i < this->nbconsumers ; i++){
                     this->consumers[i]->snapshot(this->record_now, 0, 0, true, false);
-                }
-                for (size_t i = 0; i < this->nbdrawables ; i++){
-                    this->drawables[i]->snapshot(this->record_now, 0, 0, true, false);
                 }
             }
             if (this->end_capture.tv_sec 

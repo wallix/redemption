@@ -24,7 +24,6 @@
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
 
-TODO("Capture is not a drawable, this is a problem when replaying as it won't get the image chunks. We should change API to make both RDPGraphicDevice and RDPDrawable able to receive image chunks (structures that are not drawables won't do anything with it, that's all")
 class Capture : public RDPGraphicDevice
 {
 public:
