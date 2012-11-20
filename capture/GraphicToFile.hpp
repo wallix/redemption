@@ -29,9 +29,6 @@
 #if !defined(__GRAPHIC_TO_FILE_HPP__)
 #define __GRAPHIC_TO_FILE_HPP__
 
-#include <sys/time.h>
-#include <ctime>
-
 #include "RDP/x224.hpp"
 #include "RDP/mcs.hpp"
 #include "RDP/rdp.hpp"

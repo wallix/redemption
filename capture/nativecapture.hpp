@@ -22,11 +22,9 @@
 #define __CAPTURE_NATIVECAPTURE_HPP__
 
 #include <errno.h>
-#include "rdtsc.hpp"
 #include "bitmap.hpp"
 #include "rect.hpp"
 #include "constants.hpp"
-#include <time.h>
 #include "difftimeval.hpp"
 
 #include "RDP/orders/RDPOrdersCommon.hpp"

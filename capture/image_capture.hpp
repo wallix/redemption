@@ -26,11 +26,8 @@
 #define __CAPTURE_IMAGE_CAPTURE_HPP__
 
 #include <stdio.h>
-#include <sys/time.h>
-#include <time.h>
 #include <png.h>
 
-#include "rdtsc.hpp"
 #include "bitmap.hpp"
 #include "rect.hpp"
 #include "constants.hpp"
