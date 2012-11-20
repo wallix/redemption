@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         BOOST_CHECK_EQUAL((unsigned)1610, (unsigned)capture.wrm_sequence->filesize(0));
         capture.wrm_sequence->unlink(0);
-        BOOST_CHECK_EQUAL((unsigned)3377, (unsigned)capture.wrm_sequence->filesize(1));
+        BOOST_CHECK_EQUAL((unsigned)3376, (unsigned)capture.wrm_sequence->filesize(1));
         capture.wrm_sequence->unlink(1);
         BOOST_CHECK_EQUAL((unsigned)3363, (unsigned)capture.wrm_sequence->filesize(2));
         capture.wrm_sequence->unlink(2);
