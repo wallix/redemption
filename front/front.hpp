@@ -31,8 +31,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <sys/time.h>
-
 #include "constants.hpp"
 #include "stream.hpp"
 #include "transport.hpp"

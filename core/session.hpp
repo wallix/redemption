@@ -33,7 +33,6 @@
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
-#include <sys/time.h>
 #include <dirent.h>
 
 #include "server.hpp"

@@ -164,7 +164,6 @@ import testing ;
 unit-test test_widget : tests/test_widget.cpp widget mainloop d3des openssl crypto png z dl libboost_unit_test  ;
 unit-test test_bitmap : tests/test_bitmap.cpp libboost_unit_test  ;
 unit-test test_logon : tests/test_logon.cpp libboost_unit_test  ;
-unit-test test_bitmap_cache : tests/test_bitmap_cache.cpp libboost_unit_test  ;
 unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp libboost_unit_test  ;
 unit-test test_stream : tests/test_stream.cpp libboost_unit_test  ;
 unit-test test_config : tests/test_config.cpp libboost_unit_test  ;

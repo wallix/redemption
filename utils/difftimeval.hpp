@@ -25,11 +25,20 @@
 #include <sys/time.h>
 #include <stdint.h>
 
-inline uint64_t difftimeval(const struct timeval& endtime, const struct timeval& starttime)
-{
-    uint64_t sec = (endtime.tv_sec  - starttime.tv_sec ) * 1000000
-                 + (endtime.tv_usec - starttime.tv_usec);
-    return sec;
+static inline uint64_t ustime(const timeval & now) {
+    return (uint64_t)now.tv_sec*1000000LL + (uint64_t)now.tv_usec;
 }
+
+static inline uint64_t ustime() {
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    return ustime(now);
+}
+
+static inline uint64_t difftimeval(const timeval& endtime, const timeval& starttime)
+{
+    return ustime(endtime) - ustime(starttime);
+}
+
 
 #endif

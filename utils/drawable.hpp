@@ -27,9 +27,6 @@
 #include "colors.hpp"
 #include "rect.hpp"
 
-#include <time.h>
-
-
 struct Drawable
 {
     static const std::size_t Bpp = 3;
