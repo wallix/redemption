@@ -26,8 +26,8 @@
 #define __WAIT_OBJS_HPP__
 
 #include "error.hpp"
-#include <sys/time.h>
 #include <stdint.h>
+#include "difftimeval.hpp"
 
 class wait_obj
 {
@@ -39,7 +39,7 @@ class wait_obj
     : obj(sck)
     , set_state(false) 
     {
-        gettimeofday(&this->trigger_time, NULL);
+        this->trigger_time = tvtime();
     }
 
     ~wait_obj()
@@ -77,7 +77,7 @@ class wait_obj
         else{
             if (this->set_state){
                 struct timeval now;
-                gettimeofday(&now, NULL);
+                now = tvtime();
                 if ((now.tv_sec > this->trigger_time.tv_sec) 
                 ||  ( (now.tv_sec == this->trigger_time.tv_sec)
                     &&(now.tv_usec > this->trigger_time.tv_usec))){
@@ -92,8 +92,7 @@ class wait_obj
     void set(uint64_t idle_usec = 0)
     {
         this->set_state = true;
-        struct timeval now;
-        gettimeofday(&now, NULL);
+        struct timeval now = tvtime();
         
         uint64_t sum_usec = (now.tv_usec + idle_usec);
         this->trigger_time.tv_sec = (sum_usec / 1000000) + now.tv_sec;

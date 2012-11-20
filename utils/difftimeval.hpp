@@ -29,16 +29,20 @@ static inline uint64_t ustime(const timeval & now) {
     return (uint64_t)now.tv_sec*1000000LL + (uint64_t)now.tv_usec;
 }
 
+static inline const timeval tvtime()
+{
+    timeval tv;
+    gettimeofday(&tv, 0);
+    return tv;
+}
+
 static inline uint64_t ustime() {
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    return ustime(now);
+    return ustime(tvtime());
 }
 
 static inline uint64_t difftimeval(const timeval& endtime, const timeval& starttime)
 {
     return ustime(endtime) - ustime(starttime);
 }
-
 
 #endif

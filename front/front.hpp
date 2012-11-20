@@ -331,8 +331,7 @@ public:
     {
         if (context.get_bool(STRAUTHID_OPT_MOVIE)){
             this->stop_capture();
-            struct timeval now;
-            gettimeofday(&now, NULL);
+            struct timeval now = tvtime();
 
             strncpy(ini.globals.movie_path, context.get(STRAUTHID_OPT_MOVIE_PATH), sizeof(ini.globals.movie_path)-1);
             ini.globals.movie_path[sizeof(ini.globals.movie_path)-1] = 0;
@@ -374,8 +373,7 @@ public:
     void periodic_snapshot(bool pointer_is_displayed)
     {
         if (this->capture){
-            struct timeval now;
-            gettimeofday(&now, NULL);
+            struct timeval now = tvtime();
             this->capture->snapshot(now, this->mouse_x, this->mouse_y, pointer_is_displayed|this->nomouse, this->notimestamp);
         }
     }

@@ -342,7 +342,7 @@ struct FileToGraphic
 
                 if (!this->timestamp_ok){
                    if (this->real_time) {
-                        gettimeofday(&this->synctime_now, 0);
+                        this->synctime_now = tvtime();
                     }
                     else {
                         this->synctime_now = this->record_now;
@@ -353,8 +353,7 @@ struct FileToGraphic
                 else {
                     LOG(LOG_INFO, "replay TIMESTAMP = %u\n", (unsigned)this->record_now.tv_sec);
                    if (this->real_time){
-                        struct timeval now;
-                        gettimeofday(&now, 0);
+                        struct timeval now = tvtime();
                         uint64_t elapsed = difftimeval(now, this->synctime_now);
                         this->synctime_now = now;
                         
