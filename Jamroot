@@ -250,8 +250,6 @@ unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test  : ;
 unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test  : ;
 unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test  ;
 
-unit-test test_filename_generator : tests/test_filename_generator.cpp libboost_unit_test  ;
-
 unit-test test_png_scale : tests/test_png_scale.cpp png z crypto libboost_unit_test  ;
 
 #unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test  ;
