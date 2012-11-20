@@ -46,10 +46,6 @@
 
 #include "GraphicToFile.hpp"
 #include "png.hpp"
-#include "auto_buffer.hpp"
-#include "cipher_transport.hpp"
-
-#include "zlib.hpp"
 
 class NativeCapture : public RDPGraphicDevice
 {
