@@ -1331,7 +1331,7 @@ public:
             throw Error(ERR_TRANSPORT);
         }
         char buffer[2048];
-        size_t len = sprintf(buffer, "%s, %lu, %lu\n", this->path, this->now.tv_sec, this->future.tv_sec);
+        size_t len = sprintf(buffer, "%s %lu %lu\n", this->path, this->now.tv_sec, this->future.tv_sec);
         size_t remaining_len = len;
         size_t total_sent = 0;
         while (remaining_len) {
@@ -1376,7 +1376,7 @@ public:
             throw Error(ERR_TRANSPORT);
         }
         char buffer[2048];
-        size_t len = sprintf(buffer, "%s, %lu, %lu\n", this->path, this->now.tv_sec, this->future.tv_sec);
+        size_t len = sprintf(buffer, "%s %lu %lu\n", this->path, this->now.tv_sec, this->future.tv_sec);
         size_t remaining_len = len;
         size_t total_sent = 0;
         while (remaining_len) {
@@ -1561,7 +1561,7 @@ public:
                     LOG(LOG_INFO, "InByMetaSequenceTransport recv failed with error %s reading meta file", strerror(errno));
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
-                char *eol2 = strchrnul(this->begin, ',');
+                char *eol2 = strchrnul(this->begin, ' ');
                 if (eol2){
                     memcpy(this->path, this->begin, eol2 - this->begin);
                     this->path[eol2 - this->begin] = 0;
