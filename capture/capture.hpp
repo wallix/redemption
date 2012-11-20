@@ -73,7 +73,7 @@ public:
         }
 
         if (this->capture_drawable){
-            this->drawable = new RDPDrawable(width, height, true);
+            this->drawable = new RDPDrawable(width, height, false);
         }
 
         if (this->capture_wrm){
