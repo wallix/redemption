@@ -57,6 +57,34 @@ public:
     {
     }
 
+    virtual void set_row(size_t rownum, const uint8_t * data)
+    {
+        if (this->conf.bgr){
+            uint32_t bgrtmp[8192];
+            const uint32_t * s = reinterpret_cast<const uint32_t*>(data);
+            uint32_t * t = bgrtmp;
+            for (size_t n = 0; n < (this->drawable.width / 4) ; n++){
+                unsigned bRGB = *s++;
+                unsigned GBrg = *s++;
+                unsigned rgbR = *s++;
+                *t++ = ((GBrg << 16) & 0xFF000000) 
+                   | ((bRGB << 16) & 0x00FF0000) 
+                   | (bRGB         & 0x0000FF00) 
+                   | ((bRGB >> 16) & 0x000000FF) ;
+                *t++ = (GBrg         & 0xFF000000) 
+                   | ((rgbR << 16) & 0x00FF0000) 
+                   | ((bRGB >> 16) & 0x0000FF00) 
+                   | ( GBrg        & 0x000000FF) ;
+                *t++ = ((rgbR << 16) & 0xFF000000)   
+                   | (rgbR         & 0x00FF0000) 
+                   | ((rgbR >> 16) & 0x0000FF00) 
+                   | ((GBrg >> 16) & 0x000000FF) ;
+            }
+        }
+        memcpy(this->drawable.data + this->drawable.rowsize * rownum, data, this->drawable.rowsize);
+    }
+
+
     virtual uint8_t * get_row(size_t rownum)
     {
         return this->drawable.data + this->drawable.rowsize * rownum;

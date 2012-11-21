@@ -57,7 +57,6 @@ public:
       , drawable(NULL)
       , pnc(NULL)
     {
-    
         if (this->capture_wrm){
             this->meta_sequence = new FileSequence("path file pid extension", path, basename, "mwrm");
             this->wrm_sequence = new FileSequence("path file pid count extension", path, basename, "wrm");
@@ -96,6 +95,9 @@ public:
     }
     
     void update_config(const Inifile & ini){
+//        if (this->capture_drawable){
+//            this->drawable->update_config(ini);
+//        }
         if (this->capture_png){ 
             this->psc->update_config(ini);
         }
@@ -106,11 +108,11 @@ public:
 
     void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
-        if (this->capture_png){ 
-            this->psc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
-        }
         if (this->capture_drawable){
             this->drawable->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
+        }
+        if (this->capture_png){ 
+            this->psc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
         }
         if (this->capture_wrm){
             this->pnc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
@@ -119,24 +121,38 @@ public:
 
     void flush()
     {
-        if (this->capture_png){ 
-            this->psc->flush();
-        }
         if (this->capture_drawable){
             this->drawable->flush();
+        }
+        if (this->capture_png){ 
+            this->psc->flush();
         }
         if (this->capture_wrm){
             this->pnc->flush();
         }
     }
 
+    virtual void set_row(size_t rownum, const uint8_t * data) 
+    { 
+        if (this->capture_drawable){
+            this->drawable->set_row(rownum, data);
+        }
+        if (this->capture_png){ 
+            this->psc->set_row(rownum, data);
+        }
+        if (this->capture_wrm){
+            this->pnc->set_row(rownum, data);
+        }
+    }
+
+
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
-        if (this->capture_png){ 
-            this->psc->draw(cmd, clip);
-        }
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip);
+        }
+        if (this->capture_png){ 
+            this->psc->draw(cmd, clip);
         }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip);
@@ -145,11 +161,11 @@ public:
 
     void draw(const RDPDestBlt & cmd, const Rect &clip)
     {
-        if (this->capture_png){ 
-            this->psc->draw(cmd, clip);
-        }
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip);
+        }
+        if (this->capture_png){ 
+            this->psc->draw(cmd, clip);
         }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip);
@@ -158,11 +174,11 @@ public:
 
     void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
-        if (this->capture_png){ 
-            this->psc->draw(cmd, clip);
-        }
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip);
+        }
+        if (this->capture_png){ 
+            this->psc->draw(cmd, clip);
         }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip);
@@ -171,11 +187,11 @@ public:
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        if (this->capture_png){ 
-            this->psc->draw(cmd, clip, bmp);
-        }
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip, bmp);
+        }
+        if (this->capture_png){ 
+            this->psc->draw(cmd, clip, bmp);
         }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip, bmp);
@@ -184,25 +200,24 @@ public:
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        if (this->capture_png){ 
-            this->psc->draw(cmd, clip);
-        }
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip);
+        }
+        if (this->capture_png){ 
+            this->psc->draw(cmd, clip);
         }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip);
         }
     }
 
-
     void draw(const RDPLineTo & cmd, const Rect & clip)
     {
-        if (this->capture_png){ 
-            this->psc->draw(cmd, clip);
-        }
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip);
+        }
+        if (this->capture_png){ 
+            this->psc->draw(cmd, clip);
         }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip);

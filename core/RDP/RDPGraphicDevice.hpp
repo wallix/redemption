@@ -43,8 +43,7 @@
 
 struct RDPGraphicDevice
 {
-    virtual uint8_t * get_row(size_t rownum) { return NULL; }
-    virtual size_t get_rowsize() { return 0; }
+    virtual void set_row(size_t rownum, const uint8_t * data) {}
     
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPScrBlt & cmd, const Rect &clip) = 0;

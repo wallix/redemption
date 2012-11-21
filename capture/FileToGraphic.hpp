@@ -183,45 +183,6 @@ struct FileToGraphic
         return true;
     }
 
-    void transport_read_png24_to_customer(Transport * trans)
-    {
-        png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-        png_set_read_fn(ppng, trans, &png_read_data_fn);
-        png_info * pinfo = png_create_info_struct(ppng);
-        png_read_info(ppng, pinfo);
-
-        size_t height = png_get_image_height(ppng, pinfo);
-        
-        size_t nb_drawable_customers = 0;
-        size_t drawable_customers[10]; 
-        for (size_t cu = 0 ; cu < this->nbconsumers ; cu++){
-            if (this->consumers[cu]->get_row(0) != NULL){
-                drawable_customers[nb_drawable_customers++] = cu;
-            }
-        }
-
-        if (nb_drawable_customers > 0){
-            for (size_t k = 0 ; k < height ; ++k) {
-                png_read_row(ppng, this->consumers[drawable_customers[0]]->get_row(k), NULL);
-                for (size_t c = 1 ; c < nb_drawable_customers ; c++){
-                    memcpy(
-                        this->consumers[drawable_customers[c]]->get_row(k),
-                        this->consumers[drawable_customers[0]]->get_row(k),
-                        this->consumers[drawable_customers[0]]->get_rowsize());
-                }
-            }
-        }
-        else {
-            uint8_t trash[8192*4];
-            for (size_t k = 0 ; k < height ; ++k) {
-                png_read_row(ppng, trash, NULL);
-            }
-        }
-        png_read_end(ppng, pinfo);
-        png_destroy_read_struct(&ppng, &pinfo, NULL);
-    }
-
-
     void interpret_order()
     {
         switch (this->chunk_type){
@@ -509,6 +470,7 @@ struct FileToGraphic
                 this->glyphindex.glyph_y = this->stream.in_sint16_le();
                 this->glyphindex.data_len = this->stream.in_uint8();
                 this->stream.in_copy_bytes(this->glyphindex.data, 256);
+                
             break;
 
             case LAST_IMAGE_CHUNK:
@@ -516,8 +478,27 @@ struct FileToGraphic
             {
                 if (this->nbconsumers){
                     InChunkedImageTransport chunk_trans(this->chunk_type, this->chunk_size, this->trans);
-         
-                    this->transport_read_png24_to_customer(&chunk_trans);
+                    
+                    png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+                    png_set_read_fn(ppng, &chunk_trans, &png_read_data_fn);
+                    png_info * pinfo = png_create_info_struct(ppng);
+                    png_read_info(ppng, pinfo);
+
+                    size_t height = png_get_image_height(ppng, pinfo);
+                    
+                    TODO("check png row_size is identical to drawable rowsize");
+                    
+                    uint32_t tmp[8192];
+                    for (size_t k = 0 ; k < height ; ++k) {
+                        png_read_row(ppng, reinterpret_cast<uint8_t*>(tmp), NULL);
+
+                        for (size_t cu = 0 ; cu < this->nbconsumers ; cu++){
+                            this->consumers[cu]->set_row(k, reinterpret_cast<uint8_t*>(tmp));
+                        }
+                    }
+                    png_read_end(ppng, pinfo);
+                    TODO("is there a memory leak ? is info structure destroyed of not ?");
+                    png_destroy_read_struct(&ppng, &pinfo, NULL);
                 }
                 else {
                     REDOC("If no drawable is available ignore images chunks");

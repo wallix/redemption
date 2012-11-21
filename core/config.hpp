@@ -292,8 +292,9 @@ struct Inifile {
     }
 
     void init(){
-            this->globals.capture_wrm = false;
-            this->globals.capture_png = false;
+            this->globals.capture_flags = 3; // 1 png, 2 wrm, 4 flv, 8 ocr
+            this->globals.capture_wrm = true;
+            this->globals.capture_png = true;
             this->globals.capture_flv = false;
             this->globals.capture_ocr = false;
             this->globals.capture_chunk = false;
@@ -315,7 +316,6 @@ struct Inifile {
             strcpy(this->globals.video_quality, "medium");
 
 
-            this->globals.capture_flags = 3; // 1 png, 2 wrm, 4 flv, 8 ocr
             this->globals.png_interval = 3000;
             this->globals.ocr_interval = 100; // 1 every second
             this->globals.frame_interval = 40;

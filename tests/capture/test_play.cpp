@@ -158,4 +158,4 @@ BOOST_AUTO_TEST_CASE(TestSecondPart)
     wrm_sequence.unlink(2);
 }
 
-TODO("need to add test for controlled replay between begin_time and end_time")
+//TODO("need to add test for controlled replay between begin_time and end_time")
