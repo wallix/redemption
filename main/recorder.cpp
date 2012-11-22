@@ -54,6 +54,7 @@ int main(int argc, char** argv)
     uint32_t png_interval = 60;
     uint32_t wrm_frame_interval = 100;
     uint32_t wrm_break_interval = 86400;
+    uint32_t order_count = 0;
 
     boost::program_options::options_description desc("Options");
     desc.add_options()
@@ -64,6 +65,7 @@ int main(int argc, char** argv)
 
     ("begin,b", boost::program_options::value<uint32_t>(&begin_cap), "begin capture time (in seconds), default=none")
     ("end,e", boost::program_options::value<uint32_t>(&end_cap), "end capture time (in seconds), default=none")
+    ("count,c", boost::program_options::value<uint32_t>(&order_count), "Number of orders to execute before stopping, default=0 execute all orders")
 
     ("png_limit,l", boost::program_options::value<uint32_t>(&png_limit), "maximum number of png files to create (remove older), default=10, 0 will disable png capture")
     ("png_interval,n", boost::program_options::value<uint32_t>(&png_interval), "time interval between png captures, default=60 seconds")
@@ -145,6 +147,8 @@ int main(int argc, char** argv)
         player.end_capture.tv_sec = player.record_now.tv_sec + end_cap;
     }
 
+    player.max_order_count = order_count;
+
     const char * fullpath = output_filename.c_str();
     char path[1024];
     char basename[1024];
@@ -153,17 +157,8 @@ int main(int argc, char** argv)
     canonical_path(fullpath, path, sizeof(path), basename, sizeof(basename));
 
     Capture capture(player.record_now, player.screen_rect.cx, player.screen_rect.cy, path, basename, ini);
+    player.add_consumer(&capture);
 
-    if (ini.globals.capture_wrm)
-    {
-        player.add_consumer(capture.drawable);
-    }
-    if (ini.globals.capture_wrm){
-        player.add_consumer(capture.pnc);
-    }
-    if (ini.globals.capture_png){
-        player.add_consumer(capture.psc);
-    }
     player.play();
     
     return 0;

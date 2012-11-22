@@ -67,6 +67,10 @@ struct FileToGraphic
     uint16_t chunk_count;
     uint16_t remaining_order_count;
 
+    // total number of RDP orders read from the start of the movie
+    // (non orders chunks are counted as 1 order)
+    uint32_t total_orders_count;
+
     timeval synctime_now;
     timeval record_now;
 
@@ -81,6 +85,7 @@ struct FileToGraphic
 
     timeval begin_capture;
     timeval end_capture;
+    uint32_t max_order_count;
 
     FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time)
     : stream(65536), trans(trans),
@@ -99,12 +104,14 @@ struct FileToGraphic
     chunk_type(0),
     chunk_count(0),
     remaining_order_count(0),
+    total_orders_count(0),
     nbconsumers(0),
     meta_ok(false),
     timestamp_ok(false),
     real_time(real_time),
     begin_capture(begin_capture),
-    end_capture(end_capture)
+    end_capture(end_capture),
+    max_order_count(0)
     {
         init_palette332(this->palette); // We don't really care movies are always 24 bits for now
         
@@ -185,6 +192,7 @@ struct FileToGraphic
 
     void interpret_order()
     {
+        this->total_orders_count++;
         switch (this->chunk_type){
         case RDP_UPDATE_ORDERS:
         {
@@ -318,10 +326,8 @@ struct FileToGraphic
                         this->synctime_now = this->record_now;
                     }
                     this->timestamp_ok = true;
-                    LOG(LOG_INFO, "replay TIMESTAMP (first timestamp) = %u\n", (unsigned)this->record_now.tv_sec);
                 }
                 else {
-                    LOG(LOG_INFO, "replay TIMESTAMP = %u\n", (unsigned)this->record_now.tv_sec);
                    if (this->real_time){
                         struct timeval now = tvtime();
                         uint64_t elapsed = difftimeval(now, this->synctime_now);
@@ -526,16 +532,21 @@ struct FileToGraphic
         }
 
         while (this->next_order()){
+            LOG(LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n", (unsigned)this->record_now.tv_sec, (unsigned)this->total_orders_count);
             this->interpret_order();
             if ((this->begin_capture.tv_sec == 0) 
             || (this->begin_capture.tv_sec < this->record_now.tv_sec)
-            || (this->begin_capture.tv_sec == this->record_now.tv_sec && this->begin_capture.tv_usec <= this->record_now.tv_usec)){
+            || (this->begin_capture.tv_sec == this->record_now.tv_sec 
+            && this->begin_capture.tv_usec <= this->record_now.tv_usec)){
                 if (send_initial_image){
                     send_initial_image = false;
                 }
                 for (size_t i = 0; i < this->nbconsumers ; i++){
                     this->consumers[i]->snapshot(this->record_now, 0, 0, true, false);
                 }
+            }
+            if (this->max_order_count && this->max_order_count <= this->total_orders_count){
+                break;
             }
             if (this->end_capture.tv_sec 
             && ((this->end_capture.tv_sec < this->record_now.tv_sec)

@@ -292,7 +292,7 @@ struct Inifile {
     }
 
     void init(){
-            this->globals.capture_flags = 3; // 1 png, 2 wrm, 4 flv, 8 ocr
+            this->globals.capture_flags = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
             this->globals.capture_wrm = true;
             this->globals.capture_png = true;
             this->globals.capture_flv = false;

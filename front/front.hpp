@@ -359,8 +359,6 @@ public:
             strcpy(path, "/tmp/"); // default value, actual one should come from movie_path
             strcpy(basename, "redemption"); // default value actual one should come from movie_path
             canonical_path(ini.globals.movie_path, path, sizeof(path), basename, sizeof(basename));
-
-            ini.globals.capture_wrm = true;
             this->capture = new Capture(now, width, height, path, basename, ini);
         }
     }
