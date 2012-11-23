@@ -1248,7 +1248,7 @@ TODO("check if implementation below is conforming to obfuscated text above (I ha
 
     void out_fom_sequence(const int count, const uint8_t * masks) {
         this->out_fom_count(count);
-        this->out_copy_bytes(masks, nbbytes(count));
+        this->out_copy_bytes(masks, nbbytes_large(count));
     }
 
     void out_fom_count_set(const int in_count)
@@ -1272,7 +1272,7 @@ TODO("check if implementation below is conforming to obfuscated text above (I ha
                               const unsigned foreground, const uint8_t * masks) {
         this->out_fom_count_set(count);
         this->out_bytes_le(Bpp, foreground);
-        this->out_copy_bytes(masks, nbbytes(count));
+        this->out_copy_bytes(masks, nbbytes_large(count));
     }
 
     // Color Run Orders
