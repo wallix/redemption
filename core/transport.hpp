@@ -83,7 +83,7 @@ static inline void canonical_path(const char * fullpath, char * path, size_t pat
             }
         }
     }
-    LOG(LOG_INFO, "canonical_path : %s %s %s\n", path, basename);
+    LOG(LOG_INFO, "canonical_path : %s %s\n", path, basename);
 }
 
 class Transport {
