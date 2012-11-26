@@ -335,6 +335,7 @@ public:
 
             strncpy(ini.globals.movie_path, context.get(STRAUTHID_OPT_MOVIE_PATH), sizeof(ini.globals.movie_path)-1);
             ini.globals.movie_path[sizeof(ini.globals.movie_path)-1] = 0;
+            LOG(LOG_INFO, "movie_path = %s\n", ini.globals.movie_path);
 
             strncpy(ini.globals.codec_id, context.get(STRAUTHID_OPT_CODEC_ID), sizeof(ini.globals.codec_id)-1);
             ini.globals.codec_id[sizeof(ini.globals.codec_id)-1] = 0;

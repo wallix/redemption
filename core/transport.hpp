@@ -61,11 +61,12 @@ static inline void canonical_path(const char * fullpath, char * path, size_t pat
         const char * start_of_extension = strrchr(end_of_path + 1, '.');
         if (start_of_extension){
             memcpy(basename, end_of_path + 1, start_of_extension - end_of_path - 1);
-            basename[start_of_extension - end_of_path - 1] = 0;
+            basename[start_of_extension - end_of_path] = 0;
         }
         else {
             if (end_of_path[0]){
                 strcpy(basename, end_of_path + 1);
+                basename[end_of_path - fullpath + 1] = 0;
             }
         }
     }
@@ -78,9 +79,11 @@ static inline void canonical_path(const char * fullpath, char * path, size_t pat
         else {
             if (fullpath[0]){
                 strcpy(basename, fullpath);
+                basename[end_of_path - fullpath + 1] = 0;
             }
         }
     }
+    LOG(LOG_INFO, "canonical_path : %s %s\n", path, basename);
 }
 
 class Transport {
@@ -1211,7 +1214,7 @@ public:
 
     void get_name(char * const buffer, size_t len, uint32_t count) const {
         if (0 == strcmp(this->format, "path file pid count extension")){
-            snprintf(buffer, len, "%s%s-%06u-%i.%s",
+            snprintf(buffer, len, "%s%s-%06u-%06u.%s",
             this->prefix, this->filename, this->pid, count, this->extension);
         }
         else if (0 == strcmp(this->format, "path file pid extension")){
@@ -1331,7 +1334,7 @@ public:
             throw Error(ERR_TRANSPORT);
         }
         char buffer[2048];
-        size_t len = sprintf(buffer, "%s %lu %lu\n", this->path, this->now.tv_sec, this->future.tv_sec);
+        size_t len = sprintf(buffer, "%s %u %u\n", this->path, (unsigned)this->now.tv_sec, (unsigned)this->future.tv_sec);
         size_t remaining_len = len;
         size_t total_sent = 0;
         while (remaining_len) {
@@ -1354,6 +1357,7 @@ public:
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         if (this->fd == -1){
+            LOG(LOG_INFO, "next chunk file: path=%s\n", this->path);
             this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
             this->fd = ::creat(this->path, 0777);
             if (this->fd == -1){
@@ -1376,7 +1380,7 @@ public:
             throw Error(ERR_TRANSPORT);
         }
         char buffer[2048];
-        size_t len = sprintf(buffer, "%s %lu %lu\n", this->path, this->now.tv_sec, this->future.tv_sec);
+        size_t len = sprintf(buffer, "%s %u %u\n", this->path, (unsigned)this->now.tv_sec, (unsigned)this->future.tv_sec);
         size_t remaining_len = len;
         size_t total_sent = 0;
         while (remaining_len) {
