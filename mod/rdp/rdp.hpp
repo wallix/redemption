@@ -1150,7 +1150,6 @@ struct mod_rdp : public client_mod {
             const char * hostname = this->hostname;
             const char * username = this->username;
             int & license_issued = this->lic_layer_license_issued;
-            int res = 0;
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
@@ -1580,7 +1579,7 @@ struct mod_rdp : public client_mod {
                         LIC::NewLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
                         TODO("Save licence to keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that")
-                        res = 1;
+                        this->state = MOD_RDP_CONNECTED;
 
                         LOG(LOG_INFO, "New licence saving failed");
                         throw Error(ERR_SEC);
@@ -1614,7 +1613,7 @@ struct mod_rdp : public client_mod {
                             LOG(LOG_INFO, "%u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u",
                                 version, flic.wMsgSize, dwErrorCode, dwStateTransition, bbErrorInfo);
                         }
-                        res = 1;
+                        this->state = MOD_RDP_CONNECTED;
                     }
                     break;
                     default:
@@ -1640,9 +1639,6 @@ struct mod_rdp : public client_mod {
                 this->state = MOD_RDP_CONNECTED;
                 sec.payload.p = sec.payload.end;
                 hexdump(sec.payload.data, sec.payload.size());
-            }
-            if (res){
-                this->state = MOD_RDP_CONNECTED;
             }
         }
         break;

@@ -2213,9 +2213,6 @@ namespace LIC
         }
     };
 
-};
-
-
 // 2.2.1.12 Server License Error PDU - Valid Client
 // =============================================
 
@@ -2292,6 +2289,61 @@ namespace LIC
 // The LicenseProtocolVersionMask is a 4-bit value containing the supported license protocol version. The following are possible version values.
 
 // wMsgSize (2 bytes): An 16-bit, unsigned integer. The size in bytes of the licensing packet (including the size of the preamble).
+
+
+    struct ErrorAlert_Recv
+    {
+        uint8_t wMsgType;
+        uint8_t bVersion;
+        uint16_t wMsgSize;
+
+
+        // validClientMessage (variable): A Licensing Error Message (section 2.2.1.12.1.3) structure.
+        // The dwStateTransition field MUST be set to ST_NO_TRANSITION (0x00000002). 
+        // The bbErrorInfo field MUST contain an empty binary large object (BLOB) of type BB_ERROR_BLOB (0x0004).
+        struct ValidClientMessage
+        {
+            uint32_t dwErrorCode;
+            uint32_t dwStateTransition;
+
+            uint16_t wBlobType;
+            uint16_t wBlobLen;
+            
+        } validClientMessage;
+
+        ErrorAlert_Recv(Stream & stream){
+            this->wMsgType = stream.in_uint8();
+            this->bVersion = stream.in_uint8();
+            this->wMsgSize = stream.in_uint16_le();
+            
+            this->validClientMessage.dwErrorCode = stream.in_uint32_le();
+            this->validClientMessage.dwStateTransition = stream.in_uint32_le();
+            this->validClientMessage.wBlobType = stream.in_uint16_le();
+            this->validClientMessage.wBlobLen = stream.in_uint16_le();
+
+//            if (this->validClientMessage.wBlobType != 2){
+//                LOG(LOG_ERR, "Unexpected BlobType in Licence ErrorAlert_Recv expected ST_NO_TRANSITION, got %u",
+//                    this->validClientMessage.wBlobType);
+//            }
+//            if (this->validClientMessage.wBlobLen != 0){
+//                LOG(LOG_ERR, "Unexpected BlobLen in Licence ErrorAlert_Recv expected empty blob, got %u bytes",
+//                    this->validClientMessage.wBlobLen);
+//            }
+            if (stream.p != stream.end){
+                LOG(LOG_ERR, "ErrorAlert_Recv : unparsed data %d", stream.end - stream.p);
+            }
+
+            if ((this->validClientMessage.wBlobType != 2)
+            || (this->validClientMessage.wBlobLen != 0)
+            || (stream.p != stream.end)){
+                throw Error(ERR_LIC);
+            }            
+        }
+    };
+
+
+} /* namespace LIC */;
+
 
 // 2.2.2.1 Server License Request (SERVER_LICENSE_REQUEST)
 // =======================================================
