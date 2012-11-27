@@ -26,18 +26,31 @@
 #define __KEYLAYOUTS_HPP__
 
 #include "keylayout.hpp"
-#include "keylayout_x00000407.hpp"
-#include "keylayout_x00000409.hpp"
-#include "keylayout_x0000040a.hpp"
-#include "keylayout_x0000040c.hpp"
-#include "keylayout_x00000410.hpp"
-#include "keylayout_x00000413.hpp"
-#include "keylayout_x00000419.hpp"
-#include "keylayout_x0000046e.hpp"
-#include "keylayout_x00000807.hpp"
-#include "keylayout_x0000080c.hpp"
-#include "keylayout_x00000816.hpp"
-#include "keylayout_x00001009.hpp"
-//#include "keylayout_x00011009.hpp"
+#include "keylayout_x00000407.hpp" // German (Germany)
+#include "keylayout_x00000409.hpp" // English (United States)
+#include "keylayout_x0000040a.hpp" // Spanish (Spain)
+#include "keylayout_x0000040c.hpp" // French (France)
+#include "keylayout_x00000410.hpp" // Italian (Italy)
+#include "keylayout_x00000413.hpp" // Dutch (Netherlands)
+#include "keylayout_x00000419.hpp" // Russian (Russia)
+#include "keylayout_x0000041d.hpp" // Swedish (Sweden)
+#include "keylayout_x00000452.hpp" // Welsh (United Kingdom)
+#include "keylayout_x0000046e.hpp" // Luxembourgish (Luxembourg)
+#include "keylayout_x00000807.hpp" // German (Switzerland)
+#include "keylayout_x00000809.hpp" // English (United Kingdom)
+#include "keylayout_x0000080c.hpp" // French (Belgium)
+#include "keylayout_x00000813.hpp" // Dutch (Belgium)
+#include "keylayout_x00000816.hpp" // Portuguese (Portugal)
+#include "keylayout_x0000083b.hpp" // Sami (Northern) (Sweden)
+#include "keylayout_x00000c0c.hpp" // French (Canada)
+#include "keylayout_x00001009.hpp" // English (Canada)
+#include "keylayout_x0000100c.hpp" // French (Switzerland)
+#include "keylayout_x00010407.hpp" // German (Germany)
+#include "keylayout_x0001040a.hpp" // Spanish (Spain)
+#include "keylayout_x00010410.hpp" // Italian (Italy)
+#include "keylayout_x00010419.hpp" // Russian (Russia)
+#include "keylayout_x0001080c.hpp" // French (Belgium)
+#include "keylayout_x00011009.hpp" // English (Canada)
+#include "keylayout_x00020409.hpp" // English (United States)
 
 #endif
