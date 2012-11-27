@@ -181,7 +181,7 @@ struct FileToGraphic
                 }
             }
             catch (Error & e){
-                LOG(LOG_INFO,"receive error %u : end of transport", e.id);
+//                LOG(LOG_INFO,"receive error %u : end of transport", e.id);
                 // receive error, end of transport
                 return false;
             }
@@ -532,7 +532,7 @@ struct FileToGraphic
         }
 
         while (this->next_order()){
-            LOG(LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n", (unsigned)this->record_now.tv_sec, (unsigned)this->total_orders_count);
+//            LOG(LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n", (unsigned)this->record_now.tv_sec, (unsigned)this->total_orders_count);
             this->interpret_order();
             if ((this->begin_capture.tv_sec == 0) 
             || (this->begin_capture.tv_sec < this->record_now.tv_sec)

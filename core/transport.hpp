@@ -61,12 +61,12 @@ static inline void canonical_path(const char * fullpath, char * path, size_t pat
         const char * start_of_extension = strrchr(end_of_path + 1, '.');
         if (start_of_extension){
             memcpy(basename, end_of_path + 1, start_of_extension - end_of_path - 1);
-            basename[start_of_extension - end_of_path] = 0;
+            basename[start_of_extension - end_of_path - 1] = 0;
         }
         else {
             if (end_of_path[0]){
                 strcpy(basename, end_of_path + 1);
-                basename[end_of_path - fullpath + 1] = 0;
+                basename[end_of_path + 1 - fullpath] = 0;
             }
         }
     }
@@ -79,7 +79,7 @@ static inline void canonical_path(const char * fullpath, char * path, size_t pat
         else {
             if (fullpath[0]){
                 strcpy(basename, fullpath);
-                basename[end_of_path - fullpath + 1] = 0;
+                basename[end_of_path - fullpath] = 0;
             }
         }
     }
