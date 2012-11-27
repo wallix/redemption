@@ -2290,6 +2290,54 @@ namespace LIC
 
 // wMsgSize (2 bytes): An 16-bit, unsigned integer. The size in bytes of the licensing packet (including the size of the preamble).
 
+// 2.2.1.12.1.3 Licensing Error Message (LICENSE_ERROR_MESSAGE)
+// ===========================================================
+
+// The LICENSE_ERROR_MESSAGE structure is used to indicate that an error occurred during the licensing protocol.
+// Alternatively, it is also used to notify the peer of important status information.
+
+// dwErrorCode (4 bytes): A 32-bit, unsigned integer. The error or status code.
+
+//    Sent by client:
+//    ERR_INVALID_SERVER_CERTIFICATE   0x00000001
+//    ERR_NO_LICENSE                   0x00000002
+
+//    Sent by server:
+//    ERR_INVALID_SCOPE                0x00000004
+//    ERR_NO_LICENSE_SERVER            0x00000006
+//    STATUS_VALID_CLIENT              0x00000007
+//    ERR_INVALID_CLIENT               0x00000008
+//    ERR_INVALID_PRODUCTID            0x0000000B
+//    ERR_INVALID_MESSAGE_LEN          0x0000000C
+
+//    Sent by client and server:
+//    ERR_INVALID_MAC                  0x00000003
+
+// dwStateTransition (4 bytes): A 32-bit, unsigned integer. The licensing state to transition into upon receipt 
+//    of this message. For more details about how this field is used, see [MS-RDPELE] section 3.1.5.2.
+
+//    ST_TOTAL_ABORT            0x00000001
+//    ST_NO_TRANSITION          0x00000002
+//    ST_RESET_PHASE_TO_START   0x00000003
+//    ST_RESEND_LAST_MESSAGE    0x00000004
+
+//    3.1.5.2 Sending License Error Messages
+//    ======================================
+
+//     Both the client and the server can send a license error message. Whenever an error message is sent, 
+//     the message type in the licensing preamble MUST be set to ERROR_ALERT (0xFF). For the PDU, see [MS-RDPBCGR] 
+//     section 2.2.1.12.1.3
+
+//     The client and the server MUST also set the appropriate state transition value in the dwStateTransition 
+//     field in the PDU. This is used to determine the next action to take. For state transitions, 
+//     see Processing License Error Messages.
+
+//     A more detailed reason for the error MAY be passed by using the bbErrorInfo BLOB. The BLOB type MUST be 
+//     BB_ERROR_BLOB (see [MS-RDPBCGR] sections 2.2.1.12.1.2 and 2.2.1.12.1.3). This BLOB is empty if no detailed
+//     reason for the error is passed.
+
+// bbErrorInfo (variable): A LICENSE_BINARY_BLOB (section 2.2.1.12.1.2) structure which MUST contain a BLOB 
+//    of type BB_ERROR_BLOB (0x0004) that includes information relevant to the error code specified in dwErrorCode.
 
     struct ErrorAlert_Recv
     {
@@ -2312,6 +2360,7 @@ namespace LIC
         } validClientMessage;
 
         ErrorAlert_Recv(Stream & stream){
+            hexdump_d(stream.data, stream.size());
             this->wMsgType = stream.in_uint8();
             this->bVersion = stream.in_uint8();
             this->wMsgSize = stream.in_uint16_le();
@@ -2321,19 +2370,25 @@ namespace LIC
             this->validClientMessage.wBlobType = stream.in_uint16_le();
             this->validClientMessage.wBlobLen = stream.in_uint16_le();
 
-//            if (this->validClientMessage.wBlobType != 2){
-//                LOG(LOG_ERR, "Unexpected BlobType in Licence ErrorAlert_Recv expected ST_NO_TRANSITION, got %u",
-//                    this->validClientMessage.wBlobType);
-//            }
-//            if (this->validClientMessage.wBlobLen != 0){
-//                LOG(LOG_ERR, "Unexpected BlobLen in Licence ErrorAlert_Recv expected empty blob, got %u bytes",
-//                    this->validClientMessage.wBlobLen);
-//            }
+            if (this->validClientMessage.dwStateTransition != 2){
+                LOG(LOG_ERR, "Unexpected dwStateTransition in Licence ErrorAlert_Recv expected ST_NO_TRANSITION, got %u",
+                    this->validClientMessage.dwStateTransition);
+            }
+            if (this->validClientMessage.wBlobType != 4){
+                LOG(LOG_ERR, "Unexpected BlobType in Licence ErrorAlert_Recv expected BB_ERROR_BLOB, got %u",
+                    this->validClientMessage.wBlobType);
+            }
+            if (this->validClientMessage.wBlobLen != 0){
+                LOG(LOG_ERR, "Unexpected BlobLen in Licence ErrorAlert_Recv expected empty blob, got %u bytes",
+                    this->validClientMessage.wBlobLen);
+            }
             if (stream.p != stream.end){
                 LOG(LOG_ERR, "ErrorAlert_Recv : unparsed data %d", stream.end - stream.p);
             }
 
-            if ((this->validClientMessage.wBlobType != 2)
+            REDOC("wBlobType is not 4 on windows 2000 or Windows XP... (content looks like garbage)")
+            if ((this->validClientMessage.dwStateTransition != 2)
+//            || (this->validClientMessage.wBlobType != 4)
             || (this->validClientMessage.wBlobLen != 0)
             || (stream.p != stream.end)){
                 throw Error(ERR_LIC);

@@ -1597,30 +1597,27 @@ struct mod_rdp : public client_mod {
                     }
                     break;
                     case LIC::ERROR_ALERT:
+                    {
                         if (this->verbose){
                             LOG(LOG_INFO, "Rdp::Get licence status");
                         }
-                    TODO("This should be moved to RDP/lic.hpp (and probably the switch should also move there)")
-                    {
-                        uint8_t tag = sec.payload.in_uint8();
-                        uint8_t flags = sec.payload.in_uint8();
-                        uint16_t wMsgSize = sec.payload.in_uint16_le();
+                        LIC::ErrorAlert_Recv lic(sec.payload);
+//                        uint8_t tag = sec.payload.in_uint8();
+//                        uint8_t flags = sec.payload.in_uint8();
+//                        uint16_t wMsgSize = sec.payload.in_uint16_le();
 
-                        uint32_t dwErrorCode = sec.payload.in_uint32_le();
-                        uint32_t dwStateTransition = sec.payload.in_uint32_le();
-                        uint32_t bbErrorInfo = sec.payload.in_uint32_le();
-                        if (this->verbose){
-                            LOG(LOG_INFO, "%u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u",
-                                version, flic.wMsgSize, dwErrorCode, dwStateTransition, bbErrorInfo);
-                        }
+//                        uint32_t dwErrorCode = sec.payload.in_uint32_le();
+//                        uint32_t dwStateTransition = sec.payload.in_uint32_le();
+//                        uint32_t bbErrorInfo = sec.payload.in_uint32_le();
+//                        if (this->verbose){
+//                            LOG(LOG_INFO, "%u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u",
+//                                version, flic.wMsgSize, dwErrorCode, dwStateTransition, bbErrorInfo);
+//                        }
                         this->state = MOD_RDP_CONNECTED;
                     }
                     break;
                     default:
                     {
-                        uint8_t tag = sec.payload.in_uint8();
-                        uint8_t flags = sec.payload.in_uint8();
-                        uint16_t wMsgSize = sec.payload.in_uint16_le();
                         LOG(LOG_WARNING, "Unexpected license tag sent from server (tag = %x)", flic.tag);
                         throw Error(ERR_SEC);
                     }
