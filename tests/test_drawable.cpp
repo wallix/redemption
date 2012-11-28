@@ -430,3 +430,27 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     // uncomment to see result in png file
     //dump_png("/tmp/test_memblt_", gd.drawable);
 }
+
+
+BOOST_AUTO_TEST_CASE(TestBgr2RGB)
+{
+    // Create a simple capture image and dump it to file
+    uint16_t width = 640;
+    uint16_t height = 480;
+    Rect screen_rect(0, 0, width, height);
+    BGRPalette palette;
+    init_palette332(palette);
+
+    RDPDrawable gd(width, height, true);
+    gd.draw(RDPOpaqueRect(screen_rect, 0xFF0000), screen_rect);
+    gd.drawable.bgr2rgb();
+
+    char message[1024];
+    if (!check_sig(gd.drawable, message,
+    "\x59\x99\x2f\x37\x8b\x44\x4b\xad\xf0\x10\x23\x03\xd8\xde\xea\x81\x41\x3b\x12\x0a"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+//    dump_png("./testBGR2RGB", gd.drawable);
+
+}

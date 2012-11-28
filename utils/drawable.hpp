@@ -73,6 +73,31 @@ struct Drawable
         delete[] this->data;
     }
 
+    void bgr2rgb()
+    {
+        const uint32_t * s = reinterpret_cast<const uint32_t *>(this->data);
+        uint32_t * t = reinterpret_cast<uint32_t *>(this->data);
+        for (size_t y = 0; y < this->height ; y++){
+            for (size_t n = 0; n < (this->width / 4) ; n++){
+                unsigned bRGB = *s++;
+                unsigned GBrg = *s++;
+                unsigned rgbR = *s++;
+                *t++ = ((GBrg << 16) & 0xFF000000) 
+                     | ((bRGB << 16) & 0x00FF0000) 
+                     | (bRGB         & 0x0000FF00) 
+                     | ((bRGB >> 16) & 0x000000FF) ;
+                *t++ = (GBrg         & 0xFF000000) 
+                     | ((rgbR << 16) & 0x00FF0000) 
+                     | ((bRGB >> 16) & 0x0000FF00) 
+                     | ( GBrg        & 0x000000FF) ;
+                *t++ = ((rgbR << 16) & 0xFF000000)   
+                     | (rgbR         & 0x00FF0000) 
+                     | ((rgbR >> 16) & 0x0000FF00) 
+                     | ((GBrg >> 16) & 0x000000FF) ;
+            }
+        }
+    }
+
     uint8_t * first_pixel()
     {
         return this->data;
