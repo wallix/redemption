@@ -390,7 +390,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
 
     FileSequence sequence("path file pid count extension", "./", "testimg", "png");
 
@@ -463,7 +463,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
     FileSequence sequence("path file pid count extension", "./", "testimg", "png");
 
     OutByFilenameSequenceTransport out_png_trans(sequence);
@@ -542,7 +542,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
     FileSequence sequence("path file pid count extension", "./", "testimg", "png");
 
     OutByFilenameSequenceTransport out_png_trans(sequence);

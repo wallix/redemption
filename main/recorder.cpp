@@ -27,6 +27,7 @@
 #include <utility>
 #include <string>
 
+#define LOGPRINT
 #include "version.hpp"
 
 #include "capture.hpp"
@@ -35,6 +36,7 @@
 
 int main(int argc, char** argv)
 {
+    uint32_t verbose = 0;
     openlog("redrec", LOG_CONS | LOG_PERROR, LOG_USER);
 
     const char * copyright_notice =
@@ -76,6 +78,7 @@ int main(int argc, char** argv)
 
     ("png,p", "enable png capture")
     ("wrm,w", "enable wrm capture")
+    ("verbose", boost::program_options::value<uint32_t>(&verbose), "more logs")
     ;
 
     Inifile ini;
@@ -128,7 +131,7 @@ int main(int argc, char** argv)
     end_capture.tv_sec = end_cap; end_capture.tv_usec = 0;
 
     InByMetaSequenceTransport in_wrm_trans(input_filename.c_str());
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, verbose);
 
     TODO("we should manage direct choice of the right start chunk based on content of mwrm, passing start capture to mwrm start chunk should be enough.")
     TODO("Also it should reject chunk change after end_capture point, but this is less critical as we must manage detecting stop from inside chunk anyway")

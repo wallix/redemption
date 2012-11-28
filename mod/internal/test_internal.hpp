@@ -75,7 +75,7 @@ struct test_internal_mod : public internal_mod {
         InByMetaSequenceTransport in_trans(this->movie);
         timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
         timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-        FileToGraphic reader(&in_trans, begin_capture, end_capture, true);
+        FileToGraphic reader(&in_trans, begin_capture, end_capture, true, 0);
         reader.add_consumer(&this->front);
         this->front.send_global_palette();
         this->front.begin_update();

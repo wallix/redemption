@@ -86,8 +86,9 @@ struct FileToGraphic
     timeval begin_capture;
     timeval end_capture;
     uint32_t max_order_count;
+    uint32_t verbose;
 
-    FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time)
+    FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
     : stream(65536), trans(trans),
      // Internal state of orders
     common(RDP::PATBLT, Rect(0, 0, 1, 1)),
@@ -111,7 +112,8 @@ struct FileToGraphic
     real_time(real_time),
     begin_capture(begin_capture),
     end_capture(end_capture),
-    max_order_count(0)
+    max_order_count(0),
+    verbose(verbose)
     {
         init_palette332(this->palette); // We don't really care movies are always 24 bits for now
         
@@ -532,7 +534,10 @@ struct FileToGraphic
         }
 
         while (this->next_order()){
-//            LOG(LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n", (unsigned)this->record_now.tv_sec, (unsigned)this->total_orders_count);
+            if (this->verbose > 8){
+                LOG(LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n",
+                    (unsigned)this->record_now.tv_sec, (unsigned)this->total_orders_count);
+            }
             this->interpret_order();
             if ((this->begin_capture.tv_sec == 0) 
             || (this->begin_capture.tv_sec < this->record_now.tv_sec)
