@@ -51,7 +51,7 @@ struct Keylayout
 {
     enum {
           MAX_DEADKEYS = 10
-        , MAX_SECOND_KEYS = 15
+        , MAX_SECOND_KEYS = 35
         , MAX_LAYOUT_CHARS = 128
     };
 
@@ -60,14 +60,16 @@ struct Keylayout
     typedef int KeyLayout_t[MAX_LAYOUT_CHARS];
 
     // keylayout working tables (X11 mode : begins in 8e position.)
-    // Each one contains at most MAX_LAYOUT_CHARS key mappings for a modifier keys combination
-    KeyLayout_t noshift;
+    // Each one contains at most MAX_LAYOUT_CHARS key mappings for a given modifier keys combination
+    KeyLayout_t noMod;
     KeyLayout_t shift;
-    KeyLayout_t altgr;
-    KeyLayout_t capslock;
-    KeyLayout_t shiftcapslock;
+    KeyLayout_t altGr;
+    KeyLayout_t shiftAltGr;
     KeyLayout_t ctrl;
-    KeyLayout_t shiftaltgr;
+    KeyLayout_t capslock_noMod;
+    KeyLayout_t capslock_shift;
+    KeyLayout_t capslock_altGr;
+    KeyLayout_t capslock_shiftAltGr;
 
     typedef struct dkk {
         uint16_t secondKey;
@@ -89,13 +91,15 @@ struct Keylayout
     // Constructor
     //==============================================================================
     Keylayout(  int LCID
-             ,  const KeyLayout_t LCID_noshift
+             ,  const KeyLayout_t LCID_noMod
              ,  const KeyLayout_t LCID_shift
-             ,  const KeyLayout_t LCID_capslock
-             ,  const KeyLayout_t LCID_altgr
-             ,  const KeyLayout_t LCID_shiftcapslock
+             ,  const KeyLayout_t LCID_altGr
+             ,  const KeyLayout_t LCID_shiftAltGr
              ,  const KeyLayout_t LCID_ctrl
-             ,  const KeyLayout_t LCID_shiftaltgr
+             ,  const KeyLayout_t LCID_capslock_noMod
+             ,  const KeyLayout_t LCID_capslock_shift
+             ,  const KeyLayout_t LCID_capslock_altGr
+             ,  const KeyLayout_t LCID_capslock_shiftAltGr
              ,  const dkey_t LCID_deadkeys[MAX_DEADKEYS]
              ,  uint32_t verbose = 0
              )
@@ -103,13 +107,15 @@ struct Keylayout
         , verbose(verbose)
     //==============================================================================
     {
-        memset(&this->noshift,       0, MAX_LAYOUT_CHARS * sizeof(int));
-        memset(&this->shift,         0, MAX_LAYOUT_CHARS * sizeof(int));
-        memset(&this->altgr,         0, MAX_LAYOUT_CHARS * sizeof(int));
-        memset(&this->capslock,      0, MAX_LAYOUT_CHARS * sizeof(int));
-        memset(&this->shiftcapslock, 0, MAX_LAYOUT_CHARS * sizeof(int));
-        memset(&this->ctrl,          0, MAX_LAYOUT_CHARS * sizeof(int));
-        memset(&this->shiftaltgr,    0, MAX_LAYOUT_CHARS * sizeof(int));
+        memset(&this->noMod,               0, MAX_LAYOUT_CHARS * sizeof(int));
+        memset(&this->shift,               0, MAX_LAYOUT_CHARS * sizeof(int));
+        memset(&this->altGr,               0, MAX_LAYOUT_CHARS * sizeof(int));
+        memset(&this->shiftAltGr,          0, MAX_LAYOUT_CHARS * sizeof(int));
+        memset(&this->ctrl,                0, MAX_LAYOUT_CHARS * sizeof(int));
+        memset(&this->capslock_noMod,      0, MAX_LAYOUT_CHARS * sizeof(int));
+        memset(&this->capslock_shift,      0, MAX_LAYOUT_CHARS * sizeof(int));
+        memset(&this->capslock_altGr,      0, MAX_LAYOUT_CHARS * sizeof(int));
+        memset(&this->capslock_shiftAltGr, 0, MAX_LAYOUT_CHARS * sizeof(int));
         memset(&this->deadkeys, 0, sizeof(this->deadkeys));
 
         //-----------------------------------------------------
@@ -118,13 +124,15 @@ struct Keylayout
 
         // Intialize the WORK tables with client LOCALE
         for(int i=0 ; i < MAX_LAYOUT_CHARS ; i++) {
-            this->noshift[i]       = LCID_noshift[i] ;
-            this->shift[i]         = LCID_shift[i] ;
-            this->altgr[i]         = LCID_altgr[i] ;
-            this->capslock[i]      = LCID_capslock[i] ;
-            this->shiftcapslock[i] = LCID_shiftcapslock[i];
-            this->ctrl[i]          = LCID_ctrl[i];
-            this->shiftaltgr[i]    = LCID_shiftaltgr[i];
+            this->noMod[i]               = LCID_noMod[i];
+            this->shift[i]               = LCID_shift[i];
+            this->altGr[i]               = LCID_altGr[i];
+            this->shiftAltGr[i]          = LCID_shiftAltGr[i];
+            this->ctrl[i]                = LCID_ctrl[i];
+            this->capslock_noMod[i]      = LCID_capslock_noMod[i];
+            this->capslock_shift[i]      = LCID_capslock_shift[i];
+            this->capslock_altGr[i]      = LCID_capslock_altGr[i];
+            this->capslock_shiftAltGr[i] = LCID_capslock_shiftAltGr[i];
         }
 
         for(size_t i = 0 ; i < Keylayout::MAX_DEADKEYS ; i++) {

@@ -21,23 +21,23 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#if !defined(__KEYLAYOUT_X00000807_HPP__)
-#define __KEYLAYOUT_X00000807_HPP__
+#if !defined(__KEYLAYOUT_X0000100C_HPP__)
+#define __KEYLAYOUT_X0000100C_HPP__
 
 #include "keylayout.hpp"
 
-namespace x00000807 {    // German (Switzerland)
+namespace x0000100c {    // French (Switzerland)
 
-const static int LCID = 0x00000807;
+const static int LCID = 0x0000100c;
 
 const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
     /* x08 - x0F */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
     /* x10 - x17 */       '7',    '8',    '9',    '0', 0x0027, 0x005E, 0x0008, 0x0009,
     /* x18 - x1F */       'q',    'w',    'e',    'r',    't',    'z',    'u',    'i',
-    /* x20 - x27 */       'o',    'p', 0x00FC, 0x00A8, 0x000D, 0x0000,    'a',    's',
-    /* x28 - x2F */       'd',    'f',    'g',    'h',    'j',    'k',    'l', 0x00F6,
-    /* x30 - x37 */    0x00E4, 0x00A7, 0x0000, 0x0024,    'y',    'x',    'c',    'v',
+    /* x20 - x27 */       'o',    'p', 0x00E8, 0x00A8, 0x000D, 0x0000,    'a',    's',
+    /* x28 - x2F */       'd',    'f',    'g',    'h',    'j',    'k',    'l', 0x00E9,
+    /* x30 - x37 */    0x00E0, 0x00A7, 0x0000, 0x0024,    'y',    'x',    'c',    'v',
     /* x38 - x3F */       'b',    'n',    'm', 0x002C, 0x002E, 0x002D, 0x0000, 0x002A,
     /* x40 - x47 */    0x0000, 0x0020, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
     /* x48 - x4F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0037,
@@ -53,9 +53,9 @@ const Keylayout::KeyLayout_t shift = {
     /* x08 - x0F */    0x0000, 0x001B, 0x002B, 0x0022, 0x002A, 0x00E7, 0x0025, 0x0026,
     /* x10 - x17 */    0x002F, 0x0028, 0x0029, 0x003D, 0x003F, 0x0060, 0x0008, 0x0000,
     /* x18 - x1F */       'Q',    'W',    'E',    'R',    'T',    'Z',    'U',    'I',
-    /* x20 - x27 */       'O',    'P', 0x00E8, 0x0021, 0x000D, 0x0000,    'A',    'S',
-    /* x28 - x2F */       'D',    'F',    'G',    'H',    'J',    'K',    'L', 0x00E9,
-    /* x30 - x37 */    0x00E0, 0x00B0, 0x0000, 0x00A3,    'Y',    'X',    'C',    'V',
+    /* x20 - x27 */       'O',    'P', 0x00FC, 0x0021, 0x000D, 0x0000,    'A',    'S',
+    /* x28 - x2F */       'D',    'F',    'G',    'H',    'J',    'K',    'L', 0x00F6,
+    /* x30 - x37 */    0x00E4, 0x00B0, 0x0000, 0x00A3,    'Y',    'X',    'C',    'V',
     /* x38 - x3F */       'B',    'N',    'M', 0x003B, 0x003A, 0x005F, 0x0000, 0x002A,
     /* x40 - x47 */    0x0000, 0x0020, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
     /* x48 - x4F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -125,9 +125,9 @@ const Keylayout::KeyLayout_t capslock_noMod = {
     /* x08 - x0F */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
     /* x10 - x17 */       '7',    '8',    '9',    '0', 0x0027, 0x005E, 0x0008, 0x0009,
     /* x18 - x1F */       'Q',    'W',    'E',    'R',    'T',    'Z',    'U',    'I',
-    /* x20 - x27 */       'O',    'P', 0x00DC, 0x00A8, 0x000D, 0x0000,    'A',    'S',
-    /* x28 - x2F */       'D',    'F',    'G',    'H',    'J',    'K',    'L', 0x00D6,
-    /* x30 - x37 */    0x00C4, 0x00A7, 0x0000, 0x0024,    'Y',    'X',    'C',    'V',
+    /* x20 - x27 */       'O',    'P', 0x00E8, 0x00A8, 0x000D, 0x0000,    'A',    'S',
+    /* x28 - x2F */       'D',    'F',    'G',    'H',    'J',    'K',    'L', 0x00E9,
+    /* x30 - x37 */    0x00E0, 0x00A7, 0x0000, 0x0024,    'Y',    'X',    'C',    'V',
     /* x38 - x3F */       'B',    'N',    'M', 0x002C, 0x002E, 0x002D, 0x0000, 0x002A,
     /* x40 - x47 */    0x0000, 0x0020, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
     /* x48 - x4F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -143,9 +143,9 @@ const Keylayout::KeyLayout_t capslock_shift = {
     /* x08 - x0F */    0x0000, 0x001B, 0x002B, 0x0022, 0x002A, 0x00E7, 0x0025, 0x0026,
     /* x10 - x17 */    0x002F, 0x0028, 0x0029, 0x003D, 0x003F, 0x0060, 0x0008, 0x0009,
     /* x18 - x1F */       'q',    'w',    'e',    'r',    't',    'z',    'u',    'i',
-    /* x20 - x27 */       'o',    'p', 0x00C8, 0x0021, 0x000D, 0x0000,    'a',    's',
-    /* x28 - x2F */       'd',    'f',    'g',    'h',    'j',    'k',    'l', 0x00C9,
-    /* x30 - x37 */    0x00C0, 0x00B0, 0x0000, 0x00A3,    'y',    'x',    'c',    'v',
+    /* x20 - x27 */       'o',    'p', 0x00FC, 0x0021, 0x000D, 0x0000,    'a',    's',
+    /* x28 - x2F */       'd',    'f',    'g',    'h',    'j',    'k',    'l', 0x00F6,
+    /* x30 - x37 */    0x00E4, 0x00B0, 0x0000, 0x00A3,    'y',    'x',    'c',    'v',
     /* x38 - x3F */       'b',    'n',    'm', 0x003B, 0x003A, 0x005F, 0x0000, 0x002A,
     /* x40 - x47 */    0x0000, 0x0020, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
     /* x48 - x4F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -245,7 +245,7 @@ const Keylayout::dkey_t deadkeys[] = {
       },
       { 0x00a8, 0x1b, 12, { {0x006f, 0x00f6}  // 'o' = 'ö'
                           , {0x0049, 0x00cf}  // 'I' = 'Ï'
-                          , {0x0020, 0x00a8}  // ' ' = '¨'
+                          , {0x0020, 0x0022}  // ' ' = '"'
                           , {0x0041, 0x00c4}  // 'A' = 'Ä'
                           , {0x0045, 0x00cb}  // 'E' = 'Ë'
                           , {0x0055, 0x00dc}  // 'U' = 'Ü'
@@ -259,19 +259,19 @@ const Keylayout::dkey_t deadkeys[] = {
       },
 };
 
-} // END NAMESPACE - x00000807
+} // END NAMESPACE - x0000100c
 
-static const Keylayout keylayout_x00000807( x00000807::LCID
-                                          , x00000807::noMod
-                                          , x00000807::shift
-                                          , x00000807::altGr
-                                          , x00000807::shiftAltGr
-                                          , x00000807::ctrl
-                                          , x00000807::capslock_noMod
-                                          , x00000807::capslock_shift
-                                          , x00000807::capslock_altGr
-                                          , x00000807::capslock_shiftAltGr
-                                          , x00000807::deadkeys
+static const Keylayout keylayout_x0000100c( x0000100c::LCID
+                                          , x0000100c::noMod
+                                          , x0000100c::shift
+                                          , x0000100c::altGr
+                                          , x0000100c::shiftAltGr
+                                          , x0000100c::ctrl
+                                          , x0000100c::capslock_noMod
+                                          , x0000100c::capslock_shift
+                                          , x0000100c::capslock_altGr
+                                          , x0000100c::capslock_shiftAltGr
+                                          , x0000100c::deadkeys
 );
 
 #endif

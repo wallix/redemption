@@ -33,19 +33,15 @@
 
 using namespace std;
 
-static const Keylayout * keylayouts[] = { &keylayout_x00000407
-                                        , &keylayout_x00000409
-                                        , &keylayout_x0000040a
-                                        , &keylayout_x0000040c
-                                        , &keylayout_x00000410
-                                        , &keylayout_x00000413
-                                        , &keylayout_x00000419
-                                        , &keylayout_x0000046e
-                                        , &keylayout_x00000807
-                                        , &keylayout_x0000080c
-                                        , &keylayout_x00000816
-                                        , &keylayout_x00001009
-//                                        , &keylayout_x00011009
+static const Keylayout * keylayouts[] = { &keylayout_x00000407, &keylayout_x00000409, &keylayout_x0000040a
+                                        , &keylayout_x0000040c, &keylayout_x00000410, &keylayout_x00000413
+                                        , &keylayout_x00000419, &keylayout_x0000041d, &keylayout_x00000452
+                                        , &keylayout_x0000046e, &keylayout_x00000807, &keylayout_x00000809
+                                        , &keylayout_x0000080c, &keylayout_x00000813, &keylayout_x00000816
+                                        , &keylayout_x0000083b, &keylayout_x00000c0c, &keylayout_x00001009
+                                        , &keylayout_x0000100c, &keylayout_x00010407, &keylayout_x0001040a
+                                        , &keylayout_x00010410, &keylayout_x00010419, &keylayout_x0001080c
+                                        , &keylayout_x00011009, &keylayout_x00020409
                                         };
 
 
@@ -303,7 +299,7 @@ struct Keymap2
                     if (this->verbose){
                         LOG(LOG_INFO, "Event is Make for key: Ox%#02x", extendedKeyCode);
                     }
-                        const Keylayout::KeyLayout_t * layout = &this->keylayout_WORK->noshift;
+                        const Keylayout::KeyLayout_t * layout = &this->keylayout_WORK->noMod;
                         this->last_char_key = extendedKeyCode;
 
                     //-------------------------------------------------------------------------
@@ -320,14 +316,14 @@ struct Keymap2
                         if (  (this->key_flags & NUMLOCK)
                            && ( ! this->is_shift_pressed())
                            ) {
-                            if (this->is_alt_pressed()) {
+                            if (this->is_ctrl_pressed()) {
                                 layout = &this->keylayout_WORK->ctrl;
                             }
-                            else if(this->is_ctrl_pressed()) {
-                                layout = &this->keylayout_WORK->altgr;
+                            else if(this->is_ctrl_pressed() && this->is_alt_pressed()) {
+                                layout = &this->keylayout_WORK->altGr;
                             }
                             else {
-                                layout = &this->keylayout_WORK->noshift;
+                                layout = &this->keylayout_WORK->noMod;
                             }
                             // Translate the scancode to an unicode char
                             uint8_t sym = map[extendedKeyCode];
@@ -386,23 +382,37 @@ struct Keymap2
                             LOG(LOG_INFO, "Key not from keypad: 0x%02x", extendedKeyCode);
                         }
 
-                        if (this->is_ctrl_pressed() && this->is_alt_pressed() && this->is_shift_pressed()){
-                            layout = &this->keylayout_WORK->shiftaltgr;
+                        // Set the layout block to be used, depending on active modifier keys and capslock status
+                        if (this->is_caps_locked()) {
+                            if (this->is_ctrl_pressed() && this->is_alt_pressed() && this->is_shift_pressed()){
+                                layout = &this->keylayout_WORK->capslock_shiftAltGr;
+                            }
+                            else if (this->is_ctrl_pressed() && this->is_alt_pressed()){
+                                layout = &this->keylayout_WORK->capslock_altGr;
+                            }
+                            else if (this->is_shift_pressed()){
+                                layout = &this->keylayout_WORK->capslock_shift;
+                            }
+                            else{
+                                layout = &this->keylayout_WORK->capslock_noMod;
+                            }
                         }
-                        else if (this->is_ctrl_pressed() && this->is_alt_pressed()){
-                            layout = &this->keylayout_WORK->altgr;
-                        }
-                        else if (this->is_ctrl_pressed()){
-                            layout = &this->keylayout_WORK->ctrl;
-                        }
-                        else if (this->is_shift_pressed() && this->is_caps_locked()){
-                            layout = &this->keylayout_WORK->shiftcapslock;
-                        }
-                        else if (this->is_shift_pressed()){
-                            layout = &this->keylayout_WORK->shift;
-                        }
-                        else if (this->is_caps_locked()) {
-                            layout = &this->keylayout_WORK->capslock;
+                        else {
+                            if (this->is_ctrl_pressed() && this->is_alt_pressed() && this->is_shift_pressed()){
+                                layout = &this->keylayout_WORK->shiftAltGr;
+                            }
+                            else if (this->is_ctrl_pressed() && this->is_alt_pressed()){
+                                layout = &this->keylayout_WORK->altGr;
+                            }
+                            else if (this->is_ctrl_pressed()){
+                                layout = &this->keylayout_WORK->ctrl;
+                            }
+                            else if (this->is_shift_pressed()){
+                                layout = &this->keylayout_WORK->shift;
+                            }
+                            else{
+                                layout = &this->keylayout_WORK->noMod;
+                            }
                         }
                         // Translate the scancode to an unicode char
                         uint8_t sym = map[extendedKeyCode];
@@ -435,7 +445,7 @@ struct Keymap2
                                     LOG(LOG_INFO, "Dead key : uchar=0x%02x", uchar);
                                 }
                                 bool deadkeyTranslated = false;
-                                // Search for for uchar to translate in the current DEADKEY entry
+                                // Search for uchar to translate in the current DEADKEY entry
                                 for (uint8_t i = 0; i < this->deadkey_pending_def.nbSecondKeys; i++) {
                                      if (this->deadkey_pending_def.secondKeys[i].secondKey == uchar) {
 
@@ -446,7 +456,7 @@ struct Keymap2
                                     }
                                 }
                                 // If that second key is not associated with that deadkey,
-                                // push both deadkey and unmodified second key uchars in keyboard buffer
+                                // push both deadkey uchar and unmodified second key uchar in keyboard buffer
                                 if (not deadkeyTranslated) {
                                     this->push(this->deadkey_pending_def.uchar);
                                     this->push(uchar);
@@ -763,7 +773,7 @@ struct Keymap2
 
 
     //==============================================================================
-    bool is_right_alt_pressed() const // altgr
+    bool is_right_alt_pressed() const // altGr
     //==============================================================================
     {
         return this->keys_down[RIGHT_ALT];
