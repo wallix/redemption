@@ -57,6 +57,7 @@ int main(int argc, char** argv)
     uint32_t wrm_frame_interval = 100;
     uint32_t wrm_break_interval = 86400;
     uint32_t order_count = 0;
+    unsigned zoom = 100;
 
     boost::program_options::options_description desc("Options");
     desc.add_options()
@@ -79,6 +80,7 @@ int main(int argc, char** argv)
     ("png,p", "enable png capture")
     ("wrm,w", "enable wrm capture")
     ("verbose", boost::program_options::value<uint32_t>(&verbose), "more logs")
+    ("zoom", boost::program_options::value<uint32_t>(&zoom), "scaling factor for png capture (default 100%)")
     ;
 
     Inifile ini;
@@ -130,6 +132,12 @@ int main(int argc, char** argv)
     timeval end_capture;
     end_capture.tv_sec = end_cap; end_capture.tv_usec = 0;
 
+    TODO("before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases")
+
+    TODO("also check if it contains any wrm at all and at wich one we should start depending on input time")
+    TODO("if start and stop time are outside wrm, users should also be warned")
+
+
     InByMetaSequenceTransport in_wrm_trans(input_filename.c_str());
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, verbose);
 
@@ -160,6 +168,9 @@ int main(int argc, char** argv)
     canonical_path(fullpath, path, sizeof(path), basename, sizeof(basename));
 
     Capture capture(player.record_now, player.screen_rect.cx, player.screen_rect.cy, path, basename, ini);
+    if (capture.capture_png){
+        capture.psc->zoom(zoom);
+    }
     player.add_consumer(&capture);
 
     player.play();

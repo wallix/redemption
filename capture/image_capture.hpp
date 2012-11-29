@@ -52,12 +52,18 @@ class ImageCapture : public RDPDrawable
 {
 public:
     Transport & trans;
+    unsigned zoom_factor;
+    unsigned scaled_width;
+    unsigned scaled_height;
 
     TODO("RDPDrawable should be provided to Image capture, not instanciated here")
 
     ImageCapture(Transport & trans, unsigned width, unsigned height)
     : RDPDrawable(width, height, true)
     , trans(trans)
+    , zoom_factor(100)
+    , scaled_width(width)
+    , scaled_height(height)
     {
     }
 
@@ -65,35 +71,45 @@ public:
     {
     }
 
+    void zoom(unsigned percent)
+    {
+        const unsigned zoom_width = (this->drawable.width * percent) / 100;
+        const unsigned zoom_height = (this->drawable.height * percent) / 100;
+        TODO("we should limit percent to avoid images larger than 4096 x 4096")
+        this->zoom_factor = percent;
+        this->scaled_width = (zoom_width + 3) & 0xFFC;
+        this->scaled_height = zoom_height;
+    }
+
     void update_config(const Inifile & ini){}
 
     virtual void flush()
     {
-//                    scale_data(this->data_scale, this->drawable.data,
-//                               this->scale_width, this->drawable.width,
-//                               this->scale_height, this->drawable.height,
-//                               this->drawable.rowsize);
-        ::transport_dump_png24(&this->trans, this->drawable.data,
-                     this->drawable.width, this->drawable.height,
-                     this->drawable.rowsize
-                    );
+        if (this->zoom_factor == 100){
+            this->dump24();
+        }
+        else {
+            this->scale_dump24();
+        }
     }
 
-    REDOC("Rescale image :\n"
-          "width size is forced to the nearest larger multiple of 4, to be an exact multiple of 32 bits\n"
-          "width and height must both be smaller than 4096\n")
-    void scale_dump(unsigned scale_width, unsigned scale_height)
+    void dump24(){
+        ::transport_dump_png24(&this->trans, this->drawable.data,
+                 this->drawable.width, this->drawable.height,
+                 this->drawable.rowsize
+                );
+    }
+
+    void scale_dump24()
     {
-        unsigned fixed_scaled_width = (scale_width >= 4096)?4096:(scale_width + 3) & 0xFFC0;
-        unsigned fixed_scaled_height = (scale_height >= 4096)?4096:scale_height;
-        uint8_t * scaled_data = (uint8_t *)malloc(fixed_scaled_width * fixed_scaled_height * 3);
+        uint8_t * scaled_data = (uint8_t *)malloc(this->scaled_width * this->scaled_height * 3);
         scale_data(scaled_data, this->drawable.data,
-                   fixed_scaled_width, this->drawable.width,
-                   fixed_scaled_height, this->drawable.height,
+                   this->scaled_width, this->drawable.width,
+                   this->scaled_height, this->drawable.height,
                    this->drawable.rowsize);
         ::transport_dump_png24(&this->trans, scaled_data,
-                     fixed_scaled_width, fixed_scaled_height,
-                     fixed_scaled_width * 3
+                     this->scaled_width, this->scaled_height,
+                     this->scaled_width * 3
                     );
         free(scaled_data);
     }
