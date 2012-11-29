@@ -382,6 +382,27 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
 }
 
 
+BOOST_AUTO_TEST_CASE(TestScaleImage)
+{
+    BOOST_CHECK(1);
+    const int width = 800;
+    const int height = 600;
+    const FileSequence sequence("path file pid count extension", "./", "test_scale", "png");
+    OutByFilenameSequenceTransport trans(sequence);
+    Rect scr(0, 0, width, height);
+    ImageCapture d(trans, scr.cx, scr.cy);
+
+    {
+        const char * filename = "./tests/fixtures/win2008capture10.png";
+        FILE * fd = fopen(filename, "r");
+        TODO("Add ability to write image to file or read image from file in RDPDrawable")
+        read_png24(fd, d.drawable.data, d.drawable.width, d.drawable.height, d.drawable.rowsize);
+        fclose(fd);
+    }
+//    d.flush();
+    d.scale_dump(1600, 1200);
+}
+
 BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 {
     BOOST_CHECK(1);
@@ -390,12 +411,6 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     Rect scr(0, 0, 800, 600);
     ImageCapture d(trans, scr.cx, scr.cy);
     d.draw(RDPOpaqueRect(scr, GREEN), scr);
-
-    // Bogus square generating zero width/height tiles if not properly guarded
-    uint8_t comp64x64RED[] = {
-        0xc0, 0x30, 0x00, 0x00, 0xFF,
-        0xf0, 0xc0, 0x0f,
-    };
 
     uint8_t source64x64[] = {
 // MIX_SET 60 remaining=932 bytes pix=0
@@ -510,3 +525,6 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     BOOST_CHECK_EQUAL(4094, sequence.filesize(0));
     sequence.unlink(0);
 }
+
+
+

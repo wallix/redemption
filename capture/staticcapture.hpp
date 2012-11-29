@@ -45,7 +45,6 @@
 #include "colors.hpp"
 
 #include "RDP/RDPDrawable.hpp"
-#include "scale.hpp"
 #include "config.hpp"
 
 struct StaticCaptureConfig {

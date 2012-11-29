@@ -47,12 +47,13 @@
 #include "colors.hpp"
 
 #include "RDP/RDPDrawable.hpp"
-#include "scale.hpp"
 
 class ImageCapture : public RDPDrawable
 {
 public:
     Transport & trans;
+
+    TODO("RDPDrawable should be provided to Image capture, not instanciated here")
 
     ImageCapture(Transport & trans, unsigned width, unsigned height)
     : RDPDrawable(width, height, true)
@@ -77,6 +78,70 @@ public:
                      this->drawable.rowsize
                     );
     }
+
+    REDOC("Rescale image :\n"
+          "width size is forced to the nearest larger multiple of 4, to be an exact multiple of 32 bits\n"
+          "width and height must both be smaller than 4096\n")
+    void scale_dump(unsigned scale_width, unsigned scale_height)
+    {
+        unsigned fixed_scaled_width = (scale_width >= 4096)?4096:(scale_width + 3) & 0xFFC0;
+        unsigned fixed_scaled_height = (scale_height >= 4096)?4096:scale_height;
+        uint8_t * scaled_data = (uint8_t *)malloc(fixed_scaled_width * fixed_scaled_height * 3);
+        scale_data(scaled_data, this->drawable.data,
+                   fixed_scaled_width, this->drawable.width,
+                   fixed_scaled_height, this->drawable.height,
+                   this->drawable.rowsize);
+        ::transport_dump_png24(&this->trans, scaled_data,
+                     fixed_scaled_width, fixed_scaled_height,
+                     fixed_scaled_width * 3
+                    );
+        free(scaled_data);
+    }
+
+    static void scale_data(uint8_t *dest, const uint8_t *src,
+                            unsigned int dest_width, unsigned int src_width,
+                            unsigned int dest_height, unsigned int src_height,
+                            unsigned int src_rowsize)
+    {
+        const uint32_t Bpp = 3;
+        unsigned int y_pixels = dest_height;
+        unsigned int y_int_part = src_height / dest_height * src_rowsize;
+        unsigned int y_fract_part = src_height % dest_height;
+        unsigned int yE = 0;
+        unsigned int x_int_part = src_width / dest_width * Bpp;
+        unsigned int x_fract_part = src_width % dest_width;
+
+        while (y_pixels-- > 0)
+        {
+            unsigned int xE = 0;
+            const uint8_t * x_src = src;
+            unsigned int x_pixels = dest_width;
+            while (x_pixels-- > 0)
+            {
+                TODO("we can perform both scaling and rgb/bgr swapping at the same time")
+                dest[0] = x_src[0];
+                dest[1] = x_src[1];
+                dest[2] = x_src[2];
+
+                dest += Bpp;
+                x_src += x_int_part;
+                xE += x_fract_part;
+                if (xE >= dest_width)
+                {
+                    xE -= dest_width;
+                    x_src += Bpp;
+                }
+            }
+            src += y_int_part;
+            yE += y_fract_part;
+            if (yE >= dest_height)
+            {
+                yE -= dest_height;
+                src += src_rowsize;
+            }
+        }
+    }
+
 };
 
 #endif
