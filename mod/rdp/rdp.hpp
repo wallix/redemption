@@ -589,9 +589,7 @@ struct mod_rdp : public client_mod {
 
     virtual BackEvent_t draw_event(void)
     {
-        static uint32_t count = 0;
         try{
-
         char * hostname = this->hostname;
 
         switch (this->state){
@@ -2935,7 +2933,6 @@ struct mod_rdp : public client_mod {
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::process_server_caps");
             }
-            uint8_t* start = stream.p;
             int ncapsets = stream.in_uint16_le();
             stream.in_skip_bytes(2); /* pad */
             for (int n = 0; n < ncapsets; n++) {
