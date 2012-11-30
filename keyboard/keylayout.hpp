@@ -136,7 +136,6 @@ struct Keylayout
             this->capslock_shift[i]      = LCID_capslock_shift[i];
             this->capslock_altGr[i]      = LCID_capslock_altGr[i];
             this->capslock_shiftAltGr[i] = LCID_capslock_shiftAltGr[i];
-printf(">> i = 0x%02x = 0X%02x\n", i, this->noMod[i]);
         }
 
         for(size_t i = 0 ; i < this->nbDeadkeys ; i++) {
