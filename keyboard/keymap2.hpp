@@ -33,15 +33,34 @@
 
 using namespace std;
 
-static const Keylayout * keylayouts[] = { &keylayout_x00000407, &keylayout_x00000409, &keylayout_x0000040a
-                                        , &keylayout_x0000040c, &keylayout_x00000410, &keylayout_x00000413
-                                        , &keylayout_x00000419, &keylayout_x0000041d, &keylayout_x00000452
-                                        , &keylayout_x0000046e, &keylayout_x00000807, &keylayout_x00000809
+static const Keylayout * keylayouts[] = { &keylayout_x00000405, &keylayout_x00000406, &keylayout_x00000407
+                                        , &keylayout_x00000408, &keylayout_x00000409, &keylayout_x0000040a
+                                        , &keylayout_x0000040b, &keylayout_x0000040c, &keylayout_x0000040f
+                                        , &keylayout_x00000410, &keylayout_x00000413, &keylayout_x00000414
+                                        , &keylayout_x00000415, &keylayout_x00000416, &keylayout_x00000418
+                                        , &keylayout_x00000419, &keylayout_x0000041a, &keylayout_x0000041b
+                                        , &keylayout_x0000041d, &keylayout_x0000041f, &keylayout_x00000422
+                                        , &keylayout_x00000424, &keylayout_x00000425, &keylayout_x00000426
+                                        , &keylayout_x00000427, &keylayout_x0000042f, &keylayout_x00000438
+                                        , &keylayout_x0000043a, &keylayout_x0000043b, &keylayout_x0000043f
+                                        , &keylayout_x00000440, &keylayout_x00000444, &keylayout_x00000450
+                                        , &keylayout_x00000452, &keylayout_x0000046e, &keylayout_x00000481
+                                        , &keylayout_x00000807, &keylayout_x00000809, &keylayout_x0000080a
                                         , &keylayout_x0000080c, &keylayout_x00000813, &keylayout_x00000816
-                                        , &keylayout_x0000083b, &keylayout_x00000c0c, &keylayout_x00001009
-                                        , &keylayout_x0000100c, &keylayout_x00010407, &keylayout_x0001040a
-                                        , &keylayout_x00010410, &keylayout_x00010419, &keylayout_x0001080c
-                                        , &keylayout_x00011009, &keylayout_x00020409
+                                        , &keylayout_x0000081a, &keylayout_x0000083b, &keylayout_x00000843
+                                        , &keylayout_x0000085d, &keylayout_x00000c0c, &keylayout_x00000c1a
+                                        , &keylayout_x00001009, &keylayout_x0000100c, &keylayout_x0000201a
+                                        , &keylayout_x00010402, &keylayout_x00010405, &keylayout_x00001809
+                                        , &keylayout_x00010407, &keylayout_x00010408, &keylayout_x0001040a
+                                        , &keylayout_x0001040e, &keylayout_x00010409, &keylayout_x00010410
+                                        , &keylayout_x00010415, &keylayout_x00010416, &keylayout_x00010419
+                                        , &keylayout_x0001041b, &keylayout_x0001041f, &keylayout_x00010426
+                                        , &keylayout_x00010427, &keylayout_x0001043a, &keylayout_x0001043b
+                                        , &keylayout_x0001080c, &keylayout_x0001083b, &keylayout_x00011009
+                                        , &keylayout_x00011809, &keylayout_x00020405, &keylayout_x00020408
+                                        , &keylayout_x00020409, &keylayout_x0002083b, &keylayout_x00030402
+                                        , &keylayout_x00030408, &keylayout_x00030409, &keylayout_x00040408
+                                        , &keylayout_x00040409, &keylayout_x00050408, &keylayout_x00060408
                                         };
 
 
@@ -220,6 +239,7 @@ struct Keymap2
     {
         // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
         uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
+
         // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
         this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
         switch (extendedKeyCode){
@@ -256,42 +276,43 @@ struct Keymap2
         //----------------
             default: // all other codes
                 // This table translates the RDP scancodes to X11 scancodes :
-                //  - the fist block (0-127) simply applies the +8 Windows to X11 translation and forces some 0 values
+                //  - the fist block (0-127) forces some values to 0
                 //  - the second block (128-255) give the code for the extended keys that have a meaningful one
                 uint8_t map[256] =  {
-                    0x00, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, // 0x00 - 0x07
-                    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, // 0x08 - 0x0f
-                    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, // 0x10 - 0x17
-                    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, // 0x18 - 0x1f
-                    0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, // 0x20 - 0x27
-                    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, // 0x28 - 0x2f
-                    0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, // 0x30 - 0x37
-                    0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, // 0x38 - 0x3f
-                    0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, // 0x40 - 0x47
-                    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, // 0x48 - 0x4f
-                    0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, // 0x50 - 0x57
-                    0x60, 0x61, 0x62, 0x00, 0x00, 0x00, 0x66, 0x67, // 0x58 - 0x5f
-                    0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, // 0x60 - 0x67
-                    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, // 0x68 - 0x6f
-                    0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f, // 0x70 - 0x77
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x78 - 0x7f
+
+                    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, // 0x00 - 0x07
+                    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, // 0x08 - 0x0f
+                    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, // 0x10 - 0x17
+                    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, // 0x18 - 0x1f
+                    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, // 0x20 - 0x27
+                    0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, // 0x28 - 0x2f
+                    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, // 0x30 - 0x37
+                    0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, // 0x38 - 0x3f
+                    0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, // 0x40 - 0x47
+                    0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, // 0x48 - 0x4f
+                    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, // 0x50 - 0x57
+                    0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, // 0x58 - 0x5f
+                    0x60, 0x61, 0x62, 0x00, 0x00, 0x00, 0x66, 0x67, // 0x60 - 0x67
+                    0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, // 0x68 - 0x6f
+                    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, // 0x70 - 0x77
+                    0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f, // 0x78 - 0x7f
 
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x80 - 0x87
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x88 - 0x8f
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x90 - 0x97
-                    0x00, 0x00, 0x00, 0x00, 0x6c, 0x6d, 0x00, 0x00, // 0x98 - 0x9f
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xa0 - 0xa7
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x98 - 0x9f
+                    0x00, 0x00, 0x00, 0x00, 0x6c, 0x6d, 0x00, 0x00, // 0xa0 - 0xa7
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xa8 - 0xaf
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x70, 0x00, 0x6f, // 0xb0 - 0xb7
-                    0x71, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xb8 - 0xbf
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x61, // 0xc0 - 0xc7
-                    0x62, 0x63, 0x00, 0x64, 0x00, 0x66, 0x00, 0x67, // 0xc8 - 0xcf
-                    0x68, 0x69, 0x6a, 0x6b, 0x00, 0x00, 0x00, 0x00, // 0xd0 - 0xd7
-                    0x00, 0x00, 0x00, 0x73, 0x74, 0x75, 0x00, 0x00, // 0xd8 - 0xdf
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xe0 - 0xe7
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xb0 - 0xb7
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x70, 0x00, 0x6f, // 0xb8 - 0xbf
+                    0x71, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xc0 - 0xc7
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x61, // 0xc8 - 0xcf
+                    0x62, 0x63, 0x00, 0x64, 0x00, 0x66, 0x00, 0x67, // 0xd0 - 0xd7
+                    0x68, 0x69, 0x6a, 0x6b, 0x00, 0x00, 0x00, 0x00, // 0xd8 - 0xdf
+                    0x00, 0x00, 0x00, 0x73, 0x74, 0x75, 0x00, 0x00, // 0xe0 - 0xe7
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xe8 - 0xef
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xf0 - 0xf7
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  // 0xf8 - 0xff
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xf8 - 0xff
                 } ;
 
                 // if event is a Make
@@ -325,8 +346,9 @@ struct Keymap2
                             else {
                                 layout = &this->keylayout_WORK->noMod;
                             }
-                            // Translate the scancode to an unicode char
+                            // Translate the incoming RDP scancode to a X11 scancode
                             uint8_t sym = map[extendedKeyCode];
+                            // Translate the X11 scancode to an unicode code point
                             uint32_t uchar = (*layout)[sym];
                             this->push(uchar);
                         }
@@ -390,6 +412,9 @@ struct Keymap2
                             else if (this->is_ctrl_pressed() && this->is_alt_pressed()){
                                 layout = &this->keylayout_WORK->capslock_altGr;
                             }
+                            else if (this->is_ctrl_pressed()){
+                                layout = &this->keylayout_WORK->ctrl;
+                            }
                             else if (this->is_shift_pressed()){
                                 layout = &this->keylayout_WORK->capslock_shift;
                             }
@@ -408,14 +433,17 @@ struct Keymap2
                                 layout = &this->keylayout_WORK->ctrl;
                             }
                             else if (this->is_shift_pressed()){
+
                                 layout = &this->keylayout_WORK->shift;
                             }
                             else{
                                 layout = &this->keylayout_WORK->noMod;
                             }
                         }
-                        // Translate the scancode to an unicode char
+                        // Translate the RDP scancode to an X11 scancode
                         uint8_t sym = map[extendedKeyCode];
+
+                        // Translate the X11 scancode to an unicode code point
                         uint32_t uchar = (*layout)[sym];
 
                         if (this->verbose){
@@ -480,7 +508,7 @@ struct Keymap2
                             }
 
                             // Test if the extendedKeyCode is a deadkey in the current keyboard layout
-                            for (int i=0; i < Keylayout::MAX_DEADKEYS; i++) {
+                            for (int i=0; i < keylayout_WORK->nbDeadkeys; i++) {
                                 if (   (keylayout_WORK->deadkeys[i].uchar == uchar)
                                    and (keylayout_WORK->deadkeys[i].extendedKeyCode == extendedKeyCode)
                                    )
@@ -794,11 +822,16 @@ struct Keymap2
     void init_layout(int LCID)
     //==============================================================================
     {
+        bool found = false;
         for (uint8_t i = 0 ; i < sizeof(keylayouts)/sizeof(keylayouts[0]); i++) {
             if (keylayouts[i]->LCID == LCID){
                 keylayout_WORK = keylayouts[i];
+                found = true;
                 break;
             }
+        }
+        if (!found){
+            LOG(LOG_INFO, "Unknown keyboard layout #0x%02x. Reverting to default (English - United States)", LCID);
         }
 
     } // END METHOD - init_layout

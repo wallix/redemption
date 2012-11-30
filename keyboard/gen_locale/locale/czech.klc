@@ -1,0 +1,353 @@
+KBD	Layout01	"Czech - Custom"
+
+COPYRIGHT	"(c) 2012 Company"
+
+COMPANY	"Company"
+
+LOCALENAME	"cs-CZ"
+
+LOCALEID	"00000405"
+
+VERSION	1.0
+
+SHIFTSTATE
+
+0	//Column 4
+1	//Column 5 : Shft
+2	//Column 6 :       Ctrl
+6	//Column 7 :       Ctrl Alt
+
+LAYOUT		;an extra '@' at the end is a dead key
+
+//SC	VK_		Cap	0	1	2	6
+//--	----		----	----	----	----	----
+
+02	1		0	002b	1	-1	007e		// PLUS SIGN, DIGIT ONE, <none>, TILDE
+03	2		SGCap	011b	2	-1	02c7@		// LATIN SMALL LETTER E WITH CARON, DIGIT TWO, <none>, CARON (Mandarin Chinese third tone)
+-1	-1	0	011a		// LATIN CAPITAL LETTER E WITH CARON
+04	3		SGCap	0161	3	-1	005e@		// LATIN SMALL LETTER S WITH CARON, DIGIT THREE, <none>, CIRCUMFLEX ACCENT
+-1	-1	0	0160		// LATIN CAPITAL LETTER S WITH CARON
+05	4		SGCap	010d	4	-1	02d8@		// LATIN SMALL LETTER C WITH CARON, DIGIT FOUR, <none>, BREVE
+-1	-1	0	010c		// LATIN CAPITAL LETTER C WITH CARON
+06	5		SGCap	0159	5	-1	00b0@		// LATIN SMALL LETTER R WITH CARON, DIGIT FIVE, <none>, DEGREE SIGN
+-1	-1	0	0158		// LATIN CAPITAL LETTER R WITH CARON
+07	6		SGCap	017e	6	-1	02db@		// LATIN SMALL LETTER Z WITH CARON, DIGIT SIX, <none>, OGONEK
+-1	-1	0	017d		// LATIN CAPITAL LETTER Z WITH CARON
+08	7		SGCap	00fd	7	-1	0060@		// LATIN SMALL LETTER Y WITH ACUTE, DIGIT SEVEN, <none>, GRAVE ACCENT
+-1	-1	0	00dd		// LATIN CAPITAL LETTER Y WITH ACUTE
+09	8		SGCap	00e1	8	-1	02d9@		// LATIN SMALL LETTER A WITH ACUTE, DIGIT EIGHT, <none>, DOT ABOVE (Mandarin Chinese light tone)
+-1	-1	0	00c1		// LATIN CAPITAL LETTER A WITH ACUTE
+0a	9		SGCap	00ed	9	-1	00b4@		// LATIN SMALL LETTER I WITH ACUTE, DIGIT NINE, <none>, ACUTE ACCENT
+-1	-1	0	00cd		// LATIN CAPITAL LETTER I WITH ACUTE
+0b	0		SGCap	00e9	0	-1	02dd@		// LATIN SMALL LETTER E WITH ACUTE, DIGIT ZERO, <none>, DOUBLE ACUTE ACCENT
+-1	-1	0	00c9		// LATIN CAPITAL LETTER E WITH ACUTE
+0c	OEM_PLUS	0	003d	0025	-1	00a8@		// EQUALS SIGN, PERCENT SIGN, <none>, DIAERESIS
+0d	OEM_2		0	00b4@	02c7@	-1	00b8@		// ACUTE ACCENT, CARON (Mandarin Chinese third tone), <none>, CEDILLA
+10	Q		1	q	Q	-1	005c		// LATIN SMALL LETTER Q, LATIN CAPITAL LETTER Q, <none>, REVERSE SOLIDUS
+11	W		1	w	W	-1	007c		// LATIN SMALL LETTER W, LATIN CAPITAL LETTER W, <none>, VERTICAL LINE
+12	E		1	e	E	-1	20ac		// LATIN SMALL LETTER E, LATIN CAPITAL LETTER E, <none>, EURO SIGN
+13	R		1	r	R	-1	-1		// LATIN SMALL LETTER R, LATIN CAPITAL LETTER R, <none>, <none>
+14	T		1	t	T	-1	-1		// LATIN SMALL LETTER T, LATIN CAPITAL LETTER T, <none>, <none>
+15	Z		1	z	Z	-1	-1		// LATIN SMALL LETTER Z, LATIN CAPITAL LETTER Z, <none>, <none>
+16	U		1	u	U	-1	-1		// LATIN SMALL LETTER U, LATIN CAPITAL LETTER U, <none>, <none>
+17	I		1	i	I	-1	-1		// LATIN SMALL LETTER I, LATIN CAPITAL LETTER I, <none>, <none>
+18	O		1	o	O	-1	-1		// LATIN SMALL LETTER O, LATIN CAPITAL LETTER O, <none>, <none>
+19	P		1	p	P	-1	-1		// LATIN SMALL LETTER P, LATIN CAPITAL LETTER P, <none>, <none>
+1a	OEM_4		SGCap	00fa	002f	001b	00f7		// LATIN SMALL LETTER U WITH ACUTE, SOLIDUS, ESCAPE, DIVISION SIGN
+-1	-1	0	00da		// LATIN CAPITAL LETTER U WITH ACUTE
+1b	OEM_6		0	0029	0028	001d	00d7		// RIGHT PARENTHESIS, LEFT PARENTHESIS, INFORMATION SEPARATOR THREE, MULTIPLICATION SIGN
+1e	A		1	a	A	-1	-1		// LATIN SMALL LETTER A, LATIN CAPITAL LETTER A, <none>, <none>
+1f	S		1	s	S	-1	0111		// LATIN SMALL LETTER S, LATIN CAPITAL LETTER S, <none>, LATIN SMALL LETTER D WITH STROKE
+20	D		1	d	D	-1	0110		// LATIN SMALL LETTER D, LATIN CAPITAL LETTER D, <none>, LATIN CAPITAL LETTER D WITH STROKE
+21	F		1	f	F	-1	005b		// LATIN SMALL LETTER F, LATIN CAPITAL LETTER F, <none>, LEFT SQUARE BRACKET
+22	G		1	g	G	-1	005d		// LATIN SMALL LETTER G, LATIN CAPITAL LETTER G, <none>, RIGHT SQUARE BRACKET
+23	H		1	h	H	-1	-1		// LATIN SMALL LETTER H, LATIN CAPITAL LETTER H, <none>, <none>
+24	J		1	j	J	-1	-1		// LATIN SMALL LETTER J, LATIN CAPITAL LETTER J, <none>, <none>
+25	K		1	k	K	-1	0142		// LATIN SMALL LETTER K, LATIN CAPITAL LETTER K, <none>, LATIN SMALL LETTER L WITH STROKE
+26	L		1	l	L	-1	0141		// LATIN SMALL LETTER L, LATIN CAPITAL LETTER L, <none>, LATIN CAPITAL LETTER L WITH STROKE
+27	OEM_1		SGCap	016f	0022	-1	0024		// LATIN SMALL LETTER U WITH RING ABOVE, QUOTATION MARK, <none>, DOLLAR SIGN
+-1	-1	0	016e		// LATIN CAPITAL LETTER U WITH RING ABOVE
+28	OEM_7		0	00a7	0021	-1	00df		// SECTION SIGN, EXCLAMATION MARK, <none>, LATIN SMALL LETTER SHARP S (German)
+29	OEM_3		0	003b	00b0@	-1	-1		// SEMICOLON, DEGREE SIGN, <none>, <none>
+2b	OEM_5		0	00a8@	0027	001c	00a4		// DIAERESIS, APOSTROPHE, INFORMATION SEPARATOR FOUR, CURRENCY SIGN
+2c	Y		1	y	Y	-1	-1		// LATIN SMALL LETTER Y, LATIN CAPITAL LETTER Y, <none>, <none>
+2d	X		1	x	X	-1	0023		// LATIN SMALL LETTER X, LATIN CAPITAL LETTER X, <none>, NUMBER SIGN
+2e	C		1	c	C	-1	0026		// LATIN SMALL LETTER C, LATIN CAPITAL LETTER C, <none>, AMPERSAND
+2f	V		1	v	V	-1	0040		// LATIN SMALL LETTER V, LATIN CAPITAL LETTER V, <none>, COMMERCIAL AT
+30	B		1	b	B	-1	007b		// LATIN SMALL LETTER B, LATIN CAPITAL LETTER B, <none>, LEFT CURLY BRACKET
+31	N		1	n	N	-1	007d		// LATIN SMALL LETTER N, LATIN CAPITAL LETTER N, <none>, RIGHT CURLY BRACKET
+32	M		1	m	M	-1	-1		// LATIN SMALL LETTER M, LATIN CAPITAL LETTER M, <none>, <none>
+33	OEM_COMMA	0	002c	003f	-1	003c		// COMMA, QUESTION MARK, <none>, LESS-THAN SIGN
+34	OEM_PERIOD	0	002e	003a	-1	003e		// FULL STOP, COLON, <none>, GREATER-THAN SIGN
+35	OEM_MINUS	0	002d	005f	-1	002a		// HYPHEN-MINUS, LOW LINE, <none>, ASTERISK
+39	SPACE		0	0020	0020	0020	-1		// SPACE, SPACE, SPACE, <none>
+56	OEM_102	0	005c	007c	-1	-1		// REVERSE SOLIDUS, VERTICAL LINE, <none>, <none>
+53	DECIMAL	0	002c	002c	-1	-1		// COMMA, COMMA, ,
+
+
+DEADKEY	02c7
+
+006e	0148	// n -> ň
+0063	010d	// c -> č
+0064	010f	// d -> ď
+0073	0161	// s -> š
+006c	013e	// l -> ľ
+0065	011b	// e -> ě
+0072	0159	// r -> ř
+0074	0165	// t -> ť
+007a	017e	// z -> ž
+004e	0147	// N -> Ň
+0043	010c	// C -> Č
+0044	010e	// D -> Ď
+0053	0160	// S -> Š
+004c	013d	// L -> Ľ
+0045	011a	// E -> Ě
+0052	0158	// R -> Ř
+0054	0164	// T -> Ť
+005a	017d	// Z -> Ž
+0020	02c7	//   -> ˇ
+
+DEADKEY	005e
+
+0061	00e2	// a -> â
+0065	00ea	// e -> ê
+0075	00fb	// u -> û
+0069	00ee	// i -> î
+006f	00f4	// o -> ô
+0041	00c2	// A -> Â
+0045	00ca	// E -> Ê
+0055	00db	// U -> Û
+0049	00ce	// I -> Î
+004f	00d4	// O -> Ô
+0020	005e	//   -> ^
+
+DEADKEY	02d8
+
+0061	0103	// a -> ă
+0067	011f	// g -> ğ
+0041	0102	// A -> Ă
+0047	011e	// G -> Ğ
+0020	02d8	//   -> ˘
+
+DEADKEY	00b0
+
+0061	00e5	// a -> å
+0075	016f	// u -> ů
+0041	00c5	// A -> Å
+0055	016e	// U -> Ů
+0020	00b0	//   -> °
+
+DEADKEY	02db
+
+0061	0105	// a -> ą
+0065	0119	// e -> ę
+0075	0173	// u -> ų
+0069	012f	// i -> į
+0041	0104	// A -> Ą
+0045	0118	// E -> Ę
+0055	0172	// U -> Ų
+0049	012e	// I -> Į
+0020	02db	//   -> ˛
+
+DEADKEY	0060
+
+0061	00e0	// a -> à
+0065	00e8	// e -> è
+0075	00f9	// u -> ù
+0069	00ec	// i -> ì
+006f	00f2	// o -> ò
+0041	00c0	// A -> À
+0045	00c8	// E -> È
+0055	00d9	// U -> Ù
+0049	00cc	// I -> Ì
+004f	00d2	// O -> Ò
+0020	0060	//   -> `
+
+DEADKEY	02d9
+
+0065	0117	// e -> ė
+0069	0131	// i -> ı
+007a	017c	// z -> ż
+0045	0116	// E -> Ė
+0049	0130	// I -> İ
+005a	017b	// Z -> Ż
+0020	00b7	//   -> ·
+
+DEADKEY	02dd
+
+0075	0171	// u -> ű
+006f	0151	// o -> ő
+0055	0170	// U -> Ű
+004f	0150	// O -> Ő
+0020	02dd	//   -> ˝
+
+DEADKEY	00b4
+
+006e	0144	// n -> ń
+0063	0107	// c -> ć
+0079	00fd	// y -> ý
+0061	00e1	// a -> á
+0073	015b	// s -> ś
+006c	013a	// l -> ĺ
+0065	00e9	// e -> é
+0072	0155	// r -> ŕ
+0075	00fa	// u -> ú
+0069	00ed	// i -> í
+007a	017a	// z -> ź
+006f	00f3	// o -> ó
+004e	0143	// N -> Ń
+0043	0106	// C -> Ć
+0059	00dd	// Y -> Ý
+0041	00c1	// A -> Á
+0053	015a	// S -> Ś
+004c	0139	// L -> Ĺ
+0045	00c9	// E -> É
+0052	0154	// R -> Ŕ
+0055	00da	// U -> Ú
+0049	00cd	// I -> Í
+005a	0179	// Z -> Ź
+004f	00d3	// O -> Ó
+0020	00b4	//   -> ´
+
+DEADKEY	00b8
+
+006e	0146	// n -> ņ
+0063	00e7	// c -> ç
+0067	0123	// g -> ģ
+0073	015f	// s -> ş
+006c	013c	// l -> ļ
+006b	0137	// k -> ķ
+0072	0157	// r -> ŗ
+0074	0163	// t -> ţ
+004e	0145	// N -> Ņ
+0043	00c7	// C -> Ç
+0047	0122	// G -> Ģ
+0053	015e	// S -> Ş
+004c	013b	// L -> Ļ
+004b	0136	// K -> Ķ
+0052	0156	// R -> Ŗ
+0054	0162	// T -> Ţ
+0020	00b8	//   -> ¸
+
+DEADKEY	00a8
+
+0079	00ff	// y -> ÿ
+0061	00e4	// a -> ä
+0065	00eb	// e -> ë
+0075	00fc	// u -> ü
+0069	00ef	// i -> ï
+006f	00f6	// o -> ö
+0059	0178	// Y -> Ÿ
+0041	00c4	// A -> Ä
+0045	00cb	// E -> Ë
+0055	00dc	// U -> Ü
+0049	00cf	// I -> Ï
+004f	00d6	// O -> Ö
+0020	00a8	//   -> ¨
+
+
+KEYNAME
+
+01	Esc
+0e	Backspace
+0f	Tab
+1c	Enter
+1d	Ctrl
+2a	Shift
+36	"Right Shift"
+37	"Num *"
+38	Alt
+39	Space
+3a	"Caps Lock"
+3b	F1
+3c	F2
+3d	F3
+3e	F4
+3f	F5
+40	F6
+41	F7
+42	F8
+43	F9
+44	F10
+45	Pause
+46	"Scroll Lock"
+47	"Num 7"
+48	"Num 8"
+49	"Num 9"
+4a	"Num -"
+4b	"Num 4"
+4c	"Num 5"
+4d	"Num 6"
+4e	"Num +"
+4f	"Num 1"
+50	"Num 2"
+51	"Num 3"
+52	"Num 0"
+53	"Num Del"
+54	"Sys Req"
+57	F11
+58	F12
+7c	F13
+7d	F14
+7e	F15
+7f	F16
+80	F17
+81	F18
+82	F19
+83	F20
+84	F21
+85	F22
+86	F23
+87	F24
+
+KEYNAME_EXT
+
+1c	"Num Enter"
+1d	"Right Ctrl"
+35	"Num /"
+37	"Prnt Scrn"
+38	"Right Alt"
+45	"Num Lock"
+46	Break
+47	Home
+48	Up
+49	"Page Up"
+4b	Left
+4d	Right
+4f	End
+50	Down
+51	"Page Down"
+52	Insert
+53	Delete
+54	<00>
+56	Help
+5b	"Left Windows"
+5c	"Right Windows"
+5d	Application
+
+KEYNAME_DEAD
+
+02c7	"CARON (Mandarin Chinese third tone)"
+005e	"CIRCUMFLEX ACCENT"
+02d8	"BREVE"
+00b0	"DEGREE SIGN"
+02db	"OGONEK"
+0060	"GRAVE ACCENT"
+02d9	"DOT ABOVE (Mandarin Chinese light tone)"
+00b4	"ACUTE ACCENT"
+02dd	"DOUBLE ACUTE ACCENT"
+00a8	"DIAERESIS"
+00b4	"ACUTE ACCENT"
+02c7	"CARON (Mandarin Chinese third tone)"
+00b8	"CEDILLA"
+00b0	"DEGREE SIGN"
+00a8	"DIAERESIS"
+
+
+DESCRIPTIONS
+
+0409	Czech - Custom
+LANGUAGENAMES
+
+0409	Czech (Czech Republic)
+ENDKBD

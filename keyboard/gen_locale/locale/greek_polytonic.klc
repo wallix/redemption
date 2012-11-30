@@ -1,0 +1,590 @@
+KBD	Layout01	"Greek Polytonic - Custom"
+
+COPYRIGHT	"(c) 2012 Company"
+
+COMPANY	"Company"
+
+LOCALENAME	"el-GR"
+
+LOCALEID	"00060408"
+
+VERSION	1.0
+
+SHIFTSTATE
+
+0	//Column 4
+1	//Column 5 : Shft
+2	//Column 6 :       Ctrl
+6	//Column 7 :       Ctrl Alt
+7	//Column 8 : Shft  Ctrl Alt
+
+LAYOUT		;an extra '@' at the end is a dead key
+
+//SC	VK_		Cap	0	1	2	6	7
+//--	----		----	----	----	----	----	----
+
+02	1		0	1	0021	-1	03da	-1		// DIGIT ONE, EXCLAMATION MARK, <none>, GREEK LETTER STIGMA, <none>
+03	2		0	2	0040	-1	03de	00b2		// DIGIT TWO, COMMERCIAL AT, <none>, GREEK LETTER KOPPA, SUPERSCRIPT TWO
+04	3		0	3	0023	-1	03e0	00b3		// DIGIT THREE, NUMBER SIGN, <none>, GREEK LETTER SAMPI, SUPERSCRIPT THREE
+05	4		0	4	0024	-1	00a3	-1		// DIGIT FOUR, DOLLAR SIGN, <none>, POUND SIGN, <none>
+06	5		0	5	0025	-1	00a7	-1		// DIGIT FIVE, PERCENT SIGN, <none>, SECTION SIGN, <none>
+07	6		0	6	005e	-1	00b6	-1		// DIGIT SIX, CIRCUMFLEX ACCENT, <none>, PILCROW SIGN, <none>
+08	7		0	7	0026	-1	-1	-1		// DIGIT SEVEN, AMPERSAND, <none>, <none>, <none>
+09	8		0	8	002a	-1	00a4	-1		// DIGIT EIGHT, ASTERISK, <none>, CURRENCY SIGN, <none>
+0a	9		0	9	0028	-1	00a6	-1		// DIGIT NINE, LEFT PARENTHESIS, <none>, BROKEN BAR, <none>
+0b	0		0	0	0029	-1	00b0	-1		// DIGIT ZERO, RIGHT PARENTHESIS, <none>, DEGREE SIGN, <none>
+0c	OEM_MINUS	0	002d@	005f@	-1	00b1	-1		// HYPHEN-MINUS, LOW LINE, <none>, PLUS-MINUS SIGN, <none>
+0d	OEM_PLUS	0	003d@	002b@	-1	00bd@	1fdf@		// EQUALS SIGN, PLUS SIGN, <none>, VULGAR FRACTION ONE HALF, GREEK DASIA AND PERISPOMENI
+10	Q		0	003b@	003a@	-1	1ffd@	-1		// SEMICOLON, COLON, <none>, GREEK OXIA, <none>
+11	W		0	03c2	0385@	-1	-1	-1		// GREEK SMALL LETTER FINAL SIGMA, GREEK DIALYTIKA TONOS, <none>, <none>, <none>
+12	E		1	03b5	0395	-1	20ac	-1		// GREEK SMALL LETTER EPSILON, GREEK CAPITAL LETTER EPSILON, <none>, EURO SIGN, <none>
+13	R		1	03c1	03a1	-1	00ae	-1		// GREEK SMALL LETTER RHO, GREEK CAPITAL LETTER RHO, <none>, REGISTERED SIGN, <none>
+14	T		1	03c4	03a4	-1	-1	-1		// GREEK SMALL LETTER TAU, GREEK CAPITAL LETTER TAU, <none>, <none>, <none>
+15	Y		1	03c5	03a5	-1	00a5	-1		// GREEK SMALL LETTER UPSILON, GREEK CAPITAL LETTER UPSILON, <none>, YEN SIGN, <none>
+16	U		1	03b8	0398	-1	-1	-1		// GREEK SMALL LETTER THETA, GREEK CAPITAL LETTER THETA, <none>, <none>, <none>
+17	I		1	03b9	0399	-1	-1	-1		// GREEK SMALL LETTER IOTA, GREEK CAPITAL LETTER IOTA, <none>, <none>, <none>
+18	O		1	03bf	039f	-1	-1	-1		// GREEK SMALL LETTER OMICRON, GREEK CAPITAL LETTER OMICRON, <none>, <none>, <none>
+19	P		1	03c0	03a0	-1	-1	-1		// GREEK SMALL LETTER PI, GREEK CAPITAL LETTER PI, <none>, <none>, <none>
+1a	OEM_4		0	005b@	007b@	001b	00ab@	-1		// LEFT SQUARE BRACKET, LEFT CURLY BRACKET, ESCAPE, LEFT-POINTING DOUBLE ANGLE QUOTATION MARK *, <none>
+1b	OEM_6		0	005d@	007d@	001d	00bb@	0387		// RIGHT SQUARE BRACKET, RIGHT CURLY BRACKET, INFORMATION SEPARATOR THREE, RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK *, GREEK ANO TELEIA
+1e	A		1	03b1	0391	-1	-1	-1		// GREEK SMALL LETTER ALPHA, GREEK CAPITAL LETTER ALPHA, <none>, <none>, <none>
+1f	S		1	03c3	03a3	-1	-1	-1		// GREEK SMALL LETTER SIGMA, GREEK CAPITAL LETTER SIGMA, <none>, <none>, <none>
+20	D		1	03b4	0394	-1	-1	-1		// GREEK SMALL LETTER DELTA, GREEK CAPITAL LETTER DELTA, <none>, <none>, <none>
+21	F		1	03c6	03a6	-1	-1	-1		// GREEK SMALL LETTER PHI, GREEK CAPITAL LETTER PHI, <none>, <none>, <none>
+22	G		1	03b3	0393	-1	-1	-1		// GREEK SMALL LETTER GAMMA, GREEK CAPITAL LETTER GAMMA, <none>, <none>, <none>
+23	H		1	03b7	0397	-1	-1	-1		// GREEK SMALL LETTER ETA, GREEK CAPITAL LETTER ETA, <none>, <none>, <none>
+24	J		1	03be	039e	-1	-1	-1		// GREEK SMALL LETTER XI, GREEK CAPITAL LETTER XI, <none>, <none>, <none>
+25	K		1	03ba	039a	-1	-1	-1		// GREEK SMALL LETTER KAPPA, GREEK CAPITAL LETTER KAPPA, <none>, <none>, <none>
+26	L		1	03bb	039b	-1	-1	-1		// GREEK SMALL LETTER LAMDA, GREEK CAPITAL LETTER LAMDA, <none>, <none>, <none>
+27	OEM_1		0	0384@	00a8@	-1	0385@	-1		// GREEK TONOS, DIAERESIS, <none>, GREEK DIALYTIKA TONOS, <none>
+28	OEM_7		0	0027@	0022@	001c	1fbf@	1ffe@		// APOSTROPHE, QUOTATION MARK, INFORMATION SEPARATOR FOUR, GREEK PSILI, GREEK DASIA
+29	OEM_3		0	007e@	0060@	-1	1fc1@	-1		// TILDE, GRAVE ACCENT, <none>, GREEK DIALYTIKA AND PERISPOMENI, <none>
+2b	OEM_5		0	005c@	007c@	001c	00ac@	1fdd@		// REVERSE SOLIDUS, VERTICAL LINE, INFORMATION SEPARATOR FOUR, NOT SIGN, GREEK DASIA AND VARIA
+2c	Z		1	03b6	0396	-1	-1	-1		// GREEK SMALL LETTER ZETA, GREEK CAPITAL LETTER ZETA, <none>, <none>, <none>
+2d	X		1	03c7	03a7	-1	-1	-1		// GREEK SMALL LETTER CHI, GREEK CAPITAL LETTER CHI, <none>, <none>, <none>
+2e	C		1	03c8	03a8	-1	00a9	-1		// GREEK SMALL LETTER PSI, GREEK CAPITAL LETTER PSI, <none>, COPYRIGHT SIGN, <none>
+2f	V		1	03c9	03a9	-1	-1	-1		// GREEK SMALL LETTER OMEGA, GREEK CAPITAL LETTER OMEGA, <none>, <none>, <none>
+30	B		1	03b2	0392	-1	-1	-1		// GREEK SMALL LETTER BETA, GREEK CAPITAL LETTER BETA, <none>, <none>, <none>
+31	N		1	03bd	039d	-1	-1	-1		// GREEK SMALL LETTER NU, GREEK CAPITAL LETTER NU, <none>, <none>, <none>
+32	M		1	03bc	039c	-1	-1	-1		// GREEK SMALL LETTER MU, GREEK CAPITAL LETTER MU, <none>, <none>, <none>
+33	OEM_COMMA	0	002c	003c	-1	-1	-1		// COMMA, LESS-THAN SIGN, <none>, <none>, <none>
+34	OEM_PERIOD	0	002e	003e	-1	-1	-1		// FULL STOP, GREATER-THAN SIGN, <none>, <none>, <none>
+35	OEM_2		0	002f@	003f@	-1	1fbe@	1fde@		// SOLIDUS, QUESTION MARK, <none>, GREEK PROSGEGRAMMENI, GREEK DASIA AND OXIA
+39	SPACE		0	0020	0020	0020	-1	-1		// SPACE, SPACE, SPACE, <none>, <none>
+56	OEM_102	0	003c	003e	001c	-1	-1		// LESS-THAN SIGN, GREATER-THAN SIGN, INFORMATION SEPARATOR FOUR, <none>, <none>
+53	DECIMAL	0	002c	002c	-1	-1	-1		// COMMA, COMMA, , ,
+
+
+DEADKEY	002d
+
+002e	00af	// . -> ¯
+03b1	1fb1	// α -> ᾱ
+03b9	1fd1	// ι -> ῑ
+03c5	1fe1	// υ -> ῡ
+0391	1fb9	// Α -> Ᾱ
+0399	1fd9	// Ι -> Ῑ
+03a5	1fe9	// Υ -> Ῡ
+0020	002d	//   -> -
+
+DEADKEY	005f
+
+002e	02d8	// . -> ˘
+03b1	1fb0	// α -> ᾰ
+03b9	1fd0	// ι -> ῐ
+03c5	1fe0	// υ -> ῠ
+0391	1fb8	// Α -> Ᾰ
+0399	1fd8	// Ι -> Ῐ
+03a5	1fe8	// Υ -> Ῠ
+0020	005f	//   -> _
+
+DEADKEY	003d
+
+03c9	1f66	// ω -> ὦ
+002e	1fcf	// . -> ῏
+03b1	1f06	// α -> ἆ
+03b7	1f26	// η -> ἦ
+03b9	1f36	// ι -> ἶ
+03c5	1f56	// υ -> ὖ
+03a9	1f6e	// Ω -> Ὦ
+0391	1f0e	// Α -> Ἆ
+0397	1f2e	// Η -> Ἦ
+0399	1f3e	// Ι -> Ἶ
+0020	003d	//   -> =
+
+DEADKEY	002b
+
+03c9	1f67	// ω -> ὧ
+002e	1fdf	// . -> ῟
+03b1	1f07	// α -> ἇ
+03b7	1f27	// η -> ἧ
+03b9	1f37	// ι -> ἷ
+03c5	1f57	// υ -> ὗ
+03a9	1f6f	// Ω -> Ὧ
+0391	1f0f	// Α -> Ἇ
+0397	1f2f	// Η -> Ἧ
+0399	1f3f	// Ι -> Ἷ
+03a5	1f5f	// Υ -> Ὗ
+0020	002b	//   -> +
+
+DEADKEY	00bd
+
+03c9	1fa6	// ω -> ᾦ
+03b1	1f86	// α -> ᾆ
+03b7	1f96	// η -> ᾖ
+03a9	1fae	// Ω -> ᾮ
+0391	1f8e	// Α -> ᾎ
+0397	1f9e	// Η -> ᾞ
+0020	00bd	//   -> ½
+
+DEADKEY	1fdf
+
+03c9	1fa7	// ω -> ᾧ
+03b1	1f87	// α -> ᾇ
+03b7	1f97	// η -> ᾗ
+03a9	1faf	// Ω -> ᾯ
+0391	1f8f	// Α -> ᾏ
+0397	1f9f	// Η -> ᾟ
+
+DEADKEY	003b
+
+03c9	1f7d	// ω -> ώ
+002e	1ffd	// . -> ´
+03b1	1f71	// α -> ά
+03b7	1f75	// η -> ή
+03b5	1f73	// ε -> έ
+03b9	1f77	// ι -> ί
+03c5	1f7b	// υ -> ύ
+03bf	1f79	// ο -> ό
+03a9	1ffb	// Ω -> Ώ
+0391	1fbb	// Α -> Ά
+0397	1fcb	// Η -> Ή
+0395	1fc9	// Ε -> Έ
+0399	1fdb	// Ι -> Ί
+03a5	1feb	// Υ -> Ύ
+039f	1ff9	// Ο -> Ό
+0020	003b	//   -> ;
+
+DEADKEY	003a
+
+002e	00a8	// . -> ¨
+03b9	03ca	// ι -> ϊ
+03c5	03cb	// υ -> ϋ
+0399	03aa	// Ι -> Ϊ
+03a5	03ab	// Υ -> Ϋ
+0020	003a	//   -> :
+
+DEADKEY	1ffd
+
+03c9	1ff4	// ω -> ῴ
+03b1	1fb4	// α -> ᾴ
+03b7	1fc4	// η -> ῄ
+
+DEADKEY	005b
+
+03c9	1ff6	// ω -> ῶ
+002e	1fc0	// . -> ῀
+03b1	1fb6	// α -> ᾶ
+03b7	1fc6	// η -> ῆ
+03b9	1fd6	// ι -> ῖ
+03c5	1fe6	// υ -> ῦ
+0020	005b	//   -> [
+
+DEADKEY	007b
+
+03c9	1ff3	// ω -> ῳ
+002e	1fbe	// . -> ι
+03b1	1fb3	// α -> ᾳ
+03b7	1fc3	// η -> ῃ
+03a9	1ffc	// Ω -> ῼ
+0391	1fbc	// Α -> ᾼ
+0397	1fcc	// Η -> ῌ
+0020	007b	//   -> {
+
+DEADKEY	00ab
+
+03c9	1ff7	// ω -> ῷ
+03b1	1fb7	// α -> ᾷ
+03b7	1fc7	// η -> ῇ
+0020	00ab	//   -> «
+
+DEADKEY	005d
+
+03c9	1f7c	// ω -> ὼ
+002e	1fef	// . -> `
+03b1	1f70	// α -> ὰ
+03b7	1f74	// η -> ὴ
+03b5	1f72	// ε -> ὲ
+03b9	1f76	// ι -> ὶ
+03c5	1f7a	// υ -> ὺ
+03bf	1f78	// ο -> ὸ
+03a9	1ffa	// Ω -> Ὼ
+0391	1fba	// Α -> Ὰ
+0397	1fca	// Η -> Ὴ
+0395	1fc8	// Ε -> Ὲ
+0399	1fda	// Ι -> Ὶ
+03a5	1fea	// Υ -> Ὺ
+039f	1ff8	// Ο -> Ὸ
+0020	005d	//   -> ]
+
+DEADKEY	007d
+
+002e	0387	// . -> ·
+0020	007d	//   -> }
+
+DEADKEY	00bb
+
+03c9	1ff2	// ω -> ῲ
+03b1	1fb2	// α -> ᾲ
+03b7	1fc2	// η -> ῂ
+0020	00bb	//   -> »
+
+DEADKEY	0384
+
+03c9	03ce	// ω -> ώ
+002e	0384	// . -> ΄
+03b1	03ac	// α -> ά
+03b7	03ae	// η -> ή
+03b5	03ad	// ε -> έ
+03b9	03af	// ι -> ί
+03c5	03cd	// υ -> ύ
+03bf	03cc	// ο -> ό
+03a9	038f	// Ω -> Ώ
+0391	0386	// Α -> Ά
+0397	0389	// Η -> Ή
+0395	0388	// Ε -> Έ
+0399	038a	// Ι -> Ί
+03a5	038e	// Υ -> Ύ
+039f	038c	// Ο -> Ό
+0020	0384	//   -> ΄
+
+DEADKEY	00a8
+
+002e	00a8	// . -> ¨
+03b9	03ca	// ι -> ϊ
+03c5	03cb	// υ -> ϋ
+0399	03aa	// Ι -> Ϊ
+03a5	03ab	// Υ -> Ϋ
+0020	00a8	//   -> ¨
+
+DEADKEY	0385
+
+002e	0385	// . -> ΅
+03b9	0390	// ι -> ΐ
+03c5	03b0	// υ -> ΰ
+0020	0385	//   -> ΅
+
+DEADKEY	0027
+
+03c9	1f60	// ω -> ὠ
+002e	1fbf	// . -> ᾿
+03b1	1f00	// α -> ἀ
+03b7	1f20	// η -> ἠ
+03b5	1f10	// ε -> ἐ
+03c1	1fe4	// ρ -> ῤ
+03b9	1f30	// ι -> ἰ
+03c5	1f50	// υ -> ὐ
+03bf	1f40	// ο -> ὀ
+03a9	1f68	// Ω -> Ὠ
+0391	1f08	// Α -> Ἀ
+0397	1f28	// Η -> Ἠ
+0395	1f18	// Ε -> Ἐ
+0399	1f38	// Ι -> Ἰ
+039f	1f48	// Ο -> Ὀ
+0020	0027	//   -> '
+
+DEADKEY	0022
+
+03c9	1f61	// ω -> ὡ
+002e	1ffe	// . -> ῾
+03b1	1f01	// α -> ἁ
+03b7	1f21	// η -> ἡ
+03b5	1f11	// ε -> ἑ
+03c1	1fe5	// ρ -> ῥ
+03b9	1f31	// ι -> ἱ
+03c5	1f51	// υ -> ὑ
+03bf	1f41	// ο -> ὁ
+03a9	1f69	// Ω -> Ὡ
+0391	1f09	// Α -> Ἁ
+0397	1f29	// Η -> Ἡ
+0395	1f19	// Ε -> Ἑ
+03a1	1fec	// Ρ -> Ῥ
+0399	1f39	// Ι -> Ἱ
+03a5	1f59	// Υ -> Ὑ
+039f	1f49	// Ο -> Ὁ
+0020	0022	//   -> "
+
+DEADKEY	1fbf
+
+03c9	1fa0	// ω -> ᾠ
+03b1	1f80	// α -> ᾀ
+03b7	1f90	// η -> ᾐ
+03a9	1fa8	// Ω -> ᾨ
+0391	1f88	// Α -> ᾈ
+0397	1f98	// Η -> ᾘ
+
+DEADKEY	1ffe
+
+03c9	1fa1	// ω -> ᾡ
+03b1	1f81	// α -> ᾁ
+03b7	1f91	// η -> ᾑ
+03a9	1fa9	// Ω -> ᾩ
+0391	1f89	// Α -> ᾉ
+0397	1f99	// Η -> ᾙ
+
+DEADKEY	007e
+
+002e	1fee	// . -> ΅
+03b9	1fd3	// ι -> ΐ
+03c5	1fe3	// υ -> ΰ
+0020	007e	//   -> ~
+
+DEADKEY	0060
+
+002e	1fed	// . -> ῭
+03b9	1fd2	// ι -> ῒ
+03c5	1fe2	// υ -> ῢ
+0020	0060	//   -> `
+
+DEADKEY	1fc1
+
+002e	1fc1	// . -> ῁
+03b9	1fd7	// ι -> ῗ
+03c5	1fe7	// υ -> ῧ
+0020	1fc1	//   -> ῁
+
+DEADKEY	005c
+
+03c9	1f62	// ω -> ὢ
+002e	1fcd	// . -> ῍
+03b1	1f02	// α -> ἂ
+03b7	1f22	// η -> ἢ
+03b5	1f12	// ε -> ἒ
+03b9	1f32	// ι -> ἲ
+03c5	1f52	// υ -> ὒ
+03bf	1f42	// ο -> ὂ
+03a9	1f6a	// Ω -> Ὢ
+0391	1f0a	// Α -> Ἂ
+0397	1f2a	// Η -> Ἢ
+0395	1f1a	// Ε -> Ἒ
+0399	1f3a	// Ι -> Ἲ
+039f	1f4a	// Ο -> Ὂ
+0020	005c	//   -> \
+
+DEADKEY	007c
+
+03c9	1f63	// ω -> ὣ
+002e	1fdd	// . -> ῝
+03b1	1f03	// α -> ἃ
+03b7	1f23	// η -> ἣ
+03b5	1f13	// ε -> ἓ
+03b9	1f33	// ι -> ἳ
+03c5	1f53	// υ -> ὓ
+03bf	1f43	// ο -> ὃ
+03a9	1f6b	// Ω -> Ὣ
+0391	1f0b	// Α -> Ἃ
+0397	1f2b	// Η -> Ἣ
+0395	1f1b	// Ε -> Ἓ
+0399	1f3b	// Ι -> Ἳ
+03a5	1f5b	// Υ -> Ὓ
+039f	1f4b	// Ο -> Ὃ
+0020	007c	//   -> |
+
+DEADKEY	00ac
+
+03c9	1fa2	// ω -> ᾢ
+03b1	1f82	// α -> ᾂ
+03b7	1f92	// η -> ᾒ
+03a9	1faa	// Ω -> ᾪ
+0391	1f8a	// Α -> ᾊ
+0397	1f9a	// Η -> ᾚ
+0020	00ac	//   -> ¬
+
+DEADKEY	1fdd
+
+03c9	1fa3	// ω -> ᾣ
+03b1	1f83	// α -> ᾃ
+03b7	1f93	// η -> ᾓ
+03a9	1fab	// Ω -> ᾫ
+0391	1f8b	// Α -> ᾋ
+0397	1f9b	// Η -> ᾛ
+
+DEADKEY	002f
+
+03c9	1f64	// ω -> ὤ
+002e	1fce	// . -> ῎
+03b1	1f04	// α -> ἄ
+03b7	1f24	// η -> ἤ
+03b5	1f14	// ε -> ἔ
+03b9	1f34	// ι -> ἴ
+03c5	1f54	// υ -> ὔ
+03bf	1f44	// ο -> ὄ
+03a9	1f6c	// Ω -> Ὤ
+0391	1f0c	// Α -> Ἄ
+0397	1f2c	// Η -> Ἤ
+0395	1f1c	// Ε -> Ἔ
+0399	1f3c	// Ι -> Ἴ
+039f	1f4c	// Ο -> Ὄ
+0020	002f	//   -> /
+
+DEADKEY	003f
+
+03c9	1f65	// ω -> ὥ
+002e	1fde	// . -> ῞
+03b1	1f05	// α -> ἅ
+03b7	1f25	// η -> ἥ
+03b5	1f15	// ε -> ἕ
+03b9	1f35	// ι -> ἵ
+03c5	1f55	// υ -> ὕ
+03bf	1f45	// ο -> ὅ
+03a9	1f6d	// Ω -> Ὥ
+0391	1f0d	// Α -> Ἅ
+0397	1f2d	// Η -> Ἥ
+0395	1f1d	// Ε -> Ἕ
+0399	1f3d	// Ι -> Ἵ
+03a5	1f5d	// Υ -> Ὕ
+039f	1f4d	// Ο -> Ὅ
+0020	003f	//   -> ?
+
+DEADKEY	1fbe
+
+03c9	1fa4	// ω -> ᾤ
+03b1	1f84	// α -> ᾄ
+03b7	1f94	// η -> ᾔ
+03a9	1fac	// Ω -> ᾬ
+0391	1f8c	// Α -> ᾌ
+0397	1f9c	// Η -> ᾜ
+
+DEADKEY	1fde
+
+03c9	1fa5	// ω -> ᾥ
+03b1	1f85	// α -> ᾅ
+03b7	1f95	// η -> ᾕ
+03a9	1fad	// Ω -> ᾭ
+0391	1f8d	// Α -> ᾍ
+0397	1f9d	// Η -> ᾝ
+
+
+KEYNAME
+
+01	Esc
+0e	Backspace
+0f	Tab
+1c	Enter
+1d	Ctrl
+2a	Shift
+36	"Right Shift"
+37	"Num *"
+38	Alt
+39	Space
+3a	"Caps Lock"
+3b	F1
+3c	F2
+3d	F3
+3e	F4
+3f	F5
+40	F6
+41	F7
+42	F8
+43	F9
+44	F10
+45	Pause
+46	"Scroll Lock"
+47	"Num 7"
+48	"Num 8"
+49	"Num 9"
+4a	"Num -"
+4b	"Num 4"
+4c	"Num 5"
+4d	"Num 6"
+4e	"Num +"
+4f	"Num 1"
+50	"Num 2"
+51	"Num 3"
+52	"Num 0"
+53	"Num Del"
+54	"Sys Req"
+57	F11
+58	F12
+7c	F13
+7d	F14
+7e	F15
+7f	F16
+80	F17
+81	F18
+82	F19
+83	F20
+84	F21
+85	F22
+86	F23
+87	F24
+
+KEYNAME_EXT
+
+1c	"Num Enter"
+1d	"Right Ctrl"
+35	"Num /"
+37	"Prnt Scrn"
+38	"Right Alt"
+45	"Num Lock"
+46	Break
+47	Home
+48	Up
+49	"Page Up"
+4b	Left
+4d	Right
+4f	End
+50	Down
+51	"Page Down"
+52	Insert
+53	Delete
+54	<00>
+56	Help
+5b	"Left Windows"
+5c	"Right Windows"
+5d	Application
+
+KEYNAME_DEAD
+
+002d	"HYPHEN-MINUS"
+005f	"LOW LINE"
+003d	"EQUALS SIGN"
+002b	"PLUS SIGN"
+00bd	"VULGAR FRACTION ONE HALF"
+1fdf	"GREEK DASIA AND PERISPOMENI"
+003b	"SEMICOLON"
+003a	"COLON"
+1ffd	"GREEK OXIA"
+0385	"GREEK DIALYTIKA TONOS"
+005b	"LEFT SQUARE BRACKET"
+007b	"LEFT CURLY BRACKET"
+00ab	"LEFT-POINTING DOUBLE ANGLE QUOTATION MARK *"
+005d	"RIGHT SQUARE BRACKET"
+007d	"RIGHT CURLY BRACKET"
+00bb	"RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK *"
+0384	"GREEK TONOS"
+00a8	"DIAERESIS"
+0385	"GREEK DIALYTIKA TONOS"
+0027	"APOSTROPHE"
+0022	"QUOTATION MARK"
+1fbf	"GREEK PSILI"
+1ffe	"GREEK DASIA"
+007e	"TILDE"
+0060	"GRAVE ACCENT"
+1fc1	"GREEK DIALYTIKA AND PERISPOMENI"
+005c	"REVERSE SOLIDUS"
+007c	"VERTICAL LINE"
+00ac	"NOT SIGN"
+1fdd	"GREEK DASIA AND VARIA"
+002f	"SOLIDUS"
+003f	"QUESTION MARK"
+1fbe	"GREEK PROSGEGRAMMENI"
+1fde	"GREEK DASIA AND OXIA"
+
+
+DESCRIPTIONS
+
+0409	Greek Polytonic - Custom
+LANGUAGENAMES
+
+0409	Greek (Greece)
+ENDKBD

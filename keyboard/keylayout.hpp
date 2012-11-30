@@ -50,7 +50,7 @@ struct Keylayout
 //##############################################################################
 {
     enum {
-          MAX_DEADKEYS = 10
+          MAX_DEADKEYS = 35
         , MAX_SECOND_KEYS = 35
         , MAX_LAYOUT_CHARS = 128
     };
@@ -84,26 +84,29 @@ struct Keylayout
     } dkey_t;
 
     dkey_t deadkeys[MAX_DEADKEYS];
+    uint8_t nbDeadkeys;  // Effective number of deadkeys for the locale
 
     uint32_t verbose;
 
 
     // Constructor
     //==============================================================================
-    Keylayout(  int LCID
-             ,  const KeyLayout_t LCID_noMod
-             ,  const KeyLayout_t LCID_shift
-             ,  const KeyLayout_t LCID_altGr
-             ,  const KeyLayout_t LCID_shiftAltGr
-             ,  const KeyLayout_t LCID_ctrl
-             ,  const KeyLayout_t LCID_capslock_noMod
-             ,  const KeyLayout_t LCID_capslock_shift
-             ,  const KeyLayout_t LCID_capslock_altGr
-             ,  const KeyLayout_t LCID_capslock_shiftAltGr
-             ,  const dkey_t LCID_deadkeys[MAX_DEADKEYS]
-             ,  uint32_t verbose = 0
+    Keylayout( int LCID
+             , const KeyLayout_t LCID_noMod
+             , const KeyLayout_t LCID_shift
+             , const KeyLayout_t LCID_altGr
+             , const KeyLayout_t LCID_shiftAltGr
+             , const KeyLayout_t LCID_ctrl
+             , const KeyLayout_t LCID_capslock_noMod
+             , const KeyLayout_t LCID_capslock_shift
+             , const KeyLayout_t LCID_capslock_altGr
+             , const KeyLayout_t LCID_capslock_shiftAltGr
+             , const dkey_t LCID_deadkeys[MAX_DEADKEYS]
+             , uint8_t nbDeadkeys
+             , uint32_t verbose = 0
              )
         : LCID(LCID)
+        , nbDeadkeys(nbDeadkeys)
         , verbose(verbose)
     //==============================================================================
     {
@@ -133,9 +136,10 @@ struct Keylayout
             this->capslock_shift[i]      = LCID_capslock_shift[i];
             this->capslock_altGr[i]      = LCID_capslock_altGr[i];
             this->capslock_shiftAltGr[i] = LCID_capslock_shiftAltGr[i];
+printf(">> i = 0x%02x = 0X%02x\n", i, this->noMod[i]);
         }
 
-        for(size_t i = 0 ; i < Keylayout::MAX_DEADKEYS ; i++) {
+        for(size_t i = 0 ; i < this->nbDeadkeys ; i++) {
             deadkeys[i] = LCID_deadkeys[i];
         }
 
@@ -147,7 +151,7 @@ struct Keylayout
     //==============================================================================
     {
         bool resu = false;
-        for (int i=0; i < MAX_DEADKEYS; i++) {
+        for (int i=0; i < this->nbDeadkeys; i++) {
             // Search if a make is a deadkey by its scancode AND by its unicode translation.
             // NB : unicode alone is not enough. (e.g. french CARET from scancode 'Ox1A' is a deadkey but
             //      from scancode '0x0A' it isn't).

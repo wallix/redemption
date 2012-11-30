@@ -73,21 +73,6 @@ LAYOUT		;an extra '@' at the end is a dead key
 56	OEM_102	0	00ab	00bb	001c	00b0		// LEFT-POINTING DOUBLE ANGLE QUOTATION MARK *, RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK *, INFORMATION SEPARATOR FOUR, DEGREE SIGN
 53	DECIMAL	0	002e	002e	-1	-1		// FULL STOP, FULL STOP, ,
 
-
-DEADKEY	005e
-
-0061	00e2	// a -> â
-0065	00ea	// e -> ê
-0075	00fb	// u -> û
-0069	00ee	// i -> î
-006f	00f4	// o -> ô
-0041	00c2	// A -> Â
-0045	00ca	// E -> Ê
-0055	00db	// U -> Û
-0049	00ce	// I -> Î
-004f	00d4	// O -> Ô
-0020	005e	//   -> ^
-
 DEADKEY	005e
 
 0061	00e2	// a -> â
@@ -122,20 +107,6 @@ DEADKEY	00a8
 0049	00cf	// I -> Ï
 004f	00d6	// O -> Ö
 0020	00a8	//   -> ¨
-
-DEADKEY	0060
-
-0061	00e0	// a -> à
-0065	00e8	// e -> è
-0075	00f9	// u -> ù
-0069	00ec	// i -> ì
-006f	00f2	// o -> ò
-0041	00c0	// A -> À
-0045	00c8	// E -> È
-0055	00d9	// U -> Ù
-0049	00cc	// I -> Ì
-004f	00d2	// O -> Ò
-0020	0060	//   -> `
 
 DEADKEY	0060
 
