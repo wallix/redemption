@@ -47,16 +47,23 @@
 #include "colors.hpp"
 
 #include "RDP/RDPDrawable.hpp"
-#include "scale.hpp"
 
 class ImageCapture : public RDPDrawable
 {
 public:
     Transport & trans;
+    unsigned zoom_factor;
+    unsigned scaled_width;
+    unsigned scaled_height;
+
+    TODO("RDPDrawable should be provided to Image capture, not instanciated here")
 
     ImageCapture(Transport & trans, unsigned width, unsigned height)
     : RDPDrawable(width, height, true)
     , trans(trans)
+    , zoom_factor(100)
+    , scaled_width(width)
+    , scaled_height(height)
     {
     }
 
@@ -64,19 +71,93 @@ public:
     {
     }
 
+    void zoom(unsigned percent)
+    {
+        const unsigned zoom_width = (this->drawable.width * percent) / 100;
+        const unsigned zoom_height = (this->drawable.height * percent) / 100;
+        TODO("we should limit percent to avoid images larger than 4096 x 4096")
+        this->zoom_factor = percent;
+        this->scaled_width = (zoom_width + 3) & 0xFFC;
+        this->scaled_height = zoom_height;
+    }
+
     void update_config(const Inifile & ini){}
 
     virtual void flush()
     {
-//                    scale_data(this->data_scale, this->drawable.data,
-//                               this->scale_width, this->drawable.width,
-//                               this->scale_height, this->drawable.height,
-//                               this->drawable.rowsize);
-        ::transport_dump_png24(&this->trans, this->drawable.data,
-                     this->drawable.width, this->drawable.height,
-                     this->drawable.rowsize
-                    );
+        if (this->zoom_factor == 100){
+            this->dump24();
+        }
+        else {
+            this->scale_dump24();
+        }
     }
+
+    void dump24(){
+        ::transport_dump_png24(&this->trans, this->drawable.data,
+                 this->drawable.width, this->drawable.height,
+                 this->drawable.rowsize
+                );
+    }
+
+    void scale_dump24()
+    {
+        uint8_t * scaled_data = (uint8_t *)malloc(this->scaled_width * this->scaled_height * 3);
+        scale_data(scaled_data, this->drawable.data,
+                   this->scaled_width, this->drawable.width,
+                   this->scaled_height, this->drawable.height,
+                   this->drawable.rowsize);
+        ::transport_dump_png24(&this->trans, scaled_data,
+                     this->scaled_width, this->scaled_height,
+                     this->scaled_width * 3
+                    );
+        free(scaled_data);
+    }
+
+    static void scale_data(uint8_t *dest, const uint8_t *src,
+                            unsigned int dest_width, unsigned int src_width,
+                            unsigned int dest_height, unsigned int src_height,
+                            unsigned int src_rowsize)
+    {
+        const uint32_t Bpp = 3;
+        unsigned int y_pixels = dest_height;
+        unsigned int y_int_part = src_height / dest_height * src_rowsize;
+        unsigned int y_fract_part = src_height % dest_height;
+        unsigned int yE = 0;
+        unsigned int x_int_part = src_width / dest_width * Bpp;
+        unsigned int x_fract_part = src_width % dest_width;
+
+        while (y_pixels-- > 0)
+        {
+            unsigned int xE = 0;
+            const uint8_t * x_src = src;
+            unsigned int x_pixels = dest_width;
+            while (x_pixels-- > 0)
+            {
+                TODO("we can perform both scaling and rgb/bgr swapping at the same time")
+                dest[0] = x_src[0];
+                dest[1] = x_src[1];
+                dest[2] = x_src[2];
+
+                dest += Bpp;
+                x_src += x_int_part;
+                xE += x_fract_part;
+                if (xE >= dest_width)
+                {
+                    xE -= dest_width;
+                    x_src += Bpp;
+                }
+            }
+            src += y_int_part;
+            yE += y_fract_part;
+            if (yE >= dest_height)
+            {
+                yE -= dest_height;
+                src += src_rowsize;
+            }
+        }
+    }
+
 };
 
 #endif

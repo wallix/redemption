@@ -66,11 +66,14 @@ static inline void canonical_path(const char * fullpath, char * path, size_t pat
         else {
             if (end_of_path[0]){
                 strcpy(basename, end_of_path + 1);
-                basename[end_of_path + 1 - fullpath] = 0;
             }
+	    else {
+	      strcpy(basename, "no_name");
+	    }
         }
     }
     else {
+      strcpy(path, "./");
         const char * start_of_extension = strrchr(fullpath, '.');
         if (start_of_extension){
             memcpy(basename, fullpath, start_of_extension - fullpath);
@@ -79,11 +82,13 @@ static inline void canonical_path(const char * fullpath, char * path, size_t pat
         else {
             if (fullpath[0]){
                 strcpy(basename, fullpath);
-                basename[end_of_path - fullpath] = 0;
             }
+	    else {
+	        strcpy(basename, "no_name");
+	    }
         }
     }
-    LOG(LOG_INFO, "canonical_path : %s %s\n", path, basename);
+    LOG(LOG_INFO, "canonical_path : %s%s\n", path, basename);
 }
 
 class Transport {

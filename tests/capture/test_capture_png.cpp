@@ -353,21 +353,6 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
 }
 
-const char small_png_image[] =
-    "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
-    "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
-    "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00"             //.............
-    "\x3b\x37\xe9\xb1"                                                 //;7..
-    "\x00\x00\x00\x32\x49\x44\x41\x54"                                 //...2IDAT
-    "\x28\x91\x63\xfc\xcf\x80\x17\xfc\xff\xcf\xc0\xc8\x88\x4b\x92\x09" //(.c..........K..
-    "\xbf\x5e\xfc\x60\x88\x6a\x66\x41\xe3\x33\x32\xa0\x84\xe0\x7f\x54" //.^.`.jfA.32....T
-    "\x91\xff\x0c\x28\x81\x37\x70\xce\x66\x1c\xb0\x78\x06\x00\x69\xdc" //...(.7p.f..x..i.
-    "\x0a\x12"                                                         //..
-    "\x86\x4a\x0c\x44"                                                 //.J.D
-    "\x00\x00\x00\x00\x49\x45\x4e\x44"                                 //....IEND
-    "\xae\x42\x60\x82"                                                 //.B`.
-;
-
 BOOST_AUTO_TEST_CASE(TestSmallImage)
 {
     const FileSequence sequence("path file pid count extension", "./", "sample", "png");
@@ -378,9 +363,32 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
     d.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     d.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     d.flush();
+    BOOST_CHECK_EQUAL(107, sequence.filesize(0));
     sequence.unlink(0);
 }
 
+
+BOOST_AUTO_TEST_CASE(TestScaleImage)
+{
+    const int width = 800;
+    const int height = 600;
+    const FileSequence sequence("path file pid count extension", "./", "test_scale", "png");
+    OutByFilenameSequenceTransport trans(sequence);
+    Rect scr(0, 0, width, height);
+    ImageCapture d(trans, scr.cx, scr.cy);
+    d.zoom(50);
+
+    {
+        const char * filename = "./tests/fixtures/win2008capture10.png";
+        FILE * fd = fopen(filename, "r");
+        TODO("Add ability to write image to file or read image from file in RDPDrawable")
+        read_png24(fd, d.drawable.data, d.drawable.width, d.drawable.height, d.drawable.rowsize);
+        fclose(fd);
+    }
+    d.flush();
+    BOOST_CHECK_EQUAL(8176, sequence.filesize(0));
+    sequence.unlink(0);
+}
 
 BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 {
@@ -390,12 +398,6 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     Rect scr(0, 0, 800, 600);
     ImageCapture d(trans, scr.cx, scr.cy);
     d.draw(RDPOpaqueRect(scr, GREEN), scr);
-
-    // Bogus square generating zero width/height tiles if not properly guarded
-    uint8_t comp64x64RED[] = {
-        0xc0, 0x30, 0x00, 0x00, 0xFF,
-        0xf0, 0xc0, 0x0f,
-    };
 
     uint8_t source64x64[] = {
 // MIX_SET 60 remaining=932 bytes pix=0
@@ -510,3 +512,6 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     BOOST_CHECK_EQUAL(4094, sequence.filesize(0));
     sequence.unlink(0);
 }
+
+
+

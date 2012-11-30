@@ -36,8 +36,8 @@ class RDPOpaqueRect {
         return RDP::RECT;
     }
 
-    RDPOpaqueRect(Rect rect, int color) :
-        rect(rect), color(color)
+    RDPOpaqueRect(const Rect & r, int c) :
+        rect(r), color(c)
         {}
 
     bool operator==(const RDPOpaqueRect &other) const {

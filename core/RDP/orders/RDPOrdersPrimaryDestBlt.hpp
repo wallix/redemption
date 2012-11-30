@@ -69,8 +69,8 @@ class RDPDestBlt {
         return RDP::DESTBLT;
     }
 
-    RDPDestBlt(Rect rect, uint8_t rop) :
-        rect(rect), rop(rop)
+    RDPDestBlt(const Rect & r, uint8_t rop) :
+        rect(r), rop(rop)
         {}
 
     bool operator==(const RDPDestBlt &other) const {
