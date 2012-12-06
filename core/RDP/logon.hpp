@@ -616,12 +616,6 @@ struct ClientTimeZone {
         memset(StandardName, 0, 65);
         memset(DaylightName, 0, 65);
 
-        this->std_init();
-
-    } // END CONSTRUCTOR
-
-    void std_init() {
-
         // bias
         this->Bias = 120;
         // standard Name
@@ -637,7 +631,7 @@ struct ClientTimeZone {
         // daylight bias
         this->DaylightBias = 120;
 
-    } // END FUNCT : std_init()
+    } // END CONSTRUCTOR
 
 }; // END STRUCT : ClientTimeZone
 
@@ -671,23 +665,17 @@ struct ExtendedInfoPacket {
         memset(clientDir, 0, 256);
         memset(autoReconnectCookie, 0, 29);
 
-        this->std_init();
-
-    } // END CONSTRUCTOR
-
-    void std_init() {
-
         clientAddressFamily = 2;
-        memcpy(this->clientAddress, "10.10.9.161", strlen("10.10.9.161")+1);
-        this->cbClientAddress = 2 * strlen((char *) this->clientAddress) + 2;
+        const char * defaultAddress = "0.0.0.0";
+        memcpy(this->clientAddress, defaultAddress, strlen(defaultAddress)+1);
+        this->cbClientAddress = 2 * strlen(defaultAddress) + 2;
 
         memcpy(this->clientDir, "C:\\Windows\\System32\\mstscax.dll", strlen("C:\\Windows\\System32\\mstscax.dll")+1);
         this->cbClientDir = 2 * strlen((char *) this->clientDir) + 2;
 
         clientSessionId = 0;
 
-    } // END FUNCT : std_init()
-
+    } // END CONSTRUCTOR
 }; // END STRUCT : ExtendedInfoPacket
 
 
@@ -724,13 +712,6 @@ struct InfoPacket {
         memset(AlternateShell, 0, 256);
         memset(WorkingDir, 0, 256);
 
-        this->std_init();
-
-   } // END CONSTRUCTOR
-
-
-    void std_init(){
-
         this->flags  = INFO_MOUSE;
         this->flags |= INFO_DISABLECTRLALTDEL;
         this->flags |= INFO_UNICODE;
@@ -738,10 +719,9 @@ struct InfoPacket {
         this->flags |= INFO_ENABLEWINDOWSKEY;
         this->flags |= INFO_LOGONNOTIFY;
 
-    } // END FUNCT : std_init()
+   } // END CONSTRUCTOR
 
-
-    void emit( Stream & stream) {
+    void emit(Stream & stream) {
 
         this->flags |= ( (strlen((char *) this->Password ) > 0) * INFO_AUTOLOGON );
         this->flags |= ( this->rdp5_support != 0 ) * ( INFO_LOGONERRORS | INFO_NOAUDIOPLAYBACK );
@@ -851,7 +831,6 @@ struct InfoPacket {
             // clientAddressFamily (skipped)
             stream.in_skip_bytes(2);
             this->extendedInfoPacket.cbClientAddress = stream.in_uint16_le();
-//            char tmpdata[256];
             stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.clientAddress, 
                                         this->extendedInfoPacket.cbClientAddress, 
                                         sizeof(this->extendedInfoPacket.clientAddress));
