@@ -670,8 +670,9 @@ struct ExtendedInfoPacket {
         memcpy(this->clientAddress, defaultAddress, strlen(defaultAddress)+1);
         this->cbClientAddress = 2 * strlen(defaultAddress) + 2;
 
-        memcpy(this->clientDir, "C:\\Windows\\System32\\mstscax.dll", strlen("C:\\Windows\\System32\\mstscax.dll")+1);
-        this->cbClientDir = 2 * strlen((char *) this->clientDir) + 2;
+        const char * defaultClientDir = "C:\\Windows\\System32\\mstscax.dll";
+        memcpy(this->clientDir, defaultClientDir, strlen(defaultClientDir)+1);
+        this->cbClientDir = 2 * strlen(defaultClientDir) + 2;
 
         clientSessionId = 0;
 
@@ -755,6 +756,9 @@ struct InfoPacket {
             stream.out_uint16_le(this->extendedInfoPacket.clientAddressFamily);
             stream.out_uint16_le(this->extendedInfoPacket.cbClientAddress);
             stream.out_unistr((const char *) this->extendedInfoPacket.clientAddress);
+//            stream.out_uint16_le(2*sizeof("0.0.0.0"));
+//            stream.out_unistr("0.0.0.0");
+
             stream.out_uint16_le(this->extendedInfoPacket.cbClientDir);
             stream.out_unistr((const char *) this->extendedInfoPacket.clientDir);
 

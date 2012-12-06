@@ -757,6 +757,7 @@ struct Session {
                 this->mod = new mod_rdp(t,
                                     this->context->get(STRAUTHID_TARGET_USER),
                                     this->context->get(STRAUTHID_TARGET_PASSWORD),
+                                    "0.0.0.0", // client ip is silenced
                                     *this->front,
                                     hostname,
                                     true,

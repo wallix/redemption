@@ -374,10 +374,14 @@ struct mod_rdp : public client_mod {
     uint32_t verbose;
 
     RdpNego nego;
+    
+    char clientAddr[512];
+    uint16_t cbClientAddr;
 
     mod_rdp(Transport * trans,
             const char * target_user,
             const char * target_password,
+            const char * clientIP,
             struct FrontAPI & front,
             const char * hostname,
             const bool tls,
@@ -410,6 +414,9 @@ struct mod_rdp : public client_mod {
         if (this->verbose){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
         }
+
+        this->cbClientAddr = strlen(clientIP)+1;
+        memcpy(this->clientAddr, clientIP, this->cbClientAddr);
 
         this->key_flags = key_flags;
         this->lic_layer_license_issued = 0;
@@ -467,7 +474,7 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_INFO, "Creation of new mod 'RDP' failed");
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
             }
-        }
+        }        
     }
 
     virtual ~mod_rdp() {
@@ -2923,7 +2930,284 @@ struct mod_rdp : public client_mod {
         void process_disconnect_pdu(Stream & stream)
         {
             uint32_t errorInfo = stream.in_uint32_le();
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x", errorInfo);
+            switch (errorInfo){
+            case ERRINFO_RPC_INITIATED_DISCONNECT:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "RPC_INITIATED_DISCONNECT");
+            break;
+            case ERRINFO_RPC_INITIATED_LOGOFF:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "RPC_INITIATED_LOGOFF");
+            break;
+            case ERRINFO_IDLE_TIMEOUT:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "IDLE_TIMEOUT");
+            break;
+            case ERRINFO_LOGON_TIMEOUT:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LOGON_TIMEOUT");
+            break;
+            case ERRINFO_DISCONNECTED_BY_OTHERCONNECTION:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DISCONNECTED_BY_OTHERCONNECTION");
+            break;
+            case ERRINFO_OUT_OF_MEMORY:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "OUT_OF_MEMORY");
+            break;
+            case ERRINFO_SERVER_DENIED_CONNECTION:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SERVER_DENIED_CONNECTION");
+            break;
+            case ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SERVER_INSUFFICIENT_PRIVILEGES");
+            break;
+            case ERRINFO_SERVER_FRESH_CREDENTIALS_REQUIRED:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SERVER_FRESH_CREDENTIALS_REQUIRED");
+            break;
+            case ERRINFO_RPC_INITIATED_DISCONNECT_BYUSER:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "RPC_INITIATED_DISCONNECT_BYUSER");
+            break;
+            case ERRINFO_LICENSE_INTERNAL:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_INTERNAL");
+            break;
+            case ERRINFO_LICENSE_NO_LICENSE_SERVER:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_NO_LICENSE_SERVER");
+            break;
+            case ERRINFO_LICENSE_NO_LICENSE:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_NO_LICENSE");
+            break;
+            case ERRINFO_LICENSE_BAD_CLIENT_MSG:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_BAD_CLIENT_MSG");
+            break;
+            case ERRINFO_LICENSE_HWID_DOESNT_MATCH_LICENSE:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_HWID_DOESNT_MATCH_LICENSE");
+            break;
+            case ERRINFO_LICENSE_BAD_CLIENT_LICENSE:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_BAD_CLIENT_LICENSE");
+            break;
+            case ERRINFO_LICENSE_CANT_FINISH_PROTOCOL:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_CANT_FINISH_PROTOCOL");
+            break;
+            case ERRINFO_LICENSE_CLIENT_ENDED_PROTOCOL:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_CLIENT_ENDED_PROTOCOL");
+            break;
+            case ERRINFO_LICENSE_BAD_CLIENT_ENCRYPTION:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_BAD_CLIENT_ENCRYPTION");
+            break;
+            case ERRINFO_LICENSE_CANT_UPGRADE_LICENSE:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_CANT_UPGRADE_LICENSE");
+            break;
+            case ERRINFO_LICENSE_NO_REMOTE_CONNECTIONS:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_NO_REMOTE_CONNECTIONS");
+            break;
+            case ERRINFO_UNKNOWNPDUTYPE2:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "UNKNOWNPDUTYPE2");
+            break;
+            case ERRINFO_UNKNOWNPDUTYPE:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "UNKNOWNPDUTYPE");
+            break;
+            case ERRINFO_DATAPDUSEQUENCE:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DATAPDUSEQUENCE");
+            break;
+            case ERRINFO_CONTROLPDUSEQUENCE:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CONTROLPDUSEQUENCE");
+            break;
+            case ERRINFO_INVALIDCONTROLPDUACTION:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDCONTROLPDUACTION");
+            break;
+            case ERRINFO_INVALIDINPUTPDUTYPE:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDINPUTPDUTYPE");
+            break;
+            case ERRINFO_INVALIDINPUTPDUMOUSE:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDINPUTPDUMOUSE");
+            break;
+            case ERRINFO_INVALIDREFRESHRECTPDU:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDREFRESHRECTPDU");
+            break;
+            case ERRINFO_CREATEUSERDATAFAILED:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CREATEUSERDATAFAILED");
+            break;
+            case ERRINFO_CONNECTFAILED:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CONNECTFAILED");
+            break;
+            case ERRINFO_CONFIRMACTIVEWRONGSHAREID:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CONFIRMACTIVEWRONGSHAREID");
+            break;
+            case ERRINFO_CONFIRMACTIVEWRONGORIGINATOR:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CONFIRMACTIVEWRONGORIGINATOR");
+            break;
+            case ERRINFO_PERSISTENTKEYPDUBADLENGTH:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "PERSISTENTKEYPDUBADLENGTH");
+            break;
+            case ERRINFO_PERSISTENTKEYPDUILLEGALFIRST:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "PERSISTENTKEYPDUILLEGALFIRST");
+            break;
+            case ERRINFO_PERSISTENTKEYPDUTOOMANYTOTALKEYS:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "PERSISTENTKEYPDUTOOMANYTOTALKEYS");
+            break;
+            case ERRINFO_PERSISTENTKEYPDUTOOMANYCACHEKEYS:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "PERSISTENTKEYPDUTOOMANYCACHEKEYS");
+            break;
+            case ERRINFO_INPUTPDUBADLENGTH:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INPUTPDUBADLENGTH");
+            break;
+            case ERRINFO_BITMAPCACHEERRORPDUBADLENGTH:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BITMAPCACHEERRORPDUBADLENGTH");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT");
+            break;
+            case ERRINFO_VCHANNELDATATOOSHORT:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VCHANNELDATATOOSHORT");
+            break;
+            case ERRINFO_SHAREDATATOOSHORT:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SHAREDATATOOSHORT");
+            break;
+            case ERRINFO_BADSUPRESSOUTPUTPDU:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BADSUPRESSOUTPUTPDU");
+            break;
+            case ERRINFO_CONFIRMACTIVEPDUTOOSHORT:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CONFIRMACTIVEPDUTOOSHORT");
+            break;
+            case ERRINFO_CAPABILITYSETTOOSMALL:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CAPABILITYSETTOOSMALL");
+            break;
+            case ERRINFO_CAPABILITYSETTOOLARGE:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CAPABILITYSETTOOLARGE");
+            break;
+            case ERRINFO_NOCURSORCACHE:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "NOCURSORCACHE");
+            break;
+            case ERRINFO_BADCAPABILITIES:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BADCAPABILITIES");
+            break;
+            case ERRINFO_VIRTUALCHANNELDECOMPRESSIONERR:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VIRTUALCHANNELDECOMPRESSIONERR");
+            break;
+            case ERRINFO_INVALIDVCCOMPRESSIONTYPE:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDVCCOMPRESSIONTYPE");
+            break;
+            case ERRINFO_INVALIDCHANNELID:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "INVALIDCHANNELID");
+            break;
+            case ERRINFO_VCHANNELSTOOMANY:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VCHANNELSTOOMANY");
+            break;
+            case ERRINFO_REMOTEAPPSNOTENABLED:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "REMOTEAPPSNOTENABLED");
+            break;
+            case ERRINFO_CACHECAPNOTSET:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CACHECAPNOTSET");
+            break;
+            case ERRINFO_BITMAPCACHEERRORPDUBADLENGTH2:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BITMAPCACHEERRORPDUBADLENGTH2");
+            break;
+            case ERRINFO_OFFSCRCACHEERRORPDUBADLENGTH:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "OFFSCRCACHEERRORPDUBADLENGTH");
+            break;
+            case ERRINFO_DNGCACHEERRORPDUBADLENGTH:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DNGCACHEERRORPDUBADLENGTH");
+            break;
+            case ERRINFO_GDIPLUSPDUBADLENGTH:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "GDIPLUSPDUBADLENGTH");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT2:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT2");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT3:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT3");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT4:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT4");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT5:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT5");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT6:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT6");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT7:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT7");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT8:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT8");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT9:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT9");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT10:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT10");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT11:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT11");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT12:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT12");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT13:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT13");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT14:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT14");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT15:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT15");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT16:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT16");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT17:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT17");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT18:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT18");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT19:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT19");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT20:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT20");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT21:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT21");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT22:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT22");
+            break;
+            case ERRINFO_SECURITYDATATOOSHORT23:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "SECURITYDATATOOSHORT23");
+            break;
+            case ERRINFO_BADMONITORDATA:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BADMONITORDATA");
+            break;
+            case ERRINFO_VCDECOMPRESSEDREASSEMBLEFAILED:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VCDECOMPRESSEDREASSEMBLEFAILED");
+            break;
+            case ERRINFO_VCDATATOOLONG:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VCDATATOOLONG");
+            break;
+            case ERRINFO_RESERVED:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "RESERVED");
+            break;
+            case ERRINFO_GRAPHICSMODENOTSUPPORTED:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "GRAPHICSMODENOTSUPPORTED");
+            break;
+            case ERRINFO_GRAPHICSSUBSYSTEMRESETFAILED:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "GRAPHICSSUBSYSTEMRESETFAILED");
+            break;
+            case ERRINFO_UPDATESESSIONKEYFAILED:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "UPDATESESSIONKEYFAILED");
+            break;
+            case ERRINFO_DECRYPTFAILED:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DECRYPTFAILED");
+            break;
+            case ERRINFO_ENCRYPTFAILED:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "ENCRYPTFAILED");
+            break;
+            case ERRINFO_ENCPKGMISMATCH:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "ENCPKGMISMATCH");
+            break;
+            case ERRINFO_DECRYPTFAILED2:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DECRYPTFAILED2");
+            break;
+            default:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "?");
+            break;
+            }
         }
 
 
@@ -3457,6 +3741,10 @@ struct mod_rdp : public client_mod {
         memcpy(infoPacket.WorkingDir, this->directory, infoPacket.cbWorkingDir);
         infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG
                                                                                                    | PERF_DISABLE_MENUANIMATIONS );
+                                                                                                   
+        infoPacket.extendedInfoPacket.cbClientAddress = 2 * this->cbClientAddr;
+        memcpy(infoPacket.extendedInfoPacket.clientAddress, this->clientAddr, this->cbClientAddr);
+
         infoPacket.log("Sending to server: ");
         infoPacket.emit(stream);
         stream.mark_end();
