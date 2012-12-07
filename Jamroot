@@ -28,7 +28,34 @@ rule defines ( properties * )
     return $(defs) ;
 }
 
-#variant coverage : debug : <cxxflags>profile-arcs <cxxflags>test-coverage <cxxflags>coverage <link>shared ;
+variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <cxxflags>--coverage <link>shared ;
+
+#gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
+
+lib gcov : : <name>gcov ;
+
+project redemption
+    : requirements
+    <include>main
+    <include>mod
+    <include>core
+    <include>front
+    <include>tests
+    <include>utils
+    <include>acl
+    <include>capture
+    <include>recorder
+    <include>keyboard
+    <include>/usr/include
+    <conditional>@defines
+#    <cxxflags>-pedantic
+#     <cxxflags>-Wconversion
+    <cxxflags>-Wvla
+#    <cxxflags>-Wlong-long
+    <cxxflags>-O3
+   : default-build release
+
+;
 
 project redemption
     : requirements
@@ -75,8 +102,6 @@ install install-etc
     :
     : <location>/etc/rdpproxy
     ;
-
-#lib gcov : : <name>gcov <variant>coverage ;
 
 lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
 lib libboost_program_options : : <name>boost_program_options <link>shared ;
@@ -161,11 +186,13 @@ exe redrec
 
 import testing ;
 
+unit-test test_stream : tests/test_stream.cpp libboost_unit_test  ;
+unit-test test_stream : tests/test_stream.cpp libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_widget : tests/test_widget.cpp widget mainloop d3des openssl crypto png z dl libboost_unit_test  ;
 unit-test test_bitmap : tests/test_bitmap.cpp libboost_unit_test  ;
 unit-test test_logon : tests/test_logon.cpp libboost_unit_test  ;
 unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp libboost_unit_test  ;
-unit-test test_stream : tests/test_stream.cpp libboost_unit_test  ;
 unit-test test_config : tests/test_config.cpp libboost_unit_test  ;
 unit-test test_font : tests/test_font.cpp libboost_unit_test  ;
 unit-test test_rect : tests/test_rect.cpp libboost_unit_test  ;
