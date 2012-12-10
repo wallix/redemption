@@ -1524,6 +1524,7 @@ public:
 
     InByMetaSequenceTransport(const char * meta_filename)
     : InFileTransport(-1)
+    , meta_fd(-1)
     , begin(this->buffer)
     , end(this->buffer)
     , begin_chunk_time(0)
@@ -1551,6 +1552,7 @@ public:
         if (this->meta_fd != -1){
             ::close(this->meta_fd);
         }
+        printf("opening %s\n", this->meta_filename);
         this->meta_fd = ::open(this->meta_filename, O_RDONLY);
         char * eol = NULL;
         if(!readline(this->meta_fd, &this->begin, &this->end, &eol, this->buffer, sizeof(this->buffer))){
@@ -1608,6 +1610,7 @@ public:
         size_t remaining_len = len;
         while (remaining_len > 0){
             if (this->fd == -1){
+                this->next_chunk_info();
                 printf("opening new source WRM %s\n", this->path);
                 this->fd = ::open(this->path, O_RDONLY);
                 if (this->fd == -1){

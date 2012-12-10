@@ -62,5 +62,28 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM)
     BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time);
     BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time);
     BOOST_CHECK_EQUAL(3, mwrm_trans.chunk_num);
+    
+    mwrm_trans.reset_meta();
+
+    BOOST_CHECK_EQUAL(0, mwrm_trans.chunk_num);
+
+    mwrm_trans.next_chunk_info();
+    BOOST_CHECK_EQUAL("./tests/fixtures/sample0.wrm", mwrm_trans.path);
+    BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time);
+    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time);
+    BOOST_CHECK_EQUAL(1, mwrm_trans.chunk_num);
+
+    mwrm_trans.next_chunk_info();
+    BOOST_CHECK_EQUAL("./tests/fixtures/sample1.wrm", mwrm_trans.path);
+    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.begin_chunk_time);
+    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.end_chunk_time);
+    BOOST_CHECK_EQUAL(2, mwrm_trans.chunk_num);
+
+    mwrm_trans.next_chunk_info();
+    BOOST_CHECK_EQUAL("./tests/fixtures/sample2.wrm", mwrm_trans.path);
+    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time);
+    BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time);
+    BOOST_CHECK_EQUAL(3, mwrm_trans.chunk_num);
+    
 }
 
