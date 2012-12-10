@@ -139,25 +139,42 @@ int main(int argc, char** argv)
 
 
     InByMetaSequenceTransport in_wrm_trans(input_filename.c_str());
+    try {
+        in_wrm_trans.next_chunk_info();
+        TODO("a negative time should be a time relative to end of movie")
+        REDOC("less than 1 year means we are given a time relatve to beginning of movie")
+        if (begin_cap < 31536000){ // less than 1 year, it is relative not absolute timestamp
+            // begin_capture.tv_usec is 0
+            begin_cap += in_wrm_trans.begin_chunk_time;
+        }
+        if (end_cap < 31536000){ // less than 1 year, it is relative not absolute timestamp
+            // begin_capture.tv_usec is 0
+            end_cap += in_wrm_trans.begin_chunk_time;
+        }
+        printf("num=%u begin=%u asked=%u end=%u\n", 
+            in_wrm_trans.chunk_num, in_wrm_trans.begin_chunk_time, begin_cap, in_wrm_trans.end_chunk_time);
+        while (begin_cap > in_wrm_trans.begin_chunk_time){
+            in_wrm_trans.next_chunk_info();    
+            printf("num=%u begin=%u asked=%u end=%u\n", 
+                in_wrm_trans.chunk_num, in_wrm_trans.begin_chunk_time, begin_cap, in_wrm_trans.end_chunk_time);
+        }
+        printf("found: count=%u\n", in_wrm_trans.chunk_num);
+        unsigned count = in_wrm_trans.chunk_num-1;
+        in_wrm_trans.reset_meta();
+        for (; count > 0 ; count--){
+            printf("loop: count=%u\n", count);
+            in_wrm_trans.next_chunk_info();
+        }
+    }
+    catch (const Error & e) {
+        if (e.id == (unsigned)ERR_TRANSPORT_READ_FAILED){
+            printf("Asked time not found in mwrm file\n");
+        };
+        exit(-1);
+    };
+
+    
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, verbose);
-
-    TODO("we should manage direct choice of the right start chunk based on content of mwrm, passing start capture to mwrm start chunk should be enough.")
-    TODO("Also it should reject chunk change after end_capture point, but this is less critical as we must manage detecting stop from inside chunk anyway")
-
-    REDOC("less than 1 year means we are given a time relatve to beginning of movie")
-    if (begin_cap && (begin_cap < 31536000)){ // less than 1 year, it is relative not absolute timestamp
-        // begin_capture.tv_usec is 0
-        player.begin_capture.tv_usec = player.record_now.tv_usec;
-        player.begin_capture.tv_sec = player.record_now.tv_sec + begin_cap;
-    }
-
-    TODO("a negative time should be a time relative to end of movie")
-    if (end_cap && (end_cap < 31536000)){
-         // begin_capture.tv_usec is 0
-        player.end_capture.tv_usec = player.record_now.tv_usec;
-        player.end_capture.tv_sec = player.record_now.tv_sec + end_cap;
-    }
-
     player.max_order_count = order_count;
 
     const char * fullpath = output_filename.c_str();

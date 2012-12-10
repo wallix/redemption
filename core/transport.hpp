@@ -1552,6 +1552,7 @@ public:
         if (this->meta_fd != -1){
             ::close(this->meta_fd);
         }
+        this->begin = this->end = this->buffer;
         printf("opening %s\n", this->meta_filename);
         this->meta_fd = ::open(this->meta_filename, O_RDONLY);
         char * eol = NULL;

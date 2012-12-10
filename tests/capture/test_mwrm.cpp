@@ -62,6 +62,16 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM)
     BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time);
     BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time);
     BOOST_CHECK_EQUAL(3, mwrm_trans.chunk_num);
+
+    try {
+        mwrm_trans.next_chunk_info();
+        BOOST_CHECK(false);
+    }
+    catch (const Error & e){
+        BOOST_CHECK_EQUAL((unsigned)ERR_TRANSPORT_READ_FAILED, e.id);
+        BOOST_CHECK(true);
+    };
+
     
     mwrm_trans.reset_meta();
 
