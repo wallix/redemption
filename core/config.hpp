@@ -163,8 +163,6 @@ struct IniAccounts {
     char password[255]; // should use string
     // do we want to allow asking ip to dns using hostname ?
     char ip[255];          // should use string
-    // if remote authentication is on below is address of authentication server
-    int maxtick;
 };
 
 struct Inifile {

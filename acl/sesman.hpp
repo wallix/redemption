@@ -196,9 +196,32 @@ class SessionManager {
 
     bool keep_alive_or_inactivity(fd_set & rfds, long & keepalive_time, long & now, Transport * trans)
     {
-        int keepalive_grace_delay = this->keepalive_grace_delay;
-        int maxtick = this->max_tick;
-
+        TODO("we should manage a mode to disconnect on inactivity when we are on login box or on selector")
+        if (keepalive_time && (now > (keepalive_time + this->keepalive_grace_delay))){
+            LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
+            this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (timeout)");
+            return false;
+        }
+        else if (keepalive_time && (now > keepalive_time)){
+            if (this->verbose & 8){
+                LOG(LOG_INFO, "%llu bytes sent in last quantum,"
+                          " total: %llu tick:%d",
+                          trans->last_quantum_sent, trans->total_sent,
+                          this->tick_count);
+            }
+            if (trans->last_quantum_sent == 0){
+                this->tick_count++;
+                if (this->tick_count > this->max_tick){ // 15 minutes before closing on inactivity
+                    this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed on inactivity");
+                    return false;
+                }
+            }
+            else {
+                this->tick_count = 0;
+            }
+            trans->tick();
+        }
+        
         // Keepalive Data exchange with sesman
         if (this->auth_trans_t){
             if (this->event(rfds)) {
@@ -207,7 +230,7 @@ class SessionManager {
                 }
                 try {
                     this->incoming();
-                    keepalive_time = now + keepalive_grace_delay;
+                    keepalive_time = now + this->keepalive_grace_delay;
                 }
                 catch (...){
                     if (this->verbose & 0x10){
@@ -217,33 +240,8 @@ class SessionManager {
                     return false;
                 }
             }
-            if (keepalive_time && (now > keepalive_time + keepalive_grace_delay)){
-                if (this->verbose & 0x10){
-                    LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-                }
-                this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (timeout)");
-                return false;
-            }
-            else if (keepalive_time && (now > keepalive_time)){
-                if (this->verbose & 0x8){
-                    LOG(LOG_INFO, "%llu bytes sent in last quantum,"
-                                  " total: %llu tick:%d",
-                                  trans->last_quantum_sent, trans->total_sent,
-                                  this->tick_count);
-                }
-                if (trans->last_quantum_sent == 0){
-                    this->tick_count++;
-                    if (this->tick_count > maxtick){ // 10 minutes before closing on inactivity
-                        this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed on inactivity");
-                        return false;
-                    }
-                }
-                else {
-                    this->tick_count = 0;
-                }
-                trans->tick();
-
-                keepalive_time = now + keepalive_grace_delay;
+            if (keepalive_time && (now > keepalive_time)){
+                keepalive_time = now + this->keepalive_grace_delay;
                 BStream stream(8192);
                 stream.out_uint32_be(0); // skip length
                 // set data

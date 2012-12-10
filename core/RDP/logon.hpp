@@ -616,12 +616,6 @@ struct ClientTimeZone {
         memset(StandardName, 0, 65);
         memset(DaylightName, 0, 65);
 
-        this->std_init();
-
-    } // END CONSTRUCTOR
-
-    void std_init() {
-
         // bias
         this->Bias = 120;
         // standard Name
@@ -637,7 +631,7 @@ struct ClientTimeZone {
         // daylight bias
         this->DaylightBias = 120;
 
-    } // END FUNCT : std_init()
+    } // END CONSTRUCTOR
 
 }; // END STRUCT : ClientTimeZone
 
@@ -671,23 +665,18 @@ struct ExtendedInfoPacket {
         memset(clientDir, 0, 256);
         memset(autoReconnectCookie, 0, 29);
 
-        this->std_init();
-
-    } // END CONSTRUCTOR
-
-    void std_init() {
-
         clientAddressFamily = 2;
-        memcpy(this->clientAddress, "10.10.9.161", strlen("10.10.9.161")+1);
-        this->cbClientAddress = 2 * strlen((char *) this->clientAddress) + 2;
+        const char * defaultAddress = "0.0.0.0";
+        memcpy(this->clientAddress, defaultAddress, strlen(defaultAddress)+1);
+        this->cbClientAddress = 2 * strlen(defaultAddress) + 2;
 
-        memcpy(this->clientDir, "C:\\Windows\\System32\\mstscax.dll", strlen("C:\\Windows\\System32\\mstscax.dll")+1);
-        this->cbClientDir = 2 * strlen((char *) this->clientDir) + 2;
+        const char * defaultClientDir = "C:\\Windows\\System32\\mstscax.dll";
+        memcpy(this->clientDir, defaultClientDir, strlen(defaultClientDir)+1);
+        this->cbClientDir = 2 * strlen(defaultClientDir) + 2;
 
         clientSessionId = 0;
 
-    } // END FUNCT : std_init()
-
+    } // END CONSTRUCTOR
 }; // END STRUCT : ExtendedInfoPacket
 
 
@@ -701,7 +690,7 @@ struct InfoPacket {
     uint16_t cbAlternateShell;
     uint16_t cbWorkingDir;
     uint8_t Domain[257];
-    uint8_t UserName[129];
+    uint8_t UserName[257];
     uint8_t Password[257];
     uint8_t AlternateShell[257];
     uint8_t WorkingDir[257];
@@ -719,17 +708,10 @@ struct InfoPacket {
     , extendedInfoPacket()
     {
         memset(Domain, 0, 256);
-        memset(UserName, 0, 128);
+        memset(UserName, 0, 256);
         memset(Password, 0, 256);
         memset(AlternateShell, 0, 256);
         memset(WorkingDir, 0, 256);
-
-        this->std_init();
-
-   } // END CONSTRUCTOR
-
-
-    void std_init(){
 
         this->flags  = INFO_MOUSE;
         this->flags |= INFO_DISABLECTRLALTDEL;
@@ -738,10 +720,9 @@ struct InfoPacket {
         this->flags |= INFO_ENABLEWINDOWSKEY;
         this->flags |= INFO_LOGONNOTIFY;
 
-    } // END FUNCT : std_init()
+   } // END CONSTRUCTOR
 
-
-    void emit( Stream & stream) {
+    void emit(Stream & stream) {
 
         this->flags |= ( (strlen((char *) this->Password ) > 0) * INFO_AUTOLOGON );
         this->flags |= ( this->rdp5_support != 0 ) * ( INFO_LOGONERRORS | INFO_NOAUDIOPLAYBACK );
@@ -775,6 +756,9 @@ struct InfoPacket {
             stream.out_uint16_le(this->extendedInfoPacket.clientAddressFamily);
             stream.out_uint16_le(this->extendedInfoPacket.cbClientAddress);
             stream.out_unistr((const char *) this->extendedInfoPacket.clientAddress);
+//            stream.out_uint16_le(2*sizeof("0.0.0.0"));
+//            stream.out_unistr("0.0.0.0");
+
             stream.out_uint16_le(this->extendedInfoPacket.cbClientDir);
             stream.out_unistr((const char *) this->extendedInfoPacket.clientDir);
 
@@ -831,18 +815,18 @@ struct InfoPacket {
         this->cbAlternateShell = stream.in_uint16_le() + 2;
         this->cbWorkingDir = stream.in_uint16_le() + 2;
 
-        stream.in_uni_to_ascii_str((char *) this->Domain, this->cbDomain);
-        stream.in_uni_to_ascii_str((char *) this->UserName, this->cbUserName);
+        stream.in_uni_to_ascii_str((char *) this->Domain, this->cbDomain, sizeof(this->Domain));
+        stream.in_uni_to_ascii_str((char *) this->UserName, this->cbUserName, sizeof(this->UserName));
 
         // Whether we have a password available or not
         if (flags & INFO_AUTOLOGON) {
-            stream.in_uni_to_ascii_str((char *) this->Password, this->cbPassword);
+            stream.in_uni_to_ascii_str((char *) this->Password, this->cbPassword, sizeof(this->Password));
         }
         else {
             stream.in_skip_bytes(this->cbPassword);
         }
-        stream.in_uni_to_ascii_str((char *) this->AlternateShell, this->cbAlternateShell);
-        stream.in_uni_to_ascii_str((char *) this->WorkingDir, this->cbWorkingDir);
+        stream.in_uni_to_ascii_str((char *) this->AlternateShell, this->cbAlternateShell, sizeof(this->AlternateShell));
+        stream.in_uni_to_ascii_str((char *) this->WorkingDir, this->cbWorkingDir, sizeof(this->WorkingDir));
 
         TODO("Get extended data only if RDP is version 5 or above")
         if (stream.p < stream.end) {
@@ -851,11 +835,15 @@ struct InfoPacket {
             // clientAddressFamily (skipped)
             stream.in_skip_bytes(2);
             this->extendedInfoPacket.cbClientAddress = stream.in_uint16_le();
-//            char tmpdata[256];
-            stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.clientAddress, this->extendedInfoPacket.cbClientAddress);
+            stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.clientAddress, 
+                                        this->extendedInfoPacket.cbClientAddress, 
+                                        sizeof(this->extendedInfoPacket.clientAddress));
             // cbClientDir
             this->extendedInfoPacket.cbClientDir = stream.in_uint16_le();
-            stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.clientDir, this->extendedInfoPacket.cbClientDir);
+            stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.clientDir, 
+                                        this->extendedInfoPacket.cbClientDir,
+                                        sizeof(this->extendedInfoPacket.clientDir)
+                                        );
 
             // Client Time Zone data (skipped)
             stream.in_skip_bytes(172);
@@ -865,7 +853,9 @@ struct InfoPacket {
             if (stream.end - stream.p < this->extendedInfoPacket.cbAutoReconnectLen) {
                 this->extendedInfoPacket.cbAutoReconnectLen = stream.end - stream.p;
             }
-            stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.autoReconnectCookie, this->extendedInfoPacket.cbAutoReconnectLen);
+            stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.autoReconnectCookie, 
+                                        this->extendedInfoPacket.cbAutoReconnectLen,
+                                        sizeof(this->extendedInfoPacket.autoReconnectCookie));
             if (stream.p + 4 <= stream.end){
                 this->extendedInfoPacket.reserved1 = stream.in_uint16_le();
                 this->extendedInfoPacket.reserved2 = stream.in_uint16_le();

@@ -298,7 +298,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
-    struct client_mod * mod = new mod_rdp(&t, "xavier", "SecureLinux", front, "test", false, info, &gen, verbose);
+    struct client_mod * mod = new mod_rdp(&t, "xavier", "SecureLinux", "10.10.9.161", front, "test", false, info, &gen, verbose);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

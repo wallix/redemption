@@ -1511,18 +1511,50 @@ static inline bool readline(int fd, char ** begin, char **end, char **eol, char 
 }
 
 class InByMetaSequenceTransport : public InFileTransport {
+    char meta_filename[2048];
     int meta_fd;
-    char path[2048];
     char buffer[2048];
     char * begin;
     char * end;
 public:
+    char path[2048];
+    uint32_t begin_chunk_time;
+    uint32_t end_chunk_time;
+    unsigned chunk_num;
+
     InByMetaSequenceTransport(const char * meta_filename)
     : InFileTransport(-1)
+    , meta_fd(-1)
     , begin(this->buffer)
     , end(this->buffer)
+    , begin_chunk_time(0)
+    , end_chunk_time(0)
+    , chunk_num(0)
     {
-        this->meta_fd = ::open(meta_filename, O_RDONLY);
+        this->path[0] = 0;
+        strcpy(this->meta_filename, meta_filename);
+        this->reset_meta();
+    }
+
+    ~InByMetaSequenceTransport()
+    {
+        if (this->fd != -1){
+            ::close(this->fd);
+            this->fd = -1;
+        }
+        if (this->meta_fd != -1){
+            ::close(this->meta_fd);
+            this->meta_fd = -1;
+        }
+    }
+
+    void reset_meta(){
+        if (this->meta_fd != -1){
+            ::close(this->meta_fd);
+        }
+        this->begin = this->end = this->buffer;
+        printf("opening %s\n", this->meta_filename);
+        this->meta_fd = ::open(this->meta_filename, O_RDONLY);
         char * eol = NULL;
         if(!readline(this->meta_fd, &this->begin, &this->end, &eol, this->buffer, sizeof(this->buffer))){
             LOG(LOG_INFO, "InByMetaSequenceTransport recv failed with error %s reading meta file line 0", strerror(errno));
@@ -1539,18 +1571,33 @@ public:
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         };
         this->begin = eol;
+        this->chunk_num = 0;
     }
 
-    ~InByMetaSequenceTransport()
+    void next_chunk_info()
     {
-        if (this->fd != -1){
-            ::close(this->fd);
-            this->fd = -1;
+        char * eol = NULL;
+        bool res = readline(this->meta_fd, &this->begin, &this->end, &eol, this->buffer, sizeof(this->buffer));
+        if (!res) {
+            LOG(LOG_INFO, "InByMetaSequenceTransport recv failed with error %s reading meta file", strerror(errno));
+            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
-        if (this->meta_fd != -1){
-            ::close(this->meta_fd);
-            this->meta_fd = -1;
+        char *eol2 = strchrnul(this->begin, ' ');
+        if (eol2){
+            memcpy(this->path, this->begin, eol2 - this->begin);
+            this->path[eol2 - this->begin] = 0;
+            this->begin = eol;
         }
+        else {
+            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        }
+
+        TODO("Make this code harder, input sanity is not checked")
+        this->begin_chunk_time = atol(eol2+1);
+        char *eol3 = strchrnul(eol2+1, ' ');
+        this->end_chunk_time = atol(eol3+1);
+
+        this->chunk_num++;
     }
 
     TODO("Code below looks insanely complicated for what it is doing. I should probably stop at some point"
@@ -1564,25 +1611,11 @@ public:
         size_t remaining_len = len;
         while (remaining_len > 0){
             if (this->fd == -1){
-                char * eol = NULL;
-                bool res = readline(this->meta_fd, &this->begin, &this->end, &eol, this->buffer, sizeof(this->buffer));
-                if (!res) {
-                    LOG(LOG_INFO, "InByMetaSequenceTransport recv failed with error %s reading meta file", strerror(errno));
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                }
-                char *eol2 = strchrnul(this->begin, ' ');
-                if (eol2){
-                    memcpy(this->path, this->begin, eol2 - this->begin);
-                    this->path[eol2 - this->begin] = 0;
-                    this->begin = eol;
-                    printf("opening new source WRM %s\n", this->path);
-                    this->fd = ::open(this->path, O_RDONLY);
-                    if (this->fd == -1){
-                        LOG(LOG_INFO, "InByMetaSequence transport '%s' recv failed with error : %s", this->path, strerror(errno));
-                        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-                    }
-                }
-                else {
+                this->next_chunk_info();
+                printf("opening new source WRM %s\n", this->path);
+                this->fd = ::open(this->path, O_RDONLY);
+                if (this->fd == -1){
+                    LOG(LOG_INFO, "InByMetaSequence transport '%s' recv failed with error : %s", this->path, strerror(errno));
                     throw Error(ERR_TRANSPORT_READ_FAILED, errno);
                 }
             }

@@ -2153,6 +2153,8 @@ namespace GCC
             , encryptionLevel(0) // crypt level 0 = none, 1 = low 2 = medium, 3 = high
             , serverRandomLen(32)
             , serverCertLen(184)
+            , dwVersion(CERT_CHAIN_VERSION_1)
+            , temporary(false)
             {
                 for (size_t i = 0 ; i < sizeof(this->x509.cert) / sizeof(this->x509.cert[0]) ; i++){
                     this->x509.cert[i].cert = NULL;
@@ -2185,7 +2187,7 @@ namespace GCC
                 stream.out_uint32_le( this->dwVersion 
                                     | (this->temporary << 31));
 
-                if (this->dwVersion == CERT_CHAIN_VERSION_1){
+                if ((this->dwVersion & 0x7FFFFFFF) == CERT_CHAIN_VERSION_1){
                     stream.out_uint32_le(this->proprietaryCertificate.dwSigAlgId);
                     stream.out_uint32_le(this->proprietaryCertificate.dwKeyAlgId);
 

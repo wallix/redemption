@@ -412,13 +412,22 @@ class Stream {
     }
 
     // sz utf16 bytes are translated to ascci, 00 terminated
-    void in_uni_to_ascii_str(char* text, size_t sz)
+    void in_uni_to_ascii_str(char* text, size_t sz, size_t bufsz)
     {
         size_t i = 1;
         size_t max = (sz>>1);
         while (i <= max) {
-            text[i-1] = this->in_uint8();
-            this->in_skip_bytes(1);
+            if (i >= bufsz){
+                TODO("This is a overflow quick fix, we should end connexion immediately"
+                     " as the buffer overflow comes from some malformed RDP packet anyway")
+                this->in_skip_bytes(max - i);
+                text[bufsz-1] = 0;
+                return;
+            }
+            else {
+                text[i-1] = this->in_uint8();
+                this->in_skip_bytes(1);
+            }
             i++;
         }
         text[i-1] = 0;

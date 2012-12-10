@@ -59,6 +59,7 @@ struct ClientInfo {
     char domain[512];
     char program[512];
     char directory[512];
+
     int rdp_compression;
     int rdp_autologin;
     int encryptionLevel; /* 1, 2, 3 = low, medium, high */
