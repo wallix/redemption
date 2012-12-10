@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Dominique Lafages
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    header file. Front object (server), used to communicate with RDP client
@@ -115,7 +115,10 @@ public:
 
     Random * gen;
 
-    Front(Transport * trans, Random * gen, Inifile * ini)
+    Front ( Transport * trans
+          , Random * gen
+          , Inifile * ini
+          )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
         , capture(NULL)
         , bmp_cache(NULL)
@@ -285,6 +288,7 @@ public:
                         font_item->width,
                         font_item->height,
                         font_item->data);
+
                     this->draw(cmd);
                 }
                 break;
@@ -298,7 +302,7 @@ public:
             total_height = std::max(total_height, font_item->height);
         }
 
-        const Rect bk(x, y, total_width + 1, total_height);
+        const Rect bk(x, y, total_width + 1, total_height +1);
 
          RDPGlyphIndex glyphindex(
             f, // cache_id

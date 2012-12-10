@@ -110,16 +110,22 @@ class RDPGlyphCache {
 
     }
 
-    RDPGlyphCache(uint8_t cacheId, uint8_t cGlyphs,
-                  uint16_t glyphData_cacheIndex,
-                  uint16_t glyphData_x, uint16_t glyphData_y,
-                  uint16_t glyphData_cx, uint16_t glyphData_cy,
-                  const uint8_t * glyphData_aj)
-        :   cacheId(cacheId),
-            cGlyphs(1),
-            glyphData_cacheIndex(glyphData_cacheIndex),
-            glyphData_x(glyphData_x), glyphData_y(glyphData_y),
-            glyphData_cx(glyphData_cx), glyphData_cy(glyphData_cy)
+    RDPGlyphCache( uint8_t  cacheId
+                 , uint8_t  cGlyphs
+                 , uint16_t glyphData_cacheIndex
+                 , uint16_t glyphData_x
+                 , uint16_t glyphData_y
+                 , uint16_t glyphData_cx
+                 , uint16_t glyphData_cy
+                 , const uint8_t * glyphData_aj
+                 )
+        : cacheId(cacheId)
+        , cGlyphs(1)
+        , glyphData_cacheIndex(glyphData_cacheIndex)
+        , glyphData_x(glyphData_x)
+        , glyphData_y(glyphData_y)
+        , glyphData_cx(glyphData_cx)
+        , glyphData_cy(glyphData_cy)
     {
         size_t size = align4(nbbytes(glyphData_cx) * glyphData_cy);
         this->glyphData_aj = (uint8_t*)malloc(size);

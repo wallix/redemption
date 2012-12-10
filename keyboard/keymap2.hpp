@@ -156,6 +156,7 @@ struct Keymap2
     // Constructor
     //==============================================================================
     Keymap2(uint32_t verbose = 0)
+    //==============================================================================
         : ibuf(0)
         , nbuf(0)
         , ibuf_kevent(0)
@@ -163,7 +164,7 @@ struct Keymap2
         , deadkey(DEADKEY_NONE)
         , keylayout_WORK(&keylayout_x00000409)
         , verbose(verbose)
-    //==============================================================================
+    //------------------------------------------------------------------------------
     {
         memset(this->keys_down, 0, 256 * sizeof(int));
         memset(this->keys_down, 0, SIZE_KEYBUF * sizeof(uint32_t));
