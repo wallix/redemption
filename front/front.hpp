@@ -517,6 +517,11 @@ public:
         BStream mcs_header(256);
         BStream sec_header(256);
 
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
+
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, channel.chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
@@ -581,6 +586,11 @@ public:
             BStream x224_header(256);
             BStream mcs_header(256);
             BStream sec_header(256);
+
+            if (this->verbose > 128){
+                LOG(LOG_INFO, "Sec clear payload to send:");
+                hexdump_d(stream.data, stream.size());
+            }
 
             SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
             MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -793,6 +803,11 @@ public:
         BStream mcs_header(256);
         BStream sec_header(256);
 
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
+
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
@@ -862,6 +877,11 @@ public:
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
+
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -1394,6 +1414,11 @@ public:
                 this->decrypt.dump();
             }
             SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
+            if (this->verbose > 128){
+                LOG(LOG_INFO, "sec decrypted payload:");
+                hexdump_d(sec.payload.data, sec.payload.size());
+            }
+
             SubStream & payload = sec.payload;
 
             if (!sec.flags & SEC::SEC_INFO_PKT) {
@@ -1430,6 +1455,11 @@ public:
                     BStream x224_header(256);
                     BStream mcs_header(256);
                     BStream sec_header(256);
+
+                    if (this->verbose > 128){
+                        LOG(LOG_INFO, "Sec clear payload to send:");
+                        hexdump_d(stream.data, stream.size());
+                    }
 
                     SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0, 0);
                     MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -1525,6 +1555,11 @@ public:
                 BStream mcs_header(256);
                 BStream sec_header(256);
 
+                if (this->verbose > 128){
+                    LOG(LOG_INFO, "Sec clear payload to send:");
+                    hexdump_d(stream.data, stream.size());
+                }
+
                 SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
@@ -1560,6 +1595,11 @@ public:
             }
 
             SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
+            if (this->verbose > 128){
+                LOG(LOG_INFO, "sec decrypted payload:");
+                hexdump_d(sec.payload.data, sec.payload.size());
+            }
+
 
             // Licensing
             // ---------
@@ -1609,6 +1649,11 @@ public:
                         BStream x224_header(256);
                         BStream mcs_header(256);
                         BStream sec_header(256);
+
+                        if (this->verbose > 128){
+                            LOG(LOG_INFO, "Sec clear payload to send:");
+                            hexdump_d(stream.data, stream.size());
+                        }
 
                         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
                         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -1665,6 +1710,11 @@ public:
                         BStream x224_header(256);
                         BStream mcs_header(256);
                         BStream sec_header(256);
+
+                        if (this->verbose > 128){
+                            LOG(LOG_INFO, "Sec clear payload to send:");
+                            hexdump_d(stream.data, stream.size());
+                        }
 
                         SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0, 0);
                         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -1828,6 +1878,10 @@ public:
             TODO("We should also manage the DisconnectRequest case as it can also happen")
 
             SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
+            if (this->verbose > 128){
+                LOG(LOG_INFO, "sec decrypted payload:");
+                hexdump_d(sec.payload.data, sec.payload.size());
+            }
 
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
@@ -1959,6 +2013,11 @@ public:
         BStream mcs_header(256);
         BStream sec_header(256);
 
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
+
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
@@ -2084,6 +2143,11 @@ public:
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
+
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -2354,6 +2418,11 @@ public:
         BStream mcs_header(256);
         BStream sec_header(256);
 
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
+
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
@@ -2411,6 +2480,11 @@ public:
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
+
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -2472,6 +2546,11 @@ public:
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
+
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -2676,6 +2755,11 @@ public:
                 BStream mcs_header(256);
                 BStream sec_header(256);
 
+                if (this->verbose > 128){
+                    LOG(LOG_INFO, "Sec clear payload to send:");
+                    hexdump_d(stream.data, stream.size());
+                }
+
                 SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
@@ -2834,6 +2918,11 @@ public:
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
+
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
