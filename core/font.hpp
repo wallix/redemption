@@ -119,7 +119,10 @@ TODO(" NUM_FONTS is misleading it's actually number of glyph in font. Using it t
 struct Font
 //##############################################################################
 {
-#define DEFAULT_FONT_NAME "dejavu_14.fv1"
+TODO("Pass font name as parameter in constructor")
+#ifndef DEFAULT_FONT_NAME
+#define DEFAULT_FONT_NAME "dejavu_11.fv1"
+#endif
 
     enum {
            NUM_GLYPHS = 0x4e00

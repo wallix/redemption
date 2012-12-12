@@ -40,6 +40,9 @@
 import ImageFont
 import struct
 
+FONT_SIZE = 11
+CHARSET_SIZE = 0x4e00
+
 ########################################################################################################################
 # FUNCTIONS
 ########################################################################################################################
@@ -58,7 +61,7 @@ def doBitmap( f, pt, pix, byteBmp, totB):
     if pix == 1:
         byteBmp = byteBmp | (128 >> (pt))
     pt = pt + 1
-    # if bit pointer is 8, flush the byte to file and reset the byte management variables
+    # if bit pointer is 8, flush the byte to file and reset the byte managment variables
     if pt == 8:
         pt = 0 # bits counter
         aByte = struct.pack('B', byteBmp)
@@ -68,14 +71,36 @@ def doBitmap( f, pt, pix, byteBmp, totB):
 
     return pt, byteBmp, totB
 
+
+#def doBitmap( f, pt, pix, byteBmp, totB):
+#    """ Manage bitmap bytes bit-by-bit construction and flushing to .fv1 file
+
+#        KEYWORDS :
+#            - [IN] f = file handle
+#            - [IN / OUT] pt = bit rank in the byte bitmap (between 0 and 7)
+#            - [IN] color of the pixel (0 or 1)
+#            - [IN / OUT] byteBitmap = a bitmap byte variable
+#            - [IN / OUT] totB = total number of bytes flushed
+#    """
+
+#    if pix == 1:
+#        byteBmp = byteBmp | (128 >> (pt))
+#    pt = pt + 1
+#    # if bit pointer is 8, flush the byte to file and reset the byte management variables
+#    if pt == 8:
+#        pt = 0 # bits counter
+#        aByte = struct.pack('B', byteBmp)
+#        f.write(aByte)
+#        totB = totB  + 1  # bytes counter
+#        byteBmp = 0       # byte bitmap
+
+#    return pt, byteBmp, totB
+
 # END FUNCTION - doBitmap
 
 ########################################################################################################################
 # MAIN
 ########################################################################################################################
-
-FONT_SIZE = 10
-CHARSET_SIZE = 0x4e00
 
 deja10 = ImageFont.truetype("/home/dlafages/work/wab/tags/wab2-2.1.8/redemption/tests/fixtures/DejaVuSans.ttf", FONT_SIZE)
 
@@ -91,6 +116,7 @@ line = u"{fontname}".format(fontname = deja10.getname()[0])
 f.write(line.encode(u'utf-8'))
 
 # Pad name of font up to 32 bytes
+print len(deja10.getname()[0])
 for i in range(len(deja10.getname()[0]), 32):
     f.write(chr(0))
 
@@ -112,11 +138,12 @@ for i in range(32, CHARSET_SIZE):
     x, y = deja10.getsize(unichr(i))
     msk = deja10.getmask(unichr(i), mode="1")
 
+    print "CHR = ", unichr(i), "  SIZE = ", deja10.getsize(unichr(i)), "  ABC  = ", deja10.font.getabc(unichr(i)), "  BBOX = ", msk.getbbox()
 
     baseW = x
     baseH = y
 
-    # width of glyph (rounded to the next multiple of 8)
+    # width of glyph (based on ABC.abcB, rounded to the next multiple of 8)
     fullW = (((x - 1 ) / 8 ) + 1 ) * 8
     if fullW == 0:
         fullW = 8
@@ -135,11 +162,13 @@ for i in range(32, CHARSET_SIZE):
     f.write(line)
 
     # offset of glyph (ABC.abcA)
-    # NB: an offset < 1 is forced to 1 (tests show that a null or negative offset causes a bad centering of the glyph)
+    # an offset < 1 is forced to 1 (tests show that a null or negative offset causes a bad centering of the glyph)
     offset = deja10.font.getabc(unichr(i))[0]
     if offset < 1:
         offset = 1
-    line = struct.pack('h', offset)
+    line = struct.pack('h', offset )
+
+    f.write(line)
 
     # incby of glyph
     line = struct.pack('h', x)
@@ -149,10 +178,10 @@ for i in range(32, CHARSET_SIZE):
     for i in range(0, 6):
         f.write(chr(0))
 
-
     byteBitmap = 0
     cptPix   = 0
     totBytes = 0
+
     for iy in range(0, fullH):
 
         if iy < baseH:
@@ -175,8 +204,8 @@ for i in range(32, CHARSET_SIZE):
                 print "+",
                 cptPix, byteBitmap, totBytes = doBitmap(f, cptPix, 0, byteBitmap, totBytes)
         print
-
-    while totBytes % 4 != 0:  # should never be used (theorically, PIL fonts are aligned to multiples of 4 bytes)
+    while totBytes % 4 != 0:
+        print "COMPLETING"
         f.write(chr(0))
         totBytes = totBytes + 1
 

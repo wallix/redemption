@@ -115,6 +115,8 @@ public:
 
     Random * gen;
 
+TODO("Pass font name as parameter in constructor")
+
     Front ( Transport * trans
           , Random * gen
           , Inifile * ini
@@ -302,7 +304,7 @@ public:
             total_height = std::max(total_height, font_item->height);
         }
 
-        const Rect bk(x, y, total_width + 1, total_height +1);
+        const Rect bk(x, y, total_width + 1, total_height);
 
          RDPGlyphIndex glyphindex(
             f, // cache_id
