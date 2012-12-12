@@ -75,17 +75,9 @@ struct KeymapSym {
         KEVENT_PGDOWN,
     };
 
-    uint32_t ibuf; // first free position in char buffer
-    uint32_t nbuf; // number of char in char buffer
-    uint32_t buffer[SIZE_KEYBUF]; // actual char buffer
-
     uint32_t ibuf_sym; // first free position
     uint32_t nbuf_sym; // number of char in char buffer
     uint32_t buffer_sym[SIZE_KEYBUF_SYM]; // actual char buffer
-
-    uint32_t ibuf_kevent; // first free position
-    uint32_t nbuf_kevent; // number of char in char buffer
-    uint32_t buffer_kevent[SIZE_KEYBUF_KEVENT]; // actual char buffer
 
     uint8_t dead_key;
 
@@ -114,12 +106,10 @@ struct KeymapSym {
     // constructor
     //==============================================================================
     KeymapSym(int verbose = 0)
-            : ibuf(0)
-            , nbuf(0)
-            , ibuf_kevent(0)
-            , nbuf_kevent(0)
+            : ibuf_sym(0)
+            , nbuf_sym(0)
             , dead_key(DEADKEY_NONE)
-            , verbose(verbose)
+            , verbose(verbose|2)
     //==============================================================================
     {
         memset(this->keys_down, 0, 256 * sizeof(int));
@@ -575,7 +565,7 @@ struct KeymapSym {
     uint32_t top_sym() const
     //==============================================================================
     {
-        uint32_t res = this->buffer_sym[this->ibuf_sym?this->ibuf_sym-1:SIZE_KEYBUF_SYM-1];
+        uint32_t res = this->buffer_sym[(SIZE_KEYBUF + this->ibuf_sym - this->nbuf_sym) % SIZE_KEYBUF];
         if (this->verbose & 2){
             LOG(LOG_INFO, "KeymapSym::top_sym() -> %08x nbuf_sym=%u", res, this->nbuf_sym);
         }
