@@ -53,6 +53,7 @@ project redemption
     <cxxflags>-Wvla
 #    <cxxflags>-Wlong-long
     <cxxflags>-O3
+    <cxxflags>-Wuninitialized
    : default-build release
 
 ;
