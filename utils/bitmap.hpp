@@ -423,56 +423,58 @@ public:
         return this->data_bitmap.get();
     }
 
-    void dump() const
-    {
-        const uint8_t Bpp = nbbytes(this->original_bpp);
-        LOG(LOG_INFO, "------- Dumping bitmap RAW data [%p]---------\n", this);
-        LOG(LOG_INFO, "cx=%d cy=%d BPP=%d line_size=%d bmp_size=%d data=%p \n",
-            this->cx, this->cy, Bpp, this->line_size, this->bmp_size, this->data_bitmap.get());
-        assert(this->line_size);
-        assert(this->cx);
-        assert(this->cy);
-        assert(this->bmp_size);
-
-        LOG(LOG_INFO, "uint8_t raw%p[] = {", this);
-        const uint8_t * data = this->data_bitmap.get();
-
-        for (size_t j = 0 ; j < this->cy ; j++){
-            LOG(LOG_INFO, "/* line %d */", (this->cy - j - 1));
-            char buffer[2048];
-            char * line = buffer;
-            buffer[0] = 0;
-            for (size_t i = 0; i < this->line_size; i++){
-                line += snprintf(line, 1024, "0x%.2x, ", data[j*this->line_size+i]);
-                if (i % 16 == 15){
-                    LOG(LOG_INFO, buffer);
-                    line = buffer;
-                    buffer[0] = 0;
-                }
-            }
-            if (line != buffer){
-                LOG(LOG_INFO, buffer);
-            }
-        }
-        LOG(LOG_INFO, "}; /* %p */", this);
-        LOG(LOG_INFO, "Bitmap bmp%p(%d, %d, %d, raw%p, sizeof(raw%p));",
-            this, this->original_bpp, this->cx, this->cy, this, this);
-
-//        LOG(LOG_INFO, "\n-----End of dump [%p] -----------------------\n", this);
-    }
-
 private:
     TODO("move that function to external definition")
+
+    const char * get_opcode(uint8_t opcode){
+        enum {
+            FILL    = 0,
+            MIX     = 1,
+            FOM     = 2,
+            COLOR   = 3,
+            COPY    = 4,
+            MIX_SET = 6,
+            FOM_SET = 7,
+            BICOLOR = 8,
+            SPECIAL_FGBG_1 = 9,
+            SPECIAL_FGBG_2 = 10,
+            WHITE = 13,
+            BLACK = 14
+        };
+
+        switch (opcode){
+            case FILL:
+                return "FILL";
+            case MIX:
+                return "MIX";
+            case FOM:
+                return "FOM";
+            case COLOR:
+                return "COLOR";
+            case COPY:
+                return "COPY";
+            case MIX_SET:
+                return "MIX_SET";
+            case FOM_SET:
+                return "FOM_SET";
+            case BICOLOR:
+                return "BICOLOR";
+            case SPECIAL_FGBG_1:
+                return "SPECIAL_FGBG_1";
+            case SPECIAL_FGBG_2:
+                return "SPECIAL_FGBG_2";
+            case WHITE:
+                return "WHITE";
+            case BLACK:
+                return "BLACK";
+            default:
+                return "Unknown Opcode";
+        };
+    }
+
+
     void decompress(const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size)
     {
-//        printf("============================================\n");
-//        printf("Compressed bitmap data\n");
-//        for (size_t xxx = 0 ; xxx < size ; xxx++){
-//            printf("0x%.2x,", input[xxx]);
-//        }
-//        printf("Decompressing bitmap done\n");
-//        printf("============================================\n");
-
         const uint8_t Bpp = nbbytes(this->original_bpp);
         uint16_t & dst_cx = this->cx;
         uint8_t* pmin = this->data_bitmap.get();
@@ -653,6 +655,8 @@ private:
                 }
             }
             lastopcode = opcode;
+
+//            LOG(LOG_INFO, "%s %u", this->get_opcode(opcode), count);
 
             /* Output body */
             while (count > 0) {
@@ -1031,6 +1035,7 @@ public:
                 }
 
                 if (flags && copy_count > 0){
+//                    LOG(LOG_INFO, "COPY1 %u", copy_count);
                     out.out_copy_sequence(Bpp, copy_count, p - copy_count * Bpp);
                     copy_count = 0;
                 }
@@ -1038,22 +1043,26 @@ public:
                 TODO(" use symbolic values for flags")
                 switch (flags){
                     case 9:
+//                        LOG(LOG_INFO, "BICOLOR %u", bicolor_count);
                         out.out_bicolor_sequence(Bpp, bicolor_count, color, color2);
                         p+= bicolor_count * Bpp;
                     break;
 
                     case 8:
+//                        LOG(LOG_INFO, "COLOR %u", color_count);
                         out.out_color_sequence(Bpp, color_count, color);
                         p+= color_count * Bpp;
                     break;
 
                     case 7:
+//                        LOG(LOG_INFO, "FOM_SET %u", fom_count);
                         out.out_fom_sequence_set(Bpp, fom_count, new_foreground, masks);
                         foreground = new_foreground;
                         p+= fom_count * Bpp;
                     break;
 
                     case 6:
+//                        LOG(LOG_INFO, "MIX_SET %u", fom_count);
                         out.out_mix_count_set(fom_count);
                         out.out_bytes_le(Bpp, new_foreground);
                         foreground = new_foreground;
@@ -1061,27 +1070,32 @@ public:
                     break;
 
                     case 3:
+//                        LOG(LOG_INFO, "FOM %u", fom_count);
                         out.out_fom_sequence(fom_count, masks);
                         p+= fom_count * Bpp;
                     break;
 
                     case 2:
+//                        LOG(LOG_INFO, "MIX %u", fom_count);
                         out.out_mix_count(fom_count);
                         p+= fom_count * Bpp;
                     break;
 
                     case 1:
+//                        LOG(LOG_INFO, "FILL %u", fom_count);
                         out.out_fill_count(fom_count);
                         p+= fom_count * Bpp;
                     break;
 
                     default:
+//                        LOG(LOG_INFO, "default, count BPP");
                         p += Bpp;
                     break;
                 }
             }
 
             if (copy_count > 0){
+//                LOG(LOG_INFO, "COPY2 %u", copy_count);
                 out.out_copy_sequence(Bpp, copy_count, p - copy_count * Bpp);
                 copy_count = 0;
             }
