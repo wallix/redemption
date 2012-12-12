@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Author(s): Christophe Grosjean, Javier Caverni, Dominique Lafages
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Font header file
@@ -37,31 +37,48 @@
 #include <bits/posix1_lim.h>
 #include "bitfu.hpp"
 
-struct FontChar {
-    int offset;  // leading whistespace before char
+//##############################################################################
+struct FontChar
+//##############################################################################
+{
+    int offset;   // leading whistespace before char
     int baseline; // real -height (probably unused for now)
-    int width; // width of glyph actually containing pixels
-    int height; // height of glyph (in pixels)
-    int incby; // width of glyph (in pixels) including leading and trailing whitespaces
+    int width;    // width of glyph actually containing pixels
+    int height;   // height of glyph (in pixels)
+    int incby;    // width of glyph (in pixels) including leading and trailing whitespaces
     uint8_t * data;
+
+    // Constructor
+    //==============================================================================
     FontChar(int offset, int baseline, int width, int height, int incby)
-        : offset(offset),
-          baseline(baseline),
-          width(width),
-          height(height),
-          incby(incby),
-          data(new uint8_t[this->datasize()])
+    //==============================================================================
+        : offset(   offset )
+        , baseline( baseline )
+        , width(    width )
+        , height(   height )
+        , incby(    incby )
+        , data(     new uint8_t[ this->datasize() ] )
+    //------------------------------------------------------------------------------
     {
     }
+
+    // Destructor
+    //==============================================================================
     ~FontChar(){
-        delete [] this->data;
+    //==============================================================================
+       delete [] this->data;
     }
+
+    //==============================================================================
     inline int datasize() const {
+    //==============================================================================
         return align4(this->height * nbbytes(this->width));
     }
 
     /* compare the two font items returns 1 if they match */
+    //==============================================================================
     int item_compare(struct FontChar* glyph)
+    //==============================================================================
     {
         return glyph
             && (this->offset == glyph->offset)
@@ -72,7 +89,7 @@ struct FontChar {
             && (0 == memcmp(this->data, glyph->data, glyph->datasize()));
     }
 
-};
+}; // END STRUCT - FontChar
 
 
 TODO(" NUM_FONTS is misleading it's actually number of glyph in font. Using it to set size of a static array is quite dangerous as we shouldn't have to change code whenever we change font file.")
@@ -98,19 +115,31 @@ TODO(" NUM_FONTS is misleading it's actually number of glyph in font. Using it t
 
 
 /* font */
-struct Font {
+//##############################################################################
+struct Font
+//##############################################################################
+{
+TODO("Pass font name as parameter in constructor")
+#ifndef DEFAULT_FONT_NAME
+#define DEFAULT_FONT_NAME "dejavu_11.fv1"
+#endif
+
     enum {
-         NUM_GLYPHS = 0x4e00
-        };
-
-#define DEFAULT_FONT_NAME "sans-10.fv1"
-
+           NUM_GLYPHS = 0x4e00
+         };
 
     struct FontChar * font_items[NUM_GLYPHS];
     char name[32];
     int size;
     int style;
-    Font(const char * file_path){
+
+
+    // Constructor
+    // Params :
+    //    - file_path : path to the font definition file (*.fv1)
+    //==============================================================================
+    Font(const char * file_path) {
+    //==============================================================================
         int fd;
         int b;
          // we start at space, no glyph for chars below 32
@@ -118,31 +147,37 @@ struct Font {
         int file_size;
 
         LOG(LOG_INFO, "Reading font file %s", file_path);
-
+        // RAZ of font chars table
         for (int i = 0; i < NUM_GLYPHS ; i++){
             font_items[i] = 0;
         }
 
         try{
+            // Does font definition file exist and is it accessible ?
             if (access(file_path, F_OK)) {
                 LOG(LOG_ERR,
                     "create: error font file [%s] does not exist\n",
                     file_path);
                 throw 1;
             }
-            struct stat st;
 
+            // Retrieves system stats about the file
+            struct stat st;
             if (stat(file_path, &st)) {
                 LOG(LOG_ERR, "create: can't stat file [%s]\n", file_path);
                 throw 2;
             }
+            // Is file empty ?
             if (st.st_size < 1) {
                 LOG(LOG_ERR, "create: empty font file [%s]\n", file_path);
                 throw 3;
             }
+
+            // Allocate a buffer to read the whole file into
             file_size = st.st_size;
-            TODO(" stream allocated stream here is much too large  we could (should) read fonton the fly without storing whole file in buffer. Doinf that is quite insane.")
+            TODO(" stream allocated stream here is much too large  we could (should) read font on the fly without storing whole file in buffer. Doing that is quite insane.")
             BStream stream(file_size + 1024);
+
             if (-1 == (fd = open(file_path, O_RDONLY))){
                 LOG(LOG_ERR,
                     "create: "
@@ -150,10 +185,12 @@ struct Font {
                 throw 4;
             }
 
+            // Read the file into the buffer by slices of bytes, the size of each slices beeing at most equal to the size of a long int (limits::SSIZE_MAX)
             long size_to_read = file_size;
             stream.end = stream.data;
+
             for (;;){
-                b = read(fd, stream.end, (size_to_read<SSIZE_MAX)?size_to_read:SSIZE_MAX);
+                b = read(fd, stream.end, (size_to_read < SSIZE_MAX) ? size_to_read : SSIZE_MAX);
                 if (b > 0) {
                     size_to_read -= b;
                     stream.end += b;
@@ -173,26 +210,54 @@ struct Font {
             }
             close(fd);
 
+            // Extract font info from the buffer
+            //----------------------------------
+            // >>> 4 bytes for FNT1 (dropped)
             stream.in_skip_bytes(4);
+
+            // >>> 32 bytes for Font Name
             memcpy(this->name, stream.in_uint8p(32), 32);
+
+            // >>> 2 bytes for Font Size
             this->size = stream.in_uint16_le();
+            LOG(LOG_INFO, "font name <%s> size <%u>", this->name, this->size);
+
+            // >>> 2 bytes for Font Style
             this->style = stream.in_uint16_le();
+
+            // >>> 8 bytes for PAD (dropped)
             stream.in_skip_bytes(8);
 
     TODO(" we can do something much cooler using C++ facilities and moving glyph building code to FontChar. Only problem : clean error management using exceptions implies a real exception object in FontChar. We will do that later.")
+            // Extract each character glyph
             while (stream.in_check_rem(16)) {
 //                LOG(LOG_INFO, "Reading definition for glyph %u", index);
+
+                // >>> 2 bytes for glyph width
                 int width = stream.in_sint16_le();
+
+                // >>> 2 bytes for glyph height
                 int height = stream.in_sint16_le();
+
 TODO(" baseline is always -height (seen from the code of fontdump) looks strange. It means that baseline is probably not used in current code.")
+
+                // >>> 2 bytes for glyph baseline
                 int baseline = stream.in_sint16_le();
 
+                // >>> 2 bytes for glyph offset
                 int offset = stream.in_sint16_le();
+
+                // >>> 2 bytes for glyph incby
                 int incby = stream.in_sint16_le();
+
+                // >>> 6 bytes for PAD (dropped)
                 stream.in_skip_bytes(6);
 
                 this->font_items[index] = new FontChar(offset, baseline, width, height, incby);
+
+                // Check if glyph data size makes sens
                 int datasize = this->font_items[index]->datasize();
+
                 if (datasize < 0 || datasize > 512) {
                     /* shouldn't happen, implies broken font file*/
                     LOG(LOG_ERR,
@@ -203,14 +268,24 @@ TODO(" baseline is always -height (seen from the code of fontdump) looks strange
                     // one glyph is broken but we continue with other glyphs
                 }
                 else {
+                    // Read the data only if there is enough space left in buffer
                     if (!stream.in_check_rem(datasize)) {
-                        LOG(LOG_ERR, "Error loading font %s:"
-                            " not enough data for definition of glyph %d"
-                            " (expected %d, got %d)\n", file_path, index,
-                            datasize, (unsigned)(stream.end - stream.p));
-                            throw 6;
-                            // we stop loading font here, we are at end of file
+
+                        LOG( LOG_ERR
+                           , "Error loading font %s:"
+                             " not enough data for definition of glyph %d"
+                             " (expected %d, got %d)\n"
+                           , file_path
+                           , index
+                           , datasize
+                           , (unsigned)(stream.end - stream.p)
+                           );
+
+                        throw 6;
+                        // we stop loading font here, we are at end of file
                     }
+
+                    // >>> <datasize> bytes for glyph data (bitmap)
                     memcpy(this->font_items[index]->data, stream.in_uint8p(datasize), datasize);
                 }
                 index++;
@@ -218,13 +293,17 @@ TODO(" baseline is always -height (seen from the code of fontdump) looks strange
         }
         catch (...){
         }
+
         return;
     }
 
+    // Destructor
+    //==============================================================================
     ~Font()
+    //==============================================================================
     {
     }
 
-};
+}; // END STRUCT - Font
 
 #endif

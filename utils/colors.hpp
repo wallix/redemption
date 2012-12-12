@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Author(s): Christophe Grosjean, Javier Caverni, Dominique Lafages
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Colors object. Contains generic colors
@@ -203,7 +203,8 @@ enum {
     INV_DARK_WABGREEN = 0x2BBE91,
     DARK_GREEN    = 0x499F74,
     INV_DARK_GREEN    = 0x749F49,
-    LIGHT_GREEN   = 0x37E58E,
+//    LIGHT_GREEN   = 0x37E58E,
+    LIGHT_GREEN   = 0x90ffe0, // lighter version to improve contrast in textboxes
     INV_LIGHT_GREEN   = 0x8EE537,
     PALE_GREEN    = 0xE1FAF0,
     INV_PALE_GREEN    = 0xF0FAE1,

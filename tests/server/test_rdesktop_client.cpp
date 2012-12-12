@@ -30,7 +30,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #include "log.hpp"
-#define LOGNULL
+#define LOGNULLz
 
 #include <errno.h>
 #include <algorithm>
@@ -38,6 +38,9 @@
 
 #undef SHARE_PATH
 #define SHARE_PATH "./tests/fixtures"
+
+#undef DEFAULT_FONT_NAME
+#define DEFAULT_FONT_NAME "sans-10.fv1"
 
 #include "constants.hpp"
 #include "listen.hpp"

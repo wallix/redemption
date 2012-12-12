@@ -100,7 +100,7 @@ struct window_login : public window
         if (acc.askip){
             /* label */
             b = new widget_label(this->mod,
-                Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 20),
+                Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 22),
                 this, "ip");
 
             b->id = 100 + 2 * count;
@@ -108,7 +108,7 @@ struct window_login : public window
 
             /* edit */
             b = new widget_edit(this->mod,
-                Rect(this->rect.cx >= 400 ? 230 : 70, 60 + 25 * count, 350, 20),
+                Rect(this->rect.cx >= 400 ? 230 : 70, 60 + 25 * count, 350, 22),
                 this,
                 100 + 2 * count + 1, /* id */
                 1, /* tab stop */
@@ -122,7 +122,7 @@ struct window_login : public window
 
         if (acc.askusername){
             b = new widget_label(this->mod,
-                Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 20),
+                Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 22),
                 this, this->context.get(STRAUTHID_TRANS_LOGIN));
 
             b->id = 100 + 2 * count;
@@ -130,7 +130,7 @@ struct window_login : public window
 
             /* edit */
             b = new widget_edit(this->mod,
-                Rect((this->rect.cx >= 400) ? 230 : 70, 60 + 25 * count, 350, 20),
+                Rect((this->rect.cx >= 400) ? 230 : 70, 60 + 25 * count, 350, 22),
                     this,
                     100 + 2 * count + 1, /* id */
                     1, /* tab stop */
@@ -149,7 +149,7 @@ struct window_login : public window
 
         if (acc.askpassword){
             b = new widget_label(this->mod,
-                Rect(this->rect.cx >= 400 ? 155 : 5, 60 + 25 * count, 70, 20),
+                Rect(this->rect.cx >= 400 ? 155 : 5, 60 + 25 * count, 70, 22),
                 this, this->context.get(STRAUTHID_TRANS_PASSWORD));
 
             b->id = 100 + 2 * count;
@@ -157,7 +157,7 @@ struct window_login : public window
 
             /* edit */
             b = new widget_edit(this->mod,
-                    Rect((this->rect.cx) >= 400 ? 230 : 70, 60 + 25 * count, 350, 20),
+                    Rect((this->rect.cx) >= 400 ? 230 : 70, 60 + 25 * count, 350, 22),
                     this,
                     100 + 2 * count + 1, /* id */
                     1, /* tab stop */
