@@ -26,7 +26,7 @@
 #define BOOST_TEST_MODULE TestPNGCapture
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include "test_orders.hpp"
 
 #include "transport.hpp"
@@ -513,5 +513,264 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     sequence.unlink(0);
 }
 
+BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
+{
+    BOOST_CHECK(1);
+    const FileSequence sequence("path file pid count extension", "./", "bogus", "png");
+    OutByFilenameSequenceTransport trans(sequence, 0x100);
+    Rect scr(0, 0, 800, 600);
+    ImageCapture d(trans, scr.cx, scr.cy);
+    d.draw(RDPOpaqueRect(scr, GREEN), scr);
+
+    uint8_t source32x1[] = 
+//MemBlt Primary Drawing Order (0x0D)
+//memblt(id=0 idx=15 x=448 y=335 cx=32 cy=1)
+//Cache Bitmap V2 (Compressed) Secondary Drawing Order (0x05)
+//update_read_cache_bitmap_v2_order
+//update_read_cache_bitmap_v2_order id=0
+//update_read_cache_bitmap_v2_order flags=8 CBR2_NO_BITMAP_COMPRESSION_HDR
+//update_read_cache_bitmap_v2_order width=32 height=1
+//update_read_cache_bitmap_v2_order Index=16
+//rledecompress width=32 height=1 cbSrcBuffer=58
+
+//-- /* BMP Cache compressed V2 */
+//-- COPY1 5
+//-- MIX 1
+//-- COPY1 7
+//-- MIX 1
+//-- COPY1 2
+//-- MIX_SET 4
+//-- COPY1 9
+//-- MIX_SET 3
+
+           "\x85\xf8\xff\x2b\x6a\x6c\x12\x8d\x12\x79\x14"
+           "\x21"
+           "\x87\x15\xff\x2b\x42\x4b\x12\x4c\x12\x6c\x12\x4c\x12\x38\x14"
+           "\x21"
+           "\x82\x32\xfe\x6c\x12"
+           "\xc4\x8d\x12"
+           "\x89\x6d\x12\x4c\x12\x1f\x6e\xff\xff\x2a\xb4\x2b\x12\x6d\x12\xae\x12\xcf\x1a"
+           "\xc3\xef\x1a"
+    ;
+
+    try {
+        Bitmap bloc32x1(16, NULL, 32, 1, source32x1, sizeof(source32x1)-1, true );
+        d.draw(RDPMemBlt(0, Rect(100, 100, bloc32x1.cx, bloc32x1.cy), 0xCC, 0, 0, 0), scr, bloc32x1);
+    } catch (Error e) {
+        printf("exception caught e=%u\n", e.id);
+    };
+
+    d.flush();
+//    BOOST_CHECK_EQUAL(4094, sequence.filesize(0));
+//    sequence.unlink(0);
+}
+
+//-- /* BMP Cache compressed V2 */
+//-- MIX_SET 10
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 5
+//-- MIX 10
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 5
+//-- MIX 2
+//-- RDPBmpCache(id=0 idx=23 bpp=16 cx=32 cy=1)
+//-- order(13):memblt(cache_id=0 rect(384,335,32,1) rop=cc srcx=0 srcy=0 cache_idx=23)
+//-- /* BMP Cache compressed V2 */
+//-- MIX_SET 8
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 6
+//-- MIX_SET 2
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 5
+//-- MIX 2
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY2 9
+//-- RDPBmpCache(id=0 idx=24 bpp=16 cx=32 cy=1)
+//-- order(13):memblt(cache_id=0 rect(416,335,32,1) rop=cc srcx=0 srcy=0 cache_idx=24)
+//-- /* BMP Cache compressed V2 */
+
+//-- MIX 1
+//-- COPY1 15
+//-- MIX_SET 2
+//-- COPY1 4
+//-- MIX 2
+//-- COPY1 4
+//-- MIX 2
+//-- COPY2 2
+
+//-- RDPBmpCache(id=0 idx=25 bpp=16 cx=32 cy=1)
+//-- order(13):memblt(cache_id=0 rect(448,335,32,1) rop=cc srcx=0 srcy=0 cache_idx=25)
+//-- /* BMP Cache compressed V2 */
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 5
+//-- MIX 1
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 7
+//-- MIX 1
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 2
+//-- MIX_SET 4
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 9
+//-- MIX_SET 3
+//-- RDPBmpCache(id=0 idx=26 bpp=16 cx=32 cy=1)
+//-- order(13):memblt(cache_id=0 rect(480,335,32,1) rop=cc srcx=0 srcy=0 cache_idx=26)
+//-- /* BMP Cache compressed V2 */
+//-- MIX_SET 2
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 7
+//-- MIX_SET 2
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 9
+//-- MIX_SET 2
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY2 10
+//-- RDPBmpCache(id=0 idx=27 bpp=16 cx=32 cy=1)
+//-- order(13):memblt(cache_id=0 rect(512,335,32,1) rop=cc srcx=0 srcy=0 cache_idx=27)
+//-- /* BMP Cache compressed V2 */
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 12
+//-- MIX 1
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 7
+//-- MIX 1
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 5
+//-- MIX 1
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY2 5
+//-- RDPBmpCache(id=0 idx=28 bpp=16 cx=32 cy=1)
+//-- order(13):memblt(cache_id=0 rect(544,335,32,1) rop=cc srcx=0 srcy=0 cache_idx=28)
+//-- /* BMP Cache compressed V2 */
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 8
+//-- MIX 1
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 6
+//-- MIX 1
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 7
+//-- MIX 1
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY1 5
+//-- MIX 1
+//-- default, count BPP
+//-- default, count BPP
+//-- COPY2 2
+//-- RDPBmpCache(id=0 idx=29 bpp=16 cx=32 cy=1)
 
 

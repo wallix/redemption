@@ -137,7 +137,6 @@ int main(int argc, char** argv)
     TODO("also check if it contains any wrm at all and at wich one we should start depending on input time")
     TODO("if start and stop time are outside wrm, users should also be warned")
 
-
     InByMetaSequenceTransport in_wrm_trans(input_filename.c_str());
     try {
         in_wrm_trans.next_chunk_info();
@@ -151,18 +150,12 @@ int main(int argc, char** argv)
             // begin_capture.tv_usec is 0
             end_cap += in_wrm_trans.begin_chunk_time;
         }
-        printf("num=%u begin=%u asked=%u end=%u\n", 
-            in_wrm_trans.chunk_num, in_wrm_trans.begin_chunk_time, begin_cap, in_wrm_trans.end_chunk_time);
-        while (begin_cap > in_wrm_trans.begin_chunk_time){
+        while (begin_cap >= in_wrm_trans.end_chunk_time){
             in_wrm_trans.next_chunk_info();    
-            printf("num=%u begin=%u asked=%u end=%u\n", 
-                in_wrm_trans.chunk_num, in_wrm_trans.begin_chunk_time, begin_cap, in_wrm_trans.end_chunk_time);
         }
-        printf("found: count=%u\n", in_wrm_trans.chunk_num);
         unsigned count = in_wrm_trans.chunk_num-1;
         in_wrm_trans.reset_meta();
         for (; count > 0 ; count--){
-            printf("loop: count=%u\n", count);
             in_wrm_trans.next_chunk_info();
         }
     }
