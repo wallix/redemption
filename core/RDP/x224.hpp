@@ -304,6 +304,7 @@ namespace X224
     };
 
     // Factory just read enough data to know the type of packet we are dealing with
+    TODO("This could be TPKT transport layer, hence X224 could follow the same profile as others layers functions");
     struct RecvFactory
     {
         int type;
@@ -332,7 +333,7 @@ namespace X224
             case X224::CC_TPDU: // Connection Confirm 1101 xxxx
             case X224::DR_TPDU: // Disconnect Request 1000 0000
             case X224::DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
-            case X224::ER_TPDU:  // TPDU Error         0111 0000
+            case X224::ER_TPDU:  // TPDU Error        0111 0000
                 this->type = tpdu_type & 0xF0;
             break;
             default:

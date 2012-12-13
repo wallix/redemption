@@ -420,6 +420,7 @@ struct mod_rdp : public client_mod {
 
         this->key_flags = key_flags;
         this->lic_layer_license_issued = 0;
+
         this->lic_layer_license_size = 0;
         memset(this->lic_layer_license_key, 0, 16);
         memset(this->lic_layer_license_sign_key, 0, 16);
@@ -1154,7 +1155,6 @@ struct mod_rdp : public client_mod {
         {
             const char * hostname = this->hostname;
             const char * username = this->username;
-            int & license_issued = this->lic_layer_license_issued;
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
@@ -1167,66 +1167,6 @@ struct mod_rdp : public client_mod {
             SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->encryptionLevel, this->encryptionMethod);
 
             if (sec.flags & SEC::SEC_LICENSE_PKT) {
-
-                // 2.2.1.12.1 Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
-                // ================================================================
-
-
-                // validClientLicenseData (variable): The actual contents of the
-                // License Error (Valid Client) PDU, as specified in section 2.2.1.12.1.
-
-
-                // preamble (4 bytes): Licensing Preamble (section 2.2.1.12.1.1) structure containing header
-                // information. The bMsgType field of the preamble structure MUST be set to ERROR_ALERT (0xFF).
-
-                // validClientMessage (variable): A Licensing Error Message (section
-                // 2.2.1.12.1.3) structure. The dwErrorCode field of the error message
-                // structure MUST be set to STATUS_VALID_CLIENT (0x00000007) and the
-                // dwStateTransition field MUST be set to ST_NO_TRANSITION (0x00000002).
-                // The bbErrorInfo field MUST contain an empty binary large object
-                // (BLOB) of type BB_ERROR_BLOB (0x0004).
-
-
-                // 2.2.1.12.1.3 Licensing Error Message (LICENSE_ERROR_MESSAGE)
-                // ============================================================
-
-                // The LICENSE_ERROR_MESSAGE structure is used to indicate that an
-                //  error occurred during the licensing protocol. Alternatively,
-                // it is also used to notify the peer of important status information.
-
-                // dwErrorCode (4 bytes): A 32-bit, unsigned integer. The error or
-                // status code.
-
-                // Sent by client:
-                // ERR_INVALID_SERVER_CERTIFICATE 0x00000001
-                // ERR_NO_LICENSE 0x00000002
-
-                // Sent by server
-                // ERR_INVALID_SCOPE 0x00000004
-                // ERR_NO_LICENSE_SERVER 0x00000006
-                // STATUS_VALID_CLIENT 0x00000007
-                // ERR_INVALID_CLIENT 0x00000008
-                // ERR_INVALID_PRODUCTID 0x0000000B
-                // ERR_INVALID_MESSAGE_LEN 0x0000000C
-
-                // Sent by client and server:
-                // ERR_INVALID_MAC 0x00000003
-
-                // dwStateTransition (4 bytes): A 32-bit, unsigned integer. The
-                // licensing state to transition into upon receipt of this message.
-                // For more details about how this field is used, see [MS-RDPELE]
-                // section 3.1.5.2.
-
-                // ST_TOTAL_ABORT 0x00000001
-                // ST_NO_TRANSITION 0x00000002
-                // ST_RESEND_LAST_MESSAGE 0x00000003
-                // ST_RESET_PHASE_TO_START 0x00000004
-
-                // bbErrorInfo (variable): A LICENSE_BINARY_BLOB (section
-                // 2.2.1.12.1.2) structure which MUST contain a BLOB of type
-                // BB_ERROR_BLOB (0x0004) that includes information relevant to
-                // the error code specified in dwErrorCode.
-
                 LIC::RecvFactory flic(sec.payload);
 
                 switch (flic.tag) {
@@ -1489,8 +1429,6 @@ struct mod_rdp : public client_mod {
                         {
                             LIC::PlatformChallenge_Recv lic(sec.payload);
 
-                            BStream stream(65535);
-
                             ssllib ssl;
 
                             uint8_t out_token[LIC::LICENSE_TOKEN_SIZE];
@@ -1502,18 +1440,13 @@ struct mod_rdp : public client_mod {
                             memcpy(out_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
                             /* Decrypt the token. It should read TEST in Unicode. */
                             memcpy(decrypt_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
-                            {
-                                SslRC4 rc4;
-                                rc4.set_key(16, this->lic_layer_license_key);
-                                rc4.crypt(LIC::LICENSE_TOKEN_SIZE, decrypt_token);
-                            }
+                            SslRC4 rc4_decrypt_token;
+                            rc4_decrypt_token.set_key(16, this->lic_layer_license_key);
+                            rc4_decrypt_token.crypt(LIC::LICENSE_TOKEN_SIZE, decrypt_token);
 
-                            hexdump((const char*)decrypt_token, LIC::LICENSE_TOKEN_SIZE);
                             /* Generate a signature for a buffer of token and HWID */
                             buf_out_uint32(hwid, 2);
                             memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
-                    //        memcpy(hwid, "\x00\x00\x00\x00\x73\x19\x46\x88\x47\xd7\xb1\xae\xe4\x0d\xbf\x5d\xd9\x63\xc9\x99", LIC::LICENSE_HWID_SIZE);
-                            hexdump((const char*)hwid, LIC::LICENSE_HWID_SIZE);
 
                             uint8_t sealed_buffer[LIC::LICENSE_TOKEN_SIZE + LIC::LICENSE_HWID_SIZE];
                             memcpy(sealed_buffer, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
@@ -1522,57 +1455,26 @@ struct mod_rdp : public client_mod {
 
                             /* Now encrypt the HWID */
                             memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
-                            {
-                                SslRC4 rc4;
-                                rc4.set_key(16, this->lic_layer_license_key);
-                                rc4.crypt(LIC::LICENSE_HWID_SIZE, crypt_hwid);
-                            }
-
-                            int length = 58;
-
-                            stream.out_uint8(LIC::PLATFORM_CHALLENGE_RESPONSE);
-                            stream.out_uint8(this->use_rdp5?3:2); /* version */
-                            stream.out_uint16_le(length);
-
-                            // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
-                            // the binary information. If wBlobLen is set to 0, then the contents
-                            // of this field SHOULD be ignored.
-                            stream.out_uint16_le(LIC::BB_DATA_BLOB);
-
-                            // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
-                            // the binary information in the blobData field. If wBlobLen is set to 0,
-                            // then the blobData field is not included in the Licensing Binary BLOB
-                            // structure and the contents of the wBlobType field SHOULD be ignored.
-                            stream.out_uint16_le(LIC::LICENSE_TOKEN_SIZE);
-                            stream.out_copy_bytes(out_token, LIC::LICENSE_TOKEN_SIZE);
-
-                            // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
-                            // the binary information. If wBlobLen is set to 0, then the contents
-                            // of this field SHOULD be ignored.
-                            stream.out_uint16_le(LIC::BB_DATA_BLOB);
-
-                            // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
-                            // the binary information in the blobData field. If wBlobLen is set to 0,
-                            // then the blobData field is not included in the Licensing Binary BLOB
-                            // structure and the contents of the wBlobType field SHOULD be ignored.
-                            stream.out_uint16_le(LIC::LICENSE_HWID_SIZE);
-                            stream.out_copy_bytes(crypt_hwid, LIC::LICENSE_HWID_SIZE);
-
-                            stream.out_copy_bytes(out_sig, LIC::LICENSE_SIGNATURE_SIZE);
-                            stream.mark_end();
+                            SslRC4 rc4_hwid;
+                            rc4_hwid.set_key(16, this->lic_layer_license_key);
+                            rc4_hwid.crypt(LIC::LICENSE_HWID_SIZE, crypt_hwid);
 
                             BStream x224_header(256);
                             BStream mcs_header(256);
                             BStream sec_header(256);
-                            SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
+                            BStream lic_data(65535);
+                            
+                            LIC::ClientPlatformChallengeResponse_Send(lic_data, this->use_rdp5?3:2, out_token, crypt_hwid, out_sig);
+                            SEC::Sec_Send sec(sec_header, lic_data, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
                             MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3,
-                                                          sec_header.size() + stream.size() , MCS::PER_ENCODING);
-                            X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
+                                                          sec_header.size() + lic_data.size() , MCS::PER_ENCODING);
+                            X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + lic_data.size());
 
                             this->nego.trans->send(x224_header.data, x224_header.size());
                             this->nego.trans->send(mcs_header.data, mcs_header.size());
                             this->nego.trans->send(sec_header.data, sec_header.size());
-                            this->nego.trans->send(stream.data, stream.size());
+
+                            this->nego.trans->send(lic_data.data, lic_data.size());
                         }
                         break;
                     case LIC::NEW_LICENSE:
