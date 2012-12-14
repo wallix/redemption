@@ -125,6 +125,8 @@ lib Xext : : <name>Xext <link>static ;
 
 lib png : : <name>png <link>static ;
 
+lib icuuc : : <name>icuuc ;
+
 obj widget : mod/internal/widget.cpp ;
 obj mainloop : core/mainloop.cpp ;
 obj d3des : utils/d3des.cpp ;
@@ -189,6 +191,9 @@ import testing ;
 
 unit-test test_stream : tests/test_stream.cpp libboost_unit_test  ;
 unit-test test_stream : tests/test_stream.cpp libboost_unit_test gcov : <variant>coverage ;
+
+#unit-test test_utf : tests/test_utf.cpp icuuc libboost_unit_test  ;
+#unit-test test_utf : tests/test_utf.cpp icuuc libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_widget : tests/test_widget.cpp widget mainloop d3des openssl crypto png z dl libboost_unit_test  ;
 unit-test test_bitmap : tests/test_bitmap.cpp libboost_unit_test  ;
