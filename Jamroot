@@ -51,6 +51,7 @@ project redemption
 #    <cxxflags>-pedantic
 #     <cxxflags>-Wconversion
     <cxxflags>-Wvla
+    <cxxflags>-Wstrict-aliasing=2
 #    <cxxflags>-Wlong-long
     <cxxflags>-O3
     <cxxflags>-Wuninitialized

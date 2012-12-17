@@ -33,6 +33,7 @@ static inline void UTF8toUTF16(const uint8_t ** s, size_t s_len, uint8_t ** t, s
 {
     const uint8_t * source = *s;
     uint8_t * target = *t;
+    size_t i_t = 0; 
     // naive first implementation, not check for length, not check for error or invalid sequences
     size_t i = 0;
     while (i < s_len){
@@ -57,21 +58,22 @@ static inline void UTF8toUTF16(const uint8_t ** s, size_t s_len, uint8_t ** t, s
                 goto UTF8toUTF16_exit;
             break;
         }
-        *target = c & 0xFF;
-        target++;
-        *target = (c >> 8) & 0xFF;
-        target++;
+        if (i_t + 2 > t_len) { break; }
+        target[i_t] = c & 0xFF;
+        target[i_t + 1] = (c >> 8) & 0xFF;
+        i_t += 2;
     }
 UTF8toUTF16_exit:
     *s = source + i;
-    *t = target;
+    *t = target + i_t;
 }
 
 static inline void UTF16toUTF8(const uint8_t ** s, size_t s_len, uint8_t ** t, size_t t_len)
 {
     const uint8_t * source = *s;
     uint8_t * target = *t;
-    // naive first implementation, not check for length, not check for error or invalid sequences
+    size_t i_t = 0; 
+    // naive first implementation, not check for source length, not check for error or invalid sequences
     
     size_t i = 0;
     while (i < s_len){
@@ -80,26 +82,28 @@ static inline void UTF16toUTF8(const uint8_t ** s, size_t s_len, uint8_t ** t, s
 
         if (hi & 0xF8){
             // 3 bytes
-            *target = 0xE0 | ((hi >> 4) & 0x0F);
-            target++;
-            *target = 0x80 | ((hi & 0x0F) << 2) | (lo >> 6);
-            target++;
-            *target = 0x80 | (lo & 0x3F);
+            if ((i_t + 3) > t_len) { break; }
+            target[i_t] = 0xE0 | ((hi >> 4) & 0x0F);
+            target[i_t + 1] = 0x80 | ((hi & 0x0F) << 2) | (lo >> 6);
+            target[i_t + 2] = 0x80 | (lo & 0x3F);
+            i_t += 3;
         }
         else if (hi || (lo & 0x80)) {
             // 2 bytes
-            *target = 0xC0 | ((hi << 2) & 0x1C) | ((lo >> 6) & 3);
-            target++;
-            *target = 0x80 | (lo & 0x3F);
+            if ((i_t + 2) > t_len) { break; }
+            target[i_t] = 0xC0 | ((hi << 2) & 0x1C) | ((lo >> 6) & 3);
+            target[i_t + 1] = 0x80 | (lo & 0x3F);
+            i_t += 2;
         }
         else {
-            *target = lo;
+            if ((i_t + 1) > t_len) { break; }
+            target[i_t] = lo;
+            i_t++;
         }
-        target++;
         i+=2;
     }
     *s = source + i;
-    *t = target;
+    *t = target + i_t;
 }
 
 #endif

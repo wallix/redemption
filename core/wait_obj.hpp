@@ -45,13 +45,6 @@ class wait_obj
     ~wait_obj()
     {
         if (this->obj > 0){
-            struct sockaddr_un sa;
-            socklen_t sa_size = sizeof(sa);
-
-            if (getsockname(this->obj, (struct sockaddr*)&sa, &sa_size) < 0) {
-                /* socket is in error state : can't close */
-                return;
-            }
             close(this->obj);
         }
     }

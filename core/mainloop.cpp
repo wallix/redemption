@@ -156,7 +156,13 @@ void redemption_new_session()
     char text[256];
     char ip_source[256];
 
-    struct sockaddr_in from;
+    union
+    {
+      struct sockaddr s;
+      struct sockaddr_storage ss;
+      struct sockaddr_in s4;
+      struct sockaddr_in6 s6;
+    } u;
     int sock_len = sizeof(from);
 
     Inifile ini(CFG_PATH "/" RDPPROXY_INI);
@@ -164,8 +170,8 @@ void redemption_new_session()
     init_signals();
     snprintf(text, 255, "redemption_%8.8x_main_term", getpid());
 
-    getpeername(0, (struct sockaddr *)&from, (socklen_t *)&sock_len);
-    strcpy(ip_source, inet_ntoa(from.sin_addr));
+    getpeername(0, &u.s, (socklen_t *)&sock_len);
+    strcpy(ip_source, inet_ntoa(u.s4.sin_addr));
 
     int sck = 0;
     if (ini.globals.debug.session){
