@@ -397,9 +397,9 @@ class Stream {
     }
 
     // sz utf16 bytes are translated to ascci, 00 terminated
-    void in_uni_to_ascii_str(char* text, size_t sz, size_t bufsz)
+    void in_uni_to_ascii_str(uint8_t * text, size_t sz, size_t bufsz)
     {
-        UTF16toUTF8((const uint8_t **)&this->p, sz, (uint8_t **)(&text), bufsz);
+        UTF16toUTF8(const_cast<const uint8_t **>(&this->p), sz, &text, bufsz);
     }
 
     void mark_end() {

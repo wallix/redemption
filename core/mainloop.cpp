@@ -163,7 +163,7 @@ void redemption_new_session()
       struct sockaddr_in s4;
       struct sockaddr_in6 s6;
     } u;
-    int sock_len = sizeof(from);
+    int sock_len = sizeof(u);
 
     Inifile ini(CFG_PATH "/" RDPPROXY_INI);
 
