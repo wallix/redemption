@@ -72,14 +72,20 @@ struct Listen {
         /* set non blocking */
         fcntl(this->sck, F_SETFL, fcntl(this->sck, F_GETFL) | O_NONBLOCK);
 
-        struct sockaddr_in s;
-        memset(&s, 0, sizeof(struct sockaddr_in));
-        s.sin_family = AF_INET;
-        s.sin_port = htons(this->port);
-        s.sin_addr.s_addr = INADDR_ANY;
+        union
+        {
+          struct sockaddr s;
+          struct sockaddr_storage ss;
+          struct sockaddr_in s4;
+          struct sockaddr_in6 s6;
+        } u;
+        memset(&u, 0, sizeof(u));
+        u.s4.sin_family = AF_INET;
+        u.s4.sin_port = htons(this->port);
+        u.s4.sin_addr.s_addr = INADDR_ANY;
 
         LOG(LOG_INFO, "Listen: binding socket %d on port %d", this->sck, this->port);
-        if (0 != bind(this->sck, (struct sockaddr*)&s, sizeof(struct sockaddr_in))) {
+        if (0 != bind(this->sck, &u.s, sizeof(u))) {
             LOG(LOG_ERR, "Listen: error binding socket [errno=%u] %s", errno, strerror(errno));
             ((this->sck) && (shutdown(this->sck, 2), close(this->sck)));
             goto end_of_listener;

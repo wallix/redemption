@@ -1056,12 +1056,18 @@ class ClientSocketTransport : public Transport {
         }
 
         TODO("DNS resolution should probably be done only once in constructor, even if we try several connections with TLS")
-        struct sockaddr_in s;
-        memset(&s, 0, sizeof(struct sockaddr_in));
-        s.sin_family = AF_INET;
-        s.sin_port = htons(this->port);
-        s.sin_addr.s_addr = inet_addr(this->ip);
-        if (s.sin_addr.s_addr == INADDR_NONE) {
+        union
+        {
+          struct sockaddr s;
+          struct sockaddr_storage ss;
+          struct sockaddr_in s4;
+          struct sockaddr_in6 s6;
+        } u;
+        memset(&u, 0, sizeof(u));
+        u.s4.sin_family = AF_INET;
+        u.s4.sin_port = htons(this->port);
+        u.s4.sin_addr.s_addr = inet_addr(this->ip);
+        if (u.s4.sin_addr.s_addr == INADDR_NONE) {
         TODO(" gethostbyname is obsolete use new function getnameinfo")
             LOG(LOG_INFO, "Asking ip to DNS for %s\n", this->ip);
             struct hostent *h = gethostbyname(this->ip);
@@ -1070,14 +1076,14 @@ class ClientSocketTransport : public Transport {
                     this->ip, errno, strerror(errno));
                 return false;
             }
-            s.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
+            u.s4.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
         }
 
         fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
 
         int trial = 0;
         for (; trial < this->nbretry ; trial++){
-            int res = ::connect(sck, (struct sockaddr*)&s, sizeof(s));
+            int res = ::connect(sck, &u.s, sizeof(u));
             if (-1 != res){
                 // connection suceeded
                 break;

@@ -36,6 +36,7 @@
 #include "ssl_calls.hpp"
 #include "error.hpp"
 #include "bitfu.hpp"
+#include "utf.hpp"
 
 // using a template for default size of stream would make sense instead of always using the large buffer below
 enum {
@@ -361,24 +362,8 @@ class Stream {
 
     void out_unistr(const char* text)
     {
-        for (int i=0; text[i]; i++) {
-            this->out_uint8(text[i]);
-            this->out_uint8(0);
-        }
-        this->out_uint8(0);
-        this->out_uint8(0);
-    }
-
-
-    void set_out_unistr(const char* text, size_t offset)
-    {
-        int i=0;
-        for (; text[i]; i++) {
-            this->set_out_uint8(text[i], offset+i*2);
-            this->set_out_uint8(0, offset+i*2+1);
-        }
-        this->set_out_uint8(0, offset+i*2);
-        this->set_out_uint8(0, offset+i*2+1);
+        const uint8_t * s = (const uint8_t *)text;
+        UTF8toUTF16(&s, strlen(text)+1, &this->p, this->end - this->p);
     }
 
     void out_date_name(const char* text, const size_t buflen)
@@ -412,25 +397,9 @@ class Stream {
     }
 
     // sz utf16 bytes are translated to ascci, 00 terminated
-    void in_uni_to_ascii_str(char* text, size_t sz, size_t bufsz)
+    void in_uni_to_ascii_str(uint8_t * text, size_t sz, size_t bufsz)
     {
-        size_t i = 1;
-        size_t max = (sz>>1);
-        while (i <= max) {
-            if (i >= bufsz){
-                TODO("This is a overflow quick fix, we should end connexion immediately"
-                     " as the buffer overflow comes from some malformed RDP packet anyway")
-                this->in_skip_bytes(max - i);
-                text[bufsz-1] = 0;
-                return;
-            }
-            else {
-                text[i-1] = this->in_uint8();
-                this->in_skip_bytes(1);
-            }
-            i++;
-        }
-        text[i-1] = 0;
+        UTF16toUTF8(const_cast<const uint8_t **>(&this->p), sz, &text, bufsz);
     }
 
     void mark_end() {

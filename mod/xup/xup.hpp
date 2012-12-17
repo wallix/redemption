@@ -192,13 +192,13 @@ enum {
 
         try{
             BStream stream(32768);
-            this->t->recv((char**)&stream.end, 8);
+            this->t->recv(&stream.end, 8);
             int type = stream.in_uint16_le();
             int num_orders = stream.in_uint16_le();
             int len = stream.in_uint32_le();
             if (type == 1) {
                 stream.init(len);
-                this->t->recv((char**)&stream.end, len);
+                this->t->recv(&stream.end, len);
 
                 for (int index = 0; index < num_orders; index++) {
                     type = stream.in_uint16_le();

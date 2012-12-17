@@ -304,6 +304,7 @@ namespace X224
     };
 
     // Factory just read enough data to know the type of packet we are dealing with
+    TODO("This could be TPKT transport layer, hence X224 could follow the same profile as others layers functions");
     struct RecvFactory
     {
         int type;
@@ -311,7 +312,7 @@ namespace X224
 
         RecvFactory(Transport & t, Stream & stream)
         {
-            t.recv((char**)(&(stream.end)), X224::TPKT_HEADER_LEN);
+            t.recv(&stream.end, X224::TPKT_HEADER_LEN);
             uint8_t tpkt_version = stream.in_uint8();
             if (tpkt_version != 3) {
                 LOG(LOG_ERR, "Tpkt type 3 slow-path PDU expected (version = %u)", tpkt_version);
@@ -319,7 +320,7 @@ namespace X224
             }
             stream.in_skip_bytes(1);
             uint16_t tpkt_len = stream.in_uint16_be();
-            t.recv((char**)(&(stream.end)), 2);
+            t.recv(&stream.end, 2);
             if (tpkt_len < 6){
                 LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", tpkt_len);
                 throw Error(ERR_X224);
@@ -332,7 +333,7 @@ namespace X224
             case X224::CC_TPDU: // Connection Confirm 1101 xxxx
             case X224::DR_TPDU: // Disconnect Request 1000 0000
             case X224::DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
-            case X224::ER_TPDU:  // TPDU Error         0111 0000
+            case X224::ER_TPDU:  // TPDU Error        0111 0000
                 this->type = tpdu_type & 0xF0;
             break;
             default:
@@ -359,7 +360,7 @@ namespace X224
         {
             uint16_t length = stream.size();
             if (length < 4){
-                t.recv((char**)(&(stream.end)), 4 - length);
+                t.recv(&stream.end, 4 - length);
             }
             stream.p = stream.data;
 
@@ -368,7 +369,7 @@ namespace X224
             stream.in_skip_bytes(1);
             this->tpkt.len = stream.in_uint16_be();
             if (stream.size() < this->tpkt.len){
-                t.recv((char**)(&(stream.end)), this->tpkt.len - stream.size());
+                t.recv(&stream.end, this->tpkt.len - stream.size());
             }
         }
     };

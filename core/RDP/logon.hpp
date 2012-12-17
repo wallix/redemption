@@ -815,18 +815,18 @@ struct InfoPacket {
         this->cbAlternateShell = stream.in_uint16_le() + 2;
         this->cbWorkingDir = stream.in_uint16_le() + 2;
 
-        stream.in_uni_to_ascii_str((char *) this->Domain, this->cbDomain, sizeof(this->Domain));
-        stream.in_uni_to_ascii_str((char *) this->UserName, this->cbUserName, sizeof(this->UserName));
+        stream.in_uni_to_ascii_str(this->Domain, this->cbDomain, sizeof(this->Domain));
+        stream.in_uni_to_ascii_str(this->UserName, this->cbUserName, sizeof(this->UserName));
 
         // Whether we have a password available or not
         if (flags & INFO_AUTOLOGON) {
-            stream.in_uni_to_ascii_str((char *) this->Password, this->cbPassword, sizeof(this->Password));
+            stream.in_uni_to_ascii_str(this->Password, this->cbPassword, sizeof(this->Password));
         }
         else {
             stream.in_skip_bytes(this->cbPassword);
         }
-        stream.in_uni_to_ascii_str((char *) this->AlternateShell, this->cbAlternateShell, sizeof(this->AlternateShell));
-        stream.in_uni_to_ascii_str((char *) this->WorkingDir, this->cbWorkingDir, sizeof(this->WorkingDir));
+        stream.in_uni_to_ascii_str(this->AlternateShell, this->cbAlternateShell, sizeof(this->AlternateShell));
+        stream.in_uni_to_ascii_str(this->WorkingDir, this->cbWorkingDir, sizeof(this->WorkingDir));
 
         TODO("Get extended data only if RDP is version 5 or above")
         if (stream.p < stream.end) {
@@ -835,12 +835,12 @@ struct InfoPacket {
             // clientAddressFamily (skipped)
             stream.in_skip_bytes(2);
             this->extendedInfoPacket.cbClientAddress = stream.in_uint16_le();
-            stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.clientAddress, 
+            stream.in_uni_to_ascii_str(this->extendedInfoPacket.clientAddress, 
                                         this->extendedInfoPacket.cbClientAddress, 
                                         sizeof(this->extendedInfoPacket.clientAddress));
             // cbClientDir
             this->extendedInfoPacket.cbClientDir = stream.in_uint16_le();
-            stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.clientDir, 
+            stream.in_uni_to_ascii_str(this->extendedInfoPacket.clientDir, 
                                         this->extendedInfoPacket.cbClientDir,
                                         sizeof(this->extendedInfoPacket.clientDir)
                                         );
@@ -853,7 +853,7 @@ struct InfoPacket {
             if (stream.end - stream.p < this->extendedInfoPacket.cbAutoReconnectLen) {
                 this->extendedInfoPacket.cbAutoReconnectLen = stream.end - stream.p;
             }
-            stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.autoReconnectCookie, 
+            stream.in_uni_to_ascii_str(this->extendedInfoPacket.autoReconnectCookie, 
                                         this->extendedInfoPacket.cbAutoReconnectLen,
                                         sizeof(this->extendedInfoPacket.autoReconnectCookie));
             if (stream.p + 4 <= stream.end){

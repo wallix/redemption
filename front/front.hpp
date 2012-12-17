@@ -477,7 +477,6 @@ TODO("Pass font name as parameter in constructor")
 
         BStream x224_header(256);
         BStream mcs_data(256);
-
         MCS::DisconnectProviderUltimatum_Send(mcs_data, 0, MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_data.size());
 
@@ -522,6 +521,11 @@ TODO("Pass font name as parameter in constructor")
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
+
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, channel.chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -587,6 +591,11 @@ TODO("Pass font name as parameter in constructor")
             BStream x224_header(256);
             BStream mcs_header(256);
             BStream sec_header(256);
+
+            if (this->verbose > 128){
+                LOG(LOG_INFO, "Sec clear payload to send:");
+                hexdump_d(stream.data, stream.size());
+            }
 
             SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
             MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -799,6 +808,11 @@ TODO("Pass font name as parameter in constructor")
         BStream mcs_header(256);
         BStream sec_header(256);
 
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
+
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
@@ -868,6 +882,11 @@ TODO("Pass font name as parameter in constructor")
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
+
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -957,8 +976,7 @@ TODO("Pass font name as parameter in constructor")
             X224::RecvFactory f(*this->trans, x224_data);
             X224::DT_TPDU_Recv x224(*this->trans, x224_data);
 
-            SubStream & mcs_data = x224.payload;
-            MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(mcs_data, MCS::BER_ENCODING);
+            MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
 
             // GCC User Data
             // -------------
@@ -1185,8 +1203,7 @@ TODO("Pass font name as parameter in constructor")
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
                 X224::DT_TPDU_Recv x224(*trans, x224_data);
-                SubStream & mcs_data = x224.payload;
-                MCS::ErectDomainRequest_Recv mcs(mcs_data, MCS::PER_ENCODING);
+                MCS::ErectDomainRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
             if (this->verbose){
                 LOG(LOG_INFO, "Front::incoming:: Recv MCS::AttachUserRequest");
@@ -1195,8 +1212,7 @@ TODO("Pass font name as parameter in constructor")
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
                 X224::DT_TPDU_Recv x224(*trans, x224_data);
-                SubStream & mcs_data = x224.payload;
-                MCS::AttachUserRequest_Recv mcs(mcs_data, MCS::PER_ENCODING);
+                MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
             if (this->verbose){
                 LOG(LOG_INFO, "Front::incoming:: Send MCS::AttachUserConfirm", this->userid);
@@ -1204,7 +1220,6 @@ TODO("Pass font name as parameter in constructor")
             {
                 BStream x224_header(256);
                 BStream mcs_data(256);
-
                 MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_data.size());
 
@@ -1220,8 +1235,7 @@ TODO("Pass font name as parameter in constructor")
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
                 X224::DT_TPDU_Recv x224(*this->trans, x224_data);
-                SubStream & mcs_data = x224.payload;
-                MCS::ChannelJoinRequest_Recv mcs(mcs_data, MCS::PER_ENCODING);
+                MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 this->userid = mcs.initiator;
 
                 BStream x224_header(256);
@@ -1265,8 +1279,7 @@ TODO("Pass font name as parameter in constructor")
                 BStream x224_data(256);
                 X224::RecvFactory f(*this->trans, x224_data);
                 X224::DT_TPDU_Recv x224(*this->trans, x224_data);
-                SubStream & mcs_data = x224.payload;
-                MCS::ChannelJoinRequest_Recv mcs(mcs_data, MCS::PER_ENCODING);
+                MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 if (mcs.initiator != this->userid){
                     LOG(LOG_ERR, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
                     throw Error(ERR_MCS_BAD_USERID);
@@ -1326,8 +1339,7 @@ TODO("Pass font name as parameter in constructor")
                 BStream pdu(65536);
                 X224::RecvFactory f(*this->trans, pdu);
                 X224::DT_TPDU_Recv x224(*this->trans, pdu);
-                SubStream & mcs_data = x224.payload;
-                MCS::SendDataRequest_Recv mcs(mcs_data, MCS::PER_ENCODING);
+                MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 SubStream & payload = mcs.payload;
                 SEC::SecExchangePacket_Recv sec(payload, mcs.payload_size);
 
@@ -1392,14 +1404,18 @@ TODO("Pass font name as parameter in constructor")
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream);
 
-            SubStream & mcs_data = x224.payload;
-            MCS::SendDataRequest_Recv mcs(mcs_data, MCS::PER_ENCODING);
+            MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             TODO("We should also manage the DisconnectRequest case as it can also happen")
 
             if (this->verbose >= 256){
                 this->decrypt.dump();
             }
             SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
+            if (this->verbose > 128){
+                LOG(LOG_INFO, "sec decrypted payload:");
+                hexdump_d(sec.payload.data, sec.payload.size());
+            }
+
             SubStream & payload = sec.payload;
 
             if (!sec.flags & SEC::SEC_INFO_PKT) {
@@ -1436,6 +1452,11 @@ TODO("Pass font name as parameter in constructor")
                     BStream x224_header(256);
                     BStream mcs_header(256);
                     BStream sec_header(256);
+
+                    if (this->verbose > 128){
+                        LOG(LOG_INFO, "Sec clear payload to send:");
+                        hexdump_d(stream.data, stream.size());
+                    }
 
                     SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0, 0);
                     MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -1531,6 +1552,11 @@ TODO("Pass font name as parameter in constructor")
                 BStream mcs_header(256);
                 BStream sec_header(256);
 
+                if (this->verbose > 128){
+                    LOG(LOG_INFO, "Sec clear payload to send:");
+                    hexdump_d(stream.data, stream.size());
+                }
+
                 SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
@@ -1556,16 +1582,13 @@ TODO("Pass font name as parameter in constructor")
             BStream stream(65536);
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream);
-
-            SubStream & mcs_data = x224.payload;
-            MCS::SendDataRequest_Recv mcs(mcs_data, MCS::PER_ENCODING);
+            MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             TODO("We should also manage the DisconnectRequest case as it can also happen")
-
-            if (this->verbose >= 256){
-                this->decrypt.dump();
-            }
-
             SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
+            if (this->verbose > 128){
+                LOG(LOG_INFO, "sec decrypted payload:");
+                hexdump_d(sec.payload.data, sec.payload.size());
+            }
 
             // Licensing
             // ---------
@@ -1615,6 +1638,11 @@ TODO("Pass font name as parameter in constructor")
                         BStream x224_header(256);
                         BStream mcs_header(256);
                         BStream sec_header(256);
+
+                        if (this->verbose > 128){
+                            LOG(LOG_INFO, "Sec clear payload to send:");
+                            hexdump_d(stream.data, stream.size());
+                        }
 
                         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
                         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -1671,6 +1699,11 @@ TODO("Pass font name as parameter in constructor")
                         BStream x224_header(256);
                         BStream mcs_header(256);
                         BStream sec_header(256);
+
+                        if (this->verbose > 128){
+                            LOG(LOG_INFO, "Sec clear payload to send:");
+                            hexdump_d(stream.data, stream.size());
+                        }
 
                         SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0, 0);
                         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -1829,11 +1862,14 @@ TODO("Pass font name as parameter in constructor")
 
             X224::DT_TPDU_Recv x224(*this->trans, stream);
 
-            SubStream & mcs_data = x224.payload;
-            MCS::SendDataRequest_Recv mcs(mcs_data, MCS::PER_ENCODING);
+            MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             TODO("We should also manage the DisconnectRequest case as it can also happen")
 
             SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
+            if (this->verbose > 128){
+                LOG(LOG_INFO, "sec decrypted payload:");
+                hexdump_d(sec.payload.data, sec.payload.size());
+            }
 
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
@@ -1965,6 +2001,11 @@ TODO("Pass font name as parameter in constructor")
         BStream mcs_header(256);
         BStream sec_header(256);
 
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
+
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
@@ -2090,6 +2131,11 @@ TODO("Pass font name as parameter in constructor")
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
+
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -2360,6 +2406,11 @@ TODO("Pass font name as parameter in constructor")
         BStream mcs_header(256);
         BStream sec_header(256);
 
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
+
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
@@ -2417,6 +2468,11 @@ TODO("Pass font name as parameter in constructor")
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
+
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -2478,6 +2534,11 @@ TODO("Pass font name as parameter in constructor")
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
+
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
@@ -2682,6 +2743,11 @@ TODO("Pass font name as parameter in constructor")
                 BStream mcs_header(256);
                 BStream sec_header(256);
 
+                if (this->verbose > 128){
+                    LOG(LOG_INFO, "Sec clear payload to send:");
+                    hexdump_d(stream.data, stream.size());
+                }
+
                 SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
@@ -2840,6 +2906,11 @@ TODO("Pass font name as parameter in constructor")
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
+
+        if (this->verbose > 128){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.data, stream.size());
+        }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
