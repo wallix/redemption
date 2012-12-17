@@ -90,10 +90,21 @@ struct combo_login : public window_login
                 }
                 else {
                     char buffer[256];
-                    snprintf(buffer, 256, "%s@%s:%s",
-                        context.get(STRAUTHID_TARGET_USER),
-                        context.get(STRAUTHID_TARGET_DEVICE),
-                        context.get(STRAUTHID_AUTH_USER));
+                    if ( strlen(context.get(STRAUTHID_TARGET_PROTOCOL)) > 0) {
+                        snprintf( buffer, 256, "%s@%s:%s:%s"
+                                , context.get(STRAUTHID_TARGET_USER)
+                                , context.get(STRAUTHID_TARGET_DEVICE)
+                                , context.get(STRAUTHID_TARGET_PROTOCOL)
+                                , context.get(STRAUTHID_AUTH_USER)
+                                );
+                    }
+                    else {
+                        snprintf( buffer, 256, "%s@%s:%s"
+                                , context.get(STRAUTHID_TARGET_USER)
+                                , context.get(STRAUTHID_TARGET_DEVICE)
+                                , context.get(STRAUTHID_AUTH_USER)
+                                );
+                    }
                     strcpy(ini->account[i].username, buffer);
                 }
                 break;
