@@ -119,12 +119,12 @@ struct mod_vnc : public client_mod {
 
         /* protocol version */
         BStream stream(32768);
-        this->t->recv((char**)&stream.end, 12);
+        this->t->recv(&stream.end, 12);
         this->t->send("RFB 003.003\n", 12);
 
         /* sec type */
         stream.init(8192);
-        this->t->recv((char**)&stream.end, 4);
+        this->t->recv(&stream.end, 4);
         int security_level = stream.in_uint32_be();
         LOG(LOG_INFO, "security level is %d (1 = none, 2 = standard)\n",
                       security_level);
@@ -136,7 +136,7 @@ struct mod_vnc : public client_mod {
             {
                 LOG(LOG_INFO, "Receiving VNC Server Random");
                 stream.init(8192);
-                this->t->recv((char**)&stream.end, 16);
+                this->t->recv(&stream.end, 16);
 
                 /* taken from vncauth.c */
                 {
@@ -155,7 +155,7 @@ struct mod_vnc : public client_mod {
                 /* sec result */
                 LOG(LOG_INFO, "Waiting for password ack");
                 stream.init(8192);
-                this->t->recv((char**)&stream.end, 4);
+                this->t->recv(&stream.end, 4);
                 int i = stream.in_uint32_be();
                 if (i != 0) {
                     LOG(LOG_INFO, "vnc password failed\n");
@@ -250,7 +250,7 @@ struct mod_vnc : public client_mod {
 
         {
             BStream stream(32768);
-            this->t->recv((char**)&stream.end, 24); /* server init */
+            this->t->recv(&stream.end, 24); /* server init */
             this->width = stream.in_uint16_be();
             this->height = stream.in_uint16_be();
             this->bpp    = stream.in_uint8();
@@ -582,7 +582,7 @@ struct mod_vnc : public client_mod {
         if (this->event.can_recv()){
             BStream stream(1);
             try {
-                this->t->recv((char**)&stream.end, 1);
+                this->t->recv(&stream.end, 1);
                 char type = stream.in_uint8();
                 switch (type)
                 {
@@ -623,14 +623,14 @@ struct mod_vnc : public client_mod {
     //==============================================================================================================
     {
         BStream stream(256);
-        this->t->recv((char**)&stream.end, 3);
+        this->t->recv(&stream.end, 3);
         stream.in_skip_bytes(1);
         size_t num_recs = stream.in_uint16_be();
 
         uint8_t Bpp = nbbytes(this->bpp);
         stream.init(256);
         for (size_t i = 0; i < num_recs; i++) {
-            this->t->recv((char**)&stream.end, 12);
+            this->t->recv(&stream.end, 12);
             uint16_t x = stream.in_uint16_be();
             uint16_t y = stream.in_uint16_be();
             uint16_t cx = stream.in_uint16_be();
@@ -649,7 +649,7 @@ struct mod_vnc : public client_mod {
                 for (uint16_t yy = y ; yy < y + cy ; yy += 16){
                     uint8_t * tmp = raw;
                     uint16_t cyy = std::min<uint16_t>(16, cy-(yy-y));
-                    this->t->recv((char**)&tmp, cyy*cx*Bpp);
+                    this->t->recv(&tmp, cyy*cx*Bpp);
                     this->front.begin_update();
 //                    LOG(LOG_INFO, "draw vnc: x=%d y=%d cx=%d cy=%d", x, yy, cx, cyy);
                     this->front.draw_vnc(Rect(x, yy, cx, cyy), this->bpp, this->palette332, raw, cx*16*Bpp);
@@ -661,7 +661,7 @@ struct mod_vnc : public client_mod {
             case 1: /* copy rect */
             {
                 BStream stream(4);
-                this->t->recv((char**)&stream.end, 4);
+                this->t->recv(&stream.end, 4);
                 const int srcx = stream.in_uint16_be();
                 const int srcy = stream.in_uint16_be();
 //                LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
@@ -706,7 +706,7 @@ struct mod_vnc : public client_mod {
                 const int sz_pixel_array = cx * cy * Bpp;
                 const int sz_bitmask = nbbytes(cx) * cy;
                 BStream stream(sz_pixel_array + sz_bitmask);
-                this->t->recv((char**)&stream.end, sz_pixel_array + sz_bitmask);
+                this->t->recv(&stream.end, sz_pixel_array + sz_bitmask);
 
                 const uint8_t *vnc_pointer_data = stream.in_uint8p(sz_pixel_array);
                 const uint8_t *vnc_pointer_mask = stream.in_uint8p(sz_bitmask);
@@ -783,13 +783,13 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
     //==============================================================================================================
     {
         BStream stream(32768);
-        this->t->recv((char**)&stream.end, 5);
+        this->t->recv(&stream.end, 5);
         stream.in_skip_bytes(1);
         int first_color = stream.in_uint16_be();
         int num_colors = stream.in_uint16_be();
 
         BStream stream2(8192);
-        this->t->recv((char**)&stream2.end, num_colors * 6);
+        this->t->recv(&stream2.end, num_colors * 6);
 
         if (num_colors <= 256){
             for (int i = 0; i < num_colors; i++) {
@@ -856,14 +856,14 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
             // Store the clipboard into *clip_data* and its length in *clip_data_size*
             BStream stream(32768);
-            this->t->recv((char**)&stream.end, 7);
+            this->t->recv(&stream.end, 7);
             stream.in_skip_bytes(3);
             int size = stream.in_uint32_be();
 
             this->clip_data.init(size);
             if (size > 0){
                 this->clip_data_size = size;
-                this->t->recv((char**)&this->clip_data.end, size);
+                this->t->recv(&this->clip_data.end, size);
 
 // DLA_DEBUG
                 LOG(LOG_INFO, "#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#");
@@ -989,9 +989,15 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                 // This is a msgType VNC isn't able to respond to
                 // So, we create a handshift response, using the clipboard buffer this class manages
 
-                uint8_t msgFlags = stream.in_uint16_le();
-                uint8_t datalen  = stream.in_uint32_le();
-                uint8_t resquestedFormatId = stream.in_uint32_le();
+                uint16_t msgFlags = stream.in_uint16_le();
+                uint32_t datalen  = stream.in_uint32_le();
+                uint32_t resquestedFormatId = stream.in_uint32_le();
+
+                if ( this->verbose ){
+                    LOG(LOG_INFO, "mod_rdp::send_to_front_channel:ChannelDef::CB_FORMAT_DATA_REQUEST"
+                                  " msgFlags=%u datalen=%u resquestedFormatId=%u",
+                                  msgFlags, datalen, resquestedFormatId);
+                }
 
     //            // only support CF_TEXT and CF_UNICODETEXT
     //            if ((resquestedFormatId != CF_TEXT) && (resquestedFormatId != CF_UNICODETEXT)) {

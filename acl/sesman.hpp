@@ -579,7 +579,7 @@ class SessionManager {
     void incoming()
     {
         BStream stream(4);
-        this->auth_trans_t->recv((char**)&(stream.end), 4);
+        this->auth_trans_t->recv(&stream.end, 4);
         size_t size = stream.in_uint32_be();
         if (size > 65536){
             LOG(LOG_WARNING, "Error: ACL message too big (got %u max 64 K)", size);
@@ -588,7 +588,7 @@ class SessionManager {
         if (size > stream.capacity){
             stream.init(size);
         }
-        this->auth_trans_t->recv((char**)&(stream.end), size - 4);
+        this->auth_trans_t->recv(&stream.end, size - 4);
 
         bool flag = (this->context.get(STRAUTHID_SESSION_ID)[0] == 0);
         this->in_items(stream);
