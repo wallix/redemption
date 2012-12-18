@@ -52,6 +52,7 @@ project redemption
 #     <cxxflags>-Wconversion
     <cxxflags>-Wvla
     <cxxflags>-Wstrict-aliasing=2
+#    <cxxflags>-Wold-style-cast
 #    <cxxflags>-Wlong-long
     <cxxflags>-O3
     <cxxflags>-Wuninitialized
