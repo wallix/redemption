@@ -154,25 +154,23 @@ class ssllib
 
         SslSha1 sha1;
         sha1.update(session_key, keylen);
-        const uint8_t pad_54[40] = { 
-                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                54, 54, 54, 54, 54, 54, 54, 54
-        };
-        sha1.update(pad_54, 40);
-        sha1.update(lenhdr, 4);
+        sha1.update(reinterpret_cast<const uint8_t *>(
+                    "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
+                    "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
+                    "\x36\x36\x36\x36\x36\x36\x36\x36"
+                    ), 40);
+        sha1.update(lenhdr, sizeof(lenhdr));
         sha1.update(data, datalen);
         uint8_t shasig[20];
         sha1.final(shasig);
 
         SslMd5 md5;
         md5.update(session_key, keylen);
-        const uint8_t pad_92[48] = { 
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-        };
-        md5.update(pad_92, 48);
+        md5.update(reinterpret_cast<const uint8_t *>(
+                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                    ), 48);
         md5.update(shasig, 20);
         uint8_t md5sig[16];
         md5.final(md5sig);
@@ -343,24 +341,22 @@ struct CryptContext
 
             SslSha1 sha1;
             sha1.update(this->update_key, keylen);
-            const uint8_t pad_54[40] = {
-                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                54, 54, 54, 54, 54, 54, 54, 54
-            };
-            sha1.update(pad_54, 40);
+            sha1.update(reinterpret_cast<const uint8_t *>(
+                    "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
+                    "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
+                    "\x36\x36\x36\x36\x36\x36\x36\x36"
+                    ), 40);
             sha1.update(this->key, keylen);
             uint8_t shasig[20];
             sha1.final(shasig);
 
             SslMd5 md5;
             md5.update(this->update_key, keylen);
-            const uint8_t pad_92[48] = {
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-            };
-            md5.update(pad_92, 48);
+            md5.update(reinterpret_cast<const uint8_t *>(
+                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                    ), 48);
             md5.update(shasig, 20);
             md5.final(this->key);
 
@@ -380,37 +376,8 @@ struct CryptContext
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
     void sign(uint8_t* signature, int siglen, uint8_t* data, int datalen)
     {
-        size_t keylen = (this->encryptionMethod==1)?8:16;
- 
-       uint8_t lenhdr[4];
-        buf_out_uint32(lenhdr, datalen);
-
-        SslSha1 sha1;
-        sha1.update(this->sign_key, keylen);
-        const uint8_t pad_54[40] = { 
-                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                54, 54, 54, 54, 54, 54, 54, 54
-        };
-        sha1.update(pad_54, 40);
-        sha1.update(lenhdr, 4);
-        sha1.update(data, datalen);
-        uint8_t shasig[20];
-        sha1.final(shasig);
-
-        SslMd5 md5;
-        md5.update(this->sign_key, keylen);
-        const uint8_t pad_92[48] = { 
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-        };
-        md5.update(pad_92, 48);
-        md5.update(shasig, 20);
-        uint8_t md5sig[16];
-        md5.final(md5sig);
-
-        memcpy(signature, md5sig, siglen);
+        ssllib ssl;
+        ssl.sign(signature, siglen, this->sign_key, (this->encryptionMethod==1)?8:16, data, datalen);
     }
 };
 

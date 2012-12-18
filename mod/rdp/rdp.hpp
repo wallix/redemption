@@ -1281,7 +1281,6 @@ struct mod_rdp : public client_mod {
                         {
                             LIC::PlatformChallenge_Recv lic(sec.payload);
 
-                            ssllib ssl;
 
                             uint8_t out_token[LIC::LICENSE_TOKEN_SIZE];
                             uint8_t decrypt_token[LIC::LICENSE_TOKEN_SIZE];
@@ -1303,6 +1302,8 @@ struct mod_rdp : public client_mod {
                             uint8_t sealed_buffer[LIC::LICENSE_TOKEN_SIZE + LIC::LICENSE_HWID_SIZE];
                             memcpy(sealed_buffer, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
                             memcpy(sealed_buffer + LIC::LICENSE_TOKEN_SIZE, hwid, LIC::LICENSE_HWID_SIZE);
+
+                            ssllib ssl;
                             ssl.sign(out_sig, 16, this->lic_layer_license_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
 
                             /* Now encrypt the HWID */
@@ -1361,17 +1362,6 @@ struct mod_rdp : public client_mod {
                             LOG(LOG_INFO, "Rdp::Get licence status");
                         }
                         LIC::ErrorAlert_Recv lic(sec.payload);
-//                        uint8_t tag = sec.payload.in_uint8();
-//                        uint8_t flags = sec.payload.in_uint8();
-//                        uint16_t wMsgSize = sec.payload.in_uint16_le();
-
-//                        uint32_t dwErrorCode = sec.payload.in_uint32_le();
-//                        uint32_t dwStateTransition = sec.payload.in_uint32_le();
-//                        uint32_t bbErrorInfo = sec.payload.in_uint32_le();
-//                        if (this->verbose){
-//                            LOG(LOG_INFO, "%u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u",
-//                                version, flic.wMsgSize, dwErrorCode, dwStateTransition, bbErrorInfo);
-//                        }
                         this->state = MOD_RDP_CONNECTED;
                     }
                     break;
@@ -1724,8 +1714,6 @@ struct mod_rdp : public client_mod {
 // the Persistent Key List PDU.
 
 
-
-
         // 2.2.1.13.1.1 Demand Active PDU Data (TS_DEMAND_ACTIVE_PDU)
         // ==========================================================
         // The TS_DEMAND_ACTIVE_PDU structure is a standard T.128 Demand Active PDU (see [T128] section 8.4.1).
@@ -2014,6 +2002,7 @@ struct mod_rdp : public client_mod {
             }
 
             stream.in_skip_bytes(2); /* pad */
+            TODO("check that : why am I reading 32 bits into 16 bits ?")
             uint16_t numberColors = stream.in_uint32_le();
             assert(numberColors == 256);
             for (int i = 0; i < numberColors; i++) {
@@ -2971,9 +2960,9 @@ struct mod_rdp : public client_mod {
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::process_server_caps");
             }
-            int ncapsets = stream.in_uint16_le();
+            uint16_t ncapsets = stream.in_uint16_le();
             stream.in_skip_bytes(2); /* pad */
-            for (int n = 0; n < ncapsets; n++) {
+            for (uint16_t n = 0; n < ncapsets; n++) {
                 uint16_t capset_type = stream.in_uint16_le();
                 uint16_t capset_length = stream.in_uint16_le();
                 uint8_t * next = (stream.p + capset_length) - 4;
@@ -3238,27 +3227,25 @@ struct mod_rdp : public client_mod {
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu");
         }
-        unsigned cache_idx;
-        unsigned dlen;
-        unsigned mlen;
-        struct rdp_cursor* cursor;
-
-        cache_idx = stream.in_uint16_le();
-        if (cache_idx >= (sizeof(this->cursors) / sizeof(cursor))) {
+        unsigned cache_idx = stream.in_uint16_le();
+        if (cache_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_CACHE_NOT_OK);
         }
-        cursor = this->cursors + cache_idx;
+        struct rdp_cursor* cursor = this->cursors + cache_idx;
         cursor->x = stream.in_uint16_le();
         cursor->y = stream.in_uint16_le();
         cursor->width = stream.in_uint16_le();
         cursor->height = stream.in_uint16_le();
-        mlen = stream.in_uint16_le(); /* mask length */
-        dlen = stream.in_uint16_le(); /* data length */
+        unsigned mlen = stream.in_uint16_le(); /* mask length */
+        unsigned dlen = stream.in_uint16_le(); /* data length */
         if ((mlen > sizeof(cursor->mask)) || (dlen > sizeof(cursor->data))) {
+            LOG(LOG_WARNING, "mod_rdp::Bad length for color pointer mask_len=%u data_len=%u",
+                (unsigned)mlen, (unsigned)dlen);
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
         }
-        memcpy( cursor->data, stream.in_uint8p( dlen),  dlen);
-        memcpy( cursor->mask, stream.in_uint8p( mlen),  mlen);
+        memcpy(cursor->data, stream.in_uint8p(dlen), dlen);
+        memcpy(cursor->mask, stream.in_uint8p(mlen), mlen);
+        
         mod->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
