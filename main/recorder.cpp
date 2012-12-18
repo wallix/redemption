@@ -138,6 +138,8 @@ int main(int argc, char** argv)
     TODO("if start and stop time are outside wrm, users should also be warned")
 
     InByMetaSequenceTransport in_wrm_trans(input_filename.c_str());
+//    InByFilenameTransport in_wrm_trans(input_filename.c_str());
+
     try {
         in_wrm_trans.next_chunk_info();
         TODO("a negative time should be a time relative to end of movie")

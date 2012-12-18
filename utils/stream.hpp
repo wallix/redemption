@@ -134,6 +134,22 @@ class Stream {
              ;
     }
 
+    void in_timeval_from_uint64le_usec(timeval & tv)
+    {
+        uint64_t movie_usec_lo = this->in_uint32_le();
+        uint64_t movie_usec_hi = this->in_uint32_le();
+        tv.tv_sec = static_cast<uint32_t>((movie_usec_hi * 0x100000000LL + movie_usec_lo) / 1000000LL);
+        tv.tv_usec = static_cast<uint32_t>(movie_usec_lo % 1000000LL);
+    }
+
+    void out_timeval_to_uint64le_usec(const timeval & tv)
+    {
+        uint64_t sec = tv.tv_sec;
+        uint64_t usec = tv.tv_usec;
+        this->out_uint32_le(static_cast<uint32_t>((sec * 1000000LL + usec) / 0x100000000LL));
+        this->out_uint32_le(static_cast<uint32_t>(sec * 1000000LL + usec));
+    }
+
     void out_uint64_le(uint64_t v) {
         REDASSERT(has_room(8));
         this->p[0] = v & 0xFF;
@@ -147,17 +163,6 @@ class Stream {
         this->p+=8;
     }
 
-    void set_out_uint64_le(uint64_t v, size_t offset) {
-        this->data[offset+0] = v & 0xFF;
-        this->data[offset+1] = (v >> 8) & 0xFF;
-        this->data[offset+2] = (v >> 16) & 0xFF;
-        this->data[offset+3] = (v >> 24) & 0xFF;
-        this->data[offset+4] = (v >> 32) & 0xFF;
-        this->data[offset+5] = (v >> 40) & 0xFF;
-        this->data[offset+6] = (v >> 48) & 0xFF;
-        this->data[offset+7] = (uint8_t)(v >> 56) & 0xFF;
-    }
-
     uint64_t in_uint64_le(void) {
         REDASSERT(in_check_rem(8));
         uint64_t low = this->in_uint32_le();
@@ -165,16 +170,9 @@ class Stream {
         return low + (high << 32);
     }
 
-    uint64_t in_uint64_be(void) {
-        REDASSERT(in_check_rem(8));
-        uint64_t high = this->in_uint32_be();
-        uint64_t low = this->in_uint32_be();
-        return low + (high << 32);
-    }
-
     void out_uint64_be(uint64_t v) {
         REDASSERT(has_room(8));
-        this->p[0] = (uint8_t)(v >> 56) & 0xFF;
+        this->p[0] = (v >> 56) & 0xFF;
         this->p[1] = (v >> 48) & 0xFF;
         this->p[2] = (v >> 40) & 0xFF;
         this->p[3] = (v >> 32) & 0xFF;
@@ -185,15 +183,11 @@ class Stream {
         this->p+=8;
     }
 
-    void set_out_uint64_be(uint64_t v, size_t offset) {
-        this->data[offset+0] = (uint8_t)(v >> 56) & 0xFF;
-        this->data[offset+1] = (v >> 48) & 0xFF;
-        this->data[offset+2] = (v >> 40) & 0xFF;
-        this->data[offset+3] = (v >> 32) & 0xFF;
-        this->data[offset+4] = (v >> 24) & 0xFF;
-        this->data[offset+5] = (v >> 16) & 0xFF;
-        this->data[offset+6] = (v >> 8) & 0xFF;
-        this->data[offset+7] = v & 0xFF;
+    uint64_t in_uint64_be(void) {
+        REDASSERT(in_check_rem(8));
+        uint64_t high = this->in_uint32_be();
+        uint64_t low = this->in_uint32_be();
+        return low + (high << 32);
     }
 
     unsigned in_bytes_le(const uint8_t nb){

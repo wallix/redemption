@@ -26,7 +26,7 @@
 #include <stdint.h>
 
 static inline uint64_t ustime(const timeval & now) {
-    return (uint64_t)now.tv_sec*1000000LL + (uint64_t)now.tv_usec;
+    return static_cast<uint64_t>(now.tv_sec)*1000000LL + static_cast<uint64_t>(now.tv_usec);
 }
 
 static inline const timeval tvtime()
@@ -41,8 +41,10 @@ static inline uint64_t ustime() {
 }
 
 static inline uint64_t difftimeval(const timeval& endtime, const timeval& starttime)
+REDOC("as gettimeofday is not monotonic we may get surprising results (overflow). In these case we choose to send 0.")
 {
-    return ustime(endtime) - ustime(starttime);
+    uint64_t d = ustime(endtime) - ustime(starttime);
+    return (d > 0x100000000LL)?0:d;
 }
 
 #endif
