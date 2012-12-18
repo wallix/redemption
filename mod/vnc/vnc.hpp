@@ -89,11 +89,12 @@ struct mod_vnc : public client_mod {
             , int key_flags
             , uint32_t verbose
             )
+    //==============================================================================================================
         : client_mod(front, front_width, front_height)
         , verbose(verbose)
         , keymapSym(verbose)
         , incr(0)
-    //==============================================================================================================
+    //--------------------------------------------------------------------------------------------------------------
     {
         LOG(LOG_INFO, "Connecting to VNC Server");
         init_palette332(this->palette332);
@@ -264,8 +265,6 @@ struct mod_vnc : public client_mod {
             this->green_shift = stream.in_uint8();
             this->blue_shift = stream.in_uint8();
             stream.in_skip_bytes(3); // skip padding
-
-//            LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
 
             int lg = stream.in_uint32_be();
 
@@ -555,7 +554,6 @@ struct mod_vnc : public client_mod {
     virtual void rdp_input_invalidate( const Rect & r )
     //==============================================================================================================
     {
-//        LOG(LOG_INFO, "rdp_input_invalidate");
         if (!r.isempty()) {
             BStream stream(32768);
             /* FrambufferUpdateRequest */
@@ -636,7 +634,6 @@ struct mod_vnc : public client_mod {
             uint16_t cx = stream.in_uint16_be();
             uint16_t cy = stream.in_uint16_be();
             uint32_t encoding = stream.in_uint32_be();
-
             switch (encoding){
             case 0: /* raw */
             {
@@ -767,8 +764,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             }
             break;
             default:
-                LOG(LOG_INFO, "unexpected encoding %8x in lib_frame_buffer", encoding);
-//                throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
+                LOG(LOG_INFO, "unexpected encoding 0x%08x in lib_frame_buffer", encoding);
+                throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
                 break;
             }
         }
@@ -852,68 +849,57 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         ChannelDefArray chanlist = this->front.get_channel_list();
         const ChannelDef * channel = chanlist.get((char *) "cliprdr");
 
+        // NB : Whether the clipboard is available or not, read the incoming data to prevent a jam in transport layer
+
+        // Store the clipboard into *clip_data* and its length in *clip_data_size*
+        BStream stream(32768);
+        this->t->recv(&stream.end, 7);
+        stream.in_skip_bytes(3);
+        int size = stream.in_uint32_be();
+
+        this->clip_data.init(size);
+        if (size > 0){
+            this->t->recv(&this->clip_data.end, size);
+        }
+
         if (channel) {
-
-            // Store the clipboard into *clip_data* and its length in *clip_data_size*
-            BStream stream(32768);
-            this->t->recv(&stream.end, 7);
-            stream.in_skip_bytes(3);
-            int size = stream.in_uint32_be();
-
-            this->clip_data.init(size);
-            if (size > 0){
-                this->clip_data_size = size;
-                this->t->recv(&this->clip_data.end, size);
-
-// DLA_DEBUG
-                LOG(LOG_INFO, "#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#");
-
-                hexdump(this->clip_data.data, size);
-                LOG(LOG_INFO, "CLIP CHANNEL Number = %d", chanlist.size());
-                for (size_t i = 0; i < chanlist.size(); i++) {
-                    LOG(LOG_INFO, "CLIP CHANNEL idx = %d = Name: %s ID:Id %d flags:%x", i, chanlist[i].name, chanlist[i].chanid, chanlist[i].flags );
-                }
-
-                LOG(LOG_INFO, "CLIP CHANNEL Name: %s ID:Id %d flags:%#x", channel->name, channel->chanid, channel->flags );
-                LOG(LOG_INFO, "#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#");
-// < -- Fin DLA_DEBUG
+            //#############################################################
+            //#############################################################
+            // Temporary message, until clipboard is operationnal
+            LOG(LOG_INFO, "Clipboard Channel Redirection unavailable");
+            //#############################################################
+            //#############################################################
 
 
-                // Only CF_TEXT format is passed to front (as ISO 8859-1 (Latin-1) is the only encoding that VNC RFB 3.x is supposed to use for clipboard)
-                BStream out_s(8192);
-                out_s.out_uint16_le(2);
-                out_s.out_uint16_le(0);
-//                out_s.out_uint32_le(0x90);
-                out_s.out_uint32_le(0x24);
-//                out_s.out_uint8(0x0d);
+//                // Only CF_TEXT format is passed to front (as ISO 8859-1 -Latin-1- is the only encoding that VNC RFB 3.x is supposed to use for clipboard)
+//                BStream out_s(8192);
+//                out_s.out_uint16_le(2);
+//                out_s.out_uint16_le(0);
+////                out_s.out_uint32_le(0x90);
+//                out_s.out_uint32_le(0x24);
+////                out_s.out_uint8(0x0d);
+////                out_s.out_clear_bytes(35);
+////                out_s.out_uint8(0x10);
+////                out_s.out_clear_bytes(35);
+//                out_s.out_uint8(0x01);
 //                out_s.out_clear_bytes(35);
-//                out_s.out_uint8(0x10);
-//                out_s.out_clear_bytes(35);
-                out_s.out_uint8(0x01);
-                out_s.out_clear_bytes(35);
-//                out_s.out_uint8(0x07);
-//                out_s.out_clear_bytes(35);
-                out_s.out_clear_bytes(4);
-                out_s.mark_end();
+////                out_s.out_uint8(0x07);
+////                out_s.out_clear_bytes(35);
+//                out_s.out_clear_bytes(4);
+//                out_s.mark_end();
 
+//                uint32_t length = out_s.end - out_s.data;
+//                size_t chunk_size = length < ChannelDef::CHANNEL_CHUNK_LENGTH ? length : ChannelDef::CHANNEL_CHUNK_LENGTH;
 
-// DLA_DEBUG
-                hexdump(out_s.data, out_s.end - out_s.data);
-                LOG(LOG_INFO, "#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#");
+//                this->front.send_to_channel( *channel
+//                                           , out_s.data
+////                                           , (size_t) sizeof(formatlist)
+////                                           , (size_t) sizeof(formatlist) < ChannelDef::CHANNEL_CHUNK_LENGTH ? sizeof(formatlist) : ChannelDef::CHANNEL_CHUNK_LENGTH
+//                                           , length
+//                                           , chunk_size
+//                                           , ChannelDef::CHANNEL_FLAG_FIRST | ChannelDef::CHANNEL_FLAG_LAST
+//                                           );
 
-                uint32_t length = out_s.end - out_s.data;
-                size_t chunk_size = length < ChannelDef::CHANNEL_CHUNK_LENGTH ? length : ChannelDef::CHANNEL_CHUNK_LENGTH;
-
-                this->front.send_to_channel( *channel
-                                           , out_s.data
-//                                           , (size_t) sizeof(formatlist)
-//                                           , (size_t) sizeof(formatlist) < ChannelDef::CHANNEL_CHUNK_LENGTH ? sizeof(formatlist) : ChannelDef::CHANNEL_CHUNK_LENGTH
-                                           , length
-                                           , chunk_size
-                                           , ChannelDef::CHANNEL_FLAG_FIRST | ChannelDef::CHANNEL_FLAG_LAST
-                                           );
-
-            }
         }
         else {
             LOG(LOG_INFO, "Clipboard Channel Redirection unavailable");
@@ -959,18 +945,11 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::send_to_channel");
         }
-        if (this->verbose){
-            LOG(LOG_INFO, ">>>>>>>>>>> VNC >>>>>>>>>>> mod_vnc::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%#x)", data, length, chunk_size, flags);
-            LOG(LOG_INFO, ">>>>>>>>>>> VNC >>>>>>>>>>> (CHANNEL) , name=%s, chanid=%d, flags=%#x)", channel.name, channel.chanid, channel.flags);
-        }
-
-// DLA_DEBUG
-        hexdump(data, chunk_size);
 
         // specific treatement depending on msgType
         BStream stream(length);
         memcpy(stream.data, data, length);
-        uint8_t msgType = stream.in_uint16_le();
+        uint16_t msgType = stream.in_uint16_le();
 
 
         switch (msgType) {
