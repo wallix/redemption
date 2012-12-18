@@ -154,27 +154,29 @@ class ssllib
 
         SslSha1 sha1;
         sha1.update(session_key, keylen);
-        const uint8_t pad_54[40] = { 
-                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                54, 54, 54, 54, 54, 54, 54, 54
-        };
-        sha1.update(pad_54, 40);
-        sha1.update(lenhdr, 4);
+        sha1.update(reinterpret_cast<const uint8_t *>(
+                    "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
+                    "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
+                    "\x36\x36\x36\x36\x36\x36\x36\x36"
+                    ), 40);
+                    
+        // Data we are signing
+        TODO("pass in a stream and factorize with code in decrypt")
+        sha1.update(lenhdr, sizeof(lenhdr));
         sha1.update(data, datalen);
+
         uint8_t shasig[20];
         sha1.final(shasig);
 
         SslMd5 md5;
         md5.update(session_key, keylen);
-        const uint8_t pad_92[48] = { 
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-        };
-        md5.update(pad_92, 48);
+        md5.update(reinterpret_cast<const uint8_t *>(
+                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                    ), 48);
         md5.update(shasig, 20);
-        uint8_t md5sig[16];
+        uint8_t md5sig[MD5_DIGEST_LENGTH];
         md5.final(md5sig);
 
         memcpy(signature, md5sig, siglen);
@@ -235,9 +237,9 @@ class ssllib
 struct CryptContext
 {
     int use_count;
-    uint8_t sign_key[16];
-    uint8_t key[16];
-    uint8_t update_key[16];
+    uint8_t sign_key[MD5_DIGEST_LENGTH];
+    uint8_t key[MD5_DIGEST_LENGTH];
+    uint8_t update_key[MD5_DIGEST_LENGTH];
     SslRC4 rc4;
 
     // encryptionMethod (4 bytes): A 32-bit, unsigned integer. The selected
@@ -269,12 +271,13 @@ struct CryptContext
     // +-------------------------------------+-------------------------------------+
     uint32_t encryptionMethod;
 
-    CryptContext() : use_count(0)
+    CryptContext() 
+        : use_count(0)
+        , encryptionMethod(0)
     {
-        memset(this->sign_key, 0, 16);
-        memset(this->key, 0, 16);
-        memset(this->update_key, 0, 16);
-        this->encryptionMethod = 0;
+        memset(this->sign_key, 0, MD5_DIGEST_LENGTH);
+        memset(this->key, 0, MD5_DIGEST_LENGTH);
+        memset(this->update_key, 0, MD5_DIGEST_LENGTH);
     }
 
     void generate_key(uint8_t * key_block, const uint8_t* salt1, const uint8_t* salt2, uint32_t encryptionMethod)
@@ -302,37 +305,6 @@ struct CryptContext
         }
     }
 
-    void rc4dump(const char * data, size_t size){
-        char buffer[16384];
-        char * line = buffer;
-        line += sprintf(line, "memcpy((void*)(&cc.rc4_info), (void*)\"");
-        for (size_t j = 0 ; j < size ; j ++){
-            line += sprintf(line, "\\x%.2x", (unsigned char)data[j]);
-        }
-        line += sprintf(line, "\", %u);", (unsigned)size);
-        LOG(LOG_INFO, "%s", buffer);
-    }
-
-    void dump(){
-        LOG(LOG_INFO, "cc.use_count=%u;", this->use_count);
-        LOG(LOG_INFO, "memcpy(cc.sign_key, \""
-            "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-            "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\", 16);",
-            this->sign_key[0],this->sign_key[1],this->sign_key[2],this->sign_key[3],
-            this->sign_key[4],this->sign_key[5],this->sign_key[6],this->sign_key[7],
-            this->sign_key[8],this->sign_key[9],this->sign_key[10],this->sign_key[11],
-            this->sign_key[12],this->sign_key[13],this->sign_key[14],this->sign_key[15]);
-        LOG(LOG_INFO, "memcpy(cc.key, \""
-            "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-            "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\", 16);",
-            this->key[0],this->key[1],this->key[2],this->key[3],
-            this->key[4],this->key[5],this->key[6],this->key[7],
-            this->key[8],this->key[9],this->key[10],this->key[11],
-            this->key[12],this->key[13],this->key[14],this->key[15]);
-        this->rc4dump((const char *)(&this->rc4), sizeof(this->rc4));
-        LOG(LOG_INFO, "cc.encryptionMethod=%u;", this->encryptionMethod);
-    }
-
     /* Decrypt data using RC4 */
     void decrypt(uint8_t* data, int len)
     {
@@ -343,24 +315,26 @@ struct CryptContext
 
             SslSha1 sha1;
             sha1.update(this->update_key, keylen);
-            const uint8_t pad_54[40] = {
-                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                54, 54, 54, 54, 54, 54, 54, 54
-            };
-            sha1.update(pad_54, 40);
+            sha1.update(reinterpret_cast<const uint8_t *>(
+                    "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
+                    "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
+                    "\x36\x36\x36\x36\x36\x36\x36\x36"
+                    ), 40);
+
+            // Data we are signing
+            TODO("pass in a stream and factorize with code in sign")
             sha1.update(this->key, keylen);
+
             uint8_t shasig[20];
             sha1.final(shasig);
 
             SslMd5 md5;
             md5.update(this->update_key, keylen);
-            const uint8_t pad_92[48] = {
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-            };
-            md5.update(pad_92, 48);
+            md5.update(reinterpret_cast<const uint8_t *>(
+                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                    ), 48);
             md5.update(shasig, 20);
             md5.final(this->key);
 
@@ -380,37 +354,8 @@ struct CryptContext
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
     void sign(uint8_t* signature, int siglen, uint8_t* data, int datalen)
     {
-        size_t keylen = (this->encryptionMethod==1)?8:16;
- 
-       uint8_t lenhdr[4];
-        buf_out_uint32(lenhdr, datalen);
-
-        SslSha1 sha1;
-        sha1.update(this->sign_key, keylen);
-        const uint8_t pad_54[40] = { 
-                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                54, 54, 54, 54, 54, 54, 54, 54
-        };
-        sha1.update(pad_54, 40);
-        sha1.update(lenhdr, 4);
-        sha1.update(data, datalen);
-        uint8_t shasig[20];
-        sha1.final(shasig);
-
-        SslMd5 md5;
-        md5.update(this->sign_key, keylen);
-        const uint8_t pad_92[48] = { 
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-        };
-        md5.update(pad_92, 48);
-        md5.update(shasig, 20);
-        uint8_t md5sig[16];
-        md5.final(md5sig);
-
-        memcpy(signature, md5sig, siglen);
+        ssllib ssl;
+        ssl.sign(signature, siglen, this->sign_key, (this->encryptionMethod==1)?8:16, data, datalen);
     }
 };
 

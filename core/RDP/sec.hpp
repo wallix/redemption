@@ -739,10 +739,6 @@ enum {
                     LOG(LOG_DEBUG, "Receiving encrypted TPDU");
                     hexdump_c((char*)payload.data, payload.size());
                 }
-                if (this->verbose >= 0x100){
-                    LOG(LOG_DEBUG, "Crypt context is:");
-                    crypt.dump();
-                }
                 crypt.decrypt(payload.data, payload.size());
                 if (this->verbose >= 0x80){
                     LOG(LOG_DEBUG, "Decrypted %u bytes", payload.size());

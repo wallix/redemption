@@ -1236,7 +1236,10 @@ struct mod_rdp : public client_mod {
                             md5.update(lic.server_random, 32);
                             md5.final(this->lic_layer_license_key);
 
-                            BStream stream(65535);
+                            BStream x224_header(256);
+                            BStream mcs_header(256);
+                            BStream sec_header(256);
+                            BStream lic_data(65535);
 
                             if (this->lic_layer_license_size > 0) {
                                 uint8_t hwid[LIC::LICENSE_HWID_SIZE];
@@ -1253,173 +1256,22 @@ struct mod_rdp : public client_mod {
                                 rc4.set_key(16, this->lic_layer_license_key);
                                 rc4.crypt(sizeof(hwid), hwid);
 
-                                uint8_t null_data[SEC_MODULUS_SIZE];
-                                memset(null_data, 0, sizeof(null_data));
-
-                                int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
-                                         this->lic_layer_license_size + LIC::LICENSE_HWID_SIZE + LIC::LICENSE_SIGNATURE_SIZE;
-
-                                stream.out_uint8(LIC::LICENSE_INFO);
-                                stream.out_uint8(this->use_rdp5?3:2); /* version */
-                                stream.out_uint16_le(length);
-                                stream.out_uint32_le(1);
-                                stream.out_uint16_le(0);
-                                stream.out_uint16_le(0x0201);
-                                stream.out_copy_bytes(null_data, SEC_RANDOM_SIZE); // client_random
-                                stream.out_uint16_le(0);
-                                stream.out_uint16_le(SEC_MODULUS_SIZE + SEC_PADDING_SIZE);
-                                stream.out_copy_bytes(null_data, SEC_MODULUS_SIZE); // rsa_data
-                                stream.out_clear_bytes( SEC_PADDING_SIZE);
-                                stream.out_uint16_le(1);
-                                stream.out_uint16_le(this->lic_layer_license_size);
-                                stream.out_copy_bytes(this->lic_layer_license_data, this->lic_layer_license_size);
-                                stream.out_uint16_le(1);
-                                stream.out_uint16_le(LIC::LICENSE_HWID_SIZE);
-                                stream.out_copy_bytes(hwid, LIC::LICENSE_HWID_SIZE);
-                                stream.out_copy_bytes(signature, LIC::LICENSE_SIGNATURE_SIZE);
-                                stream.mark_end();
+                                LIC::ClientLicenseInfo_Send(lic_data, this->use_rdp5?3:2, 
+                                    this->lic_layer_license_size, this->lic_layer_license_data, hwid, signature);
                             }
                             else {
-                                uint8_t null_data[SEC_MODULUS_SIZE];
-                                memset(null_data, 0, sizeof(null_data));
-
-                                int userlen = strlen(username) + 1;
-                                int hostlen = strlen(hostname) + 1;
-                                int length = 128 + userlen + hostlen;
-
-                                stream.out_uint8(LIC::NEW_LICENSE_REQUEST);
-                                stream.out_uint8(this->use_rdp5?3:2);
-                                stream.out_uint16_le(length);
-
-                                // PreferredKeyExchangeAlg (4 bytes): A 32-bit unsigned integer that
-                                // indicates the key exchange algorithm chosen by the client. It MUST be set
-                                // to KEY_EXCHANGE_ALG_RSA (0x00000001), which indicates an RSA-based key
-                                // exchange with a 512-bit asymmetric key.<9>
-
-                                stream.out_uint32_le(LIC::KEY_EXCHANGE_ALG_RSA);
-
-                                // PlatformId (4 bytes): A 32-bit unsigned integer. This field is composed
-                                // of two identifiers: the operating system identifier and the independent
-                                // software vendor (ISV) identifier. The platform ID is composed of the
-                                // logical OR of these two values.
-
-                                // The most significant byte of the PlatformId field contains the operating
-                                // system version of the client.<10>
-
-                                // The second most significant byte of the PlatformId field identifies the
-                                // ISV that provided the client image.<11>
-
-                                // The remaining two bytes in the PlatformId field are used by the ISV to
-                                // identify the build number of the operating system.<12>
-
-                                stream.out_uint32_le(0);
-
-                                // ClientRandom (32 bytes): A 32-byte random number generated by the client
-                                // using a cryptographically secure pseudo-random number generator. The
-                                // ClientRandom and ServerRandom (see section 2.2.2.1) values, along with
-                                // the data in the EncryptedPreMasterSecret field, are used to generate
-                                // licensing encryption keys (see section 5.1.3). These keys are used to
-                                // encrypt licensing protocol messages (see sections 5.1.4 and 5.1.5).
-
-                                stream.out_copy_bytes(null_data, SEC_RANDOM_SIZE); // client_random
-
-                                // EncryptedPreMasterSecret (variable): A Licensing Binary BLOB structure
-                                // (see [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_RANDOM_BLOB (0x0002).
-                                // This BLOB contains an encrypted 48-byte random number. For instructions
-                                // on how to encrypt this random number, see section 5.1.2.1.
-
-                                // 2.2.1.12.1.2 Licensing Binary Blob (LICENSE_BINARY_BLOB)
-                                // --------------------------------------------------------
-                                // The LICENSE_BINARY_BLOB structure is used to encapsulate arbitrary
-                                // length binary licensing data.
-
-                                // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
-                                // the binary information. If wBlobLen is set to 0, then the contents
-                                // of this field SHOULD be ignored.
-
-                                // +------------------------------------+-------------------------------------+
-                                // | 0x0001 BB_DATA_BLOB                | Used by License Information PDU and |
-                                // |                                    | Platform Challenge Response PDU     |
-                                // |                                    | ([MS-RDPELE] sections 2.2.2.3 and   |
-                                // |                                    | 2.2.2.5).                           |
-                                // +------------------------------------+-------------------------------------+
-                                // | 0x0002 BB_RANDOM_BLOB              | Used by License Information PDU and |
-                                // |                                    | New License Request PDU ([MS-RDPELE]|
-                                // |                                    | sections 2.2.2.3 and 2.2.2.2).      |
-                                // +------------------------------------+-------------------------------------+
-                                // | 0x0003 BB_CERTIFICATE_BLOB         | Used by License Request PDU         |
-                                // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
-                                // +------------------------------------+-------------------------------------+
-                                // | 0x0004 BB_ERROR_BLOB               | Used by License Error PDU (section  |
-                                // |                                    | 2.2.1.12).                          |
-                                // +------------------------------------+-------------------------------------+
-                                // | 0x0009 BB_ENCRYPTED_DATA_BLOB      | Used by Platform Challenge Response |
-                                // |                                    | PDU and Upgrade License PDU         |
-                                // |                                    | ([MS-RDPELE] sections 2.2.2.5 and   |
-                                // |                                    | 2.2.2.6).                           |
-                                // +------------------------------------+-------------------------------------+
-                                // | 0x000D BB_KEY_EXCHG_ALG_BLOB       | Used by License Request PDU         |
-                                // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
-                                // +------------------------------------+-------------------------------------+
-                                // | 0x000E BB_SCOPE_BLOB               | Used by License Request PDU         |
-                                // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
-                                // +------------------------------------+-------------------------------------+
-                                // | 0x000F BB_CLIENT_USER_NAME_BLOB    | Used by New License Request PDU     |
-                                // |                                    | ([MS-RDPELE] section 2.2.2.2).      |
-                                // +------------------------------------+-------------------------------------+
-                                // | 0x0010 BB_CLIENT_MACHINE_NAME_BLOB | Used by New License Request PDU     |
-                                // |                                    | ([MS-RDPELE] section 2.2.2.2).      |
-                                // +------------------------------------+-------------------------------------+
-
-                                // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
-                                // binary information in the blobData field. If wBlobLen is set to 0, then the
-                                // blobData field is not included in the Licensing Binary BLOB structure and the
-                                // contents of the wBlobType field SHOULD be ignored.
-
-                                // blobData (variable): Variable-length binary data. The size of this data in
-                                // bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field
-                                // is not included in the Licensing Binary BLOB structure.
-
-                                stream.out_uint16_le(LIC::BB_RANDOM_BLOB);
-                                stream.out_uint16_le((SEC_MODULUS_SIZE + SEC_PADDING_SIZE));
-                                stream.out_copy_bytes(null_data, SEC_MODULUS_SIZE); // rsa_data
-                                stream.out_clear_bytes(SEC_PADDING_SIZE);
-
-                                // ClientUserName (variable): A Licensing Binary BLOB structure (see
-                                // [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_CLIENT_USER_NAME_BLOB
-                                // (0x000F). This BLOB contains the client user name string in
-                                // null-terminated ANSI character set format and is used along with the
-                                // ClientMachineName BLOB to keep track of licenses issued to clients.
-
-                                stream.out_uint16_le(LIC::LICENSE_TAG_USER);
-                                stream.out_uint16_le(userlen);
-                                stream.out_copy_bytes(username, userlen);
-
-                                // ClientMachineName (variable): A Licensing Binary BLOB structure (see
-                                // [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_CLIENT_MACHINE_NAME_BLOB
-                                // (0x0010). This BLOB contains the client machine name string in
-                                // null-terminated ANSI character set format and is used along with the
-                                // ClientUserName BLOB to keep track of licenses issued to clients.
-
-                                stream.out_uint16_le(LIC::LICENSE_TAG_HOST);
-                                stream.out_uint16_le(hostlen);
-                                stream.out_copy_bytes(hostname, hostlen);
-                                stream.mark_end();
+                                LIC::NewLicenseRequest_Send(lic_data, this->use_rdp5?3:2, username, hostname);
                             }
 
-                            BStream x224_header(256);
-                            BStream mcs_header(256);
-                            BStream sec_header(256);
-
-                            SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
+                            SEC::Sec_Send sec(sec_header, lic_data, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
                             MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3,
-                                                          sec_header.size() + stream.size() , MCS::PER_ENCODING);
-                            X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
+                                                          sec_header.size() + lic_data.size() , MCS::PER_ENCODING);
+                            X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + lic_data.size());
 
                             this->nego.trans->send(x224_header.data, x224_header.size());
                             this->nego.trans->send(mcs_header.data, mcs_header.size());
                             this->nego.trans->send(sec_header.data, sec_header.size());
-                            this->nego.trans->send(stream.data, stream.size());
+                            this->nego.trans->send(lic_data.data, lic_data.size());
                         }
                         break;
                     case LIC::PLATFORM_CHALLENGE:
@@ -1429,7 +1281,6 @@ struct mod_rdp : public client_mod {
                         {
                             LIC::PlatformChallenge_Recv lic(sec.payload);
 
-                            ssllib ssl;
 
                             uint8_t out_token[LIC::LICENSE_TOKEN_SIZE];
                             uint8_t decrypt_token[LIC::LICENSE_TOKEN_SIZE];
@@ -1451,6 +1302,8 @@ struct mod_rdp : public client_mod {
                             uint8_t sealed_buffer[LIC::LICENSE_TOKEN_SIZE + LIC::LICENSE_HWID_SIZE];
                             memcpy(sealed_buffer, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
                             memcpy(sealed_buffer + LIC::LICENSE_TOKEN_SIZE, hwid, LIC::LICENSE_HWID_SIZE);
+
+                            ssllib ssl;
                             ssl.sign(out_sig, 16, this->lic_layer_license_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
 
                             /* Now encrypt the HWID */
@@ -1509,17 +1362,6 @@ struct mod_rdp : public client_mod {
                             LOG(LOG_INFO, "Rdp::Get licence status");
                         }
                         LIC::ErrorAlert_Recv lic(sec.payload);
-//                        uint8_t tag = sec.payload.in_uint8();
-//                        uint8_t flags = sec.payload.in_uint8();
-//                        uint16_t wMsgSize = sec.payload.in_uint16_le();
-
-//                        uint32_t dwErrorCode = sec.payload.in_uint32_le();
-//                        uint32_t dwStateTransition = sec.payload.in_uint32_le();
-//                        uint32_t bbErrorInfo = sec.payload.in_uint32_le();
-//                        if (this->verbose){
-//                            LOG(LOG_INFO, "%u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u",
-//                                version, flic.wMsgSize, dwErrorCode, dwStateTransition, bbErrorInfo);
-//                        }
                         this->state = MOD_RDP_CONNECTED;
                     }
                     break;
@@ -1872,8 +1714,6 @@ struct mod_rdp : public client_mod {
 // the Persistent Key List PDU.
 
 
-
-
         // 2.2.1.13.1.1 Demand Active PDU Data (TS_DEMAND_ACTIVE_PDU)
         // ==========================================================
         // The TS_DEMAND_ACTIVE_PDU structure is a standard T.128 Demand Active PDU (see [T128] section 8.4.1).
@@ -2162,6 +2002,7 @@ struct mod_rdp : public client_mod {
             }
 
             stream.in_skip_bytes(2); /* pad */
+            TODO("check that : why am I reading 32 bits into 16 bits ?")
             uint16_t numberColors = stream.in_uint32_le();
             assert(numberColors == 256);
             for (int i = 0; i < numberColors; i++) {
@@ -3119,9 +2960,9 @@ struct mod_rdp : public client_mod {
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::process_server_caps");
             }
-            int ncapsets = stream.in_uint16_le();
+            uint16_t ncapsets = stream.in_uint16_le();
             stream.in_skip_bytes(2); /* pad */
-            for (int n = 0; n < ncapsets; n++) {
+            for (uint16_t n = 0; n < ncapsets; n++) {
                 uint16_t capset_type = stream.in_uint16_le();
                 uint16_t capset_length = stream.in_uint16_le();
                 uint8_t * next = (stream.p + capset_length) - 4;
@@ -3386,27 +3227,25 @@ struct mod_rdp : public client_mod {
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu");
         }
-        unsigned cache_idx;
-        unsigned dlen;
-        unsigned mlen;
-        struct rdp_cursor* cursor;
-
-        cache_idx = stream.in_uint16_le();
-        if (cache_idx >= (sizeof(this->cursors) / sizeof(cursor))) {
+        unsigned cache_idx = stream.in_uint16_le();
+        if (cache_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_CACHE_NOT_OK);
         }
-        cursor = this->cursors + cache_idx;
+        struct rdp_cursor* cursor = this->cursors + cache_idx;
         cursor->x = stream.in_uint16_le();
         cursor->y = stream.in_uint16_le();
         cursor->width = stream.in_uint16_le();
         cursor->height = stream.in_uint16_le();
-        mlen = stream.in_uint16_le(); /* mask length */
-        dlen = stream.in_uint16_le(); /* data length */
+        unsigned mlen = stream.in_uint16_le(); /* mask length */
+        unsigned dlen = stream.in_uint16_le(); /* data length */
         if ((mlen > sizeof(cursor->mask)) || (dlen > sizeof(cursor->data))) {
+            LOG(LOG_WARNING, "mod_rdp::Bad length for color pointer mask_len=%u data_len=%u",
+                (unsigned)mlen, (unsigned)dlen);
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
         }
-        memcpy( cursor->data, stream.in_uint8p( dlen),  dlen);
-        memcpy( cursor->mask, stream.in_uint8p( mlen),  mlen);
+        memcpy(cursor->data, stream.in_uint8p(dlen), dlen);
+        memcpy(cursor->mask, stream.in_uint8p(mlen), mlen);
+        
         mod->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
