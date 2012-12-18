@@ -320,6 +320,11 @@ struct FileToGraphic
                 this->record_now.tv_sec  = movie_usec / ucoeff; 
                 this->record_now.tv_usec = movie_usec % ucoeff;
 
+//                timeval last_movie_time = this->record_now;
+//                this->stream.in_timeval_from_uint64le_usec(this->record_now);
+//                
+                REDOC("If some data remains, it is input data : mouse or keyboard")
+
                 if (!this->timestamp_ok){
                    if (this->real_time) {
                         this->synctime_now = tvtime();
@@ -332,14 +337,18 @@ struct FileToGraphic
                 else {
                    if (this->real_time){
                         struct timeval now = tvtime();
+
                         uint64_t elapsed = difftimeval(now, this->synctime_now);
+
                         this->synctime_now = now;
                         
+//                        uint64_t movie_elapsed = difftimeval(this->record_now, last_movie_time);
                         uint64_t movie_elapsed = movie_usec - last_movie_usec;
+ 
                         if (elapsed <= movie_elapsed){
                             struct timespec wtime =
-                                { static_cast<uint32_t>((movie_elapsed - elapsed) / ucoeff)
-                                , static_cast<uint32_t>((movie_elapsed - elapsed) % ucoeff * 1000)
+                                { static_cast<uint32_t>((movie_elapsed - elapsed) / 1000000LL)
+                                , static_cast<uint32_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
                                 };
                             nanosleep(&wtime, NULL);
                         }
