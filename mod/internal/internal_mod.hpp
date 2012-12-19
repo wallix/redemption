@@ -184,7 +184,8 @@ struct internal_mod : public client_mod {
     }
 
     void draw_edit(const Rect & r, char password_char, char * buffer, size_t edit_pos, bool has_focus, const Rect & clip){
-        this->front.draw(RDPOpaqueRect(Rect(r.x+1, r.y+1, r.cx - 3, r.cy - 3), DARK_GREEN), clip);
+//        this->front.draw(RDPOpaqueRect(Rect(r.x+1, r.y+1, r.cx - 3, r.cy - 3), DARK_GREEN), clip);
+        this->front.draw(RDPOpaqueRect(Rect(r.x+1, r.y+1, r.cx - 3, r.cy - 3), WHITE), clip);
         this->front.draw(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), BLACK), clip);
         this->front.draw(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), BLACK), clip);
         this->front.draw(RDPOpaqueRect(Rect(r.x, r.y + r.cy - 1, r.cx, 1), WHITE), clip);
@@ -198,10 +199,12 @@ struct internal_mod : public client_mod {
             int i = mbstowcs(0, buffer, 0);
             memset(text, password_char, i);
             text[i] = 0;
-            this->front.server_draw_text(r.x + 4, r.y + 2, text, DARK_GREEN, LIGHT_GREEN, clip);
+//            this->front.server_draw_text(r.x + 4, r.y + 2, text, DARK_GREEN, LIGHT_GREEN, clip);
+            this->front.server_draw_text(r.x + 4, r.y + 2, text, WHITE, BLACK, clip);
         }
         else {
-            this->front.server_draw_text(r.x + 4, r.y + 2, buffer, DARK_GREEN, LIGHT_GREEN, clip);
+//            this->front.server_draw_text(r.x + 4, r.y + 2, buffer, DARK_GREEN, LIGHT_GREEN, clip);
+            this->front.server_draw_text(r.x + 4, r.y + 2, buffer, WHITE, BLACK, clip);
         }
         /* draw xor box(cursor) */
         if (has_focus) {
@@ -224,7 +227,8 @@ struct internal_mod : public client_mod {
             int h = 0;
             this->front.text_metrics(text, w, h);
             this->front.draw(
-                RDPOpaqueRect(Rect(r.x + 4 + w, r.y + 3, 2, r.cy - 6), PALE_GREEN),
+//                RDPOpaqueRect(Rect(r.x + 4 + w, r.y + 3, 2, r.cy - 6), PALE_GREEN),
+                RDPOpaqueRect(Rect(r.x + 4 + w, r.y + 3, 2, r.cy - 6), BLACK),
                 clip);
         }
     }
