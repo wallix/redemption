@@ -568,7 +568,7 @@ struct FileToGraphic
                     send_initial_image = false;
                 }
                 for (size_t i = 0; i < this->nbconsumers ; i++){
-                    this->consumers[i]->snapshot(this->record_now, 0, 0, true, false);
+                    this->consumers[i]->snapshot(this->record_now, this->mouse_x, this->mouse_y, false, false);
                 }
             }
             if (this->max_order_count && this->max_order_count <= this->total_orders_count){
