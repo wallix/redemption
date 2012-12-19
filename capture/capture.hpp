@@ -78,6 +78,7 @@ public:
             this->wrm_trans = new OutByFilenameSequenceWithMetaTransport(*this->meta_sequence, now, width, height, *this->wrm_sequence);
             this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288); 
             this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
+            this->pnc->recorder.send_input = true;
         }
    }
 

@@ -110,6 +110,9 @@ public:
         if (difftimeval(now, this->start_native_capture) 
                 >= this->inter_frame_interval_native_capture){
             this->recorder.timestamp(now);
+            if (!pointer_already_displayed){
+                this->recorder.mouse(static_cast<uint16_t>(x), static_cast<uint16_t>(y));
+            }
             this->start_native_capture = now;
             if (difftimeval(now, this->start_break_capture) 
                 >= this->inter_frame_interval_start_break_capture){

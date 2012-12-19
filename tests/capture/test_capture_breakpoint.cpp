@@ -98,11 +98,11 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         BOOST_CHECK_EQUAL((unsigned)3176, (unsigned)capture.png_sequence->filesize(6));
         capture.png_sequence->unlink(6);
 
-        BOOST_CHECK_EQUAL((unsigned)1610, (unsigned)capture.wrm_sequence->filesize(0));
+        BOOST_CHECK_EQUAL((unsigned)1622, (unsigned)capture.wrm_sequence->filesize(0));
         capture.wrm_sequence->unlink(0);
-        BOOST_CHECK_EQUAL((unsigned)3376, (unsigned)capture.wrm_sequence->filesize(1));
+        BOOST_CHECK_EQUAL((unsigned)3392, (unsigned)capture.wrm_sequence->filesize(1));
         capture.wrm_sequence->unlink(1);
-        BOOST_CHECK_EQUAL((unsigned)3363, (unsigned)capture.wrm_sequence->filesize(2));
+        BOOST_CHECK_EQUAL((unsigned)3371, (unsigned)capture.wrm_sequence->filesize(2));
         capture.wrm_sequence->unlink(2);
         // The destruction of capture object will finalize the metafile content
     }

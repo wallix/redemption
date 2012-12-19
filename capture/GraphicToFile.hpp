@@ -119,6 +119,9 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     const uint16_t width;
     const uint16_t height;
     const uint8_t  bpp;
+    uint16_t mouse_x;
+    uint16_t mouse_y;
+    bool send_input;
     RDPDrawable * drawable;
 
     GraphicToFile(const timeval& now
@@ -137,6 +140,9 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     , width(width)
     , height(height)
     , bpp(bpp)
+    , mouse_x(0)
+    , mouse_y(0)
+    , send_input(false)
     , drawable(drawable)
     {
         last_sent_timer.tv_sec = 0;
@@ -161,6 +167,13 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             this->trans->timestamp(now);
         }
     }
+
+    virtual void mouse(uint16_t mouse_x, uint16_t mouse_y)
+    {
+        this->mouse_x = mouse_x;
+        this->mouse_y = mouse_y;
+    }
+
 
     void send_meta_chunk(void)
     {
@@ -198,7 +211,12 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     void send_timestamp_chunk(void)
     {
         BStream payload(8);
+//        payload.out_timeval_to_uint64le_usec(this->timer);
         payload.out_uint64_le(this->timer.tv_sec * 1000000ULL + this->timer.tv_usec);
+        if (this->send_input){
+            payload.out_uint16_le(this->mouse_x);
+            payload.out_uint16_le(this->mouse_y);
+        }
         payload.mark_end();
 
         BStream header(8);

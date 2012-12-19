@@ -136,18 +136,18 @@ class Stream {
 
     void in_timeval_from_uint64le_usec(timeval & tv)
     {
-        uint64_t movie_usec_lo = this->in_uint32_le();
-        uint64_t movie_usec_hi = this->in_uint32_le();
-        tv.tv_sec = static_cast<uint32_t>((movie_usec_hi * 0x100000000LL + movie_usec_lo) / 1000000LL);
-        tv.tv_usec = static_cast<uint32_t>(movie_usec_lo % 1000000LL);
+        const uint64_t movie_usec_lo = this->in_uint32_le();
+        const uint64_t movie_usec_hi = this->in_uint32_le();
+        const uint64_t movie_usec = (movie_usec_hi * 0x100000000LL + movie_usec_lo);
+        tv.tv_usec = static_cast<uint32_t>(movie_usec % 1000000LL);
+        tv.tv_sec = static_cast<uint32_t>(movie_usec / 1000000LL);
     }
 
     void out_timeval_to_uint64le_usec(const timeval & tv)
     {
-        uint64_t sec = tv.tv_sec;
-        uint64_t usec = tv.tv_usec;
-        this->out_uint32_le(static_cast<uint32_t>((sec * 1000000LL + usec) / 0x100000000LL));
-        this->out_uint32_le(static_cast<uint32_t>(sec * 1000000LL + usec));
+        uint64_t usec = tv.tv_sec * 1000000ULL + tv.tv_usec;
+        this->out_uint32_le(static_cast<uint32_t>(usec));
+        this->out_uint32_le(static_cast<uint32_t>(usec >> 32));
     }
 
     void out_uint64_le(uint64_t v) {

@@ -79,6 +79,10 @@ struct FileToGraphic
 
     bool meta_ok;
     bool timestamp_ok;
+    uint16_t mouse_x;
+    uint16_t mouse_y;
+    uint16_t input_len;
+    uint8_t  input[8192];
     bool real_time;
 
     BGRPalette palette;
@@ -89,31 +93,34 @@ struct FileToGraphic
     uint32_t verbose;
 
     FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
-    : stream(65536), trans(trans),
-     // Internal state of orders
-    common(RDP::PATBLT, Rect(0, 0, 1, 1)),
-    destblt(Rect(), 0),
-    patblt(Rect(), 0, 0, 0, RDPBrush()),
-    scrblt(Rect(), 0, 0, 0),
-    opaquerect(Rect(), 0),
-    memblt(0, Rect(), 0, 0, 0, 0),
-    lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
-    glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
-    bmp_cache(NULL),
-    // variables used to read batch of orders "chunks"
-    chunk_size(0),
-    chunk_type(0),
-    chunk_count(0),
-    remaining_order_count(0),
-    total_orders_count(0),
-    nbconsumers(0),
-    meta_ok(false),
-    timestamp_ok(false),
-    real_time(real_time),
-    begin_capture(begin_capture),
-    end_capture(end_capture),
-    max_order_count(0),
-    verbose(verbose)
+        : stream(65536)
+        , trans(trans)
+        , common(RDP::PATBLT, Rect(0, 0, 1, 1))
+        , destblt(Rect(), 0)
+        , patblt(Rect(), 0, 0, 0, RDPBrush())
+        , scrblt(Rect(), 0, 0, 0)
+        , opaquerect(Rect(), 0)
+        , memblt(0, Rect(), 0, 0, 0, 0)
+        , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
+        , glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"")
+        , bmp_cache(NULL)
+        // variables used to read batch of orders "chunks"
+        , chunk_size(0)
+        , chunk_type(0)
+        , chunk_count(0)
+        , remaining_order_count(0)
+        , total_orders_count(0)
+        , nbconsumers(0)
+        , meta_ok(false)
+        , timestamp_ok(false)
+        , mouse_x(0)
+        , mouse_y(0)
+        , input_len(0)
+        , real_time(real_time)
+        , begin_capture(begin_capture)
+        , end_capture(end_capture)
+        , max_order_count(0)
+        , verbose(verbose)
     {
         init_palette332(this->palette); // We don't really care movies are always 24 bits for now
         
@@ -314,16 +321,25 @@ struct FileToGraphic
             break;
             case TIMESTAMP:
             {
-                const uint64_t ucoeff = 1000000;
-                uint64_t last_movie_usec = this->record_now.tv_sec * ucoeff + this->record_now.tv_usec;
-                uint64_t movie_usec = this->stream.in_uint64_le();
-                this->record_now.tv_sec  = movie_usec / ucoeff; 
-                this->record_now.tv_usec = movie_usec % ucoeff;
+                timeval last_movie_time = this->record_now;
+                this->stream.in_timeval_from_uint64le_usec(this->record_now);
 
-//                timeval last_movie_time = this->record_now;
-//                this->stream.in_timeval_from_uint64le_usec(this->record_now);
-//                
-                REDOC("If some data remains, it is input data : mouse or keyboard")
+                REDOC("If some data remains, it is input data : mouse_x, mouse_y and decoded keyboard keys (utf8)")
+                if (this->stream.end - this->stream.p > 0){
+                    if (this->stream.end - this->stream.p < 4){
+                        LOG(LOG_WARNING, "Input data truncated");
+                        hexdump_d(stream.p, stream.end - stream.p);
+                    }
+                    this->mouse_x = this->stream.in_uint16_le();
+                    this->mouse_y = this->stream.in_uint16_le();
+                    this->input_len = std::min(static_cast<uint16_t>(stream.end - stream.p), static_cast<uint16_t>(sizeof(this->input)-1));
+                    if (this->input_len){
+                        this->stream.in_copy_bytes(this->input, this->input_len);
+                        this->input[this->input_len] = 0;
+                        this->stream.p = this->stream.end;
+                    }
+                }
+
 
                 if (!this->timestamp_ok){
                    if (this->real_time) {
@@ -337,13 +353,9 @@ struct FileToGraphic
                 else {
                    if (this->real_time){
                         struct timeval now = tvtime();
-
                         uint64_t elapsed = difftimeval(now, this->synctime_now);
-
                         this->synctime_now = now;
-                        
-//                        uint64_t movie_elapsed = difftimeval(this->record_now, last_movie_time);
-                        uint64_t movie_elapsed = movie_usec - last_movie_usec;
+                        uint64_t movie_elapsed = difftimeval(this->record_now, last_movie_time);
  
                         if (elapsed <= movie_elapsed){
                             struct timespec wtime =
