@@ -210,9 +210,9 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void send_timestamp_chunk(void)
     {
-        BStream payload(8);
-//        payload.out_timeval_to_uint64le_usec(this->timer);
-        payload.out_uint64_le(this->timer.tv_sec * 1000000ULL + this->timer.tv_usec);
+        BStream payload(12);
+        payload.out_timeval_to_uint64le_usec(this->timer);
+//        payload.out_uint64_le(this->timer.tv_sec * 1000000ULL + this->timer.tv_usec);
         if (this->send_input){
             payload.out_uint16_le(this->mouse_x);
             payload.out_uint16_le(this->mouse_y);
@@ -220,7 +220,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         payload.mark_end();
 
         BStream header(8);
-        WRMChunk_Send chunk(header, TIMESTAMP, 8, 1);
+        WRMChunk_Send chunk(header, TIMESTAMP, payload.size(), 1);
         this->trans->send(header.data, header.size());
         this->trans->send(payload.data, payload.size());
     }
