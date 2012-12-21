@@ -93,12 +93,12 @@ class SslRC4
     public:
     SslRC4(){}    
 
-    void set_key(size_t key_len, uint8_t * key)
+    void set_key(uint8_t * key, size_t key_len)
     {
         RC4_set_key(&this->rc4, key_len, key);
     }
 
-    void crypt(size_t len, uint8_t * data){
+    void crypt(uint8_t * data, size_t len){
         RC4(&this->rc4, len, data, data);
     }
 };
@@ -296,12 +296,12 @@ struct CryptContext
             ssllib ssl;
             ssl.sec_make_40bit(this->key);
             memcpy(this->update_key, this->key, 16);
-            this->rc4.set_key(8, this->key);
+            this->rc4.set_key(this->key, 8);
         }
         else {
         // 128 bits encryption
             memcpy(this->update_key, this->key, 16);
-            this->rc4.set_key(16, this->key);
+            this->rc4.set_key(this->key, 16);
         }
     }
 
@@ -338,16 +338,16 @@ struct CryptContext
             md5.update(shasig, 20);
             md5.final(this->key);
 
-            this->rc4.set_key(keylen, this->key);
-            this->rc4.crypt(keylen, this->key);
+            this->rc4.set_key(this->key, keylen);
+            this->rc4.crypt(this->key, keylen);
 
             if (this->encryptionMethod == 1){
                 ssl.sec_make_40bit(this->key);
             }
-            this->rc4.set_key(keylen, this->key);
+            this->rc4.set_key(this->key, keylen);
             this->use_count = 0;
         }
-        this->rc4.crypt(len, data);
+        this->rc4.crypt(data, len);
         this->use_count++;
     }
 
