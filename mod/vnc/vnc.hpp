@@ -1155,5 +1155,6 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             LOG( LOG_INFO, "mod_vnc::send_to_channel done" );
         }
     } // send_to_channel
+};
 
-// END
+#endif
