@@ -336,8 +336,8 @@ struct ModContext : public Dico {
         LOG(LOG_INFO, "asking for selector");
 
         if (username[0]){
-            unsigned iusername = 0;
-            unsigned ihost = 0;
+            unsigned itarget_user = 0;
+            unsigned itarget_device = 0;
             unsigned iprotocol = 0;
             unsigned iauthuser = 0;
             // well if that is not obvious the code below this
@@ -351,22 +351,22 @@ struct ModContext : public Dico {
             // the protocol is what follows the first :
             // the user is what follows the second :, or what follows the unique : (if only one is found)
 
-            enum { COPY_USERNAME
+            enum { COPY_TARGET_USER
                  , COPY_HOST
                  , COPY_AUTHUSER
-            } state = COPY_USERNAME;
+            } state = COPY_TARGET_USER;
 
             unsigned c;
 
             for (unsigned i = 0; i < 255 && (c = username[i]); i++){
                 switch (state) {
-                case COPY_USERNAME:
+                case COPY_TARGET_USER:
                     switch (c){
                     case ':': state = COPY_AUTHUSER;
                     break;
                     case '@': state = COPY_HOST;
                     break;
-                    default: target_user[iusername++] = c;
+                    default: target_user[itarget_user++] = c;
                     break;
                     }
                 break;
@@ -375,18 +375,18 @@ struct ModContext : public Dico {
                         case ':': state = COPY_AUTHUSER;
                            break;
                         case '@':
-                            target_user[iusername++] = '@';
-                            memcpy(target_user+iusername, target_device, ihost);
-                            iusername += ihost;
-                            ihost = 0;
+                            target_user[itarget_user++] = '@';
+                            memcpy(target_user+itarget_user, target_device, itarget_device);
+                            itarget_user += itarget_device;
+                            itarget_device = 0;
                             break;
-                        default: target_device[ihost++] = c;
+                        default: target_device[itarget_device++] = c;
                          break;
                     }
                 break;
                 case COPY_AUTHUSER:
                     switch (c){
-                        case ':':
+                        case ':': // second ':' means we had 'protocol:user' pair
                             memcpy(target_protocol, auth_user, iauthuser);
                             iprotocol = iauthuser;
                             iauthuser = 0;
@@ -397,37 +397,54 @@ struct ModContext : public Dico {
                 break;
                 }
             }
-            target_user[iusername] = 0;
-            target_device[ihost] = 0;
+            target_user[itarget_user] = 0;
+            target_device[itarget_device] = 0;
             target_protocol[iprotocol] = 0;
             auth_user[iauthuser] = 0;
-            if ((iusername > 0) && (ihost == 0) && (iauthuser == 0)){
-                memcpy(auth_user, target_user, iusername);
-                auth_user[iusername] = 0;
-                target_user[0] = 0;
+            if (iauthuser == 0){
+                if ((itarget_user > 0) && (itarget_device == 0)){
+                    memcpy(auth_user, target_user, itarget_user);
+                    target_user[0] = 0;
+                    auth_user[itarget_user] = 0;
+                }
+                if ((itarget_user > 0) && (itarget_device > 0)){
+                    memcpy(auth_user, target_user, itarget_user);
+                    target_user[0] = 0;
+                    auth_user[itarget_user] = '@';
+                    memcpy(auth_user + 1 + itarget_user, target_device, itarget_device);
+                    target_device[0] = 0;
+                    auth_user[itarget_user + 1 + itarget_device] = 0;
+                }
+            }
+            // 'win:user' means user@win:user
+            else if ((itarget_user != 0) && (itarget_device == 0)){
+                memcpy(target_device, target_user, itarget_user);
+                target_device[itarget_user] = 0;
+                memcpy(target_user, auth_user, iauthuser);
+                target_user[iauthuser] = 0;
             }
         }
 
-        if (!*target_user)
+        if (*target_user == 0)
         {
             this->ask(STRAUTHID_TARGET_USER);
         }
         else {
             this->cpy(STRAUTHID_TARGET_USER, target_user);
         }
-        if (!*target_device) {
+        if (*target_device == 0) {
             this->ask(STRAUTHID_TARGET_DEVICE);
         }
         else {
             this->cpy(STRAUTHID_TARGET_DEVICE, target_device);
         }
-        if (!*target_protocol) {
+        if (*target_protocol == 0) {
             this->ask(STRAUTHID_TARGET_PROTOCOL);
         }
         else {
             this->cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
         }
-        if (!*auth_user) {
+        if (*auth_user == 0) {
             this->ask(STRAUTHID_AUTH_USER);
         }
         else {
