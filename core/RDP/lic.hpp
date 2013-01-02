@@ -2063,8 +2063,9 @@ namespace LIC
 
             // following data is encrypted using license_key
             SslRC4 rc4;
-            rc4.set_key(16, license_key);
-            rc4.crypt(this->licenseInfo.wBlobLen, stream.p);
+            rc4.set_key(license_key, 16);
+            TODO("use a substream instead, check buffer overflows in substreams")
+            rc4.crypt(stream.p, this->licenseInfo.wBlobLen);
 
             // now it's unencrypted, we can read it
             this->licenseInfo.dwVersion = stream.in_uint32_le();
@@ -2193,8 +2194,8 @@ namespace LIC
 
             // following data is encrypted using license_key
             SslRC4 rc4;
-            rc4.set_key(16, license_key);
-            rc4.crypt(this->licenseInfo.wBlobLen, stream.p);
+            rc4.set_key(license_key, 16);
+            rc4.crypt(stream.p, this->licenseInfo.wBlobLen);
 
             // now it's unencrypted, we can read it
             this->licenseInfo.dwVersion = stream.in_uint32_le();

@@ -1253,8 +1253,8 @@ struct mod_rdp : public client_mod {
                                 /* Now encrypt the HWID */
 
                                 SslRC4 rc4;
-                                rc4.set_key(16, this->lic_layer_license_key);
-                                rc4.crypt(sizeof(hwid), hwid);
+                                rc4.set_key(this->lic_layer_license_key, 16);
+                                rc4.crypt(hwid, sizeof(hwid));
 
                                 LIC::ClientLicenseInfo_Send(lic_data, this->use_rdp5?3:2, 
                                     this->lic_layer_license_size, this->lic_layer_license_data, hwid, signature);
@@ -1292,8 +1292,8 @@ struct mod_rdp : public client_mod {
                             /* Decrypt the token. It should read TEST in Unicode. */
                             memcpy(decrypt_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
                             SslRC4 rc4_decrypt_token;
-                            rc4_decrypt_token.set_key(16, this->lic_layer_license_key);
-                            rc4_decrypt_token.crypt(LIC::LICENSE_TOKEN_SIZE, decrypt_token);
+                            rc4_decrypt_token.set_key(this->lic_layer_license_key, 16);
+                            rc4_decrypt_token.crypt(decrypt_token, LIC::LICENSE_TOKEN_SIZE);
 
                             /* Generate a signature for a buffer of token and HWID */
                             buf_out_uint32(hwid, 2);
@@ -1309,8 +1309,8 @@ struct mod_rdp : public client_mod {
                             /* Now encrypt the HWID */
                             memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
                             SslRC4 rc4_hwid;
-                            rc4_hwid.set_key(16, this->lic_layer_license_key);
-                            rc4_hwid.crypt(LIC::LICENSE_HWID_SIZE, crypt_hwid);
+                            rc4_hwid.set_key(this->lic_layer_license_key, 16);
+                            rc4_hwid.crypt(crypt_hwid, LIC::LICENSE_HWID_SIZE);
 
                             BStream x224_header(256);
                             BStream mcs_header(256);

@@ -58,12 +58,16 @@ class Stream {
         this->end = this->p = this->data;
     }
 
-    bool has_room(unsigned n) {
+    bool has_room(unsigned n) const {
         return this->get_offset() + n <= this->capacity;
     }
 
-    uint16_t get_offset(){
+    uint16_t get_offset() const {
         return this->p - this->data;
+    }
+
+    uint16_t room() const {
+        return this->capacity - this->get_offset();
     }
 
     bool in_check_rem(unsigned n) {
@@ -1429,17 +1433,31 @@ class SubStream : public Stream {
 
     SubStream(){}  // not yet initialized
 
-    SubStream(const Stream & stream, size_t offset = 0)
+    SubStream(const Stream & stream, size_t offset = 0, size_t new_size = 0)
     {
+        if ((offset + new_size) > stream.capacity){
+            LOG(LOG_ERR, "Substream allocation overflow capacity=%u offset=%u new_size=%u", 
+                static_cast<unsigned>(stream.capacity),
+                static_cast<unsigned>(offset), 
+                static_cast<unsigned>(new_size));
+            throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
+        }
         this->p = this->data = stream.data + offset;
-        this->capacity = stream.capacity - offset;
-        this->end = stream.end;
+        this->capacity = (new_size == 0)?(stream.capacity - offset):new_size;
+        this->end = this->data + this->capacity;
     }
 
     void resize(const Stream & stream, size_t new_size){
         this->data = this->p = stream.p;
+        if (new_size > (stream.room())){
+            LOG(LOG_ERR, "Substream resize overflow capacity=%u offset=%u new_size=%u", 
+                static_cast<unsigned>(stream.capacity),
+                static_cast<unsigned>(stream.get_offset()), 
+                static_cast<unsigned>(new_size));
+            throw Error(ERR_SUBSTREAM_OVERFLOW_IN_RESIZE);
+        }
         this->capacity = new_size;
-        this->end = this->data + new_size;
+        this->end = stream.p + new_size;
     }
 
     virtual ~SubStream() {}
