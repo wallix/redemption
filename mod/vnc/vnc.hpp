@@ -1100,7 +1100,17 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     BStream out_s(8192);
                     out_s.out_uint16_le(5);
                     out_s.out_uint16_le(1);
-                    out_s.out_uint32_le(this->clip_data_size * 2 + 2);
+
+                    // Convert utf-8 VNC buffer to utf-16 for RDP
+                    uint8_t dataU16[this->clip_data_size * 2];
+                    memset(dataU16, 0, sizeof(dataU16));
+                    const uint8_t * pdataU8 = this->clip_data.data;
+                    uint8_t * pdataU16 = dataU16;
+                    UTF8toUTF16(&pdataU8, this->clip_data_size, &pdataU16, (this->clip_data_size * 2));
+
+                    out_s.out_uint32_le((pdataU16 - dataU16));
+                    stream.in_copy_bytes(dataU16, (pdataU16 - dataU16));
+
                     for (size_t index = 0; index < this->clip_data_size; index++) {
                         out_s.out_uint8(this->clip_data.data[index]);
                         out_s.out_uint8(0);
@@ -1130,20 +1140,19 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                 uint16_t msgFlags = stream.in_uint16_le();
                 if (msgFlags == 1) {
 
-                    uint32_t dataLen1 = stream.in_uint32_le();
-                    uint8_t data1[dataLen1];
-                    stream.in_copy_bytes(data1, dataLen1);
+                    uint32_t dataLenU16 = stream.in_uint32_le();
+                    uint8_t dataU16[dataLenU16];
+                    memset(dataU16, 0, sizeof(dataU16));
+                    stream.in_copy_bytes(dataU16, dataLenU16);
 
-                    // strip RDP null bytes from clipboard buffer
-                    uint8_t data2[dataLen1];
-                    int dataLen2 = 0;
-                    memset(data2, 0, dataLen1);
-                    for (int i = 0; i < dataLen1; i++) {
-                        if (*(data1+i) != 0) {
-                            data2[dataLen2++] = *(data1+i);
-                        }
-                    }
-                    this->rdp_input_clip_data(data2, dataLen2);
+                    // Convert utf-16 RDP buffer to utf-8 for VNC
+                    uint8_t dataU8[dataLenU16];
+                    memset(dataU8, 0, sizeof(dataU8));
+                    const uint8_t * pdataU16 = dataU16;
+                    uint8_t * pdataU8 = dataU8;
+                    UTF16toUTF8(&pdataU16, dataLenU16, &pdataU8, dataLenU16);
+
+                    this->rdp_input_clip_data(dataU8, (pdataU8 - dataU8));
                 }
                 break;
             }
@@ -1155,6 +1164,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             LOG( LOG_INFO, "mod_vnc::send_to_channel done" );
         }
     } // send_to_channel
+
 };
 
 #endif
