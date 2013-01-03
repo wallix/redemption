@@ -1569,7 +1569,7 @@ namespace GCC
                 stream.out_uint32_le(this->channelCount);
                 for (size_t i = 0; i < this->channelCount ; i++){
                     stream.out_copy_bytes(this->channelDefArray[i].name, 8);
-                    stream.out_uint32_be(this->channelDefArray[i].options);
+                    stream.out_uint32_le(this->channelDefArray[i].options);
                 }
                 stream.mark_end();
             }
@@ -1581,7 +1581,7 @@ namespace GCC
                 this->channelCount = stream.in_uint32_le();
                 for (size_t i = 0; i < this->channelCount ; i++){
                     stream.in_copy_bytes(this->channelDefArray[i].name, 8);
-                    this->channelDefArray[i].options = stream.in_uint32_be();
+                    this->channelDefArray[i].options = stream.in_uint32_le();
                 }
             }
 
@@ -1670,7 +1670,7 @@ namespace GCC
             {
                 this->length = 8 + 2 * this->channelCount + 2 * (this->channelCount & 1);
                 stream.out_uint16_le(this->userDataType);
-                stream.out_uint16_le(this->length);        
+                stream.out_uint16_le(this->length);
                 stream.out_uint16_le(this->MCSChannelId);
                 stream.out_uint16_le(this->channelCount);
                 for (size_t i = 0; i < this->channelCount ; i++){
@@ -1686,10 +1686,10 @@ namespace GCC
             {
                 this->userDataType = stream.in_uint16_le();
                 this->length = stream.in_uint16_le();
-                this->MCSChannelId = this->length = stream.in_uint16_le();
+                this->MCSChannelId = stream.in_uint16_le();
                 this->channelCount = stream.in_uint16_le();
                 for (size_t i = 0; i < this->channelCount ; i++){
-                    this->channelDefArray[i].id = stream.in_uint32_be();
+                    this->channelDefArray[i].id = stream.in_uint16_le();
                 }
                 if (this->channelCount & 1){
                     stream.in_skip_bytes(2);
