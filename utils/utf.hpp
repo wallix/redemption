@@ -36,7 +36,7 @@ static inline void UTF8toUTF16(const uint8_t ** s, size_t s_len, uint8_t ** t, s
     size_t i_t = 0; 
     // naive first implementation, not check for length, not check for error or invalid sequences
     size_t i = 0;
-    while (i < s_len){
+    while (i + 1 < s_len){
         unsigned c = source[i];
         i++;
         switch (c >> 4){
@@ -53,16 +53,36 @@ static inline void UTF8toUTF16(const uint8_t ** s, size_t s_len, uint8_t ** t, s
                 c = (c << 12)|((source[i] & 0x3F) << 6)|(source[i+1] & 0x3F);
                 i += 2;
             break;
-            case 0xF0:
+            default:
+            case 0xF:
                 LOG(LOG_ERR, "complicated cases not yet supported");
                 goto UTF8toUTF16_exit;
             break;
         }
-        if (i_t + 2 > t_len) { break; }
+        if (i_t + 2 > t_len) { goto UTF8toUTF16_exit; }
         target[i_t] = c & 0xFF;
         target[i_t + 1] = (c >> 8) & 0xFF;
         i_t += 2;
     }
+    if (i < s_len){
+        unsigned c = source[i];
+        switch (c >> 4){
+            case 0: case 1: case 2: case 3: 
+            case 4: case 5: case 6: case 7:
+                i++;
+            break;
+             /* handle 2 or 3 bytes sequences */ 
+            default:
+                LOG(LOG_ERR, "complicated cases not yet supported");
+                goto UTF8toUTF16_exit;
+            break;
+        }
+        if (i_t + 2 > t_len) { goto UTF8toUTF16_exit; }
+        target[i_t] = c & 0xFF;
+        target[i_t + 1] = (c >> 8) & 0xFF;
+        i_t += 2;
+    }
+
 UTF8toUTF16_exit:
     *s = source + i;
     *t = target + i_t;
