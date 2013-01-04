@@ -1018,11 +1018,11 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
                     // 03 00 01 00 00 00 00 00 00 00 00 00
 
-                                              //- Beginning of clipboard PDU Header ----------------------------
+                    //--------------------------- Beginning of clipboard PDU Header ----------------------------
                     out_s.out_uint16_le(3);   //  - MSG Type 2 bytes
                     out_s.out_uint16_le(1);   //  - MSG flags 2 bytes
                     out_s.out_uint32_le(0);   //  - Datalen of the rest of the message
-                                              //- End of clipboard PDU Header ----------------------------------
+                    //--------------------------- End of clipboard PDU Header ----------------------------------
                     out_s.out_clear_bytes(8);
                     out_s.mark_end();
 
@@ -1042,14 +1042,14 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
                     // 04 00 00 00 04 00 00 00 0d 00 00 00 00 00 00 00
 
-                                              //- Beginning of clipboard PDU Header ----------------------------
+                    //--------------------------- Beginning of clipboard PDU Header ----------------------------
                     out_s.out_uint16_le(4);   //  - MSG Type 2 bytes
                     out_s.out_uint16_le(0);   //  - MSG flags 2 bytes
                     out_s.out_uint32_le(4);   //  - Datalen of the rest of the message
-                                              //- End of clipboard PDU Header ----------------------------------
-                                              //- Beginning of Format list PDU payload -------------------------
+                    //--------------------------- End of clipboard PDU Header ----------------------------------
+                    //--------------------------- Beginning of Format list PDU payload -------------------------
                      out_s.out_uint32_le(13); //  - Payload
-                                              //- End of Format list PDU payload -------------------------------
+                    //--------------------------- End of Format list PDU payload -------------------------------
                     out_s.out_clear_bytes(4);
                     out_s.mark_end();
 
@@ -1098,8 +1098,6 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                 // only support CF_UNICODETEXT
                 if (resquestedFormatId == CF_UNICODETEXT) {
                     BStream out_s(8192);
-                    out_s.out_uint16_le(5);
-                    out_s.out_uint16_le(1);
 
                     // Convert utf-8 VNC buffer to utf-16 for RDP
                     uint8_t dataU16[this->clip_data_size * 2];
@@ -1108,13 +1106,14 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     uint8_t * pdataU16 = dataU16;
                     UTF8toUTF16(&pdataU8, this->clip_data_size, &pdataU16, (this->clip_data_size * 2));
 
-                    out_s.out_uint32_le((pdataU16 - dataU16));
-                    stream.in_copy_bytes(dataU16, (pdataU16 - dataU16));
-
-                    for (size_t index = 0; index < this->clip_data_size; index++) {
-                        out_s.out_uint8(this->clip_data.data[index]);
-                        out_s.out_uint8(0);
-                    }
+                    //--------------------------- Beginning of clipboard PDU Header ----------------------------
+                    out_s.out_uint16_le(5);                    //  - MSG Type 2 bytes
+                    out_s.out_uint16_le(1);                    //  - MSG flags 2 bytes
+                    out_s.out_uint32_le((pdataU16 - dataU16)); //  - Datalen of the rest of the message
+                    //--------------------------- End of clipboard PDU Header ----------------------------------
+                    //--------------------------- Beginning of Format Data Response PDU payload ----------------
+                    out_s.out_copy_bytes(dataU16, (pdataU16 - dataU16));
+                    //--------------------------- End of Format Data Response PDU payload ----------------------
                     out_s.out_clear_bytes(2);
                     out_s.mark_end();
 
