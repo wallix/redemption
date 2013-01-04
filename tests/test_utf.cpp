@@ -34,56 +34,6 @@
 //#include <unicode/ustring.h>
 #include <stdio.h>
 
-//BOOST_AUTO_TEST_CASE(TestUTF8_UTF32)
-//{
-//    uint8_t source[] = "abcedeféçà@";
-//    int32_t i = 0;
-//    size_t length = sizeof(source);
-//    uint32_t c = 0;
-//    uint32_t expected_target[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xE9 /* é */, 0xE7 /* ç */, 0xE0 /* à */, '@', 0 };
-//    size_t target_length = sizeof(expected_target)/sizeof(expected_target[0]);
-//    uint32_t target[target_length];
-
-
-//    uint32_t t_count = 0;
-//    while (i < length){    
-//        U8_NEXT(source, i, length, c);
-//        target[t_count++] = c;
-//    }
-
-//    // Check UTF32 result (array of code points)
-//    BOOST_CHECK_EQUAL(target_length, t_count);
-//    for (size_t q = 0 ; q < target_length ; q++){
-//        if (expected_target[q] != target[q]){
-//            printf("at %u: expected %u, got %u\n", q, expected_target[q] ,target[q]);
-//            BOOST_CHECK(false);
-//        }
-//    }
-//}
-
-//BOOST_AUTO_TEST_CASE(TestUTF8_UTF32)
-//{
-//    char source[] = "abcedeféçà@";
-//    size_t source_length = sizeof(source);
-//    UChar expected_target[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xE9 /* é */, 0xE7 /* ç */, 0xE0 /* à */, '@', 0 };
-//    const size_t target_length = sizeof(expected_target)/sizeof(expected_target[0]);
-//    UChar target[target_length];
-
-//    int32_t nb = 0;
-//    UErrorCode error = U_ZERO_ERROR;
-//    u_strFromUTF8(target, target_length, &nb, source, source_length, &error);
-
-//    // Check UTF32 result (array of code points)
-//    BOOST_CHECK_EQUAL(target_length, nb);
-//    for (size_t q = 0 ; q < target_length ; q++){
-//        if (expected_target[q] != target[q]){
-//            printf("at %u: expected %u, got %u\n", q, expected_target[q] ,target[q]);
-//            BOOST_CHECK(false);
-//        }
-//    }
-//}
-
-
 BOOST_AUTO_TEST_CASE(TestUTF8_UTF16)
 {
     uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
@@ -124,7 +74,45 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16)
             BOOST_CHECK(false);
         }
     }
+}
 
+
+BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_invalid_utf8)
+{
+    uint8_t source[] = {0xC3, 0xA9 /* é */, 0xC3 };
+    size_t source_length = sizeof(source);
+    uint8_t expected_target[] = { 0xE9, 0 /* é */ };
+    const size_t target_length = sizeof(expected_target)/sizeof(expected_target[0]);
+    uint8_t target[target_length];
+
+    const uint8_t * psource = source;
+    uint8_t * ptarget = target;
+    UTF8toUTF16(&psource, source_length, &ptarget, target_length);
+
+    // Check result
+    BOOST_CHECK_EQUAL(target_length, ptarget - target);
+    BOOST_CHECK_EQUAL(source_length - 1, psource - source);
+    for (size_t q = 0 ; q < target_length ; q++){
+        if (expected_target[q] != target[q]){
+            printf("at %u: expected %u, got %u\n", (unsigned)q, expected_target[q], target[q]);
+            BOOST_CHECK(false);
+        }
+    }
+
+    uint8_t source_round_trip[15];
+    const uint8_t * psource2 = expected_target;
+    uint8_t * ptarget2 = source_round_trip;
+
+    UTF16toUTF8(&psource2, target_length, &ptarget2, source_length);
+
+    // Check round trip result
+    BOOST_CHECK_EQUAL(source_length - 1, ptarget2 - source_round_trip);
+    for (size_t q = 0 ; q < source_length - 1 ; q++){
+        if (source_round_trip[q] != source[q]){
+            printf("at %u: expected %x, got %x\n", (unsigned)q, source[q], source_round_trip[q]);
+            BOOST_CHECK(false);
+        }
+    }
 
 }
 
