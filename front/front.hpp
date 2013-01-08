@@ -2574,6 +2574,8 @@ TODO("Pass font name as parameter in constructor")
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_UPDATE");
             }
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
+            sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_CONTROL: // 20(0x14) Control PDU (section 2.2.1.15.1)
             if (this->verbose){
@@ -2599,6 +2601,8 @@ TODO("Pass font name as parameter in constructor")
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_POINTER");
             }
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
+            sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_INPUT:   // 28(0x1c) Input PDU (section 2.2.8.1.1.3)
             {
@@ -2700,15 +2704,20 @@ TODO("Pass font name as parameter in constructor")
                 }
             }
         break;
-        case PDUTYPE2_PLAY_SOUND:   // Play Sound PDU (section 2.2.9.1.1.5.1)
+        case PDUTYPE2_PLAY_SOUND:   // Play Sound PDU (section 2.2.9.1.1.5.1):w
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");
             }
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
+            sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_SUPPRESS_OUTPUT:  // Suppress Output PDU (section 2.2.11.3.1)
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_SUPPRESS_OUTPUT");
             }
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
+            sdata_in.payload.p = sdata_in.payload.end;
+
             // PDUTYPE2_SUPPRESS_OUTPUT comes when minimizing a full screen
             // mstsc.exe 2600. I think this is saying the client no longer wants
             // screen updates and it will issue a PDUTYPE2_REFRESH_RECT above
@@ -2759,11 +2768,15 @@ TODO("Pass font name as parameter in constructor")
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");
             }
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
+            sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_SAVE_SESSION_INFO: // Save Session Info PDU (section 2.2.10.1.1)
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");
             }
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
+            sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_FONTLIST: // 39(0x27) Font List PDU (section 2.2.1.18.1)
         {
@@ -2826,11 +2839,15 @@ TODO("Pass font name as parameter in constructor")
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_FONTMAP");
             }
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
+            sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_SET_KEYBOARD_INDICATORS: // Set Keyboard Indicators PDU (section 2.2.8.2.1.1)
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_INDICATORS");
             }
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
+            sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST: // Persistent Key List PDU (section 2.2.1.17.1)
             if (this->verbose){
@@ -2842,36 +2859,50 @@ TODO("Pass font name as parameter in constructor")
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_ERROR_PDU");
             }
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
+            sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_SET_KEYBOARD_IME_STATUS: // Set Keyboard IME Status PDU (section 2.2.8.2.2.1)
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_IME_STATUS");
             }
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
+            sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_OFFSCRCACHE_ERROR_PDU: // Offscreen Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.2)
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_OFFSCRCACHE_ERROR_PDU");
             }
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
+            sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_SET_ERROR_INFO_PDU: // Set Error Info PDU (section 2.2.5.1.1)
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");
             }
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
+            sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_DRAWNINEGRID_ERROR_PDU: // DrawNineGrid Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.3)
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_DRAWNINEGRID_ERROR_PDU");
             }
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
+            sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_DRAWGDIPLUS_ERROR_PDU: // GDI+ Error PDU (see [MS-RDPEGDI] section 2.2.2.3.4)
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_DRAWGDIPLUS_ERROR_PDU");
             }
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
+            sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_ARC_STATUS_PDU: // Auto-Reconnect Status PDU (section 2.2.4.1.1)
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_ARC_STATUS_PDU");
             }
+            // TODO this quickfix prevents a tech crash, but consuming the data should be a better behaviour
+            sdata_in.payload.p = sdata_in.payload.end;
         break;
 
         default:
