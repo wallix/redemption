@@ -729,6 +729,7 @@ struct InfoPacket {
 
         stream.out_uint32_le(this->CodePage);
         stream.out_uint32_le(this->flags);
+
         stream.out_uint16_le(this->cbDomain);
         stream.out_uint16_le(this->cbUserName);
         stream.out_uint16_le(this->cbPassword);

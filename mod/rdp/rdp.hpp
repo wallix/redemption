@@ -3470,16 +3470,27 @@ struct mod_rdp : public client_mod {
         BStream stream(1024);
         InfoPacket infoPacket;
         infoPacket.rdp5_support = this->use_rdp5;
-        infoPacket.cbDomain = 2 * strlen(this->domain);
+
+        const uint8_t * pDomain = reinterpret_cast<const uint8_t *>(this->domain);
+        infoPacket.cbDomain = UTF8len(&pDomain, strlen(this->domain))*2;
         memcpy(infoPacket.Domain, this->domain, infoPacket.cbDomain);
-        infoPacket.cbUserName = 2 * strlen(this->username);
+
+        const uint8_t * pUsername = reinterpret_cast<const uint8_t *>(this->username);    
+        infoPacket.cbUserName = UTF8len(&pUsername, strlen(this->username))*2;
         memcpy(infoPacket.UserName, this->username, infoPacket.cbUserName);
-        infoPacket.cbPassword = 2 * strlen(password);
+
+        const uint8_t * pPassword = reinterpret_cast<const uint8_t *>(password);
+        infoPacket.cbPassword = UTF8len(&pPassword, strlen(password))*2;
         memcpy(infoPacket.Password, password, infoPacket.cbPassword);
-        infoPacket.cbAlternateShell = 2 * strlen(this->program);
+
+        const uint8_t * pProgram = reinterpret_cast<const uint8_t *>(this->program);
+        infoPacket.cbAlternateShell = UTF8len(&pProgram, strlen(this->program))*2;
         memcpy(infoPacket.AlternateShell, this->program, infoPacket.cbAlternateShell);
-        infoPacket.cbWorkingDir = 2 * strlen(this->directory);
+
+        const uint8_t * pDirectory = reinterpret_cast<const uint8_t *>(this->directory);
+        infoPacket.cbWorkingDir = UTF8len(&pDirectory, strlen(this->directory));
         memcpy(infoPacket.WorkingDir, this->directory, infoPacket.cbWorkingDir);
+
         infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG
                                                                                                    | PERF_DISABLE_MENUANIMATIONS );
                                                                                                    
