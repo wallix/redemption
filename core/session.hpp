@@ -301,11 +301,6 @@ struct Session {
                                 // default is "allow", do nothing special
                             }
 
-                            if (this->mod != this->no_mod) {
-                                delete this->mod;
-                                this->mod = this->no_mod;
-                            }
-
                             this->mod->refresh_context(*this->context);
 
                             this->mod->event.set();
