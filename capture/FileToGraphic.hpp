@@ -229,6 +229,9 @@ struct FileToGraphic
                 {
                     RDPBmpCache cmd;
                     cmd.receive(this->stream, control, header, this->palette);
+                    if (this->verbose > 32){
+                        cmd.log(LOG_INFO);
+                    }
                     this->bmp_cache->put(cmd.id, cmd.idx, cmd.bmp);
                 }
                 break;
@@ -268,30 +271,45 @@ struct FileToGraphic
                     break;
                 case RDP::DESTBLT:
                     this->destblt.receive(this->stream, header);
+                    if (this->verbose > 32){
+                        this->destblt.log(LOG_INFO, clip);
+                    }
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->destblt, clip);
                     }
                     break;
                 case RDP::PATBLT:
                     this->patblt.receive(this->stream, header);
+                    if (this->verbose > 32){
+                        this->patblt.log(LOG_INFO, clip);
+                    }
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->patblt, clip);
                     }
                     break;
                 case RDP::SCREENBLT:
                     this->scrblt.receive(this->stream, header);
+                    if (this->verbose > 32){
+                        this->scrblt.log(LOG_INFO, clip);
+                    }
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->scrblt, clip);
                     }
                     break;
                 case RDP::LINE:
                     this->lineto.receive(this->stream, header);
+                    if (this->verbose > 32){
+                        this->lineto.log(LOG_INFO, clip);
+                    }
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->lineto, clip);
                     }
                     break;
                 case RDP::RECT:
                     this->opaquerect.receive(this->stream, header);
+                    if (this->verbose > 32){
+                        this->opaquerect.log(LOG_INFO, clip);
+                    }
                     for (size_t i = 0; i < this->nbconsumers ; i++){
                         this->consumers[i]->draw(this->opaquerect, clip);
                     }
@@ -299,6 +317,9 @@ struct FileToGraphic
                 case RDP::MEMBLT:
                     {
                         this->memblt.receive(this->stream, header);
+                        if (this->verbose > 32){
+                            this->memblt.log(LOG_INFO, clip);
+                        }
                         const Bitmap * bmp = this->bmp_cache->get(this->memblt.cache_id, this->memblt.cache_idx);
                         if (!bmp){
                             LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)", this->memblt.cache_id, this->memblt.cache_idx);
@@ -330,8 +351,18 @@ struct FileToGraphic
                         LOG(LOG_WARNING, "Input data truncated");
                         hexdump_d(stream.p, stream.end - stream.p);
                     }
+                    
                     this->mouse_x = this->stream.in_uint16_le();
                     this->mouse_y = this->stream.in_uint16_le();
+
+                    if (this->verbose > 16){
+                        LOG(LOG_INFO, "TIMESTAMP %u.%u mouse (x=%u, y=%u)\n"
+                            , this->record_now.tv_sec
+                            , this->record_now.tv_usec
+                            , this->mouse_x
+                            , this->mouse_y);
+                    }
+
                     this->input_len = std::min(static_cast<uint16_t>(stream.end - stream.p), static_cast<uint16_t>(sizeof(this->input)-1));
                     if (this->input_len){
                         this->stream.in_copy_bytes(this->input, this->input_len);
@@ -339,7 +370,6 @@ struct FileToGraphic
                         this->stream.p = this->stream.end;
                     }
                 }
-
 
                 if (!this->timestamp_ok){
                    if (this->real_time) {
