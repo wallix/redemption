@@ -3617,7 +3617,6 @@ struct selector_mod : public internal_mod {
 
     virtual void rdp_input_scancode(long param1, long param2, long flags, long time, Keymap2 * keymap)
     {
-        LOG(LOG_INFO, "selector::rdp_input_scancode");
         if (keymap->nb_kevent_available() > 0){
             switch (keymap->top_kevent()){
             case Keymap2::KEVENT_BACKSPACE:
@@ -3687,7 +3686,7 @@ struct selector_mod : public internal_mod {
                 {
                     size_t lg_dev_text = strlen(this->filter_device_text);
                     uint32_t c = keymap->get_char();
-                    if (lg_dev_text < 20){
+                    if ((c > 32) && (c < 128) && (lg_dev_text < 20)){
                         memmove(this->filter_device_text + this->filter_device_edit_pos+1,
                                this->filter_device_text + this->filter_device_edit_pos,
                                lg_dev_text - this->filter_device_edit_pos + 1);
@@ -3701,7 +3700,7 @@ struct selector_mod : public internal_mod {
                 {
                     size_t lg_group_text = strlen(this->filter_group_text);
                     uint32_t c = keymap->get_char();
-                    if (lg_group_text < 10){
+                    if (((c > 32) && (c < 128) && lg_group_text < 10)){
                         memmove(this->filter_group_text + this->filter_group_edit_pos + 1,
                                this->filter_group_text + this->filter_group_edit_pos,
                                lg_group_text - this->filter_group_edit_pos + 1);
