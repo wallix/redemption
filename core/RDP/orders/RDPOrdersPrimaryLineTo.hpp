@@ -91,6 +91,7 @@ class RDPLineTo {
         using namespace RDP;
         RDPPrimaryOrderHeader header(STANDARD, 0);
 
+        TODO("check that");
         if (!(common.clip.contains_pt(this->startx, this->starty)
            && common.clip.contains_pt(this->endx, this->endy))){
            header.control |= BOUNDS;
@@ -161,8 +162,7 @@ class RDPLineTo {
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
     {
-        size_t lg = common.str(buffer, sz, !(!(common.clip.contains_pt(this->startx, this->starty)
-           && common.clip.contains_pt(this->endx, this->endy))));
+        size_t lg = common.str(buffer, sz, true);
 
         lg += snprintf(
             buffer+lg,

@@ -409,7 +409,7 @@ class RDPGlyphIndex {
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
     {
-        size_t lg = common.str(buffer, sz, !(!common.clip.contains(this->bk)||((this->op.cx > 1)&& !common.clip.contains(this->op))));
+        size_t lg = common.str(buffer, sz, !(!common.clip.contains(this->bk)||((this->op.cx > 1) && !common.clip.contains(this->op))));
         lg += snprintf(
             buffer+lg,
             sz-lg,
