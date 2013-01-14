@@ -139,6 +139,7 @@ public:
         if (rect.isempty()){
             return ;
         }
+        
         switch (cmd.rop) {
         case 0x00:
             this->drawable.black_color(rect);
@@ -147,10 +148,16 @@ public:
             this->drawable.white_color(rect);
         break;
         case 0x55:
-            this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->conf.bgr);
+            this->drawable.mem_blt(rect, bmp
+                , cmd.srcx + (rect.x  - cmd.rect.x)
+                , cmd.srcy + (rect.y  - cmd.rect.y)
+                , 0xFFFFFF, this->conf.bgr);
         break;
         case 0xCC:
-            this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0, this->conf.bgr);
+            this->drawable.mem_blt(rect, bmp
+                , cmd.srcx + (rect.x  - cmd.rect.x)
+                , cmd.srcy + (rect.y  - cmd.rect.y)
+                , 0, this->conf.bgr);
         break;
         default:
             // should not happen
