@@ -36,7 +36,6 @@
 
 int main(int argc, char** argv)
 {
-    uint32_t verbose = 0;
     openlog("redrec", LOG_CONS | LOG_PERROR, LOG_USER);
 
     const char * copyright_notice =
@@ -50,6 +49,8 @@ int main(int argc, char** argv)
     std::string input_filename;
     std::string output_filename;
 
+    uint32_t verbose = 0;
+    uint32_t clear = 1; // default on
     uint32_t begin_cap = 0;
     uint32_t end_cap = 0;
     uint32_t png_limit = 10;
@@ -79,6 +80,7 @@ int main(int argc, char** argv)
 
     ("png,p", "enable png capture")
     ("wrm,w", "enable wrm capture")
+    ("clear", boost::program_options::value<uint32_t>(&clear), "Clear old capture files with same prefix (default on)")
     ("verbose", boost::program_options::value<uint32_t>(&verbose), "more logs")
     ("zoom", boost::program_options::value<uint32_t>(&zoom), "scaling factor for png capture (default 100%)")
     ;
@@ -178,6 +180,10 @@ int main(int argc, char** argv)
     strcpy(path, "./"); // default value, actual one should come from output_filename
     strcpy(basename, "redemption"); // default value actual one should come from output_filename
     canonical_path(fullpath, path, sizeof(path), basename, sizeof(basename));
+
+    if (clear == 1) {
+        clear_files_flv_meta_png(path, basename);
+    }
 
     Capture capture(player.record_now, player.screen_rect.cx, player.screen_rect.cy, path, basename, ini);
     if (capture.capture_png){

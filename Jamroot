@@ -291,6 +291,8 @@ unit-test test_cipher_transport : tests/test_cipher_transport.cpp z dl crypto pn
 
 unit-test test_bitfu : tests/test_bitfu.cpp libboost_unit_test  ;
 
+unit-test test_find : tests/test_find.cpp libboost_unit_test  ;
+
 unit-test test_zlib : tests/test_zlib.cpp z libboost_unit_test  ;
 
 unit-test test_parse_username : tests/test_parse_username.cpp libboost_unit_test  ;

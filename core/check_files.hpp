@@ -33,6 +33,8 @@
 #include <errno.h>
 #include "constants.hpp"
 
+TODO("merge that with find and unlink")
+
 struct Check_files{
 
     bool ad24b;
