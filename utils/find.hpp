@@ -22,6 +22,8 @@
 */
 
 
+#ifndef __UTILS_FIND_HPP__
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -87,3 +89,4 @@ void clear_files_flv_meta_png(const char * path, const char * prefix)
     }
 }
 
+#endif
