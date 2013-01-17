@@ -239,8 +239,10 @@ TODO("Pass font name as parameter in constructor")
         height = 0;
         width = 0;
         if (text) {
-            size_t len = mbstowcs(0, text, 0);
-            wchar_t wstr[8192 + 2];
+            const char * psource = text;
+            size_t len = UTF8len(&psource, strlen(text));
+            TODO("check psource consumed the whole text : ie: psource == text + strlen(text))")
+            uint8_t wstr[8192 + 2];
             mbstowcs(wstr, text, len + 1);
             for (size_t index = 0; index < len; index++) {
                 FontChar *font_item = this->font.font_items[wstr[index]];
