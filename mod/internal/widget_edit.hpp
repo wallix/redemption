@@ -83,13 +83,13 @@ struct widget_edit : public Widget {
             }
             if ((keymap->top_kevent() == Keymap2::KEVENT_RIGHT_ARROW)
             || (keymap->top_kevent() == Keymap2::KEVENT_DOWN_ARROW)){
-                if (this->edit_pos < (int)mbstowcs(0, this->buffer, 0)) {
+                if (this->edit_pos < (int)UTF8Len(this->buffer)) {
                     this->edit_pos++;
                     this->refresh(this->rect.wh());
                 }
             }
             else if ((keymap->top_kevent() == Keymap2::KEVENT_BACKSPACE)) {
-                n = mbstowcs(0, this->buffer, 0);
+                n = UTF8Len(this->buffer);
                 if (n > 0) {
                     if (this->edit_pos > 0) {
                         this->edit_pos--;
@@ -99,7 +99,7 @@ struct widget_edit : public Widget {
                 }
             }
             else if ((keymap->top_kevent() == Keymap2::KEVENT_DELETE)) {
-                n = mbstowcs(0, this->buffer, 0);
+                n = UTF8Len(this->buffer);
                 if (n > 0) {
                     if (this->edit_pos < n) {
                         remove_char_at(this->buffer, 255, this->edit_pos);
@@ -109,7 +109,7 @@ struct widget_edit : public Widget {
             }
             else if (keymap->top_kevent() == Keymap2::KEVENT_END) {
                 keymap->get_kevent();
-                n = mbstowcs(0, this->buffer, 0);
+                n = UTF8Len(this->buffer);
                 if (this->edit_pos < n) {
                     this->edit_pos = n;
                     this->refresh(this->rect.wh());
@@ -124,7 +124,7 @@ struct widget_edit : public Widget {
             else {
                 if (keymap->top_kevent() == Keymap2::KEVENT_KEY){
                     wchar_t c = keymap->top_char();
-                    int num_chars = mbstowcs(0, this->buffer, 0);
+                    int num_chars = UTF8Len(this->buffer);
                     if ((this->edit_pos >= num_chars) || (this->edit_pos < 0)) {
                         this->edit_pos = num_chars;
                     }

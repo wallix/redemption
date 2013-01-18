@@ -196,7 +196,7 @@ struct internal_mod : public client_mod {
         wchar_t wtext[255];
 
         if (password_char != 0) {
-            int i = mbstowcs(0, buffer, 0);
+            int i = UTF8Len(buffer);
             memset(text, password_char, i);
             text[i] = 0;
 //            this->front.server_draw_text(r.x + 4, r.y + 2, text, DARK_GREEN, LIGHT_GREEN, clip);

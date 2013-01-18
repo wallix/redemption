@@ -84,7 +84,7 @@ enum {
 /* if index = -1 remove it from the end */
 static inline void remove_char_at(char* text, int text_size, int index)
 {
-    int len = mbstowcs(0, text, 0);
+    int len = UTF8Len(text);
     if (len <= 0) {
         return;
     }

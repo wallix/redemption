@@ -239,8 +239,7 @@ TODO("Pass font name as parameter in constructor")
         height = 0;
         width = 0;
         if (text) {
-            const char * psource = text;
-            size_t len = UTF8len(reinterpret_cast<const uint8_t **>(&psource), strlen(text));
+            size_t len = UTF8Len(text);
             TODO("check psource consumed the whole text : ie: psource == text + strlen(text))")
             wchar_t wstr[8192 + 2];
             mbstowcs(wstr, text, len + 1);
@@ -265,7 +264,7 @@ TODO("Pass font name as parameter in constructor")
 
         // add text to glyph cache
         TODO(" use mbsrtowcs instead")
-        int len = mbstowcs(0, text, 0);
+        int len = UTF8Len(text);
         wchar_t* wstr = new wchar_t[len + 2];
         mbstowcs(wstr, text, len + 1);
         int total_width = 0;

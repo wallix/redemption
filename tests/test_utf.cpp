@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_invalid_utf8)
 
     // Check result
     BOOST_CHECK_EQUAL(target_length, ptarget - target);
-    BOOST_CHECK_EQUAL(source_length - 1, psource - source);
+    BOOST_CHECK_EQUAL(2, psource - source);
     for (size_t q = 0 ; q < target_length ; q++){
         if (expected_target[q] != target[q]){
             printf("at %u: expected %u, got %u\n", (unsigned)q, expected_target[q], target[q]);

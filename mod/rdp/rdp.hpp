@@ -3471,24 +3471,19 @@ struct mod_rdp : public client_mod {
         InfoPacket infoPacket;
         infoPacket.rdp5_support = this->use_rdp5;
 
-        const uint8_t * pDomain = reinterpret_cast<const uint8_t *>(this->domain);
-        infoPacket.cbDomain = UTF8len(&pDomain, strlen(this->domain))*2;
+        infoPacket.cbDomain = UTF8Len(this->domain)*2;
         memcpy(infoPacket.Domain, this->domain, infoPacket.cbDomain);
 
-        const uint8_t * pUsername = reinterpret_cast<const uint8_t *>(this->username);    
-        infoPacket.cbUserName = UTF8len(&pUsername, strlen(this->username))*2;
+        infoPacket.cbUserName = UTF8Len(this->username)*2;
         memcpy(infoPacket.UserName, this->username, infoPacket.cbUserName);
 
-        const uint8_t * pPassword = reinterpret_cast<const uint8_t *>(password);
-        infoPacket.cbPassword = UTF8len(&pPassword, strlen(password))*2;
+        infoPacket.cbPassword = UTF8Len(password)*2;
         memcpy(infoPacket.Password, password, infoPacket.cbPassword);
 
-        const uint8_t * pProgram = reinterpret_cast<const uint8_t *>(this->program);
-        infoPacket.cbAlternateShell = UTF8len(&pProgram, strlen(this->program))*2;
+        infoPacket.cbAlternateShell = UTF8Len(this->program)*2;
         memcpy(infoPacket.AlternateShell, this->program, infoPacket.cbAlternateShell);
 
-        const uint8_t * pDirectory = reinterpret_cast<const uint8_t *>(this->directory);
-        infoPacket.cbWorkingDir = UTF8len(&pDirectory, strlen(this->directory));
+        infoPacket.cbWorkingDir = UTF8Len(this->directory) * 2;
         memcpy(infoPacket.WorkingDir, this->directory, infoPacket.cbWorkingDir);
 
         infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG

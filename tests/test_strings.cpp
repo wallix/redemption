@@ -33,6 +33,7 @@
 #include "log.hpp"
 
 #include <string>
+#include "utf.hpp"
 
 BOOST_AUTO_TEST_CASE(TestString)
 {
@@ -40,8 +41,8 @@ BOOST_AUTO_TEST_CASE(TestString)
     std::string str1("toto");
     BOOST_CHECK_EQUAL(str1.length(), 4);
 
-    // but we can get the true length calling mbstowcs
-    int l = mbstowcs(NULL, str1.c_str(), 0);
+    // but we can get the true length
+    int l = UTF8Len(str1.c_str());
     BOOST_CHECK_EQUAL(l, 4);
 
     // olé is also a 4 char length string as it is internally UTF-8 encoded
@@ -49,10 +50,8 @@ BOOST_AUTO_TEST_CASE(TestString)
     // It means length is the number of bytes
     BOOST_CHECK_EQUAL(str_unicode.length(), 4);
 
-    // but we can get the true length calling mbstowcs
-    int len = mbstowcs(NULL, str_unicode.c_str(), 0);
-    // Well it does not work yet :-(
-    BOOST_CHECK_EQUAL(len, -1);
-
+    // but we can get the true length
+    int len = UTF8Len(str_unicode.c_str());
+    BOOST_CHECK_EQUAL(len, 3);
 
 }

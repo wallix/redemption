@@ -29,117 +29,133 @@
 #include <stdint.h>
 #include "log.hpp"
 
-
-static inline unsigned UTF8len(const uint8_t ** s, size_t s_len)
+REDOC("Check some string is valid utf8, zero terminated")
+static inline bool UTF8Check(const uint8_t * source, size_t len)
 {
-    const uint8_t * source = *s;
-    size_t i_t = 0; 
-    // naive first implementation, not check for length, not check for error or invalid sequences
-    size_t i = 0;
-    while (i + 1 < s_len){
-        unsigned c = source[i];
-        i++;
+    for (size_t i = 0 ; i < len ; i++){
+        uint8_t c = source[i];
         switch (c >> 4){
-            case 0: case 1: case 2: case 3: 
-            case 4: case 5: case 6: case 7:
+            case 0:
+            case 1: case 2: case 3: case 4: case 5: case 6: case 7:
             break;
+            case 8: case 9: case 0xA: case 0xB:
+                // either continuation bytes without start byte or 5 or 6 bytes sequence after 0xFX
+                // both cases are errors.
+                return false;
             /* handle U+0080..U+07FF inline : 2 bytes sequences */ 
-            case 0xC: case 0xD: 
-                c = ((c & 0x1F) << 6) | (source[i] & 0x3F);
-                i++;
+            case 0xC: case 0xD:
+                if ((i+1 >= len)
+                   ||((source[i]&0xFE) == 0xC0)
+                   ||((source[i+1] >> 6) != 2)){
+                    return false;
+                }
+                i+=1;
             break;
              /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */ 
             case 0xE:
-                c = (c << 12)|((source[i] & 0x3F) << 6)|(source[i+1] & 0x3F);
-                i += 2;
+                if ((i+2 >= len) 
+                   ||((source[i+1] >> 6) != 2)
+                   ||((source[i+2] >> 6) != 2)){
+                    return false;
+                }
+                i+=2;
             break;
-            default:
             case 0xF:
-                LOG(LOG_ERR, "complicated cases not yet supported");
-                goto UTF8toUTF16_exit;
+                if ((i+3 >= len)
+                   ||(c > 244)
+                   ||((source[i+1] >> 6) != 2)
+                   ||((source[i+2] >> 6) != 2)
+                   ||((source[i+3] >> 6) != 2)){
+                    return false;
+                }
+                i+=3;
             break;
         }
-        i_t += 2;
     }
-    if (i < s_len){
-        unsigned c = source[i];
-        switch (c >> 4){
-            case 0: case 1: case 2: case 3: 
-            case 4: case 5: case 6: case 7:
-                i++;
-            break;
-             /* handle 2 or 3 bytes sequences */ 
-            default:
-                LOG(LOG_ERR, "complicated cases not yet supported");
-                goto UTF8toUTF16_exit;
-            break;
-        }
-        i_t += 2;
-    }
-
-UTF8toUTF16_exit:
-    *s = source + i;
-    return (i_t >> 1);
 }
 
 
-static inline void UTF8toUTF16(const uint8_t ** s, size_t s_len, uint8_t ** t, size_t t_len)
+REDOC("UTF8Len assumes input is valid utf8, zero terminated, that has been checked before")
+static inline size_t UTF8Len(const uint8_t * source)
 {
+    size_t len = 0; 
+    uint8_t c = 0;
+    for (size_t i = 0 ; 0 != (c = source[i]) ; i++){
+        len += ((c >> 6) == 2)?0:1;
+    }
+    return len;
+}
+
+static inline size_t UTF8Len(const char * source)
+{
+    return UTF8Len(reinterpret_cast<const uint8_t *>(source));
+}
+
+
+struct utf8_str {
+    const uint8_t * data;
+};
+
+static inline bool UTF8toUTF16(const uint8_t ** s, size_t s_len, uint8_t ** t, size_t t_len)
+{
+    bool res = false;
     const uint8_t * source = *s;
     uint8_t * target = *t;
     size_t i_t = 0; 
-    // naive first implementation, not check for length, not check for error or invalid sequences
+    uint32_t ucode = 0;
     size_t i = 0;
-    while (i + 1 < s_len){
+    for (; i < s_len ; i++){
         unsigned c = source[i];
-        i++;
         switch (c >> 4){
             case 0: case 1: case 2: case 3: 
             case 4: case 5: case 6: case 7:
+            ucode = c;
             break;
             /* handle U+0080..U+07FF inline : 2 bytes sequences */ 
             case 0xC: case 0xD: 
-                c = ((c & 0x1F) << 6) | (source[i] & 0x3F);
-                i++;
+                if ((i+1 >= s_len)
+                   ||((c & 0xFE) == 0xC0)
+                   ||((source[i+1] >> 6) != 2)){
+                    goto UTF8toUTF16_exit;
+                }
+                ucode = ((c & 0x1F) << 6)|(source[i+1] & 0x3F);
+                i+=1;
             break;
              /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */ 
             case 0xE:
-                c = (c << 12)|((source[i] & 0x3F) << 6)|(source[i+1] & 0x3F);
-                i += 2;
+                if ((i+2 >= s_len) 
+                   ||((source[i+1] >> 6) != 2)
+                   ||((source[i+2] >> 6) != 2)){
+                    goto UTF8toUTF16_exit;
+                }
+                ucode = ((c & 0x0F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
+                i+=2;
             break;
-            default:
             case 0xF:
-                LOG(LOG_ERR, "complicated cases not yet supported");
+                if ((i+3 >= s_len)
+                   ||(c > 244)
+                   ||((source[i+1] >> 6) != 2)
+                   ||((source[i+2] >> 6) != 2)
+                   ||((source[i+3] >> 6) != 2)){
+                    goto UTF8toUTF16_exit;
+                }
+                c = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
+                i+=3;
+            break;
+            case 8: case 9: case 0x0A: case 0x0B:
                 goto UTF8toUTF16_exit;
             break;
         }
         if (i_t + 2 > t_len) { goto UTF8toUTF16_exit; }
-        target[i_t] = c & 0xFF;
-        target[i_t + 1] = (c >> 8) & 0xFF;
+        target[i_t] = ucode & 0xFF;
+        target[i_t + 1] = (ucode >> 8) & 0xFF;
         i_t += 2;
     }
-    if (i < s_len){
-        unsigned c = source[i];
-        switch (c >> 4){
-            case 0: case 1: case 2: case 3: 
-            case 4: case 5: case 6: case 7:
-                i++;
-            break;
-             /* handle 2 or 3 bytes sequences */ 
-            default:
-                LOG(LOG_ERR, "complicated cases not yet supported");
-                goto UTF8toUTF16_exit;
-            break;
-        }
-        if (i_t + 2 > t_len) { goto UTF8toUTF16_exit; }
-        target[i_t] = c & 0xFF;
-        target[i_t + 1] = (c >> 8) & 0xFF;
-        i_t += 2;
-    }
-
+    res = true;
 UTF8toUTF16_exit:
     *s = source + i;
     *t = target + i_t;
+    return res;
 }
 
 static inline void UTF16toUTF8(const uint8_t ** s, size_t s_len, uint8_t ** t, size_t t_len)
