@@ -30,7 +30,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #include "log.hpp"
-#define LOGNULLz
+#define LOGNULL
 
 #include <errno.h>
 #include <algorithm>
@@ -108,8 +108,8 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
         front.incoming(no_mod);
     }
     BOOST_CHECK_EQUAL(1, front.up_and_running);
-
     test_card_mod mod(front, front.client_info.width, front.client_info.height);
+
     mod.draw_event();
 
 //    sleep(5);

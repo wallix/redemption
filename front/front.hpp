@@ -243,10 +243,14 @@ TODO("Pass font name as parameter in constructor")
             TODO("check psource consumed the whole text : ie: psource == text + strlen(text))")
             wchar_t wstr[8192 + 2];
             mbstowcs(wstr, text, len + 1);
+
+//            uint32_t uni[8192]
+//            UTF8toUnicode(text, uni, sizeof(uni))
             for (size_t index = 0; index < len; index++) {
-                FontChar *font_item = this->font.font_items[wstr[index]];
+                uint32_t charnum = wstr[index]; // uni[index]; // 
+                FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
                 if (!font_item) {
-                    LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", wstr[index]);
+                    LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
                     font_item = this->font.font_items['?'];
                 }
                 width += font_item->incby;
