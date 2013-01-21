@@ -96,6 +96,8 @@ struct utf8_str {
     const uint8_t * data;
 };
 
+TODO("API may be clearer if we always return a len and an error code in case of failure (error defaulting to 0)"
+     "Another option could be to be to return a negative value in cas of error like other C functions")
 static inline bool UTF8toUTF16(const uint8_t ** s, size_t s_len, uint8_t ** t, size_t t_len)
 {
     bool res = false;
@@ -153,6 +155,69 @@ static inline bool UTF8toUTF16(const uint8_t ** s, size_t s_len, uint8_t ** t, s
     }
     res = true;
 UTF8toUTF16_exit:
+    *s = source + i;
+    *t = target + i_t;
+    return res;
+}
+
+TODO("API may be clearer if we always return a len and an error code in case of failure (error defaulting to 0)"
+     "Another option could be to be to return a negative value in cas of error like other C functions")
+static inline bool UTF8toUnicode(const uint8_t ** s, size_t s_len, uint32_t ** t, size_t t_len)
+{
+    bool res = false;
+    const uint8_t * source = *s;
+    uint32_t * target = *t;
+    size_t i_t = 0; 
+    uint32_t ucode = 0;
+    size_t i = 0;
+    for (; i < s_len ; i++){
+        unsigned c = source[i];
+        switch (c >> 4){
+            case 0: case 1: case 2: case 3: 
+            case 4: case 5: case 6: case 7:
+            ucode = c;
+            break;
+            /* handle U+0080..U+07FF inline : 2 bytes sequences */ 
+            case 0xC: case 0xD: 
+                if ((i+1 >= s_len)
+                   ||((c & 0xFE) == 0xC0)
+                   ||((source[i+1] >> 6) != 2)){
+                    goto UTF8toUnicode_exit;
+                }
+                ucode = ((c & 0x1F) << 6)|(source[i+1] & 0x3F);
+                i+=1;
+            break;
+             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */ 
+            case 0xE:
+                if ((i+2 >= s_len) 
+                   ||((source[i+1] >> 6) != 2)
+                   ||((source[i+2] >> 6) != 2)){
+                    goto UTF8toUnicode_exit;
+                }
+                ucode = ((c & 0x0F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
+                i+=2;
+            break;
+            case 0xF:
+                if ((i+3 >= s_len)
+                   ||(c > 244)
+                   ||((source[i+1] >> 6) != 2)
+                   ||((source[i+2] >> 6) != 2)
+                   ||((source[i+3] >> 6) != 2)){
+                    goto UTF8toUnicode_exit;
+                }
+                c = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
+                i+=3;
+            break;
+            case 8: case 9: case 0x0A: case 0x0B:
+                goto UTF8toUnicode_exit;
+            break;
+        }
+        if (i_t + 1 > t_len) { goto UTF8toUnicode_exit; }
+        target[i_t] = ucode;
+        i_t += 1;
+    }
+    res = true;
+UTF8toUnicode_exit:
     *s = source + i;
     *t = target + i_t;
     return res;

@@ -223,7 +223,6 @@ TODO("Pass font name as parameter in constructor")
                         stream.p = stream.data;
                         stream.end = stream.p + remaining;
                         //-----------------------------------------------------
-                        printf("reading data in %s\n", file_path);
                         while ((b = read(fd, stream.end, std::min<uint32_t>(size_to_read, 8192 - remaining))) < 0){
                             if (b >= 0){
                                 break;

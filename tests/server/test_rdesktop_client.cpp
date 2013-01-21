@@ -30,7 +30,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #include "log.hpp"
-#define LOGNULL
+#define LOGPRINT
 
 #include <errno.h>
 #include <algorithm>
@@ -101,16 +101,25 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     const char * name = "Test Front Transport";
     TestTransport front_trans(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
+    printf("test_rdesktop_client 1\n");
     Front front(&front_trans, &gen, &ini);
+    printf("test_rdesktop_client 2\n");
     null_mod no_mod(front);
 
+    printf("test_rdesktop_client 3\n");
     while (front.up_and_running == 0){
         front.incoming(no_mod);
     }
     BOOST_CHECK_EQUAL(1, front.up_and_running);
+    printf("test_rdesktop_client 4\n");
     test_card_mod mod(front, front.client_info.width, front.client_info.height);
-
-    mod.draw_event();
+    printf("test_rdesktop_client 5\n");
+    try {
+        mod.draw_event();
+    } catch (Error & e) {
+        printf("Exception id=%u\n", e.id);
+    }
+    printf("test_rdesktop_client 6\n");
 
 //    sleep(5);
 //    shutdown(one_shot_server.sck, 2);
