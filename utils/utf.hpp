@@ -92,6 +92,20 @@ static inline size_t UTF8Len(const char * source)
 }
 
 
+REDOC("UTF8TruncateAtLen assumes input is valid utf8, zero terminated, that has been checked before")
+static inline size_t UTF8TruncateAtLen(char * source, size_t len)
+{
+    len += 1;
+    uint8_t c = 0;
+    for (size_t i = 0 ; 0 != (c = source[i]) ; i++){
+        len -= ((c >> 6) == 2)?0:1;
+        if (len == 0) {
+            source[i] = 0;
+        }
+    }
+    return len;
+}
+
 struct utf8_str {
     const uint8_t * data;
 };

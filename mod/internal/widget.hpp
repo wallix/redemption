@@ -79,26 +79,6 @@ enum {
 };
 
 
-/*****************************************************************************/
-/* remove a ch at index position in text, index starts at 0 */
-/* if index = -1 remove it from the end */
-static inline void remove_char_at(char* text, int text_size, int index)
-{
-    int len = UTF8Len(text);
-    if (len <= 0) {
-        return;
-    }
-    wchar_t wstr[1024 + 16];
-    mbstowcs(wstr, text, len + 1);
-    if ((index < (len - 1)) && (index >= 0)) {
-        for (int i = index; i < (len - 1); i++) {
-            wstr[i] = wstr[i + 1];
-        }
-    }
-    wstr[len - 1] = 0;
-    wcstombs(text, wstr, text_size);
-}
-
 struct Widget {
     struct internal_mod * mod;
     bool has_focus;

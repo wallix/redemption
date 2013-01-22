@@ -193,42 +193,28 @@ struct internal_mod : public client_mod {
 
         /* draw text */
         char text[255];
-        wchar_t wtext[255];
+        int len = UTF8Len(buffer);
+        if (len > 255) { len = 255; }
 
         if (password_char != 0) {
-            int i = UTF8Len(buffer);
-            memset(text, password_char, i);
-            text[i] = 0;
-//            this->front.server_draw_text(r.x + 4, r.y + 2, text, DARK_GREEN, LIGHT_GREEN, clip);
-            this->front.server_draw_text(r.x + 4, r.y + 2, text, WHITE, BLACK, clip);
+            memset(text, password_char, len);
         }
         else {
-//            this->front.server_draw_text(r.x + 4, r.y + 2, buffer, DARK_GREEN, LIGHT_GREEN, clip);
-            this->front.server_draw_text(r.x + 4, r.y + 2, buffer, WHITE, BLACK, clip);
+            memcpy(text, buffer, len);
         }
+        text[len] = 0;
+
+        this->front.server_draw_text(r.x + 4, r.y + 2, text, WHITE, BLACK, clip);
+
         /* draw xor box(cursor) */
         if (has_focus) {
-            if (password_char != 0) {
-                for (size_t index = 0; index < edit_pos; index++) {
-                    if (index >= 255) {
-                        break;
-                    }
-                    wtext[index] = password_char;
-                }
-                wtext[edit_pos] = 0;
-                wcstombs(text, wtext, 255);
-            } else {
-                mbstowcs(wtext, buffer, 255);
-                wtext[edit_pos] = 0;
-                wcstombs(text, wtext, 255);
-            }
-
-            int w = 0;
-            int h = 0;
-            this->front.text_metrics(text, w, h);
+            UTF8TruncateAtLen(text, std::min<unsigned>(edit_pos, len));
+            int width = 0; int height = 0;
+            TODO("As we are just looking for the end of bounding box to draw cursor, calling text_metrics is overkill."
+                 "It would need some simpler function only computing width")
+            this->front.text_metrics(text, width, height);
             this->front.draw(
-//                RDPOpaqueRect(Rect(r.x + 4 + w, r.y + 3, 2, r.cy - 6), PALE_GREEN),
-                RDPOpaqueRect(Rect(r.x + 4 + w, r.y + 3, 2, r.cy - 6), BLACK),
+                RDPOpaqueRect(Rect(r.x + 4 + width, r.y + 3, 2, r.cy - 6), BLACK),
                 clip);
         }
     }
