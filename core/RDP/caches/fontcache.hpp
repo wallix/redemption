@@ -78,33 +78,26 @@ struct GlyphCache {
     };
 
     /*****************************************************************************/
-    t_glyph_cache_result add_glyph(FontChar* font_item, int & cacheid, int & cacheidx)
+    t_glyph_cache_result add_glyph(FontChar* font_item, int cacheid, int & cacheidx)
     {
         this->char_stamp++;
         /* look for match */
-        for (size_t i = 7; i < 12; i++) {
-            for (size_t j = 0; j < 250; j++) {
-                if (this->char_items[i][j].font_item){
-                    if (this->char_items[i][j].font_item->item_compare(font_item)) {
-                        this->char_items[i][j].stamp = this->char_stamp;
-                        cacheidx = j;
-                        cacheid = i;
-                        return GLYPH_FOUND_IN_CACHE;
-                    }
+        for (size_t j = 0; j < 250; j++) {
+            if (this->char_items[cacheid][j].font_item){
+                if (this->char_items[cacheid][j].font_item->item_compare(font_item)) {
+                    this->char_items[cacheid][j].stamp = this->char_stamp;
+                    cacheidx = j;
+                    return GLYPH_FOUND_IN_CACHE;
                 }
             }
         }
         /* look for oldest */
-        int f = 0;
         int c = 0;
         int oldest = 0x7fffffff;
-        for (size_t i = 7; i < 12; i++) {
-            for (size_t j = 0; j < 250; j++) {
-                if (this->char_items[i][j].stamp < oldest) {
-                    oldest = this->char_items[i][j].stamp;
-                    f = i;
-                    c = j;
-                }
+        for (size_t j = 0; j < 250; j++) {
+            if (this->char_items[cacheid][j].stamp < oldest) {
+                oldest = this->char_items[cacheid][j].stamp;
+                c = j;
             }
         }
         /* set, send char and return */
@@ -112,10 +105,9 @@ struct GlyphCache {
 
         FontChar * fi = new FontChar(font_item->offset, font_item->baseline, font_item->width, font_item->height, font_item->incby);
         memcpy(fi->data, font_item->data, font_item->datasize());
-        this->char_items[f][c].font_item = fi;
-        this->char_items[f][c].stamp = this->char_stamp;
+        this->char_items[cacheid][c].font_item = fi;
+        this->char_items[cacheid][c].stamp = this->char_stamp;
         cacheidx = c;
-        cacheid = f;
         return GLYPH_ADDED_TO_CACHE;
     }
 };

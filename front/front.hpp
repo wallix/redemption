@@ -262,172 +262,89 @@ TODO("Pass font name as parameter in constructor")
     }
 
 
-    TODO(" implementation of the server_draw_text function below is quite broken (a small subset of possibilities is implemented  especially for data). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
-    void server_draw_text_new(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
-    {
-        setlocale(LC_CTYPE, "fr_FR.UTF-8");
-        this->send_global_palette();
-
-        printf("text = %s\n", text);
-
-        TODO("No need to use a large buffer, we can split sending between several smaller buffers"
-             "To allow for large texts we need a loop anyway")
-        // add text to glyph cache
-        int len = UTF8Len(text);
-        if (len > 8192) {
-            len = 8192;
-        }
-        uint32_t uni[8192];
-        const char * ptext = text;
-        uint32_t * puni = uni;
-        UTF8toUnicode(reinterpret_cast<const uint8_t **>(&ptext), len, &puni, sizeof(uni));
-        if (len != puni - uni){
-            LOG(LOG_WARNING, "Front::server_draw_text() some UTF8 characters were not converted to Unicode in %s", text);
-        }
-
-        int total_width = 0;
-        int total_height = 0;
-        uint8_t data[32768];
-        memset(data, 0, len * 4);
-        int f = 0;
-        int c = 0;
-        int distance_from_previous_fragment = 0;
-        for (int index = 0; index < len; index++) {
-            printf("index = %u\n", index);
-
-            uint32_t charnum = uni[index]; // 
-            FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
-            if (!font_item) {
-                LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
-                font_item = this->font.font_items['?'];
-            }
-            TODO(" avoid passing parameters by reference to get results")
-            switch (this->glyph_cache.add_glyph(font_item, f, c))
-            {
-                case GlyphCache::GLYPH_ADDED_TO_CACHE:
-                {
-                    RDPGlyphCache cmd(f, 1, c,
-                        font_item->offset,
-                        font_item->baseline,
-                        font_item->width,
-                        font_item->height,
-                        font_item->data);
-
-                    this->draw(cmd);
-                }
-                break;
-                default:
-                break;
-            }
-            data[index * 2] = c;
-            data[index * 2 + 1] = distance_from_previous_fragment;
-            distance_from_previous_fragment = font_item->incby;
-            total_width += font_item->incby;
-            total_height = std::max(total_height, font_item->height);
-        }
-
-        const Rect bk(x, y, total_width + 1, total_height);
-
-         RDPGlyphIndex glyphindex(
-            f, // cache_id
-            0x03, // fl_accel
-            0x0, // ui_charinc
-            1, // f_op_redundant,
-            bgcolor, // bgcolor
-            fgcolor, // fgcolor
-            bk, // bk
-            bk, // op
-            // brush
-            RDPBrush(0, 0, 3, 0xaa,
-                (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
-//            this->brush,
-            x,  // glyph_x
-            y + total_height, // glyph_y
-            len * 2, // data_len in bytes
-            data // data
-        );
-        printf("server_draw_text len = %u\n", len);
-
-        this->draw(glyphindex, clip);
-        printf("server_draw_text 2\n");
-    }
-
-
-
-    TODO(" implementation of the server_draw_text function below is quite broken (a small subset of possibilities is implemented  especially for data). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
+    TODO(" implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
     void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
-        setlocale(LC_CTYPE, "fr_FR.UTF-8");
         this->send_global_palette();
 
         // add text to glyph cache
-        TODO(" use mbsrtowcs instead")
         int len = UTF8Len(text);
-        wchar_t* wstr = new wchar_t[len + 2];
-        mbstowcs(wstr, text, len + 1);
-        int total_width = 0;
-        int total_height = 0;
-        uint8_t *data = new uint8_t[len * 4];
-        memset(data, 0, len * 4);
-        int f = 0;
-        int c = 0;
-        int distance_from_previous_fragment = 0;
-        for (int index = 0; index < len; index++) {
-            FontChar* font_item = this->font.font_items[wstr[index]];
 
-            if (!font_item){
-                font_item = this->font.font_items['?'];
-            }
-            TODO(" avoid passing parameters by reference to get results")
-            switch (this->glyph_cache.add_glyph(font_item, f, c))
-            {
-                case GlyphCache::GLYPH_ADDED_TO_CACHE:
-                {
-                    RDPGlyphCache cmd(f, 1, c,
-                        font_item->offset,
-                        font_item->baseline,
-                        font_item->width,
-                        font_item->height,
-                        font_item->data);
+        const char * ptext0 = text;
+        while (len > 0){
 
-                    this->draw(cmd);
+            uint32_t uni[128];
+            const char * ptext1 = ptext0;
+            uint32_t * puni = uni;
+            UTF8toUnicode(reinterpret_cast<const uint8_t **>(&ptext1), len, &puni, sizeof(uni));
+            size_t part_len = static_cast<unsigned>(puni-uni);
+            len -= part_len;
+            ptext0 = ptext1;
+        
+            int total_width = 0;
+            int total_height = 0;
+            uint8_t data[256];
+            memset(data, 0, part_len * 2 + 4);
+            int f = 7;
+            int distance_from_previous_fragment = 0;
+            for (int index = 0; index < part_len; index++) {
+                int c = 0;
+                uint32_t charnum = uni[index]; // 
+                FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
+                if (!font_item) {
+                    LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
+                    font_item = this->font.font_items['?'];
                 }
-                break;
-                default:
-                break;
+                TODO(" avoid passing parameters by reference to get results")
+                switch (this->glyph_cache.add_glyph(font_item, f, c))
+                {
+                    case GlyphCache::GLYPH_ADDED_TO_CACHE:
+                    {
+                        RDPGlyphCache cmd(f, 1, c,
+                            font_item->offset,
+                            font_item->baseline,
+                            font_item->width,
+                            font_item->height,
+                            font_item->data);
+
+                        this->draw(cmd);
+                    }
+                    break;
+                    default:
+                    break;
+                }
+                data[index * 2] = c;
+                data[index * 2 + 1] = distance_from_previous_fragment;
+                distance_from_previous_fragment = font_item->incby;
+                total_width += font_item->incby;
+                total_height = std::max(total_height, font_item->height);
             }
-            data[index * 2] = c;
-            data[index * 2 + 1] = distance_from_previous_fragment;
-            distance_from_previous_fragment = font_item->incby;
-            total_width += font_item->incby;
-            total_height = std::max(total_height, font_item->height);
+
+            const Rect bk(x, y, total_width + 1, total_height);
+
+             RDPGlyphIndex glyphindex(
+                f, // cache_id
+                0x03, // fl_accel
+                0x0, // ui_charinc
+                1, // f_op_redundant,
+                bgcolor, // bgcolor
+                fgcolor, // fgcolor
+                bk, // bk
+                bk, // op
+                // brush
+                RDPBrush(0, 0, 3, 0xaa,
+                    (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
+    //            this->brush,
+                x,  // glyph_x
+                y + total_height, // glyph_y
+                part_len * 2, // data_len in bytes
+                data // data
+            );
+
+            this->draw(glyphindex, clip);
+
+            x += total_width;
         }
-
-        const Rect bk(x, y, total_width + 1, total_height);
-
-         RDPGlyphIndex glyphindex(
-            f, // cache_id
-            0x03, // fl_accel
-            0x0, // ui_charinc
-            1, // f_op_redundant,
-            bgcolor, // bgcolor
-            fgcolor, // fgcolor
-            bk, // bk
-            bk, // op
-            // brush
-            RDPBrush(0, 0, 3, 0xaa,
-                (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
-//            this->brush,
-            x,  // glyph_x
-            y + total_height, // glyph_y
-            len * 2, // data_len in bytes
-            data // data
-        );
-
-        this->draw(glyphindex, clip);
-
-        delete [] wstr;
-        delete [] data;
     }
 
 

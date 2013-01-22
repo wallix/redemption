@@ -304,7 +304,7 @@ ErrorReadingFontFile:
 
     bool glyph_defined(uint32_t charnum)
     {
-        if ((charnum <= 32)||(charnum >= NUM_GLYPHS)){
+        if ((charnum < 32)||(charnum >= NUM_GLYPHS)){
             return false;
         }
         return this->font_items[charnum] != NULL;

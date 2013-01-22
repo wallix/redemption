@@ -24,72 +24,96 @@
 #if !defined(__RDPORDERSPRIMARYGLYPHINDEX_HPP__)
 #define __RDPORDERSPRIMARYGLYPHINDEX_HPP__
 
-//2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
-//==============================================
-//The GlyphIndex Primary Drawing Order encodes a set of glyph indices at a specified position.
-//Encoding order number: 27 (0x1B)
-//Negotiation order number: 27 (0x1B)
-//Number of fields: 22
+// 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
+// ==============================================
+// The GlyphIndex Primary Drawing Order encodes a set of glyph indices at a specified position.
+// Encoding order number: 27 (0x1B)
+// Negotiation order number: 27 (0x1B)
+// Number of fields: 22
 
-//cacheId (1 byte): An 8-bit, unsigned integer. The ID of the glyph cache in which the glyph data MUST be stored. This value MUST be in the range 0 to 9 (inclusive).
+// cacheId (1 byte): An 8-bit, unsigned integer. The ID of the glyph cache in
+//   which the glyph data MUST be stored. This value MUST be in the range 0 to 9 (inclusive).
 
-//flAccel (1 byte): An 8-bit, unsigned integer. Accelerator flags. For glyph related terminology, see [YUAN] figures 14-17 and 15-1. For information about string widths and heights, see [MSDN-SWH]. For information about character widths, see [MSDN-CW]. This field MUST contain a combination of the following flags.
+// flAccel (1 byte): An 8-bit, unsigned integer. Accelerator flags. For glyph
+//   related terminology, see [YUAN] figures 14-17 and 15-1. For information about string widths and heights, see [MSDN-SWH]. For information about character widths, see [MSDN-CW]. This field MUST contain a combination of the following flags.
 
-//0x01 SO_FLAG_DEFAULT_PLACEMENT This flag MUST be set.
+// 0x01 SO_FLAG_DEFAULT_PLACEMENT This flag MUST be set.
 // 
-//0x02 SO_HORIZONTAL Text is horizontal, left-to-right or right-to-left, depending on SO_REVERSED.
-//0x04 SO_VERTICAL Text is vertical, top-to-bottom or bottom-to-top, depending on SO_REVERSED.
-//0x08 SO_REVERSED Set if horizontal text is right-to-left or vertical text is bottom-to-top.
-//0x10 SO_ZERO_BEARINGS For a given glyph in the font, the A-width (left-side bearing) and C-width (right-side bearing) associated with the glyph have a value of zero.
-//0x20 SO_CHAR_INC_EQUAL_BM_BASE For a given glyph in the font, the B-width associated with the glyph equals the advance width of the glyph.
-//0x40 SO_MAXEXT_EQUAL_BM_SIDE The height of the bitmap associated with a given glyph in the font is always equal to the sum of the ascent and descent. This implies that the tops and bottoms of all glyph bitmaps lie on the same line in the direction of writing.
+// 0x02 SO_HORIZONTAL Text is horizontal, left-to-right or right-to-left, depending on SO_REVERSED.
+// 0x04 SO_VERTICAL Text is vertical, top-to-bottom or bottom-to-top, depending on SO_REVERSED.
+// 0x08 SO_REVERSED Set if horizontal text is right-to-left or vertical text is bottom-to-top.
+// 0x10 SO_ZERO_BEARINGS For a given glyph in the font, the A-width (left-side bearing) and C-width (right-side bearing) associated with the glyph have a value of zero.
+// 0x20 SO_CHAR_INC_EQUAL_BM_BASE For a given glyph in the font, the B-width associated with the glyph equals the advance width of the glyph.
+// 0x40 SO_MAXEXT_EQUAL_BM_SIDE The height of the bitmap associated with a given glyph in the font is always equal to the sum of the ascent and descent. This implies that the tops and bottoms of all glyph bitmaps lie on the same line in the direction of writing.
 
-//ulCharInc (1 byte): An 8-bit, unsigned integer. Specifies whether or not the font is a fixed-pitch (monospace) font. If so, this member is equal to the advance width of the glyphs in pixels (see [YUAN] figures 14-17); if not, this field is set to 0x00. The minimum value for this field is 0x00 (inclusive), and the maximum value is 0xFF (inclusive).
+// ulCharInc (1 byte): An 8-bit, unsigned integer. Specifies whether or not the
+//  font is a fixed-pitch (monospace) font. If so, this member is equal to the advance width of the glyphs in pixels (see [YUAN] figures 14-17); if not, this field is set to 0x00. The minimum value for this field is 0x00 (inclusive), and the maximum value is 0xFF (inclusive).
 
-//fOpRedundant (1 byte): An 8-bit, unsigned integer. A Boolean value indicating whether or not the opaque rectangle is redundant. Redundant, in this context, means that the text background is transparent.
+// fOpRedundant (1 byte): An 8-bit, unsigned integer. A Boolean value 
+//  indicating whether or not the opaque rectangle is redundant. Redundant, in this context, means that the text background is transparent.
 
-//BackColor (3 bytes): The text color described by using a Generic Color (section 2.2.2.2.1.1.1.8) structure.
+// BackColor (3 bytes): The text color described by using a Generic Color 
+//  (section 2.2.2.2.1.1.1.8) structure.
 
-//ForeColor (3 bytes): Color of the opaque rectangle described by using a Generic Color (section 2.2.2.2.1.1.1.8) structure.
+// ForeColor (3 bytes): Color of the opaque rectangle described by using a 
+//  Generic Color (section 2.2.2.2.1.1.1.8) structure.
 
-//BkLeft (2 bytes): A 16-bit, signed integer. The left coordinate of the text background rectangle.
+// BkLeft (2 bytes): A 16-bit, signed integer. The left coordinate of the text 
+//  background rectangle.
 
-//BkTop (2 bytes): A 16-bit, signed integer. The top coordinate of the text background rectangle.
+// BkTop (2 bytes): A 16-bit, signed integer. The top coordinate of the text 
+//  background rectangle.
 
-//BkRight (2 bytes): A 16-bit, signed integer. The right coordinate of the text background rectangle.
+// BkRight (2 bytes): A 16-bit, signed integer. The right coordinate of the 
+//  text background rectangle.
 
-//BkBottom (2 bytes): A 16-bit, signed integer. The bottom coordinate of the text background rectangle.
+// BkBottom (2 bytes): A 16-bit, signed integer. The bottom coordinate of the 
+//  text background rectangle.
 
-//OpLeft (2 bytes): A 16-bit, signed integer. The left coordinate of the opaque rectangle. This field MUST be set to 0 if the fOpRedundant flag is set.
+// OpLeft (2 bytes): A 16-bit, signed integer. The left coordinate of the 
+//  opaque rectangle. This field MUST be set to 0 if the fOpRedundant flag is set.
 
-//OpTop (2 bytes): A 16-bit, signed integer. The top coordinate of the opaque rectangle. This field MUST be set to 0 if the fOpRedundant flag is set.
+// OpTop (2 bytes): A 16-bit, signed integer. The top coordinate of the opaque 
+//  rectangle. This field MUST be set to 0 if the fOpRedundant flag is set.
 
-//OpRight (2 bytes): A 16-bit, signed integer. The right coordinate of the opaque rectangle. This field MUST be set to 0 if the fOpRedundant flag is set.
+// OpRight (2 bytes): A 16-bit, signed integer. The right coordinate of the 
+//  opaque rectangle. This field MUST be set to 0 if the fOpRedundant flag is set.
 
-//OpBottom (2 bytes): A 16-bit, signed integer. The bottom coordinate of the opaque rectangle. This field MUST be set to 0 if the fOpRedundant flag is set.
+// OpBottom (2 bytes): A 16-bit, signed integer. The bottom coordinate of the
+//   opaque rectangle. This field MUST be set to 0 if the fOpRedundant flag is set.
 
-//BrushOrgX (1 byte): An 8-bit, signed integer. The x-coordinate of the point where the top leftmost pixel of a brush pattern MUST be anchored.
+// BrushOrgX (1 byte): An 8-bit, signed integer. The x-coordinate of the point 
+//  where the top leftmost pixel of a brush pattern MUST be anchored.
 
-//BrushOrgY (1 byte): An 8-bit, signed integer. The y-coordinate of the point where the top leftmost pixel of a brush pattern MUST be anchored.
+// BrushOrgY (1 byte): An 8-bit, signed integer. The y-coordinate of the point 
+//  where the top leftmost pixel of a brush pattern MUST be anchored.
 
-//BrushStyle (1 byte): An 8-bit, unsigned integer. This field MUST be set to BS_SOLID (0x00), as the GlyphIndex Primary Drawing Order MUST only use solid color brushes to render the opaque rectangle.
+// BrushStyle (1 byte): An 8-bit, unsigned integer. This field MUST be set 
+//  to BS_SOLID (0x00), as the GlyphIndex Primary Drawing Order MUST only use 
+//  solid color brushes to render the opaque rectangle.
 
-//BrushHatch (1 byte): An 8-bit, unsigned integer. This field MUST be set to 0x00, as the GlyphIndex Primary Drawing Order MUST only use solid color brushes to render the opaque rectangle.
+// BrushHatch (1 byte): An 8-bit, unsigned integer. This field MUST be set 
+//  to 0x00, as the GlyphIndex Primary Drawing Order MUST only use solid color 
+//  brushes to render the opaque rectangle.
 
-//BrushExtra (7 bytes): This field is not used, as the GlyphIndex Primary Drawing Order MUST only use solid color brushes to render the opaque rectangle. 
+// BrushExtra (7 bytes): This field is not used, as the GlyphIndex Primary 
+//  Drawing Order MUST only use solid color brushes to render the opaque 
+//  rectangle. 
 
-//X (2 bytes): A 16-bit, signed integer. The x-coordinate of the point where the origin of the starting glyph MUST be positioned.
+// X (2 bytes): A 16-bit, signed integer. The x-coordinate of the point where 
+//  the origin of the starting glyph MUST be positioned.
 
-//Y (2 bytes): A 16-bit, signed integer. The y-coordinate of the point where the origin of the starting glyph MUST be positioned.
+// Y (2 bytes): A 16-bit, signed integer. The y-coordinate of the point where 
+//  the origin of the starting glyph MUST be positioned.
 
-//VariableBytes (variable): A One-Byte Header Variable Field (section 2.2.2.2.1.1.1.2)
+// VariableBytes (variable): A One-Byte Header Variable Field (section 2.2.2.2.1.1.1.2)
 // structure. This field MUST contain glyph fragments (which are composed of a 
 // series of one or more glyph cache indices) and instructions to use entries 
 // previously stored in the glyph fragment cache. Multiple glyph fragments can be
 // contained in this field. The first byte of each fragment is either a USE (0xFE)
 // operation byte or a glyph index (0x00 to 0x0FD) byte: 
 
-//- value of 0xFE (USE) indicates that a previously stored fragment MUST be 
+// - value of 0xFE (USE) indicates that a previously stored fragment MUST be 
 // displayed. The byte following the USE byte is the index in the fragment cache
 // where the fragment is located. This fragment MUST be read and displayed. If the
 // ulCharInc field is set to 0 and the flAccel field does not contain the 
@@ -100,7 +124,7 @@
 // the value 0x80 MUST be used, and the following two bytes will be set to contain
 // the actual distance formatted as an unsigned integer in little-endian order.
 
-//- If not preceded by 0xFE, a value of 0x00 to 0xFD identifies a glyph stored at
+// - If not preceded by 0xFE, a value of 0x00 to 0xFD identifies a glyph stored at
 //  the given index in the glyph cache. Multiple glyphs can be sent at one time. 
 //  If the ulCharInc field is set to 0 and the flAccel field does not contain the
 //  SO_CHAR_INC_EQUAL_BM_BASE (0x20) flag, then the index byte MUST be followed by
@@ -110,20 +134,20 @@
 //  value 0x80 MUST be used, and the following two bytes will be set to contain
 //  the actual distance formatted as an unsigned integer in little-endian order.
 
-//If a series of glyph indices ends with an ADD (0xFF) operation byte, the 
+// If a series of glyph indices ends with an ADD (0xFF) operation byte, the 
 // preceding glyph information MUST be collected, displayed, and then stored in 
 // the fragment cache. The byte following the ADD byte is the index of the cache 
 // where the fragment MUST be stored. A final byte that indicates the size of the
 // fragment follows the index byte. (The ADD byte, index byte, and size byte MUST
 // NOT be counted when calculating the value of the size byte.)
 
-//All glyph cache indices MUST be greater than or equal to 0, and less than the
+// All glyph cache indices MUST be greater than or equal to 0, and less than the
 // maximum number of entries allowed in the glyph cache with the ID specified by
 // the cacheId field. The maximum number of entries allowed in each of the ten
 // glyph caches is specified in the GlyphCache field of the Glyph Cache Capability
 // Set ([MS-RDPBCGR] section 2.2.7.1.8).
 
-//All fragment cache indices MUST be in the range 0 to 255 (inclusive).
+// All fragment cache indices MUST be in the range 0 to 255 (inclusive).
 
 class RDPGlyphIndex {
 // GLYPHINDEX_ORDER fields bytes
