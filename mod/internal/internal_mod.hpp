@@ -208,7 +208,7 @@ struct internal_mod : public client_mod {
 
         /* draw xor box(cursor) */
         if (has_focus) {
-            UTF8TruncateAtLen(text, std::min<unsigned>(edit_pos, len));
+            UTF8TruncateAtPos(text, std::min<unsigned>(edit_pos, len));
             int width = 0; int height = 0;
             TODO("As we are just looking for the end of bounding box to draw cursor, calling text_metrics is overkill."
                  "It would need some simpler function only computing width")

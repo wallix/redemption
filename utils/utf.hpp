@@ -93,7 +93,7 @@ static inline size_t UTF8Len(const char * source)
 
 
 REDOC("UTF8TruncateAtLen assumes input is valid utf8, zero terminated, that has been checked before")
-static inline size_t UTF8TruncateAtLen(char * source, size_t len)
+static inline size_t UTF8TruncateAtPos(uint8_t * source, size_t len)
 {
     len += 1;
     uint8_t c = 0;
@@ -105,6 +105,38 @@ static inline size_t UTF8TruncateAtLen(char * source, size_t len)
     }
     return len;
 }
+
+static inline size_t UTF8TruncateAtPos(char * source, size_t len)
+{
+    return UTF8TruncateAtPos(reinterpret_cast<uint8_t *>(source), len);
+}
+
+
+REDOC("UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before")
+REDOC("UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert")
+static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t * to_insert, size_t max_source)
+{
+    len += 1;
+    uint8_t c = 0;
+    size_t i = 0;
+    for (; 0 != (c = source[i]) ; i++){
+        len -= ((c >> 6) == 2)?0:1;
+        if (len == 0) { break; }
+    }
+    
+
+    size_t insertion_point = i;
+    size_t end_point = insertion_point + strlen(reinterpret_cast<char *>(source+i));
+    size_t to_insert_nbbytes = strlen(reinterpret_cast<const char *>(to_insert));
+    if (end_point + to_insert_nbbytes + 1 > max_source){
+        return false;
+    }
+    
+    memmove(source + insertion_point + to_insert_nbbytes, source + insertion_point, end_point - insertion_point + 1);
+    memcpy(source + insertion_point, to_insert, to_insert_nbbytes);
+    return true;
+}
+
 
 struct utf8_str {
     const uint8_t * data;

@@ -34,6 +34,214 @@
 //#include <unicode/ustring.h>
 #include <stdio.h>
 
+
+BOOST_AUTO_TEST_CASE(TestUTF8Len)
+{
+    uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    BOOST_CHECK_EQUAL(11, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos)
+{
+    uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8TruncateAtPos(source, 20);
+    BOOST_CHECK_EQUAL(11, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos_0)
+{
+    uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8TruncateAtPos(source, 0);
+    BOOST_CHECK_EQUAL(0, source[0]);
+    BOOST_CHECK_EQUAL(0, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos_0_v2)
+{
+    uint8_t source[] = { 0xC3, 0xA9, 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8TruncateAtPos(source, 0);
+    BOOST_CHECK_EQUAL(0, source[0]);
+    BOOST_CHECK_EQUAL(0, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos_1)
+{
+    uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8TruncateAtPos(source, 1);
+    
+    BOOST_CHECK_EQUAL('a', source[0]);
+    BOOST_CHECK_EQUAL(0, source[1]);
+    BOOST_CHECK_EQUAL(1, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos_1_v2)
+{
+    uint8_t source[] = { 0xC3, 0xA9, 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8TruncateAtPos(source, 1);
+    
+    BOOST_CHECK_EQUAL(0xC3, source[0]);
+    BOOST_CHECK_EQUAL(0xA9, source[1]);
+    BOOST_CHECK_EQUAL(0, source[2]);
+    BOOST_CHECK_EQUAL(1, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos_2)
+{
+    uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8TruncateAtPos(source, 2);
+    
+    BOOST_CHECK_EQUAL('a', source[0]);
+    BOOST_CHECK_EQUAL('b', source[1]);
+    BOOST_CHECK_EQUAL(0, source[2]);
+    BOOST_CHECK_EQUAL(2, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos_2_v2)
+{
+    uint8_t source[] = { 0xC3, 0xA9, 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8TruncateAtPos(source, 2);
+    
+    BOOST_CHECK_EQUAL(0xC3, source[0]);
+    BOOST_CHECK_EQUAL(0xA9, source[1]);
+    BOOST_CHECK_EQUAL('a', source[2]);
+    BOOST_CHECK_EQUAL(0, source[3]);
+    BOOST_CHECK_EQUAL(2, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos_8)
+{
+    uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8TruncateAtPos(source, 8);
+    
+    uint8_t expected_result[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0};
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(8, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos_8_v2)
+{
+    uint8_t source[] = { 0xC3, 0xA9, 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8TruncateAtPos(source, 8);
+    
+    uint8_t expected_result[] = {0xC3, 0xA9, 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0};
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(8, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos_9)
+{
+    uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8TruncateAtPos(source, 9);
+    
+    uint8_t expected_result[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0};
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(9, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos_9_v2)
+{
+    uint8_t source[] = { 0xC3, 0xA9, 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8TruncateAtPos(source, 9);
+    
+    uint8_t expected_result[] = {0xC3, 0xA9, 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0};
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(9, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8InsertAtPos_0)
+{
+    uint8_t source[255] = { 0 };
+    uint8_t to_insert[] = { 0xC3, 0xA9, 0};
+
+    UTF8InsertAtPos(source, 3, to_insert, sizeof(source));
+    uint8_t expected_result[] = { 0xC3, 0xA9, 0};
+
+    BOOST_CHECK_EQUAL(0xC3, source[0]);
+    BOOST_CHECK_EQUAL(0xA9, source[1]);
+    BOOST_CHECK_EQUAL(0, source[2]);
+
+    BOOST_CHECK_EQUAL(1, UTF8Len(source));
+}
+
+
+BOOST_AUTO_TEST_CASE(TestUTF8InsertAtPos_beyond_end)
+{
+    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+    uint8_t to_insert[] = { 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z', 0};
+
+    UTF8InsertAtPos(source, 20, to_insert, sizeof(source));
+    
+    uint8_t expected_result[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 
+                                  0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z', 0
+    };
+
+
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+
+    BOOST_CHECK_EQUAL(17, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8InsertAtPos_at_start)
+{
+    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+    uint8_t to_insert[] = { 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z', 0};
+
+    UTF8InsertAtPos(source, 0, to_insert, sizeof(source));
+    
+    uint8_t expected_result[] = { 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z',
+                                 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0
+    };
+
+
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(17, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8InsertAtPos_at_1)
+{
+    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+    uint8_t to_insert[] = { 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z', 0};
+
+    UTF8InsertAtPos(source, 1, to_insert, sizeof(source));
+    
+    uint8_t expected_result[] = {'a', 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z',
+                                 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0
+    };
+
+
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(17, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8InsertAtPos_at_8)
+{
+    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+    uint8_t to_insert[] = { 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z', 0};
+
+    UTF8InsertAtPos(source, 8, to_insert, sizeof(source));
+    
+    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9,
+                                 0xC3, 0xA9, 'x', 0xC3, 0xA7, 0xC3, 0xA0, 'y', 'z',
+                                 0xC3, 0xA7, 0xC3, 0xA0, '@', 0
+    };
+
+
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(17, UTF8Len(source));
+}
+
 BOOST_AUTO_TEST_CASE(TestUTF8_UTF16)
 {
     uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
