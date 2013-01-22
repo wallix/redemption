@@ -152,7 +152,7 @@ struct widget_edit : public Widget {
                     }
 
                     if (num_chars < 120) {
-                        UTF8InsertOneAtPos(this->buffer, this->edit_pos, c, 255);
+                        UTF8InsertOneAtPos(reinterpret_cast<uint8_t *>(this->buffer), this->edit_pos, c, 255);
                         this->edit_pos++;
                         this->refresh(this->rect.wh());
                     }
