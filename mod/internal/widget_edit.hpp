@@ -145,25 +145,14 @@ struct widget_edit : public Widget {
             }
             else {
                 if (keymap->top_kevent() == Keymap2::KEVENT_KEY){
-                    wchar_t c = keymap->top_char();
+                    uint32_t c = keymap->top_char();
                     int num_chars = UTF8Len(this->buffer);
                     if ((this->edit_pos >= num_chars) || (this->edit_pos < 0)) {
                         this->edit_pos = num_chars;
                     }
 
                     if (num_chars < 120) {
-                        TODO("Insert char at given position, write specialized UTF8 function to do this")
-                        wchar_t wstr[120 + 16];
-                        mbstowcs(wstr, this->buffer, num_chars + 1);
-                        // make room by moving the end
-                        for (int i = (num_chars - 1); i >= this->edit_pos; i--) {
-                            wstr[i + 1] = wstr[i];
-                        }
-                        // store char at the right place
-                        wstr[this->edit_pos] = c;
-                        wstr[num_chars + 1] = 0;
-                        TODO("check man page and perform checks for conversion failure cases")
-                        wcstombs(this->buffer, wstr, 255);
+                        UTF8InsertOneAtPos(this->buffer, this->edit_pos, c, 255);
                         this->edit_pos++;
                         this->refresh(this->rect.wh());
                     }

@@ -166,7 +166,6 @@ BOOST_AUTO_TEST_CASE(TestUTF8InsertAtPos_0)
     uint8_t to_insert[] = { 0xC3, 0xA9, 0};
 
     UTF8InsertAtPos(source, 3, to_insert, sizeof(source));
-    uint8_t expected_result[] = { 0xC3, 0xA9, 0};
 
     BOOST_CHECK_EQUAL(0xC3, source[0]);
     BOOST_CHECK_EQUAL(0xA9, source[1]);

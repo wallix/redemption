@@ -138,6 +138,62 @@ static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t *
 }
 
 
+REDOC("UTF8Len assumes input is valid utf8, zero terminated, that has been checked before")
+TODO("Naive immplementation, not working for complex cases")
+static inline size_t UTF8CharNbBytes(const uint8_t * source)
+{
+    uint8_t c = *source;
+    return (c<=0x7F)?1:(c<=0xDF)?2:(c<=0xEF)?3:4;
+}
+
+REDOC("UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before")
+static inline void UTF8RemoveOneAtPos(uint8_t * source, size_t len)
+{
+    len += 1;
+    uint8_t c = 0;
+    size_t i = 0;
+    for (; 0 != (c = source[i]) ; i++){
+        len -= ((c >> 6) == 2)?0:1;
+        if (len == 0) {
+            size_t insertion_point = i;
+            size_t end_point = insertion_point + strlen(reinterpret_cast<char *>(source+i));
+            uint32_t char_len = UTF8CharNbBytes(source+i);
+            memmove(source + i, source + i + char_len, end_point - insertion_point + 1 - char_len);
+            break; 
+        }
+    }
+    return;
+}
+
+
+REDOC("UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before")
+REDOC("UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert")
+static inline bool UTF8InsertOneAtPos(uint8_t * source, size_t len, const uint32_t to_insert_char, size_t max_source)
+{
+    uint8_t lo = to_insert_char & 0xFF;
+    uint8_t hi  = (to_insert_char >> 8) & 0xFF;
+    uint8_t to_insert[4];
+
+    if (hi & 0xF8){
+        // 3 bytes
+        to_insert[0] = 0xE0 | ((hi >> 4) & 0x0F);
+        to_insert[1] = 0x80 | ((hi & 0x0F) << 2) | (lo >> 6);
+        to_insert[2] = 0x80 | (lo & 0x3F);
+        to_insert[3] = 0;
+    }
+    else if (hi || (lo & 0x80)) {
+        // 2 bytes
+        to_insert[0] = 0xC0 | ((hi << 2) & 0x1C) | ((lo >> 6) & 3);
+        to_insert[1] = 0x80 | (lo & 0x3F);
+        to_insert[2] = 0;
+    }
+    else {
+        to_insert[0] = lo;
+        to_insert[1] = 0;
+    }
+    return UTF8InsertAtPos(source, len, to_insert, max_source);
+}
+
 struct utf8_str {
     const uint8_t * data;
 };
