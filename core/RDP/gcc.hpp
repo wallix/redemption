@@ -1699,7 +1699,16 @@ namespace GCC
             void log(const char * msg)
             {
                 // --------------------- Base Fields ---------------------------------------
-                LOG(LOG_INFO, "%s GCC User Data SC_NET (%u bytes) %u channels", msg, this->length, this->channelCount);
+                LOG(LOG_INFO, "%s GCC User Data SC_NET (%u bytes)", msg, this->length);
+                LOG(LOG_INFO, "sc_net::MCSChannelId   = %u", this->MCSChannelId);
+                LOG(LOG_INFO, "sc_net::channelCount   = %u", this->channelCount);
+
+                for (size_t i = 0; i < this->channelCount ; i++){
+                    LOG(LOG_INFO, "sc_net::channel[%u]::id = %u" 
+                        , MCS_GLOBAL_CHANNEL + i + 1
+                        , this->channelDefArray[i].id
+                        );
+                }
             }
         };
 

@@ -70,7 +70,9 @@ struct ChannelDef {
         this->chanid = 0;
     }
 
-    void log(){
+    void log(unsigned index){
+        LOG(LOG_INFO, "ChannelDef[%u]::(name = %s, flags = %8x, chanid = %u)", 
+            index, this->name, (unsigned)this->flags, (unsigned)this->chanid);
     }
 };
 
@@ -111,6 +113,13 @@ public:
             }
         }
         return channel;
+    }
+
+    void log(char * name){
+        LOG(LOG_INFO, "%s channels %u channels defined", name, this->channelCount);
+        for (unsigned index = 0 ; index < this->channelCount ; index++){
+            this->items[index].log(index);
+        }
     }
 };
 

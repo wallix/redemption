@@ -692,6 +692,10 @@ struct mod_rdp : public client_mod {
                             const ChannelDef & channel_item = channel_list[index];
                             memcpy(cs_net.channelDefArray[index].name, channel_list[index].name, 8);
                             cs_net.channelDefArray[index].options = channel_item.flags;
+                            ChannelDef def;
+                            memcpy(def.name, cs_net.channelDefArray[index].name, 8);
+                            def.flags = channel_item.flags;
+                            this->mod_channel_list.push_back(def);
                         }
                         cs_net.log("Sending to server");
                         cs_net.emit(stream);
@@ -873,15 +877,9 @@ struct mod_rdp : public client_mod {
                         /* We assume that the channel_id array is confirmed in the same order
                         that it has been sent. If there are any channels not confirmed, they're
                         going to be the last channels on the array sent in MCS Connect Initial */
-                        for (size_t index = 0; index < sc_net.channelCount; index++){
-                            this->mod_channel_list.push_back(this->front.get_channel_list()[index]);
+                        for (uint32_t index = 0; index < sc_net.channelCount; index++) {
+                            this->mod_channel_list.set_chanid(index, sc_net.channelDefArray[index].id);
                         }
-
-//                        for (uint32_t index = 0; index < sc_net.channelCount; index++) {
-//                            ChannelDef def = this->front.get_channel_list()[index];
-//                            def.chanid = sc_net.channelDefArray[index].id;
-//                            this->mod_channel_list.push_back(def);
-//                        }
                         sc_net.log("Received from server");
                     }
                     break;
