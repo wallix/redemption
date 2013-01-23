@@ -25,28 +25,6 @@
 #include "widget.hpp"
 #include "internal/internal_mod.hpp"
 
-/*****************************************************************************/
-/* remove a ch at index position in text, index starts at 0 */
-/* if index = -1 remove it from the end */
-TODO("remove char at given position")
-static inline void remove_char_at(char* text, int text_size, int index)
-{
-    int len = UTF8Len(text);
-    if (len <= 0) {
-        return;
-    }
-    wchar_t wstr[1024 + 16];
-    mbstowcs(wstr, text, len + 1);
-    if ((index < (len - 1)) && (index >= 0)) {
-        for (int i = index; i < (len - 1); i++) {
-            wstr[i] = wstr[i + 1];
-        }
-    }
-    wstr[len - 1] = 0;
-    wcstombs(text, wstr, text_size);
-}
-
-
 struct widget_edit : public Widget {
 
     char buffer[256];
@@ -112,25 +90,20 @@ struct widget_edit : public Widget {
             }
             else if ((keymap->top_kevent() == Keymap2::KEVENT_BACKSPACE)) {
                 n = UTF8Len(this->buffer);
-                if (n > 0) {
-                    if (this->edit_pos > 0) {
-                        this->edit_pos--;
-                        remove_char_at(this->buffer, 255, this->edit_pos);
-                        this->refresh(this->rect.wh());
-                    }
+                if ((n > 0) && (this->edit_pos > 0)) {
+                    this->edit_pos--;
+                    UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->buffer), this->edit_pos);
+                    this->refresh(this->rect.wh());
                 }
             }
             else if ((keymap->top_kevent() == Keymap2::KEVENT_DELETE)) {
                 n = UTF8Len(this->buffer);
-                if (n > 0) {
-                    if (this->edit_pos < n) {
-                        remove_char_at(this->buffer, 255, this->edit_pos);
-                        this->refresh(this->rect.wh());
-                    }
+                if (n > 0 && this->edit_pos < n) {
+                    UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->buffer), this->edit_pos);
+                    this->refresh(this->rect.wh());
                 }
             }
             else if (keymap->top_kevent() == Keymap2::KEVENT_END) {
-                keymap->get_kevent();
                 n = UTF8Len(this->buffer);
                 if (this->edit_pos < n) {
                     this->edit_pos = n;

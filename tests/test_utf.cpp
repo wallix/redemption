@@ -35,11 +35,18 @@
 #include <stdio.h>
 
 
-BOOST_AUTO_TEST_CASE(TestUTF8Len)
+BOOST_AUTO_TEST_CASE(TestUTF8Len_2)
 {
     uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
 
     BOOST_CHECK_EQUAL(11, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8Len)
+{
+    uint8_t source[] = { 'a', 0xC3, 0xA9, 0};
+
+    BOOST_CHECK_EQUAL(2, UTF8Len(source));
 }
 
 BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos)
@@ -239,6 +246,119 @@ BOOST_AUTO_TEST_CASE(TestUTF8InsertAtPos_at_8)
 
     BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
     BOOST_CHECK_EQUAL(17, UTF8Len(source));
+}
+
+
+BOOST_AUTO_TEST_CASE(TestUTF8InsertOneAtPos_at_8)
+{
+    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8InsertOneAtPos(source, 8, 0xE9, sizeof(source));
+    
+    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0,
+                                 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0
+    };
+
+
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(12, UTF8Len(source));
+}
+
+
+BOOST_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos0)
+{
+    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8RemoveOneAtPos(source, 0);
+    
+    uint8_t expected_result[] = {'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0 };
+
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(10, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos1)
+{
+    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8RemoveOneAtPos(source, 1);
+    
+    uint8_t expected_result[] = {'a', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0 };
+
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(10, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos7)
+{
+    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8RemoveOneAtPos(source, 7);
+    
+    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA7, 0xC3, 0xA0, '@', 0 };
+
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(10, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos8)
+{
+    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8RemoveOneAtPos(source, 8);
+    
+    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA0, '@', 0 };
+
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(10, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos9)
+{
+    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8RemoveOneAtPos(source, 9);
+    
+    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, '@', 0 };
+
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(10, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos10)
+{
+    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8RemoveOneAtPos(source, 10);
+    
+    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, 0 };
+
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(10, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos11)
+{
+    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8RemoveOneAtPos(source, 11);
+    
+    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0 };
+
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(11, UTF8Len(source));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8RemoveOneAtPos12)
+{
+    uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+
+    UTF8RemoveOneAtPos(source, 12);
+    
+    uint8_t expected_result[] = {'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA0, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0 };
+
+    BOOST_CHECK_EQUAL(0, memcmp(source, expected_result, sizeof(expected_result)));
+    BOOST_CHECK_EQUAL(11, UTF8Len(source));
 }
 
 BOOST_AUTO_TEST_CASE(TestUTF8_UTF16)

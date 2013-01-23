@@ -361,7 +361,7 @@ class Stream {
     void out_unistr(const char* text)
     {
         const uint8_t * s = (const uint8_t *)text;
-        UTF8toUTF16(&s, strlen(text)+1, &this->p, this->end - this->p);
+        UTF8toUTF16(&s, strlen(text)+1, &this->p, this->room());
     }
 
     void out_date_name(const char* text, const size_t buflen)

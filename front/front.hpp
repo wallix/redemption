@@ -238,16 +238,13 @@ TODO("Pass font name as parameter in constructor")
     void text_metrics(const char * text, int & width, int & height){
         height = 0;
         width = 0;
-        if (text) {
-            TODO("check text is valid UTF-8, or UTF8Len behavior is undefined")
-            size_t len = UTF8Len(text);
-            uint32_t uni[8192];
-            const char * ptext = text;
-            uint32_t * puni = uni;
-            UTF8toUnicode(reinterpret_cast<const uint8_t **>(&ptext), len, &puni, sizeof(uni));
-            if (len != static_cast<uint32_t>(puni - uni)){
-                LOG(LOG_WARNING, "Front::text_metrics() some UTF8 characters were not converted to Unicode in %s", text);
-            }
+        TODO("check text is valid UTF-8, or UTF8Len behavior is undefined")
+        uint32_t uni[256];
+        const char * ptext = text;
+        uint32_t * puni = uni;
+        UTF8toUnicode(reinterpret_cast<const uint8_t **>(&ptext), strlen(text), &puni, sizeof(uni)/sizeof(uni[0]));
+        size_t len_uni = static_cast<uint32_t>(puni - uni);
+        if (len_uni){
             for (size_t index = 0; index < (puni - uni); index++) {
                 uint32_t charnum = uni[index]; // 
                 FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
@@ -268,7 +265,7 @@ TODO("Pass font name as parameter in constructor")
         this->send_global_palette();
 
         // add text to glyph cache
-        int len = UTF8Len(text);
+        int len = strlen(text);
 
         const char * ptext0 = text;
         while (len > 0){
@@ -276,9 +273,13 @@ TODO("Pass font name as parameter in constructor")
             uint32_t uni[128];
             const char * ptext1 = ptext0;
             uint32_t * puni = uni;
-            UTF8toUnicode(reinterpret_cast<const uint8_t **>(&ptext1), len, &puni, sizeof(uni));
+            UTF8toUnicode(reinterpret_cast<const uint8_t **>(&ptext1), len, &puni, sizeof(uni)/sizeof(uni[0]));
             size_t part_len = static_cast<unsigned>(puni-uni);
-            len -= part_len;
+            if (part_len == 0){
+                LOG(LOG_WARNING, "Front::server_draw_text() some UTF8 characters were not converted to Unicode in %s", ptext0);
+                break;
+            }
+            len -= static_cast<unsigned>(ptext1-ptext0);;
             ptext0 = ptext1;
         
             int total_width = 0;

@@ -269,7 +269,7 @@ static inline bool UTF8toUnicode(const uint8_t ** s, size_t s_len, uint32_t ** t
     bool res = false;
     const uint8_t * source = *s;
     uint32_t * target = *t;
-    size_t i_t = 0; 
+    size_t i_t = 0;
     uint32_t ucode = 0;
     size_t i = 0;
     for (; i < s_len ; i++){

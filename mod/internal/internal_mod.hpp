@@ -193,22 +193,20 @@ struct internal_mod : public client_mod {
 
         /* draw text */
         char text[255];
-        int len = UTF8Len(buffer);
-        if (len > 255) { len = 255; }
-
+        const size_t len = strlen(buffer);
         if (password_char != 0) {
             memset(text, password_char, len);
+            text[len] = 0;
         }
         else {
-            memcpy(text, buffer, len);
+            memcpy(text, buffer, len+1);
         }
-        text[len] = 0;
 
         this->front.server_draw_text(r.x + 4, r.y + 2, text, WHITE, BLACK, clip);
 
         /* draw xor box(cursor) */
         if (has_focus) {
-            UTF8TruncateAtPos(text, std::min<unsigned>(edit_pos, len));
+            UTF8TruncateAtPos(text, std::min<unsigned>(edit_pos, 255));
             int width = 0; int height = 0;
             TODO("As we are just looking for the end of bounding box to draw cursor, calling text_metrics is overkill."
                  "It would need some simpler function only computing width")
