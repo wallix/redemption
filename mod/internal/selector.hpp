@@ -3620,28 +3620,23 @@ struct selector_mod : public internal_mod {
         if (keymap->nb_kevent_available() > 0){
             switch (keymap->top_kevent()){
             case Keymap2::KEVENT_BACKSPACE:
+            {
                 keymap->get_kevent();
                 switch (this->focus_item){
                 case FOCUS_ON_FILTER_DEVICE:
                 {
-                    size_t lg_dev_text = strlen(this->filter_device_text);
                     if (this->filter_device_edit_pos > 0){
-                        memmove(this->filter_device_text + this->filter_device_edit_pos - 1,
-                               this->filter_device_text + this->filter_device_edit_pos,
-                               lg_dev_text - this->filter_device_edit_pos + 1);
                         this->filter_device_edit_pos--;
+                        UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->filter_device_text), this->filter_device_edit_pos);
                     }
                     this->event.set();
                 }
                 break;
                 case FOCUS_ON_FILTER_GROUP:
                 {
-                    size_t lg_group_text = strlen(this->filter_group_text);
                     if (this->filter_group_edit_pos > 0){
-                        memmove(this->filter_group_text + this->filter_group_edit_pos - 1,
-                               this->filter_group_text + this->filter_group_edit_pos,
-                               lg_group_text - this->filter_group_edit_pos + 1);
                         this->filter_group_edit_pos--;
+                        UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->filter_group_text), this->filter_group_edit_pos);
                     }
                     this->event.set();
                 }
@@ -3649,29 +3644,26 @@ struct selector_mod : public internal_mod {
                 default:
                 break;
                 }
+            }
             break;
             case Keymap2::KEVENT_DELETE:
+            {
                 keymap->get_kevent();
                 switch (this->focus_item){
                 case FOCUS_ON_FILTER_DEVICE:
                 {
-                    size_t lg_dev_text = strlen(this->filter_device_text);
-                    if (lg_dev_text - this->filter_device_edit_pos > 0){
-                        keymap->get_kevent();
-                        memmove(this->filter_device_text + this->filter_device_edit_pos,
-                               this->filter_device_text + this->filter_device_edit_pos + 1,
-                               lg_dev_text - this->filter_device_edit_pos);
+                    UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->filter_device_text), this->filter_device_edit_pos);
+                    if (this->filter_device_edit_pos > strlen(this->filter_device_text)){
+                        this->filter_device_edit_pos = strlen(this->filter_device_text);
                     }
                     this->event.set();
                 }
                 break;
                 case FOCUS_ON_FILTER_GROUP:
                 {
-                    size_t lg_group_text = strlen(this->filter_group_text);
-                    if (lg_group_text - this->filter_group_edit_pos > 0){
-                        memmove(this->filter_group_text + this->filter_group_edit_pos,
-                               this->filter_group_text + this->filter_group_edit_pos + 1,
-                               lg_group_text - this->filter_group_edit_pos);
+                    UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->filter_group_text), this->filter_group_edit_pos);
+                    if (this->filter_group_edit_pos > strlen(this->filter_group_text)){
+                        this->filter_group_edit_pos = strlen(this->filter_group_text);
                     }
                     this->event.set();
                 }
@@ -3679,18 +3671,15 @@ struct selector_mod : public internal_mod {
                 default:
                 break;
                 }
+            }
             break;
             case Keymap2::KEVENT_KEY:
+            {
                 switch (this->focus_item){
                 case FOCUS_ON_FILTER_DEVICE:
                 {
-                    size_t lg_dev_text = strlen(this->filter_device_text);
                     uint32_t c = keymap->get_char();
-                    if ((c > 32) && (c < 128) && (lg_dev_text < 20)){
-                        memmove(this->filter_device_text + this->filter_device_edit_pos+1,
-                               this->filter_device_text + this->filter_device_edit_pos,
-                               lg_dev_text - this->filter_device_edit_pos + 1);
-                        *(this->filter_device_text + this->filter_device_edit_pos) = c;
+                    if (UTF8InsertOneAtPos(reinterpret_cast<uint8_t *>(this->filter_device_text), this->filter_device_edit_pos, c , sizeof(this->filter_device_text))){
                         this->filter_device_edit_pos++;
                     }
                     this->event.set();
@@ -3698,13 +3687,8 @@ struct selector_mod : public internal_mod {
                 break;
                 case FOCUS_ON_FILTER_GROUP:
                 {
-                    size_t lg_group_text = strlen(this->filter_group_text);
                     uint32_t c = keymap->get_char();
-                    if (((c > 32) && (c < 128) && lg_group_text < 10)){
-                        memmove(this->filter_group_text + this->filter_group_edit_pos + 1,
-                               this->filter_group_text + this->filter_group_edit_pos,
-                               lg_group_text - this->filter_group_edit_pos + 1);
-                        *(this->filter_group_text + this->filter_group_edit_pos) = c;
+                    if (UTF8InsertOneAtPos(reinterpret_cast<uint8_t *>(this->filter_group_text), this->filter_group_edit_pos, c , sizeof(this->filter_group_text))){
                         this->filter_group_edit_pos++;
                     }
                     this->event.set();
@@ -3713,37 +3697,49 @@ struct selector_mod : public internal_mod {
                 default:
                     keymap->get_kevent();
                 break;
+                }
             }
             break;
             case Keymap2::KEVENT_TAB:
+            {
                 keymap->get_kevent();
                 this->focus_item = (this->focus_item + 1) % MAX_FOCUS_ITEM;
                 this->event.set();
+            }
             break;
             case Keymap2::KEVENT_BACKTAB:
+            {
                 keymap->get_kevent();
                 this->focus_item = (this->focus_item - 1 + MAX_FOCUS_ITEM) % MAX_FOCUS_ITEM;
                 this->event.set();
+            }
             break;
             case Keymap2::KEVENT_ENTER:
+            {
                 keymap->get_kevent();
                 this->click_focus = this->focus_item;
                 this->click(this->focus_item);
                 this->click_focus = NO_FOCUS;
                 this->event.set();
+            }
             break;
 
             case Keymap2::KEVENT_DOWN_ARROW:
+            {
                 keymap->get_kevent();
                 this->focus_line = (this->focus_line + 1) % this->nblines();
                 this->event.set();
+            }
             break;
             case Keymap2::KEVENT_UP_ARROW:
+            {
                 keymap->get_kevent();
                 this->focus_line = (this->focus_line + this->nblines() - 1) % this->nblines();
                 this->event.set();
+            }
             break;
             case Keymap2::KEVENT_LEFT_ARROW:
+            {
                 keymap->get_kevent();
                 if (this->focus_item == FOCUS_ON_FILTER_GROUP){
                     if (this->filter_group_edit_pos > 0) {
@@ -3756,22 +3752,23 @@ struct selector_mod : public internal_mod {
                     }
                 }
                 this->event.set();
+            }
             break;
             case Keymap2::KEVENT_RIGHT_ARROW:
+            {
                 keymap->get_kevent();
                 if (this->focus_item == FOCUS_ON_FILTER_GROUP){
-                    if (this->filter_group_edit_pos < strlen(this->filter_group_text)
-                    && this->filter_group_edit_pos < 10) {
+                    if (this->filter_group_edit_pos < strlen(this->filter_group_text)){
                         this->filter_group_edit_pos++;
                     }
                 }
                 else if (this->focus_item == FOCUS_ON_FILTER_DEVICE){
-                    if (this->filter_device_edit_pos < strlen(this->filter_device_text)
-                    && this->filter_device_edit_pos < 20) {
+                    if (this->filter_device_edit_pos < strlen(this->filter_device_text)){
                         this->filter_device_edit_pos++;
                     }
                 }
                 this->event.set();
+            }
             break;
             default:
                 keymap->get_kevent();

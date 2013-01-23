@@ -131,7 +131,6 @@ class Dico {
     }
 
     void cpy(const char * key, int value) {
-        TODO(" may be raising an exception would be better")
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
             return;

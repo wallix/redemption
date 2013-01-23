@@ -485,21 +485,18 @@ class SessionManager {
         }
         else {
             const char * tmp = this->context.get(key);
-            // do not send empty values
-            if (tmp[0] != 0){
-                if ((strncasecmp("password", (char*)key, 8) == 0)
-                ||(strncasecmp("target_password", (char*)key, 15) == 0)){
-                    LOG(LOG_INFO, "sending %s=<hidden>\n", key);
-                }
-                else {
-                    LOG(LOG_INFO, "sending %s=%s\n", key, tmp);
-                }
-                stream.out_copy_bytes(key, strlen(key));
-                stream.out_uint8('\n');
-                stream.out_uint8('!');
-                stream.out_copy_bytes(tmp, strlen(tmp));
-                stream.out_uint8('\n');
+            if ((strncasecmp("password", (char*)key, 8) == 0)
+            ||(strncasecmp("target_password", (char*)key, 15) == 0)){
+                LOG(LOG_INFO, "sending %s=<hidden>\n", key);
             }
+            else {
+                LOG(LOG_INFO, "sending %s=%s\n", key, tmp);
+            }
+            stream.out_copy_bytes(key, strlen(key));
+            stream.out_uint8('\n');
+            stream.out_uint8('!');
+            stream.out_copy_bytes(tmp, strlen(tmp));
+            stream.out_uint8('\n');
         }
     }
 
@@ -510,7 +507,6 @@ class SessionManager {
             this->auth_event->add_to_fd_set(rfds, max);
         }
     }
-
 
     void ask_next_module_remote(const char * auth_host, int authport)
     {
