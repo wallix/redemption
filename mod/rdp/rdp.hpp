@@ -397,8 +397,8 @@ struct mod_rdp : public client_mod {
             const ClientInfo & info,
             Random * gen,
             int key_flags,
-            uint32_t verbose = 0
-            bool enable_pointer = false)
+            uint32_t verbose = 0,
+            bool enable_new_pointer = false)
             :
                 client_mod(front, info.width, info.height),
                     in_stream(65536),
@@ -419,7 +419,8 @@ struct mod_rdp : public client_mod {
                     front_bpp(info.bpp),
                     gen(gen),
                     verbose(verbose),
-                    nego(tls, trans, target_user)
+                    nego(tls, trans, target_user),
+                    enable_new_pointer(enable_new_pointer)
     {
         if (this->verbose){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
@@ -1873,6 +1874,11 @@ struct mod_rdp : public client_mod {
 
             PointerCaps pointer_caps;
             pointer_caps.len = 10;
+            if (this->enable_new_pointer == false) {
+                pointer_caps.pointerCacheSize = 0;
+                pointer_caps.colorPointerCacheSize = 20;
+                pointer_caps.len = 8;
+            }
             pointer_caps.log("Sending pointer caps to server");
             pointer_caps.emit(stream);
             stream.mark_end();
@@ -1988,7 +1994,9 @@ struct mod_rdp : public client_mod {
                 if (this->verbose){
                     LOG(LOG_INFO, "Process pointer new");
                 }
-                this->process_new_pointer_pdu(stream, mod); // Pointer with arbitrary color depth
+                if (enable_new_pointer) {
+                    this->process_new_pointer_pdu(stream, mod); // Pointer with arbitrary color depth
+                }
                 if (this->verbose){
                     LOG(LOG_INFO, "Process pointer new done");
                 }

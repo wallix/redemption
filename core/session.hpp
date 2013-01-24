@@ -759,7 +759,7 @@ struct Session {
                                     &this->gen,
                                     this->front->keymap.key_flags,
                                     this->ini->globals.debug.mod_rdp,
-                                    false
+                                    true
                                     );
                 this->mod->event.obj = t->sck;
 
