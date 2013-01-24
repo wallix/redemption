@@ -57,8 +57,15 @@ static inline BGRColor RGBtoBGR(const BGRColor & c){
 
 static inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, const uint32_t (& palette)[256]){
     switch (in_bpp){
+    case 1:
+    {
+        uint32_t res = 0;
+        if (c) res = 0x00FFFFFF;
+        return res;
+    }
+    break;
     case 8:
-      return palette[(uint8_t)c] & 0xFFFFFF;
+        return palette[(uint8_t)c] & 0xFFFFFF;
     case 15:
     {
         // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 b1 b2 b3 b4 b5

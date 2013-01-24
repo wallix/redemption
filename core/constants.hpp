@@ -112,13 +112,6 @@ enum {
 };
 
 enum {
-    RDP_POINTER_SYSTEM             = 1,
-    RDP_POINTER_MOVE               = 3,
-    RDP_POINTER_COLOR              = 6,
-    RDP_POINTER_CACHED             = 7,
-};
-
-enum {
     RDP_NULL_POINTER               = 0,
     RDP_DEFAULT_POINTER            = 0x7F00,
 };
