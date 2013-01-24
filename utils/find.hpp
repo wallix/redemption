@@ -56,7 +56,7 @@ void clear_files_flv_meta_png(const char * path, const char * prefix)
                 continue;
             }
 
-            if (strncmp(entryp->d_name, prefix, strlen(prefix))){
+            if (strncmp(entryp->d_name, prefix, prefix_len)){
                 continue;
             }
 

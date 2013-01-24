@@ -288,7 +288,7 @@ TODO("Pass font name as parameter in constructor")
             memset(data, 0, part_len * 2 + 4);
             int f = 7;
             int distance_from_previous_fragment = 0;
-            for (int index = 0; index < part_len; index++) {
+            for (size_t index = 0; index < part_len; index++) {
                 int c = 0;
                 uint32_t charnum = uni[index]; // 
                 FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
