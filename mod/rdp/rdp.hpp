@@ -354,8 +354,6 @@ struct mod_rdp : public client_mod {
     uint8_t client_crypt_random[512];
     CryptContext encrypt, decrypt;
 
-    bool enable_new_pointer;
-
     enum {
         MOD_RDP_NEGO,
         MOD_RDP_BASIC_SETTINGS_EXCHANGE,
@@ -386,6 +384,8 @@ struct mod_rdp : public client_mod {
 
     char clientAddr[512];
     uint16_t cbClientAddr;
+
+    bool enable_new_pointer;
 
     mod_rdp(Transport * trans,
             const char * target_user,
@@ -3384,7 +3384,7 @@ struct mod_rdp : public client_mod {
             LOG(LOG_INFO, "mod_rdp::to_regular_bpp");
         }
         BStream resu(3072); // return a bitmap of 32 x 32 x 3 bytes
-        memset(resu.data, 3072, 0);
+        memset(resu.data, 0, 3072);
         unsigned nbr_pixel = dlen * 8 / bpp;
 
         switch (bpp) {
