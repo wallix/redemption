@@ -71,6 +71,14 @@
 //   transmission source of the PDU.
 
 
+enum {
+    RDP_POINTER_SYSTEM             = 1,
+    RDP_POINTER_MOVE               = 3,
+    RDP_POINTER_COLOR              = 6,
+    RDP_POINTER_CACHED             = 7,
+    RDP_POINTER_NEW                = 8,
+};
+
 //##############################################################################
 struct ShareControl
 //##############################################################################
@@ -147,7 +155,7 @@ struct ShareControl
     {
         if (this->payload.p != this->payload.end){
             LOG(LOG_ERR, "ShareControl: all payload data should have been consumed : len = %u size=%u remains %d", this->len, this->payload.size(), stream.end - stream.p);
-            throw Error(ERR_SEC);      
+            throw Error(ERR_SEC);
         }
     } // END METHOD recv_end
 
@@ -417,9 +425,9 @@ struct ShareData
     //==============================================================================
     {
         if (this->payload.p != this->payload.end){
-            LOG(LOG_INFO, "ShareData : some payload data were not consumed len=%u compressedLen=%u remains1=%u remains=%u", 
+            LOG(LOG_INFO, "ShareData : some payload data were not consumed len=%u compressedLen=%u remains1=%u remains=%u",
                 this->len, this->compressedLen, payload.end - payload.p, stream.end - stream.p);
-                throw Error(ERR_SEC);      
+                throw Error(ERR_SEC);
       }
     } // END METHOD recv_end
 

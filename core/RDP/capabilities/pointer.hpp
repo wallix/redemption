@@ -73,8 +73,8 @@ struct PointerCaps : public Capability {
     PointerCaps()
     : Capability(CAPSTYPE_POINTER, CAPLEN_POINTER)
     , colorPointerFlag(1)       // True = color supported ; False = only mono supported
-    , colorPointerCacheSize(20) // Number of available slots in color pointer cache
-    , pointerCacheSize(0)       // Optionnal ; Number of available slots in new update pointer cache
+    , colorPointerCacheSize(25) // Number of available slots in color pointer cache
+    , pointerCacheSize(25)       // Optionnal ; Number of available slots in new update pointer cache
     {
     }
 

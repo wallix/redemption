@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Author(s): Christophe Grosjean, Javier Caverni, Dominique Lafages
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    rdp module main header file
@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <netinet/tcp.h>
 #include <stdlib.h>
+#include <math.h>
 
 /* include other h files */
 #include "stream.hpp"
@@ -67,20 +68,26 @@
 
 #include "genrandom.hpp"
 
+// Bitmap sizes (in bytes)
+enum { DATA_BITMAP_SIZE = 4096 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x 32 bits
+     , MASK_BITMAP_SIZE =  128 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x  1 bit
+};
+
+
 struct rdp_cursor {
     int x;
     int y;
     int width;
     int height;
-    uint8_t mask[(32 * 32) / 8];
-    uint8_t data[(32 * 32) * 3];
+    uint8_t data[DATA_BITMAP_SIZE];
+    uint8_t mask[MASK_BITMAP_SIZE];
     rdp_cursor() {
         this->x = 0;
         this->y = 0;
         this->width = 0;
         this->height = 0;
-        memset(this->mask, 0, (32 * 32) / 8);
-        memset(this->data, 0, (32 * 32) * 3);
+        memset(this->data, 0, DATA_BITMAP_SIZE);
+        memset(this->mask, 0, MASK_BITMAP_SIZE);
     }
 };
 
@@ -347,6 +354,8 @@ struct mod_rdp : public client_mod {
     uint8_t client_crypt_random[512];
     CryptContext encrypt, decrypt;
 
+    bool enable_new_pointer;
+
     enum {
         MOD_RDP_NEGO,
         MOD_RDP_BASIC_SETTINGS_EXCHANGE,
@@ -374,7 +383,7 @@ struct mod_rdp : public client_mod {
     uint32_t verbose;
 
     RdpNego nego;
-    
+
     char clientAddr[512];
     uint16_t cbClientAddr;
 
@@ -388,7 +397,8 @@ struct mod_rdp : public client_mod {
             const ClientInfo & info,
             Random * gen,
             int key_flags,
-            uint32_t verbose = 0)
+            uint32_t verbose = 0,
+            bool enable_new_pointer = false)
             :
                 client_mod(front, info.width, info.height),
                     in_stream(65536),
@@ -409,7 +419,8 @@ struct mod_rdp : public client_mod {
                     front_bpp(info.bpp),
                     gen(gen),
                     verbose(verbose),
-                    nego(tls, trans, target_user)
+                    nego(tls, trans, target_user),
+                    enable_new_pointer(enable_new_pointer)
     {
         if (this->verbose){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
@@ -475,7 +486,7 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_INFO, "Creation of new mod 'RDP' failed");
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
             }
-        }        
+        }
     }
 
     virtual ~mod_rdp() {
@@ -1254,7 +1265,7 @@ struct mod_rdp : public client_mod {
                                 rc4.set_key(this->lic_layer_license_key, 16);
                                 rc4.crypt(hwid, sizeof(hwid));
 
-                                LIC::ClientLicenseInfo_Send(lic_data, this->use_rdp5?3:2, 
+                                LIC::ClientLicenseInfo_Send(lic_data, this->use_rdp5?3:2,
                                     this->lic_layer_license_size, this->lic_layer_license_data, hwid, signature);
                             }
                             else {
@@ -1314,7 +1325,7 @@ struct mod_rdp : public client_mod {
                             BStream mcs_header(256);
                             BStream sec_header(256);
                             BStream lic_data(65535);
-                            
+
                             LIC::ClientPlatformChallengeResponse_Send(lic_data, this->use_rdp5?3:2, out_token, crypt_hwid, out_sig);
                             SEC::Sec_Send sec(sec_header, lic_data, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
                             MCS::SendDataRequest_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3,
@@ -1862,7 +1873,12 @@ struct mod_rdp : public client_mod {
             capscount++;
 
             PointerCaps pointer_caps;
-            pointer_caps.len = 8;
+            pointer_caps.len = 10;
+            if (this->enable_new_pointer == false) {
+                pointer_caps.pointerCacheSize = 0;
+                pointer_caps.colorPointerCacheSize = 20;
+                pointer_caps.len = 8;
+            }
             pointer_caps.log("Sending pointer caps to server");
             pointer_caps.emit(stream);
             stream.mark_end();
@@ -1951,22 +1967,6 @@ struct mod_rdp : public client_mod {
             int message_type = stream.in_uint16_le();
             stream.in_skip_bytes(2); /* pad */
             switch (message_type) {
-            case RDP_POINTER_MOVE:
-            {
-                TODO(" implement RDP_POINTER_MOVE")
-                /* int x = */ stream.in_uint16_le();
-                /* int y = */ stream.in_uint16_le();
-            }
-            break;
-            case RDP_POINTER_COLOR:
-                if (this->verbose){
-                    LOG(LOG_INFO, "Process pointer color");
-                }
-                this->process_color_pointer_pdu(stream, mod);
-                if (this->verbose){
-                    LOG(LOG_INFO, "Process pointer color done");
-                }
-                break;
             case RDP_POINTER_CACHED:
                 if (this->verbose){
                     LOG(LOG_INFO, "Process pointer cached");
@@ -1976,15 +1976,42 @@ struct mod_rdp : public client_mod {
                     LOG(LOG_INFO, "Process pointer cached done");
                 }
                 break;
-            case RDP_POINTER_SYSTEM:
+            case RDP_POINTER_COLOR:
                 if (this->verbose){
-                    LOG(LOG_INFO, "Process pointer system");
+                    LOG(LOG_INFO, "Process pointer color");
                 }
                 this->process_system_pointer_pdu(stream, mod);
                 if (this->verbose){
                     LOG(LOG_INFO, "Process pointer system done");
                 }
                 break;
+                this->process_color_pointer_pdu(stream, mod);
+                if (this->verbose){
+                    LOG(LOG_INFO, "Process pointer color done");
+                }
+                break;
+            case RDP_POINTER_NEW:
+                if (this->verbose){
+                    LOG(LOG_INFO, "Process pointer new");
+                }
+                if (enable_new_pointer) {
+                    this->process_new_pointer_pdu(stream, mod); // Pointer with arbitrary color depth
+                }
+                if (this->verbose){
+                    LOG(LOG_INFO, "Process pointer new done");
+                }
+                break;
+            case RDP_POINTER_SYSTEM:
+                if (this->verbose){
+                    LOG(LOG_INFO, "Process pointer system");
+                }
+            case RDP_POINTER_MOVE:
+            {
+                TODO(" implement RDP_POINTER_MOVE")
+                /* int x = */ stream.in_uint16_le();
+                /* int y = */ stream.in_uint16_le();
+            }
+            break;
             default:
                 break;
             }
@@ -3236,6 +3263,7 @@ struct mod_rdp : public client_mod {
         cursor->height = stream.in_uint16_le();
         unsigned mlen = stream.in_uint16_le(); /* mask length */
         unsigned dlen = stream.in_uint16_le(); /* data length */
+
         if ((mlen > sizeof(cursor->mask)) || (dlen > sizeof(cursor->data))) {
             LOG(LOG_WARNING, "mod_rdp::Bad length for color pointer mask_len=%u data_len=%u",
                 (unsigned)mlen, (unsigned)dlen);
@@ -3243,7 +3271,7 @@ struct mod_rdp : public client_mod {
         }
         memcpy(cursor->data, stream.in_uint8p(dlen), dlen);
         memcpy(cursor->mask, stream.in_uint8p(mlen), mlen);
-        
+
         mod->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
@@ -3292,6 +3320,112 @@ struct mod_rdp : public client_mod {
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu done");
         }
+    }
+
+    void process_new_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
+    {
+        if (this->verbose){
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
+        }
+        unsigned data_bpp = stream.in_uint16_le(); /* data bpp */
+        unsigned cache_idx = stream.in_uint16_le();
+        if (cache_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
+            throw Error(ERR_RDP_PROCESS_NEW_POINTER_CACHE_NOT_OK);
+        }
+        struct rdp_cursor* cursor = this->cursors + cache_idx;
+        cursor->x = stream.in_uint16_le();
+        cursor->y = stream.in_uint16_le();
+        cursor->width = stream.in_uint16_le();
+        cursor->height = stream.in_uint16_le();
+        unsigned mlen = stream.in_uint16_le(); /* mask length */
+        unsigned dlen = stream.in_uint16_le(); /* data length */
+        if ((mlen > sizeof(cursor->mask)) || (dlen > sizeof(cursor->data))) {
+            LOG(LOG_WARNING, "mod_rdp::Bad length for color pointer mask_len=%u data_len=%u - Widh = %u Height = %u - BPP = %u",
+                (unsigned)mlen, (unsigned)dlen, cursor->width, cursor->height, data_bpp);
+            abort();
+            throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
+        }
+        memcpy(cursor->data, stream.in_uint8p(dlen), dlen);
+        memcpy(cursor->mask, stream.in_uint8p(mlen), mlen);
+
+        // convert arbitrary color depth to fixed 24bpp
+        BStream t1 = to_regular_bpp(cursor->data, dlen, data_bpp);
+        if (data_bpp == 1) {
+            // Reverse the regularized 24bpp bitmap (i.e. to COLOR POINTER style)
+            BStream t2(DATA_BITMAP_SIZE);
+            for (int i=2976; i >=0; i-=96) {
+                for (unsigned j=0; j < 96; j++) {
+                    t2.out_uint8(t1.data[i+j]);
+                }
+            }
+            memcpy(cursor->data, t2.data, DATA_BITMAP_SIZE);
+            // Also reverse the mask (i.e. to COLOR POINTER style) to have origin in up-left corner instead of down-left corner
+            BStream t3(MASK_BITMAP_SIZE);
+            for (int i = 124; i >= 0; i -= 4) {
+                for (unsigned j = 0; j < 4; j++) {
+                    t3.out_uint8(cursor->mask[i+j]);
+                }
+            }
+            memcpy(cursor->mask, t3.data, MASK_BITMAP_SIZE);
+        }
+        else {
+            memcpy(cursor->data, t1.data, DATA_BITMAP_SIZE);
+        }
+        mod->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
+        if (this->verbose){
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
+        }
+    }
+
+    // Convert a bitmap of arbitrary color_depth to a fixed depth of 24bpp (3 bytes)
+    BStream to_regular_bpp(uint8_t * bufin, unsigned dlen, unsigned bpp)
+    {
+        if (this->verbose > 10){
+            LOG(LOG_INFO, "mod_rdp::to_regular_bpp");
+        }
+        BStream resu(3072); // return a bitmap of 32 x 32 x 3 bytes
+        memset(resu.data, 3072, 0);
+        unsigned nbr_pixel = dlen * 8 / bpp;
+
+        switch (bpp) {
+        case 1 : {
+            for ( unsigned i=0; i < nbr_pixel; i++) {
+                BGRColor px = bufin[i/8] & (unsigned) pow(2, 7-(i%8));
+                BGRColor col = color_decode( px, (uint8_t) bpp, this->orders.global_palette);
+                resu.out_uint8( col & 0x000000FF);
+                resu.out_uint8( (col & 0x0000FF00) >> 8);
+                resu.out_uint8( (col & 0x00FF0000) >> 16);
+            }
+            break;
+        }
+        case 16 : {
+            for ( unsigned i=0; i < 2048; i+=2) {
+                BGRColor px = (bufin[i] << 8) + bufin[i+1];
+                BGRColor col = color_decode( px, (uint8_t) bpp, this->orders.global_palette);
+                resu.out_bytes_le(3, col);
+            }
+            break;
+        }
+        case 32 :{
+            for ( unsigned i=0; i < 4096; i+= 4) {
+                resu.out_uint8( bufin[i+2] );
+                resu.out_uint8( bufin[i+1] );
+                resu.out_uint8( bufin[i] );
+            }
+            break;
+        }
+        default: {
+            LOG(LOG_ERR, "Mouse pointer : color depth not supported : %d", bpp);
+            exit(0);
+            assert(false);
+            break;
+        }
+        }
+
+        if (this->verbose){
+            LOG(LOG_INFO, "mod_rdp::to_regular_bpp");
+        }
+        return resu;
     }
 
     void process_bitmap_updates(Stream & stream, client_mod * mod)
@@ -3486,7 +3620,7 @@ struct mod_rdp : public client_mod {
 
         infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG
                                                                                                    | PERF_DISABLE_MENUANIMATIONS );
-                                                                                                   
+
         infoPacket.extendedInfoPacket.cbClientAddress = 2 * this->cbClientAddr;
         memcpy(infoPacket.extendedInfoPacket.clientAddress, this->clientAddr, this->cbClientAddr);
 

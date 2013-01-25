@@ -758,7 +758,9 @@ struct Session {
                                     info,
                                     &this->gen,
                                     this->front->keymap.key_flags,
-                                    this->ini->globals.debug.mod_rdp);
+                                    this->ini->globals.debug.mod_rdp,
+                                    true
+                                    );
                 this->mod->event.obj = t->sck;
 
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front->client_info.width, this->front->client_info.height));

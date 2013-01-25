@@ -31,6 +31,7 @@
 #include <algorithm>
 
 #define LOGNULL
+//#define LOGPRINT
 #include "./test_orders.hpp"
 
 #include "stream.hpp"
@@ -298,7 +299,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
-    struct mod_rdp * mod = new mod_rdp(&t, "administrateur@qa", "S3cur3!1nux", "0.0.0.0", front, "test", false, info, &gen, 2);
+    struct mod_rdp * mod = new mod_rdp(&t, "administrateur@qa", "S3cur3!1nux", "0.0.0.0", front, "test", false, info, &gen, 2, false);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
