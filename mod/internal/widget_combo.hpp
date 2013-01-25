@@ -56,7 +56,7 @@ struct widget_combo : public Widget
             const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
 
             this->mod->draw_combo(scr_r,
-                this->string_list[0],
+                "Redemption Proxy",
                 this->state,
                 this->has_focus,
                 region_clip);

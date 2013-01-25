@@ -81,100 +81,59 @@ struct window_login : public window
 
         IniAccounts & acc = this->ini->account;
 
-        if (acc.accountdefined){
-            const char * target_protocol = "RDP";
-            switch (acc.idlib){
-                case ID_LIB_VNC:
-                    target_protocol = "VNC";
-                break;
-                case ID_LIB_XUP:
-                    target_protocol = "XUP";
-                break;
-                default:;
-            }
-            this->context.cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
-            this->context.cpy(STRAUTHID_TARGET_DEVICE, acc.ip);
-        }
-
         count = 0;
-        if (acc.askip){
-            /* label */
-            b = new widget_label(this->mod,
-                Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 22),
-                this, "ip");
 
-            b->id = 100 + 2 * count;
-            list.push_back(b);
+        b = new widget_label(this->mod,
+            Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 22),
+            this, this->context.get(STRAUTHID_TRANS_LOGIN));
 
-            /* edit */
-            b = new widget_edit(this->mod,
-                Rect(this->rect.cx >= 400 ? 230 : 70, 60 + 25 * count, 350, 22),
+        b->id = 100 + 2 * count;
+        list.push_back(b);
+
+        /* edit */
+        b = new widget_edit(this->mod,
+            Rect((this->rect.cx >= 400) ? 230 : 70, 60 + 25 * count, 350, 22),
                 this,
                 100 + 2 * count + 1, /* id */
                 1, /* tab stop */
-                acc.ip,
+                acc.username,
                 1, /* pointer */
                 0 /* edit pos */);
 
-            list.push_back(b);
-            count++;
+        list.push_back(b);
+
+        if (acc.username[0] == 0){
+            this->focused_control = b;
+            b->has_focus = true;
         }
+        count++;
 
-        if (acc.askusername){
-            b = new widget_label(this->mod,
-                Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 22),
-                this, this->context.get(STRAUTHID_TRANS_LOGIN));
+        b = new widget_label(this->mod,
+            Rect(this->rect.cx >= 400 ? 155 : 5, 60 + 25 * count, 70, 22),
+            this, this->context.get(STRAUTHID_TRANS_PASSWORD));
 
-            b->id = 100 + 2 * count;
-            list.push_back(b);
+        b->id = 100 + 2 * count;
+        list.push_back(b);
 
-            /* edit */
-            b = new widget_edit(this->mod,
-                Rect((this->rect.cx >= 400) ? 230 : 70, 60 + 25 * count, 350, 22),
-                    this,
-                    100 + 2 * count + 1, /* id */
-                    1, /* tab stop */
-                    acc.username,
-                    1, /* pointer */
-                    0 /* edit pos */);
+        /* edit */
+        b = new widget_edit(this->mod,
+                Rect((this->rect.cx) >= 400 ? 230 : 70, 60 + 25 * count, 350, 22),
+                this,
+                100 + 2 * count + 1, /* id */
+                1, /* tab stop */
+                acc.password,
+                1, /* pointer */
+                0 /* edit pos */);
 
-            list.push_back(b);
+        TODO(" move that into widget_edit")
+        b->password_char = '*';
+        list.push_back(b);
 
-            if (acc.username[0] == 0){
-                this->focused_control = b;
-                b->has_focus = true;
-            }
-            count++;
+        if (acc.username[0]){
+            this->focused_control = b;
+            b->has_focus = true;
         }
-
-        if (acc.askpassword){
-            b = new widget_label(this->mod,
-                Rect(this->rect.cx >= 400 ? 155 : 5, 60 + 25 * count, 70, 22),
-                this, this->context.get(STRAUTHID_TRANS_PASSWORD));
-
-            b->id = 100 + 2 * count;
-            list.push_back(b);
-
-            /* edit */
-            b = new widget_edit(this->mod,
-                    Rect((this->rect.cx) >= 400 ? 230 : 70, 60 + 25 * count, 350, 22),
-                    this,
-                    100 + 2 * count + 1, /* id */
-                    1, /* tab stop */
-                    acc.password,
-                    1, /* pointer */
-                    0 /* edit pos */);
-
-            TODO(" move that into widget_edit")
-            b->password_char = '*';
-            list.push_back(b);
-
-            if (acc.username[0]){
-                this->focused_control = b;
-                b->has_focus = true;
-            }
-            count++;
-        }
+        count++;
 
         for (i_tmp = 0; i_tmp < tmp.size() ; i_tmp++){
             list.push_back(tmp[i_tmp]);
@@ -192,6 +151,7 @@ struct window_login : public window
         if (this->modal_dialog != 0 && msg != 100) {
             return;
         }
+        LOG(LOG_INFO, "notify msg = %u", msg);
         if (msg == 1) { /* click */
             if (sender->id == 1) { /* help button */
                 this->help_clicked();
@@ -262,45 +222,30 @@ struct window_login : public window
 
         if (combo != 0) {
             IniAccounts & acc = this->ini->account;
-            const char * target_protocol = "RDP";
-            switch (acc.idlib){
-                case ID_LIB_VNC:
-                    target_protocol = "VNC";
-                break;
-                case ID_LIB_XUP:
-                    target_protocol = "XUP";
-                break;
-                default:;
-            }
-            this->context.cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
 
-            if (acc.accountdefined){
-                /* get the user typed values */
-                i = 100;
-                for (;;) {
-                TODO(" we should not rely on labels and window ordering for such things but on widget (Widget) identifiers")
-                    struct Widget* label = this->Widget_get_child_by_id(i);
-                    if (label == 0) {
-                        break;
-                    }
-                    struct widget_edit * edit = (widget_edit *)this->Widget_get_child_by_id(i + 1);
-                    if (edit == 0){
-                        break;
-                    }
-                    if (0 == strcmp(label->caption1, "ip")){
-                        context.cpy(STRAUTHID_TARGET_DEVICE, acc.askip?edit->buffer:acc.ip);
-                    }
-                    else if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_LOGIN))){
-                        context.parse_username(acc.askusername?edit->buffer:acc.username);
-                    }
-                    else if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_PASSWORD))){
-                        context.cpy(STRAUTHID_PASSWORD, acc.askpassword?edit->buffer:acc.password);
-                    }
-                    i += 2;
+            /* get the user typed values */
+            i = 100;
+            for (;;) {
+            TODO(" we should not rely on labels and window ordering for such things but on widget (Widget) identifiers")
+                struct Widget* label = this->Widget_get_child_by_id(i);
+                LOG(LOG_INFO, "label %i\n", i);
+                if (label == 0) {
+                    break;
                 }
-                this->mod->signal = BACK_EVENT_2;
-                this->mod->event.set();
+                struct widget_edit * edit = (widget_edit *)this->Widget_get_child_by_id(i + 1);
+                if (edit == 0){
+                    break;
+                }
+                else if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_LOGIN))){
+                    context.parse_username(edit->buffer);
+                }
+                else if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_PASSWORD))){
+                    context.cpy(STRAUTHID_PASSWORD, edit->buffer);
+                }
+                i += 2;
             }
+            this->mod->signal = BACK_EVENT_2;
+            this->mod->event.set();
         }
         else {
             i = 104;

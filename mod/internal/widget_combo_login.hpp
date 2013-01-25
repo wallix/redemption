@@ -65,60 +65,45 @@ struct combo_login : public window_login
         Rect rect(regular ? 230 : 70, 35, 350, 20);
         this->combo = new widget_combo(this->mod, rect, this, 6, 1);
 
-        if (ini->account.accountdefined){
-            this->combo->string_list.push_back(strdup(ini->account.accountname));
-        }
+        this->combo->string_list.push_back(strdup(ini->account.accountname));
 
-        if (ini->account.accountdefined){
-            this->combo->item_index = 0;
+        this->combo->item_index = 0;
 
-            if (context.is_asked(STRAUTHID_TARGET_USER)
-            ||  context.is_asked(STRAUTHID_TARGET_DEVICE)){
-                if (context.is_asked(STRAUTHID_AUTH_USER)){
-                    ini->account.username[0] = 0;
-                }
-                else {
-                    strcpy(ini->account.username, context.get(STRAUTHID_AUTH_USER));
-                }
-            }
-            else if (context.is_asked(STRAUTHID_AUTH_USER)) {
+        if (context.is_asked(STRAUTHID_TARGET_USER)
+        ||  context.is_asked(STRAUTHID_TARGET_DEVICE)){
+            if (context.is_asked(STRAUTHID_AUTH_USER)){
                 ini->account.username[0] = 0;
             }
             else {
-                char buffer[256];
-                if ( strlen(context.get(STRAUTHID_TARGET_PROTOCOL)) > 0) {
-                    snprintf( buffer, 256, "%s@%s:%s:%s"
-                            , context.get(STRAUTHID_TARGET_USER)
-                            , context.get(STRAUTHID_TARGET_DEVICE)
-                            , context.get(STRAUTHID_TARGET_PROTOCOL)
-                            , context.get(STRAUTHID_AUTH_USER)
-                            );
-                }
-                else {
-                    snprintf( buffer, 256, "%s@%s:%s"
-                            , context.get(STRAUTHID_TARGET_USER)
-                            , context.get(STRAUTHID_TARGET_DEVICE)
-                            , context.get(STRAUTHID_AUTH_USER)
-                            );
-                }
-                strcpy(ini->account.username, buffer);
+                strcpy(ini->account.username, context.get(STRAUTHID_AUTH_USER));
             }
+        }
+        else if (context.is_asked(STRAUTHID_AUTH_USER)) {
+            ini->account.username[0] = 0;
+        }
+        else {
+            char buffer[256];
+            if ( strlen(context.get(STRAUTHID_TARGET_PROTOCOL)) > 0) {
+                snprintf( buffer, 256, "%s@%s:%s:%s"
+                        , context.get(STRAUTHID_TARGET_USER)
+                        , context.get(STRAUTHID_TARGET_DEVICE)
+                        , context.get(STRAUTHID_TARGET_PROTOCOL)
+                        , context.get(STRAUTHID_AUTH_USER)
+                        );
+            }
+            else {
+                snprintf( buffer, 256, "%s@%s:%s"
+                        , context.get(STRAUTHID_TARGET_USER)
+                        , context.get(STRAUTHID_TARGET_DEVICE)
+                        , context.get(STRAUTHID_AUTH_USER)
+                        );
+            }
+            strcpy(ini->account.username, buffer);
         }
 
         this->child_list.push_back(this->combo);
 
         struct IniAccounts * acc = this->current_account();
-        const char * target_protocol = "RDP";
-        switch (acc->idlib){
-            case ID_LIB_VNC:
-                target_protocol = "VNC";
-            break;
-            case ID_LIB_XUP:
-                target_protocol = "XUP";
-            break;
-            default:;
-        }
-        this->context.cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
 
         but = new widget_button(this->mod,
               Rect(regular ? 180 : 30, 160, 60, 25),

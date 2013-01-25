@@ -42,16 +42,6 @@
 
 using namespace std;
 
-typedef enum{
-    ID_LIB_UNKNOWN,
-    ID_LIB_AUTH,
-    ID_LIB_VNC,
-    ID_LIB_MC,
-    ID_LIB_RDP,
-    ID_LIB_XUP
-} idlib_t;
-
-
 static inline bool bool_from_string(string str)
 {
     return (boost::iequals(string("1"),str))
@@ -86,42 +76,6 @@ static inline bool check_ask(const char * str)
     return (0 == strcmp(str, "ask"));
 }
 
-
-static inline idlib_t idlib_from_string(string str)
-{
-    idlib_t res = ID_LIB_UNKNOWN;
-    if ((0 == string("libvnc.so").compare(str))
-        || (0 == string("vnc.dll").compare(str))
-        || (0 == string("VNC").compare(str))
-        || (0 == string("vnc").compare(str))){
-            res = ID_LIB_VNC;
-    }
-    else if ((0 == string("librdp.so").compare(str))
-        || (0 == string("rdp.dll").compare(str))
-        || (0 == string("RDP").compare(str))
-        || (0 == string("rdp").compare(str))){
-            res = ID_LIB_RDP;
-    }
-    else if ((0 == string("libxup.so").compare(str))
-        || (0 == string("XUP").compare(str))
-        || (0 == string("xup.dll").compare(str))
-        || (0 == string("xup").compare(str))){
-            res = ID_LIB_XUP;
-    }
-    else if ((0 == string("libmc.so").compare(str))
-        || (0 == string("mc.dll").compare(str))
-        || (0 == string("MC").compare(str))
-        || (0 == string("mc").compare(str))){
-            res = ID_LIB_MC;
-    }
-    else if ((0 == string("auth").compare(str))){
-            res = ID_LIB_AUTH;
-    }
-    return res;
-}
-
-
-
 static inline void ask_string(const char * str, char buffer[], bool & flag)
 {
     flag = check_ask(str);
@@ -137,32 +91,8 @@ static inline void ask_string(const char * str, char buffer[], bool & flag)
 
 struct IniAccounts {
     char accountname[255];
-    idlib_t idlib; // 0 = unknown, 1 = vnc, 2 = mc, 3 = rdp, 4 = xup
-
-    bool accountdefined; // true if entry exists (name defined)
-
-    // using a boolean is not enough. We have to manage from where to get
-    // the value:
-    // - from configuration file
-    // - from command lines parameters of rdp client
-    // - from user input in login box
-    // If we get it from user input in login box we also should state from
-    // where comes the initial value:
-    // - from configuration file
-    // - from command line parameters
-    // - default as empty
-    // It can also be a combination of the above like:
-    // get it from configuration file and if it's empty use command line
-    // ... it's getting quite complicated and obviously too complicated
-    // to be managed by a poor lone boolean...
-    bool askusername;    // true if username should be asked interactively
-    bool askip;          // true if ip should be asked interactively
-    bool askpassword;    // true if password should be asked interactively
-
     char username[255]; // should use string
     char password[255]; // should use string
-    // do we want to allow asking ip to dns using hostname ?
-    char ip[255];          // should use string
 };
 
 struct Inifile {
@@ -359,15 +289,9 @@ struct Inifile {
             this->globals.debug.widget            = 0;
             this->globals.debug.input             = 0;
 
-            this->account.idlib = idlib_from_string("UNKNOWN");
-            this->account.accountdefined = false;
             strcpy(this->account.accountname, "");
-            this->account.askusername = false;
             strcpy(this->account.username, "");
-            this->account.askpassword = false;
             strcpy(this->account.password, "");
-            this->account.askip = false;
-            strcpy(this->account.ip, "");
     };
 
     void cparse(istream & ifs){
