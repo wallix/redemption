@@ -3390,11 +3390,19 @@ struct mod_rdp : public client_mod {
         switch (bpp) {
         case 1 : {
             for ( unsigned i=0; i < nbr_pixel; i++) {
-                unsigned px = bufin[i/8] & (unsigned) pow(2, 7-(i%8));
-                uint32_t col = color_decode( px, (uint8_t) bpp, this->orders.global_palette);
+                BGRColor px = bufin[i/8] & (unsigned) pow(2, 7-(i%8));
+                BGRColor col = color_decode( px, (uint8_t) bpp, this->orders.global_palette);
                 resu.out_uint8( col & 0x000000FF);
                 resu.out_uint8( (col & 0x0000FF00) >> 8);
                 resu.out_uint8( (col & 0x00FF0000) >> 16);
+            }
+            break;
+        }
+        case 16 : {
+            for ( unsigned i=0; i < 2048; i+=2) {
+                BGRColor px = (bufin[i] << 8) + bufin[i+1];
+                BGRColor col = color_decode( px, (uint8_t) bpp, this->orders.global_palette);
+                resu.out_bytes_le(3, col);
             }
             break;
         }
@@ -3407,7 +3415,7 @@ struct mod_rdp : public client_mod {
             break;
         }
         default: {
-            LOG(LOG_ERR, "Color depth not supported : %d", bpp);
+            LOG(LOG_ERR, "Mouse pointer : color depth not supported : %d", bpp);
             exit(0);
             assert(false);
             break;
