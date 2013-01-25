@@ -221,8 +221,6 @@ struct window_login : public window
         struct Widget* combo = this->Widget_get_child_by_id(6);
 
         if (combo != 0) {
-            IniAccounts & acc = this->ini->account;
-
             /* get the user typed values */
             i = 100;
             for (;;) {

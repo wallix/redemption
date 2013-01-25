@@ -103,8 +103,6 @@ struct combo_login : public window_login
 
         this->child_list.push_back(this->combo);
 
-        struct IniAccounts * acc = this->current_account();
-
         but = new widget_button(this->mod,
               Rect(regular ? 180 : 30, 160, 60, 25),
               this, 3, 1, context.get(STRAUTHID_TRANS_BUTTON_OK));
