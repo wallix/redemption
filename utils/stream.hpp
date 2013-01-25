@@ -399,7 +399,7 @@ class Stream {
     void in_uni_to_ascii_str(uint8_t * text, size_t sz, size_t bufsz)
     {
         UTF16toUTF8(this->p, sz / 2, text, bufsz);
-	this->p += sz;
+        this->p += sz;
     }
 
     void mark_end() {

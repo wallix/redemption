@@ -107,6 +107,9 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     while (front.up_and_running == 0){
         front.incoming(no_mod);
     }
+    
+    BOOST_CHECK_EQUAL(0, memcmp(front.client_info.hostname, "cgrgpu\0\0\0\0\0\0\0\0\0\0", 16));
+    
     BOOST_CHECK_EQUAL(1, front.up_and_running);
     test_card_mod mod(front, front.client_info.width, front.client_info.height);
     mod.draw_event();

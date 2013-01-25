@@ -292,3 +292,36 @@ BOOST_AUTO_TEST_CASE(TestStream_out_Stream)
 
     delete s;
 }
+
+BOOST_AUTO_TEST_CASE(TestStream_in_unistr)
+{
+    // test we can create a Stream object
+    BStream stream(1024);
+    uint8_t data[] = { 'r', 0, 'e', 0, 's', 0, 'u', 0, 'l', 0, 't', 0, 0, 0 };
+    stream.out_copy_bytes(data, sizeof(data));
+    stream.out_uint32_le(-1); // just to put a padding after usefull data
+    stream.mark_end();
+
+    stream.p = stream.data;
+    uint8_t result[256];
+    stream.in_uni_to_ascii_str(result, sizeof(data), sizeof(result));
+    BOOST_CHECK_EQUAL(14, stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp("result", result, 7));
+}
+
+BOOST_AUTO_TEST_CASE(TestStream_in_unistr_2)
+{
+    // test we can create a Stream object
+    BStream stream(1024);
+    uint8_t data[] = { 'r', 0, 0xE9, 0, 's', 0, 'u', 0, 'l', 0, 't', 0, 0, 0 };
+    stream.out_copy_bytes(data, sizeof(data));
+    stream.out_uint32_le(-1); // just to put a padding after usefull data
+    stream.mark_end();
+
+    stream.p = stream.data;
+    uint8_t result[256];
+    stream.in_uni_to_ascii_str(result, sizeof(data), sizeof(result));
+    BOOST_CHECK_EQUAL(14, stream.get_offset());
+    BOOST_CHECK_EQUAL(0, memcmp("r\xC3\xA9sult", result, 8));
+}
+
