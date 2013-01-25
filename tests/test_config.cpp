@@ -14,9 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+   Copyright (C) Wallix 2012
+   Author(s): Christophe Grosjean
 
    Unit test to config.cpp file
    Using lib boost functions, some tests need to be added
@@ -58,17 +57,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"), std::string(ini.globals.authip));
     BOOST_CHECK_EQUAL(3350, ini.globals.authport);
     BOOST_CHECK_EQUAL(std::string("/tmp/"), std::string(ini.globals.replay_path));
-
-    BOOST_CHECK_EQUAL(ID_LIB_UNKNOWN, ini.account[0].idlib);
-
-    BOOST_CHECK_EQUAL(false, ini.account[0].accountdefined);
-    BOOST_CHECK_EQUAL(0,     ini.account[0].accountname[0]);
-    BOOST_CHECK_EQUAL(false, ini.account[0].askusername);
-    BOOST_CHECK_EQUAL(0,     ini.account[0].username[0]);
-    BOOST_CHECK_EQUAL(false, ini.account[0].askpassword);
-    BOOST_CHECK_EQUAL(0,     ini.account[0].password[0]);
-    BOOST_CHECK_EQUAL(false, ini.account[0].askip);
-    BOOST_CHECK_EQUAL(0,     ini.account[0].ip[0]);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigDefault)
@@ -89,18 +77,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"), std::string(ini.globals.authip));
     BOOST_CHECK_EQUAL(3350, ini.globals.authport);
     BOOST_CHECK_EQUAL(std::string("/tmp/"), std::string(ini.globals.replay_path));
-
-    BOOST_CHECK_EQUAL(ID_LIB_UNKNOWN, ini.account[0].idlib);
-
-    BOOST_CHECK_EQUAL(false, ini.account[0].accountdefined);
-    BOOST_CHECK_EQUAL(0,     ini.account[0].accountname[0]);
-    BOOST_CHECK_EQUAL(false, ini.account[0].askusername);
-    BOOST_CHECK_EQUAL(0,     ini.account[0].username[0]);
-    BOOST_CHECK_EQUAL(false, ini.account[0].askpassword);
-    BOOST_CHECK_EQUAL(0,     ini.account[0].password[0]);
-    BOOST_CHECK_EQUAL(false, ini.account[0].askip);
-    BOOST_CHECK_EQUAL(0,     ini.account[0].ip[0]);
-
 }
 
 BOOST_AUTO_TEST_CASE(TestConfig1)
@@ -113,31 +89,12 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     "port=3390\n"
     "encryptionLevel=low\n"
     "\n"
-    "[xrdp1]\n"
-    "lib=libvnc.so\n"
-    "name=config1\n"
-    "username=myname\n"
-    "password=secret\n"
-    "ip=127.0.0.1\n"
-    "port=5900\n"
     );
 
     Inifile ini(oss);
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3390, ini.globals.port);
-
-    struct IniAccounts & acc = ini.account[0];
-
-    BOOST_CHECK_EQUAL(ID_LIB_VNC, acc.idlib);
-    BOOST_CHECK_EQUAL(std::string("config1"), std::string(acc.accountname));
-    BOOST_CHECK_EQUAL(true, acc.accountdefined);
-    BOOST_CHECK_EQUAL(false, acc.askusername);
-    BOOST_CHECK_EQUAL(std::string("myname"), std::string(acc.username));
-    BOOST_CHECK_EQUAL(false, acc.askpassword);
-    BOOST_CHECK_EQUAL(std::string("secret"), std::string(acc.password));
-    BOOST_CHECK_EQUAL(false, acc.askip);
-    BOOST_CHECK_EQUAL(std::string("127.0.0.1"), std::string(acc.ip));
 }
 
 BOOST_AUTO_TEST_CASE(TestConfig1bis)
@@ -150,31 +107,12 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     "bitmap_compression=on\n"
     "encryptionLevel=medium\n"
     "\n"
-    "[xrdp1]\n"
-    "lib=libxup.so\n"
-    "name=config2\n"
-    "username=ask\n"
-    "password=ask\n"
-    "ip=ask\n"
-    "port=5900\n"
-
     );
 
     Inifile ini(oss);
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(1,    ini.globals.encryptionLevel);
-
-    struct IniAccounts & acc = ini.account[0];
-
-    BOOST_CHECK_EQUAL(ID_LIB_XUP,  acc.idlib);
-    BOOST_CHECK_EQUAL(true, acc.askusername);
-    BOOST_CHECK_EQUAL(std::string(""), std::string(acc.username));
-    BOOST_CHECK_EQUAL(true, acc.askpassword);
-    BOOST_CHECK_EQUAL(std::string(""), std::string(acc.password));
-    BOOST_CHECK_EQUAL(true, acc.askip);
-    BOOST_CHECK_EQUAL(std::string(""), std::string(acc.ip));
-
 }
 
 BOOST_AUTO_TEST_CASE(TestConfig2)
@@ -186,18 +124,12 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     "bitmap_compression=false\n"
     "encryptionLevel=high\n"
     "\n"
-    "[xrdp1]\n"
-    "lib=auth\n"
     );
 
     Inifile ini(oss);
     BOOST_CHECK_EQUAL(false, ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(false, ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(2, ini.globals.encryptionLevel);
-
-    struct IniAccounts & acc = ini.account[0];
-
-    BOOST_CHECK_EQUAL(ID_LIB_AUTH, acc.idlib);
 }
 
 
@@ -211,83 +143,12 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     "port=3390\n"
     "encryptionLevel=low\n"
     "\n"
-    "[xrdp1]\n"
-    "lib=libvnc.so\n"
-    "name=config1\n"
-    "username=myname\n"
-    "password=secret\n"
-    "ip=127.0.0.1\n"
-    "port=5900\n"
-    "\n"
-    "[xrdp2]\n"
-    "lib=libxup.so\n"
-    "name=config2\n"
-    "username=ask\n"
-    "password=ask\n"
-    "ip=ask\n"
-    "port=5900\n"
-    "\n"
-    "[xrdp3]\n"
-    "lib=auth\n"
-    "name=config3\n"
-    "username=ask\n"
-    "password=ask\n"
-    "ip=127.0.0.1\n"
-    "port=5900\n"
-    "authip=127.0.0.1\n"
-    "authport=3350\n"
-    "\n"
-    "[xrdp6]\n"
-    "lib=auth\n"
-    "name=config4\n"
     );
 
     Inifile ini(oss);
     BOOST_CHECK_EQUAL(false, ini.globals.bitmap_cache);
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3390, ini.globals.port);
-
-    struct IniAccounts & acc = ini.account[0];
-
-    BOOST_CHECK_EQUAL(ID_LIB_VNC,  acc.idlib);
-    BOOST_CHECK_EQUAL(std::string("config1"), std::string(acc.accountname));
-    BOOST_CHECK_EQUAL(true, acc.accountdefined);
-    BOOST_CHECK_EQUAL(false, acc.askusername);
-    BOOST_CHECK_EQUAL(std::string("myname"), std::string(acc.username));
-    BOOST_CHECK_EQUAL(false, ini.account[0].askpassword);
-    BOOST_CHECK_EQUAL(std::string("secret"), std::string(acc.password));
-    BOOST_CHECK_EQUAL(false, acc.askip);
-    BOOST_CHECK_EQUAL(std::string("127.0.0.1"), std::string(acc.ip));
-
-    acc = ini.account[1];
-
-    BOOST_CHECK_EQUAL(ID_LIB_XUP,  acc.idlib);
-    BOOST_CHECK_EQUAL(std::string("config2"), std::string(acc.accountname));
-    BOOST_CHECK_EQUAL(true, acc.accountdefined);
-    BOOST_CHECK_EQUAL(true, acc.askusername);
-    BOOST_CHECK_EQUAL(std::string(""), std::string(acc.username));
-    BOOST_CHECK_EQUAL(true, acc.askpassword);
-    BOOST_CHECK_EQUAL(std::string(""), std::string(acc.password));
-    BOOST_CHECK_EQUAL(true, acc.askip);
-    BOOST_CHECK_EQUAL(std::string(""), std::string(acc.ip));
-
-    acc = ini.account[2];
-
-    BOOST_CHECK_EQUAL(ID_LIB_AUTH,  acc.idlib);
-    BOOST_CHECK_EQUAL(std::string("config3"), std::string(acc.accountname));
-    BOOST_CHECK_EQUAL(true, acc.accountdefined);
-    BOOST_CHECK_EQUAL(true, acc.askusername);
-    BOOST_CHECK_EQUAL(std::string(""), std::string(acc.username));
-    BOOST_CHECK_EQUAL(true, acc.askpassword);
-    BOOST_CHECK_EQUAL(std::string(""), std::string(acc.password));
-    BOOST_CHECK_EQUAL(false, acc.askip);
-    BOOST_CHECK_EQUAL(std::string("127.0.0.1"), std::string(acc.ip));
-
-    acc = ini.account[5];
-
-    BOOST_CHECK_EQUAL(ID_LIB_AUTH, acc.idlib);
-    BOOST_CHECK_EQUAL(std::string("config4"), std::string(acc.accountname));
-    BOOST_CHECK_EQUAL(true, acc.accountdefined);
 
     // see we can change configuration using parse without default setting of existing ini
     std::stringstream oss2(

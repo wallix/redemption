@@ -270,7 +270,7 @@ struct Inifile {
 
     } globals;
 
-    struct IniAccounts account[6];
+    struct IniAccounts account;
 
     Inifile() {
         std::stringstream oss("");
@@ -359,17 +359,15 @@ struct Inifile {
             this->globals.debug.widget            = 0;
             this->globals.debug.input             = 0;
 
-            for (size_t i=0; i< 6; i++){
-                this->account[i].idlib = idlib_from_string("UNKNOWN");
-                this->account[i].accountdefined = false;
-                strcpy(this->account[i].accountname, "");
-                this->account[i].askusername = false;
-                strcpy(this->account[i].username, "");
-                this->account[i].askpassword = false;
-                strcpy(this->account[i].password, "");
-                this->account[i].askip = false;
-                strcpy(this->account[i].ip, "");
-            }
+            this->account.idlib = idlib_from_string("UNKNOWN");
+            this->account.accountdefined = false;
+            strcpy(this->account.accountname, "");
+            this->account.askusername = false;
+            strcpy(this->account.username, "");
+            this->account.askpassword = false;
+            strcpy(this->account.password, "");
+            this->account.askip = false;
+            strcpy(this->account.ip, "");
     };
 
     void cparse(istream & ifs){
@@ -625,30 +623,6 @@ struct Inifile {
             }
             else if (0 == strcmp(key, "input")){
                 this->globals.debug.input            = atol(value);
-            }
-            else {
-                LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
-            }
-        }
-        else if (0 == strncmp("xrdp", context, 4) && context[4] >= '1' && context[4] <= '6' && context[5] == 0){
-            int i = context[4] - '1';
-            if (0 == strcmp(key, "lib")){
-                this->account[i].idlib = idlib_from_string(value);
-            }
-            else if (0 == strcmp(key, "name")){
-                if (strlen(value) > 0) {
-                    strcpy(this->account[i].accountname, value);
-                    this->account[i].accountdefined = true;
-                }
-            }
-            else if (0 == strcmp(key, "username")){
-                ask_string(value, this->account[i].username, this->account[i].askusername);
-            }
-            else if (0 == strcmp(key, "password")){
-                ask_string(value, this->account[i].password, this->account[i].askpassword);
-            }
-            else if (0 == strcmp(key, "ip")){
-                ask_string(value, this->account[i].ip, this->account[i].askip);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

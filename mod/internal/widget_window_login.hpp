@@ -49,7 +49,7 @@ struct window_login : public window
 
     IniAccounts * current_account()
     {
-        return &(this->ini->account[this->combo->item_index]);
+        return &(this->ini->account);
     }
 
     TODO(" this should not be here  the whole widget hierarchy should be rethought anyway")
@@ -79,7 +79,7 @@ struct window_login : public window
        }
        list.push_back(this->combo);
 
-        IniAccounts & acc = this->ini->account[this->combo->item_index];
+        IniAccounts & acc = this->ini->account;
 
         if (acc.accountdefined){
             const char * target_protocol = "RDP";
@@ -261,7 +261,7 @@ struct window_login : public window
         struct Widget* combo = this->Widget_get_child_by_id(6);
 
         if (combo != 0) {
-            IniAccounts & acc = this->ini->account[combo->item_index];
+            IniAccounts & acc = this->ini->account;
             const char * target_protocol = "RDP";
             switch (acc.idlib){
                 case ID_LIB_VNC:

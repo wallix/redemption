@@ -14,7 +14,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
+   Copyright (C) Wallix 2010-2012
    Author(s): Christophe Grosjean, Javier Caverni
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
@@ -65,49 +65,43 @@ struct combo_login : public window_login
         Rect rect(regular ? 230 : 70, 35, 350, 20);
         this->combo = new widget_combo(this->mod, rect, this, 6, 1);
 
-        TODO(" add this to combo through constructor (pass in an array of strings ?) a list of pairs with id and string could be better.")
-        for (int i = 0; i < 6 ; i++){
-            if (ini->account[i].accountdefined){
-                this->combo->string_list.push_back(strdup(ini->account[i].accountname));
-            }
+        if (ini->account.accountdefined){
+            this->combo->string_list.push_back(strdup(ini->account.accountname));
         }
 
-        for (int i = 0; i < 6 ; i++){
-            if (ini->account[i].accountdefined){
-                this->combo->item_index = i;
+        if (ini->account.accountdefined){
+            this->combo->item_index = 0;
 
-                if (context.is_asked(STRAUTHID_TARGET_USER)
-                ||  context.is_asked(STRAUTHID_TARGET_DEVICE)){
-                    if (context.is_asked(STRAUTHID_AUTH_USER)){
-                        ini->account[i].username[0] = 0;
-                    }
-                    else {
-                        strcpy(ini->account[i].username, context.get(STRAUTHID_AUTH_USER));
-                    }
-                }
-                else if (context.is_asked(STRAUTHID_AUTH_USER)) {
-                    ini->account[i].username[0] = 0;
+            if (context.is_asked(STRAUTHID_TARGET_USER)
+            ||  context.is_asked(STRAUTHID_TARGET_DEVICE)){
+                if (context.is_asked(STRAUTHID_AUTH_USER)){
+                    ini->account.username[0] = 0;
                 }
                 else {
-                    char buffer[256];
-                    if ( strlen(context.get(STRAUTHID_TARGET_PROTOCOL)) > 0) {
-                        snprintf( buffer, 256, "%s@%s:%s:%s"
-                                , context.get(STRAUTHID_TARGET_USER)
-                                , context.get(STRAUTHID_TARGET_DEVICE)
-                                , context.get(STRAUTHID_TARGET_PROTOCOL)
-                                , context.get(STRAUTHID_AUTH_USER)
-                                );
-                    }
-                    else {
-                        snprintf( buffer, 256, "%s@%s:%s"
-                                , context.get(STRAUTHID_TARGET_USER)
-                                , context.get(STRAUTHID_TARGET_DEVICE)
-                                , context.get(STRAUTHID_AUTH_USER)
-                                );
-                    }
-                    strcpy(ini->account[i].username, buffer);
+                    strcpy(ini->account.username, context.get(STRAUTHID_AUTH_USER));
                 }
-                break;
+            }
+            else if (context.is_asked(STRAUTHID_AUTH_USER)) {
+                ini->account.username[0] = 0;
+            }
+            else {
+                char buffer[256];
+                if ( strlen(context.get(STRAUTHID_TARGET_PROTOCOL)) > 0) {
+                    snprintf( buffer, 256, "%s@%s:%s:%s"
+                            , context.get(STRAUTHID_TARGET_USER)
+                            , context.get(STRAUTHID_TARGET_DEVICE)
+                            , context.get(STRAUTHID_TARGET_PROTOCOL)
+                            , context.get(STRAUTHID_AUTH_USER)
+                            );
+                }
+                else {
+                    snprintf( buffer, 256, "%s@%s:%s"
+                            , context.get(STRAUTHID_TARGET_USER)
+                            , context.get(STRAUTHID_TARGET_DEVICE)
+                            , context.get(STRAUTHID_AUTH_USER)
+                            );
+                }
+                strcpy(ini->account.username, buffer);
             }
         }
 
@@ -126,14 +120,12 @@ struct combo_login : public window_login
         }
         this->context.cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
 
-        TODO(" valgrind say there is a memory leak here")
         but = new widget_button(this->mod,
               Rect(regular ? 180 : 30, 160, 60, 25),
               this, 3, 1, context.get(STRAUTHID_TRANS_BUTTON_OK));
         this->child_list.push_back(but);
         this->default_button = but;
 
-        TODO(" valgrind say there is a memory leak here")
         but = new widget_button(this->mod,
               Rect(regular ? 250 : ((r.cx - 30) - 60), 160, 60, 25),
               this, 2, 1, context.get(STRAUTHID_TRANS_BUTTON_CANCEL));
@@ -141,7 +133,6 @@ struct combo_login : public window_login
         this->esc_button = but;
 
         if (regular) {
-        TODO(" valgrind say there is a memory leak here")
             but = new widget_button(this->mod,
                   Rect(320, 160, 60, 25), this, 1, 1, context.get(STRAUTHID_TRANS_BUTTON_HELP));
             this->child_list.push_back(but);

@@ -56,7 +56,7 @@ struct widget_combo : public Widget
             const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
 
             this->mod->draw_combo(scr_r,
-                this->string_list[this->item_index],
+                this->string_list[0],
                 this->state,
                 this->has_focus,
                 region_clip);
@@ -66,25 +66,6 @@ struct widget_combo : public Widget
 
     virtual void def_proc(const int msg, const int param1, const int param2, Keymap2 * keymap)
     {
-        if (msg == WM_KEYDOWN) {
-            if ((keymap->top_kevent() == Keymap2::KEVENT_LEFT_ARROW)
-            || (keymap->top_kevent() == Keymap2::KEVENT_UP_ARROW)){
-                if (this->item_index > 0) {
-                    this->item_index--;
-                    this->refresh(this->rect.wh());
-                    this->notify(this, CB_ITEMCHANGE, 0, 0);
-                }
-            }
-            else if ((keymap->top_kevent() == Keymap2::KEVENT_RIGHT_ARROW)
-            || (keymap->top_kevent() == Keymap2::KEVENT_DOWN_ARROW)){
-                size_t count = this->string_list.size();
-                if ((this->item_index + 1) < count) {
-                    this->item_index++;
-                    this->refresh(this->rect.wh());
-                    this->notify(this, CB_ITEMCHANGE, 0, 0);
-                }
-            }
-        }
     }
 
 };
