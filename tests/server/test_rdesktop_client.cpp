@@ -29,8 +29,8 @@
 #define BOOST_TEST_MODULE TestFrontRdesktopClient
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGNULL
 #include "log.hpp"
-#define LOGPRINT
 
 #include <errno.h>
 #include <algorithm>

@@ -360,8 +360,9 @@ class Stream {
 
     void out_unistr(const char* text)
     {
-        const uint8_t * s = (const uint8_t *)text;
-        UTF8toUTF16(&s, strlen(text)+1, &this->p, this->room());
+        const size_t len = UTF8toUTF16(reinterpret_cast<const uint8_t*>(text), this->p, this->room());
+        this->p += len;
+        this->out_clear_bytes(2);
     }
 
     void out_date_name(const char* text, const size_t buflen)
@@ -397,7 +398,8 @@ class Stream {
     // sz utf16 bytes are translated to ascci, 00 terminated
     void in_uni_to_ascii_str(uint8_t * text, size_t sz, size_t bufsz)
     {
-        UTF16toUTF8(const_cast<const uint8_t **>(&this->p), sz, &text, bufsz);
+        UTF16toUTF8(this->p, sz / 2, text, bufsz);
+	this->p += sz;
     }
 
     void mark_end() {

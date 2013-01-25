@@ -238,14 +238,10 @@ TODO("Pass font name as parameter in constructor")
     void text_metrics(const char * text, int & width, int & height){
         height = 0;
         width = 0;
-        TODO("check text is valid UTF-8, or UTF8Len behavior is undefined")
         uint32_t uni[256];
-        const char * ptext = text;
-        uint32_t * puni = uni;
-        UTF8toUnicode(reinterpret_cast<const uint8_t **>(&ptext), strlen(text), &puni, sizeof(uni)/sizeof(uni[0]));
-        size_t len_uni = static_cast<uint32_t>(puni - uni);
+        size_t len_uni = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
         if (len_uni){
-            for (size_t index = 0; index < (puni - uni); index++) {
+            for (size_t index = 0; index < len_uni; index++) {
                 uint32_t charnum = uni[index]; // 
                 FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
                 if (!font_item) {
@@ -266,26 +262,17 @@ TODO("Pass font name as parameter in constructor")
 
         // add text to glyph cache
         int len = strlen(text);
+        TODO("we should put some loop here for text to be splitted between chunks of UTF8 characters and loop on them")
+        if (len > 120) {
+            len = 120;
+        }
 
-        const char * ptext0 = text;
-        while (len > 0){
-
+        if (len > 0){
             uint32_t uni[128];
-            const char * ptext1 = ptext0;
-            uint32_t * puni = uni;
-            UTF8toUnicode(reinterpret_cast<const uint8_t **>(&ptext1), len, &puni, sizeof(uni)/sizeof(uni[0]));
-            size_t part_len = static_cast<unsigned>(puni-uni);
-            if (part_len == 0){
-                LOG(LOG_WARNING, "Front::server_draw_text() some UTF8 characters were not converted to Unicode in %s", ptext0);
-                break;
-            }
-            len -= static_cast<unsigned>(ptext1-ptext0);;
-            ptext0 = ptext1;
-        
+            size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
             int total_width = 0;
             int total_height = 0;
             uint8_t data[256];
-            memset(data, 0, part_len * 2 + 4);
             int f = 7;
             int distance_from_previous_fragment = 0;
             for (size_t index = 0; index < part_len; index++) {

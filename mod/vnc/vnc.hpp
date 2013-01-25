@@ -59,7 +59,6 @@ struct mod_vnc : public client_mod {
 //    int clip_chanid;
 
     BStream clip_data;
-    size_t clip_data_size;
 
     uint16_t width;
     uint16_t height;
@@ -111,7 +110,6 @@ struct mod_vnc : public client_mod {
         memset(this->password, 0, 256);
 
 //        this->clip_chanid = 0;
-        this->clip_data_size = 0;
 
         strcpy(this->username, username);
         strcpy(this->password, password);
@@ -160,14 +158,14 @@ struct mod_vnc : public client_mod {
                 int i = stream.in_uint32_be();
                 if (i != 0) {
                     LOG(LOG_INFO, "vnc password failed\n");
-                    throw 2;
+                    throw Error(ERR_VNC_CONNECTION_ERROR);
                 } else {
                     LOG(LOG_INFO, "vnc password ok\n");
                 }
             }
             break;
             default:
-                throw 1;
+                throw Error(ERR_VNC_CONNECTION_ERROR);
         }
         this->t->send("\x01", 1); /* share flag */
 
@@ -271,7 +269,7 @@ struct mod_vnc : public client_mod {
             int lg = stream.in_uint32_be();
 
             if (lg > 255 || lg < 0) {
-                throw 3;
+                throw Error(ERR_VNC_CONNECTION_ERROR);
             }
             char * end = this->mod_name;
             this->t->recv(&end, lg);
@@ -895,22 +893,39 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         ChannelDefArray chanlist = this->front.get_channel_list();
         const ChannelDef * channel = chanlist.get((char *) "cliprdr");
 
+        TODO("change code below. It will overflow for long VNC data to copy."
+        " If clip_data_size is large is will also allocate an undecent amoutn of memory")
+
         // NB : Whether the clipboard is available or not, read the incoming data to prevent a jam in transport layer
-        // Store the clipboard into *clip_data* and its length in *clip_data_size*
+        // Store the clipboard into *clip_data*, data length will be (clip_data.end - clip_data.data)
         BStream stream(32768);
         this->t->recv(&stream.end, 7);
         stream.in_skip_bytes(3);
-        this->clip_data_size = stream.in_uint32_be();
+        size_t clip_data_size = stream.in_uint32_be();
 
-        // Put the clipboard content into the VNC PROXY internal buffer for futher use (when client ask for.)
-        this->clip_data.init(this->clip_data_size);
-        if (this->clip_data_size > 0){
-            this->t->recv(&this->clip_data.end, this->clip_data_size);
+        size_t chunk_size = (clip_data_size>8000)?8000:clip_data_size;
+        this->clip_data.init(8192);
+        this->t->recv(&this->clip_data.end, chunk_size);
+        
+        // Add two trailing zero if not already there to ensure we have UTF8sz content
+        if (this->clip_data.end[-1]){ this->clip_data.end++; }
+        if (this->clip_data.end[-1]){ this->clip_data.end++; }
+
+        // drop remaining clipboard content if larger that about 8000 bytes
+        if (clip_data_size > chunk_size){
+            size_t remaining = clip_data_size - chunk_size;
+            BStream drop(4096);
+            while (remaining > 4096){
+                drop.end = drop.data;
+                this->t->recv(&drop.end, 4096);
+                remaining -= 4096;
+            }
+            drop.end = drop.data;
+            this->t->recv(&drop.end, remaining);
         }
 
-
         if (channel) {
-            BStream out_s(8192);
+            BStream out_s(16384);
             //- Beginning of clipboard PDU Header ----------------------------
             out_s.out_uint16_le(2); // MSG Type 2 bytes
             out_s.out_uint16_le(0); // MSG flags 2 bytes
@@ -1100,21 +1115,24 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     BStream out_s(8192);
 
                     // Convert utf-8 VNC buffer to utf-16 for RDP
-                    uint8_t dataU16[this->clip_data_size * 2];
-                    memset(dataU16, 0, sizeof(dataU16));
-                    const uint8_t * pdataU8 = this->clip_data.data;
-                    uint8_t * pdataU16 = dataU16;
-                    UTF8toUTF16(&pdataU8, this->clip_data_size, &pdataU16, (this->clip_data_size * 2));
-
                     //--------------------------- Beginning of clipboard PDU Header ----------------------------
                     out_s.out_uint16_le(5);                    //  - MSG Type 2 bytes
                     out_s.out_uint16_le(1);                    //  - MSG flags 2 bytes
-                    out_s.out_uint32_le((pdataU16 - dataU16)); //  - Datalen of the rest of the message
+
+                    size_t clipboard_payload_size = UTF8Check(this->clip_data.end, this->clip_data.end - this->clip_data.data);
+                    // Ensure watchdog. In normal cases it will already be there
+                    this->clip_data.end[clipboard_payload_size] = 0;
+
+                    size_t start_of_data = out_s.get_offset();
+                    out_s.out_uint32_le(0); //  - Datalen of the rest of the message
                     //--------------------------- End of clipboard PDU Header ----------------------------------
                     //--------------------------- Beginning of Format Data Response PDU payload ----------------
-                    out_s.out_copy_bytes(dataU16, (pdataU16 - dataU16));
+
+                    out_s.out_unistr(reinterpret_cast<const char *>(this->clip_data.data));
                     //--------------------------- End of Format Data Response PDU payload ----------------------
                     out_s.out_clear_bytes(2);
+                    size_t end_of_data = out_s.get_offset();
+                    out_s.set_out_uint32_le(end_of_data - start_of_data - 4, start_of_data);
                     out_s.mark_end();
 
                     uint32_t length = out_s.end - out_s.data;
@@ -1146,12 +1164,10 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
                     // Convert utf-16 RDP buffer to utf-8 for VNC
                     uint8_t dataU8[dataLenU16];
-                    memset(dataU8, 0, sizeof(dataU8));
-                    const uint8_t * pdataU16 = dataU16;
-                    uint8_t * pdataU8 = dataU8;
-                    UTF16toUTF8(&pdataU16, dataLenU16, &pdataU8, dataLenU16);
+                    size_t len_utf8 = UTF16toUTF8(dataU16, dataLenU16 / 2, dataU8, dataLenU16);
+                    dataU8[len_utf8] = 0;
 
-                    this->rdp_input_clip_data(dataU8, (pdataU8 - dataU8));
+                    this->rdp_input_clip_data(dataU8, len_utf8 + 1);
                 }
                 break;
             }

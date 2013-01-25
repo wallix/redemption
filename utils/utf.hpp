@@ -29,25 +29,29 @@
 #include <stdint.h>
 #include "log.hpp"
 
-REDOC("Check some string is valid utf8, zero terminated")
-static inline bool UTF8Check(const uint8_t * source, size_t len)
+REDOC("Check if some string is valid utf8, zero terminated")
+static inline size_t UTF8Check(const uint8_t * source, size_t len)
 {
-    for (size_t i = 0 ; i < len ; i++){
+    size_t i = 0;
+    for (; i < len ; i++){
         uint8_t c = source[i];
         switch (c >> 4){
             case 0:
+                i++;
+                goto UTF8Check_exit;
+            break;
             case 1: case 2: case 3: case 4: case 5: case 6: case 7:
             break;
             case 8: case 9: case 0xA: case 0xB:
                 // either continuation bytes without start byte or 5 or 6 bytes sequence after 0xFX
                 // both cases are errors.
-                return false;
+                goto UTF8Check_exit;
             /* handle U+0080..U+07FF inline : 2 bytes sequences */ 
             case 0xC: case 0xD:
                 if ((i+1 >= len)
                    ||((source[i]&0xFE) == 0xC0)
                    ||((source[i+1] >> 6) != 2)){
-                    return false;
+                    goto UTF8Check_exit;
                 }
                 i+=1;
             break;
@@ -56,7 +60,7 @@ static inline bool UTF8Check(const uint8_t * source, size_t len)
                 if ((i+2 >= len) 
                    ||((source[i+1] >> 6) != 2)
                    ||((source[i+2] >> 6) != 2)){
-                    return false;
+                    goto UTF8Check_exit;
                 }
                 i+=2;
             break;
@@ -66,12 +70,14 @@ static inline bool UTF8Check(const uint8_t * source, size_t len)
                    ||((source[i+1] >> 6) != 2)
                    ||((source[i+2] >> 6) != 2)
                    ||((source[i+3] >> 6) != 2)){
-                    return false;
+                    goto UTF8Check_exit;
                 }
                 i+=3;
             break;
         }
     }
+UTF8Check_exit:
+    return i;
 }
 
 
@@ -92,23 +98,30 @@ static inline size_t UTF8Len(const char * source)
 }
 
 
-REDOC("UTF8TruncateAtLen assumes input is valid utf8, zero terminated, that has been checked before")
-static inline size_t UTF8TruncateAtPos(uint8_t * source, size_t len)
+REDOC("UTF8GetLen find the number of bytes of the len first characters of input. It assumes input is valid utf8, zero terminated (that has been checked before).")
+static inline size_t UTF8GetPos(uint8_t * source, size_t len)
 {
     len += 1;
     uint8_t c = 0;
-    for (size_t i = 0 ; 0 != (c = source[i]) ; i++){
+    size_t i = 0;
+    for (; 0 != (c = source[i]) ; i++){
         len -= ((c >> 6) == 2)?0:1;
         if (len == 0) {
-            source[i] = 0;
+            break;
         }
     }
-    return len;
+    return i;
 }
 
-static inline size_t UTF8TruncateAtPos(char * source, size_t len)
+REDOC("UTF8TruncateAtLen assumes input is valid utf8, zero terminated, that has been checked before.")
+static inline void UTF8TruncateAtPos(uint8_t * source, size_t len)
 {
-    return UTF8TruncateAtPos(reinterpret_cast<uint8_t *>(source), len);
+    source[UTF8GetPos(source, len)] = 0;
+}
+
+static inline void UTF8TruncateAtPos(char * source, size_t len)
+{
+    UTF8TruncateAtPos(reinterpret_cast<uint8_t *>(source), len);
 }
 
 
@@ -198,55 +211,38 @@ struct utf8_str {
     const uint8_t * data;
 };
 
-TODO("API may be clearer if we always return a len and an error code in case of failure (error defaulting to 0)"
-     "Another option could be to be to return a negative value in cas of error like other C functions")
-static inline bool UTF8toUTF16(const uint8_t ** s, size_t s_len, uint8_t ** t, size_t t_len)
+// UTF8toUTF16 never writes the trailing zero
+static inline size_t UTF8toUTF16(const uint8_t * source, uint8_t * target, size_t t_len)
 {
-    bool res = false;
-    const uint8_t * source = *s;
-    uint8_t * target = *t;
     size_t i_t = 0; 
     uint32_t ucode = 0;
-    size_t i = 0;
-    for (; i < s_len ; i++){
-        unsigned c = source[i];
+    unsigned c = 0;
+    for (size_t i = 0; (ucode = c = source[i]) != 0 ; i++){
         switch (c >> 4){
-            case 0: case 1: case 2: case 3: 
+            case 0:
+                // should never happen, catched by test above
+                goto UTF8toUTF16_exit;
+            break;
+            case 1: case 2: case 3: 
             case 4: case 5: case 6: case 7:
             ucode = c;
             break;
             /* handle U+0080..U+07FF inline : 2 bytes sequences */ 
             case 0xC: case 0xD: 
-                if ((i+1 >= s_len)
-                   ||((c & 0xFE) == 0xC0)
-                   ||((source[i+1] >> 6) != 2)){
-                    goto UTF8toUTF16_exit;
-                }
                 ucode = ((c & 0x1F) << 6)|(source[i+1] & 0x3F);
                 i+=1;
             break;
              /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */ 
             case 0xE:
-                if ((i+2 >= s_len) 
-                   ||((source[i+1] >> 6) != 2)
-                   ||((source[i+2] >> 6) != 2)){
-                    goto UTF8toUTF16_exit;
-                }
                 ucode = ((c & 0x0F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
                 i+=2;
             break;
             case 0xF:
-                if ((i+3 >= s_len)
-                   ||(c > 244)
-                   ||((source[i+1] >> 6) != 2)
-                   ||((source[i+2] >> 6) != 2)
-                   ||((source[i+3] >> 6) != 2)){
-                    goto UTF8toUTF16_exit;
-                }
                 c = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
                 i+=3;
             break;
             case 8: case 9: case 0x0A: case 0x0B:
+                // should never happen on valid UTF8
                 goto UTF8toUTF16_exit;
             break;
         }
@@ -255,16 +251,57 @@ static inline bool UTF8toUTF16(const uint8_t ** s, size_t s_len, uint8_t ** t, s
         target[i_t + 1] = (ucode >> 8) & 0xFF;
         i_t += 2;
     }
-    res = true;
+    // write final 0
 UTF8toUTF16_exit:
-    *s = source + i;
-    *t = target + i_t;
-    return res;
+    return i_t;
+}
+
+// UTF8toUnicode never writes the trailing zero
+static inline size_t UTF8toUnicode(const uint8_t * source, uint32_t * target, size_t t_len)
+{
+    size_t i_t = 0;
+    uint32_t ucode = 0;
+    size_t i = 0;
+    for (; (ucode = source[i]) != 0 ; i++){
+        switch (ucode >> 4){
+            case 0:
+                // should never happen, catched by test above
+                goto UTF8toUnicode_exit;
+            break;
+            case 1: case 2: case 3: 
+            case 4: case 5: case 6: case 7:
+            break;
+            /* handle U+0080..U+07FF inline : 2 bytes sequences */ 
+            case 0xC: case 0xD: 
+                ucode = ((ucode & 0x1F) << 6)|(source[i+1] & 0x3F);
+                i+=1;
+            break;
+             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */ 
+            case 0xE:
+                ucode = ((ucode & 0x0F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
+                i+=2;
+            break;
+            case 0xF:
+                ucode = ((ucode & 0x07) << 18)|((source[i+1] & 0x3F) << 12)|((source[i+2] & 0x3F) << 6)|(source[i+3] & 0x3F);
+                i+=3;
+            break;
+            case 8: case 9: case 0x0A: case 0x0B:
+                // these should never happen on valid UTF8
+                goto UTF8toUnicode_exit;
+            break;
+        }
+        if (i_t + 1 > t_len) { goto UTF8toUnicode_exit; }
+        target[i_t] = ucode;
+        i_t += 1;
+    }
+    // write final 0
+UTF8toUnicode_exit:
+    return i_t;
 }
 
 TODO("API may be clearer if we always return a len and an error code in case of failure (error defaulting to 0)"
      "Another option could be to be to return a negative value in cas of error like other C functions")
-static inline bool UTF8toUnicode(const uint8_t ** s, size_t s_len, uint32_t ** t, size_t t_len)
+static inline bool UTF8toUnicodeWithCheck(const uint8_t ** s, size_t s_len, uint32_t ** t, size_t t_len)
 {
     bool res = false;
     const uint8_t * source = *s;
@@ -325,42 +362,42 @@ UTF8toUnicode_exit:
     return res;
 }
 
-static inline void UTF16toUTF8(const uint8_t ** s, size_t s_len, uint8_t ** t, size_t t_len)
+// Return number of UTF8 bytes used to encode UTF16 input
+// do not write trailing 0
+static inline size_t UTF16toUTF8(const uint8_t * utf16_source, size_t utf16_len, uint8_t * utf8_target, size_t target_len)
 {
-    const uint8_t * source = *s;
-    uint8_t * target = *t;
     size_t i_t = 0; 
-    // naive first implementation, not check for source length, not check for error or invalid sequences
-    
-    size_t i = 0;
-    while (i < s_len){
-        uint8_t lo = source[i];
-        uint8_t hi  = source[i+1];
+    size_t i_s = 0;
+    for (size_t i = 0 ; i < utf16_len ; i++){
+        uint8_t lo = utf16_source[i_s];
+        uint8_t hi  = utf16_source[i_s+1];
+        if (lo == 0 && hi == 0){
+            break;
+        }
+        i_s += 2;
 
         if (hi & 0xF8){
             // 3 bytes
-            if ((i_t + 3) > t_len) { break; }
-            target[i_t] = 0xE0 | ((hi >> 4) & 0x0F);
-            target[i_t + 1] = 0x80 | ((hi & 0x0F) << 2) | (lo >> 6);
-            target[i_t + 2] = 0x80 | (lo & 0x3F);
+            if ((i_t + 3) > target_len) { break; }
+            utf8_target[i_t] = 0xE0 | ((hi >> 4) & 0x0F);
+            utf8_target[i_t + 1] = 0x80 | ((hi & 0x0F) << 2) | (lo >> 6);
+            utf8_target[i_t + 2] = 0x80 | (lo & 0x3F);
             i_t += 3;
         }
         else if (hi || (lo & 0x80)) {
             // 2 bytes
-            if ((i_t + 2) > t_len) { break; }
-            target[i_t] = 0xC0 | ((hi << 2) & 0x1C) | ((lo >> 6) & 3);
-            target[i_t + 1] = 0x80 | (lo & 0x3F);
+            if ((i_t + 2) > target_len) { break; }
+            utf8_target[i_t] = 0xC0 | ((hi << 2) & 0x1C) | ((lo >> 6) & 3);
+            utf8_target[i_t + 1] = 0x80 | (lo & 0x3F);
             i_t += 2;
         }
         else {
-            if ((i_t + 1) > t_len) { break; }
-            target[i_t] = lo;
+            if ((i_t + 1) > target_len) { break; }
+            utf8_target[i_t] = lo;
             i_t++;
         }
-        i+=2;
     }
-    *s = source + i;
-    *t = target + i_t;
+    return i_t;
 }
 
 #endif
