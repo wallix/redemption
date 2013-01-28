@@ -372,6 +372,9 @@ static inline size_t UTF16toUTF8(const uint8_t * utf16_source, size_t utf16_len,
         uint8_t lo = utf16_source[i_s];
         uint8_t hi  = utf16_source[i_s+1];
         if (lo == 0 && hi == 0){
+            if ((i_t + 1) > target_len) { break; }
+            utf8_target[i_t] = 0;
+            i_t++;
             break;
         }
         i_s += 2;

@@ -312,7 +312,7 @@ BOOST_AUTO_TEST_CASE(TestStream_in_unistr)
     BOOST_CHECK_EQUAL('u', result[3]);
     BOOST_CHECK_EQUAL('l', result[4]);
     BOOST_CHECK_EQUAL('t', result[5]);
-    BOOST_CHECK_EQUAL(0, result[0]);
+    BOOST_CHECK_EQUAL(0, result[6]);
 }
 
 BOOST_AUTO_TEST_CASE(TestStream_in_unistr_2)
