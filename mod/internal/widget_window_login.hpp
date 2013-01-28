@@ -56,7 +56,6 @@ struct window_login : public window
     int login_window_show_edits()
     {
         int count;
-        struct Widget* b;
 
         /* free edits and labels, cause we gota re-create them */
         vector<Widget*> tmp;
@@ -83,15 +82,15 @@ struct window_login : public window
 
         count = 0;
 
-        b = new widget_label(this->mod,
+        struct Widget* login_label = new widget_label(this->mod,
             Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 22),
             this, this->context.get(STRAUTHID_TRANS_LOGIN));
 
-        b->id = 100 + 2 * count;
-        list.push_back(b);
+        login_label->id = 100 + 2 * count;
+        list.push_back(login_label);
 
         /* edit */
-        b = new widget_edit(this->mod,
+        struct Widget* login_edit = new widget_edit(this->mod,
             Rect((this->rect.cx >= 400) ? 230 : 70, 60 + 25 * count, 350, 22),
                 this,
                 100 + 2 * count + 1, /* id */
@@ -100,23 +99,22 @@ struct window_login : public window
                 1, /* pointer */
                 0 /* edit pos */);
 
-        list.push_back(b);
-
         if (acc.username[0] == 0){
-            this->focused_control = b;
-            b->has_focus = true;
+            this->focused_control = login_edit;
+            login_edit->has_focus = true;
         }
+        list.push_back(login_edit);
         count++;
 
-        b = new widget_label(this->mod,
+        struct Widget* password_label = new widget_label(this->mod,
             Rect(this->rect.cx >= 400 ? 155 : 5, 60 + 25 * count, 70, 22),
             this, this->context.get(STRAUTHID_TRANS_PASSWORD));
 
-        b->id = 100 + 2 * count;
-        list.push_back(b);
+        password_label->id = 100 + 2 * count;
+        list.push_back(password_label);
 
         /* edit */
-        b = new widget_edit(this->mod,
+        struct Widget* password_edit = new widget_edit(this->mod,
                 Rect((this->rect.cx) >= 400 ? 230 : 70, 60 + 25 * count, 350, 22),
                 this,
                 100 + 2 * count + 1, /* id */
@@ -126,12 +124,12 @@ struct window_login : public window
                 0 /* edit pos */);
 
         TODO(" move that into widget_edit")
-        b->password_char = '*';
-        list.push_back(b);
+        password_edit->password_char = '*';
+        list.push_back(password_edit);
 
         if (acc.username[0]){
-            this->focused_control = b;
-            b->has_focus = true;
+            this->focused_control = password_edit;
+            password_edit->has_focus = true;
         }
         count++;
 

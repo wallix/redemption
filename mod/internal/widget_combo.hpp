@@ -49,18 +49,6 @@ struct widget_combo : public Widget
 
     virtual void draw(const Rect & clip)
     {
-        const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
-        const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
-
-        for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-            const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
-
-            this->mod->draw_combo(scr_r,
-                "Redemption Proxy",
-                this->state,
-                this->has_focus,
-                region_clip);
-        }
     }
 
 
