@@ -112,12 +112,6 @@ struct Widget {
     wchar_t password_char;
     /* for button or combo */
     int state; /* for button 0 = normal 1 = down */
-    /* for combo */
-    vector<char*> string_list;
-    /* for combo or popup */
-    unsigned item_index;
-    /* for popup */
-    struct Widget* popped_from;
     int item_height;
     /* crc */
     int crc;
@@ -142,12 +136,6 @@ struct Widget {
         /* for edit */
         this->edit_pos = 0;
         this->password_char = 0;
-        /* for button or combo */
-        this->state = 0; /* for button 0 = normal 1 = down */
-        /* for popup */
-        this->popped_from = 0;
-        /* for combo or popup */
-        this->item_index = 0;
         /* crc */
         this->crc = 0;
 

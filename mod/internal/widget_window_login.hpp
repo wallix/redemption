@@ -50,7 +50,6 @@ struct window_login : public window
         context(context)
     {
         this->ini = ini;
-        struct Widget* but;
 
         /* create help screen */
         uint32_t grey = 0xc0c0c0;
@@ -71,15 +70,11 @@ struct window_login : public window
         }
 
         /* label */
-        but = new widget_label(this->mod, Rect((regular ? 155 : 5), 35, 60, 20), this,  "Module");
+        struct Widget* but = new widget_label(this->mod, Rect((regular ? 155 : 5), 35, 60, 20), this,  "Module");
         this->child_list.push_back(but);
 
         Rect rect(regular ? 230 : 70, 35, 350, 20);
         this->combo = new widget_combo(this->mod, rect, this, 6, 1);
-
-        this->combo->string_list.push_back(strdup(ini->account.accountname));
-
-        this->combo->item_index = 0;
 
         if (context.is_asked(STRAUTHID_TARGET_USER)
         ||  context.is_asked(STRAUTHID_TARGET_DEVICE)){

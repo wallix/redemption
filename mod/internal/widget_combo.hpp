@@ -35,16 +35,9 @@ struct widget_combo : public Widget
         this->rect.y = r.y;
         this->id = id;
         this->tab_stop = tab_stop;
-        this->item_index = 0;
     }
 
     virtual ~widget_combo() {
-        vector<char*>::iterator it;
-        for (it = this->string_list.begin(); it != this->string_list.end(); it++){
-            delete *it;
-            *it = 0;
-        }
-
     }
 
     virtual void draw(const Rect & clip)
