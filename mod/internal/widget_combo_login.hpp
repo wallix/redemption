@@ -27,7 +27,6 @@
 
 #include "widget_window.hpp"
 #include "widget_window_login.hpp"
-#include "widget_image.hpp"
 #include "widget_combo_help.hpp"
 //#include "widget_popup.hpp"
 #include "version.hpp"
