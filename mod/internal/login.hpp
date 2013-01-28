@@ -26,10 +26,6 @@
 #define __LOGIN_HPP__
 
 #include "widget_window_login.hpp"
-#include "widget_combo_help.hpp"
-#include "widget_combo_login.hpp"
-
-#include "version.hpp"
 
 
 struct login_mod : public internal_mod {
@@ -68,7 +64,7 @@ struct login_mod : public internal_mod {
             log_width,
             log_height);
 
-        this->login_window = new combo_login(this,
+        this->login_window = new window_login(this,
             r, context,
             &this->screen, // parent
             this->screen, // notify_to
