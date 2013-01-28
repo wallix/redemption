@@ -284,7 +284,6 @@ struct login_mod : public internal_mod {
 
                             switch (control->type) {
                                 case WND_TYPE_BUTTON:
-                                case WND_TYPE_COMBO:
                                     if (this->button_down == control){
                                         control->state = 0;
                                         this->front.begin_update();

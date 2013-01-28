@@ -23,16 +23,7 @@
 #if !defined(__WIDGET__)
 #define __WIDGET__
 
-// #include <unistd.h>
-// #include <stdio.h>
 #include <stdlib.h>
-// #include <assert.h>
-// #include <string.h>
-// #include <sys/types.h>
-// #include <sys/stat.h>
-// #include <fcntl.h>
-//#include <iostream>
-//#include <list>
 
 #include "log.hpp"
 #include "constants.hpp"
@@ -73,9 +64,6 @@ enum {
     WND_TYPE_IMAGE   = 4,
     WND_TYPE_EDIT    = 5,
     WND_TYPE_LABEL   = 6,
-    WND_TYPE_COMBO   = 7,
-    WND_TYPE_SPECIAL = 8,
-    WND_TYPE_LISTBOX = 9,
 };
 
 

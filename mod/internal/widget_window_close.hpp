@@ -29,11 +29,9 @@
 #include "widget_image.hpp"
 #include "widget_button.hpp"
 #include "widget_label.hpp"
-#include "widget_combo.hpp"
 
 struct wab_close : public window
 {
-    widget_combo * combo;
     ModContext & context;
     window * help;
 

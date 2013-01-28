@@ -32,7 +32,6 @@
 #include "widget_label.hpp"
 #include "widget_image.hpp"
 #include "widget_combo_help.hpp"
-#include "widget_combo.hpp"
 #include "version.hpp"
 
 struct window_login : public window
@@ -40,7 +39,6 @@ struct window_login : public window
     public:
     Widget & notify_to;
     Inifile * ini;
-    widget_combo * combo;
     ModContext & context;
     window * help;
 
@@ -68,13 +66,6 @@ struct window_login : public window
                     SHARE_PATH "/" LOGIN_LOGO24, 24);
             this->child_list.push_back(but);
         }
-
-        /* label */
-        struct Widget* but = new widget_label(this->mod, Rect((regular ? 155 : 5), 35, 60, 20), this,  "Module");
-        this->child_list.push_back(but);
-
-        Rect rect(regular ? 230 : 70, 35, 350, 20);
-        this->combo = new widget_combo(this->mod, rect, this, 6, 1);
 
         if (context.is_asked(STRAUTHID_TARGET_USER)
         ||  context.is_asked(STRAUTHID_TARGET_DEVICE)){
@@ -108,9 +99,7 @@ struct window_login : public window
             strcpy(ini->account.username, buffer);
         }
 
-        this->child_list.push_back(this->combo);
-
-        but = new widget_button(this->mod,
+        Widget * but = new widget_button(this->mod,
               Rect(regular ? 180 : 30, 160, 60, 25),
               this, 3, 1, context.get(STRAUTHID_TRANS_BUTTON_OK));
         this->child_list.push_back(but);
@@ -128,27 +117,6 @@ struct window_login : public window
             this->child_list.push_back(but);
         }
 
-        /* free edits and labels, cause we gota re-create them */
-        vector<Widget*> tmp;
-        vector<Widget*> & list = this->child_list;
-        for (size_t i = 0; i < list.size() ; i++){
-            if (list[i]->type == WND_TYPE_LABEL || list[i]->type == WND_TYPE_EDIT) {
-                delete list[i];
-                continue;
-            }
-            tmp.push_back(list[i]);
-       }
-       list.clear();
-
-       size_t i_tmp = 0;
-       for (; i_tmp < tmp.size() ; i_tmp++){
-          if (tmp[i_tmp] == this->combo){
-              break;
-          }
-          list.push_back(tmp[i_tmp]);
-       }
-       list.push_back(this->combo);
-
         IniAccounts & acc = this->ini->account;
 
         struct Widget* login_label = new widget_label(this->mod,
@@ -156,7 +124,7 @@ struct window_login : public window
             this, this->context.get(STRAUTHID_TRANS_LOGIN));
 
         login_label->id = 100;
-        list.push_back(login_label);
+        this->child_list.push_back(login_label);
 
         /* edit */
         struct Widget* login_edit = new widget_edit(this->mod,
@@ -172,14 +140,14 @@ struct window_login : public window
             this->focused_control = login_edit;
             login_edit->has_focus = true;
         }
-        list.push_back(login_edit);
+        this->child_list.push_back(login_edit);
 
         struct Widget* password_label = new widget_label(this->mod,
             Rect(this->rect.cx >= 400 ? 155 : 5, 60 + 25, 70, 22),
             this, this->context.get(STRAUTHID_TRANS_PASSWORD));
 
         password_label->id = 100 + 2;
-        list.push_back(password_label);
+        this->child_list.push_back(password_label);
 
         /* edit */
         struct Widget* password_edit = new widget_edit(this->mod,
@@ -193,18 +161,11 @@ struct window_login : public window
 
         TODO(" move that into widget_edit")
         password_edit->password_char = '*';
-        list.push_back(password_edit);
+        this->child_list.push_back(password_edit);
 
         if (acc.username[0]){
             this->focused_control = password_edit;
             password_edit->has_focus = true;
-        }
-
-        for (i_tmp = 0; i_tmp < tmp.size() ; i_tmp++){
-            list.push_back(tmp[i_tmp]);
-            if (tmp[i_tmp] == this->combo){
-                list.pop_back();
-            }
         }
     }
 
@@ -218,7 +179,6 @@ struct window_login : public window
         if (this->modal_dialog != 0 && msg != 100) {
             return;
         }
-        LOG(LOG_INFO, "notify msg = %u", msg);
         if (msg == 1) { /* click */
             if (sender->id == 1) { /* help button */
                 this->help_clicked();
@@ -282,53 +242,29 @@ struct window_login : public window
     {
         int i;
 
-        struct Widget* combo = this->Widget_get_child_by_id(6);
-
-        if (combo != 0) {
-            /* get the user typed values */
-            i = 100;
-            for (;;) {
-            TODO(" we should not rely on labels and window ordering for such things but on widget (Widget) identifiers")
-                struct Widget* label = this->Widget_get_child_by_id(i);
-                LOG(LOG_INFO, "label %i\n", i);
-                if (label == 0) {
-                    break;
-                }
-                struct widget_edit * edit = (widget_edit *)this->Widget_get_child_by_id(i + 1);
-                if (edit == 0){
-                    break;
-                }
-                else if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_LOGIN))){
-                    context.parse_username(edit->buffer);
-                }
-                else if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_PASSWORD))){
-                    context.cpy(STRAUTHID_PASSWORD, edit->buffer);
-                }
-                i += 2;
+        /* get the user typed values */
+        i = 100;
+        for (;;) {
+        TODO(" we should not rely on labels and window ordering for such things but on widget (Widget) identifiers")
+            struct Widget* label = this->Widget_get_child_by_id(i);
+            LOG(LOG_INFO, "label %i\n", i);
+            if (label == 0) {
+                break;
             }
-            this->mod->signal = BACK_EVENT_2;
-            this->mod->event.set();
-        }
-        else {
-            i = 104;
-            for (;;) {
-                struct Widget* label = this->Widget_get_child_by_id(i);
-                if (label == 0) {
-                    break;
-                }
-                struct widget_edit * edit = (widget_edit *)this->Widget_get_child_by_id(i + 1);
-                if (label == 0) {
-                    break;
-                }
-            TODO(" we should not rely on labels and window ordering for such things but on widget (Widget) identifiers")
-                if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_PASSWORD))){
-                        context.cpy(STRAUTHID_PASSWORD, edit->buffer);
-                }
-                i += 2;
+            struct widget_edit * edit = (widget_edit *)this->Widget_get_child_by_id(i + 1);
+            if (edit == 0){
+                break;
             }
-            this->mod->signal = BACK_EVENT_3;
-            this->mod->event.set();
+            else if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_LOGIN))){
+                context.parse_username(edit->buffer);
+            }
+            else if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_PASSWORD))){
+                context.cpy(STRAUTHID_PASSWORD, edit->buffer);
+            }
+            i += 2;
         }
+        this->mod->signal = BACK_EVENT_2;
+        this->mod->event.set();
         return 0;
 
     }
