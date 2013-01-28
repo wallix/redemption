@@ -306,7 +306,13 @@ BOOST_AUTO_TEST_CASE(TestStream_in_unistr)
     uint8_t result[256];
     stream.in_uni_to_ascii_str(result, sizeof(data), sizeof(result));
     BOOST_CHECK_EQUAL(14, stream.get_offset());
-    BOOST_CHECK_EQUAL(0, memcmp("result", result, 7));
+    BOOST_CHECK_EQUAL('r', result[0]);
+    BOOST_CHECK_EQUAL('e', result[1]);
+    BOOST_CHECK_EQUAL('s', result[2]);
+    BOOST_CHECK_EQUAL('u', result[3]);
+    BOOST_CHECK_EQUAL('l', result[4]);
+    BOOST_CHECK_EQUAL('t', result[5]);
+    BOOST_CHECK_EQUAL(0, result[0]);
 }
 
 BOOST_AUTO_TEST_CASE(TestStream_in_unistr_2)
@@ -322,6 +328,13 @@ BOOST_AUTO_TEST_CASE(TestStream_in_unistr_2)
     uint8_t result[256];
     stream.in_uni_to_ascii_str(result, sizeof(data), sizeof(result));
     BOOST_CHECK_EQUAL(14, stream.get_offset());
-    BOOST_CHECK_EQUAL(0, memcmp("r\xC3\xA9sult", result, 8));
+    BOOST_CHECK_EQUAL('r', result[0]);
+    BOOST_CHECK_EQUAL(0xC3, result[1]);
+    BOOST_CHECK_EQUAL(0xA9, result[2]);
+    BOOST_CHECK_EQUAL('s', result[3]);
+    BOOST_CHECK_EQUAL('u', result[4]);
+    BOOST_CHECK_EQUAL('l', result[5]);
+    BOOST_CHECK_EQUAL('t', result[6]);
+    BOOST_CHECK_EQUAL(0, result[7]);
 }
 
