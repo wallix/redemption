@@ -29,6 +29,7 @@
 #include "widget_button.hpp"
 #include "widget_edit.hpp"
 #include "widget_label.hpp"
+#include "widget_image.hpp"
 #include "widget_combo.hpp"
 
 struct window_login : public window

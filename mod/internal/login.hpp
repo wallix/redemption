@@ -34,7 +34,7 @@
 
 struct login_mod : public internal_mod {
     struct window_login * login_window;
-    Widget* popup_wnd;
+//    Widget* popup_wnd;
     Widget* button_down;
 
 
@@ -56,7 +56,6 @@ struct login_mod : public internal_mod {
         int log_height = 200;
         int regular = 1;
 
-        this->popup_wnd = 0;
         if (this->screen.rect.cx < log_width ) {
             log_width = std::min(this->screen.rect.cx - 4, 240);
             regular = 0;
@@ -114,42 +113,6 @@ struct login_mod : public internal_mod {
     /*****************************************************************************/
     int clear_popup()
     {
-        TODO(" simplify that")
-        if (this->popup_wnd != 0) {
-
-            vector<Widget*>::iterator to_erase;
-            for (vector<Widget*>::iterator it = this->screen.child_list.begin()
-                ; it != this->screen.child_list.end()
-                ; it++){
-                if (*it == this->popup_wnd){
-                    to_erase = it;
-                }
-            }
-            this->screen.child_list.erase(to_erase);
-
-            TODO(" below inlining of bogus rdp_input_invalidate_clip")
-            this->front.begin_update();
-            this->screen.draw(this->popup_wnd->rect);
-
-            /* notify */
-            this->screen.notify(&this->screen, WM_PAINT, 0, 0); /* 3 */
-
-            /* draw any child windows in the area */
-            int count = this->screen.child_list.size();
-            for (int i = 0; i < count; i++) {
-                Widget* b = this->screen.child_list.at(i);
-                Rect r2 = this->popup_wnd->rect.intersect(b->rect);
-                if (!r2.isempty()) {
-                    r2 = r2.offset(-(b->rect.x), -(b->rect.y));
-                    b->refresh(r2);
-                }
-            }
-
-            this->front.end_update();
-
-            delete this->popup_wnd;
-            this->popup_wnd = 0;
-        }
         return 0;
     }
 
@@ -259,23 +222,6 @@ struct login_mod : public internal_mod {
                             control->state = 1;
                             control->refresh(control->rect.wh());
                         break;
-                        case WND_TYPE_COMBO:
-                            this->button_down = control;
-                            control->state = 1;
-                            control->refresh(control->rect.wh());
-                            this->popup_wnd = new widget_popup(this,
-                                        Rect(
-                                        control->to_screenx(),
-                                        control->to_screeny() + control->rect.cy,
-                                        control->rect.cx,
-                                        100),
-                                    control, // popped_from
-                                    &this->screen, // parent
-                                    control->item_index); // item_index
-
-                            this->screen.child_list.insert(this->screen.child_list.begin(), this->popup_wnd);
-                            this->popup_wnd->refresh(this->popup_wnd->rect.wh());
-                        break;
                         case WND_TYPE_WND:
                             /* drag by clicking in title bar and keeping button down */
                             if (y < (control->rect.y + 21)) {
@@ -328,21 +274,7 @@ struct login_mod : public internal_mod {
 
                     Widget * control = wnd->widget_at_pos(x, y);
 
-                    // popup is opened
-                    if (this->popup_wnd) {
-                         this->front.begin_update();
-
-                        // click inside popup
-                        if (this->popup_wnd == control){
-                            this->popup_wnd->def_proc(WM_LBUTTONUP, x, y, keymap);
-                        }
-                        // clear popup
-                        this->clear_popup();
-                        this->screen.refresh(this->screen.rect.wh());
-
-                        this->front.end_update();
-                    }
-                    else {
+                    {
                         if (wnd == &this->screen || (wnd->modal_dialog == 0)){
                             if (wnd != &this->screen) {
                                 if (control != wnd && control->tab_stop) {
@@ -379,11 +311,6 @@ struct login_mod : public internal_mod {
 
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap){
         if (keymap->nb_kevent_available() > 0){
-            if (this->popup_wnd != 0) {
-                this->front.begin_update();
-                this->clear_popup();
-                this->front.end_update();
-            }
             if (this->login_window->has_focus) {
                 this->front.begin_update();
                 this->login_window->def_proc(WM_KEYDOWN, param1, device_flags, keymap);
