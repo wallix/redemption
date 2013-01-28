@@ -121,7 +121,84 @@ struct combo_login : public window_login
             this->child_list.push_back(but);
         }
 
-         this->login_window_show_edits();
+        /* free edits and labels, cause we gota re-create them */
+        vector<Widget*> tmp;
+        vector<Widget*> & list = this->child_list;
+        for (size_t i = 0; i < list.size() ; i++){
+            if (list[i]->type == WND_TYPE_LABEL || list[i]->type == WND_TYPE_EDIT) {
+                delete list[i];
+                continue;
+            }
+            tmp.push_back(list[i]);
+       }
+       list.clear();
+
+       size_t i_tmp = 0;
+       for (; i_tmp < tmp.size() ; i_tmp++){
+          if (tmp[i_tmp] == this->combo){
+              break;
+          }
+          list.push_back(tmp[i_tmp]);
+       }
+       list.push_back(this->combo);
+
+        IniAccounts & acc = this->ini->account;
+
+        struct Widget* login_label = new widget_label(this->mod,
+            Rect((this->rect.cx >= 400) ? 155 : 5, 60, 70, 22),
+            this, this->context.get(STRAUTHID_TRANS_LOGIN));
+
+        login_label->id = 100;
+        list.push_back(login_label);
+
+        /* edit */
+        struct Widget* login_edit = new widget_edit(this->mod,
+            Rect((this->rect.cx >= 400) ? 230 : 70, 60, 350, 22),
+                this,
+                100 + 1, /* id */
+                1, /* tab stop */
+                acc.username,
+                1, /* pointer */
+                0 /* edit pos */);
+
+        if (acc.username[0] == 0){
+            this->focused_control = login_edit;
+            login_edit->has_focus = true;
+        }
+        list.push_back(login_edit);
+
+        struct Widget* password_label = new widget_label(this->mod,
+            Rect(this->rect.cx >= 400 ? 155 : 5, 60 + 25, 70, 22),
+            this, this->context.get(STRAUTHID_TRANS_PASSWORD));
+
+        password_label->id = 100 + 2;
+        list.push_back(password_label);
+
+        /* edit */
+        struct Widget* password_edit = new widget_edit(this->mod,
+                Rect((this->rect.cx) >= 400 ? 230 : 70, 60 + 25, 350, 22),
+                this,
+                100 + 2 + 1, /* id */
+                1, /* tab stop */
+                acc.password,
+                1, /* pointer */
+                0 /* edit pos */);
+
+        TODO(" move that into widget_edit")
+        password_edit->password_char = '*';
+        list.push_back(password_edit);
+
+        if (acc.username[0]){
+            this->focused_control = password_edit;
+            password_edit->has_focus = true;
+        }
+
+        for (i_tmp = 0; i_tmp < tmp.size() ; i_tmp++){
+            list.push_back(tmp[i_tmp]);
+            if (tmp[i_tmp] == this->combo){
+                list.pop_back();
+            }
+        }
     }
 
     ~combo_login(){
