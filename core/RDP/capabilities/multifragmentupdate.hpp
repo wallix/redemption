@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__RDP_CAPABILITIES_MULTIFRAGMENTUPDATE_HPP__)
-#define __RDP_CAPABILITIES_MULTIFRAGMENTUPDATE_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_MULTIFRAGMENTUPDATE_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_MULTIFRAGMENTUPDATE_HPP_
 
 // 2.2.7.2.6 Multifragment Update Capability Set (TS_MULTIFRAGMENTUPDATE_CAPABILITYSET)
 // ====================================================================================

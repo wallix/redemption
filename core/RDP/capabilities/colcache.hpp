@@ -20,8 +20,8 @@
    RDP Capabilities : Color Table Cache Capability Set (see [MS-RDPEGDI] section 2.2.1.1)
 */
 
-#if !defined(__RDP_CAPABILITIES_COLCACHE_HPP__)
-#define __RDP_CAPABILITIES_COLCACHE_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_COLCACHE_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_COLCACHE_HPP_
 
 // 2.2.1.1  Color Table Cache Capability Set (TS_COLORTABLE_CAPABILITYSET)
 

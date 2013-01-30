@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__RDP_CAPABILITIES_SURFACECOMMANDS_HPP__)
-#define __RDP_CAPABILITIES_SURFACECOMMANDS_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_SURFACECOMMANDS_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_SURFACECOMMANDS_HPP_
 
 // 2.2.7.2.9 Surface Commands Capability Set (TS_SURFCMDS_CAPABILITYSET)
 //======================================================================

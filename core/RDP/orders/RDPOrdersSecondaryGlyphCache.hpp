@@ -21,10 +21,8 @@
 
 */
 
-#if !defined(__RDPORDERSSECONDARYGLYPHCACHE_HPP__)
-#define __RDPORDERSSECONDARYGLYPHCACHE_HPP__
-
-
+#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYGLYPHCACHE_HPP_
+#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYGLYPHCACHE_HPP_
 
 // MS-RDPEGDI 2.2.2.2.1.2.5     Cache Glyph - Revision 1 (CACHE_GLYPH_ORDER)
 // =========================================================================

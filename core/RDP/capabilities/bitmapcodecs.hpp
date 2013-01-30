@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__RDP_CAPABILITIES_BITMAPCODECS_HPP__)
-#define __RDP_CAPABILITIES_BITMAPCODECS_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_BITMAPCODECS_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_BITMAPCODECS_HPP_
 
 // 2.2.7.2.10 Bitmap Codecs Capability Set (TS_BITMAPCODECS_CAPABILITYSET)
 // =======================================================================

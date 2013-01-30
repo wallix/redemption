@@ -19,8 +19,8 @@
    Martin Potier, Jonathan Poelen
 */
 
-#if !defined(__DIFFTIMEVAL_HPP__)
-#define __DIFFTIMEVAL_HPP__
+#ifndef _REDEMPTION_UTILS_DIFFTIMEVAL_HPP_
+#define _REDEMPTION_UTILS_DIFFTIMEVAL_HPP_
 
 #include <sys/time.h>
 #include <stdint.h>

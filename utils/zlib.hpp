@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__UTILS_ZLIB_HPP__)
-#define __UTILS_ZLIB_HPP__
+#ifndef _REDEMPTION_UTILS_ZLIB_HPP_
+#define _REDEMPTION_UTILS_ZLIB_HPP_
 
 #include <zlib.h>
 

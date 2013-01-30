@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier, Poelen Jonathan
 */
 
-#if !defined(__CORE_DRAWABLE_HPP__)
-#define __CORE_DRAWABLE_HPP__
+#ifndef _REDEMPTION_UTILS_DRAWABLE_HPP_
+#define _REDEMPTION_UTILS_DRAWABLE_HPP_
 
 #include <algorithm>
 #include "bitmap.hpp"

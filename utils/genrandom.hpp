@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__GENRANDOM_HPP__)
-#define __GENRANDOM_HPP__
+#ifndef _REDEMPTION_UTILS_GENRANDOM_HPP_
+#define _REDEMPTION_UTILS_GENRANDOM_HPP_
 
 #include <sys/types.h>
 #include <sys/stat.h>

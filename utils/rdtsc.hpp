@@ -20,8 +20,8 @@
 
 */
 
-#ifndef __RDTSC_H_DEFINED__
-#define __RDTSC_H_DEFINED__
+#ifndef _REDEMPTION_UTILS_RDTSC_HPP_
+#define _REDEMPTION_UTILS_RDTSC_HPP_
 
 
 #if defined(__i386__)

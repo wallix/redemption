@@ -23,8 +23,8 @@
 
 */
 
-#if !defined(___UTILS_STREAM_HPP__)
-#define ___UTILS_STREAM_HPP__
+#ifndef _REDEMPTION_UTILS_STREAM_HPP_
+#define _REDEMPTION_UTILS_STREAM_HPP_
 
 #include "log.hpp"
 

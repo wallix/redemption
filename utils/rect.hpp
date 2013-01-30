@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__RECT_HPP__)
-#define __RECT_HPP__
+#ifndef _REDEMPTION_UTILS_RECT_HPP_
+#define _REDEMPTION_UTILS_RECT_HPP_
 
 #include <algorithm>
 #include <ostream>

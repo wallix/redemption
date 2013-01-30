@@ -17,12 +17,12 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean
 
-   RDP Capabilities :
+   RDP Capabilities : Input
 
 */
 
-#if !defined(__RDP_CAPABILITIES_INPUT_HPP__)
-#define __RDP_CAPABILITIES_INPUT_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_INPUT_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_INPUT_HPP_
 
 //2.2.7.1.6 Input Capability Set (TS_INPUT_CAPABILITYSET)
 //=======================================================

@@ -21,8 +21,9 @@
 
 */
 
+#ifndef _REDEMPTION_UTILS_FIND_HPP_
+#define _REDEMPTION_UTILS_FIND_HPP_
 
-#ifndef __UTILS_FIND_HPP__
 
 #include <sys/types.h>
 #include <sys/stat.h>

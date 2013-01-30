@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__RDP_CAPABILITIES_GENERAL_HPP__)
-#define __RDP_CAPABILITIES_GENERAL_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_GENERAL_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_GENERAL_HPP_
 
 // 2.2.7.1.1 General Capability Set (TS_GENERAL_CAPABILITYSET)
 // ===========================================================

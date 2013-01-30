@@ -1,6 +1,3 @@
-#ifndef D3DES_H
-#define D3DES_H
-
 /*
  * This is D3DES (V5.09) by Richard Outerbridge with the double and
  * triple-length support removed for use in VNC.
@@ -21,6 +18,9 @@
  * Copyright (c) 1988,1989,1990,1991,1992 by Richard Outerbridge
  *	(GEnie : OUTER; CIS : [71755,204])
  */
+
+#ifndef _REDEMPTION_UTILS_D3DES_HPP_
+#define _REDEMPTION_UTILS_D3DES_HPP_
 
 #define EN0	0	/* MODE == encrypt */
 #define DE1	1	/* MODE == decrypt */

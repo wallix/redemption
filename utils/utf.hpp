@@ -23,8 +23,8 @@
 
 */
 
-#if !defined(___UTILS_UTF_HPP__)
-#define ___UTILS_UTF_HPP__
+#ifndef _REDEMPTION_UTILS_UTF_HPP_
+#define _REDEMPTION_UTILS_UTF_HPP_
 
 #include <stdint.h>
 #include "log.hpp"

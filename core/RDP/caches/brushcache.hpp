@@ -19,8 +19,8 @@
 
 */
 
-#if !defined(__RDP_CACHES_BRUSHCACHE_HPP__)
-#define __RDP_CACHES_BRUSHCACHE_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CACHES_BRUSHCACHE_HPP_
+#define _REDEMPTION_CORE_RDP_CACHES_BRUSHCACHE_HPP_
 
 struct brush_item {
     int stamp;

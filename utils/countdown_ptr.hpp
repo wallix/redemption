@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Jonathan Poelen
  */
 
-#if !defined(__COUNTDOWN_PTR_HPP__)
-#define __COUNTDOWN_PTR_HPP__
+#ifndef _REDEMPTION_UTILS_COUNTDOWN_PTR_HPP_
+#define _REDEMPTION_UTILS_COUNTDOWN_PTR_HPP_
 
 #include <cstddef>
 

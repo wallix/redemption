@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__RDP_CAPABILITIES_DRAWGDIPLUS_HPP__)
-#define __RDP_CAPABILITIES_DRAWGDIPLUS_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_DRAWGDIPLUS_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_DRAWGDIPLUS_HPP_
 
 // 2.2.1.3 Draw GDI+ Capability Set (TS_DRAW_GDIPLUS_CAPABILITYSET)
 //=================================================================

@@ -21,8 +21,8 @@
    Colors object. Contains generic colors
 */
 
-#if !defined(__COLORS__)
-#define __COLORS__
+#ifndef _REDEMPTION_UTILS_COLORS_HPP_
+#define _REDEMPTION_UTILS_COLORS_HPP_
 
 #include <stdint.h>
 #include <assert.h>

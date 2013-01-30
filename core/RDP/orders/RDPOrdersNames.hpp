@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__RDPORDERSNAMES_HPP__)
-#define __RDPORDERSNAMES_HPP__
+#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSNAMES_HPP_
+#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSNAMES_HPP_
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
 

@@ -19,8 +19,8 @@
 
 */
 
-#if !defined(__RDP_CACHES_FONTCACHE_HPP__)
-#define __RDP_CACHES_FONTCACHE_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CACHES_FONTCACHE_HPP_
+#define _REDEMPTION_CORE_RDP_CACHES_FONTCACHE_HPP_
 
 #include "font.hpp"
 struct char_item {

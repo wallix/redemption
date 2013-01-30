@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__RDP_CAPABILITIES_SHARE_HPP__)
-#define __RDP_CAPABILITIES_SHARE_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_SHARE_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_SHARE_HPP_
 
 // 2.2.7.2.4 Share Capability Set (TS_SHARE_CAPABILITYSET)
 // ====================================================

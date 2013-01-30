@@ -21,8 +21,8 @@
 
 */
 
-#ifndef __UTILS_ALTOCO__HPP
-#define __UTILS_ALTOCO__HPP
+#ifndef _REDEMPTION_UTILS_BITFU_HPP_
+#define _REDEMPTION_UTILS_BITFU_HPP_
 
 #include <stdint.h>
 #include <assert.h>

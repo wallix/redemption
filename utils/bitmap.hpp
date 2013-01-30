@@ -28,8 +28,8 @@
 
 
 
-#if !defined(__UTILS_BITMAP_HPP__)
-#define __UTILS_BITMAP_HPP__
+#ifndef _REDEMPTION_UTILS_BITMAP_HPP__
+#define _REDEMPTION_UTILS_BITMAP_HPP__
 
 #include <unistd.h>
 #include <stdio.h>

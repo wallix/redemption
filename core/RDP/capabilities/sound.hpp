@@ -17,12 +17,12 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean
 
-   RDP Capabilities :
+   RDP Capabilities : Sond
 
 */
 
-#if !defined(__RDP_CAPABILITIES_SOUND_HPP__)
-#define __RDP_CAPABILITIES_SOUND_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_SOUND_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_SOUND_HPP_
 
 
 // 2.2.7.1.11   Sound Capability Set (TS_SOUND_CAPABILITYSET)

@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__RDP_CAPABILITIES_RAIL_HPP__)
-#define __RDP_CAPABILITIES_RAIL_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_RAIL_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_RAIL_HPP_
 
 // 2.2.1.1.1 Remote Programs Capability Set
 // ========================================

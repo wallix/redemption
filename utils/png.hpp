@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-#if !defined(__UTILS_PNG_HPP__)
-#define __UTILS_PNG_HPP__
+#ifndef _REDEMPTION_UTILS_PNG_HPP_
+#define _REDEMPTION_UTILS_PNG_HPP_
 
 #include <stdint.h>
 #include <png.h>

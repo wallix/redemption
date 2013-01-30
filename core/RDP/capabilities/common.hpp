@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__RDP_CAPABILITIES_COMMON_HPP__)
-#define __RDP_CAPABILITIES_COMMON_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_COMMON_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_COMMON_HPP_
 
 #include <stdint.h>
 #include "log.hpp"

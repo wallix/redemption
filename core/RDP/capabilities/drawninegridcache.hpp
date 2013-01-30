@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__RDP_CAPABILITIES_DRAWNINEGRIDCACHE_HPP__)
-#define __RDP_CAPABILITIES_DRAWNINEGRIDCACHE_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_DRAWNINEGRIDCACHE_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_DRAWNINEGRIDCACHE_HPP_
 
 // 2.2.1.2 DrawNineGrid Cache Capability Set (TS_DRAW_NINEGRID_CAPABILITYSET)
 // ==========================================================================

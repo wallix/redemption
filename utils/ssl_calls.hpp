@@ -25,8 +25,8 @@
 
 */
 
-#if !defined(SSL_CALLS_H)
-#define SSL_CALLS_H
+#ifndef _REDEMPTION_UTILS_SSL_CALLS_HPP_
+#define _REDEMPTION_UTILS_SSL_CALLS_HPP_
 #include "bitfu.hpp"
 
 #include <stdint.h>

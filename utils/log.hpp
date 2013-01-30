@@ -21,8 +21,8 @@
    log file including syslog
 */
 
-#ifndef __UTILS_LOG_HPP__
-#define __UTILS_LOG_HPP__
+#ifndef _REDEMPTION_UTILS_LOG_HPP_
+#define _REDEMPTION_UTILS_LOG_HPP_
 
 #include <string.h>
 

@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__REGION_HPP__)
-#define __REGION_HPP__
+#ifndef _REDEMPTION_UTILS_REGION_HPP_
+#define _REDEMPTION_UTILS_REGION_HPP_
 
 #include <vector>
 #include <stdio.h>

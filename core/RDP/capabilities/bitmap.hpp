@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__RDP_CAPABILITIES_BITMAP_HPP__)
-#define __RDP_CAPABILITIES_BITMAP_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_BITMAP_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_BITMAP_HPP_
 
 // 2.2.7.1.2    Bitmap Capability Set (TS_BITMAP_CAPABILITYSET)
 // ============================================================

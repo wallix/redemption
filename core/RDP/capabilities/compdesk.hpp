@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__RDP_CAPABILITIES_COMPDESK_HPP__)
-#define __RDP_CAPABILITIES_COMPDESK_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_COMPDESK_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_COMPDESK_HPP_
 
 // 2.2.7.2.8 Desktop Composition Capability Set (TS_COMPDESK_CAPABILITYSET)
 // ========================================================================
