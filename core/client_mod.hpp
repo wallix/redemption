@@ -21,8 +21,8 @@
    module object. Some kind of interface between core and modules
 
 */
-#if !defined(__CLIENT_MOD_HPP__)
-#define __CLIENT_MOD_HPP__
+#ifndef _REDEMPTION_CORE_CLIENT_MOD_HPP_
+#define _REDEMPTION_CORE_CLIENT_MOD_HPP_
 
 #include <string.h>
 #include <sys/un.h>

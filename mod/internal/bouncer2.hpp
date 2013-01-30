@@ -22,8 +22,8 @@
 
 */
 
-#ifndef __BOUNCER2_HPP__
-#define __BOUNCER2_HPP__
+#ifndef _REDEMPTION_MOD_INTERNAL_BOUNCER2_HPP_
+#define _REDEMPTION_MOD_INTERNAL_BOUNCER2_HPP_
 
 #include "client_mod.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"

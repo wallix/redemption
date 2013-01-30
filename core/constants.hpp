@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__CONSTANTS_HPP__)
-#define __CONSTANTS_HPP__
+#ifndef _REDEMPTION_CORE_CONSTANTS_HPP_
+#define _REDEMPTION_CORE_CONSTANTS_HPP_
 
 #include "log.hpp"
 

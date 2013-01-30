@@ -26,8 +26,8 @@
 
 */
 
-#if !defined(__FILE_TO_GRAPHIC_HPP__)
-#define __FILE_TO_GRAPHIC_HPP__
+#ifndef _REDEMPTION_CAPTURE_FILETOGRAPHIC_HPP_
+#define _REDEMPTION_CAPTURE_FILETOGRAPHIC_HPP_
 
 #include "transport.hpp"
 #include "RDP/caches/bmpcache.hpp"

@@ -23,8 +23,9 @@
 */
 
 
-#ifndef __CORE_CONFIG_HPP__
-#define __CORE_CONFIG_HPP__
+#ifndef _REDEMPTION_CORE_CONFIG_HPP_
+#define _REDEMPTION_CORE_CONFIG_HPP_
+
 #include <dirent.h>
 #include <stdio.h>
 

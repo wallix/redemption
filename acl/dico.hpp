@@ -28,12 +28,9 @@
 
 */
 
-#if !defined(__ACL_DICO_HPP__)
-#define __ACL_DICO_HPP__
+#ifndef _REDEMPTION_ACL_DICO_HPP_
+#define _REDEMPTION_ACL_DICO_HPP_
 
-// #include <stdio.h>
-//#include <stdarg.h>
-// #include <stdlib.h>
 #include <string.h>
 #include <map>
 

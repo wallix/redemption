@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(CORE_SERVER_HPP)
-#define CORE_SERVER_HPP
+#ifndef _REDEMPTION_CORE_SERVER_HPP_
+#define _REDEMPTION_CORE_SERVER_HPP_
 
 class Server
 {

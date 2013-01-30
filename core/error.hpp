@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__ERROR_HPP__)
-#define __ERROR_HPP__
+#ifndef _REDEMPTION_CORE_ERROR_HPP_
+#define _REDEMPTION_CORE_ERROR_HPP_
 
 enum {
     NO_ERROR = 0,

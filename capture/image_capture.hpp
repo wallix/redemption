@@ -22,8 +22,8 @@
    with some other target image format.
 */
 
-#if !defined(__CAPTURE_IMAGE_CAPTURE_HPP__)
-#define __CAPTURE_IMAGE_CAPTURE_HPP__
+#ifndef _REDEMPTION_CAPTURE_IMAGE_CAPTURE_HPP_
+#define _REDEMPTION_CAPTURE_IMAGE_CAPTURE_HPP_
 
 #include <stdio.h>
 #include <png.h>

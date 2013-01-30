@@ -19,8 +19,8 @@
 
 */
 
-#if !defined(__CORE_SESSION_SERVER_HPP__)
-#define __CORE_SESSION_SERVER_HPP__
+#ifndef _REDEMPTION_CORE_SESSION_SERVER_HPP_
+#define _REDEMPTION_CORE_SESSION_SERVER_HPP_
 
 #include "config.hpp"
 #include "ssl_calls.hpp"

@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__HPP__)
-#define __HPP__
+#ifndef _REDEMPTION_CORE_MAINLOOP_HPP_
+#define _REDEMPTION_CORE_MAINLOOP_HPP_
 
 int g_is_term(void);
 void redemption_main_loop();

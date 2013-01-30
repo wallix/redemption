@@ -20,8 +20,8 @@
 
 */
 
-#if !defined(__MOD_INTERNAL_WIDGET_WINDOW_CLOSE_HPP__)
-#define __MOD_INTERNAL_WIDGET_WINDOW_CLOSE_HPP__
+#ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_WINDOW_CLOSE_HPP_
+#define _REDEMPTION_MOD_INTERNAL_WIDGET_WINDOW_CLOSE_HPP_
 
 #include "widget.hpp"
 #include "internal_mod.hpp"

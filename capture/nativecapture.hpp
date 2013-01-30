@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-#if !defined(__CAPTURE_NATIVECAPTURE_HPP__)
-#define __CAPTURE_NATIVECAPTURE_HPP__
+#ifndef _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
+#define _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
 
 #include <errno.h>
 #include "bitmap.hpp"

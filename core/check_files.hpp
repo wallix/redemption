@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__CHECK_FILES_HPP__)
-#define __CHECK_FILES_HPP__
+#ifndef _REDEMPTION_CORE_CHECK_FILES_HPP_
+#define _REDEMPTION_CORE_CHECK_FILES_HPP_
 
 #include <iostream>
 #include <string>

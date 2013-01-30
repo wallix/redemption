@@ -26,8 +26,8 @@
 
 */
 
-#if !defined(__GRAPHIC_TO_FILE_HPP__)
-#define __GRAPHIC_TO_FILE_HPP__
+#ifndef _REDEMPTION_CAPTURE_GRAPHICTOFILE_HPP_
+#define _REDEMPTION_CAPTURE_GRAPHICTOFILE_HPP_
 
 #include "RDP/x224.hpp"
 #include "RDP/mcs.hpp"

@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(CORE_CHANNEL_LIST_HPP__)
-#define CORE_CHANNEL_LIST_HPP__
+#ifndef _REDEMPTION_CORE_CHANNEL_LIST_HPP_
+#define _REDEMPTION_CORE_CHANNEL_LIST_HPP_
 
 struct ChannelDef {
     char name[16];

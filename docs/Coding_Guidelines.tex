@@ -1,0 +1,113 @@
+\documentclass[11pt]{report}
+\title{\textbf{ReDemPtion C++ Coding Guidelines}}
+\author{Christophe Grosjean}
+\date{30/01/2013}
+\usepackage{listings} % http://en.wikibooks.org/wiki/LaTeX/Source_Code_Listings
+%\lstset{language=C++}
+\usepackage{color}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{ %
+  language=C++,                   % the language of the code
+  backgroundcolor=\color{white},  % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
+  basicstyle=\footnotesize,       % the size of the fonts that are used for the code
+  breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
+  breaklines=true,                % sets automatic line breaking
+  captionpos=b,                   % sets the caption-position to bottom
+  commentstyle=\color{dkgreen},   % comment style
+  deletekeywords={...},           % if you want to delete keywords from the given language
+  escapeinside={\%*}{*)},         % if you want to add LaTeX within your code
+  frame=L,                        % adds a frame around the code
+  keywordstyle=\color{blue},      % keyword style
+  morekeywords={*,...},           % if you want to add more keywords to the set
+  numbers=none,                   % where to put the line-numbers; possible values are (none, left, right)
+  numbersep=5pt,                  % how far the line-numbers are from the code
+  numberstyle=\tiny\color{gray},  % the style that is used for the line-numbers
+  rulecolor=\color{black},        % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+  showspaces=false,               % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+  showstringspaces=false,         % underline spaces within strings only
+  showtabs=false,                 % show tabs within strings adding particular underscores
+  stepnumber=2,                   % the step between two line-numbers. If it's 1, each line will be numbered
+  stringstyle=\color{mauve},      % string literal style
+  tabsize=4,                      % sets default tabsize to 4 spaces
+  title=\lstname                  % show the filename of files included with \lstinputlisting; also try caption instead of title
+}
+
+\begin{document}
+
+\maketitle
+
+\chapter{Before we start}
+
+\section{Disclaimer}
+
+This document is based on Google C++ Coding Guidelines, to which I basically agree. Hence many paragraphs belons tp their respective authors. I encourage readers to check the original \emph{Google C++ Style Guide}\footnote{http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml}, which I believe is an enlitghtning reading.
+
+However there is differences between the way I'm currently writing code in ReDemPtion project and those guidelines. So, I felt I had to review all of it's content and modify it to what I really wished. I revendicate evil ideas as mine, mostly perversion of the original good content. I also added some brand new content not addressed by original document. Mostly, it about the way the C++ code relates to external world and tools (building and testing tools, contain management and such).
+
+Some conventions used by ReDemPtion projects exists for historical reasons and may evolve in the future. Others are related to code management, performances, statical check or code generation issues and were introduced deliberately event if they may seems unusual or disturbing at once. There is even projects to port part of the code base to some other languages (hint: I love D). Again some current rules may (and should) evolve in the future.
+
+Good or bad theses coventions are (yet) an ideal and many parts of the code must be fixed, hence they are only mandatory for new of modified source code.
+
+
+\section{Background}
+
+C++ is the main development language used by ReDemPtion project. As every C++ programmer knows, the language has many powerful features, but this power brings with it complexity, which in turn can make code more bug-prone and harder to read and maintain.
+
+The goal of this guide is to manage this complexity by describing in detail the dos and don'ts of writing C++ code. These rules exist to keep the code base manageable while still allowing coders to use C++ language features productively.
+
+Style, also known as readability, is what we call the conventions that govern our C++ code. The term Style is a bit of a misnomer, since these conventions cover far more than just source file formatting. Many parts are even not about C++ language at all, but about software design rules like how to write unit tests or which code smells should be avoided and how the code should be refactored if such a smell is detected.
+
+One way in which we keep the code base manageable is by enforcing consistency. It is very important that any programmer be able to look at another's code and quickly understand it. Maintaining a uniform style and following conventions means that we can more easily use "pattern-matching" to infer what various symbols are and what invariants are true about them. Creating common, required idioms and patterns makes code much easier to understand. In some cases there might be good arguments for changing certain style rules, but we nonetheless keep things as they are in order to preserve consistency.
+
+Another issue this guide addresses is that of C++ feature bloat. C++ is a huge language with many advanced features. In many cases we constrain, or even ban, use of certain features. We do this to keep code simple and to avoid the various common errors and problems that these features can cause. This guide lists these features and explains why their use is restricted. Be warned \emph{large} parts of C++ are frowned upon in these guide : STL, templates, function overloading, etc.
+
+
+Note that this guide is not a C++ tutorial: we assume that the reader is familiar with the language.
+
+\chapter{Build Environment}
+
+\chapter{Header Files}
+
+In general, every .cpp file should have an associated .hpp file. There are some common exceptions, such as unittests and small .cpp files containing just a main() function.
+
+Correct use of header files can make a huge difference to the readability, size and performance of your code.
+
+The following rules will guide you through the various pitfalls of using header files. 
+
+\section{The define Guard}
+
+All header files should have \#define guards to prevent multiple inclusion. To guarantee uniqueness the format of the symbol name should be:
+\vspace{5pt}
+\begin{lstlisting}[frame=none]
+<PROJECT>_<PATH>_<FILE>_HPP_
+\end{lstlisting}
+\vspace{-20pt}
+ \lstinline{}
+
+The given path should be the full path in the source tree and the define name will be fully capitalized. In some rare case there may be some name collision with the above scheme if the source name containes underscore or if several files with different capitalization exists in tre source tree. We will ignore these cases it's the responsibility of the coder to ensure it does not happen.
+
+\vspace{5pt}
+\begin{lstlisting}
+#ifndef FOO_BAR_BAZ_HPP_
+#define FOO_BAR_BAZ_HPP_
+\end{lstlisting}
+\vspace{-20pt}
+
+\chapter{Unit Testing}
+
+\chapter{Code Smells}
+
+\chapter{Scoping}
+
+\chapter{Other C++ Features}
+
+\chapter{Naming}
+
+\chapter{Comments}
+
+\chapter{Formatting}
+
+\end{document}

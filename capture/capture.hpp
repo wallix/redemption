@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-#if !defined(__CAPTURE_CAPTURE_HPP__)
-#define __CAPTURE_CAPTURE_HPP__
+#ifndef _REDEMPTION_CAPTURE_CAPTURE_HPP_
+#define _REDEMPTION_CAPTURE_CAPTURE_HPP_
 
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"

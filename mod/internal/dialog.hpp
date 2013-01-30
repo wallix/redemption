@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__DIALOG_HPP__)
-#define __DIALOG_HPP__
+#ifndef _REDEMPTION_MOD_INTERNAL_DIALOG_HPP_
+#define _REDEMPTION_MOD_INTERNAL_DIALOG_HPP_
 
 #include <stdlib.h>
 #include "log.hpp"

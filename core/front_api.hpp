@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__CORE_FRONT_API_HPP__)
-#define __CORE_FRONT_API_HPP__
+#ifndef _REDEMPTION_CORE_FRONT_API_HPP_
+#define _REDEMPTION_CORE_FRONT_API_HPP_
 
 
 class FrontAPI : public RDPGraphicDevice {

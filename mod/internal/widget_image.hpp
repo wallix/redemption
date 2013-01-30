@@ -19,8 +19,8 @@
 
 */
 
-#if !defined(__MOD_INTERNAL_WIDGET_IMAGE__)
-#define __MOD_INTERNAL_WIDGET_IMAGE__
+#ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_IMAGE_HPP_
+#define _REDEMPTION_MOD_INTERNAL_WIDGET_IMAGE_HPP_
 
 #include "widget.hpp"
 #include "internal/internal_mod.hpp"

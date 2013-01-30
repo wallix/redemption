@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__WAIT_OBJS_HPP__)
-#define __WAIT_OBJS_HPP__
+#ifndef _REDEMPTION_CORE_WAIT_OBJ_HPP_
+#define _REDEMPTION_CORE_WAIT_OBJ_HPP_
 
 #include "error.hpp"
 #include <stdint.h>

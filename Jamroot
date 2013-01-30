@@ -158,17 +158,6 @@ exe rdpproxy
         <link>static
     ;
 
-exe drawtest
-    :
-        main/drawtest.cpp
-
-        libboost_program_options
-        z
-        png
-    :
-        <link>static
-    ;
-
 exe redrec
     :
         main/recorder.cpp
@@ -297,4 +286,3 @@ unit-test test_zlib : tests/test_zlib.cpp z libboost_unit_test  ;
 
 unit-test test_parse_username : tests/test_parse_username.cpp libboost_unit_test  ;
 
-#unit-test test_recorder_by_socket : tests/test_recorder_by_socket.cpp crypto png z openssl crypto dl libboost_unit_test  ;

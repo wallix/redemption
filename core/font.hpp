@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__FONT_HPP__)
-#define __FONT_HPP__
+#ifndef _REDEMPTION_CORE_FONT_HPP_
+#define _REDEMPTION_CORE_FONT_HPP_
 
 #include <sys/types.h>
 #include <sys/stat.h>

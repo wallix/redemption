@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(CORE_LISTEN_HPP)
-#define CORE_LISTEN_HPP
+#ifndef _REDEMPTION_CORE_LISTEN_HPP_
+#define _REDEMPTION_CORE_LISTEN_HPP_
 
 #include "mainloop.hpp"
 

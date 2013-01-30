@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__CLIENT_INFO_HPP__)
-#define __CLIENT_INFO_HPP__
+#ifndef _REDEMPTION_CORE_CLIENT_INFO_HPP_
+#define _REDEMPTION_CORE_CLIENT_INFO_HPP_
 
 #include <string.h>
 #include "config.hpp"

@@ -20,8 +20,8 @@
 
 */
 
-#if !defined(__MOD_INTERNAL_WIDGET_WINDOW_LOGIN_HPP__)
-#define __MOD_INTERNAL_WIDGET_WINDOW_LOGIN_HPP__
+#ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_WINDOW_LOGIN_HPP_
+#define _REDEMPTION_MOD_INTERNAL_WIDGET_WINDOW_LOGIN_HPP_
 
 #include "widget_window.hpp"
 #include "widget.hpp"

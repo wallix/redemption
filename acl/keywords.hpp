@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__KEYWORDS_HPP__)
-#define __KEYWORDS_HPP__
+#ifndef _REDEMPTION_ACL_KEYWORDS_HPP_
+#define _REDEMPTION_ACL_KEYWORDS_HPP_
 
 enum {
     TYPE_BOOLEAN,

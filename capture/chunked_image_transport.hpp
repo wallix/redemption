@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__CHUNKED_IMAGE_TRANSPORT_HPP__)
-#define __CHUNKED_IMAGE_TRANSPORT_HPP__
+#ifndef _REDEMPTION_CAPTURE_CHUNKED_IMAGE_TRANSPORT_HPP_
+#define _REDEMPTION_CAPTURE_CHUNKED_IMAGE_TRANSPORT_HPP_
 
 #include "transport.hpp"
 #include "RDP/RDPDrawable.hpp"

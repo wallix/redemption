@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__WIDGET_COMBO_HELP_HPP__)
-#define __WIDGET_COMBO_HELP_HPP__
+#ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_COMBO_HELP_HPP_
+#define _REDEMPTION_MOD_INTERNAL_WIDGET_COMBO_HELP_HPP_
 
 #include "widget_window_login.hpp"
 

@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__CORE_CIPHER_HPP__)
-#define __CORE_CIPHER_HPP__
+#ifndef _REDEMPTION_CORE_CIPHER_HPP_
+#define _REDEMPTION_CORE_CIPHER_HPP_
 
 #include <cstddef>
 #include <openssl/evp.h>

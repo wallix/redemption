@@ -19,8 +19,8 @@
 
 */
 
-#if !defined(__CORE_SESSION_HPP__)
-#define __CORE_SESSION_HPP__
+#ifndef _REDEMPTION_CORE_SESSION_HPP_
+#define _REDEMPTION_CORE_SESSION_HPP_
 
 #include <netinet/tcp.h>
 #include <unistd.h>

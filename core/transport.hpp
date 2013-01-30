@@ -20,8 +20,8 @@
    Transport layer abstraction
 */
 
-#if !defined(__TRANSPORT_HPP__)
-#define __TRANSPORT_HPP__
+#ifndef _REDEMPTION_CORE_TRANSPORT_HPP_
+#define _REDEMPTION_CORE_TRANSPORT_HPP_
 
 #include <sys/types.h> // recv, send
 #include <sys/socket.h>

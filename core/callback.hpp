@@ -23,8 +23,8 @@
 
 */
 
-#ifndef __CALLBACK_HPP__
-#define __CALLBACK_HPP__
+#ifndef _REDEMPTION_CORE_CALLBACK_HPP_
+#define _REDEMPTION_CORE_CALLBACK_HPP_
 #include "keymap2.hpp"
 #include "channel_list.hpp"
 

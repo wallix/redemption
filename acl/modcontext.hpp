@@ -19,8 +19,8 @@
 
 */
 
-#if !defined(__ACL_MODCONTEXT_HPP__)
-#define __ACL_MODCONTEXT_HPP__
+#ifndef _REDEMPTION_ACL_MODCONTEXT_HPP_
+#define _REDEMPTION_ACL_MODCONTEXT_HPP_
 
 #include <string>
 
