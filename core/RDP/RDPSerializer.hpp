@@ -24,8 +24,8 @@
 
 */
 
-#if !defined(__RDP_SERIALIZER_HPP__)
-#define __RDP_SERIALIZER_HPP__
+#ifndef _REDEMPTION_CORE_RDP_RDPSERIALIZER_HPP_
+#define _REDEMPTION_CORE_RDP_RDPSERIALIZER_HPP_
 
 // MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
 // ================================================================

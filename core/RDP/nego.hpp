@@ -21,8 +21,8 @@
 
 */
 
-#ifndef __CORE_RDP_NEGO_HPP__
-#define __CORE_RDP_NEGO_HPP__
+#ifndef _REDEMPTION_CORE_RDP_NEGO_HPP_
+#define _REDEMPTION_CORE_RDP_NEGO_HPP_
 
 struct RdpNego
 {

@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__MOD_RDP_HPP__)
-#define __MOD_RDP_HPP__
+#ifndef _REDEMPTION_MOD_RDP_RDP_HPP_
+#define _REDEMPTION_MOD_RDP_RDP_HPP__
 
 #include <unistd.h>
 #include <string.h>
@@ -51,7 +51,6 @@
 #include "RDP/sec.hpp"
 #include "colors.hpp"
 #include "RDP/capabilities.hpp"
-#include "RDP/connection.hpp"
 
 //#include "RDP/orders/RDPOrdersNames.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"

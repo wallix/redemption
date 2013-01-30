@@ -26,9 +26,8 @@
 
 */
 
-#if !defined(__GRAPHIC_UPDATE_PDU_HPP__)
-#define __GRAPHIC_UPDATE_PDU_HPP__
-
+#ifndef _REDEMPTION_CORE_RDP_GRAPHIC_UPDATE_PDU_HPP_
+#define _REDEMPTION_CORE_RDP_GRAPHIC_UPDATE_PDU_HPP_
 
 #include "RDP/x224.hpp"
 #include "RDP/mcs.hpp"

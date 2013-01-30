@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier, Poelen Jonathan
 */
 
-#if !defined(__CORE_RDP_RDPDRAWABLE_HPP__)
-#define __CORE_RDP_RDPDRAWABLE_HPP__
+#ifndef _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
+#define _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
 
 #include "drawable.hpp"
 #include "RDP/caches/bmpcache.hpp"

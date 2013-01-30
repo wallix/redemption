@@ -27,8 +27,8 @@
 
 */
 
-#if !defined(__CORE_RDP_GCC_HPP__)
-#define __CORE_RDP_GCC_HPP__
+#ifndef _REDEMPTION_CORE_RDP_GCC_HPP_
+#define _REDEMPTION_CORE_RDP_GCC_HPP_
 
 #include "stream.hpp"
 #include "ssl_calls.hpp"

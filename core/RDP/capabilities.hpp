@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__RDP_CAPABILITIES_HPP__)
-#define __RDP_CAPABILITIES_HPP__
+#ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_HPP_
+#define _REDEMPTION_CORE_RDP_CAPABILITIES_HPP_
 
 #include "capabilities/common.hpp"
 

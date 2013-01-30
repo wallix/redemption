@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__FRONT_FRONT_HPP__)
-#define __FRONT_FRONT_HPP__
+#ifndef _REDEMPTION_FRONT_FRONT_HPP_
+#define _REDEMPTION_FRONT_FRONT_HPP_
 
 #include "log.hpp"
 #include "../acl/modcontext.hpp"
@@ -44,7 +44,6 @@
 #include "RDP/sec.hpp"
 #include "colors.hpp"
 #include "RDP/capabilities.hpp"
-#include "RDP/connection.hpp"
 
 #include "ssl_calls.hpp"
 #include "bitfu.hpp"

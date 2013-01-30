@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__FASTPATH_HPP__)
-#define __FASTPATH_HPP__
+#ifndef _REDEMPTION_CORE_RDP_FASTPATH_HPP_
+#define _REDEMPTION_CORE_RDP_FASTPATH_HPP_
 
 // 2.2.9.1.2 Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
 // ========================================================

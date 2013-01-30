@@ -23,8 +23,8 @@
 
 */
 
-#if !defined(__CORE_RDP_X224_HPP__)
-#define __CORE_RDP_X224_HPP__
+#ifndef _REDEMPTION_CORE_RDP_X224_HPP_
+#define _REDEMPTION_CORE_RDP_X224_HPP_
 
 #include <stdint.h>
 #include "transport.hpp"

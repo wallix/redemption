@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__CORE_RDP_MCS_HPP__)
-#define __CORE_RDP_MCS_HPP__
+#ifndef _REDEMPTION_CORE_RDP_MCS_HPP_
+#define _REDEMPTION_CORE_RDP_MCS_HPP_
 
 #include <algorithm>
 

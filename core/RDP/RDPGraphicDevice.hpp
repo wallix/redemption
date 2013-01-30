@@ -26,8 +26,8 @@
 
 */
 
-#if !defined(__RDP_GRAPHIC_DEVICE_HPP__)
-#define __RDP_GRAPHIC_DEVICE_HPP__
+#ifndef _REDEMPTION_CORE_RDP_RDPGRAPHICDEVICE_HPP_
+#define _REDEMPTION_CORE_RDP_RDPGRAPHICDEVICE_HPP_
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"

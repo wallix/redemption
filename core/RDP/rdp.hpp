@@ -23,8 +23,8 @@
 */
 
 
-#if !defined(CORE_RDP_RDP_HPP__)
-#define CORE_RDP_RDP_HPP__
+#ifndef _REDEMPTION_CORE_RDP_RDP_HPP_
+#define _REDEMPTION_CORE_RDP_RDP_HPP_
 
 #include <stdlib.h>
 

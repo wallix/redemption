@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__CORE_RDP_SEC_HPP__)
-#define __CORE_RDP_SEC_HPP__
+#ifndef _REDEMPTION_CORE_RDP_SEC_HPP_
+#define _REDEMPTION_CORE_RDP_SEC_HPP_
 
 #include <assert.h>
 #include <stdint.h>
