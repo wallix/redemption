@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__MOD_VNC_HPP__)
-#define __MOD_VNC_HPP__
+#ifndef _REDEMPTION_MOD_VNC_VNC_HPP_
+#define _REDEMPTION_MOD_VNC_VNC_HPP_
 
 #include <sys/types.h>
 #include <sys/socket.h>

@@ -20,8 +20,8 @@
 
 */
 
-#if !defined(__WIDGET__)
-#define __WIDGET__
+#ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_HPP_
+#define _REDEMPTION_MOD_INTERNAL_WIDGET_HPP_
 
 #include <stdlib.h>
 

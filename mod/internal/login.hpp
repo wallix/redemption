@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__LOGIN_HPP__)
-#define __LOGIN_HPP__
+#ifndef _REDEMPTION_MOD_INTERNAL_LOGIN_HPP_
+#define _REDEMPTION_MOD_INTERNAL_LOGIN_HPP_
 
 #include "widget_window_login.hpp"
 
