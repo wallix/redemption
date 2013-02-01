@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__TEST_CARD_HPP__)
-#define __TEST_CARD_HPP__
+#ifndef _REDEMPTION_MOD_INTERNAL_TEST_CARD_HPP_
+#define _REDEMPTION_MOD_INTERNAL_TEST_CARD_HPP_
 
 #include "internal/internal_mod.hpp"
 

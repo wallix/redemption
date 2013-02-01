@@ -22,8 +22,8 @@
 */
 
 
-#if !defined(__KEYLAYOUT_HPP__)
-#define __KEYLAYOUT_HPP__
+#ifndef _REDEMPTION_KEYLAYOUT_HPP_
+#define _REDEMPTION_KEYLAYOUT_HPP_
 
 //====================================
 // SCANCODES PHYSICAL LAYOUT REFERENCE

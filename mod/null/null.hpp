@@ -19,8 +19,8 @@
 
 */
 
-#if !defined(__MOD_NULL_HPP__)
-#define __MOD_NULL_HPP__
+#ifndef _REDEMPTION_MOD_NULL_NULL_HPP_
+#define _REDEMPTION_MOD_NULL_NULL_HPP_
 
 #include "client_mod.hpp"
 

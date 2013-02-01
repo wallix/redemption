@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__TEST_INTERNAL_HPP__)
-#define __TEST_INTERNAL_HPP__
+#ifndef _REDEMPTION_MOD_INTERNAL_TEST_INTERNAL_HPP_
+#define _REDEMPTION_MOD_INTERNAL_TEST_INTERNAL_HPP_
 
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"

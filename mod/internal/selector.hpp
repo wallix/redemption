@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__SELECTOR_HPP__)
-#define __SELECTOR_HPP__
+#ifndef _REDEMPTION_MOD_INTERNAL_SELECTOR_HPP_
+#define _REDEMPTION_MOD_INTERNAL_SELECTOR_HPP_
 
 #include <stdio.h>
 #include "colors.hpp"
