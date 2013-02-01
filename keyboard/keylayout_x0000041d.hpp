@@ -21,8 +21,8 @@
    header file. Keylayout object, used by keymap managers
 */
 
-#if !defined(__KEYLAYOUT_X0000041D_HPP__)
-#define __KEYLAYOUT_X0000041D_HPP__
+#ifndef _REDEMPTION_KEYLAYOUT_X0000041D_HPP_
+#define _REDEMPTION_KEYLAYOUT_X0000041D_HPP_
 
 #include "keylayout.hpp"
 

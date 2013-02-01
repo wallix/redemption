@@ -19,8 +19,8 @@
 
 */
 
-#if !defined(__INTERNAL_MOD_HPP__)
-#define __INTERNAL_MOD_HPP__
+#ifndef _REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP_
+#define _REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP_
 
 #include "internal/widget.hpp"
 #include "modcontext.hpp"

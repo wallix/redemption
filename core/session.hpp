@@ -48,7 +48,7 @@
 #include "bitmap.hpp"
 #include "modcontext.hpp"
 
-#include "sesman.hpp"
+#include "authentifier.hpp"
 #include "front.hpp"
 #include "null/null.hpp"
 #include "internal/login.hpp"

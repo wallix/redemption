@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__KEYLAYOUTS_HPP__)
-#define __KEYLAYOUTS_HPP__
+#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUTS_HPP_
+#define _REDEMPTION_KEYBOARD_KEYLAYOUTS_HPP_
 
 #include "keylayout.hpp"
 #include "keylayout_x0000201a.hpp" // Bosnian (Cyrillic) (Bosnia and Herzegovina))

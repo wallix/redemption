@@ -21,8 +21,8 @@
    header file. Keymap2 object, used to manage key stroke events
 */
 
-#if !defined(__KEYMAP__)
-#define __KEYMAP__
+#ifndef _REDEMPTION_KEYBOARD_KEYMAP2_HPP_
+#define _REDEMPTION_KEYBOARD_KEYMAP2_HPP_
 
 #include <stdio.h>
 #include "constants.hpp"

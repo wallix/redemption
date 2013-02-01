@@ -19,16 +19,13 @@
 
 */
 
-TODO(" rename sesman to authentifier")
-#if !defined(__SESMAN3_HPP__)
-#define __SESMAN3_HPP__
-
+#ifndef _REDEMPTION_ACL_AUTHENTIFIER_HPP_
+#define _REDEMPTION_ACL_AUTHENTIFIER_HPP_
 
 TODO("Sesman is performing two largely unrelated tasks : finding out the next module to run (from context reading) and updating context dictionnary from incoming acl traffic. These tasks should be performed by two different modules")
 
 #include "stream.hpp"
 #include "config.hpp"
-#include "sesman.hpp"
 #include "modcontext.hpp"
 
 class SessionManager {

@@ -19,8 +19,8 @@
 
 */
 
-#if !defined(__MOD_TRANSITORY_HPP__)
-#define __MOD_TRANSITORY_HPP__
+#ifndef _REDEMPTION_MOD_INTERNAL_TRANSITORY_HPP_
+#define _REDEMPTION_MOD_INTERNAL_TRANSITORY_HPP_
 
 #include "client_mod.hpp"
 

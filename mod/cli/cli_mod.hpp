@@ -20,8 +20,8 @@
 
 */
 
-#if !defined(__CLI_HPP__)
-#define __CLI_HPP__
+#ifndef _REDEMPTION_MOD_CLI_CLI_MOD_HPP_
+#define _REDEMPTION_MOD_CLI_CLI_MOD_HPP_
 
 #include "transitory/transitory.hpp"
 

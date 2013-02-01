@@ -422,9 +422,9 @@ def writeLicense(f):
 #===============================================================================
 def writeHeader(f):
 #===============================================================================
-    line = u"\n#if !defined(__KEYLAYOUT_X{locid}_HPP__)\n".format(locid = localeId.upper())
+    line = u"\n#ifndef _REDEMPTION_KEYBOARD_KEYLAYOUT_X{locid}_HPP_)\n".format(locid = localeId.upper())
     f.write(line.encode(u'utf-8'))
-    line = u"#define __KEYLAYOUT_X{locid}_HPP__\n".format(locid = localeId.upper())
+    line = u"#define _REDEMPTION_KEYBOARD_KEYLAYOUT_X{locid}_HPP_\n".format(locid = localeId.upper())
     f.write(line.encode(u'utf-8'))
     f.write(u'\n#include "keylayout.hpp"\n'.encode(u'utf-8'))
     line = u"\nnamespace x{locid} {acco}    // {loctag} // {locdesc}\n".format( locid = localeId

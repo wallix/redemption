@@ -19,8 +19,8 @@
 
 */
 
-#if !defined(__MOD_INTERNAL_WIDGET_BUTTON__)
-#define __MOD_INTERNAL_WIDGET_BUTTON__
+#ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_BUTTON_HPP_
+#define _REDEMPTION_MOD_INTERNAL_WIDGET_BUTTON_HPP_
 
 #include "widget.hpp"
 #include "internal/internal_mod.hpp"
