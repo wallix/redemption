@@ -26,7 +26,6 @@
 #define _REDEMPTION_FRONT_FRONT_HPP_
 
 #include "log.hpp"
-#include "../acl/modcontext.hpp"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -52,6 +51,7 @@
 #include "capture.hpp"
 #include "font.hpp"
 #include "bitmap.hpp"
+#include "modcontext.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/fontcache.hpp"
 #include "RDP/caches/pointercache.hpp"
