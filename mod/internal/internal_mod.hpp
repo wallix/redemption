@@ -26,6 +26,12 @@
 #include "modcontext.hpp"
 #include "client_mod.hpp"
 
+enum {
+    BUTTON_STATE_UP   = 0,
+    BUTTON_STATE_DOWN = 1,
+};
+
+
 struct internal_mod : public client_mod {
     public:
     BackEvent_t signal;

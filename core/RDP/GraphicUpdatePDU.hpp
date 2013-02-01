@@ -144,7 +144,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
             LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
         }
         this->sctrl = new ShareControl(this->stream);
-        this->sctrl->emit_begin( PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE );
+        this->sctrl->emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE );
         this->sdata = new ShareData(this->stream);
         this->sdata->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED );
         TODO("this is to kind of header, to be treated like other headers")
@@ -172,7 +172,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
             BStream sec_header(256);
 
             SEC::Sec_Send sec(sec_header, this->stream, 0, this->encrypt, this->encryptionLevel, 0);
-            MCS::SendDataIndication_Send mcs(mcs_header, this->userid, MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + this->stream.size(), MCS::PER_ENCODING);
+            MCS::SendDataIndication_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + this->stream.size(), MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, sec_header.size() + this->stream.size() + mcs_header.size());
 
 

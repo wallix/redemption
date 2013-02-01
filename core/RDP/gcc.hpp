@@ -199,6 +199,10 @@ namespace GCC
 //    set to 0, the length is given by the low six bits of the first byte and the second byte.
 //    Hence, the value is 0x11c, which is 284 bytes.
 
+    enum {
+        MCS_GLOBAL_CHANNEL   = 1003,
+        MCS_USERCHANNEL_BASE = 1001,
+    };
 
     class Create_Request_Send {
         public:
@@ -1594,7 +1598,7 @@ namespace GCC
                     uint32_t options = channelDefArray[i].options;
                     LOG(LOG_INFO, "cs_net::channel '%*s' [%u]%s%s%s%s%s%s%s%s" 
                         , 8
-                        , channelDefArray[i].name, MCS_GLOBAL_CHANNEL + i + 1
+                        , channelDefArray[i].name, GCC::MCS_GLOBAL_CHANNEL + i + 1
                         , (options & CHANNEL_OPTION_INITIALIZED)?" INITIALIZED":""
                         , (options & CHANNEL_OPTION_PRI_HIGH)?" PRI_HIGH":""
                         , (options & CHANNEL_OPTION_PRI_MED)?" PRI_MED":""
@@ -1661,7 +1665,7 @@ namespace GCC
             SCNet()
             : userDataType(SC_NET)
             , length(12)
-            , MCSChannelId(MCS_GLOBAL_CHANNEL)
+            , MCSChannelId(GCC::MCS_GLOBAL_CHANNEL)
             , channelCount(0)
             {
             }
@@ -1705,7 +1709,7 @@ namespace GCC
 
                 for (size_t i = 0; i < this->channelCount ; i++){
                     LOG(LOG_INFO, "sc_net::channel[%u]::id = %u" 
-                        , MCS_GLOBAL_CHANNEL + i + 1
+                        , GCC::MCS_GLOBAL_CHANNEL + i + 1
                         , this->channelDefArray[i].id
                         );
                 }

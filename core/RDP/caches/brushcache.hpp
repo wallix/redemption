@@ -34,6 +34,11 @@ struct brush_item {
     }
 };
 
+enum {
+    BRUSH_TO_SEND = 0,
+    BRUSH_ALLREADY_SENT
+};
+
 /* difference caches */
 struct BrushCache {
     /* brush */

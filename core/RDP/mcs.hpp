@@ -35,7 +35,7 @@ namespace MCS
         BER_ENCODING,
         PER_ENCODING
     };
-
+    
     // Reason ::= ENUMERATED   -- in DisconnectProviderUltimatum, DetachUserRequest, DetachUserIndication
     enum {
         RN_DOMAIN_DISCONNECTED = 0,

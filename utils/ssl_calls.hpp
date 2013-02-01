@@ -42,6 +42,13 @@
 #include "constants.hpp"
 #include "log.hpp"
 
+enum {
+    SEC_RANDOM_SIZE   = 32,
+    SEC_MODULUS_SIZE  = 64,
+    SEC_MAX_MODULUS_SIZE  = 256,
+    SEC_PADDING_SIZE  =  8,
+    SEC_EXPONENT_SIZE =  4
+};
 
 class SslSha1
 {

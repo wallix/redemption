@@ -218,6 +218,11 @@ struct pointer_item {
     }
 };
 
+enum {
+    POINTER_TO_SEND = 0,
+    POINTER_ALLREADY_SENT
+};
+
 /* difference caches */
 struct PointerCache {
     int pointer_cache_entries;
