@@ -14,9 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2011
+   Copyright (C) Wallix 2010-2013
    Author(s): Christophe Grosjean, Dominique Lafages
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    header file. Keymap2 object, used to manage key stroke events
 */
@@ -189,18 +188,6 @@ struct Keymap2
         this->keys_down[RIGHT_ALT] = 0;
 
     } // END METHOD : synchronize
-
-
-    //==============================================================================
-    void update_keys_flags(int key_state)
-    //==============================================================================
-    {}
-
-
-    //==============================================================================
-    void update_chr_unicode(int key_state, int device_flags)
-    //==============================================================================
-    {}
 
 
 // The TS_KEYBOARD_EVENT structure is a standard T.128 Keyboard Event (see [T128] section
