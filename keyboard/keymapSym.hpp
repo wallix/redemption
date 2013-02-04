@@ -937,7 +937,6 @@ struct KeymapSym {
          , KBDFLAGS_RELEASE  = 0x8000
     };
 
-
     enum {
            SCROLLLOCK  = 0x01
          , NUMLOCK     = 0x02
@@ -966,15 +965,7 @@ struct KeymapSym {
                             // Windows = 64, AltGr = 128
 
     enum {
-        SIZE_KEYBUF = 20
-    };
-
-    enum {
         SIZE_KEYBUF_SYM = 20
-    };
-
-    enum {
-        SIZE_KEYBUF_KEVENT = 20
     };
 
     enum {
@@ -1169,6 +1160,13 @@ struct KeymapSym {
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  // 0xf8 - 0xff
                 } ;
                 const KeyLayout_t * layout = &keylayout_WORK_noshift_sym;
+
+                // if ctrl+alt+fin or ctrl+alt+suppr -> insert delete
+                if (is_ctrl_pressed() && is_alt_pressed() 
+                && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){
+                    //    Delete                           65535     0xffff
+                    this->push_sym(0xFFFF);
+                }
 
                 if ( ( (extendedKeyCode >= 0x47) && (extendedKeyCode <= 0x49) )
                   || ( (extendedKeyCode >= 0x4b) && (extendedKeyCode <= 0x4d) )
@@ -1479,18 +1477,6 @@ struct KeymapSym {
             return res;
         }
         return 0;
-    }
-
-    // head of keyboard buffer (or keyboard buffer of size 1)
-    //==============================================================================
-    uint32_t top_sym() const
-    //==============================================================================
-    {
-        uint32_t res = this->buffer_sym[(SIZE_KEYBUF + this->ibuf_sym - this->nbuf_sym) % SIZE_KEYBUF];
-        if (this->verbose & 2){
-            LOG(LOG_INFO, "KeymapSym::top_sym() -> %08x nbuf_sym=%u", res, this->nbuf_sym);
-        }
-        return res;
     }
 
     //==============================================================================
@@ -1830,6 +1816,7 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
+                                 
                     };
                     const KeyLayout_t x0409_shift_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,

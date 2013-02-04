@@ -525,6 +525,7 @@ struct mod_vnc : public client_mod {
                                    )
     //==============================================================================================================
     {
+        TODO("As down/up state is not stored in keymapSym, code below is quite dangerous")
         keymapSym.event(device_flags, param1);
         int key = keymapSym.get_sym();
         if (key > 0) {
