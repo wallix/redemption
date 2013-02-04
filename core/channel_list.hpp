@@ -55,6 +55,60 @@ enum {
     CF_GDIOBJLAST                  = 1023,
 };
 
+//    1.3.3 Static Virtual Channels
+//    =============================
+
+//    Static virtual channels allow lossless communication between client and server components over the
+//    main RDP data connection. Virtual channel data is application-specific and opaque to RDP. A
+//    maximum of 30 static virtual channels can be created at connection time.
+//    The list of desired virtual channels is requested and confirmed during the Basic Settings Exchange
+//    phase of the connection sequence (as specified in section 1.3.1.1) and the endpoints are joined
+//    during the Channel Connection phase (as specified in section 1.3.1.1). Once joined, the client and
+//    server endpoints should be prevented from exchanging data until the connection sequence has
+//    completed.
+//    Static virtual channel data must be broken up into chunks of up to 1600 bytes in size before being
+//    transmitted (this size does not include RDP headers). Each virtual channel acts as an independent
+//    data stream. The client and server examine the data received on each virtual channel and route the
+//    data stream to the appropriate endpoint for further processing. A particular client or server
+//    implementation can decide whether to pass on individual chunks of data as they are received, or to
+//    assemble the separate chunks of data into a complete block before passing it on to the endpoint.
+
+//    2.2.1 Clipboard PDU Header (CLIPRDR_HEADER)
+//    ===========================================
+
+//    The CLIPRDR_HEADER structure is present in all clipboard PDUs. It is used to identify the PDU type,
+//    specify the length of the PDU, and convey message flags.
+
+// 0x0001 CB_MONITOR_READY Monitor Ready PDU
+// 0x0002 CB_FORMAT_LIST Format List PDU
+// 0x0003 CB_FORMAT_LIST_RESPONSE Format List Response PDU
+// 0x0004 CB_FORMAT_DATA_REQUEST Format Data Request PDU
+// 0x0005 CB_FORMAT_DATA_RESPONSE Format Data Response PDU
+// 0x0006 CB_TEMP_DIRECTORY Temporary Directory PDU
+// 0x0007 CB_CLIP_CAPS Clipboard Capabilities PDU
+// 0x0008 CB_FILECONTENTS_REQUEST File Contents Request PDU
+// 0x0009 CB_FILECONTENTS_RESPONSE File Contents Response PDU
+// 0x000A CB_LOCK_CLIPDATA Lock Clipboard Data PDU
+// 0x000B CB_UNLOCK_CLIPDATA Unlock Clipboard Data PDU
+
+// dataLen (4 bytes): An unsigned, 32-bit integer that specifies the size, in bytes, of the data
+// which follows the Clipboard PDU Header.
+
+
+// 0x0001 CB_RESPONSE_OK   Used by the Format List Response PDU, Format Data Response PDU, and File Contents Response PDU
+//                        to indicate that the associated request Format List PDU, Format Data Request PDU, and File
+//                        Contents Request PDU were processed successfully.
+//                        
+// 0x0002 CB_RESPONSE_FAIL Used by the Format List Response PDU, Format Data Response PDU, and File Contents Response PDU
+//                        to indicate that the associated Format List PDU, Format Data Request PDU, and File Contents 
+//                        Request PDU were not processed successfully.
+
+// 0x0004 CB_ASCII_NAMES   Used by the Short Format Name variant of the Format List Response PDU to indicate the format
+//                        names are in ASCII 8.
+
+
+
+
 struct ChannelDef {
     char name[16];
 
@@ -66,7 +120,7 @@ struct ChannelDef {
     };
 
     enum {
-        CHANNEL_CHUNK_LENGTH = 8192,
+        CHANNEL_CHUNK_LENGTH = 1600,
     };
 
     enum {
@@ -81,14 +135,23 @@ struct ChannelDef {
         CompressionTypeMask          = 0x000F0000,
     };
 
-    enum { CB_MONITOR_READY        = 0x0001
-         , CB_FORMAT_LIST          = 0x0002
-         , CB_FORMAT_LIST_RESPONSE = 0x0003
-         , CB_FORMAT_DATA_REQUEST  = 0x0004
-         , CB_FORMAT_DATA_RESPONSE = 0x0005
-         , CB_TEMP_DIRECTORY       = 0x0006
-         , CB_CLIP_CAPS            = 0x0007
-         , CB_FILECONTENTS_REQUEST = 0x0008
+
+    enum { CB_MONITOR_READY         = 0x0001
+         , CB_FORMAT_LIST           = 0x0002
+         , CB_FORMAT_LIST_RESPONSE  = 0x0003
+         , CB_FORMAT_DATA_REQUEST   = 0x0004
+         , CB_FORMAT_DATA_RESPONSE  = 0x0005
+         , CB_TEMP_DIRECTORY        = 0x0006
+         , CB_CLIP_CAPS             = 0x0007
+         , CB_FILECONTENTS_REQUEST  = 0x0008
+         , CB_FILECONTENTS_RESPONSE = 0x0009 
+         , CB_LOCK_CLIPDATA         = 0x000A
+         , CB_UNLOCK_CLIPDATA       = 0x000B
+    };
+
+
+    enum { CB_RESPONSE_OK   = 0x0001
+         , CB_RESPONSE_FAIL = 0x0002
     };
 
     uint32_t flags;

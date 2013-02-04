@@ -14,9 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2011
+   Copyright (C) Wallix 2010-2013
    Author(s): Christophe Grosjean, Dominique Lafages
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    header file. Keymap2 object, used to manage key stroke events
 */
@@ -93,6 +92,10 @@ struct Keymap2
          , LEFT_ALT    = 0x38
          , RIGHT_ALT   = 0xB8
     };
+    
+    TODO("we should be able to unify unicode support and events. Idea would be to attribute codes 0xFFFFxxxx on 32 bits for events."
+         " These are outside unicode range. It would enable to use only one keycode stack instead of two and it's more similar"
+         " to the way X11 manage inputs (hence easier to unify with keymapSym)".)
 
     // keyboard info
     int keys_down[256];  // key states 0 up 1 down (0..127 plain keys, 128..255 extended keys)
@@ -181,6 +184,8 @@ struct Keymap2
     {
         this->key_flags = param1 & 0x07;
         // non sticky keys are forced to be UP
+        TODO("Non sticky keys are forced in up state. Is it what we should do ? We have up and down events for these key anyway"
+             "hence up is not likelier than down (really it should be 'unknown', but we do not have this state")
         this->keys_down[LEFT_SHIFT] = 0;
         this->keys_down[RIGHT_SHIFT] = 0;
         this->keys_down[LEFT_CTRL] = 0;
@@ -189,18 +194,6 @@ struct Keymap2
         this->keys_down[RIGHT_ALT] = 0;
 
     } // END METHOD : synchronize
-
-
-    //==============================================================================
-    void update_keys_flags(int key_state)
-    //==============================================================================
-    {}
-
-
-    //==============================================================================
-    void update_chr_unicode(int key_state, int device_flags)
-    //==============================================================================
-    {}
 
 
 // The TS_KEYBOARD_EVENT structure is a standard T.128 Keyboard Event (see [T128] section
@@ -407,10 +400,10 @@ struct Keymap2
 
                         // Set the layout block to be used, depending on active modifier keys and capslock status
                         if (this->is_caps_locked()) {
-                            if (this->is_ctrl_pressed() && this->is_alt_pressed() && this->is_shift_pressed()){
+                            if (this->is_ctrl_alt_pressed() && this->is_shift_pressed()){
                                 layout = &this->keylayout_WORK->capslock_shiftAltGr;
                             }
-                            else if (this->is_ctrl_pressed() && this->is_alt_pressed()){
+                            else if (this->is_ctrl_alt_pressed()){
                                 layout = &this->keylayout_WORK->capslock_altGr;
                             }
                             else if (this->is_ctrl_pressed()){
@@ -424,10 +417,10 @@ struct Keymap2
                             }
                         }
                         else {
-                            if (this->is_ctrl_pressed() && this->is_alt_pressed() && this->is_shift_pressed()){
+                            if (this->is_ctrl_alt_pressed() && this->is_shift_pressed()){
                                 layout = &this->keylayout_WORK->shiftAltGr;
                             }
-                            else if (this->is_ctrl_pressed() && this->is_alt_pressed()){
+                            else if (this->is_ctrl_alt_pressed()){
                                 layout = &this->keylayout_WORK->altGr;
                             }
                             else if (this->is_ctrl_pressed()){
@@ -763,6 +756,13 @@ struct Keymap2
 
     } // END METHOD : is_shift_pressed
 
+
+    bool is_ctrl_alt_pressed() const {
+        TODO("This is a hack to know if there is a Altgr map defined or not. It should be set through map generator... not reading map content like here")
+        bool has_AltGr = (this->keylayout_WORK->altGr[0x12] | this->keylayout_WORK->altGr[2]) != 0;
+        return ((this->is_ctrl_pressed() && this->is_alt_pressed())
+            || (this->is_right_alt_pressed() && has_AltGr));
+    }
 
     //==============================================================================
     bool is_left_ctrl_pressed() const
