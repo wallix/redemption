@@ -370,10 +370,7 @@ struct Session {
                                 }
                             }
                             break;
-                            case BACK_EVENT_1:
-                            case BACK_EVENT_2:
-                            case BACK_EVENT_3:
-                            case BACK_EVENT_5:
+                            case BACK_EVENT_NEXT:
                             default:
                             {
                                 if (this->verbose){

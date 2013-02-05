@@ -315,7 +315,7 @@ enum {
             }
         }
         catch(...){
-            rv = BACK_EVENT_1;
+            rv = BACK_EVENT_NEXT;
         }
         return rv;
     }

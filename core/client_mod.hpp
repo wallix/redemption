@@ -39,11 +39,8 @@
 
 enum BackEvent_t {
     BACK_EVENT_NONE = 0,
-    BACK_EVENT_1,
-    BACK_EVENT_2,
-    BACK_EVENT_3,
+    BACK_EVENT_NEXT,
     BACK_EVENT_STOP = 4,
-    BACK_EVENT_5,
     BACK_EVENT_REFRESH,
 };
 

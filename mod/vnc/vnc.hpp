@@ -617,14 +617,16 @@ struct mod_vnc : public client_mod {
                 }
             }
             catch(const Error & e) {
-                LOG(LOG_INFO, "VNC Stopped id=%u", e.id);
-                rv = BACK_EVENT_1;
+                LOG(LOG_INFO, "VNC Stopped [reason id=%u]", e.id);
+                rv = BACK_EVENT_NEXT;
             }
             catch(...) {
-                LOG(LOG_INFO, "exception raised");
-                rv = BACK_EVENT_1;
+                LOG(LOG_INFO, "unexpected exception raised in VNC");
+                rv = BACK_EVENT_NEXT;
             }
-            this->event.set(1000);
+            if (rv != BACK_EVENT_NEXT){
+                this->event.set(1000);
+            }
         }
         else {
             this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));

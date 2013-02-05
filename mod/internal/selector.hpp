@@ -3579,25 +3579,23 @@ struct selector_mod : public internal_mod {
         break;
         case FOCUS_ON_CONNECT:
         {
-//            LOG(LOG_INFO, "Connect");
             char buffer[1024];
             sprintf(buffer, "%s:%s",
                 this->grid[this->focus_line].target,
                 this->context.get(STRAUTHID_AUTH_USER));
             this->context.parse_username(buffer);
-            this->signal = BACK_EVENT_2;
+            this->signal = BACK_EVENT_NEXT;
             this->event.set();
         }
         break;
         case FOCUS_ON_LOGOUT:
         {
-//            LOG(LOG_INFO, "Logout");
             this->context.ask(STRAUTHID_AUTH_USER);
             this->context.ask(STRAUTHID_PASSWORD);
             this->context.ask(STRAUTHID_TARGET_USER);
             this->context.ask(STRAUTHID_TARGET_DEVICE);
             this->context.ask(STRAUTHID_SELECTOR);
-            this->signal = BACK_EVENT_2;
+            this->signal = BACK_EVENT_NEXT;
             this->event.set();
         }
         break;
@@ -3605,7 +3603,6 @@ struct selector_mod : public internal_mod {
         case FOCUS_ON_FILTER_DEVICE:
         case FOCUS_ON_APPLY:
         {
-//            LOG(LOG_INFO, "Apply");
             this->ask_page();
         }
         break;
@@ -3782,14 +3779,14 @@ struct selector_mod : public internal_mod {
     }
 
     // event from back end (draw event from remote or internal server)
-    // returns module continuation status, 0 if module want to continue
-    // non 0 if it wants to stop (to run another module)
+    // returns module continuation status, BACK_EVENT_NONE if module want to continue
+    // BACK_EVENT_NEXT if it wants to run another module
+    // BACK_EVENT_STOP if it wants to stop proxy
+    // BACK_EVENT_REFRESH if it wants to refresh context exchanging data with authentifier
     virtual BackEvent_t draw_event()
     {
-//        LOG(LOG_INFO, "selector::draw_event");
         this->draw(this->get_screen_rect());
         this->event.reset();
-//        LOG(LOG_INFO, "draw_event : signal = %u", this->signal);
         return this->signal;
     }
 

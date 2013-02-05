@@ -247,7 +247,6 @@ struct window_login : public window
         for (;;) {
         TODO(" we should not rely on labels and window ordering for such things but on widget (Widget) identifiers")
             struct Widget* label = this->Widget_get_child_by_id(i);
-            LOG(LOG_INFO, "label %i\n", i);
             if (label == 0) {
                 break;
             }
@@ -263,7 +262,7 @@ struct window_login : public window
             }
             i += 2;
         }
-        this->mod->signal = BACK_EVENT_2;
+        this->mod->signal = BACK_EVENT_NEXT;
         this->mod->event.set();
         return 0;
 

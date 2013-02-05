@@ -1700,9 +1700,8 @@ struct mod_rdp : public client_mod {
             }
             catch(Error e){
                 LOG(LOG_INFO, "Connection to server Already closed", e.id);
-                return (e.id == ERR_SOCKET_CLOSED)?BACK_EVENT_2:BACK_EVENT_1;
             };
-            return BACK_EVENT_1;
+            return BACK_EVENT_NEXT;
         }
         return BACK_EVENT_NONE;
     }
