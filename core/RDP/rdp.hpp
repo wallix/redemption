@@ -155,6 +155,7 @@ struct ShareControl
     //==============================================================================
     {
         stream.set_out_uint16_le(stream.get_offset() - this->offlen, this->offlen);
+        stream.mark_end();
 
     } // END METHOD emit_end
 
@@ -429,6 +430,7 @@ struct ShareData
     //==============================================================================
     {
         stream.set_out_uint16_le(stream.get_offset() - (this->offlen + 8), this->offlen + 6);
+        stream.mark_end();
 
     } // END METHOD emit_end
 

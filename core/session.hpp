@@ -247,7 +247,6 @@ struct Session {
                     case SESSION_STATE_ENTRY:
                     {
                         if (this->front->up_and_running){
-                            LOG(LOG_INFO, "session::session_setup_mod(%u) A", MCTX_STATUS_CLI);
                             this->session_setup_mod(MCTX_STATUS_CLI, this->context);
                             this->mod->event.set();
                             this->internal_state = SESSION_STATE_RUNNING;
@@ -318,7 +317,6 @@ struct Session {
                         || !this->sesman->keep_alive_or_inactivity(rfds, this->keep_alive_time, timestamp, &this->front_trans)){
                             this->internal_state = SESSION_STATE_STOP;
                             this->context->nextmod = ModContext::INTERNAL_CLOSE;
-                            LOG(LOG_INFO, "session::session_setup_mod(%u) B", MCTX_STATUS_INTERNAL);
                             this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context);
                             this->keep_alive_time = 0;
                             TODO(" move that to sesman ? (to hide implementation details)")
@@ -364,7 +362,6 @@ struct Session {
                                     this->internal_state = SESSION_STATE_STOP;
                                     delete this->mod;
                                     this->mod = this->no_mod;
-                                    LOG(LOG_INFO, "session::session_setup_mod(%u) C", next_state);
                                     this->session_setup_mod(next_state, this->context);
                                     this->internal_state = SESSION_STATE_RUNNING;
                                 }
@@ -401,7 +398,6 @@ struct Session {
                                 if (next_state != MCTX_STATUS_WAITING){
                                     this->internal_state = SESSION_STATE_STOP;
                                     try {
-                                        LOG(LOG_INFO, "session::session_setup_mod(%u) D", next_state);
                                         this->session_setup_mod(next_state, this->context);
                                         if (record_video) {
                                             this->front->start_capture(
@@ -423,7 +419,6 @@ struct Session {
                                         LOG(LOG_INFO, "Session::connect failed Error=%u", e.id);
                                         this->internal_state = SESSION_STATE_CLOSE_CONNECTION;
                                         this->context->nextmod = ModContext::INTERNAL_CLOSE;
-                                        LOG(LOG_INFO, "session::session_setup_mod(%u) E", next_state);
                                         this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context);
                                         this->keep_alive_time = 0;
                                         TODO(" move that to sesman (to hide implementation details)")

@@ -426,7 +426,7 @@ struct mod_vnc : public client_mod {
         }
 
         TODO(" define some constants  not need to use dynamic data")
-        /* set almost null cursor, this is the little dot cursor */
+//        /* set almost null cursor, this is the little dot cursor */
         uint8_t rdp_cursor_data[32 * (32 * 3)];
         uint8_t rdp_cursor_mask[32 * (32 / 8)];
         memset(rdp_cursor_data, 0, 32 * (32 * 3));

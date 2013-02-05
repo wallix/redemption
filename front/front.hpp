@@ -2928,11 +2928,11 @@ TODO("Pass font name as parameter in constructor")
         }
 
         BStream stream(65536);
-        stream.mark_end();
 
         ShareControl sctrl(stream);
         sctrl.emit_begin(PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
         sctrl.emit_end();
+        stream.mark_end();
 
         BStream x224_header(256);
         BStream mcs_header(256);
