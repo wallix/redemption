@@ -247,6 +247,7 @@ struct Session {
                     case SESSION_STATE_ENTRY:
                     {
                         if (this->front->up_and_running){
+                            LOG(LOG_INFO, "session::session_setup_mod(%u) A", MCTX_STATUS_CLI);
                             this->session_setup_mod(MCTX_STATUS_CLI, this->context);
                             this->mod->event.set();
                             this->internal_state = SESSION_STATE_RUNNING;
@@ -317,6 +318,7 @@ struct Session {
                         || !this->sesman->keep_alive_or_inactivity(rfds, this->keep_alive_time, timestamp, &this->front_trans)){
                             this->internal_state = SESSION_STATE_STOP;
                             this->context->nextmod = ModContext::INTERNAL_CLOSE;
+                            LOG(LOG_INFO, "session::session_setup_mod(%u) B", MCTX_STATUS_INTERNAL);
                             this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context);
                             this->keep_alive_time = 0;
                             TODO(" move that to sesman ? (to hide implementation details)")
@@ -362,6 +364,7 @@ struct Session {
                                     this->internal_state = SESSION_STATE_STOP;
                                     delete this->mod;
                                     this->mod = this->no_mod;
+                                    LOG(LOG_INFO, "session::session_setup_mod(%u) C", next_state);
                                     this->session_setup_mod(next_state, this->context);
                                     this->internal_state = SESSION_STATE_RUNNING;
                                 }
@@ -394,9 +397,11 @@ struct Session {
                                                                     this->ini->globals.authip,
                                                                     this->ini->globals.authport,
                                                                     record_video, keep_alive);
+                                LOG(LOG_INFO, "session::next_state %u", next_state);
                                 if (next_state != MCTX_STATUS_WAITING){
                                     this->internal_state = SESSION_STATE_STOP;
                                     try {
+                                        LOG(LOG_INFO, "session::session_setup_mod(%u) D", next_state);
                                         this->session_setup_mod(next_state, this->context);
                                         if (record_video) {
                                             this->front->start_capture(
@@ -415,23 +420,18 @@ struct Session {
                                         this->internal_state = SESSION_STATE_RUNNING;
                                     }
                                     catch (const Error & e) {
-                                         LOG(LOG_INFO, "Session::connect failed Error=%u", e.id);
-                                         if (e.id == ERR_SOCKET_CONNECT_FAILED) {
-                                            this->internal_state = SESSION_STATE_CLOSE_CONNECTION;
-                                            this->context->nextmod = ModContext::INTERNAL_CLOSE;
-                                            this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context);
-                                            this->keep_alive_time = 0;
-                                            TODO(" move that to sesman (to hide implementation details)")
+                                        LOG(LOG_INFO, "Session::connect failed Error=%u", e.id);
+                                        this->internal_state = SESSION_STATE_CLOSE_CONNECTION;
+                                        this->context->nextmod = ModContext::INTERNAL_CLOSE;
+                                        LOG(LOG_INFO, "session::session_setup_mod(%u) E", next_state);
+                                        this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context);
+                                        this->keep_alive_time = 0;
+                                        TODO(" move that to sesman (to hide implementation details)")
+                                        delete this->sesman->auth_event;
+                                        this->sesman->auth_event = 0;
 
-                                            delete this->sesman->auth_event;
-                                            this->sesman->auth_event = 0;
-
-                                            this->internal_state = SESSION_STATE_RUNNING;
-                                            this->front->stop_capture();
-                                        }
-                                        else {
-                                            throw;
-                                        }
+                                        this->internal_state = SESSION_STATE_RUNNING;
+                                        this->front->stop_capture();
                                     }
                                 }
                                 else {
@@ -716,8 +716,7 @@ struct Session {
                     delete this->mod;
                     this->mod = this->no_mod;
                 }
-                // hostname is the name of the RDP host ("windows" hostname)
-                // it is **not** used to get an ip address.
+                REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.")
                 char hostname[255];
                 hostname[0] = 0;
                 if (this->front->client_info.hostname[0]){
@@ -802,7 +801,7 @@ struct Session {
                     this->ini->globals.debug.mod_vnc);
                 this->mod->event.obj = t->sck;
                 this->mod->draw_event();
-//                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
+
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'VNC' suceeded\n");
                 }
