@@ -1093,6 +1093,13 @@ struct KeymapSym {
         // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
         this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
 
+        // if ctrl+alt+fin or ctrl+alt+suppr -> insert delete
+        if (is_ctrl_pressed() && is_alt_pressed() 
+        && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){
+        //    Delete                           65535     0xffff
+            extendedKeyCode = 211;
+        }
+
         switch (extendedKeyCode){
         //----------------
         // Lock keys
@@ -1162,11 +1169,12 @@ struct KeymapSym {
                 const KeyLayout_t * layout = &keylayout_WORK_noshift_sym;
 
                 // if ctrl+alt+fin or ctrl+alt+suppr -> insert delete
-                if (is_ctrl_pressed() && is_alt_pressed() 
-                && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){
+//                if (is_ctrl_pressed() && is_alt_pressed() 
+//                && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){
                     //    Delete                           65535     0xffff
-                    this->push_sym(0xFFFF);
-                }
+//                    this->push_sym(0xFFFF);
+//                    return;
+//                }
 
                 if ( ( (extendedKeyCode >= 0x47) && (extendedKeyCode <= 0x49) )
                   || ( (extendedKeyCode >= 0x4b) && (extendedKeyCode <= 0x4d) )

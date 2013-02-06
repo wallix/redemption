@@ -235,6 +235,13 @@ struct Keymap2
         uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
         // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
         this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
+        
+        if (is_ctrl_pressed() && is_alt_pressed() 
+        && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){
+            //    Delete                           65535     0xffff
+            extendedKeyCode = 211; // SUPPR
+        }
+
         switch (extendedKeyCode){
         //----------------
         // Lock keys
