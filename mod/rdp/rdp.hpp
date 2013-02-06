@@ -64,6 +64,7 @@
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
+#include "../acl/authentifier.hpp"
 
 #include "genrandom.hpp"
 
@@ -379,6 +380,11 @@ struct mod_rdp : public client_mod {
     Random * gen;
     uint32_t verbose;
 
+    SessionManager *sesman;
+    int wablauncher_flags;
+    int wablauncher_chanid;
+    int wablauncher_state; // 0 means unused, 1 means session running
+
     RdpNego nego;
 
     char clientAddr[512];
@@ -396,6 +402,7 @@ struct mod_rdp : public client_mod {
             const ClientInfo & info,
             Random * gen,
             int key_flags,
+            SessionManager * sesman = NULL,
             uint32_t verbose = 0,
             bool enable_new_pointer = false)
             :
@@ -418,6 +425,10 @@ struct mod_rdp : public client_mod {
                     front_bpp(info.bpp),
                     gen(gen),
                     verbose(verbose),
+                    sesman(sesman),
+                    wablauncher_flags(0),
+                    wablauncher_chanid(0),
+                    wablauncher_state(0), // 0 means unused
                     nego(tls, trans, target_user),
                     enable_new_pointer(enable_new_pointer)
     {
@@ -547,9 +558,36 @@ struct mod_rdp : public client_mod {
         if (mod_channel){
             this->send_to_channel(*mod_channel, data, length, chunk_size, flags);
         }
+
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::send_to_mod_channel done");
         }
+    }
+
+    // Method used by session to transmit sesman answer for wablnch channel
+    virtual void send_wablauncher_data(char * data) {
+        BStream stream(65536);
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        if (strncmp("Error:", data, 6)) {
+            this->wablauncher_state = 1; // session started
+        }
+        stream.out_uint32_le(strlen(data));
+        stream.out_uint32_le(this->wablauncher_flags);
+        stream.out_copy_bytes(data, strlen(data));
+        stream.mark_end();
+
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, 0);
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, 
+            this->wablauncher_chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+        this->nego.trans->send(x224_header.data, x224_header.size());
+        this->nego.trans->send(mcs_header.data, mcs_header.size());
+        this->nego.trans->send(sec_header.data, sec_header.size());
+        this->nego.trans->send(stream.data, stream.size());
     }
 
     void send_to_channel(
@@ -707,6 +745,17 @@ struct mod_rdp : public client_mod {
                             def.flags = channel_item.flags;
                             this->mod_channel_list.push_back(def);
                         }
+                        // Inject a new channel for wablnch virtual channel
+                        if (this->sesman){
+                            memcpy(cs_net.channelDefArray[num_channels].name, "wablnch", 8);
+                            cs_net.channelDefArray[num_channels].options = cs_net.channelDefArray[num_channels-1].options;
+                            cs_net.channelCount++;
+                            ChannelDef def;
+                            memcpy(def.name, "wablnch", 8);
+                            def.flags = cs_net.channelDefArray[num_channels].options;
+                            this->mod_channel_list.push_back(def);
+                        }
+                        
                         cs_net.log("Sending to server");
                         cs_net.emit(stream);
                     }
@@ -1478,6 +1527,34 @@ struct mod_rdp : public client_mod {
                 uint32_t length = sec.payload.in_uint32_le();
                 int flags = sec.payload.in_uint32_le();
                 size_t chunk_size = sec.payload.end - sec.payload.p;
+
+                // If channel name is our virtual channel, then don't send data to front
+                if (this->sesman && !strcmp(mod_channel.name, "wablnch")){
+                    const char * wablauncher_message = (const char *)sec.payload.p;
+                    if (this->wablauncher_state == 0) {
+                        this->wablauncher_flags = flags;
+                        this->wablauncher_chanid = mod_channel.chanid;
+                        if (strncmp("target:", wablauncher_message, 7)){
+                            LOG(LOG_ERR, "Invalid request (%s)", wablauncher_message);
+                            this->send_wablauncher_data("Error: Invalid request");
+                        } else {
+                            // Ask sesman for requested target
+                            this->sesman->ask_wablauncher_target(wablauncher_message + 7);
+                        }
+                    }
+                    else if (this->wablauncher_state == 1){
+                        if (strncmp("result:", wablauncher_message, 7)){
+                            LOG(LOG_ERR, "Invalid result (%s)", wablauncher_message);
+                            wablauncher_message = "result:Session interrupted";
+                        }
+                        this->wablauncher_state = 0;
+                        this->sesman->set_wablauncher_result(wablauncher_message + 7);
+                    }
+                }
+                else {
+                    this->send_to_front_channel(mod_channel.name, sec.payload.p, length, chunk_size, flags);
+                }
+
 
                 this->send_to_front_channel(mod_channel.name, sec.payload.p, length, chunk_size, flags);
 
