@@ -33,7 +33,6 @@
 
 #include "transport.hpp"
 #include "error.hpp"
-#include "log.hpp"
 
 BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
 {
