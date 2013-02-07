@@ -755,7 +755,7 @@ namespace LIC
     //    00000150:  44 45 4e 54 00                                   DENT.
 
     //    0x00: LICENSE_PREAMBLE (4 bytes)
-    //    13 -> LICENSE_PREAMBE::bMsgType = NEW_LICENSE_REQUEST
+    //    13 -> LICENSE_PREAMBLE::bMsgType = NEW_LICENSE_REQUEST
     //     
     //    83 -> LICENSE_PREAMBLE::bVersion = 0x80
     //               (ExtendedError supported) | 0x3 (RDP 5.0,5.2,6.0)

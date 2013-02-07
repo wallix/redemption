@@ -445,17 +445,17 @@ struct mod_rdp : public client_mod {
         this->lic_layer_license_size = 0;
         memset(this->lic_layer_license_key, 0, 16);
         memset(this->lic_layer_license_sign_key, 0, 16);
-        TODO(" licence loading should be done before creating protocol layers")
+        TODO(" license loading should be done before creating protocol layers")
         struct stat st;
         char path[256];
-        sprintf(path, LICENSE_PATH "/licence.%s", hostname);
+        sprintf(path, LICENSE_PATH "/license.%s", hostname);
         int fd = open(path, O_RDONLY);
         if (fd != -1 && fstat(fd, &st) != 0){
             this->lic_layer_license_data = (uint8_t *)malloc(this->lic_layer_license_size);
             if (this->lic_layer_license_data){
                 size_t lic_size = read(fd, this->lic_layer_license_data, this->lic_layer_license_size);
                 if (lic_size != this->lic_layer_license_size){
-                    LOG(LOG_ERR, "licence file truncated : expected %u, got %u", this->lic_layer_license_size, lic_size);
+                    LOG(LOG_ERR, "license file truncated : expected %u, got %u", this->lic_layer_license_size, lic_size);
                 }
             }
             close(fd);
@@ -1153,7 +1153,7 @@ struct mod_rdp : public client_mod {
         // that take place during the Licensing Phase, see [MS-RDPELE].
 
         // Client                                                     Server
-        //    | <------ Licence Error PDU Valid Client ---------------- |
+        //    | <------ License Error PDU Valid Client ---------------- |
 
         // 2.2.1.12 Server License Error PDU - Valid Client
         // ================================================
@@ -1237,7 +1237,7 @@ struct mod_rdp : public client_mod {
                             uint8_t null_data[SEC_MODULUS_SIZE];
 
                             /* We currently use null client keys. This is a bit naughty but, hey,
-                               the security of licence negotiation isn't exactly paramount. */
+                               the security of license negotiation isn't exactly paramount. */
                             memset(null_data, 0, sizeof(null_data));
                             uint8_t* client_random = null_data;
                             uint8_t* pre_master_secret = null_data;
@@ -1395,11 +1395,10 @@ struct mod_rdp : public client_mod {
 
                         LIC::NewLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
-                        TODO("Save licence to keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that")
+                        TODO("Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that")
                         this->state = MOD_RDP_CONNECTED;
 
-                        LOG(LOG_INFO, "New licence saving failed");
-                        throw Error(ERR_SEC);
+                        LOG(LOG_WARNING, "New license saving failed");
                     }
                     break;
                     case LIC::UPGRADE_LICENSE:
@@ -1409,14 +1408,13 @@ struct mod_rdp : public client_mod {
                         }
                         LIC::UpgradeLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
-                        LOG(LOG_INFO, "Upgraded licence saving failed");
-                        throw Error(ERR_SEC);
+                        LOG(LOG_WARNING, "Upgraded license saving failed");
                     }
                     break;
                     case LIC::ERROR_ALERT:
                     {
                         if (this->verbose){
-                            LOG(LOG_INFO, "Rdp::Get licence status");
+                            LOG(LOG_INFO, "Rdp::Get license status");
                         }
                         LIC::ErrorAlert_Recv lic(sec.payload);
                         this->state = MOD_RDP_CONNECTED;
@@ -1436,7 +1434,7 @@ struct mod_rdp : public client_mod {
                 }
             }
             else {
-                LOG(LOG_ERR, "Failed to get expected licence negotiation PDU");
+                LOG(LOG_ERR, "Failed to get expected license negotiation PDU");
                 hexdump(x224.payload.data, x224.payload.size());
 //                throw Error(ERR_SEC);
                 this->state = MOD_RDP_CONNECTED;
