@@ -95,7 +95,7 @@ struct Keymap2
     
     TODO("we should be able to unify unicode support and events. Idea would be to attribute codes 0xFFFFxxxx on 32 bits for events."
          " These are outside unicode range. It would enable to use only one keycode stack instead of two and it's more similar"
-         " to the way X11 manage inputs (hence easier to unify with keymapSym)".)
+         " to the way X11 manage inputs (hence easier to unify with keymapSym)")
 
     // keyboard info
     int keys_down[256];  // key states 0 up 1 down (0..127 plain keys, 128..255 extended keys)
