@@ -124,7 +124,7 @@ struct client_mod : public Callback {
     }
 
     // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
-    virtual void send_wablauncher_data(char * data) {};
+    virtual void send_auth_channel_data(char * data) {};
     virtual void rdp_input_invalidate(const Rect & r) = 0;
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
     virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) = 0;

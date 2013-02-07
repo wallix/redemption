@@ -40,9 +40,9 @@ typedef enum{
     AUTHID_TARGET_DEVICE,   // target_device
     AUTHID_TARGET_PORT,     // target_port
     AUTHID_TARGET_PROTOCOL, // proto_dest
-    AUTHID_WABLAUNCHER_TARGET, // WabLauncher target request
-    AUTHID_WABLAUNCHER_RESULT, // WabLauncher session result
-    AUTHID_WABLAUNCHER_ANSWER, // WabLauncher target answer
+    AUTHID_AUTHCHANNEL_TARGET, // WabLauncher target request
+    AUTHID_AUTHCHANNEL_RESULT, // WabLauncher session result
+    AUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
     AUTHID_END_TIME,        // end time as text
     AUTHID_SELECTOR_GROUP_FILTER, // group filter text
     AUTHID_SELECTOR_DEVICE_FILTER, // device filter text
@@ -99,10 +99,10 @@ typedef enum{
 #define STRAUTHID_TARGET_DEVICE    "target_device"
 #define STRAUTHID_TARGET_PORT      "target_port"
 #define STRAUTHID_TARGET_PROTOCOL  "proto_dest"
-#define STRAUTHID_WABLAUNCHER_TARGET "wablauncher_target"
-#define STRAUTHID_WABLAUNCHER_RESULT "wablauncher_result"
-TODO("This is not a translation but wablauncher answer, change key name in sesman")
-#define STRAUTHID_WABLAUNCHER_ANSWER "trans_wablauncher"
+#define STRAUTHID_AUTHCHANNEL_TARGET "auth_channel_target"
+#define STRAUTHID_AUTHCHANNEL_RESULT "auth_channel_result"
+TODO("This is not a translation but auth_channel answer, change key name in sesman")
+#define STRAUTHID_AUTHCHANNEL_ANSWER "trans_auth_channel"
 #define STRAUTHID_END_TIME         "end_time"
 #define STRAUTHID_SELECTOR_GROUP_FILTER "selector_group_filter"
 #define STRAUTHID_SELECTOR_DEVICE_FILTER "selector_device_filter"
@@ -185,9 +185,9 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     {STRAUTHID_TARGET_DEVICE, TYPE_TEXT, "!"},
     {STRAUTHID_TARGET_PORT, TYPE_INTEGER, "!3389"},
     {STRAUTHID_TARGET_PROTOCOL, TYPE_TEXT, "!RDP"},
-    {STRAUTHID_WABLAUNCHER_TARGET, TYPE_TEXT, "!"},
-    {STRAUTHID_WABLAUNCHER_RESULT, TYPE_TEXT, "!"},
-    {STRAUTHID_WABLAUNCHER_ANSWER, TYPE_TEXT, "!"},
+    {STRAUTHID_AUTHCHANNEL_TARGET, TYPE_TEXT, "!"},
+    {STRAUTHID_AUTHCHANNEL_RESULT, TYPE_TEXT, "!"},
+    {STRAUTHID_AUTHCHANNEL_ANSWER, TYPE_TEXT, "!"},
    
     {STRAUTHID_END_TIME, TYPE_TEXT, "!-"},
     {STRAUTHID_SELECTOR_GROUP_FILTER, TYPE_TEXT, "!"},
@@ -247,9 +247,9 @@ static inline authid_t authid_from_string(const char * kw)
     STRAUTHID_TARGET_DEVICE,
     STRAUTHID_TARGET_PORT,
     STRAUTHID_TARGET_PROTOCOL,
-    STRAUTHID_WABLAUNCHER_TARGET,
-    STRAUTHID_WABLAUNCHER_RESULT,
-    STRAUTHID_WABLAUNCHER_ANSWER, // WabLauncher target answer
+    STRAUTHID_AUTHCHANNEL_TARGET,
+    STRAUTHID_AUTHCHANNEL_RESULT,
+    STRAUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
     STRAUTHID_END_TIME,
     STRAUTHID_SELECTOR_GROUP_FILTER,
     STRAUTHID_SELECTOR_DEVICE_FILTER,

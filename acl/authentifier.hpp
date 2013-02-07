@@ -111,23 +111,23 @@ class SessionManager {
         }
     }
 
-    // Set WABLAUNCHER_TARGET dict value and transmit request to sesman (then wabenginge)
-    void ask_wablauncher_target(const char * target)
+    // Set AUTHCHANNEL_TARGET dict value and transmit request to sesman (then wabenginge)
+    void ask_auth_channel_target(const char * target)
     {
         if (!this->auth_trans_t) {
-            LOG(LOG_ERR, "Asking wablauncher_target without auth_trans_t!");
+            LOG(LOG_ERR, "Asking auth_channel_target without auth_trans_t!");
             return;
         }
         if (this->verbose) {
-            LOG(LOG_INFO, "SessionManager::ask_wablauncher_target(%s)", target);
+            LOG(LOG_INFO, "SessionManager::ask_auth_channel_target(%s)", target);
         }
 
         BStream stream(8192);
 
-        this->context.cpy(STRAUTHID_WABLAUNCHER_TARGET, target);
+        this->context.cpy(STRAUTHID_AUTHCHANNEL_TARGET, target);
 
         stream.out_uint32_be(0); // skip length
-        this->out_item(stream, STRAUTHID_WABLAUNCHER_TARGET);
+        this->out_item(stream, STRAUTHID_AUTHCHANNEL_TARGET);
 
         int total_length = stream.get_offset();
         stream.p = stream.data;
@@ -135,21 +135,21 @@ class SessionManager {
         this->auth_trans_t->send(stream.data, total_length);
     }
 
-    // Set WABLAUNCHER_RESULT dict value and transmit request to sesman (then wabenginge)
-    void set_wablauncher_result(const char * result)
+    // Set AUTHCHANNEL_RESULT dict value and transmit request to sesman (then wabenginge)
+    void set_auth_channel_result(const char * result)
     {
         if (!this->auth_trans_t) {
-            LOG(LOG_ERR, "Setting wablauncher_result without auth_trans_t!");
+            LOG(LOG_ERR, "Setting auth_channel_result without auth_trans_t!");
             return;
         }
         if (this->verbose) {
-            LOG(LOG_INFO, "SessionManager::set_wablauncher_result(%s)", result);
+            LOG(LOG_INFO, "SessionManager::set_auth_channel_result(%s)", result);
         }
         BStream stream(8192);
 
-        this->context.cpy(STRAUTHID_WABLAUNCHER_RESULT, result);
+        this->context.cpy(STRAUTHID_AUTHCHANNEL_RESULT, result);
         stream.out_uint32_be(0);  // skip length
-        this->out_item(stream, STRAUTHID_WABLAUNCHER_RESULT);
+        this->out_item(stream, STRAUTHID_AUTHCHANNEL_RESULT);
         int total_length = stream.get_offset();
         stream.set_out_uint32_be(total_length, 0);
 

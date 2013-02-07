@@ -331,15 +331,15 @@ struct Session {
                         }
 
                         TODO("This does not read data, hence we will end-up waiting for data until the next keep_alive event occurs")
-                        // Check if sesman is read ready for a possible answer to wablauncher_target (asked previously)
-                        if (this->sesman->event(rfds)) {
-                            // Get sesman answer to WABLAUNCHER_TARGET
-                            char *item = this->context->get(STRAUTHID_WABLAUNCHER_ANSWER);
+                        // Check if sesman is read ready for a possible answer to auth_channel_target (asked previously)
+                        if (this->ini->globals.auth_channel[0] && this->sesman->event(rfds)) {
+                            // Get sesman answer to AUTHCHANNEL_TARGET
+                            char *item = this->context->get(STRAUTHID_AUTHCHANNEL_ANSWER);
                             if (item[0] != 0) {
-                                // If set, transmit to wablauncher channel
-                                this->mod->send_wablauncher_data(item);
+                                // If set, transmit to auth_channel channel
+                                this->mod->send_auth_channel_data(item);
                                 // Erase the context variable
-                                this->context->cpy(STRAUTHID_WABLAUNCHER_ANSWER, "!");
+                                this->context->cpy(STRAUTHID_AUTHCHANNEL_ANSWER, "!");
                             }
                         }
                         // data incoming from server module
@@ -763,7 +763,8 @@ struct Session {
                                     info,
                                     &this->gen,
                                     this->front->keymap.key_flags,
-                                    this->sesman, // we give mod_rdp a direct access to sesman for wablauncher channel
+                                    this->sesman, // we give mod_rdp a direct access to sesman for auth_channel channel
+                                    this->ini->globals.auth_channel,
                                     this->ini->globals.debug.mod_rdp,
                                     true
                                     );

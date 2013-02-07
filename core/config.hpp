@@ -111,6 +111,7 @@ struct Inifile {
         char host[512];
         char target_device[512];
         char target_user[512];
+        char auth_channel[512];
         
         bool bitmap_cache;       // default true
         bool bitmap_compression; // default true
@@ -290,6 +291,7 @@ struct Inifile {
             this->globals.debug.widget            = 0;
             this->globals.debug.input             = 0;
 
+            memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
             strcpy(this->account.accountname, "");
             strcpy(this->account.username, "");
             strcpy(this->account.password, "");
@@ -417,6 +419,10 @@ struct Inifile {
             }
             else if (0 == strcmp(key, "dynamic_conf_path")){
                 strcpy(this->globals.dynamic_conf_path, value);
+            }
+            else if (0 == strcmp(key, "auth_channel")){
+                strncpy(this->globals.auth_channel, value, 8);
+                this->globals.auth_channel[7] = 0;
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
