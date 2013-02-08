@@ -1402,7 +1402,7 @@ struct mod_rdp : public client_mod {
                         TODO("Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that")
                         this->state = MOD_RDP_CONNECTED;
 
-                        LOG(LOG_WARNING, "New license saving failed");
+                        LOG(LOG_WARNING, "New license not saved");
                     }
                     break;
                     case LIC::UPGRADE_LICENSE:
@@ -1412,7 +1412,7 @@ struct mod_rdp : public client_mod {
                         }
                         LIC::UpgradeLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
-                        LOG(LOG_WARNING, "Upgraded license saving failed");
+                        LOG(LOG_WARNING, "Upgraded license not saved");
                     }
                     break;
                     case LIC::ERROR_ALERT:
@@ -1420,6 +1420,7 @@ struct mod_rdp : public client_mod {
                         if (this->verbose){
                             LOG(LOG_INFO, "Rdp::Get license status");
                         }
+                        TODO("We should check what is actually returned by this message, as it may be an error")
                         LIC::ErrorAlert_Recv lic(sec.payload);
                         this->state = MOD_RDP_CONNECTED;
                     }
@@ -1570,6 +1571,12 @@ struct mod_rdp : public client_mod {
                     ShareControl sctrl(sec.payload);
                     sctrl.recv_begin();
                     next_packet += sctrl.len;
+
+                    if (this->verbose){
+                        LOG(LOG_WARNING, "LOOPING on PDUs: %u", (unsigned)sctrl.len);
+                    }
+
+
                     switch (sctrl.pdu_type1) {
                     case PDUTYPE_DATAPDU:
                         if (this->verbose){

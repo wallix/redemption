@@ -1607,120 +1607,74 @@ TODO("Pass font name as parameter in constructor")
             //    | <------ Licence Error PDU Valid Client ---------------- |
 
             if (sec.flags & SEC::SEC_LICENSE_PKT) {
-                uint8_t tag = sec.payload.in_uint8();
-                uint8_t version = sec.payload.in_uint8();
-                uint16_t length = sec.payload.in_uint16_le();
-                if (this->verbose){
-                    LOG(LOG_INFO, "Front::WAITING_FOR_ANSWER_TO_LICENCE sec_flags=%x %u %u %u", sec.flags, tag, version, length);
-                }
-
-                switch (tag) {
-                case LIC::LICENSE_REQUEST:
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Front::LICENSE_REQUEST");
-                        LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
-                    }
-                    {
-                        BStream stream(65535);
-
-                        /* some compilers need unsigned char to avoid warnings */
-                        static uint8_t lic2[20] = { 0x80, 0x00, 0x10, 0x00, 0xff, 0x02, 0x10, 0x00,
-                                                 0x07, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
-                                                 0x28, 0x14, 0x00, 0x00
-                                               };
-
-                        stream.out_copy_bytes((char*)lic2, 20);
-                        stream.mark_end();
-
-                        BStream x224_header(256);
-                        BStream mcs_header(256);
-                        BStream sec_header(256);
-
-                        if (this->verbose > 128){
-                            LOG(LOG_INFO, "Sec clear payload to send:");
-                            hexdump_d(stream.data, stream.size());
-                        }
-
-                        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
-                        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-                        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-
-                        trans->send(x224_header.data, x224_header.size());
-                        trans->send(mcs_header.data, mcs_header.size());
-                        trans->send(sec_header.data, sec_header.size());
-                        trans->send(stream.data, stream.size());
-                    }
-                    break;
-                case LIC::LICENSE_INFO:
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Front::LICENSE_INFO");
-                    }
-                    break;
-                case LIC::PLATFORM_CHALLENGE:
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE");
-                    }
-                    break;
-                case LIC::NEW_LICENSE:
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Front::NEW_LICENSE");
-                    }
-                    break;
-                case LIC::UPGRADE_LICENSE:
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Front::UPGRADE_LICENSE");
-                    }
-                    break;
+                LIC::RecvFactory flic(sec.payload);
+                switch (flic.tag) {
                 case LIC::ERROR_ALERT:
+                {
                     if (this->verbose){
                         LOG(LOG_INFO, "Front::ERROR_ALERT");
                     }
-                    break;
+                    TODO("We should check what is actually returned by this message, as it may be an error")
+                    LIC::ErrorAlert_Recv lic(sec.payload);
+                }
+                break;
                 case LIC::NEW_LICENSE_REQUEST:
+                {
                     if (this->verbose){
                         LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");
-                        LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
                     }
-                    {
-                        BStream stream(65535);
+                    LIC::NewLicenseRequest_Recv lic(sec.payload);
+                    TODO("Instead of returning a license we return a message saying that no license is OK")
+                    BStream stream(65535);
+                    // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
 
-                        /* some compilers need unsigned char to avoid warnings */
-                        static uint8_t lic2[16] = { 0xff, 0x02, 0x10, 0x00,
-                                                 0x07, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
-                                                 0x28, 0x14, 0x00, 0x00
-                                               };
+                    /* some compilers need unsigned char to avoid warnings */
+                    static uint8_t lic2[16] = { 
+                        0xff,       // bMsgType : ERROR_ALERT
+                        0x02,       // NOT EXTENDED_ERROR_MSG_SUPPORTED, PREAMBLE_VERSION_2_0
+                        0x10, 0x00, // wMsgSize: 16 bytes including preamble
+                        0x07, 0x00, 0x00, 0x00, // dwErrorCode : STATUS_VALID_CLIENT
+                        0x02, 0x00, 0x00, 0x00, // dwStateTransition ST_NO_TRANSITION
+                        0x28, 0x14, // wBlobType : ignored because wBlobLen is 0
+                        0x00, 0x00  // wBlobLen  : 0
+                    };
+                    stream.out_copy_bytes((char*)lic2, 16);
+                    stream.mark_end();
 
-                        stream.out_copy_bytes((char*)lic2, 16);
-                        stream.mark_end();
+                    BStream x224_header(256);
+                    BStream mcs_header(256);
+                    BStream sec_header(256);
 
-                        BStream x224_header(256);
-                        BStream mcs_header(256);
-                        BStream sec_header(256);
-
-                        if (this->verbose > 128){
-                            LOG(LOG_INFO, "Sec clear payload to send:");
-                            hexdump_d(stream.data, stream.size());
-                        }
-
-                        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0, 0);
-                        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-                        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-
-                        trans->send(x224_header.data, x224_header.size());
-                        trans->send(mcs_header.data, mcs_header.size());
-                        trans->send(sec_header.data, sec_header.size());
-                        trans->send(stream.data, stream.size());
-
+                    if (this->verbose > 128){
+                        LOG(LOG_INFO, "Sec clear payload to send:");
+                        hexdump_d(stream.data, stream.size());
                     }
-                    break;
+
+                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0, 0);
+                    MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+                    X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+                    trans->send(x224_header.data, x224_header.size());
+                    trans->send(mcs_header.data, mcs_header.size());
+                    trans->send(sec_header.data, sec_header.size());
+                    trans->send(stream.data, stream.size());
+                }
+                break;
                 case LIC::PLATFORM_CHALLENGE_RESPONSE:
+                    TODO("As we never send a platform challenge, it is unlikely we ever receive a PLATFORM_CHALLENGE_RESPONSE")
                     if (this->verbose){
                         LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE_RESPONSE");
                     }
                     break;
+                case LIC::LICENSE_INFO:
+                    TODO("As we never send a server license request, it is unlikely we ever receive a LICENSE_INFO")
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::LICENSE_INFO");
+                    }
+                    break;
                 default:
                     if (this->verbose){
-                        LOG(LOG_INFO, "Front::LICENCE_TAG_UNKNOWN %u", tag);
+                        LOG(LOG_INFO, "Front::LICENCE_TAG %u unknown or unsupported by server", flic.tag);
                     }
                     break;
                 }
@@ -1795,8 +1749,9 @@ TODO("Pass font name as parameter in constructor")
                     LOG(LOG_WARNING, "unknown PDU type received while in licence negociation (%d)\n", sctrl.pdu_type1);
                     break;
                 }
+                TODO("Check why this is necessary when using loop connection ?")
+                sctrl.payload.end = sctrl.payload.p;
                 sctrl.recv_end();
-                sec.payload.p = sctrl.payload.p;
             }
             sec.payload.p = sec.payload.end;
         }
@@ -2168,7 +2123,6 @@ TODO("Pass font name as parameter in constructor")
             LOG(LOG_INFO, "lengthCombinedCapabilities = %u", lengthCombinedCapabilities);
         }
 
-
         uint8_t * start = stream.p;
         uint8_t* theoricCapabilitiesEnd = start + lengthCombinedCapabilities;
         uint8_t* actualCapabilitiesEnd = stream.end;
@@ -2314,6 +2268,9 @@ TODO("Pass font name as parameter in constructor")
                 LOG(LOG_ERR, "read out of bound detected");
             }
             stream.p = next;
+        }
+        if (this->verbose){
+            LOG(LOG_INFO, "process_confirm_active done p=%p end=%p", stream.p, stream.end);
         }
     }
 
