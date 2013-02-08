@@ -220,12 +220,12 @@ unit-test test_primary_order_glyph_index : tests/orders/primary/glyph_index.cpp 
 unit-test test_secondary_order_col_cache : tests/orders/secondary/col_cache.cpp libboost_unit_test  ;
 unit-test test_secondary_order_bmp_cache : tests/orders/secondary/bmp_cache.cpp libboost_unit_test  ;
 
-unit-test test_x224 : tests/test_x224.cpp libboost_unit_test  ;
-unit-test test_mcs : tests/test_mcs.cpp libboost_unit_test  ;
-unit-test test_gcc : tests/test_gcc.cpp openssl crypto z dl libboost_unit_test  ;
-unit-test test_sec : tests/test_sec.cpp openssl crypto libboost_unit_test  ;
-unit-test test_lic : tests/test_lic.cpp openssl crypto libboost_unit_test  ;
-unit-test test_rdp : tests/test_rdp.cpp libboost_unit_test  ;
+unit-test test_x224 : tests/core/test_x224.cpp libboost_unit_test  ;
+unit-test test_mcs : tests/core/test_mcs.cpp libboost_unit_test  ;
+unit-test test_gcc : tests/core/test_gcc.cpp openssl crypto z dl libboost_unit_test  ;
+unit-test test_sec : tests/core/test_sec.cpp openssl crypto libboost_unit_test  ;
+unit-test test_lic : tests/core/test_lic.cpp openssl crypto libboost_unit_test  ;
+unit-test test_rdp : tests/core/test_rdp.cpp libboost_unit_test  ;
 
 unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test  : ;
 unit-test test_dico : tests/test_dico.cpp libboost_unit_test  ;
