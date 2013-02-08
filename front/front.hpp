@@ -1416,18 +1416,15 @@ TODO("Pass font name as parameter in constructor")
                 hexdump_d(sec.payload.data, sec.payload.size());
             }
 
-            SubStream & payload = sec.payload;
-
             if (!sec.flags & SEC::SEC_INFO_PKT) {
                 throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
             }
 
             /* this is the first test that the decrypt is working */
-            TODO("Use sec.payload")
-            this->client_info.process_logon_info(payload, (uint16_t)(payload.end - payload.p));
+            this->client_info.process_logon_info(sec.payload, (uint16_t)(sec.payload.end - sec.payload.p));
 
             TODO("check all data are consumed as expected")
-            if (payload.end != payload.p){
+            if (sec.payload.end != sec.payload.p){
                 LOG(LOG_ERR, "Front::incoming::process_logon all data should have been consumed");
             }
 

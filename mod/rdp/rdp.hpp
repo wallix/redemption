@@ -569,7 +569,7 @@ struct mod_rdp : public client_mod {
     }
 
     // Method used by session to transmit sesman answer for auth_channel
-    virtual void send_auth_channel_data(char * data) {
+    virtual void send_auth_channel_data(const char * data) {
         BStream stream(65536);
         BStream x224_header(256);
         BStream mcs_header(256);
