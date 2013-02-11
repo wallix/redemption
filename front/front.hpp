@@ -2829,6 +2829,7 @@ TODO("Pass font name as parameter in constructor")
                 if (this->verbose){
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
                 }
+                cb.rdp_input_up_and_running();
                 this->up_and_running = 1;
             }
         }
