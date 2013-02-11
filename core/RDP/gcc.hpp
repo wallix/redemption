@@ -2370,7 +2370,7 @@ namespace GCC
                         this->proprietaryCertificate.RSAPK.datalen);
                 }
                 else {
-                    LOG(LOG_DEBUG, "sc_security::RDP5-style encryption");
+                    LOG(LOG_INFO, "sc_security::RDP5-style encryption");
                 }
             }
         };

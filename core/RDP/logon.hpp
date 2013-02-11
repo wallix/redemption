@@ -832,7 +832,7 @@ struct InfoPacket {
         TODO("Get extended data only if RDP is version 5 or above")
         if (stream.p < stream.end) {
             this->rdp5_support = true;
-            LOG(LOG_DEBUG, "RDP-5 Style logon");
+            LOG(LOG_INFO, "RDP-5 Style logon");
             // clientAddressFamily (skipped)
             stream.in_skip_bytes(2);
             this->extendedInfoPacket.cbClientAddress = stream.in_uint16_le();

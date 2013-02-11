@@ -77,7 +77,6 @@ class SessionServer : public Server
                     _exit(1);
                 }
                 size_t lg = snprintf(text, 255, "%d", child_pid);
-                LOG(LOG_DEBUG, "PID TEXTE : %s", text);
                 if (write(fd, text, lg) == -1) {
                     LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/redemption/session_<pid>.pid", strerror(errno));
                     _exit(1);
@@ -85,6 +84,7 @@ class SessionServer : public Server
                 close(fd);
 
                 // Launch session
+                LOG(LOG_INFO, "New session on %u (pid=%u) from %s", (unsigned)sck, (unsigned)child_pid, ip_source);
                 Session session(front_event, front_trans, ip_source, this->refreshconf, &ini);
 
                 // Suppress session file

@@ -639,7 +639,7 @@ class SessionManager {
             rename(old_session_file, new_session_file);
         }
 
-        LOG(LOG_DEBUG, "SESSION_ID = %s", this->context.get(STRAUTHID_SESSION_ID) );
+        LOG(LOG_INFO, "SESSION_ID = %s", this->context.get(STRAUTHID_SESSION_ID) );
     }
 
     void receive_next_module()

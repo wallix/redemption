@@ -211,6 +211,7 @@ TODO("Pass font name as parameter in constructor")
                 /* this should do the actual resizing */
                 this->send_demand_active();
 
+                LOG(LOG_INFO, "Front::incoming::ACTIVATED (resize)");
                 state = ACTIVATE_AND_PROCESS_DATA;
                 res = 1;
             }
@@ -909,17 +910,15 @@ TODO("Pass font name as parameter in constructor")
     void incoming(Callback & cb) throw (Error)
     {
         if (this->verbose & 4){
-            LOG(LOG_INFO, "Front::incoming()--------------------------");
+            LOG(LOG_INFO, "Front::incoming()");
         }
 
         switch (this->state){
         case CONNECTION_INITIATION:
-        if (this->verbose){
-            LOG(LOG_INFO, "Front::incoming:CONNECTION_INITIATION");
-        }
         {
             // Connection Initiation
             // ---------------------
+            LOG(LOG_INFO, "Front::incoming:CONNECTION_INITIATION");
 
             // The client initiates the connection by sending the server an X.224 Connection
             //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
@@ -1398,11 +1397,9 @@ TODO("Pass font name as parameter in constructor")
 
         // Client                                                     Server
         //    |------ Client Info PDU      ---------------------------> |
-
-        if (this->verbose){
-            LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
-        }
         {
+            LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
+
             BStream stream(65536);
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream);
@@ -1482,6 +1479,7 @@ TODO("Pass font name as parameter in constructor")
                 }
                 this->send_demand_active();
 
+                LOG(LOG_INFO, "Front::incoming::ACTIVATED (mce)");
                 this->state = ACTIVATE_AND_PROCESS_DATA;
             }
             else {
@@ -1572,10 +1570,8 @@ TODO("Pass font name as parameter in constructor")
         break;
 
         case WAITING_FOR_ANSWER_TO_LICENCE:
-        if (this->verbose){
-            LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE");
-        }
         {
+            LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE");
             BStream stream(65536);
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream);
@@ -1696,6 +1692,7 @@ TODO("Pass font name as parameter in constructor")
                 }
                 this->send_demand_active();
 
+                LOG(LOG_INFO, "Front::incoming::ACTIVATED (new license request)");
                 this->state = ACTIVATE_AND_PROCESS_DATA;
             }
             else {
@@ -1861,7 +1858,7 @@ TODO("Pass font name as parameter in constructor")
                     switch (sctrl.pdu_type1) {
                     case PDUTYPE_DEMANDACTIVEPDU:
                         if (this->verbose){
-                            LOG(LOG_INFO, "Front received DEMANDACTIVEPDU");
+                            LOG(LOG_INFO, "Front received DEMANDACTIVEPDU (unsupported)");
                         }
                         break;
                     case PDUTYPE_CONFIRMACTIVEPDU:
@@ -1880,6 +1877,9 @@ TODO("Pass font name as parameter in constructor")
                         init_palette332(palette);
                         this->color_cache(palette, 0);
                         this->init_pointers();
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
+                        }
                         break;
                     case PDUTYPE_DATAPDU: /* 7 */
                         if (this->verbose & 4){
@@ -1890,6 +1890,9 @@ TODO("Pass font name as parameter in constructor")
                         // we will not exit this loop until we are in this state.
 //                        LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
                         this->process_data(sctrl.payload, cb);
+                        if (this->verbose & 4){
+                            LOG(LOG_INFO, "Front received DATAPDU done");
+                        }
                         break;
                     case PDUTYPE_DEACTIVATEALLPDU:
                         if (this->verbose){
@@ -1905,6 +1908,7 @@ TODO("Pass font name as parameter in constructor")
                         LOG(LOG_WARNING, "Front received unknown PDU type in session_data (%d)\n", sctrl.pdu_type1);
                         break;
                     }
+//                    sctrl.end = sctrl.p;
                     sctrl.recv_end();
                     sec.payload.p = sctrl.payload.p;
                 }
@@ -2108,12 +2112,14 @@ TODO("Pass font name as parameter in constructor")
         }
     }
 
-
     void process_confirm_active(Stream & stream)
     {
         if (this->verbose){
             LOG(LOG_INFO, "process_confirm_active");
         }
+        TODO("We should separate the parts relevant to caps processing and the part relevant to actual confirm active")
+        TODO("Server Caps management should go to RDP layer and be unified between client (mod/rdp.hpp and server code front.hpp)")
+
         uint16_t lengthSourceDescriptor = stream.in_uint16_le(); /* sizeof RDP_SOURCE */
         uint16_t lengthCombinedCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(lengthSourceDescriptor);
@@ -2131,6 +2137,9 @@ TODO("Pass font name as parameter in constructor")
         stream.in_skip_bytes(2); /* pad */
 
         for (int n = 0; n < numberCapabilities; n++) {
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::capability %u / %u", n, numberCapabilities );
+            }
             if (stream.p + 4 > theoricCapabilitiesEnd) {
                 LOG(LOG_ERR, "Incomplete capabilities received (bad length): expected length=%d need=%d available=%d",
                     lengthCombinedCapabilities,
@@ -2185,26 +2194,34 @@ TODO("Pass font name as parameter in constructor")
                 }
                 break;
             case CAPSTYPE_CONTROL: /* 5 */
+                LOG(LOG_INFO, "Receiving from client CAPSTYPE_CONTROL");
                 break;
             case CAPSTYPE_ACTIVATION: /* 7 */
+                LOG(LOG_INFO, "Receiving from client CAPSTYPE_ACTIVATION");
                 break;
             case CAPSTYPE_POINTER: {  /* 8 */
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_POINTER");
                     stream.in_skip_bytes(2); /* color pointer */
                     int i = stream.in_uint16_le();
                     this->client_info.pointer_cache_entries = std::min(i, 32);
                 }
                 break;
             case CAPSTYPE_SHARE: /* 9 */
+                LOG(LOG_INFO, "Receiving from client CAPSTYPE_SHARE");
                 break;
             case CAPSTYPE_COLORCACHE: /* 10 */
+                LOG(LOG_INFO, "Receiving from client CAPSTYPE_COLORCACHE");
                 break;
             case CAPSTYPE_SOUND:
+                LOG(LOG_INFO, "Receiving from client CAPSTYPE_SOUND");
                 break;
             case CAPSTYPE_INPUT: /* 13 */
+                LOG(LOG_INFO, "Receiving from client CAPSTYPE_INPUT");
                 break;
             case CAPSTYPE_FONT: /* 14 */
                 break;
             case CAPSTYPE_BRUSH: { /* 15 */
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_BRUSH");
                     BrushCacheCaps brushcache_caps;
                     brushcache_caps.log("Receiving from client");
                     brushcache_caps.recv(stream, capset_length);
@@ -2212,15 +2229,19 @@ TODO("Pass font name as parameter in constructor")
                 }
                 break;
             case CAPSTYPE_GLYPHCACHE: /* 16 */
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_GLYPHCACHE");
                 break;
             case CAPSTYPE_OFFSCREENCACHE: /* 17 */
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_OFFSCREENCACHE");
                 break;
             case CAPSTYPE_BITMAPCACHE_HOSTSUPPORT: /* 18 */
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_BITMAPCACHE_HOSTSUPPORT");
                 break;
             case CAPSTYPE_BITMAPCACHE_REV2: {
 //                    BmpCache2Caps bmpcache2_caps;
 //                    bmpcache2_caps.recv(stream, capset_length);
 //                    bmpcache2_caps.log("Receiving from client");
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_BITMAPCACHE_REV2");
 
                     LOG(LOG_INFO, "capset_bmpcache2");
                     this->client_info.bitmap_cache_version = 2;
@@ -2236,14 +2257,19 @@ TODO("Pass font name as parameter in constructor")
                 }
                 break;
             case CAPSTYPE_VIRTUALCHANNEL: /* 20 */
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_VIRTUALCHANNEL");
                 break;
             case CAPSTYPE_DRAWNINEGRIDCACHE: /* 21 */
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWNINEGRIDCACHE");
                 break;
             case CAPSTYPE_DRAWGDIPLUS: /* 22 */
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWGDIPLUS");
                 break;
             case CAPSTYPE_RAIL: /* 23 */
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_RAIL");
                 break;
             case CAPSTYPE_WINDOW: /* 24 */
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_WINDOW");
                 break;
             case CAPSETTYPE_COMPDESK: { /* 25 */
                     CompDeskCaps compdesk_caps;
@@ -2252,22 +2278,33 @@ TODO("Pass font name as parameter in constructor")
                 }
                 break;
             case CAPSETTYPE_MULTIFRAGMENTUPDATE: /* 26 */
+                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_MULTIFRAGMENTUPDATE");
                 break;
             case CAPSETTYPE_LARGE_POINTER: /* 27 */
+                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_LARGE_POINTER");
                 break;
             case CAPSETTYPE_SURFACE_COMMANDS: /* 28 */
+                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_SURFACE_COMMANDS");
                 break;
             case CAPSETTYPE_BITMAP_CODECS: /* 29 */
+                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_BITMAP_CODECS");
                 break;
             case CAPSETTYPE_FRAME_ACKNOWLEDGE: /* 30 */
+                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_FRAME_ACKNOWLEDGE");
                 break;
             default:
+                    LOG(LOG_INFO, "Receiving from client unknown caps %u", capset_type);
                 break;
             }
             if (stream.p > next){
                 LOG(LOG_ERR, "read out of bound detected");
             }
             stream.p = next;
+        }
+        // After Capabilities read optional SessionId
+        TODO("Check if sessionId is actually optional or not, rdesktop does not send it")
+        if ((stream.end - stream.p) >= 4){
+            uint32_t sessionId = stream.in_uint32_le(); /* Session Id */
         }
         if (this->verbose){
             LOG(LOG_INFO, "process_confirm_active done p=%p end=%p", stream.p, stream.end);

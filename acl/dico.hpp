@@ -72,7 +72,7 @@ class Dico {
         TODO(" be be raising an exception would be better")
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
-            LOG(LOG_DEBUG, "'%s' Not found in context\n", key);
+            LOG(LOG_WARNING, "'%s' Not found in context\n", key);
             return NULL;
         }
         char * v = it->second->value;

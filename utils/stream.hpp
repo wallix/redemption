@@ -1391,7 +1391,6 @@ class BStream : public Stream {
     }
     virtual ~BStream() {
         if (this->capacity > AUTOSIZE) {
-//            LOG(LOG_DEBUG, "Stream buffer freed : size=%d @%p\n", this->capacity, this->data);
             delete [] this->data;
         }
     }
@@ -1401,11 +1400,9 @@ class BStream : public Stream {
         if (v != this->capacity) {
             try {
                 if (this->capacity > AUTOSIZE){
-//                    LOG(LOG_DEBUG, "Stream buffer freed : size=%d @%p\n", this->capacity, this->data);
                     delete [] this->data;
                 }
                 if (v > AUTOSIZE){
-//                    LOG(LOG_DEBUG, "Stream buffer allocation succeeded : size=%d @%p\n", v, this->data);
                     this->data = new uint8_t[v];
                 }
                 else {

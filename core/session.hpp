@@ -208,7 +208,7 @@ struct Session {
                 }
 
                 if (this->internal_state != previous_state)
-                    LOG(LOG_DEBUG, "Session::-------------- %s\n", state_names[this->internal_state]);
+                    LOG(LOG_INFO, "Session::-------------- %s -------------------", state_names[this->internal_state]);
                 previous_state = this->internal_state;
 
                 unsigned max = 0;

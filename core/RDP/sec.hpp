@@ -736,12 +736,12 @@ enum {
                 stream.in_skip_bytes(8); /* signature */
                 this->payload.resize(stream, stream.end - stream.p);
                 if (this->verbose >= 0x200){
-                    LOG(LOG_DEBUG, "Receiving encrypted TPDU");
+                    LOG(LOG_INFO, "Receiving encrypted TPDU");
                     hexdump_c((char*)payload.data, payload.size());
                 }
                 crypt.decrypt(payload.data, payload.size());
                 if (this->verbose >= 0x80){
-                    LOG(LOG_DEBUG, "Decrypted %u bytes", payload.size());
+                    LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
                     hexdump_c((char*)payload.data, payload.size());
                 }
             }
