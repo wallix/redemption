@@ -797,10 +797,13 @@ struct InfoPacket {
             stream.out_uint32_le(this->extendedInfoPacket.clientSessionId);
             stream.out_uint32_le(this->extendedInfoPacket.performanceFlags);
 
-            stream.out_uint16_le(2 * this->extendedInfoPacket.cbAutoReconnectLen);
-//               stream.out_unistr((const char *) this->extendedInfoPacket.autoReconnectCookie);
-//               stream.out_unistr((const char *) this->extendedInfoPacket.reserved1);
-//               stream.out_unistr((const char *) this->extendedInfoPacket.reserved2);
+            stream.out_uint16_le(0); // cbAutoReconnectLen is 0, as there is no AutoReconnectCookie Sent
+//            stream.out_uint16_le(2 * this->extendedInfoPacket.cbAutoReconnectLen);
+//            stream.out_unistr((const char *) this->extendedInfoPacket.autoReconnectCookie);
+
+            // These are sent by mctsc, but not by rdesktop
+//            stream.out_uint16_le(this->extendedInfoPacket.reserved1);
+//            stream.out_uint16_le(this->extendedInfoPacket.reserved2);
 
         } // END IF (this->rdp5_support)
 
@@ -849,18 +852,42 @@ struct InfoPacket {
             // Client Time Zone data (skipped)
             stream.in_skip_bytes(172);
 
+            if (stream.p + 4 > stream.end){
+                LOG(LOG_ERR, "Missing InfoPacket.clientSessionId");
+                return;
+            }
+            this->extendedInfoPacket.clientSessionId = stream.in_uint32_le();
+
+            if (stream.p + 4 > stream.end){
+                LOG(LOG_ERR, "Missing InfoPacket.performanceFlags");
+                return; 
+            }
             this->extendedInfoPacket.performanceFlags = stream.in_uint32_le();
+            
+            if (stream.p + 2 > stream.end){
+                LOG(LOG_ERR, "Missing InfoPacket.cbAutoReconnectLen");
+                return;
+            }
             this->extendedInfoPacket.cbAutoReconnectLen = stream.in_uint16_le();
-            if (stream.end - stream.p < this->extendedInfoPacket.cbAutoReconnectLen) {
-                this->extendedInfoPacket.cbAutoReconnectLen = stream.end - stream.p;
+            
+            if (stream.p + this->extendedInfoPacket.cbAutoReconnectLen > stream.end) {
+                LOG(LOG_ERR, "Missing data for InfoPacket.cbAutoReconnectLen");
+                this->extendedInfoPacket.cbAutoReconnectLen = 0;
+                return;
             }
             stream.in_uni_to_ascii_str(this->extendedInfoPacket.autoReconnectCookie, 
                                         this->extendedInfoPacket.cbAutoReconnectLen,
                                         sizeof(this->extendedInfoPacket.autoReconnectCookie));
-            if (stream.p + 4 <= stream.end){
-                this->extendedInfoPacket.reserved1 = stream.in_uint16_le();
-                this->extendedInfoPacket.reserved2 = stream.in_uint16_le();
+
+            if (stream.p + 4 > stream.end){
+                // LOG(LOG_WARNING, "Missing InfoPacket.reserved"); // But seems to be OK
+                return;
             }
+            this->extendedInfoPacket.reserved1 = stream.in_uint16_le();
+            this->extendedInfoPacket.reserved2 = stream.in_uint16_le();
+         }
+         if (stream.p != stream.end){
+            LOG(LOG_ERR, "Trailing data in InfoPacket %d bytes", (signed)(stream.end - stream.p));
          }
     } // END FUNCT : recv()
 

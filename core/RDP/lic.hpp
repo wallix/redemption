@@ -99,6 +99,29 @@ namespace LIC
         LICENSE_TAG_HOST            = 0x0010,
     };
 
+    enum {
+        // sent by client
+        ERR_INVALID_SERVER_CERTIFICATE   = 0x00000001,
+        ERR_NO_LICENSE                   = 0x00000002,
+
+        // Sent by server:
+        ERR_INVALID_SCOPE                = 0x00000004,
+        ERR_NO_LICENSE_SERVER            = 0x00000006,
+        STATUS_VALID_CLIENT              = 0x00000007,
+        ERR_INVALID_CLIENT               = 0x00000008,
+        ERR_INVALID_PRODUCTID            = 0x0000000B,
+        ERR_INVALID_MESSAGE_LEN          = 0x0000000C,
+
+        //    Sent by client and server:
+        ERR_INVALID_MAC                  = 0x00000003,
+    };
+
+    enum {
+        ST_TOTAL_ABORT            = 0x00000001,
+        ST_NO_TRANSITION          = 0x00000002,
+        ST_RESET_PHASE_TO_START   = 0x00000003,
+        ST_RESEND_LAST_MESSAGE    = 0x00000004,
+    };
 
     // +------------------------------------+-------------------------------------+
     // | 0x0001 BB_DATA_BLOB                | Used by License Information PDU and |
@@ -2860,7 +2883,9 @@ namespace LIC
                 LOG(LOG_ERR, "Unexpected dwStateTransition in Licence ErrorAlert_Recv expected ST_NO_TRANSITION, got %u",
                     this->validClientMessage.dwStateTransition);
             }
-            if (this->validClientMessage.wBlobType != 4){
+            // Ignore Blog Type is BlobLen is 0
+            if ((this->validClientMessage.wBlobLen != 0) 
+            && (this->validClientMessage.wBlobType != LIC::BB_ERROR_BLOB)){
                 LOG(LOG_ERR, "Unexpected BlobType in Licence ErrorAlert_Recv expected BB_ERROR_BLOB, got %u",
                     this->validClientMessage.wBlobType);
             }

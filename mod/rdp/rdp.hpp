@@ -1420,8 +1420,15 @@ struct mod_rdp : public client_mod {
                         if (this->verbose){
                             LOG(LOG_INFO, "Rdp::Get license status");
                         }
-                        TODO("We should check what is actually returned by this message, as it may be an error")
                         LIC::ErrorAlert_Recv lic(sec.payload);
+                        if ((lic.validClientMessage.dwErrorCode == LIC::STATUS_VALID_CLIENT) 
+                        && (lic.validClientMessage.dwStateTransition == LIC::ST_NO_TRANSITION)){
+                            this->state = MOD_RDP_CONNECTED;
+                        }
+                        else {
+                            LOG(LOG_ERR, "RDP::License Alert: error=%u transition=%u",
+                                lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
+                        }
                         this->state = MOD_RDP_CONNECTED;
                     }
                     break;

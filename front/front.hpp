@@ -1418,11 +1418,12 @@ TODO("Pass font name as parameter in constructor")
             }
 
             /* this is the first test that the decrypt is working */
-            this->client_info.process_logon_info(sec.payload, (uint16_t)(sec.payload.end - sec.payload.p));
+            this->client_info.process_logon_info(sec.payload);
 
             TODO("check all data are consumed as expected")
             if (sec.payload.end != sec.payload.p){
-                LOG(LOG_ERR, "Front::incoming::process_logon all data should have been consumed");
+                LOG(LOG_ERR, "Front::incoming::process_logon all data should have been consumed %d bytes trailing", 
+                    (signed)(sec.payload.end - sec.payload.p));
             }
 
             this->keymap.init_layout(this->client_info.keylayout);
@@ -1612,6 +1613,9 @@ TODO("Pass font name as parameter in constructor")
                     }
                     TODO("We should check what is actually returned by this message, as it may be an error")
                     LIC::ErrorAlert_Recv lic(sec.payload);
+                    LOG(LOG_ERR, "Front::License Alert: error=%u transition=%u",
+                        lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
+                    
                 }
                 break;
                 case LIC::NEW_LICENSE_REQUEST:

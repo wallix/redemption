@@ -114,7 +114,7 @@ struct ClientInfo {
         this->encryptionLevel = encryptionLevel + 1; // ini->globals.encryptionLevel + 1;
     }
 
-    void process_logon_info(Stream & stream, uint32_t length) throw (Error)
+    void process_logon_info(Stream & stream) throw (Error)
     {
         InfoPacket infoPacket;
         infoPacket.recv(stream);
