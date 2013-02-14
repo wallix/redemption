@@ -40,8 +40,19 @@
 
 typedef enum {
     RT_TYPE_GENERATOR,
+    RT_TYPE_CHECK,
+    RT_TYPE_TEST,
     RT_TYPE_OUTFILE,
     RT_TYPE_INFILE,
+    RT_TYPE_SOCKET,
+    RT_TYPE_CLIENTSOCKET,
+    RT_TYPE_OUTBYFILENAME, // based on OUTFILE
+    RT_TYPE_INBYFILENAME, // based on INFILE
+    RT_TYPE_OUTBYFILENAMESEQUENCE, // based on OUTFILE
+    RT_TYPE_OUTBYFILENAMESEQUENCEWITHMETA, // based on OUTFILE
+    RT_TYPE_INBYFILENAMESEQUENCE, // based on INFILE
+    RT_TYPE_INBYMETASEQUENCE, // based on INFILE
+    
 } RT_TYPE;
 
 typedef enum {
@@ -49,6 +60,8 @@ typedef enum {
     RT_ERROR_TYPE_MISMATCH,
     RT_ERROR_UNKNOWN_TYPE,
 } RT_ERROR;
+
+TODO("These classes are needing a large cleanup")
 
 struct RT {
     unsigned rt_type;
@@ -60,6 +73,12 @@ struct RT {
         size_t len;
       } generator;
 
+      struct Check {
+      } check;
+
+      struct Test {
+      } test;
+
       struct Outfile {
         int fd;
       } outfile;
@@ -67,6 +86,36 @@ struct RT {
       struct Infile {
         int fd;
       } infile;
+
+      struct Socket {
+      } socket;
+
+      struct ClientSocket {
+      } clientsocket;
+
+      struct OutByFilename {
+        int fd;
+      } outbyfilename;
+
+      struct InByFilename {
+        int fd;
+      } inbyfilename;
+
+      struct OutByFilenameSequence {
+        int fd;
+      } outbyfilenamesequence;
+
+      struct OutByFilenameSequenceWithMeta {
+        int fd;
+      } outbyfilenamesequencewithmeta;
+
+      struct InByFilenameSequence {
+        int fd;
+      } inbyfilenamesequence;
+
+      struct InByMetaSequence {
+        int fd;
+      } inbymetasequence;
     } u;
 };
 

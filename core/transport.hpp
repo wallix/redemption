@@ -428,19 +428,6 @@ class InFileTransport : public Transport {
 
 };
 
-TODO("for now loop transport is not yet implemented, it's a null transport")
-
-class LoopTransport : public Transport {
-    public:
-    using Transport::recv;
-    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-    }
-    using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error) {
-    }
-};
-
-
 class SocketTransport : public Transport {
         bool tls;
         SSL * ssl;
