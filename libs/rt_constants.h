@@ -18,32 +18,19 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Dominique Lafages
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
-   header file. Front object (server), used to communicate with RDP client
+   Constants used by RT lib
 
 */
 
-#ifndef _REDEMPTION_LIBS_RT_GENERATOR_H_
-#define _REDEMPTION_LIBS_RT_GENERATOR_H_
+#ifndef _REDEMPTION_LIBS_RT_CONSTANTS_H_
+#define _REDEMPTION_LIBS_RT_CONSTANTS_H_
 
-#include "rt_constants.h"
+typedef enum {
+    RT_ERROR_OK,
+    RT_ERROR_MALLOC,
+    RT_ERROR_TYPE_MISMATCH,
+    RT_ERROR_UNKNOWN_TYPE,
+} RT_ERROR;
 
-struct RTGenerator {
-    size_t current;
-    uint8_t * data;
-    size_t len;
-};
-
-extern "C" {
-    inline RT_ERROR rt_m_generator_new(RTGenerator * self, const void * data, size_t len)
-    {
-        self->data = (uint8_t *)malloc(len);
-        if (!self->data) { return RT_ERROR_MALLOC; }
-        self->len = len;
-        self->current = 0;
-        memcpy(self->data, data, len);
-        return RT_ERROR_OK;
-    }
-};
 
 #endif
-

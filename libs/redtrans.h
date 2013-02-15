@@ -33,6 +33,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "rt_generator.h"
+
 typedef enum {
     RT_TYPE_GENERATOR,
     RT_TYPE_CHECK,
@@ -50,23 +52,13 @@ typedef enum {
     
 } RT_TYPE;
 
-typedef enum {
-    RT_ERROR_OK,
-    RT_ERROR_TYPE_MISMATCH,
-    RT_ERROR_UNKNOWN_TYPE,
-} RT_ERROR;
-
 TODO("These classes are needing a large cleanup")
 
 struct RT {
     unsigned rt_type;
     union {
 
-      struct Generator {
-        size_t current;
-        uint8_t * data;
-        size_t len;
-      } generator;
+      struct RTGenerator generator;
 
       struct Check {
       } check;
@@ -126,11 +118,7 @@ RT_ERROR rt_init_generator(RT * rt, const void * data, size_t len)
     if (rt->rt_type != RT_TYPE_GENERATOR){
         return RT_ERROR_TYPE_MISMATCH;
     }
-    rt->u.generator.data = (uint8_t *)malloc(len);
-    rt->u.generator.len = len;
-    rt->u.generator.current = 0;
-    memcpy(rt->u.generator.data, data, len);
-    return RT_ERROR_OK;
+    return rt_m_generator_new(&(rt->u.generator), data, len);
 }
 
 RT_ERROR rt_init_outfile_writer(RT * rt, int fd)
@@ -163,6 +151,20 @@ ssize_t rt_internal_recv_t_generator(RT * rt, void * data, size_t len)
     rt->u.generator.current += len;
     return len;
 }
+
+ssize_t rt_m_generator_recv(RT * rt, void * data, size_t len)
+{
+    if (rt->u.generator.current + len > rt->u.generator.len){
+        size_t available_len = rt->u.generator.len - rt->u.generator.current;
+        memcpy(data, (char*)rt->u.generator.data + rt->u.generator.current, available_len);
+        rt->u.generator.current += available_len;
+        return available_len;
+    }
+    memcpy(data, (char*)rt->u.generator.data + rt->u.generator.current, len);
+    rt->u.generator.current += len;
+    return len;
+}
+
 
 ssize_t rt_internal_recv_t_infile(RT * rt, void * data, size_t len)
 {
