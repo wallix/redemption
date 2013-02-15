@@ -17,17 +17,16 @@
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean
 
-   New Outfile RedTransport class
+   new ClientSocket RedTransport class
 
 */
 
-#ifndef _REDEMPTION_LIBS_RT_INFILE_H_
-#define _REDEMPTION_LIBS_RT_INFILE_H_
+#ifndef _REDEMPTION_LIBS_RT_CLIENTSOCKET_H_
+#define _REDEMPTION_LIBS_RT_CLIENTSOCKET_H_
 
 #include "rt_constants.h"
 
-struct RTInfile {
-    int fd;
+struct RTClientSocket {
 };
 
 extern "C" {
@@ -35,15 +34,14 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_RTInfile_constructor(RTInfile * self, int fd)
+    inline RT_ERROR rt_m_RTClientSocket_constructor(RTClientSocket * self)
     {
-        self->fd = fd;
-        return RT_ERROR_OK;
+        return RT_ERROR_NOT_IMPLEMENTED;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_RTInfile_destructor(RTInfile * self)
+    inline RT_ERROR rt_m_RTClientSocket_destructor(RTClientSocket * self)
     {
         return RT_ERROR_OK;
     }
@@ -55,7 +53,7 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTInfile_recv(RTInfile * self, void * data, size_t len)
+    inline ssize_t rt_m_RTClientSocket_recv(RTClientSocket * self, void * data, size_t len)
     {
          return -RT_ERROR_SEND_ONLY;
     }
@@ -67,10 +65,11 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTInfile_send(RTInfile * self, const void * data, size_t len)
+    inline ssize_t rt_m_RTClientSocket_send(RTClientSocket * self, const void * data, size_t len)
     {
          return -RT_ERROR_RECV_ONLY;
     }
+
 
 };
 

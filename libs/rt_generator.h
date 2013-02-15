@@ -36,7 +36,7 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_generator_constructor(RTGenerator * self, const void * data, size_t len)
+    inline RT_ERROR rt_m_RTGenerator_constructor(RTGenerator * self, const void * data, size_t len)
     {
         self->data = (uint8_t *)malloc(len);
         if (!self->data) { return RT_ERROR_MALLOC; }
@@ -48,7 +48,7 @@ extern "C" {
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_generator_destructor(RTGenerator * self)
+    inline RT_ERROR rt_m_RTGenerator_destructor(RTGenerator * self)
     {
         free(self->data);
         return RT_ERROR_OK;
@@ -61,7 +61,7 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_generator_recv(RTGenerator * self, void * data, size_t len)
+    inline ssize_t rt_m_RTGenerator_recv(RTGenerator * self, void * data, size_t len)
     {
         if (self->current + len > self->len){
             size_t available_len = self->len - self->current;
@@ -81,7 +81,7 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_generator_send(RTGenerator * self, const void * data, size_t len)
+    inline ssize_t rt_m_RTGenerator_send(RTGenerator * self, const void * data, size_t len)
     {
          return RT_ERROR_RECV_ONLY;
     }

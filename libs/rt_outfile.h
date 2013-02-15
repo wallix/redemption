@@ -35,7 +35,7 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_outfile_constructor(RTOutfile * self, int fd)
+    inline RT_ERROR rt_m_RTOutfile_constructor(RTOutfile * self, int fd)
     {
         self->fd = fd;
         return RT_ERROR_OK;
@@ -43,7 +43,7 @@ extern "C" {
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_outfile_destructor(RTOutfile * self)
+    inline RT_ERROR rt_m_RTOutfile_destructor(RTOutfile * self)
     {
         return RT_ERROR_OK;
     }
@@ -55,7 +55,7 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_outfile_recv(RTOutfile * self, void * data, size_t len)
+    inline ssize_t rt_m_RTOutfile_recv(RTOutfile * self, void * data, size_t len)
     {
          return -RT_ERROR_SEND_ONLY;
     }
@@ -67,7 +67,7 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_outfile_send(RTOutfile * self, const void * data, size_t len)
+    inline ssize_t rt_m_RTOutfile_send(RTOutfile * self, const void * data, size_t len)
     {
          return -RT_ERROR_RECV_ONLY;
     }

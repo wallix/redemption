@@ -33,8 +33,18 @@
 #include <errno.h>
 
 #include "rt_generator.h"
+#include "rt_check.h"
+#include "rt_test.h"
 #include "rt_outfile.h"
 #include "rt_infile.h"
+#include "rt_inbyfilename.h"
+#include "rt_outbyfilename.h"
+#include "rt_inbyfilenamesequence.h"
+#include "rt_outbyfilenamesequence.h"
+#include "rt_outbyfilenamesequencewithmeta.h"
+#include "rt_inbymetasequence.h"
+#include "rt_socket.h"
+#include "rt_clientsocket.h"
 #include "rt_XXX.h"
 
 typedef enum {
@@ -60,45 +70,29 @@ struct RT {
 
       struct RTGenerator generator;
 
-      struct Check {
-      } check;
+      struct RTCheck check;
 
-      struct Test {
-      } test;
+      struct RTTest test;
 
       struct RTOutfile outfile;
 
       struct RTInfile infile;
 
-      struct Socket {
-      } socket;
+      struct RTSocket socket;
 
-      struct ClientSocket {
-      } clientsocket;
+      struct RTClientSocket client_socket;
 
-      struct OutByFilename {
-        int fd;
-      } outbyfilename;
+      struct RTOutByFilename out_by_filename;
 
-      struct InByFilename {
-        int fd;
-      } inbyfilename;
+      struct RTInByFilename in_by_filename;
 
-      struct OutByFilenameSequence {
-        int fd;
-      } outbyfilenamesequence;
+      struct RTOutByFilenameSequence out_by_filename_sequence;
 
-      struct OutByFilenameSequenceWithMeta {
-        int fd;
-      } outbyfilenamesequencewithmeta;
+      struct RTOutByFilenameSequenceWithMeta out_by_filename_sequence_with_meta;
 
-      struct InByFilenameSequence {
-        int fd;
-      } inbyfilenamesequence;
+      struct RTInByFilenameSequence in_by_filename_sequence;
 
-      struct InByMetaSequence {
-        int fd;
-      } inbymetasequence;
+      struct RTInByMetaSequence in_by_meta_sequence;
     } u;
 };
 
@@ -110,10 +104,10 @@ RT * rt_new_generator(RT_ERROR * error, const void * data, size_t len)
         return NULL;
     }
     res->rt_type = RT_TYPE_GENERATOR;
-    RT_ERROR status = rt_m_generator_constructor(&(res->u.generator), data, len);
+    RT_ERROR status = rt_m_RTGenerator_constructor(&(res->u.generator), data, len);
     switch (status){
     default:
-        rt_m_generator_destructor(&(res->u.generator));
+        rt_m_RTGenerator_destructor(&(res->u.generator));
         free(res);
         if (error){ *error = status; }
         return NULL;
@@ -137,10 +131,10 @@ RT * rt_new_outfile(RT_ERROR * error, int fd)
         return NULL;
     }
     res->rt_type = RT_TYPE_OUTFILE;
-    RT_ERROR status = rt_m_outfile_constructor(&(res->u.outfile), fd);
+    RT_ERROR status = rt_m_RTOutfile_constructor(&(res->u.outfile), fd);
     switch (status){
     default:
-        rt_m_outfile_destructor(&(res->u.outfile));
+        rt_m_RTOutfile_destructor(&(res->u.outfile));
         free(res);
         if (error){ *error = status; }
         return NULL;
@@ -163,10 +157,10 @@ RT * rt_new_infile(RT_ERROR * error, int fd)
         return NULL;
     }
     res->rt_type = RT_TYPE_INFILE;
-    RT_ERROR status = rt_m_infile_constructor(&(res->u.infile), fd);
+    RT_ERROR status = rt_m_RTInfile_constructor(&(res->u.infile), fd);
     switch (status){
     default:
-        rt_m_infile_destructor(&(res->u.infile));
+        rt_m_RTInfile_destructor(&(res->u.infile));
         free(res);
         if (error){ *error = status; }
         return NULL;
@@ -180,6 +174,27 @@ RT * rt_new_infile(RT_ERROR * error, int fd)
     }
     return res;
 }
+
+RT_ERROR rt_delete(RT * rt)
+{
+    RT_ERROR status = RT_ERROR_OK;
+    switch(rt->rt_type){
+        case RT_TYPE_GENERATOR:
+            status = rt_m_RTGenerator_destructor(&(rt->u.generator));
+        break;
+        case RT_TYPE_INFILE:
+            status = rt_m_RTInfile_destructor(&(rt->u.infile));
+        break;
+        case RT_TYPE_OUTFILE:
+            status = rt_m_RTOutfile_destructor(&(rt->u.outfile));
+        break;
+        default:
+            ;
+    }
+    free(rt);
+    return status;
+}
+
 
 ssize_t rt_internal_recv_t_infile(RT * rt, void * data, size_t len)
 {
@@ -207,7 +222,7 @@ ssize_t rt_recv(RT * rt, void * data, size_t len)
 {
     switch (rt->rt_type){
     case RT_TYPE_GENERATOR:
-        return rt_m_generator_recv(&(rt->u.generator), data, len);
+        return rt_m_RTGenerator_recv(&(rt->u.generator), data, len);
     break;
     case RT_TYPE_INFILE:
         return rt_internal_recv_t_infile(rt, data, len);
@@ -273,24 +288,6 @@ void rt_close(RT * rt)
             ;
     }
     return;
-}
-
-RT_ERROR rt_delete(RT * rt)
-{
-    RT_ERROR status = RT_ERROR_OK;
-    switch(rt->rt_type){
-        case RT_TYPE_GENERATOR:
-            status = rt_m_generator_destructor(&(rt->u.generator));
-        break;
-        case RT_TYPE_INFILE:
-        break;
-        case RT_TYPE_OUTFILE:
-        break;
-        default:
-            ;
-    }
-    free(rt);
-    return status;
 }
 
 #endif
