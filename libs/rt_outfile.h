@@ -48,6 +48,15 @@ extern "C" {
         return RT_ERROR_OK;
     }
 
+    /* This method close ressource without calling destructor
+       Any subsequent call should return an error
+    */
+    inline RT_ERROR rt_m_RTOutfile_close(RTOutfile * self)
+    {
+        close(self->fd);
+        return RT_ERROR_OK;
+    }
+
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data
        returns len actually received (may be 0),
@@ -69,7 +78,21 @@ extern "C" {
     */
     inline ssize_t rt_m_RTOutfile_send(RTOutfile * self, const void * data, size_t len)
     {
-         return -RT_ERROR_RECV_ONLY;
+        ssize_t ret = 0;
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ret = ::write(self->fd, (uint8_t*)data + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){ continue; }
+                TODO("Really several errors are possible and we should define codes for them"
+                     "Basically EOF means that we won't be able to write to this file anymore in the future")                
+                return RT_ERROR_EOF;
+            }
+            remaining_len -= ret;
+            total_sent += ret;
+        }
+        return total_sent;
     }
 
 };

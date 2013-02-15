@@ -69,29 +69,17 @@ struct RT {
     union {
 
       struct RTGenerator generator;
-
       struct RTCheck check;
-
       struct RTTest test;
-
       struct RTOutfile outfile;
-
       struct RTInfile infile;
-
       struct RTSocket socket;
-
       struct RTClientSocket client_socket;
-
       struct RTOutByFilename out_by_filename;
-
       struct RTInByFilename in_by_filename;
-
       struct RTOutByFilenameSequence out_by_filename_sequence;
-
       struct RTOutByFilenameSequenceWithMeta out_by_filename_sequence_with_meta;
-
       struct RTInByFilenameSequence in_by_filename_sequence;
-
       struct RTInByMetaSequence in_by_meta_sequence;
     } u;
 };
@@ -195,29 +183,6 @@ RT_ERROR rt_delete(RT * rt)
     return status;
 }
 
-
-ssize_t rt_internal_recv_t_infile(RT * rt, void * data, size_t len)
-{
-    size_t ret = 0;
-    size_t remaining_len = len;
-    size_t total_len = 0;
-    while (remaining_len) {
-        ret = ::read(rt->u.infile.fd, (uint8_t*)data + total_len, remaining_len);
-        if (ret < 0){
-            if (errno == EINTR){
-                continue;
-            }
-            return -1;
-        }
-        if (ret == 0){
-            break;
-        }
-        remaining_len -= ret;
-        total_len += ret;
-    }
-    return total_len;
-}
-
 ssize_t rt_recv(RT * rt, void * data, size_t len)
 {
     switch (rt->rt_type){
@@ -225,7 +190,7 @@ ssize_t rt_recv(RT * rt, void * data, size_t len)
         return rt_m_RTGenerator_recv(&(rt->u.generator), data, len);
     break;
     case RT_TYPE_INFILE:
-        return rt_internal_recv_t_infile(rt, data, len);
+        return rt_m_RTInfile_recv(&(rt->u.infile), data, len);
     break;
     case RT_TYPE_OUTFILE:
         return -1;
@@ -234,43 +199,21 @@ ssize_t rt_recv(RT * rt, void * data, size_t len)
         ;
     }
     return -1;
-}
-
-ssize_t rt_internal_send_t_outfile(RT * rt, const void * data, size_t len)
-{
-    ssize_t ret = 0;
-    size_t remaining_len = len;
-    size_t total_sent = 0;
-    while (remaining_len) {
-        ret = ::write(rt->u.outfile.fd, (uint8_t*)data + total_sent, remaining_len);
-        if (ret <= 0){
-            if (errno == EINTR){
-                continue;
-            }
-            return -1;
-        }
-        remaining_len -= ret;
-        total_sent += ret;
-    }
-    return total_sent;
 }
 
 ssize_t rt_send(RT * rt, void * data, size_t len)
 {
     switch (rt->rt_type){
     case RT_TYPE_GENERATOR:
-        return -1;
-        break;
+        return rt_m_RTGenerator_send(&(rt->u.generator), data, len);
     case RT_TYPE_INFILE:
-        return -1;
-    break;
+        return rt_m_RTInfile_send(&(rt->u.infile), data, len);
     case RT_TYPE_OUTFILE:
-        return rt_internal_send_t_outfile(rt, data, len);
-    break;
+        return rt_m_RTOutfile_send(&(rt->u.outfile), data, len);
     default:
         ;
     }
-    return -1;
+    return RT_ERROR_UNKNOWN_TYPE;
 }
 
 void rt_close(RT * rt)

@@ -46,6 +46,14 @@ extern "C" {
         return RT_ERROR_OK;
     }
 
+    /* This method close ressource without calling destructor
+       Any subsequent call should return an error
+    */
+    inline RT_ERROR rt_m_RTCheck_close(RTCheck * self)
+    {
+        return RT_ERROR_OK;
+    }
+
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data
        returns len actually received (may be 0),
