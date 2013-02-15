@@ -32,11 +32,10 @@
 
 BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
 {
-    RT * rt = rt_new(RT_TYPE_GENERATOR);
-    BOOST_CHECK(NULL != rt);
+    RT_ERROR status = RT_ERROR_OK;
+    RT * rt = rt_new_generator(&status, "We read what we provide!", 24);
 
-    unsigned status = rt_init_generator(rt, "We read what we provide!", 24);
-    BOOST_CHECK_EQUAL(0, status);
+    BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
 
     uint8_t buffer[1024];
     
@@ -57,11 +56,10 @@ BOOST_AUTO_TEST_CASE(TestFileTransport)
 
     {
         int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
-        RT * rt = rt_new(RT_TYPE_OUTFILE);
+        RT_ERROR status = RT_ERROR_OK;
+        RT * rt = rt_new_outfile(&status, fd);
         BOOST_CHECK(NULL != rt);
-
-        unsigned status = rt_init_outfile_writer(rt, fd);
-        BOOST_CHECK_EQUAL(0, status);
+        BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
 
         char buffer[1024];
         strcpy(buffer, "We read what we provide!");
@@ -77,11 +75,10 @@ BOOST_AUTO_TEST_CASE(TestFileTransport)
     {
         int fd = ::open(tmpname, O_RDONLY);
 
-        RT * rt = rt_new(RT_TYPE_INFILE);
+        RT_ERROR status = RT_ERROR_OK;
+        RT * rt = rt_new_infile(&status, fd);
         BOOST_CHECK(NULL != rt);
-
-        unsigned status = rt_init_infile_reader(rt, fd);
-        BOOST_CHECK_EQUAL(0, status);
+        BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
 
         uint8_t buffer[1024];
         

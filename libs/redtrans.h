@@ -14,11 +14,10 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Dominique Lafages
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+   Copyright (C) Wallix 2013
+   Author(s): Christophe Grosjean
 
-   header file. Front object (server), used to communicate with RDP client
+   Main entry point file for RT Transport library
 
 */
 
@@ -34,6 +33,9 @@
 #include <errno.h>
 
 #include "rt_generator.h"
+#include "rt_outfile.h"
+#include "rt_infile.h"
+#include "rt_XXX.h"
 
 typedef enum {
     RT_TYPE_GENERATOR,
@@ -52,8 +54,6 @@ typedef enum {
     
 } RT_TYPE;
 
-TODO("These classes are needing a large cleanup")
-
 struct RT {
     unsigned rt_type;
     union {
@@ -66,13 +66,9 @@ struct RT {
       struct Test {
       } test;
 
-      struct Outfile {
-        int fd;
-      } outfile;
+      struct RTOutfile outfile;
 
-      struct Infile {
-        int fd;
-      } infile;
+      struct RTInfile infile;
 
       struct Socket {
       } socket;
@@ -106,65 +102,84 @@ struct RT {
     } u;
 };
 
-RT * rt_new(RT_TYPE t)
+RT * rt_new_generator(RT_ERROR * error, const void * data, size_t len)
 {
     RT * res = (RT*)malloc(sizeof(RT));
-    res->rt_type = t;
+    if (res == 0){ 
+        if (error){ *error = RT_ERROR_OK; }
+        return NULL;
+    }
+    res->rt_type = RT_TYPE_GENERATOR;
+    RT_ERROR status = rt_m_generator_constructor(&(res->u.generator), data, len);
+    switch (status){
+    default:
+        rt_m_generator_destructor(&(res->u.generator));
+        free(res);
+        if (error){ *error = status; }
+        return NULL;
+    case RT_ERROR_MALLOC:
+        free(res);
+        if (error){ *error = status; }
+        return NULL;
+    case RT_ERROR_OK:
+        if (error){ *error = RT_ERROR_OK; }
+        break;
+    }
     return res;
 }
 
-RT_ERROR rt_init_generator(RT * rt, const void * data, size_t len)
+
+RT * rt_new_outfile(RT_ERROR * error, int fd)
 {
-    if (rt->rt_type != RT_TYPE_GENERATOR){
-        return RT_ERROR_TYPE_MISMATCH;
+    RT * res = (RT*)malloc(sizeof(RT));
+    if (res == 0){ 
+        if (error){ *error = RT_ERROR_OK; }
+        return NULL;
     }
-    return rt_m_generator_new(&(rt->u.generator), data, len);
+    res->rt_type = RT_TYPE_OUTFILE;
+    RT_ERROR status = rt_m_outfile_constructor(&(res->u.outfile), fd);
+    switch (status){
+    default:
+        rt_m_outfile_destructor(&(res->u.outfile));
+        free(res);
+        if (error){ *error = status; }
+        return NULL;
+    case RT_ERROR_MALLOC:
+        free(res);
+        if (error){ *error = status; }
+        return NULL;
+    case RT_ERROR_OK:
+        if (error){ *error = RT_ERROR_OK; }
+        break;
+    }
+    return res;
 }
 
-RT_ERROR rt_init_outfile_writer(RT * rt, int fd)
+RT * rt_new_infile(RT_ERROR * error, int fd)
 {
-    if (rt->rt_type != RT_TYPE_OUTFILE){
-        return RT_ERROR_TYPE_MISMATCH;
+    RT * res = (RT*)malloc(sizeof(RT));
+    if (res == 0){ 
+        if (error){ *error = RT_ERROR_OK; }
+        return NULL;
     }
-    rt->u.outfile.fd = fd;
-    return RT_ERROR_OK;
-}
-
-RT_ERROR rt_init_infile_reader(RT * rt, int fd)
-{
-    if (rt->rt_type != RT_TYPE_INFILE){
-        return RT_ERROR_TYPE_MISMATCH;
+    res->rt_type = RT_TYPE_INFILE;
+    RT_ERROR status = rt_m_infile_constructor(&(res->u.infile), fd);
+    switch (status){
+    default:
+        rt_m_infile_destructor(&(res->u.infile));
+        free(res);
+        if (error){ *error = status; }
+        return NULL;
+    case RT_ERROR_MALLOC:
+        free(res);
+        if (error){ *error = status; }
+        return NULL;
+    case RT_ERROR_OK:
+        if (error){ *error = RT_ERROR_OK; }
+        break;
     }
-    rt->u.infile.fd = fd;
-    return RT_ERROR_OK;
+    return res;
 }
-
-ssize_t rt_internal_recv_t_generator(RT * rt, void * data, size_t len)
-{
-    if (rt->u.generator.current + len > rt->u.generator.len){
-        size_t available_len = rt->u.generator.len - rt->u.generator.current;
-        memcpy(data, (char*)rt->u.generator.data + rt->u.generator.current, available_len);
-        rt->u.generator.current += available_len;
-        return available_len;
-    }
-    memcpy(data, (char*)rt->u.generator.data + rt->u.generator.current, len);
-    rt->u.generator.current += len;
-    return len;
-}
-
-ssize_t rt_m_generator_recv(RT * rt, void * data, size_t len)
-{
-    if (rt->u.generator.current + len > rt->u.generator.len){
-        size_t available_len = rt->u.generator.len - rt->u.generator.current;
-        memcpy(data, (char*)rt->u.generator.data + rt->u.generator.current, available_len);
-        rt->u.generator.current += available_len;
-        return available_len;
-    }
-    memcpy(data, (char*)rt->u.generator.data + rt->u.generator.current, len);
-    rt->u.generator.current += len;
-    return len;
-}
-
 
 ssize_t rt_internal_recv_t_infile(RT * rt, void * data, size_t len)
 {
@@ -192,7 +207,7 @@ ssize_t rt_recv(RT * rt, void * data, size_t len)
 {
     switch (rt->rt_type){
     case RT_TYPE_GENERATOR:
-        return rt_internal_recv_t_generator(rt, data, len);
+        return rt_m_generator_recv(&(rt->u.generator), data, len);
     break;
     case RT_TYPE_INFILE:
         return rt_internal_recv_t_infile(rt, data, len);
@@ -260,11 +275,12 @@ void rt_close(RT * rt)
     return;
 }
 
-void rt_delete(RT * rt)
+RT_ERROR rt_delete(RT * rt)
 {
+    RT_ERROR status = RT_ERROR_OK;
     switch(rt->rt_type){
         case RT_TYPE_GENERATOR:
-            free(rt->u.generator.data);
+            status = rt_m_generator_destructor(&(rt->u.generator));
         break;
         case RT_TYPE_INFILE:
         break;
@@ -274,7 +290,7 @@ void rt_delete(RT * rt)
             ;
     }
     free(rt);
-    return;
+    return status;
 }
 
 #endif

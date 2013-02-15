@@ -17,18 +17,17 @@
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean
 
-   new Generator RedTransport class
+   New Outfile RedTransport class
+
 */
 
-#ifndef _REDEMPTION_LIBS_RT_GENERATOR_H_
-#define _REDEMPTION_LIBS_RT_GENERATOR_H_
+#ifndef _REDEMPTION_LIBS_RT_INFILE_H_
+#define _REDEMPTION_LIBS_RT_INFILE_H_
 
 #include "rt_constants.h"
 
-struct RTGenerator {
-    size_t current;
-    uint8_t * data;
-    size_t len;
+struct RTInfile {
+    int fd;
 };
 
 extern "C" {
@@ -36,21 +35,16 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_generator_constructor(RTGenerator * self, const void * data, size_t len)
+    inline RT_ERROR rt_m_infile_constructor(RTInfile * self, int fd)
     {
-        self->data = (uint8_t *)malloc(len);
-        if (!self->data) { return RT_ERROR_MALLOC; }
-        self->len = len;
-        self->current = 0;
-        memcpy(self->data, data, len);
+        self->fd = fd;
         return RT_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_generator_destructor(RTGenerator * self)
+    inline RT_ERROR rt_m_infile_destructor(RTInfile * self)
     {
-        free(self->data);
         return RT_ERROR_OK;
     }
 
@@ -61,17 +55,9 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_generator_recv(RTGenerator * self, void * data, size_t len)
+    inline ssize_t rt_m_infile_recv(RTInfile * self, void * data, size_t len)
     {
-        if (self->current + len > self->len){
-            size_t available_len = self->len - self->current;
-            memcpy(data, (char*)self->data + self->current, available_len);
-            self->current += available_len;
-            return available_len;
-        }
-        memcpy(data, (char*)self->data + self->current, len);
-        self->current += len;
-        return len;
+         return -RT_ERROR_SEND_ONLY;
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -81,11 +67,10 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_generator_send(RTGenerator * self, const void * data, size_t len)
+    inline ssize_t rt_m_infile_send(RTInfile * self, const void * data, size_t len)
     {
-         return RT_ERROR_RECV_ONLY;
+         return -RT_ERROR_RECV_ONLY;
     }
-
 
 };
 

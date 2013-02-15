@@ -14,9 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Dominique Lafages
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+   Copyright (C) Wallix 2013
+   Author(s): Christophe Grosjean
 
    Constants used by RT lib
 
@@ -28,8 +27,11 @@
 typedef enum {
     RT_ERROR_OK,
     RT_ERROR_MALLOC,
+    RT_ERROR_RECV_ONLY,
+    RT_ERROR_SEND_ONLY,
     RT_ERROR_TYPE_MISMATCH,
     RT_ERROR_UNKNOWN_TYPE,
+    RT_ERROR_NOT_IMPLEMENTED,
 } RT_ERROR;
 
 
