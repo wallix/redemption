@@ -89,10 +89,25 @@ extern "C" {
     inline ssize_t rt_m_RTCheck_send(RTCheck * self, const void * data, size_t len)
     {
         if (!(self->status)) {
+            switch (self->err){
+            case RT_ERROR_TRAILING_DATA:
+            {
+                    LOG(LOG_INFO, "Check transport out of reference data");
+                    LOG(LOG_INFO, "=============== Got Unexpected Data ==========");
+                    hexdump_c(&(((const char *)data)[0]), len);
+            }
+            break;
+            default:
+            {
+            }
+            break;
+            }
             return -self->err;
         }
         size_t available_len = (self->current + len > self->len)?(self->len - self->current):len;
-        if (0 != memcmp(data, (const char *)(&self->data[self->current]), available_len)){
+        hexdump_c(&(((const char *)data)[0]), available_len);
+
+        if (0 != memcmp(data, (const char *)(&(self->data[self->current])), available_len)){
             // data differs
             self->status = false;
             self->err = RT_ERROR_DATA_MISMATCH;
@@ -114,10 +129,7 @@ extern "C" {
             return differs;
         }
         self->current += available_len;
-        if (available_len != len){
-            LOG(LOG_INFO, "Check transport out of reference data available=%u len=%u", available_len, len);
-            LOG(LOG_INFO, "=============== Got Unexpected Data ==========");
-            hexdump_c(&(((const char *)data)[available_len]), len - available_len);
+        if (available_len == len){
             self->status = false;
             self->err = RT_ERROR_TRAILING_DATA;
         }

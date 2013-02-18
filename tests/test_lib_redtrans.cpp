@@ -67,6 +67,30 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport)
 }
 
 
+// TestTransport is basically (and internally) a Generator comined with a Check Transport
+// It is designed fot testing purpose of bidirectional transports
+// ie:
+// - for testing an input file behavior, we will use a Generator
+// - for testing an output file behavior, we wll use a Check
+// - for testing a socket performing alternated sending and receiving, we use Test Transport
+// (obviously a Test transport without input data will behave like Check,
+// and a Test Transport without output data will behave like Generator)
+
+BOOST_AUTO_TEST_CASE(TestTestTransport)
+{
+    RT_ERROR status = RT_ERROR_OK;
+//    RT * rt = rt_new_test(&status, "output", 6, "input", 5);
+    RT * rt = rt_new_check(&status, "output", 6);
+
+    BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
+    // If both strings match, return length of send buffer
+    BOOST_CHECK_EQUAL(2, rt_send(rt, "ou", 2));
+    // if mismatch return the length of the common part (at least one)
+    BOOST_CHECK_EQUAL(4, rt_send(rt, "tput", 4));
+    // Now the next call mismatch
+    BOOST_CHECK_EQUAL(-RT_ERROR_TRAILING_DATA, rt_send(rt, "xxx", 3));
+}
+
 
 BOOST_AUTO_TEST_CASE(TestFileTransport)
 {

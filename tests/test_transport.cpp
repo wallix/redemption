@@ -149,13 +149,6 @@ BOOST_AUTO_TEST_CASE(TestFileTransport)
 
 BOOST_AUTO_TEST_CASE(TestCheckTransport)
 {
-    // TestTransport is bidirectional
-    // We provide both an output and an input source
-    // when using a test Transport we read what we provide in input source
-    // and we check that what we write to output is identical to output source
-    // if send fails, the difference between expected and actual data is showed
-    // and status is set to false (and will stay so) to allow tests to fail.
-    // inside Transport, the difference
     CheckTransport gt("input", 5);
     BOOST_CHECK_EQUAL(gt.status, true);
     try{
@@ -175,13 +168,6 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport)
 
 BOOST_AUTO_TEST_CASE(TestCheckTransportInputOverflow)
 {
-    // TestTransport is bidirectional
-    // We provide both an output and an input source
-    // when using a test Transport we read what we provide in input source
-    // and we check that what we write to output is identical to output source
-    // if send fails, the difference between expected and actual data is showed
-    // and status is set to false (and will stay so) to allow tests to fail.
-    // inside Transport, the difference
     CheckTransport gt("0123456789ABCDEF", 16);
     BOOST_CHECK_EQUAL(gt.status, true);
     try {
@@ -201,7 +187,7 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     // and we check that what we write to output is identical to output source
     // if send fails, the difference between expected and actual data is showed
     // and status is set to false (and will stay so) to allow tests to fail.
-    // inside Transport, the difference
+    // inside Transport, the difference is shown in trace logs.
     TestTransport gt("Test1", "OUTPUT", 6, "input", 5);
     BOOST_CHECK_EQUAL(gt.status, true);
     char buf[128] = {};

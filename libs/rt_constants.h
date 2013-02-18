@@ -26,6 +26,7 @@
 
 typedef enum {
     RT_ERROR_OK,
+    A, B, C, D, E, F,
     RT_ERROR_MALLOC,
     RT_ERROR_EOF,
     RT_ERROR_RECV_ONLY,

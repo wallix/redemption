@@ -70,7 +70,51 @@ extern "C" {
          return -RT_ERROR_RECV_ONLY;
     }
 
+    /* This method flush current chunk and start a new one
+       default: do nothing if the current file does not support chunking
+    */
+    inline RT_ERROR rt_m_XXX_next(RTXXX * self)
+    {
+         return RT_ERROR_OK;
+    }
 
+    /* Set Timestamp for next chunk
+       default : do nothing if the current file does not support timestamped chunks 
+    */
+    inline RT_ERROR rt_m_XXX_timestamp(RTXXX * self, uint32_t tv_sec, uint32_t tv_usec)
+    {
+         return RT_ERROR_OK;
+    }
+
+    /* Get Timestamp for current chunk
+       tv_usec can be a NULL pointer. In this case usec won't be returned
+       tv_sec is mandatory.
+       default : do nothing if the current file does not support timestamped chunks 
+    */
+    inline RT_ERROR rt_m_XXX_get_timestamp(RTXXX * self, uint32_t * tv_sec, uint32_t * tv_usec)
+    {
+         return RT_ERROR_OK;
+    }
+
+    /* Set metadata for next chunk (when writing to transport) 
+       this method can be called any number of times
+       meta is some UTF-8 zero terminated string and can't be larger than 1024 bytes (arbitrary limit)
+       Metadata can be added until the chunk is terminated (by calling next)
+       default : do nothing if the current file does not support timestamped chunks
+    */
+    inline RT_ERROR rt_m_XXX_add_meta(RTXXX * self, const char * meta)
+    {
+         return RT_ERROR_OK;
+    }
+
+    /* Get metadata for current chunk (when reading from transport)
+       this method can be called any number of time to get all metadata blocks relevant to current chunk.
+       default : do nothing if the current file does not support timestamped chunks
+    */
+    inline RT_ERROR rt_m_XXX_get_meta(RTXXX * self, char * meta)
+    {
+         return RT_ERROR_OK;
+    }
 };
 
 #endif
