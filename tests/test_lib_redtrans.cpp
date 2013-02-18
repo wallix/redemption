@@ -58,12 +58,12 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport)
     // it checks that was is written to it is the provided reference string
 
     BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
-//    // If both strings match, return length of send buffer
-//    BOOST_CHECK_EQUAL(7, rt_send(rt, "We read", 7));
-//    // if mismatch return the length of the common part (at least one)
-//    BOOST_CHECK_EQUAL(8, rt_send(rt, " what we!!!", 11));
-//    // Now the next call mismatch
-//    BOOST_CHECK_EQUAL(-RT_ERROR_DATA_MISMATCH, rt_send(rt, "xxx", 3));
+    // If both strings match, return length of send buffer
+    BOOST_CHECK_EQUAL(7, rt_send(rt, "We read", 7));
+    // if mismatch return the length of the common part (at least one)
+    BOOST_CHECK_EQUAL(8, rt_send(rt, " what we!!!", 11));
+    // Now the next call mismatch
+    BOOST_CHECK_EQUAL(-RT_ERROR_DATA_MISMATCH, rt_send(rt, "xxx", 3));
 }
 
 

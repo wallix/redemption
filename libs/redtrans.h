@@ -234,6 +234,8 @@ ssize_t rt_send(RT * rt, const void * data, size_t len)
     switch (rt->rt_type){
     case RT_TYPE_GENERATOR:
         return rt_m_RTGenerator_send(&(rt->u.generator), data, len);
+    case RT_TYPE_CHECK:
+        return rt_m_RTCheck_send(&(rt->u.check), data, len);
     case RT_TYPE_INFILE:
         return rt_m_RTInfile_send(&(rt->u.infile), data, len);
     case RT_TYPE_OUTFILE:
