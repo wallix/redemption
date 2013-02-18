@@ -30,6 +30,7 @@ struct RTGenerator {
     uint8_t * data;
     size_t len;
     bool status;
+    RT_ERROR err;
 };
 
 extern "C" {
@@ -44,6 +45,7 @@ extern "C" {
         self->len = len;
         self->current = 0;
         self->status = true;
+        self->err = RT_ERROR_OK;
         memcpy(self->data, data, len);
         return RT_ERROR_OK;
     }
@@ -65,14 +67,13 @@ extern "C" {
     */
     inline ssize_t rt_m_RTGenerator_recv(RTGenerator * self, void * data, size_t len)
     {
-        if (!self->status){
-            return -RT_ERROR_EOF;
-        }
+        if (!self->status){ return -self->err; }
         if (self->current + len > self->len){
             size_t available_len = self->len - self->current;
             memcpy(data, (char*)self->data + self->current, available_len);
             self->current += available_len;
             self->status = false; // next read will trigger an error
+            self->err = RT_ERROR_EOF;
             return available_len;
         }
         memcpy(data, (char*)self->data + self->current, len);
@@ -89,7 +90,9 @@ extern "C" {
     */
     inline ssize_t rt_m_RTGenerator_send(RTGenerator * self, const void * data, size_t len)
     {
-         return RT_ERROR_RECV_ONLY;
+         self->status = false;
+         self->err = RT_ERROR_RECV_ONLY;
+         return -self->err;
     }
 
 

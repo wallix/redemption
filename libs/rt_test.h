@@ -27,6 +27,8 @@
 #include "rt_constants.h"
 
 struct RTTest {
+    RT * check;
+    RT * generator;
 };
 
 extern "C" {
@@ -34,17 +36,32 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_RTTest_constructor(RTTest * self)
+    inline RT_ERROR rt_m_RTTest_constructor(RTTest * self, 
+                                            const void * data_check, size_t len_check, 
+                                            const void * data_gen, size_t len_gen)
     {
-        return RT_ERROR_NOT_IMPLEMENTED;
+        RT_ERROR status = RT_ERROR_OK;
+        self->check = rt_new_check(&status, data_check, len_check);
+        if (status != RT_ERROR_OK){
+            return status;
+        }
+        self->generator = rt_new_generator(&status, data_gen, len_gen);
+        if (status != RT_ERROR_OK){
+            rt_delete(self->check);
+            return status;
+        }
+        return status;
     }
 
     /* This method deallocate any space used for subfields if any
     */
     inline RT_ERROR rt_m_RTTest_destructor(RTTest * self)
     {
+        rt_delete(self->check);
+        rt_delete(self->generator);
         return RT_ERROR_OK;
     }
+
 
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data
@@ -55,7 +72,16 @@ extern "C" {
     */
     inline ssize_t rt_m_RTTest_recv(RTTest * self, void * data, size_t len)
     {
-         return -RT_ERROR_SEND_ONLY;
+        
+        RT_ERROR err_gen = rt_get_status(self->generator);
+        if (err_gen != RT_ERROR_OK){
+            return -err_gen;
+        }
+        RT_ERROR err_check = rt_get_status(self->check);
+        if (err_check != RT_ERROR_OK){
+            return -err_check;
+        }
+        return rt_recv(self->generator, data, len);
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -67,9 +93,16 @@ extern "C" {
     */
     inline ssize_t rt_m_RTTest_send(RTTest * self, const void * data, size_t len)
     {
-         return -RT_ERROR_RECV_ONLY;
+        RT_ERROR err_gen = rt_get_status(self->generator);
+        if (err_gen != RT_ERROR_OK){
+            return -err_gen;
+        }
+        RT_ERROR err_check = rt_get_status(self->check);
+        if (err_check != RT_ERROR_OK){
+            return -err_check;
+        }
+        return rt_send(self->check, data, len);
     }
-
 
 };
 

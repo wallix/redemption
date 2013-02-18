@@ -26,7 +26,6 @@
 
 typedef enum {
     RT_ERROR_OK,
-    A, B, C, D, E, F,
     RT_ERROR_MALLOC,
     RT_ERROR_EOF,
     RT_ERROR_RECV_ONLY,
@@ -38,5 +37,20 @@ typedef enum {
     RT_ERROR_NOT_IMPLEMENTED,
 } RT_ERROR;
 
+struct RT;
+
+// Forward headers for methods defined in redtrans 
+//(this allow to use them as an interface to individual transports for combining transports)
+RT * rt_new_generator(RT_ERROR * error, const void * data, size_t len);
+RT * rt_new_check(RT_ERROR * error, const void * data, size_t len);
+RT * rt_new_test(RT_ERROR * error,
+                     const void * data_check, size_t len_check, 
+                     const void * data_gen, size_t len_gen);
+RT * rt_new_outfile(RT_ERROR * error, int fd);
+RT * rt_new_infile(RT_ERROR * error, int fd);
+RT_ERROR rt_delete(RT * rt);
+ssize_t rt_recv(RT * rt, void * data, size_t len);
+ssize_t rt_send(RT * rt, const void * data, size_t len);
+RT_ERROR rt_get_status(RT * rt);
 
 #endif

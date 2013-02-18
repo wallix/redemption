@@ -24,7 +24,7 @@
 #define BOOST_TEST_MODULE TestRedTransportLibrary
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 
 #include "../libs/redtrans.h"
@@ -66,6 +66,21 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport)
     BOOST_CHECK_EQUAL(-RT_ERROR_DATA_MISMATCH, rt_send(rt, "xxx", 3));
 }
 
+BOOST_AUTO_TEST_CASE(TestCheckTransport2)
+{
+    RT_ERROR status = RT_ERROR_OK;
+//    RT * rt = rt_new_test(&status, "output", 6, "input", 5);
+    RT * rt = rt_new_check(&status, "output", 6);
+
+    BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
+    // If both strings match, return length of send buffer
+    BOOST_CHECK_EQUAL(2, rt_send(rt, "ou", 2));
+    // if mismatch return the length of the common part (at least one)
+    BOOST_CHECK_EQUAL(4, rt_send(rt, "tput", 4));
+    // Now the next call mismatch
+    BOOST_CHECK_EQUAL(0, rt_send(rt, "xxx", 3));
+    BOOST_CHECK_EQUAL(-RT_ERROR_TRAILING_DATA, rt_send(rt, "xxx", 3));
+}
 
 // TestTransport is basically (and internally) a Generator comined with a Check Transport
 // It is designed fot testing purpose of bidirectional transports
@@ -80,7 +95,7 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
 {
     RT_ERROR status = RT_ERROR_OK;
 //    RT * rt = rt_new_test(&status, "output", 6, "input", 5);
-    RT * rt = rt_new_check(&status, "output", 6);
+    RT * rt = rt_new_test(&status, "output", 6, "input", 5);
 
     BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
     // If both strings match, return length of send buffer
@@ -88,6 +103,7 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     // if mismatch return the length of the common part (at least one)
     BOOST_CHECK_EQUAL(4, rt_send(rt, "tput", 4));
     // Now the next call mismatch
+    BOOST_CHECK_EQUAL(0, rt_send(rt, "xxx", 3));
     BOOST_CHECK_EQUAL(-RT_ERROR_TRAILING_DATA, rt_send(rt, "xxx", 3));
 }
 

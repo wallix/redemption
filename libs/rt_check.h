@@ -76,7 +76,9 @@ extern "C" {
     */
     inline ssize_t rt_m_RTCheck_recv(RTCheck * self, void * data, size_t len)
     {
-         return -RT_ERROR_SEND_ONLY;
+         self->status = false;
+         self->err = RT_ERROR_SEND_ONLY;
+         return -self->err;
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -89,25 +91,10 @@ extern "C" {
     inline ssize_t rt_m_RTCheck_send(RTCheck * self, const void * data, size_t len)
     {
         if (!(self->status)) {
-            switch (self->err){
-            case RT_ERROR_TRAILING_DATA:
-            {
-                    LOG(LOG_INFO, "Check transport out of reference data");
-                    LOG(LOG_INFO, "=============== Got Unexpected Data ==========");
-                    hexdump_c(&(((const char *)data)[0]), len);
-            }
-            break;
-            default:
-            {
-            }
-            break;
-            }
             return -self->err;
         }
         size_t available_len = (self->current + len > self->len)?(self->len - self->current):len;
-        hexdump_c(&(((const char *)data)[0]), available_len);
-
-        if (0 != memcmp(data, (const char *)(&(self->data[self->current])), available_len)){
+        if (0 != memcmp(data, (const char *)(&self->data[self->current]), available_len)){
             // data differs
             self->status = false;
             self->err = RT_ERROR_DATA_MISMATCH;
@@ -129,7 +116,12 @@ extern "C" {
             return differs;
         }
         self->current += available_len;
-        if (available_len == len){
+        if (available_len != len){
+            LOG(LOG_INFO, "Check transport out of reference data available=%u len=%u", available_len, len);
+            LOG(LOG_INFO, "=============== Common Part =======");
+            hexdump_c(&(((const char *)data)[0]), available_len);
+            LOG(LOG_INFO, "=============== Got Unexpected Data ==========");
+            hexdump_c(&(((const char *)data)[available_len]), len - available_len);
             self->status = false;
             self->err = RT_ERROR_TRAILING_DATA;
         }
