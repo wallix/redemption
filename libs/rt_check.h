@@ -27,6 +27,10 @@
 #include "rt_constants.h"
 
 struct RTCheck {
+    size_t current;
+    uint8_t * data;
+    size_t len;
+    bool status;
 };
 
 extern "C" {
@@ -36,13 +40,20 @@ extern "C" {
     */
     inline RT_ERROR rt_m_RTCheck_constructor(RTCheck * self, const void * data, size_t len)
     {
-        return RT_ERROR_NOT_IMPLEMENTED;
+        self->data = (uint8_t *)malloc(len);
+        if (!self->data) { return RT_ERROR_MALLOC; }
+        self->len = len;
+        self->current = 0;
+        self->status = true;
+        memcpy(self->data, data, len);
+        return RT_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
     inline RT_ERROR rt_m_RTCheck_destructor(RTCheck * self)
     {
+        free(self->data);
         return RT_ERROR_OK;
     }
 
@@ -75,7 +86,37 @@ extern "C" {
     */
     inline ssize_t rt_m_RTCheck_send(RTCheck * self, const void * data, size_t len)
     {
-         return -RT_ERROR_RECV_ONLY;
+        if (self->status) {
+            return -RT_ERROR_DIFFERS;
+        }
+        size_t available_len = (self->current + len > self->len)?(self->len - self->current):len;
+//        if (0 != memcmp(data, (const char *)(&self->data[self->current]), available_len)){
+//            // data differs
+//            self->status = false;
+//            // find where
+//            uint32_t differs = 0;
+//            for (size_t i = 0; i < available_len ; i++){
+//                if ((const char *)data[i] != (((const char *)(self->data))[self->current])[i]){
+//                    differs = i;
+//                    break;
+//                }
+//            }
+//            LOG(LOG_INFO, "=============== Common Part =======");
+//            hexdump_c(data, differs);
+//            LOG(LOG_INFO, "=============== Expected ==========");
+//            hexdump(&self->data[self->current] + differs, available_len - differs);
+//            LOG(LOG_INFO, "=============== Got ===============");
+//            hexdump_c(data+differs, available_len - differs);
+//            return differs;
+//        }
+        self->current += available_len;
+        if (available_len != len){
+//            LOG(LOG_INFO, "Check transport out of reference data available=%u len=%u", available_len, len);
+//            LOG(LOG_INFO, "=============== Unexpected Missing ==========");
+//            hexdump_c(data + available_len, len - available_len);
+            self->status = false;
+        }
+        return available_len;
     }
 
 

@@ -14,9 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+   Copyright (C) Wallix 2013
+   Author(s): Christophe Grosjean
 
 */
 
@@ -43,11 +42,31 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
     BOOST_CHECK_EQUAL(0, memcmp("We ", buffer, 3));
     BOOST_CHECK_EQUAL(21, rt_recv(rt, buffer+3, 1024));
     BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
-    BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer+24, 1024));
+    BOOST_CHECK_EQUAL(-RT_ERROR_EOF, rt_recv(rt, buffer+24, 1024));
     
     rt_close(rt);
     rt_delete(rt);
 }
+
+
+BOOST_AUTO_TEST_CASE(TestCheckTransport)
+{
+    RT_ERROR status = RT_ERROR_OK;
+    RT * rt = rt_new_check(&status, "We read what we provide!", 24);
+    // Check Transport it somewhat similar to Generator Transport,
+    // but instead of allowing to read what is provided
+    // it checks that was is written to it is the provided reference string
+
+    BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
+//    // If both strings match, return length of send buffer
+//    BOOST_CHECK_EQUAL(7, rt_send(rt, "We read", 7));
+//    // if mismatch return the length of the common part (at least one)
+//    BOOST_CHECK_EQUAL(8, rt_send(rt, " what we!!!", 11));
+//    // Now the next call mismatch
+//    BOOST_CHECK_EQUAL(-RT_ERROR_DATA_MISMATCH, rt_send(rt, "xxx", 3));
+}
+
+
 
 BOOST_AUTO_TEST_CASE(TestFileTransport)
 {

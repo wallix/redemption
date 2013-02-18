@@ -96,6 +96,60 @@ The given path should be the full path in the source tree and the define name wi
 \end{lstlisting}
 \vspace{-20pt}
 
+
+\section{Forward Declarations}
+
+Forward declaration of classes should be avoided. 
+
+\subsection{Definition:} A \"forward declaration\" is a declaration of a class, function, or template without an associated definition. \#include lines can often be replaced with forward declarations of whatever symbols are actually used by the client code.
+
+\subsection{Pros:}
+
+Unnecessary \#includes force the compiler to open more files and process more input.
+    They can also force your code to be recompiled more often, due to changes in the header.
+
+\subsection{Cons:}
+
+    It can be difficult to determine the correct form of a forward declaration in the presence of features like templates, typedefs, default parameters, and using declarations.
+    It can be difficult to determine whether a forward declaration or a full \#include is needed for a given piece of code, particularly when implicit conversion operations are involved. In extreme cases, replacing an \#include with a forward declaration can silently change the meaning of code.
+    Forward declaring multiple symbols from a header can be more verbose than simply \#include-ing the header.
+    Forward declarations of functions and templates can prevent the header owners from making otherwise-compatible changes to their APIs; for example, widening a parameter type, or adding a template parameter with a default value.
+    Forward declaring symbols from namespace std:: usually yields undefined behavior.
+    Structuring code to enable forward declarations (e.g. using pointer members instead of object members) can make the code slower and more complex.
+    The practical efficiency benefits of forward declarations are unproven.
+
+\subsection{Decision:}
+
+    When using a function declared in a header file, always \#include that header.
+    When using a class template, prefer to \#include its header file.
+    When using an ordinary class forward declaration should be avoided. There are situations where a forward declaration may be insufficient or incorrect preferably just \#include the appropriate header.
+    Do not replace data members with pointers just to avoid an \#include.
+
+Always \#include the file that actually provides the declarations/definitions you need; do not rely on the symbol being brought in transitively via headers not directly included. One exception is that myfile.cpp may rely on \#includes and forward declarations from its corresponding header file myfile.hpp.
+
+\section{Inline Functions}
+
+inline function is a misleading name. It is related to compilation unit more than actually inlining. All functions and methods should be inlined when using headers-only style or linking problems will occur.
+
+\subsection{Definition:} You can declare functions in a way that tells the compiler that the same function definition can appear in several compilation units. The used keyword is inline and is also a hint for the compiler to inline the code (but this is not mandatory and compilers will do as they wish).
+
+\subsection{Pros:} Inlining a function can generate more efficient object code, as long as the inlined function is small. Typical use is to inline accessors and mutators, and other short, performance-critical functions.
+Inlining a function avoids keeping two independant header lines one in header, the other in implementation file. This is a burden when refactoring loop.
+Making a function inline place its definition in the class, which is convenient and document its behavior, e.g., for accessors and mutators. 
+
+Inline is mandatory when using headers only style as soon as we have several compilation units, or prtogram won't link (multiple definitions of the same symbol).
+
+It is important to know that functions are not always inlined even if they are declared as such; for example, virtual and recursive functions are not normally inlined. Usually recursive functions should not be inline. Modern compilers may often choose not to inline code even hinted with the inline keyword in inefficient cases (like when the inlined function contains loops or switch statements).
+
+\subsection{Cons:} Overuse of inlining can actually make programs slower. Depending on a function's size, inlining it can cause the code size to increase or decrease. Inlining a very small accessor function will usually decrease code size while inlining a very large function can dramatically increase code size. On modern processors smaller code usually runs faster due to better use of the instruction cache.
+Inlining makes headers files larger and leads to slower compilation times. 
+The header will also be changed more often which will also lead to longer compilation times.
+
+\subsection{Decision:} Inlining should be used with headers only style, unless there is a mesurable performance issue doing otherwise is best.
+
+When a class API is stabilized and the class is ready to become an independant library (not headers library), header file should be refactored and inlined functions shortened and code moved to implementation .cpp file.
+
+
 \chapter{Unit Testing}
 
 \chapter{Code Smells}

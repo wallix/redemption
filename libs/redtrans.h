@@ -110,6 +110,31 @@ RT * rt_new_generator(RT_ERROR * error, const void * data, size_t len)
     return res;
 }
 
+RT * rt_new_check(RT_ERROR * error, const void * data, size_t len)
+{
+    RT * res = (RT*)malloc(sizeof(RT));
+    if (res == 0){ 
+        if (error){ *error = RT_ERROR_OK; }
+        return NULL;
+    }
+    res->rt_type = RT_TYPE_CHECK;
+    RT_ERROR status = rt_m_RTCheck_constructor(&(res->u.check), data, len);
+    switch (status){
+    default:
+        rt_m_RTCheck_destructor(&(res->u.check));
+        free(res);
+        if (error){ *error = status; }
+        return NULL;
+    case RT_ERROR_MALLOC:
+        free(res);
+        if (error){ *error = status; }
+        return NULL;
+    case RT_ERROR_OK:
+        if (error){ *error = RT_ERROR_OK; }
+        break;
+    }
+    return res;
+}
 
 RT * rt_new_outfile(RT_ERROR * error, int fd)
 {
@@ -170,6 +195,9 @@ RT_ERROR rt_delete(RT * rt)
         case RT_TYPE_GENERATOR:
             status = rt_m_RTGenerator_destructor(&(rt->u.generator));
         break;
+        case RT_TYPE_CHECK:
+            status = rt_m_RTCheck_destructor(&(rt->u.check));
+        break;
         case RT_TYPE_INFILE:
             status = rt_m_RTInfile_destructor(&(rt->u.infile));
         break;
@@ -193,15 +221,15 @@ ssize_t rt_recv(RT * rt, void * data, size_t len)
         return rt_m_RTInfile_recv(&(rt->u.infile), data, len);
     break;
     case RT_TYPE_OUTFILE:
-        return -1;
+        return rt_m_RTOutfile_recv(&(rt->u.outfile), data, len);;
     break;
     default:
         ;
     }
-    return -1;
+    return -RT_ERROR_UNKNOWN_TYPE;
 }
 
-ssize_t rt_send(RT * rt, void * data, size_t len)
+ssize_t rt_send(RT * rt, const void * data, size_t len)
 {
     switch (rt->rt_type){
     case RT_TYPE_GENERATOR:
@@ -213,7 +241,7 @@ ssize_t rt_send(RT * rt, void * data, size_t len)
     default:
         ;
     }
-    return RT_ERROR_UNKNOWN_TYPE;
+    return -RT_ERROR_UNKNOWN_TYPE;
 }
 
 void rt_close(RT * rt)
