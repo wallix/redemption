@@ -142,22 +142,16 @@ struct window_login : public window
             ini->account.username[0] = 0;
         }
         else {
+            TODO("check this assembling parts to get user login with target is not obvious"
+                 "method used below il likely to show @: if target fields are empty")
             char buffer[256];
-            if ( strlen(context.get(STRAUTHID_TARGET_PROTOCOL)) > 0) {
-                snprintf( buffer, 256, "%s@%s:%s:%s"
-                        , context.get(STRAUTHID_TARGET_USER)
-                        , context.get(STRAUTHID_TARGET_DEVICE)
-                        , context.get(STRAUTHID_TARGET_PROTOCOL)
-                        , context.get(STRAUTHID_AUTH_USER)
-                        );
-            }
-            else {
-                snprintf( buffer, 256, "%s@%s:%s"
-                        , context.get(STRAUTHID_TARGET_USER)
-                        , context.get(STRAUTHID_TARGET_DEVICE)
-                        , context.get(STRAUTHID_AUTH_USER)
-                        );
-            }
+            snprintf( buffer, 256, "%s@%s:%s%s%s"
+                    , context.get(STRAUTHID_TARGET_USER)
+                    , context.get(STRAUTHID_TARGET_DEVICE)
+                    , context.get(STRAUTHID_TARGET_PROTOCOL)[0]?context.get(STRAUTHID_TARGET_PROTOCOL):""
+                    , context.get(STRAUTHID_TARGET_PROTOCOL)[0]?":":""
+                    , context.get(STRAUTHID_AUTH_USER)
+                    );
             strcpy(ini->account.username, buffer);
         }
 
@@ -238,6 +232,7 @@ struct window_login : public window
 
     virtual void notify(struct Widget* sender, int msg, long param1, long param2)
     {
+        LOG(LOG_INFO, "notify: sender=%p id=%u msg=%u p1=%lu p2=%lu", sender, sender?sender->id:0, msg, param1, param2);
         if (this->modal_dialog != 0 && msg != 100) {
             return;
         }

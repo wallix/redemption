@@ -55,6 +55,14 @@ enum {
     WM_CHANNELDATA = 0x5555,
 };
 
+enum {
+    NOTIFY_MOUSE_MOVE,
+    NOTIFY_MOUSE_DOWN,
+    NOTIFY_MOUSE_UP,
+    NOTIFY_CLICK,
+};
+
+
 /* drawable types */
 enum {
     WND_TYPE_BITMAP  = 0,
@@ -235,7 +243,9 @@ struct Widget {
     {
     }
 
-    virtual void draw(const Rect & clip);
+    virtual void draw(const Rect & clip)
+    {
+    }
 
     // transform a rectangle relative to current widget to rectangle relative to screen
     Rect const to_screen_rect(const Rect & r)
@@ -332,5 +342,6 @@ struct Widget {
         return region;
     }
 };
+
 
 #endif
