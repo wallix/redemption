@@ -151,26 +151,6 @@ struct login_mod : public internal_mod {
                 this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
                 this->front.end_update();
             }
-            else {
-                this->front.begin_update();
-
-                struct Widget *b = this->screen.widget_at_pos(x, y);
-                if (b == 0) { /* if b is null, the movement must be over the screen */
-                    b = &this->screen;
-                }
-//                if (b->pointer != this->current_pointer) {
-//                    this->server_set_pointer(b->pointer);
-//                }
-                b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), keymap);
-                if (this->button_down) {
-                    this->button_down->state = (b == this->button_down);
-                    this->button_down->refresh(this->button_down->rect.wh());
-                }
-                else {
-                    b->notify(b->parent, 2, x, y);
-                }
-                this->front.end_update();
-            }
         }
 
         // -------------------------------------------------------
@@ -289,7 +269,7 @@ struct login_mod : public internal_mod {
                                         control->state = 0;
                                         this->front.begin_update();
                                         control->refresh(control->rect.wh());
-                                        control->notify(control, 1, x, y);
+                                        control->notify(control->id, 1, x, y);
                                         this->front.end_update();
                                     }
                                 break;

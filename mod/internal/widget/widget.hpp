@@ -34,11 +34,11 @@
 #include "keymap2.hpp"
 
 enum {
+    WM_MOUSE_MOVE  = 2,
     WM_PAINT       = 3,
     WM_KEYDOWN     = 15,
     WM_KEYUP       = 16,
     WM_SYNCHRONIZE = 17,
-    WM_MOUSEMOVE   = 100,
     WM_LBUTTONUP   = 101,
     WM_LBUTTONDOWN = 102,
     WM_RBUTTONUP   = 103,
@@ -211,10 +211,10 @@ struct Widget {
     }
 
 
-    virtual void notify(struct Widget* sender, int msg, long param1, long param2)
+    virtual void notify(int id, int msg, long param1, long param2)
     {
         if (this->type != WND_TYPE_SCREEN){
-            this->parent->notify(sender, msg, param1, param2);
+            this->parent->notify(id, msg, param1, param2);
         }
     }
 
@@ -229,7 +229,7 @@ struct Widget {
     virtual void refresh(const Rect & clip)
     {
         this->draw(clip);
-        this->notify(this, WM_PAINT, 0, 0);
+        this->notify(this->id, WM_PAINT, 0, 0);
 
         size_t count = this->child_list.size();
         for (size_t i = 0; i < count; i++) {

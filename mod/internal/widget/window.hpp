@@ -37,9 +37,6 @@ struct window : public Widget
 {
     window(internal_mod * mod, const Rect & r, Widget * parent, int bg_color, const char * title)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_WND) {
-
-        assert(type == WND_TYPE_WND);
-
         this->bg_color = bg_color;
         this->rect.x = r.x;
         this->rect.y = r.y;
@@ -136,11 +133,11 @@ struct window : public Widget
                 }
             break;
             case Keymap2::KEVENT_ENTER:
-                this->notify(this->default_button, 1, 0, 0);
+                this->notify(this->default_button->id, 1, 0, 0);
             return;
             case Keymap2::KEVENT_ESC:
                 if (this->esc_button) {
-                    this->notify(this->esc_button, 1, 0, 0);
+                    this->notify(this->esc_button->id, 1, 0, 0);
                 }
             break;
             default:
@@ -152,90 +149,6 @@ struct window : public Widget
     }
 };
 
-struct window_dialog : public window
-{
-    ModContext * context;
-
-    window_dialog(internal_mod * mod, const Rect & r,
-                  ModContext & context,
-                  Widget * parent, int bg_color,
-                  const char * title, Inifile * ini, int regular,
-                  const char * message,
-                  const char * refuse)
-    : window(mod, r, parent, bg_color, title)
-    {
-        struct Widget* but;
-        this->context = &context;
-        this->esc_button = NULL;
-
-        but = new widget_button(this->mod, Rect(200, r.cy - 40, 60, 25), this, 3, 1, "OK");
-        this->child_list.push_back(but);
-        this->default_button = but;
-
-        if (refuse) {
-            but = new widget_button(this->mod, Rect(300, r.cy - 40, 60, 25), this, 2, 1, refuse);
-            this->child_list.push_back(but);
-            this->esc_button = but;
-            this->default_button = but;
-        }
-        size_t count = 0;
-        bool done = false;
-        while (!done) {
-            if (75 + count * 16 >= r.cy){
-                break;
-            }
-            const char * str = strstr(message, "<br>");
-            char tmp[256];
-            tmp[0] = 0;
-            strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
-            tmp[255] = 0;
-            but = new widget_label(this->mod, Rect(30, 25 + 16 * count, r.cx - 30, 40), this, tmp);
-            this->child_list.push_back(but);
-            count++;
-            if (!str){
-                done = true;
-            }
-            else {
-                message = str + 4;
-            }
-        }
-    }
-
-    virtual void notify(struct Widget* sender, int msg, long param1, long param2)
-    {
-        if (this->modal_dialog != 0 && msg != 100) {
-            return;
-        }
-        TODO(" use symbolic button ids instead of constants 2 and 3")
-        if (msg == 1) { /* click */
-            LOG(LOG_INFO, "windget_window_dialog::notify %d sender->id=%d", msg, sender->id);
-            switch (sender->id) {
-            case 2: /* cancel button -> Esc */
-                this->context->cpy(
-                        (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
-                                          :STRAUTHID_DISPLAY_MESSAGE,
-                        "False");
-                this->mod->event.set();
-                this->mod->signal = BACK_EVENT_NEXT;
-            break;
-            case 3: /* ok button -> Enter */
-                this->context->cpy(
-                        (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
-                                          :STRAUTHID_DISPLAY_MESSAGE,
-                        "True");
-                this->mod->event.set();
-                this->mod->signal = BACK_EVENT_NEXT;
-            break;
-            default:
-            break;
-            }
-        }
-        return;
-    }
-
-    virtual ~window_dialog(){
-    }
-};
 
 
 struct window_help : public window
@@ -247,56 +160,62 @@ struct window_help : public window
     {
     }
 
-    virtual void notify(struct Widget* sender, int msg, long param1, long param2)
+    void draw(const Rect & clip)
+    {
+        this->window::draw(clip);
+        TODO(" the code below is a bit too much specialized. Change it to some code able to write a paragraph of text in a given rectangle. Later we may even add some formatting support.")
+        const char * message =
+                "You must be authenticated before using this<br>"
+                "session.<br>"
+                "<br>"
+                "Enter a valid username in the username edit box.<br>"
+                "Enter the password in the password edit box.<br>"
+                "<br>"
+                "Both the username and password are case<br>"
+                "sensitive.<br>"
+                "<br>"
+                "Contact your system administrator if you are<br>"
+                "having problems logging on.<br>"
+                ;
+        int count = 0;
+        bool done = false;
+        while (!done) {
+            const char * str = strstr(message, "<br>");
+            char tmp[256];
+            tmp[0] = 0;
+            strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
+            tmp[255] = 0;
+
+            Rect r(0, 0, this->rect.cx, this->rect.cy);
+            const Rect scr_r = this->to_screen_rect(r);
+            const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
+
+            for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+                this->mod->front.server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK, region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
+            }
+
+            count++;
+            if (!str){
+                done = true;
+            }
+            else {
+                message = str + 4;
+            }
+        }
+    }
+
+
+    virtual void notify(int id, int msg, long param1, long param2)
     {
         if (msg == 1) { /* click */
-            if (sender->id == 1) { /* ok button */
-                    this->notify_to.notify(this, 100, 1, 0); /* ok */
+            if (id == 1) { /* ok button */
+                    this->notify_to.notify(id, 100, 1, 0); /* ok */
             }
         } else if (msg == WM_PAINT) { /* 3 */
-            TODO(" the code below is a bit too much specialized. Change it to some code able to write a paragraph of text in a given rectangle. Later we may even add some formatting support.")
-            const char * message =
-                    "You must be authenticated before using this<br>"
-                    "session.<br>"
-                    "<br>"
-                    "Enter a valid username in the username edit box.<br>"
-                    "Enter the password in the password edit box.<br>"
-                    "<br>"
-                    "Both the username and password are case<br>"
-                    "sensitive.<br>"
-                    "<br>"
-                    "Contact your system administrator if you are<br>"
-                    "having problems logging on.<br>"
-                    ;
-            int count = 0;
-            bool done = false;
-            while (!done) {
-                const char * str = strstr(message, "<br>");
-                char tmp[256];
-                tmp[0] = 0;
-                strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
-                tmp[255] = 0;
-
-                Rect r(0, 0, this->rect.cx, this->rect.cy);
-                const Rect scr_r = this->to_screen_rect(r);
-                const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
-
-                for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-                    this->mod->front.server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK, region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
-                }
-
-                count++;
-                if (!str){
-                    done = true;
-                }
-                else {
-                    message = str + 4;
-                }
-            }
+            this->draw(this->rect);
         }
         return;
     }
-
 };
 
 
@@ -323,7 +242,7 @@ struct window_login : public window
                 340,
                 300),
             &mod->screen, // parent
-            *this, // notify
+            *this, // notify_to
             grey,
             "Login help");
 
@@ -346,7 +265,7 @@ struct window_login : public window
             ini->account.username[0] = 0;
         }
         else {
-            TODO("check this assembling parts to get user login with target is not obvious"
+            TODO("check this! Assembling parts to get user login with target is not obvious"
                  "method used below il likely to show @: if target fields are empty")
             char buffer[256];
             snprintf( buffer, 256, "%s@%s:%s%s%s"
@@ -434,28 +353,30 @@ struct window_login : public window
         return &(this->ini->account);
     }
 
-    virtual void notify(struct Widget* sender, int msg, long param1, long param2)
+    virtual void notify(int id, int msg, long param1, long param2)
     {
-        LOG(LOG_INFO, "notify: sender=%p id=%u msg=%u p1=%lu p2=%lu", sender, sender?sender->id:0, msg, param1, param2);
+        LOG(LOG_INFO, "notify: id=%u msg=%u p1=%lu p2=%lu", id, msg, param1, param2);
         if (this->modal_dialog != 0 && msg != 100) {
             return;
         }
         if (msg == 1) { /* click */
-            if (sender->id == 1) { /* help button */
+            if (id == 1) { /* help button */
                 this->help_clicked();
-            } else if (sender->id == 2) { /* cancel button */
+            } else if (id == 2) { /* cancel button */
                 this->cancel_clicked();
-            } else if (sender->id == 3) { /* ok button */
+            } else if (id == 3) { /* ok button */
                 this->ok_clicked();
             }
         } else if (msg == 2) { /* mouse move */
         } else if (msg == 100) { /* modal result is done */
-            sender->has_focus = false;
+            if (this->modal_dialog && this->modal_dialog->has_focus){
+                this->modal_dialog->has_focus = false;
+            }
             this->has_focus = true;
             for (size_t i = 0 ; i < this->mod->screen.child_list.size() ; i++)
             {
                 Widget * b = this->mod->screen.child_list[i];
-                if (b == sender){
+                if (b->id == id){
                     this->mod->screen.child_list.erase(this->mod->screen.child_list.begin()+i);
                     this->mod->front.begin_update();
                     this->mod->screen.refresh(this->mod->screen.rect);
@@ -540,6 +461,93 @@ struct window_login : public window
         delete this->help;
     }
 };
+
+
+struct window_dialog : public window
+{
+    ModContext * context;
+
+    window_dialog(internal_mod * mod, const Rect & r,
+                  ModContext & context,
+                  Widget * parent, int bg_color,
+                  const char * title, Inifile * ini, int regular,
+                  const char * message,
+                  const char * refuse)
+    : window(mod, r, parent, bg_color, title)
+    {
+        struct Widget* but;
+        this->context = &context;
+        this->esc_button = NULL;
+
+        but = new widget_button(this->mod, Rect(200, r.cy - 40, 60, 25), this, 3, 1, "OK");
+        this->child_list.push_back(but);
+        this->default_button = but;
+
+        if (refuse) {
+            but = new widget_button(this->mod, Rect(300, r.cy - 40, 60, 25), this, 2, 1, refuse);
+            this->child_list.push_back(but);
+            this->esc_button = but;
+            this->default_button = but;
+        }
+        size_t count = 0;
+        bool done = false;
+        while (!done) {
+            if (75 + count * 16 >= r.cy){
+                break;
+            }
+            const char * str = strstr(message, "<br>");
+            char tmp[256];
+            tmp[0] = 0;
+            strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
+            tmp[255] = 0;
+            but = new widget_label(this->mod, Rect(30, 25 + 16 * count, r.cx - 30, 40), this, tmp);
+            this->child_list.push_back(but);
+            count++;
+            if (!str){
+                done = true;
+            }
+            else {
+                message = str + 4;
+            }
+        }
+    }
+
+    virtual void notify(int id, int msg, long param1, long param2)
+    {
+        if (this->modal_dialog != 0 && msg != 100) {
+            return;
+        }
+        TODO(" use symbolic button ids instead of constants 2 and 3")
+        if (msg == 1) { /* click */
+            LOG(LOG_INFO, "windget_window_dialog::notify id=%d msg=%d", id, msg);
+            switch (id) {
+            case 2: /* cancel button -> Esc */
+                this->context->cpy(
+                        (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
+                                          :STRAUTHID_DISPLAY_MESSAGE,
+                        "False");
+                this->mod->event.set();
+                this->mod->signal = BACK_EVENT_NEXT;
+            break;
+            case 3: /* ok button -> Enter */
+                this->context->cpy(
+                        (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
+                                          :STRAUTHID_DISPLAY_MESSAGE,
+                        "True");
+                this->mod->event.set();
+                this->mod->signal = BACK_EVENT_NEXT;
+            break;
+            default:
+            break;
+            }
+        }
+        return;
+    }
+
+    virtual ~window_dialog(){
+    }
+};
+
 
 struct wab_close : public window
 {
@@ -646,7 +654,7 @@ struct wab_close : public window
     ~wab_close(){
     }
 
-    virtual void notify(struct Widget* sender, int msg, long param1, long param2)
+    virtual void notify(int id, int msg, long param1, long param2)
     {
         return;
     }
