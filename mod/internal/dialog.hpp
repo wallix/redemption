@@ -27,7 +27,7 @@
 
 #include <stdlib.h>
 #include "log.hpp"
-#include "widget/window_dialog.hpp"
+#include "widget/window.hpp"
 
 struct dialog_mod : public internal_mod {
     struct window_dialog * close_window;

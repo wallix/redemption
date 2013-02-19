@@ -25,7 +25,8 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_LOGIN_HPP_
 #define _REDEMPTION_MOD_INTERNAL_LOGIN_HPP_
 
-#include "widget/window_login.hpp"
+#include "version.hpp"
+#include "widget/window.hpp"
 
 
 struct login_mod : public internal_mod {
