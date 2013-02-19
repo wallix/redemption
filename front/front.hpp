@@ -235,7 +235,7 @@ TODO("Pass font name as parameter in constructor")
         }
     }
 
-    void text_metrics(const char * text, int & width, int & height){
+    virtual void text_metrics(const char * text, int & width, int & height){
         height = 0;
         width = 0;
         uint32_t uni[256];
@@ -256,7 +256,7 @@ TODO("Pass font name as parameter in constructor")
 
 
     TODO(" implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
-    void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+    virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
         this->send_global_palette();
 

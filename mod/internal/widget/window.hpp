@@ -23,7 +23,6 @@
 #define _REDEMPTION_MOD_INTERNAL_WIDGET_WINDOW_HPP_
 
 #include "internal/widget/widget.hpp"
-#include "internal/internal_mod.hpp"
 
 #include "internal/widget/image.hpp"
 #include "internal/widget/button.hpp"
@@ -35,7 +34,7 @@
 
 struct window : public Widget
 {
-    window(internal_mod * mod, const Rect & r, Widget * parent, int bg_color, const char * title)
+    window(mod_api * mod, const Rect & r, Widget * parent, int bg_color, const char * title)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_WND) {
         this->bg_color = bg_color;
         this->rect.x = r.x;
@@ -70,7 +69,7 @@ struct window : public Widget
     {
         Rect r(0, 0, this->rect.cx, this->rect.cy);
         const Rect scr_r = this->to_screen_rect(r);
-        const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
+        const Region region = this->get_visible_region(this->parent, this, this->parent, scr_r);
 
         for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
             const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
@@ -155,7 +154,7 @@ struct window_help : public window
 {
     Widget & notify_to;
 
-    window_help(internal_mod * mod, const Rect & r, Widget * parent, Widget & notify_to, int bg_color, const char * title)
+    window_help(mod_api * mod, const Rect & r, Widget * parent, Widget & notify_to, int bg_color, const char * title)
     : window(mod, r, parent, bg_color, title), notify_to(notify_to)
     {
     }
@@ -188,10 +187,10 @@ struct window_help : public window
 
             Rect r(0, 0, this->rect.cx, this->rect.cy);
             const Rect scr_r = this->to_screen_rect(r);
-            const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
+            const Region region = this->get_visible_region(this->parent, this, this->parent, scr_r);
 
             for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-                this->mod->front.server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK, region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
+                this->mod->server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK, region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
             }
 
             count++;
@@ -227,7 +226,7 @@ struct window_login : public window
     ModContext & context;
     window * help;
 
-    window_login(internal_mod * mod, const Rect & r, ModContext & context, Widget * parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
+    window_login(mod_api * mod, const Rect & r, ModContext & context, Widget * parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
     :   window(mod, r, parent, bg_color, title),
         notify_to(notify_to),
         context(context)
@@ -237,8 +236,8 @@ struct window_login : public window
         /* create help screen */
         uint32_t grey = 0xc0c0c0;
         this->help = new window_help(this->mod,
-            Rect(this->mod->screen.rect.cx / 2 - 340 / 2,
-                this->mod->screen.rect.cy / 2 - 300 / 2,
+            Rect(this->parent->rect.cx / 2 - 340 / 2,
+                this->parent->rect.cy / 2 - 300 / 2,
                 340,
                 300),
             &mod->screen, // parent
@@ -373,14 +372,14 @@ struct window_login : public window
                 this->modal_dialog->has_focus = false;
             }
             this->has_focus = true;
-            for (size_t i = 0 ; i < this->mod->screen.child_list.size() ; i++)
+            for (size_t i = 0 ; i < this->parent->child_list.size() ; i++)
             {
-                Widget * b = this->mod->screen.child_list[i];
+                Widget * b = this->parent->child_list[i];
                 if (b->id == id){
-                    this->mod->screen.child_list.erase(this->mod->screen.child_list.begin()+i);
-                    this->mod->front.begin_update();
-                    this->mod->screen.refresh(this->mod->screen.rect);
-                    this->mod->front.end_update();
+                    this->parent->child_list.erase(this->parent->child_list.begin()+i);
+                    this->mod->begin_update();
+                    this->parent->refresh(this->parent->rect);
+                    this->mod->end_update();
                     this->modal_dialog = 0;
                     break;
                 }
@@ -391,11 +390,10 @@ struct window_login : public window
 
     int help_clicked()
     {
-        TODO(" add new function in widget_screen : add_window  where window can be modal")
         this->modal_dialog = this->help;
         {
-            vector<Widget *>::iterator it = this->mod->screen.child_list.begin();
-            this->mod->screen.child_list.insert(it, this->help);
+            vector<Widget *>::iterator it = this->parent->child_list.begin();
+            this->parent->child_list.insert(it, this->help);
         }
 
         struct Widget* but = new widget_button(this->mod,
@@ -444,16 +442,16 @@ struct window_login : public window
             }
             i += 2;
         }
-        this->mod->signal = BACK_EVENT_NEXT;
-        this->mod->event.set();
+//        this->mod->signal = BACK_EVENT_NEXT;
+//        this->mod->event.set();
         return 0;
 
     }
 
     int cancel_clicked()
     {
-        this->mod->signal = BACK_EVENT_STOP;
-        this->mod->event.set();
+//        this->mod->signal = BACK_EVENT_STOP;
+//        this->mod->event.set();
         return 0;
     }
 
@@ -467,7 +465,7 @@ struct window_dialog : public window
 {
     ModContext * context;
 
-    window_dialog(internal_mod * mod, const Rect & r,
+    window_dialog(mod_api * mod, const Rect & r,
                   ModContext & context,
                   Widget * parent, int bg_color,
                   const char * title, Inifile * ini, int regular,
@@ -526,16 +524,16 @@ struct window_dialog : public window
                         (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
                                           :STRAUTHID_DISPLAY_MESSAGE,
                         "False");
-                this->mod->event.set();
-                this->mod->signal = BACK_EVENT_NEXT;
+//                this->mod->event.set();
+//                this->mod->signal = BACK_EVENT_NEXT;
             break;
             case 3: /* ok button -> Enter */
                 this->context->cpy(
                         (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
                                           :STRAUTHID_DISPLAY_MESSAGE,
                         "True");
-                this->mod->event.set();
-                this->mod->signal = BACK_EVENT_NEXT;
+//                this->mod->event.set();
+//                this->mod->signal = BACK_EVENT_NEXT;
             break;
             default:
             break;
@@ -554,7 +552,7 @@ struct wab_close : public window
     ModContext & context;
     window * help;
 
-    wab_close(internal_mod * mod, const Rect & r, ModContext & context, Widget * parent, int bg_color, const char * title, int regular)
+    wab_close(mod_api * mod, const Rect & r, ModContext & context, Widget * parent, int bg_color, const char * title, int regular)
     : window(mod, r, parent, bg_color, title),
       context(context)
     {

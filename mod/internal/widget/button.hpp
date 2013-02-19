@@ -23,11 +23,10 @@
 #define _REDEMPTION_MOD_INTERNAL_WIDGET_BUTTON_HPP_
 
 #include "widget.hpp"
-#include "internal/internal_mod.hpp"
 
 struct widget_button : public Widget
 {
-    widget_button(internal_mod * mod, const Rect & r, Widget * parent, int id, int tab_stop, const char * caption)
+    widget_button(mod_api * mod, const Rect & r, Widget * parent, int id, int tab_stop, const char * caption)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_BUTTON) {
 
         assert(type == WND_TYPE_BUTTON);
@@ -51,7 +50,12 @@ struct widget_button : public Widget
         Rect r(0, 0, this->rect.cx, this->rect.cy);
 
         const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
-        const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
+        Widget * screen = this->parent;
+        while (screen->type != WND_TYPE_SCREEN){
+            screen = screen->parent;
+        }
+
+        const Region region = this->get_visible_region(screen, this, this->parent, scr_r);
 
         for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
             const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
@@ -63,9 +67,6 @@ struct widget_button : public Widget
                 region_clip);
         }
     }
-
-    void draw_focus_rect(Widget * wdg, const Rect & r, const Rect & clip);
-
 };
 
 #endif

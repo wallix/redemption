@@ -26,12 +26,12 @@
 #include <stdlib.h>
 
 #include "log.hpp"
-#include "constants.hpp"
 #include "rect.hpp"
 #include "region.hpp"
 #include "bitmap.hpp"
 #include "region.hpp"
 #include "keymap2.hpp"
+#include "mod_api.hpp"
 
 enum {
     WM_MOUSE_MOVE  = 2,
@@ -54,19 +54,20 @@ enum {
     WM_CHANNELDATA = 0x5555,
 };
 
+/* msg 1 = click 2 = mouse move 3 = paint 100 = modal result */
 enum {
-    NOTIFY_MOUSE_MOVE,
-    NOTIFY_MOUSE_DOWN,
-    NOTIFY_MOUSE_UP,
-    NOTIFY_CLICK,
+    NOTIFY_CLICK         =   1,
+    NOTIFY_MOUSE_MOVE    =   2,
+    NOTIFY_PAINT         =   3,
+    NOTIFY_MODAL_RESULT  = 100,
 };
 
 
 /* drawable types */
 enum {
-    WND_TYPE_BITMAP  = 0,
+    WND_TYPE_SCREEN  = 0,
     WND_TYPE_WND     = 1,
-    WND_TYPE_SCREEN  = 2,
+    WND_TYPE_BITMAP  = 2,
     WND_TYPE_BUTTON  = 3,
     WND_TYPE_IMAGE   = 4,
     WND_TYPE_EDIT    = 5,
@@ -75,7 +76,7 @@ enum {
 
 
 struct Widget {
-    struct internal_mod * mod;
+    struct mod_api * mod;
     bool has_focus;
 
     /* 0 = bitmap 1 = window 2 = screen 3 = button 4 = image 5 = edit
@@ -83,9 +84,6 @@ struct Widget {
     int type;
 
     Rect rect;
-
-    /* msg 1 = click 2 = mouse move 3 = paint 100 = modal result */
-    /* see messages in constants.h */
 
     /* for all but bitmap */
     int pointer;
@@ -114,7 +112,7 @@ struct Widget {
     public:
 
 
-    Widget(struct internal_mod * mod, int width, int height, Widget * parent, int type) : parent(parent) {
+    Widget(struct mod_api * mod, int width, int height, Widget * parent, int type) : parent(parent) {
         this->mod = mod;
         /* for all but bitmap */
         this->pointer = 0;

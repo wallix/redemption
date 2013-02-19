@@ -19,47 +19,32 @@
 
 */
 
-#ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_LABEL_HPP_
-#define _REDEMPTION_MOD_INTERNAL_WIDGET_LABEL_HPP_
+#ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_SCREEN_HPP_
+#define _REDEMPTION_MOD_INTERNAL_WIDGET_SCREEN_HPP_
 
 #include "widget.hpp"
 #include "mod_api.hpp"
 
-struct widget_label : public Widget {
+struct widget_screen : public Widget {
+    widget_screen(mod_api * mod, int width, int height, int type, Widget * parent)
+    : Widget(mod, width, height, parent, type) {
 
-    widget_label(mod_api * mod, const Rect & r, Widget * parent, const char * title)
-    : Widget(mod, r.cx, r.cy, parent, WND_TYPE_LABEL) {
-
-        this->rect.x = r.x;
-        this->rect.y = r.y;
-        this->caption1 = strdup(title);
+    ~widget_screen() {
     }
 
-    virtual ~widget_label() {
-        if (this->caption1){
-            free(this->caption1);
-            this->caption1 = 0;
-        }
-    }
-
-    void draw(const Rect & clip)
+    virtual void draw(const Rect & clip)
     {
-        const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
-        Widget * screen = this->parent;
-        while (screen->type != WND_TYPE_SCREEN){
-            screen = screen->parent;
-        }
+        Rect r(0, 0, this->rect.cx, this->rect.cy);
 
-        const Region region = this->get_visible_region(screen, this, this->parent, scr_r);
+        const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
+        const Region region = this->get_visible_region(this, this, this->parent, scr_r);
 
         for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
             const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
 
-            this->mod->server_draw_text(scr_r.x, scr_r.y, this->caption1, GREY, BLACK, region_clip);
+            this->mod->draw(RDPOpaqueRect(scr_r, this->bg_color), region_clip);
         }
-
     }
-
 };
 
 #endif
