@@ -23,15 +23,14 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_WINDOW_LOGIN_HPP_
 #define _REDEMPTION_MOD_INTERNAL_WIDGET_WINDOW_LOGIN_HPP_
 
-#include "widget_window.hpp"
-#include "widget.hpp"
-#include "internal_mod.hpp"
-#include "widget_window.hpp"
-#include "widget_button.hpp"
-#include "widget_edit.hpp"
-#include "widget_label.hpp"
-#include "widget_image.hpp"
 #include "version.hpp"
+#include "internal/widget/widget.hpp"
+#include "internal/internal_mod.hpp"
+#include "internal/widget/window.hpp"
+#include "internal/widget/button.hpp"
+#include "internal/widget/edit.hpp"
+#include "internal/widget/label.hpp"
+#include "internal/widget/image.hpp"
 
 
 struct window_help : public window

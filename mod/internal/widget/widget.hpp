@@ -30,7 +30,6 @@
 #include "rect.hpp"
 #include "region.hpp"
 #include "bitmap.hpp"
-#include "client_mod.hpp"
 #include "region.hpp"
 #include "keymap2.hpp"
 

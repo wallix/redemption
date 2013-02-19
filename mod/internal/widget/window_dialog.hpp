@@ -23,11 +23,11 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_WINDOW_DIALOG_HPP_
 #define _REDEMPTION_MOD_INTERNAL_WIDGET_WINDOW_DIALOG_HPP_
 
-#include "widget.hpp"
-#include "internal_mod.hpp"
-#include "widget_window.hpp"
-#include "widget_button.hpp"
-#include "widget_label.hpp"
+#include "internal/widget/widget.hpp"
+#include "internal/internal_mod.hpp"
+#include "internal/widget/window.hpp"
+#include "internal/widget/button.hpp"
+#include "internal/widget/label.hpp"
 
 struct window_dialog : public window
 {

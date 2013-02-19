@@ -23,12 +23,12 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_WINDOW_CLOSE_HPP_
 #define _REDEMPTION_MOD_INTERNAL_WIDGET_WINDOW_CLOSE_HPP_
 
-#include "widget.hpp"
-#include "internal_mod.hpp"
-#include "widget_window.hpp"
-#include "widget_image.hpp"
-#include "widget_button.hpp"
-#include "widget_label.hpp"
+#include "internal/widget/widget.hpp"
+#include "internal/internal_mod.hpp"
+#include "internal/widget/window.hpp"
+#include "internal/widget/image.hpp"
+#include "internal/widget/button.hpp"
+#include "internal/widget/label.hpp"
 
 struct wab_close : public window
 {

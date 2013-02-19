@@ -31,7 +31,7 @@
 #include "log.hpp"
 
 #include "internal/internal_mod.hpp"
-#include "internal/widget.hpp"
+#include "internal/widget/widget.hpp"
 #include "colors.hpp"
 
 #include "front.hpp"

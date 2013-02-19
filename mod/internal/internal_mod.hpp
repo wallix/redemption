@@ -22,7 +22,7 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP_
 #define _REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP_
 
-#include "internal/widget.hpp"
+#include "internal/widget/widget.hpp"
 #include "modcontext.hpp"
 #include "client_mod.hpp"
 

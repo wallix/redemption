@@ -37,6 +37,8 @@
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+
+#include "internal_mod.hpp"
 #include <unistd.h>
 
 struct bouncer2_mod : public internal_mod {
