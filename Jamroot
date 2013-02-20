@@ -184,7 +184,7 @@ unit-test test_stream : tests/test_stream.cpp libboost_unit_test gcov : <variant
 unit-test test_utf : tests/test_utf.cpp libboost_unit_test  ;
 unit-test test_utf : tests/test_utf.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_widget : tests/test_widget.cpp mainloop d3des openssl crypto png z dl libboost_unit_test  ;
+unit-test test_widget : tests/test_widget.cpp d3des openssl crypto png z dl libboost_unit_test  ;
 unit-test test_bitmap : tests/test_bitmap.cpp libboost_unit_test  ;
 unit-test test_logon : tests/test_logon.cpp libboost_unit_test  ;
 unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp libboost_unit_test  ;
@@ -284,7 +284,7 @@ unit-test test_cipher_transport : tests/test_cipher_transport.cpp z dl crypto pn
 
 unit-test test_bitfu : tests/test_bitfu.cpp libboost_unit_test  ;
 
-unit-test test_find : tests/test_find.cpp libboost_unit_test  ;
+unit-test test_fileutils : tests/test_fileutils.cpp libboost_unit_test  ;
 
 unit-test test_zlib : tests/test_zlib.cpp z libboost_unit_test  ;
 

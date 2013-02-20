@@ -32,7 +32,7 @@
 struct login_mod : public internal_mod {
     struct window_login * login_window;
     Widget* button_down;
-    window * help;
+    Widget * help;
 
 
     login_mod(ModContext & context, FrontAPI & front, uint16_t width, uint16_t height, Inifile * ini)

@@ -208,28 +208,3 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     BOOST_CHECK_EQUAL(gt.status, false);
 }
 
-BOOST_AUTO_TEST_CASE(CanonicalPath)
-{
-  // check that function that splits a path between canonical parts has expected behavior
-  // Parts are:
-  // - path : full path absolute or relative to directory containing file
-  // - basename : the filename without extension
-  // - extension : the extension = part following the last dot, removed from basename
-  //  if initial fullpath does not has any dot in it nothing is removed
-
-  char path[4096];
-  char basename[4096];
-  canonical_path("./result.tmp", path, 4096, basename, 4096);
-  BOOST_CHECK_EQUAL("./", path);
-  BOOST_CHECK_EQUAL("result", basename);
-
-
-  canonical_path("result", path, 4096, basename, 4096);
-  BOOST_CHECK_EQUAL("./", path);
-  BOOST_CHECK_EQUAL("result", basename);
-
-  canonical_path("", path, 4096, basename, 4096);
-  BOOST_CHECK_EQUAL("./", path);
-  BOOST_CHECK_EQUAL("no_name", basename);
-
-}

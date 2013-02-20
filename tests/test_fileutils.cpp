@@ -14,30 +14,20 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2012
+   Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean
 
 */
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestFind
+#define BOOST_TEST_MODULE TestFileUtils
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
 #include "log.hpp"
 #include <fcntl.h>
-#include "find.hpp"
-
-static inline int filesize(const char * path)
-{
-    struct stat sb;
-    int status = stat(path, &sb);
-    if (status >= 0){
-        return sb.st_size;
-    }
-    return -1;
-}
+#include "fileutils.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
@@ -201,3 +191,28 @@ BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
     }
 }
 
+BOOST_AUTO_TEST_CASE(CanonicalPath)
+{
+  // check that function that splits a path between canonical parts has expected behavior
+  // Parts are:
+  // - path : full path absolute or relative to directory containing file
+  // - basename : the filename without extension
+  // - extension : the extension = part following the last dot, removed from basename
+  //  if initial fullpath does not has any dot in it nothing is removed
+
+  char path[4096];
+  char basename[4096];
+  canonical_path("./result.tmp", path, 4096, basename, 4096);
+  BOOST_CHECK_EQUAL("./", path);
+  BOOST_CHECK_EQUAL("result", basename);
+
+
+  canonical_path("result", path, 4096, basename, 4096);
+  BOOST_CHECK_EQUAL("./", path);
+  BOOST_CHECK_EQUAL("result", basename);
+
+  canonical_path("", path, 4096, basename, 4096);
+  BOOST_CHECK_EQUAL("./", path);
+  BOOST_CHECK_EQUAL("no_name", basename);
+
+}

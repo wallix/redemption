@@ -30,7 +30,7 @@
 #define LOGPRINT
 #include "version.hpp"
 
-#include "find.hpp"
+#include "fileutils.hpp"
 #include "capture.hpp"
 #include "FileToGraphic.hpp"
 

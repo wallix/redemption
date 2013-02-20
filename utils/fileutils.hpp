@@ -64,9 +64,9 @@ static inline void canonical_path(const char * fullpath, char * path, size_t pat
             if (end_of_path[0]){
                 strcpy(basename, end_of_path + 1);
             }
-	    else {
-	      strcpy(basename, "no_name");
-	    }
+        else {
+          strcpy(basename, "no_name");
+        }
         }
     }
     else {
@@ -87,5 +87,60 @@ static inline void canonical_path(const char * fullpath, char * path, size_t pat
     }
     LOG(LOG_INFO, "canonical_path : %s%s\n", path, basename);
 }
+
+void clear_files_flv_meta_png(const char * path, const char * prefix)
+{
+    DIR * d = opendir(path);
+    if (d){
+        size_t path_len = strlen(path);
+        size_t prefix_len = strlen(prefix);
+        size_t file_len = pathconf(path, _PC_NAME_MAX) + 1;
+        char * buffer = (char*)malloc(file_len + path_len + 1);
+        strcpy(buffer, path);
+        if (buffer[path_len] != '/'){
+            buffer[path_len] = '/'; path_len++; buffer[path_len] = 0;
+        }
+
+        size_t len = offsetof(struct dirent, d_name) + file_len;
+        struct dirent * entryp = (struct dirent *)malloc(len);
+        struct dirent * result;
+        for (readdir_r(d, entryp, &result) ; result ; readdir_r(d, entryp, &result)) {
+            if ((0 == strcmp(entryp->d_name, ".")) || (0 == strcmp(entryp->d_name, ".."))){
+                continue;
+            }
+
+            if (strncmp(entryp->d_name, prefix, prefix_len)){
+                continue;
+            }
+
+            strcpy(buffer + path_len, entryp->d_name);
+            const char * eob = buffer + path_len + strlen(entryp->d_name);
+            const bool extension = ((eob[-4] == '.') && (eob[-3] == 'f') && (eob[-2] == 'l') && (eob[-1] == 'v'))
+                          || ((eob[-4] == '.') && (eob[-3] == 'p') && (eob[-2] == 'n') && (eob[-1] == 'g'))
+                          || ((eob[-5] == '.') && (eob[-4] == 'm') && (eob[-3] == 'e') && (eob[-2] == 't') && (eob[-1] == 'a'))
+                          ;
+
+            if (!extension){
+                continue;
+            }
+
+            struct stat st;
+            if (stat(buffer, &st) < 0){
+                LOG(LOG_WARNING, "Failed to read file %s [%u: %s]\n", buffer, errno, strerror(errno));
+                continue;
+            }
+            if (unlink(buffer) < 0){
+                LOG(LOG_WARNING, "Failed to remove file %s", buffer, errno, strerror(errno));
+            }
+        }
+        closedir(d);
+        free(entryp);
+        free(buffer);
+    }
+    else {
+        LOG(LOG_WARNING, "Failed to open directory %s [%u: %s]", path, errno, strerror(errno));
+    }
+}
+
 
 #endif

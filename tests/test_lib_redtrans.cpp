@@ -93,8 +93,8 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport2)
 
 BOOST_AUTO_TEST_CASE(TestTestTransport)
 {
+    // Test Transport behave as a Check when we perform only send
     RT_ERROR status = RT_ERROR_OK;
-//    RT * rt = rt_new_test(&status, "output", 6, "input", 5);
     RT * rt = rt_new_test(&status, "output", 6, "input", 5);
 
     BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
@@ -105,6 +105,26 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     // Now the next call mismatch
     BOOST_CHECK_EQUAL(0, rt_send(rt, "xxx", 3));
     BOOST_CHECK_EQUAL(-RT_ERROR_TRAILING_DATA, rt_send(rt, "xxx", 3));
+}
+
+BOOST_AUTO_TEST_CASE(TestTestTransport2)
+{
+    // Test Transport behave as a generator when we perform only receives
+    RT_ERROR status = RT_ERROR_OK;
+    RT * rt = rt_new_test(&status, "output", 6, "We read what we provide!", 24);
+
+    BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
+
+    uint8_t buffer[1024];
+    
+    BOOST_CHECK_EQUAL(3, rt_recv(rt, buffer, 3));
+    BOOST_CHECK_EQUAL(0, memcmp("We ", buffer, 3));
+    BOOST_CHECK_EQUAL(21, rt_recv(rt, buffer+3, 1024));
+    BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
+    BOOST_CHECK_EQUAL(-RT_ERROR_EOF, rt_recv(rt, buffer+24, 1024));
+    
+    rt_close(rt);
+    rt_delete(rt);
 }
 
 
