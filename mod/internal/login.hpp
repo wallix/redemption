@@ -31,8 +31,8 @@
 
 struct login_mod : public internal_mod {
     struct window_login * login_window;
-//    Widget* popup_wnd;
     Widget* button_down;
+    window * help;
 
 
     login_mod(ModContext & context, FrontAPI & front, uint16_t width, uint16_t height, Inifile * ini)
@@ -132,7 +132,7 @@ struct login_mod : public internal_mod {
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
 
-        LOG(LOG_INFO, "rdp_input_mouse flags=%04x (%u, %u)", device_flags, x, y);
+//        LOG(LOG_INFO, "rdp_input_mouse flags=%04x (%u, %u)", device_flags, x, y);
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
             if (this->dragging) {
                 long dragx = (x < 0)                         ? 0
@@ -309,7 +309,6 @@ struct login_mod : public internal_mod {
         // after refreshing button, return module status that may have changed
         return this->signal;
     }
-
 };
 
 #endif

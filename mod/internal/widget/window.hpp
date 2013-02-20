@@ -224,6 +224,7 @@ struct window_login : public window
     Widget & notify_to;
     Inifile * ini;
     ModContext & context;
+    TODO("The help window should be created by module, not by other window") 
     window * help;
 
     window_login(mod_api * mod, const Rect & r, ModContext & context, Widget * parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
@@ -354,7 +355,7 @@ struct window_login : public window
 
     virtual void notify(int id, int msg, long param1, long param2)
     {
-        LOG(LOG_INFO, "notify: id=%u msg=%u p1=%lu p2=%lu", id, msg, param1, param2);
+//        LOG(LOG_INFO, "notify: id=%u msg=%u p1=%lu p2=%lu", id, msg, param1, param2);
         if (this->modal_dialog != 0 && msg != 100) {
             return;
         }
