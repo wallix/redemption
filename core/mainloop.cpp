@@ -206,4 +206,5 @@ void redemption_main_loop()
     Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     int port = ini.globals.port;
     Listen listener(ss, port);
+    listener.run();
 }

@@ -38,17 +38,21 @@
 #include "log.hpp"
 #include "server.hpp"
 
-using namespace std;
+//using namespace std;
 
 struct Listen {
     Server & server;
     int port;
     int sck;
+    bool exit_on_timeout;
+    int timeout_sec;
 
     Listen(Server & server, int port, bool exit_on_timeout = false, int timeout_sec = 60) 
         : server(server)
         , port(port)
-        , sck(0) 
+        , sck(0)
+        , exit_on_timeout(exit_on_timeout)
+        , timeout_sec(timeout_sec)
     {
         this->sck = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -97,12 +101,29 @@ struct Listen {
             goto end_of_listener;
         }
 
+        TODO("We should find a way to generalize the select loop concept"
+             "say select is waiting on a bunch of transport objects or such"
+             "and whenever of of those wake-up it should get a chance to act"
+             "read data, write data, accept incoming connections, perform some task, etc.")
+
+        return;
+        end_of_listener:;
+        if (this->sck){
+            shutdown(this->sck, 2);
+            close(this->sck);
+        }
+        // throw some exception to signal to outside world listen failed
+
+    }
+    
+    TODO("Some values (server, timeout) become only necessary when calling check")
+    void run() {
         while (1) {
             fd_set rfds;
             FD_ZERO(&rfds);
             FD_SET(this->sck, &rfds);
             struct timeval timeout;
-            timeout.tv_sec = timeout_sec;
+            timeout.tv_sec = this->timeout_sec;
             timeout.tv_usec = 0;
 
             switch (select(this->sck + 1, &rfds, 0, 0, &timeout)){
@@ -113,7 +134,7 @@ struct Listen {
                 LOG(LOG_WARNING, "socket error detected in listen (%s)\n", strerror(errno));
             goto end_of_listener;
             case 0:
-                if (exit_on_timeout){
+                if (this->exit_on_timeout){
                     LOG(LOG_INFO, "Listener exiting on timeout");
                     goto end_of_listener;
                 }

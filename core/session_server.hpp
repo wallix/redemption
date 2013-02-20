@@ -24,6 +24,7 @@
 
 #include "config.hpp"
 #include "ssl_calls.hpp"
+#include "server.hpp"
 #include "session.hpp"
 
 class SessionServer : public Server

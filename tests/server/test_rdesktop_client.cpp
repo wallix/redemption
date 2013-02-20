@@ -42,10 +42,7 @@
 #undef DEFAULT_FONT_NAME
 #define DEFAULT_FONT_NAME "sans-10.fv1"
 
-#include "constants.hpp"
 #include "listen.hpp"
-#include "ssl_calls.hpp"
-#include "config.hpp"
 #include "session.hpp"
 
 BOOST_AUTO_TEST_CASE(TestIncomingConnection)
@@ -74,6 +71,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 //        }
 //    } one_shot_server;
 //    Listen listener(one_shot_server, 3389, true, 5); // 25 seconds to connect, or timeout
+//    listener.run();
 
     Inifile ini;
     int verbose = 511;
