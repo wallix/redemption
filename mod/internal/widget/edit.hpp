@@ -55,12 +55,7 @@ struct widget_edit : public Widget {
 
         Rect r(0, 0, this->rect.cx, this->rect.cy);
         const Rect scr_r = this->to_screen_rect(r);
-        Widget * screen = this->parent;
-        while (screen->type != WND_TYPE_SCREEN){
-            screen = screen->parent;
-        }
-
-        const Region region = this->get_visible_region(screen, this, this->parent, scr_r);
+        const Region region = this->get_visible_region(this, this->parent, scr_r);
 
         for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
             const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));

@@ -69,7 +69,7 @@ struct window : public Widget
     {
         Rect r(0, 0, this->rect.cx, this->rect.cy);
         const Rect scr_r = this->to_screen_rect(r);
-        const Region region = this->get_visible_region(this->parent, this, this->parent, scr_r);
+        const Region region = this->get_visible_region(this, this->parent, scr_r);
 
         for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
             const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
@@ -187,7 +187,7 @@ struct window_help : public window
 
             Rect r(0, 0, this->rect.cx, this->rect.cy);
             const Rect scr_r = this->to_screen_rect(r);
-            const Region region = this->get_visible_region(this->parent, this, this->parent, scr_r);
+            const Region region = this->get_visible_region(this, this->parent, scr_r);
 
             for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
                 this->mod->server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK, region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
@@ -240,7 +240,7 @@ struct window_login : public window
                 this->parent->rect.cy / 2 - 300 / 2,
                 340,
                 300),
-            &mod->screen, // parent
+            parent, // parent
             *this, // notify_to
             grey,
             "Login help");

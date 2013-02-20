@@ -42,13 +42,7 @@ struct widget_image : public Widget {
         TODO("See why region clipping is not done the same way as everywhere else here")
         Rect image_screen_rect = this->to_screen_rect();
         Rect intersection = image_screen_rect.intersect(this->to_screen_rect(clip));
-        
-        Widget * screen = this->parent;
-        while (screen->type != WND_TYPE_SCREEN){
-            screen = screen->parent;
-        }
-        
-        const Region region = this->get_visible_region(screen, this, this->parent, intersection);
+        const Region region = this->get_visible_region(this, this->parent, intersection);
 
         for (size_t ir = 0; ir < region.rects.size(); ir++){
             this->mod->draw(RDPMemBlt(0, image_screen_rect, 0xCC, 0, 0, 0), region.rects[ir], this->bmp);

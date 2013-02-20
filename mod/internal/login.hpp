@@ -27,7 +27,7 @@
 
 #include "version.hpp"
 #include "widget/window.hpp"
-
+#include "internal/internal_mod.hpp"
 
 struct login_mod : public internal_mod {
     struct window_login * login_window;
@@ -38,7 +38,6 @@ struct login_mod : public internal_mod {
     login_mod(ModContext & context, FrontAPI & front, uint16_t width, uint16_t height, Inifile * ini)
             : internal_mod(front, width, height)
     {
-
         uint32_t nb = (this->screen.rect.cy - 230) / 20;
         nb = (nb > 50)?50:nb;
         char buffer[128];
@@ -132,6 +131,8 @@ struct login_mod : public internal_mod {
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
+
+        LOG(LOG_INFO, "rdp_input_mouse flags=%04x (%u, %u)", device_flags, x, y);
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
             if (this->dragging) {
                 long dragx = (x < 0)                         ? 0
@@ -156,6 +157,7 @@ struct login_mod : public internal_mod {
         // -------------------------------------------------------
         if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
             if (device_flags & MOUSE_FLAG_DOWN) {
+
                 /* loop on surface widgets on screen to find active window */
                 Widget* wnd = &this->screen;
                 for (size_t i = 0; i < wnd->child_list.size(); i++) {
@@ -164,6 +166,7 @@ struct login_mod : public internal_mod {
                         break;
                     }
                 }
+                LOG(LOG_INFO, "button down , looking for window at (%u, %u) found %p", x, y, wnd);
 
                 /* set focus on window */
                 if (wnd && wnd->type == WND_TYPE_WND) {

@@ -29,8 +29,6 @@ struct widget_button : public Widget
     widget_button(mod_api * mod, const Rect & r, Widget * parent, int id, int tab_stop, const char * caption)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_BUTTON) {
 
-        assert(type == WND_TYPE_BUTTON);
-
         this->rect.x = r.x;
         this->rect.y = r.y;
         this->tab_stop = tab_stop;
@@ -50,12 +48,7 @@ struct widget_button : public Widget
         Rect r(0, 0, this->rect.cx, this->rect.cy);
 
         const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
-        Widget * screen = this->parent;
-        while (screen->type != WND_TYPE_SCREEN){
-            screen = screen->parent;
-        }
-
-        const Region region = this->get_visible_region(screen, this, this->parent, scr_r);
+        const Region region = this->get_visible_region(this, this->parent, scr_r);
 
         for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
             const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));

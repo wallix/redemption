@@ -324,8 +324,13 @@ struct Widget {
     // 2 - offsprings of a widget overlap it
     // 3 - siblings overlap if they are youger (after it in the child list of parent)
     // It is obvious that Rule 1 yield only one rectangle while other rules yields true regions
-    const Region get_visible_region(Widget * screen, Widget * window, Widget * widget, const Rect & rect)
+    const Region get_visible_region(Widget * window, Widget * widget, const Rect & rect)
     {
+        Widget * screen = this;
+        while (screen->type != WND_TYPE_SCREEN){
+            screen = screen->parent;
+        }
+
         Region region;
         region.rects.push_back(rect);
         /* loop through all windows in z order */
