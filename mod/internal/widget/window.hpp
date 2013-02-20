@@ -442,16 +442,14 @@ struct window_login : public window
             }
             i += 2;
         }
-//        this->mod->signal = BACK_EVENT_NEXT;
-//        this->mod->event.set();
+        this->mod->mod_event(BACK_EVENT_NEXT);
         return 0;
 
     }
 
     int cancel_clicked()
     {
-//        this->mod->signal = BACK_EVENT_STOP;
-//        this->mod->event.set();
+        this->mod->mod_event(BACK_EVENT_STOP);
         return 0;
     }
 
@@ -524,16 +522,14 @@ struct window_dialog : public window
                         (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
                                           :STRAUTHID_DISPLAY_MESSAGE,
                         "False");
-//                this->mod->event.set();
-//                this->mod->signal = BACK_EVENT_NEXT;
+                this->mod->mod_event(BACK_EVENT_NEXT);
             break;
             case 3: /* ok button -> Enter */
                 this->context->cpy(
                         (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
                                           :STRAUTHID_DISPLAY_MESSAGE,
                         "True");
-//                this->mod->event.set();
-//                this->mod->signal = BACK_EVENT_NEXT;
+                this->mod->mod_event(BACK_EVENT_NEXT);
             break;
             default:
             break;

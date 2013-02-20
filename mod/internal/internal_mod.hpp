@@ -53,6 +53,12 @@ struct internal_mod : public mod_api, public client_mod {
         this->dragging_window = 0;
     }
 
+    virtual void mod_event(int event_id) 
+    {
+        this->signal = static_cast<BackEvent_t>(event_id);
+        this->event.set();
+    }
+
     virtual void begin_update()
     {
         this->front.begin_update();

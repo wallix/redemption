@@ -32,6 +32,8 @@ enum {
 
 struct mod_api : public RDPGraphicDevice {
 
+    virtual void mod_event(int event_id) = 0;
+
     virtual void begin_update() = 0;
     virtual void end_update() = 0;
 
