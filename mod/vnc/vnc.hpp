@@ -1186,7 +1186,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             {
                 uint16_t msgFlags = stream.in_uint16_le();
                 if (msgFlags == 1) {
-
+                    TODO("code below is broken for large buffers if we get a large stream if can't be stored "
+                         "in only one PDU anyway, because PDU are limited to 64 bytes")
                     uint32_t dataLenU16 = stream.in_uint32_le();
                     uint8_t dataU16[dataLenU16];
                     memset(dataU16, 0, sizeof(dataU16));
