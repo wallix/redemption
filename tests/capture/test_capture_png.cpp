@@ -244,7 +244,18 @@ BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
 BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 {
     const char * filename = "test.png";
-    OutByFilenameTransport trans(filename);
+    size_t len = strlen(filename);
+    char path[1024];
+    memcpy(path, filename, len);
+    path[len] = 0;
+    int fd = ::creat(path, 0777);
+    if (fd == -1){
+        LOG(LOG_INFO, "OutByFilename transport write failed with error : %s on %s", strerror(errno), path);
+        BOOST_CHECK(false);
+        return;
+    }
+
+    OutFileTransport trans(fd);
     ImageCapture d(trans, 800, 600);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);

@@ -870,39 +870,6 @@ class SocketTransport : public Transport {
     private:
 };
 
-class OutByFilenameTransport : public OutFileTransport {
-    char path[1024];
-public:
-    OutByFilenameTransport(const char * path)
-    : OutFileTransport(-1)
-    {
-        size_t len = strlen(path);
-        memcpy(this->path, path, len);
-        this->path[len] = 0;
-    }
-
-    ~OutByFilenameTransport()
-    {
-        if (this->fd != -1){
-            ::close(this->fd);
-            this->fd = -1;
-        }
-    }
-
-    using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error) {
-        if (this->fd == -1){
-            this->fd = ::creat(this->path, 0777);
-            if (this->fd == -1){
-                LOG(LOG_INFO, "OutByFilename transport write failed with error : %s on %s", strerror(errno), this->path);
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        OutFileTransport::send(buffer, len);
-    }
-};
-
-
 class InByFilenameTransport : public InFileTransport {
     char path[1024];
 public:

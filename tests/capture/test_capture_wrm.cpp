@@ -374,7 +374,20 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
 
     Rect screen_rect(0, 0, 800, 600);
     BStream stream(65536);
-    OutByFilenameTransport trans("./testcap.wrm");
+    
+    const char * filename = "./testcap.wrm";
+    size_t len = strlen(filename);
+    char path[1024];
+    memcpy(path, filename, len);
+    path[len] = 0;
+    int fd = ::creat(path, 0777);
+    if (fd == -1){
+        LOG(LOG_INFO, "OutByFilename transport write failed with error : %s on %s", strerror(errno), path);
+        BOOST_CHECK(false);
+        return;
+    }
+
+    OutFileTransport trans(fd);
     BOOST_CHECK_EQUAL(0, 0);
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
