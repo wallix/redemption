@@ -51,17 +51,17 @@ extern "C" {
     /* This method close ressource without calling destructor
        Any subsequent call should return an error
     */
-    inline RT_ERROR rt_m_RTOutfile_close(RTOutfile * self)
+    inline void rt_m_RTOutfile_close(RTOutfile * self)
     {
         close(self->fd);
-        return RT_ERROR_OK;
     }
 
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data
        returns len actually received (may be 0),
        or negative value to signal some error.
-       If an error occurs after reading some data the amount read will be returned
+       If an error occurs after reading some data, the return buffer
+       has been changed but an error is returned anyway
        and an error returned on subsequent call.
     */
     inline ssize_t rt_m_RTOutfile_recv(RTOutfile * self, void * data, size_t len)

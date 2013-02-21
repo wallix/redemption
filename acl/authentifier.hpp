@@ -27,6 +27,7 @@ TODO("Sesman is performing two largely unrelated tasks : finding out the next mo
 #include "stream.hpp"
 #include "config.hpp"
 #include "modcontext.hpp"
+#include "netutils.hpp"
 
 class SessionManager {
 
@@ -48,7 +49,7 @@ class SessionManager {
     int tick_count;
     public:
 
-    struct ClientSocketTransport * auth_trans_t;
+    struct SocketTransport * auth_trans_t;
     wait_obj * auth_event;
     int keepalive_grace_delay;
     int max_tick;
@@ -560,11 +561,13 @@ class SessionManager {
             TODO(" is there a way to make auth_event RAII ? (initialized in sesman constructor)")
             if (!this->auth_trans_t){
                 static const char * name = "Authentifier";
-                this->auth_trans_t = new ClientSocketTransport(name, auth_host, authport, 30, 1000, this->verbose);
-                if (!this->auth_trans_t->connect()){
+                int client_sck = ip_connect(auth_host, authport, 30, 1000, this->verbose);
+                if (client_sck == -1){
+                    LOG(LOG_ERR, "Failed to connect to authentifier");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
-                TODO(" create a realloc method")
+
+                this->auth_trans_t = new SocketTransport(name, client_sck, this->verbose);
                 delete this->auth_event;
                 this->auth_event = new wait_obj(this->auth_trans_t->sck);
             }

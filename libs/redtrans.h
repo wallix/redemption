@@ -44,7 +44,6 @@
 #include "rt_outbyfilenamesequencewithmeta.h"
 #include "rt_inbymetasequence.h"
 #include "rt_socket.h"
-#include "rt_clientsocket.h"
 #include "rt_XXX.h"
 
 typedef enum {
@@ -54,7 +53,6 @@ typedef enum {
     RT_TYPE_OUTFILE,
     RT_TYPE_INFILE,
     RT_TYPE_SOCKET,
-    RT_TYPE_CLIENTSOCKET,
     RT_TYPE_OUTBYFILENAME, // based on OUTFILE
     RT_TYPE_INBYFILENAME, // based on INFILE
     RT_TYPE_OUTBYFILENAMESEQUENCE, // based on OUTFILE
@@ -75,7 +73,6 @@ struct RT {
       struct RTOutfile outfile;
       struct RTInfile infile;
       struct RTSocket socket;
-      struct RTClientSocket client_socket;
       struct RTOutByFilename out_by_filename;
       struct RTInByFilename in_by_filename;
       struct RTOutByFilenameSequence out_by_filename_sequence;
@@ -204,6 +201,30 @@ RT * rt_new_infile(RT_ERROR * error, int fd)
     return res;
 }
 
+RT * rt_new_socket(RT_ERROR * error, int sck)
+{
+    RT * res = (RT*)malloc(sizeof(RT));
+    if (res == 0){ 
+        if (error){ *error = RT_ERROR_MALLOC; }
+        return NULL;
+    }
+    res->rt_type = RT_TYPE_SOCKET;
+    res->err = rt_m_RTSocket_constructor(&(res->u.socket), sck);
+    switch (res->err){
+    default:
+        rt_m_RTSocket_destructor(&(res->u.socket));
+        free(res);
+        return NULL;
+    case RT_ERROR_MALLOC:
+        free(res);
+        return NULL;
+    case RT_ERROR_OK:
+        break;
+    }
+    return res;
+}
+
+
 RT_ERROR rt_delete(RT * rt)
 {
     RT_ERROR status = RT_ERROR_OK;
@@ -222,6 +243,9 @@ RT_ERROR rt_delete(RT * rt)
         break;
         case RT_TYPE_OUTFILE:
             status = rt_m_RTOutfile_destructor(&(rt->u.outfile));
+        break;
+        case RT_TYPE_SOCKET:
+            status = rt_m_RTSocket_destructor(&(rt->u.socket));
         break;
         default:
             ;
@@ -275,6 +299,13 @@ ssize_t rt_recv(RT * rt, void * data, size_t len)
         }
         return res;
     }
+    case RT_TYPE_SOCKET:{
+        ssize_t res = rt_m_RTSocket_recv(&(rt->u.socket), data, len);
+        if (res < 0){
+            rt->err = (RT_ERROR)-res;
+        }
+        return res;
+    }
     default:
         rt->err = RT_ERROR_UNKNOWN_TYPE;
     }
@@ -310,6 +341,12 @@ ssize_t rt_send(RT * rt, const void * data, size_t len)
         if (res < 0){ rt->err = (RT_ERROR)-res; }
         return res;
     }
+    case RT_TYPE_SOCKET: {
+        printf("send on socket\n");
+        ssize_t res = rt_m_RTSocket_send(&(rt->u.socket), data, len);
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
+        return res;
+    }
     default:
         rt->err = RT_ERROR_UNKNOWN_TYPE;
     }
@@ -324,16 +361,28 @@ void rt_close(RT * rt)
     if (rt->err != RT_ERROR_OK){ return; }
     switch(rt->rt_type){
         case RT_TYPE_GENERATOR:
+            rt_m_RTGenerator_close(&(rt->u.generator));
+        break;
+        case RT_TYPE_CHECK:
+            rt_m_RTCheck_close(&(rt->u.check));
+        break;
+        case RT_TYPE_TEST:
+            rt_m_RTTest_close(&(rt->u.test));
         break;
         case RT_TYPE_OUTFILE:
-            close(rt->u.outfile.fd);
+            rt_m_RTOutfile_close(&(rt->u.outfile));
         break;
         case RT_TYPE_INFILE:
-            close(rt->u.infile.fd);
+            rt_m_RTInfile_close(&(rt->u.infile));
+        break;
+        case RT_TYPE_SOCKET:
+            rt_m_RTSocket_close(&(rt->u.socket));
         break;
         default:
             ;
     }
+    /* after a close any subsequent call to recv/send/etc. raise an error */
+    rt->err = RT_ERROR_CLOSED;
     return;
 }
 
