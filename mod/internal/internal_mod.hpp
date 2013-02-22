@@ -34,7 +34,7 @@ struct internal_mod : public mod_api, public client_mod {
     int dragging;
     Rect dragging_rect;
     int draggingdx; // distance between mouse and top angle of dragged window
-    int draggingdy; // distance between mouse and top angle of dragged window
+    int draggingdy; // distance between mouse and left angle of dragged window
     struct Widget* dragging_window;
     RDPBrush brush;
 
@@ -49,11 +49,11 @@ struct internal_mod : public mod_api, public client_mod {
         this->event = event;
         // dragging_rect is (0,0,0,0)
         this->draggingdx = 0; // distance between mouse and top angle of dragged window
-        this->draggingdy = 0; // distance between mouse and top angle of dragged window
+        this->draggingdy = 0; // distance between mouse and left angle of dragged window
         this->dragging_window = 0;
     }
 
-    virtual void mod_event(int event_id) 
+    virtual void mod_event(int event_id)
     {
         this->signal = static_cast<BackEvent_t>(event_id);
         this->event.set();
@@ -93,12 +93,12 @@ struct internal_mod : public mod_api, public client_mod {
     {
         this->front.draw(cmd, clip, bmp);
     }
-    
+
     virtual void draw(const RDPLineTo& cmd, const Rect & clip)
     {
         this->front.draw(cmd, clip);
     }
-    
+
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
         this->front.draw(cmd, clip);
@@ -108,7 +108,7 @@ struct internal_mod : public mod_api, public client_mod {
     {
         this->front.server_draw_text(x, y, text, fgcolor, bgcolor, clip);
     }
-    
+
     virtual void text_metrics(const char * text, int & width, int & height)
     {
         this->front.text_metrics(text, width, height);

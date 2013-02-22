@@ -290,3 +290,5 @@ unit-test test_zlib : tests/test_zlib.cpp z libboost_unit_test  ;
 
 unit-test test_parse_username : tests/test_parse_username.cpp libboost_unit_test  ;
 
+unit-test test_widget_notify : tests/test_widget_notify.cpp libboost_unit_test ;
+
