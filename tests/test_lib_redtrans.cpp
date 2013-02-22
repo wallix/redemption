@@ -493,26 +493,26 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
 // hence returned seq *must not* be explicitely deleted
 // deleting transport will take care of it.
 
-//BOOST_AUTO_TEST_CASE(TestOutMeta)
-//{
-//    RT_ERROR status = RT_ERROR_OK;
-//    SQ * seq  = NULL;
-//    RT * rt = rt_new_outmeta(&status, "TESTOFS", &seq);
+BOOST_AUTO_TEST_CASE(TestOutMeta)
+{
+    RT_ERROR status = RT_ERROR_OK;
+    SQ * seq  = NULL;
+    RT * rt = rt_new_outmeta(&status, &seq, "TESTOFS", "mwrm");
 
-//    BOOST_CHECK_EQUAL( 5, rt_send(rt, "AAAAX",  5));
-//    BOOST_CHECK_EQUAL(RT_ERROR_OK, sq_next(sequence));
-//    BOOST_CHECK_EQUAL(10, rt_send(rt, "BBBBXCCCCX", 10));
+    BOOST_CHECK_EQUAL( 5, rt_send(rt, "AAAAX",  5));
+    BOOST_CHECK_EQUAL(RT_ERROR_OK, sq_next(seq));
+    BOOST_CHECK_EQUAL(10, rt_send(rt, "BBBBXCCCCX", 10));
 
-//    rt_close(rt);
-//    rt_delete(rt);
-//    
-//    if (::unlink("TESTOFS-000000.txt") < 0){
-//        BOOST_CHECK(false);
-//        LOG(LOG_ERR, "failed to unlink TESTOFS-000000.txt");
-//    }
-//    if (::unlink("TESTOFS-000001.txt") < 0){
-//        BOOST_CHECK(false);
-//        LOG(LOG_ERR, "failed to unlink TESTOFS-000001.txt");
-//    }
-//}
+    rt_close(rt);
+    rt_delete(rt);
+    
+    if (::unlink("TESTOFS-000000.wrm") < 0){
+        BOOST_CHECK(false);
+        LOG(LOG_ERR, "failed to unlink TESTOFS-000000.txt");
+    }
+    if (::unlink("TESTOFS-000001.wrm") < 0){
+        BOOST_CHECK(false);
+        LOG(LOG_ERR, "failed to unlink TESTOFS-000001.txt");
+    }
+}
 

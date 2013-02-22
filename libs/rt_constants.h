@@ -61,14 +61,17 @@ extern "C" {
     RT * rt_new_outfile(RT_ERROR * error, int fd);
     RT * rt_new_infile(RT_ERROR * error, int fd);
     RT * rt_new_socket(RT_ERROR * error, int fd);
-    RT * rt_new_outsequence(RT_ERROR * error, int fd);
+    RT * rt_new_outsequence(RT_ERROR * error, SQ * seq);
     RT_ERROR rt_delete(RT * rt);
+    RT_ERROR sq_delete(SQ * rt);
     ssize_t rt_recv(RT * rt, void * data, size_t len);
     ssize_t rt_send(RT * rt, const void * data, size_t len);
     RT_ERROR rt_get_status(RT * rt);
     SQ * sq_new_one_RT(RT_ERROR * error, RT * trans);
     RT_ERROR sq_next(SQ * seq);
     RT * sq_get_trans(SQ * seq, RT_ERROR * error);
+    SQ * sq_new_outfilename(RT_ERROR * error, SQ_FORMAT format, const char * prefix, const char * extension);
+
 }
 
 #endif

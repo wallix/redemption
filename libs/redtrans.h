@@ -42,6 +42,7 @@
 #include "rt_infile.h"
 #include "rt_socket.h"
 #include "rt_outsequence.h"
+#include "rt_outmeta.h"
 #include "rt_inbyfilenamesequence.h"
 #include "rt_outbyfilenamesequence.h"
 #include "rt_outbyfilenamesequencewithmeta.h"
@@ -56,6 +57,7 @@ typedef enum {
     RT_TYPE_INFILE,
     RT_TYPE_SOCKET,
     RT_TYPE_OUTSEQUENCE,
+    RT_TYPE_OUTMETA,
     RT_TYPE_INSEQUENCE,
 } RT_TYPE;
 
@@ -186,6 +188,7 @@ struct RT {
       struct RTInfile infile;
       struct RTSocket socket;
       struct RTOutsequence outsequence;
+      struct RTOutmeta outmeta;
 //      struct RTInsequence insequence;
     } u;
 };
@@ -355,6 +358,28 @@ RT * rt_new_outsequence(RT_ERROR * error, SQ * seq)
     return res;
 }
 
+RT * rt_new_outmeta(RT_ERROR * error, SQ ** seq, const char * prefix, const char * extension)
+{
+    RT * res = (RT*)malloc(sizeof(RT));
+    if (res == 0){ 
+        if (error){ *error = RT_ERROR_MALLOC; }
+        return NULL;
+    }
+    res->rt_type = RT_TYPE_OUTMETA;
+    res->err = rt_m_RTOutmeta_constructor(&(res->u.outmeta), seq, prefix, extension);
+    switch (res->err){
+    default:
+        rt_m_RTOutmeta_destructor(&(res->u.outmeta));
+        free(res);
+        return NULL;
+    case RT_ERROR_MALLOC:
+        free(res);
+        return NULL;
+    case RT_ERROR_OK:
+        break;
+    }
+    return res;
+}
 
 RT_ERROR rt_delete(RT * rt)
 {
@@ -380,6 +405,9 @@ RT_ERROR rt_delete(RT * rt)
         break;
         case RT_TYPE_OUTSEQUENCE:
             status = rt_m_RTOutsequence_destructor(&(rt->u.outsequence));
+        break;
+        case RT_TYPE_OUTMETA:
+            status = rt_m_RTOutmeta_destructor(&(rt->u.outmeta));
         break;
         default:
             ;
@@ -433,6 +461,11 @@ ssize_t rt_recv(RT * rt, void * data, size_t len)
         if (res < 0){ rt->err = (RT_ERROR)-res; }
         return res;
     }
+    case RT_TYPE_OUTMETA:{
+        ssize_t res = rt_m_RTOutmeta_recv(&(rt->u.outmeta), data, len);
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
+        return res;
+    }
     default:
         rt->err = RT_ERROR_UNKNOWN_TYPE;
     }
@@ -478,6 +511,11 @@ ssize_t rt_send(RT * rt, const void * data, size_t len)
         if (res < 0){ rt->err = (RT_ERROR)-res; }
         return res;
     }
+    case RT_TYPE_OUTMETA: {
+        ssize_t res = rt_m_RTOutmeta_send(&(rt->u.outmeta), data, len);
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
+        return res;
+    }
     default:
         rt->err = RT_ERROR_UNKNOWN_TYPE;
     }
@@ -508,6 +546,9 @@ void rt_close(RT * rt)
         break;
         case RT_TYPE_SOCKET:
             rt_m_RTSocket_close(&(rt->u.socket));
+        break;
+        case RT_TYPE_OUTMETA:
+//            rt_m_RTOutmeta_close(&(rt->u.outmeta));
         break;
         default:
             ;
