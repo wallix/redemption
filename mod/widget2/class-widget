@@ -1,0 +1,90 @@
+DrawAPI : RDPGraphicDevice
+	----------------------
+	text_metrics(const char * text, int& width, int& height) : void = 0
+	draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip) : void = 0
+	begin_update() : void = 0
+	end_update() : void = 0
+
+
+NotifyAPI
+	----------------------
+	notify(int id, EventType event) : void = 0
+
+NOTE: notify devra peut-être prendre un argument, comme par exemple le caractère appuyer ou un Keymap2. (passer par un void* ?)
+
+
+Widget : NotifyAPI
+	type : WidgetType
+	id : int
+	rect : Rect
+	has_focus : bool
+	drawable : DrawAPI*
+	parent : Widget*
+	----------------------
+	draw() : void
+	do_draw(const Rect& rect) : void = 0
+	notify(int id, EventType event) : void
+	widget_at_pos(int x, int y) : Widget*
+	dx() : int
+	dy() : int
+	widget_focused() : Widget*
+	# propagate_event(EventType event) : void
+	focus() : void
+	blur() : void
+
+- Widget::draw : Sélectionne les rectangles visible du widget et les envois à do_draw
+- Widget::notify : vérifie le focus (CLIC_BUTTON1_DOWN || FOCUS_BEGIN) puis fait remonter l'évènement au parent
+- Widget::propagate_event : fait remonter l'évènement au parent
+- Widget::dx : racourcie pour rect.x
+- Widget::dy : racourcie pour rect.y
+- Widget::x : calcule la position x par rapport au plus shaut parent
+- Widget::y : calcule la position y par rapport au plus shaut parent
+- Widget::widget_focused : descend l'arbre des widgets eyant le focus et retourne le dernier trouvé.
+
+
+WidgetLabel : Widget
+	----------------------
+	do_draw(const Rect& rec) : void
+
+
+WidgetEdit : Label
+	----------------------
+	do_draw(const Rect& rec) : void
+	notify(int id, EventType event) : void
+
+-WidgetEdit::notify : intercepte les frappes clavier pour les écrire. Sinon, propage l'évènement.
+
+
+WidgetImage : Widget
+	----------------------
+	do_draw(const Rect& rec) : void
+
+
+WidgetComposite : Widget
+	child_list : std::vector<Widget*>;
+	----------------------
+	do_draw(const Rect& rec) : void
+	notify(int id, EventType event) : void
+
+- WidgetComposite::notify : switch le focus d'un widget enfant.
+
+
+WidgetScreen : WidgetComposite
+
+
+Window : WidgetComposite
+
+
+
+EventType:
+	FOCUS_BEGIN
+	FOCUS_END
+	MOUSE_MOVE
+	KEYDOWN
+	KEYUP
+	CLIC_BUTTON1_UP
+	CLIC_BUTTON1_DOWN
+	CLIC_BUTTON2_UP
+	CLIC_BUTTON2_DOWN
+	CLIC_BUTTON3_UP
+	CLIC_BUTTON3_DOWN
