@@ -58,6 +58,10 @@ extern "C" {
         return RT_ERROR_OK;
     }
 
+    void rt_m_RTGenerator_close(RTGenerator * self)
+    {
+    }
+
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data
        returns len actually received (may be 0),

@@ -60,11 +60,9 @@ extern "C" {
     }
 
     /* This method close ressource without calling destructor
-       Any subsequent call should return an error
     */
-    inline RT_ERROR rt_m_RTCheck_close(RTCheck * self)
+    void rt_m_RTCheck_close(RTCheck * self)
     {
-        return RT_ERROR_OK;
     }
 
     /* This method receive len bytes of data into buffer

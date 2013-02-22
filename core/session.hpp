@@ -41,6 +41,7 @@
 #include "ssl_calls.hpp"
 #include "rect.hpp"
 #include "client_info.hpp"
+#include "netutils.hpp"
 
 #include "config.hpp"
 #include "wait_obj.hpp"
@@ -691,22 +692,23 @@ struct Session {
                     delete this->mod;
                     this->mod = this->no_mod;
                 }
-                ClientSocketTransport * t = new ClientSocketTransport(name,
-                                this->context->get(STRAUTHID_TARGET_DEVICE),
-                                atoi(this->context->get(STRAUTHID_TARGET_PORT)),
-                                4, 1000,
-                                this->ini->globals.debug.mod_xup);
-                if (!t->connect()){
+
+                int client_sck = ip_connect(this->context->get(STRAUTHID_TARGET_DEVICE),
+                                            atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                                            4, 1000,
+                                            this->ini->globals.debug.mod_xup);
+
+                if (client_sck == -1){
                     this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
-                else {
-                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote X host");
-                }
+
+                SocketTransport * t = new SocketTransport(name, client_sck, this->ini->globals.debug.mod_xup);
+                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote X host");
                 this->mod = new xup_mod(t, *this->context, *(this->front),
                                         this->front->client_info.width,
                                         this->front->client_info.height);
-                this->mod->event.obj = t->sck;
+                this->mod->event.obj = client_sck;
                 this->mod->draw_event();
 //                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "");
@@ -733,26 +735,20 @@ struct Session {
                     hostname[31] = 0;
                 }
                 static const char * name = "RDP Target";
-                ClientSocketTransport * t = new ClientSocketTransport(
-                                        name,
-                                        this->context->get(STRAUTHID_TARGET_DEVICE),
-                                        atoi(this->context->get(STRAUTHID_TARGET_PORT)),
-                                        3, 1000,
-                                        this->ini->globals.debug.mod_rdp);
-                if (!t->connect()){
+
+                int client_sck = ip_connect(this->context->get(STRAUTHID_TARGET_DEVICE),
+                                            atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                                            3, 1000,
+                                            this->ini->globals.debug.mod_rdp);
+
+                if (client_sck == -1){
                     this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
-                else {
-                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote RDP host");
-                }
-                TODO("Wait obj should work with transport object, not directly with socket")
-                // enable or disable clipboard
-                // this->context->get_bool(STRAUTHID_OPT_CLIPBOARD)
-                // enable or disable device redirection
-                // this->context->get_bool(STRAUTHID_OPT_DEVICEREDIRECTION)
-                const ClientInfo & info = this->front->client_info;
 
+                SocketTransport * t = new SocketTransport(name, client_sck, this->ini->globals.debug.mod_rdp);
+
+                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote RDP host");
                 this->mod = new mod_rdp(t,
                                     this->context->get(STRAUTHID_TARGET_USER),
                                     this->context->get(STRAUTHID_TARGET_PASSWORD),
@@ -760,7 +756,7 @@ struct Session {
                                     *this->front,
                                     hostname,
                                     true,
-                                    info,
+                                    this->front->client_info,
                                     &this->gen,
                                     this->front->keymap.key_flags,
                                     this->sesman, // we give mod_rdp a direct access to sesman for auth_channel channel
@@ -768,7 +764,7 @@ struct Session {
                                     this->ini->globals.debug.mod_rdp,
                                     true
                                     );
-                this->mod->event.obj = t->sck;
+                this->mod->event.obj = client_sck;
 
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front->client_info.width, this->front->client_info.height));
                 if (this->verbose){
@@ -788,19 +784,22 @@ struct Session {
                     this->mod = this->no_mod;
                 }
                 static const char * name = "VNC Target";
-                ClientSocketTransport *t = new ClientSocketTransport(
-                                                name,
-                                                this->context->get(STRAUTHID_TARGET_DEVICE),
-                                                atoi(this->context->get(STRAUTHID_TARGET_PORT)),
-                                                3, 1000,
-                                                this->ini->globals.debug.mod_vnc);
-                if (!t->connect()){
+                
+                
+                int client_sck = ip_connect(this->context->get(STRAUTHID_TARGET_DEVICE),
+                                            atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                                            3, 1000,
+                                            this->ini->globals.debug.mod_vnc);
+
+                if (client_sck == -1){
                     this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
-                else {
-                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote VNC host");
-                }
+
+                SocketTransport * t = new SocketTransport(name, client_sck, this->ini->globals.debug.mod_vnc);
+                
+                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote VNC host");                
+
                 this->mod = new mod_vnc(t,
                     this->context->get(STRAUTHID_TARGET_USER),
                     this->context->get(STRAUTHID_TARGET_PASSWORD),
@@ -810,7 +809,7 @@ struct Session {
                     this->front->client_info.keylayout,
                     this->front->keymap.key_flags,
                     this->ini->globals.debug.mod_vnc);
-                this->mod->event.obj = t->sck;
+                this->mod->event.obj = client_sck;
                 this->mod->draw_event();
 
                 if (this->verbose){
