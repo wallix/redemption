@@ -60,29 +60,6 @@ project redemption
 
 ;
 
-project redemption
-    : requirements
-    <include>main
-    <include>mod
-    <include>core
-    <include>front
-    <include>tests
-    <include>utils
-    <include>acl
-    <include>capture
-    <include>recorder
-    <include>keyboard
-    <include>/usr/include
-    <conditional>@defines
-#    <cxxflags>-pedantic
-#     <cxxflags>-Wconversion
-    <cxxflags>-Wvla
-#    <cxxflags>-Wlong-long
-    <cxxflags>-O3
-   : default-build release
-
-;
-
 explicit install instexe install-bin install-test install-etc install-share ;
 
 alias instexe : install-bin install-test ;
