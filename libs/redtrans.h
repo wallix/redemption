@@ -156,6 +156,24 @@ RT * sq_get_trans(SQ * seq, RT_ERROR * error)
     return trans;
 }
 
+RT_ERROR sq_delete(SQ * sq)
+{
+    RT_ERROR status = RT_ERROR_OK;
+    switch(sq->sq_type){
+        case SQ_TYPE_ONE:
+            status = sq_m_SQOne_destructor(&(sq->u.one));
+        break;
+        case SQ_TYPE_OUTFILENAME:
+            status = sq_m_SQOutfilename_destructor(&(sq->u.outfilename));
+        break;
+        default:
+            ;
+    }
+    free(sq);
+    return status;
+}
+
+
 struct RT {
     unsigned rt_type;
     RT_ERROR err;
