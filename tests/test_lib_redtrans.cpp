@@ -281,7 +281,6 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
     }
     fcntl(client_sck, F_SETFL, fcntl(client_sck, F_GETFL) | O_NONBLOCK);
 
-    int res = -1;
     int data_sent = 0;
     RT * client_rt = NULL;
 
@@ -299,55 +298,60 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
         FD_SET(max, &rfds);
         
         for (int i = 0 ; i < nb_recv_sck ; i++){
-            if (recv_sck[i] > max){
-                max = recv_sck[i];
-            }
             FD_SET(recv_sck[i], &rfds);
+            if (recv_sck[i] > max){ max = recv_sck[i]; }
         }
 
-        if (((client_rt != NULL) && (data_sent == 0)) 
-        || (res == -1))
-        {
-            FD_SET(client_sck, &wfds);
-            if (client_sck > max){
-                max = client_sck;
-            }
-        }
+        FD_SET(client_sck, &wfds);
+        if (client_sck > max){ max = client_sck; }
 
         int num = select(max + 1, &rfds, &wfds, 0, &timeout);
     
         switch (num) {
-        case 0:
-            LOG(LOG_INFO, "woke up on timeout\n");
+        case 0: // this is timeout : as everything is automated it should never happen
+            BOOST_CHECK(false);
+            return;
         break;
         default:
         {
             if (FD_ISSET(client_sck, &wfds)){
-                if (client_rt && (data_sent == 0)){
-                    int len = rt_send(client_rt, "AAAAXBBBBXCCCCXDDDDX", 20);
+                 // connected client
+                if (client_rt == NULL){
+                    int res = ::connect(client_sck, &ucs.s, sizeof(ucs));
                     if (res < 0){
-                        BOOST_CHECK_EQUAL(RT_ERROR_OK, (RT_ERROR)(-len));
-                        return;
-                    }
-                    data_sent = 20;
-                }
-                else if (res == -1) {
-                    res = ::connect(client_sck, &ucs.s, sizeof(ucs));
-                    if (res != -1){
-                        RT_ERROR status = RT_ERROR_OK;
-                        client_rt = rt_new_socket(&status, client_sck);
-                        BOOST_CHECK(NULL != client_rt);
-                        BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
-                        if ((client_rt == NULL) || (status != RT_ERROR_OK)){
+                        if (!try_again(errno)){
+                            LOG(LOG_ERR, "conection failed with error %s", strerror(errno));
+                            BOOST_CHECK(false);
                             return;
                         }
+                    }
+                    else {
+                        RT_ERROR status = RT_ERROR_OK;
+                        client_rt = rt_new_socket(&status, client_sck);
+                        if ((client_rt == NULL) || (status != RT_ERROR_OK)){
+                            BOOST_CHECK(NULL != client_rt);
+                            BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
+                            return;
+                        }
+                    }
+                }
+                else {
+                    // send data on client socket
+                    if (data_sent < 20){
+                        int res = rt_send(client_rt, "AAAAXBBBBXCCCCXDDDDX" + data_sent, 20 - data_sent);
+                        if (res < 0){
+                            BOOST_CHECK_EQUAL(RT_ERROR_OK, (RT_ERROR)(-res));
+                            return;
+                        }
+                        data_sent += res;
                     }
                 }
             }
 
             for (int i = 0 ; i < nb_recv_sck ; i++){
+                // received data on connected socket (server side)
                 if (FD_ISSET(recv_sck[i], & rfds)){
-                    LOG(LOG_INFO, "activity on %d", recv_sck[i]);
+                    LOG(LOG_INFO, "received data activity on %d", recv_sck[i]);
                     int len = rt_recv(sck_rt[i], &(((char*)p)[nb_inbuffer]), 5);
                     if (len < 0){
                         BOOST_CHECK_EQUAL(RT_ERROR_OK, (RT_ERROR)(-len));
@@ -364,7 +368,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
                     }
                 }
             }
-            
+            // accept new connection on server socket
             if (FD_ISSET(listener_sck, &rfds)){
                 char ip_source[128];
                 union
@@ -381,7 +385,14 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
                 int sck = accept(listener_sck, &u.s, &sin_size);
                 strcpy(ip_source, inet_ntoa(u.s4.sin_addr));
                 LOG(LOG_INFO, "Incoming socket to %d (ip=%s)\n", sck, ip_source);
-                if (sck > 0){
+                if (sck < 0){
+                    if (!try_again(errno)){
+                        LOG(LOG_ERR, "accept failed with error %s", strerror(errno));
+                        BOOST_CHECK(false);
+                        return;
+                    }
+                }
+                else {
                     recv_sck[nb_recv_sck] = sck;
                     RT_ERROR status = RT_ERROR_OK;
                     RT * server_rt = rt_new_socket(&status, sck);
@@ -392,14 +403,13 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
                     }
                     sck_rt[nb_recv_sck] = server_rt;
                     nb_recv_sck++;
-
                 }
             }
         }
         break;
         case -1:
             if ((errno == EINTR)||(errno==EAGAIN)) { continue; }
-            LOG(LOG_INFO, "stopped on error [%d] %s\n", num, strerror(errno));
+            LOG(LOG_INFO, "select stopped on error [%d] %s\n", num, strerror(errno));
             run = false;
         }
     }
