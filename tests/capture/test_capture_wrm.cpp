@@ -382,7 +382,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     path[len] = 0;
     int fd = ::creat(path, 0777);
     if (fd == -1){
-        LOG(LOG_INFO, "OutByFilename transport write failed with error : %s on %s", strerror(errno), path);
+        LOG(LOG_INFO, "open failed with error : %s on %s", strerror(errno), path);
         BOOST_CHECK(false);
         return;
     }
@@ -413,9 +413,21 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     consumer.flush();
     BOOST_CHECK_EQUAL(0, 0);
     ::close(trans.fd);
-    BOOST_CHECK_EQUAL(1588, filesize("./testcap.wrm"));
+    BOOST_CHECK_EQUAL(1588, filesize(filename));
     
-    InByFilenameTransport in_wrm_trans("./testcap.wrm");
+    char in_path[1024];
+    len = strlen(filename);
+    memcpy(in_path, filename, len);
+    in_path[len] = 0;
+
+    fd = ::open(in_path, O_RDONLY);
+    if (fd == -1){
+        LOG(LOG_INFO, "open '%s' failed with error : %s", path, strerror(errno));
+        BOOST_CHECK(false);
+        return;
+    }
+    InFileTransport in_wrm_trans(fd);
+
     FileSequence sequence("path file pid count extension", "./", "testcap", "png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
 

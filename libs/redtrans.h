@@ -37,7 +37,6 @@
 #include "rt_test.h"
 #include "rt_outfile.h"
 #include "rt_infile.h"
-#include "rt_inbyfilename.h"
 #include "rt_inbyfilenamesequence.h"
 #include "rt_outbyfilenamesequence.h"
 #include "rt_outbyfilenamesequencewithmeta.h"
@@ -52,7 +51,6 @@ typedef enum {
     RT_TYPE_OUTFILE,
     RT_TYPE_INFILE,
     RT_TYPE_SOCKET,
-    RT_TYPE_INBYFILENAME, // based on INFILE
     RT_TYPE_OUTBYFILENAMESEQUENCE, // based on OUTFILE
     RT_TYPE_OUTBYFILENAMESEQUENCEWITHMETA, // based on OUTFILE
     RT_TYPE_INBYFILENAMESEQUENCE, // based on INFILE
@@ -71,7 +69,6 @@ struct RT {
       struct RTOutfile outfile;
       struct RTInfile infile;
       struct RTSocket socket;
-      struct RTInByFilename in_by_filename;
       struct RTOutByFilenameSequence out_by_filename_sequence;
       struct RTOutByFilenameSequenceWithMeta out_by_filename_sequence_with_meta;
       struct RTInByFilenameSequence in_by_filename_sequence;

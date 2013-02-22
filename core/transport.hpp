@@ -870,38 +870,6 @@ class SocketTransport : public Transport {
     private:
 };
 
-class InByFilenameTransport : public InFileTransport {
-    char path[1024];
-public:
-    InByFilenameTransport(const char * path)
-    : InFileTransport(-1)
-    {
-        size_t len = strlen(path);
-        memcpy(this->path, path, len);
-        this->path[len] = 0;
-    }
-
-    ~InByFilenameTransport()
-    {
-        if (this->fd != -1){
-            ::close(this->fd);
-            this->fd = -1;
-        }
-    }
-
-    using Transport::recv;
-    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        if (this->fd == -1){
-            this->fd = ::open(this->path, O_RDONLY);
-            if (this->fd == -1){
-                LOG(LOG_INFO, "InByFilename transport '%s' recv failed with error : %s", this->path, strerror(errno));
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
-        }
-        InFileTransport::recv(pbuffer, len);
-    }
-};
-
 class FileSequence
 {
     char format[64];

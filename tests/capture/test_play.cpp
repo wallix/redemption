@@ -34,7 +34,19 @@
 BOOST_AUTO_TEST_CASE(TestSample0WRM)
 {
     const char * input_filename = "./tests/fixtures/sample0.wrm";
-    InByFilenameTransport in_wrm_trans(input_filename);
+    char path[1024];
+    size_t len = strlen(input_filename);
+    memcpy(path, input_filename, len);
+    path[len] = 0;
+
+    int fd = ::open(path, O_RDONLY);
+    if (fd == -1){
+        LOG(LOG_INFO, "open '%s' failed with error : %s", path, strerror(errno));
+        BOOST_CHECK(false);
+        return;
+    }
+
+    InFileTransport in_wrm_trans(fd);
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
@@ -98,7 +110,19 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 BOOST_AUTO_TEST_CASE(TestSecondPart)
 {
     const char * input_filename = "./tests/fixtures/sample1.wrm";
-    InByFilenameTransport in_wrm_trans(input_filename);
+    char path[1024];
+    size_t len = strlen(input_filename);
+    memcpy(path, input_filename, len);
+    path[len] = 0;
+
+    int fd = ::open(path, O_RDONLY);
+    if (fd == -1){
+        LOG(LOG_INFO, "open '%s' failed with error : %s", path, strerror(errno));
+        BOOST_CHECK(false);
+        return;
+    }
+
+    InFileTransport in_wrm_trans(fd);
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
