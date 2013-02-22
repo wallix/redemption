@@ -33,6 +33,7 @@
 #include <errno.h>
 
 #include "sq_one.h"
+#include "sq_outfilename.h"
 
 #include "rt_generator.h"
 #include "rt_check.h"
@@ -60,6 +61,7 @@ typedef enum {
 
 typedef enum {
     SQ_TYPE_ONE,
+    SQ_TYPE_OUTFILENAME,
 } SQ_TYPE;
 
 
@@ -68,6 +70,7 @@ struct SQ {
     RT_ERROR err;
     union {
       struct SQOne one;
+      struct SQOutfilename outfilename;
     } u;
 };
 
@@ -95,12 +98,39 @@ SQ * sq_new_one_RT(RT_ERROR * error, RT * trans)
     return res;
 }
 
+SQ * sq_new_outfilename(RT_ERROR * error, SQ_FORMAT format, const char * prefix, const char * extension)
+{
+    SQ * res = (SQ*)malloc(sizeof(SQ));
+    if (res == 0){ 
+        if (error){ *error = RT_ERROR_MALLOC; }
+        return NULL;
+    }
+    res->sq_type = SQ_TYPE_OUTFILENAME;
+    res->err = sq_m_SQOutfilename_constructor(&(res->u.outfilename), format, prefix, extension);
+    if (*error) {*error = res->err; }
+    switch (res->err){
+    default:
+        sq_m_SQOutfilename_destructor(&(res->u.outfilename));
+        free(res);
+        return NULL;
+    case RT_ERROR_MALLOC:
+        free(res);
+        return NULL;
+    case RT_ERROR_OK:
+        break;
+    }
+    return res;
+}
+
 RT_ERROR sq_next(SQ * seq)
 {
     RT_ERROR res = RT_ERROR_OK;
     switch (seq->sq_type){
     case SQ_TYPE_ONE:
         res = sq_m_SQOne_next(&(seq->u.one));
+        break;
+    case SQ_TYPE_OUTFILENAME:
+        res = sq_m_SQOutfilename_next(&(seq->u.outfilename));
         break;
     default:
         res = RT_ERROR_TYPE_MISMATCH;
@@ -115,6 +145,9 @@ RT * sq_get_trans(SQ * seq, RT_ERROR * error)
     switch (seq->sq_type){
     case SQ_TYPE_ONE:
         trans = sq_m_SQOne_get_trans(&(seq->u.one), &status);
+        break;
+    case SQ_TYPE_OUTFILENAME:
+        trans = sq_m_SQOutfilename_get_trans(&(seq->u.outfilename), &status);
         break;
     default:
         status = RT_ERROR_TYPE_MISMATCH;
@@ -135,10 +168,7 @@ struct RT {
       struct RTInfile infile;
       struct RTSocket socket;
       struct RTOutsequence outsequence;
-      struct RTOutByFilenameSequence out_by_filename_sequence;
-      struct RTOutByFilenameSequenceWithMeta out_by_filename_sequence_with_meta;
-      struct RTInByFilenameSequence in_by_filename_sequence;
-      struct RTInByMetaSequence in_by_meta_sequence;
+//      struct RTInsequence insequence;
     } u;
 };
 

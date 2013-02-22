@@ -37,8 +37,16 @@ extern "C" {
         RT_ERROR_UNKNOWN_TYPE,
         RT_ERROR_TRAILING_DATA,
         RT_ERROR_CLOSED,
+        RT_ERROR_CREAT,
         RT_ERROR_NOT_IMPLEMENTED,
+        RT_ERROR_STRING_PREFIX_TOO_LONG,
+        RT_ERROR_STRING_EXTENSION_TOO_LONG,
     } RT_ERROR;
+
+    typedef enum {
+        SQF_PREFIX_PID_COUNT_EXTENSION,
+        SQF_PREFIX_COUNT_EXTENSION,
+    } SQ_FORMAT;
 
     struct RT;
     struct SQ;

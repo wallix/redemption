@@ -420,13 +420,14 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
 // A sequence is a very simple object that expose 2 methods, 
 // sq_get_trans() return the current transport to use
 // sq_next() goes forward to the next transport tu use
-// the simplest possible sequence is the "one" sequence implemented below : 
+
+// The simplest possible sequence is the "one" sequence implemented below : 
 // - sq_get_trans() always return the same transport (the one the sequence was initialized with)
 // - sq_next() does nothing
 // In the test below, we just wrap a check transport in a one_sequence
 // hence the resultant outseuence object behave exactly like a check sequence
 
-BOOST_AUTO_TEST_CASE(TestOutSequenceTransport)
+BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OneSequence)
 {
     RT_ERROR status_trans = RT_ERROR_OK;
     RT * out = rt_new_check(&status_trans, "AAAAXBBBBXCCCCX", 15);
@@ -445,4 +446,36 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport)
     rt_delete(rt);
 }
 
+// Second simplest sequence is "outfilename" sequence
+// - sq_get_trans() open an outfile if necessary using the given name pattern 
+//      and return it on subsequent calls it is closed
+// - sq_next() close the current outfile and step to the next filename wich will 
+//    be used by the next sq_get_trans to create an outfile transport.
+
+// The test below is very similar to the previous one except for the creation of the sequence
+
+BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
+{
+    RT_ERROR status_seq = RT_ERROR_OK;
+    SQ * sequence = sq_new_outfilename(&status_seq, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", "txt");
+
+    RT_ERROR status = RT_ERROR_OK;
+    RT * rt = rt_new_outsequence(&status, sequence);
+
+    BOOST_CHECK_EQUAL( 5, rt_send(rt, "AAAAX",  5));
+    BOOST_CHECK_EQUAL(RT_ERROR_OK, sq_next(sequence));
+    BOOST_CHECK_EQUAL(10, rt_send(rt, "BBBBXCCCCX", 10));
+
+    rt_close(rt);
+    rt_delete(rt);
+    
+    if (::unlink("TESTOFS-000000.txt") < 0){
+        BOOST_CHECK(false);
+        LOG(LOG_ERR, "failed to unlink TESTOFS-000000.txt");
+    }
+    if (::unlink("TESTOFS-000001.txt") < 0){
+        BOOST_CHECK(false);
+        LOG(LOG_ERR, "failed to unlink TESTOFS-000001.txt");
+    }
+}
 
