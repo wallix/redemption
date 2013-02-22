@@ -32,16 +32,19 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "sq_one.h"
+
 #include "rt_generator.h"
 #include "rt_check.h"
 #include "rt_test.h"
 #include "rt_outfile.h"
 #include "rt_infile.h"
+#include "rt_socket.h"
+#include "rt_outsequence.h"
 #include "rt_inbyfilenamesequence.h"
 #include "rt_outbyfilenamesequence.h"
 #include "rt_outbyfilenamesequencewithmeta.h"
 #include "rt_inbymetasequence.h"
-#include "rt_socket.h"
 #include "rt_XXX.h"
 
 typedef enum {
@@ -51,12 +54,74 @@ typedef enum {
     RT_TYPE_OUTFILE,
     RT_TYPE_INFILE,
     RT_TYPE_SOCKET,
-    RT_TYPE_OUTBYFILENAMESEQUENCE, // based on OUTFILE
-    RT_TYPE_OUTBYFILENAMESEQUENCEWITHMETA, // based on OUTFILE
-    RT_TYPE_INBYFILENAMESEQUENCE, // based on INFILE
-    RT_TYPE_INBYMETASEQUENCE, // based on INFILE
-    
+    RT_TYPE_OUTSEQUENCE,
+    RT_TYPE_INSEQUENCE,
 } RT_TYPE;
+
+typedef enum {
+    SQ_TYPE_ONE,
+} SQ_TYPE;
+
+
+struct SQ {
+    unsigned sq_type;
+    RT_ERROR err;
+    union {
+      struct SQOne one;
+    } u;
+};
+
+SQ * sq_new_one_RT(RT_ERROR * error, RT * trans)
+{
+    SQ * res = (SQ*)malloc(sizeof(SQ));
+    if (res == 0){ 
+        if (error){ *error = RT_ERROR_MALLOC; }
+        return NULL;
+    }
+    res->sq_type = SQ_TYPE_ONE;
+    res->err = sq_m_SQOne_constructor(&(res->u.one), trans);
+    if (*error) {*error = res->err; }
+    switch (res->err){
+    default:
+        sq_m_SQOne_destructor(&(res->u.one));
+        free(res);
+        return NULL;
+    case RT_ERROR_MALLOC:
+        free(res);
+        return NULL;
+    case RT_ERROR_OK:
+        break;
+    }
+    return res;
+}
+
+RT_ERROR sq_next(SQ * seq)
+{
+    RT_ERROR res = RT_ERROR_OK;
+    switch (seq->sq_type){
+    case SQ_TYPE_ONE:
+        res = sq_m_SQOne_next(&(seq->u.one));
+        break;
+    default:
+        res = RT_ERROR_TYPE_MISMATCH;
+    }
+    return res;
+}
+
+RT * sq_get_trans(SQ * seq, RT_ERROR * error)
+{
+    RT_ERROR status = RT_ERROR_OK;
+    RT * trans = NULL;
+    switch (seq->sq_type){
+    case SQ_TYPE_ONE:
+        trans = sq_m_SQOne_get_trans(&(seq->u.one), &status);
+        break;
+    default:
+        status = RT_ERROR_TYPE_MISMATCH;
+    }
+    if (error) { *error = status; }
+    return trans;
+}
 
 struct RT {
     unsigned rt_type;
@@ -69,6 +134,7 @@ struct RT {
       struct RTOutfile outfile;
       struct RTInfile infile;
       struct RTSocket socket;
+      struct RTOutsequence outsequence;
       struct RTOutByFilenameSequence out_by_filename_sequence;
       struct RTOutByFilenameSequenceWithMeta out_by_filename_sequence_with_meta;
       struct RTInByFilenameSequence in_by_filename_sequence;
@@ -218,6 +284,29 @@ RT * rt_new_socket(RT_ERROR * error, int sck)
     return res;
 }
 
+RT * rt_new_outsequence(RT_ERROR * error, SQ * seq)
+{
+    RT * res = (RT*)malloc(sizeof(RT));
+    if (res == 0){ 
+        if (error){ *error = RT_ERROR_MALLOC; }
+        return NULL;
+    }
+    res->rt_type = RT_TYPE_OUTSEQUENCE;
+    res->err = rt_m_RTOutsequence_constructor(&(res->u.outsequence), seq);
+    switch (res->err){
+    default:
+        rt_m_RTOutsequence_destructor(&(res->u.outsequence));
+        free(res);
+        return NULL;
+    case RT_ERROR_MALLOC:
+        free(res);
+        return NULL;
+    case RT_ERROR_OK:
+        break;
+    }
+    return res;
+}
+
 
 RT_ERROR rt_delete(RT * rt)
 {
@@ -241,6 +330,9 @@ RT_ERROR rt_delete(RT * rt)
         case RT_TYPE_SOCKET:
             status = rt_m_RTSocket_destructor(&(rt->u.socket));
         break;
+        case RT_TYPE_OUTSEQUENCE:
+            status = rt_m_RTOutsequence_destructor(&(rt->u.outsequence));
+        break;
         default:
             ;
     }
@@ -260,44 +352,37 @@ ssize_t rt_recv(RT * rt, void * data, size_t len)
     switch (rt->rt_type){
     case RT_TYPE_GENERATOR:{
         ssize_t res = rt_m_RTGenerator_recv(&(rt->u.generator), data, len);
-        if (res < 0){
-            rt->err = (RT_ERROR)-res;
-        }
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
         return res;
     }
     case RT_TYPE_CHECK:{
         ssize_t res = rt_m_RTCheck_recv(&(rt->u.check), data, len);
-        if (res < 0){
-            rt->err = (RT_ERROR)-res;
-        }
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
         return res;
     }
     case RT_TYPE_TEST:{
         ssize_t res = rt_m_RTTest_recv(&(rt->u.test), data, len);
-        if (res < 0){
-            rt->err = (RT_ERROR)-res;
-        }
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
         return res;
     }
     case RT_TYPE_INFILE:{
         ssize_t res = rt_m_RTInfile_recv(&(rt->u.infile), data, len);
-        if (res < 0){
-            rt->err = (RT_ERROR)-res;
-        }
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
         return res;
     }
     case RT_TYPE_OUTFILE:{
         ssize_t res = rt_m_RTOutfile_recv(&(rt->u.outfile), data, len);
-        if (res < 0){
-            rt->err = (RT_ERROR)-res;
-        }
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
         return res;
     }
     case RT_TYPE_SOCKET:{
         ssize_t res = rt_m_RTSocket_recv(&(rt->u.socket), data, len);
-        if (res < 0){
-            rt->err = (RT_ERROR)-res;
-        }
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
+        return res;
+    }
+    case RT_TYPE_OUTSEQUENCE:{
+        ssize_t res = rt_m_RTOutsequence_recv(&(rt->u.outsequence), data, len);
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
         return res;
     }
     default:
@@ -336,8 +421,12 @@ ssize_t rt_send(RT * rt, const void * data, size_t len)
         return res;
     }
     case RT_TYPE_SOCKET: {
-        printf("send on socket\n");
         ssize_t res = rt_m_RTSocket_send(&(rt->u.socket), data, len);
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
+        return res;
+    }
+    case RT_TYPE_OUTSEQUENCE: {
+        ssize_t res = rt_m_RTOutsequence_send(&(rt->u.outsequence), data, len);
         if (res < 0){ rt->err = (RT_ERROR)-res; }
         return res;
     }

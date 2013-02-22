@@ -415,3 +415,34 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
     }
 
 }
+
+// The Outsequence transport use one inderection level to find out where data should be sent
+// A sequence is a very simple object that expose 2 methods, 
+// sq_get_trans() return the current transport to use
+// sq_next() goes forward to the next transport tu use
+// the simplest possible sequence is the "one" sequence implemented below : 
+// - sq_get_trans() always return the same transport (the one the sequence was initialized with)
+// - sq_next() does nothing
+// In the test below, we just wrap a check transport in a one_sequence
+// hence the resultant outseuence object behave exactly like a check sequence
+
+BOOST_AUTO_TEST_CASE(TestOutSequenceTransport)
+{
+    RT_ERROR status_trans = RT_ERROR_OK;
+    RT * out = rt_new_check(&status_trans, "AAAAXBBBBXCCCCX", 15);
+
+    RT_ERROR status_seq = RT_ERROR_OK;
+    SQ * sequence = sq_new_one_RT(&status_seq, out);
+
+    RT_ERROR status = RT_ERROR_OK;
+    RT * rt = rt_new_outsequence(&status, sequence);
+
+    BOOST_CHECK_EQUAL( 5, rt_send(rt, "AAAAX",  5));
+    BOOST_CHECK_EQUAL(RT_ERROR_OK, sq_next(sequence));
+    BOOST_CHECK_EQUAL(10, rt_send(rt, "BBBBXCCCCX", 10));
+
+    rt_close(rt);
+    rt_delete(rt);
+}
+
+
