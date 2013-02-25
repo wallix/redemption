@@ -34,6 +34,7 @@
 
 #include "sq_one.h"
 #include "sq_outfilename.h"
+#include "sq_infilename.h"
 
 #include "rt_generator.h"
 #include "rt_check.h"
@@ -42,7 +43,9 @@
 #include "rt_infile.h"
 #include "rt_socket.h"
 #include "rt_outsequence.h"
+#include "rt_insequence.h"
 #include "rt_outmeta.h"
+#include "rt_inmeta.h"
 #include "rt_inbyfilenamesequence.h"
 #include "rt_outbyfilenamesequence.h"
 #include "rt_outbyfilenamesequencewithmeta.h"
@@ -58,12 +61,14 @@ typedef enum {
     RT_TYPE_SOCKET,
     RT_TYPE_OUTSEQUENCE,
     RT_TYPE_OUTMETA,
+    RT_TYPE_INMETA,
     RT_TYPE_INSEQUENCE,
 } RT_TYPE;
 
 typedef enum {
     SQ_TYPE_ONE,
     SQ_TYPE_OUTFILENAME,
+    SQ_TYPE_INFILENAME,
 } SQ_TYPE;
 
 
@@ -73,6 +78,7 @@ struct SQ {
     union {
       struct SQOne one;
       struct SQOutfilename outfilename;
+      struct SQInfilename infilename;
     } u;
 };
 
@@ -112,10 +118,26 @@ SQ * sq_new_outfilename(RT_ERROR * error, RT * tracker, SQ_FORMAT format, const 
     if (*error) {*error = res->err; }
     switch (res->err){
     default:
-        sq_m_SQOutfilename_destructor(&(res->u.outfilename));
         free(res);
         return NULL;
-    case RT_ERROR_MALLOC:
+    case RT_ERROR_OK:
+        break;
+    }
+    return res;
+}
+
+SQ * sq_new_infilename(RT_ERROR * error, SQ_FORMAT format, const char * prefix, const char * extension)
+{
+    SQ * res = (SQ*)malloc(sizeof(SQ));
+    if (res == 0){ 
+        if (error){ *error = RT_ERROR_MALLOC; }
+        return NULL;
+    }
+    res->sq_type = SQ_TYPE_INFILENAME;
+    res->err = sq_m_SQInfilename_constructor(&(res->u.infilename), format, prefix, extension);
+    if (*error) {*error = res->err; }
+    switch (res->err){
+    default:
         free(res);
         return NULL;
     case RT_ERROR_OK:
@@ -134,6 +156,9 @@ RT_ERROR sq_next(SQ * seq)
     case SQ_TYPE_OUTFILENAME:
         res = sq_m_SQOutfilename_next(&(seq->u.outfilename));
         break;
+    case SQ_TYPE_INFILENAME:
+        res = sq_m_SQInfilename_next(&(seq->u.infilename));
+        break;
     default:
         res = RT_ERROR_TYPE_MISMATCH;
     }
@@ -150,6 +175,9 @@ RT * sq_get_trans(SQ * seq, RT_ERROR * error)
         break;
     case SQ_TYPE_OUTFILENAME:
         trans = sq_m_SQOutfilename_get_trans(&(seq->u.outfilename), &status);
+        break;
+    case SQ_TYPE_INFILENAME:
+        trans = sq_m_SQInfilename_get_trans(&(seq->u.infilename), &status);
         break;
     default:
         status = RT_ERROR_TYPE_MISMATCH;
@@ -188,7 +216,9 @@ struct RT {
       struct RTInfile infile;
       struct RTSocket socket;
       struct RTOutsequence outsequence;
+      struct RTInsequence insequence;
       struct RTOutmeta outmeta;
+      struct RTInmeta inmeta;
 //      struct RTInsequence insequence;
     } u;
 };
@@ -205,10 +235,6 @@ RT * rt_new_generator(RT_ERROR * error, const void * data, size_t len)
     if (*error) {*error = res->err; }
     switch (res->err){
     default:
-        rt_m_RTGenerator_destructor(&(res->u.generator));
-        free(res);
-        return NULL;
-    case RT_ERROR_MALLOC:
         free(res);
         return NULL;
     case RT_ERROR_OK:
@@ -229,10 +255,6 @@ RT * rt_new_check(RT_ERROR * error, const void * data, size_t len)
     if (error){ *error = res->err; }
     switch (res->err){
     default:
-        rt_m_RTCheck_destructor(&(res->u.check));
-        free(res);
-        return NULL;
-    case RT_ERROR_MALLOC:
         free(res);
         return NULL;
     case RT_ERROR_OK:
@@ -253,10 +275,6 @@ RT * rt_new_test(RT_ERROR * error, const void * data_check, size_t len_check, co
     if (error){ *error = res->err; }
     switch (res->err){
     default:
-        rt_m_RTTest_destructor(&(res->u.test));
-        free(res);
-        return NULL;
-    case RT_ERROR_MALLOC:
         free(res);
         return NULL;
     case RT_ERROR_OK:
@@ -277,10 +295,6 @@ RT * rt_new_outfile(RT_ERROR * error, int fd)
     if (error){ *error = res->err; }
     switch (res->err){
     default:
-        rt_m_RTOutfile_destructor(&(res->u.outfile));
-        free(res);
-        return NULL;
-    case RT_ERROR_MALLOC:
         free(res);
         return NULL;
     case RT_ERROR_OK:
@@ -300,10 +314,6 @@ RT * rt_new_infile(RT_ERROR * error, int fd)
     res->err = rt_m_RTInfile_constructor(&(res->u.infile), fd);
     switch (res->err){
     default:
-        rt_m_RTInfile_destructor(&(res->u.infile));
-        free(res);
-        return NULL;
-    case RT_ERROR_MALLOC:
         free(res);
         return NULL;
     case RT_ERROR_OK:
@@ -323,10 +333,6 @@ RT * rt_new_socket(RT_ERROR * error, int sck)
     res->err = rt_m_RTSocket_constructor(&(res->u.socket), sck);
     switch (res->err){
     default:
-        rt_m_RTSocket_destructor(&(res->u.socket));
-        free(res);
-        return NULL;
-    case RT_ERROR_MALLOC:
         free(res);
         return NULL;
     case RT_ERROR_OK:
@@ -346,10 +352,25 @@ RT * rt_new_outsequence(RT_ERROR * error, SQ * seq)
     res->err = rt_m_RTOutsequence_constructor(&(res->u.outsequence), seq);
     switch (res->err){
     default:
-        rt_m_RTOutsequence_destructor(&(res->u.outsequence));
         free(res);
         return NULL;
-    case RT_ERROR_MALLOC:
+    case RT_ERROR_OK:
+        break;
+    }
+    return res;
+}
+
+RT * rt_new_insequence(RT_ERROR * error, SQ * seq)
+{
+    RT * res = (RT*)malloc(sizeof(RT));
+    if (res == 0){ 
+        if (error){ *error = RT_ERROR_MALLOC; }
+        return NULL;
+    }
+    res->rt_type = RT_TYPE_INSEQUENCE;
+    res->err = rt_m_RTInsequence_constructor(&(res->u.insequence), seq);
+    switch (res->err){
+    default:
         free(res);
         return NULL;
     case RT_ERROR_OK:
@@ -369,10 +390,6 @@ RT * rt_new_outmeta(RT_ERROR * error, SQ ** seq, const char * prefix, const char
     res->err = rt_m_RTOutmeta_constructor(&(res->u.outmeta), seq, prefix, extension);
     switch (res->err){
     default:
-        rt_m_RTOutmeta_destructor(&(res->u.outmeta));
-        free(res);
-        return NULL;
-    case RT_ERROR_MALLOC:
         free(res);
         return NULL;
     case RT_ERROR_OK:
@@ -380,6 +397,26 @@ RT * rt_new_outmeta(RT_ERROR * error, SQ ** seq, const char * prefix, const char
     }
     return res;
 }
+
+RT * rt_new_inmeta(RT_ERROR * error, const char * prefix, const char * extension)
+{
+    RT * res = (RT*)malloc(sizeof(RT));
+    if (res == 0){ 
+        if (error){ *error = RT_ERROR_MALLOC; }
+        return NULL;
+    }
+    res->rt_type = RT_TYPE_OUTMETA;
+    res->err = rt_m_RTInmeta_constructor(&(res->u.inmeta), prefix, extension);
+    switch (res->err){
+    default:
+        free(res);
+        return NULL;
+    case RT_ERROR_OK:
+        break;
+    }
+    return res;
+}
+
 
 RT_ERROR rt_delete(RT * rt)
 {
@@ -408,6 +445,9 @@ RT_ERROR rt_delete(RT * rt)
         break;
         case RT_TYPE_OUTMETA:
             status = rt_m_RTOutmeta_destructor(&(rt->u.outmeta));
+        break;
+        case RT_TYPE_INMETA:
+            status = rt_m_RTInmeta_destructor(&(rt->u.inmeta));
         break;
         default:
             ;
@@ -461,8 +501,18 @@ ssize_t rt_recv(RT * rt, void * data, size_t len)
         if (res < 0){ rt->err = (RT_ERROR)-res; }
         return res;
     }
+    case RT_TYPE_INSEQUENCE:{
+        ssize_t res = rt_m_RTInsequence_recv(&(rt->u.insequence), data, len);
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
+        return res;
+    }
     case RT_TYPE_OUTMETA:{
         ssize_t res = rt_m_RTOutmeta_recv(&(rt->u.outmeta), data, len);
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
+        return res;
+    }
+    case RT_TYPE_INMETA:{
+        ssize_t res = rt_m_RTInmeta_recv(&(rt->u.inmeta), data, len);
         if (res < 0){ rt->err = (RT_ERROR)-res; }
         return res;
     }
@@ -516,6 +566,11 @@ ssize_t rt_send(RT * rt, const void * data, size_t len)
         if (res < 0){ rt->err = (RT_ERROR)-res; }
         return res;
     }
+    case RT_TYPE_INMETA: {
+        ssize_t res = rt_m_RTInmeta_send(&(rt->u.inmeta), data, len);
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
+        return res;
+    }
     default:
         rt->err = RT_ERROR_UNKNOWN_TYPE;
     }
@@ -549,6 +604,9 @@ void rt_close(RT * rt)
         break;
         case RT_TYPE_OUTMETA:
 //            rt_m_RTOutmeta_close(&(rt->u.outmeta));
+        break;
+        case RT_TYPE_INMETA:
+//            rt_m_RTInmeta_close(&(rt->u.inmeta));
         break;
         default:
             ;

@@ -85,9 +85,30 @@ extern "C" {
             ret = ::write(self->fd, (uint8_t*)data + total_sent, remaining_len);
             if (ret <= 0){
                 if (errno == EINTR){ continue; }
-                TODO("Really several errors are possible and we should define codes for them"
-                     "Basically EOF means that we won't be able to write to this file anymore in the future")                
-                return RT_ERROR_EOF;
+                switch (errno){
+                    case EAGAIN:
+                        return -RT_ERROR_EAGAIN;
+                    case EBADF:
+                        return -RT_ERROR_EBADF;
+                    case EDESTADDRREQ:
+                        return -RT_ERROR_EDESTADDRREQ;
+                    case EFAULT:
+                        return -RT_ERROR_EFAULT;
+                    case EFBIG:
+                        return -RT_ERROR_EFBIG;
+                    case EINVAL:
+                        return -RT_ERROR_EINVAL;
+                    case EIO:
+                        return -RT_ERROR_EIO;
+                    case ENOSPC:
+                        return -RT_ERROR_ENOSPC;
+                    case EPIPE:
+                        return -RT_ERROR_EPIPE;
+                    case EISDIR:
+                        return -RT_ERROR_EISDIR;
+                    default:
+                        return -RT_ERROR_POSIX;
+                }
             }
             remaining_len -= ret;
             total_sent += ret;

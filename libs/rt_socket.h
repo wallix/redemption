@@ -78,6 +78,7 @@ extern "C" {
                         select(self->sck + 1, &fds, NULL, NULL, &time);
                         continue;
                     }
+                    TODO("replace this with actual error management, EOF is not even an option for sockets")
                     return -RT_ERROR_EOF;
                 case 0: /* no data received, socket closed */
                     return -RT_ERROR_EOF;

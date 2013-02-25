@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
     BOOST_CHECK_EQUAL(0, memcmp("We ", buffer, 3));
     BOOST_CHECK_EQUAL(21, rt_recv(rt, buffer+3, 1024));
     BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
-    BOOST_CHECK_EQUAL(-RT_ERROR_EOF, rt_recv(rt, buffer+24, 1024));
+    BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer+24, 1024)); // EOF
     
     rt_close(rt);
     rt_delete(rt);
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestTestTransport2)
     BOOST_CHECK_EQUAL(0, memcmp("We ", buffer, 3));
     BOOST_CHECK_EQUAL(21, rt_recv(rt, buffer+3, 1024));
     BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
-    BOOST_CHECK_EQUAL(-RT_ERROR_EOF, rt_recv(rt, buffer+24, 1024));
+    BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer+24, 1024));
     
     rt_close(rt);
     rt_delete(rt);
@@ -446,38 +446,78 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OneSequence)
     rt_delete(rt);
 }
 
-// Second simplest sequence is "outfilename" sequence
-// - sq_get_trans() open an outfile if necessary using the given name pattern 
-//      and return it on subsequent calls it is closed
-// - sq_next() close the current outfile and step to the next filename wich will 
-//    be used by the next sq_get_trans to create an outfile transport.
-
-// The test below is very similar to the previous one except for the creation of the sequence
 
 BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
 {
     RT_ERROR status_seq = RT_ERROR_OK;
-    SQ * sequence = sq_new_outfilename(&status_seq, NULL, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", "txt");
+// Second simplest sequence is "outfilename" sequence
+// - sq_get_trans() open an outfile if necessary using the given name pattern 
+//      and return it on subsequent calls until it is closed
+// - sq_next() close the current outfile and step to the next filename wich will 
+//    be used by the next sq_get_trans to create an outfile transport.
 
-    RT_ERROR status = RT_ERROR_OK;
-    RT * rt = rt_new_outsequence(&status, sequence);
+// The test below is very similar to the previous one except for the creation of the sequence
+    {
+        SQ * sequence = sq_new_outfilename(&status_seq, NULL, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", "txt");
 
-    BOOST_CHECK_EQUAL( 5, rt_send(rt, "AAAAX",  5));
-    BOOST_CHECK_EQUAL(RT_ERROR_OK, sq_next(sequence));
-    BOOST_CHECK_EQUAL(10, rt_send(rt, "BBBBXCCCCX", 10));
+        RT_ERROR status = RT_ERROR_OK;
+        RT * rt = rt_new_outsequence(&status, sequence);
 
-    rt_close(rt);
-    rt_delete(rt);
-    
-    sq_delete(sequence);
-    
-    if (::unlink("TESTOFS-000000.txt") < 0){
-        BOOST_CHECK(false);
-        LOG(LOG_ERR, "failed to unlink TESTOFS-000000.txt");
+        BOOST_CHECK_EQUAL( 5, rt_send(rt, "AAAAX",  5));
+        BOOST_CHECK_EQUAL(RT_ERROR_OK, sq_next(sequence));
+        BOOST_CHECK_EQUAL(10, rt_send(rt, "BBBBXCCCCX", 10));
+
+        rt_close(rt);
+        rt_delete(rt);
+        
+        sq_delete(sequence);
     }
-    if (::unlink("TESTOFS-000001.txt") < 0){
-        BOOST_CHECK(false);
-        LOG(LOG_ERR, "failed to unlink TESTOFS-000001.txt");
+
+// Third simplest sequence is "infilename" sequence
+// - sq_get_trans() open an infile if necessary using the given name pattern 
+//      and return it on subsequent calls untile it is closed (reach EOF)
+// - sq_next() close the current outfile and step to the next filename wich will 
+//    be used by the next sq_get_trans to create an outfile transport.
+
+    {
+        SQ * sequence = sq_new_infilename(&status_seq, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", "txt");
+
+        RT_ERROR status = RT_ERROR_OK;
+        RT * rt = rt_new_insequence(&status, sequence);
+
+        char buffer[1024] = {};
+        BOOST_CHECK_EQUAL(10, rt_recv(rt, buffer, 10));
+        BOOST_CHECK_EQUAL(0, buffer[10]);
+        if (0 != memcmp(buffer, "AAAAXBBBBX", 10)){
+            LOG(LOG_ERR, "expected \"AAAAXBBBBX\" got \"%s\"\n", buffer);
+        }
+        BOOST_CHECK_EQUAL(5, rt_recv(rt, buffer + 10, 1024));
+        BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
+        BOOST_CHECK_EQUAL(0, buffer[15]);
+        BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer + 15, 1024));
+        rt_close(rt);
+        rt_delete(rt);
+        sq_delete(sequence);
+    }
+
+// Third simplest sequence is "intracker" sequence
+// - Behavior is identical to infilename sequence except the input pattern is the name of a file 
+// that contains the list of the input files.
+// - sq_get_trans() open an infile if necessary using the name it got from tracker
+//      and return it on subsequent calls until it is closed (reach EOF)
+// - sq_next() close the current outfile and step to the next filename wich will 
+//    be used by the next sq_get_trans to create an outfile transport.
+
+
+    const char * file[] = {
+        "TESTOFS-000000.txt",
+        "TESTOFS-000001.txt"
+    };
+    for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
+        if (::unlink(file[i]) < 0){
+            BOOST_CHECK(false);
+            LOG(LOG_ERR, "failed to unlink %s", file[i]);
+        }
     }
 }
 
@@ -506,13 +546,60 @@ BOOST_AUTO_TEST_CASE(TestOutMeta)
     rt_close(rt);
     rt_delete(rt);
     
-    if (::unlink("TESTOFS-000000.wrm") < 0){
-        BOOST_CHECK(false);
-        LOG(LOG_ERR, "failed to unlink TESTOFS-000000.txt");
+    const char * file[] = {
+        "TESTOFS.mwrm",
+        "TESTOFS-000000.wrm",
+        "TESTOFS-000001.wrm"
+    };
+    for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
+        if (::unlink(file[i]) < 0){
+            BOOST_CHECK(false);
+            LOG(LOG_ERR, "failed to unlink %s", file[i]);
+        }
     }
-    if (::unlink("TESTOFS-000001.wrm") < 0){
-        BOOST_CHECK(false);
-        LOG(LOG_ERR, "failed to unlink TESTOFS-000001.txt");
+}
+
+BOOST_AUTO_TEST_CASE(TestInmeta)
+{
+    {
+        RT_ERROR status = RT_ERROR_OK;
+        SQ * seq  = NULL;
+        RT * rt = rt_new_outmeta(&status, &seq, "TESTOFS", "mwrm");
+
+        BOOST_CHECK_EQUAL( 5, rt_send(rt, "AAAAX",  5));
+        BOOST_CHECK_EQUAL(RT_ERROR_OK, sq_next(seq));
+        BOOST_CHECK_EQUAL(10, rt_send(rt, "BBBBXCCCCX", 10));
+
+        rt_close(rt);
+        rt_delete(rt);
+    }
+    
+    {
+        RT_ERROR status = RT_ERROR_OK;
+        RT * rt = rt_new_inmeta(&status, "TESTOFS", "mwrm");
+
+        if (rt){
+            char buffer[1024] = {};
+            BOOST_CHECK_EQUAL(15, rt_recv(rt, buffer,  15));
+            if (0 != memcmp(buffer, "AAAAXBBBBXCCCCX", 15)){
+                BOOST_CHECK_EQUAL(0, buffer[15]); // this one should not have changed
+                buffer[15] = 0;
+                LOG(LOG_ERR, "expected \"AAAAXBBBBXCCCCX\" got \"%s\"", buffer);
+                BOOST_CHECK(false);
+            }
+        }
+    }    
+    
+    const char * file[] = {
+        "TESTOFS.mwrm",
+        "TESTOFS-000000.wrm",
+        "TESTOFS-000001.wrm"
+    };
+    for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
+        if (::unlink(file[i]) < 0){
+            BOOST_CHECK(false);
+            LOG(LOG_ERR, "failed to unlink %s", file[i]);
+        }
     }
 }
 

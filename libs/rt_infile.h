@@ -28,6 +28,8 @@
 
 struct RTInfile {
     int fd;
+    bool status;
+    RT_ERROR err;    
 };
 
 extern "C" {
@@ -38,6 +40,8 @@ extern "C" {
     inline RT_ERROR rt_m_RTInfile_constructor(RTInfile * self, int fd)
     {
         self->fd = fd;
+        self->status = true;
+        self->err = RT_ERROR_OK;        
         return RT_ERROR_OK;
     }
 
@@ -66,27 +70,56 @@ extern "C" {
     */
     inline ssize_t rt_m_RTInfile_recv(RTInfile * self, void * data, size_t len)
     {
+        if (!self->status){ 
+            if (self->err == RT_ERROR_EOF){
+                return 0;
+            }
+            return -self->err; 
+        }
         size_t ret = 0;
         size_t remaining_len = len;
-        size_t total_len = 0;
         while (remaining_len) {
-            ret = ::read(self->fd, (uint8_t*)data + total_len, remaining_len);
+            ret = ::read(self->fd, &(((char*)data)[len - remaining_len]), remaining_len);
             if (ret < 0){
                 if (errno == EINTR){ continue; }
-                TODO("Really several errors are possible and we should define codes for them"
-                     "Basically EOF means that we won't be able to read this file anymore in the future")
-                return -RT_ERROR_EOF;
+                self->status = false;
+                switch (errno){
+                    case EAGAIN:
+                        self->err = RT_ERROR_EAGAIN;
+                        break;
+                    case EBADF:
+                        self->err = RT_ERROR_EBADF;
+                        break;
+                    case EFAULT:
+                        self->err = RT_ERROR_EFAULT;
+                        break;
+                    case EINVAL:
+                        self->err = RT_ERROR_EINVAL;
+                        break;
+                    case EIO:
+                        self->err = RT_ERROR_EIO;
+                        break;
+                    case EISDIR:
+                        self->err = RT_ERROR_EISDIR;
+                        break;
+                    default:
+                        self->err = RT_ERROR_POSIX;
+                        break;
+                }
+                if (remaining_len != len){
+                    return len - remaining_len;
+                }
+                return -self->err;
             }
             if (ret == 0){
+                self->status = false;
+                self->err = RT_ERROR_EOF;
                 break;
             }
             remaining_len -= ret;
-            total_len += ret;
         }
-        return total_len;
+        return len - remaining_len;
     }
-
-
 
     /* This method send len bytes of data from buffer to current transport
        buffer must actually contains the amount of data requested to send.

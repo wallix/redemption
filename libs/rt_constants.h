@@ -28,8 +28,20 @@ extern "C" {
 
     typedef enum {
         RT_ERROR_OK,
+        RT_ERROR_ANY,
         RT_ERROR_MALLOC,
         RT_ERROR_EOF,
+        RT_ERROR_EAGAIN,
+        RT_ERROR_EBADF,
+        RT_ERROR_EDESTADDRREQ,
+        RT_ERROR_EFAULT,
+        RT_ERROR_EFBIG,
+        RT_ERROR_EINVAL,
+        RT_ERROR_EIO,
+        RT_ERROR_ENOSPC,
+        RT_ERROR_EPIPE,
+        RT_ERROR_EISDIR,
+        RT_ERROR_POSIX,
         RT_ERROR_RECV_ONLY,
         RT_ERROR_SEND_ONLY,
         RT_ERROR_DATA_MISMATCH,
@@ -38,6 +50,7 @@ extern "C" {
         RT_ERROR_TRAILING_DATA,
         RT_ERROR_CLOSED,
         RT_ERROR_CREAT,
+        RT_ERROR_OPEN,
         RT_ERROR_NOT_IMPLEMENTED,
         RT_ERROR_STRING_PREFIX_TOO_LONG,
         RT_ERROR_STRING_EXTENSION_TOO_LONG,
@@ -63,6 +76,7 @@ extern "C" {
     RT * rt_new_infile(RT_ERROR * error, int fd);
     RT * rt_new_socket(RT_ERROR * error, int fd);
     RT * rt_new_outsequence(RT_ERROR * error, SQ * seq);
+    RT * rt_new_insequence(RT_ERROR * error, SQ * seq);    
     RT_ERROR rt_delete(RT * rt);
     RT_ERROR sq_delete(SQ * rt);
     ssize_t rt_recv(RT * rt, void * data, size_t len);
@@ -72,7 +86,7 @@ extern "C" {
     RT_ERROR sq_next(SQ * seq);
     RT * sq_get_trans(SQ * seq, RT_ERROR * error);
     SQ * sq_new_outfilename(RT_ERROR * error, RT * tracker, SQ_FORMAT format, const char * prefix, const char * extension);
-
+    RT * rt_new_inmeta(RT_ERROR * error, const char * prefix, const char * extension);
 }
 
 #endif
