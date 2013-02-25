@@ -457,7 +457,7 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OneSequence)
 BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
 {
     RT_ERROR status_seq = RT_ERROR_OK;
-    SQ * sequence = sq_new_outfilename(&status_seq, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", "txt");
+    SQ * sequence = sq_new_outfilename(&status_seq, NULL, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", "txt");
 
     RT_ERROR status = RT_ERROR_OK;
     RT * rt = rt_new_outsequence(&status, sequence);

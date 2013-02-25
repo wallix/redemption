@@ -100,7 +100,7 @@ SQ * sq_new_one_RT(RT_ERROR * error, RT * trans)
     return res;
 }
 
-SQ * sq_new_outfilename(RT_ERROR * error, SQ_FORMAT format, const char * prefix, const char * extension)
+SQ * sq_new_outfilename(RT_ERROR * error, RT * tracker, SQ_FORMAT format, const char * prefix, const char * extension)
 {
     SQ * res = (SQ*)malloc(sizeof(SQ));
     if (res == 0){ 
@@ -108,7 +108,7 @@ SQ * sq_new_outfilename(RT_ERROR * error, SQ_FORMAT format, const char * prefix,
         return NULL;
     }
     res->sq_type = SQ_TYPE_OUTFILENAME;
-    res->err = sq_m_SQOutfilename_constructor(&(res->u.outfilename), format, prefix, extension);
+    res->err = sq_m_SQOutfilename_constructor(&(res->u.outfilename), tracker, format, prefix, extension);
     if (*error) {*error = res->err; }
     switch (res->err){
     default:

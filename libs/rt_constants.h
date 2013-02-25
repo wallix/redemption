@@ -46,6 +46,7 @@ extern "C" {
     typedef enum {
         SQF_PREFIX_PID_COUNT_EXTENSION,
         SQF_PREFIX_COUNT_EXTENSION,
+        SQF_PREFIX_EXTENSION,
     } SQ_FORMAT;
 
     struct RT;
@@ -70,7 +71,7 @@ extern "C" {
     SQ * sq_new_one_RT(RT_ERROR * error, RT * trans);
     RT_ERROR sq_next(SQ * seq);
     RT * sq_get_trans(SQ * seq, RT_ERROR * error);
-    SQ * sq_new_outfilename(RT_ERROR * error, SQ_FORMAT format, const char * prefix, const char * extension);
+    SQ * sq_new_outfilename(RT_ERROR * error, RT * tracker, SQ_FORMAT format, const char * prefix, const char * extension);
 
 }
 

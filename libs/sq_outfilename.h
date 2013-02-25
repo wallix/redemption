@@ -34,6 +34,7 @@
 extern "C" {
     struct SQOutfilename {
         RT * trans;
+        RT * tracker;
         SQ_FORMAT format;
         char prefix[512];
         char extension[12];
@@ -41,9 +42,10 @@ extern "C" {
         unsigned count;
     };
 
-    RT_ERROR sq_m_SQOutfilename_constructor(SQOutfilename * self, SQ_FORMAT format, const char * prefix, const char * extension)
+    RT_ERROR sq_m_SQOutfilename_constructor(SQOutfilename * self, RT * tracker, SQ_FORMAT format, const char * prefix, const char * extension)
     {
         self->trans = NULL;
+        self->tracker = tracker;
         self->count = 0;
         self->format = format;
         self->pid = getpid();
@@ -58,29 +60,41 @@ extern "C" {
         return RT_ERROR_OK;
     }
 
+    // internal utility method, used to get name of files used for target transports
+    // it is called internally, but actual goal is to enable tests to check and remove the created files afterward.
+    // not a part of external sequence API
+    size_t sq_im_SQOutfilename_get_name(SQOutfilename * self, char * buffer, size_t size)
+    {
+        size_t res = 0;
+        switch (self->format){
+        default:
+        case SQF_PREFIX_PID_COUNT_EXTENSION:
+            res = snprintf(buffer, size, "%s-%06u-%06u.%s", self->prefix, self->pid, self->count, self->extension);
+        break;
+        case SQF_PREFIX_COUNT_EXTENSION:
+            res = snprintf(buffer, size, "%s-%06u.%s", self->prefix, self->count, self->extension);
+        break;
+        case SQF_PREFIX_EXTENSION:
+            res = snprintf(buffer, size, "%s.%s", self->prefix, self->extension);
+        break;
+        }
+        return res;
+    }
+
+
     RT_ERROR sq_m_SQOutfilename_destructor(SQOutfilename * self)
     {
         if (self->trans){
+            if (self->tracker) { 
+                char buffer[1024];
+                size_t len = sq_im_SQOutfilename_get_name(self, buffer, sizeof(buffer)-1);
+                buffer[len] = '\n';
+                rt_send(self->tracker, buffer, len + 1);
+            }
             rt_delete(self->trans);
             self->trans = NULL;
         }
         return RT_ERROR_OK;
-    }
-
-    // internal utility method, used to get name of files used for target transports
-    // it is called internally, but actual goal is to enable tests to check and remove the created files afterward.
-    // not a part of external sequence API
-    void sq_im_SQOutfilename_get_name(SQOutfilename * self, char * buffer)
-    {
-        switch (self->format){
-        default:
-        case SQF_PREFIX_PID_COUNT_EXTENSION:
-            sprintf(buffer, "%s-%06u-%06u.%s", self->prefix, self->pid, self->count, self->extension);
-        break;
-        case SQF_PREFIX_COUNT_EXTENSION:
-            sprintf(buffer, "%s-%06u.%s", self->prefix, self->count, self->extension);
-        break;
-        }
     }
 
     RT * sq_m_SQOutfilename_get_trans(SQOutfilename * self, RT_ERROR * status)
@@ -88,7 +102,7 @@ extern "C" {
         if (status && (*status != RT_ERROR_OK)) { return self->trans; }
         if (!self->trans){
             char tmpname[1024];
-            sq_im_SQOutfilename_get_name(self, tmpname);
+            sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname));
             int fd = ::open(tmpname, O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR);
             if (fd < 0){
                 if (status) { *status = RT_ERROR_CREAT; }
@@ -101,10 +115,7 @@ extern "C" {
 
     RT_ERROR sq_m_SQOutfilename_next(SQOutfilename * self)
     {
-        if (self->trans){
-            rt_delete(self->trans);
-            self->trans = NULL;
-        }
+        sq_m_SQOutfilename_destructor(self);
         self->count += 1;
         return RT_ERROR_OK;
     }

@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean
 
-   Template for new XXX RedTransport class
+   Template for new Outmeta RedTransport class
 
 */
 
@@ -27,8 +27,10 @@
 #include "rt_constants.h"
 
 struct RTOutmeta {
-    struct SQ * seq;
+    int lastcount;
+    struct SQ * metaseq;
     struct RT * meta;
+    struct SQ * seq;
     struct RT * out;
 };
 
@@ -39,19 +41,35 @@ extern "C" {
     */
     inline RT_ERROR rt_m_RTOutmeta_constructor(RTOutmeta * self, SQ ** seq, const char * prefix, const char * extension)
     {
-        RT_ERROR status_seq = RT_ERROR_OK;
-        SQ * sequence = sq_new_outfilename(&status_seq, SQF_PREFIX_COUNT_EXTENSION, prefix, "wrm");
-        if (status_seq != RT_ERROR_OK){
-            return status_seq;
-        }
         RT_ERROR status = RT_ERROR_OK;
+        SQ * metaseq = sq_new_outfilename(&status, (RT*)NULL, SQF_PREFIX_EXTENSION, prefix, "mwrm");
+        if (status != RT_ERROR_OK){
+            return status;
+        }
+        RT * meta = rt_new_outsequence(&status, metaseq);
+        if (status != RT_ERROR_OK){
+            sq_delete(metaseq);
+            return status;
+        }
+        SQ * sequence = sq_new_outfilename(&status, meta, SQF_PREFIX_COUNT_EXTENSION, prefix, "wrm");
+        if (status != RT_ERROR_OK){
+            rt_delete(meta);
+            sq_delete(metaseq);
+            return status;
+        }
         RT * out = rt_new_outsequence(&status, sequence);
         if (status != RT_ERROR_OK){
             sq_delete(sequence);
+            rt_delete(meta);
+            sq_delete(metaseq);
             return status;
         }
-        self->out = out;
+
+        self->lastcount = -1;
+        self->metaseq = metaseq;
         *seq = self->seq = sequence;
+        self->meta = meta;
+        self->out = out;
         return RT_ERROR_OK;
     }
 
@@ -59,6 +77,10 @@ extern "C" {
     */
     inline RT_ERROR rt_m_RTOutmeta_destructor(RTOutmeta * self)
     {
+        sq_delete(self->seq);
+        rt_delete(self->meta);
+        sq_delete(self->metaseq);
+        rt_delete(self->out);
         return RT_ERROR_OK;
     }
 
@@ -84,45 +106,6 @@ extern "C" {
     inline ssize_t rt_m_RTOutmeta_send(RTOutmeta * self, const void * data, size_t len)
     {
         return rt_send(self->out, data, len);
-    }
-
-
-    /* Set Timestamp for next chunk
-       default : do nothing if the current file does not support timestamped chunks 
-    */
-    inline RT_ERROR rt_m_RTOutmeta_timestamp(RTOutmeta * self, uint32_t tv_sec, uint32_t tv_usec)
-    {
-         return RT_ERROR_OK;
-    }
-
-    /* Get Timestamp for current chunk
-       tv_usec can be a NULL pointer. In this case usec won't be returned
-       tv_sec is mandatory.
-       default : do nothing if the current file does not support timestamped chunks 
-    */
-    inline RT_ERROR rt_m_RTOutmeta_get_timestamp(RTOutmeta * self, uint32_t * tv_sec, uint32_t * tv_usec)
-    {
-         return RT_ERROR_OK;
-    }
-
-    /* Set metadata for next chunk (when writing to transport) 
-       this method can be called any number of times
-       meta is some UTF-8 zero terminated string and can't be larger than 1024 bytes (arbitrary limit)
-       Metadata can be added until the chunk is terminated (by calling next)
-       default : do nothing if the current file does not support timestamped chunks
-    */
-    inline RT_ERROR rt_m_RTOutmeta_add_meta(RTOutmeta * self, const char * meta)
-    {
-         return RT_ERROR_OK;
-    }
-
-    /* Get metadata for current chunk (when reading from transport)
-       this method can be called any number of time to get all metadata blocks relevant to current chunk.
-       default : do nothing if the current file does not support timestamped chunks
-    */
-    inline RT_ERROR rt_m_RTOutmeta_get_meta(RTOutmeta * self, char * meta)
-    {
-         return RT_ERROR_OK;
     }
 };
 
