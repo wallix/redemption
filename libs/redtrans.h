@@ -35,6 +35,7 @@
 #include "sq_one.h"
 #include "sq_outfilename.h"
 #include "sq_infilename.h"
+#include "sq_intracker.h"
 
 #include "rt_generator.h"
 #include "rt_check.h"
@@ -69,6 +70,7 @@ typedef enum {
     SQ_TYPE_ONE,
     SQ_TYPE_OUTFILENAME,
     SQ_TYPE_INFILENAME,
+    SQ_TYPE_INTRACKER,
 } SQ_TYPE;
 
 
@@ -79,6 +81,7 @@ struct SQ {
       struct SQOne one;
       struct SQOutfilename outfilename;
       struct SQInfilename infilename;
+      struct SQIntracker intracker;
     } u;
 };
 
@@ -146,6 +149,26 @@ SQ * sq_new_infilename(RT_ERROR * error, SQ_FORMAT format, const char * prefix, 
     return res;
 }
 
+SQ * sq_new_intracker(RT_ERROR * error, RT * tracker)
+{
+    SQ * res = (SQ*)malloc(sizeof(SQ));
+    if (res == 0){ 
+        if (error){ *error = RT_ERROR_MALLOC; }
+        return NULL;
+    }
+    res->sq_type = SQ_TYPE_INTRACKER;
+    res->err = sq_m_SQIntracker_constructor(&(res->u.intracker), tracker);
+    if (*error) {*error = res->err; }
+    switch (res->err){
+    default:
+        free(res);
+        return NULL;
+    case RT_ERROR_OK:
+        break;
+    }
+    return res;
+}
+
 RT_ERROR sq_next(SQ * seq)
 {
     RT_ERROR res = RT_ERROR_OK;
@@ -158,6 +181,9 @@ RT_ERROR sq_next(SQ * seq)
         break;
     case SQ_TYPE_INFILENAME:
         res = sq_m_SQInfilename_next(&(seq->u.infilename));
+        break;
+    case SQ_TYPE_INTRACKER:
+        res = sq_m_SQIntracker_next(&(seq->u.intracker));
         break;
     default:
         res = RT_ERROR_TYPE_MISMATCH;
@@ -179,6 +205,9 @@ RT * sq_get_trans(SQ * seq, RT_ERROR * error)
     case SQ_TYPE_INFILENAME:
         trans = sq_m_SQInfilename_get_trans(&(seq->u.infilename), &status);
         break;
+    case SQ_TYPE_INTRACKER:
+        trans = sq_m_SQIntracker_get_trans(&(seq->u.intracker), &status);
+        break;
     default:
         status = RT_ERROR_TYPE_MISMATCH;
     }
@@ -195,6 +224,12 @@ RT_ERROR sq_delete(SQ * sq)
         break;
         case SQ_TYPE_OUTFILENAME:
             status = sq_m_SQOutfilename_destructor(&(sq->u.outfilename));
+        break;
+        case SQ_TYPE_INFILENAME:
+            status = sq_m_SQInfilename_destructor(&(sq->u.infilename));
+        break;
+        case SQ_TYPE_INTRACKER:
+            status = sq_m_SQIntracker_destructor(&(sq->u.intracker));
         break;
         default:
             ;
