@@ -449,6 +449,14 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OneSequence)
 
 BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
 {
+    // cleanup of possible previous test files
+    {
+        const char * file[] = {"TESTOFS-000000.txt", "TESTOFS-000001.txt"};
+        for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
+            ::unlink(file[i]);
+        }
+    }
+
 // Second simplest sequence is "outfilename" sequence
 // - sq_get_trans() open an outfile if necessary using the given name pattern 
 //      and return it on subsequent calls until it is closed
@@ -515,27 +523,27 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
             "TESTOFS-000000.txt\n"
             "TESTOFS-000001.txt\n";
 
-        RT * rt = rt_new_generator(&status, trackdata, sizeof(trackdata)-1);
+        RT * tracker = rt_new_generator(&status, trackdata, sizeof(trackdata)-1);
 
-//        RT_ERROR status_seq = RT_ERROR_OK;
-//        SQ * sequence = sq_new_intracker(&status_seq, tracker);
+        status = RT_ERROR_OK;
+        SQ * sequence = sq_new_intracker(&status, tracker);
 
-//        RT_ERROR status = RT_ERROR_OK;
-//        RT * rt = rt_new_insequence(&status, sequence);
+        status = RT_ERROR_OK;
+        RT * rt = rt_new_insequence(&status, sequence);
 
-//        char buffer[1024] = {};
-//        BOOST_CHECK_EQUAL(10, rt_recv(rt, buffer, 10));
-//        BOOST_CHECK_EQUAL(0, buffer[10]);
-//        if (0 != memcmp(buffer, "AAAAXBBBBX", 10)){
-//            LOG(LOG_ERR, "expected \"AAAAXBBBBX\" got \"%s\"\n", buffer);
-//        }
-//        BOOST_CHECK_EQUAL(5, rt_recv(rt, buffer + 10, 1024));
-//        BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
-//        BOOST_CHECK_EQUAL(0, buffer[15]);
-//        BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer + 15, 1024));
-//        rt_close(rt);
-//        rt_delete(rt);
-//        sq_delete(sequence);
+        char buffer[1024] = {};
+        BOOST_CHECK_EQUAL(10, rt_recv(rt, buffer, 10));
+        BOOST_CHECK_EQUAL(0, buffer[10]);
+        if (0 != memcmp(buffer, "AAAAXBBBBX", 10)){
+            LOG(LOG_ERR, "expected \"AAAAXBBBBX\" got \"%s\"\n", buffer);
+        }
+        BOOST_CHECK_EQUAL(5, rt_recv(rt, buffer + 10, 1024));
+        BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
+        BOOST_CHECK_EQUAL(0, buffer[15]);
+        BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer + 15, 1024));
+        rt_close(rt);
+        rt_delete(rt);
+        sq_delete(sequence);
     }
 
 

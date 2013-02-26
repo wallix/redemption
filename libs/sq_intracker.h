@@ -43,46 +43,46 @@ extern "C" {
         int rlstatus;
     };
 
-    static inline bool sq_m_SQIntracker_readline(RT * trans, char ** begin, char **end, char **eol, char buffer[], size_t len)
+    // input: begin : beginning of available buffer (already read)
+    // input: end :   end of available buffer (already read)
+
+    // return eol : end of next line
+    // begin and end may be modified (buffer recentered, more data from input)
+    // return 0 if no eol (end of file reached)
+    // return 1 if \n found
+    // (in other words : returns number of trailing eol characters at end of line)
+    // return error codes as negative number
+    static inline bool sq_m_SQIntracker_readline(SQIntracker * self)
     {
-        for (char * p = *begin; p < *end; p++){
+        for (char * p = self->begin; p < self->end; p++){
             if (*p == '\n'){
-                *eol = p+1;
+                self->eol = p+1;
                 return 1;
             }
         }
-        size_t trailing_space = buffer + len - *end;
+        size_t trailing_space = self->buffer + sizeof(self->buffer) - self->end;
         // reframe buffer if no trailing space left
         if (trailing_space == 0){
-            size_t used_len = *end - *begin;
-            memmove(buffer, *begin, used_len);
-            *end = buffer + used_len;
-            *begin = buffer;
+            size_t used_len = self->end - self->begin;
+            memmove(self->buffer, self->begin, used_len);
+            self->end = self->buffer + used_len;
+            self->begin = self->buffer;
         }
-        ssize_t res = 0;
-        do {
-            res = rt_recv(trans, *end, buffer + len - *end);
-        } while ((res < 0) && (errno == EINTR));
+        ssize_t res = rt_recv(self->tracker, self->end, self->buffer + sizeof(self->buffer) - self->end);
         if (res < 0){
-            if (res != RT_ERROR_EOF){
-                return -res;
-            }
+            return -res;
         }
-        if (res == 0){
-            if (*begin != *end) {
-                *eol = *end;
-                return 0;
-            }
+        self->end += res;
+        if (self->begin == self->end) {
             return -RT_ERROR_EOF;
         }
-        *end += res;
-        for (char * p = *begin; p < *end; p++){
+        for (char * p = self->begin; p < self->end; p++){
             if (*p == '\n'){
-                *eol = p+1;
+                self->eol = p+1;
                 return 1;
             }
         }
-        *eol = *end;
+        self->eol = self->end;
         return 0;
     }
 
@@ -91,9 +91,8 @@ extern "C" {
     {
         self->trans = NULL;
         self->tracker = tracker;
-        self->begin = self->end = self->buffer;
-        self->eol = NULL;
-        self->rlstatus = sq_m_SQIntracker_readline(self->tracker, &self->begin, &self->end, &self->eol, self->buffer, sizeof(self->buffer));
+        self->begin = self->eol = self->end = self->buffer;
+        self->rlstatus = sq_m_SQIntracker_readline(self);
         if (self->rlstatus < 0){
             return (RT_ERROR)-self->rlstatus;
         }
@@ -105,8 +104,13 @@ extern "C" {
     // not a part of external sequence API
     size_t sq_im_SQIntracker_get_name(SQIntracker * self, char * buffer, size_t size)
     {
-        size_t res = snprintf(buffer, size, "%s", self->begin, self->eol - self->begin);
-        return res;
+        size_t name_size = (unsigned)(self->eol - self->begin - self->rlstatus);
+        if (name_size >= size) {
+            name_size = size - 1;
+        }
+        memcpy(buffer, self->begin, name_size);
+        buffer[name_size] = 0;
+        return name_size;
     }
 
 
@@ -121,8 +125,12 @@ extern "C" {
 
     RT * sq_m_SQIntracker_get_trans(SQIntracker * self, RT_ERROR * status)
     {
-        if (status && (*status != RT_ERROR_OK)) { return self->trans; }
+        if (status && (*status != RT_ERROR_OK)) { return NULL; }
         if (!self->trans){
+            if (self->rlstatus < 0){
+                if (status) { *status = (RT_ERROR)-self->rlstatus; }
+                return NULL; // self->trans is NULL
+            }
             char tmpname[1024];
             sq_im_SQIntracker_get_name(self, tmpname, sizeof(tmpname));
             int fd = ::open(tmpname, O_RDONLY, S_IRUSR|S_IRUSR);
@@ -138,10 +146,8 @@ extern "C" {
     RT_ERROR sq_m_SQIntracker_next(SQIntracker * self)
     {
         sq_m_SQIntracker_destructor(self);
-        self->rlstatus = sq_m_SQIntracker_readline(self->tracker, &self->begin, &self->end, &self->eol, self->buffer, sizeof(self->buffer));
-        if (self->rlstatus < 0){
-            return (RT_ERROR)-self->rlstatus;
-        }
+        self->begin = self->eol;
+        self->rlstatus = sq_m_SQIntracker_readline(self);
         return RT_ERROR_OK;
     }
 };
