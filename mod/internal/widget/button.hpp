@@ -27,10 +27,8 @@
 struct widget_button : public Widget
 {
     widget_button(mod_api * mod, const Rect & r, Widget * parent, int id, int tab_stop, const char * caption)
-    : Widget(mod, r.cx, r.cy, parent, WND_TYPE_BUTTON) {
+    : Widget(mod, r, parent, WND_TYPE_BUTTON) {
 
-        this->rect.x = r.x;
-        this->rect.y = r.y;
         this->tab_stop = tab_stop;
         this->id = id;
         this->caption1 = strdup(caption);

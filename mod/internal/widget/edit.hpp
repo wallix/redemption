@@ -29,7 +29,7 @@ struct widget_edit : public Widget {
     char buffer[256];
 
     widget_edit(mod_api * mod, const Rect & r, Widget * parent, int id, int tab_stop, const char * caption, int pointer, int edit_pos)
-    : Widget(mod, r.cx, r.cy, parent, WND_TYPE_EDIT) {
+    : Widget(mod, r, parent, WND_TYPE_EDIT) {
 
         assert(type == WND_TYPE_EDIT);
 

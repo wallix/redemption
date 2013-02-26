@@ -77,13 +77,13 @@ enum {
 
 struct Widget {
     struct mod_api * mod;
-    bool has_focus;
-
     /* 0 = bitmap 1 = window 2 = screen 3 = button 4 = image 5 = edit
        6 = label 7 = combo 8 = special */
     int type;
-
     Rect rect;
+    struct Widget * parent; /* widget container, NULL for screen */
+
+    bool has_focus;
 
     /* for all but bitmap */
     int pointer;
@@ -94,7 +94,6 @@ struct Widget {
     /* for window or screen */
     struct Widget* modal_dialog;
     struct Widget* focused_control;
-    struct Widget * parent; /* widget container, NULL for screen */
     /* for modal dialog */
     struct Widget* default_button; /* button when enter is pressed */
     struct Widget* esc_button; /* button when esc is pressed */
@@ -112,8 +111,12 @@ struct Widget {
     public:
 
 
-    Widget(struct mod_api * mod, int width, int height, Widget * parent, int type) : parent(parent) {
-        this->mod = mod;
+    Widget(struct mod_api * mod, const Rect & rect, Widget * parent, int type) 
+        : mod(mod) 
+        , type(type)
+        , rect(rect)
+        , parent(parent) 
+    {
         /* for all but bitmap */
         this->pointer = 0;
         this->bg_color = 0;
@@ -131,17 +134,7 @@ struct Widget {
         this->password_char = 0;
         /* crc */
         this->crc = 0;
-
         this->has_focus = false;
-
-    TODO(" build the right type of bitmap = class hierarchy")
-        /* 0 = bitmap 1 = window 2 = screen 3 = button 4 = image 5 = edit
-           6 = label 7 = combo 8 = special */
-        this->type = type;
-        this->rect.x = 0;
-        this->rect.y = 0;
-        this->rect.cx = width;
-        this->rect.cy = height;
     }
 
     virtual ~Widget(){
@@ -167,6 +160,8 @@ struct Widget {
         return 0;
     }
 
+    REDOC("invalidate(rect): message sent to Widget whenever some part of the widget client area must be redrawn")
+    virtual void invalidate(const Rect & rect) {}
 
     /*****************************************************************************/
     // called for screen

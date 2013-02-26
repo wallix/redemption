@@ -29,8 +29,10 @@ struct widget_image : public Widget {
     Bitmap bmp;
 
     widget_image(mod_api * mod, int width, int height, int type, Widget * parent, int x, int y, const char* filename, uint8_t bpp)
-    : Widget(mod, width, height, parent, type), bmp(filename) {
-
+    : Widget(mod, Rect(x, y, width, height), parent, type)
+    , bmp(filename) 
+    {
+        TODO("we redefine image size after loading bmp, instead we should provide already loaded bmp to widget")
         this->rect = Rect(x, y, bmp.cx, bmp.cy);
     }
 

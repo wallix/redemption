@@ -26,8 +26,10 @@
 #include "mod_api.hpp"
 
 struct widget_screen : public Widget {
-    widget_screen(mod_api * mod, int width, int height, int type, Widget * parent)
-    : Widget(mod, width, height, parent, type) {
+    widget_screen(mod_api * mod, int width, int height)
+    : Widget(mod, Rect(0, 0, width, height), NULL, WND_TYPE_SCREEN) 
+    {
+    }
 
     ~widget_screen() {
     }
@@ -44,6 +46,17 @@ struct widget_screen : public Widget {
             this->mod->draw(RDPOpaqueRect(scr_r, this->bg_color), region_clip);
         }
     }
+    
+    virtual void invalidate(const Rect & rect)
+    {
+        if (!rect.isempty()) {
+            this->mod->begin_update();
+            this->draw(rect);
+            this->mod->end_update();
+        }
+    }
+
+    
 };
 
 #endif

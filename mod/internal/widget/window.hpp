@@ -30,15 +30,13 @@
 
 #include "internal/widget/edit.hpp"
 #include "internal/widget/image.hpp"
-
+#include "modcontext.hpp"
 
 struct window : public Widget
 {
     window(mod_api * mod, const Rect & r, Widget * parent, int bg_color, const char * title)
-    : Widget(mod, r.cx, r.cy, parent, WND_TYPE_WND) {
+    : Widget(mod, r, parent, WND_TYPE_WND) {
         this->bg_color = bg_color;
-        this->rect.x = r.x;
-        this->rect.y = r.y;
         this->caption1 = strdup(title);
     }
 
@@ -436,10 +434,10 @@ struct window_login : public window
                 break;
             }
             else if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_LOGIN))){
-                context.parse_username(edit->buffer);
+                this->context.parse_username(edit->buffer);
             }
             else if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_PASSWORD))){
-                context.cpy(STRAUTHID_PASSWORD, edit->buffer);
+                this->context.cpy(STRAUTHID_PASSWORD, edit->buffer);
             }
             i += 2;
         }
