@@ -22,7 +22,7 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP_
 #define _REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP_
 
-#include "internal/widget/widget.hpp"
+#include "widget/screen.hpp"
 #include "modcontext.hpp"
 #include "client_mod.hpp"
 
@@ -30,7 +30,7 @@ struct internal_mod : public mod_api, public client_mod {
     public:
     BackEvent_t signal;
 
-    Widget screen;
+    widget_screen screen;
     int dragging;
     Rect dragging_rect;
     int draggingdx; // distance between mouse and top angle of dragged window
@@ -41,7 +41,7 @@ struct internal_mod : public mod_api, public client_mod {
     internal_mod(FrontAPI & front, uint16_t front_width, uint16_t front_height)
             : client_mod(front, front_width, front_height)
             , signal(BACK_EVENT_NONE)
-            , screen(this, front_width, front_height, NULL, WND_TYPE_SCREEN)
+            , screen(this, front_width, front_height)
     {
         this->front.server_resize(front_width, front_height, 24);
         /* dragging info */

@@ -30,15 +30,13 @@
 
 #include "internal/widget/edit.hpp"
 #include "internal/widget/image.hpp"
-
+#include "modcontext.hpp"
 
 struct window : public Widget
 {
     window(mod_api * mod, const Rect & r, Widget * parent, int bg_color, const char * title)
-    : Widget(mod, r.cx, r.cy, parent, WND_TYPE_WND) {
+    : Widget(mod, r, parent, WND_TYPE_WND) {
         this->bg_color = bg_color;
-        this->rect.x = r.x;
-        this->rect.y = r.y;
         this->caption1 = strdup(title);
     }
 
@@ -74,10 +72,22 @@ struct window : public Widget
         for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
             const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
 
-            this->mod->draw_window(scr_r,
-                this->bg_color, this->caption1,
-                this->has_focus,
-                region_clip);
+            // Window surface and border
+            this->mod->draw(RDPOpaqueRect(scr_r, this->bg_color), region_clip);
+            this->mod->draw(RDPOpaqueRect(Rect(scr_r.x + 1, scr_r.y + 1, scr_r.cx - 2, 1), WHITE), region_clip);
+            this->mod->draw(RDPOpaqueRect(Rect(scr_r.x + 1, scr_r.y + 1, 1, scr_r.cy - 2), WHITE), region_clip);
+            this->mod->draw(RDPOpaqueRect(Rect(scr_r.x + 1, scr_r.y + scr_r.cy - 2, scr_r.cx - 2, 1), DARK_GREY), region_clip);
+            this->mod->draw(RDPOpaqueRect(Rect(scr_r.x+scr_r.cx-2, scr_r.y + 1, 1, scr_r.cy), DARK_GREY), region_clip);
+            this->mod->draw(RDPOpaqueRect(Rect(scr_r.x, scr_r.y + scr_r.cy - 1, scr_r.cx, 1), BLACK), region_clip);
+            this->mod->draw(RDPOpaqueRect(Rect(scr_r.x + scr_r.cx - 1, scr_r.y, 1, scr_r.cy), BLACK), region_clip);
+
+            // Title bar
+            this->mod->draw(RDPOpaqueRect(Rect(scr_r.x + 3, scr_r.y + 3, scr_r.cx - 5, 18),
+                              this->has_focus?WABGREEN:DARK_GREY), region_clip);
+
+            this->mod->server_draw_text(scr_r.x + 4, scr_r.y + 4, this->caption1,
+                    this->has_focus?WABGREEN:DARK_GREY,
+                    this->has_focus?WHITE:BLACK, region_clip);
         }
     }
 
@@ -225,7 +235,6 @@ struct window_login : public window
     Inifile * ini;
     ModContext & context;
     TODO("The help window should be created by module, not by other window") 
-    window * help;
 
     window_login(mod_api * mod, const Rect & r, ModContext & context, Widget * parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
     :   window(mod, r, parent, bg_color, title),
@@ -234,22 +243,9 @@ struct window_login : public window
     {
         this->ini = ini;
 
-        /* create help screen */
-        uint32_t grey = 0xc0c0c0;
-        this->help = new window_help(this->mod,
-            Rect(this->parent->rect.cx / 2 - 340 / 2,
-                this->parent->rect.cy / 2 - 300 / 2,
-                340,
-                300),
-            parent, // parent
-            *this, // notify_to
-            grey,
-            "Login help");
-
         if (regular) {
             widget_image * but = new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE, this, 10, 30,
                     SHARE_PATH "/" LOGIN_LOGO24, 24);
-            this->child_list.push_back(but);
         }
 
         if (context.is_asked(STRAUTHID_TARGET_USER)
@@ -281,19 +277,16 @@ struct window_login : public window
         Widget * but = new widget_button(this->mod,
               Rect(regular ? 180 : 30, 160, 60, 25),
               this, 3, 1, context.get(STRAUTHID_TRANS_BUTTON_OK));
-        this->child_list.push_back(but);
         this->default_button = but;
 
         but = new widget_button(this->mod,
               Rect(regular ? 250 : ((r.cx - 30) - 60), 160, 60, 25),
               this, 2, 1, context.get(STRAUTHID_TRANS_BUTTON_CANCEL));
-        this->child_list.push_back(but);
         this->esc_button = but;
 
         if (regular) {
             but = new widget_button(this->mod,
                   Rect(320, 160, 60, 25), this, 1, 1, context.get(STRAUTHID_TRANS_BUTTON_HELP));
-            this->child_list.push_back(but);
         }
 
         IniAccounts & acc = this->ini->account;
@@ -303,7 +296,6 @@ struct window_login : public window
             this, this->context.get(STRAUTHID_TRANS_LOGIN));
 
         login_label->id = 100;
-        this->child_list.push_back(login_label);
 
         /* edit */
         struct Widget* login_edit = new widget_edit(this->mod,
@@ -319,14 +311,12 @@ struct window_login : public window
             this->focused_control = login_edit;
             login_edit->has_focus = true;
         }
-        this->child_list.push_back(login_edit);
 
         struct Widget* password_label = new widget_label(this->mod,
             Rect(this->rect.cx >= 400 ? 155 : 5, 60 + 25, 70, 22),
             this, this->context.get(STRAUTHID_TRANS_PASSWORD));
 
         password_label->id = 100 + 2;
-        this->child_list.push_back(password_label);
 
         /* edit */
         struct Widget* password_edit = new widget_edit(this->mod,
@@ -340,7 +330,6 @@ struct window_login : public window
 
         TODO(" move that into widget_edit")
         password_edit->password_char = '*';
-        this->child_list.push_back(password_edit);
 
         if (acc.username[0]){
             this->focused_control = password_edit;
@@ -391,31 +380,23 @@ struct window_login : public window
 
     int help_clicked()
     {
-        this->modal_dialog = this->help;
-        {
-            vector<Widget *>::iterator it = this->parent->child_list.begin();
-            this->parent->child_list.insert(it, this->help);
-        }
+        TODO("Disabled until help window is fixed")
+//        this->modal_dialog = this->help;
+//        struct Widget* but = new widget_button(this->mod,
+//                    Rect(140, 260, 60, 25),
+//                    this->help, 1, 1, this->context.get(STRAUTHID_TRANS_BUTTON_OK));
 
-        struct Widget* but = new widget_button(this->mod,
-                    Rect(140, 260, 60, 25),
-                    this->help, 1, 1, this->context.get(STRAUTHID_TRANS_BUTTON_OK));
-        {
-            vector<Widget *>::iterator it = this->help->child_list.begin();
-            this->help->child_list.insert(it, but);
-        }
+//        TODO(" add new function to window add_button (add_widget ?)")
+//        /* draw it */
+//        but->has_focus = true;
+//        this->help->default_button = but;
+//        this->help->esc_button = but;
 
-        TODO(" add new function to window add_button (add_widget ?)")
-        /* draw it */
-        but->has_focus = true;
-        this->help->default_button = but;
-        this->help->esc_button = but;
-
-        this->help->refresh(this->help->rect.wh());
-        this->help->focus(this->help->rect);
-        this->has_focus = false;
-        this->help->has_focus = true;
-        this->help->refresh(this->help->rect.wh());
+//        this->help->refresh(this->help->rect.wh());
+//        this->help->focus(this->help->rect);
+//        this->has_focus = false;
+//        this->help->has_focus = true;
+//        this->help->refresh(this->help->rect.wh());
         return 0;
     }
 
@@ -436,10 +417,10 @@ struct window_login : public window
                 break;
             }
             else if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_LOGIN))){
-                context.parse_username(edit->buffer);
+                this->context.parse_username(edit->buffer);
             }
             else if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_PASSWORD))){
-                context.cpy(STRAUTHID_PASSWORD, edit->buffer);
+                this->context.cpy(STRAUTHID_PASSWORD, edit->buffer);
             }
             i += 2;
         }
@@ -455,7 +436,6 @@ struct window_login : public window
     }
 
     ~window_login(){
-        delete this->help;
     }
 };
 
@@ -477,12 +457,10 @@ struct window_dialog : public window
         this->esc_button = NULL;
 
         but = new widget_button(this->mod, Rect(200, r.cy - 40, 60, 25), this, 3, 1, "OK");
-        this->child_list.push_back(but);
         this->default_button = but;
 
         if (refuse) {
             but = new widget_button(this->mod, Rect(300, r.cy - 40, 60, 25), this, 2, 1, refuse);
-            this->child_list.push_back(but);
             this->esc_button = but;
             this->default_button = but;
         }
@@ -498,7 +476,6 @@ struct window_dialog : public window
             strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
             tmp[255] = 0;
             but = new widget_label(this->mod, Rect(30, 25 + 16 * count, r.cx - 30, 40), this, tmp);
-            this->child_list.push_back(but);
             count++;
             if (!str){
                 done = true;
@@ -559,7 +536,6 @@ struct wab_close : public window
             widget_image * but = new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE,
                 this, 10, 30, SHARE_PATH "/" LOGIN_LOGO24, 24);
             TODO(" bitmap load below should probably be done before call")
-            this->child_list.push_back(but);
         }
 
         struct Widget* b;
@@ -569,13 +545,11 @@ struct wab_close : public window
             Rect(10 + ((this->rect.cx >= 400) ? 155 : 5), 60 + 25 * count, 70, 20),
             this, "Username:");
 
-        this->child_list.push_back(b);
         b = new widget_label(this->mod,
             Rect(10 + ((this->rect.cx >= 400) ?  230 : 70), 60 + 25 * count, 350, 20),
             this, context.is_asked(STRAUTHID_AUTH_USER)?"":context.get(STRAUTHID_AUTH_USER));
 
         b->id = 100 + 2 * count;
-        this->child_list.push_back(b);
         count ++;
 
         char target[255];
@@ -593,27 +567,22 @@ struct wab_close : public window
             Rect(10+((this->rect.cx >= 400) ? 155 : 5), 60 + 25 * count, 70, 20),
             this, "Target:");
 
-        this->child_list.push_back(b);
         b = new widget_label(this->mod,
             Rect(10 + ((this->rect.cx >= 400) ?  230 : 70), 60 + 25 * count, 350, 20),
             this, target);
 
         b->id = 100 + 2 * count;
-        this->child_list.push_back(b);
         count ++;
 
         b = new widget_label(this->mod,
             Rect(150 + ((this->rect.cx >= 400) ? 155 : 5), 60 + 25 * count, 130, 20),
             this, "Connection closed");
 
-        this->child_list.push_back(b);
         count ++;
 
         b = new widget_label(this->mod,
             Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 20),
             this, "Diagnostic:");
-
-        this->child_list.push_back(b);
 
         bool done = false;
         int line = 0;
@@ -626,7 +595,6 @@ struct wab_close : public window
             strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
             tmp[255] = 0;
             b = new widget_label(this->mod, Rect((this->rect.cx >= 400) ?  230 : 70, 60 + 25 * count + 16 * line, 350, 20), this, tmp);
-            this->child_list.push_back(b);
             line++;
             if (!str){
                 done = true;
@@ -640,7 +608,6 @@ struct wab_close : public window
         but = new widget_button(this->mod,
               Rect(50 + (regular ? 250 : ((r.cx - 30) - 60)), 150 + 16 * line, 60, 25),
               this, 2, 1, "Close");
-        this->child_list.push_back(but);
         this->esc_button = but;
         this->default_button = but;
 

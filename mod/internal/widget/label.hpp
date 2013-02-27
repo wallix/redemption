@@ -28,7 +28,7 @@
 struct widget_label : public Widget {
 
     widget_label(mod_api * mod, const Rect & r, Widget * parent, const char * title)
-    : Widget(mod, r.cx, r.cy, parent, WND_TYPE_LABEL) {
+    : Widget(mod, r, parent, WND_TYPE_LABEL) {
 
         this->rect.x = r.x;
         this->rect.y = r.y;

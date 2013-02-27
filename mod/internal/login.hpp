@@ -57,6 +57,21 @@ struct login_mod : public internal_mod {
             regular = 0;
         }
 
+        TODO("disabled until help window is fixed")
+//        /* create help screen */
+//        uint32_t grey = 0xc0c0c0;
+//        this->help = new window_help(this->mod,
+//            Rect(this->parent->rect.cx / 2 - 340 / 2,
+//                this->parent->rect.cy / 2 - 300 / 2,
+//                340,
+//                300),
+//            parent, // parent
+//            *this, // notify_to
+//            grey,
+//            "Login help");
+
+
+
         /* draw login window */
         Rect r(
             this->screen.rect.cx / 2 - log_width / 2,
@@ -73,7 +88,6 @@ struct login_mod : public internal_mod {
             ini,
             regular);
 
-        this->screen.child_list.push_back(this->login_window);
         assert(this->login_window->mod == this);
 
 //        LOG(LOG_INFO, "loading image...");
@@ -87,8 +101,6 @@ struct login_mod : public internal_mod {
                 this->screen.rect.cy - 120 - 4,
                 SHARE_PATH "/" REDEMPTION_LOGO24,
                 24);
-
-            this->screen.child_list.push_back(but);
         }
 
 //        LOG(LOG_INFO, "focus on login_window");
@@ -117,14 +129,6 @@ struct login_mod : public internal_mod {
         if (!rect.isempty()) {
             this->front.begin_update();
             this->screen.draw(rect);
-            /* draw any child windows in the area */
-            for (size_t i = 0; i < this->nb_windows(); i++) {
-                Widget *b = this->window(i);
-                Rect r2 = rect.intersect(b->rect.wh());
-                if (!r2.isempty()) {
-                    b->refresh(r2);
-                }
-            }
             this->front.end_update();
         }
     }

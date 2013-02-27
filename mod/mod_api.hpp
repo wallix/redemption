@@ -56,43 +56,6 @@ struct mod_api : public RDPGraphicDevice {
         this->end_update();
     }
 
-    void draw_window(const Rect & r, uint32_t bgcolor, const char * caption, bool has_focus, const Rect & clip){
-
-        // Window surface and border
-        this->draw(RDPOpaqueRect(r, bgcolor), clip);
-        this->draw(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), WHITE), clip);
-        this->draw(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), WHITE), clip);
-        this->draw(RDPOpaqueRect(Rect(r.x + 1, r.y + r.cy - 2, r.cx - 2, 1), DARK_GREY), clip);
-        this->draw(RDPOpaqueRect(Rect(r.x+r.cx-2, r.y + 1, 1, r.cy), DARK_GREY), clip);
-        this->draw(RDPOpaqueRect(Rect(r.x, r.y + r.cy - 1, r.cx, 1), BLACK), clip);
-        this->draw(RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), BLACK), clip);
-
-        // Title bar
-        this->draw(RDPOpaqueRect(Rect(r.x + 3, r.y + 3, r.cx - 5, 18),
-                          has_focus?WABGREEN:DARK_GREY), clip);
-
-        this->server_draw_text(r.x + 4, r.y + 4, caption,
-                has_focus?WABGREEN:DARK_GREY,
-                has_focus?WHITE:BLACK, clip);
-    }
-
-    void draw_combo(const Rect & r, const char * caption, int state, bool has_focus, const Rect & clip)
-    {
-        this->draw(RDPOpaqueRect(Rect(r.x, r.y, r.cx, r.cy), GREY), clip);
-        this->draw(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 3, r.cy - 3), WHITE), clip);
-        if (has_focus) {
-            this->draw(RDPOpaqueRect(Rect(r.x + 3, r.y + 3, (r.cx - 6) - 18, r.cy - 5), DARK_WABGREEN), clip);
-        }
-        this->draw(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), DARK_GREY), clip);
-        this->draw(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), DARK_GREY), clip);
-        this->draw(RDPOpaqueRect(Rect(r.x, r.y + r.cy- 1, r.cx, 1), WHITE), clip);
-        this->draw(RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), WHITE), clip);
-        this->draw(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), BLACK), clip);
-        this->draw(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), BLACK), clip);
-        this->server_draw_text(r.x + 4, r.y + 3, caption, has_focus?DARK_WABGREEN:WHITE, has_focus?WHITE:BLACK, clip);
-        this->draw_button(Rect(r.x + r.cx - 20, r.y + 2, 18, r.cy - 4), "", state, false, clip);
-    }
-
     void draw_button(const Rect & r, const char * caption, int state, bool has_focus, const Rect & clip){
 
         int bevel = (state == BUTTON_STATE_DOWN)?1:0;

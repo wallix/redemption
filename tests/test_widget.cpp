@@ -24,36 +24,131 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestBitmap
+#define BOOST_TEST_MODULE TestCreateWidget
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 
-#include "internal/internal_mod.hpp"
-#include "internal/widget/widget.hpp"
-#include "colors.hpp"
+#include "client_mod.hpp"
 
-#include "front.hpp"
+#include "internal/widget/screen.hpp"
+#include "internal/widget/window.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCreateWidget)
+struct TestWidgetMod : mod_api
 {
-//    cout << "Test Creating Screen object";
-    TODO(" passing in a null front is not a good idea  define a test front")
-    Widget *screen = new Widget((internal_mod*)0, 20, 10, NULL, WND_TYPE_SCREEN);
-    BOOST_CHECK_EQUAL(20, screen->rect.cx);
-    BOOST_CHECK_EQUAL(10, screen->rect.cy);
+    char buffer[32768];
+    char * result;
+    TestWidgetMod() : result(this->buffer) {
+    }
+    virtual void mod_event(int event_id) {}
+    virtual void begin_update() { result += sprintf(result, "begin_update()\n"); }
+    virtual void end_update() {result += sprintf(result, "end_update()\n");}
+    virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+    {
+        result += sprintf(result, "server_draw_text()\n");
+    }
+    virtual void text_metrics(const char * text, int & width, int & height)
+    {
+        result += sprintf(result, "text_metrics()\n");
+    }
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
+    {
+        result += sprintf(result, "draw(RDPOpaqueRect(%d, %d, %d, %d, %06x), clip(%d, %d, %d, %d))\n", 
+                          cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
+                          cmd.color, 
+                          clip.x, clip.y, clip.cx, clip.cy);
+    }
+    virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
+    {
+        result += sprintf(result, "draw(RDPScrBlt(), clip(%d, %d, %d, %d))\n", clip.x, clip.y, clip.cx, clip.cy);
+    }
+    virtual void draw(const RDPDestBlt & cmd, const Rect &clip)
+    {
+        result += sprintf(result, "draw(RDPDestBlt(), clip(%d, %d, %d, %d))\n", clip.x, clip.y, clip.cx, clip.cy);
+    }
+    virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
+    {
+        result += sprintf(result, "draw(RDPPatBlt(), clip(%d, %d, %d, %d))\n", clip.x, clip.y, clip.cx, clip.cy);
+    }
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
+    {
+        result += sprintf(result, "draw(RDPMemBlt(), clip(%d, %d, %d, %d))\n", clip.x, clip.y, clip.cx, clip.cy);
+    }
+    virtual void draw(const RDPLineTo& cmd, const Rect & clip)
+    {
+        result += sprintf(result, "draw(RDPLineTo(), clip(%d, %d, %d, %d))\n", clip.x, clip.y, clip.cx, clip.cy);
+    }
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
+    {
+        result += sprintf(result, "draw(RDPGlyphIndex(), clip(%d, %d, %d, %d))\n", clip.x, clip.y, clip.cx, clip.cy);
+    }
+};
+
+
+BOOST_AUTO_TEST_CASE(TestCreateScreen)
+{
+    TestWidgetMod mod;
+    Widget *screen = new widget_screen(&mod, 20, 10);
     BOOST_CHECK_EQUAL((int)WND_TYPE_SCREEN, screen->type);
+    BOOST_CHECK_EQUAL(Rect(0, 0, 20, 10), screen->rect);
+    const Rect rect(1, 2, 3, 4);
+    mod.begin_update();
+    screen->draw(rect);
+    mod.end_update();
+    const char * expected =
+        "begin_update()\n"
+        "draw(RDPOpaqueRect(0, 0, 20, 10, 000000), clip(1, 2, 3, 4))\n"
+        "end_update()\n"
+        ;
+        
+    if (0 != strcmp(expected, mod.buffer)){
+        LOG(LOG_ERR, "expected:\n%s\n", expected); 
+        LOG(LOG_ERR, "got:\n%s\n", mod.buffer); 
+        BOOST_CHECK(false);
+    }
     delete screen;
 }
 
-BOOST_AUTO_TEST_CASE(TestCreateWidgetScreen)
+BOOST_AUTO_TEST_CASE(TestCreateScreen2)
 {
-//    cout << "Test Creating Screen object";
-    TODO(" passing in a null front is not a good idea  define a test front")
-    Widget *screen = new Widget((internal_mod*)0, 20, 10, NULL, WND_TYPE_SCREEN);
-    BOOST_CHECK_EQUAL(20, screen->rect.cx);
-    BOOST_CHECK_EQUAL(10, screen->rect.cy);
+    TestWidgetMod mod;
+    Widget *screen = new widget_screen(&mod, 800, 600);
     BOOST_CHECK_EQUAL((int)WND_TYPE_SCREEN, screen->type);
+    BOOST_CHECK_EQUAL(Rect(0, 0, 800, 600), screen->rect);
+    Widget *w = new window(&mod, Rect(10, 10, 400, 200), screen, RED, "window 1");
+
+    const Rect rect(0, 0, 800, 600);
+    mod.begin_update();
+    screen->draw(rect);
+    mod.end_update();
+    const char * expected = 
+    "begin_update()\n"
+    // screen background around the window
+    "draw(RDPOpaqueRect(0, 0, 800, 600, 000000), clip(0, 0, 800, 10))\n"
+    "draw(RDPOpaqueRect(0, 0, 800, 600, 000000), clip(0, 10, 10, 200))\n"
+    "draw(RDPOpaqueRect(0, 0, 800, 600, 000000), clip(410, 10, 390, 200))\n"
+    "draw(RDPOpaqueRect(0, 0, 800, 600, 000000), clip(0, 210, 800, 390))\n"
+    // ------------- window 1 ----------------------
+    // RED Window (as defined above)
+    "draw(RDPOpaqueRect(10, 10, 400, 200, 0000ff), clip(10, 10, 400, 200))\n"
+    // window borders (some pixels white, grey and black)
+    "draw(RDPOpaqueRect(11, 11, 398, 1, ffffff), clip(10, 10, 400, 200))\n"
+    "draw(RDPOpaqueRect(11, 11, 1, 198, ffffff), clip(10, 10, 400, 200))\n"
+    "draw(RDPOpaqueRect(11, 208, 398, 1, 808080), clip(10, 10, 400, 200))\n"
+    "draw(RDPOpaqueRect(408, 11, 1, 200, 808080), clip(10, 10, 400, 200))\n"
+    "draw(RDPOpaqueRect(10, 209, 400, 1, 000000), clip(10, 10, 400, 200))\n"
+    "draw(RDPOpaqueRect(409, 10, 1, 200, 000000), clip(10, 10, 400, 200))\n"
+    "draw(RDPOpaqueRect(13, 13, 395, 18, 808080), clip(10, 10, 400, 200))\n"
+    "server_draw_text()\n"
+    "end_update()\n"
+        ;
+        
+    if (0 != strcmp(expected, mod.buffer)){
+        LOG(LOG_ERR, "expected:\n%s\n", expected); 
+        LOG(LOG_ERR, "got:\n %s\n", mod.buffer); 
+        BOOST_CHECK(false);
+    }
     delete screen;
 }
+

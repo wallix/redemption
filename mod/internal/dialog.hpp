@@ -102,16 +102,7 @@ struct dialog_mod : public internal_mod {
     {
         if (!rect.isempty()) {
             this->front.begin_update();
-            const Rect & r = this->get_screen_rect();
-            this->screen.draw(r);
-            /* draw any child windows in the area */
-            for (size_t i = 0; i < this->nb_windows(); i++) {
-                Widget *b = this->window(i);
-                Rect r2 = rect.intersect(b->rect.wh());
-                if (!r2.isempty()) {
-                    b->refresh(r2);
-                }
-            }
+            this->screen.draw(rect);
             this->front.end_update();
         }
     }

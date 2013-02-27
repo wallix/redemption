@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
     BOOST_CHECK_EQUAL(0, memcmp("We ", buffer, 3));
     BOOST_CHECK_EQUAL(21, rt_recv(rt, buffer+3, 1024));
     BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
-    BOOST_CHECK_EQUAL(-RT_ERROR_EOF, rt_recv(rt, buffer+24, 1024));
+    BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer+24, 1024)); // EOF
     
     rt_close(rt);
     rt_delete(rt);
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestTestTransport2)
     BOOST_CHECK_EQUAL(0, memcmp("We ", buffer, 3));
     BOOST_CHECK_EQUAL(21, rt_recv(rt, buffer+3, 1024));
     BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
-    BOOST_CHECK_EQUAL(-RT_ERROR_EOF, rt_recv(rt, buffer+24, 1024));
+    BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer+24, 1024));
     
     rt_close(rt);
     rt_delete(rt);
@@ -281,7 +281,6 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
     }
     fcntl(client_sck, F_SETFL, fcntl(client_sck, F_GETFL) | O_NONBLOCK);
 
-    int res = -1;
     int data_sent = 0;
     RT * client_rt = NULL;
 
@@ -299,55 +298,60 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
         FD_SET(max, &rfds);
         
         for (int i = 0 ; i < nb_recv_sck ; i++){
-            if (recv_sck[i] > max){
-                max = recv_sck[i];
-            }
             FD_SET(recv_sck[i], &rfds);
+            if (recv_sck[i] > max){ max = recv_sck[i]; }
         }
 
-        if (((client_rt != NULL) && (data_sent == 0)) 
-        || (res == -1))
-        {
-            FD_SET(client_sck, &wfds);
-            if (client_sck > max){
-                max = client_sck;
-            }
-        }
+        FD_SET(client_sck, &wfds);
+        if (client_sck > max){ max = client_sck; }
 
         int num = select(max + 1, &rfds, &wfds, 0, &timeout);
     
         switch (num) {
-        case 0:
-            LOG(LOG_INFO, "woke up on timeout\n");
+        case 0: // this is timeout : as everything is automated it should never happen
+            BOOST_CHECK(false);
+            return;
         break;
         default:
         {
             if (FD_ISSET(client_sck, &wfds)){
-                if (client_rt && (data_sent == 0)){
-                    int len = rt_send(client_rt, "AAAAXBBBBXCCCCXDDDDX", 20);
+                 // connected client
+                if (client_rt == NULL){
+                    int res = ::connect(client_sck, &ucs.s, sizeof(ucs));
                     if (res < 0){
-                        BOOST_CHECK_EQUAL(RT_ERROR_OK, (RT_ERROR)(-len));
-                        return;
-                    }
-                    data_sent = 20;
-                }
-                else if (res == -1) {
-                    res = ::connect(client_sck, &ucs.s, sizeof(ucs));
-                    if (res != -1){
-                        RT_ERROR status = RT_ERROR_OK;
-                        client_rt = rt_new_socket(&status, client_sck);
-                        BOOST_CHECK(NULL != client_rt);
-                        BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
-                        if ((client_rt == NULL) || (status != RT_ERROR_OK)){
+                        if (!try_again(errno)){
+                            LOG(LOG_ERR, "conection failed with error %s", strerror(errno));
+                            BOOST_CHECK(false);
                             return;
                         }
+                    }
+                    else {
+                        RT_ERROR status = RT_ERROR_OK;
+                        client_rt = rt_new_socket(&status, client_sck);
+                        if ((client_rt == NULL) || (status != RT_ERROR_OK)){
+                            BOOST_CHECK(NULL != client_rt);
+                            BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
+                            return;
+                        }
+                    }
+                }
+                else {
+                    // send data on client socket
+                    if (data_sent < 20){
+                        int res = rt_send(client_rt, "AAAAXBBBBXCCCCXDDDDX" + data_sent, 20 - data_sent);
+                        if (res < 0){
+                            BOOST_CHECK_EQUAL(RT_ERROR_OK, (RT_ERROR)(-res));
+                            return;
+                        }
+                        data_sent += res;
                     }
                 }
             }
 
             for (int i = 0 ; i < nb_recv_sck ; i++){
+                // received data on connected socket (server side)
                 if (FD_ISSET(recv_sck[i], & rfds)){
-                    LOG(LOG_INFO, "activity on %d", recv_sck[i]);
+                    LOG(LOG_INFO, "received data activity on %d", recv_sck[i]);
                     int len = rt_recv(sck_rt[i], &(((char*)p)[nb_inbuffer]), 5);
                     if (len < 0){
                         BOOST_CHECK_EQUAL(RT_ERROR_OK, (RT_ERROR)(-len));
@@ -364,7 +368,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
                     }
                 }
             }
-            
+            // accept new connection on server socket
             if (FD_ISSET(listener_sck, &rfds)){
                 char ip_source[128];
                 union
@@ -381,7 +385,14 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
                 int sck = accept(listener_sck, &u.s, &sin_size);
                 strcpy(ip_source, inet_ntoa(u.s4.sin_addr));
                 LOG(LOG_INFO, "Incoming socket to %d (ip=%s)\n", sck, ip_source);
-                if (sck > 0){
+                if (sck < 0){
+                    if (!try_again(errno)){
+                        LOG(LOG_ERR, "accept failed with error %s", strerror(errno));
+                        BOOST_CHECK(false);
+                        return;
+                    }
+                }
+                else {
                     recv_sck[nb_recv_sck] = sck;
                     RT_ERROR status = RT_ERROR_OK;
                     RT * server_rt = rt_new_socket(&status, sck);
@@ -392,16 +403,241 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
                     }
                     sck_rt[nb_recv_sck] = server_rt;
                     nb_recv_sck++;
-
                 }
             }
         }
         break;
         case -1:
             if ((errno == EINTR)||(errno==EAGAIN)) { continue; }
-            LOG(LOG_INFO, "stopped on error [%d] %s\n", num, strerror(errno));
+            LOG(LOG_INFO, "select stopped on error [%d] %s\n", num, strerror(errno));
             run = false;
         }
     }
 
 }
+
+// The Outsequence transport use one inderection level to find out where data should be sent
+// A sequence is a very simple object that expose 2 methods, 
+// sq_get_trans() return the current transport to use
+// sq_next() goes forward to the next transport tu use
+
+// The simplest possible sequence is the "one" sequence implemented below : 
+// - sq_get_trans() always return the same transport (the one the sequence was initialized with)
+// - sq_next() does nothing
+// In the test below, we just wrap a check transport in a one_sequence
+// hence the resultant outseuence object behave exactly like a check sequence
+
+BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OneSequence)
+{
+    RT_ERROR status_trans = RT_ERROR_OK;
+    RT * out = rt_new_check(&status_trans, "AAAAXBBBBXCCCCX", 15);
+
+    RT_ERROR status_seq = RT_ERROR_OK;
+    SQ * sequence = sq_new_one_RT(&status_seq, out);
+
+    RT_ERROR status = RT_ERROR_OK;
+    RT * rt = rt_new_outsequence(&status, sequence);
+
+    BOOST_CHECK_EQUAL( 5, rt_send(rt, "AAAAX",  5));
+    BOOST_CHECK_EQUAL(RT_ERROR_OK, sq_next(sequence));
+    BOOST_CHECK_EQUAL(10, rt_send(rt, "BBBBXCCCCX", 10));
+
+    rt_close(rt);
+    rt_delete(rt);
+}
+
+
+BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
+{
+    // cleanup of possible previous test files
+    {
+        const char * file[] = {"TESTOFS-000000.txt", "TESTOFS-000001.txt"};
+        for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
+            ::unlink(file[i]);
+        }
+    }
+
+// Second simplest sequence is "outfilename" sequence
+// - sq_get_trans() open an outfile if necessary using the given name pattern 
+//      and return it on subsequent calls until it is closed
+// - sq_next() close the current outfile and step to the next filename wich will 
+//    be used by the next sq_get_trans to create an outfile transport.
+
+// The test below is very similar to the previous one except for the creation of the sequence
+    {
+        RT_ERROR status_seq = RT_ERROR_OK;
+        SQ * sequence = sq_new_outfilename(&status_seq, NULL, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", "txt");
+
+        RT_ERROR status = RT_ERROR_OK;
+        RT * rt = rt_new_outsequence(&status, sequence);
+
+        BOOST_CHECK_EQUAL( 5, rt_send(rt, "AAAAX",  5));
+        BOOST_CHECK_EQUAL(RT_ERROR_OK, sq_next(sequence));
+        BOOST_CHECK_EQUAL(10, rt_send(rt, "BBBBXCCCCX", 10));
+
+        rt_close(rt);
+        rt_delete(rt);
+        
+        sq_delete(sequence);
+    }
+
+// Third simplest sequence is "infilename" sequence
+// - sq_get_trans() open an infile if necessary using the given name pattern 
+//      and return it on subsequent calls untile it is closed (reach EOF)
+// - sq_next() close the current outfile and step to the next filename wich will 
+//    be used by the next sq_get_trans to create an outfile transport.
+
+    {
+        RT_ERROR status_seq = RT_ERROR_OK;
+        SQ * sequence = sq_new_infilename(&status_seq, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", "txt");
+
+        RT_ERROR status = RT_ERROR_OK;
+        RT * rt = rt_new_insequence(&status, sequence);
+
+        char buffer[1024] = {};
+        BOOST_CHECK_EQUAL(10, rt_recv(rt, buffer, 10));
+        BOOST_CHECK_EQUAL(0, buffer[10]);
+        if (0 != memcmp(buffer, "AAAAXBBBBX", 10)){
+            LOG(LOG_ERR, "expected \"AAAAXBBBBX\" got \"%s\"\n", buffer);
+        }
+        BOOST_CHECK_EQUAL(5, rt_recv(rt, buffer + 10, 1024));
+        BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
+        BOOST_CHECK_EQUAL(0, buffer[15]);
+        BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer + 15, 1024));
+        rt_close(rt);
+        rt_delete(rt);
+        sq_delete(sequence);
+    }
+
+// Thourth simplest sequence is "intracker" sequence
+// - Behavior is identical to infilename sequence except the input pattern is
+// a Transport that contains the list of the input files.
+// - sq_get_trans() open an infile if necessary using the name it got from tracker
+//   and return it on subsequent calls until it is closed (reach EOF)
+// - sq_next() close the current outfile and step to the next filename wich will 
+//    be used by the next sq_get_trans to create an outfile transport.
+
+    {
+        RT_ERROR status = RT_ERROR_OK;
+        const char trackdata[] = 
+            "TESTOFS-000000.txt\n"
+            "TESTOFS-000001.txt\n";
+
+        RT * tracker = rt_new_generator(&status, trackdata, sizeof(trackdata)-1);
+
+        status = RT_ERROR_OK;
+        SQ * sequence = sq_new_intracker(&status, tracker);
+
+        status = RT_ERROR_OK;
+        RT * rt = rt_new_insequence(&status, sequence);
+
+        char buffer[1024] = {};
+        BOOST_CHECK_EQUAL(10, rt_recv(rt, buffer, 10));
+        BOOST_CHECK_EQUAL(0, buffer[10]);
+        if (0 != memcmp(buffer, "AAAAXBBBBX", 10)){
+            LOG(LOG_ERR, "expected \"AAAAXBBBBX\" got \"%s\"\n", buffer);
+        }
+        BOOST_CHECK_EQUAL(5, rt_recv(rt, buffer + 10, 1024));
+        BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
+        BOOST_CHECK_EQUAL(0, buffer[15]);
+        BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer + 15, 1024));
+        rt_close(rt);
+        rt_delete(rt);
+        sq_delete(sequence);
+    }
+
+
+    const char * file[] = {
+        "TESTOFS-000000.txt",
+        "TESTOFS-000001.txt"
+    };
+    for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
+        if (::unlink(file[i]) < 0){
+            BOOST_CHECK(false);
+            LOG(LOG_ERR, "failed to unlink %s", file[i]);
+        }
+    }
+}
+
+
+// Outmeta is a transport that manage file opening and chunking by itself
+// We provide a base filename and it creates an outfilename sequence based on it
+// A trace of this sequence is kept in an independant journal file that will
+// be used later to reopen the same sequence as an input transport.
+// chunking is performed externally, using the independant seq object created by constructor.
+// metadata can be attached to individual chunks through seq object.
+
+// The seq object memory allocation is performed by Outmeta,
+// hence returned seq *must not* be explicitely deleted
+// deleting transport will take care of it.
+
+BOOST_AUTO_TEST_CASE(TestOutMeta)
+{
+    RT_ERROR status = RT_ERROR_OK;
+    SQ * seq  = NULL;
+    RT * rt = rt_new_outmeta(&status, &seq, "TESTOFS", "mwrm");
+
+    BOOST_CHECK_EQUAL( 5, rt_send(rt, "AAAAX",  5));
+    BOOST_CHECK_EQUAL(RT_ERROR_OK, sq_next(seq));
+    BOOST_CHECK_EQUAL(10, rt_send(rt, "BBBBXCCCCX", 10));
+
+    rt_close(rt);
+    rt_delete(rt);
+    
+    const char * file[] = {
+        "TESTOFS.mwrm",
+        "TESTOFS-000000.wrm",
+        "TESTOFS-000001.wrm"
+    };
+    for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
+        if (::unlink(file[i]) < 0){
+            BOOST_CHECK(false);
+            LOG(LOG_ERR, "failed to unlink %s", file[i]);
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TestInmeta)
+{
+    {
+        RT_ERROR status = RT_ERROR_OK;
+        SQ * seq  = NULL;
+        RT * rt = rt_new_outmeta(&status, &seq, "TESTOFS", "mwrm");
+
+        BOOST_CHECK_EQUAL( 5, rt_send(rt, "AAAAX",  5));
+        BOOST_CHECK_EQUAL(RT_ERROR_OK, sq_next(seq));
+        BOOST_CHECK_EQUAL(10, rt_send(rt, "BBBBXCCCCX", 10));
+
+        rt_close(rt);
+        rt_delete(rt);
+    }
+    
+    {
+        RT_ERROR status = RT_ERROR_OK;
+        RT * rt = rt_new_inmeta(&status, "TESTOFS", "mwrm");
+
+        if (rt){
+            char buffer[1024] = {};
+            BOOST_CHECK_EQUAL(15, rt_recv(rt, buffer,  15));
+            if (0 != memcmp(buffer, "AAAAXBBBBXCCCCX", 15)){
+                BOOST_CHECK_EQUAL(0, buffer[15]); // this one should not have changed
+                buffer[15] = 0;
+                LOG(LOG_ERR, "expected \"AAAAXBBBBXCCCCX\" got \"%s\"", buffer);
+                BOOST_CHECK(false);
+            }
+        }
+    }    
+    
+    const char * file[] = {
+        "TESTOFS.mwrm",
+        "TESTOFS-000000.wrm",
+        "TESTOFS-000001.wrm"
+    };
+    for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
+        if (::unlink(file[i]) < 0){
+            BOOST_CHECK(false);
+            LOG(LOG_ERR, "failed to unlink %s", file[i]);
+        }
+    }
+}
+

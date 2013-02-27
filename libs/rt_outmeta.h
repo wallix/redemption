@@ -17,20 +17,21 @@
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean
 
-   new Generator RedTransport class
+   Template for new Outmeta RedTransport class
+
 */
 
-#ifndef _REDEMPTION_LIBS_RT_GENERATOR_H_
-#define _REDEMPTION_LIBS_RT_GENERATOR_H_
+#ifndef _REDEMPTION_LIBS_RT_OUTMETA_H_
+#define _REDEMPTION_LIBS_RT_OUTMETA_H_
 
 #include "rt_constants.h"
 
-struct RTGenerator {
-    size_t current;
-    uint8_t * data;
-    size_t len;
-    bool status;
-    RT_ERROR err;
+struct RTOutmeta {
+    int lastcount;
+    struct SQ * metaseq;
+    struct RT * meta;
+    struct SQ * seq;
+    struct RT * out;
 };
 
 extern "C" {
@@ -38,28 +39,49 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_RTGenerator_constructor(RTGenerator * self, const void * data, size_t len)
+    inline RT_ERROR rt_m_RTOutmeta_constructor(RTOutmeta * self, SQ ** seq, const char * prefix, const char * extension)
     {
-        self->data = (uint8_t *)malloc(len);
-        if (!self->data) { return RT_ERROR_MALLOC; }
-        self->len = len;
-        self->current = 0;
-        self->status = true;
-        self->err = RT_ERROR_OK;
-        memcpy(self->data, data, len);
+        RT_ERROR status = RT_ERROR_OK;
+        SQ * metaseq = sq_new_outfilename(&status, (RT*)NULL, SQF_PREFIX_EXTENSION, prefix, "mwrm");
+        if (status != RT_ERROR_OK){
+            return status;
+        }
+        RT * meta = rt_new_outsequence(&status, metaseq);
+        if (status != RT_ERROR_OK){
+            sq_delete(metaseq);
+            return status;
+        }
+        SQ * sequence = sq_new_outfilename(&status, meta, SQF_PREFIX_COUNT_EXTENSION, prefix, "wrm");
+        if (status != RT_ERROR_OK){
+            rt_delete(meta);
+            sq_delete(metaseq);
+            return status;
+        }
+        RT * out = rt_new_outsequence(&status, sequence);
+        if (status != RT_ERROR_OK){
+            sq_delete(sequence);
+            rt_delete(meta);
+            sq_delete(metaseq);
+            return status;
+        }
+
+        self->lastcount = -1;
+        self->metaseq = metaseq;
+        *seq = self->seq = sequence;
+        self->meta = meta;
+        self->out = out;
         return RT_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_RTGenerator_destructor(RTGenerator * self)
+    inline RT_ERROR rt_m_RTOutmeta_destructor(RTOutmeta * self)
     {
-        free(self->data);
+        sq_delete(self->seq);
+        rt_delete(self->meta);
+        sq_delete(self->metaseq);
+        rt_delete(self->out);
         return RT_ERROR_OK;
-    }
-
-    void rt_m_RTGenerator_close(RTGenerator * self)
-    {
     }
 
     /* This method receive len bytes of data into buffer
@@ -69,25 +91,9 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTGenerator_recv(RTGenerator * self, void * data, size_t len)
+    inline ssize_t rt_m_RTOutmeta_recv(RTOutmeta * self, void * data, size_t len)
     {
-        if (!self->status){ 
-            if (self->err == RT_ERROR_EOF){
-                return 0;
-            }
-            return -self->err; 
-        }
-        if (self->current + len > self->len){
-            size_t available_len = self->len - self->current;
-            memcpy(data, (char*)self->data + self->current, available_len);
-            self->current += available_len;
-            self->status = false; // next read will trigger EOF
-            self->err = RT_ERROR_EOF;
-            return available_len;
-        }
-        memcpy(data, (char*)self->data + self->current, len);
-        self->current += len;
-        return len;
+         return -RT_ERROR_SEND_ONLY;
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -97,14 +103,10 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTGenerator_send(RTGenerator * self, const void * data, size_t len)
+    inline ssize_t rt_m_RTOutmeta_send(RTOutmeta * self, const void * data, size_t len)
     {
-         self->status = false;
-         self->err = RT_ERROR_RECV_ONLY;
-         return -self->err;
+        return rt_send(self->out, data, len);
     }
-
-
 };
 
 #endif

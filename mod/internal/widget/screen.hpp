@@ -26,8 +26,10 @@
 #include "mod_api.hpp"
 
 struct widget_screen : public Widget {
-    widget_screen(mod_api * mod, int width, int height, int type, Widget * parent)
-    : Widget(mod, width, height, parent, type) {
+    widget_screen(mod_api * mod, int width, int height)
+    : Widget(mod, Rect(0, 0, width, height), NULL, WND_TYPE_SCREEN) 
+    {
+    }
 
     ~widget_screen() {
     }
@@ -40,10 +42,19 @@ struct widget_screen : public Widget {
 
         for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
             const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
-
-            this->mod->draw(RDPOpaqueRect(scr_r, this->bg_color), region_clip);
+            if (!region_clip.isempty()){
+                this->mod->draw(RDPOpaqueRect(scr_r, this->bg_color), region_clip);
+            }
         }
-    }
+
+        for (size_t i = 0; i < this->child_list.size(); i++) {
+            Widget *b = this->child_list[i];
+            Rect r2 = rect.intersect(b->rect.wh());
+            if (!r2.isempty()) {
+                b->refresh(r2);
+            }
+        }
+    }  
 };
 
 #endif
