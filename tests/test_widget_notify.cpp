@@ -26,29 +26,47 @@
 
 // #define LOGNULL
 #include <iostream>
+#include <string>
+#include <map>
 #include <sstream>
 #include <widget2/window.hpp>
+#include <widget2/screen.hpp>
+#include <widget2/edit.hpp>
 
-void widget_info(std::ostringstream& out, Widget* w, int depth = 0)
+struct TestNotify : NotifyApi
 {
-    std::string s(depth, ' ');
-    out << s << "id: " << w->id << ", focus: " << w->has_focus << std::endl;
-    if (w->type == Widget::TYPE_SCREEN || w->type == Widget::TYPE_WND){
-        WidgetComposite* wc = static_cast<WidgetComposite*>(w);
-        for (std::size_t i = 0; i < wc->child_list.size(); ++i){
-            widget_info(out, wc->child_list[i], depth+2);
-        }
+    std::map<Widget*, const char *>& dico;
+    std::ostringstream oss;
+
+    TestNotify(std::map<Widget*, const char *>& dico_ref)
+    : dico(dico_ref)
+    {}
+
+    virtual void notify(Widget * sender, Widget * receiver, EventType event)
+    {
+        BOOST_ASSERT(sender != 0);
+        BOOST_ASSERT(receiver != 0);
+        BOOST_ASSERT(this->dico.find(sender) != this->dico.end());
+        BOOST_ASSERT(this->dico.find(receiver) != this->dico.end());
+        oss << "event: " << event
+        << "\n\tsender (" << this->dico[sender] << ") -- "
+        << "id: " << sender->id
+        << ", type: " << sender->type
+        << "\n\treceiver (" << this->dico[receiver] << ") -- "
+        << "id: " << receiver->id
+        << ", type: " << receiver->type << std::endl;
     }
-}
+};
 
-BOOST_AUTO_TEST_CASE(TestWidgetFocus)
+BOOST_AUTO_TEST_CASE(TraceWidgetFocus)
 {
-    Window screen(0, 1000, 1000, 0, Widget::TYPE_SCREEN);
+    WidgetScreen screen(0, 1000, 1000);
     Window win(0, 800, 600, 0);
     screen.addWidget(&win);
     win.set_position(30,30);
+    win.has_focus = true;
     Widget w1(0, 10, 10, 0, Widget::TYPE_BUTTON); w1.id = 1;
-    Widget w2(0, 10, 10, 0, Widget::TYPE_BUTTON); w2.id = 2;
+    WidgetEdit w2(0, 10, 10, 0); w2.id = 2;
     Widget w3(0, 10, 10, 0, Widget::TYPE_BUTTON); w3.id = 3;
     win.addWidget(&w1);
     win.addWidget(&w2);
@@ -62,42 +80,76 @@ BOOST_AUTO_TEST_CASE(TestWidgetFocus)
     BOOST_CHECK(&w2 == screen.widget_at_pos(89, 70));
     BOOST_CHECK(&w3 == screen.widget_at_pos(133, 437));
 
-#define WIDGET_CHECK(widget, strCmp)do{\
-    std::ostringstream oss;\
-    widget_info(oss, widget);\
-    BOOST_CHECK_EQUAL(oss.str(), strCmp); }while(0)
+
+    std::map<Widget*, const char *> dico_widget_name;
+    TestNotify notify(dico_widget_name);
+    {
+        typedef std::pair<Widget*, const char *> pair_t;
+        pair_t widgets[] = {
+            pair_t(&screen, "screen"),
+            pair_t(&win, "win"),
+            pair_t(&w1, "w1"),
+            pair_t(&w2, "w2"),
+            pair_t(&w3, "w3"),
+        };
+        for (size_t i = 0; i < sizeof(widgets)/sizeof(widgets[0]); ++i){
+            dico_widget_name.insert(widgets[i]);
+            widgets[i].first->add_notify(FOCUS_BEGIN, &notify);
+            widgets[i].first->add_notify(FOCUS_END, &notify);
+            widgets[i].first->add_notify(TEXT_CHANGED, &notify);
+        }
+    }
+
+    w2.has_focus = true;
+    BOOST_CHECK(!w1.has_focus && w2.has_focus && !w3.has_focus);
     {
         Widget* wevent = screen.widget_at_pos(133, 437);
-        wevent->notify(0, FOCUS_BEGIN);
-        WIDGET_CHECK(&screen,
-        "id: 0, focus: 1\n"
-        "  id: 0, focus: 1\n"
-        "    id: 1, focus: 0\n"
-        "    id: 2, focus: 0\n"
-        "    id: 3, focus: 1\n");
+        wevent->focus();
     }
+    BOOST_CHECK(!w1.has_focus && !w2.has_focus && w3.has_focus);
     {
         Widget* wevent = screen.widget_at_pos(45, 70);
-        wevent->notify(0, FOCUS_BEGIN);
-        std::ostringstream oss;
-        widget_info(oss, &screen);
-        WIDGET_CHECK(&screen,
-        "id: 0, focus: 1\n"
-        "  id: 0, focus: 1\n"
-        "    id: 1, focus: 1\n"
-        "    id: 2, focus: 0\n"
-        "    id: 3, focus: 0\n");
+        wevent->focus();
     }
+    BOOST_CHECK(w1.has_focus && !w2.has_focus && !w3.has_focus);
     {
         Widget* wevent = screen.widget_at_pos(89, 70);
-        wevent->notify(0, CLIC_BUTTON1_DOWN);
-        std::ostringstream oss;
-        widget_info(oss, &screen);
-        WIDGET_CHECK(&screen,
-        "id: 0, focus: 1\n"
-        "  id: 0, focus: 1\n"
-        "    id: 1, focus: 0\n"
-        "    id: 2, focus: 1\n"
-        "    id: 3, focus: 0\n");
+        wevent->focus();
     }
+    BOOST_CHECK(!w1.has_focus && w2.has_focus && !w3.has_focus);
+
+    BOOST_CHECK(notify.oss.str() ==
+        "event: 0\n"
+        "\tsender (w3) -- id: 3, type: 3\n"
+        "\treceiver (w3) -- id: 3, type: 3\n"
+        "event: 1\n"
+        "\tsender (w2) -- id: 2, type: 5\n"
+        "\treceiver (w2) -- id: 2, type: 5\n"
+        "event: 0\n"
+        "\tsender (w1) -- id: 1, type: 3\n"
+        "\treceiver (w1) -- id: 1, type: 3\n"
+        "event: 1\n"
+        "\tsender (w3) -- id: 3, type: 3\n"
+        "\treceiver (w3) -- id: 3, type: 3\n"
+        "event: 0\n"
+        "\tsender (w2) -- id: 2, type: 5\n"
+        "\treceiver (w2) -- id: 2, type: 5\n"
+        "event: 1\n"
+        "\tsender (w1) -- id: 1, type: 3\n"
+        "\treceiver (w1) -- id: 1, type: 3\n");
+
+    notify.oss.str("");
+
+    Keymap2 keymap;
+    screen.def_proc(KEYDOWN, 0, &keymap);
+    BOOST_CHECK(notify.oss.str() ==
+        "event: 11\n"
+        "\tsender (w2) -- id: 2, type: 5\n"
+        "\treceiver (w2) -- id: 2, type: 5\n"
+        "event: 11\n"
+        "\tsender (w2) -- id: 2, type: 5\n"
+        "\treceiver (win) -- id: 0, type: 1\n"
+        "event: 11\n"
+        "\tsender (w2) -- id: 2, type: 5\n"
+        "\treceiver (screen) -- id: 0, type: 0\n");
 }

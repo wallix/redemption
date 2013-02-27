@@ -30,7 +30,7 @@ public:
     std::vector<Widget*> child_list;
 
 public:
-    WidgetComposite(DrawAPI * drawable, int width, int height, Widget * parent, int type)
+    WidgetComposite(ModApi * drawable, int width, int height, Widget * parent, int type)
     : Widget(drawable, width, height, parent, type)
     , child_list()
     {}
@@ -61,31 +61,44 @@ public:
         return ret;
     }
 
-    virtual void notify(int id, EventType event)
+    virtual void def_proc(EventType event, int param, Keymap2* keymap)
     {
-        if (event == FOCUS_BEGIN)
+        for (std::size_t i = 0; i < this->child_list.size(); ++i)
         {
-            for (size_t i = 0; i < this->child_list.size(); i++)
-            {
-                struct Widget * w = this->child_list[i];
-                if (w->id != id && w->has_focus)
-                {
-                    w->blur();
-                    break;
-                }
-            }
+            if (this->child_list[i]->has_focus)
+                this->child_list[i]->def_proc(event, param, keymap);
         }
-        this->Widget::notify(id, event);
     }
 
-    void addWidget(Widget* w)
+    virtual void notify(Widget* w, EventType event)
+    {
+        if (event == FOCUS_BEGIN && this->has_focus == true){
+            this->notify_self(w, event);
+        } else {
+            this->Widget::notify(w, event);
+        }
+    }
+
+    virtual void redraw(const Rect & clip)
+    {
+        this->draw(clip);
+        this->notify(this, WM_DRAW);
+
+        size_t count = this->child_list.size();
+        for (size_t i = 0; i < count; i++) {
+            Widget * b = this->child_list[i];
+            b->redraw(b->rect.wh());
+        }
+    }
+
+    void addWidget(Widget* w) ///TODO
     {
         this->child_list.push_back(w);
         w->parent = this;
     }
 
 protected:
-    Widget* direct_child_focused()
+    Widget* direct_child_focused() const
     {
         for (std::size_t i = 0; i < this->child_list.size(); ++i)
         {
@@ -95,7 +108,17 @@ protected:
         return 0;
     }
 
-    Widget* get_child_by_id(int id)
+    size_t direct_idx_focused() const
+    {
+        for (std::size_t i = 0; i < this->child_list.size(); ++i)
+        {
+            if (this->child_list[i]->has_focus)
+                return i;
+        }
+        return -1;
+    }
+
+    Widget* get_child_by_id(int id) const
     {
         for (size_t i = 0; i < this->child_list.size(); i++)
         {

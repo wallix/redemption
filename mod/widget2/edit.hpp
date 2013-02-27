@@ -18,26 +18,31 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_NOTIFYAPI_HPP_)
-#define REDEMPTION_MOD_WIDGET2_NOTIFYAPI_HPP_
+#if !defined(REDEMPTION_MOD_WIDGET2_EDIT_HPP_)
+#define REDEMPTION_MOD_WIDGET2_EDIT_HPP_
 
-enum EventType {
-    FOCUS_BEGIN,
-    FOCUS_END,
-    KEYDOWN,
-    KEYUP,
-    CLIC_BUTTON1_UP,
-    CLIC_BUTTON1_DOWN,
-    CLIC_BUTTON2_UP,
-    CLIC_BUTTON2_DOWN,
-    CLIC_BUTTON3_UP,
-    CLIC_BUTTON3_DOWN
-};
+#include "widget.hpp"
 
-class NotifyAPI
+class WidgetEdit : public Widget
 {
 public:
-    virtual void notify(int id, EventType event) = 0;
+    WidgetEdit(ModApi* drawable, int width, int height, Widget* parent)
+    : Widget(drawable, width, height, parent, Widget::TYPE_EDIT)
+    {}
+
+    virtual void draw(const Rect & rect)
+    {
+        (void)rect;
+    }
+
+    virtual void def_proc(EventType event, int param, Keymap2* keymap)
+    {
+        std::cout << "event: " << event << std::endl;
+        if (event == KEYDOWN)
+        {
+            this->notify(this, TEXT_CHANGED);
+        }
+    }
 };
 
 #endif

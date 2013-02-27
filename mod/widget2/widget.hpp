@@ -21,12 +21,15 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_WIDGET_HPP_)
 #define REDEMPTION_MOD_WIDGET2_WIDGET_HPP_
 
-#include "notifyapi.hpp"
+#include <vector>
+#include "notify_api.hpp"
+#include "mod_api.hpp"
+#include "notify_api.hpp"
 #include <rect.hpp>
 
-class DrawAPI;
+class Keymap2;
 
-class Widget : NotifyAPI
+class Widget
 {
 public:
     enum WidgetType {
@@ -39,16 +42,32 @@ public:
         TYPE_LABEL   = 6,
     };
 
+    struct notify_event {
+        EventType type;
+        NotifyApi * notify;
+
+        notify_event(EventType type, NotifyApi * notify)
+        : type(type)
+        , notify(notify)
+        {}
+
+        void send_notify(Widget * sender, Widget * receiver)
+        {
+            this->notify->notify(sender, receiver, this->type);
+        }
+    };
+
 public:
     int type;
     int id;
     Rect rect;
     bool has_focus;
-    DrawAPI * drawable;
+    ModApi * drawable;
+    std::vector<notify_event> notifies;
     Widget * parent;
 
 public:
-    Widget(DrawAPI * drawable, int width, int height, Widget * parent, int type)
+    Widget(ModApi * drawable, int width, int height, Widget * parent, int type)
     : type(type)
     , id(0)
     , rect(0,0,width,height)
@@ -57,29 +76,61 @@ public:
     , parent(parent)
     {}
 
-    void draw(const Rect& rect)
+    void add_notify(EventType type, NotifyApi * notify)
     {
-        this->do_draw(rect);
+        notifies.push_back(notify_event(type, notify));
     }
 
-    virtual void notify(int id, EventType event)
+    NotifyApi * detach_notify(EventType type, NotifyApi * notify)
     {
-        (void)id;
-        if (event == CLIC_BUTTON1_DOWN || event == FOCUS_BEGIN)
-        {
-            this->focus();
-            this->propagate_event(FOCUS_BEGIN);
+        NotifyApi * ret = 0;
+        for (std::size_t i = 0; i != notifies.size(); ++i) {
+            if (notifies[i].type == type && notifies[i].notify == notify) {
+                ret = notifies[i].notify;
+                notifies[i] = notifies[notifies.size()-1];
+                notifies.pop_back();
+                break;
+            }
         }
-        else
-        {
-            this->propagate_event(event);
+        return ret;
+    }
+
+    virtual void draw(const Rect& rect)
+    {
+        (void)rect;
+    }
+
+    virtual void redraw(const Rect & rect)
+    {
+        if (!rect.isempty() && this->drawable){
+            this->drawable->begin_update();
+            this->draw(rect);
+            this->drawable->begin_update();
         }
     }
 
-    void propagate_event(EventType event)
+    virtual void def_proc(EventType event, int param, Keymap2 * keymap)
+    {}
+
+    virtual void notify(Widget * w, EventType event)
+    {
+        this->notify_self(w, event);
+        this->notify_parent(w, event);
+    }
+
+    void notify_self(Widget * w, EventType event)
+    {
+        for (std::size_t i = 0; i != notifies.size(); ++i) {
+            if (notifies[i].type == event) {
+                notifies[i].send_notify(w, this);
+            }
+        }
+    }
+
+    void notify_parent(Widget * w, EventType event)
     {
         if (this->parent)
-            this->parent->notify(this->id, event);
+            this->parent->notify(w, event);
     }
 
     virtual Widget * widget_at_pos(int x, int y)
@@ -99,25 +150,38 @@ public:
         return this->rect.y;
     }
 
+    uint16_t cx() const
+    {
+        return this->rect.cx;
+    }
+
+    uint16_t cy() const
+    {
+        return this->rect.cy;
+    }
+
     virtual Widget * widget_focused()
     {
-        return 0;
+        return 0; ///TODO
     }
 
     virtual void focus()
-    { this->has_focus = true; }
+    {
+        this->has_focus = true;
+        this->notify(this, FOCUS_BEGIN);
+    }
 
     virtual void blur()
-    { this->has_focus = false;}
+    {
+        this->has_focus = false;
+        this->notify(this, FOCUS_END);
+    }
 
     void set_position(int x, int y)
     {
         this->rect.x = x;
         this->rect.y = y;
     }
-
-protected:
-    virtual void do_draw(const Rect&) {}; ///TODO virtual pure = 0
 };
 
 #endif

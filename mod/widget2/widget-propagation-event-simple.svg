@@ -1,39 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Bouml (http://bouml.free.fr/) -->
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="846" height="489" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<svg width="814" height="370" version="1.1" xmlns="http://www.w3.org/2000/svg">
 <g>
-	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="774" y1="46" x2="774" y2="489" />
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="55" y1="48" x2="55" y2="370" />
 </g>
 <g>
-	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="204" y1="46" x2="204" y2="489" />
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="421" y1="47" x2="421" y2="370" />
 </g>
 <g>
-	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="421" y1="47" x2="421" y2="489" />
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="204" y1="46" x2="204" y2="370" />
 </g>
 <g>
-	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="55" y1="48" x2="55" y2="489" />
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="645" y1="45" x2="645" y2="370" />
 </g>
 <g>
-	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="645" y1="45" x2="645" y2="489" />
-</g>
-<g>
-	<rect fill="#808080" stroke="none" stroke-opacity="1" x="830" y="9" width="3" height="21" />
-	<rect fill="#808080" stroke="none" stroke-opacity="1" x="719" y="27" width="114" height="3" />
-	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="715" y="5" width="115" height="22" />
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="773" y="21">activeWidget:Edit</text>
-</g>
-<g>
-	<rect fill="#808080" stroke="none" stroke-opacity="1" x="229" y="9" width="3" height="21" />
-	<rect fill="#808080" stroke="none" stroke-opacity="1" x="180" y="27" width="52" height="3" />
-	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="176" y="5" width="53" height="22" />
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="203" y="21">:Screen</text>
-</g>
-<g>
-	<rect fill="#808080" stroke="none" stroke-opacity="1" x="449" y="10" width="3" height="21" />
-	<rect fill="#808080" stroke="none" stroke-opacity="1" x="394" y="28" width="58" height="3" />
-	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="390" y="6" width="59" height="22" />
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="420" y="22">:Window</text>
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="774" y1="46" x2="774" y2="370" />
 </g>
 <g>
 	<rect fill="#808080" stroke="none" stroke-opacity="1" x="105" y="11" width="3" height="21" />
@@ -42,160 +24,127 @@
 	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="53" y="23">Utilisateur:Front</text>
 </g>
 <g>
+	<rect fill="#808080" stroke="none" stroke-opacity="1" x="449" y="10" width="3" height="21" />
+	<rect fill="#808080" stroke="none" stroke-opacity="1" x="394" y="28" width="58" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="390" y="6" width="59" height="22" />
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="420" y="22">:Window</text>
+</g>
+<g>
+	<rect fill="#808080" stroke="none" stroke-opacity="1" x="229" y="9" width="3" height="21" />
+	<rect fill="#808080" stroke="none" stroke-opacity="1" x="180" y="27" width="52" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="176" y="5" width="53" height="22" />
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="203" y="21">:Screen</text>
+</g>
+<g>
 	<rect fill="#808080" stroke="none" stroke-opacity="1" x="666" y="8" width="3" height="21" />
 	<rect fill="#808080" stroke="none" stroke-opacity="1" x="625" y="26" width="44" height="3" />
 	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="621" y="4" width="45" height="22" />
 	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="644" y="20">:Edit</text>
 </g>
 <g>
-	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="199" y="111" width="10" height="89" />
+	<rect fill="#808080" stroke="none" stroke-opacity="1" x="798" y="9" width="3" height="21" />
+	<rect fill="#808080" stroke="none" stroke-opacity="1" x="750" y="27" width="51" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="746" y="5" width="52" height="22" />
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="772" y="21">:Button</text>
 </g>
 <g>
-	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="640" y="235" width="10" height="32" />
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="50" y="54" width="10" height="294" />
 </g>
 <g>
-	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="416" y="255" width="10" height="41" />
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="199" y="74" width="10" height="24" />
 </g>
 <g>
-	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="199" y="271" width="10" height="26" />
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="416" y="72" width="10" height="25" />
 </g>
 <g>
-	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="640" y="421" width="10" height="56" />
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="769" y="305" width="10" height="43" />
 </g>
 <g>
-	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="769" y="284" width="10" height="24" />
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="416" y="334" width="10" height="24" />
 </g>
 <g>
-	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="416" y="126" width="10" height="62" />
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="640" y="72" width="10" height="57" />
 </g>
 <g>
-	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="640" y="144" width="10" height="30" />
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="416" y="118" width="10" height="24" />
 </g>
 <g>
-	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="199" y="371" width="10" height="29" />
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="199" y="229" width="10" height="35" />
 </g>
 <g>
-	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="50" y="63" width="10" height="389" />
+	<line stroke="black" stroke-opacity="1" x1="427" y1="77" x2="640" y2="77" />
+	<polygon fill="#000000" stroke="none" points="640,77 636,73 636,81" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="61" y1="426" x2="640" y2="426" />
-	<polygon fill="#000000" stroke="none" points="640,426 636,422 636,430" />
+	<line stroke="black" stroke-opacity="1" x1="210" y1="79" x2="416" y2="79" />
+	<polygon fill="#000000" stroke="none" points="416,79 412,75 412,83" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="210" y1="276" x2="416" y2="276" />
-	<polygon fill="#000000" stroke="none" points="210,276 214,272 214,280" />
+	<line stroke="black" stroke-opacity="1" x1="427" y1="123" x2="640" y2="123" />
+	<polygon fill="#000000" stroke="none" points="427,123 431,119 431,127" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="210" y1="132" x2="416" y2="132" />
-	<polygon fill="#000000" stroke="none" points="416,132 412,128 412,136" />
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="56" y="55" width="10" height="31" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" stroke-dasharray="4,4" x1="427" y1="169" x2="640" y2="169" />
-	<path fill="none" stroke="black" stroke-opacity="1" d="M 431 165 L 427 169 L 431 173" />
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="56" y="205" width="10" height="121" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" stroke-dasharray="4,4" x1="67" y1="195" x2="199" y2="195" />
-	<path fill="none" stroke="black" stroke-opacity="1" d="M 71 191 L 67 195 L 71 199" />
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 68 206 L 85 206 L 85 213 L 68 213" />
+	<polygon fill="#000000" stroke="none" points="68,213 72,217 72,209" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="427" y1="289" x2="769" y2="289" />
-	<polygon fill="#000000" stroke="none" points="769,289 765,285 765,293" />
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 68 56 L 85 56 L 85 63 L 68 63" />
+	<polygon fill="#000000" stroke="none" points="68,63 72,67 72,59" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="427" y1="260" x2="640" y2="260" />
-	<polygon fill="#000000" stroke="none" points="427,260 431,256 431,264" />
+	<line stroke="black" stroke-opacity="1" x1="67" y1="81" x2="199" y2="81" />
+	<polygon fill="#000000" stroke="none" points="199,81 195,77 195,85" />
 </g>
 <g>
-	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="56" y="336" width="10" height="104" />
+	<line stroke="black" stroke-opacity="1" x1="67" y1="236" x2="199" y2="236" />
+	<polygon fill="#000000" stroke="none" points="199,236 195,232 195,240" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="427" y1="150" x2="640" y2="150" />
-	<polygon fill="#000000" stroke="none" points="640,150 636,146 636,154" />
+	<line stroke="black" stroke-opacity="1" x1="67" y1="310" x2="769" y2="310" />
+	<polygon fill="#000000" stroke="none" points="769,310 765,306 765,314" />
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" stroke-dasharray="4,4" x1="210" y1="183" x2="416" y2="183" />
-	<path fill="none" stroke="black" stroke-opacity="1" d="M 214 179 L 210 183 L 214 187" />
+	<line stroke="black" stroke-opacity="1" stroke-dasharray="4,4" x1="67" y1="258" x2="199" y2="258" />
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 71 254 L 67 258 L 71 262" />
 </g>
 <g>
-	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="646" y="443" width="10" height="24" />
+	<line stroke="black" stroke-opacity="1" x1="427" y1="339" x2="769" y2="339" />
+	<polygon fill="#000000" stroke="none" points="427,339 431,335 431,343" />
 </g>
 <g>
-	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="56" y="77" width="10" height="168" />
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="46" y="199">clic souris</text>
 </g>
 <g>
-	<path fill="none" stroke="black" stroke-opacity="1" d="M 658 445 L 675 445 L 675 452 L 658 452" />
-	<path fill="none" stroke="black" stroke-opacity="1" d="M 662 456 L 658 452 L 662 448" />
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="281" y="68">def_proc()</text>
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="67" y1="376" x2="199" y2="376" />
-	<polygon fill="#000000" stroke="none" points="199,376 195,372 195,380" />
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="533" y="328">notify(FOCUS_BEGIN)</text>
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" stroke-dasharray="4,4" x1="67" y1="395" x2="199" y2="395" />
-	<path fill="none" stroke="black" stroke-opacity="1" d="M 71 391 L 67 395 L 71 399" />
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="67" y="46">frappe clavier</text>
 </g>
 <g>
-	<path fill="none" stroke="black" stroke-opacity="1" d="M 68 337 L 85 337 L 85 344 L 68 344" />
-	<polygon fill="#000000" stroke="none" points="68,344 72,348 72,340" />
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="95" y="73">def_proc()</text>
 </g>
 <g>
-	<path fill="none" stroke="black" stroke-opacity="1" d="M 68 78 L 85 78 L 85 85 L 68 85" />
-	<polygon fill="#000000" stroke="none" points="68,85 72,89 72,81" />
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="112" y="247">widget</text>
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="67" y1="117" x2="199" y2="117" />
-	<polygon fill="#000000" stroke="none" points="199,117 195,113 195,121" />
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="501" y="66">def_proc()</text>
 </g>
 <g>
-	<line stroke="black" stroke-opacity="1" x1="67" y1="240" x2="640" y2="240" />
-	<polygon fill="#000000" stroke="none" points="640,240 636,236 636,244" />
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="75" y="225">widget_at_pos(x,y)</text>
 </g>
 <g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="79" y="364">widget_focused()</text>
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="386" y="299">def_proc()</text>
 </g>
 <g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="67" y="327">frappe clavier</text>
-</g>
-<g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="429" y="251">focus()</text>
-</g>
-<g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="169" y="230">notify(widget_id, CLICK_BUTTON1)</text>
-</g>
-<g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="506" y="278">blur()</text>
-</g>
-<g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="279" y="418">notify(widget_id, KEYDOWN)</text>
-</g>
-<g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="634" y="438">edit_text()</text>
-</g>
-<g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="208" y="267">focus()</text>
-</g>
-<g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="72" y="105">widget_at_pos(x, y)</text>
-</g>
-<g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="216" y="123">widget_at_pos(x-dx(), y-dy())</text>
-</g>
-<g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="447" y="142">widget_at_pos(x-dx(), y-dy())</text>
-</g>
-<g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="517" y="160">widget</text>
-</g>
-<g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="293" y="175">widget</text>
-</g>
-<g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="139" y="384">widget</text>
-</g>
-<g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="41" y="71">clic souris</text>
-</g>
-<g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="142" y="187">widget</text>
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="466" y="113">notify(TEXT_CHANGED)</text>
 </g>
 </svg>
