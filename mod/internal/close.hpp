@@ -71,7 +71,6 @@ struct close_mod : public internal_mod {
             "Close",
             regular);
 
-        this->screen.child_list.push_back(this->close_window);
         assert(this->close_window->mod == this);
 
         if (regular) {
@@ -81,8 +80,6 @@ struct close_mod : public internal_mod {
                 this->screen.rect.cx - 250 - 4,
                 this->screen.rect.cy - 120 - 4,
                 SHARE_PATH "/" REDEMPTION_LOGO24, 24);
-
-            this->screen.child_list.push_back(but);
         }
 
         this->close_window->focus(this->close_window->rect);
@@ -98,19 +95,7 @@ struct close_mod : public internal_mod {
     {
         if (!rect.isempty()) {
             this->front.begin_update();
-            const Rect & r = this->get_screen_rect();
-            this->screen.draw(r);
-
-            /* draw any child windows in the area */
-            for (size_t i = 0; i < this->nb_windows(); i++) {
-                Widget *b = this->window(i);
-                Rect r2 = rect.intersect(b->rect.wh());
-                if (!r2.isempty()) {
-                    this->front.begin_update();
-                    b->refresh(r2);
-                    this->front.end_update();
-                }
-            }
+            this->screen.draw(rect);
             this->front.end_update();
         }
     }

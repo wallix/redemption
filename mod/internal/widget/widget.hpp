@@ -117,6 +117,9 @@ struct Widget {
         , rect(rect)
         , parent(parent) 
     {
+        if (this->parent) {
+            this->parent->child_list.push_back(this);
+        }
         /* for all but bitmap */
         this->pointer = 0;
         this->bg_color = 0;
@@ -138,14 +141,19 @@ struct Widget {
     }
 
     virtual ~Widget(){
-        if (this->type != WND_TYPE_SCREEN){
-            vector<Widget*>::iterator it;
-            for (it = this->child_list.begin(); it != this->child_list.end(); it++){
-                if (*it == this){
-                    this->parent->child_list.erase(it);
+        if (this->parent){
+            vector<Widget *> & siblings = this->parent->child_list;
+            for (size_t i = 0; i < siblings.size() ; ++i){
+                if (siblings[i] == this){
+                    siblings.erase(siblings.begin()+i);
                     break;
                 }
             }
+        }
+        while (this->child_list.size() > 0){
+            this->child_list.back()->parent = NULL;
+            delete this->child_list.back();
+            this->child_list.pop_back();
         }
     }
 

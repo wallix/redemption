@@ -54,7 +54,10 @@ struct TestWidgetMod : mod_api
     }
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        result += sprintf(result, "draw(RDPOpaqueRect(), clip(%d, %d, %d, %d))\n", clip.x, clip.y, clip.cx, clip.cy);
+        result += sprintf(result, "draw(RDPOpaqueRect(%d, %d, %d, %d, %06x), clip(%d, %d, %d, %d))\n", 
+                          cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
+                          cmd.color, 
+                          clip.x, clip.y, clip.cx, clip.cy);
     }
     virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
     {
@@ -90,16 +93,18 @@ BOOST_AUTO_TEST_CASE(TestCreateScreen)
     BOOST_CHECK_EQUAL((int)WND_TYPE_SCREEN, screen->type);
     BOOST_CHECK_EQUAL(Rect(0, 0, 20, 10), screen->rect);
     const Rect rect(1, 2, 3, 4);
-    screen->invalidate(rect);
-    const char * expected = 
+    mod.begin_update();
+    screen->draw(rect);
+    mod.end_update();
+    const char * expected =
         "begin_update()\n"
-        "draw(RDPOpaqueRect(), clip(1, 2, 3, 4))\n"
+        "draw(RDPOpaqueRect(0, 0, 20, 10, 000000), clip(1, 2, 3, 4))\n"
         "end_update()\n"
         ;
         
     if (0 != strcmp(expected, mod.buffer)){
         LOG(LOG_ERR, "expected:\n%s\n", expected); 
-        LOG(LOG_ERR, "got:\n %s\n", mod.buffer); 
+        LOG(LOG_ERR, "got:\n%s\n", mod.buffer); 
         BOOST_CHECK(false);
     }
     delete screen;
@@ -108,17 +113,35 @@ BOOST_AUTO_TEST_CASE(TestCreateScreen)
 BOOST_AUTO_TEST_CASE(TestCreateScreen2)
 {
     TestWidgetMod mod;
-    Widget *screen = new widget_screen(&mod, 100, 100);
+    Widget *screen = new widget_screen(&mod, 800, 600);
     BOOST_CHECK_EQUAL((int)WND_TYPE_SCREEN, screen->type);
-    BOOST_CHECK_EQUAL(Rect(0, 0, 100, 100), screen->rect);
-    Widget *w = new window(&mod, Rect(10, 10, 10, 10), screen, RED, "window 1");
+    BOOST_CHECK_EQUAL(Rect(0, 0, 800, 600), screen->rect);
+    Widget *w = new window(&mod, Rect(10, 10, 400, 200), screen, RED, "window 1");
 
-    const Rect rect(10, 10, 50, 50);
-    screen->invalidate(rect);
+    const Rect rect(0, 0, 800, 600);
+    mod.begin_update();
+    screen->draw(rect);
+    mod.end_update();
     const char * expected = 
-        "begin_update()\n"
-        "draw(RDPOpaqueRect(), clip(10, 10, 50, 50))\n"
-        "end_update()\n"
+    "begin_update()\n"
+    // screen background around the window
+    "draw(RDPOpaqueRect(0, 0, 800, 600, 000000), clip(0, 0, 800, 10))\n"
+    "draw(RDPOpaqueRect(0, 0, 800, 600, 000000), clip(0, 10, 10, 200))\n"
+    "draw(RDPOpaqueRect(0, 0, 800, 600, 000000), clip(410, 10, 390, 200))\n"
+    "draw(RDPOpaqueRect(0, 0, 800, 600, 000000), clip(0, 210, 800, 390))\n"
+    // ------------- window 1 ----------------------
+    // RED Window (as defined above)
+    "draw(RDPOpaqueRect(10, 10, 400, 200, 0000ff), clip(10, 10, 400, 200))\n"
+    // window borders (some pixels white, grey and black)
+    "draw(RDPOpaqueRect(11, 11, 398, 1, ffffff), clip(10, 10, 400, 200))\n"
+    "draw(RDPOpaqueRect(11, 11, 1, 198, ffffff), clip(10, 10, 400, 200))\n"
+    "draw(RDPOpaqueRect(11, 208, 398, 1, 808080), clip(10, 10, 400, 200))\n"
+    "draw(RDPOpaqueRect(408, 11, 1, 200, 808080), clip(10, 10, 400, 200))\n"
+    "draw(RDPOpaqueRect(10, 209, 400, 1, 000000), clip(10, 10, 400, 200))\n"
+    "draw(RDPOpaqueRect(409, 10, 1, 200, 000000), clip(10, 10, 400, 200))\n"
+    "draw(RDPOpaqueRect(13, 13, 395, 18, 808080), clip(10, 10, 400, 200))\n"
+    "server_draw_text()\n"
+    "end_update()\n"
         ;
         
     if (0 != strcmp(expected, mod.buffer)){
@@ -128,16 +151,4 @@ BOOST_AUTO_TEST_CASE(TestCreateScreen2)
     }
     delete screen;
 }
-
-//BOOST_AUTO_TEST_CASE(TestCreateWidgetScreen)
-//{
-////    cout << "Test Creating Screen object";
-//    TODO(" passing in a null front is not a good idea  define a test front")
-//    Widget *screen = new Widget((internal_mod*)0, 20, 10, NULL, WND_TYPE_SCREEN);
-//    BOOST_CHECK_EQUAL(20, screen->rect.cx);
-//    BOOST_CHECK_EQUAL(10, screen->rect.cy);
-//    BOOST_CHECK_EQUAL((int)WND_TYPE_SCREEN, screen->type);
-//    delete screen;
-//}
-
 

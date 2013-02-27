@@ -42,21 +42,19 @@ struct widget_screen : public Widget {
 
         for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
             const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
-
-            this->mod->draw(RDPOpaqueRect(scr_r, this->bg_color), region_clip);
+            if (!region_clip.isempty()){
+                this->mod->draw(RDPOpaqueRect(scr_r, this->bg_color), region_clip);
+            }
         }
-    }
-    
-    virtual void invalidate(const Rect & rect)
-    {
-        if (!rect.isempty()) {
-            this->mod->begin_update();
-            this->draw(rect);
-            this->mod->end_update();
-        }
-    }
 
-    
+        for (size_t i = 0; i < this->child_list.size(); i++) {
+            Widget *b = this->child_list[i];
+            Rect r2 = rect.intersect(b->rect.wh());
+            if (!r2.isempty()) {
+                b->refresh(r2);
+            }
+        }
+    }  
 };
 
 #endif
