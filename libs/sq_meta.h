@@ -37,9 +37,9 @@ extern "C" {
         RT * tracker;
         char name[1024];
         char buffer[2048];
-        char * begin;
-        char * end;
-        char * eol;
+        int begin;
+        int end;
+        int eol;
         int rlstatus;
     };
 
@@ -54,21 +54,21 @@ extern "C" {
     // return error codes as negative number
     static inline bool sq_m_SQMeta_readline(SQMeta * self)
     {
-        for (char * p = self->begin; p < self->end; p++){
-            if (*p == '\n'){
-                self->eol = p+1;
+        for (int i = self->begin; i < self->end; i++){
+            if (self->buffer[i] == '\n'){
+                self->eol = i+1;
                 return 1;
             }
         }
-        size_t trailing_space = self->buffer + sizeof(self->buffer) - self->end;
+        size_t trailing_space = sizeof(self->buffer) - self->end;
         // reframe buffer if no trailing space left
         if (trailing_space == 0){
             size_t used_len = self->end - self->begin;
-            memmove(self->buffer, self->begin, used_len);
-            self->end = self->buffer + used_len;
-            self->begin = self->buffer;
+            memmove(self->buffer, &(self->buffer[self->begin]), used_len);
+            self->end = used_len;
+            self->begin = 0;
         }
-        ssize_t res = rt_recv(self->tracker, self->end, self->buffer + sizeof(self->buffer) - self->end);
+        ssize_t res = rt_recv(self->tracker, &(self->buffer[self->end]), sizeof(self->buffer) - self->end);
         if (res < 0){
             return -res;
         }
@@ -76,9 +76,9 @@ extern "C" {
         if (self->begin == self->end) {
             return -RT_ERROR_EOF;
         }
-        for (char * p = self->begin; p < self->end; p++){
-            if (*p == '\n'){
-                self->eol = p+1;
+        for (int i = self->begin; i < self->end; i++){
+            if (self->buffer[i] == '\n'){
+                self->eol = i+1;
                 return 1;
             }
         }
@@ -106,7 +106,7 @@ extern "C" {
             return status;
         }
         self->tracker = rt;
-        self->begin = self->eol = self->end = self->buffer;
+        self->begin = self->eol = self->end = 0;
         self->rlstatus = sq_m_SQMeta_readline(self);
         if (self->rlstatus < 0){
             return (RT_ERROR)-self->rlstatus;
@@ -126,7 +126,7 @@ extern "C" {
         if (name_size >= size) {
             name_size = size - 1;
         }
-        memcpy(buffer, self->begin, name_size);
+        memcpy(buffer, &(self->buffer[self->begin]), name_size);
         buffer[name_size] = 0;
         return name_size;
     }
@@ -168,6 +168,9 @@ extern "C" {
     RT_ERROR sq_m_SQMeta_next(SQMeta * self)
     {
         sq_m_SQMeta_destructor(self);
+        if (self->rlstatus < 0){
+            return (RT_ERROR)-self->rlstatus;
+        }
         self->begin = self->eol;
         self->rlstatus = sq_m_SQMeta_readline(self);
         return RT_ERROR_OK;
