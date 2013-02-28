@@ -27,8 +27,8 @@
 class Window : public WidgetComposite
 {
 public:
-    Window(ModApi * drawable, int width, int height, Widget * parent, int type = Widget::TYPE_WND)
-    : WidgetComposite(drawable, width, height, parent, type)
+    Window(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier)
+    : WidgetComposite(drawable, rect, parent, Widget::TYPE_WND, notifier)
     {}
 
 protected:
@@ -36,16 +36,14 @@ protected:
     {
         bool res = true;
         old_focus->has_focus = false;
-        old_focus->notify_self(old_focus, FOCUS_END);
-        old_focus->redraw(old_focus->rect.wh());
+        old_focus->notify_self(NOTIFY_FOCUS_END);
         new_focus->has_focus = true;
-        new_focus->notify_self(new_focus, FOCUS_BEGIN);
-        new_focus->redraw(new_focus->rect.wh());
+        new_focus->notify_self(NOTIFY_FOCUS_BEGIN);
         return res;
     }
 
 public:
-    virtual void def_proc(EventType event, int param, Keymap2* keymap)
+    virtual void send_event(EventType event, int param, int param2, Keymap2* keymap)
     {
         if (event == KEYDOWN) {
             size_t idx = this->direct_idx_focused();
@@ -71,33 +69,32 @@ public:
                         }
                         break;
                     default:
-                        w->def_proc(event, param, keymap);
+                        w->send_event(event, param, param2, keymap);
                         break;
                 }
             }
         } else {
-            this->WidgetComposite::def_proc(event, param, keymap);
+            this->WidgetComposite::send_event(event, param, param2, keymap);
         }
     }
 
-    virtual void notify(Widget* w, EventType event)
+    virtual void notify(int id, EventType event)
     {
         if (event == FOCUS_BEGIN){
             for (std::size_t i = 0; i < this->child_list.size(); ++i)
             {
                 Widget * wchild = this->child_list[i];
-                if (wchild->has_focus && wchild != w){
+                if (wchild->has_focus && wchild->id != id){
                     wchild->has_focus = false;
-                    wchild->notify_self(wchild, FOCUS_END);
-                    wchild->redraw(wchild->rect.wh());
+                    wchild->notify_self(NOTIFY_FOCUS_END);
                 }
             }
             if (false == this->has_focus){
                 this->has_focus = true;
-                this->notify_parent(this, FOCUS_BEGIN);
+                this->notify_parent(FOCUS_BEGIN);
             }
         } else {
-            this->Widget::notify(w, event);
+            this->Widget::notify(id, event);
         }
     }
 };

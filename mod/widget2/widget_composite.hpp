@@ -29,12 +29,35 @@ class WidgetComposite : public Widget
 public:
     std::vector<Widget*> child_list;
 
-public:
-    WidgetComposite(ModApi * drawable, int width, int height, Widget * parent, int type)
-    : Widget(drawable, width, height, parent, type)
+    WidgetComposite(ModApi * drawable, const Rect& rect, Widget * parent, int type, NotifyApi * notifier)
+    : Widget(drawable, rect, parent, type, notifier)
     , child_list()
     {}
 
+    ~WidgetComposite()
+    {
+        for (size_t i = 0; i < this->child_list.size(); ++i) {
+            this->child_list[i]->parent = 0;
+        }
+    }
+
+protected:
+    virtual void attach_widget(Widget * widget)
+    {
+        this->child_list.push_back(widget);
+    }
+
+    virtual void detach_widget(Widget * widget)
+    {
+        for (size_t i = 0; i < this->child_list.size(); ++i) {
+            if (this->child_list[i] == widget){
+                this->child_list[i] = this->child_list[this->child_list.size() - 1];
+                this->child_list.resize(this->child_list.size() - 1);
+            }
+        }
+    }
+
+public:
     virtual Widget * widget_at_pos(int x, int y)
     {
         if (!this->rect.contains_pt(x, y))
@@ -61,40 +84,36 @@ public:
         return ret;
     }
 
-    virtual void def_proc(EventType event, int param, Keymap2* keymap)
+    virtual void send_event(EventType event, int param, int param2, Keymap2 * keymap)
     {
-        for (std::size_t i = 0; i < this->child_list.size(); ++i)
-        {
-            if (this->child_list[i]->has_focus)
-                this->child_list[i]->def_proc(event, param, keymap);
+        if (event == WM_DRAW){
+            this->refresh(this->rect);
+        } else {
+            for (std::size_t i = 0; i < this->child_list.size(); ++i) {
+                if (this->child_list[i]->has_focus)
+                    this->child_list[i]->send_event(event, param, param2, keymap);
+            }
         }
     }
 
-    virtual void notify(Widget* w, EventType event)
+    virtual void notify(int id, EventType event)
     {
         if (event == FOCUS_BEGIN && this->has_focus == true){
-            this->notify_self(w, event);
+            this->notify_self(event);
         } else {
-            this->Widget::notify(w, event);
+            this->Widget::notify(id, event);
         }
     }
 
-    virtual void redraw(const Rect & clip)
+    virtual void draw(const Rect & clip)
     {
-        this->draw(clip);
-        this->notify(this, WM_DRAW);
-
+        this->drawable->draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
         size_t count = this->child_list.size();
         for (size_t i = 0; i < count; i++) {
             Widget * b = this->child_list[i];
-            b->redraw(b->rect.wh());
+            b->refresh(clip.intersect(Rect(b->rect.x+clip.x, b->rect.cy+clip.y,
+                                           b->rect.cx, b->rect.cy)));
         }
-    }
-
-    void addWidget(Widget* w) ///TODO
-    {
-        this->child_list.push_back(w);
-        w->parent = this;
     }
 
 protected:

@@ -26,8 +26,8 @@
 class WidgetScreen : public WidgetComposite
 {
 public:
-    WidgetScreen(ModApi * drawable, int width, int height)
-    : WidgetComposite(drawable, width, height, 0, Widget::TYPE_SCREEN)
+    WidgetScreen(ModApi * drawable, uint16_t width, uint16_t height, NotifyApi * notifier)
+    : WidgetComposite(drawable, Rect(0, 0, width, height), 0, Widget::TYPE_SCREEN, notifier)
     {}
 };
 

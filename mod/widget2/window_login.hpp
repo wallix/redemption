@@ -18,34 +18,26 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_EDIT_HPP_)
-#define REDEMPTION_MOD_WIDGET2_EDIT_HPP_
+#if !defined(REDEMPTION_MOD_WIDGET2_WINDOW_LOGIN_HPP_)
+#define REDEMPTION_MOD_WIDGET2_WINDOW_LOGIN_HPP_
 
-#include "widget.hpp"
+#include "window.hpp"
 
-class WidgetEdit : public Widget
+class WindowLogin : public Window
 {
 public:
-    WidgetEdit(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier)
-    : Widget(drawable, rect, parent, Widget::TYPE_EDIT, notifier)
+    enum {
+        NOTIFY_FOCUS_BEGIN = ::NOTIFY_FOCUS_BEGIN,
+        NOTIFY_FOCUS_END = ::NOTIFY_FOCUS_END,
+        NOTIFY_SUBMIT = ::NOTIFY_SUBMIT,
+        NOTIFY_CANCEL = ::NOTIFY_CANCEL,
+        NOTIFY_USERNAME_EDIT = 100,
+        NOTIFY_PASSWORD_EDIT,
+    };
+
+    WindowLogin(ModApi* drawable, const Rect& rect, Widget* parent, NotifyApi* notifier)
+    : Window(drawable, rect, parent, notifier)
     {}
-
-    virtual void draw(const Rect & rect)
-    {
-        int w,h;
-        this->drawable->text_metrics("", w,h);
-        this->drawable->server_draw_text(rect.x, rect.y, "", 0, 0, rect);
-    }
-
-    virtual void send_event(EventType event, int param, int param2, Keymap2 * keymap)
-    {
-        if (event == KEYDOWN)
-        {
-            this->notify_self(NOTIFY_TEXT_CHANGED);
-            //this->notify_parent(this, WM_DRAW);
-            this->refresh(Rect(0,0,10,10));
-        }
-    }
 };
 
 #endif

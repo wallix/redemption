@@ -25,9 +25,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 // #define LOGNULL
-#include <iostream>
 #include <string>
-#include <map>
 #include <sstream>
 #include <widget2/window.hpp>
 #include <widget2/screen.hpp>
@@ -35,121 +33,200 @@
 
 struct TestNotify : NotifyApi
 {
-    std::map<Widget*, const char *>& dico;
     std::ostringstream oss;
 
-    TestNotify(std::map<Widget*, const char *>& dico_ref)
-    : dico(dico_ref)
-    {}
-
-    virtual void notify(Widget * sender, Widget * receiver, EventType event)
+    virtual void notify(Widget * sender, NotifyApi::notify_event_t event)
     {
         BOOST_ASSERT(sender != 0);
-        BOOST_ASSERT(receiver != 0);
-        BOOST_ASSERT(this->dico.find(sender) != this->dico.end());
-        BOOST_ASSERT(this->dico.find(receiver) != this->dico.end());
         oss << "event: " << event
-        << "\n\tsender (" << this->dico[sender] << ") -- "
-        << "id: " << sender->id
-        << ", type: " << sender->type
-        << "\n\treceiver (" << this->dico[receiver] << ") -- "
-        << "id: " << receiver->id
-        << ", type: " << receiver->type << std::endl;
+        << " -- id: " << sender->id
+        << ", type: " << sender->type << std::endl;
     }
 };
 
+struct TestDraw : ModApi
+{
+    std::string s;
+
+    virtual void begin_update()
+    {
+        s += "begin_update\n";
+    }
+
+
+    virtual void draw(const RDPOpaqueRect& cmd, const Rect& clip)
+    {
+        s += "draw(RDPOpaqueRect)\n";
+    }
+
+
+    virtual void draw(const RDPScrBlt& cmd, const Rect& clip)
+    {
+        s += "draw(RDPScrBlt)\n";
+    }
+
+
+    virtual void draw(const RDPDestBlt& cmd, const Rect& clip)
+    {
+        s += "draw(RDPDestBlt)\n";
+    }
+
+
+    virtual void draw(const RDPPatBlt& cmd, const Rect& clip)
+    {
+        s += "draw(RDPPatBlt)\n";
+    }
+
+
+    virtual void draw(const RDPLineTo& cmd, const Rect& clip)
+    {
+        s += "draw(RDPLineTo)\n";
+    }
+
+
+    virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip)
+    {
+        s += "draw(RDPGlyphIndex)\n";
+    }
+
+
+    virtual void draw(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bmp)
+    {
+        s += "draw(RDPMemBlt)\n";
+    }
+
+
+    virtual void end_update()
+    {
+        s += "end_update\n";
+    }
+
+
+    virtual void server_draw_text(uint16_t x, uint16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
+    {
+        s += "server_draw_text\n";
+    }
+
+
+    virtual void text_metrics(const char* text, int& width, int& height)
+    {
+        s += "text_metrics\n";
+    }
+
+
+};
+
+struct TestWidget
+{
+    WidgetScreen screen;
+    Window win;
+    Widget w1;
+    WidgetEdit w2;
+    Widget w3;
+
+    TestWidget(TestDraw * drawable=0, TestNotify * notify=0)
+    : screen(drawable, 1000, 1000, notify)
+    , win(drawable, Rect(30,30, 800, 600), &screen, notify)
+    , w1(drawable, Rect(10, 40, 10, 10), &win, Widget::TYPE_BUTTON, notify)
+    , w2(drawable, Rect(50, 40, 10, 10), &win, notify)
+    , w3(drawable, Rect(100, 400, 10, 10), &win, Widget::TYPE_BUTTON, notify)
+    {
+        win.has_focus = true;
+        w2.has_focus = true;
+        w1.id = 1;
+        w2.id = 2;
+        w3.id = 3;
+    }
+};
+
+
+BOOST_AUTO_TEST_CASE(TraceWidgetAtPos)
+{
+    TestWidget w;
+    BOOST_CHECK(&w.w1 == w.w1.widget_at_pos(15,45));
+    BOOST_CHECK(0 == w.screen.widget_at_pos(5, 20));
+    BOOST_CHECK(&w.w1 == w.screen.widget_at_pos(45, 70));
+    BOOST_CHECK(&w.w2 == w.screen.widget_at_pos(89, 70));
+    BOOST_CHECK(&w.w3 == w.screen.widget_at_pos(133, 437));
+}
+
 BOOST_AUTO_TEST_CASE(TraceWidgetFocus)
 {
-    WidgetScreen screen(0, 1000, 1000);
-    Window win(0, 800, 600, 0);
-    screen.addWidget(&win);
-    win.set_position(30,30);
-    win.has_focus = true;
-    Widget w1(0, 10, 10, 0, Widget::TYPE_BUTTON); w1.id = 1;
-    WidgetEdit w2(0, 10, 10, 0); w2.id = 2;
-    Widget w3(0, 10, 10, 0, Widget::TYPE_BUTTON); w3.id = 3;
-    win.addWidget(&w1);
-    win.addWidget(&w2);
-    win.addWidget(&w3);
-    w1.set_position(10, 40);
-    w2.set_position(50, 40);
-    w3.set_position(100, 400);
-    BOOST_CHECK(&w1 == w1.widget_at_pos(15,45));
-    BOOST_CHECK(0 == screen.widget_at_pos(5, 20));
-    BOOST_CHECK(&w1 == screen.widget_at_pos(45, 70));
-    BOOST_CHECK(&w2 == screen.widget_at_pos(89, 70));
-    BOOST_CHECK(&w3 == screen.widget_at_pos(133, 437));
+    TestNotify notify;
+    TestWidget w(0, &notify);
 
-
-    std::map<Widget*, const char *> dico_widget_name;
-    TestNotify notify(dico_widget_name);
+    BOOST_CHECK(!w.w1.has_focus && w.w2.has_focus && !w.w3.has_focus);
     {
-        typedef std::pair<Widget*, const char *> pair_t;
-        pair_t widgets[] = {
-            pair_t(&screen, "screen"),
-            pair_t(&win, "win"),
-            pair_t(&w1, "w1"),
-            pair_t(&w2, "w2"),
-            pair_t(&w3, "w3"),
-        };
-        for (size_t i = 0; i < sizeof(widgets)/sizeof(widgets[0]); ++i){
-            dico_widget_name.insert(widgets[i]);
-            widgets[i].first->add_notify(FOCUS_BEGIN, &notify);
-            widgets[i].first->add_notify(FOCUS_END, &notify);
-            widgets[i].first->add_notify(TEXT_CHANGED, &notify);
-        }
+        Widget* wevent = w.screen.widget_at_pos(133, 437);
+        wevent->has_focus = true;
+        wevent->notify(wevent->id, FOCUS_BEGIN);
     }
-
-    w2.has_focus = true;
-    BOOST_CHECK(!w1.has_focus && w2.has_focus && !w3.has_focus);
+    BOOST_CHECK(!w.w1.has_focus && !w.w2.has_focus && w.w3.has_focus);
     {
-        Widget* wevent = screen.widget_at_pos(133, 437);
-        wevent->focus();
+        Widget* wevent = w.screen.widget_at_pos(45, 70);
+        wevent->has_focus = true;
+        wevent->notify(wevent->id, FOCUS_BEGIN);
     }
-    BOOST_CHECK(!w1.has_focus && !w2.has_focus && w3.has_focus);
+    BOOST_CHECK(w.w1.has_focus && !w.w2.has_focus && !w.w3.has_focus);
     {
-        Widget* wevent = screen.widget_at_pos(45, 70);
-        wevent->focus();
+        Widget* wevent = w.screen.widget_at_pos(89, 70);
+        wevent->has_focus = true;
+        wevent->notify(wevent->id, FOCUS_BEGIN);
     }
-    BOOST_CHECK(w1.has_focus && !w2.has_focus && !w3.has_focus);
-    {
-        Widget* wevent = screen.widget_at_pos(89, 70);
-        wevent->focus();
-    }
-    BOOST_CHECK(!w1.has_focus && w2.has_focus && !w3.has_focus);
+    BOOST_CHECK(!w.w1.has_focus && w.w2.has_focus && !w.w3.has_focus);
 
     BOOST_CHECK(notify.oss.str() ==
-        "event: 0\n"
-        "\tsender (w3) -- id: 3, type: 3\n"
-        "\treceiver (w3) -- id: 3, type: 3\n"
-        "event: 1\n"
-        "\tsender (w2) -- id: 2, type: 5\n"
-        "\treceiver (w2) -- id: 2, type: 5\n"
-        "event: 0\n"
-        "\tsender (w1) -- id: 1, type: 3\n"
-        "\treceiver (w1) -- id: 1, type: 3\n"
-        "event: 1\n"
-        "\tsender (w3) -- id: 3, type: 3\n"
-        "\treceiver (w3) -- id: 3, type: 3\n"
-        "event: 0\n"
-        "\tsender (w2) -- id: 2, type: 5\n"
-        "\treceiver (w2) -- id: 2, type: 5\n"
-        "event: 1\n"
-        "\tsender (w1) -- id: 1, type: 3\n"
-        "\treceiver (w1) -- id: 1, type: 3\n");
+        "event: 0 -- id: 3, type: 3\n" //FOCUS_END
+        "event: 1 -- id: 2, type: 5\n" //FOCUS_BEGIN
+        "event: 0 -- id: 1, type: 3\n" //FOCUS_END
+        "event: 1 -- id: 3, type: 3\n" //FOCUS_BEGIN
+        "event: 0 -- id: 2, type: 5\n" //FOCUS_END
+        "event: 1 -- id: 1, type: 3\n" //FOCUS_BEGIN
+    );
+}
+#include <iostream>
+BOOST_AUTO_TEST_CASE(TraceWidgetDraw)
+{
+    TestDraw drawable;
+    TestWidget w(&drawable);
 
-    notify.oss.str("");
+    w.screen.send_event(WM_DRAW, 0, 0, 0);
+
+    BOOST_CHECK(drawable.s ==
+        "begin_update\n"
+        "draw(RDPOpaqueRect)\n"
+        "begin_update\n"
+        "draw(RDPOpaqueRect)\n"
+        "begin_update\n"
+        "draw(RDPOpaqueRect)\n"
+        "end_update\n"
+        "begin_update\n"
+        "text_metrics\n"
+        "server_draw_text\n"
+        "end_update\n"
+        "begin_update\n"
+        "draw(RDPOpaqueRect)\n"
+        "end_update\n"
+        "end_update\n"
+        "end_update\n"
+    );
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
+{
+    TestNotify notify;
+    TestDraw drawable;
+    TestWidget w(&drawable, &notify);
 
     Keymap2 keymap;
-    screen.def_proc(KEYDOWN, 0, &keymap);
+    w.screen.send_event(KEYDOWN, 0, 0, &keymap);
     BOOST_CHECK(notify.oss.str() ==
-        "event: 11\n"
-        "\tsender (w2) -- id: 2, type: 5\n"
-        "\treceiver (w2) -- id: 2, type: 5\n"
-        "event: 11\n"
-        "\tsender (w2) -- id: 2, type: 5\n"
-        "\treceiver (win) -- id: 0, type: 1\n"
-        "event: 11\n"
-        "\tsender (w2) -- id: 2, type: 5\n"
-        "\treceiver (screen) -- id: 0, type: 0\n");
+    "event: 11 -- id: 2, type: 5\n");
+
+    BOOST_CHECK(drawable.s ==
+    "begin_update\n"
+    "text_metrics\n"
+    "server_draw_text\n"
+    "end_update\n"
+    );
 }
