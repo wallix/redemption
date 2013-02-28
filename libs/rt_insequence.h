@@ -62,9 +62,7 @@ extern "C" {
     inline ssize_t rt_m_RTInsequence_recv(RTInsequence * self, void * data, size_t len)
     {
         if (!self->status){ 
-            if (self->err == RT_ERROR_EOF){
-                return 0;
-            }
+            if (self->err == RT_ERROR_EOF){ return 0; }
             return -self->err; 
         }
 

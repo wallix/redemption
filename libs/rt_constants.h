@@ -51,6 +51,7 @@ extern "C" {
         RT_ERROR_CLOSED,
         RT_ERROR_CREAT,
         RT_ERROR_OPEN,
+        RT_ERROR_FILENAME_TOO_LONG,
         RT_ERROR_NOT_IMPLEMENTED,
         RT_ERROR_STRING_PREFIX_TOO_LONG,
         RT_ERROR_STRING_EXTENSION_TOO_LONG,
@@ -92,6 +93,8 @@ extern "C" {
 
     SQ * sq_new_outfilename(RT_ERROR * error, RT * tracker, SQ_FORMAT format, const char * prefix, const char * extension);
     SQ * sq_new_intracker(RT_ERROR * error, RT * tracker);
+    SQ * sq_new_meta(RT_ERROR * error, const char * prefix, const char * extension);
+
 }
 
 #endif

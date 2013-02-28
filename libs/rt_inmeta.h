@@ -28,7 +28,7 @@
 
 struct RTInmeta {
     struct SQ * seq;
-    struct RT * in;
+    struct RT * insequence;
 };
 
 extern "C" {
@@ -38,13 +38,27 @@ extern "C" {
     */
     inline RT_ERROR rt_m_RTInmeta_constructor(RTInmeta * self, const char * prefix, const char * extension)
     {
-        return RT_ERROR_MALLOC;
+        RT_ERROR status = RT_ERROR_OK;
+        SQ * sequence = sq_new_meta(&status, prefix, extension);
+        if (status != RT_ERROR_OK){
+            return status;
+        }
+        RT * rt = rt_new_insequence(&status, sequence);
+        if (status != RT_ERROR_OK){
+            sq_delete(sequence);
+            return status;
+        }
+        self->seq = sequence;
+        self->insequence = rt;
+        return RT_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
     inline RT_ERROR rt_m_RTInmeta_destructor(RTInmeta * self)
     {
+        rt_delete(self->insequence);
+        sq_delete(self->seq);
         return RT_ERROR_OK;
     }
 
@@ -57,7 +71,7 @@ extern "C" {
     */
     inline ssize_t rt_m_RTInmeta_recv(RTInmeta * self, void * data, size_t len)
     {
-         return -RT_ERROR_SEND_ONLY;
+         return rt_recv(self->insequence, data, len);
     }
 
     /* This method send len bytes of data from buffer to current transport

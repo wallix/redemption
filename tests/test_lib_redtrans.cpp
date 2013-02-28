@@ -509,7 +509,7 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
         sq_delete(sequence);
     }
 
-// Thourth simplest sequence is "intracker" sequence
+// 4th simplest sequence is "intracker" sequence
 // - Behavior is identical to infilename sequence except the input pattern is
 // a Transport that contains the list of the input files.
 // - sq_get_trans() open an infile if necessary using the name it got from tracker
@@ -546,7 +546,6 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
         sq_delete(sequence);
     }
 
-
     const char * file[] = {
         "TESTOFS-000000.txt",
         "TESTOFS-000001.txt"
@@ -559,6 +558,36 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
     }
 }
 
+
+// 5th simplest sequence is "meta" sequence
+// - Behavior is identical to intacker sequence except the input pattern is the name of the tracker file
+// - sq_get_trans() open an infile if necessary using the name it got from tracker
+//   and return it on subsequent calls until it is closed (reach EOF)
+// - sq_next() close the current outfile and step to the next filename wich will 
+//    be used by the next sq_get_trans to create an outfile transport.
+
+BOOST_AUTO_TEST_CASE(TestSequenceMeta)
+{
+    RT_ERROR status = RT_ERROR_OK;
+    SQ * sequence = sq_new_meta(&status, "./tests/fixtures/TESTOFS", "mwrm");
+
+    status = RT_ERROR_OK;
+    RT * rt = rt_new_insequence(&status, sequence);
+
+    char buffer[1024] = {};
+    BOOST_CHECK_EQUAL(10, rt_recv(rt, buffer, 10));
+    BOOST_CHECK_EQUAL(0, buffer[10]);
+    if (0 != memcmp(buffer, "AAAAXBBBBX", 10)){
+        LOG(LOG_ERR, "expected \"AAAAXBBBBX\" got \"%s\"\n", buffer);
+    }
+    BOOST_CHECK_EQUAL(5, rt_recv(rt, buffer + 10, 1024));
+    BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
+    BOOST_CHECK_EQUAL(0, buffer[15]);
+    BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer + 15, 1024));
+    rt_close(rt);
+    rt_delete(rt);
+    sq_delete(sequence);
+}
 
 // Outmeta is a transport that manage file opening and chunking by itself
 // We provide a base filename and it creates an outfilename sequence based on it
@@ -573,6 +602,14 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
 
 BOOST_AUTO_TEST_CASE(TestOutMeta)
 {
+    // cleanup of possible previous test files
+    {
+        const char * file[] = {"TESTOFS.mwrm", "TESTOFS-000000.wrm", "TESTOFS-000001.wrm"};
+        for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
+            ::unlink(file[i]);
+        }
+    }
+
     RT_ERROR status = RT_ERROR_OK;
     SQ * seq  = NULL;
     RT * rt = rt_new_outmeta(&status, &seq, "TESTOFS", "mwrm");
@@ -599,6 +636,14 @@ BOOST_AUTO_TEST_CASE(TestOutMeta)
 
 BOOST_AUTO_TEST_CASE(TestInmeta)
 {
+    // cleanup of possible previous test files
+    {
+        const char * file[] = {"TESTOFS.mwrm", "TESTOFS-000000.wrm", "TESTOFS-000001.wrm"};
+        for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
+            ::unlink(file[i]);
+        }
+    }
+
     {
         RT_ERROR status = RT_ERROR_OK;
         SQ * seq  = NULL;
@@ -615,16 +660,15 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
     {
         RT_ERROR status = RT_ERROR_OK;
         RT * rt = rt_new_inmeta(&status, "TESTOFS", "mwrm");
+        BOOST_CHECK( rt != NULL);
 
-        if (rt){
-            char buffer[1024] = {};
-            BOOST_CHECK_EQUAL(15, rt_recv(rt, buffer,  15));
-            if (0 != memcmp(buffer, "AAAAXBBBBXCCCCX", 15)){
-                BOOST_CHECK_EQUAL(0, buffer[15]); // this one should not have changed
-                buffer[15] = 0;
-                LOG(LOG_ERR, "expected \"AAAAXBBBBXCCCCX\" got \"%s\"", buffer);
-                BOOST_CHECK(false);
-            }
+        char buffer[1024] = {};
+        BOOST_CHECK_EQUAL(15, rt_recv(rt, buffer,  15));
+        if (0 != memcmp(buffer, "AAAAXBBBBXCCCCX", 15)){
+            BOOST_CHECK_EQUAL(0, buffer[15]); // this one should not have changed
+            buffer[15] = 0;
+            LOG(LOG_ERR, "expected \"AAAAXBBBBXCCCCX\" got \"%s\"", buffer);
+            BOOST_CHECK(false);
         }
     }    
     

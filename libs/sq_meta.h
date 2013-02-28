@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_LIBS_SQ_INTRACKER_H_
-#define _REDEMPTION_LIBS_SQ_INTRACKER_H_
+#ifndef _REDEMPTION_LIBS_SQ_META_H_
+#define _REDEMPTION_LIBS_SQ_META_H_
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -32,7 +32,7 @@
 
 
 extern "C" {
-    struct SQIntracker {
+    struct SQMeta {
         RT * trans;
         RT * tracker;
         char name[1024];
@@ -52,7 +52,7 @@ extern "C" {
     // return 1 if \n found
     // (in other words : returns number of trailing eol characters at end of line)
     // return error codes as negative number
-    static inline bool sq_m_SQIntracker_readline(SQIntracker * self)
+    static inline bool sq_m_SQMeta_readline(SQMeta * self)
     {
         for (char * p = self->begin; p < self->end; p++){
             if (*p == '\n'){
@@ -87,12 +87,27 @@ extern "C" {
     }
 
 
-    RT_ERROR sq_m_SQIntracker_constructor(SQIntracker * self, RT * tracker)
+    RT_ERROR sq_m_SQMeta_constructor(SQMeta * self, const char * prefix, const char * extension)
     {
         self->trans = NULL;
-        self->tracker = tracker;
+        TODO("Manage all actual open error with more details")
+        char tmpname[1024];
+        if ((size_t)snprintf(tmpname, sizeof(tmpname), "%s.%s", prefix, extension) >= sizeof(tmpname)){
+            return RT_ERROR_FILENAME_TOO_LONG;
+        }
+        int fd = ::open(tmpname, O_RDONLY);
+        if (fd < 0){
+            return RT_ERROR_OPEN;
+        }
+        RT_ERROR status = RT_ERROR_OK;
+        RT * rt = rt_new_infile(&status, fd);
+        if (status != RT_ERROR_OK){
+            close(fd);
+            return status;
+        }
+        self->tracker = rt;
         self->begin = self->eol = self->end = self->buffer;
-        self->rlstatus = sq_m_SQIntracker_readline(self);
+        self->rlstatus = sq_m_SQMeta_readline(self);
         if (self->rlstatus < 0){
             return (RT_ERROR)-self->rlstatus;
         }
@@ -102,20 +117,25 @@ extern "C" {
     // internal utility method, used to get name of files used for target transports
     // it is called internally, but actual goal is to enable tests to check and remove the created files afterward.
     // not a part of external sequence API
-    size_t sq_im_SQIntracker_get_name(SQIntracker * self, char * buffer, size_t size)
+    size_t sq_im_SQMeta_get_name(SQMeta * self, char * buffer, size_t size)
     {
+        printf("get_name\n");
         size_t name_size = (unsigned)(self->eol - self->begin - self->rlstatus);
-        if (self->begin == self->end) { return 0; }
+        if (self->begin == self->end) {
+            printf("name 0\n");
+            return 0; 
+        }
         if (name_size >= size) {
             name_size = size - 1;
         }
         memcpy(buffer, self->begin, name_size);
         buffer[name_size] = 0;
+        printf("name_size=%u\n", name_size);
         return name_size;
     }
 
 
-    RT_ERROR sq_m_SQIntracker_destructor(SQIntracker * self)
+    RT_ERROR sq_m_SQMeta_destructor(SQMeta * self)
     {
         if (self->trans){
             rt_delete(self->trans);
@@ -124,7 +144,7 @@ extern "C" {
         return RT_ERROR_OK;
     }
 
-    RT * sq_m_SQIntracker_get_trans(SQIntracker * self, RT_ERROR * status)
+    RT * sq_m_SQMeta_get_trans(SQMeta * self, RT_ERROR * status)
     {
         if (status && (*status != RT_ERROR_OK)) { return NULL; }
         if (!self->trans){
@@ -133,12 +153,13 @@ extern "C" {
                 return NULL; // self->trans is NULL
             }
             char tmpname[1024];
-            if (sq_im_SQIntracker_get_name(self, tmpname, sizeof(tmpname)) <= 0){
+            if (sq_im_SQMeta_get_name(self, tmpname, sizeof(tmpname)) <= 0){
                 if (status) { *status = RT_ERROR_EOF; }
                 return self->trans; // self->trans is NULL                
             }
             int fd = ::open(tmpname, O_RDONLY, S_IRUSR|S_IRUSR);
             if (fd < 0){
+                LOG(LOG_ERR, "SQMeta error: %s\n", strerror(errno));
                 if (status) { *status = RT_ERROR_OPEN; }
                 return self->trans; // self->trans is NULL
             }
@@ -147,11 +168,11 @@ extern "C" {
         return self->trans;
     }
 
-    RT_ERROR sq_m_SQIntracker_next(SQIntracker * self)
+    RT_ERROR sq_m_SQMeta_next(SQMeta * self)
     {
-        sq_m_SQIntracker_destructor(self);
+        sq_m_SQMeta_destructor(self);
         self->begin = self->eol;
-        self->rlstatus = sq_m_SQIntracker_readline(self);
+        self->rlstatus = sq_m_SQMeta_readline(self);
         return RT_ERROR_OK;
     }
 };

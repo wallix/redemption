@@ -36,6 +36,7 @@
 #include "sq_outfilename.h"
 #include "sq_infilename.h"
 #include "sq_intracker.h"
+#include "sq_meta.h"
 
 #include "rt_generator.h"
 #include "rt_check.h"
@@ -71,6 +72,7 @@ typedef enum {
     SQ_TYPE_OUTFILENAME,
     SQ_TYPE_INFILENAME,
     SQ_TYPE_INTRACKER,
+    SQ_TYPE_META,
 } SQ_TYPE;
 
 
@@ -82,6 +84,7 @@ struct SQ {
       struct SQOutfilename outfilename;
       struct SQInfilename infilename;
       struct SQIntracker intracker;
+      struct SQMeta meta;
     } u;
 };
 
@@ -169,6 +172,26 @@ SQ * sq_new_intracker(RT_ERROR * error, RT * tracker)
     return res;
 }
 
+SQ * sq_new_meta(RT_ERROR * error, const char * prefix, const char * extension)
+{
+    SQ * res = (SQ*)malloc(sizeof(SQ));
+    if (res == 0){ 
+        if (error){ *error = RT_ERROR_MALLOC; }
+        return NULL;
+    }
+    res->sq_type = SQ_TYPE_META;
+    res->err = sq_m_SQMeta_constructor(&(res->u.meta), prefix, extension);
+    if (*error) {*error = res->err; }
+    switch (res->err){
+    default:
+        free(res);
+        return NULL;
+    case RT_ERROR_OK:
+        break;
+    }
+    return res;
+}
+
 RT_ERROR sq_next(SQ * seq)
 {
     RT_ERROR res = RT_ERROR_OK;
@@ -184,6 +207,9 @@ RT_ERROR sq_next(SQ * seq)
         break;
     case SQ_TYPE_INTRACKER:
         res = sq_m_SQIntracker_next(&(seq->u.intracker));
+        break;
+    case SQ_TYPE_META:
+        res = sq_m_SQMeta_next(&(seq->u.meta));
         break;
     default:
         res = RT_ERROR_TYPE_MISMATCH;
@@ -208,6 +234,9 @@ RT * sq_get_trans(SQ * seq, RT_ERROR * error)
     case SQ_TYPE_INTRACKER:
         trans = sq_m_SQIntracker_get_trans(&(seq->u.intracker), &status);
         break;
+    case SQ_TYPE_META:
+        trans = sq_m_SQMeta_get_trans(&(seq->u.meta), &status);
+        break;
     default:
         status = RT_ERROR_TYPE_MISMATCH;
     }
@@ -230,6 +259,9 @@ RT_ERROR sq_delete(SQ * sq)
         break;
         case SQ_TYPE_INTRACKER:
             status = sq_m_SQIntracker_destructor(&(sq->u.intracker));
+        break;
+        case SQ_TYPE_META:
+            status = sq_m_SQMeta_destructor(&(sq->u.meta));
         break;
         default:
             ;
@@ -440,7 +472,7 @@ RT * rt_new_inmeta(RT_ERROR * error, const char * prefix, const char * extension
         if (error){ *error = RT_ERROR_MALLOC; }
         return NULL;
     }
-    res->rt_type = RT_TYPE_OUTMETA;
+    res->rt_type = RT_TYPE_INMETA;
     res->err = rt_m_RTInmeta_constructor(&(res->u.inmeta), prefix, extension);
     switch (res->err){
     default:
