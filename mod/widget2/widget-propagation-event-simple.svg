@@ -121,7 +121,7 @@
 	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="46" y="199">clic souris</text>
 </g>
 <g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="281" y="68">def_proc()</text>
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="281" y="68">send_event()</text>
 </g>
 <g>
 	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="533" y="328">notify(FOCUS_BEGIN)</text>
@@ -130,19 +130,19 @@
 	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="67" y="46">frappe clavier</text>
 </g>
 <g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="95" y="73">def_proc()</text>
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="95" y="73">send_event()</text>
 </g>
 <g>
 	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="112" y="247">widget</text>
 </g>
 <g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="501" y="66">def_proc()</text>
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="501" y="66">send_event()</text>
 </g>
 <g>
 	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="75" y="225">widget_at_pos(x,y)</text>
 </g>
 <g>
-	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="386" y="299">def_proc()</text>
+	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="386" y="299">send_event()</text>
 </g>
 <g>
 	<text font-family="Sans Serif" font-size="9" fill="#000000" xml:space="preserve" x="466" y="113">notify(TEXT_CHANGED)</text>

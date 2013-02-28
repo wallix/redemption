@@ -26,8 +26,8 @@
 class WidgetEdit : public Widget
 {
 public:
-    WidgetEdit(ModApi* drawable, int width, int height, Widget* parent)
-    : Widget(drawable, width, height, parent, Widget::TYPE_EDIT)
+    WidgetEdit(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier)
+    : Widget(drawable, rect, parent, Widget::TYPE_EDIT, notifier)
     {}
 
     virtual void draw(const Rect & rect)
@@ -35,12 +35,11 @@ public:
         (void)rect;
     }
 
-    virtual void def_proc(EventType event, int param, Keymap2* keymap)
+    virtual void send_event(EventType event, int param, int param2, Keymap2 * keymap)
     {
-        std::cout << "event: " << event << std::endl;
         if (event == KEYDOWN)
         {
-            this->notify(this, TEXT_CHANGED);
+            this->notify_self(TEXT_CHANGED);
         }
     }
 };

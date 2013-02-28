@@ -41,7 +41,7 @@ class Widget;
 class NotifyApi
 {
 public:
-    virtual void notify(Widget * sender, Widget * receiver, EventType event) = 0;
+    virtual void notify(Widget * sender, EventType event) = 0;
 };
 
 #endif

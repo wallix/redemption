@@ -27,8 +27,8 @@
 class Window : public WidgetComposite
 {
 public:
-    Window(ModApi * drawable, int width, int height, Widget * parent, int type = Widget::TYPE_WND)
-    : WidgetComposite(drawable, width, height, parent, type)
+    Window(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier)
+    : WidgetComposite(drawable, rect, parent, Widget::TYPE_WND, notifier)
     {}
 
 protected:
@@ -36,16 +36,16 @@ protected:
     {
         bool res = true;
         old_focus->has_focus = false;
-        old_focus->notify_self(old_focus, FOCUS_END);
+        this->notify_to(old_focus, FOCUS_END);
         old_focus->redraw(old_focus->rect.wh());
         new_focus->has_focus = true;
-        new_focus->notify_self(new_focus, FOCUS_BEGIN);
+        this->notify_to(new_focus, FOCUS_END);
         new_focus->redraw(new_focus->rect.wh());
         return res;
     }
 
 public:
-    virtual void def_proc(EventType event, int param, Keymap2* keymap)
+    virtual void send_event(EventType event, int param, int param2, Keymap2* keymap)
     {
         if (event == KEYDOWN) {
             size_t idx = this->direct_idx_focused();
@@ -71,12 +71,12 @@ public:
                         }
                         break;
                     default:
-                        w->def_proc(event, param, keymap);
+                        w->send_event(event, param, param2, keymap);
                         break;
                 }
             }
         } else {
-            this->WidgetComposite::def_proc(event, param, keymap);
+            this->WidgetComposite::send_event(event, param, param2, keymap);
         }
     }
 
@@ -88,7 +88,7 @@ public:
                 Widget * wchild = this->child_list[i];
                 if (wchild->has_focus && wchild != w){
                     wchild->has_focus = false;
-                    wchild->notify_self(wchild, FOCUS_END);
+                    this->notify_to(wchild, FOCUS_END);
                     wchild->redraw(wchild->rect.wh());
                 }
             }
