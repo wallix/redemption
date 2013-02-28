@@ -44,11 +44,29 @@
 #include "rt_outfile.h"
 #include "rt_infile.h"
 #include "rt_socket.h"
+#include "rt_socket_TLS.h"
 #include "rt_outsequence.h"
 #include "rt_insequence.h"
 #include "rt_outmeta.h"
 #include "rt_inmeta.h"
 #include "rt_XXX.h"
+
+TODO("finish backport of existing TLS Client Transport")
+TODO("finish coding of in/ou meta classes (to add the 3 initial lines and timestamps after filename + possible keywords ?)")
+TODO("metadata files could be used to store non filename lines (meta lines could start with some reserved characters like ; ou #)")
+TODO("replace Transport classes with calls to new methods")
+TODO("convert PNG transport to new format")
+TODO("write prototype python API for exposed methods")
+TODO("check and enhance test coverage for lib")
+TODO("check possible memory leaks (using valgrind on tests)")
+TODO("add filter class sample")
+TODO("write filter classes to compress or encrypt/decrypt data on the fly")
+TODO("C equivalent of LOG function (? PLAIN_C_LOG => PCLOG)")
+TODO("rename classes and methods using RIO prefix instead of RT (Redemption IO - RedemptIOn)")
+TODO("Modify Jamroot to create C library from sources")
+TODO("Add versioning information for rio library (or use redemption version ?)")
+TODO("write lib modification and tagging procedure")
+TODO("create debian packager .deb (use git-builder as base sample) to build rio.deb package from github source")
 
 typedef enum {
     RT_TYPE_GENERATOR,
@@ -57,6 +75,7 @@ typedef enum {
     RT_TYPE_OUTFILE,
     RT_TYPE_INFILE,
     RT_TYPE_SOCKET,
+    RT_TYPE_SOCKET_TLS,
     RT_TYPE_OUTSEQUENCE,
     RT_TYPE_INSEQUENCE,
     RT_TYPE_OUTMETA,
@@ -278,6 +297,7 @@ struct RT {
       struct RTOutfile outfile;
       struct RTInfile infile;
       struct RTSocket socket;
+      struct RTSocketTLS socket_tls;
       struct RTOutsequence outsequence;
       struct RTInsequence insequence;
       struct RTOutmeta outmeta;
@@ -404,6 +424,25 @@ RT * rt_new_socket(RT_ERROR * error, int sck)
     return res;
 }
 
+RT * rt_new_socket_tls(RT_ERROR * error, int sck)
+{
+    RT * res = (RT*)malloc(sizeof(RT));
+    if (res == 0){ 
+        if (error){ *error = RT_ERROR_MALLOC; }
+        return NULL;
+    }
+    res->rt_type = RT_TYPE_SOCKET_TLS;
+    res->err = rt_m_RTSocketTLS_constructor(&(res->u.socket_tls), sck);
+    switch (res->err){
+    default:
+        free(res);
+        return NULL;
+    case RT_ERROR_OK:
+        break;
+    }
+    return res;
+}
+
 RT * rt_new_outsequence(RT_ERROR * error, SQ * seq)
 {
     RT * res = (RT*)malloc(sizeof(RT));
@@ -503,6 +542,9 @@ RT_ERROR rt_delete(RT * rt)
         case RT_TYPE_SOCKET:
             status = rt_m_RTSocket_destructor(&(rt->u.socket));
         break;
+        case RT_TYPE_SOCKET_TLS:
+            status = rt_m_RTSocketTLS_destructor(&(rt->u.socket_tls));
+        break;
         case RT_TYPE_OUTSEQUENCE:
             status = rt_m_RTOutsequence_destructor(&(rt->u.outsequence));
         break;
@@ -556,6 +598,11 @@ ssize_t rt_recv(RT * rt, void * data, size_t len)
     }
     case RT_TYPE_SOCKET:{
         ssize_t res = rt_m_RTSocket_recv(&(rt->u.socket), data, len);
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
+        return res;
+    }
+    case RT_TYPE_SOCKET_TLS:{
+        ssize_t res = rt_m_RTSocketTLS_recv(&(rt->u.socket_tls), data, len);
         if (res < 0){ rt->err = (RT_ERROR)-res; }
         return res;
     }
@@ -619,6 +666,11 @@ ssize_t rt_send(RT * rt, const void * data, size_t len)
         if (res < 0){ rt->err = (RT_ERROR)-res; }
         return res;
     }
+    case RT_TYPE_SOCKET_TLS: {
+        ssize_t res = rt_m_RTSocketTLS_send(&(rt->u.socket_tls), data, len);
+        if (res < 0){ rt->err = (RT_ERROR)-res; }
+        return res;
+    }
     case RT_TYPE_OUTSEQUENCE: {
         ssize_t res = rt_m_RTOutsequence_send(&(rt->u.outsequence), data, len);
         if (res < 0){ rt->err = (RT_ERROR)-res; }
@@ -664,6 +716,9 @@ void rt_close(RT * rt)
         break;
         case RT_TYPE_SOCKET:
             rt_m_RTSocket_close(&(rt->u.socket));
+        break;
+        case RT_TYPE_SOCKET_TLS:
+            rt_m_RTSocketTLS_close(&(rt->u.socket_tls));
         break;
         case RT_TYPE_OUTMETA:
 //            rt_m_RTOutmeta_close(&(rt->u.outmeta));
