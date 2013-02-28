@@ -119,10 +119,8 @@ extern "C" {
     // not a part of external sequence API
     size_t sq_im_SQMeta_get_name(SQMeta * self, char * buffer, size_t size)
     {
-        printf("get_name\n");
         size_t name_size = (unsigned)(self->eol - self->begin - self->rlstatus);
         if (self->begin == self->end) {
-            printf("name 0\n");
             return 0; 
         }
         if (name_size >= size) {
@@ -130,7 +128,6 @@ extern "C" {
         }
         memcpy(buffer, self->begin, name_size);
         buffer[name_size] = 0;
-        printf("name_size=%u\n", name_size);
         return name_size;
     }
 

@@ -48,10 +48,6 @@
 #include "rt_insequence.h"
 #include "rt_outmeta.h"
 #include "rt_inmeta.h"
-#include "rt_inbyfilenamesequence.h"
-#include "rt_outbyfilenamesequence.h"
-#include "rt_outbyfilenamesequencewithmeta.h"
-#include "rt_inbymetasequence.h"
 #include "rt_XXX.h"
 
 typedef enum {
@@ -62,9 +58,9 @@ typedef enum {
     RT_TYPE_INFILE,
     RT_TYPE_SOCKET,
     RT_TYPE_OUTSEQUENCE,
+    RT_TYPE_INSEQUENCE,
     RT_TYPE_OUTMETA,
     RT_TYPE_INMETA,
-    RT_TYPE_INSEQUENCE,
 } RT_TYPE;
 
 typedef enum {
