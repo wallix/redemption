@@ -27,7 +27,35 @@
 #include "notify_api.hpp"
 #include <rect.hpp>
 
+
+#include <iostream>
+
 class Keymap2;
+
+enum EventType {
+    FOCUS_BEGIN,
+    FOCUS_END,
+    KEYDOWN,
+    KEYUP,
+    CLIC_BUTTON1_UP,
+    CLIC_BUTTON1_DOWN,
+    CLIC_BUTTON2_UP,
+    CLIC_BUTTON2_DOWN,
+    CLIC_BUTTON3_UP,
+    CLIC_BUTTON3_DOWN,
+    WM_DRAW,
+    TEXT_CHANGED,
+    BUTTON_PRESSED,
+};
+
+enum NotifyEventType {
+    NOTIFY_FOCUS_BEGIN,
+    NOTIFY_FOCUS_END,
+    NOTIFY_TEXT_CHANGED = TEXT_CHANGED,
+    NOTIFY_BUTTON_PRESSED = BUTTON_PRESSED,
+    NOTIFY_SUBMIT,
+    NOTIFY_CANCEL,
+};
 
 class Widget
 {
@@ -49,6 +77,7 @@ public:
     Rect rect;
     int type;
     int id;
+    int bg_color;
     bool has_focus;
 
 public:
@@ -59,6 +88,7 @@ public:
     , rect(rect)
     , type(type)
     , id(0)
+    , bg_color(0)
     , has_focus(false)
     {
         if (this->parent)
@@ -79,46 +109,44 @@ protected:
     {}
 
 public:
-    virtual void draw(const Rect& rect)
+    virtual void draw(const Rect& clip)
     {
-        (void)rect;
+        this->drawable->draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
     }
 
-    virtual void redraw(const Rect & rect)
+    void refresh(const Rect & rect)
     {
         if (!rect.isempty() && this->drawable){
             this->drawable->begin_update();
             this->draw(rect);
-            this->drawable->begin_update();
+            this->drawable->end_update();
         }
     }
 
     virtual void send_event(EventType event, int param, int param2, Keymap2 * keymap)
-    {}
+    {
+        if (event == WM_DRAW){
+            this->refresh(this->rect);
+        }
+    }
 
-protected:
-    void notify_self(EventType event)
+    void notify_self(NotifyApi::notify_event_t event)
     {
         if (this->notifier)
             this->notifier->notify(this, event);
     }
 
-    void notify_parent(Widget * w, EventType event)
+    void notify_parent(EventType event)
     {
         if (this->parent)
-            this->parent->notify(w, event);
+            this->parent->notify(this->id, event);
     }
 
-    static void notify_to(Widget * w, EventType type)
+    virtual void notify(int id, EventType event)
     {
-        w->notify_self(type);
-    }
-
-public:
-    virtual void notify(Widget * w, EventType event)
-    {
+        (void)id;
         this->notify_self(event);
-        this->notify_parent(w, event);
+        this->notify_parent(event);
     }
 
     virtual Widget * widget_at_pos(int x, int y)

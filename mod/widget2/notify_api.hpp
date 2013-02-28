@@ -21,27 +21,14 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_NOTIFYAPI_HPP_)
 #define REDEMPTION_MOD_WIDGET2_NOTIFYAPI_HPP_
 
-enum EventType {
-    FOCUS_BEGIN,
-    FOCUS_END,
-    KEYDOWN,
-    KEYUP,
-    CLIC_BUTTON1_UP,
-    CLIC_BUTTON1_DOWN,
-    CLIC_BUTTON2_UP,
-    CLIC_BUTTON2_DOWN,
-    CLIC_BUTTON3_UP,
-    CLIC_BUTTON3_DOWN,
-    WM_DRAW,
-    TEXT_CHANGED
-};
-
 class Widget;
 
 class NotifyApi
 {
 public:
-    virtual void notify(Widget * sender, EventType event) = 0;
+    typedef int notify_event_t;
+
+    virtual void notify(Widget * sender, notify_event_t event) = 0;
 };
 
 #endif

@@ -36,11 +36,9 @@ protected:
     {
         bool res = true;
         old_focus->has_focus = false;
-        this->notify_to(old_focus, FOCUS_END);
-        old_focus->redraw(old_focus->rect.wh());
+        old_focus->notify_self(NOTIFY_FOCUS_END);
         new_focus->has_focus = true;
-        this->notify_to(new_focus, FOCUS_END);
-        new_focus->redraw(new_focus->rect.wh());
+        new_focus->notify_self(NOTIFY_FOCUS_BEGIN);
         return res;
     }
 
@@ -80,24 +78,23 @@ public:
         }
     }
 
-    virtual void notify(Widget* w, EventType event)
+    virtual void notify(int id, EventType event)
     {
         if (event == FOCUS_BEGIN){
             for (std::size_t i = 0; i < this->child_list.size(); ++i)
             {
                 Widget * wchild = this->child_list[i];
-                if (wchild->has_focus && wchild != w){
+                if (wchild->has_focus && wchild->id != id){
                     wchild->has_focus = false;
-                    this->notify_to(wchild, FOCUS_END);
-                    wchild->redraw(wchild->rect.wh());
+                    wchild->notify_self(NOTIFY_FOCUS_END);
                 }
             }
             if (false == this->has_focus){
                 this->has_focus = true;
-                this->notify_parent(this, FOCUS_BEGIN);
+                this->notify_parent(FOCUS_BEGIN);
             }
         } else {
-            this->Widget::notify(w, event);
+            this->Widget::notify(id, event);
         }
     }
 };
