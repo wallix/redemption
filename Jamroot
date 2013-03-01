@@ -106,6 +106,14 @@ lib png : : <name>png <link>static ;
 
 lib icuuc : : <name>icuuc ;
 
+# Build rio library
+# bjam rio
+# Build rio library : force build, verbose
+# bjam -a -d2 rio 
+# See library content (entry points) using
+# nm -C --defined-only -g bin/*/*/librio.so
+lib rio : libs/rio.cpp : ;
+
 obj mainloop : core/mainloop.cpp ;
 obj d3des : utils/d3des.cpp ;
 

@@ -87,7 +87,7 @@ extern "C" {
     }
 
 
-    RIO_ERROR sq_m_SQIntracker_constructor(SQIntracker * self, RIO * tracker)
+    static inline RIO_ERROR sq_m_SQIntracker_constructor(SQIntracker * self, RIO * tracker)
     {
         self->trans = NULL;
         self->tracker = tracker;
@@ -102,7 +102,7 @@ extern "C" {
     // internal utility method, used to get name of files used for target transports
     // it is called internally, but actual goal is to enable tests to check and remove the created files afterward.
     // not a part of external sequence API
-    size_t sq_im_SQIntracker_get_name(SQIntracker * self, char * buffer, size_t size)
+    static inline size_t sq_im_SQIntracker_get_name(SQIntracker * self, char * buffer, size_t size)
     {
         size_t name_size = (unsigned)(self->eol - self->begin - self->rlstatus);
         if (self->begin == self->end) { return 0; }
@@ -115,7 +115,7 @@ extern "C" {
     }
 
 
-    RIO_ERROR sq_m_SQIntracker_destructor(SQIntracker * self)
+    static inline RIO_ERROR sq_m_SQIntracker_destructor(SQIntracker * self)
     {
         if (self->trans){
             rio_delete(self->trans);
@@ -124,7 +124,7 @@ extern "C" {
         return RIO_ERROR_OK;
     }
 
-    RIO * sq_m_SQIntracker_get_trans(SQIntracker * self, RIO_ERROR * status)
+    static inline RIO * sq_m_SQIntracker_get_trans(SQIntracker * self, RIO_ERROR * status)
     {
         if (status && (*status != RIO_ERROR_OK)) { return NULL; }
         if (!self->trans){
@@ -147,7 +147,7 @@ extern "C" {
         return self->trans;
     }
 
-    RIO_ERROR sq_m_SQIntracker_next(SQIntracker * self)
+    static inline RIO_ERROR sq_m_SQIntracker_next(SQIntracker * self)
     {
         sq_m_SQIntracker_destructor(self);
         self->begin = self->eol;

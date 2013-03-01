@@ -39,7 +39,7 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RIO_ERROR rio_m_RIOCheck_constructor(RIOCheck * self, const void * data, size_t len)
+    static inline RIO_ERROR rio_m_RIOCheck_constructor(RIOCheck * self, const void * data, size_t len)
     {
         self->data = (uint8_t *)malloc(len);
         if (!self->data) { return RIO_ERROR_MALLOC; }
@@ -53,7 +53,7 @@ extern "C" {
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RIO_ERROR rio_m_RIOCheck_destructor(RIOCheck * self)
+    static inline RIO_ERROR rio_m_RIOCheck_destructor(RIOCheck * self)
     {
         free(self->data);
         return RIO_ERROR_OK;
@@ -61,7 +61,7 @@ extern "C" {
 
     /* This method close ressource without calling destructor
     */
-    void rio_m_RIOCheck_close(RIOCheck * self)
+    static inline void rio_m_RIOCheck_close(RIOCheck * self)
     {
     }
 
@@ -72,7 +72,7 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rio_m_RIOCheck_recv(RIOCheck * self, void * data, size_t len)
+    static inline ssize_t rio_m_RIOCheck_recv(RIOCheck * self, void * data, size_t len)
     {
          self->status = false;
          self->err = RIO_ERROR_SEND_ONLY;
@@ -86,7 +86,7 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rio_m_RIOCheck_send(RIOCheck * self, const void * data, size_t len)
+    static inline ssize_t rio_m_RIOCheck_send(RIOCheck * self, const void * data, size_t len)
     {
         if (!(self->status)) {
             return -self->err;

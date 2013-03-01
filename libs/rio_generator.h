@@ -38,7 +38,7 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RIO_ERROR rio_m_RIOGenerator_constructor(RIOGenerator * self, const void * data, size_t len)
+    static inline RIO_ERROR rio_m_RIOGenerator_constructor(RIOGenerator * self, const void * data, size_t len)
     {
         self->data = (uint8_t *)malloc(len);
         if (!self->data) { return RIO_ERROR_MALLOC; }
@@ -52,13 +52,13 @@ extern "C" {
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RIO_ERROR rio_m_RIOGenerator_destructor(RIOGenerator * self)
+    static inline RIO_ERROR rio_m_RIOGenerator_destructor(RIOGenerator * self)
     {
         free(self->data);
         return RIO_ERROR_OK;
     }
 
-    void rio_m_RIOGenerator_close(RIOGenerator * self)
+    static inline void rio_m_RIOGenerator_close(RIOGenerator * self)
     {
     }
 
@@ -69,7 +69,7 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rio_m_RIOGenerator_recv(RIOGenerator * self, void * data, size_t len)
+    static inline ssize_t rio_m_RIOGenerator_recv(RIOGenerator * self, void * data, size_t len)
     {
         if (!self->status){ 
             if (self->err == RIO_ERROR_EOF){
@@ -97,7 +97,7 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rio_m_RIOGenerator_send(RIOGenerator * self, const void * data, size_t len)
+    static inline ssize_t rio_m_RIOGenerator_send(RIOGenerator * self, const void * data, size_t len)
     {
          self->status = false;
          self->err = RIO_ERROR_RECV_ONLY;

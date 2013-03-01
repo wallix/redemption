@@ -40,7 +40,7 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RIO_ERROR rio_m_RIOSocketTLS_constructor(RIOSocketTLS * self, int sck)
+    static inline RIO_ERROR rio_m_RIOSocketTLS_constructor(RIOSocketTLS * self, int sck)
     {
         self->tls = false;
         self->ssl = NULL;
@@ -50,17 +50,17 @@ extern "C" {
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RIO_ERROR rio_m_RIOSocketTLS_destructor(RIOSocketTLS * self)
+    static inline RIO_ERROR rio_m_RIOSocketTLS_destructor(RIOSocketTLS * self)
     {
         return RIO_ERROR_OK;
     }
 
-    inline void rio_m_RIOSocketTLS_close(RIOSocketTLS * self)
+    static inline void rio_m_RIOSocketTLS_close(RIOSocketTLS * self)
     {
     }
 
 
-    size_t rio_m_RIOSocketTLS_recv_tls(RIOSocketTLS * self, void * data, size_t len)
+    static inline size_t rio_m_RIOSocketTLS_recv_tls(RIOSocketTLS * self, void * data, size_t len)
     {
         char * pbuffer = (char*)data;
         size_t remaining_len = len;
@@ -122,7 +122,7 @@ extern "C" {
        has been changed but an error is returned anyway
        and an error returned on subsequent call.
     */
-    inline ssize_t rio_m_RIOSocketTLS_recv(RIOSocketTLS * self, void * data, size_t len)
+    static inline ssize_t rio_m_RIOSocketTLS_recv(RIOSocketTLS * self, void * data, size_t len)
     {
         if (self->tls) {
             return rio_m_RIOSocketTLS_recv_tls(self, data, len);
@@ -155,7 +155,7 @@ extern "C" {
         return len;
     }
 
-    ssize_t rio_m_RIOSocketTLS_send_tls(RIOSocketTLS * self, const void * data, size_t len)
+    static inline ssize_t rio_m_RIOSocketTLS_send_tls(RIOSocketTLS * self, const void * data, size_t len)
     {
         const char * const buffer = (const char * const)data;
         size_t remaining_len = len;
@@ -203,7 +203,7 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rio_m_RIOSocketTLS_send(RIOSocketTLS * self, const void * data, size_t len)
+    static inline ssize_t rio_m_RIOSocketTLS_send(RIOSocketTLS * self, const void * data, size_t len)
     {
         if (self->tls){
             return rio_m_RIOSocketTLS_send_tls(self, data, len);
@@ -231,7 +231,7 @@ extern "C" {
         return len;
     }
 
-    RIO_ERROR rio_m_RIOSocketTLS_enableTLS(RIOSocketTLS * self)
+    static inline RIO_ERROR rio_m_RIOSocketTLS_enableTLS(RIOSocketTLS * self)
     {
         LOG(LOG_INFO, "RIO *::enable_tls()");
         SSL_load_error_strings();

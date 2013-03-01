@@ -38,7 +38,7 @@ extern "C" {
     };
 
 
-    RIO_ERROR sq_m_SQMeta_constructor(SQMeta * self, const char * prefix, const char * extension)
+    static inline RIO_ERROR sq_m_SQMeta_constructor(SQMeta * self, const char * prefix, const char * extension)
     {
         TODO("Manage all actual open error with more details")
         char tmpname[1024];
@@ -63,19 +63,19 @@ extern "C" {
         return status;
     }
 
-    RIO_ERROR sq_m_SQMeta_destructor(SQMeta * self)
+    static inline RIO_ERROR sq_m_SQMeta_destructor(SQMeta * self)
     {
         sq_m_SQIntracker_destructor(&self->impl);
         rio_delete(self->tracker);
         return RIO_ERROR_OK;
     }
 
-    RIO * sq_m_SQMeta_get_trans(SQMeta * self, RIO_ERROR * status)
+    static inline RIO * sq_m_SQMeta_get_trans(SQMeta * self, RIO_ERROR * status)
     {
         return sq_m_SQIntracker_get_trans(&self->impl, status);
     }
 
-    RIO_ERROR sq_m_SQMeta_next(SQMeta * self)
+    static inline RIO_ERROR sq_m_SQMeta_next(SQMeta * self)
     {
         return sq_m_SQIntracker_next(&self->impl);
     }

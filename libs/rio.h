@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_LIBS_REDTRANS_H_
 #define _REDEMPTION_LIBS_REDTRANS_H_
 
+#include "log.hpp"
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdint.h>
@@ -31,6 +33,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <string.h>
 
 #include "sq_one.h"
 #include "sq_outfilename.h"
@@ -51,21 +54,23 @@
 #include "rio_inmeta.h"
 #include "rio_XXX.h"
 
-TODO("rename classes and methods using RIO prefix instead of RIO *(Redemption IO - RedemptIOn)")
+TODO("C equivalent of LOG function (? PLAIN_C_LOG => PCLOG) : looks not necessary we can compile using C++ compiler we just have to provide C linkage entry points")
 TODO("finish coding of in/ou meta classes (to add the 3 initial lines and timestamps after filename + possible keywords ?)")
+TODO("add filter class sample")
+TODO("Add versioning information for rio library (or use redemption version ?)")
 TODO("replace Transport classes with calls to new methods")
 TODO("convert PNG transport to new format")
 TODO("write prototype python API for exposed methods")
 TODO("check and enhance test coverage for lib")
 TODO("check possible memory leaks (using valgrind on tests)")
-TODO("add filter class sample")
+TODO("check possible closes missing (especially when exiting on errors)")
+TODO("check possible problems related to error management")
+TODO("complete error lists with exhaustive possible system errors (and keep ERROR_ANY if we forget some)")
 TODO("write filter classes to compress or encrypt/decrypt data on the fly")
-TODO("C equivalent of LOG function (? PLAIN_C_LOG => PCLOG)")
-TODO("Modify Jamroot to create C library from sources")
-TODO("Add versioning information for rio library (or use redemption version ?)")
 TODO("write lib modification and tagging procedure")
 TODO("create debian packager .deb (use git-builder as base sample) to build rio.deb package from github source")
-TODO("metadata files could be used to store non filename lines (meta lines could start with some reserved characters like ; ou #)")
+TODO("extension: metadata files could be used to store non filename lines (meta lines could start with some reserved characters like ; ou #)"
+     "This would be handy for large metadata that may not fit on one line")
 
 typedef enum {
     RIO_TYPE_GENERATOR,

@@ -41,7 +41,7 @@ extern "C" {
         unsigned count;
     };
 
-    RIO_ERROR sq_m_SQInfilename_constructor(SQInfilename * self, SQ_FORMAT format, const char * prefix, const char * extension)
+    static inline RIO_ERROR sq_m_SQInfilename_constructor(SQInfilename * self, SQ_FORMAT format, const char * prefix, const char * extension)
     {
         self->trans = NULL;
         self->count = 0;
@@ -61,7 +61,7 @@ extern "C" {
     // internal utility method, used to get name of files used for target transports
     // it is called internally, but actual goal is to enable tests to check and remove the created files afterward.
     // not a part of external sequence API
-    size_t sq_im_SQInfilename_get_name(SQInfilename * self, char * buffer, size_t size)
+    static inline size_t sq_im_SQInfilename_get_name(SQInfilename * self, char * buffer, size_t size)
     {
         size_t res = 0;
         switch (self->format){
@@ -80,7 +80,7 @@ extern "C" {
     }
 
 
-    RIO_ERROR sq_m_SQInfilename_destructor(SQInfilename * self)
+    static inline RIO_ERROR sq_m_SQInfilename_destructor(SQInfilename * self)
     {
         if (self->trans){
             rio_delete(self->trans);
@@ -89,7 +89,7 @@ extern "C" {
         return RIO_ERROR_OK;
     }
 
-    RIO * sq_m_SQInfilename_get_trans(SQInfilename * self, RIO_ERROR * status)
+    static inline RIO * sq_m_SQInfilename_get_trans(SQInfilename * self, RIO_ERROR * status)
     {
         if (status && (*status != RIO_ERROR_OK)) { return self->trans; }
         if (!self->trans){
@@ -105,7 +105,7 @@ extern "C" {
         return self->trans;
     }
 
-    RIO_ERROR sq_m_SQInfilename_next(SQInfilename * self)
+    static inline RIO_ERROR sq_m_SQInfilename_next(SQInfilename * self)
     {
         sq_m_SQInfilename_destructor(self);
         self->count += 1;

@@ -31,23 +31,23 @@ extern "C" {
         RIO * trans;
     };
 
-    RIO_ERROR sq_m_SQOne_constructor(SQOne * self, RIO * trans)
+    inline RIO_ERROR sq_m_SQOne_constructor(SQOne * self, RIO * trans)
     {
         self->trans = trans;
         return RIO_ERROR_OK;
     }
 
-    RIO_ERROR sq_m_SQOne_destructor(SQOne * self)
+    inline RIO_ERROR sq_m_SQOne_destructor(SQOne * self)
     {
         return RIO_ERROR_OK;
     }
 
-    RIO * sq_m_SQOne_get_trans(SQOne * self, RIO_ERROR * status)
+    inline RIO * sq_m_SQOne_get_trans(SQOne * self, RIO_ERROR * status)
     {
         return self->trans;
     }
 
-    RIO_ERROR sq_m_SQOne_next(SQOne * self)
+    inline RIO_ERROR sq_m_SQOne_next(SQOne * self)
     {
         return RIO_ERROR_OK;
     }
