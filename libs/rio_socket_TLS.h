@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -21,15 +21,15 @@
 
 */
 
-#ifndef _REDEMPTION_LIBS_RT_SOCKET_TLS_H_
-#define _REDEMPTION_LIBS_RT_SOCKET_TLS_H_
+#ifndef _REDEMPTION_LIBS_RIO_SOCKET_TLS_H_
+#define _REDEMPTION_LIBS_RIO_SOCKET_TLS_H_
 
 #include "rio_constants.h"
 #include "netutils.hpp"
 #include </usr/include/openssl/ssl.h>
 #include </usr/include/openssl/err.h>
 
-struct RTSocketTLS {
+struct RIOSocketTLS {
     bool tls;
     SSL * ssl;
     int sck;
@@ -40,33 +40,34 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_RTSocketTLS_constructor(RTSocketTLS * self, int sck)
+    inline RIO_ERROR rio_m_RIOSocketTLS_constructor(RIOSocketTLS * self, int sck)
     {
         self->tls = false;
         self->ssl = NULL;
         self->sck = sck;
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_RTSocketTLS_destructor(RTSocketTLS * self)
+    inline RIO_ERROR rio_m_RIOSocketTLS_destructor(RIOSocketTLS * self)
     {
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
-    inline void rt_m_RTSocketTLS_close(RTSocketTLS * self)
+    inline void rio_m_RIOSocketTLS_close(RIOSocketTLS * self)
     {
     }
 
 
-    size_t rt_m_RTSocketTLS_recv_tls(RTSocketTLS * self, void * data, size_t len)
+    size_t rio_m_RIOSocketTLS_recv_tls(RIOSocketTLS * self, void * data, size_t len)
     {
         char * pbuffer = (char*)data;
         size_t remaining_len = len;
         while (remaining_len > 0) {
             ssize_t rcvd = ::SSL_read(self->ssl, pbuffer, remaining_len);
-            switch (SSL_get_error(self->ssl, rcvd)) {
+            unsigned long error = SSL_get_error(self->ssl, rcvd);
+            switch (error) {
                 case SSL_ERROR_NONE:
                     pbuffer += rcvd;
                     remaining_len -= rcvd;
@@ -96,17 +97,15 @@ extern "C" {
                     return remaining_len - len;
                 default:
                 {
-                    unsigned long error = 0;
                     uint32_t errcount = 0;
+                    errcount++;
+                    LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
                     while ((error = ERR_get_error()) != 0){
                         errcount++;
                         LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
                     }
-                    if (!errcount && rcvd == -1){
-                        LOG(LOG_INFO, "%s [%u]", strerror(errno), errno);
-                    }
                     TODO("Manage actual errors, check possible values")
-                    return (RT_ERROR)-RT_ERROR_ANY;
+                    return (RIO_ERROR)-RIO_ERROR_ANY;
                 }
                 break;
             }
@@ -123,10 +122,10 @@ extern "C" {
        has been changed but an error is returned anyway
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTSocketTLS_recv(RTSocketTLS * self, void * data, size_t len)
+    inline ssize_t rio_m_RIOSocketTLS_recv(RIOSocketTLS * self, void * data, size_t len)
     {
         if (self->tls) {
-            return rt_m_RTSocketTLS_recv_tls(self, data, len);
+            return rio_m_RIOSocketTLS_recv_tls(self, data, len);
         }
         char * pbuffer = (char*)data;
         size_t remaining_len = len;
@@ -144,9 +143,9 @@ extern "C" {
                         continue;
                     }
                     TODO("replace this with actual error management, EOF is not even an option for sockets")
-                    return -RT_ERROR_EOF;
+                    return -RIO_ERROR_EOF;
                 case 0: /* no data received, socket closed */
-                    return -RT_ERROR_EOF;
+                    return -RIO_ERROR_EOF;
                 default: /* some data received */
                     pbuffer += res;
                     remaining_len -= res;
@@ -156,7 +155,7 @@ extern "C" {
         return len;
     }
 
-    ssize_t rt_m_RTSocketTLS_send_tls(RTSocketTLS * self, const void * data, size_t len)
+    ssize_t rio_m_RIOSocketTLS_send_tls(RIOSocketTLS * self, const void * data, size_t len)
     {
         const char * const buffer = (const char * const)data;
         size_t remaining_len = len;
@@ -164,8 +163,8 @@ extern "C" {
         while (remaining_len > 0){
             int ret = SSL_write(self->ssl, buffer + offset, remaining_len);
 
-            unsigned long error;
-            switch (SSL_get_error(self->ssl, ret))
+            unsigned long error = SSL_get_error(self->ssl, ret);
+            switch (error)
             {
                 case SSL_ERROR_NONE:
                     remaining_len -= ret;
@@ -183,16 +182,14 @@ extern "C" {
                 default:
                 {
                     LOG(LOG_INFO, "Failure in SSL library");
-                    unsigned long error = 0;
                     uint32_t errcount = 0;
+                    errcount++;
+                    LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
                     while ((error = ERR_get_error()) != 0){
                         errcount++;
                         LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
                     }
-                    if (!errcount && ret == -1){
-                        LOG(LOG_INFO, "%s [%u]", strerror(errno), errno);
-                    }
-                    return (RT_ERROR)-RT_ERROR_ANY;
+                    return (RIO_ERROR)-RIO_ERROR_ANY;
                 }
             }
         }
@@ -206,10 +203,10 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTSocketTLS_send(RTSocketTLS * self, const void * data, size_t len)
+    inline ssize_t rio_m_RIOSocketTLS_send(RIOSocketTLS * self, const void * data, size_t len)
     {
         if (self->tls){
-            return rt_m_RTSocketTLS_send_tls(self, data, len);
+            return rio_m_RIOSocketTLS_send_tls(self, data, len);
         }
         size_t total = 0;
         while (total < len) {
@@ -224,9 +221,9 @@ extern "C" {
                     select(self->sck + 1, NULL, &wfds, NULL, &time);
                     continue;
                 }
-                return RT_ERROR_EOF;
+                return RIO_ERROR_EOF;
             case 0:
-                return RT_ERROR_EOF;
+                return RIO_ERROR_EOF;
             default:
                 total = total + sent;
             }
@@ -234,13 +231,13 @@ extern "C" {
         return len;
     }
 
-    RT_ERROR rt_m_RTSocketTLS_enableTLS(RTSocketTLS * self)
+    RIO_ERROR rio_m_RIOSocketTLS_enableTLS(RIOSocketTLS * self)
     {
-        LOG(LOG_INFO, "RT::enable_tls()");
+        LOG(LOG_INFO, "RIO *::enable_tls()");
         SSL_load_error_strings();
         SSL_library_init();
 
-        LOG(LOG_INFO, "RT::SSL_CTX_new()");
+        LOG(LOG_INFO, "RIO *::SSL_CTX_new()");
         SSL_CTX* ctx = SSL_CTX_new(TLSv1_client_method());
 
         /*
@@ -251,17 +248,17 @@ extern "C" {
          * block padding is normally used, but the Microsoft TLS implementation
          * won't recognize it and will disconnect you after sending a TLS alert.
          */
-        LOG(LOG_INFO, "RT::SSL_CTX_set_options()");
+        LOG(LOG_INFO, "RIO *::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
-        LOG(LOG_INFO, "RT::SSL_new()");
+        LOG(LOG_INFO, "RIO *::SSL_new()");
         self->ssl = SSL_new(ctx);
 
         int flags = fcntl(self->sck, F_GETFL);
         fcntl(self->sck, F_SETFL, flags & ~(O_NONBLOCK));
 
-        LOG(LOG_INFO, "RT::SSL_set_fd()");
+        LOG(LOG_INFO, "RIO *::SSL_set_fd()");
         SSL_set_fd(self->ssl, self->sck);
-        LOG(LOG_INFO, "RT::SSL_connect()");
+        LOG(LOG_INFO, "RIO *::SSL_connect()");
     again:
         int connection_status = SSL_connect(self->ssl);
 
@@ -274,7 +271,7 @@ extern "C" {
                 case SSL_ERROR_ZERO_RETURN:
                     LOG(LOG_INFO, "Server closed TLS connection\n");
                     LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_ZERO_RETURN done\n");
-                    return RT_ERROR_TLS_CONNECT_FAILED;
+                    return RIO_ERROR_TLS_CONNECT_FAILED;
 
                 case SSL_ERROR_WANT_READ:
                     LOG(LOG_INFO, "SSL_ERROR_WANT_READ\n");
@@ -291,14 +288,14 @@ extern "C" {
                     while ((error = ERR_get_error()) != 0)
                         LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
                     LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_SYSCLASS done\n");
-                    return RT_ERROR_TLS_CONNECT_FAILED;
+                    return RIO_ERROR_TLS_CONNECT_FAILED;
 
                 case SSL_ERROR_SSL:
                     LOG(LOG_INFO, "Failure in SSL library (protocol error?)\n");
                     while ((error = ERR_get_error()) != 0)
                         LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
                     LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_SSL done\n");
-                    return RT_ERROR_TLS_CONNECT_FAILED;
+                    return RIO_ERROR_TLS_CONNECT_FAILED;
 
                 default:
                     LOG(LOG_INFO, "Unknown error\n");
@@ -311,27 +308,27 @@ extern "C" {
             }
         }
 
-        LOG(LOG_INFO, "RT::SSL_get_peer_certificate()");
+        LOG(LOG_INFO, "RIO *::SSL_get_peer_certificate()");
         X509 * px509 = SSL_get_peer_certificate(self->ssl);
         if (!px509)
         {
-            LOG(LOG_INFO, "RT::crypto_cert_get_public_key: SSL_get_peer_certificate() failed");
-            return RT_ERROR_TLS_CONNECT_FAILED;
+            LOG(LOG_INFO, "RIO *::crypto_cert_get_public_key: SSL_get_peer_certificate() failed");
+            return RIO_ERROR_TLS_CONNECT_FAILED;
         }
 
-        LOG(LOG_INFO, "RT::X509_get_pubkey()");
+        LOG(LOG_INFO, "RIO *::X509_get_pubkey()");
         EVP_PKEY* pkey = X509_get_pubkey(px509);
         if (!pkey)
         {
-            LOG(LOG_INFO, "RT::crypto_cert_get_public_key: X509_get_pubkey() failed");
-            return RT_ERROR_TLS_CONNECT_FAILED;
+            LOG(LOG_INFO, "RIO *::crypto_cert_get_public_key: X509_get_pubkey() failed");
+            return RIO_ERROR_TLS_CONNECT_FAILED;
         }
 
-        LOG(LOG_INFO, "RT::i2d_PublicKey()");
+        LOG(LOG_INFO, "RIO *::i2d_PublicKey()");
         int public_key_length = i2d_PublicKey(pkey, NULL);
-        LOG(LOG_INFO, "RT::i2d_PublicKey() -> length = %u", public_key_length);
+        LOG(LOG_INFO, "RIO *::i2d_PublicKey() -> length = %u", public_key_length);
         uint8_t * public_key_data = (uint8_t *)malloc(public_key_length);
-        LOG(LOG_INFO, "RT::i2d_PublicKey()");
+        LOG(LOG_INFO, "RIO *::i2d_PublicKey()");
         i2d_PublicKey(pkey, &public_key_data);
         // verify_certificate -> ignore for now
 
@@ -416,8 +413,8 @@ extern "C" {
             //            tls::tls_free_certificate done
             //            tls::tls_connect -> true done
         self->tls = true;
-        LOG(LOG_INFO, "RT::enable_tls() done");
-        return RT_ERROR_OK;
+        LOG(LOG_INFO, "RIO *::enable_tls() done");
+        return RIO_ERROR_OK;
     }
 };
 

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -21,12 +21,12 @@
 
 */
 
-#ifndef _REDEMPTION_LIBS_RT_XXX_H_
-#define _REDEMPTION_LIBS_RT_XXX_H_
+#ifndef _REDEMPTION_LIBS_RIO_XXX_H_
+#define _REDEMPTION_LIBS_RIO_XXX_H_
 
 #include "rio_constants.h"
 
-struct RTXXX {
+struct RIOXXX {
 };
 
 extern "C" {
@@ -34,16 +34,16 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_XXX_constructor(RTXXX * self, const void * data, size_t len)
+    inline RIO_ERROR rio_m_XXX_constructor(RIOXXX * self, const void * data, size_t len)
     {
-        return RT_ERROR_NOT_IMPLEMENTED;
+        return RIO_ERROR_NOT_IMPLEMENTED;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_XXX_destructor(RTXXX * self)
+    inline RIO_ERROR rio_m_XXX_destructor(RIOXXX * self)
     {
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method receive len bytes of data into buffer
@@ -53,9 +53,9 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_XXX_recv(RTXXX * self, void * data, size_t len)
+    inline ssize_t rio_m_XXX_recv(RIOXXX * self, void * data, size_t len)
     {
-         return -RT_ERROR_SEND_ONLY;
+         return -RIO_ERROR_SEND_ONLY;
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -65,25 +65,25 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_XXX_send(RTXXX * self, const void * data, size_t len)
+    inline ssize_t rio_m_XXX_send(RIOXXX * self, const void * data, size_t len)
     {
-         return -RT_ERROR_RECV_ONLY;
+         return -RIO_ERROR_RECV_ONLY;
     }
 
     /* This method flush current chunk and start a new one
        default: do nothing if the current file does not support chunking
     */
-    inline RT_ERROR rt_m_XXX_next(RTXXX * self)
+    inline RIO_ERROR rio_m_XXX_next(RIOXXX * self)
     {
-         return RT_ERROR_OK;
+         return RIO_ERROR_OK;
     }
 
     /* Set Timestamp for next chunk
        default : do nothing if the current file does not support timestamped chunks 
     */
-    inline RT_ERROR rt_m_XXX_timestamp(RTXXX * self, uint32_t tv_sec, uint32_t tv_usec)
+    inline RIO_ERROR rio_m_XXX_timestamp(RIOXXX * self, uint32_t tv_sec, uint32_t tv_usec)
     {
-         return RT_ERROR_OK;
+         return RIO_ERROR_OK;
     }
 
     /* Get Timestamp for current chunk
@@ -91,9 +91,9 @@ extern "C" {
        tv_sec is mandatory.
        default : do nothing if the current file does not support timestamped chunks 
     */
-    inline RT_ERROR rt_m_XXX_get_timestamp(RTXXX * self, uint32_t * tv_sec, uint32_t * tv_usec)
+    inline RIO_ERROR rio_m_XXX_get_timestamp(RIOXXX * self, uint32_t * tv_sec, uint32_t * tv_usec)
     {
-         return RT_ERROR_OK;
+         return RIO_ERROR_OK;
     }
 
     /* Set metadata for next chunk (when writing to transport) 
@@ -102,18 +102,18 @@ extern "C" {
        Metadata can be added until the chunk is terminated (by calling next)
        default : do nothing if the current file does not support timestamped chunks
     */
-    inline RT_ERROR rt_m_XXX_add_meta(RTXXX * self, const char * meta)
+    inline RIO_ERROR rio_m_XXX_add_meta(RIOXXX * self, const char * meta)
     {
-         return RT_ERROR_OK;
+         return RIO_ERROR_OK;
     }
 
     /* Get metadata for current chunk (when reading from transport)
        this method can be called any number of time to get all metadata blocks relevant to current chunk.
        default : do nothing if the current file does not support timestamped chunks
     */
-    inline RT_ERROR rt_m_XXX_get_meta(RTXXX * self, char * meta)
+    inline RIO_ERROR rio_m_XXX_get_meta(RIOXXX * self, char * meta)
     {
-         return RT_ERROR_OK;
+         return RIO_ERROR_OK;
     }
 };
 

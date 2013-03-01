@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -21,17 +21,17 @@
 
 */
 
-#ifndef _REDEMPTION_LIBS_RT_OUTMETA_H_
-#define _REDEMPTION_LIBS_RT_OUTMETA_H_
+#ifndef _REDEMPTION_LIBS_RIO_OUTMETA_H_
+#define _REDEMPTION_LIBS_RIO_OUTMETA_H_
 
 #include "rio_constants.h"
 
-struct RTOutmeta {
+struct RIOOutmeta {
     int lastcount;
     struct SQ * metaseq;
-    struct RT * meta;
+    struct RIO * meta;
     struct SQ * seq;
-    struct RT * out;
+    struct RIO * out;
 };
 
 extern "C" {
@@ -39,28 +39,28 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_RTOutmeta_constructor(RTOutmeta * self, SQ ** seq, const char * prefix, const char * extension)
+    inline RIO_ERROR rio_m_RIOOutmeta_constructor(RIOOutmeta * self, SQ ** seq, const char * prefix, const char * extension)
     {
-        RT_ERROR status = RT_ERROR_OK;
-        SQ * metaseq = sq_new_outfilename(&status, (RT*)NULL, SQF_PREFIX_EXTENSION, prefix, "mwrm");
-        if (status != RT_ERROR_OK){
+        RIO_ERROR status = RIO_ERROR_OK;
+        SQ * metaseq = sq_new_outfilename(&status, (RIO *)NULL, SQF_PREFIX_EXTENSION, prefix, "mwrm");
+        if (status != RIO_ERROR_OK){
             return status;
         }
-        RT * meta = rt_new_outsequence(&status, metaseq);
-        if (status != RT_ERROR_OK){
+        RIO * meta = rio_new_outsequence(&status, metaseq);
+        if (status != RIO_ERROR_OK){
             sq_delete(metaseq);
             return status;
         }
         SQ * sequence = sq_new_outfilename(&status, meta, SQF_PREFIX_COUNT_EXTENSION, prefix, "wrm");
-        if (status != RT_ERROR_OK){
-            rt_delete(meta);
+        if (status != RIO_ERROR_OK){
+            rio_delete(meta);
             sq_delete(metaseq);
             return status;
         }
-        RT * out = rt_new_outsequence(&status, sequence);
-        if (status != RT_ERROR_OK){
+        RIO * out = rio_new_outsequence(&status, sequence);
+        if (status != RIO_ERROR_OK){
             sq_delete(sequence);
-            rt_delete(meta);
+            rio_delete(meta);
             sq_delete(metaseq);
             return status;
         }
@@ -70,18 +70,18 @@ extern "C" {
         *seq = self->seq = sequence;
         self->meta = meta;
         self->out = out;
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_RTOutmeta_destructor(RTOutmeta * self)
+    inline RIO_ERROR rio_m_RIOOutmeta_destructor(RIOOutmeta * self)
     {
         sq_delete(self->seq);
-        rt_delete(self->meta);
+        rio_delete(self->meta);
         sq_delete(self->metaseq);
-        rt_delete(self->out);
-        return RT_ERROR_OK;
+        rio_delete(self->out);
+        return RIO_ERROR_OK;
     }
 
     /* This method receive len bytes of data into buffer
@@ -91,9 +91,9 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTOutmeta_recv(RTOutmeta * self, void * data, size_t len)
+    inline ssize_t rio_m_RIOOutmeta_recv(RIOOutmeta * self, void * data, size_t len)
     {
-         return -RT_ERROR_SEND_ONLY;
+         return -RIO_ERROR_SEND_ONLY;
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -103,9 +103,9 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTOutmeta_send(RTOutmeta * self, const void * data, size_t len)
+    inline ssize_t rio_m_RIOOutmeta_send(RIOOutmeta * self, const void * data, size_t len)
     {
-        return rt_send(self->out, data, len);
+        return rio_send(self->out, data, len);
     }
 };
 

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -21,15 +21,15 @@
 
 */
 
-#ifndef _REDEMPTION_LIBS_RT_INFILE_H_
-#define _REDEMPTION_LIBS_RT_INFILE_H_
+#ifndef _REDEMPTION_LIBS_RIO_INFILE_H_
+#define _REDEMPTION_LIBS_RIO_INFILE_H_
 
 #include "rio_constants.h"
 
-struct RTInfile {
+struct RIOInfile {
     int fd;
     bool status;
-    RT_ERROR err;    
+    RIO_ERROR err;    
 };
 
 extern "C" {
@@ -37,25 +37,25 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_RTInfile_constructor(RTInfile * self, int fd)
+    inline RIO_ERROR rio_m_RIOInfile_constructor(RIOInfile * self, int fd)
     {
         self->fd = fd;
         self->status = true;
-        self->err = RT_ERROR_OK;        
-        return RT_ERROR_OK;
+        self->err = RIO_ERROR_OK;        
+        return RIO_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_RTInfile_destructor(RTInfile * self)
+    inline RIO_ERROR rio_m_RIOInfile_destructor(RIOInfile * self)
     {
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method close ressource without calling destructor
        Any subsequent call should return an error
     */
-    inline void rt_m_RTInfile_close(RTInfile * self)
+    inline void rio_m_RIOInfile_close(RIOInfile * self)
     {
         close(self->fd);
     }
@@ -68,10 +68,10 @@ extern "C" {
        has been changed but an error is returned anyway
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTInfile_recv(RTInfile * self, void * data, size_t len)
+    inline ssize_t rio_m_RIOInfile_recv(RIOInfile * self, void * data, size_t len)
     {
         if (!self->status){ 
-            if (self->err == RT_ERROR_EOF){
+            if (self->err == RIO_ERROR_EOF){
                 return 0;
             }
             return -self->err; 
@@ -85,25 +85,25 @@ extern "C" {
                 self->status = false;
                 switch (errno){
                     case EAGAIN:
-                        self->err = RT_ERROR_EAGAIN;
+                        self->err = RIO_ERROR_EAGAIN;
                         break;
                     case EBADF:
-                        self->err = RT_ERROR_EBADF;
+                        self->err = RIO_ERROR_EBADF;
                         break;
                     case EFAULT:
-                        self->err = RT_ERROR_EFAULT;
+                        self->err = RIO_ERROR_EFAULT;
                         break;
                     case EINVAL:
-                        self->err = RT_ERROR_EINVAL;
+                        self->err = RIO_ERROR_EINVAL;
                         break;
                     case EIO:
-                        self->err = RT_ERROR_EIO;
+                        self->err = RIO_ERROR_EIO;
                         break;
                     case EISDIR:
-                        self->err = RT_ERROR_EISDIR;
+                        self->err = RIO_ERROR_EISDIR;
                         break;
                     default:
-                        self->err = RT_ERROR_POSIX;
+                        self->err = RIO_ERROR_POSIX;
                         break;
                 }
                 if (remaining_len != len){
@@ -113,7 +113,7 @@ extern "C" {
             }
             if (ret == 0){
                 self->status = false;
-                self->err = RT_ERROR_EOF;
+                self->err = RIO_ERROR_EOF;
                 break;
             }
             remaining_len -= ret;
@@ -128,9 +128,9 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTInfile_send(RTInfile * self, const void * data, size_t len)
+    inline ssize_t rio_m_RIOInfile_send(RIOInfile * self, const void * data, size_t len)
     {
-         return -RT_ERROR_RECV_ONLY;
+         return -RIO_ERROR_RECV_ONLY;
     }
 
 };

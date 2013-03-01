@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -21,17 +21,17 @@
 
 */
 
-#ifndef _REDEMPTION_LIBS_RT_CHECK_H_
-#define _REDEMPTION_LIBS_RT_CHECK_H_
+#ifndef _REDEMPTION_LIBS_RIO_CHECK_H_
+#define _REDEMPTION_LIBS_RIO_CHECK_H_
 
 #include "rio_constants.h"
 
-struct RTCheck {
+struct RIOCheck {
     size_t current;
     uint8_t * data;
     size_t len;
     bool status;
-    RT_ERROR err;
+    RIO_ERROR err;
 };
 
 extern "C" {
@@ -39,29 +39,29 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_RTCheck_constructor(RTCheck * self, const void * data, size_t len)
+    inline RIO_ERROR rio_m_RIOCheck_constructor(RIOCheck * self, const void * data, size_t len)
     {
         self->data = (uint8_t *)malloc(len);
-        if (!self->data) { return RT_ERROR_MALLOC; }
+        if (!self->data) { return RIO_ERROR_MALLOC; }
         self->len = len;
         self->current = 0;
         self->status = true;
-        self->err = RT_ERROR_OK;
+        self->err = RIO_ERROR_OK;
         memcpy(self->data, data, len);
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_RTCheck_destructor(RTCheck * self)
+    inline RIO_ERROR rio_m_RIOCheck_destructor(RIOCheck * self)
     {
         free(self->data);
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method close ressource without calling destructor
     */
-    void rt_m_RTCheck_close(RTCheck * self)
+    void rio_m_RIOCheck_close(RIOCheck * self)
     {
     }
 
@@ -72,10 +72,10 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTCheck_recv(RTCheck * self, void * data, size_t len)
+    inline ssize_t rio_m_RIOCheck_recv(RIOCheck * self, void * data, size_t len)
     {
          self->status = false;
-         self->err = RT_ERROR_SEND_ONLY;
+         self->err = RIO_ERROR_SEND_ONLY;
          return -self->err;
     }
 
@@ -86,7 +86,7 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTCheck_send(RTCheck * self, const void * data, size_t len)
+    inline ssize_t rio_m_RIOCheck_send(RIOCheck * self, const void * data, size_t len)
     {
         if (!(self->status)) {
             return -self->err;
@@ -95,7 +95,7 @@ extern "C" {
         if (0 != memcmp(data, (const char *)(&self->data[self->current]), available_len)){
             // data differs
             self->status = false;
-            self->err = RT_ERROR_DATA_MISMATCH;
+            self->err = RIO_ERROR_DATA_MISMATCH;
             // find where
             uint32_t differs = 0;
             for (size_t i = 0; i < available_len ; i++){
@@ -121,7 +121,7 @@ extern "C" {
             LOG(LOG_INFO, "=============== Got Unexpected Data ==========");
             hexdump_c(&(((const char *)data)[available_len]), len - available_len);
             self->status = false;
-            self->err = RT_ERROR_TRAILING_DATA;
+            self->err = RIO_ERROR_TRAILING_DATA;
         }
         return available_len;
     }

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -21,12 +21,12 @@
 
 */
 
-#ifndef _REDEMPTION_LIBS_RT_OUTFILE_H_
-#define _REDEMPTION_LIBS_RT_OUTFILE_H_
+#ifndef _REDEMPTION_LIBS_RIO_OUTFILE_H_
+#define _REDEMPTION_LIBS_RIO_OUTFILE_H_
 
 #include "rio_constants.h"
 
-struct RTOutfile {
+struct RIOOutfile {
     int fd;
 };
 
@@ -35,23 +35,23 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_RTOutfile_constructor(RTOutfile * self, int fd)
+    inline RIO_ERROR rio_m_RIOOutfile_constructor(RIOOutfile * self, int fd)
     {
         self->fd = fd;
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_RTOutfile_destructor(RTOutfile * self)
+    inline RIO_ERROR rio_m_RIOOutfile_destructor(RIOOutfile * self)
     {
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method close ressource without calling destructor
        Any subsequent call should return an error
     */
-    inline void rt_m_RTOutfile_close(RTOutfile * self)
+    inline void rio_m_RIOOutfile_close(RIOOutfile * self)
     {
         close(self->fd);
     }
@@ -64,9 +64,9 @@ extern "C" {
        has been changed but an error is returned anyway
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTOutfile_recv(RTOutfile * self, void * data, size_t len)
+    inline ssize_t rio_m_RIOOutfile_recv(RIOOutfile * self, void * data, size_t len)
     {
-         return -RT_ERROR_SEND_ONLY;
+         return -RIO_ERROR_SEND_ONLY;
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -76,7 +76,7 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTOutfile_send(RTOutfile * self, const void * data, size_t len)
+    inline ssize_t rio_m_RIOOutfile_send(RIOOutfile * self, const void * data, size_t len)
     {
         ssize_t ret = 0;
         size_t remaining_len = len;
@@ -87,27 +87,27 @@ extern "C" {
                 if (errno == EINTR){ continue; }
                 switch (errno){
                     case EAGAIN:
-                        return -RT_ERROR_EAGAIN;
+                        return -RIO_ERROR_EAGAIN;
                     case EBADF:
-                        return -RT_ERROR_EBADF;
+                        return -RIO_ERROR_EBADF;
                     case EDESTADDRREQ:
-                        return -RT_ERROR_EDESTADDRREQ;
+                        return -RIO_ERROR_EDESTADDRREQ;
                     case EFAULT:
-                        return -RT_ERROR_EFAULT;
+                        return -RIO_ERROR_EFAULT;
                     case EFBIG:
-                        return -RT_ERROR_EFBIG;
+                        return -RIO_ERROR_EFBIG;
                     case EINVAL:
-                        return -RT_ERROR_EINVAL;
+                        return -RIO_ERROR_EINVAL;
                     case EIO:
-                        return -RT_ERROR_EIO;
+                        return -RIO_ERROR_EIO;
                     case ENOSPC:
-                        return -RT_ERROR_ENOSPC;
+                        return -RIO_ERROR_ENOSPC;
                     case EPIPE:
-                        return -RT_ERROR_EPIPE;
+                        return -RIO_ERROR_EPIPE;
                     case EISDIR:
-                        return -RT_ERROR_EISDIR;
+                        return -RIO_ERROR_EISDIR;
                     default:
-                        return -RT_ERROR_POSIX;
+                        return -RIO_ERROR_POSIX;
                 }
             }
             remaining_len -= ret;

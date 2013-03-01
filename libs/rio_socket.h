@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -21,13 +21,13 @@
 
 */
 
-#ifndef _REDEMPTION_LIBS_RT_SOCKET_H_
-#define _REDEMPTION_LIBS_RT_SOCKET_H_
+#ifndef _REDEMPTION_LIBS_RIO_SOCKET_H_
+#define _REDEMPTION_LIBS_RIO_SOCKET_H_
 
 #include "rio_constants.h"
 #include "netutils.hpp"
 
-struct RTSocket {
+struct RIOSocket {
     int sck;
 };
 
@@ -36,20 +36,20 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_RTSocket_constructor(RTSocket * self, int sck)
+    inline RIO_ERROR rio_m_RIOSocket_constructor(RIOSocket * self, int sck)
     {
         self->sck = sck;
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_RTSocket_destructor(RTSocket * self)
+    inline RIO_ERROR rio_m_RIOSocket_destructor(RIOSocket * self)
     {
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
-    inline void rt_m_RTSocket_close(RTSocket * self)
+    inline void rio_m_RIOSocket_close(RIOSocket * self)
     {
     }
 
@@ -61,7 +61,7 @@ extern "C" {
        has been changed but an error is returned anyway
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTSocket_recv(RTSocket * self, void * data, size_t len)
+    inline ssize_t rio_m_RIOSocket_recv(RIOSocket * self, void * data, size_t len)
     {
         char * pbuffer = (char*)data;
         size_t remaining_len = len;
@@ -79,9 +79,9 @@ extern "C" {
                         continue;
                     }
                     TODO("replace this with actual error management, EOF is not even an option for sockets")
-                    return -RT_ERROR_EOF;
+                    return -RIO_ERROR_EOF;
                 case 0: /* no data received, socket closed */
-                    return -RT_ERROR_EOF;
+                    return -RIO_ERROR_EOF;
                 default: /* some data received */
                     pbuffer += res;
                     remaining_len -= res;
@@ -98,7 +98,7 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTSocket_send(RTSocket * self, const void * data, size_t len)
+    inline ssize_t rio_m_RIOSocket_send(RIOSocket * self, const void * data, size_t len)
     {
         size_t total = 0;
         while (total < len) {
@@ -113,9 +113,9 @@ extern "C" {
                     select(self->sck + 1, NULL, &wfds, NULL, &time);
                     continue;
                 }
-                return RT_ERROR_EOF;
+                return RIO_ERROR_EOF;
             case 0:
-                return RT_ERROR_EOF;
+                return RIO_ERROR_EOF;
             default:
                 total = total + sent;
             }

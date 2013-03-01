@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -28,28 +28,28 @@
 
 extern "C" {
     struct SQOne {
-        RT * trans;
+        RIO * trans;
     };
 
-    RT_ERROR sq_m_SQOne_constructor(SQOne * self, RT * trans)
+    RIO_ERROR sq_m_SQOne_constructor(SQOne * self, RIO * trans)
     {
         self->trans = trans;
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
-    RT_ERROR sq_m_SQOne_destructor(SQOne * self)
+    RIO_ERROR sq_m_SQOne_destructor(SQOne * self)
     {
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
-    RT * sq_m_SQOne_get_trans(SQOne * self, RT_ERROR * status)
+    RIO * sq_m_SQOne_get_trans(SQOne * self, RIO_ERROR * status)
     {
         return self->trans;
     }
 
-    RT_ERROR sq_m_SQOne_next(SQOne * self)
+    RIO_ERROR sq_m_SQOne_next(SQOne * self)
     {
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 };
 

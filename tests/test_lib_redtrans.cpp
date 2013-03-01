@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -31,55 +31,55 @@
 
 BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
 {
-    RT_ERROR status = RT_ERROR_OK;
-    RT * rt = rt_new_generator(&status, "We read what we provide!", 24);
+    RIO_ERROR status = RIO_ERROR_OK;
+    RIO * rt = rio_new_generator(&status, "We read what we provide!", 24);
 
-    BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
+    BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
     uint8_t buffer[1024];
     
-    BOOST_CHECK_EQUAL(3, rt_recv(rt, buffer, 3));
+    BOOST_CHECK_EQUAL(3, rio_recv(rt, buffer, 3));
     BOOST_CHECK_EQUAL(0, memcmp("We ", buffer, 3));
-    BOOST_CHECK_EQUAL(21, rt_recv(rt, buffer+3, 1024));
+    BOOST_CHECK_EQUAL(21, rio_recv(rt, buffer+3, 1024));
     BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
-    BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer+24, 1024)); // EOF
+    BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer+24, 1024)); // EOF
     
-    rt_close(rt);
-    rt_delete(rt);
+    rio_close(rt);
+    rio_delete(rt);
 }
 
 
 BOOST_AUTO_TEST_CASE(TestCheckTransport)
 {
-    RT_ERROR status = RT_ERROR_OK;
-    RT * rt = rt_new_check(&status, "We read what we provide!", 24);
+    RIO_ERROR status = RIO_ERROR_OK;
+    RIO * rt = rio_new_check(&status, "We read what we provide!", 24);
     // Check Transport it somewhat similar to Generator Transport,
     // but instead of allowing to read what is provided
     // it checks that was is written to it is the provided reference string
 
-    BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
+    BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
     // If both strings match, return length of send buffer
-    BOOST_CHECK_EQUAL(7, rt_send(rt, "We read", 7));
+    BOOST_CHECK_EQUAL(7, rio_send(rt, "We read", 7));
     // if mismatch return the length of the common part (at least one)
-    BOOST_CHECK_EQUAL(8, rt_send(rt, " what we!!!", 11));
+    BOOST_CHECK_EQUAL(8, rio_send(rt, " what we!!!", 11));
     // Now the next call mismatch
-    BOOST_CHECK_EQUAL(-RT_ERROR_DATA_MISMATCH, rt_send(rt, "xxx", 3));
+    BOOST_CHECK_EQUAL(-RIO_ERROR_DATA_MISMATCH, rio_send(rt, "xxx", 3));
 }
 
 BOOST_AUTO_TEST_CASE(TestCheckTransport2)
 {
-    RT_ERROR status = RT_ERROR_OK;
-//    RT * rt = rt_new_test(&status, "output", 6, "input", 5);
-    RT * rt = rt_new_check(&status, "output", 6);
+    RIO_ERROR status = RIO_ERROR_OK;
+//    RIO * rt = rio_new_test(&status, "output", 6, "input", 5);
+    RIO * rt = rio_new_check(&status, "output", 6);
 
-    BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
+    BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
     // If both strings match, return length of send buffer
-    BOOST_CHECK_EQUAL(2, rt_send(rt, "ou", 2));
+    BOOST_CHECK_EQUAL(2, rio_send(rt, "ou", 2));
     // if mismatch return the length of the common part (at least one)
-    BOOST_CHECK_EQUAL(4, rt_send(rt, "tput", 4));
+    BOOST_CHECK_EQUAL(4, rio_send(rt, "tput", 4));
     // Now the next call mismatch
-    BOOST_CHECK_EQUAL(0, rt_send(rt, "xxx", 3));
-    BOOST_CHECK_EQUAL(-RT_ERROR_TRAILING_DATA, rt_send(rt, "xxx", 3));
+    BOOST_CHECK_EQUAL(0, rio_send(rt, "xxx", 3));
+    BOOST_CHECK_EQUAL(-RIO_ERROR_TRAILING_DATA, rio_send(rt, "xxx", 3));
 }
 
 // TestTransport is basically (and internally) a Generator comined with a Check Transport
@@ -94,37 +94,37 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport2)
 BOOST_AUTO_TEST_CASE(TestTestTransport)
 {
     // Test Transport behave as a Check when we perform only send
-    RT_ERROR status = RT_ERROR_OK;
-    RT * rt = rt_new_test(&status, "output", 6, "input", 5);
+    RIO_ERROR status = RIO_ERROR_OK;
+    RIO * rt = rio_new_test(&status, "output", 6, "input", 5);
 
-    BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
+    BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
     // If both strings match, return length of send buffer
-    BOOST_CHECK_EQUAL(2, rt_send(rt, "ou", 2));
+    BOOST_CHECK_EQUAL(2, rio_send(rt, "ou", 2));
     // if mismatch return the length of the common part (at least one)
-    BOOST_CHECK_EQUAL(4, rt_send(rt, "tput", 4));
+    BOOST_CHECK_EQUAL(4, rio_send(rt, "tput", 4));
     // Now the next call mismatch
-    BOOST_CHECK_EQUAL(0, rt_send(rt, "xxx", 3));
-    BOOST_CHECK_EQUAL(-RT_ERROR_TRAILING_DATA, rt_send(rt, "xxx", 3));
+    BOOST_CHECK_EQUAL(0, rio_send(rt, "xxx", 3));
+    BOOST_CHECK_EQUAL(-RIO_ERROR_TRAILING_DATA, rio_send(rt, "xxx", 3));
 }
 
 BOOST_AUTO_TEST_CASE(TestTestTransport2)
 {
     // Test Transport behave as a generator when we perform only receives
-    RT_ERROR status = RT_ERROR_OK;
-    RT * rt = rt_new_test(&status, "output", 6, "We read what we provide!", 24);
+    RIO_ERROR status = RIO_ERROR_OK;
+    RIO * rt = rio_new_test(&status, "output", 6, "We read what we provide!", 24);
 
-    BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
+    BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
     uint8_t buffer[1024];
     
-    BOOST_CHECK_EQUAL(3, rt_recv(rt, buffer, 3));
+    BOOST_CHECK_EQUAL(3, rio_recv(rt, buffer, 3));
     BOOST_CHECK_EQUAL(0, memcmp("We ", buffer, 3));
-    BOOST_CHECK_EQUAL(21, rt_recv(rt, buffer+3, 1024));
+    BOOST_CHECK_EQUAL(21, rio_recv(rt, buffer+3, 1024));
     BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
-    BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer+24, 1024));
+    BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer+24, 1024));
     
-    rt_close(rt);
-    rt_delete(rt);
+    rio_close(rt);
+    rio_delete(rt);
 }
 
 
@@ -135,18 +135,18 @@ BOOST_AUTO_TEST_CASE(TestFileTransport)
 
     {
         int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
-        RT_ERROR status = RT_ERROR_OK;
-        RT * rt = rt_new_outfile(&status, fd);
+        RIO_ERROR status = RIO_ERROR_OK;
+        RIO * rt = rio_new_outfile(&status, fd);
         BOOST_CHECK(NULL != rt);
-        BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
+        BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
         char buffer[1024];
         strcpy(buffer, "We read what we provide!");
-        BOOST_CHECK_EQUAL(5, rt_send(rt, buffer, 5));
-        BOOST_CHECK_EQUAL(19, rt_send(rt, buffer + 5, 19));
+        BOOST_CHECK_EQUAL(5, rio_send(rt, buffer, 5));
+        BOOST_CHECK_EQUAL(19, rio_send(rt, buffer + 5, 19));
 
-        rt_close(rt);
-        rt_delete(rt);
+        rio_close(rt);
+        rio_delete(rt);
 
         ::close(fd);
     }
@@ -154,21 +154,21 @@ BOOST_AUTO_TEST_CASE(TestFileTransport)
     {
         int fd = ::open(tmpname, O_RDONLY);
 
-        RT_ERROR status = RT_ERROR_OK;
-        RT * rt = rt_new_infile(&status, fd);
+        RIO_ERROR status = RIO_ERROR_OK;
+        RIO * rt = rio_new_infile(&status, fd);
         BOOST_CHECK(NULL != rt);
-        BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
+        BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
         uint8_t buffer[1024];
         
-        BOOST_CHECK_EQUAL(3, rt_recv(rt, buffer, 3));
+        BOOST_CHECK_EQUAL(3, rio_recv(rt, buffer, 3));
         BOOST_CHECK_EQUAL(0, memcmp("We ", buffer, 3));
-        BOOST_CHECK_EQUAL(21, rt_recv(rt, buffer + 3, 1024));
+        BOOST_CHECK_EQUAL(21, rio_recv(rt, buffer + 3, 1024));
         BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
-        BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer + 24, 1024));
+        BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer + 24, 1024));
         
-        rt_close(rt);
-        rt_delete(rt);
+        rio_close(rt);
+        rio_delete(rt);
     }
 }
 
@@ -253,7 +253,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
     int nb_recv_sck = 0;
     // 10 should be enough for testing
     int recv_sck[10];
-    RT * sck_rt[10];
+    RIO * sck_rt[10];
 
     bool run = true;
 
@@ -282,7 +282,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
     fcntl(client_sck, F_SETFL, fcntl(client_sck, F_GETFL) | O_NONBLOCK);
 
     int data_sent = 0;
-    RT * client_rt = NULL;
+    RIO * client_rt = NULL;
 
     while (run){
         fd_set rfds;
@@ -326,11 +326,11 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
                         }
                     }
                     else {
-                        RT_ERROR status = RT_ERROR_OK;
-                        client_rt = rt_new_socket(&status, client_sck);
-                        if ((client_rt == NULL) || (status != RT_ERROR_OK)){
+                        RIO_ERROR status = RIO_ERROR_OK;
+                        client_rt = rio_new_socket(&status, client_sck);
+                        if ((client_rt == NULL) || (status != RIO_ERROR_OK)){
                             BOOST_CHECK(NULL != client_rt);
-                            BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
+                            BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
                             return;
                         }
                     }
@@ -338,9 +338,9 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
                 else {
                     // send data on client socket
                     if (data_sent < 20){
-                        int res = rt_send(client_rt, "AAAAXBBBBXCCCCXDDDDX" + data_sent, 20 - data_sent);
+                        int res = rio_send(client_rt, "AAAAXBBBBXCCCCXDDDDX" + data_sent, 20 - data_sent);
                         if (res < 0){
-                            BOOST_CHECK_EQUAL(RT_ERROR_OK, (RT_ERROR)(-res));
+                            BOOST_CHECK_EQUAL(RIO_ERROR_OK, (RIO_ERROR)(-res));
                             return;
                         }
                         data_sent += res;
@@ -352,9 +352,9 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
                 // received data on connected socket (server side)
                 if (FD_ISSET(recv_sck[i], & rfds)){
                     LOG(LOG_INFO, "received data activity on %d", recv_sck[i]);
-                    int len = rt_recv(sck_rt[i], &(((char*)p)[nb_inbuffer]), 5);
+                    int len = rio_recv(sck_rt[i], &(((char*)p)[nb_inbuffer]), 5);
                     if (len < 0){
-                        BOOST_CHECK_EQUAL(RT_ERROR_OK, (RT_ERROR)(-len));
+                        BOOST_CHECK_EQUAL(RIO_ERROR_OK, (RIO_ERROR)(-len));
                         return;
                     }
                     nb_inbuffer += len;
@@ -394,11 +394,11 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
                 }
                 else {
                     recv_sck[nb_recv_sck] = sck;
-                    RT_ERROR status = RT_ERROR_OK;
-                    RT * server_rt = rt_new_socket(&status, sck);
-                    if ((server_rt == NULL) || (status != RT_ERROR_OK)){
+                    RIO_ERROR status = RIO_ERROR_OK;
+                    RIO * server_rt = rio_new_socket(&status, sck);
+                    if ((server_rt == NULL) || (status != RIO_ERROR_OK)){
                         BOOST_CHECK(NULL != server_rt);
-                        BOOST_CHECK_EQUAL(RT_ERROR_OK, status);
+                        BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
                         return;
                     }
                     sck_rt[nb_recv_sck] = server_rt;
@@ -429,21 +429,21 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
 
 BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OneSequence)
 {
-    RT_ERROR status_trans = RT_ERROR_OK;
-    RT * out = rt_new_check(&status_trans, "AAAAXBBBBXCCCCX", 15);
+    RIO_ERROR status_trans = RIO_ERROR_OK;
+    RIO * out = rio_new_check(&status_trans, "AAAAXBBBBXCCCCX", 15);
 
-    RT_ERROR status_seq = RT_ERROR_OK;
-    SQ * sequence = sq_new_one_RT(&status_seq, out);
+    RIO_ERROR status_seq = RIO_ERROR_OK;
+    SQ * sequence = sq_new_one(&status_seq, out);
 
-    RT_ERROR status = RT_ERROR_OK;
-    RT * rt = rt_new_outsequence(&status, sequence);
+    RIO_ERROR status = RIO_ERROR_OK;
+    RIO * rt = rio_new_outsequence(&status, sequence);
 
-    BOOST_CHECK_EQUAL( 5, rt_send(rt, "AAAAX",  5));
-    BOOST_CHECK_EQUAL(RT_ERROR_OK, sq_next(sequence));
-    BOOST_CHECK_EQUAL(10, rt_send(rt, "BBBBXCCCCX", 10));
+    BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
+    BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(sequence));
+    BOOST_CHECK_EQUAL(10, rio_send(rt, "BBBBXCCCCX", 10));
 
-    rt_close(rt);
-    rt_delete(rt);
+    rio_close(rt);
+    rio_delete(rt);
 }
 
 
@@ -465,18 +465,18 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
 
 // The test below is very similar to the previous one except for the creation of the sequence
     {
-        RT_ERROR status_seq = RT_ERROR_OK;
+        RIO_ERROR status_seq = RIO_ERROR_OK;
         SQ * sequence = sq_new_outfilename(&status_seq, NULL, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", "txt");
 
-        RT_ERROR status = RT_ERROR_OK;
-        RT * rt = rt_new_outsequence(&status, sequence);
+        RIO_ERROR status = RIO_ERROR_OK;
+        RIO * rt = rio_new_outsequence(&status, sequence);
 
-        BOOST_CHECK_EQUAL( 5, rt_send(rt, "AAAAX",  5));
-        BOOST_CHECK_EQUAL(RT_ERROR_OK, sq_next(sequence));
-        BOOST_CHECK_EQUAL(10, rt_send(rt, "BBBBXCCCCX", 10));
+        BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
+        BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(sequence));
+        BOOST_CHECK_EQUAL(10, rio_send(rt, "BBBBXCCCCX", 10));
 
-        rt_close(rt);
-        rt_delete(rt);
+        rio_close(rt);
+        rio_delete(rt);
         
         sq_delete(sequence);
     }
@@ -488,24 +488,24 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
 //    be used by the next sq_get_trans to create an outfile transport.
 
     {
-        RT_ERROR status_seq = RT_ERROR_OK;
+        RIO_ERROR status_seq = RIO_ERROR_OK;
         SQ * sequence = sq_new_infilename(&status_seq, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", "txt");
 
-        RT_ERROR status = RT_ERROR_OK;
-        RT * rt = rt_new_insequence(&status, sequence);
+        RIO_ERROR status = RIO_ERROR_OK;
+        RIO * rt = rio_new_insequence(&status, sequence);
 
         char buffer[1024] = {};
-        BOOST_CHECK_EQUAL(10, rt_recv(rt, buffer, 10));
+        BOOST_CHECK_EQUAL(10, rio_recv(rt, buffer, 10));
         BOOST_CHECK_EQUAL(0, buffer[10]);
         if (0 != memcmp(buffer, "AAAAXBBBBX", 10)){
             LOG(LOG_ERR, "expected \"AAAAXBBBBX\" got \"%s\"\n", buffer);
         }
-        BOOST_CHECK_EQUAL(5, rt_recv(rt, buffer + 10, 1024));
+        BOOST_CHECK_EQUAL(5, rio_recv(rt, buffer + 10, 1024));
         BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
         BOOST_CHECK_EQUAL(0, buffer[15]);
-        BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer + 15, 1024));
-        rt_close(rt);
-        rt_delete(rt);
+        BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer + 15, 1024));
+        rio_close(rt);
+        rio_delete(rt);
         sq_delete(sequence);
     }
 
@@ -518,31 +518,31 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
 //    be used by the next sq_get_trans to create an outfile transport.
 
     {
-        RT_ERROR status = RT_ERROR_OK;
+        RIO_ERROR status = RIO_ERROR_OK;
         const char trackdata[] = 
             "TESTOFS-000000.txt\n"
             "TESTOFS-000001.txt\n";
 
-        RT * tracker = rt_new_generator(&status, trackdata, sizeof(trackdata)-1);
+        RIO * tracker = rio_new_generator(&status, trackdata, sizeof(trackdata)-1);
 
-        status = RT_ERROR_OK;
+        status = RIO_ERROR_OK;
         SQ * sequence = sq_new_intracker(&status, tracker);
 
-        status = RT_ERROR_OK;
-        RT * rt = rt_new_insequence(&status, sequence);
+        status = RIO_ERROR_OK;
+        RIO * rt = rio_new_insequence(&status, sequence);
 
         char buffer[1024] = {};
-        BOOST_CHECK_EQUAL(10, rt_recv(rt, buffer, 10));
+        BOOST_CHECK_EQUAL(10, rio_recv(rt, buffer, 10));
         BOOST_CHECK_EQUAL(0, buffer[10]);
         if (0 != memcmp(buffer, "AAAAXBBBBX", 10)){
             LOG(LOG_ERR, "expected \"AAAAXBBBBX\" got \"%s\"\n", buffer);
         }
-        BOOST_CHECK_EQUAL(5, rt_recv(rt, buffer + 10, 1024));
+        BOOST_CHECK_EQUAL(5, rio_recv(rt, buffer + 10, 1024));
         BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
         BOOST_CHECK_EQUAL(0, buffer[15]);
-        BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer + 15, 1024));
-        rt_close(rt);
-        rt_delete(rt);
+        BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer + 15, 1024));
+        rio_close(rt);
+        rio_delete(rt);
         sq_delete(sequence);
     }
 
@@ -568,24 +568,24 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
 
 BOOST_AUTO_TEST_CASE(TestSequenceMeta)
 {
-    RT_ERROR status = RT_ERROR_OK;
+    RIO_ERROR status = RIO_ERROR_OK;
     SQ * sequence = sq_new_meta(&status, "./tests/fixtures/TESTOFS", "mwrm");
 
-    status = RT_ERROR_OK;
-    RT * rt = rt_new_insequence(&status, sequence);
+    status = RIO_ERROR_OK;
+    RIO * rt = rio_new_insequence(&status, sequence);
 
     char buffer[1024] = {};
-    BOOST_CHECK_EQUAL(10, rt_recv(rt, buffer, 10));
+    BOOST_CHECK_EQUAL(10, rio_recv(rt, buffer, 10));
     BOOST_CHECK_EQUAL(0, buffer[10]);
     if (0 != memcmp(buffer, "AAAAXBBBBX", 10)){
         LOG(LOG_ERR, "expected \"AAAAXBBBBX\" got \"%s\"\n", buffer);
     }
-    BOOST_CHECK_EQUAL(5, rt_recv(rt, buffer + 10, 1024));
+    BOOST_CHECK_EQUAL(5, rio_recv(rt, buffer + 10, 1024));
     BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
     BOOST_CHECK_EQUAL(0, buffer[15]);
-    BOOST_CHECK_EQUAL(0, rt_recv(rt, buffer + 15, 1024));
-    rt_close(rt);
-    rt_delete(rt);
+    BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer + 15, 1024));
+    rio_close(rt);
+    rio_delete(rt);
     sq_delete(sequence);
 }
 
@@ -610,16 +610,16 @@ BOOST_AUTO_TEST_CASE(TestOutMeta)
         }
     }
 
-    RT_ERROR status = RT_ERROR_OK;
+    RIO_ERROR status = RIO_ERROR_OK;
     SQ * seq  = NULL;
-    RT * rt = rt_new_outmeta(&status, &seq, "TESTOFS", "mwrm");
+    RIO * rt = rio_new_outmeta(&status, &seq, "TESTOFS", "mwrm");
 
-    BOOST_CHECK_EQUAL( 5, rt_send(rt, "AAAAX",  5));
-    BOOST_CHECK_EQUAL(RT_ERROR_OK, sq_next(seq));
-    BOOST_CHECK_EQUAL(10, rt_send(rt, "BBBBXCCCCX", 10));
+    BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
+    BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(seq));
+    BOOST_CHECK_EQUAL(10, rio_send(rt, "BBBBXCCCCX", 10));
 
-    rt_close(rt);
-    rt_delete(rt);
+    rio_close(rt);
+    rio_delete(rt);
     
     const char * file[] = {
         "TESTOFS.mwrm",
@@ -645,25 +645,25 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
     }
 
     {
-        RT_ERROR status = RT_ERROR_OK;
+        RIO_ERROR status = RIO_ERROR_OK;
         SQ * seq  = NULL;
-        RT * rt = rt_new_outmeta(&status, &seq, "TESTOFS", "mwrm");
+        RIO * rt = rio_new_outmeta(&status, &seq, "TESTOFS", "mwrm");
 
-        BOOST_CHECK_EQUAL( 5, rt_send(rt, "AAAAX",  5));
-        BOOST_CHECK_EQUAL(RT_ERROR_OK, sq_next(seq));
-        BOOST_CHECK_EQUAL(10, rt_send(rt, "BBBBXCCCCX", 10));
+        BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
+        BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(seq));
+        BOOST_CHECK_EQUAL(10, rio_send(rt, "BBBBXCCCCX", 10));
 
-        rt_close(rt);
-        rt_delete(rt);
+        rio_close(rt);
+        rio_delete(rt);
     }
     
     {
-        RT_ERROR status = RT_ERROR_OK;
-        RT * rt = rt_new_inmeta(&status, "TESTOFS", "mwrm");
+        RIO_ERROR status = RIO_ERROR_OK;
+        RIO * rt = rio_new_inmeta(&status, "TESTOFS", "mwrm");
         BOOST_CHECK( rt != NULL);
 
         char buffer[1024] = {};
-        BOOST_CHECK_EQUAL(15, rt_recv(rt, buffer,  15));
+        BOOST_CHECK_EQUAL(15, rio_recv(rt, buffer,  15));
         if (0 != memcmp(buffer, "AAAAXBBBBXCCCCX", 15)){
             BOOST_CHECK_EQUAL(0, buffer[15]); // this one should not have changed
             buffer[15] = 0;

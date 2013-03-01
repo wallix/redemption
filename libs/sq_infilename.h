@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -33,7 +33,7 @@
 
 extern "C" {
     struct SQInfilename {
-        RT * trans;
+        RIO * trans;
         SQ_FORMAT format;
         char prefix[512];
         char extension[12];
@@ -41,21 +41,21 @@ extern "C" {
         unsigned count;
     };
 
-    RT_ERROR sq_m_SQInfilename_constructor(SQInfilename * self, SQ_FORMAT format, const char * prefix, const char * extension)
+    RIO_ERROR sq_m_SQInfilename_constructor(SQInfilename * self, SQ_FORMAT format, const char * prefix, const char * extension)
     {
         self->trans = NULL;
         self->count = 0;
         self->format = format;
         self->pid = getpid();
         if (strlen(prefix) > sizeof(self->prefix) - 1){
-            return RT_ERROR_STRING_PREFIX_TOO_LONG;
+            return RIO_ERROR_STRING_PREFIX_TOO_LONG;
         }
         strcpy(self->prefix, prefix);
         if (strlen(extension) > sizeof(self->extension) - 1){
-            return RT_ERROR_STRING_EXTENSION_TOO_LONG;
+            return RIO_ERROR_STRING_EXTENSION_TOO_LONG;
         }
         strcpy(self->extension, extension);
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     // internal utility method, used to get name of files used for target transports
@@ -80,36 +80,36 @@ extern "C" {
     }
 
 
-    RT_ERROR sq_m_SQInfilename_destructor(SQInfilename * self)
+    RIO_ERROR sq_m_SQInfilename_destructor(SQInfilename * self)
     {
         if (self->trans){
-            rt_delete(self->trans);
+            rio_delete(self->trans);
             self->trans = NULL;
         }
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
-    RT * sq_m_SQInfilename_get_trans(SQInfilename * self, RT_ERROR * status)
+    RIO * sq_m_SQInfilename_get_trans(SQInfilename * self, RIO_ERROR * status)
     {
-        if (status && (*status != RT_ERROR_OK)) { return self->trans; }
+        if (status && (*status != RIO_ERROR_OK)) { return self->trans; }
         if (!self->trans){
             char tmpname[1024];
             sq_im_SQInfilename_get_name(self, tmpname, sizeof(tmpname));
             int fd = ::open(tmpname, O_RDONLY, S_IRUSR|S_IRUSR);
             if (fd < 0){
-                if (status) { *status = RT_ERROR_OPEN; }
+                if (status) { *status = RIO_ERROR_OPEN; }
                 return self->trans; // self->trans is NULL
             }
-            self->trans = rt_new_infile(status, fd);
+            self->trans = rio_new_infile(status, fd);
         }
         return self->trans;
     }
 
-    RT_ERROR sq_m_SQInfilename_next(SQInfilename * self)
+    RIO_ERROR sq_m_SQInfilename_next(SQInfilename * self)
     {
         sq_m_SQInfilename_destructor(self);
         self->count += 1;
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 };
 

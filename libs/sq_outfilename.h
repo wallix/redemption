@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -33,8 +33,8 @@
 
 extern "C" {
     struct SQOutfilename {
-        RT * trans;
-        RT * tracker;
+        RIO * trans;
+        RIO * tracker;
         SQ_FORMAT format;
         char prefix[512];
         char extension[12];
@@ -42,7 +42,7 @@ extern "C" {
         unsigned count;
     };
 
-    RT_ERROR sq_m_SQOutfilename_constructor(SQOutfilename * self, RT * tracker, SQ_FORMAT format, const char * prefix, const char * extension)
+    RIO_ERROR sq_m_SQOutfilename_constructor(SQOutfilename * self, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension)
     {
         self->trans = NULL;
         self->tracker = tracker;
@@ -50,14 +50,14 @@ extern "C" {
         self->format = format;
         self->pid = getpid();
         if (strlen(prefix) > sizeof(self->prefix) - 1){
-            return RT_ERROR_STRING_PREFIX_TOO_LONG;
+            return RIO_ERROR_STRING_PREFIX_TOO_LONG;
         }
         strcpy(self->prefix, prefix);
         if (strlen(extension) > sizeof(self->extension) - 1){
-            return RT_ERROR_STRING_EXTENSION_TOO_LONG;
+            return RIO_ERROR_STRING_EXTENSION_TOO_LONG;
         }
         strcpy(self->extension, extension);
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     // internal utility method, used to get name of files used for target transports
@@ -82,42 +82,42 @@ extern "C" {
     }
 
 
-    RT_ERROR sq_m_SQOutfilename_destructor(SQOutfilename * self)
+    RIO_ERROR sq_m_SQOutfilename_destructor(SQOutfilename * self)
     {
         if (self->trans){
             if (self->tracker) { 
                 char buffer[1024];
                 size_t len = sq_im_SQOutfilename_get_name(self, buffer, sizeof(buffer)-1);
                 buffer[len] = '\n';
-                rt_send(self->tracker, buffer, len + 1);
+                rio_send(self->tracker, buffer, len + 1);
             }
-            rt_delete(self->trans);
+            rio_delete(self->trans);
             self->trans = NULL;
         }
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
-    RT * sq_m_SQOutfilename_get_trans(SQOutfilename * self, RT_ERROR * status)
+    RIO * sq_m_SQOutfilename_get_trans(SQOutfilename * self, RIO_ERROR * status)
     {
-        if (status && (*status != RT_ERROR_OK)) { return self->trans; }
+        if (status && (*status != RIO_ERROR_OK)) { return self->trans; }
         if (!self->trans){
             char tmpname[1024];
             sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname));
             int fd = ::open(tmpname, O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR);
             if (fd < 0){
-                if (status) { *status = RT_ERROR_CREAT; }
+                if (status) { *status = RIO_ERROR_CREAT; }
                 return self->trans;
             }
-            self->trans = rt_new_outfile(status, fd);
+            self->trans = rio_new_outfile(status, fd);
         }
         return self->trans;
     }
 
-    RT_ERROR sq_m_SQOutfilename_next(SQOutfilename * self)
+    RIO_ERROR sq_m_SQOutfilename_next(SQOutfilename * self)
     {
         sq_m_SQOutfilename_destructor(self);
         self->count += 1;
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 };
 

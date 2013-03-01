@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -21,14 +21,14 @@
 
 */
 
-#ifndef _REDEMPTION_LIBS_RT_INSEQUENCE_H_
-#define _REDEMPTION_LIBS_RT_INSEQUENCE_H_
+#ifndef _REDEMPTION_LIBS_RIO_INSEQUENCE_H_
+#define _REDEMPTION_LIBS_RIO_INSEQUENCE_H_
 
 #include "rio_constants.h"
 
-struct RTInsequence {
+struct RIOInsequence {
     bool status;
-    RT_ERROR err;
+    RIO_ERROR err;
     struct SQ * seq;
 };
 
@@ -37,19 +37,19 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_RTInsequence_constructor(RTInsequence * self, SQ * seq)
+    inline RIO_ERROR rio_m_RIOInsequence_constructor(RIOInsequence * self, SQ * seq)
     {
         self->status = true;
-        self->err = RT_ERROR_OK;
+        self->err = RIO_ERROR_OK;
         self->seq = seq;
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_RTInsequence_destructor(RTInsequence * self)
+    inline RIO_ERROR rio_m_RIOInsequence_destructor(RIOInsequence * self)
     {
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method receive len bytes of data into buffer
@@ -59,28 +59,28 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTInsequence_recv(RTInsequence * self, void * data, size_t len)
+    inline ssize_t rio_m_RIOInsequence_recv(RIOInsequence * self, void * data, size_t len)
     {
         if (!self->status){ 
-            if (self->err == RT_ERROR_EOF){ return 0; }
+            if (self->err == RIO_ERROR_EOF){ return 0; }
             return -self->err; 
         }
 
-        RT_ERROR status = RT_ERROR_OK;
-        RT * trans = sq_get_trans(self->seq, &status);
-        if (status != RT_ERROR_OK){
+        RIO_ERROR status = RIO_ERROR_OK;
+        RIO * trans = sq_get_trans(self->seq, &status);
+        if (status != RIO_ERROR_OK){
             return -status;
         }
         int remaining_len = len;
         while (remaining_len > 0){
-            int res = rt_recv(trans, &((char*)data)[len-remaining_len], remaining_len);
+            int res = rio_recv(trans, &((char*)data)[len-remaining_len], remaining_len);
             if (res == 0){
-                RT_ERROR status = RT_ERROR_OK;
+                RIO_ERROR status = RIO_ERROR_OK;
                 sq_next(self->seq);
                 trans = sq_get_trans(self->seq, &status);
-                if (status != RT_ERROR_OK){ // this one is the last in the sequence (or other error ?)
+                if (status != RIO_ERROR_OK){ // this one is the last in the sequence (or other error ?)
                     self->status = false;
-                    self->err = RT_ERROR_EOF; // next read will trigger EOF
+                    self->err = RIO_ERROR_EOF; // next read will trigger EOF
                     return len - remaining_len;
                 }
                 continue;
@@ -105,25 +105,25 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTInsequence_send(RTInsequence * self, const void * data, size_t len)
+    inline ssize_t rio_m_RIOInsequence_send(RIOInsequence * self, const void * data, size_t len)
     {
-         return -RT_ERROR_RECV_ONLY;
+         return -RIO_ERROR_RECV_ONLY;
     }
 
     /* This method flush current chunk and start a new one
        default: do nothing if the current file does not support chunking
     */
-    inline RT_ERROR rt_m_RTInsequence_next(RTInsequence * self)
+    inline RIO_ERROR rio_m_RIOInsequence_next(RIOInsequence * self)
     {
-         return RT_ERROR_OK;
+         return RIO_ERROR_OK;
     }
 
     /* Set Timestamp for next chunk
        default : do nothing if the current file does not support timestamped chunks 
     */
-    inline RT_ERROR rt_m_RTInsequence_timestamp(RTInsequence * self, uint32_t tv_sec, uint32_t tv_usec)
+    inline RIO_ERROR rio_m_RIOInsequence_timestamp(RIOInsequence * self, uint32_t tv_sec, uint32_t tv_usec)
     {
-         return RT_ERROR_OK;
+         return RIO_ERROR_OK;
     }
 
     /* Get Timestamp for current chunk
@@ -131,9 +131,9 @@ extern "C" {
        tv_sec is mandatory.
        default : do nothing if the current file does not support timestamped chunks 
     */
-    inline RT_ERROR rt_m_RTInsequence_get_timestamp(RTInsequence * self, uint32_t * tv_sec, uint32_t * tv_usec)
+    inline RIO_ERROR rio_m_RIOInsequence_get_timestamp(RIOInsequence * self, uint32_t * tv_sec, uint32_t * tv_usec)
     {
-         return RT_ERROR_OK;
+         return RIO_ERROR_OK;
     }
 
     /* Set metadata for next chunk (when writing to transport) 
@@ -142,18 +142,18 @@ extern "C" {
        Metadata can be added until the chunk is terminated (by calling next)
        default : do nothing if the current file does not support timestamped chunks
     */
-    inline RT_ERROR rt_m_RTInsequence_add_meta(RTInsequence * self, const char * meta)
+    inline RIO_ERROR rio_m_RIOInsequence_add_meta(RIOInsequence * self, const char * meta)
     {
-         return RT_ERROR_OK;
+         return RIO_ERROR_OK;
     }
 
     /* Get metadata for current chunk (when reading from transport)
        this method can be called any number of time to get all metadata blocks relevant to current chunk.
        default : do nothing if the current file does not support timestamped chunks
     */
-    inline RT_ERROR rt_m_RTInsequence_get_meta(RTInsequence * self, char * meta)
+    inline RIO_ERROR rio_m_RIOInsequence_get_meta(RIOInsequence * self, char * meta)
     {
-         return RT_ERROR_OK;
+         return RIO_ERROR_OK;
     }
 };
 

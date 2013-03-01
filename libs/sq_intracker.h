@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -33,8 +33,8 @@
 
 extern "C" {
     struct SQIntracker {
-        RT * trans;
-        RT * tracker;
+        RIO * trans;
+        RIO * tracker;
         char name[1024];
         char buffer[2048];
         int begin;
@@ -68,13 +68,13 @@ extern "C" {
             self->end = used_len;
             self->begin = 0;
         }
-        ssize_t res = rt_recv(self->tracker, &(self->buffer[self->end]), sizeof(self->buffer) - self->end);
+        ssize_t res = rio_recv(self->tracker, &(self->buffer[self->end]), sizeof(self->buffer) - self->end);
         if (res < 0){
             return -res;
         }
         self->end += res;
         if (self->begin == self->end) {
-            return -RT_ERROR_EOF;
+            return -RIO_ERROR_EOF;
         }
         for (int i = self->begin; i < self->end; i++){
             if (self->buffer[i] == '\n'){
@@ -87,16 +87,16 @@ extern "C" {
     }
 
 
-    RT_ERROR sq_m_SQIntracker_constructor(SQIntracker * self, RT * tracker)
+    RIO_ERROR sq_m_SQIntracker_constructor(SQIntracker * self, RIO * tracker)
     {
         self->trans = NULL;
         self->tracker = tracker;
         self->begin = self->eol = self->end = 0;
         self->rlstatus = sq_m_SQIntracker_readline(self);
         if (self->rlstatus < 0){
-            return (RT_ERROR)-self->rlstatus;
+            return (RIO_ERROR)-self->rlstatus;
         }
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     // internal utility method, used to get name of files used for target transports
@@ -115,44 +115,44 @@ extern "C" {
     }
 
 
-    RT_ERROR sq_m_SQIntracker_destructor(SQIntracker * self)
+    RIO_ERROR sq_m_SQIntracker_destructor(SQIntracker * self)
     {
         if (self->trans){
-            rt_delete(self->trans);
+            rio_delete(self->trans);
             self->trans = NULL;
         }
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
-    RT * sq_m_SQIntracker_get_trans(SQIntracker * self, RT_ERROR * status)
+    RIO * sq_m_SQIntracker_get_trans(SQIntracker * self, RIO_ERROR * status)
     {
-        if (status && (*status != RT_ERROR_OK)) { return NULL; }
+        if (status && (*status != RIO_ERROR_OK)) { return NULL; }
         if (!self->trans){
             if (self->rlstatus < 0){
-                if (status) { *status = (RT_ERROR)-self->rlstatus; }
+                if (status) { *status = (RIO_ERROR)-self->rlstatus; }
                 return NULL; // self->trans is NULL
             }
             char tmpname[1024];
             if (sq_im_SQIntracker_get_name(self, tmpname, sizeof(tmpname)) <= 0){
-                if (status) { *status = RT_ERROR_EOF; }
+                if (status) { *status = RIO_ERROR_EOF; }
                 return self->trans; // self->trans is NULL                
             }
             int fd = ::open(tmpname, O_RDONLY, S_IRUSR|S_IRUSR);
             if (fd < 0){
-                if (status) { *status = RT_ERROR_OPEN; }
+                if (status) { *status = RIO_ERROR_OPEN; }
                 return self->trans; // self->trans is NULL
             }
-            self->trans = rt_new_infile(status, fd);
+            self->trans = rio_new_infile(status, fd);
         }
         return self->trans;
     }
 
-    RT_ERROR sq_m_SQIntracker_next(SQIntracker * self)
+    RIO_ERROR sq_m_SQIntracker_next(SQIntracker * self)
     {
         sq_m_SQIntracker_destructor(self);
         self->begin = self->eol;
         self->rlstatus = sq_m_SQIntracker_readline(self);
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 };
 

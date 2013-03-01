@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -21,14 +21,14 @@
 
 */
 
-#ifndef _REDEMPTION_LIBS_RT_INMETA_H_
-#define _REDEMPTION_LIBS_RT_INMETA_H_
+#ifndef _REDEMPTION_LIBS_RIO_INMETA_H_
+#define _REDEMPTION_LIBS_RIO_INMETA_H_
 
 #include "rio_constants.h"
 
-struct RTInmeta {
+struct RIOInmeta {
     struct SQ * seq;
-    struct RT * insequence;
+    struct RIO * insequence;
 };
 
 extern "C" {
@@ -36,30 +36,30 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_RTInmeta_constructor(RTInmeta * self, const char * prefix, const char * extension)
+    inline RIO_ERROR rio_m_RIOInmeta_constructor(RIOInmeta * self, const char * prefix, const char * extension)
     {
-        RT_ERROR status = RT_ERROR_OK;
+        RIO_ERROR status = RIO_ERROR_OK;
         SQ * sequence = sq_new_meta(&status, prefix, extension);
-        if (status != RT_ERROR_OK){
+        if (status != RIO_ERROR_OK){
             return status;
         }
-        RT * rt = rt_new_insequence(&status, sequence);
-        if (status != RT_ERROR_OK){
+        RIO * rt = rio_new_insequence(&status, sequence);
+        if (status != RIO_ERROR_OK){
             sq_delete(sequence);
             return status;
         }
         self->seq = sequence;
         self->insequence = rt;
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_RTInmeta_destructor(RTInmeta * self)
+    inline RIO_ERROR rio_m_RIOInmeta_destructor(RIOInmeta * self)
     {
-        rt_delete(self->insequence);
+        rio_delete(self->insequence);
         sq_delete(self->seq);
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method receive len bytes of data into buffer
@@ -69,9 +69,9 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTInmeta_recv(RTInmeta * self, void * data, size_t len)
+    inline ssize_t rio_m_RIOInmeta_recv(RIOInmeta * self, void * data, size_t len)
     {
-         return rt_recv(self->insequence, data, len);
+         return rio_recv(self->insequence, data, len);
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -81,9 +81,9 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTInmeta_send(RTInmeta * self, const void * data, size_t len)
+    inline ssize_t rio_m_RIOInmeta_send(RIOInmeta * self, const void * data, size_t len)
     {
-        return -RT_ERROR_RECV_ONLY;
+        return -RIO_ERROR_RECV_ONLY;
     }
 };
 

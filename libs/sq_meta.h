@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -33,49 +33,49 @@
 
 extern "C" {
     struct SQMeta {
-        RT * tracker;
+        RIO * tracker;
         struct SQIntracker impl;
     };
 
 
-    RT_ERROR sq_m_SQMeta_constructor(SQMeta * self, const char * prefix, const char * extension)
+    RIO_ERROR sq_m_SQMeta_constructor(SQMeta * self, const char * prefix, const char * extension)
     {
         TODO("Manage all actual open error with more details")
         char tmpname[1024];
         if ((size_t)snprintf(tmpname, sizeof(tmpname), "%s.%s", prefix, extension) >= sizeof(tmpname)){
-            return RT_ERROR_FILENAME_TOO_LONG;
+            return RIO_ERROR_FILENAME_TOO_LONG;
         }
         int fd = ::open(tmpname, O_RDONLY);
         if (fd < 0){
-            return RT_ERROR_OPEN;
+            return RIO_ERROR_OPEN;
         }
-        RT_ERROR status = RT_ERROR_OK;
-        RT * rt = rt_new_infile(&status, fd);
-        if (status != RT_ERROR_OK){
+        RIO_ERROR status = RIO_ERROR_OK;
+        RIO * rt = rio_new_infile(&status, fd);
+        if (status != RIO_ERROR_OK){
             close(fd);
             return status;
         }
         self->tracker = rt;
         status = sq_m_SQIntracker_constructor(&self->impl, rt);
-        if (status != RT_ERROR_OK){
-            rt_delete(rt);
+        if (status != RIO_ERROR_OK){
+            rio_delete(rt);
         }
         return status;
     }
 
-    RT_ERROR sq_m_SQMeta_destructor(SQMeta * self)
+    RIO_ERROR sq_m_SQMeta_destructor(SQMeta * self)
     {
         sq_m_SQIntracker_destructor(&self->impl);
-        rt_delete(self->tracker);
-        return RT_ERROR_OK;
+        rio_delete(self->tracker);
+        return RIO_ERROR_OK;
     }
 
-    RT * sq_m_SQMeta_get_trans(SQMeta * self, RT_ERROR * status)
+    RIO * sq_m_SQMeta_get_trans(SQMeta * self, RIO_ERROR * status)
     {
         return sq_m_SQIntracker_get_trans(&self->impl, status);
     }
 
-    RT_ERROR sq_m_SQMeta_next(SQMeta * self)
+    RIO_ERROR sq_m_SQMeta_next(SQMeta * self)
     {
         return sq_m_SQIntracker_next(&self->impl);
     }

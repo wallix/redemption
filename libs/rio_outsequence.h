@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -21,12 +21,12 @@
 
 */
 
-#ifndef _REDEMPTION_LIBS_RT_OUTSEQUENCE_H_
-#define _REDEMPTION_LIBS_RT_OUTSEQUENCE_H_
+#ifndef _REDEMPTION_LIBS_RIO_OUTSEQUENCE_H_
+#define _REDEMPTION_LIBS_RIO_OUTSEQUENCE_H_
 
 #include "rio_constants.h"
 
-struct RTOutsequence {
+struct RIOOutsequence {
     struct SQ * seq;
 };
 
@@ -35,17 +35,17 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_RTOutsequence_constructor(RTOutsequence * self, SQ * seq)
+    inline RIO_ERROR rio_m_RIOOutsequence_constructor(RIOOutsequence * self, SQ * seq)
     {
         self->seq = seq;
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_RTOutsequence_destructor(RTOutsequence * self)
+    inline RIO_ERROR rio_m_RIOOutsequence_destructor(RIOOutsequence * self)
     {
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method receive len bytes of data into buffer
@@ -55,9 +55,9 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTOutsequence_recv(RTOutsequence * self, void * data, size_t len)
+    inline ssize_t rio_m_RIOOutsequence_recv(RIOOutsequence * self, void * data, size_t len)
     {
-         return -RT_ERROR_SEND_ONLY;
+         return -RIO_ERROR_SEND_ONLY;
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -67,12 +67,12 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTOutsequence_send(RTOutsequence * self, const void * data, size_t len)
+    inline ssize_t rio_m_RIOOutsequence_send(RIOOutsequence * self, const void * data, size_t len)
     {
-         RT_ERROR status = RT_ERROR_OK;
-         RT * trans = sq_get_trans(self->seq, &status);
-         if (status == RT_ERROR_OK){
-             return rt_send(trans, data, len);
+         RIO_ERROR status = RIO_ERROR_OK;
+         RIO * trans = sq_get_trans(self->seq, &status);
+         if (status == RIO_ERROR_OK){
+             return rio_send(trans, data, len);
          }
          else {
             return -status;
@@ -82,17 +82,17 @@ extern "C" {
     /* This method flush current chunk and start a new one
        default: do nothing if the current file does not support chunking
     */
-    inline RT_ERROR rt_m_RTOutsequence_next(RTOutsequence * self)
+    inline RIO_ERROR rio_m_RIOOutsequence_next(RIOOutsequence * self)
     {
-         return RT_ERROR_OK;
+         return RIO_ERROR_OK;
     }
 
     /* Set Timestamp for next chunk
        default : do nothing if the current file does not support timestamped chunks 
     */
-    inline RT_ERROR rt_m_RTOutsequence_timestamp(RTOutsequence * self, uint32_t tv_sec, uint32_t tv_usec)
+    inline RIO_ERROR rio_m_RIOOutsequence_timestamp(RIOOutsequence * self, uint32_t tv_sec, uint32_t tv_usec)
     {
-         return RT_ERROR_OK;
+         return RIO_ERROR_OK;
     }
 
     /* Get Timestamp for current chunk
@@ -100,9 +100,9 @@ extern "C" {
        tv_sec is mandatory.
        default : do nothing if the current file does not support timestamped chunks 
     */
-    inline RT_ERROR rt_m_RTOutsequence_get_timestamp(RTOutsequence * self, uint32_t * tv_sec, uint32_t * tv_usec)
+    inline RIO_ERROR rio_m_RIOOutsequence_get_timestamp(RIOOutsequence * self, uint32_t * tv_sec, uint32_t * tv_usec)
     {
-         return RT_ERROR_OK;
+         return RIO_ERROR_OK;
     }
 
     /* Set metadata for next chunk (when writing to transport) 
@@ -111,18 +111,18 @@ extern "C" {
        Metadata can be added until the chunk is terminated (by calling next)
        default : do nothing if the current file does not support timestamped chunks
     */
-    inline RT_ERROR rt_m_RTOutsequence_add_meta(RTOutsequence * self, const char * meta)
+    inline RIO_ERROR rio_m_RIOOutsequence_add_meta(RIOOutsequence * self, const char * meta)
     {
-         return RT_ERROR_OK;
+         return RIO_ERROR_OK;
     }
 
     /* Get metadata for current chunk (when reading from transport)
        this method can be called any number of time to get all metadata blocks relevant to current chunk.
        default : do nothing if the current file does not support timestamped chunks
     */
-    inline RT_ERROR rt_m_RTOutsequence_get_meta(RTOutsequence * self, char * meta)
+    inline RIO_ERROR rio_m_RIOOutsequence_get_meta(RIOOutsequence * self, char * meta)
     {
-         return RT_ERROR_OK;
+         return RIO_ERROR_OK;
     }
 };
 

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -20,17 +20,17 @@
    new Generator RedTransport class
 */
 
-#ifndef _REDEMPTION_LIBS_RT_GENERATOR_H_
-#define _REDEMPTION_LIBS_RT_GENERATOR_H_
+#ifndef _REDEMPTION_LIBS_RIO_GENERATOR_H_
+#define _REDEMPTION_LIBS_RIO_GENERATOR_H_
 
 #include "rio_constants.h"
 
-struct RTGenerator {
+struct RIOGenerator {
     size_t current;
     uint8_t * data;
     size_t len;
     bool status;
-    RT_ERROR err;
+    RIO_ERROR err;
 };
 
 extern "C" {
@@ -38,27 +38,27 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_RTGenerator_constructor(RTGenerator * self, const void * data, size_t len)
+    inline RIO_ERROR rio_m_RIOGenerator_constructor(RIOGenerator * self, const void * data, size_t len)
     {
         self->data = (uint8_t *)malloc(len);
-        if (!self->data) { return RT_ERROR_MALLOC; }
+        if (!self->data) { return RIO_ERROR_MALLOC; }
         self->len = len;
         self->current = 0;
         self->status = true;
-        self->err = RT_ERROR_OK;
+        self->err = RIO_ERROR_OK;
         memcpy(self->data, data, len);
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_RTGenerator_destructor(RTGenerator * self)
+    inline RIO_ERROR rio_m_RIOGenerator_destructor(RIOGenerator * self)
     {
         free(self->data);
-        return RT_ERROR_OK;
+        return RIO_ERROR_OK;
     }
 
-    void rt_m_RTGenerator_close(RTGenerator * self)
+    void rio_m_RIOGenerator_close(RIOGenerator * self)
     {
     }
 
@@ -69,10 +69,10 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTGenerator_recv(RTGenerator * self, void * data, size_t len)
+    inline ssize_t rio_m_RIOGenerator_recv(RIOGenerator * self, void * data, size_t len)
     {
         if (!self->status){ 
-            if (self->err == RT_ERROR_EOF){
+            if (self->err == RIO_ERROR_EOF){
                 return 0;
             }
             return -self->err; 
@@ -82,7 +82,7 @@ extern "C" {
             memcpy(data, (char*)self->data + self->current, available_len);
             self->current += available_len;
             self->status = false; // next read will trigger EOF
-            self->err = RT_ERROR_EOF;
+            self->err = RIO_ERROR_EOF;
             return available_len;
         }
         memcpy(data, (char*)self->data + self->current, len);
@@ -97,10 +97,10 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTGenerator_send(RTGenerator * self, const void * data, size_t len)
+    inline ssize_t rio_m_RIOGenerator_send(RIOGenerator * self, const void * data, size_t len)
     {
          self->status = false;
-         self->err = RT_ERROR_RECV_ONLY;
+         self->err = RIO_ERROR_RECV_ONLY;
          return -self->err;
     }
 
