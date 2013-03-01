@@ -656,16 +656,16 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
         }
     }    
     
-//    const char * file[] = {
-//        "TESTOFS.mwrm",
-//        "TESTOFS-000000.wrm",
-//        "TESTOFS-000001.wrm"
-//    };
-//    for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
-//        if (::unlink(file[i]) < 0){
-//            BOOST_CHECK(false);
-//            LOG(LOG_ERR, "failed to unlink %s", file[i]);
-//        }
-//    }
+    const char * file[] = {
+        "TESTOFS.mwrm",
+        "TESTOFS-000000.wrm",
+        "TESTOFS-000001.wrm"
+    };
+    for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
+        if (::unlink(file[i]) < 0){
+            BOOST_CHECK(false);
+            LOG(LOG_ERR, "failed to unlink %s", file[i]);
+        }
+    }
 }
 
