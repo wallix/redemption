@@ -45,14 +45,13 @@ enum EventType {
     CLIC_BUTTON3_DOWN,
     WM_DRAW,
     TEXT_CHANGED,
-    BUTTON_PRESSED,
+    WIDGET_SUBMIT
 };
 
 enum NotifyEventType {
     NOTIFY_FOCUS_BEGIN,
     NOTIFY_FOCUS_END,
     NOTIFY_TEXT_CHANGED = TEXT_CHANGED,
-    NOTIFY_BUTTON_PRESSED = BUTTON_PRESSED,
     NOTIFY_SUBMIT,
     NOTIFY_CANCEL,
 };
@@ -109,24 +108,62 @@ protected:
     {}
 
 public:
-    virtual void draw(const Rect& clip)
+    Rect get_clip_base()
     {
-        this->drawable->draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
+        if (this->parent){
+            Rect ret = this->rect;
+            for (Widget * p = this->parent; p; p = p->parent){
+                ret = ret.intersect(p->rect.cx, p->rect.cy);
+                ret.x += p->rect.x;
+                ret.y += p->rect.y;
+            }
+            return ret;
+        }
+        return this->rect;
+    }
+
+    virtual void draw(const Rect& rect, const Rect& clip_screen)
+    {
+        this->drawable->draw(
+            RDPOpaqueRect(
+                rect.offset(clip_screen.x, clip_screen.y),
+                this->bg_color
+            ), clip_screen);
     }
 
     void refresh(const Rect & rect)
     {
         if (!rect.isempty() && this->drawable){
-            this->drawable->begin_update();
-            this->draw(rect);
-            this->drawable->end_update();
+            Rect clip = this->get_clip_base();
+            if (clip.cx && clip.cy && rect.x < clip.cx && rect.y < clip.cy){
+                this->drawable->begin_update();
+                this->draw(rect, clip);
+                this->drawable->end_update();
+            }
+        }
+    }
+
+    void refresh_child(Widget * w, const Rect & rect, const Rect & clip_screen)
+    {
+        if (!w->rect.isempty() && w->drawable){
+            Rect new_clip = clip_screen.intersect(
+                Rect(clip_screen.x + rect.x + w->rect.x,
+                     clip_screen.y + rect.y + w->rect.y,
+                     rect.x + rect.cx,
+                     rect.y + rect.cy)
+            );
+            if (new_clip.cx && new_clip.cy && rect.x < new_clip.cx && rect.y < new_clip.cy){
+                w->drawable->begin_update();
+                w->draw(rect, new_clip);
+                w->drawable->end_update();
+            }
         }
     }
 
     virtual void send_event(EventType event, int param, int param2, Keymap2 * keymap)
     {
         if (event == WM_DRAW){
-            this->refresh(this->rect);
+            this->refresh(Rect(0,0,this->rect.cx, this->rect.cy));
         }
     }
 

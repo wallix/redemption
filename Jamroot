@@ -109,7 +109,7 @@ lib icuuc : : <name>icuuc ;
 # Build rio library
 # bjam rio
 # Build rio library : force build, verbose
-# bjam -a -d2 rio 
+# bjam -a -d2 rio
 # See library content (entry points) using
 # nm -C --defined-only -g bin/*/*/librio.so
 lib rio : libs/rio.cpp : ;
@@ -275,5 +275,6 @@ unit-test test_zlib : tests/test_zlib.cpp z libboost_unit_test  ;
 
 unit-test test_parse_username : tests/test_parse_username.cpp libboost_unit_test  ;
 
-unit-test test_widget_notify : tests/test_widget_notify.cpp libboost_unit_test ;
+unit-test test_widget2 : tests/test_widget2.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_widget2_clip : tests/test_widget2_clip.cpp libboost_unit_test ;
 

@@ -27,93 +27,102 @@
 // #define LOGNULL
 #include <string>
 #include <sstream>
+#include <boost/lexical_cast.hpp>
 #include <widget2/window.hpp>
 #include <widget2/screen.hpp>
 #include <widget2/edit.hpp>
+#include "ssl_calls.hpp"
+#include "RDP/RDPDrawable.hpp"
+#include "png.hpp"
+#include <stdio.h>
 
 struct TestNotify : NotifyApi
 {
-    std::ostringstream oss;
+    std::string s;
 
     virtual void notify(Widget * sender, NotifyApi::notify_event_t event)
     {
         BOOST_ASSERT(sender != 0);
-        oss << "event: " << event
-        << " -- id: " << sender->id
-        << ", type: " << sender->type << std::endl;
+        s += "event: ";
+        s += boost::lexical_cast<std::string>(event);
+        s += " -- id: ";
+        s += boost::lexical_cast<std::string>(sender->id);
+        s += ", type: ";
+        s += boost::lexical_cast<std::string>(sender->type);
+        s += '\n';
     }
 };
 
 struct TestDraw : ModApi
 {
-    std::string s;
+    RDPDrawable gd;
 
-    virtual void begin_update()
-    {
-        s += "begin_update\n";
-    }
-
+    TestDraw()
+    : gd(1000,1000,true)
+    {}
 
     virtual void draw(const RDPOpaqueRect& cmd, const Rect& clip)
     {
-        s += "draw(RDPOpaqueRect)\n";
+        gd.draw(cmd, clip);
     }
-
 
     virtual void draw(const RDPScrBlt& cmd, const Rect& clip)
     {
-        s += "draw(RDPScrBlt)\n";
+        gd.draw(cmd, clip);
     }
-
 
     virtual void draw(const RDPDestBlt& cmd, const Rect& clip)
     {
-        s += "draw(RDPDestBlt)\n";
+        gd.draw(cmd, clip);
     }
-
 
     virtual void draw(const RDPPatBlt& cmd, const Rect& clip)
     {
-        s += "draw(RDPPatBlt)\n";
+        gd.draw(cmd, clip);
     }
-
-
-    virtual void draw(const RDPLineTo& cmd, const Rect& clip)
-    {
-        s += "draw(RDPLineTo)\n";
-    }
-
-
-    virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip)
-    {
-        s += "draw(RDPGlyphIndex)\n";
-    }
-
 
     virtual void draw(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bmp)
     {
-        s += "draw(RDPMemBlt)\n";
+        gd.draw(cmd, clip, bmp);
     }
 
+    virtual void draw(const RDPLineTo& cmd, const Rect& clip)
+    {
+        gd.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip)
+    {
+        gd.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPBrushCache& cmd)
+    {
+        gd.draw(cmd);
+    }
+
+    virtual void draw(const RDPColCache& cmd)
+    {
+        gd.draw(cmd);
+    }
+
+    virtual void draw(const RDPGlyphCache& cmd)
+    {
+        gd.draw(cmd);
+    }
+
+    virtual void begin_update()
+    {}
 
     virtual void end_update()
-    {
-        s += "end_update\n";
-    }
-
+    {}
 
     virtual void server_draw_text(uint16_t x, uint16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
-    {
-        s += "server_draw_text\n";
-    }
+    {}
 
 
     virtual void text_metrics(const char* text, int& width, int& height)
-    {
-        s += "text_metrics\n";
-    }
-
-
+    {}
 };
 
 struct TestWidget
@@ -136,6 +145,11 @@ struct TestWidget
         w1.id = 1;
         w2.id = 2;
         w3.id = 3;
+        screen.bg_color = 100;
+        win.bg_color = 1000;
+        w1.bg_color = 10000;
+        w2.bg_color = 100000;
+        w3.bg_color = 1000000;
     }
 };
 
@@ -175,7 +189,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFocus)
     }
     BOOST_CHECK(!w.w1.has_focus && w.w2.has_focus && !w.w3.has_focus);
 
-    BOOST_CHECK(notify.oss.str() ==
+    BOOST_CHECK(notify.s ==
         "event: 0 -- id: 3, type: 3\n" //FOCUS_END
         "event: 1 -- id: 2, type: 5\n" //FOCUS_BEGIN
         "event: 0 -- id: 1, type: 3\n" //FOCUS_END
@@ -184,32 +198,59 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFocus)
         "event: 1 -- id: 1, type: 3\n" //FOCUS_BEGIN
     );
 }
-#include <iostream>
+
+inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
+                      char * message, const char * shasig)
+{
+    uint8_t sig[20];
+    SslSha1 sha1;
+    for (size_t y = 0; y < (size_t)height; y++){
+        sha1.update(data + y * len, len);
+    }
+    sha1.final(sig);
+
+    if (memcmp(shasig, sig, 20)){
+        sprintf(message, "Expected signature: \""
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
+        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
+        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
+        sig[ 8], sig[ 9], sig[10], sig[11],
+        sig[12], sig[13], sig[14], sig[15],
+        sig[16], sig[17], sig[18], sig[19]);
+        return false;
+    }
+    return true;
+}
+
+inline bool check_sig(Drawable & data, char * message, const char * shasig)
+{
+    return check_sig(data.data, data.height, data.rowsize, message, shasig);
+}
+
 BOOST_AUTO_TEST_CASE(TraceWidgetDraw)
 {
     TestDraw drawable;
     TestWidget w(&drawable);
+    Widget wid(&drawable, Rect(700, 500, 200, 200), &w.win, Widget::TYPE_BUTTON, 0);
+    wid.bg_color = 10000000;
 
     w.screen.send_event(WM_DRAW, 0, 0, 0);
+    //or w.screen.refresh(w.screen.rect);
 
-    BOOST_CHECK(drawable.s ==
-        "begin_update\n"
-        "draw(RDPOpaqueRect)\n"
-        "begin_update\n"
-        "draw(RDPOpaqueRect)\n"
-        "begin_update\n"
-        "draw(RDPOpaqueRect)\n"
-        "end_update\n"
-        "begin_update\n"
-        "text_metrics\n"
-        "server_draw_text\n"
-        "end_update\n"
-        "begin_update\n"
-        "draw(RDPOpaqueRect)\n"
-        "end_update\n"
-        "end_update\n"
-        "end_update\n"
-    );
+    //std::FILE * file = fopen("/tmp/b.png", "w+");
+    //dump_png24(file, drawable.gd.drawable.data, drawable.gd.drawable.width, //drawable.gd.drawable.height, drawable.gd.drawable.rowsize);
+    //fclose(file);
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xd9\xe1\x56\xed\xbc\x4b\xf5\x70\xe3\x97"
+        "\x42\x54\x92\x91\x88\xad\xeb\x49\xc8\x83")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
@@ -220,13 +261,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
 
     Keymap2 keymap;
     w.screen.send_event(KEYDOWN, 0, 0, &keymap);
-    BOOST_CHECK(notify.oss.str() ==
-    "event: 11 -- id: 2, type: 5\n");
+    BOOST_CHECK(notify.s ==
+        "event: 11 -- id: 2, type: 5\n");
 
-    BOOST_CHECK(drawable.s ==
-    "begin_update\n"
-    "text_metrics\n"
-    "server_draw_text\n"
-    "end_update\n"
-    );
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x7b\xb1\x56\x2c\x72\xf2\x50\x39\x15\xf0"
+        "\x63\x27\xfd\x16\x84\x37\x52\xab\x3d\x42")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 }

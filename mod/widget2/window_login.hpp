@@ -22,9 +22,13 @@
 #define REDEMPTION_MOD_WIDGET2_WINDOW_LOGIN_HPP_
 
 #include "window.hpp"
+#include "edit.hpp"
 
 class WindowLogin : public Window
 {
+    WidgetEdit login;
+    WidgetEdit pass;
+
 public:
     enum {
         NOTIFY_FOCUS_BEGIN = ::NOTIFY_FOCUS_BEGIN,
@@ -33,11 +37,29 @@ public:
         NOTIFY_CANCEL = ::NOTIFY_CANCEL,
         NOTIFY_USERNAME_EDIT = 100,
         NOTIFY_PASSWORD_EDIT,
+        NOTIFY_USERNAME_SUBMIT,
+        //NOTIFY_PASSWORD_SUBMIT,
     };
 
     WindowLogin(ModApi* drawable, const Rect& rect, Widget* parent, NotifyApi* notifier)
     : Window(drawable, rect, parent, notifier)
+    , login(drawable, Rect(0,0,100,15), this, 0)
+    , pass(drawable, Rect(0,0,100,15), this, 0)
     {}
+
+    virtual void notify(int id, EventType event)
+    {
+        if (event == WIDGET_SUBMIT){
+            this->ok();
+        } else {
+            this->Window::notify(id, event);
+        }
+    }
+
+    void ok()
+    {
+        this->notify_self(NOTIFY_SUBMIT);
+    }
 };
 
 #endif

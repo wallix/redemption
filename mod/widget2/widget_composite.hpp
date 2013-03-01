@@ -23,6 +23,7 @@
 
 #include "widget.hpp"
 #include <vector>
+#include <region.hpp>
 
 class WidgetComposite : public Widget
 {
@@ -87,7 +88,7 @@ public:
     virtual void send_event(EventType event, int param, int param2, Keymap2 * keymap)
     {
         if (event == WM_DRAW){
-            this->refresh(this->rect);
+            this->refresh(Rect(0,0,this->rect.cx, this->rect.cy));
         } else {
             for (std::size_t i = 0; i < this->child_list.size(); ++i) {
                 if (this->child_list[i]->has_focus)
@@ -105,14 +106,23 @@ public:
         }
     }
 
-    virtual void draw(const Rect & clip)
+    virtual void draw(const Rect& rect, const Rect& clip_screen)
     {
-        this->drawable->draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
-        size_t count = this->child_list.size();
-        for (size_t i = 0; i < count; i++) {
-            Widget * b = this->child_list[i];
-            b->refresh(clip.intersect(Rect(b->rect.x+clip.x, b->rect.cy+clip.y,
-                                           b->rect.cx, b->rect.cy)));
+        Rect clip = rect.intersect(Rect(
+            0,0, clip_screen.cx, clip_screen.cy
+        ));
+        Region region;
+        region.rects.push_back(clip);
+        for (std::size_t i = 0; i < this->child_list.size(); ++i) {
+            Widget *p = this->child_list[i];
+            Rect tmp = clip.intersect(p->rect);
+            if (!tmp.isempty()){
+                region.subtract_rect(tmp);
+                this->refresh_child(p, Rect(0,0,tmp.cx,tmp.cy), clip_screen);
+            }
+        }
+        for (size_t i = 0, max = region.rects.size(); i < max; ++i) {
+            this->Widget::draw(region.rects[i], clip_screen);
         }
     }
 
