@@ -52,7 +52,7 @@ extern "C" {
     // return 1 if \n found
     // (in other words : returns number of trailing eol characters at end of line)
     // return error codes as negative number
-    static inline bool sq_m_SQIntracker_readline(SQIntracker * self)
+    static inline int sq_m_SQIntracker_readline(SQIntracker * self)
     {
         for (int i = self->begin; i < self->end; i++){
             if (self->buffer[i] == '\n'){
@@ -70,11 +70,11 @@ extern "C" {
         }
         ssize_t res = rio_recv(self->tracker, &(self->buffer[self->end]), sizeof(self->buffer) - self->end);
         if (res < 0){
-            return -res;
+            return (RIO_ERROR)-res;
         }
         self->end += res;
         if (self->begin == self->end) {
-            return -RIO_ERROR_EOF;
+            return (RIO_ERROR)-RIO_ERROR_EOF;
         }
         for (int i = self->begin; i < self->end; i++){
             if (self->buffer[i] == '\n'){
@@ -86,12 +86,19 @@ extern "C" {
         return 0;
     }
 
-
-    static inline RIO_ERROR sq_m_SQIntracker_constructor(SQIntracker * self, RIO * tracker)
+    static inline RIO_ERROR sq_m_SQIntracker_destructor(SQIntracker * self)
     {
-        self->trans = NULL;
-        self->tracker = tracker;
-        self->begin = self->eol = self->end = 0;
+        if (self->trans){
+            rio_delete(self->trans);
+            self->trans = NULL;
+        }
+        return RIO_ERROR_OK;
+    }
+
+    static inline RIO_ERROR sq_m_SQIntracker_next(SQIntracker * self)
+    {
+        sq_m_SQIntracker_destructor(self);
+        self->begin = self->eol;
         self->rlstatus = sq_m_SQIntracker_readline(self);
         if (self->rlstatus < 0){
             return (RIO_ERROR)-self->rlstatus;
@@ -99,28 +106,24 @@ extern "C" {
         return RIO_ERROR_OK;
     }
 
-    // internal utility method, used to get name of files used for target transports
-    // it is called internally, but actual goal is to enable tests to check and remove the created files afterward.
-    // not a part of external sequence API
-    static inline size_t sq_im_SQIntracker_get_name(SQIntracker * self, char * buffer, size_t size)
+    static inline RIO_ERROR sq_m_SQIntracker_constructor(SQIntracker * self, RIO * tracker)
     {
-        size_t name_size = (unsigned)(self->eol - self->begin - self->rlstatus);
-        if (self->begin == self->end) { return 0; }
-        if (name_size >= size) {
-            name_size = size - 1;
-        }
-        memcpy(buffer, &(self->buffer[self->begin]), name_size);
-        buffer[name_size] = 0;
-        return name_size;
-    }
-
-
-    static inline RIO_ERROR sq_m_SQIntracker_destructor(SQIntracker * self)
-    {
-        if (self->trans){
-            rio_delete(self->trans);
-            self->trans = NULL;
-        }
+        self->trans = NULL;
+        self->tracker = tracker;
+        self->begin = self->eol = self->end = 0;
+        
+        // First header line
+        RIO_ERROR status = sq_m_SQIntracker_next(self);
+        if (status != RIO_ERROR_OK){ return (RIO_ERROR)-status; }
+        // Second header line
+        status = sq_m_SQIntracker_next(self);
+        if (status != RIO_ERROR_OK){ return (RIO_ERROR)-status; }
+        // 3rd header line
+        status = sq_m_SQIntracker_next(self);
+        if (status != RIO_ERROR_OK){ return (RIO_ERROR)-status; }
+        // First real filename line
+        status = sq_m_SQIntracker_next(self);
+        if (status != RIO_ERROR_OK){ return (RIO_ERROR)-status; }
         return RIO_ERROR_OK;
     }
 
@@ -132,12 +135,19 @@ extern "C" {
                 if (status) { *status = (RIO_ERROR)-self->rlstatus; }
                 return NULL; // self->trans is NULL
             }
-            char tmpname[1024];
-            if (sq_im_SQIntracker_get_name(self, tmpname, sizeof(tmpname)) <= 0){
+            TODO("really this is a line, not a filename, we have to manage timestamps after filename");
+            char line[1024];
+            size_t name_size = (unsigned)(self->eol - self->begin - self->rlstatus);
+            if (self->begin == self->end) {
                 if (status) { *status = RIO_ERROR_EOF; }
                 return self->trans; // self->trans is NULL                
             }
-            int fd = ::open(tmpname, O_RDONLY, S_IRUSR|S_IRUSR);
+            if (name_size >= sizeof(line)) {
+                name_size = sizeof(line) - 1;
+            }
+            memcpy(line, &(self->buffer[self->begin]), name_size);
+            line[name_size] = 0;
+            int fd = ::open(line, O_RDONLY, S_IRUSR|S_IRUSR);
             if (fd < 0){
                 if (status) { *status = RIO_ERROR_OPEN; }
                 return self->trans; // self->trans is NULL
@@ -145,14 +155,6 @@ extern "C" {
             self->trans = rio_new_infile(status, fd);
         }
         return self->trans;
-    }
-
-    static inline RIO_ERROR sq_m_SQIntracker_next(SQIntracker * self)
-    {
-        sq_m_SQIntracker_destructor(self);
-        self->begin = self->eol;
-        self->rlstatus = sq_m_SQIntracker_readline(self);
-        return RIO_ERROR_OK;
     }
 };
 
