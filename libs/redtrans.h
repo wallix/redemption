@@ -51,7 +51,6 @@
 #include "rt_inmeta.h"
 #include "rt_XXX.h"
 
-TODO("finish backport of existing TLS Client Transport")
 TODO("finish coding of in/ou meta classes (to add the 3 initial lines and timestamps after filename + possible keywords ?)")
 TODO("metadata files could be used to store non filename lines (meta lines could start with some reserved characters like ; ou #)")
 TODO("replace Transport classes with calls to new methods")

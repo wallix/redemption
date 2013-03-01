@@ -59,6 +59,62 @@ extern "C" {
     {
     }
 
+
+    size_t rt_m_RTSocketTLS_recv_tls(RTSocketTLS * self, void * data, size_t len)
+    {
+        char * pbuffer = (char*)data;
+        size_t remaining_len = len;
+        while (remaining_len > 0) {
+            ssize_t rcvd = ::SSL_read(self->ssl, pbuffer, remaining_len);
+            switch (SSL_get_error(self->ssl, rcvd)) {
+                case SSL_ERROR_NONE:
+                    pbuffer += rcvd;
+                    remaining_len -= rcvd;
+                    break;
+
+                case SSL_ERROR_WANT_READ:
+                    LOG(LOG_INFO, "recv_tls WANT READ");
+                    continue;
+
+                case SSL_ERROR_WANT_WRITE:
+                    LOG(LOG_INFO, "recv_tls WANT WRITE");
+                    continue;
+
+                case SSL_ERROR_WANT_CONNECT:
+                    LOG(LOG_INFO, "recv_tls WANT CONNECT");
+                    continue;
+
+                case SSL_ERROR_WANT_ACCEPT:
+                    LOG(LOG_INFO, "recv_tls WANT ACCEPT");
+                    continue;
+
+                case SSL_ERROR_WANT_X509_LOOKUP:
+                    LOG(LOG_INFO, "recv_tls WANT X509 LOOKUP");
+                    continue;
+
+                case SSL_ERROR_ZERO_RETURN:
+                    return remaining_len - len;
+                default:
+                {
+                    unsigned long error = 0;
+                    uint32_t errcount = 0;
+                    while ((error = ERR_get_error()) != 0){
+                        errcount++;
+                        LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
+                    }
+                    if (!errcount && rcvd == -1){
+                        LOG(LOG_INFO, "%s [%u]", strerror(errno), errno);
+                    }
+                    TODO("Manage actual errors, check possible values")
+                    return (RT_ERROR)-RT_ERROR_ANY;
+                }
+                break;
+            }
+        }
+        return len;
+    }
+
+
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data
        returns len actually received (may be 0),
@@ -69,6 +125,9 @@ extern "C" {
     */
     inline ssize_t rt_m_RTSocketTLS_recv(RTSocketTLS * self, void * data, size_t len)
     {
+        if (self->tls) {
+            return rt_m_RTSocketTLS_recv_tls(self, data, len);
+        }
         char * pbuffer = (char*)data;
         size_t remaining_len = len;
 
@@ -97,6 +156,49 @@ extern "C" {
         return len;
     }
 
+    ssize_t rt_m_RTSocketTLS_send_tls(RTSocketTLS * self, const void * data, size_t len)
+    {
+        const char * const buffer = (const char * const)data;
+        size_t remaining_len = len;
+        size_t offset = 0;
+        while (remaining_len > 0){
+            int ret = SSL_write(self->ssl, buffer + offset, remaining_len);
+
+            unsigned long error;
+            switch (SSL_get_error(self->ssl, ret))
+            {
+                case SSL_ERROR_NONE:
+                    remaining_len -= ret;
+                    offset += ret;
+                    break;
+
+                case SSL_ERROR_WANT_READ:
+                    LOG(LOG_INFO, "send_tls WANT READ");
+                    continue;
+
+                case SSL_ERROR_WANT_WRITE:
+                    LOG(LOG_INFO, "send_tls WANT WRITE");
+                    continue;
+
+                default:
+                {
+                    LOG(LOG_INFO, "Failure in SSL library");
+                    unsigned long error = 0;
+                    uint32_t errcount = 0;
+                    while ((error = ERR_get_error()) != 0){
+                        errcount++;
+                        LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
+                    }
+                    if (!errcount && ret == -1){
+                        LOG(LOG_INFO, "%s [%u]", strerror(errno), errno);
+                    }
+                    return (RT_ERROR)-RT_ERROR_ANY;
+                }
+            }
+        }
+        return len;
+    }
+
     /* This method send len bytes of data from buffer to current transport
        buffer must actually contains the amount of data requested to send.
        returns len actually sent (may be 0),
@@ -106,6 +208,9 @@ extern "C" {
     */
     inline ssize_t rt_m_RTSocketTLS_send(RTSocketTLS * self, const void * data, size_t len)
     {
+        if (self->tls){
+            return rt_m_RTSocketTLS_send_tls(self, data, len);
+        }
         size_t total = 0;
         while (total < len) {
             ssize_t sent = ::send(self->sck, &(((uint8_t*)data)[total]), len - total, 0);
@@ -314,148 +419,6 @@ extern "C" {
         LOG(LOG_INFO, "RT::enable_tls() done");
         return RT_ERROR_OK;
     }
-
-
-//    void recv_tls(char ** input_buffer, size_t total_len) throw (Error)
-//    {
-//        if (this->verbose & 0x100){
-//            LOG(LOG_INFO, "TLS Socket %s (%u) receiving %u bytes", this->name, this->sck, total_len);
-//        }
-//        char * start = *input_buffer;
-//        size_t len = total_len;
-//        char * pbuffer = *input_buffer;
-//        unsigned long error;
-
-//        if (this->sck_closed) {
-//            LOG(LOG_INFO, "TLS Socket %s (%u) already closed", this->name, this->sck);
-//            throw Error(ERR_SOCKET_ALLREADY_CLOSED);
-//        }
-
-//        while (len > 0) {
-//            ssize_t rcvd = ::SSL_read(this->ssl, pbuffer, len);
-//            switch (SSL_get_error(this->ssl, rcvd)) {
-//                case SSL_ERROR_NONE:
-////                    LOG(LOG_INFO, "recv_tls ERROR NONE");
-//                    pbuffer += rcvd;
-//                    len -= rcvd;
-//                    break;
-
-//                case SSL_ERROR_WANT_READ:
-//                    LOG(LOG_INFO, "recv_tls WANT READ");
-//                    continue;
-
-//                case SSL_ERROR_WANT_WRITE:
-//                    LOG(LOG_INFO, "recv_tls WANT WRITE");
-//                    continue;
-
-//                case SSL_ERROR_WANT_CONNECT:
-//                    LOG(LOG_INFO, "recv_tls WANT CONNECT");
-//                    continue;
-
-//                case SSL_ERROR_WANT_ACCEPT:
-//                    LOG(LOG_INFO, "recv_tls WANT ACCEPT");
-//                    continue;
-
-//                case SSL_ERROR_WANT_X509_LOOKUP:
-//                    LOG(LOG_INFO, "recv_tls WANT X509 LOOKUP");
-//                    continue;
-
-//                case SSL_ERROR_ZERO_RETURN:
-//                    LOG(LOG_INFO, "recv_tls ZERO RETURN");
-//                    LOG(LOG_INFO, "No data received. TLS Socket %s (%u) closed on recv", this->name, this->sck);
-//                    this->sck_closed = 1;
-//                    throw Error(ERR_SOCKET_CLOSED);
-//                    break;
-
-//                default:
-//                {
-//                    LOG(LOG_INFO, "Failure in SSL library");
-//                    uint32_t errcount = 0;
-//                    while ((error = ERR_get_error()) != 0){
-//                        errcount++;
-//                        LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
-//                    }
-//                    if (!errcount && rcvd == -1){
-//                        LOG(LOG_INFO, "%s [%u]", strerror(errno), errno);
-//                    }
-//                    LOG(LOG_INFO, "Closing socket %s (%u) on recv", this->name, this->sck);
-//                    this->sck_closed = 1;
-//                    throw Error(ERR_SOCKET_ERROR, errno);
-//                }
-//                break;
-//            }
-//        }
-
-//        if (this->verbose & 0x100){
-//            LOG(LOG_INFO, "Recv done on %s (%u) %u bytes", this->name, this->sck, total_len);
-//            hexdump_c(start, total_len);
-//            LOG(LOG_INFO, "Dump done on %s (%u) %u bytes", this->name, this->sck, total_len);
-//        }
-//        *input_buffer = pbuffer;
-//        total_received += total_len;
-//        last_quantum_received += total_len;
-//    }
-
-//    void send_tls(const char * const buffer, size_t len) throw (Error)
-//    {
-//        if (this->verbose & 0x100){
-//            LOG(LOG_INFO, "TLS Socket %s (%u) sending %u bytes", this->name, this->sck, len);
-//            hexdump_c(buffer, len);
-//            LOG(LOG_INFO, "TLS Dump done %s (%u) sending %u bytes", this->name, this->sck, len);
-//        }
-
-//        if (this->sck_closed) {
-//            LOG(LOG_INFO, "Socket already closed on %s (%u)", this->name, this->sck);
-//            throw Error(ERR_SOCKET_ALLREADY_CLOSED);
-//        }
-
-//        size_t offset = 0;
-//        while (len > 0){
-//            int ret = SSL_write(this->ssl, buffer + offset, len);
-
-//            unsigned long error;
-//            switch (SSL_get_error(this->ssl, ret))
-//            {
-//                case SSL_ERROR_NONE:
-////                    LOG(LOG_INFO, "send_tls ERROR NONE ret=%u", ret);
-//                    total_sent += ret;
-//                    last_quantum_sent += ret;
-//                    len -= ret;
-//                    offset += ret;
-//                    break;
-
-//                case SSL_ERROR_WANT_READ:
-//                    LOG(LOG_INFO, "send_tls WANT READ");
-//                    continue;
-
-//                case SSL_ERROR_WANT_WRITE:
-//                    LOG(LOG_INFO, "send_tls WANT WRITE");
-//                    continue;
-
-//                default:
-//                {
-//                    LOG(LOG_INFO, "Failure in SSL library");
-//                    uint32_t errcount = 0;
-//                    while ((error = ERR_get_error()) != 0){
-//                        errcount++;
-//                        LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
-//                    }
-//                    if (!errcount && ret == -1){
-//                        LOG(LOG_INFO, "%s [%u]", strerror(errno), errno);
-//                    }
-//                    LOG(LOG_INFO, "Closing socket %s (%u) on recv", this->name, this->sck);
-//                    this->sck_closed = 1;
-//                    throw Error(ERR_SOCKET_ERROR, errno);
-//                    break;
-//                }
-//            }
-//        }
-//        if (this->verbose & 0x100){
-//            LOG(LOG_INFO, "TLS Send done on %s (%u)", this->name, this->sck);
-//        }
-
-//    }
-
 };
 
 #endif
