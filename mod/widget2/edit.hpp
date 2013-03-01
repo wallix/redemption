@@ -22,6 +22,7 @@
 #define REDEMPTION_MOD_WIDGET2_EDIT_HPP_
 
 #include "widget.hpp"
+#include <keymap2.hpp>
 
 class WidgetEdit : public Widget
 {
@@ -30,20 +31,28 @@ public:
     : Widget(drawable, rect, parent, Widget::TYPE_EDIT, notifier)
     {}
 
-    virtual void draw(const Rect & rect)
+    virtual void draw(const Rect& rect, const Rect& clip_screen)
     {
+        this->Widget::draw(rect, clip_screen);
         int w,h;
         this->drawable->text_metrics("", w,h);
-        this->drawable->server_draw_text(rect.x, rect.y, "", 0, 0, rect);
+        this->drawable->server_draw_text(
+            clip_screen.x, clip_screen.y,
+            "", 0, 0, clip_screen
+        );
     }
 
     virtual void send_event(EventType event, int param, int param2, Keymap2 * keymap)
     {
         if (event == KEYDOWN)
         {
-            this->notify_self(NOTIFY_TEXT_CHANGED);
-            //this->notify_parent(this, WM_DRAW);
-            this->refresh(Rect(0,0,10,10));
+            if (keymap->top_kevent() == Keymap2::KEVENT_ENTER){
+                this->notify_parent(WIDGET_SUBMIT);
+            } else {
+                this->notify_self(NOTIFY_TEXT_CHANGED);
+                //this->notify_parent(this, WM_DRAW);
+                this->refresh(Rect(0,0,10,10));
+            }
         }
     }
 };

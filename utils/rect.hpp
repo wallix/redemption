@@ -26,7 +26,7 @@
 #define _REDEMPTION_UTILS_RECT_HPP_
 
 #include <algorithm>
-#include <ostream>
+#include <iosfwd>
 #include <stdint.h>
 #include "log.hpp"
 
