@@ -21,15 +21,13 @@
 
 */
 
-#ifndef _REDEMPTION_LIBS_RT_INFILE_H_
-#define _REDEMPTION_LIBS_RT_INFILE_H_
+#ifndef _REDEMPTION_LIBS_RT_OUTFILE_H_
+#define _REDEMPTION_LIBS_RT_OUTFILE_H_
 
-#include "rt_constants.h"
+#include "rio_constants.h"
 
-struct RTInfile {
+struct RTOutfile {
     int fd;
-    bool status;
-    RT_ERROR err;    
 };
 
 extern "C" {
@@ -37,17 +35,15 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_RTInfile_constructor(RTInfile * self, int fd)
+    inline RT_ERROR rt_m_RTOutfile_constructor(RTOutfile * self, int fd)
     {
         self->fd = fd;
-        self->status = true;
-        self->err = RT_ERROR_OK;        
         return RT_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_RTInfile_destructor(RTInfile * self)
+    inline RT_ERROR rt_m_RTOutfile_destructor(RTOutfile * self)
     {
         return RT_ERROR_OK;
     }
@@ -55,7 +51,7 @@ extern "C" {
     /* This method close ressource without calling destructor
        Any subsequent call should return an error
     */
-    inline void rt_m_RTInfile_close(RTInfile * self)
+    inline void rt_m_RTOutfile_close(RTOutfile * self)
     {
         close(self->fd);
     }
@@ -68,57 +64,9 @@ extern "C" {
        has been changed but an error is returned anyway
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTInfile_recv(RTInfile * self, void * data, size_t len)
+    inline ssize_t rt_m_RTOutfile_recv(RTOutfile * self, void * data, size_t len)
     {
-        if (!self->status){ 
-            if (self->err == RT_ERROR_EOF){
-                return 0;
-            }
-            return -self->err; 
-        }
-        size_t ret = 0;
-        size_t remaining_len = len;
-        while (remaining_len) {
-            ret = ::read(self->fd, &(((char*)data)[len - remaining_len]), remaining_len);
-            if (ret < 0){
-                if (errno == EINTR){ continue; }
-                self->status = false;
-                switch (errno){
-                    case EAGAIN:
-                        self->err = RT_ERROR_EAGAIN;
-                        break;
-                    case EBADF:
-                        self->err = RT_ERROR_EBADF;
-                        break;
-                    case EFAULT:
-                        self->err = RT_ERROR_EFAULT;
-                        break;
-                    case EINVAL:
-                        self->err = RT_ERROR_EINVAL;
-                        break;
-                    case EIO:
-                        self->err = RT_ERROR_EIO;
-                        break;
-                    case EISDIR:
-                        self->err = RT_ERROR_EISDIR;
-                        break;
-                    default:
-                        self->err = RT_ERROR_POSIX;
-                        break;
-                }
-                if (remaining_len != len){
-                    return len - remaining_len;
-                }
-                return -self->err;
-            }
-            if (ret == 0){
-                self->status = false;
-                self->err = RT_ERROR_EOF;
-                break;
-            }
-            remaining_len -= ret;
-        }
-        return len - remaining_len;
+         return -RT_ERROR_SEND_ONLY;
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -128,9 +76,44 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTInfile_send(RTInfile * self, const void * data, size_t len)
+    inline ssize_t rt_m_RTOutfile_send(RTOutfile * self, const void * data, size_t len)
     {
-         return -RT_ERROR_RECV_ONLY;
+        ssize_t ret = 0;
+        size_t remaining_len = len;
+        size_t total_sent = 0;
+        while (remaining_len) {
+            ret = ::write(self->fd, (uint8_t*)data + total_sent, remaining_len);
+            if (ret <= 0){
+                if (errno == EINTR){ continue; }
+                switch (errno){
+                    case EAGAIN:
+                        return -RT_ERROR_EAGAIN;
+                    case EBADF:
+                        return -RT_ERROR_EBADF;
+                    case EDESTADDRREQ:
+                        return -RT_ERROR_EDESTADDRREQ;
+                    case EFAULT:
+                        return -RT_ERROR_EFAULT;
+                    case EFBIG:
+                        return -RT_ERROR_EFBIG;
+                    case EINVAL:
+                        return -RT_ERROR_EINVAL;
+                    case EIO:
+                        return -RT_ERROR_EIO;
+                    case ENOSPC:
+                        return -RT_ERROR_ENOSPC;
+                    case EPIPE:
+                        return -RT_ERROR_EPIPE;
+                    case EISDIR:
+                        return -RT_ERROR_EISDIR;
+                    default:
+                        return -RT_ERROR_POSIX;
+                }
+            }
+            remaining_len -= ret;
+            total_sent += ret;
+        }
+        return total_sent;
     }
 
 };

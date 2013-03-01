@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_LIBS_RT_SOCKET_H_
 #define _REDEMPTION_LIBS_RT_SOCKET_H_
 
-#include "rt_constants.h"
+#include "rio_constants.h"
 #include "netutils.hpp"
 
 struct RTSocket {

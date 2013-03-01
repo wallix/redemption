@@ -38,21 +38,21 @@
 #include "sq_intracker.h"
 #include "sq_meta.h"
 
-#include "rt_generator.h"
-#include "rt_check.h"
-#include "rt_test.h"
-#include "rt_outfile.h"
-#include "rt_infile.h"
-#include "rt_socket.h"
-#include "rt_socket_TLS.h"
-#include "rt_outsequence.h"
-#include "rt_insequence.h"
-#include "rt_outmeta.h"
-#include "rt_inmeta.h"
-#include "rt_XXX.h"
+#include "rio_generator.h"
+#include "rio_check.h"
+#include "rio_test.h"
+#include "rio_outfile.h"
+#include "rio_infile.h"
+#include "rio_socket.h"
+#include "rio_socket_TLS.h"
+#include "rio_outsequence.h"
+#include "rio_insequence.h"
+#include "rio_outmeta.h"
+#include "rio_inmeta.h"
+#include "rio_XXX.h"
 
+TODO("rename classes and methods using RIO prefix instead of RT (Redemption IO - RedemptIOn)")
 TODO("finish coding of in/ou meta classes (to add the 3 initial lines and timestamps after filename + possible keywords ?)")
-TODO("metadata files could be used to store non filename lines (meta lines could start with some reserved characters like ; ou #)")
 TODO("replace Transport classes with calls to new methods")
 TODO("convert PNG transport to new format")
 TODO("write prototype python API for exposed methods")
@@ -61,11 +61,11 @@ TODO("check possible memory leaks (using valgrind on tests)")
 TODO("add filter class sample")
 TODO("write filter classes to compress or encrypt/decrypt data on the fly")
 TODO("C equivalent of LOG function (? PLAIN_C_LOG => PCLOG)")
-TODO("rename classes and methods using RIO prefix instead of RT (Redemption IO - RedemptIOn)")
 TODO("Modify Jamroot to create C library from sources")
 TODO("Add versioning information for rio library (or use redemption version ?)")
 TODO("write lib modification and tagging procedure")
 TODO("create debian packager .deb (use git-builder as base sample) to build rio.deb package from github source")
+TODO("metadata files could be used to store non filename lines (meta lines could start with some reserved characters like ; ou #)")
 
 typedef enum {
     RT_TYPE_GENERATOR,

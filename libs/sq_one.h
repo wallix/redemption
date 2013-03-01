@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_LIBS_SQ_ONE_H_
 #define _REDEMPTION_LIBS_SQ_ONE_H_
 
-#include "rt_constants.h"
+#include "rio_constants.h"
 
 extern "C" {
     struct SQOne {

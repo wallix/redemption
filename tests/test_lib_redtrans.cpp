@@ -27,7 +27,7 @@
 #define LOGPRINT
 #include "log.hpp"
 
-#include "../libs/redtrans.h"
+#include "../libs/rio.h"
 
 BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
 {

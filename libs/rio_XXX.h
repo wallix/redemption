@@ -17,19 +17,16 @@
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean
 
-   Template for new Insequence RedTransport class
+   Template for new XXX RedTransport class
 
 */
 
-#ifndef _REDEMPTION_LIBS_RT_INSEQUENCE_H_
-#define _REDEMPTION_LIBS_RT_INSEQUENCE_H_
+#ifndef _REDEMPTION_LIBS_RT_XXX_H_
+#define _REDEMPTION_LIBS_RT_XXX_H_
 
-#include "rt_constants.h"
+#include "rio_constants.h"
 
-struct RTInsequence {
-    bool status;
-    RT_ERROR err;
-    struct SQ * seq;
+struct RTXXX {
 };
 
 extern "C" {
@@ -37,17 +34,14 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RT_ERROR rt_m_RTInsequence_constructor(RTInsequence * self, SQ * seq)
+    inline RT_ERROR rt_m_XXX_constructor(RTXXX * self, const void * data, size_t len)
     {
-        self->status = true;
-        self->err = RT_ERROR_OK;
-        self->seq = seq;
-        return RT_ERROR_OK;
+        return RT_ERROR_NOT_IMPLEMENTED;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RT_ERROR rt_m_RTInsequence_destructor(RTInsequence * self)
+    inline RT_ERROR rt_m_XXX_destructor(RTXXX * self)
     {
         return RT_ERROR_OK;
     }
@@ -59,43 +53,9 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTInsequence_recv(RTInsequence * self, void * data, size_t len)
+    inline ssize_t rt_m_XXX_recv(RTXXX * self, void * data, size_t len)
     {
-        if (!self->status){ 
-            if (self->err == RT_ERROR_EOF){ return 0; }
-            return -self->err; 
-        }
-
-        RT_ERROR status = RT_ERROR_OK;
-        RT * trans = sq_get_trans(self->seq, &status);
-        if (status != RT_ERROR_OK){
-            return -status;
-        }
-        int remaining_len = len;
-        while (remaining_len > 0){
-            int res = rt_recv(trans, &((char*)data)[len-remaining_len], remaining_len);
-            if (res == 0){
-                RT_ERROR status = RT_ERROR_OK;
-                sq_next(self->seq);
-                trans = sq_get_trans(self->seq, &status);
-                if (status != RT_ERROR_OK){ // this one is the last in the sequence (or other error ?)
-                    self->status = false;
-                    self->err = RT_ERROR_EOF; // next read will trigger EOF
-                    return len - remaining_len;
-                }
-                continue;
-            }
-            if (res < 0){ 
-                self->status = false;
-                self->err = status;
-                if (remaining_len != len) {
-                    return len - remaining_len;
-                }
-                return -status; 
-            }
-            remaining_len -= res;
-        }
-        return len;
+         return -RT_ERROR_SEND_ONLY;
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -105,7 +65,7 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rt_m_RTInsequence_send(RTInsequence * self, const void * data, size_t len)
+    inline ssize_t rt_m_XXX_send(RTXXX * self, const void * data, size_t len)
     {
          return -RT_ERROR_RECV_ONLY;
     }
@@ -113,7 +73,7 @@ extern "C" {
     /* This method flush current chunk and start a new one
        default: do nothing if the current file does not support chunking
     */
-    inline RT_ERROR rt_m_RTInsequence_next(RTInsequence * self)
+    inline RT_ERROR rt_m_XXX_next(RTXXX * self)
     {
          return RT_ERROR_OK;
     }
@@ -121,7 +81,7 @@ extern "C" {
     /* Set Timestamp for next chunk
        default : do nothing if the current file does not support timestamped chunks 
     */
-    inline RT_ERROR rt_m_RTInsequence_timestamp(RTInsequence * self, uint32_t tv_sec, uint32_t tv_usec)
+    inline RT_ERROR rt_m_XXX_timestamp(RTXXX * self, uint32_t tv_sec, uint32_t tv_usec)
     {
          return RT_ERROR_OK;
     }
@@ -131,7 +91,7 @@ extern "C" {
        tv_sec is mandatory.
        default : do nothing if the current file does not support timestamped chunks 
     */
-    inline RT_ERROR rt_m_RTInsequence_get_timestamp(RTInsequence * self, uint32_t * tv_sec, uint32_t * tv_usec)
+    inline RT_ERROR rt_m_XXX_get_timestamp(RTXXX * self, uint32_t * tv_sec, uint32_t * tv_usec)
     {
          return RT_ERROR_OK;
     }
@@ -142,7 +102,7 @@ extern "C" {
        Metadata can be added until the chunk is terminated (by calling next)
        default : do nothing if the current file does not support timestamped chunks
     */
-    inline RT_ERROR rt_m_RTInsequence_add_meta(RTInsequence * self, const char * meta)
+    inline RT_ERROR rt_m_XXX_add_meta(RTXXX * self, const char * meta)
     {
          return RT_ERROR_OK;
     }
@@ -151,7 +111,7 @@ extern "C" {
        this method can be called any number of time to get all metadata blocks relevant to current chunk.
        default : do nothing if the current file does not support timestamped chunks
     */
-    inline RT_ERROR rt_m_RTInsequence_get_meta(RTInsequence * self, char * meta)
+    inline RT_ERROR rt_m_XXX_get_meta(RTXXX * self, char * meta)
     {
          return RT_ERROR_OK;
     }
