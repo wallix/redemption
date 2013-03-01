@@ -37,7 +37,7 @@
 
 #include "sq_one.h"
 #include "sq_outfilename.h"
-#include "sq_infilename.h"
+//#include "sq_infilename.h"
 #include "sq_intracker.h"
 #include "sq_meta.h"
 
@@ -54,8 +54,7 @@
 #include "rio_inmeta.h"
 #include "rio_XXX.h"
 
-TODO("C equivalent of LOG function (? PLAIN_C_LOG => PCLOG) : looks not necessary we can compile using C++ compiler we just have to provide C linkage entry points")
-TODO("finish coding of in/ou meta classes (to add the 3 initial lines and timestamps after filename + possible keywords ?)")
+TODO("finish coding of in/out meta classes (to add the 3 initial lines and timestamps after filename + possible keywords ?)")
 TODO("add filter class sample")
 TODO("Add versioning information for rio library (or use redemption version ?)")
 TODO("replace Transport classes with calls to new methods")
@@ -71,6 +70,7 @@ TODO("write lib modification and tagging procedure")
 TODO("create debian packager .deb (use git-builder as base sample) to build rio.deb package from github source")
 TODO("extension: metadata files could be used to store non filename lines (meta lines could start with some reserved characters like ; ou #)"
      "This would be handy for large metadata that may not fit on one line")
+TODO("C equivalent of LOG function (? PLAIN_C_LOG => PCLOG) : looks not necessary we can compile using C++ compiler we just have to provide C linkage entry points")
 
 typedef enum {
     RIO_TYPE_GENERATOR,
@@ -89,7 +89,6 @@ typedef enum {
 typedef enum {
     SQ_TYPE_ONE,
     SQ_TYPE_OUTFILENAME,
-    SQ_TYPE_INFILENAME,
     SQ_TYPE_INTRACKER,
     SQ_TYPE_META,
 } SQ_TYPE;
@@ -101,7 +100,6 @@ struct SQ {
     union {
       struct SQOne one;
       struct SQOutfilename outfilename;
-      struct SQInfilename infilename;
       struct SQIntracker intracker;
       struct SQMeta meta;
     } u;
@@ -140,26 +138,6 @@ SQ * sq_new_outfilename(RIO_ERROR * error, RIO * tracker, SQ_FORMAT format, cons
     }
     res->sq_type = SQ_TYPE_OUTFILENAME;
     res->err = sq_m_SQOutfilename_constructor(&(res->u.outfilename), tracker, format, prefix, extension);
-    if (*error) {*error = res->err; }
-    switch (res->err){
-    default:
-        free(res);
-        return NULL;
-    case RIO_ERROR_OK:
-        break;
-    }
-    return res;
-}
-
-SQ * sq_new_infilename(RIO_ERROR * error, SQ_FORMAT format, const char * prefix, const char * extension)
-{
-    SQ * res = (SQ*)malloc(sizeof(SQ));
-    if (res == 0){ 
-        if (error){ *error = RIO_ERROR_MALLOC; }
-        return NULL;
-    }
-    res->sq_type = SQ_TYPE_INFILENAME;
-    res->err = sq_m_SQInfilename_constructor(&(res->u.infilename), format, prefix, extension);
     if (*error) {*error = res->err; }
     switch (res->err){
     default:
@@ -221,9 +199,6 @@ RIO_ERROR sq_next(SQ * seq)
     case SQ_TYPE_OUTFILENAME:
         res = sq_m_SQOutfilename_next(&(seq->u.outfilename));
         break;
-    case SQ_TYPE_INFILENAME:
-        res = sq_m_SQInfilename_next(&(seq->u.infilename));
-        break;
     case SQ_TYPE_INTRACKER:
         res = sq_m_SQIntracker_next(&(seq->u.intracker));
         break;
@@ -247,9 +222,6 @@ RIO * sq_get_trans(SQ * seq, RIO_ERROR * error)
     case SQ_TYPE_OUTFILENAME:
         trans = sq_m_SQOutfilename_get_trans(&(seq->u.outfilename), &status);
         break;
-    case SQ_TYPE_INFILENAME:
-        trans = sq_m_SQInfilename_get_trans(&(seq->u.infilename), &status);
-        break;
     case SQ_TYPE_INTRACKER:
         trans = sq_m_SQIntracker_get_trans(&(seq->u.intracker), &status);
         break;
@@ -272,9 +244,6 @@ RIO_ERROR sq_delete(SQ * sq)
         break;
         case SQ_TYPE_OUTFILENAME:
             status = sq_m_SQOutfilename_destructor(&(sq->u.outfilename));
-        break;
-        case SQ_TYPE_INFILENAME:
-            status = sq_m_SQInfilename_destructor(&(sq->u.infilename));
         break;
         case SQ_TYPE_INTRACKER:
             status = sq_m_SQIntracker_destructor(&(sq->u.intracker));
@@ -484,7 +453,8 @@ RIO * rio_new_insequence(RIO_ERROR * error, SQ * seq)
     return res;
 }
 
-RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension)
+RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension, 
+                      const char * l1, const char * l2, const char * l3)
 {
     RIO * res = (RIO *)malloc(sizeof(RIO));
     if (res == 0){ 
@@ -492,7 +462,7 @@ RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const c
         return NULL;
     }
     res->rt_type = RIO_TYPE_OUTMETA;
-    res->err = rio_m_RIOOutmeta_constructor(&(res->u.outmeta), seq, prefix, extension);
+    res->err = rio_m_RIOOutmeta_constructor(&(res->u.outmeta), seq, prefix, extension, l1, l2, l3);
     switch (res->err){
     default:
         free(res);

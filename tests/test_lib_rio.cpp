@@ -481,35 +481,7 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
         sq_delete(sequence);
     }
 
-// Third simplest sequence is "infilename" sequence
-// - sq_get_trans() open an infile if necessary using the given name pattern 
-//      and return it on subsequent calls untile it is closed (reach EOF)
-// - sq_next() close the current outfile and step to the next filename wich will 
-//    be used by the next sq_get_trans to create an outfile transport.
-
-    {
-        RIO_ERROR status_seq = RIO_ERROR_OK;
-        SQ * sequence = sq_new_infilename(&status_seq, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", "txt");
-
-        RIO_ERROR status = RIO_ERROR_OK;
-        RIO * rt = rio_new_insequence(&status, sequence);
-
-        char buffer[1024] = {};
-        BOOST_CHECK_EQUAL(10, rio_recv(rt, buffer, 10));
-        BOOST_CHECK_EQUAL(0, buffer[10]);
-        if (0 != memcmp(buffer, "AAAAXBBBBX", 10)){
-            LOG(LOG_ERR, "expected \"AAAAXBBBBX\" got \"%s\"\n", buffer);
-        }
-        BOOST_CHECK_EQUAL(5, rio_recv(rt, buffer + 10, 1024));
-        BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
-        BOOST_CHECK_EQUAL(0, buffer[15]);
-        BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer + 15, 1024));
-        rio_close(rt);
-        rio_delete(rt);
-        sq_delete(sequence);
-    }
-
-// 4th simplest sequence is "intracker" sequence
+// 3rd simplest sequence is "intracker" sequence
 // - Behavior is identical to infilename sequence except the input pattern is
 // a Transport that contains the list of the input files.
 // - sq_get_trans() open an infile if necessary using the name it got from tracker
@@ -520,6 +492,9 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
     {
         RIO_ERROR status = RIO_ERROR_OK;
         const char trackdata[] = 
+            "800 600\n"
+            "\n"
+            "\n"
             "TESTOFS-000000.txt\n"
             "TESTOFS-000001.txt\n";
 
@@ -612,7 +587,7 @@ BOOST_AUTO_TEST_CASE(TestOutMeta)
 
     RIO_ERROR status = RIO_ERROR_OK;
     SQ * seq  = NULL;
-    RIO * rt = rio_new_outmeta(&status, &seq, "TESTOFS", "mwrm");
+    RIO * rt = rio_new_outmeta(&status, &seq, "TESTOFS", "mwrm", "800 600\n", "\n", "\n");
 
     BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(seq));
@@ -647,7 +622,7 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
     {
         RIO_ERROR status = RIO_ERROR_OK;
         SQ * seq  = NULL;
-        RIO * rt = rio_new_outmeta(&status, &seq, "TESTOFS", "mwrm");
+        RIO * rt = rio_new_outmeta(&status, &seq, "TESTOFS", "mwrm", "800 600\n", "\n", "\n");
 
         BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
         BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(seq));

@@ -28,7 +28,6 @@
 
 struct RIOOutmeta {
     int lastcount;
-    struct SQ * metaseq;
     struct RIO * meta;
     struct SQ * seq;
     struct RIO * out;
@@ -39,34 +38,42 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RIO_ERROR rio_m_RIOOutmeta_constructor(RIOOutmeta * self, SQ ** seq, const char * prefix, const char * extension)
+    inline RIO_ERROR rio_m_RIOOutmeta_constructor(RIOOutmeta * self, SQ ** seq, const char * prefix, const char * extension, 
+                                                  const char * header1, const char * header2, const char* header3)
     {
-        RIO_ERROR status = RIO_ERROR_OK;
-        SQ * metaseq = sq_new_outfilename(&status, (RIO *)NULL, SQF_PREFIX_EXTENSION, prefix, "mwrm");
-        if (status != RIO_ERROR_OK){
-            return status;
+        char buffer[1024];
+        size_t res = snprintf(buffer, sizeof(buffer), "%s.%s", prefix, extension);
+        if (res >= sizeof(buffer)){
+            return RIO_ERROR_FILENAME_TOO_LONG;
         }
-        RIO * meta = rio_new_outsequence(&status, metaseq);
-        if (status != RIO_ERROR_OK){
-            sq_delete(metaseq);
-            return status;
+        int fd = ::open(buffer, O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR);
+        if (fd < 0){
+            return RIO_ERROR_CREAT;
+        }
+        RIO_ERROR status = RIO_ERROR_OK;
+        RIO * meta = rio_new_outfile(&status, fd);
+        // write headers
+        const char * headers[3] = {header1, header2,header3};
+        for (size_t i = 0 ; i < sizeof(headers)/sizeof(headers[0]) ; i++){
+          ssize_t res = rio_send(meta, header1, strlen(header1));
+          if (res < 0){
+            rio_delete(meta);
+            return (RIO_ERROR)-res;
+          }
         }
         SQ * sequence = sq_new_outfilename(&status, meta, SQF_PREFIX_COUNT_EXTENSION, prefix, "wrm");
         if (status != RIO_ERROR_OK){
             rio_delete(meta);
-            sq_delete(metaseq);
             return status;
         }
         RIO * out = rio_new_outsequence(&status, sequence);
         if (status != RIO_ERROR_OK){
             sq_delete(sequence);
             rio_delete(meta);
-            sq_delete(metaseq);
             return status;
         }
 
         self->lastcount = -1;
-        self->metaseq = metaseq;
         *seq = self->seq = sequence;
         self->meta = meta;
         self->out = out;
@@ -77,10 +84,9 @@ extern "C" {
     */
     inline RIO_ERROR rio_m_RIOOutmeta_destructor(RIOOutmeta * self)
     {
+        rio_delete(self->out);
         sq_delete(self->seq);
         rio_delete(self->meta);
-        sq_delete(self->metaseq);
-        rio_delete(self->out);
         return RIO_ERROR_OK;
     }
 
