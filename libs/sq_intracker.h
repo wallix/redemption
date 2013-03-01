@@ -41,6 +41,8 @@ extern "C" {
         int end;
         int eol;
         int rlstatus;
+        timeval start_tv;
+        timeval stop_tv;
     };
 
     // input: begin : beginning of available buffer (already read)
@@ -147,6 +149,45 @@ extern "C" {
             }
             memcpy(line, &(self->buffer[self->begin]), name_size);
             line[name_size] = 0;
+            unsigned stop_sec = 0;
+            ssize_t i = name_size - 1;
+            for ( ; i >= 0 ; i--){
+                if (line[i] >= '0' && line[i] <= '9'){
+                    stop_sec = stop_sec * 10 + (line[i]-'0');
+                    TODO("add check for tv overflow");
+                    continue;
+                }
+                if (line[i] == ' '){
+                    self->stop_tv.tv_sec = stop_sec;
+                    self->stop_tv.tv_usec = 0;
+                    i--;
+                    break;
+                }
+                if (status) {
+                    TODO("close trans");
+                    *status = (RIO_ERROR)-RIO_ERROR_INVALID_STOP_TIMESTAMP;
+                }
+                return NULL;
+            }
+            unsigned start_sec = 0;
+            for ( ; i >= 0 ; i--){
+                if (line[i] >= '0' && line[i] <= '9'){
+                    start_sec = start_sec * 10 + (line[i]-'0');
+                    TODO("add check for tv overflow");
+                    continue;
+                }
+                if (line[i] == ' '){
+                    self->start_tv.tv_sec = start_sec;
+                    self->start_tv.tv_usec = 0;
+                    line[i] = 0;
+                    break;
+                }
+                if (status) {
+                    TODO("close trans");
+                    *status = (RIO_ERROR)-RIO_ERROR_INVALID_START_TIMESTAMP;
+                }
+                return NULL;
+            }
             int fd = ::open(line, O_RDONLY, S_IRUSR|S_IRUSR);
             if (fd < 0){
                 if (status) { *status = RIO_ERROR_OPEN; }

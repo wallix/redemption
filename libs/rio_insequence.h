@@ -113,47 +113,9 @@ extern "C" {
     /* This method flush current chunk and start a new one
        default: do nothing if the current file does not support chunking
     */
-    inline RIO_ERROR rio_m_RIOInsequence_next(RIOInsequence * self)
+    inline RIO_ERROR rio_m_RIOInsequence_next(RIOInsequence * self, timeval tv)
     {
-         return RIO_ERROR_OK;
-    }
-
-    /* Set Timestamp for next chunk
-       default : do nothing if the current file does not support timestamped chunks 
-    */
-    inline RIO_ERROR rio_m_RIOInsequence_timestamp(RIOInsequence * self, uint32_t tv_sec, uint32_t tv_usec)
-    {
-         return RIO_ERROR_OK;
-    }
-
-    /* Get Timestamp for current chunk
-       tv_usec can be a NULL pointer. In this case usec won't be returned
-       tv_sec is mandatory.
-       default : do nothing if the current file does not support timestamped chunks 
-    */
-    inline RIO_ERROR rio_m_RIOInsequence_get_timestamp(RIOInsequence * self, uint32_t * tv_sec, uint32_t * tv_usec)
-    {
-         return RIO_ERROR_OK;
-    }
-
-    /* Set metadata for next chunk (when writing to transport) 
-       this method can be called any number of times
-       meta is some UTF-8 zero terminated string and can't be larger than 1024 bytes (arbitrary limit)
-       Metadata can be added until the chunk is terminated (by calling next)
-       default : do nothing if the current file does not support timestamped chunks
-    */
-    inline RIO_ERROR rio_m_RIOInsequence_add_meta(RIOInsequence * self, const char * meta)
-    {
-         return RIO_ERROR_OK;
-    }
-
-    /* Get metadata for current chunk (when reading from transport)
-       this method can be called any number of time to get all metadata blocks relevant to current chunk.
-       default : do nothing if the current file does not support timestamped chunks
-    */
-    inline RIO_ERROR rio_m_RIOInsequence_get_meta(RIOInsequence * self, char * meta)
-    {
-         return RIO_ERROR_OK;
+         return RIO_ERROR_OUT_ONLY;
     }
 };
 

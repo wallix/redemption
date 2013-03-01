@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_LIBS_REDTRANS_H_
 #define _REDEMPTION_LIBS_REDTRANS_H_
 
+#define RIOVERSION "0.1"
+
 #include "log.hpp"
 
 #include <stdlib.h>
@@ -54,9 +56,7 @@
 #include "rio_inmeta.h"
 #include "rio_XXX.h"
 
-TODO("finish coding of in/out meta classes (to add the 3 initial lines and timestamps after filename + possible keywords ?)")
 TODO("add filter class sample")
-TODO("Add versioning information for rio library (or use redemption version ?)")
 TODO("replace Transport classes with calls to new methods")
 TODO("convert PNG transport to new format")
 TODO("write prototype python API for exposed methods")
@@ -71,6 +71,12 @@ TODO("create debian packager .deb (use git-builder as base sample) to build rio.
 TODO("extension: metadata files could be used to store non filename lines (meta lines could start with some reserved characters like ; ou #)"
      "This would be handy for large metadata that may not fit on one line")
 TODO("C equivalent of LOG function (? PLAIN_C_LOG => PCLOG) : looks not necessary we can compile using C++ compiler we just have to provide C linkage entry points")
+
+extern "C" {
+    const char * rio_version(){
+        return RIOVERSION;
+    }
+};
 
 typedef enum {
     RIO_TYPE_GENERATOR,
@@ -129,7 +135,7 @@ SQ * sq_new_one(RIO_ERROR * error, RIO * trans)
     return res;
 }
 
-SQ * sq_new_outfilename(RIO_ERROR * error, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension)
+SQ * sq_new_outfilename(RIO_ERROR * error, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, timeval * tv)
 {
     SQ * res = (SQ*)malloc(sizeof(SQ));
     if (res == 0){ 
@@ -137,7 +143,7 @@ SQ * sq_new_outfilename(RIO_ERROR * error, RIO * tracker, SQ_FORMAT format, cons
         return NULL;
     }
     res->sq_type = SQ_TYPE_OUTFILENAME;
-    res->err = sq_m_SQOutfilename_constructor(&(res->u.outfilename), tracker, format, prefix, extension);
+    res->err = sq_m_SQOutfilename_constructor(&(res->u.outfilename), tracker, format, prefix, extension, tv);
     if (*error) {*error = res->err; }
     switch (res->err){
     default:
@@ -454,7 +460,7 @@ RIO * rio_new_insequence(RIO_ERROR * error, SQ * seq)
 }
 
 RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension, 
-                      const char * l1, const char * l2, const char * l3)
+                      const char * l1, const char * l2, const char * l3, timeval * tv)
 {
     RIO * res = (RIO *)malloc(sizeof(RIO));
     if (res == 0){ 
@@ -462,7 +468,7 @@ RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const c
         return NULL;
     }
     res->rt_type = RIO_TYPE_OUTMETA;
-    res->err = rio_m_RIOOutmeta_constructor(&(res->u.outmeta), seq, prefix, extension, l1, l2, l3);
+    res->err = rio_m_RIOOutmeta_constructor(&(res->u.outmeta), seq, prefix, extension, l1, l2, l3, tv);
     switch (res->err){
     default:
         free(res);

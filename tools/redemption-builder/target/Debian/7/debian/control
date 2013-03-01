@@ -1,0 +1,14 @@
+Source: <!redemptionname!>
+Section: x11
+Priority: extra
+Maintainer: WAB Dev Team <wab@wallix.com>
+Build-Depends: locales-all, libboost1.46-dev, g++, libswscale-dev, libavcodec-dev, libavformat-dev, libssl-dev, libswscale0, libavutil49, libavformat52, libavcodec52, libfaad2, libtheora0, libvorbisenc2, libbz2-dev
+
+Package: <!redemptionname!>
+Architecture: <!architecture!>
+Homepage: http://redemption.wallix.org
+Depends: locales-all, libswscale0, libavutil49, libavformat52, libavcodec52, libfaad2, libtheora0, libvorbisenc2, libboost-program-options1.42.0, libsdl1.2debian-alsa
+Replaces: wab2-redemption
+Description: A new generation RDP proxy for WAB
+    A new generation RDP proxy for WAB
+    wwww: http://redemption.wallix.org

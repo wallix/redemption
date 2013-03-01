@@ -466,7 +466,10 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
 // The test below is very similar to the previous one except for the creation of the sequence
     {
         RIO_ERROR status_seq = RIO_ERROR_OK;
-        SQ * sequence = sq_new_outfilename(&status_seq, NULL, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", "txt");
+        struct timeval tv;
+        tv.tv_usec = 0;
+        tv.tv_sec = 1352304810;
+        SQ * sequence = sq_new_outfilename(&status_seq, NULL, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", "txt", &tv);
 
         RIO_ERROR status = RIO_ERROR_OK;
         RIO * rt = rio_new_outsequence(&status, sequence);
@@ -495,8 +498,8 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
             "800 600\n"
             "\n"
             "\n"
-            "TESTOFS-000000.txt\n"
-            "TESTOFS-000001.txt\n";
+            "TESTOFS-000000.txt 1352304810 1352304870\n"
+            "TESTOFS-000001.txt 1352304870 1352304930\n";
 
         RIO * tracker = rio_new_generator(&status, trackdata, sizeof(trackdata)-1);
 
@@ -587,7 +590,10 @@ BOOST_AUTO_TEST_CASE(TestOutMeta)
 
     RIO_ERROR status = RIO_ERROR_OK;
     SQ * seq  = NULL;
-    RIO * rt = rio_new_outmeta(&status, &seq, "TESTOFS", "mwrm", "800 600\n", "\n", "\n");
+    struct timeval tv;
+    tv.tv_usec = 0;
+    tv.tv_sec = 1352304810;
+    RIO * rt = rio_new_outmeta(&status, &seq, "TESTOFS", "mwrm", "800 600\n", "\n", "\n", &tv);
 
     BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(seq));
@@ -622,7 +628,10 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
     {
         RIO_ERROR status = RIO_ERROR_OK;
         SQ * seq  = NULL;
-        RIO * rt = rio_new_outmeta(&status, &seq, "TESTOFS", "mwrm", "800 600\n", "\n", "\n");
+        struct timeval tv;
+        tv.tv_usec = 0;
+        tv.tv_sec = 1352304810;
+        RIO * rt = rio_new_outmeta(&status, &seq, "TESTOFS", "mwrm", "800 600\n", "\n", "\n", &tv);
 
         BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
         BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(seq));
@@ -647,16 +656,16 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
         }
     }    
     
-    const char * file[] = {
-        "TESTOFS.mwrm",
-        "TESTOFS-000000.wrm",
-        "TESTOFS-000001.wrm"
-    };
-    for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
-        if (::unlink(file[i]) < 0){
-            BOOST_CHECK(false);
-            LOG(LOG_ERR, "failed to unlink %s", file[i]);
-        }
-    }
+//    const char * file[] = {
+//        "TESTOFS.mwrm",
+//        "TESTOFS-000000.wrm",
+//        "TESTOFS-000001.wrm"
+//    };
+//    for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
+//        if (::unlink(file[i]) < 0){
+//            BOOST_CHECK(false);
+//            LOG(LOG_ERR, "failed to unlink %s", file[i]);
+//        }
+//    }
 }
 

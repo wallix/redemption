@@ -1,0 +1,44 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+#export DH_VERBOSE=1
+
+PACKAGENAME=<!redemptionname!>
+BUILDDIR=<!builddir!>
+BUILDSCRIPT=$(BUILDDIR)/redemptionbuild.py
+REDEMPTIONINSTALLPREFIX=<!redemptioninstallprefix!>
+
+DESTDIR=$(CURDIR)/debian/tmp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -Rf $(DESTDIR)
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_prep
+	dh_installdirs
+
+	$(BUILDSCRIPT) $(DESTDIR)
+
+binary-indep: build install
+
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_install --sourcedir=debian/tmp --list-missing
+#   dh_strip
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

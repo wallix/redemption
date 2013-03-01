@@ -56,6 +56,9 @@ extern "C" {
         RIO_ERROR_NOT_IMPLEMENTED,
         RIO_ERROR_STRING_PREFIX_TOO_LONG,
         RIO_ERROR_STRING_EXTENSION_TOO_LONG,
+        RIO_ERROR_INVALID_START_TIMESTAMP,
+        RIO_ERROR_INVALID_STOP_TIMESTAMP,
+        RIO_ERROR_OUT_ONLY,
     } RIO_ERROR;
 
     typedef enum {
@@ -92,7 +95,7 @@ extern "C" {
     RIO_ERROR sq_next(SQ * seq);
     RIO * sq_get_trans(SQ * seq, RIO_ERROR * error);
 
-    SQ * sq_new_outfilename(RIO_ERROR * error, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension);
+    SQ * sq_new_outfilename(RIO_ERROR * error, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, timeval * tv);
     SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker);
     SQ * sq_new_meta(RIO_ERROR * error, const char * prefix, const char * extension);
 

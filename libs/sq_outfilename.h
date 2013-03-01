@@ -34,6 +34,8 @@
 extern "C" {
     struct SQOutfilename {
         RIO * trans;
+        timeval start_tv;
+        timeval stop_tv;
         RIO * tracker;
         SQ_FORMAT format;
         char prefix[512];
@@ -42,13 +44,15 @@ extern "C" {
         unsigned count;
     };
 
-    static inline RIO_ERROR sq_m_SQOutfilename_constructor(SQOutfilename * self, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension)
+    static inline RIO_ERROR sq_m_SQOutfilename_constructor(SQOutfilename * self, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, struct timeval * tv)
     {
         self->trans = NULL;
         self->tracker = tracker;
         self->count = 0;
         self->format = format;
         self->pid = getpid();
+        self->start_tv.tv_sec = self->stop_tv.tv_sec = tv->tv_sec;
+        self->start_tv.tv_usec = self->stop_tv.tv_usec = tv->tv_usec;
         if (strlen(prefix) > sizeof(self->prefix) - 1){
             return RIO_ERROR_STRING_PREFIX_TOO_LONG;
         }
@@ -74,11 +78,33 @@ extern "C" {
         case SQF_PREFIX_COUNT_EXTENSION:
             res = snprintf(buffer, size, "%s-%06u.%s", self->prefix, self->count, self->extension);
         break;
-        case SQF_PREFIX_EXTENSION:
-            res = snprintf(buffer, size, "%s.%s", self->prefix, self->extension);
+        }
+        return res;
+    }
+
+    static inline size_t sq_im_SQOutfilename_get_line(SQOutfilename * self, char * buffer, size_t size)
+    {
+        size_t res = 0;
+        switch (self->format){
+        default:
+        case SQF_PREFIX_PID_COUNT_EXTENSION:
+            res = snprintf(buffer, size, "%s-%06u-%06u.%s %u %u", 
+                self->prefix, self->pid, self->count, self->extension, 
+                (unsigned)self->start_tv.tv_sec, (unsigned)self->stop_tv.tv_sec+1);
+        break;
+        case SQF_PREFIX_COUNT_EXTENSION:
+            res = snprintf(buffer, size, "%s-%06u.%s %u %u",
+                self->prefix, self->count, self->extension, 
+                (unsigned)self->start_tv.tv_sec, (unsigned)self->stop_tv.tv_sec+1);
         break;
         }
         return res;
+    }
+
+    static inline void sq_m_SQOutfilename_timestamp(SQOutfilename * self, timeval * tv)
+    {
+        self->stop_tv.tv_sec = tv->tv_sec;
+        self->stop_tv.tv_usec = tv->tv_usec;    
     }
 
 
@@ -87,9 +113,11 @@ extern "C" {
         if (self->trans){
             if (self->tracker) { 
                 char buffer[1024];
-                size_t len = sq_im_SQOutfilename_get_name(self, buffer, sizeof(buffer)-1);
+                size_t len = sq_im_SQOutfilename_get_line(self, buffer, sizeof(buffer)-1);
                 buffer[len] = '\n';
                 rio_send(self->tracker, buffer, len + 1);
+                self->start_tv.tv_sec = self->stop_tv.tv_sec;
+                self->start_tv.tv_usec = self->stop_tv.tv_usec;
             }
             rio_delete(self->trans);
             self->trans = NULL;

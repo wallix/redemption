@@ -27,6 +27,8 @@
 #include "rio_constants.h"
 
 struct RIOInmeta {
+    timeval start_tv;
+    timeval end_tv;
     struct SQ * seq;
     struct RIO * insequence;
 };

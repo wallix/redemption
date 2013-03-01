@@ -1,0 +1,13 @@
+Source: <!redemptionname!>
+Section: x11
+Priority: extra
+Maintainer: WAB Dev Team <wab@wallix.com>
+Build-Depends: locales, libavcodec-dev, bjam, boost-build, g++, libswscale-dev, libcv-dev, libsdl-dev, libavformat-dev, libboost-program-options-dev, libssl-dev, libmagick++-dev, libswscale0, libavutil50, libavformat52, libavcodec52, libtheora0, libvorbisenc2, libmagick++3, libmagick++9-dev, libboost-test-dev, libhighgui-dev
+
+Package: <!redemptionname!>
+Architecture: i386
+Homepage: http://redemption.wallix.org
+Depends: locales, libswscale0, libavutil50, libavformat52, libavcodec52, libtheora0, libvorbisenc2, libmagick++3
+Description: A new generation RDP proxy for WAB
+    A new generation RDP proxy for WAB
+    wwww: http://redemption.wallix.org
