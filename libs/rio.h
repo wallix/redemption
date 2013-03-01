@@ -54,8 +54,7 @@
 #include "rio_inmeta.h"
 #include "rio_XXX.h"
 
-TODO("C equivalent of LOG function (? PLAIN_C_LOG => PCLOG) : looks not necessary we can compile using C++ compiler we just have to provide C linkage entry points")
-TODO("finish coding of in/ou meta classes (to add the 3 initial lines and timestamps after filename + possible keywords ?)")
+TODO("finish coding of in/out meta classes (to add the 3 initial lines and timestamps after filename + possible keywords ?)")
 TODO("add filter class sample")
 TODO("Add versioning information for rio library (or use redemption version ?)")
 TODO("replace Transport classes with calls to new methods")
@@ -71,6 +70,7 @@ TODO("write lib modification and tagging procedure")
 TODO("create debian packager .deb (use git-builder as base sample) to build rio.deb package from github source")
 TODO("extension: metadata files could be used to store non filename lines (meta lines could start with some reserved characters like ; ou #)"
      "This would be handy for large metadata that may not fit on one line")
+TODO("C equivalent of LOG function (? PLAIN_C_LOG => PCLOG) : looks not necessary we can compile using C++ compiler we just have to provide C linkage entry points")
 
 typedef enum {
     RIO_TYPE_GENERATOR,
