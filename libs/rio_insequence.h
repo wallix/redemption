@@ -71,7 +71,7 @@ extern "C" {
         if (status != RIO_ERROR_OK){
             return -status;
         }
-        int remaining_len = len;
+        size_t remaining_len = len;
         while (remaining_len > 0){
             int res = rio_recv(trans, &((char*)data)[len-remaining_len], remaining_len);
             if (res == 0){
