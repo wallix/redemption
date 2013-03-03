@@ -203,12 +203,12 @@ unit-test test_primary_order_glyph_index : tests/orders/primary/glyph_index.cpp 
 unit-test test_secondary_order_col_cache : tests/orders/secondary/col_cache.cpp libboost_unit_test  ;
 unit-test test_secondary_order_bmp_cache : tests/orders/secondary/bmp_cache.cpp libboost_unit_test  ;
 
-unit-test test_x224 : tests/core/test_x224.cpp libboost_unit_test  ;
-unit-test test_mcs : tests/core/test_mcs.cpp libboost_unit_test  ;
-unit-test test_gcc : tests/core/test_gcc.cpp openssl crypto z dl libboost_unit_test  ;
-unit-test test_sec : tests/core/test_sec.cpp openssl crypto libboost_unit_test  ;
-unit-test test_lic : tests/core/test_lic.cpp openssl crypto libboost_unit_test  ;
-unit-test test_rdp : tests/core/test_rdp.cpp libboost_unit_test  ;
+unit-test test_x224 : tests/core/test_x224.cpp z openssl crypto dl libboost_unit_test  ;
+unit-test test_mcs : tests/core/test_mcs.cpp z openssl crypto dl libboost_unit_test  ;
+unit-test test_gcc : tests/core/test_gcc.cpp z openssl crypto dl libboost_unit_test  ;
+unit-test test_sec : tests/core/test_sec.cpp z openssl crypto dl libboost_unit_test  ;
+unit-test test_lic : tests/core/test_lic.cpp z openssl crypto dl libboost_unit_test  ;
+unit-test test_rdp : tests/core/test_rdp.cpp z openssl crypto dl libboost_unit_test  ;
 
 unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test  : ;
 unit-test test_dico : tests/test_dico.cpp libboost_unit_test  ;
@@ -219,7 +219,7 @@ unit-test test_drawable : tests/test_drawable.cpp png z openssl crypto libboost_
 
 unit-test test_countdown_ptr : tests/test_countdown_ptr.cpp libboost_unit_test  ;
 
-unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp libboost_unit_test  ;
+unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp z openssl crypto libboost_unit_test  ;
 unit-test test_rdp_client_w2000 : tests/client_mods/test_rdp_client_w2000.cpp png openssl crypto d3des z dl libboost_unit_test  ;
 unit-test test_rdp_client_w2008 : tests/client_mods/test_rdp_client_w2008.cpp png openssl crypto d3des z dl libboost_unit_test  ;
 
@@ -265,7 +265,7 @@ unit-test test_lib_rio : tests/test_lib_rio.cpp openssl crypto z dl libboost_uni
 
 
 #unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test  ;
-unit-test test_cipher_transport : tests/test_cipher_transport.cpp z dl crypto png libboost_unit_test  ;
+unit-test test_cipher_transport : tests/test_cipher_transport.cpp z openssl dl crypto png libboost_unit_test  ;
 
 unit-test test_bitfu : tests/test_bitfu.cpp libboost_unit_test  ;
 

@@ -39,6 +39,8 @@
 #include "log.hpp"
 #include "fileutils.hpp"
 #include "netutils.hpp"
+#include "../libs/rio.h"
+
 
 class Transport {
 public:
@@ -112,38 +114,42 @@ public:
 class GeneratorTransport : public Transport {
 
     public:
-    size_t current;
-    char * data;
-    size_t len;
+    RIO * rio;
 
 
     GeneratorTransport(const char * data, size_t len)
-        : Transport(), current(0), data(0), len(len)
+        : Transport()
     {
-        this->data = (char *)malloc(len);
-        memcpy(this->data, data, len);
+        RIO_ERROR status;
+        this->rio = rio_new_generator(&status, data, len);
+        if (status != RIO_ERROR_OK){ 
+            throw Error(ERR_TRANSPORT, 0);
+        }
+    }
+
+    ~GeneratorTransport()
+    {
+        rio_delete(this->rio);
     }
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        if (current + len > this->len){
-            size_t available_len = this->len - this->current;
-            memcpy(*pbuffer, (const char *)(&this->data[this->current]),
-                                            available_len);
-            *pbuffer += available_len;
-            this->current += available_len;
-            LOG(LOG_INFO, "Generator transport has no more data");
+        ssize_t res = rio_recv(this->rio, *pbuffer, len);
+        if (res < 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
-        memcpy(*pbuffer, (const char *)(&this->data[current]), len);
-        *pbuffer += len;
-        current += len;
+        *pbuffer += res;
+        if ((size_t)res < len){
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+        }
     }
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         // send perform like a /dev/null and does nothing in generator transport
     }
+
+
 };
 
 class CheckTransport : public Transport {
