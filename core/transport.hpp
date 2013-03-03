@@ -124,15 +124,6 @@ class GeneratorTransport : public Transport {
         memcpy(this->data, data, len);
     }
 
-    void reset(const char * data, size_t len)
-    {
-        delete this->data;
-        current = 0;
-        this->len = len;
-        this->data = (char *)malloc(len);
-        memcpy(this->data, data, len);
-    }
-
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         if (current + len > this->len){
@@ -167,15 +158,6 @@ class CheckTransport : public Transport {
     CheckTransport(const char * data, size_t len, uint32_t verbose = 0)
         : Transport(), current(0), data(0), len(len), verbose(verbose)
     {
-        this->data = (char *)malloc(len);
-        memcpy(this->data, data, len);
-    }
-
-    void reset(const char * data, size_t len)
-    {
-        delete this->data;
-        current = 0;
-        this->len = len;
         this->data = (char *)malloc(len);
         memcpy(this->data, data, len);
     }
