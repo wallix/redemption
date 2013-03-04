@@ -24,7 +24,7 @@
 #define BOOST_TEST_MODULE TestWidgetNotify
 #include <boost/test/auto_unit_test.hpp>
 
-// #define LOGNULL
+#define LOGNULL
 #include <string>
 #include <sstream>
 #include <boost/lexical_cast.hpp>
@@ -35,6 +35,7 @@
 #include "RDP/RDPDrawable.hpp"
 #include "png.hpp"
 #include <stdio.h>
+#include <font.hpp>
 
 struct TestNotify : NotifyApi
 {
@@ -56,9 +57,11 @@ struct TestNotify : NotifyApi
 struct TestDraw : ModApi
 {
     RDPDrawable gd;
+    Font font;
 
     TestDraw()
     : gd(1000,1000,true)
+    , font("/tmp/sans-10.fv1")
     {}
 
     virtual void draw(const RDPOpaqueRect& cmd, const Rect& clip)
@@ -94,6 +97,27 @@ struct TestDraw : ModApi
     virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip)
     {
         gd.draw(cmd, clip);
+//         if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()){
+//             RDPGlyphIndex new_cmd = cmd;
+//             if (this->client_info.bpp != this->mod_bpp){
+//                 const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+//                 const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+//                 new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
+//                 new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
+//             }
+//
+//             // this may change the brush and send it to to remote cache
+//             this->cache_brush(new_cmd.brush);
+//
+//             this->orders->draw(new_cmd, clip);
+//
+//             if (this->capture){
+//                 RDPGlyphIndex new_cmd24 = cmd;
+//                 new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+//                 new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+//                 this->capture->draw(new_cmd24, clip);
+//             }
+//         }
     }
 
     virtual void draw(const RDPBrushCache& cmd)
@@ -118,11 +142,92 @@ struct TestDraw : ModApi
     {}
 
     virtual void server_draw_text(uint16_t x, uint16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
-    {}
+    {
+        // add text to glyph cache
+        int len = strlen(text);
+        TODO("we should put some loop here for text to be splitted between chunks of UTF8 characters and loop on them")
+        if (len > 120) {
+            len = 120;
+        }
 
+        if (len > 0){
+            uint32_t uni[128];
+            size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
+            int total_width = 0;
+            int total_height = 0;
+            uint8_t data[256];
+            int f = 7;
+            int distance_from_previous_fragment = 0;
+            int xx = x;
+            for (size_t index = 0; index < part_len; index++) {
+                int c = 0;
+                uint32_t charnum = uni[index]; //
+                FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
+                if (!font_item) {
+                    LOG(LOG_WARNING, "TestDraw::text_metrics() - character not defined >0x%02x<", charnum);
+                    font_item = this->font.font_items['?'];
+                }
+                for (int i = 0 ; i < font_item->height; i++){
+                    for (int ii = 0 ; ii < font_item->incby; ii++){
+                        if (font_item->data[i*font_item->width + ii]) {
+                            this->draw(RDPOpaqueRect(Rect(xx+ii, y+i, 1,1), WHITE), clip);
+                        }
+                    }
+                }
+                xx += font_item->incby;
+                data[index * 2] = c;
+                data[index * 2 + 1] = distance_from_previous_fragment;
+                distance_from_previous_fragment = font_item->incby;
+                total_width += font_item->incby;
+                total_height = std::max(total_height, font_item->height);
+            }
+
+            const Rect bk(x, y, total_width + 1, total_height);
+
+            RDPGlyphIndex glyphindex(
+                f, // cache_id
+                0x03, // fl_accel
+                0x0, // ui_charinc
+                1, // f_op_redundant,
+                bgcolor, // bgcolor
+                fgcolor, // fgcolor
+                bk, // bk
+                bk, // op
+                // brush
+                RDPBrush(0, 0, 3, 0xaa,
+                    (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
+    //            this->brush,
+                x,  // glyph_x
+                y + total_height, // glyph_y
+                part_len * 2, // data_len in bytes
+                data // data
+            );
+
+            this->draw(glyphindex, clip);
+
+            x += total_width;
+        }
+    }
 
     virtual void text_metrics(const char* text, int& width, int& height)
-    {}
+    {
+        height = 0;
+        width = 0;
+        uint32_t uni[256];
+        size_t len_uni = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
+        if (len_uni){
+            for (size_t index = 0; index < len_uni; index++) {
+                uint32_t charnum = uni[index]; //
+                FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
+                if (!font_item) {
+                    LOG(LOG_WARNING, "TestDraw::text_metrics() - character not defined >0x%02x<", charnum);
+                    font_item = this->font.font_items['?'];
+                }
+                width += font_item->incby;
+                height = std::max(height, font_item->height);
+            }
+        }
+    }
 };
 
 struct TestWidget
@@ -137,7 +242,7 @@ struct TestWidget
     : screen(drawable, 1000, 1000, notify)
     , win(drawable, Rect(30,30, 800, 600), &screen, notify)
     , w1(drawable, Rect(10, 40, 10, 10), &win, Widget::TYPE_BUTTON, notify)
-    , w2(drawable, Rect(50, 40, 10, 10), &win, notify)
+    , w2(drawable, Rect(50, 40, 120, 45), &win, notify, "plop", 4)
     , w3(drawable, Rect(100, 400, 10, 10), &win, Widget::TYPE_BUTTON, notify)
     {
         win.has_focus = true;
@@ -241,14 +346,15 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDraw)
     w.screen.send_event(WM_DRAW, 0, 0, 0);
     //or w.screen.refresh(w.screen.rect);
 
-    //std::FILE * file = fopen("/tmp/b.png", "w+");
-    //dump_png24(file, drawable.gd.drawable.data, drawable.gd.drawable.width, //drawable.gd.drawable.height, drawable.gd.drawable.rowsize);
-    //fclose(file);
+    std::FILE * file = fopen("/tmp/a.png", "w+");
+    dump_png24(file, drawable.gd.drawable.data, drawable.gd.drawable.width,
+               drawable.gd.drawable.height, drawable.gd.drawable.rowsize);
+    fclose(file);
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xd9\xe1\x56\xed\xbc\x4b\xf5\x70\xe3\x97"
-        "\x42\x54\x92\x91\x88\xad\xeb\x49\xc8\x83")){
+        "\x94\xd3\xf2\xbb\xe6\xcf\xa9\xb1\x76\x44"
+        "\x1d\xcc\xd0\xef\x64\x60\x60\x9d\x2c\xaa")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -259,15 +365,22 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     TestDraw drawable;
     TestWidget w(&drawable, &notify);
 
+    w.screen.send_event(WM_DRAW, 0, 0, 0);
     Keymap2 keymap;
+    keymap.push_kevent(Keymap2::KEVENT_KEY);
     w.screen.send_event(KEYDOWN, 0, 0, &keymap);
     BOOST_CHECK(notify.s ==
-        "event: 11 -- id: 2, type: 5\n");
+      "event: 11 -- id: 2, type: 5\n");
+
+    std::FILE * file = fopen("/tmp/b.png", "w+");
+    dump_png24(file, drawable.gd.drawable.data, drawable.gd.drawable.width,
+              drawable.gd.drawable.height, drawable.gd.drawable.rowsize);
+    fclose(file);
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x7b\xb1\x56\x2c\x72\xf2\x50\x39\x15\xf0"
-        "\x63\x27\xfd\x16\x84\x37\x52\xab\x3d\x42")){
+        "\x3d\x25\xd2\xd9\x91\x75\xed\x4a\xff\x4d"
+        "\xda\xa3\x3a\x4d\x01\x97\xd8\xf2\x3d\x5b")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }

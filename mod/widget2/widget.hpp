@@ -108,22 +108,35 @@ protected:
     {}
 
 public:
-    Rect get_clip_base()
+    struct screen_position {
+        Rect rect;
+        uint16_t x;
+        uint16_t y;
+
+        screen_position(const Rect & rect)
+        : rect(rect)
+        , x(rect.x)
+        , y(rect.y)
+        {}
+    };
+
+    screen_position get_clip_base()
     {
-        if (this->parent){
-            Rect ret = this->rect;
-            for (Widget * p = this->parent; p; p = p->parent){
-                ret = ret.intersect(p->rect.cx, p->rect.cy);
-                ret.x += p->rect.x;
-                ret.y += p->rect.y;
-            }
-            return ret;
+        screen_position ret(this->rect);
+        for (Widget * p = this->parent; p; p = p->parent){
+            ret.rect = ret.rect.intersect(p->rect.cx, p->rect.cy);
+            ret.rect.x += p->rect.x;
+            ret.rect.y += p->rect.y;
+            ret.x += p->rect.x;
+            ret.y += p->rect.y;
         }
-        return this->rect;
+        return ret;
     }
 
-    virtual void draw(const Rect& rect, const Rect& clip_screen)
+    virtual void draw(const Rect& rect, uint16_t x_screen, uint16_t y_screen, const Rect& clip_screen)
     {
+        (void)x_screen;
+        (void)y_screen;
         this->drawable->draw(
             RDPOpaqueRect(
                 rect.offset(clip_screen.x, clip_screen.y),
@@ -134,16 +147,16 @@ public:
     void refresh(const Rect & rect)
     {
         if (!rect.isempty() && this->drawable){
-            Rect clip = this->get_clip_base();
-            if (clip.cx && clip.cy && rect.x < clip.cx && rect.y < clip.cy){
+            screen_position sp = this->get_clip_base();
+            if (sp.rect.cx && sp.rect.cy && rect.x < sp.rect.cx && rect.y < sp.rect.cy){
                 this->drawable->begin_update();
-                this->draw(rect, clip);
+                this->draw(rect, sp.x, sp.y, sp.rect);
                 this->drawable->end_update();
             }
         }
     }
 
-    void refresh_child(Widget * w, const Rect & rect, const Rect & clip_screen)
+    void refresh_child(Widget * w, const Rect & rect, uint16_t x_screen, uint16_t y_screen, const Rect & clip_screen)
     {
         if (!w->rect.isempty() && w->drawable){
             Rect new_clip = clip_screen.intersect(
@@ -154,7 +167,7 @@ public:
             );
             if (new_clip.cx && new_clip.cy && rect.x < new_clip.cx && rect.y < new_clip.cy){
                 w->drawable->begin_update();
-                w->draw(rect, new_clip);
+                w->draw(rect, x_screen + w->rect.x, y_screen + w->rect.y, new_clip);
                 w->drawable->end_update();
             }
         }

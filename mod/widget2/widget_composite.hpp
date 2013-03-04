@@ -106,7 +106,7 @@ public:
         }
     }
 
-    virtual void draw(const Rect& rect, const Rect& clip_screen)
+    virtual void draw(const Rect& rect, uint16_t x_screen, uint16_t y_screen, const Rect& clip_screen)
     {
         Rect clip = rect.intersect(Rect(
             0,0, clip_screen.cx, clip_screen.cy
@@ -118,11 +118,11 @@ public:
             Rect tmp = clip.intersect(p->rect);
             if (!tmp.isempty()){
                 region.subtract_rect(tmp);
-                this->refresh_child(p, Rect(0,0,tmp.cx,tmp.cy), clip_screen);
+                this->refresh_child(p, Rect(0,0,tmp.cx,tmp.cy), x_screen, y_screen, clip_screen);
             }
         }
         for (size_t i = 0, max = region.rects.size(); i < max; ++i) {
-            this->Widget::draw(region.rects[i], clip_screen);
+            this->Widget::draw(region.rects[i], x_screen, y_screen, clip_screen);
         }
     }
 
