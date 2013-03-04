@@ -198,53 +198,50 @@ class CheckTransport : public Transport {
 
 class TestTransport : public Transport {
 
-    GeneratorTransport out;
-    CheckTransport in;
     public:
-    char name[256];
-    uint32_t verbose;
+    RIO * rio;
+    bool status;
 
     TestTransport(const char * name, const char * outdata, size_t outlen, const char * indata, size_t inlen, uint32_t verbose = 0)
-        : out(outdata, outlen), in(indata, inlen), verbose(verbose)
     {
-        strncpy(this->name, name, 254);
-        this->name[255]=0;
+        this->status = true;
+        RIO_ERROR res = RIO_ERROR_OK;
+        this->rio = rio_new_test(&res, indata, inlen, outdata, outlen);
+        if (res != RIO_ERROR_OK){ 
+            this->status = false;
+            throw Error(ERR_TRANSPORT, 0);
+        }
+    }
+
+    ~TestTransport()
+    {
+        rio_delete(this->rio);
     }
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        if (this->status){
-            try {
-                this->out.recv(pbuffer, len);
-            } catch (const Error & e){
-                this->status = this->out.status;
-                throw;
-            }
-            this->status = this->out.status;
-            if (this->verbose & 0x100){
-                LOG(LOG_INFO, "Recv done on %s (Test Data) %u bytes", this->name, len);
-                hexdump_c(*pbuffer - len, len);
-                LOG(LOG_INFO, "Dump done on %s (Test Data) %u bytes", this->name, len);
-            }
+        ssize_t res = rio_recv(this->rio, *pbuffer, len);
+        if (res < 0){
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+        }
+        *pbuffer += res;
+        if ((size_t)res < len){
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
     }
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
-        if (this->status){
-            if (this->verbose & 0x100){
-                LOG(LOG_INFO, "Test Transport %s (Test Data) sending %u bytes", this->name, len);
-                hexdump_c(buffer, len);
-                LOG(LOG_INFO, "Dump done %s (Test Data) sending %u bytes", this->name, len);
-            }
-            try {
-                this->in.send(buffer, len);
-                this->status = this->in.status;
-            } catch (const Error & e){
-                this->status = this->in.status;
-                throw;
-            }
+        ssize_t res = rio_send(this->rio, buffer, len);
+        if (res < 0) {
+            this->status = false;
+            throw Error(ERR_TRANSPORT_DIFFERS);
         }
+        if (res < (ssize_t)len) {
+            this->status = false;
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+        return;
     }
 };
 
