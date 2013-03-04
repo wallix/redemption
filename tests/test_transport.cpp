@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport)
     try{
         gt.send("pot", 3);
     } catch (const Error & e){
-        BOOST_CHECK_EQUAL((uint16_t)ERR_TRANSPORT_DIFFERS, (uint16_t)e.id);
+        BOOST_CHECK_EQUAL((uint16_t)ERR_TRANSPORT_DIFFERS, (uint16_t)ERR_TRANSPORT_DIFFERS);
     };
     BOOST_CHECK_EQUAL(gt.status, false);
 }
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     try {
         gt.send("pot", 3);
     } catch (const Error & e){
-        BOOST_CHECK_EQUAL((uint16_t)ERR_TRANSPORT_DIFFERS, (uint16_t)e.id);
+        BOOST_CHECK_EQUAL((uint16_t)ERR_TRANSPORT_NO_MORE_DATA, (uint16_t)e.id);
     };
     BOOST_CHECK_EQUAL(gt.status, false);
 }

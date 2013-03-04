@@ -155,17 +155,24 @@ class GeneratorTransport : public Transport {
 class CheckTransport : public Transport {
 
     public:
-    size_t current;
-    char * data;
-    size_t len;
-    uint32_t verbose;
-
+    RIO * rio;
+    bool status;
 
     CheckTransport(const char * data, size_t len, uint32_t verbose = 0)
-        : Transport(), current(0), data(0), len(len), verbose(verbose)
+        : Transport()
     {
-        this->data = (char *)malloc(len);
-        memcpy(this->data, data, len);
+        this->status = true;
+        RIO_ERROR res = RIO_ERROR_OK;
+        this->rio = rio_new_check(&res, data, len);
+        if (res != RIO_ERROR_OK){ 
+            this->status = false;
+            throw Error(ERR_TRANSPORT, 0);
+        }
+    }
+
+    ~CheckTransport()
+    {
+        rio_delete(this->rio);
     }
 
     using Transport::recv;
@@ -176,45 +183,17 @@ class CheckTransport : public Transport {
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
-        if (this->verbose & 0x100){
-            LOG(LOG_INFO, "Check Transport (Test Data) sending %u bytes", len);
-            hexdump_c(buffer, len);
-            LOG(LOG_INFO, "Dump done (Test Data) sending %u bytes", len);
-        }
-        size_t available_len = (this->current + len > this->len)?this->len - this->current:len;
-        if (0 != memcmp(buffer, (const char *)(&this->data[this->current]), available_len)){
-            // data differs
+        ssize_t res = rio_send(this->rio, buffer, len);
+        if (res < 0) {
             this->status = false;
-            // find where
-            uint32_t differs = 0;
-            for (size_t i = 0; i < available_len ; i++){
-                if (buffer[i] != ((const char *)(&this->data[this->current]))[i]){
-                    differs = i;
-                    break;
-                }
-            }
-            LOG(LOG_INFO, "=============== Common Part =======");
-            hexdump_c(buffer, differs);
-            LOG(LOG_INFO, "=============== Expected ==========");
-            hexdump((const char *)(&this->data[this->current]) + differs, available_len - differs);
-            LOG(LOG_INFO, "=============== Got ===============");
-            hexdump_c(buffer+differs, available_len - differs);
-            throw Error(ERR_TRANSPORT_DIFFERS, 0);
+            throw Error(ERR_TRANSPORT_DIFFERS);
         }
-        this->current += available_len;
-        if (available_len != len){
-            LOG(LOG_INFO, "Check transport out of reference data available=%u len=%u", available_len, len);
-            LOG(LOG_INFO, "=============== Unexpected Missing ==========");
-            hexdump_c((const char *)(buffer + available_len), len - available_len);
+        if (res < (ssize_t)len) {
             this->status = false;
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
+        return;
     }
-
-    size_t remaining(){
-        return this->len - this->current;
-    }
-
 };
 
 class TestTransport : public Transport {
