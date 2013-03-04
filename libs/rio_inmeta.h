@@ -41,7 +41,7 @@ extern "C" {
     inline RIO_ERROR rio_m_RIOInmeta_constructor(RIOInmeta * self, const char * prefix, const char * extension)
     {
         RIO_ERROR status = RIO_ERROR_OK;
-        SQ * sequence = sq_new_meta(&status, prefix, extension);
+        SQ * sequence = sq_new_inmeta(&status, prefix, extension);
         if (status != RIO_ERROR_OK){
             return status;
         }

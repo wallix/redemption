@@ -197,6 +197,12 @@ extern "C" {
         }
         return self->trans;
     }
+    
+    static inline RIO_ERROR sq_m_SQIntracker_timestamp(SQIntracker * self, timeval * tv)
+    {
+        return RIO_ERROR_OK;
+    }
+
 };
 
 #endif

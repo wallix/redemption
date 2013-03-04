@@ -83,6 +83,8 @@ extern "C" {
     RIO * rio_new_outsequence(RIO_ERROR * error, SQ * seq);
     RIO * rio_new_insequence(RIO_ERROR * error, SQ * seq);    
     RIO * rio_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extension);
+    RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension, 
+                      const char * l1, const char * l2, const char * l3, timeval * tv);
 
     RIO_ERROR rio_delete(RIO * rt);
     RIO_ERROR sq_delete(SQ * rt);
@@ -97,7 +99,7 @@ extern "C" {
 
     SQ * sq_new_outfilename(RIO_ERROR * error, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, timeval * tv);
     SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker);
-    SQ * sq_new_meta(RIO_ERROR * error, const char * prefix, const char * extension);
+    SQ * sq_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extension);
 
 }
 

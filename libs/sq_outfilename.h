@@ -101,10 +101,11 @@ extern "C" {
         return res;
     }
 
-    static inline void sq_m_SQOutfilename_timestamp(SQOutfilename * self, timeval * tv)
+    static RIO_ERROR sq_m_SQOutfilename_timestamp(SQOutfilename * self, timeval * tv)
     {
         self->stop_tv.tv_sec = tv->tv_sec;
-        self->stop_tv.tv_usec = tv->tv_usec;    
+        self->stop_tv.tv_usec = tv->tv_usec;
+        return RIO_ERROR_OK;
     }
 
 

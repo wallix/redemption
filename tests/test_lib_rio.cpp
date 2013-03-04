@@ -475,6 +475,7 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
         RIO * rt = rio_new_outsequence(&status, sequence);
 
         BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
+        sq_timestamp(sequence, &tv);
         BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(sequence));
         BOOST_CHECK_EQUAL(10, rio_send(rt, "BBBBXCCCCX", 10));
 
@@ -547,7 +548,7 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
 BOOST_AUTO_TEST_CASE(TestSequenceMeta)
 {
     RIO_ERROR status = RIO_ERROR_OK;
-    SQ * sequence = sq_new_meta(&status, "./tests/fixtures/TESTOFS", "mwrm");
+    SQ * sequence = sq_new_inmeta(&status, "./tests/fixtures/TESTOFS", "mwrm");
 
     status = RIO_ERROR_OK;
     RIO * rt = rio_new_insequence(&status, sequence);
@@ -596,12 +597,39 @@ BOOST_AUTO_TEST_CASE(TestOutMeta)
     RIO * rt = rio_new_outmeta(&status, &seq, "TESTOFS", "mwrm", "800 600\n", "\n", "\n", &tv);
 
     BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
+    tv.tv_sec += 100;
+    sq_timestamp(seq, &tv);
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(seq));
     BOOST_CHECK_EQUAL(10, rio_send(rt, "BBBBXCCCCX", 10));
+    tv.tv_sec += 100;
+    sq_timestamp(seq, &tv);
+    BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(seq));
 
     rio_close(rt);
     rio_delete(rt);
-    
+
+    {
+        RIO_ERROR status = RIO_ERROR_OK;
+        SQ * sequence = sq_new_inmeta(&status, "./tests/fixtures/TESTOFS", "mwrm");
+
+        status = RIO_ERROR_OK;
+        RIO * rt = rio_new_insequence(&status, sequence);
+
+        char buffer[1024] = {};
+        BOOST_CHECK_EQUAL(10, rio_recv(rt, buffer, 10));
+        BOOST_CHECK_EQUAL(0, buffer[10]);
+        if (0 != memcmp(buffer, "AAAAXBBBBX", 10)){
+            LOG(LOG_ERR, "expected \"AAAAXBBBBX\" got \"%s\"\n", buffer);
+        }
+        BOOST_CHECK_EQUAL(5, rio_recv(rt, buffer + 10, 1024));
+        BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
+        BOOST_CHECK_EQUAL(0, buffer[15]);
+        BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer + 15, 1024));
+        rio_close(rt);
+        rio_delete(rt);
+        sq_delete(sequence);
+    }
+
     const char * file[] = {
         "TESTOFS.mwrm",
         "TESTOFS-000000.wrm",
@@ -634,8 +662,12 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
         RIO * rt = rio_new_outmeta(&status, &seq, "TESTOFS", "mwrm", "800 600\n", "\n", "\n", &tv);
 
         BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
+        tv.tv_sec+= 100;
+        sq_timestamp(seq, &tv);
         BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(seq));
         BOOST_CHECK_EQUAL(10, rio_send(rt, "BBBBXCCCCX", 10));
+        tv.tv_sec+= 100;
+        sq_timestamp(seq, &tv);
 
         rio_close(rt);
         rio_delete(rt);

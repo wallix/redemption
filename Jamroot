@@ -258,8 +258,8 @@ unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test  : ;
 unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test  : ;
 unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test  ;
 
-unit-test test_lib_rio : tests/test_lib_rio.cpp openssl crypto z dl libboost_unit_test  ;
-unit-test test_lib_rio : tests/test_lib_rio.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+#unit-test test_lib_rio : tests/test_lib_rio.cpp openssl crypto z dl libboost_unit_test  ;
+#unit-test test_lib_rio : tests/test_lib_rio.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
 #gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_lib_rio.gcno bin/gcc-4.6/coverage/test_lib_rio
 

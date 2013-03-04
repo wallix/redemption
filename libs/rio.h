@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_LIBS_REDTRANS_H_
-#define _REDEMPTION_LIBS_REDTRANS_H_
+#ifndef _REDEMPTION_LIBS_RIO_H_
+#define _REDEMPTION_LIBS_RIO_H_
 
 #define RIOVERSION "0.1"
 
@@ -39,9 +39,8 @@
 
 #include "sq_one.h"
 #include "sq_outfilename.h"
-//#include "sq_infilename.h"
 #include "sq_intracker.h"
-#include "sq_meta.h"
+#include "sq_inmeta.h"
 
 #include "rio_generator.h"
 #include "rio_check.h"
@@ -96,7 +95,7 @@ typedef enum {
     SQ_TYPE_ONE,
     SQ_TYPE_OUTFILENAME,
     SQ_TYPE_INTRACKER,
-    SQ_TYPE_META,
+    SQ_TYPE_INMETA,
 } SQ_TYPE;
 
 
@@ -107,7 +106,7 @@ struct SQ {
       struct SQOne one;
       struct SQOutfilename outfilename;
       struct SQIntracker intracker;
-      struct SQMeta meta;
+      struct SQInmeta inmeta;
     } u;
 };
 
@@ -175,15 +174,15 @@ SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker)
     return res;
 }
 
-SQ * sq_new_meta(RIO_ERROR * error, const char * prefix, const char * extension)
+SQ * sq_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extension)
 {
     SQ * res = (SQ*)malloc(sizeof(SQ));
     if (res == 0){ 
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
-    res->sq_type = SQ_TYPE_META;
-    res->err = sq_m_SQMeta_constructor(&(res->u.meta), prefix, extension);
+    res->sq_type = SQ_TYPE_INMETA;
+    res->err = sq_m_SQInmeta_constructor(&(res->u.inmeta), prefix, extension);
     if (*error) {*error = res->err; }
     switch (res->err){
     default:
@@ -194,6 +193,29 @@ SQ * sq_new_meta(RIO_ERROR * error, const char * prefix, const char * extension)
     }
     return res;
 }
+
+RIO_ERROR sq_timestamp(SQ * seq, timeval * tv)
+{
+    RIO_ERROR res = RIO_ERROR_OK;
+    switch (seq->sq_type){
+    case SQ_TYPE_ONE:
+        res = sq_m_SQOne_timestamp(&(seq->u.one), tv);
+        break;
+    case SQ_TYPE_OUTFILENAME:
+        res = sq_m_SQOutfilename_timestamp(&(seq->u.outfilename), tv);
+        break;
+    case SQ_TYPE_INTRACKER:
+        res = sq_m_SQIntracker_timestamp(&(seq->u.intracker), tv);
+        break;
+    case SQ_TYPE_INMETA:
+        res = sq_m_SQInmeta_timestamp(&(seq->u.inmeta), tv);
+        break;
+    default:
+        res = RIO_ERROR_TYPE_MISMATCH;
+    }
+    return res;
+}
+
 
 RIO_ERROR sq_next(SQ * seq)
 {
@@ -208,8 +230,8 @@ RIO_ERROR sq_next(SQ * seq)
     case SQ_TYPE_INTRACKER:
         res = sq_m_SQIntracker_next(&(seq->u.intracker));
         break;
-    case SQ_TYPE_META:
-        res = sq_m_SQMeta_next(&(seq->u.meta));
+    case SQ_TYPE_INMETA:
+        res = sq_m_SQInmeta_next(&(seq->u.inmeta));
         break;
     default:
         res = RIO_ERROR_TYPE_MISMATCH;
@@ -231,8 +253,8 @@ RIO * sq_get_trans(SQ * seq, RIO_ERROR * error)
     case SQ_TYPE_INTRACKER:
         trans = sq_m_SQIntracker_get_trans(&(seq->u.intracker), &status);
         break;
-    case SQ_TYPE_META:
-        trans = sq_m_SQMeta_get_trans(&(seq->u.meta), &status);
+    case SQ_TYPE_INMETA:
+        trans = sq_m_SQInmeta_get_trans(&(seq->u.inmeta), &status);
         break;
     default:
         status = RIO_ERROR_TYPE_MISMATCH;
@@ -254,8 +276,8 @@ RIO_ERROR sq_delete(SQ * sq)
         case SQ_TYPE_INTRACKER:
             status = sq_m_SQIntracker_destructor(&(sq->u.intracker));
         break;
-        case SQ_TYPE_META:
-            status = sq_m_SQMeta_destructor(&(sq->u.meta));
+        case SQ_TYPE_INMETA:
+            status = sq_m_SQInmeta_destructor(&(sq->u.inmeta));
         break;
         default:
             ;
