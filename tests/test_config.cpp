@@ -52,7 +52,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3389, ini.globals.port);
     BOOST_CHECK_EQUAL(0,    ini.globals.encryptionLevel);
-    BOOST_CHECK_EQUAL(0,    ini.globals.autologin);
     BOOST_CHECK_EQUAL(2,    ini.globals.authversion);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"), std::string(ini.globals.authip));
     BOOST_CHECK_EQUAL(3350, ini.globals.authport);
@@ -72,7 +71,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(true, ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3389, ini.globals.port);
     BOOST_CHECK_EQUAL(0,    ini.globals.encryptionLevel);
-    BOOST_CHECK_EQUAL(0,    ini.globals.autologin);
     BOOST_CHECK_EQUAL(2,    ini.globals.authversion);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"), std::string(ini.globals.authip));
     BOOST_CHECK_EQUAL(3350, ini.globals.authport);
