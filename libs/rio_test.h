@@ -62,10 +62,6 @@ extern "C" {
         return RIO_ERROR_OK;
     }
 
-    inline void rio_m_RIOTest_close(RIOTest * self)
-    {
-    }
-
 
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data
@@ -79,10 +75,12 @@ extern "C" {
         
         RIO_ERROR err_gen = rio_get_status(self->generator);
         if (err_gen != RIO_ERROR_OK){
+            rio_m_RIOTest_destructor(self);
             return -err_gen;
         }
         RIO_ERROR err_check = rio_get_status(self->check);
         if (err_check != RIO_ERROR_OK){
+            rio_m_RIOTest_destructor(self);
             return -err_check;
         }
         return rio_recv(self->generator, data, len);
@@ -99,10 +97,12 @@ extern "C" {
     {
         RIO_ERROR err_gen = rio_get_status(self->generator);
         if (err_gen != RIO_ERROR_OK){
+            rio_m_RIOTest_destructor(self);
             return -err_gen;
         }
         RIO_ERROR err_check = rio_get_status(self->check);
         if (err_check != RIO_ERROR_OK){
+            rio_m_RIOTest_destructor(self);
             return -err_check;
         }
         return rio_send(self->check, data, len);

@@ -26,13 +26,13 @@
 
 #include "rio_constants.h"
 
-struct RIOInfile {
-    int fd;
-    bool status;
-    RIO_ERROR err;    
-};
-
 extern "C" {
+    struct RIOInfile {
+        int fd;
+        bool status;
+        RIO_ERROR err;    
+    };
+
     /* This method does not allocate space for object itself, 
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
@@ -49,7 +49,7 @@ extern "C" {
     */
     inline RIO_ERROR rio_m_RIOInfile_destructor(RIOInfile * self)
     {
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
 
     /* This method close ressource without calling destructor

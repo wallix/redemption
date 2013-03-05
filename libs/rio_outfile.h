@@ -31,6 +31,7 @@ struct RIOOutfile {
 };
 
 extern "C" {
+
     /* This method does not allocate space for object itself, 
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
@@ -45,7 +46,7 @@ extern "C" {
     */
     inline RIO_ERROR rio_m_RIOOutfile_destructor(RIOOutfile * self)
     {
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
 
     /* This method close ressource without calling destructor
@@ -66,6 +67,7 @@ extern "C" {
     */
     inline ssize_t rio_m_RIOOutfile_recv(RIOOutfile * self, void * data, size_t len)
     {
+         rio_m_RIOOutfile_destructor(self);
          return -RIO_ERROR_SEND_ONLY;
     }
 
@@ -85,6 +87,7 @@ extern "C" {
             ret = ::write(self->fd, (uint8_t*)data + total_sent, remaining_len);
             if (ret <= 0){
                 if (errno == EINTR){ continue; }
+                rio_m_RIOOutfile_destructor(self);
                 switch (errno){
                     case EAGAIN:
                         return -RIO_ERROR_EAGAIN;

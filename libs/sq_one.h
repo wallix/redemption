@@ -51,6 +51,12 @@ extern "C" {
     {
         return RIO_ERROR_OK;
     }
+    
+    static inline RIO_ERROR sq_m_SQOne_timestamp(SQOne * self, timeval * tv)
+    {
+        return RIO_ERROR_OK;
+    }
+
 };
 
 #endif

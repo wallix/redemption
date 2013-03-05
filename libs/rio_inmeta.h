@@ -26,14 +26,14 @@
 
 #include "rio_constants.h"
 
-struct RIOInmeta {
-    timeval start_tv;
-    timeval end_tv;
-    struct SQ * seq;
-    struct RIO * insequence;
-};
-
 extern "C" {
+    struct RIOInmeta {
+        timeval start_tv;
+        timeval end_tv;
+        struct SQ * seq;
+        struct RIO * insequence;
+    };
+
     /* This method does not allocate space for object itself, 
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
@@ -41,7 +41,7 @@ extern "C" {
     inline RIO_ERROR rio_m_RIOInmeta_constructor(RIOInmeta * self, const char * prefix, const char * extension)
     {
         RIO_ERROR status = RIO_ERROR_OK;
-        SQ * sequence = sq_new_meta(&status, prefix, extension);
+        SQ * sequence = sq_new_inmeta(&status, prefix, extension);
         if (status != RIO_ERROR_OK){
             return status;
         }
@@ -63,6 +63,7 @@ extern "C" {
         sq_delete(self->seq);
         return RIO_ERROR_OK;
     }
+
 
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data
@@ -87,6 +88,7 @@ extern "C" {
     {
         return -RIO_ERROR_RECV_ONLY;
     }
+
 };
 
 #endif

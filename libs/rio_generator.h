@@ -25,15 +25,16 @@
 
 #include "rio_constants.h"
 
-struct RIOGenerator {
-    size_t current;
-    uint8_t * data;
-    size_t len;
-    bool status;
-    RIO_ERROR err;
-};
-
 extern "C" {
+
+    struct RIOGenerator {
+        size_t current;
+        uint8_t * data;
+        size_t len;
+        bool status;
+        RIO_ERROR err;
+    };
+
     /* This method does not allocate space for object itself, 
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
@@ -56,10 +57,6 @@ extern "C" {
     {
         free(self->data);
         return RIO_ERROR_OK;
-    }
-
-    static inline void rio_m_RIOGenerator_close(RIOGenerator * self)
-    {
     }
 
     /* This method receive len bytes of data into buffer
