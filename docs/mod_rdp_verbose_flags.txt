@@ -25,10 +25,21 @@ MOD_RDP VERBOSE FLAGS
 ---------------------
 1: connection initiation
 2: licensing management
-4: pointer process, input send
+4: pointer process, input send, palette
 8: PDUTYPE2 details
 16: channel_management
 32: capabilities
 64: rdp_orders details, process bitmap updates
 128: PDUTYPE1 details
 256: hexdump of mod_rdp traffic
+
+FRONT VERBOSE FLAGS
+---------------------
+1: connection initiation and reset
+2: licensing management
+4: pointer process, input send, palette
+8: DATAPDU details
+16: channel management
+32: capabilities
+64: RDP orders details
+128: decrypted payload

@@ -398,7 +398,7 @@ TODO("Pass font name as parameter in constructor")
 
 
     virtual void reset(){
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "Front::reset()");
             LOG(LOG_INFO, "Front::reset::use_bitmap_comp=%u", this->client_info.use_bitmap_comp);
             LOG(LOG_INFO, "Front::reset::use_compact_packets=%u", this->client_info.use_compact_packets);
@@ -456,7 +456,7 @@ TODO("Pass font name as parameter in constructor")
 
     virtual void begin_update()
     {
-        if (this->verbose & 8){
+        if (this->verbose & 64){
             LOG(LOG_INFO, "Front::begin_update()");
         }
         this->order_level++;
@@ -464,7 +464,7 @@ TODO("Pass font name as parameter in constructor")
 
     virtual void end_update()
     {
-        if (this->verbose & 8){
+        if (this->verbose & 64){
             LOG(LOG_INFO, "Front::end_update()");
         }
         this->order_level--;
@@ -475,7 +475,7 @@ TODO("Pass font name as parameter in constructor")
 
     void disconnect() throw (Error)
     {
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "Front::disconnect()");
         }
 
@@ -490,7 +490,7 @@ TODO("Pass font name as parameter in constructor")
 
     void set_console_session(bool b)
     {
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "Front::set_console_session(%u)", b);
         }
         this->client_info.console_session = b;
@@ -508,7 +508,7 @@ TODO("Pass font name as parameter in constructor")
         size_t chunk_size,
         int flags)
     {
-        if (this->verbose){
+        if (this->verbose & 16){
             LOG(LOG_INFO, "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)", data, length, chunk_size, flags);
         }
 
@@ -526,7 +526,7 @@ TODO("Pass font name as parameter in constructor")
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        if (this->verbose > 128){
+        if (((this->verbose & 128) != 0)||((this->verbose & 16)!=0)){
             LOG(LOG_INFO, "Sec clear payload to send:");
             hexdump_d(stream.data, stream.size());
         }
@@ -540,7 +540,7 @@ TODO("Pass font name as parameter in constructor")
         trans->send(sec_header);
         trans->send(stream);
 
-        if (this->verbose){
+        if (this->verbose & 16){
             LOG(LOG_INFO, "Front::send_to_channel done");
         }
     }
@@ -564,7 +564,7 @@ TODO("Pass font name as parameter in constructor")
 
             const BGRPalette & palette = (this->mod_bpp == 8)?this->memblt_mod_palette:this->palette332;
 
-            if (this->verbose > 4){
+            if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
             BStream stream(65536);
@@ -596,7 +596,7 @@ TODO("Pass font name as parameter in constructor")
             BStream mcs_header(256);
             BStream sec_header(256);
 
-            if (this->verbose > 128){
+            if (this->verbose & 128){
                 LOG(LOG_INFO, "Sec clear payload to send:");
                 hexdump_d(stream.data, stream.size());
             }
@@ -726,7 +726,7 @@ TODO("Pass font name as parameter in constructor")
 
     virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
     {
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
         }
 
@@ -812,7 +812,7 @@ TODO("Pass font name as parameter in constructor")
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        if (this->verbose > 128){
+        if (((this->verbose & 4)!=0)&&((this->verbose & 4)!=0)){
             LOG(LOG_INFO, "Sec clear payload to send:");
             hexdump_d(stream.data, stream.size());
         }
@@ -826,7 +826,7 @@ TODO("Pass font name as parameter in constructor")
         trans->send(sec_header);
         trans->send(stream);
 
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "Front::send_pointer done");
         }
     }
@@ -864,7 +864,7 @@ TODO("Pass font name as parameter in constructor")
 
     virtual void set_pointer(int cache_idx) throw (Error)
     {
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
         }
         BStream stream(65536);
@@ -887,7 +887,7 @@ TODO("Pass font name as parameter in constructor")
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        if (this->verbose > 128){
+        if ((this->verbose & (128|4)) == (128|4)){
             LOG(LOG_INFO, "Sec clear payload to send:");
             hexdump_d(stream.data, stream.size());
         }
@@ -901,7 +901,7 @@ TODO("Pass font name as parameter in constructor")
         trans->send(sec_header);
         trans->send(stream);
 
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "Front::set_pointer done");
         }
 
@@ -929,7 +929,7 @@ TODO("Pass font name as parameter in constructor")
             //    |------------X224 Connection Request PDU----------------> |
             //    | <----------X224 Connection Confirm PDU----------------- |
 
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "Front::incoming::receiving x224 request PDU");
             }
 
@@ -943,7 +943,7 @@ TODO("Pass font name as parameter in constructor")
                 }
             }
 
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "Front::incoming::sending x224 connection confirm PDU");
             }
             {
@@ -969,7 +969,7 @@ TODO("Pass font name as parameter in constructor")
             //    | <------------MCS Connect Response PDU with------------- |
             //                   GCC conference Create Response
 
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "Front::incoming::Basic Settings Exchange");
                 LOG(LOG_INFO, "Front::incoming::channel_list : %u", this->channel_list.size());
             }
@@ -1194,7 +1194,7 @@ TODO("Pass font name as parameter in constructor")
             //    |-------MCS Channel Join Request PDU--------------------> |
             //    | <-----MCS Channel Join Confirm PDU--------------------- |
 
-            if (this->verbose){
+            if (this->verbose & 16){
                 LOG(LOG_INFO, "Front::incoming::Channel Connection");
             }
 
@@ -1282,6 +1282,11 @@ TODO("Pass font name as parameter in constructor")
                 X224::RecvFactory f(*this->trans, x224_data);
                 X224::DT_TPDU_Recv x224(*this->trans, x224_data);
                 MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+
+                if (this->verbose & 16){
+                    LOG(LOG_INFO, "cjrq[%u] = %u -> cjcf", i, mcs.channelId);
+                }
+
                 if (mcs.initiator != this->userid){
                     LOG(LOG_ERR, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
                     throw Error(ERR_MCS_BAD_USERID);
@@ -1303,7 +1308,7 @@ TODO("Pass font name as parameter in constructor")
                 this->channel_list.set_chanid(i, mcs.channelId);
             }
 
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "Front::incoming::RDP Security Commencement");
             }
 
@@ -1408,7 +1413,7 @@ TODO("Pass font name as parameter in constructor")
             TODO("We should also manage the DisconnectRequest case as it can also happen")
 
             SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
-            if (this->verbose > 128){
+            if (this->verbose & 128){
                 LOG(LOG_INFO, "sec decrypted payload:");
                 hexdump_d(sec.payload.data, sec.payload.size());
             }
@@ -1420,7 +1425,6 @@ TODO("Pass font name as parameter in constructor")
             /* this is the first test that the decrypt is working */
             this->client_info.process_logon_info(sec.payload);
 
-            TODO("check all data are consumed as expected")
             if (sec.payload.end != sec.payload.p){
                 LOG(LOG_ERR, "Front::incoming::process_logon all data should have been consumed %d bytes trailing", 
                     (signed)(sec.payload.end - sec.payload.p));
@@ -1429,8 +1433,11 @@ TODO("Pass font name as parameter in constructor")
             this->keymap.init_layout(this->client_info.keylayout);
 
             if (this->client_info.is_mce) {
-                LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
-                LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");
+                if (this->verbose & 2){
+                    LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
+                    LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");
+                }
+
                 {
                     BStream stream(65535);
 
@@ -1448,7 +1455,7 @@ TODO("Pass font name as parameter in constructor")
                     BStream mcs_header(256);
                     BStream sec_header(256);
 
-                    if (this->verbose > 128){
+                    if ((this->verbose & (128|2)) == (128|2)){
                         LOG(LOG_INFO, "Sec clear payload to send:");
                         hexdump_d(stream.data, stream.size());
                     }
@@ -1475,7 +1482,7 @@ TODO("Pass font name as parameter in constructor")
                 //    | <------- Demand Active PDU ---------------------------- |
                 //    |--------- Confirm Active PDU --------------------------> |
 
-                if (this->verbose){
+                if (this->verbose & 1){
                     LOG(LOG_INFO, "Front::incoming::send_demand_active");
                 }
                 this->send_demand_active();
@@ -1484,7 +1491,7 @@ TODO("Pass font name as parameter in constructor")
                 this->state = ACTIVATE_AND_PROCESS_DATA;
             }
             else {
-                if (this->verbose){
+                if (this->verbose & 16){
                     LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
                 }
@@ -1548,7 +1555,7 @@ TODO("Pass font name as parameter in constructor")
                 BStream mcs_header(256);
                 BStream sec_header(256);
 
-                if (this->verbose > 128){
+                if ((this->verbose & (128|2)) == (128|2)){
                     LOG(LOG_INFO, "Sec clear payload to send:");
                     hexdump_d(stream.data, stream.size());
                 }
@@ -1562,7 +1569,7 @@ TODO("Pass font name as parameter in constructor")
                 trans->send(sec_header);
                 trans->send(stream);
 
-                if (this->verbose){
+                if (this->verbose & 2){
                     LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
                 }
                 this->state = WAITING_FOR_ANSWER_TO_LICENCE;
@@ -1572,14 +1579,16 @@ TODO("Pass font name as parameter in constructor")
 
         case WAITING_FOR_ANSWER_TO_LICENCE:
         {
-            LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE");
+            if (this->verbose & 2){
+                LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE");
+            }
             BStream stream(65536);
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream);
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             TODO("We should also manage the DisconnectRequest case as it can also happen")
             SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
-            if (this->verbose > 128){
+            if ((this->verbose & (128|2)) == (128|2)){
                 LOG(LOG_INFO, "sec decrypted payload:");
                 hexdump_d(sec.payload.data, sec.payload.size());
             }
@@ -1608,7 +1617,7 @@ TODO("Pass font name as parameter in constructor")
                 switch (flic.tag) {
                 case LIC::ERROR_ALERT:
                 {
-                    if (this->verbose){
+                    if (this->verbose & 2){
                         LOG(LOG_INFO, "Front::ERROR_ALERT");
                     }
                     TODO("We should check what is actually returned by this message, as it may be an error")
@@ -1620,7 +1629,7 @@ TODO("Pass font name as parameter in constructor")
                 break;
                 case LIC::NEW_LICENSE_REQUEST:
                 {
-                    if (this->verbose){
+                    if (this->verbose & 2){
                         LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");
                     }
                     LIC::NewLicenseRequest_Recv lic(sec.payload);
@@ -1645,7 +1654,7 @@ TODO("Pass font name as parameter in constructor")
                     BStream mcs_header(256);
                     BStream sec_header(256);
 
-                    if (this->verbose > 128){
+                    if ((this->verbose & (128|2)) == (128|2)){
                         LOG(LOG_INFO, "Sec clear payload to send:");
                         hexdump_d(stream.data, stream.size());
                     }
@@ -1662,18 +1671,18 @@ TODO("Pass font name as parameter in constructor")
                 break;
                 case LIC::PLATFORM_CHALLENGE_RESPONSE:
                     TODO("As we never send a platform challenge, it is unlikely we ever receive a PLATFORM_CHALLENGE_RESPONSE")
-                    if (this->verbose){
+                    if (this->verbose & 2){
                         LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE_RESPONSE");
                     }
                     break;
                 case LIC::LICENSE_INFO:
                     TODO("As we never send a server license request, it is unlikely we ever receive a LICENSE_INFO")
-                    if (this->verbose){
+                    if (this->verbose & 2){
                         LOG(LOG_INFO, "Front::LICENSE_INFO");
                     }
                     break;
                 default:
-                    if (this->verbose){
+                    if (this->verbose & 2){
                         LOG(LOG_INFO, "Front::LICENCE_TAG %u unknown or unsupported by server", flic.tag);
                     }
                     break;
@@ -1691,7 +1700,7 @@ TODO("Pass font name as parameter in constructor")
                 //    | <------- Demand Active PDU ---------------------------- |
                 //    |--------- Confirm Active PDU --------------------------> |
 
-                if (this->verbose){
+                if (this->verbose & 1){
                     LOG(LOG_INFO, "Front::incoming::send_demand_active");
                 }
                 this->send_demand_active();
@@ -1700,7 +1709,7 @@ TODO("Pass font name as parameter in constructor")
                 this->state = ACTIVATE_AND_PROCESS_DATA;
             }
             else {
-                if (this->verbose){
+                if (this->verbose & 2){
                     LOG(LOG_INFO, "non licence packet: still waiting for licence");
                 }
                 ShareControl sctrl(sec.payload);
@@ -1708,12 +1717,12 @@ TODO("Pass font name as parameter in constructor")
 
                 switch (sctrl.pdu_type1) {
                 case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
-                    if (this->verbose){
+                    if (this->verbose & 2){
                         LOG(LOG_INFO, "unexpected DEMANDACTIVE PDU while in licence negociation");
                     }
                     break;
                 case PDUTYPE_CONFIRMACTIVEPDU:
-                    if (this->verbose){
+                    if (this->verbose & 2){
                         LOG(LOG_INFO, "Unexpected CONFIRMACTIVE PDU");
                     }
                     {
@@ -1724,7 +1733,7 @@ TODO("Pass font name as parameter in constructor")
 
                     break;
                 case PDUTYPE_DATAPDU: /* 7 */
-                    if (this->verbose & 4){
+                    if (this->verbose & 2){
                         LOG(LOG_INFO, "unexpected DATA PDU while in licence negociation");
                     }
                     TODO("See what happens here")
@@ -1737,12 +1746,12 @@ TODO("Pass font name as parameter in constructor")
 //                    this->process_data(sctrl.payload, cb);
                     break;
                 case PDUTYPE_DEACTIVATEALLPDU:
-                    if (this->verbose){
+                    if (this->verbose & 2){
                         LOG(LOG_INFO, "unexpected DEACTIVATEALL PDU while in licence negociation");
                     }
                     break;
                 case PDUTYPE_SERVER_REDIR_PKT:
-                    if (this->verbose){
+                    if (this->verbose & 2){
                         LOG(LOG_INFO, "unsupported SERVER_REDIR_PKT while in licence negociation");
                     }
                     break;
@@ -1759,7 +1768,7 @@ TODO("Pass font name as parameter in constructor")
         break;
 
         case ACTIVATE_AND_PROCESS_DATA:
-        if (this->verbose & 4){
+        if (this->verbose & 8){
             LOG(LOG_INFO, "Front::incoming::ACTIVATE_AND_PROCESS_DATA");
         }
         // Connection Finalization
@@ -1819,12 +1828,12 @@ TODO("Pass font name as parameter in constructor")
             TODO("We should also manage the DisconnectRequest case as it can also happen")
 
             SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
-            if (this->verbose > 128){
+            if (this->verbose & 128){
                 LOG(LOG_INFO, "sec decrypted payload:");
                 hexdump_d(sec.payload.data, sec.payload.size());
             }
 
-            if (this->verbose & 4){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
             }
 
@@ -1837,12 +1846,19 @@ TODO("Pass font name as parameter in constructor")
                     }
                 }
 
+                if (this->verbose & 16){
+                    LOG(LOG_INFO, "Front::incoming::channel_data channelId=%u", mcs.channelId);
+                }
+
                 if (num_channel_src >= channel_list.size()) {
                     LOG(LOG_ERR, "Front::incoming::Unknown Channel");
                     throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                 }
 
                 const ChannelDef & channel = channel_list[num_channel_src];
+                if (this->verbose & 16){
+                    channel.log(mcs.channelId);
+                }
 
                 int length = sec.payload.in_uint32_le();
                 int flags = sec.payload.in_uint32_le();
@@ -1850,7 +1866,15 @@ TODO("Pass font name as parameter in constructor")
                 size_t chunk_size = sec.payload.end - sec.payload.p;
 
                 if (this->up_and_running){
+                    if (this->verbose & 16){
+                        LOG(LOG_INFO, "Front::send_to_mod_channel");
+                    }
                     cb.send_to_mod_channel(channel.name, sec.payload.p, length, chunk_size, flags);
+                }
+                else {
+                    if (this->verbose & 16){
+                        LOG(LOG_INFO, "Front::not up_and_running send_to_mod_channel dropped");
+                    }
                 }
                 sec.payload.p += chunk_size;
             }
@@ -1861,12 +1885,12 @@ TODO("Pass font name as parameter in constructor")
 
                     switch (sctrl.pdu_type1) {
                     case PDUTYPE_DEMANDACTIVEPDU:
-                        if (this->verbose){
+                        if (this->verbose & 1){
                             LOG(LOG_INFO, "Front received DEMANDACTIVEPDU (unsupported)");
                         }
                         break;
                     case PDUTYPE_CONFIRMACTIVEPDU:
-                        if (this->verbose){
+                        if (this->verbose & 1){
                             LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU");
                         }
                         {
@@ -1881,12 +1905,12 @@ TODO("Pass font name as parameter in constructor")
                         init_palette332(palette);
                         this->color_cache(palette, 0);
                         this->init_pointers();
-                        if (this->verbose){
+                        if (this->verbose & 1){
                             LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
                         }
                         break;
                     case PDUTYPE_DATAPDU: /* 7 */
-                        if (this->verbose & 4){
+                        if (this->verbose & 8){
                             LOG(LOG_INFO, "Front received DATAPDU");
                         }
                         // this is rdp_process_data that will set up_and_running to 1
@@ -1894,17 +1918,17 @@ TODO("Pass font name as parameter in constructor")
                         // we will not exit this loop until we are in this state.
 //                        LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
                         this->process_data(sctrl.payload, cb);
-                        if (this->verbose & 4){
+                        if (this->verbose & 8){
                             LOG(LOG_INFO, "Front received DATAPDU done");
                         }
                         break;
                     case PDUTYPE_DEACTIVATEALLPDU:
-                        if (this->verbose){
+                        if (this->verbose & 1){
                             LOG(LOG_INFO, "Front received DEACTIVATEALLPDU (unsupported)");
                         }
                         break;
                     case PDUTYPE_SERVER_REDIR_PKT:
-                        if (this->verbose){
+                        if (this->verbose & 1){
                             LOG(LOG_INFO, "Front received SERVER_REDIR_PKT (unsupported)");
                         }
                         break;
@@ -1939,7 +1963,7 @@ TODO("Pass font name as parameter in constructor")
     /*****************************************************************************/
     void send_data_update_sync() throw (Error)
     {
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "send_data_update_sync");
         }
         BStream stream(65536);
@@ -1961,7 +1985,7 @@ TODO("Pass font name as parameter in constructor")
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        if (this->verbose > 128){
+        if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
             hexdump_d(stream.data, stream.size());
         }
@@ -1981,7 +2005,7 @@ TODO("Pass font name as parameter in constructor")
     /*****************************************************************************/
     void send_demand_active() throw (Error)
     {
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "Front::send_demand_active");
         }
 
@@ -2092,7 +2116,7 @@ TODO("Pass font name as parameter in constructor")
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        if (this->verbose > 128){
+        if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
             hexdump_d(stream.data, stream.size());
         }
@@ -2111,14 +2135,14 @@ TODO("Pass font name as parameter in constructor")
     /* store the number of client cursor cache in client_info */
     void capset_pointercache(Stream & stream, int len)
     {
-        if (this->verbose){
+        if (this->verbose & 32){
             LOG(LOG_INFO, "capset_pointercache");
         }
     }
 
     void process_confirm_active(Stream & stream)
     {
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "process_confirm_active");
         }
         TODO("We should separate the parts relevant to caps processing and the part relevant to actual confirm active")
@@ -2128,7 +2152,7 @@ TODO("Pass font name as parameter in constructor")
         uint16_t lengthCombinedCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(lengthSourceDescriptor);
 
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "lengthSourceDescriptor = %u", lengthSourceDescriptor);
             LOG(LOG_INFO, "lengthCombinedCapabilities = %u", lengthCombinedCapabilities);
         }
@@ -2141,7 +2165,7 @@ TODO("Pass font name as parameter in constructor")
         stream.in_skip_bytes(2); /* pad */
 
         for (int n = 0; n < numberCapabilities; n++) {
-            if (this->verbose){
+            if (this->verbose & 32){
                 LOG(LOG_INFO, "Front::capability %u / %u", n, numberCapabilities );
             }
             if (stream.p + 4 > theoricCapabilitiesEnd) {
@@ -2310,7 +2334,7 @@ TODO("Pass font name as parameter in constructor")
         if ((stream.end - stream.p) >= 4){
             uint32_t sessionId = stream.in_uint32_le(); /* Session Id */
         }
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "process_confirm_active done p=%p end=%p", stream.p, stream.end);
         }
     }
@@ -2378,7 +2402,7 @@ TODO("Pass font name as parameter in constructor")
     TODO(" duplicated code in mod/rdp")
     void send_synchronize()
     {
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "send_synchronize");
         }
 
@@ -2401,7 +2425,7 @@ TODO("Pass font name as parameter in constructor")
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        if (this->verbose > 128){
+        if ((this->verbose & (128|1) == (128|1))){
             LOG(LOG_INFO, "Sec clear payload to send:");
             hexdump_d(stream.data, stream.size());
         }
@@ -2414,6 +2438,9 @@ TODO("Pass font name as parameter in constructor")
         trans->send(mcs_header);
         trans->send(sec_header);
         trans->send(stream);
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "send_synchronize done");
+        }
     }
 
 // 2.2.1.15.1 Control PDU Data (TS_CONTROL_PDU)
@@ -2440,7 +2467,7 @@ TODO("Pass font name as parameter in constructor")
 
     void send_control(int action)
     {
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "send_control action=%u", action);
         }
 
@@ -2464,7 +2491,7 @@ TODO("Pass font name as parameter in constructor")
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        if (this->verbose > 128){
+        if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
             hexdump_d(stream.data, stream.size());
         }
@@ -2477,6 +2504,10 @@ TODO("Pass font name as parameter in constructor")
         trans->send(mcs_header);
         trans->send(sec_header);
         trans->send(stream);
+
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "send_control action=%u", action);
+        }
     }
 
 
@@ -2484,7 +2515,7 @@ TODO("Pass font name as parameter in constructor")
     /*****************************************************************************/
     void send_fontmap() throw (Error)
     {
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "send_fontmap");
         }
 
@@ -2530,7 +2561,7 @@ TODO("Pass font name as parameter in constructor")
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        if (this->verbose > 128){
+        if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
             hexdump_d(stream.data, stream.size());
         }
@@ -2543,17 +2574,21 @@ TODO("Pass font name as parameter in constructor")
         trans->send(mcs_header);
         trans->send(sec_header);
         trans->send(stream);
+
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "send_fontmap");
+        }
     }
 
     /* PDUTYPE_DATAPDU */
     void process_data(Stream & stream, Callback & cb) throw (Error)
     {
-        if (this->verbose & 4){
+        if (this->verbose & 8){
             LOG(LOG_INFO, "Front::process_data(...)");
         }
         ShareData sdata_in(stream);
         sdata_in.recv_begin();
-        if (this->verbose > 0x80){
+        if (this->verbose & 8){
             LOG(LOG_INFO, "sdata_in.pdutype2=%u"
                           " sdata_in.len=%u"
                           " sdata_in.compressedLen=%u"
@@ -2569,14 +2604,14 @@ TODO("Pass font name as parameter in constructor")
 
         switch (sdata_in.pdutype2) {
         case PDUTYPE2_UPDATE:  // Update PDU (section 2.2.9.1.1.3)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_UPDATE");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
             sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_CONTROL: // 20(0x14) Control PDU (section 2.2.1.15.1)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_CONTROL");
             }
             {
@@ -2596,7 +2631,7 @@ TODO("Pass font name as parameter in constructor")
             }
             break;
         case PDUTYPE2_POINTER: // Pointer Update PDU (section 2.2.9.1.1.4)
-            if (this->verbose){
+            if (this->verbose & 4){
                 LOG(LOG_INFO, "PDUTYPE2_POINTER");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
@@ -2606,7 +2641,7 @@ TODO("Pass font name as parameter in constructor")
             {
                 int num_events = sdata_in.payload.in_uint16_le();
 
-                if (this->verbose & 2){
+                if (this->verbose & 4){
                     LOG(LOG_INFO, "PDUTYPE2_INPUT num_events=%u ", num_events);
                 }
 
@@ -2622,7 +2657,7 @@ TODO("Pass font name as parameter in constructor")
                     TODO(" with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.")
                     switch (msg_type) {
                     case RDP_INPUT_SYNCHRONIZE:
-                        if (this->verbose & 2){
+                        if (this->verbose & 4){
                             LOG(LOG_INFO, "RDP_INPUT_SYNCHRONIZE");
                         }
                         /* happens when client gets focus and sends key modifier info */
@@ -2633,7 +2668,7 @@ TODO("Pass font name as parameter in constructor")
                         break;
                     case RDP_INPUT_SCANCODE:
                         {
-                            if (this->verbose & 2){
+                            if (this->verbose & 4){
                                 LOG(LOG_INFO, "RDP_INPUT_SCANCODE time=%u flags=%04x param1=%04x param2=%04x",
                                     time, device_flags, param1, param2
                                 );
@@ -2645,7 +2680,7 @@ TODO("Pass font name as parameter in constructor")
                         }
                         break;
                     case RDP_INPUT_MOUSE:
-                        if (this->verbose & 6){
+                        if (this->verbose & 4){
                             LOG(LOG_INFO, "RDP_INPUT_MOUSE(device_flags=%u, param1=%u, param2=%u)", device_flags, param1, param2);
                         }
                         this->mouse_x = param1;
@@ -2659,7 +2694,7 @@ TODO("Pass font name as parameter in constructor")
                         break;
                     }
                 }
-                if (this->verbose & 2){
+                if (this->verbose & 4){
                     LOG(LOG_INFO, "PDUTYPE2_INPUT done");
                 }
             }
@@ -2671,7 +2706,7 @@ TODO("Pass font name as parameter in constructor")
             {
                 uint16_t messageType = sdata_in.payload.in_uint16_le();
                 uint16_t controlId = sdata_in.payload.in_uint16_le();
-                if (this->verbose){
+                if (this->verbose & 8){
                     LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE"
                                   " messageType=%u controlId=%u",
                                   (unsigned)messageType,
@@ -2681,7 +2716,7 @@ TODO("Pass font name as parameter in constructor")
             }
         break;
         case PDUTYPE2_REFRESH_RECT: // Refresh Rect PDU (section 2.2.11.2.1)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT");
             }
             {
@@ -2692,7 +2727,7 @@ TODO("Pass font name as parameter in constructor")
                 int bottom = sdata_in.payload.in_uint16_le();
                 int cx = (right - left) + 1;
                 int cy = (bottom - top) + 1;
-                if (this->verbose){
+                if (this->verbose & (64|4)){
                     LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT"
                         " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",
                         left, top, right, bottom, cx, cy);
@@ -2703,14 +2738,14 @@ TODO("Pass font name as parameter in constructor")
             }
         break;
         case PDUTYPE2_PLAY_SOUND:   // Play Sound PDU (section 2.2.9.1.1.5.1):w
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
             sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_SUPPRESS_OUTPUT:  // Suppress Output PDU (section 2.2.11.3.1)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_SUPPRESS_OUTPUT");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
@@ -2724,7 +2759,7 @@ TODO("Pass font name as parameter in constructor")
 
         break;
         case PDUTYPE2_SHUTDOWN_REQUEST: // Shutdown Request PDU (section 2.2.2.2.1)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_REQUEST");
             }
             {
@@ -2747,7 +2782,7 @@ TODO("Pass font name as parameter in constructor")
                 BStream mcs_header(256);
                 BStream sec_header(256);
 
-                if (this->verbose > 128){
+                if ((this->verbose & (128|8)) == (128|8)){
                     LOG(LOG_INFO, "Sec clear payload to send:");
                     hexdump_d(stream.data, stream.size());
                 }
@@ -2763,14 +2798,14 @@ TODO("Pass font name as parameter in constructor")
             }
         break;
         case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
             sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_SAVE_SESSION_INFO: // Save Session Info PDU (section 2.2.10.1.1)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
@@ -2778,7 +2813,7 @@ TODO("Pass font name as parameter in constructor")
         break;
         case PDUTYPE2_FONTLIST: // 39(0x27) Font List PDU (section 2.2.1.18.1)
         {
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_FONTLIST");
             }
         // 2.2.1.18.1 Font List PDU Data (TS_FONT_LIST_PDU)
@@ -2826,7 +2861,7 @@ TODO("Pass font name as parameter in constructor")
                 }
                 this->init_pointers();
 
-                if (this->verbose){
+                if (this->verbose & (8|1)){
                     LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
                 }
                 cb.rdp_input_up_and_running();
@@ -2835,69 +2870,69 @@ TODO("Pass font name as parameter in constructor")
         }
         break;
         case PDUTYPE2_FONTMAP:  // Font Map PDU (section 2.2.1.22.1)
-            if (this->verbose){
+            if (this->verbose & (8|1)){
                 LOG(LOG_INFO, "PDUTYPE2_FONTMAP");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
             sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_SET_KEYBOARD_INDICATORS: // Set Keyboard Indicators PDU (section 2.2.8.2.1.1)
-            if (this->verbose){
+            if (this->verbose & (4|8)){
                 LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_INDICATORS");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
             sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST: // Persistent Key List PDU (section 2.2.1.17.1)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST");
             }
             sdata_in.payload.in_skip_bytes(sdata_in.len);
         break;
         case PDUTYPE2_BITMAPCACHE_ERROR_PDU: // Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.1)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_ERROR_PDU");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
             sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_SET_KEYBOARD_IME_STATUS: // Set Keyboard IME Status PDU (section 2.2.8.2.2.1)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_IME_STATUS");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
             sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_OFFSCRCACHE_ERROR_PDU: // Offscreen Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.2)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_OFFSCRCACHE_ERROR_PDU");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
             sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_SET_ERROR_INFO_PDU: // Set Error Info PDU (section 2.2.5.1.1)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
             sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_DRAWNINEGRID_ERROR_PDU: // DrawNineGrid Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.3)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_DRAWNINEGRID_ERROR_PDU");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
             sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_DRAWGDIPLUS_ERROR_PDU: // GDI+ Error PDU (see [MS-RDPEGDI] section 2.2.2.3.4)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_DRAWGDIPLUS_ERROR_PDU");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
             sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_ARC_STATUS_PDU: // Auto-Reconnect Status PDU (section 2.2.4.1.1)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_ARC_STATUS_PDU");
             }
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
@@ -2912,14 +2947,14 @@ TODO("Pass font name as parameter in constructor")
         sdata_in.recv_end();
         stream.p = sdata_in.payload.p;
 
-        if (this->verbose & 4){
+        if (this->verbose & (4|8)){
             LOG(LOG_INFO, "process_data done");
         }
     }
 
     void send_deactive() throw (Error)
     {
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "send_deactive");
         }
 
@@ -2934,7 +2969,7 @@ TODO("Pass font name as parameter in constructor")
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        if (this->verbose > 128){
+        if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
             hexdump_d(stream.data, stream.size());
         }
@@ -2947,6 +2982,9 @@ TODO("Pass font name as parameter in constructor")
         trans->send(mcs_header);
         trans->send(sec_header);
         trans->send(stream);
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "send_deactive done");
+        }
     }
 
 
@@ -3044,9 +3082,12 @@ TODO("Pass font name as parameter in constructor")
 
     void draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
     {
-//        LOG(LOG_INFO, "front::draw:draw_tile((%u, %u, %u, %u) (%u, %u, %u, %u)",
-//             dst_tile.x, dst_tile.y, dst_tile.cx, dst_tile.cy,
-//             src_tile.x, src_tile.y, src_tile.cx, src_tile.cy);
+        if (this->verbose & 64){
+            LOG(LOG_INFO, "front::draw:draw_tile((%u, %u, %u, %u) (%u, %u, %u, %u)",
+                 dst_tile.x, dst_tile.y, dst_tile.cx, dst_tile.cy,
+                 src_tile.x, src_tile.y, src_tile.cx, src_tile.cy);
+        }
+
         // No need to resize bitmap
 
 //        if (dst_tile.x + dst_tile.cx == this->client_info.width
