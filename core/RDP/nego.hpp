@@ -307,7 +307,7 @@ struct RdpNego
                 this->tls?X224::RDP_NEG_REQ:0, 
                 0, 
                 this->tls?X224::RDP_NEG_PROTOCOL_TLS:0); 
-        this->trans->send(stream.data, stream.size());
+        this->trans->send(stream);
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
     }
 

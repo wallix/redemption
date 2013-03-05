@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean
 
-   Template for new XXX RedTransport class
+   Template for new OutSequence RedTransport class
 
 */
 
@@ -26,11 +26,11 @@
 
 #include "rio_constants.h"
 
-struct RIOOutsequence {
-    struct SQ * seq;
-};
-
 extern "C" {
+    struct RIOOutsequence {
+        struct SQ * seq;
+    };
+
     /* This method does not allocate space for object itself, 
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
@@ -45,7 +45,7 @@ extern "C" {
     */
     inline RIO_ERROR rio_m_RIOOutsequence_destructor(RIOOutsequence * self)
     {
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
 
     /* This method receive len bytes of data into buffer
@@ -57,6 +57,7 @@ extern "C" {
     */
     inline ssize_t rio_m_RIOOutsequence_recv(RIOOutsequence * self, void * data, size_t len)
     {
+         rio_m_RIOOutsequence_destructor(self);
          return -RIO_ERROR_SEND_ONLY;
     }
 
@@ -72,9 +73,14 @@ extern "C" {
          RIO_ERROR status = RIO_ERROR_OK;
          RIO * trans = sq_get_trans(self->seq, &status);
          if (status == RIO_ERROR_OK){
-             return rio_send(trans, data, len);
+             ssize_t res = rio_send(trans, data, len);
+             if (res < 0){
+                rio_m_RIOOutsequence_destructor(self);
+             }
+             return res;           
          }
          else {
+            rio_m_RIOOutsequence_destructor(self);
             return -status;
          }
     }
@@ -87,43 +93,6 @@ extern "C" {
          return RIO_ERROR_OK;
     }
 
-    /* Set Timestamp for next chunk
-       default : do nothing if the current file does not support timestamped chunks 
-    */
-    inline RIO_ERROR rio_m_RIOOutsequence_timestamp(RIOOutsequence * self, uint32_t tv_sec, uint32_t tv_usec)
-    {
-         return RIO_ERROR_OK;
-    }
-
-    /* Get Timestamp for current chunk
-       tv_usec can be a NULL pointer. In this case usec won't be returned
-       tv_sec is mandatory.
-       default : do nothing if the current file does not support timestamped chunks 
-    */
-    inline RIO_ERROR rio_m_RIOOutsequence_get_timestamp(RIOOutsequence * self, uint32_t * tv_sec, uint32_t * tv_usec)
-    {
-         return RIO_ERROR_OK;
-    }
-
-    /* Set metadata for next chunk (when writing to transport) 
-       this method can be called any number of times
-       meta is some UTF-8 zero terminated string and can't be larger than 1024 bytes (arbitrary limit)
-       Metadata can be added until the chunk is terminated (by calling next)
-       default : do nothing if the current file does not support timestamped chunks
-    */
-    inline RIO_ERROR rio_m_RIOOutsequence_add_meta(RIOOutsequence * self, const char * meta)
-    {
-         return RIO_ERROR_OK;
-    }
-
-    /* Get metadata for current chunk (when reading from transport)
-       this method can be called any number of time to get all metadata blocks relevant to current chunk.
-       default : do nothing if the current file does not support timestamped chunks
-    */
-    inline RIO_ERROR rio_m_RIOOutsequence_get_meta(RIOOutsequence * self, char * meta)
-    {
-         return RIO_ERROR_OK;
-    }
 };
 
 #endif

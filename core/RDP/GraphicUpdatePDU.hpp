@@ -176,12 +176,12 @@ struct GraphicsUpdatePDU : public RDPSerializer
             X224::DT_TPDU_Send(x224_header, sec_header.size() + this->stream.size() + mcs_header.size());
 
 
-            this->trans->send(x224_header.data, x224_header.size());
-            this->trans->send(mcs_header.data, mcs_header.size());
-            this->trans->send(sec_header.data, sec_header.size());
+            this->trans->send(x224_header);
+            this->trans->send(mcs_header);
+            this->trans->send(sec_header);
             
             this->stream.mark_end();
-            this->trans->send(this->stream.data, this->stream.size());
+            this->trans->send(this->stream);
             this->order_count = 0;
             this->stream.reset();
             this->init();

@@ -83,8 +83,8 @@ public:
         while (this->stream.size() + to_buffer_len > max){
             BStream header(8);
             WRMChunk_Send chunk(header, PARTIAL_IMAGE_CHUNK, max, 1);
-            this->trans->send(header.data, header.size());
-            this->trans->send(this->stream.data, this->stream.size());
+            this->trans->send(header);
+            this->trans->send(this->stream);
             size_t to_send = max - this->stream.size();
             this->trans->send(buffer + len - to_buffer_len, to_send);
             to_buffer_len -= to_send;
@@ -100,8 +100,8 @@ public:
         if (this->stream.size() > 0){
             BStream header(8);
             WRMChunk_Send chunk(header, LAST_IMAGE_CHUNK, this->stream.size(), 1);
-            this->trans->send(header.data, header.size());
-            this->trans->send(this->stream.data, this->stream.size());
+            this->trans->send(header);
+            this->trans->send(this->stream);
         }
     }
 };
@@ -193,8 +193,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
         WRMChunk_Send chunk(header, META_FILE, payload.size(), 1);
 
-        this->trans->send(header.data, header.size());
-        this->trans->send(payload.data, payload.size());
+        this->trans->send(header);
+        this->trans->send(payload);
     }
 
     // this one is used to store some embedded image inside WRM
@@ -221,8 +221,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
         BStream header(8);
         WRMChunk_Send chunk(header, TIMESTAMP, payload.size(), 1);
-        this->trans->send(header.data, header.size());
-        this->trans->send(payload.data, payload.size());
+        this->trans->send(header);
+        this->trans->send(payload);
     }
 
     void send_save_state_chunk()
@@ -324,8 +324,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
         BStream header(8);
         WRMChunk_Send chunk(header, SAVE_STATE, payload.size(), 1);
-        this->trans->send(header.data, header.size());
-        this->trans->send(payload.data, payload.size());
+        this->trans->send(header);
+        this->trans->send(payload);
     }    
 
 
@@ -376,8 +376,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->stream.mark_end();
         BStream header(8);
         WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->stream.size(), this->order_count);
-        this->trans->send(header.data, header.size());
-        this->trans->send(this->stream.data, this->stream.size());
+        this->trans->send(header);
+        this->trans->send(this->stream);
         this->order_count = 0;
         this->stream.reset();
     }

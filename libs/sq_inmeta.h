@@ -21,8 +21,8 @@
 
 */
 
-#ifndef _REDEMPTION_LIBS_SQ_META_H_
-#define _REDEMPTION_LIBS_SQ_META_H_
+#ifndef _REDEMPTION_LIBS_SQ_INMETA_H_
+#define _REDEMPTION_LIBS_SQ_INMETA_H_
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -32,13 +32,12 @@
 #include "sq_intracker.h"
 
 extern "C" {
-    struct SQMeta {
+    struct SQInmeta {
         RIO * tracker;
         struct SQIntracker impl;
     };
 
-
-    static inline RIO_ERROR sq_m_SQMeta_constructor(SQMeta * self, const char * prefix, const char * extension)
+    static inline RIO_ERROR sq_m_SQInmeta_constructor(SQInmeta * self, const char * prefix, const char * extension)
     {
         TODO("Manage all actual open error with more details")
         char tmpname[1024];
@@ -63,21 +62,26 @@ extern "C" {
         return status;
     }
 
-    static inline RIO_ERROR sq_m_SQMeta_destructor(SQMeta * self)
+    static inline RIO_ERROR sq_m_SQInmeta_destructor(SQInmeta * self)
     {
         sq_m_SQIntracker_destructor(&self->impl);
         rio_delete(self->tracker);
         return RIO_ERROR_OK;
     }
 
-    static inline RIO * sq_m_SQMeta_get_trans(SQMeta * self, RIO_ERROR * status)
+    static inline RIO * sq_m_SQInmeta_get_trans(SQInmeta * self, RIO_ERROR * status)
     {
         return sq_m_SQIntracker_get_trans(&self->impl, status);
     }
 
-    static inline RIO_ERROR sq_m_SQMeta_next(SQMeta * self)
+    static inline RIO_ERROR sq_m_SQInmeta_next(SQInmeta * self)
     {
         return sq_m_SQIntracker_next(&self->impl);
+    }
+    
+    static inline RIO_ERROR sq_m_SQInmeta_timestamp(SQInmeta * self, timeval * tv)
+    {
+        return sq_m_SQIntracker_timestamp(&(self->impl), tv);
     }
 };
 

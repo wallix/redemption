@@ -27,11 +27,11 @@
 #include "rio_constants.h"
 #include "netutils.hpp"
 
-struct RIOSocket {
-    int sck;
-};
-
 extern "C" {
+    struct RIOSocket {
+        int sck;
+    };
+
     /* This method does not allocate space for object itself, 
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
@@ -46,11 +46,7 @@ extern "C" {
     */
     inline RIO_ERROR rio_m_RIOSocket_destructor(RIOSocket * self)
     {
-        return RIO_ERROR_OK;
-    }
-
-    inline void rio_m_RIOSocket_close(RIOSocket * self)
-    {
+        return RIO_ERROR_CLOSED;
     }
 
     /* This method receive len bytes of data into buffer
@@ -79,8 +75,10 @@ extern "C" {
                         continue;
                     }
                     TODO("replace this with actual error management, EOF is not even an option for sockets")
+                    rio_m_RIOSocket_destructor(self);
                     return -RIO_ERROR_EOF;
                 case 0: /* no data received, socket closed */
+                    rio_m_RIOSocket_destructor(self);
                     return -RIO_ERROR_EOF;
                 default: /* some data received */
                     pbuffer += res;
@@ -113,9 +111,11 @@ extern "C" {
                     select(self->sck + 1, NULL, &wfds, NULL, &time);
                     continue;
                 }
-                return RIO_ERROR_EOF;
+                rio_m_RIOSocket_destructor(self);
+                return -RIO_ERROR_EOF;
             case 0:
-                return RIO_ERROR_EOF;
+                rio_m_RIOSocket_destructor(self);
+                return -RIO_ERROR_EOF;
             default:
                 total = total + sent;
             }

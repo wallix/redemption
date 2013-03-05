@@ -484,8 +484,8 @@ TODO("Pass font name as parameter in constructor")
         MCS::DisconnectProviderUltimatum_Send(mcs_data, 0, MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_data.size());
 
-        trans->send(x224_header.data, x224_header.size());
-        trans->send(mcs_data.data,  mcs_data.size());
+        trans->send(x224_header);
+        trans->send(mcs_data);
     }
 
     void set_console_session(bool b)
@@ -535,10 +535,10 @@ TODO("Pass font name as parameter in constructor")
         MCS::SendDataIndication_Send mcs(mcs_header, userid, channel.chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-        trans->send(x224_header.data, x224_header.size());
-        trans->send(mcs_header.data, mcs_header.size());
-        trans->send(sec_header.data, sec_header.size());
-        trans->send(stream.data, stream.size());
+        trans->send(x224_header);
+        trans->send(mcs_header);
+        trans->send(sec_header);
+        trans->send(stream);
 
         if (this->verbose){
             LOG(LOG_INFO, "Front::send_to_channel done");
@@ -605,10 +605,10 @@ TODO("Pass font name as parameter in constructor")
             MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-            trans->send(x224_header.data, x224_header.size());
-            trans->send(mcs_header.data, mcs_header.size());
-            trans->send(sec_header.data, sec_header.size());
-            trans->send(stream.data, stream.size());
+            trans->send(x224_header);
+            trans->send(mcs_header);
+            trans->send(sec_header);
+            trans->send(stream);
 
             this->palette_sent = true;
         }
@@ -821,10 +821,10 @@ TODO("Pass font name as parameter in constructor")
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-        trans->send(x224_header.data, x224_header.size());
-        trans->send(mcs_header.data, mcs_header.size());
-        trans->send(sec_header.data, sec_header.size());
-        trans->send(stream.data, stream.size());
+        trans->send(x224_header);
+        trans->send(mcs_header);
+        trans->send(sec_header);
+        trans->send(stream);
 
         if (this->verbose){
             LOG(LOG_INFO, "Front::send_pointer done");
@@ -896,10 +896,10 @@ TODO("Pass font name as parameter in constructor")
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-        trans->send(x224_header.data, x224_header.size());
-        trans->send(mcs_header.data, mcs_header.size());
-        trans->send(sec_header.data, sec_header.size());
-        trans->send(stream.data, stream.size());
+        trans->send(x224_header);
+        trans->send(mcs_header);
+        trans->send(sec_header);
+        trans->send(stream);
 
         if (this->verbose){
             LOG(LOG_INFO, "Front::set_pointer done");
@@ -949,7 +949,7 @@ TODO("Pass font name as parameter in constructor")
             {
                 BStream stream(256);
                 X224::CC_TPDU_Send x224(stream, 0, 0, 0);
-                this->trans->send(stream.data, stream.size());
+                this->trans->send(stream);
             }
             // Basic Settings Exchange
             // -----------------------
@@ -1152,10 +1152,10 @@ TODO("Pass font name as parameter in constructor")
             BStream x224_header(256);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + gcc_header.size() + stream.size());
             // ------------------------------------------------------------------
-            this->trans->send(x224_header.data, x224_header.size());
-            this->trans->send(mcs_header.data, mcs_header.size());
-            this->trans->send(gcc_header.data, gcc_header.size());
-            this->trans->send(stream.data, stream.size());
+            this->trans->send(x224_header);
+            this->trans->send(mcs_header);
+            this->trans->send(gcc_header);
+            this->trans->send(stream);
             // ------------------------------------------------------------------
 
             // Channel Connection
@@ -1225,8 +1225,8 @@ TODO("Pass font name as parameter in constructor")
                 MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_data.size());
 
-                this->trans->send(x224_header.data, x224_header.size());
-                this->trans->send(mcs_data.data, mcs_data.size());
+                this->trans->send(x224_header);
+                this->trans->send(mcs_data);
             }
 
 
@@ -1250,8 +1250,8 @@ TODO("Pass font name as parameter in constructor")
                                              MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
 
-                this->trans->send(x224_header.data, x224_header.size());
-                this->trans->send(mcs_cjcf_data.data, mcs_cjcf_data.size());
+                this->trans->send(x224_header);
+                this->trans->send(mcs_cjcf_data);
             }
 
             {
@@ -1273,8 +1273,8 @@ TODO("Pass font name as parameter in constructor")
                                              true, mcs.channelId,
                                              MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
-                this->trans->send(x224_header.data, x224_header.size());
-                this->trans->send(mcs_cjcf_data.data, mcs_cjcf_data.size());
+                this->trans->send(x224_header);
+                this->trans->send(mcs_cjcf_data);
             }
 
             for (size_t i = 0 ; i < this->channel_list.size() ; i++){
@@ -1297,8 +1297,8 @@ TODO("Pass font name as parameter in constructor")
                                              MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
 
-                this->trans->send(x224_header.data, x224_header.size());
-                this->trans->send(mcs_cjcf_data.data, mcs_cjcf_data.size());
+                this->trans->send(x224_header);
+                this->trans->send(mcs_cjcf_data);
 
                 this->channel_list.set_chanid(i, mcs.channelId);
             }
@@ -1457,10 +1457,10 @@ TODO("Pass font name as parameter in constructor")
                     MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                     X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-                    trans->send(x224_header.data, x224_header.size());
-                    trans->send(mcs_header.data, mcs_header.size());
-                    trans->send(sec_header.data, sec_header.size());
-                    trans->send(stream.data, stream.size());
+                    trans->send(x224_header);
+                    trans->send(mcs_header);
+                    trans->send(sec_header);
+                    trans->send(stream);
                 }
                 // proceed with capabilities exchange
 
@@ -1557,10 +1557,10 @@ TODO("Pass font name as parameter in constructor")
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-                trans->send(x224_header.data, x224_header.size());
-                trans->send(mcs_header.data, mcs_header.size());
-                trans->send(sec_header.data, sec_header.size());
-                trans->send(stream.data, stream.size());
+                trans->send(x224_header);
+                trans->send(mcs_header);
+                trans->send(sec_header);
+                trans->send(stream);
 
                 if (this->verbose){
                     LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
@@ -1654,10 +1654,10 @@ TODO("Pass font name as parameter in constructor")
                     MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                     X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-                    trans->send(x224_header.data, x224_header.size());
-                    trans->send(mcs_header.data, mcs_header.size());
-                    trans->send(sec_header.data, sec_header.size());
-                    trans->send(stream.data, stream.size());
+                    trans->send(x224_header);
+                    trans->send(mcs_header);
+                    trans->send(sec_header);
+                    trans->send(stream);
                 }
                 break;
                 case LIC::PLATFORM_CHALLENGE_RESPONSE:
@@ -1931,9 +1931,9 @@ TODO("Pass font name as parameter in constructor")
         MCS::SendDataIndication_Send mcs(mcs_header, userid, channelId, 1, 3, stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
 
-        trans->send(x224_header.data, x224_header.size());
-        trans->send(mcs_header.data, mcs_header.size());
-        trans->send(stream.data, stream.size());
+        trans->send(x224_header);
+        trans->send(mcs_header);
+        trans->send(stream);
     }
 
     /*****************************************************************************/
@@ -1970,10 +1970,10 @@ TODO("Pass font name as parameter in constructor")
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-        trans->send(x224_header.data, x224_header.size());
-        trans->send(mcs_header.data, mcs_header.size());
-        trans->send(sec_header.data, sec_header.size());
-        trans->send(stream.data, stream.size());
+        trans->send(x224_header);
+        trans->send(mcs_header);
+        trans->send(sec_header);
+        trans->send(stream);
     }
 
 
@@ -2101,10 +2101,10 @@ TODO("Pass font name as parameter in constructor")
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-        trans->send(x224_header.data, x224_header.size());
-        trans->send(mcs_header.data, mcs_header.size());
-        trans->send(sec_header.data, sec_header.size());
-        trans->send(stream.data, stream.size());
+        trans->send(x224_header);
+        trans->send(mcs_header);
+        trans->send(sec_header);
+        trans->send(stream);
     }
 
 
@@ -2410,10 +2410,10 @@ TODO("Pass font name as parameter in constructor")
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-        trans->send(x224_header.data, x224_header.size());
-        trans->send(mcs_header.data, mcs_header.size());
-        trans->send(sec_header.data, sec_header.size());
-        trans->send(stream.data, stream.size());
+        trans->send(x224_header);
+        trans->send(mcs_header);
+        trans->send(sec_header);
+        trans->send(stream);
     }
 
 // 2.2.1.15.1 Control PDU Data (TS_CONTROL_PDU)
@@ -2473,10 +2473,10 @@ TODO("Pass font name as parameter in constructor")
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-        trans->send(x224_header.data, x224_header.size());
-        trans->send(mcs_header.data, mcs_header.size());
-        trans->send(sec_header.data, sec_header.size());
-        trans->send(stream.data, stream.size());
+        trans->send(x224_header);
+        trans->send(mcs_header);
+        trans->send(sec_header);
+        trans->send(stream);
     }
 
 
@@ -2539,10 +2539,10 @@ TODO("Pass font name as parameter in constructor")
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-        trans->send(x224_header.data, x224_header.size());
-        trans->send(mcs_header.data, mcs_header.size());
-        trans->send(sec_header.data, sec_header.size());
-        trans->send(stream.data, stream.size());
+        trans->send(x224_header);
+        trans->send(mcs_header);
+        trans->send(sec_header);
+        trans->send(stream);
     }
 
     /* PDUTYPE_DATAPDU */
@@ -2756,10 +2756,10 @@ TODO("Pass font name as parameter in constructor")
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-                trans->send(x224_header.data, x224_header.size());
-                trans->send(mcs_header.data, mcs_header.size());
-                trans->send(sec_header.data, sec_header.size());
-                trans->send(stream.data, stream.size());
+                trans->send(x224_header);
+                trans->send(mcs_header);
+                trans->send(sec_header);
+                trans->send(stream);
             }
         break;
         case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
@@ -2943,10 +2943,10 @@ TODO("Pass font name as parameter in constructor")
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-        trans->send(x224_header.data, x224_header.size());
-        trans->send(mcs_header.data, mcs_header.size());
-        trans->send(sec_header.data, sec_header.size());
-        trans->send(stream.data, stream.size());
+        trans->send(x224_header);
+        trans->send(mcs_header);
+        trans->send(sec_header);
+        trans->send(stream);
     }
 
 
