@@ -24,8 +24,6 @@
 #include "widget.hpp"
 #include <keymap2.hpp>
 
-#include <iostream> ///TODO remove
-
 class WidgetEdit : public Widget
 {
 public:
@@ -39,8 +37,8 @@ public:
     int h_text;
 
 public:
-    WidgetEdit(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier, const char * text, size_t edit_position)
-    : Widget(drawable, rect, parent, Widget::TYPE_EDIT, notifier)
+    WidgetEdit(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier, const char * text, size_t edit_position, int id = 0)
+    : Widget(drawable, rect, parent, Widget::TYPE_EDIT, notifier, id)
     , remove_cursor(false)
     , h_text(0)
     {
@@ -71,10 +69,6 @@ public:
 
     virtual void draw(const Rect& rect, uint16_t x_screen, uint16_t y_screen, const Rect& clip_screen)
     {
-        std::cout << "x_screen: " << x_screen  << std::endl;
-        std::cout << "y_screen: " << y_screen  << std::endl;
-        std::cout << "clip_screen: " << clip_screen << std::endl;
-        std::cout << "rect: " << rect << std::endl;
         if (this->remove_cursor){
             this->clear_cursor(x_screen, y_screen, clip_screen);
             this->remove_cursor = false;

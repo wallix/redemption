@@ -22,13 +22,17 @@
 #define REDEMPTION_MOD_WIDGET2_WINDOW_HPP_
 
 #include "widget_composite.hpp"
+#include "label.hpp"
 #include <keymap2.hpp>
 
 class Window : public WidgetComposite
 {
 public:
-    Window(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier)
-    : WidgetComposite(drawable, rect, parent, Widget::TYPE_WND, notifier)
+    WidgetLabel titlebar;
+
+    Window(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier, const char * caption, int id = 0)
+    : WidgetComposite(drawable, rect, parent, Widget::TYPE_WND, notifier, id)
+    , titlebar(drawable, Rect(0,0, rect.cx, 15), this, 0, caption, -1)
     {}
 
 protected:

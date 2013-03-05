@@ -69,6 +69,12 @@ public:
         TYPE_LABEL   = 6,
     };
 
+    enum OptionTab {
+        IGNORE_TAB,
+        NORMAL_TAB,
+        DELEGATE_CONTROL_TAB
+    };
+
 public:
     Widget * parent;
     ModApi * drawable;
@@ -77,17 +83,21 @@ public:
     int type;
     int id;
     int bg_color;
+    int fg_color;
+    int tab_flag;
     bool has_focus;
 
 public:
-    Widget(ModApi * drawable, const Rect& rect, Widget * parent, int type, NotifyApi * notifier)
+    Widget(ModApi * drawable, const Rect& rect, Widget * parent, int type, NotifyApi * notifier, int id = 0)
     : parent(parent)
     , drawable(drawable)
     , notifier(notifier)
     , rect(rect)
     , type(type)
-    , id(0)
-    , bg_color(0)
+    , id(id)
+    , bg_color(BLACK)
+    , fg_color(WHITE)
+    , tab_flag(NORMAL_TAB)
     , has_focus(false)
     {
         if (this->parent)

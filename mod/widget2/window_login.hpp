@@ -23,11 +23,15 @@
 
 #include "window.hpp"
 #include "edit.hpp"
+#include "button.hpp"
 
 class WindowLogin : public Window
 {
+public:
     WidgetEdit login;
     WidgetEdit pass;
+    WidgetButton submit;
+    WidgetButton cancel;
 
 public:
     enum {
@@ -41,24 +45,25 @@ public:
         //NOTIFY_PASSWORD_SUBMIT,
     };
 
-    WindowLogin(ModApi* drawable, const Rect& rect, Widget* parent, NotifyApi* notifier)
-    : Window(drawable, rect, parent, notifier)
-    , login(drawable, Rect(0,0,100,15), this, 0)
-    , pass(drawable, Rect(0,0,100,15), this, 0)
+    WindowLogin(ModApi* drawable, int x, int y, Widget* parent, NotifyApi* notifier, int id = 0)
+    : Window(drawable, Rect(x, y, 270, 95), parent, notifier, "Connection", id)
+    , login(drawable, Rect(10,20,250,20), this, 0, 0, 0, 0)
+    , pass(drawable, Rect(10,45,250,20), this, 0, 0, 0, 1)
+    , submit(drawable, Rect(15,70,110,20), this, 0, "submit", 2)
+    , cancel(drawable, Rect(145,70,110,20), this, 0, "cancel", 3)
     {}
 
     virtual void notify(int id, EventType event)
     {
         if (event == WIDGET_SUBMIT){
-            this->ok();
+            if (id == this->cancel.id) {
+                this->notify_self(NOTIFY_CANCEL);
+            } else {
+                this->notify_self(NOTIFY_SUBMIT);
+            }
         } else {
             this->Window::notify(id, event);
         }
-    }
-
-    void ok()
-    {
-        this->notify_self(NOTIFY_SUBMIT);
     }
 };
 
