@@ -99,7 +99,7 @@ struct rdp_orders {
     ~rdp_orders(){
     }
 
-    void rdp_orders_process_bmpcache(uint8_t bpp, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
+    void process_bmpcache(uint8_t bpp, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
         if (this->verbose & 64){
             LOG(LOG_INFO, "rdp_orders_process_bmpcache bpp=%u", bpp);
@@ -118,7 +118,7 @@ struct rdp_orders {
         }
     }
 
-    void rdp_orders_process_fontcache(Stream & stream, int flags, client_mod * mod)
+    void process_fontcache(Stream & stream, int flags, client_mod * mod)
     {
         if (this->verbose & 64){
             LOG(LOG_INFO, "rdp_orders_process_fontcache");
@@ -181,13 +181,13 @@ struct rdp_orders {
                 switch (header.type) {
                 case TS_CACHE_BITMAP_COMPRESSED:
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
-                    this->rdp_orders_process_bmpcache(bpp, stream, control, header);
+                    this->process_bmpcache(bpp, stream, control, header);
                     break;
                 case TS_CACHE_COLOR_TABLE:
                     this->process_colormap(stream, control, header, mod);
                     break;
                 case TS_CACHE_GLYPH:
-                    this->rdp_orders_process_fontcache(stream, header.flags, mod);
+                    this->process_fontcache(stream, header.flags, mod);
                     break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV2:
                     LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)", header.type);
