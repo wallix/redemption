@@ -37,7 +37,6 @@ extern "C" {
         struct SQIntracker impl;
     };
 
-
     static inline RIO_ERROR sq_m_SQInmeta_constructor(SQInmeta * self, const char * prefix, const char * extension)
     {
         TODO("Manage all actual open error with more details")

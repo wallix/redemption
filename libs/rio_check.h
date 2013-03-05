@@ -26,15 +26,16 @@
 
 #include "rio_constants.h"
 
-struct RIOCheck {
-    size_t current;
-    uint8_t * data;
-    size_t len;
-    bool status;
-    RIO_ERROR err;
-};
-
 extern "C" {
+
+    struct RIOCheck {
+        size_t current;
+        uint8_t * data;
+        size_t len;
+        bool status;
+        RIO_ERROR err;
+    };
+
     /* This method does not allocate space for object itself, 
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
@@ -56,13 +57,7 @@ extern "C" {
     static inline RIO_ERROR rio_m_RIOCheck_destructor(RIOCheck * self)
     {
         free(self->data);
-        return RIO_ERROR_OK;
-    }
-
-    /* This method close ressource without calling destructor
-    */
-    static inline void rio_m_RIOCheck_close(RIOCheck * self)
-    {
+        return RIO_ERROR_CLOSED;
     }
 
     /* This method receive len bytes of data into buffer
@@ -104,7 +99,6 @@ extern "C" {
                     break;
                 }
             }
-            TODO("define and use C equivalent of log functions and hexdump functions")
             LOG(LOG_INFO, "=============== Common Part =======");
             hexdump_c(&(((const char *)data)[0]), differs);
             LOG(LOG_INFO, "=============== Expected ==========");

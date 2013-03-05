@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
     BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
     BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer+24, 1024)); // EOF
     
-    rio_close(rt);
+    rio_clear(rt);
     rio_delete(rt);
 }
 
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TestTestTransport2)
     BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
     BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer+24, 1024));
     
-    rio_close(rt);
+    rio_clear(rt);
     rio_delete(rt);
 }
 
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TestFileTransport)
         BOOST_CHECK_EQUAL(5, rio_send(rt, buffer, 5));
         BOOST_CHECK_EQUAL(19, rio_send(rt, buffer + 5, 19));
 
-        rio_close(rt);
+        rio_clear(rt);
         rio_delete(rt);
 
         ::close(fd);
@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(TestFileTransport)
         BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
         BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer + 24, 1024));
         
-        rio_close(rt);
+        rio_clear(rt);
         rio_delete(rt);
     }
 }
@@ -442,7 +442,7 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OneSequence)
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(sequence));
     BOOST_CHECK_EQUAL(10, rio_send(rt, "BBBBXCCCCX", 10));
 
-    rio_close(rt);
+    rio_clear(rt);
     rio_delete(rt);
 }
 
@@ -479,7 +479,7 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
         BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(sequence));
         BOOST_CHECK_EQUAL(10, rio_send(rt, "BBBBXCCCCX", 10));
 
-        rio_close(rt);
+        rio_clear(rt);
         rio_delete(rt);
         
         sq_delete(sequence);
@@ -520,7 +520,7 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
         BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
         BOOST_CHECK_EQUAL(0, buffer[15]);
         BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer + 15, 1024));
-        rio_close(rt);
+        rio_clear(rt);
         rio_delete(rt);
         sq_delete(sequence);
     }
@@ -563,7 +563,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceMeta)
     BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
     BOOST_CHECK_EQUAL(0, buffer[15]);
     BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer + 15, 1024));
-    rio_close(rt);
+    rio_clear(rt);
     rio_delete(rt);
     sq_delete(sequence);
 }
@@ -605,7 +605,7 @@ BOOST_AUTO_TEST_CASE(TestOutMeta)
     sq_timestamp(seq, &tv);
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(seq));
 
-    rio_close(rt);
+    rio_clear(rt);
     rio_delete(rt);
 
     {
@@ -625,7 +625,7 @@ BOOST_AUTO_TEST_CASE(TestOutMeta)
         BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
         BOOST_CHECK_EQUAL(0, buffer[15]);
         BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer + 15, 1024));
-        rio_close(rt);
+        rio_clear(rt);
         rio_delete(rt);
         sq_delete(sequence);
     }
@@ -669,7 +669,7 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
         tv.tv_sec+= 100;
         sq_timestamp(seq, &tv);
 
-        rio_close(rt);
+        rio_clear(rt);
         rio_delete(rt);
     }
     

@@ -26,14 +26,15 @@
 
 #include "rio_constants.h"
 
-struct RIOOutmeta {
-    int lastcount;
-    struct RIO * meta;
-    struct SQ * seq;
-    struct RIO * out;
-};
-
 extern "C" {
+
+    struct RIOOutmeta {
+        int lastcount;
+        struct RIO * meta;
+        struct SQ * seq;
+        struct RIO * out;
+    };
+
     /* This method does not allocate space for object itself, 
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
@@ -87,7 +88,7 @@ extern "C" {
         rio_delete(self->out);
         sq_delete(self->seq);
         rio_delete(self->meta);
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
 
     /* This method receive len bytes of data into buffer

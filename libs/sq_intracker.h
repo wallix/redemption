@@ -45,11 +45,12 @@ extern "C" {
         timeval stop_tv;
     };
 
-    // input: begin : beginning of available buffer (already read)
-    // input: end :   end of available buffer (already read)
+    // input: self->begin : beginning of available buffer (already read)
+    // input: self->end :   end of available buffer (already read)
+    // input: self->trans : IO data source
 
-    // return eol : end of next line
-    // begin and end may be modified (buffer recentered, more data from input)
+    // return self->eol : end of next line
+    // self->begin and self->end may be modified (buffer recentered, more data from input)
     // return 0 if no eol (end of file reached)
     // return 1 if \n found
     // (in other words : returns number of trailing eol characters at end of line)

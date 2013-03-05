@@ -29,13 +29,14 @@
 #include </usr/include/openssl/ssl.h>
 #include </usr/include/openssl/err.h>
 
-struct RIOSocketTLS {
-    bool tls;
-    SSL * ssl;
-    int sck;
-};
-
 extern "C" {
+
+    struct RIOSocketTLS {
+        bool tls;
+        SSL * ssl;
+        int sck;
+    };
+
     /* This method does not allocate space for object itself, 
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
@@ -52,13 +53,10 @@ extern "C" {
     */
     static inline RIO_ERROR rio_m_RIOSocketTLS_destructor(RIOSocketTLS * self)
     {
-        return RIO_ERROR_OK;
+        free(self->ssl);
+        self->ssl = 0;
+        return RIO_ERROR_CLOSED;
     }
-
-    static inline void rio_m_RIOSocketTLS_close(RIOSocketTLS * self)
-    {
-    }
-
 
     static inline size_t rio_m_RIOSocketTLS_recv_tls(RIOSocketTLS * self, void * data, size_t len)
     {
@@ -105,6 +103,7 @@ extern "C" {
                         LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
                     }
                     TODO("Manage actual errors, check possible values")
+                    rio_m_RIOSocketTLS_destructor(self);
                     return (RIO_ERROR)-RIO_ERROR_ANY;
                 }
                 break;
@@ -143,8 +142,10 @@ extern "C" {
                         continue;
                     }
                     TODO("replace this with actual error management, EOF is not even an option for sockets")
+                    rio_m_RIOSocketTLS_destructor(self);
                     return -RIO_ERROR_EOF;
                 case 0: /* no data received, socket closed */
+                    rio_m_RIOSocketTLS_destructor(self);
                     return -RIO_ERROR_EOF;
                 default: /* some data received */
                     pbuffer += res;
@@ -189,6 +190,7 @@ extern "C" {
                         errcount++;
                         LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
                     }
+                    rio_m_RIOSocketTLS_destructor(self);
                     return (RIO_ERROR)-RIO_ERROR_ANY;
                 }
             }
@@ -221,9 +223,11 @@ extern "C" {
                     select(self->sck + 1, NULL, &wfds, NULL, &time);
                     continue;
                 }
-                return RIO_ERROR_EOF;
+                rio_m_RIOSocketTLS_destructor(self);
+                return -RIO_ERROR_EOF;
             case 0:
-                return RIO_ERROR_EOF;
+                rio_m_RIOSocketTLS_destructor(self);
+                return -RIO_ERROR_EOF;
             default:
                 total = total + sent;
             }
@@ -271,6 +275,7 @@ extern "C" {
                 case SSL_ERROR_ZERO_RETURN:
                     LOG(LOG_INFO, "Server closed TLS connection\n");
                     LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_ZERO_RETURN done\n");
+                    rio_m_RIOSocketTLS_destructor(self);
                     return RIO_ERROR_TLS_CONNECT_FAILED;
 
                 case SSL_ERROR_WANT_READ:
@@ -288,6 +293,7 @@ extern "C" {
                     while ((error = ERR_get_error()) != 0)
                         LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
                     LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_SYSCLASS done\n");
+                    rio_m_RIOSocketTLS_destructor(self);
                     return RIO_ERROR_TLS_CONNECT_FAILED;
 
                 case SSL_ERROR_SSL:
@@ -295,6 +301,7 @@ extern "C" {
                     while ((error = ERR_get_error()) != 0)
                         LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
                     LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_SSL done\n");
+                    rio_m_RIOSocketTLS_destructor(self);
                     return RIO_ERROR_TLS_CONNECT_FAILED;
 
                 default:
@@ -313,6 +320,7 @@ extern "C" {
         if (!px509)
         {
             LOG(LOG_INFO, "RIO *::crypto_cert_get_public_key: SSL_get_peer_certificate() failed");
+            rio_m_RIOSocketTLS_destructor(self);
             return RIO_ERROR_TLS_CONNECT_FAILED;
         }
 
@@ -321,6 +329,7 @@ extern "C" {
         if (!pkey)
         {
             LOG(LOG_INFO, "RIO *::crypto_cert_get_public_key: X509_get_pubkey() failed");
+            rio_m_RIOSocketTLS_destructor(self);
             return RIO_ERROR_TLS_CONNECT_FAILED;
         }
 

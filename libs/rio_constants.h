@@ -72,34 +72,65 @@ extern "C" {
 
     // Forward headers for methods defined in redtrans 
     //(this allow to use them as an interface to individual transports for combining transports)
+
     RIO * rio_new_generator(RIO_ERROR * error, const void * data, size_t len);
+    RIO_ERROR rio_init_generator(RIO * self, const void * data, size_t len);
+
     RIO * rio_new_check(RIO_ERROR * error, const void * data, size_t len);
+    RIO_ERROR rio_init_check(RIO * self, const void * data, size_t len);
+
     RIO * rio_new_test(RIO_ERROR * error,
                          const void * data_check, size_t len_check, 
                          const void * data_gen, size_t len_gen);
+    RIO_ERROR rio_init_test(RIO * self,
+                         const void * data_check, size_t len_check, 
+                         const void * data_gen, size_t len_gen);
+
     RIO * rio_new_outfile(RIO_ERROR * error, int fd);
+    RIO_ERROR rio_init_outfile(RIO * self, int fd);
+
     RIO * rio_new_infile(RIO_ERROR * error, int fd);
+    RIO_ERROR rio_init_infile(RIO * self, int fd);
+
     RIO * rio_new_socket(RIO_ERROR * error, int fd);
+    RIO_ERROR rio_init_socket(RIO * self, int fd);
+
     RIO * rio_new_outsequence(RIO_ERROR * error, SQ * seq);
+    RIO_ERROR rio_init_outsequence(RIO * self, SQ * seq);
+
     RIO * rio_new_insequence(RIO_ERROR * error, SQ * seq);    
+    RIO_ERROR rio_init_insequence(RIO * self, SQ * seq);    
+
     RIO * rio_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extension);
+    RIO_ERROR rio_init_inmeta(RIO * self, const char * prefix, const char * extension);
+
     RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension, 
                       const char * l1, const char * l2, const char * l3, timeval * tv);
+    RIO_ERROR rio_init_outmeta(RIO * self, SQ ** seq, const char * prefix, const char * extension, 
+                      const char * l1, const char * l2, const char * l3, timeval * tv);
 
-    RIO_ERROR rio_delete(RIO * rt);
-    RIO_ERROR sq_delete(SQ * rt);
-
+    void rio_delete(RIO * rt);
     ssize_t rio_recv(RIO * rt, void * data, size_t len);
     ssize_t rio_send(RIO * rt, const void * data, size_t len);
 
     RIO_ERROR rio_get_status(RIO * rt);
+
     SQ * sq_new_one(RIO_ERROR * error, RIO * trans);
-    RIO_ERROR sq_next(SQ * seq);
-    RIO * sq_get_trans(SQ * seq, RIO_ERROR * error);
+    RIO_ERROR sq_init_one(SQ * self, RIO * trans);
 
     SQ * sq_new_outfilename(RIO_ERROR * error, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, timeval * tv);
+    RIO_ERROR sq_init_outfilename(SQ * self, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, timeval * tv);
+
     SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker);
+    RIO_ERROR sq_init_intracker(SQ * self, RIO * tracker);
+
     SQ * sq_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extension);
+    RIO_ERROR sq_init_inmeta(SQ * self, const char * prefix, const char * extension);
+
+    RIO_ERROR sq_delete(SQ * rt);
+
+    RIO_ERROR sq_next(SQ * seq);
+    RIO * sq_get_trans(SQ * seq, RIO_ERROR * error);
 
 }
 
