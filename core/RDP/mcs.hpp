@@ -1543,6 +1543,12 @@ namespace MCS
         uint16_t channelId;
 
         ChannelJoinConfirm_Recv(Stream & stream, int encoding)
+        : type(MCS::MCSPDU_ChannelJoinConfirm)
+        , result(0)
+        , initiator(0)
+        , requested(0)
+        , channelId_flag(false)
+        , channelId(0)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "ChannelJoinConfirm PER_ENCODING mandatory");
@@ -1553,7 +1559,6 @@ namespace MCS
                 LOG(LOG_ERR, "expecting ChannelJoinConfirm (%u), got %u", MCS::MCSPDU_ChannelJoinConfirm << 2, tag);
                 throw Error(ERR_MCS);
             }
-            this->type = MCS::MCSPDU_ChannelJoinConfirm;
             this->result  = stream.in_uint8();
             this->initiator = stream.in_uint16_be();
             this->requested = stream.in_uint16_be();

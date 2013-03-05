@@ -103,7 +103,6 @@ struct Inifile {
         bool capture_flv;
         bool capture_ocr;
         bool capture_chunk;
-        bool capture_drawable;
         char movie_path[512];
         char codec_id[512];
         char video_quality[512];
@@ -117,27 +116,8 @@ struct Inifile {
         bool bitmap_compression; // default true
         int port;                // default 3389
         int encryptionLevel;   // 0=low, 1=medium, 2=high
-        bool autologin;      // true if we should bypass login box and go directly
-                             // to server with credentials provided by rdp client
-                             // obviously, to do so we need some target address
-                             // the used solution is to provide a user name
-                             // in the form user@host
-                             // if autologin mode is set and that we provide
-                             // an @host target value autologin we be used
-                             // if we do not provide @host, we are directed to
-                             // login box as usual.
-        bool autologin_useauth; // the above user command line is incomplete
-                                // the full form is user@host:authuser
-                                // if autologin and autologin_useauth are on
-                                // the authuser will be used with provided
-                                // password for authentication by auth module
-                                // that will return the real credential.
-                                // Otherwise the proxy will try a direct
-                                // connection to host with user account
-                                // and provided password.
         char authip[255];
         int authport;
-        unsigned authversion;
         bool nomouse;
         bool notimestamp;
         bool autovalidate;      // dialog autovalidation for test
@@ -228,17 +208,14 @@ struct Inifile {
             this->globals.capture_flv = false;
             this->globals.capture_ocr = false;
             this->globals.capture_chunk = false;
-            this->globals.capture_drawable = false;
             this->globals.bitmap_cache = true;
             this->globals.bitmap_compression = true;
             this->globals.port = 3389;
             this->globals.nomouse = false;
             this->globals.notimestamp = false;
             this->globals.encryptionLevel = level_from_string("low");
-            this->globals.autologin = false;
             strcpy(this->globals.authip, "127.0.0.1");
             this->globals.authport = 3350;
-            this->globals.authversion = 2;
             this->globals.autovalidate = false;
             strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
             strcpy(this->globals.codec_id, "flv");
@@ -393,17 +370,11 @@ struct Inifile {
             else if (0 == strcmp(key, "encryptionLevel")){
                 this->globals.encryptionLevel = level_from_string(value);
             }
-            else if (0 == strcmp(key, "autologin")){
-                this->globals.autologin = bool_from_cstr(value);
-            }
             else if (0 == strcmp(key, "authip")){
                 strcpy(this->globals.authip, value);
             }
             else if (0 == strcmp(key, "authport")){
                 this->globals.authport = atol(value);
-            }
-            else if (0 == strcmp(key, "authversion")){
-                this->globals.authversion = atol(value);
             }
             else if (0 == strcmp(key, "autovalidate")){
                 this->globals.autovalidate = bool_from_cstr(value);

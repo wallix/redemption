@@ -1,0 +1,34 @@
+The [debug] section support the following entries, 
+each has decimal a numeric values that represent debug flags (see below for details):
+
+x224 ; verbosity log level for X224 layer
+mcs ; verbosity log level for mcs layer
+sec ; verbosity log level for sec layer
+rdp ; verbosity log level for rdp layer
+primary_orders ; verbosity log level for primary RDP drawing orders
+secondary_orders ; verbosity log level for secondary RDP drawing orders (cache management)
+bitmap ; verbosity log level for RDP RLE bitmaps decoding/encoding
+capture ; verbosity log level for capture modules (png, video, etc.)
+auth ; debug of acl authentication module
+session ; debug of session management (traffic dispatching between front end, back-end and authentication)
+front ; debug of traffic between proxy and client (receive input orders from client, send drawing orders to client)
+mod_rdp ; debug of traffic between proxy and server (receive drawing orders from RDP server, send input to server) 
+mod_vnc ; debug of traffic between proxy and server (receive drawing orders from VNC server, send input to server)
+mod_int ; debug of traffic internal to proxy (login box, selector, etc.) 
+          proxy receive client input and send drawing orders back.
+widget  ; debug of widget behavior (inside mod_int)
+mod_xup ; debug of traffic between proxy and server 
+        ; (receive drawing orders from X client, probably not working, unmaintained for a long time)
+
+
+MOD_RDP VERBOSE FLAGS
+---------------------
+1: connection initiation
+2: licensing management
+4: pointer process, input send
+8: PDUTYPE2 details
+16: channel_management
+32: capabilities
+64: rdp_orders details, process bitmap updates
+128: PDUTYPE1 details
+256: hexdump of mod_rdp traffic
