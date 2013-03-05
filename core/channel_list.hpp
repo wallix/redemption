@@ -163,7 +163,7 @@ struct ChannelDef {
         this->chanid = 0;
     }
 
-    void log(unsigned index){
+    void log(unsigned index) const {
         LOG(LOG_INFO, "ChannelDef[%u]::(name = %s, flags = %8x, chanid = %u)", 
             index, this->name, (unsigned)this->flags, (unsigned)this->chanid);
     }
@@ -171,11 +171,11 @@ struct ChannelDef {
 
 class ChannelDefArray
 {
+public:
     // The number of requested static virtual channels (the maximum allowed is 31).
     size_t channelCount;
     ChannelDef items[32];
 
-public:
     ChannelDefArray() : channelCount(0) {}
 
     const ChannelDef & operator[](size_t index) const {
@@ -208,7 +208,19 @@ public:
         return channel;
     }
 
-    void log(char * name){
+    int get_index(const char * const name) const
+    {
+        int res = -1;
+        for (size_t index = 0; index < this->size(); index++){
+            if (strcmp(name, this->items[index].name) == 0){
+                res = index;
+                break;
+            }
+        }
+        return res;
+    }
+
+    void log(char * name) const {
         LOG(LOG_INFO, "%s channels %u channels defined", name, this->channelCount);
         for (unsigned index = 0 ; index < this->channelCount ; index++){
             this->items[index].log(index);

@@ -34,12 +34,13 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "rdp/rdp_orders.hpp"
+
 /* include other h files */
 #include "stream.hpp"
 #include "ssl_calls.hpp"
 #include "constants.hpp"
 #include "client_mod.hpp"
-#include "log.hpp"
 
 #include "RDP/x224.hpp"
 #include "RDP/nego.hpp"
@@ -51,18 +52,6 @@
 #include "RDP/sec.hpp"
 #include "colors.hpp"
 #include "RDP/capabilities.hpp"
-
-//#include "RDP/orders/RDPOrdersNames.hpp"
-#include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
 #include "../acl/authentifier.hpp"
 
@@ -88,231 +77,6 @@ struct rdp_cursor {
         this->height = 0;
         memset(this->data, 0, DATA_BITMAP_SIZE);
         memset(this->mask, 0, MASK_BITMAP_SIZE);
-    }
-};
-
-/* orders */
-struct rdp_orders {
-    // State
-    RDPOrderCommon common;
-    RDPMemBlt memblt;
-    RDPOpaqueRect opaquerect;
-    RDPScrBlt scrblt;
-    RDPDestBlt destblt;
-    RDPPatBlt patblt;
-    RDPLineTo lineto;
-    RDPGlyphIndex glyph_index;
-
-    BGRPalette cache_colormap[6];
-    BGRPalette global_palette;
-    BGRPalette memblt_palette;
-
-    TODO(" this cache_bitmap here looks strange. At least it's size should be negotiated. And why is it not managed by the other cache management code ? This probably hide some kind of problem. See when working on cache secondary order primitives.")
-    const Bitmap * cache_bitmap[3][10000];
-
-    uint32_t verbose;
-
-    rdp_orders(uint32_t verbose) :
-        common(RDP::PATBLT, Rect(0, 0, 1, 1)),
-        memblt(0, Rect(), 0, 0, 0, 0),
-        opaquerect(Rect(), 0),
-        scrblt(Rect(), 0, 0, 0),
-        destblt(Rect(), 0),
-        patblt(Rect(), 0, 0, 0, RDPBrush()),
-        lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
-        glyph_index(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
-        verbose(verbose)
-    {
-        memset(this->cache_bitmap, 0, sizeof(this->cache_bitmap));
-        memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
-        memset(this->global_palette, 0, sizeof(this->global_palette));
-        memset(this->memblt_palette, 0, sizeof(this->memblt_palette));
-    }
-
-    void reset()
-    {
-        this->common = RDPOrderCommon(RDP::PATBLT, Rect(0, 0, 1, 1));
-        this->memblt = RDPMemBlt(0, Rect(), 0, 0, 0, 0);
-        this->opaquerect = RDPOpaqueRect(Rect(), 0);
-        this->scrblt = RDPScrBlt(Rect(), 0, 0, 0);
-        this->destblt = RDPDestBlt(Rect(), 0);
-        this->patblt = RDPPatBlt(Rect(), 0, 0, 0, RDPBrush());
-        this->lineto = RDPLineTo(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0));
-        this->glyph_index = RDPGlyphIndex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"");
-        memset(this->cache_bitmap, 0, sizeof(this->cache_bitmap));
-        memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
-        memset(this->global_palette, 0, sizeof(this->global_palette));
-        memset(this->memblt_palette, 0, sizeof(this->memblt_palette));
-    }
-
-    ~rdp_orders(){
-    }
-
-    void rdp_orders_process_bmpcache(uint8_t bpp, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
-    {
-        if (this->verbose & 64){
-            LOG(LOG_INFO, "rdp_orders_process_bmpcache bpp=%u", bpp);
-        }
-        RDPBmpCache bmp;
-        bmp.receive(stream, control, header, this->global_palette);
-
-        TODO("add cache_id, cache_idx range check, and also size check based on cache size by type and uncompressed bitmap size")
-        if (this->cache_bitmap[bmp.id][bmp.idx]) {
-            delete this->cache_bitmap[bmp.id][bmp.idx];
-        }
-        this->cache_bitmap[bmp.id][bmp.idx] = bmp.bmp;
-        if (this->verbose & 64){
-            LOG(LOG_ERR, "rdp_orders_process_bmpcache bitmap id=%u idx=%u cx=%u cy=%u bmp_size=%u original_bpp=%u bpp=%u"
-                       , bmp.id, bmp.idx, bmp.bmp->cx, bmp.bmp->cy, bmp.bmp->bmp_size, bmp.bmp->original_bpp, bpp);
-        }
-    }
-
-    void rdp_orders_process_fontcache(Stream & stream, int flags, client_mod * mod)
-    {
-        if (this->verbose & 64){
-            LOG(LOG_INFO, "rdp_orders_process_fontcache");
-        }
-        int font = stream.in_uint8();
-        int nglyphs = stream.in_uint8();
-        for (int i = 0; i < nglyphs; i++) {
-            int character = stream.in_uint16_le();
-            int offset = stream.in_uint16_le();
-            int baseline = stream.in_uint16_le();
-            int width = stream.in_uint16_le();
-            int height = stream.in_uint16_le();
-            int datasize = (height * nbbytes(width) + 3) & ~3;
-            const uint8_t *data = stream.in_uint8p(datasize);
-
-            mod->server_add_char(font, character, offset, baseline, width, height, data);
-        }
-        if (this->verbose & 64){
-            LOG(LOG_INFO, "rdp_orders_process_fontcache done");
-        }
-    }
-
-
-    void process_colormap(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header, client_mod * mod)
-    {
-        if (this->verbose & 64){
-            LOG(LOG_INFO, "process_colormap");
-        }
-        RDPColCache colormap;
-        colormap.receive(stream, control, header);
-        memcpy(this->cache_colormap[colormap.cacheIndex], &colormap.palette, sizeof(BGRPalette));
-        mod->front.color_cache(colormap.palette, colormap.cacheIndex);
-        if (this->verbose & 64){
-            LOG(LOG_INFO, "process_colormap done");
-        }
-    }
-
-    /*****************************************************************************/
-    int process_orders(uint8_t bpp, Stream & stream, int num_orders, client_mod * mod)
-    {
-//        if (this->verbose & 64){
-//            LOG(LOG_INFO, "process_orders bpp=%u", bpp);
-//        }
-        using namespace RDP;
-        int processed = 0;
-        while (processed < num_orders) {
-            uint8_t control = stream.in_uint8();
-
-            if (!control & STANDARD){
-                /* error, this should always be set */
-                LOG(LOG_ERR, "Non standard order detected : protocol error");
-                break;
-            }
-            if (control & SECONDARY) {
-                using namespace RDP;
-
-                RDPSecondaryOrderHeader header(stream);
-//                LOG(LOG_INFO, "secondary order=%d", header.type);
-                uint8_t *next_order = stream.p + header.length + 7;
-                switch (header.type) {
-                case TS_CACHE_BITMAP_COMPRESSED:
-                case TS_CACHE_BITMAP_UNCOMPRESSED:
-                    this->rdp_orders_process_bmpcache(bpp, stream, control, header);
-                    break;
-                case TS_CACHE_COLOR_TABLE:
-                    this->process_colormap(stream, control, header, mod);
-                    break;
-                case TS_CACHE_GLYPH:
-                    this->rdp_orders_process_fontcache(stream, header.flags, mod);
-                    break;
-                case TS_CACHE_BITMAP_COMPRESSED_REV2:
-                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)", header.type);
-                  break;
-                case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
-                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_UNCOMPRESSED_REV2 (%d)", header.type);
-                  break;
-                case TS_CACHE_BITMAP_COMPRESSED_REV3:
-                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%d)", header.type);
-                  break;
-                default:
-                    LOG(LOG_ERR, "unsupported SECONDARY ORDER (%d)", header.type);
-                    /* error, unknown order */
-                    break;
-                }
-                stream.p = next_order;
-            }
-            else {
-                RDPPrimaryOrderHeader header = this->common.receive(stream, control);
-                const Rect & cmd_clip = ((control & BOUNDS)
-                                      ? this->common.clip
-                                    : Rect(0, 0, mod->front_width, mod->front_height));
-//                LOG(LOG_INFO, "/* order=%d ordername=%s */", this->common.order, ordernames[this->common.order]);
-                switch (this->common.order) {
-                case GLYPHINDEX:
-                    this->glyph_index.receive(stream, header);
-                    mod->front.draw(this->glyph_index, cmd_clip);
-                    break;
-                case DESTBLT:
-                    this->destblt.receive(stream, header);
-                    mod->front.draw(this->destblt, cmd_clip);
-                    break;
-                case PATBLT:
-                    this->patblt.receive(stream, header);
-                    mod->front.draw(this->patblt, cmd_clip);
-                    break;
-                case SCREENBLT:
-                    this->scrblt.receive(stream, header);
-                    mod->front.draw(this->scrblt, cmd_clip);
-                    break;
-                case LINE:
-                    this->lineto.receive(stream, header);
-                    mod->front.draw(this->lineto, cmd_clip);
-                    break;
-                case RECT:
-                    this->opaquerect.receive(stream, header);
-                    mod->front.draw(this->opaquerect, cmd_clip);
-                    break;
-                case MEMBLT:
-                    this->memblt.receive(stream, header);
-                    {
-                        if ((this->memblt.cache_id >> 8) >= 6){
-                            LOG(LOG_INFO, "colormap out of range in memblt:%x", (this->memblt.cache_id >> 8));
-                            this->memblt.log(LOG_INFO, cmd_clip);
-                            assert(false);
-                        }
-                        const Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0x3][this->memblt.cache_idx];
-                        TODO("check if bitmap has the right palette...")
-                        TODO("8 bits palettes should probabily be transmitted to front, not stored in bitmaps")
-                        if (bitmap) {
-                            mod->front.draw(this->memblt, cmd_clip, *bitmap);
-                        }
-                    }
-                    break;
-                default:
-                    /* error unknown order */
-                    LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->common.order);
-                    break;
-                }
-            }
-            processed++;
-        }
-//        if (this->verbose & 64){
-//            LOG(LOG_INFO, "process_orders done");
-//        }
-        return 0;
     }
 };
 
@@ -434,7 +198,7 @@ struct mod_rdp : public client_mod {
                     nego(tls, trans, target_user),
                     enable_new_pointer(enable_new_pointer)
     {
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
         }
 
@@ -554,16 +318,21 @@ struct mod_rdp : public client_mod {
                 size_t chunk_size,
                 uint32_t flags)
     {
-        if (this->verbose){
+        if (this->verbose & 16){
             LOG(LOG_INFO, "mod_rdp::send_to_mod_channel");
+            LOG(LOG_INFO, "sending to channel %s", front_channel_name); 
         }
         const ChannelDef * mod_channel = this->mod_channel_list.get(front_channel_name);
         // send it if module has a matching channel, if no matching channel is found just forget it
         if (mod_channel){
+            if (this->verbose & 16){
+                int index = this->mod_channel_list.get_index(front_channel_name);
+                mod_channel->log(index);
+            }
             this->send_to_channel(*mod_channel, data, length, chunk_size, flags);
         }
 
-        if (this->verbose){
+        if (this->verbose & 16){
             LOG(LOG_INFO, "mod_rdp::send_to_mod_channel done");
         }
     }
@@ -601,8 +370,9 @@ struct mod_rdp : public client_mod {
                 size_t chunk_size,
                 uint32_t flags)
     {
-        if (this->verbose){
+        if (this->verbose & 16){
             LOG(LOG_INFO, "mod_rdp::send_to_channel");
+            channel.log(-1);
         }
 
         BStream stream(65536);
@@ -628,8 +398,7 @@ struct mod_rdp : public client_mod {
         this->nego.trans->send(sec_header);
         this->nego.trans->send(stream);
 
-
-        if (this->verbose){
+        if (this->verbose & 16){
             LOG(LOG_INFO, "mod_rdp::send_to_channel done");
         }
     }
@@ -654,7 +423,7 @@ struct mod_rdp : public client_mod {
 
         switch (this->state){
         case MOD_RDP_NEGO:
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::Early TLS Security Exchange");
             }
             switch (this->nego.state){
@@ -747,16 +516,23 @@ struct mod_rdp : public client_mod {
                             ChannelDef def;
                             memcpy(def.name, cs_net.channelDefArray[index].name, 8);
                             def.flags = channel_item.flags;
+                            if (this->verbose & 16){
+                                def.log(index);
+                            }
                             this->mod_channel_list.push_back(def);
                         }
                         // Inject a new channel for auth_channel virtual channel
                         if (this->auth_channel[0] && this->sesman){
                             memcpy(cs_net.channelDefArray[num_channels].name, this->auth_channel, 8);
+                            TODO("We should figure out what value options should actually have, not just get any channel option and copy it")
                             cs_net.channelDefArray[num_channels].options = cs_net.channelDefArray[num_channels-1].options;
                             cs_net.channelCount++;
                             ChannelDef def;
                             memcpy(def.name, this->auth_channel, 8);
                             def.flags = cs_net.channelDefArray[num_channels].options;
+                            if (this->verbose & 16){
+                                def.log(num_channels);
+                            }
                             this->mod_channel_list.push_back(def);
                         }
                         
@@ -786,7 +562,7 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
             }
             {
@@ -940,7 +716,15 @@ struct mod_rdp : public client_mod {
                         /* We assume that the channel_id array is confirmed in the same order
                         that it has been sent. If there are any channels not confirmed, they're
                         going to be the last channels on the array sent in MCS Connect Initial */
+                        if (this->verbose & 16){
+                            LOG(LOG_INFO, "server_channels_count=%u sent_channels_count=%u",
+                                sc_net.channelCount,
+                                mod_channel_list.channelCount);
+                        }
                         for (uint32_t index = 0; index < sc_net.channelCount; index++) {
+                            if (this->verbose & 16){
+                                this->mod_channel_list.items[index].log(index);
+                            }
                             this->mod_channel_list.set_chanid(index, sc_net.channelDefArray[index].id);
                         }
                         sc_net.log("Received from server");
@@ -958,7 +742,7 @@ struct mod_rdp : public client_mod {
 
             }
 
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::Channel Connection");
             }
 
@@ -997,7 +781,7 @@ struct mod_rdp : public client_mod {
             //    |-------MCS Channel Join Request PDU--------------------> |
             //    | <-----MCS Channel Join Confirm PDU--------------------- |
 
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "Send MCS::ErectDomainRequest");
             }
             {
@@ -1009,7 +793,7 @@ struct mod_rdp : public client_mod {
                 this->nego.trans->send(x224_header);
                 this->nego.trans->send(mcs_data);
             }
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "Send MCS::AttachUserRequest");
             }
             {
@@ -1027,7 +811,7 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User");
         }
         {
@@ -1057,6 +841,9 @@ struct mod_rdp : public client_mod {
                 for (size_t index = 0; index < num_channels+2; index++){
                     BStream x224_header(256);
                     BStream mcs_cjrq_data(256);
+                    if (this->verbose & 16){
+                        LOG(LOG_INFO, "cjrq[%u] = %u", index, channels_id[index]);
+                    }
                     MCS::ChannelJoinRequest_Send(mcs_cjrq_data, this->userid, channels_id[index], MCS::PER_ENCODING);
                     size_t mcs_length = mcs_cjrq_data.size();
                     X224::DT_TPDU_Send(x224_header, mcs_length);
@@ -1070,6 +857,10 @@ struct mod_rdp : public client_mod {
                     SubStream & mcs_cjcf_data = x224.payload;
                     MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
                     TODO("We should check channel confirmation worked, for now we just do like server said OK to everything... and that may not be the case, some channels may be closed for instance. We should also check requested chanid are some confirm may come out of order");
+                    TODO("If mcs.result is negative channel is not confirmed and should be removed from mod_channel list")
+                    if (this->verbose & 16){
+                        LOG(LOG_INFO, "cjcf[%u] = %u", index, mcs.channelId);
+                    }
                 }
             }
 
@@ -1102,12 +893,12 @@ struct mod_rdp : public client_mod {
 
             // Client                                                     Server
             //    |------Security Exchange PDU ---------------------------> |
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
             }
 
             if (this->encryptionLevel){
-                if (this->verbose){
+                if (this->verbose & 1){
                     LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u", this->server_public_key_len);
                 }
                 BStream stream(this->server_public_key_len + 32);
@@ -1125,7 +916,7 @@ struct mod_rdp : public client_mod {
             // Client                                                     Server
             //    |------ Client Info PDU      ---------------------------> |
 
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::Secure Settings Exchange");
             }
 
@@ -1136,7 +927,7 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_GET_LICENSE:
-        if (this->verbose){
+        if (this->verbose & 2){
             LOG(LOG_INFO, "mod_rdp::Licensing");
         }
         // Licensing
@@ -1231,7 +1022,7 @@ struct mod_rdp : public client_mod {
 
                 switch (flic.tag) {
                     case LIC::LICENSE_REQUEST:
-                        if (this->verbose){
+                        if (this->verbose & 2) {
                             LOG(LOG_INFO, "Rdp::License Request");
                         }
                         {
@@ -1335,7 +1126,7 @@ struct mod_rdp : public client_mod {
                         }
                         break;
                     case LIC::PLATFORM_CHALLENGE:
-                        if (this->verbose){
+                        if (this->verbose & 2){
                             LOG(LOG_INFO, "Rdp::Platform Challenge");
                         }
                         {
@@ -1392,7 +1183,7 @@ struct mod_rdp : public client_mod {
                         break;
                     case LIC::NEW_LICENSE:
                     {
-                        if (this->verbose){
+                        if (this->verbose & 2){
                             LOG(LOG_INFO, "Rdp::New License");
                         }
 
@@ -1406,7 +1197,7 @@ struct mod_rdp : public client_mod {
                     break;
                     case LIC::UPGRADE_LICENSE:
                     {
-                        if (this->verbose){
+                        if (this->verbose & 2){
                             LOG(LOG_INFO, "Rdp::Upgrade License");
                         }
                         LIC::UpgradeLicense_Recv lic(sec.payload, this->lic_layer_license_key);
@@ -1416,7 +1207,7 @@ struct mod_rdp : public client_mod {
                     break;
                     case LIC::ERROR_ALERT:
                     {
-                        if (this->verbose){
+                        if (this->verbose & 2){
                             LOG(LOG_INFO, "Rdp::Get license status");
                         }
                         LIC::ErrorAlert_Recv lic(sec.payload);
@@ -1504,7 +1295,7 @@ struct mod_rdp : public client_mod {
 
         case MOD_RDP_CONNECTED:
         {
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED bpp=%u", this->bpp);
             }
             // read tpktHeader (4 bytes = 3 0 len)
@@ -1518,6 +1309,10 @@ struct mod_rdp : public client_mod {
             SEC::Sec_Recv sec(mcs.payload, false, this->decrypt, this->encryptionLevel, this->encryptionMethod);
 
             if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){
+                if (this->verbose & 16){
+                    LOG(LOG_INFO, "received channel data on mcs.chanid=%u", mcs.channelId);
+                }
+                TODO("CGR: move this to channel_list.hpp")
                 size_t num_channel_src = this->mod_channel_list.size();
                 for (size_t index = 0; index < num_channel_src; index++){
                     const ChannelDef & mod_channel_item = this->mod_channel_list[index];
@@ -1532,6 +1327,9 @@ struct mod_rdp : public client_mod {
                 }
 
                 const ChannelDef & mod_channel = this->mod_channel_list[num_channel_src];
+                if (this->verbose & 16){
+                    mod_channel.log(num_channel_src);
+                }
 
                 uint32_t length = sec.payload.in_uint32_le();
                 int flags = sec.payload.in_uint32_le();
@@ -1578,14 +1376,14 @@ struct mod_rdp : public client_mod {
                     sctrl.recv_begin();
                     next_packet += sctrl.len;
 
-                    if (this->verbose){
+                    if (this->verbose & 128){
                         LOG(LOG_WARNING, "LOOPING on PDUs: %u", (unsigned)sctrl.len);
                     }
 
 
                     switch (sctrl.pdu_type1) {
                     case PDUTYPE_DATAPDU:
-                        if (this->verbose){
+                        if (this->verbose & 128){
                             LOG(LOG_WARNING, "PDUTYPE_DATAPDU");
                         }
                         switch (this->connection_finalization_state){
@@ -1594,7 +1392,7 @@ struct mod_rdp : public client_mod {
                             throw Error(ERR_SEC);
                         break;
                         case WAITING_SYNCHRONIZE:
-                            if (this->verbose){
+                            if (this->verbose & 1){
                                 LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
                             }
 //                            this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
@@ -1603,7 +1401,7 @@ struct mod_rdp : public client_mod {
                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
                         break;
                         case WAITING_CTL_COOPERATE:
-                            if (this->verbose){
+                            if (this->verbose & 1){
                                 LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
                             }
                             TODO("Data should actually be consumed")
@@ -1612,7 +1410,7 @@ struct mod_rdp : public client_mod {
                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                         break;
                         case WAITING_GRANT_CONTROL_COOPERATE:
-                            if (this->verbose){
+                            if (this->verbose & 1){
                                 LOG(LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
                             }
                             TODO("Data should actually be consumed")
@@ -1621,7 +1419,7 @@ struct mod_rdp : public client_mod {
                             this->connection_finalization_state = WAITING_FONT_MAP;
                         break;
                         case WAITING_FONT_MAP:
-                            if (this->verbose){
+                            if (this->verbose & 1){
                                 LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
                             }
                             TODO("Data should actually be consumed")
@@ -1838,7 +1636,7 @@ struct mod_rdp : public client_mod {
 
         void send_confirm_active(client_mod * mod) throw(Error)
         {
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::send_confirm_active");
             }
 
@@ -2042,7 +1840,7 @@ struct mod_rdp : public client_mod {
             this->nego.trans->send(sec_header);
             this->nego.trans->send(stream);
 
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::send_confirm_active done");
                 LOG(LOG_INFO, "Waiting for answer to confirm active");
             }
@@ -2050,7 +1848,7 @@ struct mod_rdp : public client_mod {
 
         void process_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
         {
-            if (this->verbose){
+            if (this->verbose & 4){
                 LOG(LOG_INFO, "mod_rdp::process_pointer_pdu");
             }
 
@@ -2058,45 +1856,46 @@ struct mod_rdp : public client_mod {
             stream.in_skip_bytes(2); /* pad */
             switch (message_type) {
             case RDP_POINTER_CACHED:
-                if (this->verbose){
+                if (this->verbose & 4){
                     LOG(LOG_INFO, "Process pointer cached");
                 }
                 this->process_cached_pointer_pdu(stream, mod);
-                if (this->verbose){
+                if (this->verbose & 4){
                     LOG(LOG_INFO, "Process pointer cached done");
                 }
                 break;
             case RDP_POINTER_COLOR:
-                if (this->verbose){
+                if (this->verbose & 4){
                     LOG(LOG_INFO, "Process pointer color");
                 }
                 this->process_system_pointer_pdu(stream, mod);
-                if (this->verbose){
+                if (this->verbose & 4){
                     LOG(LOG_INFO, "Process pointer system done");
                 }
                 break;
                 this->process_color_pointer_pdu(stream, mod);
-                if (this->verbose){
+                if (this->verbose & 4){
                     LOG(LOG_INFO, "Process pointer color done");
                 }
                 break;
             case RDP_POINTER_NEW:
-                if (this->verbose){
+                if (this->verbose & 4){
                     LOG(LOG_INFO, "Process pointer new");
                 }
                 if (enable_new_pointer) {
                     this->process_new_pointer_pdu(stream, mod); // Pointer with arbitrary color depth
                 }
-                if (this->verbose){
+                if (this->verbose & 4){
                     LOG(LOG_INFO, "Process pointer new done");
                 }
                 break;
             case RDP_POINTER_SYSTEM:
-                if (this->verbose){
+                if (this->verbose & 4){
                     LOG(LOG_INFO, "Process pointer system");
                 }
             case RDP_POINTER_MOVE:
             {
+                LOG(LOG_WARNING, "mod::rdp::RDP Pointer move not yet supported");
                 TODO(" implement RDP_POINTER_MOVE")
                 /* int x = */ stream.in_uint16_le();
                 /* int y = */ stream.in_uint16_le();
@@ -2105,14 +1904,14 @@ struct mod_rdp : public client_mod {
             default:
                 break;
             }
-            if (this->verbose){
+            if (this->verbose & 4){
                 LOG(LOG_INFO, "mod_rdp::process_pointer_pdu done");
             }
         }
 
         void process_palette(Stream & stream, client_mod * mod)
         {
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "mod_rdp::process_palette");
             }
 
@@ -2129,7 +1928,7 @@ struct mod_rdp : public client_mod {
                 this->orders.memblt_palette[i] = (b << 16)|(g << 8)|r;
             }
             mod->front.set_mod_palette(this->orders.global_palette);
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "mod_rdp::process_palette done");
             }
         }
@@ -3072,7 +2871,7 @@ struct mod_rdp : public client_mod {
         TODO("this can probably be unified with process_confirm_active in front");
         void process_server_caps(Stream & stream, uint16_t len)
         {
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::process_server_caps");
             }
             uint16_t ncapsets = stream.in_uint16_le();
@@ -3111,7 +2910,7 @@ struct mod_rdp : public client_mod {
                 }
                 stream.p = next;
             }
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::process_server_caps done");
             }
         }
@@ -3119,7 +2918,7 @@ struct mod_rdp : public client_mod {
 
         void send_control(int action) throw (Error)
         {
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::send_control");
             }
             BStream stream(65536);
@@ -3151,7 +2950,7 @@ struct mod_rdp : public client_mod {
             this->nego.trans->send(sec_header);
             this->nego.trans->send(stream);
 
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::send_control done");
             }
         }
@@ -3159,7 +2958,7 @@ struct mod_rdp : public client_mod {
         TODO(" duplicated code in front")
         void send_synchronise() throw (Error)
         {
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::send_synchronise");
             }
             BStream stream(65536);
@@ -3190,14 +2989,14 @@ struct mod_rdp : public client_mod {
             this->nego.trans->send(sec_header);
             this->nego.trans->send(stream);
 
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::send_synchronise done");
             }
         }
 
         void send_fonts(int seq) throw(Error)
         {
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::send_fonts");
             }
             BStream stream(65536);
@@ -3230,7 +3029,7 @@ struct mod_rdp : public client_mod {
             this->nego.trans->send(sec_header);
             this->nego.trans->send(stream);
 
-            if (this->verbose){
+            if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::send_fonts done");
             }
         }
@@ -3251,7 +3050,7 @@ struct mod_rdp : public client_mod {
         void send_input(int time, int message_type,
                         int device_flags, int param1, int param2) throw(Error)
         {
-            if (this->verbose > 10){
+            if (this->verbose & 32){
                 LOG(LOG_INFO, "mod_rdp::send_input");
             }
             BStream stream(65536);
@@ -3287,14 +3086,14 @@ struct mod_rdp : public client_mod {
             this->nego.trans->send(sec_header);
             this->nego.trans->send(stream);
 
-            if (this->verbose > 10){
+            if (this->verbose & 32){
                 LOG(LOG_INFO, "mod_rdp::send_input done");
             }
         }
 
         virtual void rdp_input_invalidate(const Rect & r)
         {
-            if (this->verbose){
+            if (this->verbose & 32){
                 LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
             }
             if (UP_AND_RUNNING == this->connection_finalization_state) {
@@ -3332,14 +3131,14 @@ struct mod_rdp : public client_mod {
                     this->nego.trans->send(stream);
                 }
             }
-            if (this->verbose){
+            if (this->verbose & 32){
                 LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
             }
         }
 
     void process_color_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
     {
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu");
         }
         unsigned cache_idx = stream.in_uint16_le();
@@ -3363,14 +3162,14 @@ struct mod_rdp : public client_mod {
         memcpy(cursor->mask, stream.in_uint8p(mlen), mlen);
 
         mod->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
         }
     }
 
     void process_cached_pointer_pdu(Stream & stream, client_mod * mod)
     {
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
         }
 
@@ -3383,14 +3182,14 @@ struct mod_rdp : public client_mod {
         }
         struct rdp_cursor* cursor = this->cursors + cache_idx;
         mod->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
         }
     }
 
     void process_system_pointer_pdu(Stream & stream, client_mod * mod)
     {
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
         }
         int system_pointer_type = stream.in_uint16_le();
@@ -3407,7 +3206,7 @@ struct mod_rdp : public client_mod {
         default:
             break;
         }
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu done");
         }
     }
@@ -3437,14 +3236,14 @@ struct mod_rdp : public client_mod {
         break;
         }
         stream.p = end;
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
     }
 
     void to_regular_pointer(Stream & stream, unsigned dlen, uint8_t bpp, uint8_t * data, size_t target_data_len)
     {
-        if (this->verbose > 10){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
         uint8_t * end = stream.p + dlen;
@@ -3499,7 +3298,7 @@ struct mod_rdp : public client_mod {
         }
 
         stream.p = end;
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
     }
@@ -3507,7 +3306,7 @@ struct mod_rdp : public client_mod {
 
     void process_new_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
     {
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
         }
         
@@ -3539,14 +3338,14 @@ struct mod_rdp : public client_mod {
         to_regular_mask(stream, mlen, data_bpp, cursor->mask, sizeof(cursor->mask)); 
 
         mod->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
         }
     }
 
     void process_bitmap_updates(Stream & stream, client_mod * mod)
     {
-        if (this->verbose > 10){
+        if (this->verbose & 8){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
         }
         // RDP-BCGR: 2.2.9.1.1.3.1.2 Bitmap Update (TS_UPDATE_BITMAP)
@@ -3575,7 +3374,7 @@ struct mod_rdp : public client_mod {
         // numberRectangles (2 bytes): A 16-bit, unsigned integer.
         // The number of screen rectangles present in the rectangles field.
         size_t numberRectangles = stream.in_uint16_le();
-        if (this->verbose){
+        if (this->verbose & 8){
             LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */", numberRectangles);
         }
         for (size_t i = 0; i < numberRectangles; i++) {
@@ -3650,7 +3449,7 @@ struct mod_rdp : public client_mod {
             // that the bitmapComprHdr field is present if the
             // NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not set.
 
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */",
                     i, bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
             }
@@ -3675,10 +3474,8 @@ struct mod_rdp : public client_mod {
                 }
 
                 if (width <= 0 || height <= 0){
-                    if (this->verbose){
-                        LOG(LOG_ERR, "Unexpected bitmap size : width=%d height=%d size=%u left=%u, top=%u, right=%u, bottom=%u",
-                            width, height, size, left, top, right, bottom);
-                    }
+                    LOG(LOG_WARNING, "Unexpected bitmap size : width=%d height=%d size=%u left=%u, top=%u, right=%u, bottom=%u",
+                        width, height, size, left, top, right, bottom);
                 }
                 compressed = true;
             }
@@ -3691,28 +3488,24 @@ struct mod_rdp : public client_mod {
             const uint8_t * data = stream.in_uint8p(size);
             Bitmap bitmap(bpp, &this->orders.global_palette, width, height, data, size, compressed);
             if (line_size && (line_size - bitmap.line_size)>= nbbytes(bitmap.original_bpp)){
-                if (this->verbose){
-                    LOG(LOG_WARNING, "Bad line size: line_size=%u width=%u height=%u bpp=%u",
-                       line_size, width, height, bpp);
-                }
+                LOG(LOG_WARNING, "Bad line size: line_size=%u width=%u height=%u bpp=%u",
+                   line_size, width, height, bpp);
             }
 
             if (final_size && final_size != bitmap.bmp_size){
-                if (this->verbose){
-                    LOG(LOG_WARNING, "final_size should be size of decompressed bitmap [%u != %u] width=%u height=%u bpp=%u",
-                        final_size, bitmap.bmp_size, width, height, bpp);
-                }
+                LOG(LOG_WARNING, "final_size should be size of decompressed bitmap [%u != %u] width=%u height=%u bpp=%u",
+                    final_size, bitmap.bmp_size, width, height, bpp);
             }
             mod->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
         }
-        if (this->verbose > 10){
+        if (this->verbose & 8){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");
         }
     }
 
     void send_client_info_pdu(int userid, const char * password)
     {
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
         BStream stream(1024);
@@ -3758,7 +3551,7 @@ struct mod_rdp : public client_mod {
         this->nego.trans->send(sec_header);
         this->nego.trans->send(stream);
 
-        if (this->verbose){
+        if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu done");
         }
     }
