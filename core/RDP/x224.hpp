@@ -496,7 +496,7 @@ namespace X224
             this->tpdu_hdr.LI = stream.in_uint8();
             this->tpdu_hdr.code = stream.in_uint8();
 
-            if (!this->tpdu_hdr.code == X224::CR_TPDU){
+            if (!(this->tpdu_hdr.code == X224::CR_TPDU)){
                 LOG(LOG_ERR, "Unexpected TPDU opcode, expected CR_TPDU, got %u",
                     this->tpdu_hdr.code);
                 throw Error(ERR_X224);
@@ -738,7 +738,7 @@ namespace X224
             this->tpdu_hdr.LI = stream.in_uint8();
             this->tpdu_hdr.code = stream.in_uint8();
 
-            if (!this->tpdu_hdr.code == X224::CC_TPDU){
+            if (!(this->tpdu_hdr.code == X224::CC_TPDU)){
                 LOG(LOG_ERR, "Unexpected TPDU opcode, expected CC_TPDU, got %u",
                     this->tpdu_hdr.code);
                 throw Error(ERR_X224);
@@ -890,7 +890,7 @@ namespace X224
             this->tpdu_hdr.LI = stream.in_uint8();
             this->tpdu_hdr.code = stream.in_uint8();
 
-            if (!this->tpdu_hdr.code == X224::DR_TPDU){
+            if (!(this->tpdu_hdr.code == X224::DR_TPDU)){
                 LOG(LOG_ERR, "Unexpected TPDU opcode, expected DR_TPDU, got %u",
                     this->tpdu_hdr.code);
                 throw Error(ERR_X224);
@@ -965,7 +965,7 @@ namespace X224
             this->tpdu_hdr.LI = stream.in_uint8();
             this->tpdu_hdr.code = stream.in_uint8();
 
-            if (!this->tpdu_hdr.code == X224::ER_TPDU){
+            if (!(this->tpdu_hdr.code == X224::ER_TPDU)){
                 LOG(LOG_ERR, "Unexpected TPDU opcode, expected ER_TPDU, got %u",
                     this->tpdu_hdr.code);
                 throw Error(ERR_X224);
@@ -1059,7 +1059,7 @@ namespace X224
             this->tpdu_hdr.LI = stream.in_uint8();
 
             this->tpdu_hdr.code = stream.in_uint8();
-            if (!this->tpdu_hdr.code == X224::DT_TPDU){
+            if (!(this->tpdu_hdr.code == X224::DT_TPDU)){
                 LOG(LOG_ERR, "Unexpected TPDU opcode, expected DT_TPDU, got %u",
                     this->tpdu_hdr.code);
                 throw Error(ERR_X224);
