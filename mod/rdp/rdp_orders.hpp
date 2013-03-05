@@ -24,10 +24,11 @@
 #ifndef _REDEMPTION_MOD_RDP_RDP_ORDERS_HPP_
 #define _REDEMPTION_MOD_RDP_RDP_ORDERS_HPP__
 
+#include <string.h>
+
 #include "log.hpp"
 #include "stream.hpp"
 #include "client_mod.hpp"
-
 
 //#include "RDP/orders/RDPOrdersNames.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"
@@ -58,7 +59,7 @@ struct rdp_orders {
     BGRPalette global_palette;
     BGRPalette memblt_palette;
 
-    TODO(" this cache_bitmap here looks strange. At least it's size should be negotiated. And why is it not managed by the other cache management code ? This probably hide some kind of problem. See when working on cache secondary order primitives.")
+    TODO("CGR: this cache_bitmap here looks strange. At least it's size should be negotiated. And why is it not managed by the other cache management code ? This probably hide some kind of problem. See when working on cache secondary order primitives.")
     const Bitmap * cache_bitmap[3][10000];
 
     uint32_t verbose;
@@ -107,7 +108,7 @@ struct rdp_orders {
         RDPBmpCache bmp;
         bmp.receive(stream, control, header, this->global_palette);
 
-        TODO("add cache_id, cache_idx range check, and also size check based on cache size by type and uncompressed bitmap size")
+        TODO("CGR: add cache_id, cache_idx range check, and also size check based on cache size by type and uncompressed bitmap size")
         if (this->cache_bitmap[bmp.id][bmp.idx]) {
             delete this->cache_bitmap[bmp.id][bmp.idx];
         }
@@ -245,8 +246,8 @@ struct rdp_orders {
                             assert(false);
                         }
                         const Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0x3][this->memblt.cache_idx];
-                        TODO("check if bitmap has the right palette...")
-                        TODO("8 bits palettes should probabily be transmitted to front, not stored in bitmaps")
+                        TODO("CGR: check if bitmap has the right palette...")
+                        TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps")
                         if (bitmap) {
                             mod->front.draw(this->memblt, cmd_clip, *bitmap);
                         }

@@ -35,6 +35,7 @@
 #include <math.h>
 
 #include "rdp/rdp_orders.hpp"
+#include "rdp/rdp_cursor.hpp"
 
 /* include other h files */
 #include "stream.hpp"
@@ -56,30 +57,6 @@
 #include "../acl/authentifier.hpp"
 
 #include "genrandom.hpp"
-
-// Bitmap sizes (in bytes)
-enum { DATA_BITMAP_SIZE = 4096 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x 32 bits
-     , MASK_BITMAP_SIZE =  128 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x  1 bit
-};
-
-
-struct rdp_cursor {
-    int x;
-    int y;
-    int width;
-    int height;
-    uint8_t data[DATA_BITMAP_SIZE];
-    uint8_t mask[MASK_BITMAP_SIZE];
-    rdp_cursor() {
-        this->x = 0;
-        this->y = 0;
-        this->width = 0;
-        this->height = 0;
-        memset(this->data, 0, DATA_BITMAP_SIZE);
-        memset(this->mask, 0, MASK_BITMAP_SIZE);
-    }
-};
-
 
 struct mod_rdp : public client_mod {
 
@@ -213,7 +190,7 @@ struct mod_rdp : public client_mod {
         this->lic_layer_license_size = 0;
         memset(this->lic_layer_license_key, 0, 16);
         memset(this->lic_layer_license_sign_key, 0, 16);
-        TODO(" license loading should be done before creating protocol layers")
+        TODO("CGR: license loading should be done before creating protocol layers")
         struct stat st;
         char path[256];
         sprintf(path, LICENSE_PATH "/license.%s", hostname);
@@ -240,10 +217,10 @@ struct mod_rdp : public client_mod {
         this->decrypt.encryptionMethod = 2; /* 128 bits */
         this->encrypt.encryptionMethod = 2; /* 128 bits */
 
-        TODO(" and if hostname is really larger  what happens ? We should at least emit a warning log")
+        TODO("CGR: and if hostname is really larger  what happens ? We should at least emit a warning log")
         strncpy(this->hostname, hostname, 15);
         this->hostname[15] = 0;
-        TODO(" and if username is really larger  what happens ? We should at least emit a warning log")
+        TODO("CGR: and if username is really larger  what happens ? We should at least emit a warning log")
         strncpy(this->username, target_user, 127);
         this->username[127] = 0;
 
@@ -287,7 +264,7 @@ struct mod_rdp : public client_mod {
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
-            TODO(" is decoding and reencoding really necessary  a simple pass-through from front to back-end should be enough")
+            TODO("CGR: is decoding and reencoding really necessary  a simple pass-through from front to back-end should be enough")
             if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
                 this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_MOVE, x, y);
             }
@@ -477,7 +454,7 @@ struct mod_rdp : public client_mod {
 
                     // ------------------------------------------------------------
                     GCC::UserData::CSCluster cs_cluster;
-                    TODO("values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?")
+                    TODO("CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?")
 
                     if (!this->nego.tls){
                          if (this->console_session){
@@ -524,7 +501,7 @@ struct mod_rdp : public client_mod {
                         // Inject a new channel for auth_channel virtual channel
                         if (this->auth_channel[0] && this->sesman){
                             memcpy(cs_net.channelDefArray[num_channels].name, this->auth_channel, 8);
-                            TODO("We should figure out what value options should actually have, not just get any channel option and copy it")
+                            TODO("CGR: We should figure out what value options should actually have, not just get any channel option and copy it")
                             cs_net.channelDefArray[num_channels].options = cs_net.channelDefArray[num_channels-1].options;
                             cs_net.channelCount++;
                             ChannelDef def;
@@ -636,7 +613,7 @@ struct mod_rdp : public client_mod {
                                 uint32_t cert_len = sc_sec1.x509.cert[certcount - 1].len;
                                 X509 *cert =  sc_sec1.x509.cert[certcount - 1].cert;
 
-                                TODO("Currently, we don't use the CA Certificate, we should"
+                                TODO("CGR: Currently, we don't use the CA Certificate, we should"
                                      "*) Verify the server certificate (server_cert) with the CA certificate."
                                      "*) Store the CA Certificate with the hostname of the server we are connecting"
                                      " to as key, and compare it when we connect the next time, in order to prevent"
@@ -742,7 +719,7 @@ struct mod_rdp : public client_mod {
 
             }
 
-            if (this->verbose & 1){
+            if (this->verbose & (1|16)){
                 LOG(LOG_INFO, "mod_rdp::Channel Connection");
             }
 
@@ -828,7 +805,7 @@ struct mod_rdp : public client_mod {
             }
 
             {
-                TODO(" the array size below is arbitrary  it should be checked to avoid buffer overflow")
+                TODO("CGR: the array size below is arbitrary  it should be checked to avoid buffer overflow")
 
                 size_t num_channels = this->mod_channel_list.size();
                 uint16_t channels_id[100];
@@ -856,7 +833,7 @@ struct mod_rdp : public client_mod {
                     X224::DT_TPDU_Recv x224(*this->nego.trans, x224_data);
                     SubStream & mcs_cjcf_data = x224.payload;
                     MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
-                    TODO("We should check channel confirmation worked, for now we just do like server said OK to everything... and that may not be the case, some channels may be closed for instance. We should also check requested chanid are some confirm may come out of order");
+                    TODO("CGR: We should check channel confirmation worked, for now we just do like server said OK to everything... and that may not be the case, some channels may be closed for instance. We should also check requested chanid are some confirm may come out of order");
                     TODO("If mcs.result is negative channel is not confirmed and should be removed from mod_channel list")
                     if (this->verbose & 16){
                         LOG(LOG_INFO, "cjcf[%u] = %u", index, mcs.channelId);
@@ -1189,7 +1166,7 @@ struct mod_rdp : public client_mod {
 
                         LIC::NewLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
-                        TODO("Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that")
+                        TODO("CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that")
                         this->state = MOD_RDP_CONNECTED;
 
                         LOG(LOG_WARNING, "New license not saved");
@@ -1229,7 +1206,7 @@ struct mod_rdp : public client_mod {
                     }
                     break;
                 }
-                TODO("check if moving end is still necessary all data should have been consumed")
+                TODO("CGR: check if moving end is still necessary all data should have been consumed")
                 if (sec.payload.p != sec.payload.end){
                     LOG(LOG_ERR, "all data should have been consumed %s:%u tag = %x", __FILE__, __LINE__, flic.tag);
                     throw Error(ERR_SEC);
@@ -1295,9 +1272,6 @@ struct mod_rdp : public client_mod {
 
         case MOD_RDP_CONNECTED:
         {
-            if (this->verbose & 1){
-                LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED bpp=%u", this->bpp);
-            }
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
@@ -1396,7 +1370,7 @@ struct mod_rdp : public client_mod {
                                 LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
                             }
 //                            this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
-                            TODO("Data should actually be consumed")
+                            TODO("CGR: Data should actually be consumed")
                             sctrl.payload.p = sctrl.payload.end;
                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
                         break;
@@ -1404,7 +1378,7 @@ struct mod_rdp : public client_mod {
                             if (this->verbose & 1){
                                 LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
                             }
-                            TODO("Data should actually be consumed")
+                            TODO("CGR: Data should actually be consumed")
                             sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
@@ -1413,7 +1387,7 @@ struct mod_rdp : public client_mod {
                             if (this->verbose & 1){
                                 LOG(LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
                             }
-                            TODO("Data should actually be consumed")
+                            TODO("CGR: Data should actually be consumed")
                             sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                             this->connection_finalization_state = WAITING_FONT_MAP;
@@ -1422,7 +1396,7 @@ struct mod_rdp : public client_mod {
                             if (this->verbose & 1){
                                 LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
                             }
-                            TODO("Data should actually be consumed")
+                            TODO("CGR: Data should actually be consumed")
                             sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_FONTMAP);
                             this->connection_finalization_state = UP_AND_RUNNING;
@@ -1485,28 +1459,28 @@ struct mod_rdp : public client_mod {
                             break;
                             case PDUTYPE2_CONTROL:
                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_CONTROL");}
-                                TODO("Data should actually be consumed")
+                                TODO("CGR: Data should actually be consumed")
                                 sdata.payload.p = sdata.payload.end;
                             break;
                             case PDUTYPE2_SYNCHRONIZE:
                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");}
-                                TODO("Data should actually be consumed")
+                                TODO("CGR: Data should actually be consumed")
                                 sdata.payload.p = sdata.payload.end;
                             break;
                             case PDUTYPE2_POINTER:
                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_POINTER");}
                                 this->process_pointer_pdu(sdata.payload, this);
-                                TODO("Data should actually be consumed")
+                                TODO("CGR: Data should actually be consumed")
                                 sdata.payload.p = sdata.payload.end;
                             break;
                             case PDUTYPE2_PLAY_SOUND:
                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");}
-                                TODO("Data should actually be consumed")
+                                TODO("CGR: Data should actually be consumed")
                                 sdata.payload.p = sdata.payload.end;
                             break;
                             case PDUTYPE2_SAVE_SESSION_INFO:
                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");}
-                                TODO("Data should actually be consumed")
+                                TODO("CGR: Data should actually be consumed")
                                 sdata.payload.p = sdata.payload.end;
                             break;
                             case PDUTYPE2_SET_ERROR_INFO_PDU:
@@ -1515,7 +1489,7 @@ struct mod_rdp : public client_mod {
                             break;
                             default:
                                 LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
-                                TODO("Data should actually be consumed")
+                                TODO("CGR: Data should actually be consumed")
                                 sdata.payload.p = sdata.payload.end;
                             break;
                             }
@@ -1527,6 +1501,7 @@ struct mod_rdp : public client_mod {
                     break;
                     case PDUTYPE_DEMANDACTIVEPDU:
                         {
+                            if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU"); }
                             client_mod * mod = this;
                             this->share_id = sctrl.payload.in_uint32_le();
                             uint16_t lengthSourceDescriptor = sctrl.payload.in_uint16_le();
@@ -1562,14 +1537,16 @@ struct mod_rdp : public client_mod {
                         }
                     break;
                     case PDUTYPE_DEACTIVATEALLPDU:
+                        if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_DEACTIVATEALLPDU"); }
                         LOG(LOG_INFO, "Deactivate All PDU");
-                        TODO("Data should actually be consumed")
+                        TODO("CGR: Data should actually be consumed")
                         sctrl.payload.p = sctrl.payload.end;
                         sctrl.recv_end();
-                        TODO("Check we are indeed expecting Synchronize... dubious")
+                        TODO("CGR: Check we are indeed expecting Synchronize... dubious")
                         this->connection_finalization_state = WAITING_SYNCHRONIZE;
                     break;
                     case PDUTYPE_SERVER_REDIR_PKT:
+                        if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_SERVER_REDIR_PKT"); }
                     break;
                     default:
                         LOG(LOG_INFO, "unknown PDU %u", sctrl.pdu_type1);
@@ -1814,7 +1791,7 @@ struct mod_rdp : public client_mod {
 //            stream.mark_end();
 //            capscount++;
 
-            TODO("Check caplen here")
+            TODO("CGR: Check caplen here")
             total_caplen = stream.get_offset() - total_caplen;
 
             // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
@@ -1896,7 +1873,7 @@ struct mod_rdp : public client_mod {
             case RDP_POINTER_MOVE:
             {
                 LOG(LOG_WARNING, "mod::rdp::RDP Pointer move not yet supported");
-                TODO(" implement RDP_POINTER_MOVE")
+                TODO("CGR: implement RDP_POINTER_MOVE")
                 /* int x = */ stream.in_uint16_le();
                 /* int y = */ stream.in_uint16_le();
             }
@@ -1911,12 +1888,12 @@ struct mod_rdp : public client_mod {
 
         void process_palette(Stream & stream, client_mod * mod)
         {
-            if (this->verbose & 8){
+            if (this->verbose & 4){
                 LOG(LOG_INFO, "mod_rdp::process_palette");
             }
 
             stream.in_skip_bytes(2); /* pad */
-            TODO("check that : why am I reading 32 bits into 16 bits ?")
+            TODO("CGR: check that : why am I reading 32 bits into 16 bits ?")
             uint16_t numberColors = stream.in_uint32_le();
             assert(numberColors == 256);
             for (int i = 0; i < numberColors; i++) {
@@ -1928,7 +1905,7 @@ struct mod_rdp : public client_mod {
                 this->orders.memblt_palette[i] = (b << 16)|(g << 8)|r;
             }
             mod->front.set_mod_palette(this->orders.global_palette);
-            if (this->verbose & 8){
+            if (this->verbose & 4){
                 LOG(LOG_INFO, "mod_rdp::process_palette done");
             }
         }
@@ -2868,10 +2845,10 @@ struct mod_rdp : public client_mod {
         }
 
 
-        TODO("this can probably be unified with process_confirm_active in front");
+        TODO("CGR: this can probably be unified with process_confirm_active in front");
         void process_server_caps(Stream & stream, uint16_t len)
         {
-            if (this->verbose & 1){
+            if (this->verbose & 32){
                 LOG(LOG_INFO, "mod_rdp::process_server_caps");
             }
             uint16_t ncapsets = stream.in_uint16_le();
@@ -2910,7 +2887,7 @@ struct mod_rdp : public client_mod {
                 }
                 stream.p = next;
             }
-            if (this->verbose & 1){
+            if (this->verbose & 32){
                 LOG(LOG_INFO, "mod_rdp::process_server_caps done");
             }
         }
@@ -2955,7 +2932,7 @@ struct mod_rdp : public client_mod {
             }
         }
 
-        TODO(" duplicated code in front")
+        TODO("CGR: duplicated code in front")
         void send_synchronise() throw (Error)
         {
             if (this->verbose & 1){
@@ -3050,7 +3027,7 @@ struct mod_rdp : public client_mod {
         void send_input(int time, int message_type,
                         int device_flags, int param1, int param2) throw(Error)
         {
-            if (this->verbose & 32){
+            if (this->verbose & 4){
                 LOG(LOG_INFO, "mod_rdp::send_input");
             }
             BStream stream(65536);
@@ -3086,14 +3063,14 @@ struct mod_rdp : public client_mod {
             this->nego.trans->send(sec_header);
             this->nego.trans->send(stream);
 
-            if (this->verbose & 32){
+            if (this->verbose & 4){
                 LOG(LOG_INFO, "mod_rdp::send_input done");
             }
         }
 
         virtual void rdp_input_invalidate(const Rect & r)
         {
-            if (this->verbose & 32){
+            if (this->verbose & 4){
                 LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
             }
             if (UP_AND_RUNNING == this->connection_finalization_state) {
@@ -3108,7 +3085,7 @@ struct mod_rdp : public client_mod {
                     stream.out_uint32_le(1);
                     stream.out_uint16_le(r.x);
                     stream.out_uint16_le(r.y);
-                    TODO(" check this -1 (difference between rect and clip)")
+                    TODO("CGR: check this -1 (difference between rect and clip)")
                     stream.out_uint16_le(r.cx - 1);
                     stream.out_uint16_le(r.cy - 1);
                     stream.mark_end();
@@ -3131,7 +3108,7 @@ struct mod_rdp : public client_mod {
                     this->nego.trans->send(stream);
                 }
             }
-            if (this->verbose & 32){
+            if (this->verbose & 4){
                 LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
             }
         }
@@ -3146,6 +3123,9 @@ struct mod_rdp : public client_mod {
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_CACHE_NOT_OK);
         }
         struct rdp_cursor* cursor = this->cursors + cache_idx;
+        
+        TODO("CGR: move that to rdp_cursor")
+        
         cursor->x = stream.in_uint16_le();
         cursor->y = stream.in_uint16_le();
         cursor->width = stream.in_uint16_le();
@@ -3198,7 +3178,7 @@ struct mod_rdp : public client_mod {
             {
                 struct rdp_cursor cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
-                TODO(" we should pass in a cursor to set_pointer instead of individual fields")
+                TODO("CGR: we should pass in a cursor to set_pointer instead of individual fields")
                 mod->front.server_set_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);
                 mod->set_pointer_display();
             }
@@ -3213,10 +3193,10 @@ struct mod_rdp : public client_mod {
 
     void to_regular_mask(Stream & stream, unsigned mlen, uint8_t bpp, uint8_t * mask, size_t mask_size)
     {
-        if (this->verbose > 10){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
-        TODO("we should ensure we have data enough to create mask")
+        TODO("CGR: we should ensure we have data enough to create mask")
         uint8_t * end = stream.p + mlen;
         switch (bpp) {
         case 1 : {
@@ -3247,7 +3227,7 @@ struct mod_rdp : public client_mod {
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
         uint8_t * end = stream.p + dlen;
-        TODO("we should ensure we have data enough to create pointer")
+        TODO("CGR: we should ensure we have data enough to create pointer")
         switch (bpp) {
         case 1 : 
         {
@@ -3345,7 +3325,7 @@ struct mod_rdp : public client_mod {
 
     void process_bitmap_updates(Stream & stream, client_mod * mod)
     {
-        if (this->verbose & 8){
+        if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
         }
         // RDP-BCGR: 2.2.9.1.1.3.1.2 Bitmap Update (TS_UPDATE_BITMAP)
@@ -3374,7 +3354,7 @@ struct mod_rdp : public client_mod {
         // numberRectangles (2 bytes): A 16-bit, unsigned integer.
         // The number of screen rectangles present in the rectangles field.
         size_t numberRectangles = stream.in_uint16_le();
-        if (this->verbose & 8){
+        if (this->verbose & 64){
             LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */", numberRectangles);
         }
         for (size_t i = 0; i < numberRectangles; i++) {
@@ -3449,7 +3429,7 @@ struct mod_rdp : public client_mod {
             // that the bitmapComprHdr field is present if the
             // NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not set.
 
-            if (this->verbose & 8){
+            if (this->verbose & 64){
                 LOG(LOG_INFO, "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */",
                     i, bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
             }
@@ -3480,7 +3460,7 @@ struct mod_rdp : public client_mod {
                 compressed = true;
             }
 
-            TODO("check which sanity checks should be done")
+            TODO("CGR: check which sanity checks should be done")
 //            if (bufsize != bitmap.bmp_size){
 //                LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u",
 //                    bufsize, bitmap.bmp_size, width, height, bpp);
@@ -3498,7 +3478,7 @@ struct mod_rdp : public client_mod {
             }
             mod->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
         }
-        if (this->verbose & 8){
+        if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");
         }
     }

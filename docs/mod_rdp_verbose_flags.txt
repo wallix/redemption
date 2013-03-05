@@ -1,0 +1,11 @@
+MOD_RDP VERBOSE FLAGS
+---------------------
+1: connection initiation
+2: licensing management
+4: pointer process, input send
+8: PDUTYPE2 details
+16: channel_management
+32: capabilities
+64: rdp_orders details, process bitmap updates
+128: PDUTYPE1 details
+
