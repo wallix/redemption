@@ -588,10 +588,10 @@ struct mod_rdp : public client_mod {
             this->auth_channel_chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-        this->nego.trans->send(x224_header.data, x224_header.size());
-        this->nego.trans->send(mcs_header.data, mcs_header.size());
-        this->nego.trans->send(sec_header.data, sec_header.size());
-        this->nego.trans->send(stream.data, stream.size());
+        this->nego.trans->send(x224_header);
+        this->nego.trans->send(mcs_header);
+        this->nego.trans->send(sec_header);
+        this->nego.trans->send(stream);
     }
 
     void send_to_channel(
@@ -623,10 +623,10 @@ struct mod_rdp : public client_mod {
                                       sec_header.size() + stream.size() , MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
-        this->nego.trans->send(x224_header.data, x224_header.size());
-        this->nego.trans->send(mcs_header.data, mcs_header.size());
-        this->nego.trans->send(sec_header.data, sec_header.size());
-        this->nego.trans->send(stream.data, stream.size());
+        this->nego.trans->send(x224_header);
+        this->nego.trans->send(mcs_header);
+        this->nego.trans->send(sec_header);
+        this->nego.trans->send(stream);
 
 
         if (this->verbose){
@@ -642,9 +642,9 @@ struct mod_rdp : public client_mod {
         MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channelId, 1, 3, stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
 
-        this->nego.trans->send(x224_header.data, x224_header.size());
-        this->nego.trans->send(mcs_header.data, mcs_header.size());
-        this->nego.trans->send(stream.data, stream.size());
+        this->nego.trans->send(x224_header);
+        this->nego.trans->send(mcs_header);
+        this->nego.trans->send(stream);
     }
 
     virtual BackEvent_t draw_event(void)
@@ -774,10 +774,10 @@ struct mod_rdp : public client_mod {
                     BStream x224_header(256);
                     X224::DT_TPDU_Send(x224_header, mcs_header.size() + gcc_header.size() + stream.size());
 
-                    this->nego.trans->send(x224_header.data, x224_header.size());
-                    this->nego.trans->send(mcs_header.data, mcs_header.size());
-                    this->nego.trans->send(gcc_header.data, gcc_header.size());
-                    this->nego.trans->send(stream.data, stream.size());
+                    this->nego.trans->send(x224_header);
+                    this->nego.trans->send(mcs_header);
+                    this->nego.trans->send(gcc_header);
+                    this->nego.trans->send(stream);
 
                     this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
                 }
@@ -1006,8 +1006,8 @@ struct mod_rdp : public client_mod {
 
                 MCS::ErectDomainRequest_Send mcs(mcs_data, 0, 0, MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_data.size());
-                this->nego.trans->send(x224_header.data, x224_header.size());
-                this->nego.trans->send(mcs_data.data, mcs_data.size());
+                this->nego.trans->send(x224_header);
+                this->nego.trans->send(mcs_data);
             }
             if (this->verbose){
                 LOG(LOG_INFO, "Send MCS::AttachUserRequest");
@@ -1019,10 +1019,9 @@ struct mod_rdp : public client_mod {
                 MCS::AttachUserRequest_Send mcs(mcs_data, MCS::PER_ENCODING);
                 size_t mcs_length = mcs_data.size();
                 X224::DT_TPDU_Send(x224_header, mcs_length);
-                size_t x224_length = x224_header.size();
 
-                this->nego.trans->send(x224_header.data, x224_length);
-                this->nego.trans->send(mcs_data.data, mcs_length);
+                this->nego.trans->send(x224_header);
+                this->nego.trans->send(mcs_data);
             }
             this->state = MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER;
         break;
@@ -1329,10 +1328,10 @@ struct mod_rdp : public client_mod {
                                                           sec_header.size() + lic_data.size() , MCS::PER_ENCODING);
                             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + lic_data.size());
 
-                            this->nego.trans->send(x224_header.data, x224_header.size());
-                            this->nego.trans->send(mcs_header.data, mcs_header.size());
-                            this->nego.trans->send(sec_header.data, sec_header.size());
-                            this->nego.trans->send(lic_data.data, lic_data.size());
+                            this->nego.trans->send(x224_header);
+                            this->nego.trans->send(mcs_header);
+                            this->nego.trans->send(sec_header);
+                            this->nego.trans->send(lic_data);
                         }
                         break;
                     case LIC::PLATFORM_CHALLENGE:
@@ -1384,11 +1383,11 @@ struct mod_rdp : public client_mod {
                                                           sec_header.size() + lic_data.size() , MCS::PER_ENCODING);
                             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + lic_data.size());
 
-                            this->nego.trans->send(x224_header.data, x224_header.size());
-                            this->nego.trans->send(mcs_header.data, mcs_header.size());
-                            this->nego.trans->send(sec_header.data, sec_header.size());
+                            this->nego.trans->send(x224_header);
+                            this->nego.trans->send(mcs_header);
+                            this->nego.trans->send(sec_header);
 
-                            this->nego.trans->send(lic_data.data, lic_data.size());
+                            this->nego.trans->send(lic_data);
                         }
                         break;
                     case LIC::NEW_LICENSE:
@@ -1788,7 +1787,7 @@ struct mod_rdp : public client_mod {
             BStream stream(256);
             X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
             try {
-                this->nego.trans->send(stream.data, stream.size());
+                this->nego.trans->send(stream);
                 LOG(LOG_INFO, "Connection to server closed");
             }
             catch(Error e){
@@ -2038,10 +2037,10 @@ struct mod_rdp : public client_mod {
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
-            this->nego.trans->send(x224_header.data, x224_header.size());
-            this->nego.trans->send(mcs_header.data, mcs_header.size());
-            this->nego.trans->send(sec_header.data, sec_header.size());
-            this->nego.trans->send(stream.data, stream.size());
+            this->nego.trans->send(x224_header);
+            this->nego.trans->send(mcs_header);
+            this->nego.trans->send(sec_header);
+            this->nego.trans->send(stream);
 
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_confirm_active done");
@@ -3147,10 +3146,10 @@ struct mod_rdp : public client_mod {
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
-            this->nego.trans->send(x224_header.data, x224_header.size());
-            this->nego.trans->send(mcs_header.data, mcs_header.size());
-            this->nego.trans->send(sec_header.data, sec_header.size());
-            this->nego.trans->send(stream.data, stream.size());
+            this->nego.trans->send(x224_header);
+            this->nego.trans->send(mcs_header);
+            this->nego.trans->send(sec_header);
+            this->nego.trans->send(stream);
 
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_control done");
@@ -3186,10 +3185,10 @@ struct mod_rdp : public client_mod {
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
-            this->nego.trans->send(x224_header.data, x224_header.size());
-            this->nego.trans->send(mcs_header.data, mcs_header.size());
-            this->nego.trans->send(sec_header.data, sec_header.size());
-            this->nego.trans->send(stream.data, stream.size());
+            this->nego.trans->send(x224_header);
+            this->nego.trans->send(mcs_header);
+            this->nego.trans->send(sec_header);
+            this->nego.trans->send(stream);
 
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_synchronise done");
@@ -3226,10 +3225,10 @@ struct mod_rdp : public client_mod {
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
-            this->nego.trans->send(x224_header.data, x224_header.size());
-            this->nego.trans->send(mcs_header.data, mcs_header.size());
-            this->nego.trans->send(sec_header.data, sec_header.size());
-            this->nego.trans->send(stream.data, stream.size());
+            this->nego.trans->send(x224_header);
+            this->nego.trans->send(mcs_header);
+            this->nego.trans->send(sec_header);
+            this->nego.trans->send(stream);
 
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_fonts done");
@@ -3283,10 +3282,10 @@ struct mod_rdp : public client_mod {
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
-            this->nego.trans->send(x224_header.data, x224_header.size());
-            this->nego.trans->send(mcs_header.data, mcs_header.size());
-            this->nego.trans->send(sec_header.data, sec_header.size());
-            this->nego.trans->send(stream.data, stream.size());
+            this->nego.trans->send(x224_header);
+            this->nego.trans->send(mcs_header);
+            this->nego.trans->send(sec_header);
+            this->nego.trans->send(stream);
 
             if (this->verbose > 10){
                 LOG(LOG_INFO, "mod_rdp::send_input done");
@@ -3327,10 +3326,10 @@ struct mod_rdp : public client_mod {
                                                   sec_header.size() + stream.size() , MCS::PER_ENCODING);
                     X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
-                    this->nego.trans->send(x224_header.data, x224_header.size());
-                    this->nego.trans->send(mcs_header.data, mcs_header.size());
-                    this->nego.trans->send(sec_header.data, sec_header.size());
-                    this->nego.trans->send(stream.data, stream.size());
+                    this->nego.trans->send(x224_header);
+                    this->nego.trans->send(mcs_header);
+                    this->nego.trans->send(sec_header);
+                    this->nego.trans->send(stream);
                 }
             }
             if (this->verbose){
@@ -3754,10 +3753,10 @@ struct mod_rdp : public client_mod {
                                       sec_header.size() + stream.size() , MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
-        this->nego.trans->send(x224_header.data, x224_header.size());
-        this->nego.trans->send(mcs_header.data, mcs_header.size());
-        this->nego.trans->send(sec_header.data, sec_header.size());
-        this->nego.trans->send(stream.data, stream.size());
+        this->nego.trans->send(x224_header);
+        this->nego.trans->send(mcs_header);
+        this->nego.trans->send(sec_header);
+        this->nego.trans->send(stream);
 
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu done");
