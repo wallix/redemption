@@ -40,6 +40,7 @@
 #include "fileutils.hpp"
 #include "netutils.hpp"
 #include "../libs/rio.h"
+#include "stream.hpp"
 
 
 class Transport {
@@ -81,6 +82,9 @@ public:
     }
     virtual void recv(char ** pbuffer, size_t len) throw (Error) = 0;
     virtual void send(const char * const buffer, size_t len) throw (Error) = 0;
+    void send(Stream & stream) throw(Error) {
+        this->send(stream.data, stream.size());
+    }
     void send(const uint8_t * const buffer, size_t len) throw (Error) {
         this->send(reinterpret_cast<const char * const>(buffer), len);
     }
