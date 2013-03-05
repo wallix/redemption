@@ -118,7 +118,6 @@ struct Inifile {
         int encryptionLevel;   // 0=low, 1=medium, 2=high
         char authip[255];
         int authport;
-        unsigned authversion;
         bool nomouse;
         bool notimestamp;
         bool autovalidate;      // dialog autovalidation for test
@@ -217,7 +216,6 @@ struct Inifile {
             this->globals.encryptionLevel = level_from_string("low");
             strcpy(this->globals.authip, "127.0.0.1");
             this->globals.authport = 3350;
-            this->globals.authversion = 2;
             this->globals.autovalidate = false;
             strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
             strcpy(this->globals.codec_id, "flv");
@@ -377,9 +375,6 @@ struct Inifile {
             }
             else if (0 == strcmp(key, "authport")){
                 this->globals.authport = atol(value);
-            }
-            else if (0 == strcmp(key, "authversion")){
-                this->globals.authversion = atol(value);
             }
             else if (0 == strcmp(key, "autovalidate")){
                 this->globals.autovalidate = bool_from_cstr(value);
