@@ -24,6 +24,7 @@
 #define _REDEMPTION_CORE_INBYMETASEQUENCETRANSPORT_HPP_
 
 #include "transport.hpp"
+#include "error.hpp"
 
 TODO("This readline function could probably move into stream to give some level of support for text oriented files")
 static inline bool readline(int fd, char ** begin, char **end, char **eol, char buffer[], size_t len)
@@ -213,17 +214,27 @@ public:
     unsigned end_chunk_time;
     unsigned chunk_num;
 
+    RIO * rio;
 
-    InByMetaSequenceTransport2(const char * meta_filename)
+    InByMetaSequenceTransport2(const char * filename, const char * extension)
     : Transport()
     {
         memset(this->path, 0, sizeof(path));
         this->begin_chunk_time = 0;
         this->end_chunk_time = 0;
+        this->chunk_num = 0;
+
+        RIO_ERROR status = RIO_ERROR_OK;
+        SQ * seq = NULL;
+        this->rio = rio_new_inmeta(&status, &seq, "TESTOFS", "mwrm");
+        if (status != RIO_ERROR_OK){
+            throw Error(ERR_TRANSPORT);
+        }
     }
 
     ~InByMetaSequenceTransport2()
     {
+//        rio_delete(this->rio);
     }
 
     void reset_meta(){

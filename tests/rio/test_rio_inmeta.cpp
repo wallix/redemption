@@ -60,8 +60,9 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
     }
     
     {
+        SQ * inseq = NULL;
         RIO_ERROR status = RIO_ERROR_OK;
-        RIO * rt = rio_new_inmeta(&status, "TESTOFS", "mwrm");
+        RIO * rt = rio_new_inmeta(&status, &inseq, "TESTOFS", "mwrm");
         BOOST_CHECK( rt != NULL);
 
         char buffer[1024] = {};

@@ -28,8 +28,6 @@
 
 extern "C" {
     struct RIOInmeta {
-        timeval start_tv;
-        timeval end_tv;
         struct SQ * seq;
         struct RIO * insequence;
     };
@@ -38,7 +36,7 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RIO_ERROR rio_m_RIOInmeta_constructor(RIOInmeta * self, const char * prefix, const char * extension)
+    inline RIO_ERROR rio_m_RIOInmeta_constructor(RIOInmeta * self, SQ ** seq, const char * prefix, const char * extension)
     {
         RIO_ERROR status = RIO_ERROR_OK;
         SQ * sequence = sq_new_inmeta(&status, prefix, extension);
@@ -50,7 +48,7 @@ extern "C" {
             sq_delete(sequence);
             return status;
         }
-        self->seq = sequence;
+        self->seq = *seq = sequence;
         self->insequence = rt;
         return RIO_ERROR_OK;
     }
@@ -60,7 +58,9 @@ extern "C" {
     inline RIO_ERROR rio_m_RIOInmeta_destructor(RIOInmeta * self)
     {
         rio_delete(self->insequence);
+        self->insequence = NULL;
         sq_delete(self->seq);
+        self->seq = NULL;
         return RIO_ERROR_OK;
     }
 

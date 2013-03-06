@@ -101,7 +101,7 @@ extern "C" {
     RIO * rio_new_insequence(RIO_ERROR * error, SQ * seq);    
     RIO_ERROR rio_init_insequence(RIO * self, SQ * seq);    
 
-    RIO * rio_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extension);
+    RIO * rio_new_inmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension);
     RIO_ERROR rio_init_inmeta(RIO * self, const char * prefix, const char * extension);
 
     RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension, 
@@ -110,6 +110,7 @@ extern "C" {
                       const char * l1, const char * l2, const char * l3, timeval * tv);
 
     void rio_delete(RIO * rt);
+    void rio_clear(RIO * rt);
     ssize_t rio_recv(RIO * rt, void * data, size_t len);
     ssize_t rio_send(RIO * rt, const void * data, size_t len);
 
@@ -127,10 +128,11 @@ extern "C" {
     SQ * sq_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extension);
     RIO_ERROR sq_init_inmeta(SQ * self, const char * prefix, const char * extension);
 
-    RIO_ERROR sq_delete(SQ * rt);
-
+    void sq_delete(SQ * rt);
+    void sq_clear(SQ * rt);
     RIO_ERROR sq_next(SQ * seq);
     RIO * sq_get_trans(SQ * seq, RIO_ERROR * error);
+
 
 }
 

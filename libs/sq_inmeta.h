@@ -66,6 +66,7 @@ extern "C" {
     {
         sq_m_SQIntracker_destructor(&self->impl);
         rio_delete(self->tracker);
+        self->tracker = NULL;
         return RIO_ERROR_OK;
     }
 

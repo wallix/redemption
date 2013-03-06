@@ -227,21 +227,21 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
 }
 
 
-//BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
-//{
-////        "800 600\n",
-////        "0\n",
-////        "\n",
-////        "./tests/fixtures/sample0.wrm 1352304810 1352304870\n",
-////        "./tests/fixtures/sample1.wrm 1352304870 1352304930\n",
-////        "./tests/fixtures/sample2.wrm 1352304930 1352304990\n",
+BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
+{
+//        "800 600\n",
+//        "0\n",
+//        "\n",
+//        "./tests/fixtures/sample0.wrm 1352304810 1352304870\n",
+//        "./tests/fixtures/sample1.wrm 1352304870 1352304930\n",
+//        "./tests/fixtures/sample2.wrm 1352304930 1352304990\n",
 
-//    // This is what we are actually testing, chaining of several files content
-//    InByMetaSequenceTransport2 mwrm_trans("./tests/fixtures/sample.mwrm");
-//    BOOST_CHECK_EQUAL(0, mwrm_trans.chunk_num);
+    // This is what we are actually testing, chaining of several files content
+    InByMetaSequenceTransport2 mwrm_trans("./tests/fixtures/sample", ".mwrm");
+    BOOST_CHECK_EQUAL(0, mwrm_trans.chunk_num);
 
-//    mwrm_trans.next_chunk_info();
-//    BOOST_CHECK_EQUAL("./tests/fixtures/sample0.wrm", mwrm_trans.path);
+    mwrm_trans.next_chunk_info();
+ //    BOOST_CHECK_EQUAL("./tests/fixtures/sample0.wrm", mwrm_trans.path);
 //    BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time);
 //    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time);
 //    BOOST_CHECK_EQUAL(1, mwrm_trans.chunk_num);
@@ -289,6 +289,6 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
 //    BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time);
 //    BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time);
 //    BOOST_CHECK_EQUAL(3, mwrm_trans.chunk_num);
-//    
-//}
+    
+}
 

@@ -293,27 +293,37 @@ RIO * sq_get_trans(SQ * seq, RIO_ERROR * error)
     return trans;
 }
 
-RIO_ERROR sq_delete(SQ * sq)
+void sq_clear(SQ * sq)
 {
-    RIO_ERROR status = RIO_ERROR_OK;
+    /* if transport goes into error state it should be immediately flushed and closed (if it means something)
+       hence no need to close it again calling close
+    */
+    if (sq->err != RIO_ERROR_OK){ return; }
     switch(sq->sq_type){
         case SQ_TYPE_ONE:
-            status = sq_m_SQOne_destructor(&(sq->u.one));
+            sq_m_SQOne_destructor(&(sq->u.one));
         break;
         case SQ_TYPE_OUTFILENAME:
-            status = sq_m_SQOutfilename_destructor(&(sq->u.outfilename));
+            sq_m_SQOutfilename_destructor(&(sq->u.outfilename));
         break;
         case SQ_TYPE_INTRACKER:
-            status = sq_m_SQIntracker_destructor(&(sq->u.intracker));
+            sq_m_SQIntracker_destructor(&(sq->u.intracker));
         break;
         case SQ_TYPE_INMETA:
-            status = sq_m_SQInmeta_destructor(&(sq->u.inmeta));
+            sq_m_SQInmeta_destructor(&(sq->u.inmeta));
         break;
         default:
             ;
     }
-    free(sq);
-    return status;
+    sq->err = RIO_ERROR_CLOSED;
+    return;
+}
+
+void sq_delete(SQ * self)
+{   
+    if (!self) { return; }
+    sq_clear(self);
+    free(self);
 }
 
 RIO_ERROR rio_init_outfile(RIO * self, int fd)
@@ -546,22 +556,22 @@ RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const c
     return self;
 }
 
-RIO_ERROR rio_init_inmeta(RIO * self, const char * prefix, const char * extension)
+RIO_ERROR rio_init_inmeta(RIO * self, SQ ** seq, const char * prefix, const char * extension)
 {
     self->rt_type = RIO_TYPE_INMETA;
-    self->err = rio_m_RIOInmeta_constructor(&(self->u.inmeta), prefix, extension);
+    self->err = rio_m_RIOInmeta_constructor(&(self->u.inmeta), seq, prefix, extension);
     return self->err;
 }
 
 
-RIO * rio_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extension)
+RIO * rio_new_inmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
     if (self == 0){ 
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
-    RIO_ERROR res = rio_init_inmeta(self, prefix, extension);
+    RIO_ERROR res = rio_init_inmeta(self, seq, prefix, extension);
     if (res != RIO_ERROR_OK){
         free(self);
     }
@@ -743,7 +753,8 @@ void rio_clear(RIO * rt)
 }
 
 void rio_delete(RIO * self)
-{
+{   
+    if (!self) { return; }
     rio_clear(self);
     free(self);
 }
