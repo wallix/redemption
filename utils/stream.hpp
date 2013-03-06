@@ -72,8 +72,12 @@ class Stream {
 
     bool in_check_rem(unsigned n) {
     // returns true if there is enough data available to read n bytes
-        bool res = (this->p + n) <= this->end;
+        bool res = n <= this->in_remain();
         return res;
+    }
+
+    size_t in_remain() {
+        return this->end - this->p;
     }
 
     bool check_end(void) {
