@@ -205,4 +205,48 @@ public:
     }
 };
 
+
+class InByMetaSequenceTransport2 : public Transport {
+public:
+    char path[1024];
+    unsigned begin_chunk_time;
+    unsigned end_chunk_time;
+    unsigned chunk_num;
+
+
+    InByMetaSequenceTransport2(const char * meta_filename)
+    : Transport()
+    {
+        memset(this->path, 0, sizeof(path));
+        this->begin_chunk_time = 0;
+        this->end_chunk_time = 0;
+    }
+
+    ~InByMetaSequenceTransport2()
+    {
+    }
+
+    void reset_meta(){
+    }
+
+    void next_chunk_info()
+    {
+    }
+
+    using Transport::recv;
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) 
+    {
+    }
+
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
+        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV, 0);
+    }
+
+    virtual bool next()
+    {
+        return true;
+    }
+};
+
 #endif

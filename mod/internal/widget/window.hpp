@@ -244,7 +244,9 @@ struct window_login : public window
         this->ini = ini;
 
         if (regular) {
-            widget_image * but = new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE, this, 10, 30,
+            TODO("CGR: see other comments about this new. Why it's not actually"
+                 " an error but it's not good practice and should change")
+            new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE, this, 10, 30,
                     SHARE_PATH "/" LOGIN_LOGO24, 24);
         }
 
