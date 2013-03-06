@@ -111,7 +111,6 @@ public:
             ::close(this->meta_fd);
         }
         this->begin = this->end = this->buffer;
-        printf("opening %s\n", this->meta_filename);
         this->meta_fd = ::open(this->meta_filename, O_RDONLY);
         char * eol = NULL;
         if(!readline(this->meta_fd, &this->begin, &this->end, &eol, this->buffer, sizeof(this->buffer))){
@@ -170,7 +169,6 @@ public:
         while (remaining_len > 0){
             if (this->fd == -1){
                 this->next_chunk_info();
-                printf("opening new source WRM %s\n", this->path);
                 this->fd = ::open(this->path, O_RDONLY);
                 if (this->fd == -1){
                     LOG(LOG_INFO, "InByMetaSequence transport '%s' recv failed with error : %s", this->path, strerror(errno));
@@ -227,7 +225,6 @@ public:
         RIO_ERROR status = RIO_ERROR_OK;
         SQ * seq = NULL;
         this->rio = rio_new_inmeta(&status, &seq, "TESTOFS", "mwrm");
-        printf("rio=%p seq=%p status=%u\n", this->rio, seq, status);
         if (status != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT);
         }
@@ -236,7 +233,7 @@ public:
     ~InByMetaSequenceTransport2()
     {
         if (this->rio){
-//            rio_delete(this->rio);
+            rio_delete(this->rio);
         }
     }
 

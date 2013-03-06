@@ -147,10 +147,11 @@ SQ * sq_new_one(RIO_ERROR * error, RIO * trans)
         return NULL;
     }
     RIO_ERROR res = sq_init_one(self, trans);
+    if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
+        return NULL;
     }
-    if (*error) { *error = res; }
     return self;
 }
 
@@ -170,10 +171,11 @@ SQ * sq_new_outfilename(RIO_ERROR * error, RIO * tracker, SQ_FORMAT format, cons
         return NULL;
     }
     RIO_ERROR res = sq_init_outfilename(self, tracker, format, prefix, extension, tv);
+    if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
+        return NULL;
     }
-    if (*error) { *error = res; }
     return self;
 }
 
@@ -193,9 +195,10 @@ SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker)
     }
     RIO_ERROR res = sq_init_intracker(self, tracker);
     if (res != RIO_ERROR_OK){
+        if (error) { *error = res; }
         free(self);
+        return NULL;
     }
-    if (*error) { *error = res; }
     return self;
 }
 
@@ -215,10 +218,11 @@ SQ * sq_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extensio
     }
     self->sq_type = SQ_TYPE_INMETA;
     RIO_ERROR res = sq_init_inmeta(self, prefix, extension);
+    if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
+        return NULL;
     }
-    if (*error) { *error = res; }
     return self;
 }
 
@@ -342,10 +346,11 @@ RIO * rio_new_outfile(RIO_ERROR * error, int fd)
         return NULL;
     }
     RIO_ERROR res = rio_init_outfile(self, fd);
+    if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
+        return NULL;
     }
-    if (*error) { *error = res; }
     return self;
 }
 
@@ -364,10 +369,11 @@ RIO * rio_new_infile(RIO_ERROR * error, int fd)
         return NULL;
     }
     RIO_ERROR res = rio_init_infile(self, fd);
+    if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
+        return NULL;
     }
-    if (*error) { *error = res; }
     return self;
 }
 
@@ -386,10 +392,11 @@ RIO * rio_new_generator(RIO_ERROR * error, const void * data, size_t len)
         return NULL;
     }
     RIO_ERROR res = rio_init_generator(self, data, len);
+    if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
+        return NULL;
     }
-    if (*error) { *error = res; }
     return self;
 }
 
@@ -408,10 +415,11 @@ RIO * rio_new_check(RIO_ERROR * error, const void * data, size_t len)
         return NULL;
     }
     RIO_ERROR res = rio_init_check(self, data, len);
+    if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
+        return NULL;
     }
-    if (*error) { *error = res; }
     return self;
 }
 
@@ -431,10 +439,11 @@ RIO * rio_new_test(RIO_ERROR * error, const void * data_check, size_t len_check,
         return NULL;
     }
     RIO_ERROR res = rio_init_test(self, data_check, len_check, data_gen, len_gen);
+    if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
+        return NULL;
     }
-    if (*error) { *error = res; }
     return self;
 }
 
@@ -454,10 +463,11 @@ RIO * rio_new_socket(RIO_ERROR * error, int sck)
         return NULL;
     }
     RIO_ERROR res = rio_init_socket(self, sck);
+    if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
+        return NULL;
     }
-    if (*error) { *error = res; }
     return self;
 }
 
@@ -477,10 +487,11 @@ RIO * rio_new_socket_tls(RIO_ERROR * error, int sck)
         return NULL;
     }
     RIO_ERROR res = rio_init_socket(self, sck);
+    if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
+        return NULL;
     }
-    if (*error) { *error = res; }
     return self;
 }
 
@@ -500,10 +511,11 @@ RIO * rio_new_outsequence(RIO_ERROR * error, SQ * seq)
         return NULL;
     }
     RIO_ERROR res = rio_init_outsequence(self, seq);
+    if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
+        return NULL;
     }
-    if (*error) { *error = res; }
     return self;
 }
 
@@ -523,10 +535,11 @@ RIO * rio_new_insequence(RIO_ERROR * error, SQ * seq)
         return NULL;
     }
     RIO_ERROR res = rio_init_insequence(self, seq);
+    if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
+        return NULL;
     }
-    if (*error) { *error = res; }
     return self;
 }
 
@@ -549,10 +562,11 @@ RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const c
         return NULL;
     }
     RIO_ERROR res = rio_init_outmeta(self, seq, prefix, extension, l1, l2, l3, tv);
+    if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
+        return NULL;
     }
-    if (*error) { *error = res; }
     return self;
 }
 
@@ -572,10 +586,11 @@ RIO * rio_new_inmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const ch
         return NULL;
     }
     RIO_ERROR res = rio_init_inmeta(self, seq, prefix, extension);
+    if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
+        return NULL;
     }
-    if (*error) { *error = res; }
     return self;
 }
 
@@ -694,6 +709,11 @@ ssize_t rio_send(RIO * rt, const void * data, size_t len)
         if (res < 0){ rt->err = (RIO_ERROR)-res; }
         return res;
     }
+    case RIO_TYPE_INSEQUENCE: {
+        ssize_t res = rio_m_RIOInsequence_send(&(rt->u.insequence), data, len);
+        if (res < 0){ rt->err = (RIO_ERROR)-res; }
+        return res;
+    }
     case RIO_TYPE_OUTMETA: {
         ssize_t res = rio_m_RIOOutmeta_send(&(rt->u.outmeta), data, len);
         if (res < 0){ rt->err = (RIO_ERROR)-res; }
@@ -715,7 +735,9 @@ void rio_clear(RIO * rt)
     /* if transport goes into error state it should be immediately flushed and closed (if it means something)
        hence no need to close it again calling close
     */
-    if (rt->err != RIO_ERROR_OK){ return; }
+    if (rt->err != RIO_ERROR_OK){ 
+        return; 
+    }
     switch(rt->rt_type){
         case RIO_TYPE_GENERATOR:
             rio_m_RIOGenerator_destructor(&(rt->u.generator));
@@ -737,6 +759,12 @@ void rio_clear(RIO * rt)
         break;
         case RIO_TYPE_SOCKET_TLS:
             rio_m_RIOSocketTLS_destructor(&(rt->u.socket_tls));
+        break;
+        case RIO_TYPE_OUTSEQUENCE:
+            rio_m_RIOOutsequence_destructor(&(rt->u.outsequence));
+        break;
+        case RIO_TYPE_INSEQUENCE:
+            rio_m_RIOInsequence_destructor(&(rt->u.insequence));
         break;
         case RIO_TYPE_OUTMETA:
             rio_m_RIOOutmeta_destructor(&(rt->u.outmeta));

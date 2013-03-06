@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
         rio_clear(rt);
         rio_delete(rt);
     }
-    
+
     {
         SQ * inseq = NULL;
         RIO_ERROR status = RIO_ERROR_OK;
@@ -88,3 +88,10 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
     }
 }
 
+BOOST_AUTO_TEST_CASE(TestInmeta2)
+{
+        RIO_ERROR status = RIO_ERROR_OK;
+        SQ * seq = NULL;
+        RIO * rio = rio_new_inmeta(&status, &seq, "TESTOFSXXX", "mwrm");
+        rio_delete(rio);
+}
