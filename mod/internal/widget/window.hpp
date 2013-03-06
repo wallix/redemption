@@ -530,10 +530,14 @@ struct wab_close : public window
     : window(mod, r, parent, bg_color, title),
       context(context)
     {
-        struct Widget* but;
-
         if (regular) {
-            widget_image * but = new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE,
+            TODO("CGR: WIdget is registered in wab_close and will de deallocated"
+                 " through it's child list. I'm not sure it's such a good idea "
+                 "as it breaks the usual new/delete pair."
+                 "It works but it would be good to find a better way."
+                 "A possible solution would be to make child_list some kind of"
+                 "class and instanciate widgets through it (as it will also deallocate)")
+            new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE,
                 this, 10, 30, SHARE_PATH "/" LOGIN_LOGO24, 24);
             TODO(" bitmap load below should probably be done before call")
         }
@@ -605,11 +609,11 @@ struct wab_close : public window
         }
 
         /* label */
-        but = new widget_button(this->mod,
+        struct Widget* but = new widget_button(this->mod,
               Rect(50 + (regular ? 250 : ((r.cx - 30) - 60)), 150 + 16 * line, 60, 25),
               this, 2, 1, "Close");
         this->esc_button = but;
-        this->default_button = but;
+        this->default_button = this->esc_button;
 
     }
 

@@ -35,7 +35,7 @@ struct close_mod : public internal_mod {
     close_mod(ModContext & context, FrontAPI & front, uint16_t width, uint16_t height)
             : internal_mod(front, width, height), closing(false)
     {
-        this->button_down = 0;
+        this->button_down = NULL;
 
         int win_width = 600;
         bool done = false;
@@ -74,8 +74,12 @@ struct close_mod : public internal_mod {
         assert(this->close_window->mod == this);
 
         if (regular) {
-            /* image */
-            widget_image * but = new widget_image(this, 4, 4,
+            TODO("CGR: WIdget is registered in screen and will de deallocated through screen"
+                 "I'm not sure it's a good idea as it breaks the usual new/delete pair."
+                 "It works but it would be good to find a better way."
+                 "A possible solution would be to move the widget creation code"
+                 " into screen itself (or some derived class")
+            new widget_image(this, 4, 4,
                 WND_TYPE_IMAGE, &this->screen,
                 this->screen.rect.cx - 250 - 4,
                 this->screen.rect.cy - 120 - 4,

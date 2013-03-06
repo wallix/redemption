@@ -2425,7 +2425,7 @@ TODO("Pass font name as parameter in constructor")
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        if ((this->verbose & (128|1) == (128|1))){
+        if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
             hexdump_d(stream.data, stream.size());
         }

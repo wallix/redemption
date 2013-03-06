@@ -36,9 +36,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetClip)
     WidgetComposite w4(0, Rect(0,0,15,20), &w2, Widget::TYPE_WND, 0);
     Widget w5(0, Rect(0,0,5,5), &w4, Widget::TYPE_BUTTON, 0);
 
-    BOOST_CHECK(w1.rect == w1.get_clip_base());
-    BOOST_CHECK(Rect(80,20,20,50) == w2.get_clip_base());
-    BOOST_CHECK(Rect(95,40,5,10) == w3.get_clip_base());
-    BOOST_CHECK(Rect(80,20,15,20) == w4.get_clip_base());
-    BOOST_CHECK(Rect(80,20,5,5) == w5.get_clip_base());
+    BOOST_CHECK(w1.rect == w1.get_clip_base().rect);
+    BOOST_CHECK(Rect(80,20,20,50) == w2.get_clip_base().rect);
+    BOOST_CHECK(Rect(95,40,5,10) == w3.get_clip_base().rect);
+    BOOST_CHECK(Rect(80,20,15,20) == w4.get_clip_base().rect);
+    BOOST_CHECK(Rect(80,20,5,5) == w5.get_clip_base().rect);
 }

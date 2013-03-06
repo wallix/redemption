@@ -30,6 +30,7 @@
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
+#include "inbymetasequencetransport.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM)
