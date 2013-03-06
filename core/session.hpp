@@ -332,16 +332,16 @@ struct Session {
 
                         TODO("This does not read data, hence we will end-up waiting for data until the next keep_alive event occurs")
                         // Check if sesman is read ready for a possible answer to wablauncher_target (asked previously)
-                        if (this->sesman->event(rfds)) {
-                            // Get sesman answer to WABLAUNCHER_TARGET
-                            char *item = this->context->get(STRAUTHID_WABLAUNCHER_ANSWER);
-                            if (item[0] != 0) {
-                                // If set, transmit to wablauncher channel
-                                this->mod->send_wablauncher_data(item);
-                                // Erase the context variable
-                                this->context->cpy(STRAUTHID_WABLAUNCHER_ANSWER, "!");
-                            }
-                        }
+//                        if (this->sesman->event(rfds)) {
+//                            // Get sesman answer to WABLAUNCHER_TARGET
+//                            char *item = this->context->get(STRAUTHID_WABLAUNCHER_ANSWER);
+//                            if (item[0] != 0) {
+//                                // If set, transmit to wablauncher channel
+//                                this->mod->send_wablauncher_data(item);
+//                                // Erase the context variable
+//                                this->context->cpy(STRAUTHID_WABLAUNCHER_ANSWER, "!");
+//                            }
+//                        }
                         // data incoming from server module
                         if (this->front->up_and_running
                         &&  this->mod->event.is_set(rfds)){
@@ -763,7 +763,9 @@ struct Session {
                                     info,
                                     &this->gen,
                                     this->front->keymap.key_flags,
-                                    this->sesman, // we give mod_rdp a direct access to sesman for wablauncher channel
+                                     // we give mod_rdp a direct access to sesman for wablauncher channel
+                                     // this should be done only if we have defined a wablauncher channel
+                                    NULL, // this->sesman,
                                     this->ini->globals.debug.mod_rdp,
                                     true
                                     );
