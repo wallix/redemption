@@ -570,6 +570,7 @@ struct mod_rdp : public client_mod {
 
     // Method used by session to transmit sesman answer for auth_channel
     virtual void send_auth_channel_data(char * data) {
+        if (!this->sesman){ return; }
         BStream stream(65536);
         BStream x224_header(256);
         BStream mcs_header(256);
@@ -1556,10 +1557,6 @@ struct mod_rdp : public client_mod {
                 else {
                     this->send_to_front_channel(mod_channel.name, sec.payload.p, length, chunk_size, flags);
                 }
-
-
-                this->send_to_front_channel(mod_channel.name, sec.payload.p, length, chunk_size, flags);
-
                 sec.payload.p = sec.payload.end;
             }
             else {
