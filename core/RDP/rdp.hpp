@@ -439,7 +439,7 @@ struct ShareData
     //==============================================================================
     {
         if (this->stream.end < this->stream.p + 12){
-            LOG(LOG_ERR, "sdata packet len too short: need 12, remains", this->stream.end - this->stream.p);
+            LOG(LOG_ERR, "sdata packet len too short: need 12, remains=%u", this->stream.end - this->stream.p);
             throw Error(ERR_SEC);
         }
         this->share_id = stream.in_uint32_le();
