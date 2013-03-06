@@ -35,6 +35,9 @@ public:
     , titlebar(drawable, Rect(0,0, rect.cx, 15), this, 0, caption, -1)
     {}
 
+    virtual ~Window()
+    {}
+
 protected:
     bool switch_focus(Widget * old_focus, Widget * new_focus)
     {

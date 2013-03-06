@@ -62,7 +62,7 @@ public:
         return this->buffer;
     }
 
-    virtual void draw(const Rect& rect, uint16_t x_screen, uint16_t y_screen, const Rect& clip_screen)
+    virtual void draw(const Rect& rect, int16_t x_screen, int16_t y_screen, const Rect& clip_screen)
     {
         this->Widget::draw(rect, x_screen, y_screen, clip_screen);
         this->context_text->draw_in(this->drawable, rect, x_screen, y_screen, clip_screen, ~this->bg_color);

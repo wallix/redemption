@@ -53,6 +53,9 @@ public:
     , cancel(drawable, Rect(145,70,110,20), this, 0, "cancel", 3)
     {}
 
+    virtual ~WindowLogin()
+    {}
+
     virtual void notify(int id, EventType event)
     {
         if (event == WIDGET_SUBMIT){

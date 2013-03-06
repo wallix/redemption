@@ -144,17 +144,6 @@ struct TestDraw : ModApi
     virtual void end_update()
     {}
 
-    FontChar * get_font(uint32_t c)
-    {
-        FontChar *font_item = this->font.glyph_defined(c)?this->font.font_items[c]:NULL;
-        if (!font_item) {
-            LOG(LOG_WARNING, "TestDraw::get_font() - character not defined >0x%02x<", c);
-            font_item = this->font.font_items['?'];
-        }
-        return font_item;
-    }
-
-
     class ContextText : public ModApi::ContextText
     {
     public:
@@ -164,14 +153,9 @@ struct TestDraw : ModApi
         : ModApi::ContextText()
         {}
 
-        virtual void draw_in(ModApi* drawable, const Rect& rect, uint16_t x_screen, uint16_t y_screen, const Rect&  clip_screen, int color)
+        virtual void draw_in(ModApi* drawable, const Rect& rect, int16_t x_screen, int16_t y_screen, const Rect&  clip_screen, int color)
         {
-            Rect clip = clip_screen.intersect(Rect(
-                rect.x + x_screen,
-                rect.y + y_screen,
-                rect.cx,
-                rect.cy
-            ));
+            Rect clip = clip_screen.intersect(rect.offset(x_screen, y_screen));
             if (clip.isempty()) {
                 return ;
             }
@@ -187,106 +171,46 @@ struct TestDraw : ModApi
         }
     };
 
+    FontChar * get_font(uint32_t c)
+    {
+        return this->gd.get_font(this->font, c);
+    }
+
     virtual ContextText* create_context_text(const char * s)
     {
-//         std::cout << s << '\n';
         ContextText * ret = new ContextText;
         if (s[0] != 0) {
             uint32_t uni[128];
             size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(s), uni, sizeof(uni)/sizeof(uni[0]));
-            ret->rects.reserve(part_len * 2);
-            int xx = 0;
-            int y = 0;
+            ret->rects.reserve(part_len * 10);
             for (size_t index = 0; index < part_len; index++) {
                 FontChar *font_item = this->get_font(uni[index]);
-                ret->cx += font_item->width; ///incby ?
-                ret->cy = std::max<size_t>(ret->cy, font_item->height);
                 int i = 0;
-                for (int ii = 0 ; ii < font_item->height; ii++){
+                for (int y = 0 ; y < font_item->height; y++){
                     unsigned char oc = 1<<7;
-                    for (int iii = 0; iii < font_item->width; iii++){
+                    for (int x = 0; x < font_item->width; x++){
                         if (!oc) {
                             oc = 1 << 7;
                             ++i;
                         }
-                        if (font_item->data[i + ii] & oc) {
-                            ret->rects.push_back(Rect(ret->cx+iii, ii, 1,1));
-//                             std::cout << 'X';
-                        } else {
-//                             std::cout << '.';
+                        if (font_item->data[i + y] & oc) {
+                            ret->rects.push_back(Rect(ret->cx+x, y, 1,1));
                         }
                         oc >>= 1;
                     }
-//                     std::cout << '\n';
                 }
-                xx += font_item->incby;
-//                 std::cout << '\n';
+                ret->cy = std::max<size_t>(ret->cy, font_item->height);
+                ret->cx += font_item->width + 2;
             }
+            if (part_len > 1)
+                ret->cx -= 2;
         }
         return ret;
     }
 
     virtual void server_draw_text(uint16_t x, uint16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
     {
-        // add text to glyph cache
-        int len = strlen(text);
-        TODO("we should put some loop here for text to be splitted between chunks of UTF8 characters and loop on them")
-        if (len > 120) {
-            len = 120;
-        }
-
-        if (len > 0){
-            uint32_t uni[128];
-            size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
-            int total_width = 0;
-            int total_height = 0;
-            uint8_t data[256];
-            int f = 7;
-            int distance_from_previous_fragment = 0;
-            int xx = x;
-            for (size_t index = 0; index < part_len; index++) {
-                int c = 0;
-                FontChar *font_item = this->get_font(uni[index]);
-                for (int i = 0 ; i < font_item->height; i++){
-                    for (int ii = 0 ; ii < font_item->incby; ii++){
-                        if (font_item->data[i*font_item->width + ii]) {
-                            this->draw(RDPOpaqueRect(Rect(xx+ii, y+i, 1,1), WHITE), clip);
-                        }
-                    }
-                }
-                xx += font_item->incby;
-                data[index * 2] = c;
-                data[index * 2 + 1] = distance_from_previous_fragment;
-                distance_from_previous_fragment = font_item->incby;
-                total_width += font_item->incby;
-                total_height = std::max(total_height, font_item->height);
-            }
-
-            const Rect bk(x, y, total_width + 1, total_height);
-
-            RDPGlyphIndex glyphindex(
-                f, // cache_id
-                0x03, // fl_accel
-                0x0, // ui_charinc
-                1, // f_op_redundant,
-                bgcolor, // bgcolor
-                fgcolor, // fgcolor
-                bk, // bk
-                bk, // op
-                // brush
-                RDPBrush(0, 0, 3, 0xaa,
-                    (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
-    //            this->brush,
-                x,  // glyph_x
-                y + total_height, // glyph_y
-                part_len * 2, // data_len in bytes
-                data // data
-            );
-
-            this->draw(glyphindex, clip);
-
-            x += total_width;
-        }
+        this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
     }
 
     virtual void text_metrics(const char* text, int& width, int& height)
@@ -297,15 +221,12 @@ struct TestDraw : ModApi
         size_t len_uni = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
         if (len_uni){
             for (size_t index = 0; index < len_uni; index++) {
-                uint32_t charnum = uni[index]; //
-                FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
-                if (!font_item) {
-                    LOG(LOG_WARNING, "TestDraw::text_metrics() - character not defined >0x%02x<", charnum);
-                    font_item = this->font.font_items['?'];
-                }
-                width += font_item->incby;
+                FontChar *font_item = this->get_font(uni[index]);
+                width += font_item->width + 2;
                 height = std::max(height, font_item->height);
             }
+            if (len_uni > 1)
+                width -= 2;
         }
     }
 };
@@ -320,7 +241,7 @@ struct TestWidget
 
     TestWidget(TestDraw * drawable=0, TestNotify * notify=0)
     : screen(drawable, 1000, 1000, notify)
-    , win(drawable, Rect(30,30, 800, 600), &screen, notify, "")
+    , win(drawable, Rect(30,30, 800, 600), &screen, notify, "Fenêtre 1")
     , w1(drawable, Rect(10, 40, 10, 10), &win, notify, "", 1)
     , w2(drawable, Rect(50, 40, 120, 45), &win, notify, "plop", 4, 2)
     , w3(drawable, Rect(100, 400, 10, 10), &win, notify, "", 3)
@@ -329,6 +250,7 @@ struct TestWidget
         w2.has_focus = true;
         screen.bg_color = 100;
         win.bg_color = 1000;
+        win.titlebar.bg_color = 5326;
         w1.bg_color = 10000;
         w2.bg_color = 100000;
         w3.bg_color = 1000000;
@@ -434,59 +356,77 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDraw)
     save_to_png(drawable, "/tmp/a.png");
 
     char message[1024];
-TODO("CGR: I disabled this test as it was failing. Please JPO fix it")
-//    if (!check_sig(drawable.gd.drawable, message,
-//        "\xf3\x51\x5e\xd2\xd2\x91\xe6\x02\xa4\x15"
-//        "\x45\xbd\x61\xb5\xc5\x1f\x95\x22\x8e\xfb")){
-//        BOOST_CHECK_MESSAGE(false, message);
-//    }
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xe8\xa8\xab\x23\xfd\x71\x02\xd9\x3a\x34"
+        "\x15\xd7\xfa\x1c\xef\x9b\x5d\x17\x0e\x92")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 }
 
-// BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
-// {
-//     TestNotify notify;
-//     TestDraw drawable;
-//     TestWidget w(&drawable, &notify);
-//
-//     w.screen.send_event(WM_DRAW, 0, 0, 0);
-//     Keymap2 keymap;
-//     keymap.push_kevent(Keymap2::KEVENT_KEY);
-//     w.screen.send_event(KEYDOWN, 0, 0, &keymap);
-//     BOOST_CHECK(notify.s ==
-//       "event: 11 -- id: 2, type: 5\n");
-//
-//     save_to_png(drawable, "/tmp/b.png");
-//
-//     char message[1024];
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\xa8\x3e\xb7\x8f\x0e\x03\xad\x3d\xcb\xd1"
-//         "\x14\x02\xb7\x37\x6d\x3c\xd0\x94\x51\x14")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-// }
+BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
+{
+    TestNotify notify;
+    TestDraw drawable;
+    TestWidget w(&drawable, &notify);
 
-// BOOST_AUTO_TEST_CASE(TraceWindowLogin)
-// {
-//     TestNotify notify;
-//     TestDraw drawable;
-//     WidgetScreen screen(&drawable, 1000, 1000, 0);
-//     WindowLogin win(&drawable, 50, 50, &screen, &notify);
-//     win.bg_color = 10000000;
-//     win.titlebar.bg_color = 322425;
-//
-//     screen.refresh(screen.rect);
-//
-//     win.submit.send_event(CLIC_BUTTON1_DOWN, 0, 0, 0);
-//     win.submit.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
-//     BOOST_CHECK(notify.s ==
-//         "event: 12 -- id: 0, type: 1\n");
-//
-//     save_to_png(drawable, "/tmp/c.png");
-//
-//     char message[1024];
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\xc8\x8d\x62\x71\x5d\xdc\x08\xef\x62\xe8"
-//         "\x1c\x5c\xab\x62\x65\x0b\x6e\xd6\x41\xc4")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-// }
+    w.screen.send_event(WM_DRAW, 0, 0, 0);
+    Keymap2 keymap;
+    keymap.push_kevent(Keymap2::KEVENT_KEY);
+    keymap.push_char('a');
+    w.screen.send_event(KEYDOWN, 0, 0, &keymap);
+    BOOST_CHECK(notify.s ==
+      "event: 11 -- id: 2, type: 5\n");
+
+    save_to_png(drawable, "/tmp/b.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xc5\x25\xac\x94\xb2\xeb\xa9\x9b\xf3\xcf"
+        "\xae\x5e\x43\xa0\xbd\x6e\xe7\x7c\x42\xea")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TraceWindowLogin)
+{
+    TestNotify notify;
+    TestDraw drawable;
+    WidgetScreen screen(&drawable, 1000, 1000, 0);
+    WindowLogin win(&drawable, 50, 50, &screen, &notify);
+    win.bg_color = 10000000;
+    win.titlebar.bg_color = 322425;
+
+    screen.refresh(screen.rect);
+
+    win.submit.send_event(CLIC_BUTTON1_DOWN, 0, 0, 0);
+    win.submit.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
+    BOOST_CHECK(notify.s ==
+        "event: 12 -- id: 0, type: 1\n");
+
+    save_to_png(drawable, "/tmp/c.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x4d\x19\xc1\xb4\x38\x3c\x0d\x72\x45\x9c"
+        "\xf7\x9a\xed\x05\x13\xb5\xdc\x35\xf0\x2e")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TraceDrawText)
+{
+    TestDraw drawable;
+    WidgetScreen screen(&drawable, 100, 100, 0);
+    screen.refresh(screen.rect);
+
+    drawable.server_draw_text(10,10, "plop", WHITE, 55555, Rect(0,0,27,20));
+    drawable.server_draw_text(10,30, "une phrase", BLACK, 55555, screen.rect);
+    save_to_png(drawable, "/tmp/d.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x4f\x6b\x5d\xfb\x56\x39\x8b\x0e\x19\x19"
+        "\xa7\xdc\x44\x88\xdd\xe2\xaf\xca\x12\xa3")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
