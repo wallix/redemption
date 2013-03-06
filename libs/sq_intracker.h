@@ -117,16 +117,24 @@ extern "C" {
         
         // First header line
         RIO_ERROR status = sq_m_SQIntracker_next(self);
-        if (status != RIO_ERROR_OK){ return (RIO_ERROR)-status; }
+        if (status != RIO_ERROR_OK){
+            return (RIO_ERROR)-status; 
+        }
         // Second header line
         status = sq_m_SQIntracker_next(self);
-        if (status != RIO_ERROR_OK){ return (RIO_ERROR)-status; }
+        if (status != RIO_ERROR_OK){
+            return (RIO_ERROR)-status; 
+        }
         // 3rd header line
         status = sq_m_SQIntracker_next(self);
-        if (status != RIO_ERROR_OK){ return (RIO_ERROR)-status; }
+        if (status != RIO_ERROR_OK){
+            return (RIO_ERROR)-status; 
+        }
         // First real filename line
         status = sq_m_SQIntracker_next(self);
-        if (status != RIO_ERROR_OK){ return (RIO_ERROR)-status; }
+        if (status != RIO_ERROR_OK){
+            return (RIO_ERROR)-status; 
+        }
         return RIO_ERROR_OK;
     }
 
@@ -135,10 +143,11 @@ extern "C" {
         if (status && (*status != RIO_ERROR_OK)) { return NULL; }
         if (!self->trans){
             if (self->rlstatus < 0){
-                if (status) { *status = (RIO_ERROR)-self->rlstatus; }
+                if (status) {
+                    *status = (RIO_ERROR)-self->rlstatus; 
+                }
                 return NULL; // self->trans is NULL
             }
-            TODO("really this is a line, not a filename, we have to manage timestamps after filename");
             char line[1024];
             size_t name_size = (unsigned)(self->eol - self->begin - self->rlstatus);
             if (self->begin == self->end) {

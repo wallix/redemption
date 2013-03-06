@@ -227,6 +227,7 @@ public:
         RIO_ERROR status = RIO_ERROR_OK;
         SQ * seq = NULL;
         this->rio = rio_new_inmeta(&status, &seq, "TESTOFS", "mwrm");
+        printf("rio=%p seq=%p status=%u\n", this->rio, seq, status);
         if (status != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT);
         }
@@ -234,7 +235,9 @@ public:
 
     ~InByMetaSequenceTransport2()
     {
-//        rio_delete(this->rio);
+        if (this->rio){
+//            rio_delete(this->rio);
+        }
     }
 
     void reset_meta(){
