@@ -32,7 +32,6 @@ public:
 
     virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) = 0;
     virtual void text_metrics(const char * text, int & width, int & height) = 0;
-    virtual FontChar * get_font(uint32_t c) = 0;
 
     class ContextText
     {
@@ -45,7 +44,7 @@ public:
         , cy(0)
         {}
 
-        virtual void draw_in(ModApi* drawable, const Rect& rect, uint16_t x_screen, uint16_t y_screen, const Rect&  clip, int color) = 0;
+        virtual void draw_in(ModApi* drawable, const Rect& rect, int16_t x_screen, int16_t y_screen, const Rect&  clip, int color) = 0;
     };
 
     virtual ContextText* create_context_text(const char * s) = 0;

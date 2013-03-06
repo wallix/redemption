@@ -33,13 +33,14 @@
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "font.hpp"
 
 
 struct RDPDrawableConfig {
     bool bgr;
 
-    RDPDrawableConfig(bool bgr = true) 
-    : bgr(bgr) 
+    RDPDrawableConfig(bool bgr = true)
+    : bgr(bgr)
     {
     }
 };
@@ -67,17 +68,17 @@ public:
                 unsigned bRGB = *s++;
                 unsigned GBrg = *s++;
                 unsigned rgbR = *s++;
-                *t++ = ((GBrg << 16) & 0xFF000000) 
-                   | ((bRGB << 16) & 0x00FF0000) 
-                   | (bRGB         & 0x0000FF00) 
+                *t++ = ((GBrg << 16) & 0xFF000000)
+                   | ((bRGB << 16) & 0x00FF0000)
+                   | (bRGB         & 0x0000FF00)
                    | ((bRGB >> 16) & 0x000000FF) ;
-                *t++ = (GBrg         & 0xFF000000) 
-                   | ((rgbR << 16) & 0x00FF0000) 
-                   | ((bRGB >> 16) & 0x0000FF00) 
+                *t++ = (GBrg         & 0xFF000000)
+                   | ((rgbR << 16) & 0x00FF0000)
+                   | ((bRGB >> 16) & 0x0000FF00)
                    | ( GBrg        & 0x000000FF) ;
-                *t++ = ((rgbR << 16) & 0xFF000000)   
-                   | (rgbR         & 0x00FF0000) 
-                   | ((rgbR >> 16) & 0x0000FF00) 
+                *t++ = ((rgbR << 16) & 0xFF000000)
+                   | (rgbR         & 0x00FF0000)
+                   | ((rgbR >> 16) & 0x0000FF00)
                    | ((GBrg >> 16) & 0x000000FF) ;
             }
         }
@@ -90,9 +91,9 @@ public:
         return this->drawable.data + this->drawable.rowsize * rownum;
     }
 
-    virtual size_t get_rowsize() 
+    virtual size_t get_rowsize()
     {
-        return this->drawable.rowsize; 
+        return this->drawable.rowsize;
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
@@ -139,7 +140,7 @@ public:
         if (rect.isempty()){
             return ;
         }
-        
+
         switch (cmd.rop) {
         case 0x00:
             this->drawable.black_color(rect);
@@ -249,6 +250,48 @@ public:
     }
     virtual void flush() {}
 
+    static FontChar * get_font(Font& font, uint32_t c)
+    {
+        FontChar *font_item = font.glyph_defined(c) ? font.font_items[c] : 0;
+        if (!font_item) {
+            LOG(LOG_WARNING, "RDPDrawable::get_font() - character not defined >0x%02x<", c);
+            font_item = font.font_items['?'];
+        }
+        return font_item;
+    }
+
+    void server_draw_text(uint16_t x, uint16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip, Font& font)
+    {
+        if (text[0] != 0) {
+            uint32_t uni[128];
+            size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
+            int dx = 0;
+            if (!this->conf.bgr){
+                bgcolor = ((bgcolor << 16) & 0xFF0000) | (bgcolor & 0xFF00) |((bgcolor >> 16) & 0xFF);
+                fgcolor = ((fgcolor << 16) & 0xFF0000) | (fgcolor & 0xFF00) |((fgcolor >> 16) & 0xFF);
+            }
+            for (size_t index = 0; index < part_len && x < clip.x + clip.cx; index++) {
+                FontChar *font_item = this->get_font(font, uni[index]);
+                this->drawable.opaquerect(clip.intersect(Rect(x-dx, y, font_item->width+dx, font_item->height)), bgcolor);
+                int i = 0;
+                for (int yy = 0 ; yy < font_item->height && yy + y < clip.y + clip.cy; yy++){
+                    unsigned char oc = 1<<7;
+                    for (int xx = 0; xx < font_item->width; xx++){
+                        if (!oc) {
+                            oc = 1 << 7;
+                            ++i;
+                        }
+                        if (font_item->data[i + yy] & oc) {
+                            this->drawable.opaquerect(Rect(x + xx, y + yy, 1, 1), fgcolor);
+                        }
+                        oc >>= 1;
+                    }
+                }
+                x += font_item->width + 2;
+                dx = 2;
+            }
+        }
+    }
 };
 
 #endif

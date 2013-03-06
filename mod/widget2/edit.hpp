@@ -33,14 +33,17 @@ public:
     size_t edit_buffer_pos;
     size_t edit_pos;
     size_t cursor_px_pos;
+    size_t prev_cursor_px_pos;
     bool remove_cursor;
     int h_text;
+    ModApi::ContextText * context_text;
 
 public:
     WidgetEdit(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier, const char * text, size_t edit_position, int id = 0)
     : Widget(drawable, rect, parent, Widget::TYPE_EDIT, notifier, id)
     , remove_cursor(false)
     , h_text(0)
+    , context_text(0)
     {
         if (text){
             strncpy(this->buffer, text, 255);
@@ -56,6 +59,7 @@ public:
                 this->drawable->text_metrics(this->buffer, w, this->h_text);
                 this->buffer[this->edit_buffer_pos] = c;
                 this->cursor_px_pos = w;
+                this->context_text = this->drawable->create_context_text(this->buffer);
             }
         } else {
             this->buffer[0] = 0;
@@ -67,52 +71,42 @@ public:
         }
     }
 
-    virtual void draw(const Rect& rect, uint16_t x_screen, uint16_t y_screen, const Rect& clip_screen)
+    virtual ~WidgetEdit()
+    {
+        delete this->context_text;
+    }
+
+    virtual void draw(const Rect& rect, int16_t x_screen, int16_t y_screen, const Rect& clip_screen)
     {
         if (this->remove_cursor){
             this->clear_cursor(x_screen, y_screen, clip_screen);
             this->remove_cursor = false;
         }
-        this->Widget::draw(rect, x_screen, y_screen, clip_screen); //TODO unless
-        //int w;
-        //this->drawable->text_metrics("", w,this->h_text);
-        this->drawable->server_draw_text(
-            x_screen + rect.x, y_screen + rect.y,
-            this->buffer, ~this->bg_color, this->bg_color, clip_screen
-        );
+        this->Widget::draw(rect, x_screen, y_screen, clip_screen);
+        if (this->context_text) {
+            this->context_text->draw_in(this->drawable, rect, x_screen, y_screen, clip_screen, ~this->bg_color);
+        }
         this->draw_cursor(x_screen, y_screen, clip_screen);
     }
 
-    void draw_cursor(uint16_t x_screen, uint16_t y_screen, const Rect& clip_screen)
+    void draw_cursor(int16_t x_screen, int16_t y_screen, const Rect& clip_screen)
     {
-        this->drawable->draw(
-            RDPOpaqueRect(
-                Rect(
-                    x_screen + this->cursor_px_pos,
-                    y_screen,
-                    2,
-                    this->h_text
-                ),
-                ~this->bg_color
-            ),
-            clip_screen
-        );
+        this->drawable->draw(RDPOpaqueRect(Rect(
+            x_screen + this->cursor_px_pos,
+            y_screen,
+            2,
+            this->h_text
+        ), ~this->bg_color), clip_screen);
     }
 
-    void clear_cursor(uint16_t x_screen, uint16_t y_screen, const Rect& clip_screen)
+    void clear_cursor(int16_t x_screen, int16_t y_screen, const Rect& clip_screen)
     {
-        size_t n = UTF8GetPos(reinterpret_cast<uint8_t *>(this->buffer + this->edit_buffer_pos), 1);
-        char c = this->buffer[this->edit_buffer_pos + n];
-        this->buffer[this->edit_buffer_pos + n] = 0;
-        this->drawable->server_draw_text(
-            x_screen + this->cursor_px_pos + rect.x,
-            y_screen + rect.y,
-            this->buffer + this->edit_buffer_pos,
-            ~this->bg_color,
-            this->bg_color,
-            clip_screen
-        );
-        this->buffer[this->edit_buffer_pos + n] = c;
+        this->drawable->draw(RDPOpaqueRect(Rect(
+            x_screen + this->prev_cursor_px_pos,
+            y_screen,
+            2,
+            this->h_text
+        ), this->bg_color), clip_screen);
     }
 
     void increment_edit_pos()
@@ -148,96 +142,102 @@ public:
         this->edit_buffer_pos -= len;
     }
 
+    void reload_context_text()
+    {
+        if (this->drawable) {
+            delete this->context_text;
+            this->context_text = this->drawable->create_context_text(this->buffer);
+        }
+    }
+
     virtual void send_event(EventType event, int param, int param2, Keymap2 * keymap)
     {
         if (event == KEYDOWN)
         {
-            if (keymap->top_kevent() == Keymap2::KEVENT_ENTER){
-                this->notify_parent(WIDGET_SUBMIT);
-            } else {
-                size_t n;
-                switch (keymap->top_kevent()) {
-                    case Keymap2::KEVENT_LEFT_ARROW:
-                    case Keymap2::KEVENT_UP_ARROW:
-                        if (this->edit_pos > 0) {
-                            this->decrement_edit_pos();
-                            this->remove_cursor = true;
-                            this->refresh(this->rect.wh());
+            switch (keymap->top_kevent()) {
+                case Keymap2::KEVENT_ENTER:
+                    this->notify_parent(WIDGET_SUBMIT);
+                    break;
+                case Keymap2::KEVENT_LEFT_ARROW:
+                case Keymap2::KEVENT_UP_ARROW:
+                    if (this->edit_pos > 0) {
+                        this->prev_cursor_px_pos = this->cursor_px_pos;
+                        this->decrement_edit_pos();
+                        this->remove_cursor = true;
+                        this->refresh(this->rect.wh());
+                    }
+                    break;
+                case Keymap2::KEVENT_RIGHT_ARROW:
+                case Keymap2::KEVENT_DOWN_ARROW:
+                    if (this->edit_pos < (int)this->num_chars) {
+                        this->prev_cursor_px_pos = this->cursor_px_pos;
+                        this->increment_edit_pos();
+                        this->remove_cursor = true;
+                        this->refresh(this->rect.wh());
+                    }
+                    break;
+                case Keymap2::KEVENT_BACKSPACE:
+                    if ((this->num_chars > 0) && (this->edit_pos > 0)) {
+                        this->decrement_edit_pos();
+                        UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->buffer), this->edit_pos);
+                        this->num_chars--;
+                        this->reload_context_text();
+                        this->refresh(this->rect.wh());
+                    }
+                    break;
+                case Keymap2::KEVENT_DELETE:
+                    if (this->num_chars > 0 && this->edit_pos < this->num_chars) {
+                        UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->buffer), this->edit_pos);
+                        this->num_chars--;
+                        this->reload_context_text();
+                        this->refresh(this->rect.wh());
+                    }
+                    break;
+                case Keymap2::KEVENT_END:
+                    if (this->edit_pos < this->num_chars) {
+                        this->edit_pos = this->num_chars;
+                        this->edit_buffer_pos = buffer_size;
+                        if (this->context_text) {
+                            this->prev_cursor_px_pos = this->cursor_px_pos;
+                            this->cursor_px_pos += this->context_text->cx;
                         }
-                        break;
-                    case Keymap2::KEVENT_RIGHT_ARROW:
-                    case Keymap2::KEVENT_DOWN_ARROW:
-                        if (this->edit_pos < (int)UTF8Len(this->buffer)) {
+                        this->remove_cursor = true;
+                        this->refresh(this->rect.wh());
+                    }
+                    break;
+                case Keymap2::KEVENT_HOME:
+                    if (this->edit_pos > 0) {
+                        this->edit_pos = 0;
+                        this->edit_buffer_pos = 0;
+                        this->prev_cursor_px_pos = this->cursor_px_pos;
+                        this->cursor_px_pos = 0;
+                        this->remove_cursor = true;
+                        this->refresh(this->rect.wh());
+                    }
+                    break;
+                case Keymap2::KEVENT_KEY:
+                    {
+                        uint32_t c = keymap->top_char();
+                        if (this->num_chars < 120) {
+                            UTF8InsertOneAtPos(reinterpret_cast<uint8_t *>(this->buffer), this->edit_pos, c, 255);
+                            this->prev_cursor_px_pos = this->cursor_px_pos;
+                            size_t tmp = this->edit_buffer_pos;
                             this->increment_edit_pos();
+                            this->buffer_size += tmp;
+                            this->num_chars++;
+                            this->reload_context_text();
+                            this->notify_self(NOTIFY_TEXT_CHANGED);
                             this->remove_cursor = true;
-                            this->refresh(this->rect.wh());
+                            this->refresh(Rect(this->prev_cursor_px_pos, 0, this->cursor_px_pos-this->prev_cursor_px_pos, this->h_text));
                         }
-                        break;
-                    case Keymap2::KEVENT_BACKSPACE:
-                        n = UTF8Len(this->buffer);
-                        if ((n > 0) && (this->edit_pos > 0)) {
-                            this->decrement_edit_pos();
-                            this->num_chars--;
-                            UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->buffer), this->edit_pos);
-                            this->refresh(this->rect.wh());
-                        }
-                        break;
-                    case Keymap2::KEVENT_DELETE:
-                        n = UTF8Len(this->buffer);
-                        if (n > 0 && this->edit_pos < n) {
-                            UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->buffer), this->edit_pos);
-                            this->num_chars--;
-                            this->refresh(this->rect.wh());
-                        }
-                        break;
-                    case Keymap2::KEVENT_END:
-                        n = UTF8Len(this->buffer);
-                        if (this->edit_pos < n) {
-                            this->edit_pos = n;
-                            this->edit_buffer_pos = buffer_size;
-                            int w;
-                            this->drawable->text_metrics(this->buffer + this->edit_buffer_pos, w, this->h_text);
-                            this->cursor_px_pos += w;
-                            this->remove_cursor = true;
-                            this->refresh(this->rect.wh());
-                        }
-                        break;
-                    case Keymap2::KEVENT_HOME:
-                        if (this->edit_pos > 0) {
-                            this->edit_pos = 0;
-                            this->edit_buffer_pos = 0;
-                            this->cursor_px_pos = 0;
-                            this->remove_cursor = true;
-                            this->refresh(this->rect.wh());
-                        }
-                        break;
-                    case Keymap2::KEVENT_KEY:
-                        {
-                            uint32_t c = keymap->top_char();
-                            if ((this->edit_pos >= this->num_chars) || (this->edit_pos < 0)) {
-                                this->edit_pos = this->num_chars;
-                            }
-
-                            if (this->num_chars < 120) {
-                                UTF8InsertOneAtPos(reinterpret_cast<uint8_t *>(this->buffer), this->edit_pos, c, 255);
-                                size_t n = this->cursor_px_pos;
-                                this->increment_edit_pos();
-                                this->num_chars++;
-                                this->notify_self(NOTIFY_TEXT_CHANGED);
-                                this->refresh(Rect(this->cursor_px_pos, 0, this->cursor_px_pos-n, this->h_text));
-                            }
-                        }
-                        break;
-                    default:
-                        this->notify_parent(event);
-                        break;
-                }
-
-                //this->notify_self(NOTIFY_TEXT_CHANGED);
-                //this->notify_parent(this, WM_DRAW);
-
-                //this->refresh(Rect(0,0,this->cx(),this->cy()));
+                    }
+                    break;
+                default:
+                    this->notify_parent(event);
+                    break;
             }
+        } else {
+            this->Widget::send_event(event, param, param2, keymap);
         }
     }
 };

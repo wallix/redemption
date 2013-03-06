@@ -37,7 +37,7 @@ public:
         this->tab_flag = DELEGATE_CONTROL_TAB;
     }
 
-    ~WidgetComposite()
+    virtual ~WidgetComposite()
     {
         for (size_t i = 0; i < this->child_list.size(); ++i) {
             this->child_list[i]->parent = 0;
@@ -52,10 +52,13 @@ protected:
 
     virtual void detach_widget(Widget * widget)
     {
-        for (size_t i = 0; i < this->child_list.size(); ++i) {
+        size_t size = this->child_list.size();
+        for (size_t i = 0; i < size; ++i) {
             if (this->child_list[i] == widget){
-                this->child_list[i] = this->child_list[this->child_list.size() - 1];
-                this->child_list.resize(this->child_list.size() - 1);
+                this->child_list[i] = this->child_list[size - 1];
+                this->child_list.resize(size - 1);
+                widget->parent = 0;
+                return ;
             }
         }
     }
@@ -175,19 +178,16 @@ public:
         }
     }
 
-    virtual void draw(const Rect& rect, uint16_t x_screen, uint16_t y_screen, const Rect& clip_screen)
+    virtual void draw(const Rect& rect, int16_t x_screen, int16_t y_screen, const Rect& clip_screen)
     {
-        Rect clip = rect.intersect(Rect(
-            0,0, clip_screen.cx, clip_screen.cy
-        ));
         Region region;
-        region.rects.push_back(clip);
+        region.rects.push_back(rect);
         for (std::size_t i = 0; i < this->child_list.size(); ++i) {
             Widget *p = this->child_list[i];
-            Rect tmp = clip.intersect(p->rect);
+            Rect tmp = rect.intersect(p->rect);
             if (!tmp.isempty()){
                 region.subtract_rect(tmp);
-                this->refresh_child(p, Rect(0,0,tmp.cx,tmp.cy), x_screen, y_screen, clip_screen);
+                this->refresh_child(p, Rect(0, 0, tmp.cx, tmp.cy), x_screen, y_screen, clip_screen);
             }
         }
         for (size_t i = 0, max = region.rects.size(); i < max; ++i) {

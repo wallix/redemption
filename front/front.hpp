@@ -2645,15 +2645,15 @@ TODO("Pass font name as parameter in constructor")
                     LOG(LOG_INFO, "PDUTYPE2_INPUT num_events=%u", num_events);
                 }
 
-                unsigned remains  = sdata_in.payload.end - sdata_in.payload.p;
                 unsigned expected = 
                       2               /* pad(2) */
                     + num_events * 12 /* time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2) */
                     ;
 
-                if (expected > remains){
-                    LOG(LOG_ERR, "recv truncated client input event PDU: expected=%u remains=%u",
-                        expected, remains);
+                if (!sdata_in.payload.in_check_rem(expected))
+                {
+                    LOG(LOG_ERR, "truncated client input event PDU: expected=%u remains=%u",
+                        expected, sdata_in.payload.in_remain());
                     throw Error(ERR_MCS_PDU_TRUNCATED);
                 }
 
