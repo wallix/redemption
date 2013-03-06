@@ -810,6 +810,17 @@ struct InfoPacket {
     } // END FUNCT : emit()
 
     void recv(Stream & stream){
+        unsigned expected =
+              18 /* CodePage(4) + flags(4) + cbDomain(2) + cbUserName(2) + cbPassword(2) + cbAlternateShell(2) + cbWorkingDir(2) */
+            ;
+
+        if (!stream.in_check_rem(expected))
+        {
+            LOG(LOG_ERR, "Truncated client InfoPacket: expected=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
+        }
+
         this->CodePage = stream.in_uint32_le();
         this->flags = stream.in_uint32_le();
 
@@ -818,6 +829,21 @@ struct InfoPacket {
         this->cbPassword = stream.in_uint16_le() + 2;
         this->cbAlternateShell = stream.in_uint16_le() + 2;
         this->cbWorkingDir = stream.in_uint16_le() + 2;
+
+        expected =
+              this->cbDomain
+            + this->cbUserName
+            + this->cbPassword
+            + this->cbAlternateShell
+            + this->cbWorkingDir
+            ;
+
+        if (!stream.in_check_rem(expected))
+        {
+            LOG(LOG_ERR, "Truncated client InfoPacket (data): expected=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
+        }
 
         stream.in_uni_to_ascii_str(this->Domain, this->cbDomain, sizeof(this->Domain));
         stream.in_uni_to_ascii_str(this->UserName, this->cbUserName, sizeof(this->UserName));
@@ -836,34 +862,79 @@ struct InfoPacket {
         if (stream.p < stream.end) {
             this->rdp5_support = true;
             LOG(LOG_INFO, "RDP-5 Style logon");
+
+            expected =
+                  4 /* clientAddressFamily(2) + cbClientAddress(2) */
+                ;
+
+            if (!stream.in_check_rem(expected))
+            {
+                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientAddress: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
+            }
+
             // clientAddressFamily (skipped)
             stream.in_skip_bytes(2);
             this->extendedInfoPacket.cbClientAddress = stream.in_uint16_le();
+
+            if (!stream.in_check_rem(this->extendedInfoPacket.cbClientAddress))
+            {
+                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientAddress (data): expected=%u remains=%u",
+                    this->extendedInfoPacket.cbClientAddress, stream.in_remain());
+                throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
+            }
+
             stream.in_uni_to_ascii_str(this->extendedInfoPacket.clientAddress, 
                                         this->extendedInfoPacket.cbClientAddress, 
                                         sizeof(this->extendedInfoPacket.clientAddress));
+
             // cbClientDir
+            expected = 2; /* cbClientDir(2) */
+
+            if (!stream.in_check_rem(expected))
+            {
+                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientDir: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
+            }
+
             this->extendedInfoPacket.cbClientDir = stream.in_uint16_le();
+
+            if (!stream.in_check_rem(this->extendedInfoPacket.cbClientDir))
+            {
+                LOG(LOG_ERR, "Truncated client extendedInfoPacket clientDir (data): expected=%u remains=%u",
+                    this->extendedInfoPacket.cbClientAddress, stream.in_remain());
+                throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
+            }
+
             stream.in_uni_to_ascii_str(this->extendedInfoPacket.clientDir, 
                                         this->extendedInfoPacket.cbClientDir,
                                         sizeof(this->extendedInfoPacket.clientDir)
                                         );
 
             // Client Time Zone data (skipped)
+            if (stream.p + 172 > stream.end){
+                LOG(LOG_ERR, "Missing InfoPacket.clientTimeZone");
+                return;
+            }
             stream.in_skip_bytes(172);
 
+            // Client Session Id
             if (stream.p + 4 > stream.end){
                 LOG(LOG_ERR, "Missing InfoPacket.clientSessionId");
                 return;
             }
             this->extendedInfoPacket.clientSessionId = stream.in_uint32_le();
 
+            // Performance Flags
             if (stream.p + 4 > stream.end){
                 LOG(LOG_ERR, "Missing InfoPacket.performanceFlags");
                 return; 
             }
             this->extendedInfoPacket.performanceFlags = stream.in_uint32_le();
-            
+
+            // cbAutoReconnectCookie
             if (stream.p + 2 > stream.end){
                 LOG(LOG_ERR, "Missing InfoPacket.cbAutoReconnectLen");
                 return;
