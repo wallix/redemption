@@ -28,7 +28,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "rio_constants.h"
+#include "rio.h"
 #include "sq_intracker.h"
 
 extern "C" {
@@ -41,7 +41,7 @@ extern "C" {
     {
         TODO("Manage all actual open error with more details")
         char tmpname[1024];
-        if ((size_t)snprintf(tmpname, sizeof(tmpname), "%s.%s", prefix, extension) >= sizeof(tmpname)){
+        if ((size_t)snprintf(tmpname, sizeof(tmpname), "%s%s", prefix, extension) >= sizeof(tmpname)){
             return RIO_ERROR_FILENAME_TOO_LONG;
         }
         int fd = ::open(tmpname, O_RDONLY);

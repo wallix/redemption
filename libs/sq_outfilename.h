@@ -28,7 +28,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "rio_constants.h"
+#include "rio.h"
 
 
 extern "C" {
@@ -73,10 +73,10 @@ extern "C" {
         switch (self->format){
         default:
         case SQF_PREFIX_PID_COUNT_EXTENSION:
-            res = snprintf(buffer, size, "%s-%06u-%06u.%s", self->prefix, self->pid, self->count, self->extension);
+            res = snprintf(buffer, size, "%s-%06u-%06u%s", self->prefix, self->pid, self->count, self->extension);
         break;
         case SQF_PREFIX_COUNT_EXTENSION:
-            res = snprintf(buffer, size, "%s-%06u.%s", self->prefix, self->count, self->extension);
+            res = snprintf(buffer, size, "%s-%06u%s", self->prefix, self->count, self->extension);
         break;
         }
         return res;
@@ -88,12 +88,12 @@ extern "C" {
         switch (self->format){
         default:
         case SQF_PREFIX_PID_COUNT_EXTENSION:
-            res = snprintf(buffer, size, "%s-%06u-%06u.%s %u %u", 
+            res = snprintf(buffer, size, "%s-%06u-%06u%s %u %u", 
                 self->prefix, self->pid, self->count, self->extension, 
                 (unsigned)self->start_tv.tv_sec, (unsigned)self->stop_tv.tv_sec+1);
         break;
         case SQF_PREFIX_COUNT_EXTENSION:
-            res = snprintf(buffer, size, "%s-%06u.%s %u %u",
+            res = snprintf(buffer, size, "%s-%06u%s %u %u",
                 self->prefix, self->count, self->extension, 
                 (unsigned)self->start_tv.tv_sec, (unsigned)self->stop_tv.tv_sec+1);
         break;

@@ -40,6 +40,7 @@
 #include "fileutils.hpp"
 #include "netutils.hpp"
 #include "../libs/rio.h"
+#include "../libs/rio_impl.h"
 #include "stream.hpp"
 
 

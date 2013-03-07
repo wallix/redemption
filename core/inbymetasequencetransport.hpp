@@ -224,7 +224,7 @@ public:
 
         RIO_ERROR status = RIO_ERROR_OK;
         SQ * seq = NULL;
-        this->rio = rio_new_inmeta(&status, &seq, "TESTOFS", "mwrm");
+        this->rio = rio_new_inmeta(&status, &seq, "TESTOFS", ".mwrm");
         if (status != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT);
         }

@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_LIBS_RIO_TEST_H_
 #define _REDEMPTION_LIBS_RIO_TEST_H_
 
-#include "rio_constants.h"
+#include "rio.h"
 
 struct RIOTest {
     RIO * check;

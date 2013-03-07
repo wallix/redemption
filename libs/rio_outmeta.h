@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_LIBS_RIO_OUTMETA_H_
 #define _REDEMPTION_LIBS_RIO_OUTMETA_H_
 
-#include "rio_constants.h"
+#include "rio.h"
 
 extern "C" {
 
@@ -43,7 +43,7 @@ extern "C" {
                                                   const char * header1, const char * header2, const char* header3, timeval * tv)
     {
         char buffer[1024];
-        size_t res = snprintf(buffer, sizeof(buffer), "%s.%s", prefix, extension);
+        size_t res = snprintf(buffer, sizeof(buffer), "%s%s", prefix, extension);
         if (res >= sizeof(buffer)){
             return RIO_ERROR_FILENAME_TOO_LONG;
         }
@@ -62,7 +62,7 @@ extern "C" {
             return (RIO_ERROR)-res;
           }
         }
-        SQ * sequence = sq_new_outfilename(&status, meta, SQF_PREFIX_COUNT_EXTENSION, prefix, "wrm", tv);
+        SQ * sequence = sq_new_outfilename(&status, meta, SQF_PREFIX_COUNT_EXTENSION, prefix, ".wrm", tv);
         if (status != RIO_ERROR_OK){
             rio_delete(meta);
             return status;

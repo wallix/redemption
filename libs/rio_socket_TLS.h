@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_LIBS_RIO_SOCKET_TLS_H_
 #define _REDEMPTION_LIBS_RIO_SOCKET_TLS_H_
 
-#include "rio_constants.h"
+#include "rio.h"
 #include "netutils.hpp"
 #include </usr/include/openssl/ssl.h>
 #include </usr/include/openssl/err.h>

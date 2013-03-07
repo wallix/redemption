@@ -28,7 +28,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "rio_constants.h"
+#include "rio.h"
 
 
 extern "C" {

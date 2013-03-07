@@ -28,6 +28,7 @@
 #include "log.hpp"
 
 #include "../libs/rio.h"
+#include "../libs/rio_impl.h"
 
 BOOST_AUTO_TEST_CASE(TestInmeta)
 {
@@ -45,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
         struct timeval tv;
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
-        RIO * rt = rio_new_outmeta(&status, &seq, "TESTOFS", "mwrm", "800 600\n", "\n", "\n", &tv);
+        RIO * rt = rio_new_outmeta(&status, &seq, "TESTOFS", ".mwrm", "800 600\n", "\n", "\n", &tv);
 
         BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
         tv.tv_sec+= 100;
@@ -62,7 +63,7 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
     {
         SQ * inseq = NULL;
         RIO_ERROR status = RIO_ERROR_OK;
-        RIO * rt = rio_new_inmeta(&status, &inseq, "TESTOFS", "mwrm");
+        RIO * rt = rio_new_inmeta(&status, &inseq, "TESTOFS", ".mwrm");
         BOOST_CHECK( rt != NULL);
 
         char buffer[1024] = {};
@@ -92,6 +93,6 @@ BOOST_AUTO_TEST_CASE(TestInmeta2)
 {
         RIO_ERROR status = RIO_ERROR_OK;
         SQ * seq = NULL;
-        RIO * rio = rio_new_inmeta(&status, &seq, "TESTOFSXXX", "mwrm");
+        RIO * rio = rio_new_inmeta(&status, &seq, "TESTOFSXXX", ".mwrm");
         rio_delete(rio);
 }

@@ -261,10 +261,34 @@ unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test  ;
 unit-test test_lib_rio : tests/test_lib_rio.cpp openssl crypto z dl libboost_unit_test  ;
 unit-test test_lib_rio : tests/test_lib_rio.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_rio_generator : tests/rio/test_rio_generator.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_rio_generator : tests/rio/test_rio_generator.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_check : tests/rio/test_rio_check.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_rio_check : tests/rio/test_rio_check.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_test : tests/rio/test_rio_test.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_rio_test : tests/rio/test_rio_test.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_socket : tests/rio/test_rio_socket.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_rio_socket : tests/rio/test_rio_socket.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_socket_tls : tests/rio/test_rio_socket_tls.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_rio_socket_tls : tests/rio/test_rio_socket_tls.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_rio_inmeta : tests/rio/test_rio_inmeta.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_rio_inmeta : tests/rio/test_rio_inmeta.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
-#gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_lib_rio.gcno bin/gcc-4.6/coverage/test_lib_rio
+unit-test test_rio_outfile : tests/rio/test_rio_outfile.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_rio_outfile : tests/rio/test_rio_outfile.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_infile : tests/rio/test_rio_infile.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_rio_infile : tests/rio/test_rio_infile.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_outsequence : tests/rio/test_rio_outsequence.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_rio_outsequence : tests/rio/test_rio_outsequence.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+
+#gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_rio_xxx.gcno bin/gcc-4.6/coverage/test_rio_xxx
 
 
 #unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test  ;
