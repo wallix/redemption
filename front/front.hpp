@@ -2645,7 +2645,7 @@ TODO("Pass font name as parameter in constructor")
                     LOG(LOG_INFO, "PDUTYPE2_INPUT num_events=%u", num_events);
                 }
 
-                unsigned expected = 
+                unsigned expected =
                       2               /* pad(2) */
                     + num_events * 12 /* time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2) */
                     ;

@@ -312,7 +312,7 @@ namespace X224
 
         RecvFactory(Transport & t, Stream & stream)
         {
-            t.recv(&stream.end, X224::TPKT_HEADER_LEN);
+            t.recv(&stream.end, X224::TPKT_HEADER_LEN); /* 4 bytes */
             uint8_t tpkt_version = stream.in_uint8();
             if (tpkt_version != 3) {
                 LOG(LOG_ERR, "Tpkt type 3 slow-path PDU expected (version = %u)", tpkt_version);

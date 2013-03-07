@@ -98,6 +98,12 @@ class Stream {
         return *((unsigned char*)(this->p++));
     }
 
+    /* Peek a byte from stream without move <p>. */
+    unsigned char peek_uint8(void) {
+        REDASSERT(in_check_rem(1));
+        return *((unsigned char*)(this->p));
+    }
+
     int16_t in_sint16_be(void) {
         REDASSERT(in_check_rem(2));
         unsigned int v = this->in_uint16_be();

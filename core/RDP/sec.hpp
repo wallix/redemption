@@ -728,10 +728,28 @@ enum {
         Sec_Recv(Stream & stream, bool specialPacket, CryptContext & crypt, uint32_t encryptionLevel, uint32_t encryptionMethod) 
             : flags(0), payload(stream), verbose(0)
         {
+            unsigned need;
+
             if (specialPacket || encryptionLevel | encryptionMethod){
+                need = 4; /* flags(4) */
+                if (!stream.in_check_rem(need))
+                {
+                    LOG(LOG_ERR, "flags expected: need=%u remains=%u",
+                        need, stream.in_remain());
+                    throw Error(ERR_SEC);
+                }
+
                 this->flags = stream.in_uint32_le();
             }
             if (this->flags & SEC::SEC_ENCRYPT){
+                need = 8; /* signature(8) */
+                if (!stream.in_check_rem(need))
+                {
+                    LOG(LOG_ERR, "signature expected: need=%u remains=%u",
+                        need, stream.in_remain());
+                    throw Error(ERR_SEC);
+                }
+
                 TODO(" shouldn't we check signature ?")
                 stream.in_skip_bytes(8); /* signature */
                 this->payload.resize(stream, stream.end - stream.p);

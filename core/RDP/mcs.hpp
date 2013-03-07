@@ -1839,6 +1839,22 @@ namespace MCS
                 LOG(LOG_ERR, "SendDataRequest PER_ENCODING mandatory");
                 throw Error(ERR_MCS);
             }
+
+            unsigned expected =
+                  1 /* tag(1) */
+                + 2 /* initiator */
+                + 2 /* channelId */
+                + 1 /* magic */
+                + 1 /* first byte of PER length */
+                ;
+
+            if (!stream.in_check_rem(expected))
+            {
+                LOG(LOG_ERR, "truncated SendDataRequest data: expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_MCS);
+            }
+
             uint8_t tag = stream.in_uint8();
             if (tag != (MCS::MCSPDU_SendDataRequest << 2)){
                 LOG(LOG_ERR, "expecting SendDataRequest (%u), got %u", MCS::MCSPDU_SendDataRequest << 2, tag);
@@ -1856,8 +1872,28 @@ namespace MCS
             // low 4 bits of magic are padding
 
             // length of payload, per_encoded
+            uint16_t temp = stream.peek_uint8();
+            if (temp & 0x80){
+                expected = 1; /* second byte of PER length */
+
+                if (!stream.in_check_rem(expected))
+                {
+                    LOG(LOG_ERR, "truncated SendDataRequest data: expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_MCS);
+                }
+            }
+
             this->payload_size = stream.in_per_length();
             this->_header_size = stream.p - stream.data;
+
+            if (!stream.in_check_rem(this->payload_size))
+            {
+                LOG(LOG_ERR, "truncated SendDataRequest data: expected=%u remains=%u",
+                    this->payload_size, stream.in_remain());
+                throw Error(ERR_MCS);
+            }
+
             this->payload.resize(stream, this->payload_size);
         }
     };
