@@ -242,10 +242,10 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
         BOOST_CHECK_EQUAL(0, mwrm_trans.chunk_num);
 
         mwrm_trans.next_chunk_info();
+//        BOOST_CHECK_EQUAL("./tests/fixtures/sample0.wrm", mwrm_trans.path);
     } catch(Error e) {
         LOG(LOG_INFO, "caught exception e.id=%u\n", e.id);
     };
- //    BOOST_CHECK_EQUAL("./tests/fixtures/sample0.wrm", mwrm_trans.path);
 //    BOOST_CHECK_EQUAL(1352304810, mwrm_trans.begin_chunk_time);
 //    BOOST_CHECK_EQUAL(1352304870, mwrm_trans.end_chunk_time);
 //    BOOST_CHECK_EQUAL(1, mwrm_trans.chunk_num);

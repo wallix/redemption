@@ -227,6 +227,27 @@ SQ * sq_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extensio
 }
 
 
+RIO_ERROR sq_get_chunk_info(SQ * seq, unsigned & num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
+{
+    RIO_ERROR res = RIO_ERROR_OK;
+    switch (seq->sq_type){
+    case SQ_TYPE_ONE:
+        res = sq_m_SQOne_get_chunk_info(&(seq->u.one), num_chunk, path, path_len, begin, end);
+        break;
+    case SQ_TYPE_OUTFILENAME:
+        res = sq_m_SQOutfilename_get_chunk_info(&(seq->u.outfilename), num_chunk, path, path_len, begin, end);
+        break;
+    case SQ_TYPE_INTRACKER:
+        res = sq_m_SQIntracker_get_chunk_info(&(seq->u.intracker), num_chunk, path, path_len, begin, end);
+        break;
+    case SQ_TYPE_INMETA:
+        res = sq_m_SQInmeta_get_chunk_info(&(seq->u.inmeta), num_chunk, path, path_len, begin, end);
+        break;
+    default:
+        res = RIO_ERROR_TYPE_MISMATCH;
+    }
+    return res;
+}
 
 
 RIO_ERROR sq_timestamp(SQ * seq, timeval * tv)

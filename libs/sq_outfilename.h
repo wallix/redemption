@@ -148,6 +148,12 @@ extern "C" {
         self->count += 1;
         return RIO_ERROR_OK;
     }
+
+    TODO("not yet implemented")
+    static inline RIO_ERROR sq_m_SQOutfilename_get_chunk_info(SQOutfilename * self, unsigned & num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
+    {
+        return RIO_ERROR_OK;
+    }
 };
 
 #endif

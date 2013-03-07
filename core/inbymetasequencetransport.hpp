@@ -213,6 +213,7 @@ public:
     unsigned chunk_num;
 
     RIO * rio;
+    SQ * seq;
 
     InByMetaSequenceTransport2(const char * filename, const char * extension)
     : Transport()
@@ -224,10 +225,11 @@ public:
 
         RIO_ERROR status = RIO_ERROR_OK;
         SQ * seq = NULL;
-        this->rio = rio_new_inmeta(&status, &seq, "TESTOFS", ".mwrm");
+        this->rio = rio_new_inmeta(&status, &seq, filename, extension);
         if (status != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT);
         }
+        this->seq = seq;
     }
 
     ~InByMetaSequenceTransport2()
@@ -242,6 +244,11 @@ public:
 
     void next_chunk_info()
     {
+        timeval tv_begin = {};
+        timeval tv_end = {};
+        sq_get_chunk_info(this->seq, this->chunk_num, this->path, sizeof(this->path), &tv_begin, &tv_end);
+        this->begin_chunk_time = tv_begin.tv_sec;
+        this->end_chunk_time = tv_end.tv_sec;
     }
 
     using Transport::recv;

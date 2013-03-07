@@ -31,6 +31,8 @@
 #include "../libs/rio_impl.h"
 
 
+TODO("extract these tests to their own test files, explain and comment them")
+
 BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
 {
 // 3rd simplest sequence is "intracker" sequence

@@ -84,6 +84,12 @@ extern "C" {
     {
         return sq_m_SQIntracker_timestamp(&(self->impl), tv);
     }
+
+    TODO("not yet implemented")
+    static inline RIO_ERROR sq_m_SQInmeta_get_chunk_info(SQInmeta * self, unsigned & num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
+    {
+        return RIO_ERROR_OK;
+    }
 };
 
 #endif

@@ -133,6 +133,7 @@ extern "C" {
     RIO_ERROR sq_next(SQ * seq);
     RIO * sq_get_trans(SQ * seq, RIO_ERROR * error);
     RIO_ERROR sq_timestamp(SQ * seq, timeval * tv);
+    RIO_ERROR sq_get_chunk_info(SQ * seq, unsigned & num_chunk, char * path, size_t path_len, timeval * begin, timeval * end);
 
 
 }
