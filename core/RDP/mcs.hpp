@@ -248,7 +248,7 @@ namespace MCS
         int maxHeight;
         int maxMCSPDUsize;
         int protocolVersion;
-
+/*
         int in_ber_int(Stream & stream, int & v){
             uint8_t tag = stream.in_uint8();
             if (Stream::BER_TAG_INTEGER != tag){
@@ -259,43 +259,62 @@ namespace MCS
             v = stream.in_bytes_be(len);
             return 0;
         }
-
+*/
         int recv(Stream & stream){
-            if (BER_TAG_MCS_DOMAIN_PARAMS != stream.in_uint8()){
-                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS expected");
+            bool in_result;
+
+            uint8_t tag = stream.in_uint8_with_check(in_result);
+            if (!in_result){
+               LOG(LOG_ERR, "Domain Parameters BER tag expected");
+            }
+            if (BER_TAG_MCS_DOMAIN_PARAMS != tag){
+                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS (%u) expected, got %u",
+                    BER_TAG_MCS_DOMAIN_PARAMS, tag);
                 return -1;
             }
-            size_t len = stream.in_ber_len();
+            size_t len = stream.in_ber_len_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::len error");
+                return -1;
+            }
             size_t start_offset = stream.get_offset();
-            if ( -1 == this->in_ber_int(stream, this->maxChannelIds)){
+            this->maxChannelIds = stream.in_ber_int_with_check(in_result);
+            if (!in_result){
                 LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxChannelIds tag error");
                 return -1;
             }
-            if ( -1 == this->in_ber_int(stream, this->maxUserIds)){
+            this->maxUserIds = stream.in_ber_int_with_check(in_result);
+            if (!in_result){
                 LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxUserIds tag error");
                 return -1;
             }
-            if ( -1 == this->in_ber_int(stream, this->maxTokenIds)){
+            this->maxTokenIds = stream.in_ber_int_with_check(in_result);
+            if (!in_result){
                 LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxTokenIds tag error");
                 return -1;
             }
-            if ( -1 == this->in_ber_int(stream, this->numPriorities)){
+            this->numPriorities = stream.in_ber_int_with_check(in_result);
+            if (!in_result){
                 LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::numPriorities tag error");
                 return -1;
             }
-            if ( -1 == this->in_ber_int(stream, this->minThroughput)){
+            this->minThroughput = stream.in_ber_int_with_check(in_result);
+            if (!in_result){
                 LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::minThroughput tag error");
                 return -1;
             }
-            if ( -1 == this->in_ber_int(stream, this->maxHeight)){
+            this->maxHeight = stream.in_ber_int_with_check(in_result);
+            if (!in_result){
                 LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxHeight tag error");
                 return -1;
             }
-            if ( -1 == this->in_ber_int(stream, this->maxMCSPDUsize)){
+            this->maxMCSPDUsize = stream.in_ber_int_with_check(in_result);
+            if (!in_result){
                 LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::maxMCSPDUsize tag error");
                 return -1;
             }
-            if ( -1 == this->in_ber_int(stream, this->protocolVersion)){
+            this->protocolVersion = stream.in_ber_int_with_check(in_result);
+            if (!in_result){
                 LOG(LOG_ERR, "Connect Initial BER_TAG_MCS_DOMAIN_PARAMS::protocolVersion tag error");
                 return -1;
             }
@@ -334,28 +353,43 @@ namespace MCS
                 LOG(LOG_ERR, "Connect Initial::BER_ENCODING mandatory for Connect PDUs");
                 throw Error(ERR_MCS);
             }
-            this->tag = stream.in_uint16_be();
+
+            bool in_result;
+            this->tag = stream.in_uint16_be_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "Truncated Connect Initial PDU tag: expected=2, remains=%u",
+                    stream.in_remain());
+                throw Error(ERR_MCS);
+            }
             if ((0x7F00|MCSPDU_CONNECT_INITIAL) != this->tag){
-                LOG(LOG_ERR, "Connect Initial::CONNECT_INITIAL tag expected, got %u", this->tag);
+                LOG(LOG_ERR, "Connect Initial::CONNECT_INITIAL tag (0x%04x) expected, got 0x%04x",
+                    (0x7F00|MCSPDU_CONNECT_INITIAL), this->tag);
                 throw Error(ERR_MCS);
             }
             this->tag = MCSPDU_CONNECT_INITIAL;
-            this->tag_len = stream.in_ber_len();
 
-            this->len_callingDomainSelector = stream.in_ber_octet_string(callingDomainSelector, sizeof(callingDomainSelector));
+            this->tag_len = stream.in_ber_len_with_check(in_result);
+            if (!in_result) {
+                LOG(LOG_ERR, "Truncated Connect Initial PDU tag length");
+                throw Error(ERR_MCS);
+            }
+
+            this->len_callingDomainSelector =
+                stream.in_ber_octet_string_with_check(callingDomainSelector, sizeof(callingDomainSelector));
             if (-1 == this->len_callingDomainSelector){
                 LOG(LOG_ERR, "Connect Initial::bad callingDomainSelector");
                 throw Error(ERR_MCS);
             }
 
-            this->len_calledDomainSelector = stream.in_ber_octet_string(calledDomainSelector, sizeof(calledDomainSelector));
+            this->len_calledDomainSelector =
+                stream.in_ber_octet_string_with_check(calledDomainSelector, sizeof(calledDomainSelector));
             if (-1 == this->len_calledDomainSelector){
                 LOG(LOG_ERR, "Connect Initial::bad calledDomainSelector");
                 throw Error(ERR_MCS);
             }
 
 //        upwardFlag              BOOLEAN, -- TRUE if called provider is higher
-            int upward = stream.in_ber_boolean();
+            int upward = stream.in_ber_boolean_with_check();
             if (-1 == upward){
                 LOG(LOG_ERR, "Connect Initial::bad upwardFlag");
                 throw Error(ERR_MCS);
@@ -378,14 +412,24 @@ namespace MCS
             }
 
 //        userData                OCTET STRING
-            if (Stream::BER_TAG_OCTET_STRING != stream.in_uint8()){
-                LOG(LOG_ERR, "ConnectInitial::BER payload size, tag mismatch, expected (BER_TAG_OCTET_STRING)");
+            uint8_t tag = stream.in_uint8_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "Truncated Connect Initial PDU payload tag: expected=1, remains=0");
                 throw Error(ERR_MCS);
             }
-            this->payload_size = stream.in_ber_len();
-            if (this->payload_size != (size_t)(stream.end - stream.p)){
+            if (Stream::BER_TAG_OCTET_STRING != tag){
+                LOG(LOG_ERR, "ConnectInitial::BER payload tag mismatch, expected BER_TAG_OCTET_STRING(%u), got %u",
+                    Stream::BER_TAG_OCTET_STRING, tag);
+                throw Error(ERR_MCS);
+            }
+            this->payload_size = stream.in_ber_len_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "Truncated Connect Initial PDU payload size");
+                throw Error(ERR_MCS);
+            }
+            if (this->payload_size != stream.in_remain()){
                 LOG(LOG_ERR, "ConnectInitial::BER payload size (%u) does not match available data size (%u)",
-                    this->payload_size, stream.end - stream.p);
+                    this->payload_size, stream.in_remain());
                 throw Error(ERR_MCS);
             }
 
@@ -394,7 +438,7 @@ namespace MCS
             TODO("Octets below are part of GCC Conference User Data")
 
 // The payload is the USER_DATA block
-            this->_header_size  = stream.p - stream.data;
+            this->_header_size  = stream.get_offset();
         }
     };
 
@@ -561,46 +605,103 @@ namespace MCS
             if (encoding != BER_ENCODING){
                 LOG(LOG_ERR, "Connect Response::BER_ENCODING mandatory for Connect PDUs");
                 throw Error(ERR_MCS);
-           }
-           this->tag = stream.in_uint16_be();
+            }
+
+            bool in_result;
+            this->tag = stream.in_uint16_be_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "Truncated Connect Response PDU tag: expected=2, remains=%u",
+                    stream.in_remain());
+                throw Error(ERR_MCS);
+            }
             if ((0x7F00|MCSPDU_CONNECT_RESPONSE) != this->tag){
-                LOG(LOG_ERR, "recv connect response (%u) expected, got (%u)",
-                    MCS::MCSPDU_CONNECT_RESPONSE, this->tag);
+                LOG(LOG_ERR, "Connect Response::CONNECT_RESPONSE tag (0x%04x) expected, got 0x%04x",
+                    (0x7F00|MCSPDU_CONNECT_RESPONSE), this->tag);
                 throw Error(ERR_MCS);
             }
-            this->tag = MCS::MCSPDU_CONNECT_RESPONSE;
-            this->tag_len = stream.in_ber_len();
+            this->tag = MCSPDU_CONNECT_RESPONSE;
 
-            if (stream.in_uint8() != Stream::BER_TAG_RESULT) {
-                LOG(LOG_ERR, "recv connect response result expected");
+            this->tag_len = stream.in_ber_len_with_check(in_result);
+            if (!in_result) {
+                LOG(LOG_ERR, "Truncated Connect Response PDU tag length");
                 throw Error(ERR_MCS);
             }
-            if (1 != stream.in_ber_len()){
-                LOG(LOG_ERR, "result length should be 1");
-                throw Error(ERR_MCS);
-            }
-            this->result = stream.in_uint8();
 
-            if (stream.in_uint8() != Stream::BER_TAG_INTEGER) {
-                LOG(LOG_ERR, "recv connect response connectId type not Integer");
+            uint8_t tag = stream.in_uint8_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "Truncated Connect Response PDU tag result: expected=1, remains=0");
+                throw Error(ERR_MCS);
+            }
+            if (tag != Stream::BER_TAG_RESULT) {
+                LOG(LOG_ERR, "Connect Response result tag (%u) expected, got %u",
+                    Stream::BER_TAG_RESULT, tag);
+                throw Error(ERR_MCS);
+            }
+
+            unsigned int len = stream.in_ber_len_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "Connect Response::bad result length");
+                throw Error(ERR_MCS);
+            }
+            if (1 != len){
+                LOG(LOG_ERR, "Connect Response::result length should be 1, got %u", len);
+                throw Error(ERR_MCS);
+            }
+            this->result = stream.in_uint8_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "Truncated Connect Response PDU result: expected=1, remains=0");
+                throw Error(ERR_MCS);
+            }
+
+            tag = stream.in_uint8_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "Truncated Connect Response PDU tag integer: expected=1, remains=0");
+                throw Error(ERR_MCS);
+            }
+            if (tag != Stream::BER_TAG_INTEGER) {
+                LOG(LOG_ERR, "Connect Response connectId type Integer (%u) expected, got %u",
+                    Stream::BER_TAG_INTEGER, tag);
                 throw Error(ERR_MCS);
             }
             {
-                size_t len = stream.in_ber_len();
+                size_t len = stream.in_ber_len_with_check(in_result);
+                if (!in_result){
+                    LOG(LOG_ERR, "Connect Response::bad connectId length");
+                    throw Error(ERR_MCS);
+                }
+
+                if (!stream.in_check_rem(len)) {
+                    LOG(LOG_ERR, "Truncated Connect Response PDU connectId: expected=%u, remains=%u",
+                        len, stream.in_remain());
+                    throw Error(ERR_MCS);
+                }
                 this->connectId = stream.in_bytes_le(len); /* connect id */
             }
 
             if (-1 == this->domainParameters.recv(stream)){
-                LOG(LOG_ERR, "Connect Initial::bad targetParameters");
+                LOG(LOG_ERR, "Connect Response::bad domainParameters");
                 throw Error(ERR_MCS);
             }
 
 //        userData                OCTET STRING
-            stream.in_uint8();
-            this->payload_size = stream.in_ber_len();
-            if (this->payload_size != (size_t)(stream.end - stream.p)){
-                LOG(LOG_ERR, "ConnectInitial::BER payload size (%u) does not match available data size (%u)",
-                    this->payload_size, stream.end - stream.p);
+            tag = stream.in_uint8_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "Truncated Connect Response PDU payload tag: expected=1, remains=0");
+                throw Error(ERR_MCS);
+            }
+            if (Stream::BER_TAG_OCTET_STRING != tag){
+                LOG(LOG_ERR, "ConnectInitial::BER payload tag mismatch, expected BER_TAG_OCTET_STRING(%u), got %u",
+                    Stream::BER_TAG_OCTET_STRING, tag);
+                throw Error(ERR_MCS);
+            }
+            this->payload_size = stream.in_ber_len_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "Connect Response::bad connectId length");
+                throw Error(ERR_MCS);
+            }
+            if (this->payload_size != stream.in_remain()){
+                LOG(LOG_ERR, "ConnectResponse::BER payload size (%u) does not match available data size (%u)",
+                    this->payload_size, stream.in_remain());
                 throw Error(ERR_MCS);
             }
 
@@ -610,7 +711,7 @@ namespace MCS
 //            stream.in_skip_bytes(23);
 
 // The payload is the USER_DATA block
-            this->_header_size  = stream.p - stream.data;
+            this->_header_size  = stream.get_offset();
         }
     };
 
@@ -756,14 +857,29 @@ namespace MCS
                 LOG(LOG_ERR, "ErectDomainRequest PER_ENCODING mandatory");
                 throw Error(ERR_MCS);
             }
-            uint8_t tag = stream.in_uint8();
+
+            bool in_result;
+            uint8_t tag = stream.in_uint8_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "Truncated ErectDomainRequest need 1, got 0");
+                throw Error(ERR_MCS);
+            }
             if ((MCS::MCSPDU_ErectDomainRequest << 2) != tag){
-                LOG(LOG_ERR, "ErectDomainRequest expected, got %u", tag);
+                LOG(LOG_ERR, "ErectDomainRequest tag (%u) expected, got %u",
+                    (MCS::MCSPDU_ErectDomainRequest << 2), tag);
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_ErectDomainRequest;
-            this->subHeight = stream.in_per_integer();
-            this->subInterval = stream.in_per_integer();
+            this->subHeight = stream.in_per_integer_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "ErectDomainRequest bad subHeight");
+                throw Error(ERR_MCS);
+            }
+            this->subInterval = stream.in_per_integer_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "ErectDomainRequest bad subInterval");
+                throw Error(ERR_MCS);
+            }
         }
     };
 
@@ -1009,9 +1125,18 @@ namespace MCS
                 LOG(LOG_ERR, "DisconnectProviderUltimatum PER_ENCODING mandatory");
                 throw Error(ERR_MCS);
             }
+
+            unsigned expected = 2; /* tag(1) + reason(1) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated DisconnectProviderUltimatum: expected=%u, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_MCS);
+            }
+
             uint8_t tag = stream.in_uint8();
             if ((MCS::MCSPDU_DisconnectProviderUltimatum << 2) != tag){
-                LOG(LOG_ERR, "DisconnectProviderUltimatum expected, got %u", tag);
+                LOG(LOG_ERR, "DisconnectProviderUltimatum tag (%u) expected, got %u",
+                   (MCS::MCSPDU_DisconnectProviderUltimatum << 2), tag);
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_DisconnectProviderUltimatum;
@@ -1103,9 +1228,15 @@ namespace MCS
                 LOG(LOG_ERR, "AttachUserRequest PER_ENCODING mandatory");
                 throw Error(ERR_MCS);
             }
+
+            if (!stream.in_check_rem(1)){
+                LOG(LOG_ERR, "Truncated AttachUserRequest: expected=1, remains=0");
+                throw Error(ERR_MCS);
+            }
+
             uint8_t tag = stream.in_uint8();
             if ((MCS::MCSPDU_AttachUserRequest << 2) != tag){
-                LOG(LOG_ERR, "expecting AttachUserRequest (%u), got %u", MCS::MCSPDU_AttachUserRequest << 2, tag);
+                LOG(LOG_ERR, "AttachUserRequest tag (%u) expected, got %u", MCS::MCSPDU_AttachUserRequest << 2, tag);
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_AttachUserRequest;
@@ -1250,15 +1381,29 @@ namespace MCS
                 LOG(LOG_ERR, "AttachUserConfirm PER_ENCODING mandatory");
                 throw Error(ERR_MCS);
             }
+
+            unsigned expected = 2; /* tag(1) + result(1) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated AttachUserConfirm: expected=%u, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_MCS);
+            }
+
             uint8_t tag = stream.in_uint8();
             this->initiator_flag = (tag & 2) != 0;
             if ((tag & 0xFC) != MCS::MCSPDU_AttachUserConfirm << 2){
-                LOG(LOG_ERR, "expecting AttachUserConfirm (%u), got %u", MCS::MCSPDU_AttachUserConfirm << 2, tag);
+                LOG(LOG_ERR, "AttachUserConfirm tag (%u) expected, got %u",
+                    MCS::MCSPDU_AttachUserConfirm << 2, (tag & 0xFC));
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_AttachUserConfirm;
             this->result = stream.in_uint8();
             if (this->initiator_flag){
+                if (!stream.in_check_rem(2)){
+                   LOG(LOG_ERR, "Truncated AttachUserConfirm indicator: expected=2, remains=%u",
+                       stream.in_remain());
+                   throw Error(ERR_MCS);
+                }
                 this->initiator = stream.in_uint16_be();
             }
         }
@@ -1423,9 +1568,17 @@ namespace MCS
                 LOG(LOG_ERR, "ChannelJoinRequest PER_ENCODING mandatory");
                 throw Error(ERR_MCS);
             }
+
+            unsigned expected = 5; /* tag(1) + initiator(2) + channelId(2) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated ChannelJoinRequest: expected=%u, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_MCS);
+            }
+
             uint8_t tag = stream.in_uint8();
             if (tag != (MCS::MCSPDU_ChannelJoinRequest << 2)){
-                LOG(LOG_ERR, "expecting ChannelJoinRequest (%u), got %u", MCS::MCSPDU_ChannelJoinRequest << 2, tag);
+                LOG(LOG_ERR, "ChannelJoinRequest tag (%u) expected, got %u", MCS::MCSPDU_ChannelJoinRequest << 2, tag);
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_ChannelJoinRequest;
@@ -1554,12 +1707,20 @@ namespace MCS
                 LOG(LOG_ERR, "ChannelJoinConfirm PER_ENCODING mandatory");
                 throw Error(ERR_MCS);
             }
-            uint8_t tag = stream.in_uint8();
-            if ((tag & 0xFC) != (MCS::MCSPDU_ChannelJoinConfirm << 2)){
-                LOG(LOG_ERR, "expecting ChannelJoinConfirm (%u), got %u", MCS::MCSPDU_ChannelJoinConfirm << 2, tag);
+
+            unsigned expected = 6; /* tag(1) + result(1) + initiator(2) + requested(2) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated ChannelJoinConfirm: expected=%u, remains=%u",
+                    expected, stream.in_remain());
                 throw Error(ERR_MCS);
             }
-            this->result  = stream.in_uint8();
+
+            uint8_t tag = stream.in_uint8();
+            if ((tag & 0xFC) != (MCS::MCSPDU_ChannelJoinConfirm << 2)){
+                LOG(LOG_ERR, "ChannelJoinConfirm tag (%u) expected, got %u", MCS::MCSPDU_ChannelJoinConfirm << 2, (tag & 0xFC));
+                throw Error(ERR_MCS);
+            }
+            this->result    = stream.in_uint8();
             this->initiator = stream.in_uint16_be();
             this->requested = stream.in_uint16_be();
             this->channelId_flag = (tag & 2) != 0;
@@ -1568,6 +1729,11 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
             if (this->channelId_flag){
+                if (!stream.in_check_rem(2)){
+                   LOG(LOG_ERR, "Truncated ChannelJoinConfirm indicator: expected=2, remains=%u",
+                       stream.in_remain());
+                   throw Error(ERR_MCS);
+                }
                 this->channelId = stream.in_uint16_be();
             }
         }
@@ -1841,23 +2007,16 @@ namespace MCS
             }
 
             unsigned expected =
-                  1 /* tag(1) */
-                + 2 /* initiator */
-                + 2 /* channelId */
-                + 1 /* magic */
-                + 1 /* first byte of PER length */
-                ;
-
-            if (!stream.in_check_rem(expected))
-            {
-                LOG(LOG_ERR, "truncated SendDataRequest data: expected=%u remains=%u",
+                  7; /* tag(1) + initiator(2) + channelId(2) + magic(1) + first byte of PER length(1) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated SendDataRequest data: expected=%u remains=%u",
                     expected, stream.in_remain());
                 throw Error(ERR_MCS);
             }
 
             uint8_t tag = stream.in_uint8();
             if (tag != (MCS::MCSPDU_SendDataRequest << 2)){
-                LOG(LOG_ERR, "expecting SendDataRequest (%u), got %u", MCS::MCSPDU_SendDataRequest << 2, tag);
+                LOG(LOG_ERR, "SendDataRequest tag (%u) expected, got %u", MCS::MCSPDU_SendDataRequest << 2, tag);
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_SendDataRequest;
@@ -1872,24 +2031,17 @@ namespace MCS
             // low 4 bits of magic are padding
 
             // length of payload, per_encoded
-            uint16_t temp = stream.peek_uint8();
-            if (temp & 0x80){
-                expected = 1; /* second byte of PER length */
-
-                if (!stream.in_check_rem(expected))
-                {
-                    LOG(LOG_ERR, "truncated SendDataRequest data: expected=%u remains=%u",
-                        expected, stream.in_remain());
-                    throw Error(ERR_MCS);
-                }
+            bool in_result;
+            this->payload_size = stream.in_per_length_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "Truncated SendDataRequest data: payload length");
+                throw Error(ERR_MCS);
             }
 
-            this->payload_size = stream.in_per_length();
-            this->_header_size = stream.p - stream.data;
+            this->_header_size = stream.get_offset();
 
-            if (!stream.in_check_rem(this->payload_size))
-            {
-                LOG(LOG_ERR, "truncated SendDataRequest data: expected=%u remains=%u",
+            if (!stream.in_check_rem(this->payload_size)){
+                LOG(LOG_ERR, "Truncated SendDataRequest data: expected=%u remains=%u",
                     this->payload_size, stream.in_remain());
                 throw Error(ERR_MCS);
             }
@@ -1944,9 +2096,17 @@ namespace MCS
                 LOG(LOG_ERR, "SendDataIndication PER_ENCODING mandatory");
                 throw Error(ERR_MCS);
             }
+
+            unsigned expected = 6; /* tag(1) + initiator(2) + channelId(2) + magic(1) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated SendDataIndication data: expected=%u, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_MCS);
+            }
+
             uint8_t tag = stream.in_uint8();
             if (tag != (MCS::MCSPDU_SendDataIndication << 2)){
-                LOG(LOG_ERR, "expecting SendDataIndication (%u), got %u", MCS::MCSPDU_SendDataIndication << 2, tag);
+                LOG(LOG_ERR, "SendDataIndication tag (%u) expected, got %u", MCS::MCSPDU_SendDataIndication << 2, tag);
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_SendDataIndication;
@@ -1961,11 +2121,22 @@ namespace MCS
             // low 4 bits of magic are padding
 
             // length of payload, per_encoded
-            this->payload_size = stream.in_per_length();
-            this->_header_size = stream.p - stream.data;
+            bool in_result;
+            this->payload_size = stream.in_per_length_with_check(in_result);
+            if (!in_result){
+                LOG(LOG_ERR, "Truncated SendDataIndication data: payload length");
+                throw Error(ERR_MCS);
+            }
+
+            this->_header_size = stream.get_offset();
+
+            if (!stream.in_check_rem(this->payload_size)){
+                LOG(LOG_ERR, "Truncated SendDataIndication data: expected=%u remains=%u",
+                    this->payload_size, stream.in_remain());
+                throw Error(ERR_MCS);
+            }
 
             this->payload.resize(stream, this->payload_size);
-
         }
     };
 

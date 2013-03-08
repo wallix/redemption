@@ -41,6 +41,7 @@
 #include <string.h>
 #include "constants.hpp"
 #include "log.hpp"
+#include "stream.hpp"
 
 enum {
     SEC_RANDOM_SIZE   = 32,
@@ -65,6 +66,11 @@ class SslSha1
         SHA1_Update(&this->sha1, data, len);
     }
 
+    void update(const Stream & stream)
+    {
+        update(stream.data, stream.size());
+    }
+
     void final(uint8_t * out_data)
     {
         SHA1_Final(out_data, &this->sha1);
@@ -87,6 +93,11 @@ class SslMd5
         MD5_Update(&this->md5, data, len);
     }
 
+    void update(const Stream & stream)
+    {
+        update(stream.data, stream.size());
+    }
+
     void final(uint8_t * out_data)
     {
         MD5_Final(out_data, &this->md5);
@@ -98,15 +109,24 @@ class SslRC4
     RC4_KEY rc4;
 
     public:
-    SslRC4(){}    
+    SslRC4(){}
 
     void set_key(uint8_t * key, size_t key_len)
     {
         RC4_set_key(&this->rc4, key_len, key);
     }
 
+    void set_key(const Stream & stream)
+    {
+        set_key(stream.data, stream.size());
+    }
+
     void crypt(uint8_t * data, size_t len){
         RC4(&this->rc4, len, data, data);
+    }
+
+    void crypt(Stream & stream){
+        crypt(stream.data, stream.size());
     }
 };
 
@@ -356,6 +376,12 @@ struct CryptContext
         }
         this->rc4.crypt(data, len);
         this->use_count++;
+    }
+
+    /* Decrypt data using RC4 */
+    void decrypt(Stream & stream)
+    {
+        decrypt(stream.data, stream.size());
     }
 
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */

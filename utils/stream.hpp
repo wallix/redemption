@@ -33,7 +33,7 @@
 #include <algorithm>
 
 #include "constants.hpp"
-#include "ssl_calls.hpp"
+//#include "ssl_calls.hpp"
 #include "error.hpp"
 #include "bitfu.hpp"
 #include "utf.hpp"
@@ -98,6 +98,16 @@ class Stream {
         return *((unsigned char*)(this->p++));
     }
 
+    unsigned char in_uint8_with_check(bool & result) {
+        if (in_check_rem(1)){
+            result = true;
+            return this->in_uint8();
+        }
+
+        result = false;
+        return 0;
+    }
+
     /* Peek a byte from stream without move <p>. */
     unsigned char peek_uint8(void) {
         REDASSERT(in_check_rem(1));
@@ -126,6 +136,16 @@ class Stream {
         REDASSERT(in_check_rem(2));
         this->p += 2;
         return (uint16_t)(this->p[-1] | (this->p[-2] << 8)) ;
+    }
+
+    uint16_t in_uint16_be_with_check(bool & result) {
+        if (in_check_rem(2)){
+            result = true;
+            return this->in_uint16_be();
+        }
+
+        result = false;
+        return 0;
     }
 
     unsigned int in_uint32_le(void) {
@@ -530,8 +550,9 @@ class Stream {
     // return string length or -1 on error
     int in_ber_octet_string(uint8_t * target, uint16_t target_len) 
     {
-        if (this->in_uint8() != BER_TAG_OCTET_STRING){
-            LOG(LOG_ERR, "Octet string BER tag expected");
+        uint8_t tag = this->in_uint8();
+        if (tag != BER_TAG_OCTET_STRING){
+            LOG(LOG_ERR, "Octet string BER tag (%u) expected, got %u", BER_TAG_OCTET_STRING, tag);
             return -1;
         }
         size_t len = this->in_ber_len();
@@ -543,11 +564,41 @@ class Stream {
         return len;
     }
 
+    int in_ber_octet_string_with_check(uint8_t * target, uint16_t target_len) 
+    {
+        bool in_result;
+        uint8_t tag = this->in_uint8_with_check(in_result);
+        if (!in_result) {
+            LOG(LOG_ERR, "Truncated BER octet string (need=1, remain=0)");
+            return -1;
+        }
+        if (tag != BER_TAG_OCTET_STRING){
+            LOG(LOG_ERR, "Octet string BER tag (%u) expected, got %u", BER_TAG_OCTET_STRING, tag);
+            return -1;
+        }
+        size_t len = this->in_ber_len_with_check(in_result);
+        if (!in_result){
+            return -1;
+        }
+        if (!this->in_check_rem(len)){
+            LOG(LOG_ERR, "Truncated BER octet string (need=%u, remain=%u)",
+                len, this->in_remain());
+            return -1;
+        }
+        if (len > target_len){
+            LOG(LOG_ERR, "target string too large (max=%u, got=%u)", target_len, len);
+            return -1;
+        }
+        this->in_copy_bytes(target, len);
+        return len;
+    }
+
     // return 0 if false, 1 if true, -1 on error
     int in_ber_boolean() 
     {
-        if (this->in_uint8() != BER_TAG_BOOLEAN){
-            LOG(LOG_ERR, "Boolean BER tag expected");
+        uint8_t tag = this->in_uint8();
+        if (tag != BER_TAG_BOOLEAN){
+            LOG(LOG_ERR, "Boolean BER tag (%u) expected, got %u", BER_TAG_BOOLEAN, tag);
             return -1;
         }
         size_t len = this->in_ber_len();
@@ -558,6 +609,67 @@ class Stream {
         return this->in_uint8();
     }
 
+    // return 0 if false, 1 if true, -1 on error
+    int in_ber_boolean_with_check() 
+    {
+        bool in_result;
+        uint8_t tag = this->in_uint8_with_check(in_result);
+        if (!in_result){
+            LOG(LOG_ERR, "Truncated BER boolean tag (need=1, remain=0)");
+            return -1;
+        }
+        if (tag != BER_TAG_BOOLEAN){
+            LOG(LOG_ERR, "Boolean BER tag (%u) expected, got %u", BER_TAG_BOOLEAN, tag);
+            return -1;
+        }
+        size_t len = this->in_ber_len_with_check(in_result);
+        if (!in_result){
+            return -1;
+        }
+        if (len != 1){
+            LOG(LOG_ERR, "Boolean BER should be one byte");
+            return -1;
+        }
+        if (!this->in_check_rem(1)){
+            LOG(LOG_ERR, "Truncated BER boolean value (need=1, remain=0)");
+            return -1;
+        }
+        return this->in_uint8();
+    }
+
+    int in_ber_int_with_check(bool & result){
+        int v = 0;
+
+        result = true;
+
+        unsigned expected = 2; /* tag(1) + len(1) */
+        if (this->in_check_rem(expected)){
+           uint8_t tag = this->in_uint8();
+           if (tag == BER_TAG_INTEGER){
+               uint8_t len = this->in_uint8();
+               if (this->in_check_rem(len)){
+                   v = this->in_bytes_be(len);
+               }
+               else {
+                   LOG(LOG_ERR, "Truncated BER integer data (need=%u, remain=%u)",
+                       len, this->in_remain());
+                   result = false;
+               }
+           }
+           else {
+               LOG(LOG_ERR, "Integer BER tag (%u) expected, got %u", BER_TAG_INTEGER, tag);
+               result = false;
+           }
+        }
+        else {
+            LOG(LOG_ERR, "Truncated BER integer (need=%u, remain=%u)",
+                expected, this->in_remain());
+            result = false;
+        }
+        return v;
+    }
+
+
     unsigned int in_ber_len(void) {
         uint8_t l = this->in_uint8();
         if (l & 0x80) {
@@ -567,6 +679,39 @@ class Stream {
                 len = (len << 8) | this->in_uint8();
             }
             return len;
+        }
+        return l;
+    }
+
+    unsigned int in_ber_len_with_check(bool & result) {
+        uint8_t l = 0;
+
+        result = true;
+
+        if (this->in_check_rem(1))
+        {
+            l = this->in_uint8();
+            if (l & 0x80) {
+                const uint8_t nbbytes = (uint8_t)(l & 0x7F);
+
+                if (this->in_check_rem(nbbytes)){
+                    unsigned int len = 0;
+                    for (uint8_t i = 0 ; i < nbbytes ; i++) {
+                        len = (len << 8) | this->in_uint8();
+                    }
+                    return len;
+                }
+                else {
+                    LOG(LOG_ERR, "Truncated PER length (need=%u, remain=%u)",
+                        nbbytes, this->in_remain());
+                    l = 0;
+                    result = false;
+                }
+            }
+        }
+        else {
+            result = false;
+            LOG(LOG_ERR, "Truncated BER length (need=1, remain=0)");
         }
         return l;
     }
@@ -714,6 +859,33 @@ class Stream {
         return length;
     }
 
+    uint16_t in_per_length_with_check(bool & result)
+    {
+        uint16_t length = 0;
+
+        result = true;
+        if (this->in_check_rem(1)){
+            length = this->in_uint8();
+            if (length & 0x80){
+                if (in_check_rem(1)){
+                    length = ((length & 0x7F) << 8);
+                    length += this->in_uint8();
+                }
+                else {
+                    // error
+                    LOG(LOG_ERR, "Truncated PER length (need=1, remain=0)");
+                    length = 0;
+                    result = false;
+                }
+            }
+        }
+        else {
+            LOG(LOG_ERR, "Truncated PER length (need=1, remain=0)");
+            result = false;
+        }
+        return length;
+    }
+
     void out_per_length(uint16_t length)
     {
         if (length & 0xFF80){
@@ -788,6 +960,25 @@ class Stream {
             REDASSERT(0);
             return 0;
         }
+    }
+
+    uint32_t in_per_integer_with_check(bool & result)
+    {
+        uint16_t len = this->in_per_length_with_check(result);
+        if (result){
+            switch (len){
+            case 0: // 0 is bogus bug rdesktop sends that...
+            case 1:
+                return this->in_uint8();
+            case 2:
+                return this->in_uint16_be();
+            case 4:
+                return this->in_uint32_be();
+            }
+        }
+
+        REDASSERT(0);
+        return 0;
     }
 
     void out_per_integer(uint32_t integer)

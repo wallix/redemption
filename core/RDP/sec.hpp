@@ -715,7 +715,9 @@ enum {
             this->payload.resize(stream, stream.end - stream.p);
             
             // decrypting to the end of tpdu
-            crypt.decrypt(this->payload.data, this->payload.end - this->payload.p);
+            SubStream data(this->payload, 0, this->payload.in_remain());
+//            crypt.decrypt(this->payload.data, this->payload.end - this->payload.p);
+            crypt.decrypt(data);
         }
     };
 
@@ -757,7 +759,7 @@ enum {
                     LOG(LOG_INFO, "Receiving encrypted TPDU");
                     hexdump_c((char*)payload.data, payload.size());
                 }
-                crypt.decrypt(payload.data, payload.size());
+                crypt.decrypt(payload);
                 if (this->verbose >= 0x80){
                     LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
                     hexdump_c((char*)payload.data, payload.size());
@@ -779,7 +781,7 @@ enum {
             if (flags & SEC_ENCRYPT){
                 crypt.sign(stream.p, 8, data.data, data.size());
                 stream.p += 8;
-                crypt.decrypt(data.data, data.size());
+                crypt.decrypt(data);
             }
             stream.mark_end();
         }
