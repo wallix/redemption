@@ -21,17 +21,15 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_WINDOW_LOGIN_HPP_)
 #define REDEMPTION_MOD_WIDGET2_WINDOW_LOGIN_HPP_
 
-#include "window.hpp"
+#include "window_box.hpp"
 #include "edit.hpp"
 #include "button.hpp"
 
-class WindowLogin : public Window
+class WindowLogin : public WindowBox
 {
 public:
     WidgetEdit login;
     WidgetEdit pass;
-    WidgetButton submit;
-    WidgetButton cancel;
 
 public:
     enum {
@@ -42,32 +40,32 @@ public:
         NOTIFY_USERNAME_EDIT = 100,
         NOTIFY_PASSWORD_EDIT,
         NOTIFY_USERNAME_SUBMIT,
-        //NOTIFY_PASSWORD_SUBMIT,
+        NOTIFY_PASSWORD_SUBMIT,
     };
 
     WindowLogin(ModApi* drawable, int x, int y, Widget* parent, NotifyApi* notifier, int id = 0)
-    : Window(drawable, Rect(x, y, 270, 95), parent, notifier, "Connection", id)
-    , login(drawable, Rect(10,20,250,20), this, 0, 0, 0, 0)
-    , pass(drawable, Rect(10,45,250,20), this, 0, 0, 0, 1)
-    , submit(drawable, Rect(15,70,110,20), this, 0, "submit", 2)
-    , cancel(drawable, Rect(145,70,110,20), this, 0, "cancel", 3)
-    {}
-
-    virtual ~WindowLogin()
+    : WindowBox(drawable, Rect(x, y, 270, 95), parent, notifier, "Connection", id)
+    , login(drawable, Rect(10,20,250,20), this, 0, 0, 0, 2)
+    , pass(drawable, Rect(10,45,250,20), this, 0, 0, 0, 3)
     {}
 
     virtual void notify(int id, EventType event)
     {
-        if (event == WIDGET_SUBMIT){
-            if (id == this->cancel.id) {
-                this->notify_self(NOTIFY_CANCEL);
-            } else {
-                this->notify_self(NOTIFY_SUBMIT);
-            }
+        if (id == 2) {
+            this->notify_self(event == WIDGET_SUBMIT
+            ? NOTIFY_USERNAME_SUBMIT
+            : NOTIFY_USERNAME_EDIT);
+        } else if (id == 3) {
+            this->notify_self(event == WIDGET_SUBMIT
+            ? NOTIFY_PASSWORD_SUBMIT
+            : NOTIFY_PASSWORD_EDIT);
         } else {
-            this->Window::notify(id, event);
+            this->WindowBox::notify(id, event);
         }
     }
+
+    virtual ~WindowLogin()
+    {}
 };
 
 #endif

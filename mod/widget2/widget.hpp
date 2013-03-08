@@ -59,20 +59,23 @@ enum NotifyEventType {
 class Widget
 {
 public:
+    //type & TYPE_WND -> WidgetComposite
     enum WidgetType {
-        TYPE_SCREEN  = 0,
         TYPE_WND     = 1,
-        TYPE_BITMAP  = 2,
-        TYPE_BUTTON  = 3,
-        TYPE_IMAGE   = 4,
-        TYPE_EDIT    = 5,
-        TYPE_LABEL   = 6,
+        TYPE_SCREEN  = 3,
+        TYPE_BITMAP  = 3 << 1,
+        TYPE_BUTTON  = 4 << 1,
+        TYPE_IMAGE   = 5 << 1,
+        TYPE_EDIT    = 6 << 1,
+        TYPE_LABEL   = 7 << 1,
     };
 
     enum OptionTab {
-        IGNORE_TAB,
-        NORMAL_TAB,
-        DELEGATE_CONTROL_TAB
+        IGNORE_TAB = 0,
+        NORMAL_TAB = 1,
+        DELEGATE_CONTROL_TAB = 2,
+        REWIND_TAB = 4,
+        REWIND_BACKTAB = 8
     };
 
 public:
@@ -143,40 +146,40 @@ public:
         return ret;
     }
 
-    virtual void draw(const Rect& rect, int16_t x_screen, int16_t y_screen, const Rect& clip_screen)
+    virtual void draw(const Rect& rect, int16_t x, int16_t y, const Rect & clip)
     {
         this->drawable->draw(
             RDPOpaqueRect(
-                rect.offset(x_screen, y_screen),
+                rect.offset(x,y),
                 this->bg_color
-            ), clip_screen);
+            ), clip
+        );
+    }
+
+    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip)
+    {
+        this->draw(rect, x, y, Rect(xclip, yclip, rect.cx, rect.cy));
     }
 
     void refresh(const Rect & rect)
     {
         if (!rect.isempty() && this->drawable){
-            screen_position sp = this->position_in_screen();
-            if (sp.clip.cx && sp.clip.cy && rect.x < sp.clip.cx && rect.y < sp.clip.cy){
-                this->drawable->begin_update();
-                this->draw(rect, sp.x, sp.y, sp.clip);
-                this->drawable->end_update();
+            Widget::screen_position sp = this->position_in_screen();
+            Rect clip = sp.clip.intersect(Rect(sp.x + rect.x, sp.y + rect.y, rect.cx, rect.cy));
+            if (clip.isempty()) {
+                return ;
             }
-        }
-    }
-
-    static void refresh_child(Widget * w, const Rect & rect, int16_t x_screen, int16_t y_screen, const Rect & clip_screen)
-    {
-        if (!w->rect.isempty() && w->drawable){
-            Rect new_clip = clip_screen.intersect(Rect(
-                x_screen + rect.x + w->rect.x,
-                y_screen + rect.y + w->rect.y,
-                rect.cx,
-                rect.cy
-            ));
-            if (new_clip.cx && new_clip.cy && rect.x < new_clip.cx && rect.y < new_clip.cy){
-                w->drawable->begin_update();
-                w->draw(rect, x_screen + w->rect.x, y_screen + w->rect.y, new_clip);
-                w->drawable->end_update();
+            int dx = clip.x - sp.x;
+            int dy = clip.y - sp.y;
+            Rect new_rect = Rect(dx,
+                                 dy,
+                                 clip.cx - (rect.x - dx),
+                                 clip.cy - (rect.y - dy)
+                                );
+            if (!new_rect.isempty()){
+                this->drawable->begin_update();
+                this->draw(new_rect, sp.x, sp.y, clip.x, clip.y);
+                this->drawable->end_update();
             }
         }
     }

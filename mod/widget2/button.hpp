@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_BUTTON_HPP_HPP)
-#define REDEMPTION_MOD_WIDGET2_BUTTON_HPP_HPP
+#if !defined(REDEMPTION_MOD_WIDGET2_BUTTON_HPP)
+#define REDEMPTION_MOD_WIDGET2_BUTTON_HPP
 
 #include "label.hpp"
 
@@ -29,13 +29,11 @@ public:
     char buffer[256];
     int state;
     bool is_down;
-    bool enable;
 
     WidgetButton(ModApi* drawable, const Rect& rect, Widget* parent, NotifyApi* notifier, const char * text, int id = 0)
     : WidgetLabel(drawable, rect, parent, notifier, text, id)
     , state(0)
     , is_down(false)
-    , enable(true)
     {
         this->type = Widget::TYPE_BUTTON;
     }

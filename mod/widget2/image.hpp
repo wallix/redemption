@@ -18,28 +18,44 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_WINDOW_HPP_)
-#define REDEMPTION_MOD_WIDGET2_WINDOW_HPP_
+#if !defined(REDEMPTION_MOD_WIDGET2_IMAGE_HPP)
+#define REDEMPTION_MOD_WIDGET2_IMAGE_HPP
 
-#include "widget_composite.hpp"
-#include "label.hpp"
-#include <keymap2.hpp>
+#include "widget.hpp"
 
-class Window : public WidgetComposite
+class WidgetImage : public Widget
 {
-public:
-    WidgetLabel titlebar;
+    Bitmap bmp;
 
-    Window(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier, const char * caption, int id = 0)
-    : WidgetComposite(drawable, rect, parent, Widget::TYPE_WND, notifier, id)
-    , titlebar(drawable, Rect(0,0, rect.cx, 15), this, 0, caption, -1)
+public:
+    WidgetImage(ModApi* drawable, int x, int y, const char * filename, Widget* parent, NotifyApi* notifier, int id = 0)
+    : Widget(drawable, Rect(), parent, TYPE_IMAGE, notifier, id)
+    , bmp(filename)
     {
-        this->titlebar.x_text = 5;
-        this->titlebar.tab_flag = IGNORE_TAB;
+        this->rect.x = x;
+        this->rect.y = y;
+        this->rect.cx = this->bmp.cx;
+        this->rect.cy = this->bmp.cy;
     }
 
-    virtual ~Window()
+    virtual ~WidgetImage()
     {}
+
+    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip)
+    {
+        this->drawable->draw(
+            RDPMemBlt(
+                0,
+                rect.offset(x, y),
+                0xCC,
+                xclip - x,
+                yclip - y,
+                0
+            ),
+            Rect(xclip, yclip, rect.cx, rect.cy),
+            this->bmp
+        );
+    }
 };
 
 #endif
