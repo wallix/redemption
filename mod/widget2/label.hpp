@@ -18,21 +18,26 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_LABEL_HPP_HPP)
-#define REDEMPTION_MOD_WIDGET2_LABEL_HPP_HPP
+#if !defined(REDEMPTION_MOD_WIDGET2_LABEL_HPP)
+#define REDEMPTION_MOD_WIDGET2_LABEL_HPP
 
 #include "widget.hpp"
 #include "utf.hpp"
 
 class WidgetLabel : public Widget
 {
+public:
     char buffer[256];
     ModApi::ContextText * context_text;
+    int x_text;
+    int y_text;
 
 public:
-    WidgetLabel(ModApi* drawable, const Rect& rect, Widget* parent, NotifyApi* notifier, const char * text, int id = 0)
+    WidgetLabel(ModApi* drawable, const Rect& rect, Widget* parent, NotifyApi* notifier, const char * text, int id = 0, int xtext = 0, int ytext = 0)
     : Widget(drawable, rect, parent, Widget::TYPE_LABEL, notifier, id)
     , context_text(0)
+    , x_text(xtext)
+    , y_text(ytext)
     {
         this->set_text(text);
     }
@@ -44,7 +49,9 @@ public:
 
     void set_text(const char * text)
     {
+        delete this->context_text;
         this->context_text = 0;
+        this->buffer[0] = 0;
         if (text) {
             const size_t max = sizeof(this->buffer)/sizeof(this->buffer[0]) - 1;
             strncpy(buffer, text, max);
@@ -52,8 +59,6 @@ public:
             if (this->drawable) {
                 this->context_text = this->drawable->create_context_text(this->buffer);
             }
-        } else {
-            this->buffer[0] = 0;
         }
     }
 
@@ -62,10 +67,23 @@ public:
         return this->buffer;
     }
 
-    virtual void draw(const Rect& rect, int16_t x_screen, int16_t y_screen, const Rect& clip_screen)
+    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip)
     {
-        this->Widget::draw(rect, x_screen, y_screen, clip_screen);
-        this->context_text->draw_in(this->drawable, rect, x_screen, y_screen, clip_screen, ~this->bg_color);
+        this->Widget::draw(rect, x, y, xclip, yclip);
+        if (this->context_text) {
+            this->context_text->draw_in(
+                this->drawable,
+                Rect(rect.x,
+                     rect.y,
+                     rect.cx - this->x_text,
+                     rect.cy - this->y_text),
+                x + this->x_text,
+                y + this->y_text,
+                xclip + this->x_text,
+                yclip + this->y_text,
+                ~this->bg_color
+            );
+        }
     }
 };
 

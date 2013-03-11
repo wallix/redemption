@@ -24,6 +24,7 @@
 #include <vector>
 #include "widget.hpp"
 #include <region.hpp>
+#include "keymap2.hpp"
 
 class WidgetComposite : public Widget
 {
@@ -90,37 +91,122 @@ public:
         return ret;
     }
 
-    bool switch_focus(Widget * old_focus, Widget * new_focus)
+    static bool switch_focus(Widget * old_focus, Widget * new_focus)
     {
         bool res = true;
-        old_focus->has_focus = false;
-        old_focus->notify_self(NOTIFY_FOCUS_END);
         new_focus->has_focus = true;
         new_focus->notify_self(NOTIFY_FOCUS_BEGIN);
+        new_focus->notify_parent(FOCUS_BEGIN);
         return res;
     }
 
-    static bool control_tab(Widget * w)
+    bool _control_childs_tab(Widget * old, std::size_t n, OptionTab dtab)
     {
-        if (w->type == TYPE_WND) {
-            WidgetComposite * win = static_cast<WidgetComposite*>(w);
-            size_t idx = win->direct_idx_focused();
-            if (idx != -1u) {
-                size_t size = win->child_list.size();
-                for (size_t n = idx + 1; n < size; ++n) {
-                    Widget * w = win->child_list[n];
-                    if (w->tab_flag == NORMAL_TAB) {
-                        win->switch_focus(win->child_list[idx], w);
-                        return true;
-                    } else if (w->tab_flag == DELEGATE_CONTROL_TAB) {
-                        if (win->control_tab(w)) {
-                            return true;
-                        }
-                    }
+        Widget * w = this->child_list[n];
+        if (w->tab_flag == NORMAL_TAB) {
+            this->switch_focus(old, w);
+            return true;
+        } else if (
+            w->tab_flag & DELEGATE_CONTROL_TAB
+            && w->type & TYPE_WND
+            && static_cast<WidgetComposite*>(w)->control_tab(dtab, old)
+        ) {
+            return true;
+        }
+        return false;
+    }
+
+    bool _control_tab_impl(Widget * old, std::size_t n, std::size_t last)
+    {
+        for (; n < last; ++n) {
+            if (this->_control_childs_tab(old, n, REWIND_TAB)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool _control_backtab_impl(Widget * old, std::size_t n, std::size_t last)
+    {
+        for (; n >= last; --n) {
+            if (this->_control_childs_tab(old, n, REWIND_BACKTAB)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool control_tab(OptionTab dtab, Widget * pold = 0)
+    {
+        size_t size = this->child_list.size();
+        if (size != 0) {
+            size_t idx = this->has_focus ? this->direct_idx_focused() : -1u;
+            bool nidx = (idx == -1u);
+            if (nidx)
+                idx = 0;
+            Widget * w = this->child_list[idx];
+            Widget * old = pold ? pold : w;
+            if (w->tab_flag & DELEGATE_CONTROL_TAB) {
+                if (static_cast<WidgetComposite*>(w)->control_tab(dtab, old)) {
+                    return true;
                 }
             }
-        } else {
 
+            if (dtab == REWIND_TAB
+            ? this->_control_tab_impl(old, idx+1, size)
+            : this->_control_backtab_impl(old, idx-1, 0)) {
+                return true;
+            }
+
+            if (!pold && (dtab == REWIND_TAB
+            ? this->_control_tab_impl(old, 0, idx)
+            : this->_control_backtab_impl(old, size-1, idx+1))) {
+                return true;
+            }
+
+            return !pold && !this->parent
+            && (dtab == REWIND_TAB
+            ? this->focus_on_first()
+            : this->focus_on_last());
+        }
+        return false;
+    }
+
+    bool _focus_on_impl(OptionTab dtab, std::size_t n)
+    {
+        Widget * w = this->child_list[n];
+        if (w->tab_flag == NORMAL_TAB) {
+            w->has_focus = true;
+            w->notify_self(NOTIFY_FOCUS_BEGIN);
+            w->notify_parent(FOCUS_BEGIN);
+            return true;
+        } else if (w->tab_flag & DELEGATE_CONTROL_TAB) {
+            WidgetComposite* wi = static_cast<WidgetComposite*>(w);
+            if (dtab == REWIND_TAB? wi->focus_on_first():wi->focus_on_last()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool focus_on_first()
+    {
+        size_t size = this->child_list.size();
+        for (size_t n = 0; n < size; ++n) {
+            if (this->_focus_on_impl(REWIND_TAB, n)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool focus_on_last()
+    {
+        size_t size = this->child_list.size();
+        while (0 < size--) {
+            if (this->_focus_on_impl(REWIND_BACKTAB, size)) {
+                return true;
+            }
         }
         return false;
     }
@@ -137,33 +223,18 @@ public:
     {
         if (event == WM_DRAW){
             this->refresh(Rect(0,0,this->rect.cx, this->rect.cy));
-//         } else if (event == KEYDOWN) {
-//             size_t idx = this->direct_idx_focused();
-//             if (idx != -1u) {
-//                 for (size_t n = 0; n < idx; ++n) {
-//                     Widget * w = this->child_list[n];
-//                     if (w->tab_flag == NORMAL_TAB) {
-//                         idx = n;
-//                         break;
-//                     } else if (w->tab_flag == DELEGATE_CONTROL_TAB) {
-//                         w->send_event(event, param, param2, keymap);
-//                         break;
-//                     }
-//                 }
-//                 size_t idx_next = idx+1 == this->child_list.size() ? 0 : idx+1;
-//
-//             }
-//             switch (keymap->top_kevent()) {
-//                 case Keymap2::KEVENT_TAB:
-//
-//                     break;
-//                 case Keymap2::KEVENT_BACKTAB:
-//
-//                     break;
-//                 default:
-//                     this->send_event_to_children(event, param, param2, keymap);
-//                     break;
-//             }
+        } else if (event == KEYDOWN && this->tab_flag != IGNORE_TAB) {
+            switch (keymap->top_kevent()) {
+                case Keymap2::KEVENT_TAB:
+                    this->control_tab(REWIND_TAB);
+                    break;
+                case Keymap2::KEVENT_BACKTAB:
+                    this->control_tab(REWIND_BACKTAB);
+                    break;
+                default:
+                    this->send_event_to_children(event, param, param2, keymap);
+                    break;
+            }
         } else {
             this->send_event_to_children(event, param, param2, keymap);
         }
@@ -171,27 +242,59 @@ public:
 
     virtual void notify(int id, EventType event)
     {
-        if (event == FOCUS_BEGIN && this->has_focus == true){
-            this->notify_self(event);
+        if (event == FOCUS_BEGIN){
+            for (std::size_t i = 0; i < this->child_list.size(); ++i)
+            {
+                Widget * wchild = this->child_list[i];
+                if (wchild->has_focus && wchild->id != id) {
+                    wchild->has_focus = false;
+                    wchild->notify_self(NOTIFY_FOCUS_END);
+                }
+            }
+            if (false == this->has_focus) {
+                this->has_focus = true;
+                this->notify_parent(FOCUS_BEGIN);
+            }
         } else {
             this->Widget::notify(id, event);
         }
     }
 
-    virtual void draw(const Rect& rect, int16_t x_screen, int16_t y_screen, const Rect& clip_screen)
+    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip)
     {
         Region region;
         region.rects.push_back(rect);
+        Rect clip(xclip, yclip, rect.cx, rect.cy);
         for (std::size_t i = 0; i < this->child_list.size(); ++i) {
-            Widget *p = this->child_list[i];
-            Rect tmp = rect.intersect(p->rect);
+            Widget *w = this->child_list[i];
+            Rect tmp = rect.intersect(w->rect);
             if (!tmp.isempty()){
                 region.subtract_rect(tmp);
-                this->refresh_child(p, Rect(0, 0, tmp.cx, tmp.cy), x_screen, y_screen, clip_screen);
+                if (w->drawable) {
+                    Rect wrect(tmp.x - w->rect.x, tmp.y - w->rect.y, tmp.cx, tmp.cy);
+                    if (!wrect.isempty()){
+                        Rect new_clip = clip.intersect(Rect(
+                            x + w->rect.x + wrect.x,
+                            y + w->rect.y + wrect.y,
+                            wrect.cx,
+                            wrect.cy
+                        ));
+                        if (!new_clip.isempty()) {
+                            w->drawable->begin_update();
+                            w->draw(wrect, x + w->rect.x, y + w->rect.y, new_clip.x, new_clip.y);
+                            w->drawable->end_update();
+                        }
+                    }
+                }
             }
         }
         for (size_t i = 0, max = region.rects.size(); i < max; ++i) {
-            this->Widget::draw(region.rects[i], x_screen, y_screen, clip_screen);
+            this->drawable->draw(
+                RDPOpaqueRect(
+                    region.rects[i].offset(x,y),
+                    this->bg_color
+                ), clip
+            );
         }
     }
 

@@ -21,13 +21,12 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_EDIT_HPP_)
 #define REDEMPTION_MOD_WIDGET2_EDIT_HPP_
 
-#include "widget.hpp"
+#include "label.hpp"
 #include <keymap2.hpp>
 
-class WidgetEdit : public Widget
+class WidgetEdit : public WidgetLabel
 {
 public:
-    char buffer[256];
     size_t buffer_size;
     size_t num_chars;
     size_t edit_buffer_pos;
@@ -36,17 +35,15 @@ public:
     size_t prev_cursor_px_pos;
     bool remove_cursor;
     int h_text;
-    ModApi::ContextText * context_text;
 
 public:
-    WidgetEdit(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier, const char * text, size_t edit_position, int id = 0)
-    : Widget(drawable, rect, parent, Widget::TYPE_EDIT, notifier, id)
+    WidgetEdit(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier, const char * text, size_t edit_position, int id = 0, int xtext = 0, int ytext = 0)
+    : WidgetLabel(drawable, rect, parent, notifier, text, id, xtext, ytext)
     , remove_cursor(false)
     , h_text(0)
-    , context_text(0)
     {
-        if (text){
-            strncpy(this->buffer, text, 255);
+        this->type = Widget::TYPE_EDIT;
+        if (text) {
             this->buffer_size = strlen(text);
             this->num_chars = UTF8Len(this->buffer);
             this->edit_pos = std::min(this->num_chars, edit_position);
@@ -59,10 +56,8 @@ public:
                 this->drawable->text_metrics(this->buffer, w, this->h_text);
                 this->buffer[this->edit_buffer_pos] = c;
                 this->cursor_px_pos = w;
-                this->context_text = this->drawable->create_context_text(this->buffer);
             }
         } else {
-            this->buffer[0] = 0;
             this->buffer_size = 0;
             this->num_chars = 0;
             this->edit_buffer_pos = 0;
@@ -73,20 +68,17 @@ public:
 
     virtual ~WidgetEdit()
     {
-        delete this->context_text;
     }
 
-    virtual void draw(const Rect& rect, int16_t x_screen, int16_t y_screen, const Rect& clip_screen)
+    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip)
     {
+        Rect clip_screen(xclip, yclip, rect.cx, rect.cy);
         if (this->remove_cursor){
-            this->clear_cursor(x_screen, y_screen, clip_screen);
+            this->clear_cursor(x, y, clip_screen);
             this->remove_cursor = false;
         }
-        this->Widget::draw(rect, x_screen, y_screen, clip_screen);
-        if (this->context_text) {
-            this->context_text->draw_in(this->drawable, rect, x_screen, y_screen, clip_screen, ~this->bg_color);
-        }
-        this->draw_cursor(x_screen, y_screen, clip_screen);
+        this->WidgetLabel::draw(rect, x, y, xclip, yclip);
+        this->draw_cursor(x, y, clip_screen);
     }
 
     void draw_cursor(int16_t x_screen, int16_t y_screen, const Rect& clip_screen)
@@ -227,8 +219,7 @@ public:
                             this->num_chars++;
                             this->reload_context_text();
                             this->notify_self(NOTIFY_TEXT_CHANGED);
-                            this->remove_cursor = true;
-                            this->refresh(Rect(this->prev_cursor_px_pos, 0, this->cursor_px_pos-this->prev_cursor_px_pos, this->h_text));
+                            this->refresh(Rect(this->prev_cursor_px_pos, 0, this->cursor_px_pos-this->prev_cursor_px_pos+2, this->h_text));
                         }
                     }
                     break;

@@ -26,7 +26,6 @@
 
 #define LOGNULL
 #include <string>
-#include <sstream>
 #include <boost/lexical_cast.hpp>
 #include <widget2/window.hpp>
 #include <widget2/screen.hpp>
@@ -34,6 +33,8 @@
 #include <widget2/button.hpp>
 #include <widget2/label.hpp>
 #include <widget2/window_login.hpp>
+#include <widget2/image.hpp>
+#include <widget2/window_box.hpp>
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "png.hpp"
@@ -62,8 +63,8 @@ struct TestDraw : ModApi
     RDPDrawable gd;
     Font font;
 
-    TestDraw()
-    : gd(1000,1000,true)
+    TestDraw(uint16_t width = 1000, uint16_t height = 1000)
+    : gd(width, height, true)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
@@ -100,27 +101,6 @@ struct TestDraw : ModApi
     virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip)
     {
         gd.draw(cmd, clip);
-//         if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()){
-//             RDPGlyphIndex new_cmd = cmd;
-//             if (this->client_info.bpp != this->mod_bpp){
-//                 const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-//                 const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-//                 new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
-//                 new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
-//             }
-//
-//             // this may change the brush and send it to to remote cache
-//             this->cache_brush(new_cmd.brush);
-//
-//             this->orders->draw(new_cmd, clip);
-//
-//             if (this->capture){
-//                 RDPGlyphIndex new_cmd24 = cmd;
-//                 new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-//                 new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-//                 this->capture->draw(new_cmd24, clip);
-//             }
-//         }
     }
 
     virtual void draw(const RDPBrushCache& cmd)
@@ -153,9 +133,15 @@ struct TestDraw : ModApi
         : ModApi::ContextText()
         {}
 
-        virtual void draw_in(ModApi* drawable, const Rect& rect, int16_t x_screen, int16_t y_screen, const Rect&  clip_screen, int color)
+        virtual void draw_in(ModApi* drawable, const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip, int color)
         {
-            Rect clip = clip_screen.intersect(rect.offset(x_screen, y_screen));
+            Rect clip(
+                std::max<int16_t>(rect.x + x, xclip),
+                std::max<int16_t>(rect.y + y, yclip),
+                std::min<int>(rect.x, xclip) + rect.cx,
+                std::min<int>(rect.y, yclip) + rect.cy
+            );
+
             if (clip.isempty()) {
                 return ;
             }
@@ -163,7 +149,7 @@ struct TestDraw : ModApi
                 Rect rectd = rect.intersect(this->rects[i]);
                 if (!rectd.isempty()) {
                     drawable->draw(
-                        RDPOpaqueRect(rectd.offset(x_screen, y_screen), color),
+                        RDPOpaqueRect(rectd.offset(x, y), color),
                         clip
                     );
                 }
@@ -208,7 +194,7 @@ struct TestDraw : ModApi
         return ret;
     }
 
-    virtual void server_draw_text(uint16_t x, uint16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
+    virtual void server_draw_text(int x, int y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
     {
         this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
     }
@@ -258,6 +244,46 @@ struct TestWidget
 };
 
 
+void save_to_png(TestDraw & drawable, const char * filename)
+{
+    std::FILE * file = fopen(filename, "w+");
+    dump_png24(file, drawable.gd.drawable.data, drawable.gd.drawable.width,
+               drawable.gd.drawable.height, drawable.gd.drawable.rowsize);
+    fclose(file);
+}
+
+inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
+                      char * message, const char * shasig)
+{
+    uint8_t sig[20];
+    SslSha1 sha1;
+    for (size_t y = 0; y < (size_t)height; y++){
+        sha1.update(data + y * len, len);
+    }
+    sha1.final(sig);
+
+    if (memcmp(shasig, sig, 20)){
+        sprintf(message, "Expected signature: \""
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
+        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
+        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
+        sig[ 8], sig[ 9], sig[10], sig[11],
+        sig[12], sig[13], sig[14], sig[15],
+        sig[16], sig[17], sig[18], sig[19]);
+        return false;
+    }
+    return true;
+}
+
+inline bool check_sig(Drawable & data, char * message, const char * shasig)
+{
+    return check_sig(data.data, data.height, data.rowsize, message, shasig);
+}
+
 BOOST_AUTO_TEST_CASE(TraceWidgetAtPos)
 {
     TestWidget w;
@@ -294,53 +320,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFocus)
     BOOST_CHECK(!w.w1.has_focus && w.w2.has_focus && !w.w3.has_focus);
 
     BOOST_CHECK(notify.s ==
-        "event: 0 -- id: 3, type: 3\n" //FOCUS_END
-        "event: 1 -- id: 2, type: 5\n" //FOCUS_BEGIN
-        "event: 0 -- id: 1, type: 6\n" //FOCUS_END
-        "event: 1 -- id: 3, type: 3\n" //FOCUS_BEGIN
-        "event: 0 -- id: 2, type: 5\n" //FOCUS_END
-        "event: 1 -- id: 1, type: 6\n" //FOCUS_BEGIN
+        "event: 0 -- id: 3, type: 8\n" //FOCUS_END
+        "event: 1 -- id: 2, type: 12\n" //FOCUS_BEGIN
+        "event: 0 -- id: 1, type: 14\n" //FOCUS_END
+        "event: 1 -- id: 3, type: 8\n" //FOCUS_BEGIN
+        "event: 0 -- id: 2, type: 12\n" //FOCUS_END
+        "event: 1 -- id: 1, type: 14\n" //FOCUS_BEGIN
     );
-}
-
-inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
-                      char * message, const char * shasig)
-{
-    uint8_t sig[20];
-    SslSha1 sha1;
-    for (size_t y = 0; y < (size_t)height; y++){
-        sha1.update(data + y * len, len);
-    }
-    sha1.final(sig);
-
-    if (memcmp(shasig, sig, 20)){
-        sprintf(message, "Expected signature: \""
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
-        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
-        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
-        sig[ 8], sig[ 9], sig[10], sig[11],
-        sig[12], sig[13], sig[14], sig[15],
-        sig[16], sig[17], sig[18], sig[19]);
-        return false;
-    }
-    return true;
-}
-
-void save_to_png(TestDraw & drawable, const char * filename)
-{
-    std::FILE * file = fopen(filename, "w+");
-    dump_png24(file, drawable.gd.drawable.data, drawable.gd.drawable.width,
-               drawable.gd.drawable.height, drawable.gd.drawable.rowsize);
-    fclose(file);
-}
-
-inline bool check_sig(Drawable & data, char * message, const char * shasig)
-{
-    return check_sig(data.data, data.height, data.rowsize, message, shasig);
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetDraw)
@@ -353,12 +339,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDraw)
     w.screen.send_event(WM_DRAW, 0, 0, 0);
     //or w.screen.refresh(w.screen.rect);
 
-    save_to_png(drawable, "/tmp/a.png");
+    //save_to_png(drawable, "/tmp/a.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xe8\xa8\xab\x23\xfd\x71\x02\xd9\x3a\x34"
-        "\x15\xd7\xfa\x1c\xef\x9b\x5d\x17\x0e\x92")){
+        "\x1b\xe0\x4c\x5c\x0c\x50\x2a\x4d\x97\x0a"
+        "\x0b\x13\x87\x90\xed\xa2\xad\x3b\x10\x75")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -375,14 +361,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     keymap.push_char('a');
     w.screen.send_event(KEYDOWN, 0, 0, &keymap);
     BOOST_CHECK(notify.s ==
-      "event: 11 -- id: 2, type: 5\n");
+      "event: 11 -- id: 2, type: 12\n");
 
-    save_to_png(drawable, "/tmp/b.png");
+    //save_to_png(drawable, "/tmp/b.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xc5\x25\xac\x94\xb2\xeb\xa9\x9b\xf3\xcf"
-        "\xae\x5e\x43\xa0\xbd\x6e\xe7\x7c\x42\xea")){
+        "\xfb\x3b\xb8\x94\x35\x80\x99\x64\xe1\xa3"
+        "\xfd\x4a\xfe\xdf\x79\xe6\x93\x14\x2e\x5f")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -403,30 +389,128 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
     BOOST_CHECK(notify.s ==
         "event: 12 -- id: 0, type: 1\n");
 
-    save_to_png(drawable, "/tmp/c.png");
+    //save_to_png(drawable, "/tmp/c.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x4d\x19\xc1\xb4\x38\x3c\x0d\x72\x45\x9c"
-        "\xf7\x9a\xed\x05\x13\xb5\xdc\x35\xf0\x2e")){
+        "\x5b\x94\x8d\x26\xe9\x23\x04\xbb\xa4\xf8"
+        "\x9f\xf1\x61\xd3\x66\x39\x0e\x02\x6b\x0d")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
 BOOST_AUTO_TEST_CASE(TraceDrawText)
 {
-    TestDraw drawable;
+    TestDraw drawable(100,100);
     WidgetScreen screen(&drawable, 100, 100, 0);
     screen.refresh(screen.rect);
 
     drawable.server_draw_text(10,10, "plop", WHITE, 55555, Rect(0,0,27,20));
     drawable.server_draw_text(10,30, "une phrase", BLACK, 55555, screen.rect);
-    save_to_png(drawable, "/tmp/d.png");
+    drawable.server_draw_text(-10,50, "une phrase", BLACK, 55555, screen.rect);
+
+    //save_to_png(drawable, "/tmp/d.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x4f\x6b\x5d\xfb\x56\x39\x8b\x0e\x19\x19"
-        "\xa7\xdc\x44\x88\xdd\xe2\xaf\xca\x12\xa3")){
+        "\xe4\x6b\x5f\x8f\xb4\xc2\xda\x61\x28\xd6"
+        "\x9f\x9e\x9b\x4f\xb4\x0c\xb9\xaa\x1a\xcf")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
+// void show_focus(std::ostream& out, Widget * w)
+// {
+//     out << "w->id: " << w->id << ' ' << w->has_focus << '\n';
+//     if (w->type & Widget::TYPE_WND) {
+//         WidgetComposite * win = static_cast<WidgetComposite*>(w);
+//         for (size_t i = 0; i < win->child_list.size(); ++i) {
+//             show_focus(out, win->child_list[i]);
+//         }
+//     }
+// }
+
+BOOST_AUTO_TEST_CASE(WidgetFocusTrace)
+{
+    TestNotify notify;
+    WidgetScreen screen(0, 1000, 1000, &notify);
+    Window win(0, Rect(30,30, 50, 50), &screen, &notify, "Fenêtre 1",1);
+    WidgetLabel w1(0, Rect(10, 40, 10, 10), &win, &notify, "text", 2);
+    Window win2(0, Rect(100,100, 800, 600), &win, &notify, "Fenêtre 1",3);
+    WidgetEdit w2(0, Rect(50, 40, 120, 45), &win2, &notify, "plop", 4, 4);
+    WidgetButton w3(0, Rect(100, 400, 10, 10), &win2, &notify, "submit", 5);
+    win.has_focus = true;
+    w1.has_focus = true;
+
+    Keymap2 keymap;
+    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    screen.send_event(KEYDOWN, 0, 0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    screen.send_event(KEYDOWN, 0, 0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    screen.send_event(KEYDOWN, 0, 0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    screen.send_event(KEYDOWN, 0, 0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    screen.send_event(KEYDOWN, 0, 0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    screen.send_event(KEYDOWN, 0, 0, &keymap);
+    //std::ostringstream oss;
+    //show_focus(oss, &screen);
+
+    BOOST_CHECK(notify.s ==
+        "event: 0 -- id: 4, type: 12\n"
+        "event: 1 -- id: 2, type: 14\n"
+        "event: 0 -- id: 5, type: 8\n"
+        "event: 1 -- id: 4, type: 12\n"
+        "event: 0 -- id: 2, type: 14\n"
+        "event: 1 -- id: 3, type: 1\n"
+        "event: 0 -- id: 4, type: 12\n"
+        "event: 1 -- id: 5, type: 8\n"
+        "event: 1 -- id: 2, type: 14\n"
+        "event: 0 -- id: 5, type: 8\n"
+        "event: 1 -- id: 4, type: 12\n"
+        "event: 0 -- id: 2, type: 14\n"
+        "event: 1 -- id: 3, type: 1\n"
+    );
+}
+
+BOOST_AUTO_TEST_CASE(TraceDrawImage)
+{
+    TestDraw drawable(1000,1000);
+    WidgetScreen screen(&drawable, 1000, 1000, 0);
+    screen.bg_color = 12212;
+    WidgetImage image1(&drawable, 0, 0, FIXTURES_PATH"/logo-redemption.bmp", &screen, 0);
+    WidgetImage image2(&drawable, 0, 100, FIXTURES_PATH"/logo-redemption.bmp", &screen, 0);
+    WidgetImage image3(&drawable, -100, 500, FIXTURES_PATH"/logo-redemption.bmp", &screen, 0);
+    screen.refresh(screen.rect);
+
+    //save_to_png(drawable, "/tmp/e.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x4a\xbe\xa7\xe2\x7a\xdf\x0f\xc9\xf3\x6d"
+        "\x48\x94\xb5\x01\xaa\xa2\x84\xb6\xb0\x22")){
+            BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TraceWindowBox)
+{
+    TestDraw drawable;
+    WidgetScreen screen(&drawable, 500, 500, 0);
+    WindowBox win(&drawable, Rect(50, 50, 300, 400), &screen, 0, "WindowBox");
+    win.bg_color = 10000000;
+    win.titlebar.bg_color = 322425;
+
+    screen.refresh(screen.rect);
+
+    //save_to_png(drawable, "/tmp/f.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x6f\x2c\x85\xd6\xa5\xc9\x72\xb3\x0a\x0b"
+        "\x2d\x40\x2e\x68\x17\xbc\x17\x18\xbc\xb9")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
