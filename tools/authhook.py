@@ -154,15 +154,13 @@ class Authentifier(object):
             return False
 
         p = iter(_data.split('\n'))
-        self.dic.update(dict((x, y) for x, y in zip(p, p) if (x[:6] != 'trans_')))
+        self.dic.update(dict((x, y if not y.startswith('!') else y[1:]) for x, y in zip(p, p) if (x[:6] != 'trans_')))
         print(self.dic)
 
 
         answer = {'authenticated': 'false'}
         _login = self.dic.get('login')
         if _login[:3] != 'ASK':
-            if _login.startswith('!'):
-                _login = _login[1:]
             for user in self.users:
                 if user.name == _login:
                     _password = self.dic.get('password')
