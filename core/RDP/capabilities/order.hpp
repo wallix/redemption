@@ -384,8 +384,21 @@ struct OrderCaps : public Capability {
         stream.out_uint16_le(this->pad2octetsE);
     }
 
-    void recv(Stream & stream, uint16_t len){
+    void recv(Stream & stream, uint16_t len) throw(Error){
         this->len = len;
+
+        /* terminalDescriptor(16) + pad4octetsA(4) + desktopSaveXGranularity(2) + desktopSaveYGranularity(2) +
+         * pad2octetsA(2) + maximumOrderLevel(2) + numberFonts(2) + orderFlags(2) + orderSupport(NB_ORDER_SUPPORT) +
+         * textFlags(2) + orderSupportExFlags(2) + pad4octetsB(4) + desktopSaveSize(4) + pad2octetsC(2) +
+         * pad2octetsD(2) + textANSICodePage(2) + pad2octetsE(2)
+         */
+        unsigned expected = 32 + NB_ORDER_SUPPORT + 20;
+        if (!stream.in_check_rem(expected)){
+            LOG(LOG_ERR, "Truncated OrderCaps, need=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
         stream.in_copy_bytes(this->terminalDescriptor, 16);
         this->pad4octetsA = stream.in_uint32_le();
         this->desktopSaveXGranularity = stream.in_uint16_le();

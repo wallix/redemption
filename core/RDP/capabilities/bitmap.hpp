@@ -175,8 +175,20 @@ struct BitmapCaps : public Capability {
         stream.out_uint16_le(this->pad2octetsB);
     }
 
-    void recv(Stream & stream, uint16_t len){
+    void recv(Stream & stream, uint16_t len) throw(Error){
         this->len = len;
+
+        /* preferredBitsPerPixel(2) + receive1BitPerPixel(2) + receive4BitsPerPixel(2) + receive8BitsPerPixel(2) +
+         * desktopWidth(2) + desktopHeight(2) + pad2octets(2) + desktopResizeFlag(2) + bitmapCompressionFlag(2) +
+         * highColorFlags(1) + drawingFlags(1) + multipleRectangleSupport(2) + pad2octetsB(2)
+         */
+        unsigned expected = 24;
+        if (!stream.in_check_rem(expected)){
+            LOG(LOG_ERR, "Truncated BitmapCaps, need=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
         this->preferredBitsPerPixel = stream.in_uint16_le();
         this->receive1BitPerPixel = stream.in_uint16_le();
         this->receive4BitsPerPixel = stream.in_uint16_le();

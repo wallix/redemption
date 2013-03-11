@@ -664,19 +664,26 @@ enum {
         SecExchangePacket_Recv(Stream & stream, uint16_t available_len) 
             : payload(stream)
         {
+            unsigned expected = 8; /* basicSecurityHeader(4) + length(4) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated SEC_EXCHANGE_PKT, expected=%u remains %u",
+                   expected, stream.in_remain());
+                throw Error(ERR_SEC);
+            }
+
             this->basicSecurityHeader = stream.in_uint32_le() & 0xFFFF;
 
-            if (!(this->basicSecurityHeader & SEC::SEC_EXCHANGE_PKT)) {
-                LOG(LOG_ERR, "Expecting SEC::SEC_EXCHANGE_PKT, got (%x)", this->basicSecurityHeader);
+            if (!(this->basicSecurityHeader & SEC_EXCHANGE_PKT)) {
+                LOG(LOG_ERR, "Expecting SEC_EXCHANGE_PKT, got (%x)", this->basicSecurityHeader);
                 throw Error(ERR_SEC);
             }
             uint32_t length = stream.in_uint32_le();
             if (length + 8 != available_len){
                 LOG(LOG_ERR, "Bad SEC_EXCHANGE_PKT length, header say length=%u available=%u", length, available_len-8);
             }
-            this->payload.resize(stream, stream.end - stream.p);
+            this->payload.resize(stream, stream.in_remain());
             if (this->payload.size() != 64 + 8){
-                LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %u", this->payload.size());
+                LOG(LOG_INFO, "Expecting SEC_EXCHANGE_PKT crypt length=64, got %u", this->payload.size()-8);
                 throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
             }
         }
@@ -702,6 +709,13 @@ enum {
         SecInfoPacket_Recv(Stream & stream, uint16_t available_len, CryptContext & crypt)
         : payload(stream, 4 + 8)
         {
+            unsigned expected = 12; /* basicSecurityHeader(4) + signature(8) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated SEC_INFO_PKT, expected=%u remains %u",
+                   expected, stream.in_remain());
+                throw Error(ERR_SEC);
+            }
+
             this->basicSecurityHeader = stream.in_uint32_le() & 0xFFFF;
             if (0 == (this->basicSecurityHeader & SEC::SEC_INFO_PKT)){
                 LOG(LOG_INFO, "SEC_INFO_PKT expected, got %x", this->basicSecurityHeader);
@@ -712,11 +726,10 @@ enum {
 
             // skip signature
             stream.in_skip_bytes(8);
-            this->payload.resize(stream, stream.end - stream.p);
+            this->payload.resize(stream, stream.in_remain());
             
             // decrypting to the end of tpdu
             SubStream data(this->payload, 0, this->payload.in_remain());
-//            crypt.decrypt(this->payload.data, this->payload.end - this->payload.p);
             crypt.decrypt(data);
         }
     };
@@ -754,7 +767,7 @@ enum {
 
                 TODO(" shouldn't we check signature ?")
                 stream.in_skip_bytes(8); /* signature */
-                this->payload.resize(stream, stream.end - stream.p);
+                this->payload.resize(stream, stream.in_remain());
                 if (this->verbose >= 0x200){
                     LOG(LOG_INFO, "Receiving encrypted TPDU");
                     hexdump_c((char*)payload.data, payload.size());
@@ -766,7 +779,7 @@ enum {
                 }
             }
             else {
-                this->payload.resize(stream, stream.end - stream.p);
+                this->payload.resize(stream, stream.in_remain());
             }
         }
     };

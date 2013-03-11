@@ -958,7 +958,7 @@ struct InfoPacket {
             this->extendedInfoPacket.reserved2 = stream.in_uint16_le();
          }
          if (stream.p != stream.end){
-            LOG(LOG_ERR, "Trailing data in InfoPacket %d bytes", (signed)(stream.end - stream.p));
+            LOG(LOG_ERR, "Trailing data in InfoPacket %d bytes", (signed)stream.in_remain());
          }
     } // END FUNCT : recv()
 

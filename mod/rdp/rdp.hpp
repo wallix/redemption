@@ -290,15 +290,15 @@ struct mod_rdp : public client_mod {
 
     virtual void send_to_mod_channel(
                 const char * const front_channel_name,
-                uint8_t * data,
+                Stream & chunk,
                 size_t length,
-                size_t chunk_size,
                 uint32_t flags)
     {
         if (this->verbose & 16){
             LOG(LOG_INFO, "mod_rdp::send_to_mod_channel");
             LOG(LOG_INFO, "sending to channel %s", front_channel_name); 
         }
+
         const ChannelDef * mod_channel = this->mod_channel_list.get(front_channel_name);
         // send it if module has a matching channel, if no matching channel is found just forget it
         if (mod_channel){
@@ -306,7 +306,7 @@ struct mod_rdp : public client_mod {
                 int index = this->mod_channel_list.get_index(front_channel_name);
                 mod_channel->log(index);
             }
-            this->send_to_channel(*mod_channel, data, length, chunk_size, flags);
+            this->send_to_channel(*mod_channel, chunk, length, flags);
         }
 
         if (this->verbose & 16){
@@ -343,13 +343,12 @@ struct mod_rdp : public client_mod {
 
     void send_to_channel(
                 const ChannelDef & channel,
-                uint8_t * data,
+                Stream & chunk,
                 size_t length,
-                size_t chunk_size,
                 uint32_t flags)
     {
         if (this->verbose & 16){
-            LOG(LOG_INFO, "mod_rdp::send_to_channel");
+            LOG(LOG_INFO, "mod_rdp::send_to_channel length=%u chunk_size=%u", (unsigned)length, (unsigned)chunk.size());
             channel.log(-1);
         }
 
@@ -360,7 +359,7 @@ struct mod_rdp : public client_mod {
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
             flags |= ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
-        stream.out_copy_bytes(data, chunk_size);
+        stream.out_copy_bytes(chunk.data, chunk.size());
         stream.mark_end();
 
         BStream x224_header(256);
@@ -1308,7 +1307,7 @@ struct mod_rdp : public client_mod {
 
                 uint32_t length = sec.payload.in_uint32_le();
                 int flags = sec.payload.in_uint32_le();
-                size_t chunk_size = sec.payload.end - sec.payload.p;
+                size_t chunk_size = sec.payload.in_remain();
 
                 // If channel name is our virtual channel, then don't send data to front
                 if (this->auth_channel[0] && this->sesman && !strcmp(mod_channel.name, this->auth_channel)){
@@ -2875,8 +2874,8 @@ struct mod_rdp : public client_mod {
                 case CAPSTYPE_ORDER:
                 {
                     OrderCaps order_caps;
-                    order_caps.log("Received from server");
                     order_caps.recv(stream, capset_length);
+                    order_caps.log("Received from server");
                     break;
                 }
                 default:

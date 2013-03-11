@@ -853,7 +853,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             out_s.out_clear_bytes(4);
             out_s.mark_end();
 
-            size_t length = out_s.end - out_s.data;
+            size_t length = out_s.size();
 
             size_t chunk_size = length < ChannelDef::CHANNEL_CHUNK_LENGTH ? length : ChannelDef::CHANNEL_CHUNK_LENGTH;
 
@@ -900,7 +900,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         " If clip_data_size is large is will also allocate an undecent amoutn of memory")
 
         // NB : Whether the clipboard is available or not, read the incoming data to prevent a jam in transport layer
-        // Store the clipboard into *clip_data*, data length will be (clip_data.end - clip_data.data)
+        // Store the clipboard into *clip_data*, data length will be (clip_data.size())
         BStream stream(32768);
         this->t->recv(&stream.end, 7);
         stream.in_skip_bytes(3);
@@ -947,7 +947,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             out_s.out_clear_bytes(4);
             out_s.mark_end();
 
-            size_t length = out_s.end - out_s.data;
+            size_t length = out_s.size();
 
             size_t chunk_size = length < ChannelDef::CHANNEL_CHUNK_LENGTH ? length : ChannelDef::CHANNEL_CHUNK_LENGTH;
 
@@ -967,9 +967,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
     //==============================================================================================================
     virtual void send_to_mod_channel( const char * const front_channel_name
-                                    , uint8_t * data
+                                    , Stream & chunk
                                     , size_t length
-                                    , size_t chunk_size
                                     , uint32_t flags
                                     )
     //==============================================================================================================
@@ -983,7 +982,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
         // send it if module has a matching channel, if no matching channel is found just forget it
         if (mod_channel){
-            this->send_to_vnc(*mod_channel, data, length, chunk_size, flags);
+            this->send_to_vnc(*mod_channel, chunk, length, flags);
         }
         if (this->verbose){
             LOG(LOG_INFO, "mod_vnc::send_to_mod_channel done");
@@ -993,40 +992,60 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
     //==============================================================================================================
     void send_to_vnc( const ChannelDef & channel
-                        , uint8_t * data
+                        , Stream & chunk
                         , size_t length
-                        , size_t chunk_size
                         , uint32_t flags
                         )
     //==============================================================================================================
     {
         if (this->verbose){
-            LOG(LOG_INFO, "mod_vnc::send_to_vnc length=%u chunk_size=%u", (unsigned)length, (unsigned)chunk_size);
+            LOG(LOG_INFO, "mod_vnc::send_to_vnc length=%u chunk_size=%u", (unsigned)length, (unsigned)chunk.size());
         }
+
         // specific treatement depending on msgType
-        BStream stream(chunk_size);
+        BStream stream(chunk.size());
         TODO("Avoid useless buffer copy, parse data (we shoudl probably pass a (sub)stream instead)")
-        memcpy(stream.data, data, chunk_size);
+        stream.out_copy_bytes(chunk.data, chunk.size());
+
+        if (!stream.in_check_rem(2)){
+            LOG(LOG_INFO, "mod_vnc::send_to_vnc truncated msgType, need=2 remains=%u",
+                stream.in_remain());
+            throw Error(ERR_VNC);
+        }
+
         uint16_t msgType = stream.in_uint16_le();
 
         switch (msgType) {
-
             // Client notify that a copy operation have occured. Two operations should be done :
             //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
             //  - Only if clipboard content formats list include UNICODETEXT: send a request for it in that format
             case ChannelDef::CB_FORMAT_LIST:
             {
                 // Always coming from front
-                LOG( LOG_INFO, "mod_vnc::send_to_vnc - receiving CB_FORMAT_LIST" );
+                LOG(LOG_INFO, "mod_vnc::send_to_vnc - receiving CB_FORMAT_LIST");
                 bool isTextCB = false;
+
+                unsigned expected = 6; /* msgFlags(2) + dataLen(4) */
+                if (!stream.in_check_rem(expected)){
+                    LOG(LOG_INFO, "mod_vnc::send_to_vnc truncated CB_FORMAT_LIST data, need=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_VNC);
+                }
+
                 uint16_t msgFlags = stream.in_uint16_le();
                 uint32_t dataLen = stream.in_uint32_le();
 
                 // Parse PDU to find if clipboard data is available in a TEXT format for suitable VNC
-                for(int i = 0; i < (dataLen / 36); i++) {
+                for(uint32_t i = 0; i < (dataLen / 36); i++) {
+                    expected = 36; /* contentType(4) + ignored(32) */
+                    if (!stream.in_check_rem(expected)){
+                        LOG(LOG_INFO, "mod_vnc::send_to_vnc truncated CB_FORMAT_LIST clipboard data, need=%u remains=%u",
+                            expected, stream.in_remain());
+                        throw Error(ERR_VNC);
+                    }
                     uint32_t contentType = stream.in_uint32_le();
                     stream.in_skip_bytes(32); // skip format name
-                    if ( (contentType == CF_UNICODETEXT) || (contentType == CF_TEXT) ) {
+                    if ((contentType == CF_UNICODETEXT) || (contentType == CF_TEXT)) {
                         isTextCB = true;
                     }
                 }
@@ -1120,6 +1139,13 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             {
                 // Always coming from front ; Send back the clipboard buffer content
 
+                unsigned expected = 10; /* msgFlags(2) + datalen(4) + resquestedFormatId(4) */
+                if (!stream.in_check_rem(expected)){
+                    LOG(LOG_INFO, "mod_vnc::send_to_vnc truncated CB_FORMAT_DATA_REQUEST data, need=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_VNC);
+                }
+
                 // msgType = Format Data Request PDU
                 // This is a fake treatment that pretends to send the Request to VNC server.
                 // Instead, the RDP PDU is handled localy and the clipboard PDU, if any, is likewise built localy and sent back to front
@@ -1149,7 +1175,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     out_s.out_uint16_le(5);                    //  - MSG Type 2 bytes
                     out_s.out_uint16_le(1);                    //  - MSG flags 2 bytes
 
-                    size_t clipboard_payload_size = UTF8Check(this->clip_data.end, this->clip_data.end - this->clip_data.data);
+                    size_t clipboard_payload_size = UTF8Check(this->clip_data.end, this->clip_data.size());
                     // Ensure watchdog. In normal cases it will already be there
                     this->clip_data.end[clipboard_payload_size] = 0;
 
@@ -1165,7 +1191,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     out_s.set_out_uint32_le(end_of_data - start_of_data - 4, start_of_data);
                     out_s.mark_end();
 
-                    uint32_t length = out_s.end - out_s.data;
+                    uint32_t length = out_s.size();
                     size_t chunk_size = length < ChannelDef::CHANNEL_CHUNK_LENGTH ? length : ChannelDef::CHANNEL_CHUNK_LENGTH;
 
                     this->send_to_front_channel( "cliprdr"
@@ -1184,11 +1210,30 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             }
             case ChannelDef::CB_FORMAT_DATA_RESPONSE:
             {
+                if (!stream.in_check_rem(2)){
+                    LOG(LOG_INFO, "mod_vnc::send_to_vnc truncated CB_FORMAT_DATA_RESPONSE msgFlags, need=2 remains=%u",
+                        stream.in_remain());
+                    throw Error(ERR_VNC);
+                }
+
                 uint16_t msgFlags = stream.in_uint16_le();
                 if (msgFlags == 1) {
+                    if (!stream.in_check_rem(4)){
+                        LOG(LOG_INFO, "mod_vnc::send_to_vnc truncated CB_FORMAT_DATA_REQUEST dataLenU16, need=4 remains=%u",
+                            stream.in_remain());
+                        throw Error(ERR_VNC);
+                    }
+
+                    uint32_t dataLenU16 = stream.in_uint32_le();
+
+                    if (!stream.in_check_rem(dataLenU16)){
+                        LOG(LOG_INFO, "mod_vnc::send_to_vnc truncated CB_FORMAT_DATA_REQUEST dataU16, need=%u remains=%u",
+                            dataLenU16, stream.in_remain());
+                        throw Error(ERR_VNC);
+                    }
+
                     TODO("code below is broken for large buffers if we get a large stream if can't be stored "
                          "in only one PDU anyway, because PDU are limited to 64 bytes")
-                    uint32_t dataLenU16 = stream.in_uint32_le();
                     uint8_t dataU16[dataLenU16];
                     memset(dataU16, 0, sizeof(dataU16));
                     stream.in_copy_bytes(dataU16, dataLenU16);

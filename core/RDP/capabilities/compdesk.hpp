@@ -66,6 +66,13 @@ struct CompDeskCaps : public Capability {
 
     void recv(Stream & stream, uint16_t len){
         this->len = len;
+
+        if (!stream.in_check_rem(2)){
+            LOG(LOG_ERR, "Truncated CompDeskCaps, need=2 remains=%u",
+                stream.in_remain());
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
         this->CompDeskSupportLevel = stream.in_uint16_le();
     }
 

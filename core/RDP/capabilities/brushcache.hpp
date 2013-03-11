@@ -78,6 +78,13 @@ struct BrushCacheCaps : public Capability {
 
     void recv(Stream & stream, uint16_t len){
         this->len = len;
+
+        if (!stream.in_check_rem(4)){
+            LOG(LOG_ERR, "Truncated BrushCacheCaps, need=4 remains=%u",
+                stream.in_remain());
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
         this->brushSupportLevel = stream.in_uint32_le();
     }
 

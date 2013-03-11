@@ -118,8 +118,19 @@ struct BmpCacheCaps : public Capability {
         stream.out_uint16_le(this->cache2MaximumCellSize);
     }
 
-    void recv(Stream & stream, uint16_t len){
+    void recv(Stream & stream, uint16_t len) throw(Error){
         this->len = len;
+
+        /* pad1(4) + pad2(4) + pad3(4) + pad4(4) + pad5(4) + pad6(4) + cache0Entries(2) + cache0MaximumCellSize(2) +
+         * cache1Entries(2) + cache1MaximumCellSize(2) + cache2Entries(2) + cache2MaximumCellSize(2)
+         */
+        unsigned expected = 36;
+        if (!stream.in_check_rem(expected)){
+            LOG(LOG_ERR, "Truncated BmpCacheCaps, need=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
         this->pad1 = stream.in_uint32_le();
         this->pad2 = stream.in_uint32_le();
         this->pad3 = stream.in_uint32_le();

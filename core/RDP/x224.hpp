@@ -790,7 +790,8 @@ namespace X224
             this->rdp_neg_code = 0;
 
             uint8_t * end_of_header = stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
-            if (stream.end - stream.p >= 8){
+            /* rdp_neg_type(1) + rdp_neg_flags(1) + rdp_neg_length(2) + rdp_neg_code(4) */
+            if (stream.in_remain() >= 8){
                 this->rdp_neg_type = stream.in_uint8();
 
                 if ((this->rdp_neg_type != X224::RDP_NEG_FAILURE)

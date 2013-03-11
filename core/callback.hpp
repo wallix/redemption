@@ -64,7 +64,7 @@ enum {
 
 struct Callback
 {
-    virtual void send_to_mod_channel(const char * const front_channel_name, uint8_t * data, size_t length, size_t chunk_size, uint32_t flags)
+    virtual void send_to_mod_channel(const char * const front_channel_name, Stream & chunk, size_t length, uint32_t flags)
     {
     }
     virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) = 0;

@@ -160,9 +160,16 @@ struct ShareControl
     } // END METHOD emit_end
 
     //==============================================================================
-    void recv_begin()
+    void recv_begin() throw(Error)
     //==============================================================================
     {
+        unsigned expected = 4; /* len(2) + pdu_type1(2) */
+        if (!stream.in_check_rem(expected)){
+            LOG(LOG_ERR, "Truncated ShareControl packet, need=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_SEC);
+        }
+
         this->len = stream.in_uint16_le();
 
         this->pdu_type1 = stream.in_uint16_le() & 0xF;
@@ -172,12 +179,28 @@ struct ShareControl
             this->payload.resize(this->stream, 0);
             return;
         }
+
+        if (!stream.in_check_rem(2)){
+            LOG(LOG_ERR, "Truncated ShareControl packet mcs_channel, need=2 remains=%u",
+                stream.in_remain());
+            throw Error(ERR_SEC);
+        }
+
         this->mcs_channel = stream.in_uint16_le();
         if (this->len < 6){
             LOG(LOG_ERR, "ShareControl packet too short len=%u", this->len);
             throw Error(ERR_SEC);
         }
-        this->payload.resize(this->stream, this->len - 6);
+
+        size_t new_size = this->len - 6;
+
+        if (!stream.in_check_rem(new_size)){
+            LOG(LOG_ERR, "Truncated ShareControl packet mcs_channel, need=2 remains=%u",
+                stream.in_remain());
+            throw Error(ERR_SEC);
+        }
+
+        this->payload.resize(this->stream, new_size);
     } // END METHOD recv_begin
 
     //==============================================================================
@@ -185,7 +208,7 @@ struct ShareControl
     //==============================================================================
     {
         if (this->payload.p != this->payload.end){
-            LOG(LOG_ERR, "ShareControl: all payload data should have been consumed : len = %u size=%u remains %d", this->len, this->payload.size(), stream.end - stream.p);
+            LOG(LOG_ERR, "ShareControl: all payload data should have been consumed : len = %u size=%u remains %d", this->len, this->payload.size(), stream.in_remain());
             throw Error(ERR_SEC);
         }
     } // END METHOD recv_end
@@ -438,10 +461,14 @@ struct ShareData
     void recv_begin()
     //==============================================================================
     {
-        if (this->stream.end < this->stream.p + 12){
-            LOG(LOG_ERR, "sdata packet len too short: need 12, remains=%u", this->stream.end - this->stream.p);
+        /* share_id(4) + ignored(1) + streamid(1) + len(2) + pdutype2(1) + compressedType(1) + compressedLen(2) */
+        unsigned expected = 12;
+        if (!this->stream.in_check_rem(expected)){
+            LOG(LOG_ERR, "sdata packet len too short: need %u, remains=%u",
+                expected, this->stream.in_remain());
             throw Error(ERR_SEC);
         }
+
         this->share_id = stream.in_uint32_le();
         stream.in_uint8();
         this->streamid = stream.in_uint8();
@@ -449,16 +476,17 @@ struct ShareData
         this->pdutype2 = stream.in_uint8();
         this->compressedType = stream.in_uint8();
         this->compressedLen = stream.in_uint16_le();
-        this->payload.resize(this->stream, this->stream.end - this->stream.p);
+
+        this->payload.resize(this->stream, this->stream.in_remain());
     } // END METHOD recv_begin
 
     //==============================================================================
     void recv_end()
     //==============================================================================
     {
-        if (this->payload.p != this->payload.end){
+        if (!this->payload.check_end()){
             LOG(LOG_INFO, "ShareData : some payload data were not consumed len=%u compressedLen=%u remains1=%u remains=%u",
-                this->len, this->compressedLen, payload.end - payload.p, stream.end - stream.p);
+                this->len, this->compressedLen, payload.in_remain(), stream.in_remain());
                 throw Error(ERR_SEC);
       }
     } // END METHOD recv_end

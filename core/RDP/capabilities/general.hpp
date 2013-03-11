@@ -222,8 +222,20 @@ struct GeneralCaps : public Capability {
         TODO("Add support for server only flags refreshRectSupport and suppressOutputSupport")
     }
 
-    void recv(Stream & stream, uint16_t len){
+    void recv(Stream & stream, uint16_t len) throw(Error){
         this->len = len;
+
+        /* os_major(2) + os_minor(2) + protocolVersion(2) + pad1(2) + compressionType(2) +
+         * extraflags(2) + updateCapability(2) + remoteUnshare(2) + compressionLevel(2) +
+         * pad2(2)
+         */
+        unsigned expected = 20;
+        if (!stream.in_check_rem(expected)){
+            LOG(LOG_ERR, "Truncated GeneralCaps, need=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
         this->os_major = stream.in_uint16_le();
         this->os_minor = stream.in_uint16_le();
         this->protocolVersion = stream.in_uint16_le();

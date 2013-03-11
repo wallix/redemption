@@ -214,7 +214,7 @@ TODO("Pass font name as parameter in constructor")
 
             // Extract each character glyph
             for (int index = 32; index < NUM_GLYPHS ; index++) {
-                unsigned remaining = stream.end - stream.p;
+                unsigned remaining = stream.in_remain();
                 if (remaining < 1024){
                     if (size_to_read > 0){
                         TODO("Create a pack_left function in stream to do this")
@@ -279,7 +279,7 @@ TODO("Pass font name as parameter in constructor")
                 if (!stream.in_check_rem(datasize)) {
                     LOG(LOG_ERR
                        , "Error loading font %s: not enough data for definition of glyph %d (expected %d, got %d)\n"
-                       , file_path, index, datasize, (unsigned)(stream.end - stream.p)
+                       , file_path, index, datasize, (unsigned)stream.in_remain()
                        );
                     goto ErrorReadingFontFile;
                 }

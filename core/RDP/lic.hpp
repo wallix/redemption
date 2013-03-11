@@ -234,7 +234,7 @@ namespace LIC
         RecvFactory(Stream & stream)
         {
             if (!stream.in_check_rem(4)){
-                LOG(LOG_ERR, "Not enough data to read licence info header, need %u, got %u", 4, stream.end - stream.p);
+                LOG(LOG_ERR, "Not enough data to read licence info header, need %u, got %u", 4, stream.in_remain());
                 throw Error(ERR_LIC);
             }
             this->tag = stream.in_uint8();
@@ -721,17 +721,24 @@ namespace LIC
         uint8_t server_random[SEC_RANDOM_SIZE];
 
         LicenseRequest_Recv(Stream & stream){
+            unsigned expected = 4 + SEC_RANDOM_SIZE; /* tag(1) + flags(1) + wMsgSize(2) + server_random(SEC_RANDOM_SIZE) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated License Request_Recv: need %u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+
             this->tag = stream.in_uint8();
             this->flags = stream.in_uint8();
             this->wMsgSize = stream.in_uint16_le();
-         
+
             stream.in_copy_bytes(this->server_random, SEC_RANDOM_SIZE);
 
             TODO("Add missing productInfo field")
             stream.end = stream.p;
 
             if (stream.p != stream.end){
-                LOG(LOG_ERR, "License Request_Recv : unparsed data %d", stream.end - stream.p);
+                LOG(LOG_ERR, "License Request_Recv: unparsed data %u", stream.in_remain());
                 throw Error(ERR_LIC);
             }
         }
@@ -1065,7 +1072,7 @@ namespace LIC
         // encrypt licensing protocol messages (see sections 5.1.4 and 5.1.5).
 
         uint8_t client_random[32];
-        
+
         // EncryptedPreMasterSecret (variable): A Licensing Binary BLOB structure
         // (see [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_RANDOM_BLOB (0x0002).
         // This BLOB contains an encrypted 48-byte random number. For instructions
@@ -1146,6 +1153,17 @@ namespace LIC
         
         NewLicenseRequest_Recv(Stream & stream)
         {
+            unsigned expected =
+                /* tag(1) + flags(1) + wMsgSize(2) + dwPreferredKeyExchangeAlg(4) + dwPlatformId(4) +
+                   client_random(SEC_RANDOM_SIZE) + ignored(2) + lenLicensingBlob(2)
+                 */
+                12 + SEC_RANDOM_SIZE + 4;
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Licence NewLicenseRequest_Recv : Truncated data, need=%d, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+
             this->tag = stream.in_uint8();
             this->flags = stream.in_uint8();
             this->wMsgSize = stream.in_uint16_le();
@@ -1211,10 +1229,17 @@ namespace LIC
             // bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field
             // is not included in the Licensing Binary BLOB structure.
 
-            stream.in_skip_bytes(2);
+            stream.in_skip_bytes(2); /* wBlobType */
             uint16_t lenLicensingBlob = stream.in_uint16_le();
-            stream.in_skip_bytes(lenLicensingBlob);
-            
+
+            if (!stream.in_check_rem(lenLicensingBlob)){
+                LOG(LOG_ERR, "Licence NewLicenseRequest_Recv : Truncated blobData, need=%d, remains=%u",
+                    lenLicensingBlob, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+
+            stream.in_skip_bytes(lenLicensingBlob); /* blobData */
+
             TODO("Add missing fields")
             stream.end = stream.p;
 
@@ -1405,19 +1430,19 @@ namespace LIC
 
     //    0x00: LICENSE_PREAMBLE (4 bytes)
     //                               12 -> LICENSE_PREAMBLE::bMsgType = CLIENT_LICENSE_INFO
-    //     
+    //
     //    83 -> LICENSE_PREAMBLE::bVersion = 0x80 | 0x3
-    //     
+    //
 
     //    fd -\|
     //    08 -/ LICENSE_PREAMBLE::wMsgSize = 0x8fd bytes 
-    //     
+    //
     //    0x04: PreferredKeyExchgAlg (4 bytes)
     //    01 -\|
     //    00 -|
     //    00 -|
     //    00 -/ CLIENT_LICENSE_INFO::dwPrefKeyExchangeAlg = 1
-    //     
+    //
     //    0x08: PlatformId (4 bytes)
     //    00 -\|
     //    00 -|
@@ -1586,10 +1611,10 @@ namespace LIC
     //    0x8d5: EncryptedHWID (2 + 2 + 0x14 = 0x18 bytes)
     //    01 -\|
     //    00 -/ EncryptedHWID::wBlobType
-    //     
+    //
     //    14 -\|
     //    00 -/ EncryptedHWID::wBlobLen
-    //     
+    //
     //    b9 30 59 3b 93 61 c9 f6 -\|
     //    b6 0b 1f dc 1a 85 67 39 -|
     //    dc 29 65 62             -/ EncryptedHWID::pBlob
@@ -1601,7 +1626,7 @@ namespace LIC
     struct ClientLicenseInfo_Send
     {
         ClientLicenseInfo_Send(Stream & stream, 
-            uint8_t version, uint16_t license_size, uint8_t * license_data, 
+            uint8_t version, uint16_t license_size, uint8_t * license_data,
             uint8_t * hwid, uint8_t * signature)
         {
             uint16_t length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
@@ -1613,7 +1638,7 @@ namespace LIC
             stream.out_uint8(LIC::LICENSE_INFO);
             stream.out_uint8(version); /* version */
             stream.out_uint16_le(length);
-            
+
             // PreferredKeyExchangeAlg (4 bytes): A 32-bit unsigned integer that
             // indicates the key exchange algorithm chosen by the client. It MUST be set
             // to KEY_EXCHANGE_ALG_RSA (0x00000001), which indicates an RSA-based key
@@ -1729,7 +1754,7 @@ namespace LIC
         uint8_t tag;
         uint8_t flags;
         uint16_t wMsgSize;
-        
+
 // PreferredKeyExchangeAlg (4 bytes): The content and format of this field are the same as the PreferredKeyExchangeAlg 
 //  field of the Client New License Request (section 2.2.2.2) message.
         uint32_t dwPreferredKeyExchangeAlg;
@@ -1742,7 +1767,7 @@ namespace LIC
 //   New License Request message.
 
         uint8_t client_random[32];
-        
+
 //  EncryptedPreMasterSecret (variable): The content and format of this field are the same as the 
 //    EncryptedPreMasterSecret field of the Client New License Request message.
 
@@ -1763,9 +1788,19 @@ namespace LIC
         uint8_t * license_data;
         uint8_t * hwid;
         uint8_t * signature;
-        
+
         ClientLicenseInfo_Recv(Stream & stream)
         {
+            /* tag(1) + flags(1) + wMsgSize(2) + dwPreferredKeyExchangeAlg(4) + dwPlatformId(4) +
+             * client_random(SEC_RANDOM_SIZE) + wBlobType(2) + lenLicensingBlob(2)
+             */
+            unsigned expected = 12 + SEC_RANDOM_SIZE + 4;
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Licence ClientLicenseInfo_Recv : Truncated data, need=%d, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+
             this->tag = stream.in_uint8();
             this->flags = stream.in_uint8();
             this->wMsgSize = stream.in_uint16_le();
@@ -1831,10 +1866,17 @@ namespace LIC
             // bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field
             // is not included in the Licensing Binary BLOB structure.
 
-            stream.in_skip_bytes(2);
+            stream.in_skip_bytes(2); /* wBlobType */
             uint16_t lenLicensingBlob = stream.in_uint16_le();
-            stream.in_skip_bytes(lenLicensingBlob);
-            
+
+            if (!stream.in_check_rem(lenLicensingBlob)){
+                LOG(LOG_ERR, "Licence ClientLicenseInfo_Recv : Truncated blobData, need=%d, remains=%u",
+                    lenLicensingBlob, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+
+            stream.in_skip_bytes(lenLicensingBlob); /* blobData */
+
 //            stream.out_uint16_le(1);
 //            stream.out_uint16_le(license_size);
 //            stream.out_copy_bytes(license_data, license_size);
@@ -1895,9 +1937,9 @@ namespace LIC
 
     //    0x00: LICENSE_PREAMBLE (4 bytes)
     //    02 -> LICENSE_PREAMBLE::bMsgType = SERVER_PLATFORM_CHALLENGE
-    //     
+    //
     //    03 -> LICENSE_PREAMBLE::bVersion = 3
-    //     
+    //
     //    26 -\|
     //    00 -/ LICENSE_PREAMBLE::wMsgSize
     //    0x04: ConnectFlags (4 bytes)
@@ -1908,10 +1950,10 @@ namespace LIC
     //    0x08: EncryptedPlatformChallenge (2 + 2 + 0xa = 0xe bytes)
     //    50 -\|
     //    f7 -/ EncryptedPlatformChallenge::wBlobType (ignored)
-    //     
+    //
     //    0a -\|
     //    00 -/ EncryptedPlatformChallenge::wBlobLen
-    //     
+    //
     //    46 37 85 54 8e c5 91 34 -\|
     //                      97 5d -/ EncryptedPlatformChallenge::pBlob
 
@@ -1936,6 +1978,16 @@ namespace LIC
         uint8_t MACData[LICENSE_SIGNATURE_SIZE];
 
         PlatformChallenge_Recv(Stream & stream){
+            /* wMsgType(1) + bVersion(1) + wMsgSize(2) + dwConnectFlags(4) + wBlobType(2) + wBlobLen(2) +
+             * blob(LICENSE_TOKEN_SIZE) + MACData(LICENSE_SIGNATURE_SIZE)
+             */
+            unsigned expected = 12 + LICENSE_TOKEN_SIZE + LICENSE_SIGNATURE_SIZE;
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Licence PlatformChallenge_Recv : Truncated data, need=%u, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+
             this->wMsgType = stream.in_uint8();
             this->bVersion = stream.in_uint8();
             this->wMsgSize = stream.in_uint16_le();
@@ -1943,14 +1995,15 @@ namespace LIC
             this->encryptedPlatformChallenge.wBlobType = stream.in_uint16_le();      // ignored
             this->encryptedPlatformChallenge.wBlobLen = stream.in_uint16_le();
             if (this->encryptedPlatformChallenge.wBlobLen != LICENSE_TOKEN_SIZE) {
-                LOG(LOG_ERR, "token len = %d, expected %d", this->encryptedPlatformChallenge.wBlobLen, LICENSE_TOKEN_SIZE);
+                LOG(LOG_ERR, "PlatformChallenge_Recv : token len = %d, expected %d",
+                    this->encryptedPlatformChallenge.wBlobLen, LICENSE_TOKEN_SIZE);
                 throw Error(ERR_LIC);
             }
             stream.in_copy_bytes(this->encryptedPlatformChallenge.blob, LICENSE_TOKEN_SIZE);
             stream.in_copy_bytes(this->MACData, LICENSE_SIGNATURE_SIZE);
 
-            if (stream.p != stream.end){
-                LOG(LOG_ERR, "PlatformChallenge_Recv : unparsed data %d", stream.end - stream.p);
+            if (stream.in_remain()){
+                LOG(LOG_ERR, "PlatformChallenge_Recv : unparsed data %u", stream.in_remain());
                 throw Error(ERR_LIC);
             }
         }
@@ -1976,17 +2029,17 @@ namespace LIC
 
     //    The New License Information packet contains the actual client license
     // and associated indexing information. The client stores the license in its
-    // license store using the indexing information, and uses it in subsequent 
+    // license store using the indexing information, and uses it in subsequent
     // connections. The dwVersion, pbScope, pbCompanyName, and pbProductId fields
     // are used by the client to index the licenses in the client's license store.
 
-    //    LicenseInfo::dwVersion (4 bytes): The content and format of this field are the same 
+    //    LicenseInfo::dwVersion (4 bytes): The content and format of this field are the same
     // as the dwVersion field of the Product Information (section 2.2.2.1.1) structure.
     // it's a 32-bit unsigned integer that contains the license version information. The high-order word
     // contains the major version of the operating system on which the terminal server is running, while
     // the low-order word contains the minor version.<6>
 
-    //     LicenseInfo::cbScope (4 bytes): A 32-bit unsigned integer that contains the number of 
+    //     LicenseInfo::cbScope (4 bytes): A 32-bit unsigned integer that contains the number of
     // bytes in the string contained in the pbScope field.
 
     //     LicenseInfo::pbScope (variable): Contains the NULL-terminated ANSI character set string
@@ -1999,7 +2052,7 @@ namespace LIC
     //     LicenseInfo::pbCompanyName (variable): The content and format of this field are the same as
     // the pbCompanyName field of the Product Information structure.
 
-    //     LicenseInfo::cbProductId (4 bytes): The content and format of this field are the same as 
+    //     LicenseInfo::cbProductId (4 bytes): The content and format of this field are the same as
     // the cbProductId field of the Product Information structure.
 
     //     LicenseInfo::pbProductId (variable): The content and format of this field are the same as
@@ -2174,10 +2227,10 @@ namespace LIC
     //    0x04: EncryptedLicenseInfo (2 + 2 + 0x7ef = 0x7f3 bytes)
     //    09 -\|
     //    00 -/ EncryptedLicenseInfo::wBlobType = BB_ENCRYPTED_DATA_BLOB
-    //     
+    //
     //    ef -\|
     //    07 -/ EncryptedLicenseInfo::wBlobLen = 0x7ef bytes
-    //       
+    //
     ///* 0000 */ de 18 8f 41 ad 37 5d 3a e7 6f 7d 15 38 1d fd 0b,  // ...A.7]:.o}.8...
     ///* 0010 */ b3 34 1c cc 9d cc c7 97 45 2b 00 32 4e 96 3c 9e,  // .4......E+.2N.<.
     ///* 0020 */ da cc 1a 07 1e 9f d6 c5 27 7a d1 cb 10 fc 61 19,  // ........'z....a.
@@ -2542,6 +2595,15 @@ namespace LIC
         uint8_t MACData[16];
 
         NewLicense_Recv(Stream & stream, uint8_t license_key[]){
+            /* wMsgType(1) + bVersion(1) + wMsgSize(2) + wBlobType(2) + wBlobLen(2)
+             */
+            unsigned expected = 8;
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated data, need=%u, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+
             this->wMsgType = stream.in_uint8();
             this->bVersion = stream.in_uint8();
             this->wMsgSize = stream.in_uint16_le();
@@ -2552,26 +2614,83 @@ namespace LIC
             // following data is encrypted using license_key
             SslRC4 rc4;
             rc4.set_key(license_key, 16);
-            TODO("use a substream instead, check buffer overflows in substreams")
-            rc4.crypt(stream.p, this->licenseInfo.wBlobLen);
+
+            if (!stream.in_check_rem(this->licenseInfo.wBlobLen)){
+                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license data, need=%u, remains=%u",
+                    this->licenseInfo.wBlobLen, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+
+            SubStream data(stream, stream.get_offset(), this->licenseInfo.wBlobLen);
+
+            rc4.crypt(data);
+
+            expected = 8; /* dwVersion(4) + cbScope(4) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated unencrypted license data, need=%u, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
 
             // now it's unencrypted, we can read it
             this->licenseInfo.dwVersion = stream.in_uint32_le();
             this->licenseInfo.cbScope = stream.in_uint32_le();
 
-
+            if (!stream.in_check_rem(this->licenseInfo.cbScope)){
+                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info pbScope, need=%u, remains=%u",
+                    this->licenseInfo.cbScope, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             stream.in_copy_bytes(this->licenseInfo.pbScope, this->licenseInfo.cbScope);
+
+            if (!stream.in_check_rem(4)){
+                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info cbCompanyName, need=4, remains=%u",
+                    stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             this->licenseInfo.cbCompanyName = stream.in_uint32_le();
+            if (!stream.in_check_rem(this->licenseInfo.cbCompanyName)){
+                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info pbCompanyName, need=%u, remains=%u",
+                    this->licenseInfo.cbCompanyName, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             stream.in_copy_bytes(this->licenseInfo.pbCompanyName, this->licenseInfo.cbCompanyName);
+
+            if (!stream.in_check_rem(4)){
+                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info cbProductId, need=4, remains=%u",
+                    stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             this->licenseInfo.cbProductId = stream.in_uint32_le();
+            if (!stream.in_check_rem(this->licenseInfo.cbProductId)){
+                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info pbProductId, need=%u, remains=%u",
+                    this->licenseInfo.cbProductId, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             stream.in_copy_bytes(this->licenseInfo.pbProductId, this->licenseInfo.cbProductId);
+
+            if (!stream.in_check_rem(4)){
+                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info cbLicenseInfo, need=4, remains=%u",
+                    stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             this->licenseInfo.cbLicenseInfo = stream.in_uint32_le();
+            if (!stream.in_check_rem(this->licenseInfo.cbLicenseInfo)){
+                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info pbLicenseInfo, need=%u, remains=%u",
+                    this->licenseInfo.cbLicenseInfo, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             stream.in_copy_bytes(this->licenseInfo.pbLicenseInfo, this->licenseInfo.cbLicenseInfo);
 
+            if (!stream.in_check_rem(LICENSE_SIGNATURE_SIZE)){
+                LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license info MACData, need=%u, remains=%u",
+                    LICENSE_SIGNATURE_SIZE, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             stream.in_copy_bytes(this->MACData, LICENSE_SIGNATURE_SIZE);
 
-            if (stream.p != stream.end){
-                LOG(LOG_ERR, "PlatformChallenge_Recv : unparsed data %d", stream.end - stream.p);
+            if (stream.in_remain()){
+                LOG(LOG_ERR, "NewLicense_Recv : unparsed data %u", stream.in_remain());
                 throw Error(ERR_LIC);
             }
 
@@ -2673,6 +2792,15 @@ namespace LIC
         uint8_t MACData[16];
 
         UpgradeLicense_Recv(Stream & stream, uint8_t license_key[]){
+            /* wMsgType(1) + bVersion(1) + wMsgSize(2) + wBlobType(2) + wBlobLen(2)
+             */
+            unsigned expected = 8;
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Licence UpgradeLicense_Recv : Truncated data, need=%u, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+
             this->wMsgType = stream.in_uint8();
             this->bVersion = stream.in_uint8();
             this->wMsgSize = stream.in_uint16_le();
@@ -2683,25 +2811,76 @@ namespace LIC
             // following data is encrypted using license_key
             SslRC4 rc4;
             rc4.set_key(license_key, 16);
-            rc4.crypt(stream.p, this->licenseInfo.wBlobLen);
 
-            // now it's unencrypted, we can read it
+            SubStream data(stream, stream.get_offset(), this->licenseInfo.wBlobLen);
+
+            rc4.crypt(stream);
+
+            expected = 8; /* dwVersion(4) + cbScope(4) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Licence UpgradeLicense_Recv : Truncated unencrypted license data, need=%u, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+
             this->licenseInfo.dwVersion = stream.in_uint32_le();
             this->licenseInfo.cbScope = stream.in_uint32_le();
 
-
+            if (!stream.in_check_rem(this->licenseInfo.cbScope)){
+                LOG(LOG_ERR, "Licence UpgradeLicense_Recv : Truncated license info pbScope, need=%u, remains=%u",
+                    this->licenseInfo.cbScope, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             stream.in_copy_bytes(this->licenseInfo.pbScope, this->licenseInfo.cbScope);
+
+            if (!stream.in_check_rem(4)){
+                LOG(LOG_ERR, "Licence UpgradeLicense_Recv : Truncated license info cbCompanyName, need=4, remains=%u",
+                    stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             this->licenseInfo.cbCompanyName = stream.in_uint32_le();
+            if (!stream.in_check_rem(this->licenseInfo.cbCompanyName)){
+                LOG(LOG_ERR, "Licence UpgradeLicense_Recv : Truncated license info pbCompanyName, need=%u, remains=%u",
+                    this->licenseInfo.cbCompanyName, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             stream.in_copy_bytes(this->licenseInfo.pbCompanyName, this->licenseInfo.cbCompanyName);
+
+            if (!stream.in_check_rem(4)){
+                LOG(LOG_ERR, "Licence UpgradeLicense_Recv : Truncated license info cbProductId, need=4, remains=%u",
+                    stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             this->licenseInfo.cbProductId = stream.in_uint32_le();
+            if (!stream.in_check_rem(this->licenseInfo.cbProductId)){
+                LOG(LOG_ERR, "Licence UpgradeLicense_Recv : Truncated license info pbProductId, need=%u, remains=%u",
+                    this->licenseInfo.cbProductId, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             stream.in_copy_bytes(this->licenseInfo.pbProductId, this->licenseInfo.cbProductId);
+
+            if (!stream.in_check_rem(4)){
+                LOG(LOG_ERR, "Licence UpgradeLicense_Recv : Truncated license info cbLicenseInfo, need=4, remains=%u",
+                    stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             this->licenseInfo.cbLicenseInfo = stream.in_uint32_le();
+            if (!stream.in_check_rem(this->licenseInfo.cbLicenseInfo)){
+                LOG(LOG_ERR, "Licence UpgradeLicense_Recv : Truncated license info pbLicenseInfo, need=%u, remains=%u",
+                    this->licenseInfo.cbLicenseInfo, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             stream.in_copy_bytes(this->licenseInfo.pbLicenseInfo, this->licenseInfo.cbLicenseInfo);
 
+            if (!stream.in_check_rem(LICENSE_SIGNATURE_SIZE)){
+                LOG(LOG_ERR, "Licence UpgradeLicense_Recv : Truncated license info MACData, need=%u, remains=%u",
+                    LICENSE_SIGNATURE_SIZE, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
             stream.in_copy_bytes(this->MACData, LICENSE_SIGNATURE_SIZE);
 
             if (stream.p != stream.end){
-                LOG(LOG_ERR, "PlatformChallenge_Recv : unparsed data %d", stream.end - stream.p);
+                LOG(LOG_ERR, "UpgradeLicense_Recv : unparsed data %d", stream.in_remain());
                 throw Error(ERR_LIC);
             }
 
@@ -2870,6 +3049,15 @@ namespace LIC
 
         ErrorAlert_Recv(Stream & stream){
             hexdump_d(stream.data, stream.size());
+
+            unsigned expected =
+                16; /* wMsgType(1) + bVersion(1) + wMsgSize(2) + dwErrorCode(4) + dwStateTransition(4) + wBlobType(2) + wBlobLen(2) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Licence ErrorAlert_Recv : Truncated data, need=%d, remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_LIC);
+            }
+
             this->wMsgType = stream.in_uint8();
             this->bVersion = stream.in_uint8();
             this->wMsgSize = stream.in_uint16_le();
@@ -2893,17 +3081,17 @@ namespace LIC
                 LOG(LOG_ERR, "Unexpected BlobLen in Licence ErrorAlert_Recv expected empty blob, got %u bytes",
                     this->validClientMessage.wBlobLen);
             }
-            if (stream.p != stream.end){
-                LOG(LOG_ERR, "ErrorAlert_Recv : unparsed data %d", stream.end - stream.p);
+            if (stream.in_remain()){
+                LOG(LOG_ERR, "Licence ErrorAlert_Recv : unparsed data %d", stream.in_remain());
             }
 
-            REDOC("wBlobType is not 4 on windows 2000 or Windows XP... (content looks like garbage)")
+            REDOC("wBlobType in Licence ErrorAlert_Recv is not 4 on windows 2000 or Windows XP... (content looks like garbage)")
             if ((this->validClientMessage.dwStateTransition != 2)
 //            || (this->validClientMessage.wBlobType != 4)
             || (this->validClientMessage.wBlobLen != 0)
-            || (stream.p != stream.end)){
+            || stream.in_remain()){
                 throw Error(ERR_LIC);
-            }            
+            }
         }
     };
 
@@ -3125,7 +3313,7 @@ namespace LIC
 
             stream.out_copy_bytes(out_sig, LIC::LICENSE_SIGNATURE_SIZE);
             stream.mark_end();
-                    
+
         }
     };
 
@@ -3294,6 +3482,5 @@ namespace LIC
     // version 5.0 and later clients SHOULD advertise support for large (6.5 KB
     // or higher) licenses by setting the detail level to LICENSE_DETAIL_DETAIL
     // (0x0003). The following table lists valid values for this field.
-
 
 #endif

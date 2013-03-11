@@ -1425,9 +1425,9 @@ TODO("Pass font name as parameter in constructor")
             /* this is the first test that the decrypt is working */
             this->client_info.process_logon_info(sec.payload);
 
-            if (sec.payload.end != sec.payload.p){
-                LOG(LOG_ERR, "Front::incoming::process_logon all data should have been consumed %d bytes trailing", 
-                    (signed)(sec.payload.end - sec.payload.p));
+            if (sec.payload.in_remain()){
+                LOG(LOG_ERR, "Front::incoming::process_logon all data should have been consumed %u bytes trailing", 
+                    (unsigned)sec.payload.in_remain());
             }
 
             this->keymap.init_layout(this->client_info.keylayout);
@@ -1726,6 +1726,12 @@ TODO("Pass font name as parameter in constructor")
                         LOG(LOG_INFO, "Unexpected CONFIRMACTIVE PDU");
                     }
                     {
+                        unsigned expected = 6; /* share_id(4) + originatorId(2) */
+                        if (!sctrl.payload.in_check_rem(expected)){
+                            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%u",
+                                expected, sctrl.payload.in_remain());
+                            throw Error(ERR_MCS_PDU_TRUNCATED);
+                        }
                         uint32_t share_id = sctrl.payload.in_uint32_le();
                         uint16_t originatorId = sctrl.payload.in_uint16_le();
                         this->process_confirm_active(sctrl.payload);
@@ -1860,16 +1866,25 @@ TODO("Pass font name as parameter in constructor")
                     channel.log(mcs.channelId);
                 }
 
+                unsigned expected = 8; /* length(4) + flags(4) */
+                if (!sec.payload.in_check_rem(expected)){
+                    LOG(LOG_ERR, "Front::incoming::data truncated, need=%u remains=%u",
+                        expected, sec.payload.in_remain());
+                    throw Error(ERR_MCS);
+                }
+
                 int length = sec.payload.in_uint32_le();
                 int flags = sec.payload.in_uint32_le();
 
-                size_t chunk_size = sec.payload.end - sec.payload.p;
+                size_t chunk_size = sec.payload.in_remain();
 
                 if (this->up_and_running){
                     if (this->verbose & 16){
                         LOG(LOG_INFO, "Front::send_to_mod_channel");
                     }
-                    cb.send_to_mod_channel(channel.name, sec.payload.p, length, chunk_size, flags);
+                    SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
+
+                    cb.send_to_mod_channel(channel.name, chunk, length, flags);
                 }
                 else {
                     if (this->verbose & 16){
@@ -2148,8 +2163,22 @@ TODO("Pass font name as parameter in constructor")
         TODO("We should separate the parts relevant to caps processing and the part relevant to actual confirm active")
         TODO("Server Caps management should go to RDP layer and be unified between client (mod/rdp.hpp and server code front.hpp)")
 
+        unsigned expected = 4; /* lengthSourceDescriptor(2) + lengthCombinedCapabilities(2) */
+        if (!stream.in_check_rem(expected)){
+            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
         uint16_t lengthSourceDescriptor = stream.in_uint16_le(); /* sizeof RDP_SOURCE */
         uint16_t lengthCombinedCapabilities = stream.in_uint16_le();
+
+        if (!stream.in_check_rem(lengthSourceDescriptor)){
+            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU lengthSourceDescriptor, need=%u remains=%u",
+                lengthSourceDescriptor, stream.in_remain());
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
         stream.in_skip_bytes(lengthSourceDescriptor);
 
         if (this->verbose & 1){
@@ -2160,6 +2189,13 @@ TODO("Pass font name as parameter in constructor")
         uint8_t * start = stream.p;
         uint8_t* theoricCapabilitiesEnd = start + lengthCombinedCapabilities;
         uint8_t* actualCapabilitiesEnd = stream.end;
+
+        expected = 4; /* numberCapabilities(2) + pad(2) */
+        if (!stream.in_check_rem(expected)){
+            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU numberCapabilities, need=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
 
         int numberCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(2); /* pad */
@@ -2172,13 +2208,13 @@ TODO("Pass font name as parameter in constructor")
                 LOG(LOG_ERR, "Incomplete capabilities received (bad length): expected length=%d need=%d available=%d",
                     lengthCombinedCapabilities,
                     stream.p-start,
-                    stream.end-stream.p);
+                    stream.in_remain());
             }
             if (stream.p + 4 > actualCapabilitiesEnd) {
                 LOG(LOG_ERR, "Incomplete capabilities received (need more data): expected length=%d need=%d available=%d",
                     lengthCombinedCapabilities,
                     stream.p-start,
-                    stream.end-stream.p);
+                    stream.in_remain());
                 return;
             }
 
@@ -2205,8 +2241,8 @@ TODO("Pass font name as parameter in constructor")
                 break;
             case CAPSTYPE_ORDER: { /* 3 */
                     OrderCaps order_caps;
-                    order_caps.log("Receiving from client");
                     order_caps.recv(stream, capset_length);
+                    order_caps.log("Receiving from client");
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE: {
@@ -2229,6 +2265,14 @@ TODO("Pass font name as parameter in constructor")
                 break;
             case CAPSTYPE_POINTER: {  /* 8 */
                     LOG(LOG_INFO, "Receiving from client CAPSTYPE_POINTER");
+
+                    expected = 4; /* color pointer(2) + pointer_cache_entries(2) */
+                    if (!stream.in_check_rem(expected)){
+                        LOG(LOG_ERR, "Truncated CAPSTYPE_POINTER, need=%u remains=%u",
+                            expected, stream.in_remain());
+                        throw Error(ERR_MCS_PDU_TRUNCATED);
+                    }
+
                     stream.in_skip_bytes(2); /* color pointer */
                     int i = stream.in_uint16_le();
                     this->client_info.pointer_cache_entries = std::min(i, 32);
@@ -2251,8 +2295,8 @@ TODO("Pass font name as parameter in constructor")
             case CAPSTYPE_BRUSH: { /* 15 */
                     LOG(LOG_INFO, "Receiving from client CAPSTYPE_BRUSH");
                     BrushCacheCaps brushcache_caps;
-                    brushcache_caps.log("Receiving from client");
                     brushcache_caps.recv(stream, capset_length);
+                    brushcache_caps.log("Receiving from client");
                     this->client_info.brush_cache_code = brushcache_caps.brushSupportLevel;
                 }
                 break;
@@ -2270,6 +2314,16 @@ TODO("Pass font name as parameter in constructor")
 //                    bmpcache2_caps.recv(stream, capset_length);
 //                    bmpcache2_caps.log("Receiving from client");
                     LOG(LOG_INFO, "Receiving from client CAPSTYPE_BITMAPCACHE_REV2");
+
+                    /* bitmap_cache_persist_enable(2) + ignored(2) + cache1_entries(4) + cache2_entries(4) +
+                     * cache3_entries(4)
+                     */
+                    unsigned expected = 16;
+                    if (!stream.in_check_rem(expected)){
+                        LOG(LOG_ERR, "Truncated CAPSTYPE_BITMAPCACHE_REV2, need=%u remains=%u",
+                            expected, stream.in_remain());
+                        throw Error(ERR_MCS_PDU_TRUNCATED);
+                    }
 
                     LOG(LOG_INFO, "capset_bmpcache2");
                     this->client_info.bitmap_cache_version = 2;
@@ -2301,8 +2355,8 @@ TODO("Pass font name as parameter in constructor")
                 break;
             case CAPSETTYPE_COMPDESK: { /* 25 */
                     CompDeskCaps compdesk_caps;
-                    compdesk_caps.log("Receiving from client");
                     compdesk_caps.recv(stream, capset_length);
+                    compdesk_caps.log("Receiving from client");
                 }
                 break;
             case CAPSETTYPE_MULTIFRAGMENTUPDATE: /* 26 */
@@ -2326,12 +2380,13 @@ TODO("Pass font name as parameter in constructor")
             }
             if (stream.p > next){
                 LOG(LOG_ERR, "read out of bound detected");
+                throw Error(ERR_MCS);
             }
             stream.p = next;
         }
         // After Capabilities read optional SessionId
         TODO("Check if sessionId is actually optional or not, rdesktop does not send it")
-        if ((stream.end - stream.p) >= 4){
+        if (stream.in_remain() >= 4){
             uint32_t sessionId = stream.in_uint32_le(); /* Session Id */
         }
         if (this->verbose & 1){
@@ -2597,7 +2652,7 @@ TODO("Pass font name as parameter in constructor")
                 (unsigned)sdata_in.pdutype2,
                 (unsigned)sdata_in.len,
                 (unsigned)sdata_in.compressedLen,
-                (unsigned)(stream.end - stream.p),
+                (unsigned)(stream.in_remain()),
                 (unsigned)(sdata_in.payload.size())
             );
         }
@@ -2649,7 +2704,6 @@ TODO("Pass font name as parameter in constructor")
                       2               /* pad(2) */
                     + num_events * 12 /* time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2) */
                     ;
-
                 if (!sdata_in.payload.in_check_rem(expected))
                 {
                     LOG(LOG_ERR, "truncated client input event PDU: expected=%u remains=%u",
