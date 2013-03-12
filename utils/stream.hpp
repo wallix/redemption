@@ -70,17 +70,16 @@ class Stream {
         return this->capacity - this->get_offset();
     }
 
-    bool in_check_rem(unsigned n) {
+    bool in_check_rem(const unsigned n) const {
     // returns true if there is enough data available to read n bytes
-        bool res = n <= this->in_remain();
-        return res;
+        return (n <= this->in_remain());
     }
 
-    size_t in_remain() {
+    size_t in_remain() const {
         return this->end - this->p;
     }
 
-    bool check_end(void) {
+    bool check_end(void) const {
         return this->p == this->end;
     }
 
@@ -89,17 +88,17 @@ class Stream {
     // =========================================================================
 
     signed char in_sint8(void) {
-        REDASSERT(in_check_rem(1));
+        REDASSERT(this->in_check_rem(1));
         return *((signed char*)(this->p++));
     }
 
     unsigned char in_uint8(void) {
-        REDASSERT(in_check_rem(1));
+        REDASSERT(this->in_check_rem(1));
         return *((unsigned char*)(this->p++));
     }
 
     unsigned char in_uint8_with_check(bool & result) {
-        if (in_check_rem(1)){
+        if (this->in_check_rem(1)){
             result = true;
             return this->in_uint8();
         }
@@ -110,36 +109,36 @@ class Stream {
 
     /* Peek a byte from stream without move <p>. */
     unsigned char peek_uint8(void) {
-        REDASSERT(in_check_rem(1));
+        REDASSERT(this->in_check_rem(1));
         return *((unsigned char*)(this->p));
     }
 
     int16_t in_sint16_be(void) {
-        REDASSERT(in_check_rem(2));
+        REDASSERT(this->in_check_rem(2));
         unsigned int v = this->in_uint16_be();
         return (int16_t)((v > 32767)?v - 65536:v);
     }
 
     int16_t in_sint16_le(void) {
-        REDASSERT(in_check_rem(2));
+        REDASSERT(this->in_check_rem(2));
         unsigned int v = this->in_uint16_le();
         return (int16_t)((v > 32767)?v - 65536:v);
     }
 
     uint16_t in_uint16_le(void) {
-        REDASSERT(in_check_rem(2));
+        REDASSERT(this->in_check_rem(2));
         this->p += 2;
         return (uint16_t)(this->p[-2] | (this->p[-1] << 8));
     }
 
     uint16_t in_uint16_be(void) {
-        REDASSERT(in_check_rem(2));
+        REDASSERT(this->in_check_rem(2));
         this->p += 2;
         return (uint16_t)(this->p[-1] | (this->p[-2] << 8)) ;
     }
 
     uint16_t in_uint16_be_with_check(bool & result) {
-        if (in_check_rem(2)){
+        if (this->in_check_rem(2)){
             result = true;
             return this->in_uint16_be();
         }
@@ -149,7 +148,7 @@ class Stream {
     }
 
     unsigned int in_uint32_le(void) {
-        REDASSERT(in_check_rem(4));
+        REDASSERT(this->in_check_rem(4));
         this->p += 4;
         return  this->p[-4]
              | (this->p[-3] << 8)
@@ -159,7 +158,7 @@ class Stream {
     }
 
     unsigned int in_uint32_be(void) {
-        REDASSERT(in_check_rem(4));
+        REDASSERT(this->in_check_rem(4));
         this->p += 4;
         return  this->p[-1]
              | (this->p[-2] << 8)
@@ -198,7 +197,7 @@ class Stream {
     }
 
     uint64_t in_uint64_le(void) {
-        REDASSERT(in_check_rem(8));
+        REDASSERT(this->in_check_rem(8));
         uint64_t low = this->in_uint32_le();
         uint64_t high = this->in_uint32_le();
         return low + (high << 32);
@@ -218,26 +217,26 @@ class Stream {
     }
 
     uint64_t in_uint64_be(void) {
-        REDASSERT(in_check_rem(8));
+        REDASSERT(this->in_check_rem(8));
         uint64_t high = this->in_uint32_be();
         uint64_t low = this->in_uint32_be();
         return low + (high << 32);
     }
 
     unsigned in_bytes_le(const uint8_t nb){
-        REDASSERT(in_check_rem(nb));
+        REDASSERT(this->in_check_rem(nb));
         this->p += nb;
         return ::in_bytes_le(nb, this->p - nb);
     }
 
     unsigned in_bytes_be(const uint8_t nb){
-        REDASSERT(in_check_rem(nb));
+        REDASSERT(this->in_check_rem(nb));
         this->p += nb;
         return ::in_bytes_be(nb, this->p - nb);
     }
 
     void in_copy_bytes(uint8_t * v, size_t n) {
-        REDASSERT(in_check_rem(n));
+        REDASSERT(this->in_check_rem(n));
         memcpy(v, this->p, n);
         this->p += n;
     }
@@ -247,18 +246,18 @@ class Stream {
     }
 
     const uint8_t *in_uint8p(unsigned int n) {
-        REDASSERT(in_check_rem(n));
+        REDASSERT(this->in_check_rem(n));
         this->p+=n;
         return this->p - n;
     }
 
     void in_skip_bytes(unsigned int n) {
-        REDASSERT(in_check_rem(n));
+        REDASSERT(this->in_check_rem(n));
         this->p+=n;
     }
 
     void out_skip_bytes(unsigned int n) {
-        REDASSERT(has_room(n));
+        REDASSERT(this->has_room(n));
         this->p+=n;
     }
 
@@ -867,7 +866,7 @@ class Stream {
         if (this->in_check_rem(1)){
             length = this->in_uint8();
             if (length & 0x80){
-                if (in_check_rem(1)){
+                if (this->in_check_rem(1)){
                     length = ((length & 0x7F) << 8);
                     length += this->in_uint8();
                 }
