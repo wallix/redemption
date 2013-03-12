@@ -1590,15 +1590,17 @@ class BStream : public Stream {
         this->init(size);
     }
     virtual ~BStream() {
+        // <this->data> is allocated dynamically.
         if (this->capacity > AUTOSIZE) {
             delete [] this->data;
         }
     }
 
-    // a default buffer of 8192 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
+    // a default buffer of 65536 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
     void init(size_t v) {
         if (v != this->capacity) {
             try {
+                // <this->data> is allocated dynamically.
                 if (this->capacity > AUTOSIZE){
                     delete [] this->data;
                 }

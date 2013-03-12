@@ -600,7 +600,7 @@ struct mod_vnc : public client_mod {
             BStream stream(1);
             try {
                 this->t->recv(&stream.end, 1);
-                char type = stream.in_uint8();
+                char type = stream.in_uint8(); /* message-type */
                 switch (type)
                 {
                     case 0: /* framebuffer update */
@@ -609,7 +609,7 @@ struct mod_vnc : public client_mod {
                     case 1: /* palette */
                         this->lib_palette_update();
                     break;
-                    case 3: /* clipboard */
+                    case 3: /* clipboard */ /* ServerCutText */
                         this->lib_clip_data();
                     break;
                     default:
@@ -903,12 +903,12 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         // Store the clipboard into *clip_data*, data length will be (clip_data.size())
         BStream stream(32768);
         this->t->recv(&stream.end, 7);
-        stream.in_skip_bytes(3);
-        size_t clip_data_size = stream.in_uint32_be();
+        stream.in_skip_bytes(3); /* padding */
+        size_t clip_data_size = stream.in_uint32_be(); /* length */
 
         size_t chunk_size = (clip_data_size>8000)?8000:clip_data_size;
         this->clip_data.init(8192);
-        this->t->recv(&this->clip_data.end, chunk_size);
+        this->t->recv(&this->clip_data.end, chunk_size); /* text */
         
         // Add two trailing zero if not already there to ensure we have UTF8sz content
         if (this->clip_data.end[-1]){ this->clip_data.end++; }
@@ -928,9 +928,11 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         }
 
         if (channel) {
+            LOG(LOG_INFO, "Clipboard Channel Redirection available");
+
             BStream out_s(16384);
             //- Beginning of clipboard PDU Header ----------------------------
-            out_s.out_uint16_le(2); // MSG Type 2 bytes
+            out_s.out_uint16_le(2); // MSG Type 2 bytes, CB_FORMAT_LIST = 0x0002
             out_s.out_uint16_le(0); // MSG flags 2 bytes
             out_s.out_uint32_le(0x90); // Datalen of the rest of the message
             //- End of clipboard PDU Header ----------------------------------
@@ -1006,6 +1008,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         BStream stream(chunk.size());
         TODO("Avoid useless buffer copy, parse data (we shoudl probably pass a (sub)stream instead)")
         stream.out_copy_bytes(chunk.data, chunk.size());
+        stream.mark_end();
+        stream.rewind();
 
         if (!stream.in_check_rem(2)){
             LOG(LOG_INFO, "mod_vnc::send_to_vnc truncated msgType, need=2 remains=%u",
@@ -1138,6 +1142,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             case ChannelDef::CB_FORMAT_DATA_REQUEST:
             {
                 // Always coming from front ; Send back the clipboard buffer content
+
+                LOG(LOG_INFO, "mod_vnc::send_to_vnc:ChannelDef::CB_FORMAT_DATA_REQUEST");
 
                 const unsigned expected = 10; /* msgFlags(2) + datalen(4) + resquestedFormatId(4) */
                 if (!stream.in_check_rem(expected)){
