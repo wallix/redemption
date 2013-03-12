@@ -907,12 +907,13 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         size_t clip_data_size = stream.in_uint32_be(); /* length */
 
         size_t chunk_size = (clip_data_size>8000)?8000:clip_data_size;
+        LOG(LOG_INFO, "clip_data_size=%u chunk_size=%u", clip_data_size, chunk_size);
         this->clip_data.init(8192);
         this->t->recv(&this->clip_data.end, chunk_size); /* text */
         
         // Add two trailing zero if not already there to ensure we have UTF8sz content
-        if (this->clip_data.end[-1]){ this->clip_data.end++; }
-        if (this->clip_data.end[-1]){ this->clip_data.end++; }
+        if (this->clip_data.end[-1]){ *this->clip_data.end = 0; this->clip_data.end++; }
+        if (this->clip_data.end[-1]){ *this->clip_data.end = 0; this->clip_data.end++; }
 
         // drop remaining clipboard content if larger that about 8000 bytes
         if (clip_data_size > chunk_size){
@@ -1181,15 +1182,18 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     out_s.out_uint16_le(5);                    //  - MSG Type 2 bytes
                     out_s.out_uint16_le(1);                    //  - MSG flags 2 bytes
 
-                    size_t clipboard_payload_size = UTF8Check(this->clip_data.end, this->clip_data.size());
+//                    size_t clipboard_payload_size = UTF8Check(this->clip_data.end, this->clip_data.size());
+                    size_t clipboard_payload_size = UTF8Check(this->clip_data.data, this->clip_data.size());
                     // Ensure watchdog. In normal cases it will already be there
-                    this->clip_data.end[clipboard_payload_size] = 0;
+//                    this->clip_data.end[clipboard_payload_size] = 0;
+                    this->clip_data.data[clipboard_payload_size] = 0;
 
                     size_t start_of_data = out_s.get_offset();
                     out_s.out_uint32_le(0); //  - Datalen of the rest of the message
                     //--------------------------- End of clipboard PDU Header ----------------------------------
                     //--------------------------- Beginning of Format Data Response PDU payload ----------------
 
+LOG( LOG_INFO, "mod_vnc::send_to_vnc payload = %s", reinterpret_cast<const char *>(this->clip_data.data) );
                     out_s.out_unistr(reinterpret_cast<const char *>(this->clip_data.data));
                     //--------------------------- End of Format Data Response PDU payload ----------------------
                     out_s.out_clear_bytes(2);
