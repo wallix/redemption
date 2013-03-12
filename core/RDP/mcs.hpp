@@ -1126,7 +1126,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
 
-            unsigned expected = 2; /* tag(1) + reason(1) */
+            const unsigned expected = 2; /* tag(1) + reason(1) */
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated DisconnectProviderUltimatum: expected=%u, remains=%u",
                     expected, stream.in_remain());
@@ -1382,7 +1382,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
 
-            unsigned expected = 2; /* tag(1) + result(1) */
+            const unsigned expected = 2; /* tag(1) + result(1) */
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated AttachUserConfirm: expected=%u, remains=%u",
                     expected, stream.in_remain());
@@ -1569,7 +1569,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
 
-            unsigned expected = 5; /* tag(1) + initiator(2) + channelId(2) */
+            const unsigned expected = 5; /* tag(1) + initiator(2) + channelId(2) */
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated ChannelJoinRequest: expected=%u, remains=%u",
                     expected, stream.in_remain());
@@ -1708,7 +1708,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
 
-            unsigned expected = 6; /* tag(1) + result(1) + initiator(2) + requested(2) */
+            const unsigned expected = 6; /* tag(1) + result(1) + initiator(2) + requested(2) */
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated ChannelJoinConfirm: expected=%u, remains=%u",
                     expected, stream.in_remain());
@@ -2006,7 +2006,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
 
-            unsigned expected =
+            const unsigned expected =
                   7; /* tag(1) + initiator(2) + channelId(2) + magic(1) + first byte of PER length(1) */
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated SendDataRequest data: expected=%u remains=%u",
@@ -2097,7 +2097,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
 
-            unsigned expected = 6; /* tag(1) + initiator(2) + channelId(2) + magic(1) */
+            const unsigned expected = 6; /* tag(1) + initiator(2) + channelId(2) + magic(1) */
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated SendDataIndication data: expected=%u, remains=%u",
                     expected, stream.in_remain());

@@ -1139,7 +1139,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             {
                 // Always coming from front ; Send back the clipboard buffer content
 
-                unsigned expected = 10; /* msgFlags(2) + datalen(4) + resquestedFormatId(4) */
+                const unsigned expected = 10; /* msgFlags(2) + datalen(4) + resquestedFormatId(4) */
                 if (!stream.in_check_rem(expected)){
                     LOG(LOG_INFO, "mod_vnc::send_to_vnc truncated CB_FORMAT_DATA_REQUEST data, need=%u remains=%u",
                         expected, stream.in_remain());
