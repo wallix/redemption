@@ -227,7 +227,7 @@ SQ * sq_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extensio
 }
 
 
-RIO_ERROR sq_get_chunk_info(SQ * seq, unsigned & num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
+RIO_ERROR sq_get_chunk_info(SQ * seq, unsigned * num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
 {
     RIO_ERROR res = RIO_ERROR_OK;
     switch (seq->sq_type){

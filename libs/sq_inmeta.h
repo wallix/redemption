@@ -33,6 +33,8 @@
 
 extern "C" {
     struct SQInmeta {
+        RIO_ERROR status;
+        int fd;
         RIO * tracker;
         struct SQIntracker impl;
     };
@@ -44,51 +46,80 @@ extern "C" {
         if ((size_t)snprintf(tmpname, sizeof(tmpname), "%s%s", prefix, extension) >= sizeof(tmpname)){
             return RIO_ERROR_FILENAME_TOO_LONG;
         }
-        int fd = ::open(tmpname, O_RDONLY);
-        if (fd < 0){
+        self->fd = ::open(tmpname, O_RDONLY);
+        if (self->fd < 0){
             return RIO_ERROR_OPEN;
         }
-        RIO_ERROR status = RIO_ERROR_OK;
-        RIO * rt = rio_new_infile(&status, fd);
-        if (status != RIO_ERROR_OK){
-            close(fd);
-            return status;
+        self->status = RIO_ERROR_OK;
+        RIO * rt = rio_new_infile(&self->status, self->fd);
+        if (self->status != RIO_ERROR_OK){
+            close(self->fd);
+            return self->status;
         }
         self->tracker = rt;
-        status = sq_m_SQIntracker_constructor(&self->impl, rt);
-        if (status != RIO_ERROR_OK){
+        self->status = sq_m_SQIntracker_constructor(&self->impl, rt);
+        if (self->status != RIO_ERROR_OK){
+            close(self->fd);
             rio_delete(rt);
         }
-        return status;
+        return self->status;
     }
 
     static inline RIO_ERROR sq_m_SQInmeta_destructor(SQInmeta * self)
     {
+        if (self->status != RIO_ERROR_OK) { return self->status; }
         sq_m_SQIntracker_destructor(&self->impl);
+        close(self->fd);        
         rio_delete(self->tracker);
         self->tracker = NULL;
+        self->status = RIO_ERROR_DESTRUCTED;
         return RIO_ERROR_OK;
     }
 
     static inline RIO * sq_m_SQInmeta_get_trans(SQInmeta * self, RIO_ERROR * status)
     {
-        return sq_m_SQIntracker_get_trans(&self->impl, status);
+        if (self->status != RIO_ERROR_OK) {
+            if (status) { *status = self->status; }
+            return NULL; 
+        }
+        RIO_ERROR status_res = RIO_ERROR_OK;
+        RIO * res = sq_m_SQIntracker_get_trans(&self->impl, &status_res);
+        if (!res){
+            sq_m_SQInmeta_destructor(self);
+            self->status = status_res;
+        }
+        return res;
     }
 
     static inline RIO_ERROR sq_m_SQInmeta_next(SQInmeta * self)
     {
-        return sq_m_SQIntracker_next(&self->impl);
+        if (self->status != RIO_ERROR_OK) { return self->status; }
+        RIO_ERROR res = sq_m_SQIntracker_next(&self->impl);
+        if (res != RIO_ERROR_OK){
+            sq_m_SQInmeta_destructor(self);
+            self->status = res;
+        }
+        return res;
     }
     
     static inline RIO_ERROR sq_m_SQInmeta_timestamp(SQInmeta * self, timeval * tv)
     {
-        return sq_m_SQIntracker_timestamp(&(self->impl), tv);
+        return RIO_ERROR_OUT_SEQ_ONLY;
     }
 
-    TODO("not yet implemented")
-    static inline RIO_ERROR sq_m_SQInmeta_get_chunk_info(SQInmeta * self, unsigned & num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
+    static inline RIO_ERROR sq_m_SQInmeta_get_chunk_info(SQInmeta * self, 
+                                                         unsigned * num_chunk, 
+                                                         char * path, size_t path_len, 
+                                                         timeval * begin, 
+                                                         timeval * end)
     {
-        return RIO_ERROR_OK;
+        if (self->status != RIO_ERROR_OK) { return self->status; }
+        RIO_ERROR res = sq_m_SQIntracker_get_chunk_info(&(self->impl), num_chunk, path, path_len, begin, end);
+        if (res != RIO_ERROR_OK){
+            sq_m_SQInmeta_destructor(self);
+            self->status = res;
+        }
+        return res;
     }
 };
 

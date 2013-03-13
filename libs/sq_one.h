@@ -57,7 +57,7 @@ extern "C" {
         return RIO_ERROR_OK;
     }
 
-    static inline RIO_ERROR sq_m_SQOne_get_chunk_info(SQOne * self, unsigned & num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
+    static inline RIO_ERROR sq_m_SQOne_get_chunk_info(SQOne * self, unsigned * num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
     {
         return RIO_ERROR_OK;
     }
