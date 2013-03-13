@@ -141,6 +141,8 @@ extern "C" {
         TODO("Add header sanity check")
         memcpy(self->header1, self->buffer + self->begin_line, self->end_line-self->begin_line);
         self->header1[self->eol-self->begin_line] = 0;
+//        printf("header1 %s\n", self->header1);
+        
         // Second header line
         self->begin_line = self->eol;
         self->rlstatus = sq_m_SQIntracker_readline(self);
@@ -150,6 +152,8 @@ extern "C" {
         TODO("Add header sanity check")
         memcpy(self->header2, self->buffer + self->begin_line, self->end_line-self->begin_line);
         self->header2[self->eol-self->begin_line] = 0;
+//        printf("header2 %s\n", self->header2);
+
         // 3rd header line
         self->begin_line = self->eol;
         self->rlstatus = sq_m_SQIntracker_readline(self);
@@ -159,6 +163,8 @@ extern "C" {
         TODO("Add header sanity check")
         memcpy(self->header3, self->buffer + self->begin_line, self->end_line-self->begin_line);
         self->header3[self->eol-self->begin_line] = 0;
+//        printf("header3 %s\n", self->header3);
+        
         // First real filename line
         self->begin_line = self->eol;
         TODO("check what should happen if a file has no chunk")
@@ -166,6 +172,7 @@ extern "C" {
         if (self->rlstatus != RIO_ERROR_OK){
             return self->rlstatus; 
         }
+//        printf("readline ok\n");
         return RIO_ERROR_OK;
     }
 
