@@ -67,9 +67,9 @@ extern "C" {
                 return RIO_ERROR_OK;
             }
         }
-        size_t trailing_space = sizeof(self->buffer) - self->end_line;
-        // reframe buffer if no trailing space left
-        if (trailing_space == 0){
+        size_t trailing_room = sizeof(self->buffer) - self->end_line;
+        // reframe buffer if no trailing room left
+        if (trailing_room == 0){
             size_t used_len = self->end_line - self->begin_line;
             memmove(self->buffer, &(self->buffer[self->begin_line]), used_len);
             self->end_line = used_len;
@@ -134,16 +134,22 @@ extern "C" {
         if (status != RIO_ERROR_OK){
             return (RIO_ERROR)-status; 
         }
+        memcpy(self->line, self->buffer + self->begin_line, self->end_line-self->begin_line);
+        self->line[self->eol-self->begin_line] = 0;
         // Second header line
         status = sq_m_SQIntracker_next(self);
         if (status != RIO_ERROR_OK){
             return (RIO_ERROR)-status; 
         }
+        memcpy(self->line, self->buffer + self->begin_line, self->end_line-self->begin_line);
+        self->line[self->eol-self->begin_line] = 0;
         // 3rd header line
         status = sq_m_SQIntracker_next(self);
         if (status != RIO_ERROR_OK){
             return (RIO_ERROR)-status; 
         }
+        memcpy(self->line, self->buffer + self->begin_line, self->end_line-self->begin_line);
+        self->line[self->eol-self->begin_line] = 0;
         // First real filename line
         status = sq_m_SQIntracker_next(self);
         if (status != RIO_ERROR_OK){
