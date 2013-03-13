@@ -43,6 +43,9 @@ extern "C" {
         int eol;
         int eollen;
         RIO_ERROR rlstatus;
+        char header1[1024];
+        char header2[1024];
+        char header3[1024];
         char line[1024];
         timeval start_tv;
         timeval stop_tv;
@@ -130,30 +133,38 @@ extern "C" {
         self->num_chunk = 0;
         
         // First header line
-        RIO_ERROR status = sq_m_SQIntracker_next(self);
-        if (status != RIO_ERROR_OK){
-            return (RIO_ERROR)-status; 
+        self->begin_line = self->eol;
+        self->rlstatus = sq_m_SQIntracker_readline(self);
+        if (self->rlstatus != RIO_ERROR_OK){
+            return self->rlstatus; 
         }
-        memcpy(self->line, self->buffer + self->begin_line, self->end_line-self->begin_line);
-        self->line[self->eol-self->begin_line] = 0;
+        TODO("Add header sanity check")
+        memcpy(self->header1, self->buffer + self->begin_line, self->end_line-self->begin_line);
+        self->header1[self->eol-self->begin_line] = 0;
         // Second header line
-        status = sq_m_SQIntracker_next(self);
-        if (status != RIO_ERROR_OK){
-            return (RIO_ERROR)-status; 
+        self->begin_line = self->eol;
+        self->rlstatus = sq_m_SQIntracker_readline(self);
+        if (self->rlstatus != RIO_ERROR_OK){
+            return self->rlstatus; 
         }
-        memcpy(self->line, self->buffer + self->begin_line, self->end_line-self->begin_line);
-        self->line[self->eol-self->begin_line] = 0;
+        TODO("Add header sanity check")
+        memcpy(self->header2, self->buffer + self->begin_line, self->end_line-self->begin_line);
+        self->header2[self->eol-self->begin_line] = 0;
         // 3rd header line
-        status = sq_m_SQIntracker_next(self);
-        if (status != RIO_ERROR_OK){
-            return (RIO_ERROR)-status; 
+        self->begin_line = self->eol;
+        self->rlstatus = sq_m_SQIntracker_readline(self);
+        if (self->rlstatus != RIO_ERROR_OK){
+            return self->rlstatus; 
         }
-        memcpy(self->line, self->buffer + self->begin_line, self->end_line-self->begin_line);
-        self->line[self->eol-self->begin_line] = 0;
+        TODO("Add header sanity check")
+        memcpy(self->header3, self->buffer + self->begin_line, self->end_line-self->begin_line);
+        self->header3[self->eol-self->begin_line] = 0;
         // First real filename line
-        status = sq_m_SQIntracker_next(self);
-        if (status != RIO_ERROR_OK){
-            return (RIO_ERROR)-status; 
+        self->begin_line = self->eol;
+        TODO("check what should happen if a file has no chunk")
+        self->rlstatus = sq_m_SQIntracker_readline(self);
+        if (self->rlstatus != RIO_ERROR_OK){
+            return self->rlstatus; 
         }
         return RIO_ERROR_OK;
     }
