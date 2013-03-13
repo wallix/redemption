@@ -1153,7 +1153,7 @@ namespace LIC
         
         NewLicenseRequest_Recv(Stream & stream)
         {
-            unsigned expected =
+            const unsigned expected =
                 /* tag(1) + flags(1) + wMsgSize(2) + dwPreferredKeyExchangeAlg(4) + dwPlatformId(4) +
                    client_random(SEC_RANDOM_SIZE) + ignored(2) + lenLicensingBlob(2)
                  */
@@ -1794,7 +1794,7 @@ namespace LIC
             /* tag(1) + flags(1) + wMsgSize(2) + dwPreferredKeyExchangeAlg(4) + dwPlatformId(4) +
              * client_random(SEC_RANDOM_SIZE) + wBlobType(2) + lenLicensingBlob(2)
              */
-            unsigned expected = 12 + SEC_RANDOM_SIZE + 4;
+            const unsigned expected = 12 + SEC_RANDOM_SIZE + 4;
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Licence ClientLicenseInfo_Recv : Truncated data, need=%d, remains=%u",
                     expected, stream.in_remain());
@@ -1981,7 +1981,7 @@ namespace LIC
             /* wMsgType(1) + bVersion(1) + wMsgSize(2) + dwConnectFlags(4) + wBlobType(2) + wBlobLen(2) +
              * blob(LICENSE_TOKEN_SIZE) + MACData(LICENSE_SIGNATURE_SIZE)
              */
-            unsigned expected = 12 + LICENSE_TOKEN_SIZE + LICENSE_SIGNATURE_SIZE;
+            const unsigned expected = 12 + LICENSE_TOKEN_SIZE + LICENSE_SIGNATURE_SIZE;
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Licence PlatformChallenge_Recv : Truncated data, need=%u, remains=%u",
                     expected, stream.in_remain());
@@ -3050,7 +3050,7 @@ namespace LIC
         ErrorAlert_Recv(Stream & stream){
             hexdump_d(stream.data, stream.size());
 
-            unsigned expected =
+            const unsigned expected =
                 16; /* wMsgType(1) + bVersion(1) + wMsgSize(2) + dwErrorCode(4) + dwStateTransition(4) + wBlobType(2) + wBlobLen(2) */
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Licence ErrorAlert_Recv : Truncated data, need=%d, remains=%u",

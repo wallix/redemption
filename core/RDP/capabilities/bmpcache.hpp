@@ -124,7 +124,7 @@ struct BmpCacheCaps : public Capability {
         /* pad1(4) + pad2(4) + pad3(4) + pad4(4) + pad5(4) + pad6(4) + cache0Entries(2) + cache0MaximumCellSize(2) +
          * cache1Entries(2) + cache1MaximumCellSize(2) + cache2Entries(2) + cache2MaximumCellSize(2)
          */
-        unsigned expected = 36;
+        const unsigned expected = 36;
         if (!stream.in_check_rem(expected)){
             LOG(LOG_ERR, "Truncated BmpCacheCaps, need=%u remains=%u",
                 expected, stream.in_remain());

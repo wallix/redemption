@@ -229,7 +229,7 @@ struct GeneralCaps : public Capability {
          * extraflags(2) + updateCapability(2) + remoteUnshare(2) + compressionLevel(2) +
          * pad2(2)
          */
-        unsigned expected = 20;
+        const unsigned expected = 20;
         if (!stream.in_check_rem(expected)){
             LOG(LOG_ERR, "Truncated GeneralCaps, need=%u remains=%u",
                 expected, stream.in_remain());

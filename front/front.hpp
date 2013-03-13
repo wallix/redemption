@@ -1726,7 +1726,7 @@ TODO("Pass font name as parameter in constructor")
                         LOG(LOG_INFO, "Unexpected CONFIRMACTIVE PDU");
                     }
                     {
-                        unsigned expected = 6; /* share_id(4) + originatorId(2) */
+                        const unsigned expected = 6; /* share_id(4) + originatorId(2) */
                         if (!sctrl.payload.in_check_rem(expected)){
                             LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%u",
                                 expected, sctrl.payload.in_remain());
@@ -1866,7 +1866,7 @@ TODO("Pass font name as parameter in constructor")
                     channel.log(mcs.channelId);
                 }
 
-                unsigned expected = 8; /* length(4) + flags(4) */
+                const unsigned expected = 8; /* length(4) + flags(4) */
                 if (!sec.payload.in_check_rem(expected)){
                     LOG(LOG_ERR, "Front::incoming::data truncated, need=%u remains=%u",
                         expected, sec.payload.in_remain());
@@ -2318,7 +2318,7 @@ TODO("Pass font name as parameter in constructor")
                     /* bitmap_cache_persist_enable(2) + ignored(2) + cache1_entries(4) + cache2_entries(4) +
                      * cache3_entries(4)
                      */
-                    unsigned expected = 16;
+                    const unsigned expected = 16;
                     if (!stream.in_check_rem(expected)){
                         LOG(LOG_ERR, "Truncated CAPSTYPE_BITMAPCACHE_REV2, need=%u remains=%u",
                             expected, stream.in_remain());
@@ -2700,7 +2700,7 @@ TODO("Pass font name as parameter in constructor")
                     LOG(LOG_INFO, "PDUTYPE2_INPUT num_events=%u", num_events);
                 }
 
-                unsigned expected =
+                const unsigned expected =
                       2               /* pad(2) */
                     + num_events * 12 /* time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2) */
                     ;
