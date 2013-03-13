@@ -182,7 +182,7 @@ struct BitmapCaps : public Capability {
          * desktopWidth(2) + desktopHeight(2) + pad2octets(2) + desktopResizeFlag(2) + bitmapCompressionFlag(2) +
          * highColorFlags(1) + drawingFlags(1) + multipleRectangleSupport(2) + pad2octetsB(2)
          */
-        unsigned expected = 24;
+        const unsigned expected = 24;
         if (!stream.in_check_rem(expected)){
             LOG(LOG_ERR, "Truncated BitmapCaps, need=%u remains=%u",
                 expected, stream.in_remain());

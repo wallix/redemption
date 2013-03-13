@@ -141,29 +141,26 @@ int main(int argc, char** argv)
     TODO("also check if it contains any wrm at all and at wich one we should start depending on input time")
     TODO("if start and stop time are outside wrm, users should also be warned")
 
-    InByMetaSequenceTransport in_wrm_trans(input_filename.c_str());
 //    InByFilenameTransport in_wrm_trans(input_filename.c_str());
 
+    unsigned count = 0;
     try {
-        in_wrm_trans.next_chunk_info();
+        InByMetaSequenceTransport in_wrm_trans_tmp(input_filename.c_str());
+        in_wrm_trans_tmp.next_chunk_info();
         TODO("a negative time should be a time relative to end of movie")
         REDOC("less than 1 year means we are given a time relatve to beginning of movie")
         if (begin_cap < 31536000){ // less than 1 year, it is relative not absolute timestamp
             // begin_capture.tv_usec is 0
-            begin_cap += in_wrm_trans.begin_chunk_time;
+            begin_cap += in_wrm_trans_tmp.begin_chunk_time;
         }
         if (end_cap < 31536000){ // less than 1 year, it is relative not absolute timestamp
             // begin_capture.tv_usec is 0
-            end_cap += in_wrm_trans.begin_chunk_time;
+            end_cap += in_wrm_trans_tmp.begin_chunk_time;
         }
-        while (begin_cap >= in_wrm_trans.end_chunk_time){
-            in_wrm_trans.next_chunk_info();    
+        while (begin_cap >= in_wrm_trans_tmp.end_chunk_time){
+            in_wrm_trans_tmp.next_chunk_info();    
         }
-        unsigned count = in_wrm_trans.chunk_num-1;
-        in_wrm_trans.reset_meta();
-        for (; count > 0 ; count--){
-            in_wrm_trans.next_chunk_info();
-        }
+        count = in_wrm_trans_tmp.chunk_num-1;
     }
     catch (const Error & e) {
         if (e.id == (unsigned)ERR_TRANSPORT_READ_FAILED){
@@ -172,7 +169,11 @@ int main(int argc, char** argv)
         exit(-1);
     };
 
-    
+    InByMetaSequenceTransport in_wrm_trans(input_filename.c_str());
+    for (; count > 0 ; count--){
+        in_wrm_trans.next_chunk_info();
+    }
+
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, verbose);
     player.max_order_count = order_count;
 

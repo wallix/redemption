@@ -29,7 +29,7 @@
 
 #include "../libs/rio.h"
 #include "../libs/rio_impl.h"
-
+#include "../utils/fileutils.hpp"
 
 
 // Infile is a RIO object used to wrap system file reading
@@ -56,6 +56,7 @@ BOOST_AUTO_TEST_CASE(TestOutfileRIO)
     BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer + 24, 1024));
     
     rio_delete(rt);
+    BOOST_CHECK_EQUAL(0, close(fd));
 }
 
 

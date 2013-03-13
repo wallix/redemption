@@ -664,7 +664,7 @@ enum {
         SecExchangePacket_Recv(Stream & stream, uint16_t available_len) 
             : payload(stream)
         {
-            unsigned expected = 8; /* basicSecurityHeader(4) + length(4) */
+            const unsigned expected = 8; /* basicSecurityHeader(4) + length(4) */
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated SEC_EXCHANGE_PKT, expected=%u remains %u",
                    expected, stream.in_remain());
@@ -709,7 +709,7 @@ enum {
         SecInfoPacket_Recv(Stream & stream, uint16_t available_len, CryptContext & crypt)
         : payload(stream, 4 + 8)
         {
-            unsigned expected = 12; /* basicSecurityHeader(4) + signature(8) */
+            const unsigned expected = 12; /* basicSecurityHeader(4) + signature(8) */
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated SEC_INFO_PKT, expected=%u remains %u",
                    expected, stream.in_remain());

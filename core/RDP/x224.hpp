@@ -923,7 +923,7 @@ namespace X224
         //==============================================================================
         : Recv(t, stream)
         {
-            unsigned expected = 7; /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + reason(1) */
+            const unsigned expected = 7; /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + reason(1) */
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated TPDU header: expected=%u remains=%u",
                     expected, stream.in_remain());
@@ -1120,7 +1120,7 @@ namespace X224
         : Recv(t, stream)
         , payload(stream, 0)
         {
-            unsigned expected = 3; /* LI(1) + code(1) + eot(1) */
+            const unsigned expected = 3; /* LI(1) + code(1) + eot(1) */
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated TPDU header: expected=%u remains=%u",
                     expected, stream.in_remain());

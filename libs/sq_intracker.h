@@ -35,62 +35,71 @@ extern "C" {
     struct SQIntracker {
         RIO * trans;
         RIO * tracker;
+//        TODO("CGR: check if name is used ?")
         char name[1024];
         char buffer[2048];
-        int begin;
-        int end;
+        int begin_line;
+        int end_line;
         int eol;
-        int rlstatus;
+        int eollen;
+        RIO_ERROR rlstatus;
+        char line[1024];
         timeval start_tv;
         timeval stop_tv;
+        int num_chunk;
     };
 
-    // input: self->begin : beginning of available buffer (already read)
-    // input: self->end :   end of available buffer (already read)
+    // input: self->begin_line : beginning of available buffer (already read)
+    // input: self->end_line :   end of available buffer (already read)
     // input: self->trans : IO data source
 
     // return self->eol : end of next line
-    // self->begin and self->end may be modified (buffer recentered, more data from input)
-    // return 0 if no eol (end of file reached)
-    // return 1 if \n found
+    // self->begin_line and self->end_line may be modified (buffer recentered, more data from input)
+    // self->eollen is 0 or 1 depending of the eol type (no eol = end of file reached or \n found)
     // (in other words : returns number of trailing eol characters at end of line)
-    // return error codes as negative number
-    static inline int sq_m_SQIntracker_readline(SQIntracker * self)
+    // return error code
+    static inline RIO_ERROR sq_m_SQIntracker_readline(SQIntracker * self)
     {
-        for (int i = self->begin; i < self->end; i++){
+        for (int i = self->begin_line; i < self->end_line; i++){
             if (self->buffer[i] == '\n'){
                 self->eol = i+1;
-                return 1;
+                self->eollen = 1;
+                return RIO_ERROR_OK;
             }
         }
-        size_t trailing_space = sizeof(self->buffer) - self->end;
+        size_t trailing_space = sizeof(self->buffer) - self->end_line;
         // reframe buffer if no trailing space left
         if (trailing_space == 0){
-            size_t used_len = self->end - self->begin;
-            memmove(self->buffer, &(self->buffer[self->begin]), used_len);
-            self->end = used_len;
-            self->begin = 0;
+            size_t used_len = self->end_line - self->begin_line;
+            memmove(self->buffer, &(self->buffer[self->begin_line]), used_len);
+            self->end_line = used_len;
+            self->begin_line = 0;
         }
-        ssize_t res = rio_recv(self->tracker, &(self->buffer[self->end]), sizeof(self->buffer) - self->end);
+        ssize_t res = rio_recv(self->tracker, &(self->buffer[self->end_line]), sizeof(self->buffer) - self->end_line);
         if (res < 0){
             return (RIO_ERROR)-res;
         }
-        self->end += res;
-        if (self->begin == self->end) {
-            return (RIO_ERROR)-RIO_ERROR_EOF;
+        self->end_line += res;
+        if (self->begin_line == self->end_line) {
+            return RIO_ERROR_EOF;
         }
-        for (int i = self->begin; i < self->end; i++){
+        for (int i = self->begin_line; i < self->end_line; i++){
             if (self->buffer[i] == '\n'){
                 self->eol = i+1;
-                return 1;
+                self->eollen = 1;
+                return RIO_ERROR_OK;
             }
         }
-        self->eol = self->end;
-        return 0;
+        self->eol = self->end_line;
+        self->eollen = 0;
+        return RIO_ERROR_OK;
     }
 
     static inline RIO_ERROR sq_m_SQIntracker_destructor(SQIntracker * self)
     {
+        if (self->rlstatus != RIO_ERROR_OK){
+            return self->rlstatus;
+        }
         if (self->trans){
             rio_delete(self->trans);
             self->trans = NULL;
@@ -100,11 +109,12 @@ extern "C" {
 
     static inline RIO_ERROR sq_m_SQIntracker_next(SQIntracker * self)
     {
+        if (self->rlstatus != RIO_ERROR_OK){ return self->rlstatus; }
         sq_m_SQIntracker_destructor(self);
-        self->begin = self->eol;
+        self->begin_line = self->eol;
         self->rlstatus = sq_m_SQIntracker_readline(self);
-        if (self->rlstatus < 0){
-            return (RIO_ERROR)-self->rlstatus;
+        if (self->rlstatus != RIO_ERROR_OK){
+            return self->rlstatus;
         }
         return RIO_ERROR_OK;
     }
@@ -113,7 +123,11 @@ extern "C" {
     {
         self->trans = NULL;
         self->tracker = tracker;
-        self->begin = self->eol = self->end = 0;
+        self->begin_line = self->eol = self->end_line = 0;
+        self->line[0] = 0;
+        self->eollen = 0;
+        self->rlstatus = RIO_ERROR_OK;
+        self->num_chunk = 0;
         
         // First header line
         RIO_ERROR status = sq_m_SQIntracker_next(self);
@@ -138,72 +152,102 @@ extern "C" {
         return RIO_ERROR_OK;
     }
 
-    static inline RIO * sq_m_SQIntracker_get_trans(SQIntracker * self, RIO_ERROR * status)
+    static inline RIO_ERROR sq_m_SQIntracker_next_chunk(SQIntracker * self)
     {
-        if (status && (*status != RIO_ERROR_OK)) { return NULL; }
-        if (!self->trans){
-            if (self->rlstatus < 0){
-                if (status) {
-                    *status = (RIO_ERROR)-self->rlstatus; 
-                }
-                return NULL; // self->trans is NULL
-            }
-            char line[1024];
-            size_t name_size = (unsigned)(self->eol - self->begin - self->rlstatus);
-            if (self->begin == self->end) {
-                if (status) { *status = RIO_ERROR_EOF; }
-                return self->trans; // self->trans is NULL                
-            }
-            if (name_size >= sizeof(line)) {
-                name_size = sizeof(line) - 1;
-            }
-            memcpy(line, &(self->buffer[self->begin]), name_size);
-            line[name_size] = 0;
-            unsigned stop_sec = 0;
-            ssize_t i = name_size - 1;
+        if (self->rlstatus != RIO_ERROR_OK){
+            return self->rlstatus;
+        }
+        size_t name_size = (unsigned)(self->eol - self->begin_line - self->eollen);
+        if (self->begin_line == self->end_line) {
+            return RIO_ERROR_EOF;
+        }
+        if (name_size >= sizeof(self->line)) {
+            name_size = sizeof(self->line) - 1;
+        }
+        memcpy(self->line, &(self->buffer[self->begin_line]), name_size);
+        self->line[name_size] = 0;
+        ssize_t i = name_size - 1;
+        unsigned stop_sec = 0;
+        {
+            unsigned old_stop_sec = 0;
+            unsigned coef = 1;
             for ( ; i >= 0 ; i--){
-                if (line[i] >= '0' && line[i] <= '9'){
-                    stop_sec = stop_sec * 10 + (line[i]-'0');
-                    TODO("add check for tv overflow");
+                if (self->line[i] >= '0' && self->line[i] <= '9'){
+                    if (coef > coef * 10){
+                        return RIO_ERROR_OVERFLOW_START_TIMESTAMP;
+                    }
+                    old_stop_sec = stop_sec;
+                    stop_sec +=  coef * (self->line[i]-'0');
+                    if (old_stop_sec > stop_sec){
+                        return RIO_ERROR_OVERFLOW_STOP_TIMESTAMP;
+                    }
+                    coef *= 10;
                     continue;
                 }
-                if (line[i] == ' '){
+                if (self->line[i] == ' '){
                     self->stop_tv.tv_sec = stop_sec;
                     self->stop_tv.tv_usec = 0;
                     i--;
                     break;
                 }
-                if (status) {
-                    TODO("close trans");
-                    *status = (RIO_ERROR)-RIO_ERROR_INVALID_STOP_TIMESTAMP;
-                }
-                return NULL;
+                return RIO_ERROR_INVALID_STOP_TIMESTAMP;
             }
-            unsigned start_sec = 0;
+        }
+        unsigned start_sec = 0;
+        {
+            unsigned old_start_sec = 0;
+            unsigned coef = 1;
             for ( ; i >= 0 ; i--){
-                if (line[i] >= '0' && line[i] <= '9'){
-                    start_sec = start_sec * 10 + (line[i]-'0');
-                    TODO("add check for tv overflow");
+                if (self->line[i] >= '0' && self->line[i] <= '9'){
+                    if (coef > coef * 10){
+                        return RIO_ERROR_OVERFLOW_START_TIMESTAMP;
+                    }
+                    start_sec += coef * (self->line[i]-'0');
+                    if (old_start_sec > start_sec){
+                        return RIO_ERROR_OVERFLOW_START_TIMESTAMP;
+                    }
+                    coef *= 10;
                     continue;
                 }
-                if (line[i] == ' '){
+                if (self->line[i] == ' '){
                     self->start_tv.tv_sec = start_sec;
                     self->start_tv.tv_usec = 0;
-                    line[i] = 0;
+                    self->line[i] = 0;
                     break;
                 }
-                if (status) {
-                    TODO("close trans");
-                    *status = (RIO_ERROR)-RIO_ERROR_INVALID_START_TIMESTAMP;
-                }
+                return RIO_ERROR_INVALID_START_TIMESTAMP;
+            }
+        }
+        self->start_tv.tv_sec = start_sec;
+        self->start_tv.tv_usec = 0;
+        self->stop_tv.tv_sec = stop_sec;
+        self->stop_tv.tv_usec = 0;
+        self->num_chunk++;
+        return RIO_ERROR_OK;
+    }
+
+    static inline RIO * sq_m_SQIntracker_get_trans(SQIntracker * self, RIO_ERROR * status)
+    {
+        if (status && (*status != RIO_ERROR_OK)) { return NULL; }
+        if (self->rlstatus != RIO_ERROR_OK){
+            if (status) { *status = self->rlstatus; }
+            return NULL;
+        }
+        if (!self->trans){
+            RIO_ERROR res = sq_m_SQIntracker_next_chunk(self);
+            if (res != RIO_ERROR_OK){
+                self->rlstatus = res;
+                if (status) {*status = res;}
                 return NULL;
             }
-            int fd = ::open(line, O_RDONLY, S_IRUSR|S_IRUSR);
+            int fd = ::open(self->line, O_RDONLY, S_IRUSR|S_IRUSR);
             if (fd < 0){
-                if (status) { *status = RIO_ERROR_OPEN; }
+                self->rlstatus = RIO_ERROR_OPEN;
+                if (status) { *status = self->rlstatus; }
                 return self->trans; // self->trans is NULL
             }
-            self->trans = rio_new_infile(status, fd);
+            self->trans = rio_new_infile(&(self->rlstatus), fd);
+            if (status){ *status = self->rlstatus; }
         }
         return self->trans;
     }
@@ -213,8 +257,22 @@ extern "C" {
         return RIO_ERROR_OK;
     }
 
-    static inline RIO_ERROR sq_m_SQIntracker_get_chunk_info(SQIntracker * self, unsigned & num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
+    static inline RIO_ERROR sq_m_SQIntracker_get_chunk_info(SQIntracker * self, 
+                                unsigned * num_chunk, 
+                                char * path, size_t path_len, 
+                                timeval * begin, 
+                                timeval * end)
     {
+        // ensure transport info is available and accurate (yes it goes all the way to opening trans)
+        sq_m_SQIntracker_get_trans(self, NULL);
+        if (self->rlstatus != RIO_ERROR_OK){
+            return self->rlstatus;
+        }
+        TODO("CGR: check path_len")
+        strcpy(path, self->line);
+        if (begin) { *begin = self->start_tv; }
+        if (end) { *end = self->stop_tv; }
+        if (num_chunk) { *num_chunk = self->num_chunk; }
         return RIO_ERROR_OK;
     }
 };

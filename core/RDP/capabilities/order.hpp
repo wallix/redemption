@@ -392,7 +392,7 @@ struct OrderCaps : public Capability {
          * textFlags(2) + orderSupportExFlags(2) + pad4octetsB(4) + desktopSaveSize(4) + pad2octetsC(2) +
          * pad2octetsD(2) + textANSICodePage(2) + pad2octetsE(2)
          */
-        unsigned expected = 32 + NB_ORDER_SUPPORT + 20;
+        const unsigned expected = 32 + NB_ORDER_SUPPORT + 20;
         if (!stream.in_check_rem(expected)){
             LOG(LOG_ERR, "Truncated OrderCaps, need=%u remains=%u",
                 expected, stream.in_remain());

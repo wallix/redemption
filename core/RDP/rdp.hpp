@@ -163,7 +163,7 @@ struct ShareControl
     void recv_begin() throw(Error)
     //==============================================================================
     {
-        unsigned expected = 4; /* len(2) + pdu_type1(2) */
+        const unsigned expected = 4; /* len(2) + pdu_type1(2) */
         if (!stream.in_check_rem(expected)){
             LOG(LOG_ERR, "Truncated ShareControl packet, need=%u remains=%u",
                 expected, stream.in_remain());
@@ -462,7 +462,7 @@ struct ShareData
     //==============================================================================
     {
         /* share_id(4) + ignored(1) + streamid(1) + len(2) + pdutype2(1) + compressedType(1) + compressedLen(2) */
-        unsigned expected = 12;
+        const unsigned expected = 12;
         if (!this->stream.in_check_rem(expected)){
             LOG(LOG_ERR, "sdata packet len too short: need %u, remains=%u",
                 expected, this->stream.in_remain());

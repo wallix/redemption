@@ -52,13 +52,6 @@ extern "C" {
         return RIO_ERROR_CLOSED;
     }
 
-    /* This method close ressource without calling destructor
-       Any subsequent call should return an error
-    */
-    inline void rio_m_RIOInfile_close(RIOInfile * self)
-    {
-        close(self->fd);
-    }
 
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data

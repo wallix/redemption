@@ -184,7 +184,7 @@ class Stream {
     }
 
     void out_uint64_le(uint64_t v) {
-        REDASSERT(has_room(8));
+        REDASSERT(this->has_room(8));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p[2] = (v >> 16) & 0xFF;
@@ -204,7 +204,7 @@ class Stream {
     }
 
     void out_uint64_be(uint64_t v) {
-        REDASSERT(has_room(8));
+        REDASSERT(this->has_room(8));
         this->p[0] = (v >> 56) & 0xFF;
         this->p[1] = (v >> 48) & 0xFF;
         this->p[2] = (v >> 40) & 0xFF;
@@ -262,7 +262,7 @@ class Stream {
     }
 
     void out_uint8(unsigned char v) {
-        REDASSERT(has_room(1));
+        REDASSERT(this->has_room(1));
         *(this->p++) = v;
     }
 
@@ -310,7 +310,7 @@ class Stream {
 
 
     void out_sint8(char v) {
-        REDASSERT(has_room(1));
+        REDASSERT(this->has_room(1));
         *(this->p++) = v;
     }
 
@@ -319,7 +319,7 @@ class Stream {
     }
 
     void out_uint16_le(unsigned int v) {
-        REDASSERT(has_room(2));
+        REDASSERT(this->has_room(2));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p+=2;
@@ -331,7 +331,7 @@ class Stream {
     }
 
     void out_sint16_le(signed int v) {
-        REDASSERT(has_room(2));
+        REDASSERT(this->has_room(2));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p+=2;
@@ -343,7 +343,7 @@ class Stream {
     }
 
     void out_uint16_be(unsigned int v) {
-        REDASSERT(has_room(2));
+        REDASSERT(this->has_room(2));
         this->p[1] = v & 0xFF;
         this->p[0] = (v >> 8) & 0xFF;
         this->p+=2;
@@ -355,7 +355,7 @@ class Stream {
     }
 
     void out_uint32_le(unsigned int v) {
-        REDASSERT(has_room(4));
+        REDASSERT(this->has_room(4));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p[2] = (v >> 16) & 0xFF;
@@ -371,7 +371,7 @@ class Stream {
     }
 
     void out_uint32_be(unsigned int v) {
-        REDASSERT(has_room(4));
+        REDASSERT(this->has_room(4));
         this->p[0] = (uint8_t)(v >> 24) & 0xFF;
         this->p[1] = (v >> 16) & 0xFF;
         this->p[2] = (v >> 8) & 0xFF;
@@ -380,7 +380,7 @@ class Stream {
     }
 
     void set_out_uint32_be(unsigned int v, size_t offset) {
-        REDASSERT(has_room(4));
+        REDASSERT(this->has_room(4));
         this->data[offset+0] = (uint8_t)(v >> 24) & 0xFF;
         this->data[offset+1] = (v >> 16) & 0xFF;
         this->data[offset+2] = (v >> 8) & 0xFF;
@@ -456,7 +456,7 @@ class Stream {
     }
 
     void out_copy_bytes(const uint8_t * v, size_t n) {
-        REDASSERT(has_room(n));
+        REDASSERT(this->has_room(n));
         memcpy(this->p, v, n);
         this->p += n;
     }
@@ -466,24 +466,24 @@ class Stream {
     }
 
     void out_copy_bytes(const char * v, size_t n) {
-        out_copy_bytes((uint8_t*)v, n);
+        this->out_copy_bytes((uint8_t*)v, n);
     }
 
     void set_out_copy_bytes(const char * v, size_t n, size_t offset) {
-        set_out_copy_bytes((uint8_t*)v, n, offset);
+        this->set_out_copy_bytes((uint8_t*)v, n, offset);
     }
 
     void out_concat(const char * v) {
-        out_copy_bytes(v, strlen(v));
+        this->out_copy_bytes(v, strlen(v));
     }
 
     void set_out_concat(const char * v, size_t offset) {
-        set_out_copy_bytes((uint8_t*)v, strlen(v), offset);
+        this->set_out_copy_bytes((uint8_t*)v, strlen(v), offset);
     }
 
 
     void out_clear_bytes(size_t n) {
-        REDASSERT(has_room(n));
+        REDASSERT(this->has_room(n));
         memset(this->p, 0, n);
         this->p += n;
     }
@@ -493,7 +493,7 @@ class Stream {
     }
 
     void out_bytes_le(const uint8_t nb, const unsigned value){
-        REDASSERT(has_room(nb));
+        REDASSERT(this->has_room(nb));
         ::out_bytes_le(this->p, nb, value);
         this->p += nb;
     }
@@ -1590,15 +1590,17 @@ class BStream : public Stream {
         this->init(size);
     }
     virtual ~BStream() {
+        // <this->data> is allocated dynamically.
         if (this->capacity > AUTOSIZE) {
             delete [] this->data;
         }
     }
 
-    // a default buffer of 8192 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
+    // a default buffer of 65536 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
     void init(size_t v) {
         if (v != this->capacity) {
             try {
+                // <this->data> is allocated dynamically.
                 if (this->capacity > AUTOSIZE){
                     delete [] this->data;
                 }
