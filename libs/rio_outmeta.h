@@ -53,16 +53,7 @@ extern "C" {
         }
         RIO_ERROR status = RIO_ERROR_OK;
         RIO * meta = rio_new_outfile(&status, fd);
-        // write headers
-        const char * headers[3] = {header1, header2, header3};
-        for (size_t i = 0 ; i < sizeof(headers)/sizeof(headers[0]) ; i++){
-          ssize_t res = rio_send(meta, headers[i], strlen(headers[i]));
-          if (res < 0){
-            rio_delete(meta);
-            return (RIO_ERROR)-res;
-          }
-        }
-        SQ * sequence = sq_new_outfilename(&status, meta, SQF_PREFIX_COUNT_EXTENSION, prefix, ".wrm", tv);
+        SQ * sequence = sq_new_outfilename(&status, meta, SQF_PREFIX_COUNT_EXTENSION, prefix, ".wrm", tv, header1, header2, header3);
         if (status != RIO_ERROR_OK){
             rio_delete(meta);
             return status;

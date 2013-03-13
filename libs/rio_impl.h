@@ -155,21 +155,23 @@ SQ * sq_new_one(RIO_ERROR * error, RIO * trans)
 }
 
 
-RIO_ERROR sq_init_outfilename(SQ * self, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, timeval * tv)
+RIO_ERROR sq_init_outfilename(SQ * self, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, timeval * tv, 
+        const char * header1, const char * header2, const char * header3)
 {
     self->sq_type = SQ_TYPE_OUTFILENAME;
-    self->err = sq_m_SQOutfilename_constructor(&(self->u.outfilename), tracker, format, prefix, extension, tv);
+    self->err = sq_m_SQOutfilename_constructor(&(self->u.outfilename), tracker, format, prefix, extension, tv, header1, header2, header3);
     return self->err;
 }
 
-SQ * sq_new_outfilename(RIO_ERROR * error, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, timeval * tv)
+SQ * sq_new_outfilename(RIO_ERROR * error, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, timeval * tv,
+                const char * header1, const char * header2, const char * header3)
 {
     SQ * self = (SQ*)malloc(sizeof(SQ));
     if (self == 0){ 
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
-    RIO_ERROR res = sq_init_outfilename(self, tracker, format, prefix, extension, tv);
+    RIO_ERROR res = sq_init_outfilename(self, tracker, format, prefix, extension, tv, header1, header2, header3);
     if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
