@@ -29,7 +29,7 @@
 
 #include "../libs/rio.h"
 #include "../libs/rio_impl.h"
-
+#include "../utils/fileutils.hpp"
 
 TODO("extract these tests to their own test files, explain and comment them")
 
@@ -57,6 +57,7 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
 
     status = RIO_ERROR_OK;
     SQ * sequence = sq_new_intracker(&status, tracker);
+    BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
     status = RIO_ERROR_OK;
     RIO * rt = rio_new_insequence(&status, sequence);
@@ -72,7 +73,7 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
 
     rio_delete(rt);
     sq_delete(sequence);
-    rio_delete(tracker);
+    rio_delete(tracker);  
 }
 
 

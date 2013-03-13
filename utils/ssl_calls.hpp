@@ -61,6 +61,7 @@ class SslSha1
         SHA1_Init(&this->sha1);
     }
 
+    TODO("Remove this method when all calls will use the second form below")
     void update(const uint8_t * data, uint32_t len)
     {
         SHA1_Update(&this->sha1, data, len);
@@ -68,7 +69,7 @@ class SslSha1
 
     void update(const Stream & stream)
     {
-        update(stream.data, stream.size());
+        SHA1_Update(&this->sha1, stream.data, stream.size());
     }
 
     void final(uint8_t * out_data)
@@ -88,6 +89,7 @@ class SslMd5
         MD5_Init(&this->md5);
     }
 
+    TODO("Remove this method when all calls will use the second form below")
     void update(const uint8_t * const data, uint32_t len)
     {
         MD5_Update(&this->md5, data, len);
@@ -95,7 +97,7 @@ class SslMd5
 
     void update(const Stream & stream)
     {
-        update(stream.data, stream.size());
+        MD5_Update(&this->md5, stream.data, stream.size());
     }
 
     void final(uint8_t * out_data)
@@ -111,6 +113,7 @@ class SslRC4
     public:
     SslRC4(){}
 
+    TODO("Remove this method when all calls will use the second form below")
     void set_key(uint8_t * key, size_t key_len)
     {
         RC4_set_key(&this->rc4, key_len, key);
@@ -118,15 +121,16 @@ class SslRC4
 
     void set_key(const Stream & stream)
     {
-        set_key(stream.data, stream.size());
+        RC4_set_key(&this->rc4, stream.size(), stream.data);
     }
 
+    TODO("Remove this method when all calls will use the second form below")
     void crypt(uint8_t * data, size_t len){
         RC4(&this->rc4, len, data, data);
     }
 
     void crypt(Stream & stream){
-        crypt(stream.data, stream.size());
+        RC4(&this->rc4, stream.size(), stream.data, stream.data);
     }
 };
 

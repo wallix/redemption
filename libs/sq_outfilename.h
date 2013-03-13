@@ -150,7 +150,7 @@ extern "C" {
     }
 
     TODO("not yet implemented")
-    static inline RIO_ERROR sq_m_SQOutfilename_get_chunk_info(SQOutfilename * self, unsigned & num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
+    static inline RIO_ERROR sq_m_SQOutfilename_get_chunk_info(SQOutfilename * self, unsigned * num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
     {
         return RIO_ERROR_OK;
     }

@@ -246,7 +246,8 @@ public:
     {
         timeval tv_begin = {};
         timeval tv_end = {};
-        sq_get_chunk_info(this->seq, this->chunk_num, this->path, sizeof(this->path), &tv_begin, &tv_end);
+        sq_get_chunk_info(this->seq, &this->chunk_num, this->path, sizeof(this->path), &tv_begin, &tv_end);
+        sq_next(this->seq);
         this->begin_chunk_time = tv_begin.tv_sec;
         this->end_chunk_time = tv_end.tv_sec;
     }
