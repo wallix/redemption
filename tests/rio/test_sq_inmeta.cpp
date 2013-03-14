@@ -57,10 +57,7 @@ BOOST_AUTO_TEST_CASE(TestSeqInmeta)
     // sq_next() change filename to the next one in the list by reading tracker
     // the next call to sq_get_trans() will open a new trans for reading using this file
 
-    int fd1 = ::open("tmp.tmp", O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR);
-    ::close(fd1);
-    ::unlink("tmp.tmp");
-
+    BOOST_CHECK(true); // do not remove : this test is to force opening boost test pipe before performing open
     timeval tv_begin;
     timeval tv_end;
     unsigned int chunk_num;
@@ -70,6 +67,10 @@ BOOST_AUTO_TEST_CASE(TestSeqInmeta)
     SQ * sq = sq_new_inmeta(&status, "./tests/fixtures/sample", ".mwrm");
     BOOST_CHECK(sq != NULL);
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
+
+    int fd1 = ::open("tmp.tmp", O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR);
+    ::close(fd1);
+    ::unlink("tmp.tmp");
 
     status = sq_get_chunk_info(sq, &chunk_num, path, sizeof(path), &tv_begin, &tv_end);
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
@@ -81,11 +82,11 @@ BOOST_AUTO_TEST_CASE(TestSeqInmeta)
     RIO * rt = NULL;
     rt = sq_get_trans(sq, &status);
     BOOST_CHECK(rt != NULL);
-    BOOST_CHECK_EQUAL(fd1+1, rt->u.outfile.fd);
+    BOOST_CHECK_EQUAL(fd1, rt->u.outfile.fd);
     
     rt = sq_get_trans(sq, &status);
     BOOST_CHECK(rt != NULL);
-    BOOST_CHECK_EQUAL(fd1+1, rt->u.outfile.fd);
+    BOOST_CHECK_EQUAL(fd1, rt->u.outfile.fd);
     
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(sq));
     status = sq_get_chunk_info(sq, &chunk_num, path, sizeof(path), &tv_begin, &tv_end);
@@ -97,7 +98,7 @@ BOOST_AUTO_TEST_CASE(TestSeqInmeta)
     
     rt = sq_get_trans(sq, &status);
     BOOST_CHECK(rt != NULL);
-    BOOST_CHECK_EQUAL(fd1+1, rt->u.outfile.fd);
+    BOOST_CHECK_EQUAL(fd1, rt->u.outfile.fd);
     
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(sq));
     status = sq_get_chunk_info(sq, &chunk_num, path, sizeof(path), &tv_begin, &tv_end);
@@ -109,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestSeqInmeta)
 
     rt = sq_get_trans(sq, &status);
     BOOST_CHECK(rt != NULL);
-    BOOST_CHECK_EQUAL(fd1+1, rt->u.outfile.fd);
+    BOOST_CHECK_EQUAL(fd1, rt->u.outfile.fd);
 
     BOOST_CHECK_EQUAL(RIO_ERROR_EOF, sq_next(sq));
 
