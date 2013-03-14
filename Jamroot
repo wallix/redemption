@@ -297,6 +297,9 @@ unit-test test_sq_outfilename : tests/rio/test_sq_outfilename.cpp openssl crypto
 unit-test test_sq_intracker : tests/rio/test_sq_intracker.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_sq_intracker : tests/rio/test_sq_intracker.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_sq_inmeta : tests/rio/test_sq_inmeta.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_sq_inmeta : tests/rio/test_sq_inmeta.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+
 #gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_rio_xxx.gcno bin/gcc-4.6/coverage/test_rio_xxx
 
 
