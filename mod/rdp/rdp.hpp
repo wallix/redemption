@@ -3485,6 +3485,10 @@ struct mod_rdp : public client_mod {
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
         BStream stream(1024);
+
+        TODO("CGR: This is ugly, we should provide parameters to InfoPacket constructor,"
+             "not instanciate empty InfoPacket and set parameters aftawerward"
+             "Yes, I know there are many parameters... nevertheless")
         InfoPacket infoPacket;
         infoPacket.rdp5_support = this->use_rdp5;
 
@@ -3495,6 +3499,7 @@ struct mod_rdp : public client_mod {
         memcpy(infoPacket.UserName, this->username, infoPacket.cbUserName);
 
         infoPacket.cbPassword = UTF8Len(password)*2;
+        memset(infoPacket.Password, 0, sizeof(infoPacket.Password));
         memcpy(infoPacket.Password, password, infoPacket.cbPassword);
 
         infoPacket.cbAlternateShell = UTF8Len(this->program)*2;
@@ -3503,8 +3508,11 @@ struct mod_rdp : public client_mod {
         infoPacket.cbWorkingDir = UTF8Len(this->directory) * 2;
         memcpy(infoPacket.WorkingDir, this->directory, infoPacket.cbWorkingDir);
 
-        infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG
-                                                                                                   | PERF_DISABLE_MENUANIMATIONS );
+        TODO("CGR: it is really suprising these performance flags are related to tls status!!!"
+             "Looks like an error...")
+        infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER 
+                                                       | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG
+                                                                          | PERF_DISABLE_MENUANIMATIONS );
 
         infoPacket.extendedInfoPacket.cbClientAddress = 2 * this->cbClientAddr;
         memcpy(infoPacket.extendedInfoPacket.clientAddress, this->clientAddr, this->cbClientAddr);

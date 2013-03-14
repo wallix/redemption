@@ -34,17 +34,12 @@
 
 BOOST_AUTO_TEST_CASE(TestLogon)
 {
+
+    TODO("Really the test below is useless, we are testing assignment!"
+         "Infopacket should be replaced by some constructor with parameters and test fixed")
     InfoPacket infoPacket;
 
-	infoPacket.rdp5_support = 1;
-    infoPacket.flags  = INFO_MOUSE;
-	infoPacket.flags |= INFO_DISABLECTRLALTDEL;
-	infoPacket.flags |= INFO_UNICODE;
-	infoPacket.flags |= INFO_MAXIMIZESHELL;
-	infoPacket.flags |= INFO_ENABLEWINDOWSKEY;
-	infoPacket.flags |= INFO_LOGONNOTIFY;;
-	infoPacket.flags |= ( (strlen((char *) infoPacket.Password ) > 0) * INFO_AUTOLOGON );
-	infoPacket.flags |= ( infoPacket.rdp5_support != 0 ) * ( INFO_LOGONERRORS | INFO_NOAUDIOPLAYBACK );
+    infoPacket.rdp5_support = 1;
 
     memcpy(infoPacket.Domain, "Domain_Test", strlen("Domain_Test"));
     infoPacket.cbDomain = strlen((char *) infoPacket.Domain);
@@ -57,10 +52,31 @@ BOOST_AUTO_TEST_CASE(TestLogon)
     memcpy(infoPacket.WorkingDir, "Directory_Test", strlen("Directory_Test"));
     infoPacket.cbWorkingDir = strlen((char *) infoPacket.WorkingDir);
 
-    infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER | 1 * ( PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS);
+
+    infoPacket.flags  = INFO_MOUSE;
+    infoPacket.flags |= INFO_DISABLECTRLALTDEL;
+    infoPacket.flags |= INFO_UNICODE;
+    infoPacket.flags |= INFO_MAXIMIZESHELL;
+    infoPacket.flags |= INFO_ENABLEWINDOWSKEY;
+    infoPacket.flags |= INFO_LOGONNOTIFY;;
+    infoPacket.flags |= ((infoPacket.Password[0]|infoPacket.Password[1]) != 0) * INFO_AUTOLOGON;
+    infoPacket.flags |= (infoPacket.rdp5_support != 0) * (INFO_LOGONERRORS | INFO_NOAUDIOPLAYBACK);
+
+    infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER 
+                                                   | 1 * ( PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS);
 
     BOOST_CHECK_EQUAL(infoPacket.rdp5_support, (uint32_t)1);
-    BOOST_CHECK_EQUAL(infoPacket.flags, (uint32_t)590195);
+    BOOST_CHECK_EQUAL(infoPacket.flags, (uint32_t)
+        (INFO_MOUSE
+        |INFO_DISABLECTRLALTDEL
+        |INFO_UNICODE
+        |INFO_MAXIMIZESHELL
+        |INFO_ENABLEWINDOWSKEY
+        |INFO_LOGONNOTIFY
+        |INFO_AUTOLOGON
+        |INFO_LOGONERRORS 
+        |INFO_NOAUDIOPLAYBACK
+        ));
     BOOST_CHECK_EQUAL(std::string((char *) infoPacket.Domain), std::string("Domain_Test") );
     BOOST_CHECK_EQUAL(infoPacket.cbDomain, (uint32_t)strlen((char *) infoPacket.Domain));
     BOOST_CHECK_EQUAL(std::string((char *) infoPacket.UserName), std::string("UserName_Test") );
@@ -71,6 +87,7 @@ BOOST_AUTO_TEST_CASE(TestLogon)
     BOOST_CHECK_EQUAL(infoPacket.cbAlternateShell, (uint32_t)strlen((char *) infoPacket.AlternateShell));
     BOOST_CHECK_EQUAL(std::string((char *) infoPacket.WorkingDir), std::string("Directory_Test") );
     BOOST_CHECK_EQUAL(infoPacket.cbWorkingDir, (uint32_t)strlen((char *) infoPacket.WorkingDir));
-    BOOST_CHECK_EQUAL(infoPacket.extendedInfoPacket.performanceFlags, (uint32_t)7);
+    BOOST_CHECK_EQUAL(infoPacket.extendedInfoPacket.performanceFlags, 
+        (uint32_t)(PERF_DISABLE_WALLPAPER|PERF_DISABLE_FULLWINDOWDRAG|PERF_DISABLE_MENUANIMATIONS));
 
 }
