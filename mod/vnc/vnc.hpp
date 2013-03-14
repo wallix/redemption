@@ -914,7 +914,6 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         stream.in_skip_bytes(3); /* padding */
         size_t clip_data_size = stream.in_uint32_be(); /* length */
 
-//        size_t chunk_size = (clip_data_size>MAX_VNC_2_RDP_CLIP_DATA_SIZE)?MAX_VNC_2_RDP_CLIP_DATA_SIZE:clip_data_size;
         size_t chunk_size = std::min<size_t>(clip_data_size, MAX_VNC_2_RDP_CLIP_DATA_SIZE);
         if ( this->verbose ){
             LOG(LOG_INFO, "clip_data_size=%u chunk_size=%u", clip_data_size, chunk_size);
@@ -926,8 +925,6 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         if (stream.end[-1]){ *stream.end = 0; stream.end++; }
         if (stream.end[-1]){ *stream.end = 0; stream.end++; }
 
-hexdump_d(stream.p, chunk_size);
-
         size_t clipboard_payload_size = UTF8Check(stream.p, chunk_size);
         stream.p[clipboard_payload_size] = 0;
 
@@ -935,15 +932,6 @@ hexdump_d(stream.p, chunk_size);
 
         this->clip_data.out_unistr(reinterpret_cast<const char *>(stream.p));
         this->clip_data.mark_end();
-/*
-        // The size of <this->clip_data> must be larger than MAX_VNC_2_RDP_CLIP_DATA_SIZE.
-        this->clip_data.init(MAX_VNC_2_RDP_CLIP_DATA_SIZE + 200);
-        this->t->recv(&this->clip_data.end, chunk_size); // text
-        
-        // Add two trailing zero if not already there to ensure we have UTF8sz content
-        if (this->clip_data.end[-1]){ *this->clip_data.end = 0; this->clip_data.end++; }
-        if (this->clip_data.end[-1]){ *this->clip_data.end = 0; this->clip_data.end++; }
-*/
 
         // drop remaining clipboard content if larger that about 8000 bytes
         if (clip_data_size > chunk_size){
@@ -1034,7 +1022,6 @@ hexdump_d(stream.p, chunk_size);
         if (this->verbose){
             LOG(LOG_INFO, "mod_vnc::send_to_vnc length=%u chunk_size=%u flags=0x%08X", (unsigned)length, (unsigned)chunk.size(), flags);
         }
-            LOG(LOG_INFO, "mod_vnc::send_to_vnc length=%u chunk_size=%u flags=0x%08X", (unsigned)length, (unsigned)chunk.size(), flags);
 
         // specific treatement depending on msgType
         BStream stream(chunk.size());
@@ -1218,51 +1205,20 @@ hexdump_d(stream.p, chunk_size);
                     out_s.out_uint16_le(ChannelDef::CB_FORMAT_DATA_RESPONSE);   //  - MSG Type 2 bytes
                     out_s.out_uint16_le(ChannelDef::CB_RESPONSE_OK);            //  - MSG flags 2 bytes
 
-/*
-                    size_t clipboard_payload_size = UTF8Check(this->clip_data.data, this->clip_data.size());
-                    // Ensure watchdog. In normal cases it will already be there
-                    this->clip_data.data[clipboard_payload_size] = 0;
-
-                    size_t start_of_data = out_s.get_offset();
-                    out_s.out_uint32_le(0); //  - Datalen of the rest of the message
-*/
                     this->clip_data.rewind();
 
-                    size_t length = this->clip_data.size() + 8;
+                    size_t length = this->clip_data.size() + 8 /* size of clip PDU header */;
                     out_s.out_uint32_le(this->clip_data.size()); //  - Datalen of the rest of the message
-
                     //--------------------------- End of clipboard PDU Header ----------------------------------
                     //--------------------------- Beginning of Format Data Response PDU payload ----------------
-                    
-/*
-                    out_s.out_unistr(reinterpret_cast<const char *>(this->clip_data.data));
-                    //--------------------------- End of Format Data Response PDU payload ----------------------
-                    out_s.out_clear_bytes(2);
-
-                    size_t end_of_data = out_s.get_offset();
-                    out_s.set_out_uint32_le(end_of_data - start_of_data - 4, start_of_data);
-*/
-LOG(LOG_INFO, "mod_vnc::send_to_vnc clip_data size=%u offset=%u", this->clip_data.size(), this->clip_data.get_offset());
-
                     size_t payload_size = std::min<size_t>(ChannelDef::CHANNEL_CHUNK_LENGTH - out_s.get_offset(),
                         this->clip_data.size());
                     out_s.out_copy_bytes(this->clip_data.p, payload_size);
                     this->clip_data.p += payload_size;
                     out_s.mark_end();
 
-LOG(LOG_INFO, "mod_vnc::send_to_vnc clip_data size=%u offset=%u", this->clip_data.size(), this->clip_data.get_offset());
-
                     uint32_t chunk_size = out_s.size();
-                    if (chunk_size > ChannelDef::CHANNEL_CHUNK_LENGTH){
-                        LOG(LOG_INFO, "mod_vnc::send_to_vnc trunk length(%u) > CHANNEL_CHUNK_LENGTH(%u)",
-                            chunk_size, ChannelDef::CHANNEL_CHUNK_LENGTH);
-                        throw Error(ERR_VNC);
-                    }
-//                    size_t chunk_size = length < ChannelDef::CHANNEL_CHUNK_LENGTH ? length : ChannelDef::CHANNEL_CHUNK_LENGTH;
-/*
-                    size_t chunk_size = length < (2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 200) ?
-                        length : (2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 200);
-*/
+                    REDASSERT(chunk_size <= ChannelDef::CHANNEL_CHUNK_LENGTH);
 
                     int send_flags = ChannelDef::CHANNEL_FLAG_FIRST;
 
@@ -1274,16 +1230,11 @@ LOG(LOG_INFO, "mod_vnc::send_to_vnc clip_data size=%u offset=%u", this->clip_dat
                             send_flags |= ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
                         }
 
-                        LOG(LOG_INFO, "length=%u chunk_size=%u send_flags=0x%08X", this->clip_data.size(), chunk_size, send_flags);
-
-
                         this->send_to_front_channel( "cliprdr"
                                                    , out_s.data
                                                    , length
                                                    , chunk_size
                                                    , send_flags );
-
-                        LOG(LOG_INFO, "chunk send");
 
                         if ((send_flags & ChannelDef::CHANNEL_FLAG_LAST) != 0){
                             break;
@@ -1299,19 +1250,9 @@ LOG(LOG_INFO, "mod_vnc::send_to_vnc clip_data size=%u offset=%u", this->clip_dat
                         this->clip_data.p += payload_size;
                         out_s.mark_end();
 
-LOG(LOG_INFO, "mod_vnc::send_to_vnc clip_data size=%u offset=%u", this->clip_data.size(), this->clip_data.get_offset());
-
                         chunk_size = out_s.size();
                     }
                     while (true);
-
-/*
-                    this->send_to_front_channel( "cliprdr"
-                                               , out_s.data
-                                               , length
-                                               , chunk_size
-                                               , ChannelDef::CHANNEL_FLAG_FIRST | ChannelDef::CHANNEL_FLAG_LAST );
-*/
 
                     if ( this->verbose ){
                         LOG( LOG_INFO, "mod_vnc::send_to_vnc done" );
@@ -1354,19 +1295,17 @@ LOG(LOG_INFO, "mod_vnc::send_to_vnc clip_data size=%u offset=%u", this->clip_dat
 
                         size_t len_utf8 = UTF16toUTF8(stream.p, dataLenU16 / 2, dataU8.data, dataU8.capacity);
 
-hexdump_d(dataU8.data, len_utf8);
-
                         dataU8.data[len_utf8] = 0;
 
                         this->rdp_input_clip_data(dataU8.data, len_utf8 + 1);
                     }
                     else {
+                        // Virtual channel data span in multiple Virtual Channel PDUs.
+
                         if ((flags & ChannelDef::CHANNEL_FLAG_FIRST) == 0){
                             LOG(LOG_INFO, "mod_vnc::send_to_vnc flag CHANNEL_FLAG_FIRST expected");
                             throw Error(ERR_VNC);
                         }
-
-                        LOG(LOG_INFO, "mod_vnc::send_to_vnc dataU16=%u", dataLenU16);
 
                         if ( this->verbose ){
                             LOG(LOG_INFO, "mod_vnc::send_to_vnc Virtual channel data span in multiple Virtual Channel PDUs");
@@ -1380,21 +1319,6 @@ hexdump_d(dataU8.data, len_utf8);
 
                         this->large_virtual_channel_data.out_copy_bytes(stream.p, dataLenU16);
                     }
-
-/*
-                    TODO("code be low is broken for large buffers if we get a large stream if can't be stored "
-                         "in only one PDU anyway, because PDU are limited to 64 bytes")
-                    uint8_t dataU16[dataLenU16];
-                    memset(dataU16, 0, sizeof(dataU16));
-                    stream.in_copy_bytes(dataU16, dataLenU16);
-
-                    // Convert utf-16 RDP buffer to utf-8 for VNC
-                    uint8_t dataU8[dataLenU16];
-                    size_t len_utf8 = UTF16toUTF8(dataU16, dataLenU16 / 2, dataU8, dataLenU16);
-                    dataU8[len_utf8] = 0;
-
-                    this->rdp_input_clip_data(dataU8, len_utf8 + 1);
-*/
                 }
                 break;
             }
