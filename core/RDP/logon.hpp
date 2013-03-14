@@ -724,8 +724,8 @@ struct InfoPacket {
 
     void emit(Stream & stream) {
 
-        this->flags |= ( (strlen((char *) this->Password ) > 0) * INFO_AUTOLOGON );
-        this->flags |= ( this->rdp5_support != 0 ) * ( INFO_LOGONERRORS | INFO_NOAUDIOPLAYBACK );
+        this->flags |= ((this->Password[1]|this->Password[0]) != 0) * INFO_AUTOLOGON;
+        this->flags |= (this->rdp5_support != 0 ) * ( INFO_LOGONERRORS | INFO_NOAUDIOPLAYBACK );
 
         stream.out_uint32_le(this->CodePage);
         stream.out_uint32_le(this->flags);
