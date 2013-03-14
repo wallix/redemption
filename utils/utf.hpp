@@ -37,8 +37,11 @@ static inline size_t UTF8Check(const uint8_t * source, size_t len)
         uint8_t c = source[i];
         switch (c >> 4){
             case 0:
-                i++;
-                goto UTF8Check_exit;
+                // allows control characters
+                if (c == 0){
+                    i++;
+                    goto UTF8Check_exit;
+                }
             break;
             case 1: case 2: case 3: case 4: case 5: case 6: case 7:
             break;
@@ -220,8 +223,13 @@ static inline size_t UTF8toUTF16(const uint8_t * source, uint8_t * target, size_
     for (size_t i = 0; (ucode = c = source[i]) != 0 ; i++){
         switch (c >> 4){
             case 0:
-                // should never happen, catched by test above
-                goto UTF8toUTF16_exit;
+                // allows control characters
+                if (c == 0){
+                    // should never happen, catched by test above
+                    goto UTF8toUTF16_exit;
+                }
+
+                ucode = c;
             break;
             case 1: case 2: case 3: 
             case 4: case 5: case 6: case 7:

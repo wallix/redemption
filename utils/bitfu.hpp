@@ -123,8 +123,4 @@ static inline void buf_out_uint32(uint8_t* buffer, int value)
   buffer[3] = (value >> 24) & 0xff;
 }
 
-
-
-
-
 #endif

@@ -62,7 +62,7 @@ class SslSha1
     }
 
     TODO("Remove this method when all calls will use the second form below")
-    void update(const uint8_t * data, uint32_t len)
+    void update(const uint8_t * const data, uint32_t len)
     {
         SHA1_Update(&this->sha1, data, len);
     }
@@ -83,7 +83,6 @@ class SslMd5
     MD5_CTX md5;
 
     public:
-
     SslMd5()
     {
         MD5_Init(&this->md5);
@@ -177,8 +176,9 @@ class ssllib
         key[2] = 0x9e;
     }
 
+    TODO("Remove this method when all calls will use the second form below")
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    static void sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen, uint8_t* data, int datalen)
+    static void sign(uint8_t * signature, int siglen, const uint8_t * const session_key, int keylen, const uint8_t * const data, int datalen)
     {
         uint8_t lenhdr[4];
         buf_out_uint32(lenhdr, datalen);
@@ -211,6 +211,12 @@ class ssllib
         md5.final(md5sig);
 
         memcpy(signature, md5sig, siglen);
+    }
+
+    /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
+    static void sign(Stream & signature, int siglen, const Stream & key, const Stream & data)
+    {
+        sign(signature.data, signature.capacity, key.data, key.size(), data.data, data.size());
     }
 
     static void rdp_sec_generate_keyblock(uint8_t (& key_block)[48], uint8_t *client_random, uint8_t *server_random)

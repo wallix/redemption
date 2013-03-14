@@ -361,7 +361,6 @@ struct mod_rdp : public client_mod {
         }
         stream.out_copy_bytes(chunk.data, chunk.size());
         stream.mark_end();
-        stream.rewind();
 
         BStream x224_header(256);
         BStream mcs_header(256);

@@ -181,7 +181,6 @@ BOOST_AUTO_TEST_CASE(TestUTF8InsertAtPos_0)
     BOOST_CHECK_EQUAL(1, UTF8Len(source));
 }
 
-
 BOOST_AUTO_TEST_CASE(TestUTF8InsertAtPos_beyond_end)
 {
     uint8_t source[255] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
@@ -388,7 +387,36 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16)
 
     size_t nbbytes_utf8 = UTF16toUTF8(target, nbbytes_utf16 / 2, source_round_trip, sizeof(source_round_trip));
     BOOST_CHECK_EQUAL(14, nbbytes_utf8);
+}
 
+BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_witch_control_character)
+{
+    uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0x0A, 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
+    uint8_t expected_target[] = { 'a', 0, 'b', 0, 'c', 0, 'e', 0, 'd', 0,
+                                  'e', 0, 'f', 0,
+                                  0x0A, 0 /* newline */,
+                                  0xE9, 0 /* é */,
+                                  0xE7, 0 /* ç */,
+                                  0xE0, 0 /* à */,
+                                  '@', 0, };
+    const size_t target_length = sizeof(expected_target)/sizeof(expected_target[0]);
+    uint8_t target[target_length];
+
+    size_t nbbytes_utf16 = UTF8toUTF16(source, target, target_length);
+
+    // Check result
+    BOOST_CHECK_EQUAL(target_length, nbbytes_utf16);
+    for (size_t q = 0 ; q < target_length ; q++){
+        if (expected_target[q] != target[q]){
+            printf("at %u: expected %u, got %u\n", (unsigned)q, expected_target[q] ,target[q]);
+            BOOST_CHECK(false);
+        }
+    }
+
+    uint8_t source_round_trip[16];
+
+    size_t nbbytes_utf8 = UTF16toUTF8(target, nbbytes_utf16 / 2, source_round_trip, sizeof(source_round_trip));
+    BOOST_CHECK_EQUAL(15, nbbytes_utf8);
 }
 
 
@@ -399,7 +427,6 @@ BOOST_AUTO_TEST_CASE(TestUTF8toUnicode)
 
     // Check result
     BOOST_CHECK_EQUAL(3, UTF8toUnicode(source, uni, sizeof(uni)/sizeof(uni[0])));
-
 }
 
 
@@ -411,7 +438,16 @@ BOOST_AUTO_TEST_CASE(TestUTF8Check_invalid_utf8)
 
     // Check result
     BOOST_CHECK_EQUAL(2, UTF8Check(source, source_length));
+}
 
+BOOST_AUTO_TEST_CASE(TestUTF8Check_witch_control_character)
+{
+    uint8_t source[] = {0xC3, 0xA9 /* é */, 0x09, 0xC3, 0xA9 };
+    size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
+    // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
+
+    // Check result
+    BOOST_CHECK_EQUAL(5, UTF8Check(source, source_length));
 }
 
 BOOST_AUTO_TEST_CASE(TestUTF8Check_valid_utf8_no_trailing_zero)
