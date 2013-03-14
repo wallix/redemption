@@ -665,6 +665,7 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'selector'");
                         }
+                        this->context->selector_focus = 8; // FOCUS_ON_CONNECT
                         this->mod = new selector_mod(
                                         *this->context,
                                         *this->front,

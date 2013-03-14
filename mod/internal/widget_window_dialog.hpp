@@ -53,7 +53,6 @@ struct window_dialog : public window
             but = new widget_button(this->mod, Rect(300, r.cy - 40, 60, 25), this, 2, 1, refuse);
             this->child_list.push_back(but);
             this->esc_button = but;
-            this->default_button = but;
         }
         size_t count = 0;
         bool done = false;
@@ -80,12 +79,13 @@ struct window_dialog : public window
 
     virtual void notify(struct Widget* sender, int msg, long param1, long param2)
     {
+//        LOG(LOG_DEBUG, "notify sender=%p msg=%d param1=%lu param2=%lu\n", sender, msg, param1, param2);
         if (this->modal_dialog != 0 && msg != 100) {
             return;
         }
         TODO(" use symbolic button ids instead of constants 2 and 3")
         if (msg == 1) { /* click */
-            LOG(LOG_INFO, "windget_window_dialog::notify %d sender->id=%d", msg, sender->id);
+//            LOG(LOG_INFO, "windget_window_dialog::notify %d sender->id=%d", msg, sender->id);
             switch (sender->id) {
             case 2: /* cancel button -> Esc */
                 this->context->cpy(

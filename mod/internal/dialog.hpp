@@ -32,12 +32,15 @@
 struct dialog_mod : public internal_mod {
     struct window_dialog * close_window;
     Widget* button_down;
+    bool refuse_flag;
+    ModContext & context;
 
     dialog_mod(ModContext & context,
                FrontAPI & front, uint16_t width, uint16_t height,
                const char *message, const char * refuse, Inifile * ini)
-            :
-            internal_mod(front, width, height)
+            : internal_mod(front, width, height)
+            , refuse_flag(refuse != NULL)
+            , context(context)
     {
         this->button_down = 0;
 
@@ -85,7 +88,6 @@ struct dialog_mod : public internal_mod {
             regular,
             message,
             refuse);
-
         this->screen.child_list.push_back(this->close_window);
         assert(this->close_window->mod == this);
 
@@ -274,7 +276,28 @@ struct dialog_mod : public internal_mod {
     }
 
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap){
-        TODO(" dialog does not support keyboard any more  fix that")
+        if (keymap->nb_kevent_available() > 0){
+            switch (keymap->top_kevent()){
+                case Keymap2::KEVENT_KEY:
+                {
+                    uint32_t c = keymap->get_char();
+                    if (c == ' '){
+                        this->context.cpy(this->refuse_flag?STRAUTHID_ACCEPT_MESSAGE:STRAUTHID_DISPLAY_MESSAGE, "True");
+                        this->event.set();
+                        this->signal = BACK_EVENT_NEXT;
+                    }
+                }
+                break;
+                case Keymap2::KEVENT_ENTER:
+                    keymap->get_kevent();
+                    this->context.cpy(this->refuse_flag?STRAUTHID_ACCEPT_MESSAGE:STRAUTHID_DISPLAY_MESSAGE, "True");
+                    this->event.set();
+                    this->signal = BACK_EVENT_NEXT;
+                break;
+                default:
+                break;
+            }
+        }
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
