@@ -48,6 +48,9 @@ public:
     };
 
     virtual ContextText* create_context_text(const char * s) = 0;
+
+    virtual ~ModApi()
+    {}
 };
 
 #endif

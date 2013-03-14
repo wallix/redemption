@@ -32,16 +32,16 @@ public:
     WidgetEdit pass;
 
 public:
-    enum {
-        NOTIFY_FOCUS_BEGIN = ::NOTIFY_FOCUS_BEGIN,
-        NOTIFY_FOCUS_END = ::NOTIFY_FOCUS_END,
-        NOTIFY_SUBMIT = ::NOTIFY_SUBMIT,
-        NOTIFY_CANCEL = ::NOTIFY_CANCEL,
-        NOTIFY_USERNAME_EDIT = 100,
-        NOTIFY_PASSWORD_EDIT,
-        NOTIFY_USERNAME_SUBMIT,
-        NOTIFY_PASSWORD_SUBMIT,
-    };
+    //enum {
+    //    NOTIFY_FOCUS_BEGIN = WindowBox::NOTIFY_FOCUS_BEGIN,
+    //    NOTIFY_FOCUS_END = WindowBox::NOTIFY_FOCUS_END,
+    //    NOTIFY_SUBMIT = WindowBox::NOTIFY_SUBMIT,
+    //    NOTIFY_CANCEL = WindowBox::NOTIFY_CANCEL,
+    //    NOTIFY_USERNAME_EDIT = 100,
+    //    NOTIFY_PASSWORD_EDIT,
+    //    NOTIFY_USERNAME_SUBMIT,
+    //    NOTIFY_PASSWORD_SUBMIT,
+    //};
 
     WindowLogin(ModApi* drawable, int x, int y, Widget* parent, NotifyApi* notifier, int id = 0)
     : WindowBox(drawable, Rect(x, y, 270, 95), parent, notifier, "Connection", id)
@@ -49,9 +49,12 @@ public:
     , pass(drawable, Rect(10,45,250,20), this, 0, 0, 0, 3)
     {}
 
+    virtual ~WindowLogin()
+    {}
+
     virtual void notify(int id, EventType event)
     {
-        if (id == 2) {
+        /*if (id == 2) {
             this->notify_self(event == WIDGET_SUBMIT
             ? NOTIFY_USERNAME_SUBMIT
             : NOTIFY_USERNAME_EDIT);
@@ -59,13 +62,13 @@ public:
             this->notify_self(event == WIDGET_SUBMIT
             ? NOTIFY_PASSWORD_SUBMIT
             : NOTIFY_PASSWORD_EDIT);
+        }*/
+        if (event == WIDGET_SUBMIT) {
+            this->notify_self(NOTIFY_SUBMIT);
         } else {
             this->WindowBox::notify(id, event);
         }
     }
-
-    virtual ~WindowLogin()
-    {}
 };
 
 #endif

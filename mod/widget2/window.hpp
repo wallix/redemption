@@ -23,7 +23,6 @@
 
 #include "widget_composite.hpp"
 #include "label.hpp"
-#include <keymap2.hpp>
 
 class Window : public WidgetComposite
 {
@@ -36,6 +35,10 @@ public:
     {
         this->titlebar.x_text = 5;
         this->titlebar.tab_flag = IGNORE_TAB;
+        if (!caption) {
+            this->titlebar.rect.cx = 0;
+            this->titlebar.rect.cy = 0;
+        }
     }
 
     virtual ~Window()

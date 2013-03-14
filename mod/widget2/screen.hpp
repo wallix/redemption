@@ -32,6 +32,9 @@ public:
         this->has_focus = true;
     }
 
+    virtual ~WidgetScreen()
+    {}
+
     void paint()
     {
 

@@ -29,6 +29,9 @@ public:
     typedef int notify_event_t;
 
     virtual void notify(Widget * sender, notify_event_t event) = 0;
+
+    virtual ~NotifyApi()
+    {}
 };
 
 #endif

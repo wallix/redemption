@@ -27,6 +27,17 @@
 class WindowBox : public Window
 {
 public:
+    enum {
+        NOTIFY_FOCUS_BEGIN = ::NOTIFY_FOCUS_BEGIN,
+        NOTIFY_FOCUS_END = ::NOTIFY_FOCUS_END,
+        NOTIFY_SUBMIT = ::NOTIFY_SUBMIT,
+        NOTIFY_CANCEL = ::NOTIFY_CANCEL,
+        //NOTIFY_USERNAME_EDIT = 100,
+        //NOTIFY_PASSWORD_EDIT,
+        //NOTIFY_USERNAME_SUBMIT,
+        //NOTIFY_PASSWORD_SUBMIT,
+    };
+
     WidgetButton submit;
     WidgetButton cancel;
 

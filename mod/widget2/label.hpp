@@ -22,7 +22,6 @@
 #define REDEMPTION_MOD_WIDGET2_LABEL_HPP
 
 #include "widget.hpp"
-#include "utf.hpp"
 
 class WidgetLabel : public Widget
 {

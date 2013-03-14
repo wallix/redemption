@@ -30,13 +30,16 @@ public:
     int state;
     bool is_down;
 
-    WidgetButton(ModApi* drawable, const Rect& rect, Widget* parent, NotifyApi* notifier, const char * text, int id = 0)
-    : WidgetLabel(drawable, rect, parent, notifier, text, id)
+    WidgetButton(ModApi* drawable, const Rect& rect, Widget* parent, NotifyApi* notifier, const char * text, int id = 0, int xtext = 0, int ytext = 0)
+    : WidgetLabel(drawable, rect, parent, notifier, text, id, xtext, ytext)
     , state(0)
     , is_down(false)
     {
         this->type = Widget::TYPE_BUTTON;
     }
+
+    virtual ~WidgetButton()
+    {}
 
     virtual void send_event(EventType event, int param, int param2, Keymap2* keymap)
     {

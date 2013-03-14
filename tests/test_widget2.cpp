@@ -35,6 +35,8 @@
 #include <widget2/window_login.hpp>
 #include <widget2/image.hpp>
 #include <widget2/window_box.hpp>
+#include <widget2/pager.hpp>
+#include <widget2/selector.hpp>
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "png.hpp"
@@ -497,7 +499,7 @@ BOOST_AUTO_TEST_CASE(TraceDrawImage)
 
 BOOST_AUTO_TEST_CASE(TraceWindowBox)
 {
-    TestDraw drawable;
+    TestDraw drawable(500,500);
     WidgetScreen screen(&drawable, 500, 500, 0);
     WindowBox win(&drawable, Rect(50, 50, 300, 400), &screen, 0, "WindowBox");
     win.bg_color = 10000000;
@@ -505,12 +507,78 @@ BOOST_AUTO_TEST_CASE(TraceWindowBox)
 
     screen.refresh(screen.rect);
 
-    //save_to_png(drawable, "/tmp/f.png");
+    save_to_png(drawable, "/tmp/f.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x6f\x2c\x85\xd6\xa5\xc9\x72\xb3\x0a\x0b"
-        "\x2d\x40\x2e\x68\x17\xbc\x17\x18\xbc\xb9")){
+        "\xc9\x23\xe7\xeb\x64\x21\x9b\x34\x18\xba"
+        "\x41\x44\x2d\xc4\x26\xc1\x78\x35\x92\xcb")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetPager)
+{
+    TestDraw drawable(500,500);
+    WidgetScreen screen(&drawable, 500, 500, 0);
+    WidgetPager pager(&drawable, Rect(50, 50, 300, 400), &screen, 0, 0, 3);
+    pager.bg_color = 10000000;
+    pager.prev.bg_color = 25635;
+    pager.current.bg_color = 279468;
+    pager.next.bg_color = 2522;
+    pager.titlebar.bg_color = 322425;
+
+    WidgetLabel l0(&drawable, Rect(0, pager.current.rect.cy + 4, pager.rect.cx, 15), &pager, 0, "line 0", 0, 2, 2);
+    int cy = l0.context_text->cy + 4;
+    l0.rect.cy = cy;
+    WidgetLabel l1(&drawable, Rect(0, l0.rect.y + cy, l0.rect.cx, cy), &pager, 0, "line 1", 1, 2, 2);
+    WidgetLabel l2(&drawable, Rect(0, l1.rect.y + cy, l0.rect.cx, cy), &pager, 0, "line 2", 2, 2, 2);
+    WidgetLabel l3(&drawable, Rect(0, l2.rect.y + cy, l0.rect.cx, cy), &pager, 0, "line 3", 3, 2, 2);
+    WidgetLabel l4(&drawable, Rect(0, l3.rect.y + cy, l0.rect.cx, cy), &pager, 0, "line 4", 4, 2, 2);
+    WidgetLabel l5(&drawable, Rect(0, l4.rect.y + cy, l0.rect.cx, cy), &pager, 0, "line 5", 5, 2, 2);
+    WidgetLabel l6(&drawable, Rect(0, l5.rect.y + cy, l0.rect.cx, cy), &pager, 0, "line 6", 6, 2, 2);
+    l0.bg_color = 3434;
+    l2.bg_color = 3434;
+    l4.bg_color = 3434;
+    l6.bg_color = 3434;
+
+    screen.refresh(screen.rect);
+
+    //save_to_png(drawable, "/tmp/g.png");
+
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x7f\xb1\x85\xe9\x65\x5c\x25\xd4\xd3\x06"
+        "\xe6\xf1\x19\x5c\xe5\xef\xd1\xad\xb9\x7d")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE(TraceWidgetSelector)
+{
+    TestDraw drawable(800,600);
+    WidgetScreen screen(&drawable, 800,600, 0);
+    ModContext context;
+    WidgetSelector selector(context, &drawable, 800, 600, &screen, 0);
+    selector.bg_color = 10000000;
+    selector.prev.bg_color = 25635;
+    selector.current.bg_color = 279468;
+    selector.next.bg_color = 2522;
+    selector.titlebar.bg_color = 322425;
+    selector.cancel.bg_color = 234433;
+    selector.submit.bg_color = 4433;
+
+    screen.refresh(screen.rect);
+
+    save_to_png(drawable, "/tmp/h.png");
+
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xaf\x18\x8c\x48\x46\x23\xe8\xb3\xd7\xb0"
+        "\xbb\x68\xf3\xc7\x2f\x00\xb1\x26\xf6\x9e")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
