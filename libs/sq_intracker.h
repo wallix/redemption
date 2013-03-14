@@ -33,6 +33,7 @@
 
 extern "C" {
     struct SQIntracker {
+        int fd;
         RIO * trans;
         RIO * tracker;
 //        TODO("CGR: check if name is used ?")
@@ -113,7 +114,11 @@ extern "C" {
     static inline RIO_ERROR sq_m_SQIntracker_next(SQIntracker * self)
     {
         if (self->rlstatus != RIO_ERROR_OK){ return self->rlstatus; }
-        sq_m_SQIntracker_destructor(self);
+        if (self->trans){
+            rio_delete(self->trans);
+            close(self->fd);
+            self->trans = NULL;
+        }
         self->begin_line = self->eol;
         self->rlstatus = sq_m_SQIntracker_readline(self);
         if (self->rlstatus != RIO_ERROR_OK){
@@ -141,7 +146,7 @@ extern "C" {
         TODO("Add header sanity check")
         memcpy(self->header1, self->buffer + self->begin_line, self->end_line-self->begin_line);
         self->header1[self->eol-self->begin_line] = 0;
-//        printf("header1 %s\n", self->header1);
+        printf("header1 %s\n", self->header1);
         
         // Second header line
         self->begin_line = self->eol;
@@ -152,7 +157,7 @@ extern "C" {
         TODO("Add header sanity check")
         memcpy(self->header2, self->buffer + self->begin_line, self->end_line-self->begin_line);
         self->header2[self->eol-self->begin_line] = 0;
-//        printf("header2 %s\n", self->header2);
+        printf("header2 %s\n", self->header2);
 
         // 3rd header line
         self->begin_line = self->eol;
@@ -163,7 +168,7 @@ extern "C" {
         TODO("Add header sanity check")
         memcpy(self->header3, self->buffer + self->begin_line, self->end_line-self->begin_line);
         self->header3[self->eol-self->begin_line] = 0;
-//        printf("header3 %s\n", self->header3);
+        printf("header3 %s\n", self->header3);
         
         // First real filename line
         self->begin_line = self->eol;
@@ -172,7 +177,7 @@ extern "C" {
         if (self->rlstatus != RIO_ERROR_OK){
             return self->rlstatus; 
         }
-//        printf("readline ok\n");
+        printf("readline ok\n");
         return RIO_ERROR_OK;
     }
 
@@ -264,13 +269,13 @@ extern "C" {
                 if (status) {*status = res;}
                 return NULL;
             }
-            int fd = ::open(self->line, O_RDONLY, S_IRUSR|S_IRUSR);
-            if (fd < 0){
+            self->fd = ::open(self->line, O_RDONLY, S_IRUSR|S_IRUSR);
+            if (self->fd < 0){
                 self->rlstatus = RIO_ERROR_OPEN;
                 if (status) { *status = self->rlstatus; }
                 return self->trans; // self->trans is NULL
             }
-            self->trans = rio_new_infile(&(self->rlstatus), fd);
+            self->trans = rio_new_infile(&(self->rlstatus), self->fd);
             if (status){ *status = self->rlstatus; }
         }
         return self->trans;

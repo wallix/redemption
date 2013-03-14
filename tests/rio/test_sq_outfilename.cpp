@@ -51,6 +51,9 @@
 
 BOOST_AUTO_TEST_CASE(TestSeqOutfilename)
 {
+    // get value of first available fd1
+    int fd1 = ::open("TESTOFS-000000.wrm", O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR);
+    ::close(fd1);
     // cleanup possible remain of previous test
     ::unlink("TESTOFS-000000.wrm");
     ::unlink("TESTOFS-000001.wrm");
@@ -90,12 +93,12 @@ BOOST_AUTO_TEST_CASE(TestSeqOutfilename)
     tv.tv_sec += 10; sq_timestamp(sq, &tv);
     rt = sq_get_trans(sq, &status);
     BOOST_CHECK(rt != NULL);
-    BOOST_CHECK_EQUAL(3, rt->u.infile.fd);
+    BOOST_CHECK_EQUAL(fd1, rt->u.infile.fd);
     
     tv.tv_sec += 10; sq_timestamp(sq, &tv);
     rt = sq_get_trans(sq, &status);
     BOOST_CHECK(rt != NULL);
-    BOOST_CHECK_EQUAL(3, rt->u.infile.fd);
+    BOOST_CHECK_EQUAL(fd1, rt->u.infile.fd);
     
     tv.tv_sec += 10; sq_timestamp(sq, &tv);
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(sq));
@@ -104,7 +107,7 @@ BOOST_AUTO_TEST_CASE(TestSeqOutfilename)
     tv.tv_sec += 10; sq_timestamp(sq, &tv);
     rt = sq_get_trans(sq, &status);
     BOOST_CHECK(rt != NULL);
-    BOOST_CHECK_EQUAL(3, rt->u.infile.fd);
+    BOOST_CHECK_EQUAL(fd1, rt->u.infile.fd);
     
     tv.tv_sec += 10; sq_timestamp(sq, &tv);
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(sq));
@@ -112,7 +115,7 @@ BOOST_AUTO_TEST_CASE(TestSeqOutfilename)
     tv.tv_sec += 10; sq_timestamp(sq, &tv);
     rt = sq_get_trans(sq, &status);
     BOOST_CHECK(rt != NULL);
-    BOOST_CHECK_EQUAL(3, rt->u.infile.fd);
+    BOOST_CHECK_EQUAL(fd1, rt->u.infile.fd);
 
     tv.tv_sec += 10; sq_timestamp(sq, &tv);
 

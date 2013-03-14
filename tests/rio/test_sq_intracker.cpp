@@ -56,10 +56,19 @@ BOOST_AUTO_TEST_CASE(TestSeqIntracker)
 
     // sq_next() change filename to the next one in the list by reading tracker
     // the next call to sq_get_trans() will open a new trans for reading using this file
+    ::unlink("TESTOFS-000000.wrm");
+    ::unlink("TESTOFS-000001.wrm");
+    ::unlink("TESTOFS-000002.wrm");
+    ::unlink("TESTOFS-000003.wrm");
 
-    ::close(::open("TESTOFS-000000.wrm", O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR));
-    ::close(::open("TESTOFS-000001.wrm", O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR));
-    ::close(::open("TESTOFS-000002.wrm", O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR));
+    int fd1 = ::open("TESTOFS-000000.wrm", O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR);
+    ::close(fd1);
+    int fd2 = ::open("TESTOFS-000001.wrm", O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR);
+    BOOST_CHECK_EQUAL(fd1, fd2);
+    ::close(fd2);
+    int fd3 = ::open("TESTOFS-000002.wrm", O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR);
+    BOOST_CHECK_EQUAL(fd1, fd3);
+    ::close(fd3);
 
     char trackerdata[] = "800 600\n"
                       "0\n"
@@ -69,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TestSeqIntracker)
                       "TESTOFS-000002.wrm 1352304860 1352304881\n"
                     ;
     RIO tracker;
-    RIO_ERROR status = rio_init_check(&tracker, trackerdata, sizeof(trackerdata) - 1);
+    RIO_ERROR status = rio_init_generator(&tracker, trackerdata, sizeof(trackerdata) - 1);
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
     struct timeval tv;
@@ -80,25 +89,25 @@ BOOST_AUTO_TEST_CASE(TestSeqIntracker)
     RIO * rt = NULL;
     rt = sq_get_trans(sq, &status);
     BOOST_CHECK(rt != NULL);
-    BOOST_CHECK_EQUAL(3, rt->u.outfile.fd);
+    BOOST_CHECK_EQUAL(fd1, rt->u.outfile.fd);
     
     rt = sq_get_trans(sq, &status);
     BOOST_CHECK(rt != NULL);
-    BOOST_CHECK_EQUAL(3, rt->u.outfile.fd);
+    BOOST_CHECK_EQUAL(fd1, rt->u.outfile.fd);
     
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(sq));
     
     rt = sq_get_trans(sq, &status);
     BOOST_CHECK(rt != NULL);
-    BOOST_CHECK_EQUAL(3, rt->u.outfile.fd);
+    BOOST_CHECK_EQUAL(fd1, rt->u.outfile.fd);
     
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(sq));
 
     rt = sq_get_trans(sq, &status);
     BOOST_CHECK(rt != NULL);
-    BOOST_CHECK_EQUAL(3, rt->u.outfile.fd);
+    BOOST_CHECK_EQUAL(fd1, rt->u.outfile.fd);
 
-    BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(sq));
+    BOOST_CHECK_EQUAL(RIO_ERROR_EOF, sq_next(sq));
 
     sq_delete(sq);
     rio_clear(&tracker);
