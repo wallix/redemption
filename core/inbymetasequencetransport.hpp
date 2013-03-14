@@ -244,12 +244,19 @@ public:
 
     void next_chunk_info()
     {
-        timeval tv_begin = {};
-        timeval tv_end = {};
-        sq_get_chunk_info(this->seq, &this->chunk_num, this->path, sizeof(this->path), &tv_begin, &tv_end);
+        {
+            timeval tv_begin = {};
+            timeval tv_end = {};
+            RIO_ERROR status = sq_get_chunk_info(this->seq, &this->chunk_num, this->path, sizeof(this->path), &tv_begin, &tv_end);
+            if (status != RIO_ERROR_OK){
+                throw Error(ERR_TRANSPORT_READ_FAILED);
+            }
+            this->begin_chunk_time = tv_begin.tv_sec;
+            this->end_chunk_time = tv_end.tv_sec;
+        }
+        // if some error occurs calling sq_next 
+        // it will be took care of when opening next chunk, not now
         sq_next(this->seq);
-        this->begin_chunk_time = tv_begin.tv_sec;
-        this->end_chunk_time = tv_end.tv_sec;
     }
 
     using Transport::recv;

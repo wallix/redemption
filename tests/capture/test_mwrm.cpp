@@ -261,15 +261,15 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2_RIO)
 
         try {
             mwrm_trans.next_chunk_info();
-//            BOOST_CHECK(false);
+            BOOST_CHECK(false);
         }
         catch (const Error & e){
             BOOST_CHECK_EQUAL((unsigned)ERR_TRANSPORT_READ_FAILED, e.id);
             BOOST_CHECK(true);
         };
 
-    } catch(Error e) {
-        LOG(LOG_INFO, "caught exception e.id=%u\n", e.id);
+    } catch(const Error & e) {
+        BOOST_CHECK(false);
     };
 
 }

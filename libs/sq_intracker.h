@@ -33,6 +33,7 @@
 
 extern "C" {
     struct SQIntracker {
+        int fd;
         RIO * trans;
         RIO * tracker;
 //        TODO("CGR: check if name is used ?")
@@ -43,6 +44,9 @@ extern "C" {
         int eol;
         int eollen;
         RIO_ERROR rlstatus;
+        char header1[1024];
+        char header2[1024];
+        char header3[1024];
         char line[1024];
         timeval start_tv;
         timeval stop_tv;
@@ -67,9 +71,9 @@ extern "C" {
                 return RIO_ERROR_OK;
             }
         }
-        size_t trailing_space = sizeof(self->buffer) - self->end_line;
-        // reframe buffer if no trailing space left
-        if (trailing_space == 0){
+        size_t trailing_room = sizeof(self->buffer) - self->end_line;
+        // reframe buffer if no trailing room left
+        if (trailing_room == 0){
             size_t used_len = self->end_line - self->begin_line;
             memmove(self->buffer, &(self->buffer[self->begin_line]), used_len);
             self->end_line = used_len;
@@ -110,7 +114,11 @@ extern "C" {
     static inline RIO_ERROR sq_m_SQIntracker_next(SQIntracker * self)
     {
         if (self->rlstatus != RIO_ERROR_OK){ return self->rlstatus; }
-        sq_m_SQIntracker_destructor(self);
+        if (self->trans){
+            rio_delete(self->trans);
+            close(self->fd);
+            self->trans = NULL;
+        }
         self->begin_line = self->eol;
         self->rlstatus = sq_m_SQIntracker_readline(self);
         if (self->rlstatus != RIO_ERROR_OK){
@@ -130,24 +138,41 @@ extern "C" {
         self->num_chunk = 0;
         
         // First header line
-        RIO_ERROR status = sq_m_SQIntracker_next(self);
-        if (status != RIO_ERROR_OK){
-            return (RIO_ERROR)-status; 
+        self->begin_line = self->eol;
+        self->rlstatus = sq_m_SQIntracker_readline(self);
+        if (self->rlstatus != RIO_ERROR_OK){
+            return self->rlstatus; 
         }
+        TODO("Add header sanity check")
+        memcpy(self->header1, self->buffer + self->begin_line, self->end_line-self->begin_line);
+        self->header1[self->eol-self->begin_line] = 0;
+        
         // Second header line
-        status = sq_m_SQIntracker_next(self);
-        if (status != RIO_ERROR_OK){
-            return (RIO_ERROR)-status; 
+        self->begin_line = self->eol;
+        self->rlstatus = sq_m_SQIntracker_readline(self);
+        if (self->rlstatus != RIO_ERROR_OK){
+            return self->rlstatus; 
         }
+        TODO("Add header sanity check")
+        memcpy(self->header2, self->buffer + self->begin_line, self->end_line-self->begin_line);
+        self->header2[self->eol-self->begin_line] = 0;
+
         // 3rd header line
-        status = sq_m_SQIntracker_next(self);
-        if (status != RIO_ERROR_OK){
-            return (RIO_ERROR)-status; 
+        self->begin_line = self->eol;
+        self->rlstatus = sq_m_SQIntracker_readline(self);
+        if (self->rlstatus != RIO_ERROR_OK){
+            return self->rlstatus; 
         }
+        TODO("Add header sanity check")
+        memcpy(self->header3, self->buffer + self->begin_line, self->end_line-self->begin_line);
+        self->header3[self->eol-self->begin_line] = 0;
+        
         // First real filename line
-        status = sq_m_SQIntracker_next(self);
-        if (status != RIO_ERROR_OK){
-            return (RIO_ERROR)-status; 
+        self->begin_line = self->eol;
+        TODO("check what should happen if a file has no chunk")
+        self->rlstatus = sq_m_SQIntracker_readline(self);
+        if (self->rlstatus != RIO_ERROR_OK){
+            return self->rlstatus; 
         }
         return RIO_ERROR_OK;
     }
@@ -240,13 +265,13 @@ extern "C" {
                 if (status) {*status = res;}
                 return NULL;
             }
-            int fd = ::open(self->line, O_RDONLY, S_IRUSR|S_IRUSR);
-            if (fd < 0){
+            self->fd = ::open(self->line, O_RDONLY, S_IRUSR|S_IRUSR);
+            if (self->fd < 0){
                 self->rlstatus = RIO_ERROR_OPEN;
                 if (status) { *status = self->rlstatus; }
                 return self->trans; // self->trans is NULL
             }
-            self->trans = rio_new_infile(&(self->rlstatus), fd);
+            self->trans = rio_new_infile(&(self->rlstatus), self->fd);
             if (status){ *status = self->rlstatus; }
         }
         return self->trans;

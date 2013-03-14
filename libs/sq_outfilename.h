@@ -33,6 +33,7 @@
 
 extern "C" {
     struct SQOutfilename {
+        int fd;
         RIO * trans;
         timeval start_tv;
         timeval stop_tv;
@@ -44,7 +45,7 @@ extern "C" {
         unsigned count;
     };
 
-    static inline RIO_ERROR sq_m_SQOutfilename_constructor(SQOutfilename * self, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, struct timeval * tv)
+    static inline RIO_ERROR sq_m_SQOutfilename_constructor(SQOutfilename * self, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, struct timeval * tv, const char * header1, const char * header2, const char * header3)
     {
         self->trans = NULL;
         self->tracker = tracker;
@@ -61,6 +62,15 @@ extern "C" {
             return RIO_ERROR_STRING_EXTENSION_TOO_LONG;
         }
         strcpy(self->extension, extension);
+        if (tracker){
+            TODO("Add error management, add sanity check for headers (no CR, not too long)");
+            rio_send(tracker, header1, strlen(header1));
+            rio_send(tracker, "\n", 1);
+            rio_send(tracker, header2, strlen(header2));
+            rio_send(tracker, "\n", 1);
+            rio_send(tracker, header3, strlen(header3));
+            rio_send(tracker, "\n", 1);
+        }
         return RIO_ERROR_OK;
     }
 
@@ -112,7 +122,7 @@ extern "C" {
     static inline RIO_ERROR sq_m_SQOutfilename_destructor(SQOutfilename * self)
     {
         if (self->trans){
-            if (self->tracker) { 
+            if (self->tracker) {
                 char buffer[1024];
                 size_t len = sq_im_SQOutfilename_get_line(self, buffer, sizeof(buffer)-1);
                 buffer[len] = '\n';
@@ -120,7 +130,9 @@ extern "C" {
                 self->start_tv.tv_sec = self->stop_tv.tv_sec;
                 self->start_tv.tv_usec = self->stop_tv.tv_usec;
             }
+            TODO("check if close returns some error");
             rio_delete(self->trans);
+            close(self->fd);
             self->trans = NULL;
         }
         return RIO_ERROR_OK;
@@ -132,12 +144,12 @@ extern "C" {
         if (!self->trans){
             char tmpname[1024];
             sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname));
-            int fd = ::open(tmpname, O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR);
-            if (fd < 0){
+            self->fd = ::open(tmpname, O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR);
+            if (self->fd < 0){
                 if (status) { *status = RIO_ERROR_CREAT; }
                 return self->trans;
             }
-            self->trans = rio_new_outfile(status, fd);
+            self->trans = rio_new_outfile(status, self->fd);
         }
         return self->trans;
     }
@@ -149,7 +161,6 @@ extern "C" {
         return RIO_ERROR_OK;
     }
 
-    TODO("not yet implemented")
     static inline RIO_ERROR sq_m_SQOutfilename_get_chunk_info(SQOutfilename * self, unsigned * num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
     {
         return RIO_ERROR_OK;
