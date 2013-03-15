@@ -46,21 +46,21 @@ public:
     , submit(drawable, Rect(), this, 0, "submit", 0)
     , cancel(drawable, Rect(), this, 0, "cancel", 1)
     {
-        int cx = std::max(this->cancel.context_text->cx, this->submit.context_text->cx) + 8;
-        int cy = std::max(this->cancel.context_text->cy, this->submit.context_text->cy) + 6;
+        int cx = std::max(this->cancel.label.context_text->cx, this->submit.label.context_text->cx) + 8;
+        int cy = std::max(this->cancel.label.context_text->cy, this->submit.label.context_text->cy) + 6;
         int y = this->rect.cy - cy - 5;
         this->cancel.rect.cx = cx;
         this->cancel.rect.cy = cy;
         this->cancel.rect.y = y;
         this->cancel.rect.x = this->rect.cx - cx - 5;
-        this->cancel.x_text = (cx - this->cancel.context_text->cx) / 2;
-        this->cancel.y_text = (cy - this->cancel.context_text->cy) / 2;
+        this->cancel.label.x_text = (cx - this->cancel.label.context_text->cx) / 2;
+        this->cancel.label.y_text = (cy - this->cancel.label.context_text->cy) / 2;
         this->submit.rect.cx = cx;
         this->submit.rect.cy = cy;
         this->submit.rect.y = y;
         this->submit.rect.x = this->cancel.rect.x - cx - 10;
-        this->submit.x_text = (cx - this->submit.context_text->cx) / 2;
-        this->submit.y_text = (cy - this->submit.context_text->cy) / 2;
+        this->submit.label.x_text = (cx - this->submit.label.context_text->cx) / 2;
+        this->submit.label.y_text = (cy - this->submit.label.context_text->cy) / 2;
     }
 
     virtual ~WindowBox()

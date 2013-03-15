@@ -70,14 +70,14 @@ public:
             this->nb_page.set_text(os.str().c_str());
         }
         uint16_t ymax = std::max(
-            this->first.context_text->cy,
+            this->first.label.context_text->cy,
             std::max(
-                this->prev.context_text->cy,
+                this->prev.label.context_text->cy,
                 std::max(
-                    this->current.context_text->cy,
+                    this->current.label.context_text->cy,
                     std::max(
-                        this->next.context_text->cy,
-                        this->last.context_text->cy
+                        this->next.label.context_text->cy,
+                        this->last.label.context_text->cy
                     )
                 )
             )
@@ -89,20 +89,20 @@ public:
         if (bottom) {
             y = rect.cy - y - ymax;
         }
-        int x = this->rect.cx - (this->last.context_text->cx + 6);
-        this->last.rect = Rect(x, y, this->last.context_text->cx + 4, ymax);
-        x -= this->next.context_text->cx + 6;
-        this->next.rect = Rect(x, y, this->next.context_text->cx + 4, ymax);
+        int x = this->rect.cx - (this->last.label.context_text->cx + 6);
+        this->last.rect = Rect(x, y, this->last.label.context_text->cx + 4, ymax);
+        x -= this->next.label.context_text->cx + 6;
+        this->next.rect = Rect(x, y, this->next.label.context_text->cx + 4, ymax);
         if (this->nb_page.context_text) {
             x -= this->nb_page.context_text->cx + 6;
             this->nb_page.rect = Rect(x, y, this->nb_page.context_text->cx + 4, ymax);
         }
-        x -= this->current.context_text->cx + 6;
-        this->current.rect = Rect(x, y, this->current.context_text->cx + 4, ymax);
-        x -= this->prev.context_text->cx + 6;
-        this->prev.rect = Rect(x, y, this->prev.context_text->cx + 4, ymax);
-        x -= this->first.context_text->cx + 6;
-        this->first.rect = Rect(x, y, this->first.context_text->cx + 4, ymax);
+        x -= this->current.label.context_text->cx + 6;
+        this->current.rect = Rect(x, y, this->current.label.context_text->cx + 4, ymax);
+        x -= this->prev.label.context_text->cx + 6;
+        this->prev.rect = Rect(x, y, this->prev.label.context_text->cx + 4, ymax);
+        x -= this->first.label.context_text->cx + 6;
+        this->first.rect = Rect(x, y, this->first.label.context_text->cx + 4, ymax);
     }
 
     virtual ~WidgetPager()
@@ -110,10 +110,10 @@ public:
 
     //void update_current_page()
     //{
-    //    if (this->current.context_text->cx + 4 > this->current.rect.cx) {
-    //        this->current.rect.x = this->rect.cx - (this->next.context_text->cx + this->nb_page.context_text->cx + this->current.context_text->cx + 6*3);
-    //        this->current.rect.cx = this->current.context_text->cx + 4;
-    //        this->prev.rect.x = this->current.rect.x - (this->prev.context_text->cx + 6);
+    //    if (this->current.label.context_text->cx + 4 > this->current.rect.cx) {
+    //        this->current.rect.x = this->rect.cx - (this->next.label.context_text->cx + this->nb_page.context_text->cx + this->current.label.context_text->cx + 6*3);
+    //        this->current.rect.cx = this->current.label.context_text->cx + 4;
+    //        this->prev.rect.x = this->current.rect.x - (this->prev.label.context_text->cx + 6);
     //    }
     //}
 

@@ -26,7 +26,9 @@
 class WidgetLabel : public Widget
 {
 public:
-    char buffer[256];
+    static const size_t buffer_size = 256;
+
+    char buffer[buffer_size];
     ModApi::ContextText * context_text;
     int x_text;
     int y_text;
@@ -52,8 +54,8 @@ public:
         this->context_text = 0;
         this->buffer[0] = 0;
         if (text) {
-            const size_t max = sizeof(this->buffer)/sizeof(this->buffer[0]) - 1;
-            strncpy(buffer, text, max);
+            const size_t max = buffer_size - 1;
+            memcpy(buffer, text, max);
             this->buffer[max] = 0;
             if (this->drawable) {
                 this->context_text = this->drawable->create_context_text(this->buffer);

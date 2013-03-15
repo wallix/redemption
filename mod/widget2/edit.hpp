@@ -24,9 +24,10 @@
 #include "label.hpp"
 #include <keymap2.hpp>
 
-class WidgetEdit : public WidgetLabel
+class WidgetEdit : public Widget
 {
 public:
+    WidgetLabel label;
     size_t buffer_size;
     size_t num_chars;
     size_t edit_buffer_pos;
@@ -37,22 +38,22 @@ public:
 
 public:
     WidgetEdit(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier, const char * text, size_t edit_position, int id = 0, int xtext = 0, int ytext = 0)
-    : WidgetLabel(drawable, rect, parent, notifier, text, id, xtext, ytext)
+    : Widget(drawable, rect, parent, Widget::TYPE_EDIT, notifier, id)
+    , label(drawable, rect, this, 0, text, 0, xtext, ytext)
     , h_text(0)
     {
-        this->type = Widget::TYPE_EDIT;
         if (text) {
             this->buffer_size = strlen(text);
-            this->num_chars = UTF8Len(this->buffer);
+            this->num_chars = UTF8Len(this->label.buffer);
             this->edit_pos = std::min(this->num_chars, edit_position);
-            this->edit_buffer_pos = UTF8GetPos(reinterpret_cast<uint8_t *>(this->buffer), this->edit_pos);
+            this->edit_buffer_pos = UTF8GetPos(reinterpret_cast<uint8_t *>(this->label.buffer), this->edit_pos);
             this->cursor_px_pos = 0;
             if (this->drawable) {
-                char c = this->buffer[this->edit_buffer_pos];
-                this->buffer[this->edit_buffer_pos] = 0;
+                char c = this->label.buffer[this->edit_buffer_pos];
+                this->label.buffer[this->edit_buffer_pos] = 0;
                 int w;
-                this->drawable->text_metrics(this->buffer, w, this->h_text);
-                this->buffer[this->edit_buffer_pos] = c;
+                this->drawable->text_metrics(this->label.buffer, w, this->h_text);
+                this->label.buffer[this->edit_buffer_pos] = c;
                 this->cursor_px_pos = w;
             }
         } else {
@@ -72,7 +73,7 @@ public:
     {
         Rect clip_screen(xclip, yclip, rect.cx, rect.cy);
         //this->clear_cursor(x, y, clip_screen);
-        this->WidgetLabel::draw(rect, x, y, xclip, yclip);
+        this->label.draw(rect, x, y, xclip, yclip);
         this->draw_cursor(x, y, clip_screen);
     }
 
@@ -99,14 +100,14 @@ public:
     void increment_edit_pos()
     {
         this->edit_pos++;
-        size_t n = UTF8GetPos(reinterpret_cast<uint8_t *>(this->buffer + this->edit_buffer_pos), 1);
+        size_t n = UTF8GetPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 1);
         if (this->drawable) {
-            char c = this->buffer[this->edit_buffer_pos + n];
-            this->buffer[this->edit_buffer_pos + n] = 0;
+            char c = this->label.buffer[this->edit_buffer_pos + n];
+            this->label.buffer[this->edit_buffer_pos + n] = 0;
             int w;
-            this->drawable->text_metrics(this->buffer + this->edit_buffer_pos, w, this->h_text);
+            this->drawable->text_metrics(this->label.buffer + this->edit_buffer_pos, w, this->h_text);
             this->cursor_px_pos += w;
-            this->buffer[this->edit_buffer_pos + n] = c;
+            this->label.buffer[this->edit_buffer_pos + n] = c;
         }
         this->edit_buffer_pos += n;
     }
@@ -114,17 +115,17 @@ public:
     void decrement_edit_pos()
     {
         size_t len = 1;
-        while (this->buffer[this->edit_buffer_pos - len] >> 6 == 2){
+        while (this->label.buffer[this->edit_buffer_pos - len] >> 6 == 2){
             ++len;
         }
         this->edit_pos--;
         if (this->drawable) {
-            char c = this->buffer[this->edit_buffer_pos];
-            this->buffer[this->edit_buffer_pos] = 0;
+            char c = this->label.buffer[this->edit_buffer_pos];
+            this->label.buffer[this->edit_buffer_pos] = 0;
             int w;
-            this->drawable->text_metrics(this->buffer + this->edit_buffer_pos - len, w, this->h_text);
+            this->drawable->text_metrics(this->label.buffer + this->edit_buffer_pos - len, w, this->h_text);
             this->cursor_px_pos -= w;
-            this->buffer[this->edit_buffer_pos] = c;
+            this->label.buffer[this->edit_buffer_pos] = c;
         }
         this->edit_buffer_pos -= len;
     }
@@ -132,8 +133,8 @@ public:
     void reload_context_text()
     {
         if (this->drawable) {
-            delete this->context_text;
-            this->context_text = this->drawable->create_context_text(this->buffer);
+            delete this->label.context_text;
+            this->label.context_text = this->drawable->create_context_text(this->label.buffer);
         }
     }
 
@@ -141,10 +142,10 @@ public:
     {
         if (this->drawable) {
             screen_position sp = this->position_in_screen();
-            Rect clip = sp.clip.intersect(Rect(sp.x + l + this->x_text, sp.y + this->y_text, r - l + 2, this->h_text));
+            Rect clip = sp.clip.intersect(Rect(sp.x + l + this->label.x_text, sp.y + this->label.y_text, r - l + 2, this->h_text));
             if (!clip.isempty()) {
                 //this->clear_cursor(sp.x, sp.y, clip);
-                this->WidgetLabel::draw(Rect(r + this->x_text, this->y_text, 2, this->h_text), sp.x, sp.y, clip.x, clip.y);
+                this->label.draw(Rect(r + this->label.x_text, this->label.y_text, 2, this->h_text), sp.x, sp.y, clip.x, clip.y);
                 this->draw_cursor(sp.x, sp.y, clip);
             }
         }
@@ -178,30 +179,30 @@ public:
                     break;
                 case Keymap2::KEVENT_BACKSPACE:
                     if ((this->num_chars > 0) && (this->edit_pos > 0)) {
-                        std::size_t size = this->context_text->cx - this->cursor_px_pos;
+                        std::size_t size = this->label.context_text->cx - this->cursor_px_pos;
                         this->decrement_edit_pos();
-                        UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->buffer), this->edit_pos);
+                        UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer), this->edit_pos);
                         this->num_chars--;
                         this->reload_context_text();
-                        this->refresh(Rect(this->cursor_px_pos + this->x_text, this->y_text, size, this->h_text));
+                        this->refresh(Rect(this->cursor_px_pos + this->label.x_text, this->label.y_text, size, this->h_text));
                     }
                     break;
                 case Keymap2::KEVENT_DELETE:
                     if (this->num_chars > 0 && this->edit_pos < this->num_chars) {
-                        UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->buffer), this->edit_pos);
+                        UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer), this->edit_pos);
                         this->num_chars--;
-                        std::size_t size = this->context_text->cx - this->cursor_px_pos - 2;
+                        std::size_t size = this->label.context_text->cx - this->cursor_px_pos - 2;
                         this->reload_context_text();
-                        this->refresh(Rect(this->cursor_px_pos + this->x_text + 2, this->y_text, size, this->h_text));
+                        this->refresh(Rect(this->cursor_px_pos + this->label.x_text + 2, this->label.y_text, size, this->h_text));
                     }
                     break;
                 case Keymap2::KEVENT_END:
                     if (this->edit_pos < this->num_chars) {
                         this->edit_pos = this->num_chars;
-                        this->edit_buffer_pos = buffer_size;
-                        if (this->context_text) {
+                        this->edit_buffer_pos = this->buffer_size;
+                        if (this->label.context_text) {
                             this->prev_cursor_px_pos = this->cursor_px_pos;
-                            this->cursor_px_pos += this->context_text->cx;
+                            this->cursor_px_pos += this->label.context_text->cx;
                             this->refresh_pos_cursor(this->prev_cursor_px_pos, this->cursor_px_pos);
                         }
                     }
@@ -219,7 +220,7 @@ public:
                     {
                         uint32_t c = keymap->top_char();
                         if (this->num_chars < 120) {
-                            UTF8InsertOneAtPos(reinterpret_cast<uint8_t *>(this->buffer), this->edit_pos, c, 255);
+                            UTF8InsertOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer), this->edit_pos, c, 255);
                             this->prev_cursor_px_pos = this->cursor_px_pos;
                             size_t tmp = this->edit_buffer_pos;
                             this->increment_edit_pos();

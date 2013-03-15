@@ -121,17 +121,17 @@ public:
         this->filter_device.rect.x += w;
 
         int cx = std::max(
-            this->cancel.context_text->cx,
+            this->cancel.label.context_text->cx,
             std::max(
-                this->submit.context_text->cx,
-                this->apply.context_text->cx
+                this->submit.label.context_text->cx,
+                this->apply.label.context_text->cx
             )
         ) + 8;
         int cy = std::max(
-            this->cancel.context_text->cy,
+            this->cancel.label.context_text->cy,
             std::max(
-                this->submit.context_text->cy,
-                this->apply.context_text->cy
+                this->submit.label.context_text->cy,
+                this->apply.label.context_text->cy
             )
         ) + 6;
         int y = this->rect.cy - cy - 5;
@@ -139,33 +139,33 @@ public:
         this->cancel.rect.cy = cy;
         this->cancel.rect.y = y;
         this->cancel.rect.x = this->rect.cx - cx - 5;
-        this->cancel.x_text = (cx - this->cancel.context_text->cx) / 2;
-        this->cancel.y_text = (cy - this->cancel.context_text->cy) / 2;
+        this->cancel.label.x_text = (cx - this->cancel.label.context_text->cx) / 2;
+        this->cancel.label.y_text = (cy - this->cancel.label.context_text->cy) / 2;
         this->apply.rect.cx = cx;
         this->apply.rect.cy = cy;
         this->apply.rect.y = y;
         this->apply.rect.x = this->cancel.rect.x - cx - 10;
-        this->apply.x_text = (cx - this->apply.context_text->cx) / 2;
-        this->apply.y_text = (cy - this->apply.context_text->cy) / 2;
+        this->apply.label.x_text = (cx - this->apply.label.context_text->cx) / 2;
+        this->apply.label.y_text = (cy - this->apply.label.context_text->cy) / 2;
         this->submit.rect.cx = cx;
         this->submit.rect.cy = cy;
         this->submit.rect.y = y;
         this->submit.rect.x = this->apply.rect.x - cx - 10;
-        this->submit.x_text = (cx - this->submit.context_text->cx) / 2;
-        this->submit.y_text = (cy - this->submit.context_text->cy) / 2;
+        this->submit.label.x_text = (cx - this->submit.label.context_text->cx) / 2;
+        this->submit.label.y_text = (cy - this->submit.label.context_text->cy) / 2;
 
         const char * context_current_page = this->context.get(STRAUTHID_SELECTOR_CURRENT_PAGE);
         this->current_page = atoi(context_current_page);
-        this->current.set_text(context_current_page);
+        this->current.label.set_text(context_current_page);
         const char * context_total_page = this->context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES);
         this->total_page = atoi(context_total_page);
 
         if (!this->context.is_asked(STRAUTHID_SELECTOR_DEVICE_FILTER)){
-            this->filter_device.set_text(this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER));
+            this->filter_device.label.set_text(this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER));
         }
 
         if (this->context.is_asked(STRAUTHID_SELECTOR_GROUP_FILTER)){
-            this->filter_group.set_text(this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER));
+            this->filter_group.label.set_text(this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER));
         }
 
         this->nb_page.buffer[0] = '/';

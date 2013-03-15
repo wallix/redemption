@@ -23,23 +23,29 @@
 
 #include "label.hpp"
 
-class WidgetButton : public WidgetLabel
+class WidgetButton : public Widget
 {
 public:
+    WidgetLabel label;
     char buffer[256];
     int state;
     bool is_down;
 
     WidgetButton(ModApi* drawable, const Rect& rect, Widget* parent, NotifyApi* notifier, const char * text, int id = 0, int xtext = 0, int ytext = 0)
-    : WidgetLabel(drawable, rect, parent, notifier, text, id, xtext, ytext)
+    : Widget(drawable, rect, parent, Widget::TYPE_BUTTON, notifier, id)
+    , label(drawable, rect, this, 0, text, 0, xtext, ytext)
     , state(0)
     , is_down(false)
     {
-        this->type = Widget::TYPE_BUTTON;
     }
 
     virtual ~WidgetButton()
     {}
+
+    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip)
+    {
+        this->label.draw(rect, x, y, xclip, yclip);
+    }
 
     virtual void send_event(EventType event, int param, int param2, Keymap2* keymap)
     {

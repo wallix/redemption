@@ -45,7 +45,8 @@ enum EventType {
     CLIC_BUTTON3_DOWN,
     WM_DRAW,
     TEXT_CHANGED,
-    WIDGET_SUBMIT
+    WIDGET_SUBMIT,
+    WIDGET_CANCEL
 };
 
 enum NotifyEventType {
@@ -63,19 +64,21 @@ public:
     enum WidgetType {
         TYPE_WND     = 1,
         TYPE_SCREEN  = 3,
-        TYPE_BITMAP  = 3 << 1,
-        TYPE_BUTTON  = 4 << 1,
-        TYPE_IMAGE   = 5 << 1,
-        TYPE_EDIT    = 6 << 1,
-        TYPE_LABEL   = 7 << 1,
+        TYPE_TEXT    = 1 << 3,
+        TYPE_BUTTON  = 1 << 4 | TYPE_TEXT,
+        TYPE_EDIT    = 1 << 5 | TYPE_TEXT,
+        TYPE_LABEL   = 1 << 6 | TYPE_TEXT,
+        TYPE_IMAGE   = 1 << 7,
+        TYPE_MULTIPLE= 1 << 8,
     };
 
     enum OptionTab {
         IGNORE_TAB = 0,
         NORMAL_TAB = 1,
         DELEGATE_CONTROL_TAB = 2,
-        REWIND_TAB = 4,
-        REWIND_BACKTAB = 8
+        NO_DELEGATE_CHILD_TAB = 4,
+        REWIND_TAB = 8,
+        REWIND_BACKTAB = 16
     };
 
 public:
@@ -146,7 +149,7 @@ public:
         return ret;
     }
 
-    virtual void draw(const Rect& rect, int16_t x, int16_t y, const Rect & clip)
+    void draw_rect(const Rect& rect, int16_t x, int16_t y, const Rect & clip)
     {
         this->drawable->draw(
             RDPOpaqueRect(
@@ -158,7 +161,7 @@ public:
 
     virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip)
     {
-        this->draw(rect, x, y, Rect(xclip, yclip, rect.cx, rect.cy));
+        this->draw_rect(rect, x, y, Rect(xclip, yclip, rect.cx, rect.cy));
     }
 
     void refresh(const Rect & rect)

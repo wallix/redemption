@@ -37,6 +37,8 @@
 #include <widget2/window_box.hpp>
 #include <widget2/pager.hpp>
 #include <widget2/selector.hpp>
+#include <widget2/dialog.hpp>
+#include <widget2/yes_no.hpp>
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "png.hpp"
@@ -241,7 +243,9 @@ struct TestWidget
         win.titlebar.bg_color = 5326;
         w1.bg_color = 10000;
         w2.bg_color = 100000;
+        w2.label.bg_color = 100000;
         w3.bg_color = 1000000;
+        w3.label.bg_color = 1000000;
     }
 };
 
@@ -322,12 +326,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFocus)
     BOOST_CHECK(!w.w1.has_focus && w.w2.has_focus && !w.w3.has_focus);
 
     BOOST_CHECK(notify.s ==
-        "event: 0 -- id: 3, type: 8\n" //FOCUS_END
-        "event: 1 -- id: 2, type: 12\n" //FOCUS_BEGIN
-        "event: 0 -- id: 1, type: 14\n" //FOCUS_END
-        "event: 1 -- id: 3, type: 8\n" //FOCUS_BEGIN
-        "event: 0 -- id: 2, type: 12\n" //FOCUS_END
-        "event: 1 -- id: 1, type: 14\n" //FOCUS_BEGIN
+        "event: 0 -- id: 3, type: 24\n" //FOCUS_END
+        "event: 1 -- id: 2, type: 40\n" //FOCUS_BEGIN
+        "event: 0 -- id: 1, type: 72\n" //FOCUS_END
+        "event: 1 -- id: 3, type: 24\n" //FOCUS_BEGIN
+        "event: 0 -- id: 2, type: 40\n" //FOCUS_END
+        "event: 1 -- id: 1, type: 72\n" //FOCUS_BEGIN
     );
 }
 
@@ -363,7 +367,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     keymap.push_char('a');
     w.screen.send_event(KEYDOWN, 0, 0, &keymap);
     BOOST_CHECK(notify.s ==
-      "event: 11 -- id: 2, type: 12\n");
+      "event: 11 -- id: 2, type: 40\n");
 
     //save_to_png(drawable, "/tmp/b.png");
 
@@ -461,18 +465,18 @@ BOOST_AUTO_TEST_CASE(WidgetFocusTrace)
     //show_focus(oss, &screen);
 
     BOOST_CHECK(notify.s ==
-        "event: 0 -- id: 4, type: 12\n"
-        "event: 1 -- id: 2, type: 14\n"
-        "event: 0 -- id: 5, type: 8\n"
-        "event: 1 -- id: 4, type: 12\n"
-        "event: 0 -- id: 2, type: 14\n"
+        "event: 0 -- id: 4, type: 40\n"
+        "event: 1 -- id: 2, type: 72\n"
+        "event: 0 -- id: 5, type: 24\n"
+        "event: 1 -- id: 4, type: 40\n"
+        "event: 0 -- id: 2, type: 72\n"
         "event: 1 -- id: 3, type: 1\n"
-        "event: 0 -- id: 4, type: 12\n"
-        "event: 1 -- id: 5, type: 8\n"
-        "event: 1 -- id: 2, type: 14\n"
-        "event: 0 -- id: 5, type: 8\n"
-        "event: 1 -- id: 4, type: 12\n"
-        "event: 0 -- id: 2, type: 14\n"
+        "event: 0 -- id: 4, type: 40\n"
+        "event: 1 -- id: 5, type: 24\n"
+        "event: 1 -- id: 2, type: 72\n"
+        "event: 0 -- id: 5, type: 24\n"
+        "event: 1 -- id: 4, type: 40\n"
+        "event: 0 -- id: 2, type: 72\n"
         "event: 1 -- id: 3, type: 1\n"
     );
 }
@@ -507,7 +511,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowBox)
 
     screen.refresh(screen.rect);
 
-    save_to_png(drawable, "/tmp/f.png");
+    //save_to_png(drawable, "/tmp/f.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -524,8 +528,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPager)
     WidgetPager pager(&drawable, Rect(50, 50, 300, 400), &screen, 0, 0, 3);
     pager.bg_color = 10000000;
     pager.prev.bg_color = 25635;
+    pager.prev.label.bg_color = 25635;
     pager.current.bg_color = 279468;
+    pager.current.label.bg_color = 279468;
     pager.next.bg_color = 2522;
+    pager.next.label.bg_color = 2522;
     pager.titlebar.bg_color = 322425;
 
     WidgetLabel l0(&drawable, Rect(0, pager.current.rect.cy + 4, pager.rect.cx, 15), &pager, 0, "line 0", 0, 2, 2);
@@ -546,7 +553,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPager)
 
     //save_to_png(drawable, "/tmp/g.png");
 
-
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
         "\x7f\xb1\x85\xe9\x65\x5c\x25\xd4\xd3\x06"
@@ -554,7 +560,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPager)
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
-
 
 BOOST_AUTO_TEST_CASE(TraceWidgetSelector)
 {
@@ -564,21 +569,70 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelector)
     WidgetSelector selector(context, &drawable, 800, 600, &screen, 0);
     selector.bg_color = 10000000;
     selector.prev.bg_color = 25635;
+    selector.prev.label.bg_color = 25635;
     selector.current.bg_color = 279468;
+    selector.current.label.bg_color = 279468;
     selector.next.bg_color = 2522;
+    selector.next.label.bg_color = 2522;
     selector.titlebar.bg_color = 322425;
     selector.cancel.bg_color = 234433;
+    selector.cancel.label.bg_color = 234433;
     selector.submit.bg_color = 4433;
+    selector.submit.label.bg_color = 4433;
 
     screen.refresh(screen.rect);
 
-    save_to_png(drawable, "/tmp/h.png");
-
+    //save_to_png(drawable, "/tmp/h.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
         "\xaf\x18\x8c\x48\x46\x23\xe8\xb3\xd7\xb0"
         "\xbb\x68\xf3\xc7\x2f\x00\xb1\x26\xf6\x9e")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetYesNo)
+{
+    TestDraw drawable(800,600);
+    WidgetScreen screen(&drawable, 800,600, 0);
+    WidgetYesNo dialog(&drawable, -1, 100, &screen, 0);
+    dialog.bg_color = 10000000;
+    screen.bg_color = 43244;
+    dialog.yes.bg_color = 2444;
+    dialog.yes.label.bg_color = 2444;
+    dialog.no.bg_color = 992444;
+    dialog.no.label.bg_color = 992444;
+
+    screen.refresh(screen.rect);
+
+    //save_to_png(drawable, "/tmp/i.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x7c\x94\xcc\xc5\x86\x6a\x5c\xb5\xaf\x4b"
+        "\x40\x96\xc5\x8c\x89\x2f\x40\xc6\x4b\x77")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetDialog)
+{
+    TestDraw drawable(800,600);
+    WidgetScreen screen(&drawable, 800,600, 0);
+    WidgetDialog dialog(&drawable, Rect(100, 100, 600, 400), &screen, 0, "Yes or no", "cdjsi<br>hhpde joeoei e<br><br>j ri s  lfs<br>eeeeee<br>Laaaa<br>iiii<br>ooo", 0, 7867, 64746);
+    dialog.bg_color = 10000000;
+    dialog.yesno.bg_color = 10000000;
+    dialog.titlebar.bg_color = 322425;
+
+    screen.refresh(screen.rect);
+
+    save_to_png(drawable, "/tmp/j.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xfc\xd2\x53\x07\xc4\x54\xe8\x33\x43\x81"
+        "\x2e\x11\xc9\xef\x7a\x38\x70\x38\x25\x33")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
