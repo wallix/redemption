@@ -25,6 +25,8 @@
 #ifndef _REDEMPTION_CORE_CHANNEL_LIST_HPP_
 #define _REDEMPTION_CORE_CHANNEL_LIST_HPP_
 
+#define CLIPBOARD_VIRTUAL_CHANNEL_NAME "cliprdr"
+
 /* Clipboard constants, "borrowed" from GCC system headers in the w32 cross compiler */
 enum {
     CF_TEXT                        = 1,

@@ -751,8 +751,7 @@ struct Session {
 
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote RDP host");
                 this->mod = new mod_rdp(t,
-                                    this->context->get(STRAUTHID_TARGET_USER),
-                                    this->context->get(STRAUTHID_TARGET_PASSWORD),
+                                    *this->context,
                                     "0.0.0.0", // client ip is silenced
                                     *this->front,
                                     hostname,
@@ -798,12 +797,11 @@ struct Session {
                 }
 
                 SocketTransport * t = new SocketTransport(name, client_sck, this->ini->globals.debug.mod_vnc);
-                
-                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote VNC host");                
+
+                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote VNC host");
 
                 this->mod = new mod_vnc(t,
-                    this->context->get(STRAUTHID_TARGET_USER),
-                    this->context->get(STRAUTHID_TARGET_PASSWORD),
+                    *this->context,
                     *this->front,
                     this->front->client_info.width,
                     this->front->client_info.height,

@@ -58,6 +58,8 @@
 
 #include "genrandom.hpp"
 
+
+
 struct mod_rdp : public client_mod {
 
     /* mod data */
@@ -134,9 +136,12 @@ struct mod_rdp : public client_mod {
 
     bool enable_new_pointer;
 
+    ModContext & context;
+
+    bool opt_clipboard;  // true clipboard available, false clipboard unavailable
+
     mod_rdp(Transport * trans,
-            const char * target_user,
-            const char * target_password,
+            struct ModContext & ct,
             const char * clientIP,
             struct FrontAPI & front,
             const char * hostname,
@@ -172,14 +177,15 @@ struct mod_rdp : public client_mod {
                     auth_channel_flags(0),
                     auth_channel_chanid(0),
                     auth_channel_state(0), // 0 means unused
-                    nego(tls, trans, target_user),
-                    enable_new_pointer(enable_new_pointer)
+                    nego(tls, trans, ct.get(STRAUTHID_TARGET_USER)),
+                    enable_new_pointer(enable_new_pointer),
+                    context(ct)
     {
         if (this->verbose & 1){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
         }
 
-        memset(this->auth_channel, 0, 8);        
+        memset(this->auth_channel, 0, 8);
         strncpy(this->auth_channel, auth_channel, 8);
         this->cbClientAddr = strlen(clientIP)+1;
         memcpy(this->clientAddr, clientIP, this->cbClientAddr);
@@ -221,13 +227,15 @@ struct mod_rdp : public client_mod {
         strncpy(this->hostname, hostname, 15);
         this->hostname[15] = 0;
         TODO("CGR: and if username is really larger  what happens ? We should at least emit a warning log")
-        strncpy(this->username, target_user, 127);
+        strncpy(this->username, this->context.get(STRAUTHID_TARGET_USER), 127);
         this->username[127] = 0;
+
+        opt_clipboard = this->context.get_bool(STRAUTHID_OPT_CLIPBOARD);
 
         LOG(LOG_INFO, "Remote RDP Server login:%s host:%s", this->username, this->hostname);
 
         memset(this->password, 0, 256);
-        strcpy(this->password, target_password);
+        strcpy(this->password, this->context.get(STRAUTHID_TARGET_PASSWORD));
 
         memset(this->domain, 0, 256);
         memset(this->program, 0, 256);
@@ -297,6 +305,49 @@ struct mod_rdp : public client_mod {
         if (this->verbose & 16){
             LOG(LOG_INFO, "mod_rdp::send_to_mod_channel");
             LOG(LOG_INFO, "sending to channel %s", front_channel_name); 
+        }
+
+        // Clipboard is unavailable and is a Clipboard PDU
+        if (!this->opt_clipboard && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)){
+            if ( this->verbose ){
+                LOG( LOG_INFO, "mod_rdp clipboard PDU" );
+            }
+
+            if (!chunk.in_check_rem(2)){
+                LOG(LOG_INFO, "mod_vnc::send_to_vnc truncated msgType, need=2 remains=%u",
+                    chunk.in_remain());
+                throw Error(ERR_VNC);
+            }
+
+            uint16_t msgType = chunk.in_uint16_le();
+
+            if (msgType == ChannelDef::CB_FORMAT_LIST){
+                if ( this->verbose ){
+                    LOG( LOG_INFO, "mod_rdp clipboard is unavailable" );
+                }
+
+                TODO("RZ: duplicate code")
+
+                // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
+                // 03 00 02 00 00 00 00 00
+
+                BStream out_s(256);
+                out_s.out_uint16_le(ChannelDef::CB_FORMAT_LIST_RESPONSE);   //  - MSG Type 2 bytes
+                out_s.out_uint16_le(ChannelDef::CB_RESPONSE_FAIL);          //  - MSG flags 2 bytes
+                out_s.out_uint32_le(0);                                     //  - remaining datalen of message
+                out_s.mark_end();
+
+                size_t length = out_s.size();
+
+                this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                                           , out_s.data
+                                           , length
+                                           , out_s.size()
+                                           , ChannelDef::CHANNEL_FLAG_FIRST | ChannelDef::CHANNEL_FLAG_LAST
+                                           );
+
+                return;
+            }
         }
 
         const ChannelDef * mod_channel = this->mod_channel_list.get(front_channel_name);
@@ -1330,6 +1381,41 @@ struct mod_rdp : public client_mod {
                         }
                         this->auth_channel_state = 0;
                         this->sesman->set_auth_channel_result(auth_channel_message + 7);
+                    }
+                }
+                else if (!this->opt_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)){
+                    // Clipboard is unavailable and is a Clipboard PDU
+
+                    if ( this->verbose ){
+                        LOG( LOG_INFO, "mod_rdp clipboard PDU" );
+                    }
+
+                    uint16_t msgType = sec.payload.in_uint16_le();
+
+                    if (msgType == ChannelDef::CB_FORMAT_LIST){
+                        if ( this->verbose ){
+                            LOG( LOG_INFO, "mod_rdp clipboard is unavailable" );
+                        }
+
+                        TODO("RZ: duplicate code")
+
+                        // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
+                        // 03 00 02 00 00 00 00 00
+
+                        BStream out_s(256);
+                        out_s.out_uint16_le(ChannelDef::CB_FORMAT_LIST_RESPONSE);   //  - MSG Type 2 bytes
+                        out_s.out_uint16_le(ChannelDef::CB_RESPONSE_FAIL);          //  - MSG flags 2 bytes
+                        out_s.out_uint32_le(0);                                     //  - remaining datalen of message
+                        out_s.mark_end();
+
+                        const ChannelDef * mod_channel = this->mod_channel_list.get(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+
+                        if (mod_channel){
+                            this->send_to_channel(*mod_channel,
+                                                  out_s,
+                                                  out_s.size(),
+                                                  ChannelDef::CHANNEL_FLAG_FIRST | ChannelDef::CHANNEL_FLAG_LAST);
+                        }
                     }
                 }
                 else {

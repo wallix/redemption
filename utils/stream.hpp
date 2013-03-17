@@ -394,6 +394,13 @@ class Stream {
         this->out_clear_bytes(2);
     }
 
+    void out_unistr_crlf(const char* text)
+    {
+        const size_t len = UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t*>(text), this->p, this->room());
+        this->p += len;
+        this->out_clear_bytes(2);
+    }
+
     void out_date_name(const char* text, const size_t buflen)
     {
         size_t i = 0;

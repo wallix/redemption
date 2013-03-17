@@ -419,6 +419,45 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_witch_control_character)
     BOOST_CHECK_EQUAL(15, nbbytes_utf8);
 }
 
+BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_witch_CrLf)
+{
+    uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0x0A, '@', 0};
+    uint8_t expected_targetCr[] =   { 'a', 0, 'b', 0, 'c', 0, 'e', 0, 'd', 0,
+                                      'e', 0, 'f', 0,
+                                      0x0A, 0 /* newline */,
+                                      '@', 0, };
+    uint8_t expected_targetCrLf[] = { 'a', 0, 'b', 0, 'c', 0, 'e', 0, 'd', 0,
+                                      'e', 0, 'f', 0,
+                                      0x0D, 0 /* carriage return */,
+                                      0x0A, 0 /* newline */,
+                                      '@', 0, };
+    const size_t target_lengthCr   = sizeof(expected_targetCr)/sizeof(expected_targetCr[0]);
+    const size_t target_lengthCrLf = sizeof(expected_targetCrLf)/sizeof(expected_targetCrLf[0]);
+    uint8_t targetCr[target_lengthCr];
+    uint8_t targetCrLf[target_lengthCrLf];
+
+    size_t nbbytes_utf16 = UTF8toUTF16(source, targetCr, target_lengthCr);
+
+    // Check result
+    BOOST_CHECK_EQUAL(target_lengthCr, nbbytes_utf16);
+    for (size_t q = 0 ; q < target_lengthCr ; q++){
+        if (expected_targetCr[q] != targetCr[q]){
+            printf("at %u: expected %u, got %u\n", (unsigned)q, expected_targetCr[q] ,targetCr[q]);
+            BOOST_CHECK(false);
+        }
+    }
+
+    nbbytes_utf16 = UTF8toUTF16_CrLf(source, targetCrLf, target_lengthCrLf);
+
+    // Check result
+    BOOST_CHECK_EQUAL(target_lengthCrLf, nbbytes_utf16);
+    for (size_t q = 0 ; q < target_lengthCrLf ; q++){
+        if (expected_targetCrLf[q] != targetCrLf[q]){
+            printf("at %u: expected %u, got %u\n", (unsigned)q, expected_targetCrLf[q] ,targetCrLf[q]);
+            BOOST_CHECK(false);
+        }
+    }
+}
 
 BOOST_AUTO_TEST_CASE(TestUTF8toUnicode)
 {

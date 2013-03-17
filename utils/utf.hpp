@@ -264,6 +264,71 @@ UTF8toUTF16_exit:
     return i_t;
 }
 
+// UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
+static inline size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, size_t t_len)
+{
+    size_t i_t = 0; 
+    uint32_t ucode = 0;
+    unsigned c = 0;
+    for (size_t i = 0; (ucode = c = source[i]) != 0 ; i++){
+        switch (c >> 4){
+            case 0:
+                // allows control characters
+                if (c == 0){
+                    // should never happen, catched by test above
+                    goto UTF8toUTF16_exit;
+                }
+
+                ucode = c;
+            break;
+            case 1: case 2: case 3: 
+            case 4: case 5: case 6: case 7:
+            ucode = c;
+            break;
+            /* handle U+0080..U+07FF inline : 2 bytes sequences */ 
+            case 0xC: case 0xD: 
+                ucode = ((c & 0x1F) << 6)|(source[i+1] & 0x3F);
+                i+=1;
+            break;
+             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */ 
+            case 0xE:
+                ucode = ((c & 0x0F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
+                i+=2;
+            break;
+            case 0xF:
+                c = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
+                i+=3;
+            break;
+            case 8: case 9: case 0x0A: case 0x0B:
+                // should never happen on valid UTF8
+                goto UTF8toUTF16_exit;
+            break;
+        }
+
+        if ((ucode == 0x0D) && (source[i+1] == 0x0A)){
+           continue;
+        }
+        else if (ucode == 0x0A) {
+            if (i_t + 4 /* CrLf en unicode */ > t_len) { goto UTF8toUTF16_exit; }
+            target[i_t]     = 0x0D;
+            target[i_t + 1] = 0x00;
+            target[i_t + 2] = 0x0A;
+            target[i_t + 3] = 0x00;
+            i_t += 4;
+
+            continue;
+        }
+
+        if (i_t + 2 > t_len) { goto UTF8toUTF16_exit; }
+        target[i_t] = ucode & 0xFF;
+        target[i_t + 1] = (ucode >> 8) & 0xFF;
+        i_t += 2;
+    }
+    // write final 0
+UTF8toUTF16_exit:
+    return i_t;
+}
+
 // UTF8toUnicode never writes the trailing zero
 static inline size_t UTF8toUnicode(const uint8_t * source, uint32_t * target, size_t t_len)
 {

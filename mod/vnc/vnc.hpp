@@ -82,10 +82,13 @@ struct mod_vnc : public client_mod {
 
     BStream large_virtual_channel_data;
 
+    ModContext & context;
+
+    bool opt_clipboard;  // true clipboard available, false clipboard unavailable
+
     //==============================================================================================================
     mod_vnc ( Transport * t
-            , const char * username
-            , const char * password
+            , struct ModContext & ct
             , struct FrontAPI & front
             , uint16_t front_width
             , uint16_t front_height
@@ -99,6 +102,7 @@ struct mod_vnc : public client_mod {
         , keymapSym(verbose)
         , incr(0)
         , large_virtual_channel_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
+        , context(ct)
     //--------------------------------------------------------------------------------------------------------------
     {
         LOG(LOG_INFO, "Connecting to VNC Server");
@@ -117,8 +121,10 @@ struct mod_vnc : public client_mod {
 
 //        this->clip_chanid = 0;
 
-        strcpy(this->username, username);
-        strcpy(this->password, password);
+        strcpy(this->username, this->context.get(STRAUTHID_TARGET_USER));
+        strcpy(this->password, this->context.get(STRAUTHID_TARGET_PASSWORD));
+
+        opt_clipboard = this->context.get_bool(STRAUTHID_OPT_CLIPBOARD);
 
         int error = 0;
 
@@ -458,7 +464,6 @@ struct mod_vnc : public client_mod {
         this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
 
         this->lib_open_clip_channel();
-
     } // Constructor
 
     //==============================================================================================================
@@ -845,7 +850,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 //        TODO(" not working  see why")
 //        return;
         ChannelDefArray chanlist = this->front.get_channel_list();
-        const ChannelDef * channel = chanlist.get((char *) "cliprdr");
+        const ChannelDef * channel = chanlist.get((char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME);
 
         if (channel) {
             // Monitor ready PDU send to front
@@ -865,7 +870,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
             size_t chunk_size = length < ChannelDef::CHANNEL_CHUNK_LENGTH ? length : ChannelDef::CHANNEL_CHUNK_LENGTH;
 
-            this->send_to_front_channel( (char *) "cliprdr"
+            this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                        , out_s.data
                                        , length
                                        , chunk_size
@@ -902,7 +907,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
     //==============================================================================================================
     {
         ChannelDefArray chanlist = this->front.get_channel_list();
-        const ChannelDef * channel = chanlist.get((char *) "cliprdr");
+        const ChannelDef * channel = chanlist.get((char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME);
 
         TODO("change code below. It will overflow for long VNC data to copy."
         " If clip_data_size is large is will also allocate an undecent amoutn of memory")
@@ -914,24 +919,28 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         stream.in_skip_bytes(3); /* padding */
         size_t clip_data_size = stream.in_uint32_be(); /* length */
 
-        size_t chunk_size = std::min<size_t>(clip_data_size, MAX_VNC_2_RDP_CLIP_DATA_SIZE);
-        if ( this->verbose ){
-            LOG(LOG_INFO, "clip_data_size=%u chunk_size=%u", clip_data_size, chunk_size);
+        size_t chunk_size = 0;
+
+        if (this->opt_clipboard){
+            chunk_size = std::min<size_t>(clip_data_size, MAX_VNC_2_RDP_CLIP_DATA_SIZE);
+            if ( this->verbose ){
+                LOG(LOG_INFO, "clip_data_size=%u chunk_size=%u", clip_data_size, chunk_size);
+            }
+
+            // The size of <stream> must be larger than MAX_VNC_2_RDP_CLIP_DATA_SIZE.
+            this->t->recv(&stream.end, chunk_size); /* text */
+            // Add two trailing zero if not already there to ensure we have UTF8sz content
+            if (stream.end[-1]){ *stream.end = 0; stream.end++; }
+            if (stream.end[-1]){ *stream.end = 0; stream.end++; }
+
+            size_t clipboard_payload_size = UTF8Check(stream.p, chunk_size);
+            stream.p[clipboard_payload_size] = 0;
+
+            this->clip_data.init(4 * (MAX_VNC_2_RDP_CLIP_DATA_SIZE + 1));
+
+            this->clip_data.out_unistr_crlf(reinterpret_cast<const char *>(stream.p));
+            this->clip_data.mark_end();
         }
-
-        // The size of <stream> must be larger than MAX_VNC_2_RDP_CLIP_DATA_SIZE.
-        this->t->recv(&stream.end, chunk_size); /* text */
-        // Add two trailing zero if not already there to ensure we have UTF8sz content
-        if (stream.end[-1]){ *stream.end = 0; stream.end++; }
-        if (stream.end[-1]){ *stream.end = 0; stream.end++; }
-
-        size_t clipboard_payload_size = UTF8Check(stream.p, chunk_size);
-        stream.p[clipboard_payload_size] = 0;
-
-        this->clip_data.init(2 * (MAX_VNC_2_RDP_CLIP_DATA_SIZE + 1));
-
-        this->clip_data.out_unistr(reinterpret_cast<const char *>(stream.p));
-        this->clip_data.mark_end();
 
         // drop remaining clipboard content if larger that about 8000 bytes
         if (clip_data_size > chunk_size){
@@ -946,7 +955,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             this->t->recv(&drop.end, remaining);
         }
 
-        if (channel) {
+        if (this->opt_clipboard && channel) {
             LOG(LOG_INFO, "Clipboard Channel Redirection available");
 
             BStream out_s(16384);
@@ -972,13 +981,12 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
             size_t chunk_size = length < ChannelDef::CHANNEL_CHUNK_LENGTH ? length : ChannelDef::CHANNEL_CHUNK_LENGTH;
 
-            this->send_to_front_channel( (char *) "cliprdr"
+            this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                        , out_s.data
                                        , length
                                        , chunk_size
                                        , ChannelDef::CHANNEL_FLAG_FIRST | ChannelDef::CHANNEL_FLAG_LAST
                                        );
-
         }
         else {
             LOG(LOG_INFO, "Clipboard Channel Redirection unavailable");
@@ -1074,7 +1082,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     }
                 }
 
-                if (isTextCB) {
+                if (this->opt_clipboard && isTextCB) {
                     // Build and send the CB_FORMAT_LIST_RESPONSE (with status = OK)
 
                     // 03 00 01 00 00 00 00 00 00 00 00 00
@@ -1102,7 +1110,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
                     size_t length = out_s.size();
 
-                    this->send_to_front_channel( (char *) "cliprdr"
+                    this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                                , out_s.data
                                                , length
                                                , out_s.size()
@@ -1126,7 +1134,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     length = out_s2.size();
                     size_t chunk_size = length;
 
-                    this->send_to_front_channel( (char *) "cliprdr"
+                    this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                                , out_s2.data
                                                , length
                                                , chunk_size
@@ -1147,13 +1155,12 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
                     size_t length = out_s.size();
 
-                    this->send_to_front_channel( (char *) "cliprdr"
+                    this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                                , out_s.data
                                                , length
                                                , out_s.size()
                                                , ChannelDef::CHANNEL_FLAG_FIRST | ChannelDef::CHANNEL_FLAG_LAST
                                                );
-
                 }
                 break;
             }
@@ -1230,7 +1237,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                             send_flags |= ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
                         }
 
-                        this->send_to_front_channel( "cliprdr"
+                        this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                                    , out_s.data
                                                    , length
                                                    , chunk_size
@@ -1370,7 +1377,6 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             LOG( LOG_INFO, "mod_vnc::send_to_vnc done" );
         }
     } // send_to_vnc
-
 };
 
 #endif
