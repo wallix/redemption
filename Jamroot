@@ -189,7 +189,6 @@ unit-test test_capture_native : tests/capture/test_capture_native.cpp png z open
 unit-test test_capture_wrm_image_chunk : tests/capture/test_capture_wrm_image_chunk.cpp png z openssl crypto libboost_unit_test  ;
 unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp png z openssl crypto libboost_unit_test  ;
 unit-test test_capture_breakpoint : tests/capture/test_capture_breakpoint.cpp png z openssl crypto dl libboost_unit_test  ;
-unit-test test_chained_wrm : tests/capture/test_chained_wrm.cpp png z openssl crypto dl libboost_unit_test  ;
 unit-test test_mwrm : tests/capture/test_mwrm.cpp png z openssl crypto dl libboost_unit_test  ;
 
 
