@@ -300,12 +300,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    ModContext NullContext;
-
-    NullContext.cpy(STRAUTHID_TARGET_USER, "administrateur@qa");
-    NullContext.cpy(STRAUTHID_TARGET_PASSWORD , "S3cur3!1nux");
-
-    struct mod_rdp * mod = new mod_rdp(&t, NullContext, "0.0.0.0", front, "test", false, info, &gen, 2, NULL, "", false);
+    struct mod_rdp * mod = new mod_rdp(&t, "administrateur@qa", "S3cur3!1nux", "0.0.0.0", front, "test", false, info, &gen, 2, NULL, "", true, 0, false);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

@@ -299,12 +299,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    ModContext NullContext;
-
-    NullContext.cpy(STRAUTHID_TARGET_USER, "xavier");
-    NullContext.cpy(STRAUTHID_TARGET_PASSWORD , "SecureLinux");
-
-    struct client_mod * mod = new mod_rdp(&t, NullContext, "10.10.9.161", front, "test", false, info, &gen, 7, NULL, "", verbose, false);
+    struct client_mod * mod = new mod_rdp(&t, "xavier", "SecureLinux", "10.10.9.161", front, "test", false, info, &gen, 7, NULL, "", true, verbose, false);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

@@ -751,7 +751,8 @@ struct Session {
 
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote RDP host");
                 this->mod = new mod_rdp(t,
-                                    *this->context,
+                                    this->context->get(STRAUTHID_TARGET_USER),
+                                    this->context->get(STRAUTHID_TARGET_PASSWORD),
                                     "0.0.0.0", // client ip is silenced
                                     *this->front,
                                     hostname,
@@ -761,6 +762,7 @@ struct Session {
                                     this->front->keymap.key_flags,
                                     this->sesman, // we give mod_rdp a direct access to sesman for auth_channel channel
                                     this->ini->globals.auth_channel,
+                                    this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
                                     this->ini->globals.debug.mod_rdp,
                                     true
                                     );
@@ -801,12 +803,14 @@ struct Session {
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote VNC host");
 
                 this->mod = new mod_vnc(t,
-                    *this->context,
+                    this->context->get(STRAUTHID_TARGET_USER),
+                    this->context->get(STRAUTHID_TARGET_PASSWORD),
                     *this->front,
                     this->front->client_info.width,
                     this->front->client_info.height,
                     this->front->client_info.keylayout,
                     this->front->keymap.key_flags,
+                    this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
                     this->ini->globals.debug.mod_vnc);
                 this->mod->event.obj = client_sck;
                 this->mod->draw_event();

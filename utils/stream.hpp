@@ -1631,7 +1631,6 @@ class BStream : public Stream {
     }
 };
 
-
 // SubStream does not allocate any buffer
 // (and the buffer pointed to should probably not be modifiable,
 // but I'm not yet doing any distinction between stream that can or can't be modified
@@ -1672,7 +1671,21 @@ class SubStream : public Stream {
 
     // Not allowed on SubStreams
     void init(size_t v) {}
+};
 
+// RdOnlyStream does not allocate any buffer
+class RdOnlyStream : public Stream {
+    public:
+    RdOnlyStream(){}  // not yet initialized
+
+    RdOnlyStream(uint8_t * data, size_t len){
+        this->p = this->data = data;
+        this->capacity = len;
+        this->end = this->data + this->capacity;
+    }
+
+    // Not allowed on SubStreams
+    void init(size_t v) {}
 };
 
 #endif

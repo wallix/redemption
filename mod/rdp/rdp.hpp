@@ -136,12 +136,11 @@ struct mod_rdp : public client_mod {
 
     bool enable_new_pointer;
 
-    ModContext & context;
-
     bool opt_clipboard;  // true clipboard available, false clipboard unavailable
 
     mod_rdp(Transport * trans,
-            struct ModContext & ct,
+            const char * target_user,
+            const char * target_password,
             const char * clientIP,
             struct FrontAPI & front,
             const char * hostname,
@@ -151,6 +150,7 @@ struct mod_rdp : public client_mod {
             int key_flags,
             SessionManager * sesman,
             const char * auth_channel,
+            bool clipboard,
             uint32_t verbose = 0,
             bool enable_new_pointer = false)
             :
@@ -177,9 +177,9 @@ struct mod_rdp : public client_mod {
                     auth_channel_flags(0),
                     auth_channel_chanid(0),
                     auth_channel_state(0), // 0 means unused
-                    nego(tls, trans, ct.get(STRAUTHID_TARGET_USER)),
+                    nego(tls, trans, target_user),
                     enable_new_pointer(enable_new_pointer),
-                    context(ct)
+                    opt_clipboard(clipboard)
     {
         if (this->verbose & 1){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
@@ -227,15 +227,13 @@ struct mod_rdp : public client_mod {
         strncpy(this->hostname, hostname, 15);
         this->hostname[15] = 0;
         TODO("CGR: and if username is really larger  what happens ? We should at least emit a warning log")
-        strncpy(this->username, this->context.get(STRAUTHID_TARGET_USER), 127);
+        strncpy(this->username, target_user, 127);
         this->username[127] = 0;
-
-        opt_clipboard = this->context.get_bool(STRAUTHID_OPT_CLIPBOARD);
 
         LOG(LOG_INFO, "Remote RDP Server login:%s host:%s", this->username, this->hostname);
 
         memset(this->password, 0, 256);
-        strcpy(this->password, this->context.get(STRAUTHID_TARGET_PASSWORD));
+        strcpy(this->password, target_password);
 
         memset(this->domain, 0, 256);
         memset(this->program, 0, 256);
