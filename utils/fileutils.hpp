@@ -46,7 +46,7 @@ static inline int filesize(const char * path)
     return -1;
 }
 
-static inline void canonical_path(const char * fullpath, char * path, size_t path_len, char * basename, size_t basename_len)
+static inline void canonical_path(const char * fullpath, char * path, size_t path_len, char * basename, size_t basename_len, char * extension, size_t extension_len)
 {
     TODO("add parameters values for default path and basename. From inifile ?")
     TODO("add extraction of extension")
@@ -57,35 +57,41 @@ static inline void canonical_path(const char * fullpath, char * path, size_t pat
         path[end_of_path + 1 - fullpath] = 0;
         const char * start_of_extension = strrchr(end_of_path + 1, '.');
         if (start_of_extension){
+            strcpy(extension, start_of_extension); 
             memcpy(basename, end_of_path + 1, start_of_extension - end_of_path - 1);
             basename[start_of_extension - end_of_path - 1] = 0;
         }
         else {
             if (end_of_path[0]){
                 strcpy(basename, end_of_path + 1);
+                strcpy(extension, "no extension");
             }
-        else {
-          strcpy(basename, "no_name");
-        }
+            else {
+              strcpy(basename, "no_name");
+              strcpy(extension, "no extension");
+            }
         }
     }
     else {
-      strcpy(path, "./");
+        strcpy(path, "./");
         const char * start_of_extension = strrchr(fullpath, '.');
         if (start_of_extension){
+            strcpy(extension, start_of_extension); 
             memcpy(basename, fullpath, start_of_extension - fullpath);
             basename[start_of_extension - fullpath] = 0;
         }
         else {
             if (fullpath[0]){
                 strcpy(basename, fullpath);
+                strcpy(extension, "no extension");
             }
-        else {
-            strcpy(basename, "no_name");
-        }
+            else {
+                strcpy(basename, "no_name");
+                strcpy(extension, "no extension");
+            }
         }
     }
-    LOG(LOG_INFO, "canonical_path : %s%s\n", path, basename);
+    LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
 }
 
 void clear_files_flv_meta_png(const char * path, const char * prefix)

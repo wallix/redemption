@@ -142,10 +142,20 @@ int main(int argc, char** argv)
     TODO("if start and stop time are outside wrm, users should also be warned")
 
 //    InByFilenameTransport in_wrm_trans(input_filename.c_str());
+    char infile_path[1024] = {};
+    char infile_basename[1024] = {};
+    char infile_extension[128] = {};
+    char infile_prefix[4096] = {};
+    canonical_path(input_filename.c_str(),
+        infile_path, sizeof(infile_path),
+        infile_basename, sizeof(infile_basename),
+        infile_extension, sizeof(infile_extension));
+
+    sprintf(infile_prefix, "%s%s", infile_path, infile_basename);
 
     unsigned count = 0;
     try {
-        InByMetaSequenceTransport in_wrm_trans_tmp(input_filename.c_str());
+        InByMetaSequenceTransport in_wrm_trans_tmp(infile_prefix, infile_extension);
         in_wrm_trans_tmp.next_chunk_info();
         TODO("a negative time should be a time relative to end of movie")
         REDOC("less than 1 year means we are given a time relatve to beginning of movie")
@@ -169,7 +179,7 @@ int main(int argc, char** argv)
         exit(-1);
     };
 
-    InByMetaSequenceTransport in_wrm_trans(input_filename.c_str());
+    InByMetaSequenceTransport in_wrm_trans(infile_prefix, infile_extension);
     for (; count > 0 ; count--){
         in_wrm_trans.next_chunk_info();
     }
@@ -177,18 +187,21 @@ int main(int argc, char** argv)
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, verbose);
     player.max_order_count = order_count;
 
-    const char * fullpath = output_filename.c_str();
-    char path[1024];
-    char basename[1024];
-    strcpy(path, "./"); // default value, actual one should come from output_filename
-    strcpy(basename, "redemption"); // default value actual one should come from output_filename
-    canonical_path(fullpath, path, sizeof(path), basename, sizeof(basename));
-
+    const char * outfile_fullpath = output_filename.c_str();
+    char outfile_path[1024];
+    char outfile_basename[1024];
+    char outfile_extension[128];
+    strcpy(outfile_path, "./"); // default value, actual one should come from output_filename
+    strcpy(outfile_basename, "redemption"); // default value actual one should come from output_filename
+    canonical_path(outfile_fullpath,
+        outfile_path, sizeof(outfile_path),
+        outfile_basename, sizeof(outfile_basename),
+        outfile_extension, sizeof(outfile_extension));
     if (clear == 1) {
-        clear_files_flv_meta_png(path, basename);
+        clear_files_flv_meta_png(outfile_path, outfile_basename);
     }
 
-    Capture capture(player.record_now, player.screen_rect.cx, player.screen_rect.cy, path, basename, ini);
+    Capture capture(player.record_now, player.screen_rect.cx, player.screen_rect.cy, outfile_path, outfile_basename, ini);
     if (capture.capture_png){
         capture.psc->zoom(zoom);
     }
