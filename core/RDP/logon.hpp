@@ -719,8 +719,77 @@ struct InfoPacket {
         this->flags |= INFO_MAXIMIZESHELL;
         this->flags |= INFO_ENABLEWINDOWSKEY;
         this->flags |= INFO_LOGONNOTIFY;
+    } // END CONSTRUCTOR
 
-   } // END CONSTRUCTOR
+    InfoPacket( int use_rdp5
+              , const char *domain
+              , const char *username
+              , const char *password
+              , const char *program
+              , const char *directory
+              , uint32_t performanceFlags = 0
+              , const char *clientAddr = 0)
+    : rdp5_support(use_rdp5)
+    , CodePage(0) //........... ANSI code page descriptor
+    , flags(0) //               bitmap
+    , cbDomain(0) //........... size in bytes of variable size Domain attribute
+    , cbUserName(0) //          size in bytes of variable size UserName attribute
+    , cbPassword(0) //......... size in bytes of variable size Password attribute
+    , cbAlternateShell(0) //    size in bytes of variable size AlternateShell attribute
+    , cbWorkingDir(0) //....... size in bytes of variable size WorkingDir attribute
+    , extendedInfoPacket()
+    {
+        memset(Domain, 0, 256);
+        memset(UserName, 0, 256);
+        memset(Password, 0, 256);
+        memset(AlternateShell, 0, 256);
+        memset(WorkingDir, 0, 256);
+
+        this->flags  = INFO_MOUSE;
+        this->flags |= INFO_DISABLECTRLALTDEL;
+        this->flags |= INFO_UNICODE;
+        this->flags |= INFO_MAXIMIZESHELL;
+        this->flags |= INFO_ENABLEWINDOWSKEY;
+        this->flags |= INFO_LOGONNOTIFY;
+
+        size_t len;
+
+        len = UTF8Len(domain);
+        this->cbDomain = len * 2; // This size excludes the length of the mandatory null terminator.
+        memcpy(this->Domain, domain, len);
+        this->Domain[len] = 0;
+
+        len = UTF8Len(username);
+        this->cbUserName = len * 2; // This size excludes the length of the mandatory null terminator.
+        memcpy(this->UserName, username, len);
+        this->UserName[len] = 0;
+
+        len = UTF8Len(password);
+        this->cbPassword = len * 2; // This size excludes the length of the mandatory null terminator.
+        memcpy(this->Password, password, len);
+        this->Password[len] = 0;
+
+        len = UTF8Len(program);
+        this->cbAlternateShell = len * 2; // This size excludes the length of the mandatory null terminator.
+        memcpy(this->AlternateShell, program, len);
+        this->AlternateShell[len] = 0;
+
+        len = UTF8Len(directory);
+        this->cbWorkingDir = len * 2; // This size excludes the length of the mandatory null terminator.
+        memcpy(this->WorkingDir, directory, len);
+        this->WorkingDir[len] = 0;
+
+        if (performanceFlags) {
+            this->extendedInfoPacket.performanceFlags = performanceFlags;
+        }
+
+        if (clientAddr){
+            len = UTF8Len(clientAddr);
+            this->extendedInfoPacket.cbClientAddress = (len + 1) * 2; // This size includes the length of the mandatory null terminator.
+            memcpy(this->extendedInfoPacket.clientAddress, clientAddr, len);
+            this->extendedInfoPacket.clientAddress[len] = 0;
+        }
+    }
 
     void emit(Stream & stream) {
 
@@ -963,7 +1032,6 @@ struct InfoPacket {
     } // END FUNCT : recv()
 
     void log(const char * msg){
-
         LOG(LOG_INFO, "%s InfoPacket", msg);
         LOG(LOG_INFO, "InfoPacket::CodePage %u", this->CodePage);
         LOG(LOG_INFO, "InfoPacket::flags %#x", this->flags);
@@ -1031,13 +1099,7 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMinute %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wMinute);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wSecond %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wSecond);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMilliseconds %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wMilliseconds);
-
-
     } // END FUNCT : log()
-
 }; // END STRUCT : InfoPacket
-
-
-
 
 #endif

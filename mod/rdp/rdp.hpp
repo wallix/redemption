@@ -3570,6 +3570,7 @@ struct mod_rdp : public client_mod {
         }
         BStream stream(1024);
 
+/*
         TODO("CGR: This is ugly, we should provide parameters to InfoPacket constructor,"
              "not instanciate empty InfoPacket and set parameters aftawerward"
              "Yes, I know there are many parameters... nevertheless")
@@ -3600,6 +3601,21 @@ struct mod_rdp : public client_mod {
 
         infoPacket.extendedInfoPacket.cbClientAddress = 2 * this->cbClientAddr;
         memcpy(infoPacket.extendedInfoPacket.clientAddress, this->clientAddr, this->cbClientAddr);
+*/
+        TODO("CGR: it is really suprising these performance flags are related to tls status!!!"
+             "Looks like an error...")
+        uint32_t performanceFlags = PERF_DISABLE_WALLPAPER
+                                  | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS );
+
+        InfoPacket infoPacket( this->use_rdp5
+                             , this->domain
+                             , this->username
+                             , password
+                             , this->program
+                             , this->directory
+                             , performanceFlags
+                             , this->clientAddr
+                             );
 
         infoPacket.log("Sending to server: ");
         infoPacket.emit(stream);

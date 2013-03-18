@@ -934,9 +934,19 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             size_t clipboard_payload_size = UTF8Check(stream.p, chunk_size);
             stream.p[clipboard_payload_size] = 0;
 
-            this->clip_data.init(4 * (MAX_VNC_2_RDP_CLIP_DATA_SIZE + 1));
+            this->clip_data.init(4 * (MAX_VNC_2_RDP_CLIP_DATA_SIZE + 1) + 8 /*clipboard PDU Header*/);
 
+            //--------------------------- Beginning of clipboard PDU Header ----------------------------
+            this->clip_data.out_uint16_le(ChannelDef::CB_FORMAT_DATA_RESPONSE);   //  - MSG Type 2 bytes
+            this->clip_data.out_uint16_le(ChannelDef::CB_RESPONSE_OK);            //  - MSG flags 2 bytes
+
+            size_t start_of_data = this->clip_data.get_offset();
+            this->clip_data.out_uint32_le(0);                                     //  - Datalen of the rest of the message
+
+            // Convert utf-8 VNC buffer to utf-16 for RDP
             this->clip_data.out_unistr_crlf(reinterpret_cast<const char *>(stream.p));
+            size_t end_of_data = this->clip_data.get_offset();
+            this->clip_data.set_out_uint32_le(end_of_data - start_of_data - 4, start_of_data);
             this->clip_data.mark_end();
         }
 
@@ -1197,38 +1207,23 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                                 );
                 }
 
-//                // only support CF_TEXT and CF_UNICODETEXT
-//                if ((resquestedFormatId != CF_TEXT) && (resquestedFormatId != CF_UNICODETEXT)) {
-
                 // only support CF_UNICODETEXT
                 if (resquestedFormatId == CF_UNICODETEXT) {
-                    // The size of <out_s> must be larger than 2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE.
-                    BStream out_s(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 200);
+                    // <this->clip_data> contains pre-formatted clipboard PDU.
 
-                    // Convert utf-8 VNC buffer to utf-16 for RDP
-                    //--------------------------- Beginning of clipboard PDU Header ----------------------------
-                    out_s.out_uint16_le(ChannelDef::CB_FORMAT_DATA_RESPONSE);   //  - MSG Type 2 bytes
-                    out_s.out_uint16_le(ChannelDef::CB_RESPONSE_OK);            //  - MSG flags 2 bytes
+                    size_t length = this->clip_data.size(); /* Size of clipboard PDU header + clip data */
+                    size_t PDU_remain = length;
 
-                    this->clip_data.rewind();
-
-                    size_t length = this->clip_data.size() + 8 /* size of clip PDU header */;
-                    out_s.out_uint32_le(this->clip_data.size()); //  - Datalen of the rest of the message
-                    //--------------------------- End of clipboard PDU Header ----------------------------------
-                    //--------------------------- Beginning of Format Data Response PDU payload ----------------
-                    size_t payload_size = std::min<size_t>(ChannelDef::CHANNEL_CHUNK_LENGTH - out_s.get_offset(),
-                        this->clip_data.size());
-                    out_s.out_copy_bytes(this->clip_data.p, payload_size);
-                    this->clip_data.p += payload_size;
-                    out_s.mark_end();
-
-                    uint32_t chunk_size = out_s.size();
-                    REDASSERT(chunk_size <= ChannelDef::CHANNEL_CHUNK_LENGTH);
+                    uint8_t *chunk_data = this->clip_data.data;
+                    uint32_t chunk_size;
 
                     int send_flags = ChannelDef::CHANNEL_FLAG_FIRST;
 
                     do{
-                        if (this->clip_data.in_remain() == 0){
+                        chunk_size  = std::min<size_t>(ChannelDef::CHANNEL_CHUNK_LENGTH, PDU_remain);
+                        PDU_remain -= chunk_size;
+
+                        if (chunk_size <= 0){
                             send_flags |= ChannelDef::CHANNEL_FLAG_LAST;
                         }
                         else{
@@ -1236,7 +1231,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                         }
 
                         this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
-                                                   , out_s.data
+                                                   , chunk_data
                                                    , length
                                                    , chunk_size
                                                    , send_flags );
@@ -1247,15 +1242,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
                         send_flags &= ~ChannelDef::CHANNEL_FLAG_FIRST;
 
-                        out_s.rewind();
-
-                        payload_size = std::min<size_t>(ChannelDef::CHANNEL_CHUNK_LENGTH,
-                            this->clip_data.in_remain());
-                        out_s.out_copy_bytes(this->clip_data.p, payload_size);
-                        this->clip_data.p += payload_size;
-                        out_s.mark_end();
-
-                        chunk_size = out_s.size();
+                        chunk_data += chunk_size;
                     }
                     while (true);
 
@@ -1313,7 +1300,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                         }
 
                         if ( this->verbose ){
-                            LOG(LOG_INFO, "mod_vnc::send_to_vnc Virtual channel data span in multiple Virtual Channel PDUs");
+                            LOG(LOG_INFO, "mod_vnc::send_to_vnc Virtual channel data span in multiple Virtual Channel PDUs: total=%u", dataLenU16);
                         }
 
                         this->large_virtual_channel_data.init(2 * (MAX_VNC_2_RDP_CLIP_DATA_SIZE + 1));
@@ -1329,6 +1316,9 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             }
             default:
                 if (this->large_virtual_channel_data.get_offset() != 0){
+                    // msgType is non msgType, is a part of data.
+                    stream.rewind();
+
                     // Virtual channel data span in multiple Virtual Channel PDUs.
                     if ( this->verbose ){
                         LOG( LOG_INFO, "mod_vnc::send_to_vnc an other trunk");
@@ -1339,12 +1329,12 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                         throw Error(ERR_VNC);
                     }
 
-                    size_t dataLenU16 = std::min<size_t>(stream.in_remain(), this->large_virtual_channel_data.room());
-
                     if ( this->verbose ){
                         LOG(LOG_INFO, "mod_vnc::send_to_vnc trunk size=%u, capacity=%u",
                             stream.in_remain(), this->large_virtual_channel_data.room());
                     }
+
+                    size_t dataLenU16 = std::min<size_t>(stream.in_remain(), this->large_virtual_channel_data.room());
 
                     if (dataLenU16 != 0){
                         this->large_virtual_channel_data.out_copy_bytes(stream.p, dataLenU16);
