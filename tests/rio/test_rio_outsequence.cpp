@@ -31,15 +31,6 @@
 #include "../libs/rio_impl.h"
 
 // The Outsequence RIO use one inderection level to find out where data should be sent
-// From a RIO writer point of view a sequence is a very simple object that 
-// expose 2 methods for output, 
-// sq_get_trans() return the current transport to use
-// sq_next() goes forward to the next transport to use
-
-// The "One" sequence implemented below is the simplest possible one : 
-// - sq_get_trans() always return the same transport (the one the sequence was initialized with)
-// - sq_next() : does nothing
-// - sq_timestamp() : does nothing (not useful for sq_one)
 
 // In the test below, we just wrap a check transport in a one_sequence
 // hence the resulting outsequence RIO behave exactly like a check RIO

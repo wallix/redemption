@@ -21,7 +21,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRedTransportLibrary
+#define BOOST_TEST_MODULE TestOutMetaRIO
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
@@ -29,83 +29,10 @@
 
 #include "../libs/rio.h"
 #include "../libs/rio_impl.h"
-#include "../utils/fileutils.hpp"
 
-TODO("extract these tests to their own test files, explain and comment them")
-
-BOOST_AUTO_TEST_CASE(TestOutSequenceTransport_OutfilenameSequence)
-{
-// 3rd simplest sequence is "intracker" sequence
-// - Behavior is identical to infilename sequence except the input pattern is
-// a Transport that contains the list of the input files.
-// - sq_get_trans() open an infile if necessary using the name it got from tracker
-//   and return it on subsequent calls until it is closed (reach EOF)
-// - sq_next() close the current outfile and step to the next filename wich will 
-//    be used by the next sq_get_trans to create an outfile transport.
-
-    RIO_ERROR status = RIO_ERROR_OK;
-    const char trackdata[] = 
-        "800 600\n"
-        "0\n"
-        "\n"
-        "./tests/fixtures/sample0.wrm 1352304810 1352304870\n"
-        "./tests/fixtures/sample1.wrm 1352304870 1352304930\n"
-        "./tests/fixtures/sample2.wrm 1352304930 1352304990\n"
-        ;
-
-    RIO * tracker = rio_new_generator(&status, trackdata, sizeof(trackdata)-1);
-
-    status = RIO_ERROR_OK;
-    SQ * sequence = sq_new_intracker(&status, tracker);
-    BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
-
-    status = RIO_ERROR_OK;
-    RIO * rt = rio_new_insequence(&status, sequence);
-
-    char buffer[1024] = {};
-    unsigned len = 1471394 + 444578 + 290245;
-    while (len > 1024){
-        BOOST_CHECK_EQUAL(1024, rio_recv(rt, buffer, sizeof(buffer)));
-        len -= 1024;
-    }
-    BOOST_CHECK_EQUAL(521, rio_recv(rt, buffer, sizeof(buffer)));
-    BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer, sizeof(buffer)));
-
-    rio_delete(rt);
-    sq_delete(sequence);
-    rio_delete(tracker);  
-}
-
-
-// 5th simplest sequence is "meta" sequence
-// - Behavior is identical to intacker sequence except the input pattern is the name of the tracker file
-// - sq_get_trans() open an infile if necessary using the name it got from tracker
-//   and return it on subsequent calls until it is closed (reach EOF)
-// - sq_next() close the current outfile and step to the next filename wich will 
-//    be used by the next sq_get_trans to create an outfile transport.
-
-BOOST_AUTO_TEST_CASE(TestSequenceMeta)
-{
-    RIO_ERROR status = RIO_ERROR_OK;
-    SQ * sequence = sq_new_inmeta(&status, "./tests/fixtures/TESTOFS", ".mwrm");
-
-    status = RIO_ERROR_OK;
-    RIO * rt = rio_new_insequence(&status, sequence);
-
-    char buffer[1024] = {};
-    BOOST_CHECK_EQUAL(10, rio_recv(rt, buffer, 10));
-    BOOST_CHECK_EQUAL(0, buffer[10]);
-    if (0 != memcmp(buffer, "AAAAXBBBBX", 10)){
-        LOG(LOG_ERR, "expected \"AAAAXBBBBX\" got \"%s\"\n", buffer);
-    }
-    BOOST_CHECK_EQUAL(5, rio_recv(rt, buffer + 10, 1024));
-    BOOST_CHECK_EQUAL(0, memcmp(buffer, "AAAAXBBBBXCCCCX", 15));
-    BOOST_CHECK_EQUAL(0, buffer[15]);
-    BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer + 15, 1024));
-    rio_clear(rt);
-    rio_delete(rt);
-    sq_delete(sequence);
-}
+// The OutMeta RIO use one inderection level to find out where data should be sent
+// the parts are sent to files controled by an outfilename sequence
+// a tracker file is also created and the control file list stored int it
 
 // Outmeta is a transport that manage file opening and chunking by itself
 // We provide a base filename and it creates an outfilename sequence based on it
@@ -181,5 +108,4 @@ BOOST_AUTO_TEST_CASE(TestOutMeta)
         }
     }
 }
-
 

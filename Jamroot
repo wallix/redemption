@@ -258,9 +258,6 @@ unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test  : ;
 unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test  : ;
 unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test  ;
 
-unit-test test_lib_rio : tests/test_lib_rio.cpp openssl crypto z dl libboost_unit_test  ;
-unit-test test_lib_rio : tests/test_lib_rio.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
-
 unit-test test_rio_generator : tests/rio/test_rio_generator.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_rio_generator : tests/rio/test_rio_generator.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
@@ -296,6 +293,9 @@ unit-test test_sq_one : tests/rio/test_sq_one.cpp openssl crypto z dl libboost_u
 
 unit-test test_sq_outfilename : tests/rio/test_sq_outfilename.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_sq_outfilename : tests/rio/test_sq_outfilename.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_outmeta : tests/rio/test_rio_outmeta.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_rio_outmeta : tests/rio/test_sq_outmeta.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_sq_intracker : tests/rio/test_sq_intracker.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_sq_intracker : tests/rio/test_sq_intracker.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
