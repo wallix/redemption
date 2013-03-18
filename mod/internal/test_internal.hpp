@@ -36,13 +36,14 @@ struct test_internal_mod : public internal_mod {
 
     test_internal_mod( ModContext & context
                      , FrontAPI & front
-                     , char * path
+                     , char * replay_path
                      , char * movie
                      , uint16_t width
                      , uint16_t height):
             internal_mod(front, width, height)
     {
-        strcpy(this->movie, path);
+        TODO("use canonical_path to manage trailing slash")
+        strcpy(this->movie, replay_path);
         strcat(this->movie, movie);
         LOG(LOG_INFO, "Playing %s", this->movie);
     }
