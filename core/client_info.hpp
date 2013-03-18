@@ -114,7 +114,7 @@ struct ClientInfo {
         this->encryptionLevel = encryptionLevel + 1; // ini->globals.encryptionLevel + 1;
     }
 
-    void process_logon_info(Stream & stream) throw (Error)
+    void process_logon_info(Stream & stream, bool ignore_logon_password) throw (Error)
     {
         InfoPacket infoPacket;
         infoPacket.recv(stream);
@@ -122,7 +122,9 @@ struct ClientInfo {
 
         memcpy(this->domain, infoPacket.Domain, sizeof(infoPacket.Domain));
         memcpy(this->username, infoPacket.UserName, sizeof(infoPacket.UserName));
-        memcpy(this->password, infoPacket.Password, sizeof(infoPacket.Password));
+        if (!ignore_logon_password){
+            memcpy(this->password, infoPacket.Password, sizeof(infoPacket.Password));
+        }
         memcpy(this->program, infoPacket.AlternateShell, sizeof(infoPacket.AlternateShell));
         memcpy(this->directory, infoPacket.WorkingDir, sizeof(infoPacket.WorkingDir));
 

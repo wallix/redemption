@@ -115,19 +115,20 @@ struct Inifile {
         bool bitmap_cache;       // default true
         bool bitmap_compression; // default true
         int port;                // default 3389
-        int encryptionLevel;   // 0=low, 1=medium, 2=high
+        int encryptionLevel;     // 0=low, 1=medium, 2=high
         char authip[255];
         int authport;
         bool nomouse;
         bool notimestamp;
-        bool autovalidate;      // dialog autovalidation for test
+        bool autovalidate;       // dialog autovalidation for test
         char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
+        bool ignore_logon_password;   // if true, ignore password provided by RDP client, user need do login manually. default false
 
-        unsigned capture_flags; // 1 PNG capture, 2 WRM
-        unsigned png_interval;  // time between 2 png captures (in 1/10 seconds)
-        unsigned frame_interval;  // time between 2 frame captures (in 1/100 seconds)
-        unsigned break_interval;  // time between 2 wrm movies (in seconds)
-        uint64_t flv_break_interval; // time between 2 flv movies captures (in seconds)
+        unsigned capture_flags;  // 1 PNG capture, 2 WRM
+        unsigned png_interval;   // time between 2 png captures (in 1/10 seconds)
+        unsigned frame_interval; // time between 2 frame captures (in 1/100 seconds)
+        unsigned break_interval; // time between 2 wrm movies (in seconds)
+        uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
         unsigned flv_frame_interval; 
         unsigned ocr_interval;
 
@@ -218,6 +219,7 @@ struct Inifile {
             this->globals.authport = 3350;
             this->globals.autovalidate = false;
             strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
+            this->globals.ignore_logon_password = false;
             strcpy(this->globals.codec_id, "flv");
             TODO("this could be some kind of enumeration")
             strcpy(this->globals.video_quality, "medium");
@@ -390,6 +392,9 @@ struct Inifile {
             }
             else if (0 == strcmp(key, "dynamic_conf_path")){
                 strcpy(this->globals.dynamic_conf_path, value);
+            }
+            else if (0 == strcmp(key, "ignore_logon_password")){
+                this->globals.ignore_logon_password = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "auth_channel")){
                 strncpy(this->globals.auth_channel, value, 8);

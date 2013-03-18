@@ -1425,7 +1425,7 @@ TODO("Pass font name as parameter in constructor")
             }
 
             /* this is the first test that the decrypt is working */
-            this->client_info.process_logon_info(sec.payload);
+            this->client_info.process_logon_info(sec.payload, ini->globals.ignore_logon_password);
 
             if (sec.payload.in_remain()){
                 LOG(LOG_ERR, "Front::incoming::process_logon all data should have been consumed %u bytes trailing", 
