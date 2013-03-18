@@ -48,8 +48,6 @@ static inline int filesize(const char * path)
 
 static inline void canonical_path(const char * fullpath, char * path, size_t path_len, char * basename, size_t basename_len, char * extension, size_t extension_len)
 {
-    TODO("add parameters values for default path and basename. From inifile ?")
-    TODO("add extraction of extension")
     TODO("add overflow checking of path and basename len")
     const char * end_of_path = strrchr(fullpath, '/');
     if (end_of_path){
@@ -58,36 +56,42 @@ static inline void canonical_path(const char * fullpath, char * path, size_t pat
         const char * start_of_extension = strrchr(end_of_path + 1, '.');
         if (start_of_extension){
             strcpy(extension, start_of_extension); 
-            memcpy(basename, end_of_path + 1, start_of_extension - end_of_path - 1);
-            basename[start_of_extension - end_of_path - 1] = 0;
+            if (start_of_extension > end_of_path + 1){
+                memcpy(basename, end_of_path + 1, start_of_extension - end_of_path - 1);
+                basename[start_of_extension - end_of_path - 1] = 0;
+            }
+            // else no basename : leave output buffer for name untouched
         }
         else {
-            if (end_of_path[0]){
+            if (end_of_path[1]){
                 strcpy(basename, end_of_path + 1);
-                strcpy(extension, "no extension");
+                // default extension : leave whatever is in extension output buffer
             }
             else {
-              strcpy(basename, "no_name");
-              strcpy(extension, "no extension");
+                // default name : leave whatever is in name output buffer
+                // default extension : leave whatever is in extension output buffer
             }
         }
     }
     else {
-        strcpy(path, "./");
+        // default path : leave whatever is in path output buffer
         const char * start_of_extension = strrchr(fullpath, '.');
         if (start_of_extension){
             strcpy(extension, start_of_extension); 
-            memcpy(basename, fullpath, start_of_extension - fullpath);
-            basename[start_of_extension - fullpath] = 0;
+            if (start_of_extension > fullpath){
+                memcpy(basename, fullpath, start_of_extension - fullpath);
+                basename[start_of_extension - fullpath] = 0;
+            }
+            // else no basename : leave output buffer for name untouched
         }
         else {
             if (fullpath[0]){
                 strcpy(basename, fullpath);
-                strcpy(extension, "no extension");
+                // default extension : leave whatever is in extension output buffer
             }
             else {
-                strcpy(basename, "no_name");
-                strcpy(extension, "no extension");
+                // default name : leave whatever is in name output buffer
+                // default extension : leave whatever is in extension output buffer
             }
         }
     }

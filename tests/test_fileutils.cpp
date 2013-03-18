@@ -203,20 +203,62 @@ BOOST_AUTO_TEST_CASE(CanonicalPath)
   char path[4096];
   char basename[4096];
   char extension[128];
-  canonical_path("./result.tmp", path, 4096, basename, 4096, extension, 128);
-  BOOST_CHECK_EQUAL("./", path);
+  strcpy(path, "no path");  
+  strcpy(basename, "no basename");  
+  strcpy(extension, "no extension");  
+
+  canonical_path("./titi/result.tmp", path, 4096, basename, 4096, extension, 128);
+  BOOST_CHECK_EQUAL("./titi/", path);
   BOOST_CHECK_EQUAL("result", basename);
   BOOST_CHECK_EQUAL(".tmp", extension);
 
 
+  strcpy(path, "no path");  
+  strcpy(basename, "no basename");  
+  strcpy(extension, "no extension");  
   canonical_path("result", path, 4096, basename, 4096, extension, 128);
-  BOOST_CHECK_EQUAL("./", path);
+  BOOST_CHECK_EQUAL("no path", path);
   BOOST_CHECK_EQUAL("result", basename);
   BOOST_CHECK_EQUAL("no extension", extension);
 
+  strcpy(path, "no path");  
+  strcpy(basename, "no basename");  
+  strcpy(extension, "no extension");  
+  canonical_path("result/", path, 4096, basename, 4096, extension, 128);
+  BOOST_CHECK_EQUAL("result/", path);
+  BOOST_CHECK_EQUAL("no basename", basename);
+  BOOST_CHECK_EQUAL("no extension", extension);
+
+  strcpy(path, "no path");  
+  strcpy(basename, "no basename");  
+  strcpy(extension, "no extension");  
+  canonical_path("result.tmp", path, 4096, basename, 4096, extension, 128);
+  BOOST_CHECK_EQUAL("no path", path);
+  BOOST_CHECK_EQUAL("result", basename);
+  BOOST_CHECK_EQUAL(".tmp", extension);
+
+  strcpy(path, "no extension");  
+  strcpy(basename, "no basename");  
+  strcpy(extension, "no extension");  
+  canonical_path("tmp/.tmp", path, 4096, basename, 4096, extension, 128);
+  BOOST_CHECK_EQUAL("tmp/", path);
+  BOOST_CHECK_EQUAL("no basename", basename);
+  BOOST_CHECK_EQUAL(".tmp", extension);
+
+  strcpy(path, "no path");  
+  strcpy(basename, "no basename");  
+  strcpy(extension, "no extension");  
+  canonical_path(".tmp", path, 4096, basename, 4096, extension, 128);
+  BOOST_CHECK_EQUAL("no path", path);
+  BOOST_CHECK_EQUAL("no basename", basename);
+  BOOST_CHECK_EQUAL(".tmp", extension);
+
+  strcpy(path, "no path");  
+  strcpy(basename, "no basename");  
+  strcpy(extension, "no extension");  
   canonical_path("", path, 4096, basename, 4096, extension, 128);
-  BOOST_CHECK_EQUAL("./", path);
-  BOOST_CHECK_EQUAL("no_name", basename);
+  BOOST_CHECK_EQUAL("no path", path);
+  BOOST_CHECK_EQUAL("no basename", basename);
   BOOST_CHECK_EQUAL("no extension", extension);
 
 }

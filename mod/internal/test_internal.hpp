@@ -79,8 +79,8 @@ struct test_internal_mod : public internal_mod {
         char basename[1024];
         char extension[128];
         strcpy(path, "/tmp/"); // default value, actual one should come from movie_path
-        strcpy(basename, ""); // default value actual one should come from movie_path
-        strcpy(extension, ""); // extension is currently ignored
+        strcpy(basename, "replay"); // default value actual one should come from movie_path
+        strcpy(extension, ".mwrm"); // extension is currently ignored
         char prefix[4096];
         
         canonical_path(this->movie, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
