@@ -136,22 +136,28 @@ int main(int argc, char** argv)
     timeval end_capture;
     end_capture.tv_sec = end_cap; end_capture.tv_usec = 0;
 
-    TODO("before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases")
+    char infile_path[1024];
+    char infile_basename[1024];
+    char infile_extension[128];
+    char infile_prefix[4096];
 
-    TODO("also check if it contains any wrm at all and at wich one we should start depending on input time")
-    TODO("if start and stop time are outside wrm, users should also be warned")
-
-//    InByFilenameTransport in_wrm_trans(input_filename.c_str());
-    char infile_path[1024] = {};
-    char infile_basename[1024] = {};
-    char infile_extension[128] = {};
-    char infile_prefix[4096] = {};
+    strcpy(infile_path, "./"); // default value, actual one should come from output_filename
+    strcpy(infile_basename, "redrec_input"); // default value actual one should come from output_filename
+    strcpy(infile_extension, ".mwrm");
     canonical_path(input_filename.c_str(),
         infile_path, sizeof(infile_path),
         infile_basename, sizeof(infile_basename),
         infile_extension, sizeof(infile_extension));
 
+    infile_prefix[0] = 0;
     sprintf(infile_prefix, "%s%s", infile_path, infile_basename);
+
+//    InByFilenameTransport in_wrm_trans(input_filename.c_str());
+    TODO("before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases")
+
+    TODO("also check if it contains any wrm at all and at wich one we should start depending on input time")
+    TODO("if start and stop time are outside wrm, users should also be warned")
+
 
     unsigned count = 0;
     try {
@@ -170,17 +176,17 @@ int main(int argc, char** argv)
         while (begin_cap >= in_wrm_trans_tmp.end_chunk_time){
             in_wrm_trans_tmp.next_chunk_info();    
         }
-        count = in_wrm_trans_tmp.chunk_num-1;
+        count = in_wrm_trans_tmp.chunk_num;
     }
     catch (const Error & e) {
-        if (e.id == (unsigned)ERR_TRANSPORT_READ_FAILED){
+        if (e.id == (unsigned)ERR_TRANSPORT_NO_MORE_DATA){
             printf("Asked time not found in mwrm file\n");
         };
         exit(-1);
     };
 
     InByMetaSequenceTransport in_wrm_trans(infile_prefix, infile_extension);
-    for (; count > 0 ; count--){
+    for (unsigned i = 1; i < count ; i++){
         in_wrm_trans.next_chunk_info();
     }
 
@@ -192,7 +198,8 @@ int main(int argc, char** argv)
     char outfile_basename[1024];
     char outfile_extension[128];
     strcpy(outfile_path, "./"); // default value, actual one should come from output_filename
-    strcpy(outfile_basename, "redemption"); // default value actual one should come from output_filename
+    strcpy(outfile_basename, "redrec_output"); // default value actual one should come from output_filename
+    strcpy(outfile_extension, "");
     canonical_path(outfile_fullpath,
         outfile_path, sizeof(outfile_path),
         outfile_basename, sizeof(outfile_basename),
