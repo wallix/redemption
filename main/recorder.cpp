@@ -136,12 +136,6 @@ int main(int argc, char** argv)
     timeval end_capture;
     end_capture.tv_sec = end_cap; end_capture.tv_usec = 0;
 
-    TODO("before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases")
-
-    TODO("also check if it contains any wrm at all and at wich one we should start depending on input time")
-    TODO("if start and stop time are outside wrm, users should also be warned")
-
-//    InByFilenameTransport in_wrm_trans(input_filename.c_str());
     char infile_path[1024];
     char infile_basename[1024];
     char infile_extension[128];
@@ -157,6 +151,13 @@ int main(int argc, char** argv)
 
     infile_prefix[0] = 0;
     sprintf(infile_prefix, "%s%s", infile_path, infile_basename);
+
+//    InByFilenameTransport in_wrm_trans(input_filename.c_str());
+    TODO("before continuing to work with input file, check if it's mwrm or wrm and use right object in both cases")
+
+    TODO("also check if it contains any wrm at all and at wich one we should start depending on input time")
+    TODO("if start and stop time are outside wrm, users should also be warned")
+
 
     unsigned count = 0;
     try {
