@@ -762,7 +762,7 @@ struct Session {
                                     this->front->keymap.key_flags,
                                     this->sesman, // we give mod_rdp a direct access to sesman for auth_channel channel
                                     this->ini->globals.auth_channel,
-                                    this->context->get(STRAUTHID_OPT_CLIPBOARD),
+                                    this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
                                     this->ini->globals.debug.mod_rdp,
                                     true
                                     );
