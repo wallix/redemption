@@ -787,7 +787,10 @@ enum {
                 stream.out_uint32_le(flags);
             }
             if (flags & SEC_ENCRYPT){
-                crypt.sign(stream.p, 8, data.data, data.size());
+                SubStream signature(stream, stream.get_offset(), 8);
+
+                // <signature> is an output parameter
+                crypt.sign(signature, data);
                 stream.p += 8;
                 crypt.decrypt(data);
             }

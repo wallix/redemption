@@ -214,7 +214,7 @@ class ssllib
     }
 
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    static void sign(Stream & signature, int siglen, const Stream & key, const Stream & data)
+    static void sign(Stream & signature, const Stream & key, const Stream & data)
     {
         sign(signature.data, signature.capacity, key.data, key.size(), data.data, data.size());
     }
@@ -343,7 +343,7 @@ struct CryptContext
     }
 
     /* Decrypt data using RC4 */
-    void decrypt(uint8_t* data, int len)
+    void decrypt(Stream & stream)
     {
         ssllib ssl;
 
@@ -384,21 +384,18 @@ struct CryptContext
             this->rc4.set_key(this->key, keylen);
             this->use_count = 0;
         }
-        this->rc4.crypt(data, len);
+        this->rc4.crypt(stream.data, stream.size());
         this->use_count++;
     }
 
-    /* Decrypt data using RC4 */
-    void decrypt(Stream & stream)
-    {
-        decrypt(stream.data, stream.size());
-    }
-
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    void sign(uint8_t* signature, int siglen, uint8_t* data, int datalen)
+    void sign(Stream & signature, Stream & data)
     {
         ssllib ssl;
-        ssl.sign(signature, siglen, this->sign_key, (this->encryptionMethod==1)?8:16, data, datalen);
+
+        RdOnlyStream key(this->sign_key, (this->encryptionMethod==1)?8:16);
+
+        ssl.sign(signature, key, data);
     }
 };
 

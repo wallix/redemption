@@ -82,18 +82,18 @@ struct mod_vnc : public client_mod {
 
     BStream large_virtual_channel_data;
 
-    ModContext & context;
-
     bool opt_clipboard;  // true clipboard available, false clipboard unavailable
 
     //==============================================================================================================
     mod_vnc ( Transport * t
-            , struct ModContext & ct
+            , const char * username
+            , const char * password
             , struct FrontAPI & front
             , uint16_t front_width
             , uint16_t front_height
             , int keylayout
             , int key_flags
+            , bool clipboard
             , uint32_t verbose
             )
     //==============================================================================================================
@@ -102,7 +102,7 @@ struct mod_vnc : public client_mod {
         , keymapSym(verbose)
         , incr(0)
         , large_virtual_channel_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
-        , context(ct)
+        , opt_clipboard(clipboard)
     //--------------------------------------------------------------------------------------------------------------
     {
         LOG(LOG_INFO, "Connecting to VNC Server");
@@ -121,10 +121,8 @@ struct mod_vnc : public client_mod {
 
 //        this->clip_chanid = 0;
 
-        strcpy(this->username, this->context.get(STRAUTHID_TARGET_USER));
-        strcpy(this->password, this->context.get(STRAUTHID_TARGET_PASSWORD));
-
-        opt_clipboard = this->context.get_bool(STRAUTHID_OPT_CLIPBOARD);
+        strcpy(this->username, username);
+        strcpy(this->password, password);
 
         int error = 0;
 
