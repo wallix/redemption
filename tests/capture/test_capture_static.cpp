@@ -40,7 +40,7 @@
 BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 {
     Rect screen_rect(0, 0, 800, 600);
-    FileSequence sequence("path file pid count extension", "./", "test", "png");
+    FileSequence sequence("path file pid count extension", "./", "test", ".png");
     OutByFilenameSequenceTransport trans(sequence);
 
     struct timeval now;
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 BOOST_AUTO_TEST_CASE(TestOneRedScreen_V2)
 {
     Rect screen_rect(0, 0, 800, 600);
-    FileSequence sequence("path file pid count extension", "./", "test", "png");
+    FileSequence sequence("path file pid count extension", "./", "test", ".png");
     OutByFilenameSequenceTransport2 trans(sequence);
 
     struct timeval now;

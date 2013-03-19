@@ -97,7 +97,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         capture.png_sequence->unlink(5);
         BOOST_CHECK_EQUAL((unsigned)3176, (unsigned)capture.png_sequence->filesize(6));
         capture.png_sequence->unlink(6);
-
         BOOST_CHECK_EQUAL((unsigned)1622, (unsigned)capture.wrm_sequence->filesize(0));
         capture.wrm_sequence->unlink(0);
         BOOST_CHECK_EQUAL((unsigned)3392, (unsigned)capture.wrm_sequence->filesize(1));
@@ -106,9 +105,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         capture.wrm_sequence->unlink(2);
         // The destruction of capture object will finalize the metafile content
     }
-    // from here we do not have access to the file sequence used for the metafile inside capture
-    // so we recreate a sequence with the same name. Not really nice, but it will do
-    FileSequence meta_seq("path file pid extension", "./", "capture", "mwrm");
+    FileSequence meta_seq("path file pid extension", "./", "capture", ".mwrm");
     BOOST_CHECK_EQUAL((unsigned)125, (unsigned)meta_seq.filesize(0));
     meta_seq.unlink(0);
 }

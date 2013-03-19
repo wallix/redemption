@@ -53,7 +53,7 @@ extern "C" {
         }
         RIO_ERROR status = RIO_ERROR_OK;
         RIO * meta = rio_new_outfile(&status, fd);
-        SQ * sequence = sq_new_outfilename(&status, meta, SQF_PREFIX_COUNT_EXTENSION, prefix, ".wrm", tv, header1, header2, header3);
+        SQ * sequence = sq_new_outtracker(&status, meta, SQF_PREFIX_COUNT_EXTENSION, prefix, ".wrm", tv, header1, header2, header3);
         if (status != RIO_ERROR_OK){
             rio_delete(meta);
             return status;

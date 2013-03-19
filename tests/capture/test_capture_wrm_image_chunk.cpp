@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    FileSequence sequence("path file pid count extension", "./", "testimg", "png");
+    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
     OutByFilenameSequenceTransport png_trans(sequence);
     ::transport_dump_png24(&png_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
@@ -299,7 +299,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport_V2)
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    FileSequence sequence("path file pid count extension", "./", "testimg", "png");
+    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
     OutByFilenameSequenceTransport2 png_trans(sequence);
     ::transport_dump_png24(&png_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
@@ -361,7 +361,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    FileSequence sequence("path file pid count extension", "./", "testimg", "png");
+    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
     OutByFilenameSequenceTransport png_trans(sequence);
     ::transport_dump_png24(&png_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
@@ -423,7 +423,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport_v2)
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    FileSequence sequence("path file pid count extension", "./", "testimg", "png");
+    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
     OutByFilenameSequenceTransport2 png_trans(sequence);
     ::transport_dump_png24(&png_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
@@ -487,7 +487,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
 
-    FileSequence sequence("path file pid count extension", "./", "testimg", "png");
+    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
 
     OutByFilenameSequenceTransport out_png_trans(sequence);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
@@ -556,7 +556,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM_V2)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
 
-    FileSequence sequence("path file pid count extension", "./", "testimg", "png");
+    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
 
     OutByFilenameSequenceTransport2 out_png_trans(sequence);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
@@ -627,12 +627,12 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-    FileSequence sequence("path file pid count extension", "./", "testimg", "png");
+    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
 
     OutByFilenameSequenceTransport out_png_trans(sequence);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
 
-    FileSequence second_sequence("path file pid count extension", "./", "second_testimg", "png");
+    FileSequence second_sequence("path file pid count extension", "./", "second_testimg", ".png");
     OutByFilenameSequenceTransport second_out_png_trans(second_sequence);
     ImageCapture second_png_recorder(second_out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     
@@ -707,12 +707,12 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers_V2)
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-    FileSequence sequence("path file pid count extension", "./", "testimg", "png");
+    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
 
     OutByFilenameSequenceTransport2 out_png_trans(sequence);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
 
-    FileSequence second_sequence("path file pid count extension", "./", "second_testimg", "png");
+    FileSequence second_sequence("path file pid count extension", "./", "second_testimg", ".png");
     OutByFilenameSequenceTransport2 second_out_png_trans(second_sequence);
     ImageCapture second_png_recorder(second_out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     
@@ -787,7 +787,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-    FileSequence sequence("path file pid count extension", "./", "testimg", "png");
+    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
 
     OutByFilenameSequenceTransport out_png_trans(sequence);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
@@ -859,7 +859,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk_V2)
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-    FileSequence sequence("path file pid count extension", "./", "testimg", "png");
+    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
 
     OutByFilenameSequenceTransport2 out_png_trans(sequence);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);

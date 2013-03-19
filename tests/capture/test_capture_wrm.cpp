@@ -430,7 +430,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     }
     InFileTransport in_wrm_trans(fd);
 
-    FileSequence sequence("path file pid count extension", "./", "testcap", "png");
+    FileSequence sequence("path file pid count extension", "./", "testcap", ".png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
 
     timeval begin_capture;
@@ -552,7 +552,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng_V2)
     }
     InFileTransport in_wrm_trans(fd);
 
-    FileSequence sequence("path file pid count extension", "./", "testcap", "png");
+    FileSequence sequence("path file pid count extension", "./", "testcap", ".png");
     OutByFilenameSequenceTransport2 out_png_trans(sequence);
 
     timeval begin_capture;

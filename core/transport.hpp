@@ -706,14 +706,12 @@ class SocketTransport : public Transport {
     private:
 };
 
+
 class FileSequence
 {
-    char format[64];
-    char prefix[512];
-    char filename[512];
-    char extension[12];
-    uint32_t pid;
-
+    SQ sq;
+    int pid;
+    SQ_FORMAT sqf;
 public:
     FileSequence(
         const char * const format,
@@ -721,39 +719,43 @@ public:
         const char * const filename,
         const char * const extension)
     : pid(getpid())
+    , sqf(SQF_PREFIX_EXTENSION)
     {
-        size_t len_format = std::min(strlen(format), sizeof(this->format));
-        memcpy(this->format, format, len_format);
-        this->format[len_format] = 0;
-
-        size_t len_prefix = std::min(strlen(prefix), sizeof(this->prefix));
-        memcpy(this->prefix, prefix, len_prefix);
-        this->prefix[len_prefix] = 0;
-
-        size_t len_filename = std::min(strlen(filename), sizeof(this->filename));
-        memcpy(this->filename, filename, len_filename);
-        this->filename[len_filename] = 0;
-
-        size_t len_extension = std::min(strlen(extension), sizeof(this->extension));
-        memcpy(this->extension, extension, len_extension);
-        this->extension[len_extension] = 0;
-
-        this->pid = getpid();
-    }
-
-    void get_name(char * const buffer, size_t len, uint32_t count) const {
-        if (0 == strcmp(this->format, "path file pid count extension")){
-            snprintf(buffer, len, "%s%s-%06u-%06u.%s",
-            this->prefix, this->filename, this->pid, count, this->extension);
+        if (0 == strcmp(format, "path file pid count extension")){
+            this->sqf = SQF_PREFIX_PID_COUNT_EXTENSION;
         }
-        else if (0 == strcmp(this->format, "path file pid extension")){
-            snprintf(buffer, len, "%s%s-%06u.%s",
-            this->prefix, this->filename, this->pid, this->extension);
+        else if (0 == strcmp(format, "path file count extension")){
+            this->sqf = SQF_PREFIX_COUNT_EXTENSION;
+        }
+        else if (0 == strcmp(format, "path file pid extension")){
+            this->sqf = SQF_PREFIX_PID_EXTENSION;
+        }
+        else if (0 == strcmp(format, "path file extension")){
+            this->sqf = SQF_PREFIX_EXTENSION;
         }
         else {
             LOG(LOG_ERR, "Unsupported sequence format string");
             throw Error(ERR_TRANSPORT);
         }
+
+        char path[1024];
+        snprintf(path, sizeof(path), "%s%s", prefix, filename);
+        TODO("sanity check check path len")
+
+        RIO_ERROR status = sq_init_outfilename(&this->sq, sqf, path, extension);
+        if (status < 0){
+            LOG(LOG_ERR, "Sequence outfilename initialisation failed");
+            throw Error(ERR_TRANSPORT);
+        }
+    }
+
+    ~FileSequence()
+    {
+        sq_clear(&this->sq);
+    }
+
+    void get_name(char * const buffer, size_t len, uint32_t count) const {
+        sq_im_SQOutfilename_get_name(&(this->sq.u.outfilename), buffer, len, count);
     }
 
     ssize_t filesize(uint32_t count) const {
@@ -768,6 +770,5 @@ public:
         return ::unlink(filename);
     }
 };
-
 
 #endif

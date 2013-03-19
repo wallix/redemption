@@ -41,7 +41,7 @@ public:
     OutmetaTransport(const char * path, const char * basename, 
                       timeval now, uint16_t width, uint16_t height, FileSequence ** pwrm_sequence, unsigned verbose = 0)
     : now(now)
-    , sequence("path file pid count extension", path, basename, "wrm")
+    , sequence("path file pid count extension", path, basename, ".wrm")
     , rio(NULL)
     , seq(NULL)
     {
