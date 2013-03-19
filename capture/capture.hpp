@@ -14,8 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
+   Copyright (C) Wallix 2013
+   Author(s): Christophe Grosjean
 */
 
 #ifndef _REDEMPTION_CAPTURE_CAPTURE_HPP_

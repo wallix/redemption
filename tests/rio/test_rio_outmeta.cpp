@@ -71,7 +71,6 @@ BOOST_AUTO_TEST_CASE(TestOutMeta)
     sq_timestamp(seq, &tv);
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(seq));
 
-    rio_clear(rt);
     rio_delete(rt);
 
     {

@@ -26,6 +26,8 @@
 #include "transport.hpp"
 #include "error.hpp"
 
+#include "../libs/rio.h"
+
 class OutmetaTransport : public OutFileTransport {
 public:
     timeval now;
@@ -143,6 +145,68 @@ public:
         this->now = this->future;
         ::close(mfd);
         this->OutFileTransport::next();
+        return true;
+    }
+};
+
+
+class OutmetaTransport2 : public Transport {
+public:
+    timeval now;
+    FileSequence sequence;
+    char meta_path[1024];
+    char path[1024];
+
+    RIO * rio;
+    SQ * seq;
+
+    OutmetaTransport2(const char * path, const char * basename, timeval now, uint16_t width, uint16_t height, FileSequence ** pwrm_sequence, unsigned verbose = 0)
+    : now(now)
+    , sequence("path file pid count extension", path, basename, "wrm")
+    , rio(NULL)
+    , seq(NULL)
+    {
+        *pwrm_sequence = &this->sequence;
+        RIO_ERROR status = RIO_ERROR_OK;
+        char filename[1024];
+        sprintf(filename, "%s%s", path, basename);
+        char header1[1024];
+        sprintf(header1, "%u %u", width, height);
+        this->rio = rio_new_outmeta(&status, &this->seq, filename, ".mwrm", header1, "0", "", &now);
+        if (status < 0){
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+    }
+
+    ~OutmetaTransport2()
+    {
+        rio_delete(this->rio);
+    }
+
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
+        ssize_t res = rio_send(this->rio, buffer, len);
+        if (res < 0){
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+    }
+
+    virtual void timestamp(timeval now)
+    {
+        this->future = now;
+        sq_timestamp(this->seq, &now);
+    }
+
+    using Transport::recv;
+    virtual void recv(char**, size_t) throw (Error)
+    {  
+        LOG(LOG_INFO, "OutFileTransport used for recv");
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
+    }
+
+    virtual bool next()
+    {
+        sq_next(this->seq);
         return true;
     }
 };
