@@ -62,6 +62,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.bpp = 24;
     info.width = 800;
     info.height = 600;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     int verbose = 511;
 
     class Front : public FrontAPI {

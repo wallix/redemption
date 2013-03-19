@@ -67,6 +67,15 @@ static inline unsigned level_from_string(const char * str)
     return res;
 }
 
+static inline unsigned long_from_cstr(const char * str)
+{ // 10 = 10, 0x10 = 16
+    if ((*str == '0') && (*(str + 1) == 'x')){
+        return strtol(str + 2, 0, 16);
+    }
+
+    return atol(str);
+}
+
 static inline bool check_name(const char * str)
 {
     return ((strlen(str) > 0) && (strlen(str) < 250));
@@ -122,7 +131,7 @@ struct Inifile {
         bool notimestamp;
         bool autovalidate;       // dialog autovalidation for test
         char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
-        bool ignore_logon_password;   // if true, ignore password provided by RDP client, user need do login manually. default false
+
 
         unsigned capture_flags;  // 1 PNG capture, 2 WRM
         unsigned png_interval;   // time between 2 png captures (in 1/10 seconds)
@@ -181,6 +190,13 @@ struct Inifile {
             uint32_t input;
         } debug;
 
+        // Section "client"
+        struct {
+            bool ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default false
+            uint32_t performance_flags_default;
+            uint32_t performance_flags_force_present;
+            uint32_t performance_flags_force_not_present;
+        } client;
     } globals;
 
     struct IniAccounts account;
@@ -219,11 +235,9 @@ struct Inifile {
             this->globals.authport = 3350;
             this->globals.autovalidate = false;
             strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
-            this->globals.ignore_logon_password = false;
             strcpy(this->globals.codec_id, "flv");
             TODO("this could be some kind of enumeration")
             strcpy(this->globals.video_quality, "medium");
-
 
             this->globals.png_interval = 3000;
             this->globals.ocr_interval = 100; // 1 every second
@@ -274,6 +288,13 @@ struct Inifile {
             strcpy(this->account.accountname, "");
             strcpy(this->account.username, "");
             strcpy(this->account.password, "");
+
+            // Section "client".
+            this->globals.client.ignore_logon_password = false;
+//            this->globals.client.performance_flags_default = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
+            this->globals.client.performance_flags_default = 0;
+            this->globals.client.performance_flags_force_present = 0;
+            this->globals.client.performance_flags_force_not_present = 0;
     };
 
     void cparse(istream & ifs){
@@ -393,15 +414,26 @@ struct Inifile {
             else if (0 == strcmp(key, "dynamic_conf_path")){
                 strcpy(this->globals.dynamic_conf_path, value);
             }
-            else if (0 == strcmp(key, "ignore_logon_password")){
-                this->globals.ignore_logon_password = bool_from_cstr(value);
-            }
             else if (0 == strcmp(key, "auth_channel")){
                 strncpy(this->globals.auth_channel, value, 8);
                 this->globals.auth_channel[7] = 0;
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            }
+        }
+        else if (0 == strcmp(context, "client")){
+            if (0 == strcmp(key, "ignore_logon_password")){
+                this->globals.client.ignore_logon_password = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "performance_flags_default")){
+                this->globals.client.performance_flags_default = long_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "performance_flags_force_present")){
+                this->globals.client.performance_flags_force_present = long_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "performance_flags_force_not_present")){
+                this->globals.client.performance_flags_force_not_present = long_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "video")){ 

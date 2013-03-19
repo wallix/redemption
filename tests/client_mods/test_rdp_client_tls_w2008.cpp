@@ -60,6 +60,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.bpp = 16;
     info.width = 1024;
     info.height = 768;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
     int verbose = 256;
 
 

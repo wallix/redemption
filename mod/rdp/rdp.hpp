@@ -3586,16 +3586,18 @@ struct mod_rdp : public client_mod {
         }
         BStream stream(1024);
 
+/*
         uint32_t perfFlags = (this->performanceFlags ? this->performanceFlags :
             ( PERF_DISABLE_WALLPAPER | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS ) ) );
-
+*/
         InfoPacket infoPacket( this->use_rdp5
                              , this->domain
                              , this->username
                              , password
                              , this->program
                              , this->directory
-                             , perfFlags
+//                             , perfFlags
+                             , this->performanceFlags
                              , this->clientAddr
                              );
 

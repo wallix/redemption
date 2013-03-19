@@ -114,7 +114,13 @@ struct ClientInfo {
         this->encryptionLevel = encryptionLevel + 1; // ini->globals.encryptionLevel + 1;
     }
 
-    void process_logon_info(Stream & stream, bool ignore_logon_password) throw (Error)
+    void process_logon_info( Stream & stream
+                           , bool ignore_logon_password
+                           , uint32_t performance_flags_default
+                           , uint32_t performance_flags_force_present
+                           , uint32_t performance_flags_force_not_present
+                           , bool verbose
+                           ) throw (Error)
     {
         InfoPacket infoPacket;
         infoPacket.recv(stream);
@@ -125,10 +131,28 @@ struct ClientInfo {
         if (!ignore_logon_password){
             memcpy(this->password, infoPacket.Password, sizeof(infoPacket.Password));
         }
+        else{
+            if (verbose){
+                LOG(LOG_INFO, "client info: logon password <hidden> ignored");
+            }
+        }
         memcpy(this->program, infoPacket.AlternateShell, sizeof(infoPacket.AlternateShell));
         memcpy(this->directory, infoPacket.WorkingDir, sizeof(infoPacket.WorkingDir));
 
         this->rdp5_performanceflags = infoPacket.extendedInfoPacket.performanceFlags;
+
+        if (this->rdp5_performanceflags == 0){
+            this->rdp5_performanceflags = performance_flags_default;
+        }
+        this->rdp5_performanceflags |= performance_flags_force_present;
+        this->rdp5_performanceflags &= ~performance_flags_force_not_present;
+
+        if (verbose){
+            LOG(LOG_INFO,
+                "client info: performance flags before=0x%08X after=0x%08X default=0x%08X present=0x%08X not-present=0x%08X",
+                infoPacket.extendedInfoPacket.performanceFlags, this->rdp5_performanceflags, performance_flags_default,
+                performance_flags_force_present, performance_flags_force_not_present);
+        }
 
         const uint32_t mandatory_flags = INFO_MOUSE
                                        | INFO_DISABLECTRLALTDEL
