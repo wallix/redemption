@@ -29,6 +29,7 @@
 #define LOGNULL
 #include "test_orders.hpp"
 #include "transport.hpp"
+#include "outbyfilenamesequencetransport.hpp"
 #include "image_capture.hpp"
 #include "nativecapture.hpp"
 #include "constants.hpp"

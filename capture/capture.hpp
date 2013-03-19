@@ -24,7 +24,7 @@
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
 #include "outmetatransport.hpp"
-
+#include "outbyfilenamesequencetransport.hpp"
 class Capture : public RDPGraphicDevice
 {
 public:

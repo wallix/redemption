@@ -23,12 +23,14 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOutByFilenameSequenceWithMetaTransport
+#define BOOST_TEST_MODULE TestOutmetaTransport
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
 #include "transport.hpp"
 #include "outmetatransport.hpp"
+#include "outbyfilenamesequencetransport.hpp"
+
 
 BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
 {

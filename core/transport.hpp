@@ -769,48 +769,5 @@ public:
     }
 };
 
-class OutByFilenameSequenceTransport : public OutFileTransport {
-public:
-    const FileSequence & sequence;
-    char path[1024];
-
-    OutByFilenameSequenceTransport(const FileSequence & sequence, unsigned verbose = 0)
-    : OutFileTransport(-1, verbose)
-    , sequence(sequence)
-    {
-    }
-
-    ~OutByFilenameSequenceTransport()
-    {
-        if (this->fd != -1){
-            ::close(this->fd);
-            this->fd = -1;
-        }
-    }
-
-    using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error) {
-        if (this->fd == -1){
-            this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
-            this->fd = ::creat(this->path, 0777);
-            if (this->fd == -1){
-                LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        OutFileTransport::send(buffer, len);
-    }
-
-    virtual bool next()
-    {
-        if (this->fd != -1){
-            ::close(this->fd);
-            this->fd = -1;
-        }
-        this->OutFileTransport::next();
-        return true;
-    }
-};
-
 
 #endif
