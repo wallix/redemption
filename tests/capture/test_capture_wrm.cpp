@@ -30,6 +30,8 @@
 
 #include "test_orders.hpp"
 #include "transport.hpp"
+#include "testtransport.hpp"
+#include "outbyfilenamesequencetransport.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
@@ -428,8 +430,130 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     }
     InFileTransport in_wrm_trans(fd);
 
-    FileSequence sequence("path file pid count extension", "./", "testcap", "png");
+    FileSequence sequence("path file pid count extension", "./", "testcap", ".png");
     OutByFilenameSequenceTransport out_png_trans(sequence);
+
+    timeval begin_capture;
+    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
+    timeval end_capture;
+    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
+    player.add_consumer(&png_recorder);
+
+    png_recorder.flush();
+    out_png_trans.next();
+
+    // Green Rect
+    BOOST_CHECK_EQUAL(true, player.next_order());
+    player.interpret_order();
+    png_recorder.flush();
+    out_png_trans.next();
+
+    // Blue Rect
+    BOOST_CHECK_EQUAL(true, player.next_order());
+    player.interpret_order();
+    png_recorder.flush();
+    out_png_trans.next();
+
+    // Timestamp
+    BOOST_CHECK_EQUAL(true, player.next_order());
+    player.interpret_order();
+    png_recorder.flush();
+    out_png_trans.next();
+
+    // White Rect
+    BOOST_CHECK_EQUAL(true, player.next_order());
+    player.interpret_order();
+    png_recorder.flush();
+    out_png_trans.next();
+
+    // Red Rect
+    BOOST_CHECK_EQUAL(true, player.next_order());
+    player.interpret_order();
+    png_recorder.flush();
+    out_png_trans.next();
+
+    BOOST_CHECK_EQUAL(false, player.next_order());
+    ::close(in_wrm_trans.fd);
+ 
+    // clear PNG files   
+    size_t sz[6] = {1476, 2786, 2800, 2800, 2814, 2823};
+    for (int i = 0; i < 6 ; i++){
+        char path[1024];
+        BOOST_CHECK_EQUAL(sz[i], sequence.filesize(i));
+        sequence.get_name(path, sizeof(path), i);
+        ::unlink(path);
+    }
+   ::unlink("./testcap.wrm");
+}
+
+BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng_V2)
+{
+    // Same as above, show timestamps are applied only when flushing
+    BOOST_CHECK_EQUAL(0, 0);
+    struct timeval now;
+    now.tv_usec = 0;
+    now.tv_sec = 1000;
+
+    Rect screen_rect(0, 0, 800, 600);
+    BStream stream(65536);
+    
+    const char * filename = "./testcap.wrm";
+    size_t len = strlen(filename);
+    char path[1024];
+    memcpy(path, filename, len);
+    path[len] = 0;
+    int fd = ::creat(path, 0777);
+    if (fd == -1){
+        LOG(LOG_INFO, "open failed with error : %s on %s", strerror(errno), path);
+        BOOST_CHECK(false);
+        return;
+    }
+
+    OutFileTransport trans(fd);
+    BOOST_CHECK_EQUAL(0, 0);
+    Inifile ini;
+    BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
+    RDPDrawable drawable(screen_rect.cx, screen_rect.cy, true);
+    GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, &drawable, ini);
+    BOOST_CHECK_EQUAL(0, 0);
+    RDPOpaqueRect cmd0(screen_rect, GREEN);
+    consumer.draw(cmd0, screen_rect);
+    RDPOpaqueRect cmd1(Rect(0, 50, 700, 30), BLUE);
+    consumer.draw(cmd1, screen_rect);
+    now.tv_sec++;
+    BOOST_CHECK_EQUAL(0, 0);
+    consumer.timestamp(now);
+    consumer.flush();
+    BOOST_CHECK_EQUAL(0, 0);
+
+    RDPOpaqueRect cmd2(Rect(0, 100, 700, 30), WHITE);
+    consumer.draw(cmd2, screen_rect);
+    RDPOpaqueRect cmd3(Rect(0, 150, 700, 30), RED);
+    consumer.draw(cmd3, screen_rect);
+    now.tv_sec+=6;
+    consumer.timestamp(now);
+    consumer.flush();
+    BOOST_CHECK_EQUAL(0, 0);
+    ::close(trans.fd);
+    BOOST_CHECK_EQUAL(1588, filesize(filename));
+    
+    char in_path[1024];
+    len = strlen(filename);
+    memcpy(in_path, filename, len);
+    in_path[len] = 0;
+
+    fd = ::open(in_path, O_RDONLY);
+    if (fd == -1){
+        LOG(LOG_INFO, "open '%s' failed with error : %s", path, strerror(errno));
+        BOOST_CHECK(false);
+        return;
+    }
+    InFileTransport in_wrm_trans(fd);
+
+    FileSequence sequence("path file pid count extension", "./", "testcap", ".png");
+    OutByFilenameSequenceTransport2 out_png_trans(sequence);
 
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;

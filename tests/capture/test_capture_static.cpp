@@ -29,6 +29,7 @@
 #define LOGNULL
 #include "test_orders.hpp"
 #include "transport.hpp"
+#include "outbyfilenamesequencetransport.hpp"
 #include "image_capture.hpp"
 #include "staticcapture.hpp"
 #include "constants.hpp"
@@ -39,8 +40,48 @@
 BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 {
     Rect screen_rect(0, 0, 800, 600);
-    FileSequence sequence("path file pid count extension", "./", "test", "png");
+    FileSequence sequence("path file pid count extension", "./", "test", ".png");
     OutByFilenameSequenceTransport trans(sequence);
+
+    struct timeval now;
+    now.tv_sec = 1350998222;
+    now.tv_usec = 0;
+    
+    Inifile ini;
+    ini.globals.png_limit = 3;
+    ini.globals.png_interval = 20;
+    StaticCapture consumer(now, trans, sequence, 800, 600, ini);
+
+    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
+    consumer.draw(cmd, screen_rect);
+    consumer.snapshot(now, 10, 10, true, false);
+    now.tv_sec++;
+    consumer.snapshot(now, 10, 10, true, false);
+    now.tv_sec++;
+    consumer.snapshot(now, 10, 10, true, false);
+    now.tv_sec++;
+    consumer.snapshot(now, 10, 10, true, false);
+    now.tv_sec++;
+
+    RDPOpaqueRect cmd1(Rect(100, 100, 200, 200), BLUE);
+    consumer.draw(cmd1, screen_rect);
+    consumer.snapshot(now, 10, 10, true, false);
+    now.tv_sec++;
+    consumer.snapshot(now, 10, 10, true, false);
+    now.tv_sec++;
+    ::close(trans.fd);
+
+    BOOST_CHECK_EQUAL(3092, sequence.filesize(0));
+    BOOST_CHECK_EQUAL(3108, sequence.filesize(1));
+    sequence.unlink(0);
+    sequence.unlink(1);
+}
+
+BOOST_AUTO_TEST_CASE(TestOneRedScreen_V2)
+{
+    Rect screen_rect(0, 0, 800, 600);
+    FileSequence sequence("path file pid count extension", "./", "test", ".png");
+    OutByFilenameSequenceTransport2 trans(sequence);
 
     struct timeval now;
     now.tv_sec = 1350998222;

@@ -24,14 +24,13 @@
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
 #include "outmetatransport.hpp"
-
+#include "outbyfilenamesequencetransport.hpp"
 class Capture : public RDPGraphicDevice
 {
 public:
     const bool capture_wrm;
     const bool capture_drawable;
     const bool capture_png;
-    FileSequence * wrm_sequence;
     FileSequence * png_sequence;
 
     OutByFilenameSequenceTransport * png_trans;
@@ -47,7 +46,6 @@ public:
       : capture_wrm(ini.globals.capture_wrm)
       , capture_drawable(ini.globals.capture_wrm)
       , capture_png(ini.globals.png_limit > 0)
-      , wrm_sequence(NULL)
       , png_sequence(NULL)
       , png_trans(NULL)
       , psc(NULL)
@@ -57,7 +55,7 @@ public:
       , pnc(NULL)
     {
         if (this->capture_png){
-            this->png_sequence = new FileSequence("path file pid count extension", path, basename, "png");
+            this->png_sequence = new FileSequence("path file pid count extension", path, basename, ".png");
             this->png_trans = new OutByFilenameSequenceTransport(*this->png_sequence);
             this->psc = new StaticCapture(now, *this->png_trans, *this->png_sequence, width, height, ini);
         }
@@ -67,7 +65,7 @@ public:
         }
 
         if (this->capture_wrm){
-            this->wrm_trans = new OutmetaTransport(path, basename, now, width, height, &this->wrm_sequence);
+            this->wrm_trans = new OutmetaTransport(path, basename, now, width, height);
             this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288); 
             this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
             this->pnc->recorder.send_input = true;

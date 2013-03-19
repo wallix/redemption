@@ -44,6 +44,7 @@
 
 #include "listen.hpp"
 #include "session.hpp"
+#include "testtransport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 {

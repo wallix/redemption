@@ -294,6 +294,9 @@ unit-test test_sq_one : tests/rio/test_sq_one.cpp openssl crypto z dl libboost_u
 unit-test test_sq_outfilename : tests/rio/test_sq_outfilename.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_sq_outfilename : tests/rio/test_sq_outfilename.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_sq_outtracker : tests/rio/test_sq_outtracker.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_sq_outtracker : tests/rio/test_sq_outtracker.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_rio_outmeta : tests/rio/test_rio_outmeta.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_rio_outmeta : tests/rio/test_sq_outmeta.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 

@@ -41,6 +41,7 @@
 
 #include "sq_one.h"
 #include "sq_outfilename.h"
+#include "sq_outtracker.h"
 #include "sq_intracker.h"
 #include "sq_inmeta.h"
 
@@ -97,6 +98,7 @@ typedef enum {
 typedef enum {
     SQ_TYPE_ONE,
     SQ_TYPE_OUTFILENAME,
+    SQ_TYPE_OUTTRACKER,
     SQ_TYPE_INTRACKER,
     SQ_TYPE_INMETA,
 } SQ_TYPE;
@@ -108,6 +110,7 @@ struct SQ {
     union {
       struct SQOne one;
       struct SQOutfilename outfilename;
+      struct SQOuttracker outtracker;
       struct SQIntracker intracker;
       struct SQInmeta inmeta;
     } u;
@@ -155,23 +158,21 @@ SQ * sq_new_one(RIO_ERROR * error, RIO * trans)
 }
 
 
-RIO_ERROR sq_init_outfilename(SQ * self, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, timeval * tv, 
-        const char * header1, const char * header2, const char * header3)
+RIO_ERROR sq_init_outfilename(SQ * self, SQ_FORMAT format, const char * prefix, const char * extension)
 {
     self->sq_type = SQ_TYPE_OUTFILENAME;
-    self->err = sq_m_SQOutfilename_constructor(&(self->u.outfilename), tracker, format, prefix, extension, tv, header1, header2, header3);
+    self->err = sq_m_SQOutfilename_constructor(&(self->u.outfilename), format, prefix, extension);
     return self->err;
 }
 
-SQ * sq_new_outfilename(RIO_ERROR * error, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, timeval * tv,
-                const char * header1, const char * header2, const char * header3)
+SQ * sq_new_outfilename(RIO_ERROR * error, SQ_FORMAT format, const char * prefix, const char * extension)
 {
     SQ * self = (SQ*)malloc(sizeof(SQ));
     if (self == 0){ 
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
-    RIO_ERROR res = sq_init_outfilename(self, tracker, format, prefix, extension, tv, header1, header2, header3);
+    RIO_ERROR res = sq_init_outfilename(self, format, prefix, extension);
     if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
@@ -179,6 +180,32 @@ SQ * sq_new_outfilename(RIO_ERROR * error, RIO * tracker, SQ_FORMAT format, cons
     }
     return self;
 }
+
+RIO_ERROR sq_init_outtracker(SQ * self, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, timeval * tv, 
+        const char * header1, const char * header2, const char * header3)
+{
+    self->sq_type = SQ_TYPE_OUTTRACKER;
+    self->err = sq_m_SQOuttracker_constructor(&(self->u.outtracker), tracker, format, prefix, extension, tv, header1, header2, header3);
+    return self->err;
+}
+
+SQ * sq_new_outtracker(RIO_ERROR * error, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, timeval * tv,
+                const char * header1, const char * header2, const char * header3)
+{
+    SQ * self = (SQ*)malloc(sizeof(SQ));
+    if (self == 0){ 
+        if (error){ *error = RIO_ERROR_MALLOC; }
+        return NULL;
+    }
+    RIO_ERROR res = sq_init_outtracker(self, tracker, format, prefix, extension, tv, header1, header2, header3);
+    if (error) { *error = res; }
+    if (res != RIO_ERROR_OK){
+        free(self);
+        return NULL;
+    }
+    return self;
+}
+
 
 RIO_ERROR sq_init_intracker(SQ * self, RIO * tracker)
 {
@@ -238,6 +265,9 @@ RIO_ERROR sq_get_chunk_info(SQ * seq, unsigned * num_chunk, char * path, size_t 
     case SQ_TYPE_OUTFILENAME:
         res = sq_m_SQOutfilename_get_chunk_info(&(seq->u.outfilename), num_chunk, path, path_len, begin, end);
         break;
+    case SQ_TYPE_OUTTRACKER:
+        res = sq_m_SQOuttracker_get_chunk_info(&(seq->u.outtracker), num_chunk, path, path_len, begin, end);
+        break;
     case SQ_TYPE_INTRACKER:
         res = sq_m_SQIntracker_get_chunk_info(&(seq->u.intracker), num_chunk, path, path_len, begin, end);
         break;
@@ -261,6 +291,9 @@ RIO_ERROR sq_timestamp(SQ * seq, timeval * tv)
     case SQ_TYPE_OUTFILENAME:
         res = sq_m_SQOutfilename_timestamp(&(seq->u.outfilename), tv);
         break;
+    case SQ_TYPE_OUTTRACKER:
+        res = sq_m_SQOuttracker_timestamp(&(seq->u.outtracker), tv);
+        break;
     case SQ_TYPE_INTRACKER:
         res = sq_m_SQIntracker_timestamp(&(seq->u.intracker), tv);
         break;
@@ -282,6 +315,9 @@ RIO_ERROR sq_next(SQ * seq)
         break;
     case SQ_TYPE_OUTFILENAME:
         res = sq_m_SQOutfilename_next(&(seq->u.outfilename));
+        break;
+    case SQ_TYPE_OUTTRACKER:
+        res = sq_m_SQOuttracker_next(&(seq->u.outtracker));
         break;
     case SQ_TYPE_INTRACKER:
         res = sq_m_SQIntracker_next(&(seq->u.intracker));
@@ -305,6 +341,9 @@ RIO * sq_get_trans(SQ * seq, RIO_ERROR * error)
         break;
     case SQ_TYPE_OUTFILENAME:
         trans = sq_m_SQOutfilename_get_trans(&(seq->u.outfilename), &status);
+        break;
+    case SQ_TYPE_OUTTRACKER:
+        trans = sq_m_SQOuttracker_get_trans(&(seq->u.outtracker), &status);
         break;
     case SQ_TYPE_INTRACKER:
         trans = sq_m_SQIntracker_get_trans(&(seq->u.intracker), &status);
@@ -331,6 +370,9 @@ void sq_clear(SQ * sq)
         break;
         case SQ_TYPE_OUTFILENAME:
             sq_m_SQOutfilename_destructor(&(sq->u.outfilename));
+        break;
+        case SQ_TYPE_OUTTRACKER:
+            sq_m_SQOuttracker_destructor(&(sq->u.outtracker));
         break;
         case SQ_TYPE_INTRACKER:
             sq_m_SQIntracker_destructor(&(sq->u.intracker));

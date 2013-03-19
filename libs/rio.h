@@ -68,6 +68,7 @@ extern "C" {
     typedef enum {
         SQF_PREFIX_PID_COUNT_EXTENSION,
         SQF_PREFIX_COUNT_EXTENSION,
+        SQF_PREFIX_PID_EXTENSION,
         SQF_PREFIX_EXTENSION,
     } SQ_FORMAT;
 
@@ -123,11 +124,14 @@ extern "C" {
     SQ * sq_new_one(RIO_ERROR * error, RIO * trans);
     RIO_ERROR sq_init_one(SQ * self, RIO * trans);
 
-    SQ * sq_new_outfilename(RIO_ERROR * error, RIO * tracker, 
+    SQ * sq_new_outfilename(RIO_ERROR * error, SQ_FORMAT format, const char * prefix, const char * extension);
+    RIO_ERROR sq_init_outfilename(SQ * self, SQ_FORMAT format, const char * prefix, const char * extension);
+                
+    SQ * sq_new_outtracker(RIO_ERROR * error, RIO * tracker, 
                 SQ_FORMAT format, const char * prefix, const char * extension, 
                 timeval * tv, 
                 const char * header1, const char * header2, const char * header3);
-    RIO_ERROR sq_init_outfilename(SQ * self, RIO * tracker,
+    RIO_ERROR sq_init_outtracker(SQ * self, RIO * tracker,
                 SQ_FORMAT format, const char * prefix,
                 const char * extension, timeval * tv,
                 const char * header1, const char * header2, const char * header3);

@@ -31,21 +31,17 @@
 class OutmetaTransport : public Transport {
 public:
     timeval now;
-    FileSequence sequence;
     char meta_path[1024];
     char path[1024];
 
     RIO * rio;
     SQ * seq;
 
-    OutmetaTransport(const char * path, const char * basename, 
-                      timeval now, uint16_t width, uint16_t height, FileSequence ** pwrm_sequence, unsigned verbose = 0)
+    OutmetaTransport(const char * path, const char * basename, timeval now, uint16_t width, uint16_t height, unsigned verbose = 0)
     : now(now)
-    , sequence("path file pid count extension", path, basename, "wrm")
     , rio(NULL)
     , seq(NULL)
     {
-        *pwrm_sequence = &this->sequence;
         RIO_ERROR status = RIO_ERROR_OK;
         char filename[1024];
         sprintf(filename, "%s%s-%06u", path, basename, getpid());
