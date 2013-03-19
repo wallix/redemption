@@ -23,6 +23,7 @@
 
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
+#include "outmetatransport.hpp"
 
 class Capture : public RDPGraphicDevice
 {
@@ -30,14 +31,13 @@ public:
     const bool capture_wrm;
     const bool capture_drawable;
     const bool capture_png;
-    FileSequence * meta_sequence;
     FileSequence * wrm_sequence;
     FileSequence * png_sequence;
 
     OutByFilenameSequenceTransport * png_trans;
     StaticCapture * psc;
 
-    OutByFilenameSequenceWithMetaTransport * wrm_trans;
+    OutmetaTransport * wrm_trans;
     BmpCache * pnc_bmp_cache;
     RDPDrawable * drawable;
     NativeCapture * pnc;
@@ -47,7 +47,6 @@ public:
       : capture_wrm(ini.globals.capture_wrm)
       , capture_drawable(ini.globals.capture_wrm)
       , capture_png(ini.globals.png_limit > 0)
-      , meta_sequence(NULL)
       , wrm_sequence(NULL)
       , png_sequence(NULL)
       , png_trans(NULL)
@@ -57,13 +56,6 @@ public:
       , drawable(NULL)
       , pnc(NULL)
     {
-        if (this->capture_wrm){
-            this->meta_sequence = new FileSequence("path file pid extension", path, basename, "mwrm");
-            this->wrm_sequence = new FileSequence("path file pid count extension", path, basename, "wrm");
-        }
-
-        TODO("we could probably use the same drawable for png and wrm (and other targets)")
-
         if (this->capture_png){
             this->png_sequence = new FileSequence("path file pid count extension", path, basename, "png");
             this->png_trans = new OutByFilenameSequenceTransport(*this->png_sequence);
@@ -75,7 +67,7 @@ public:
         }
 
         if (this->capture_wrm){
-            this->wrm_trans = new OutByFilenameSequenceWithMetaTransport(*this->meta_sequence, now, width, height, *this->wrm_sequence);
+            this->wrm_trans = new OutmetaTransport(path, basename, now, width, height, &this->wrm_sequence);
             this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288); 
             this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
             this->pnc->recorder.send_input = true;
@@ -88,8 +80,6 @@ public:
         delete this->png_trans;
 
         delete this->pnc;
-        delete this->wrm_sequence;
-        delete this->meta_sequence;
         delete this->wrm_trans;
         delete this->pnc_bmp_cache;
         delete this->drawable;

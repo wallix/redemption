@@ -190,6 +190,7 @@ unit-test test_capture_wrm_image_chunk : tests/capture/test_capture_wrm_image_ch
 unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp png z openssl crypto libboost_unit_test  ;
 unit-test test_capture_breakpoint : tests/capture/test_capture_breakpoint.cpp png z openssl crypto dl libboost_unit_test  ;
 unit-test test_mwrm : tests/capture/test_mwrm.cpp png z openssl crypto dl libboost_unit_test  ;
+unit-test test_outmeta : tests/capture/test_outmeta.cpp png z openssl crypto dl libboost_unit_test  ;
 
 
 unit-test test_primary_order_opaque_rect : tests/orders/primary/opaque_rect.cpp libboost_unit_test  ;
