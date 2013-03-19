@@ -137,6 +137,7 @@ struct mod_rdp : public client_mod {
     bool enable_new_pointer;
 
     bool opt_clipboard;  // true clipboard available, false clipboard unavailable
+    uint32_t performanceFlags;
 
     mod_rdp(Transport * trans,
             const char * target_user,
@@ -179,7 +180,8 @@ struct mod_rdp : public client_mod {
                     auth_channel_state(0), // 0 means unused
                     nego(tls, trans, target_user),
                     enable_new_pointer(enable_new_pointer),
-                    opt_clipboard(clipboard)
+                    opt_clipboard(clipboard),
+                    performanceFlags(info.rdp5_performanceflags)
     {
         if (this->verbose & 1){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
@@ -1126,7 +1128,13 @@ struct mod_rdp : public client_mod {
                                 ssllib ssl;
                                 /* Generate a signature for the HWID buffer */
                                 uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
-                                ssl.sign(signature, 16, this->lic_layer_license_sign_key, 16, hwid, sizeof(hwid));
+
+//                                ssl.sign(signature, 16, this->lic_layer_license_sign_key, 16, hwid, sizeof(hwid));
+                                FixedSizeStream sig(signature, sizeof(signature));
+                                FixedSizeStream key(this->lic_layer_license_sign_key, sizeof(this->lic_layer_license_sign_key));
+                                FixedSizeStream data(hwid, sizeof(hwid));
+
+                                ssl.sign(sig, key, data);
                                 /* Now encrypt the HWID */
 
                                 SslRC4 rc4;
@@ -1181,7 +1189,13 @@ struct mod_rdp : public client_mod {
                             memcpy(sealed_buffer + LIC::LICENSE_TOKEN_SIZE, hwid, LIC::LICENSE_HWID_SIZE);
 
                             ssllib ssl;
-                            ssl.sign(out_sig, 16, this->lic_layer_license_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
+//                            ssl.sign(out_sig, 16, this->lic_layer_license_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
+
+                            FixedSizeStream sig(out_sig, sizeof(out_sig));
+                            FixedSizeStream key(this->lic_layer_license_sign_key, sizeof(this->lic_layer_license_sign_key));
+                            FixedSizeStream data(sealed_buffer, sizeof(sealed_buffer));
+
+                            ssl.sign(sig, key, data);
 
                             /* Now encrypt the HWID */
                             memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
@@ -1383,6 +1397,8 @@ struct mod_rdp : public client_mod {
                 }
                 else if (!this->opt_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)){
                     // Clipboard is unavailable and is a Clipboard PDU
+
+                    TODO("RZ: Don't reject clipboard update, this can block rdesktop.")
 
                     if ( this->verbose ){
                         LOG( LOG_INFO, "mod_rdp clipboard PDU" );
@@ -3570,42 +3586,8 @@ struct mod_rdp : public client_mod {
         }
         BStream stream(1024);
 
-/*
-        TODO("CGR: This is ugly, we should provide parameters to InfoPacket constructor,"
-             "not instanciate empty InfoPacket and set parameters aftawerward"
-             "Yes, I know there are many parameters... nevertheless")
-        InfoPacket infoPacket;
-        infoPacket.rdp5_support = this->use_rdp5;
-
-        infoPacket.cbDomain = UTF8Len(this->domain)*2;
-        memcpy(infoPacket.Domain, this->domain, infoPacket.cbDomain);
-
-        infoPacket.cbUserName = UTF8Len(this->username)*2;
-        memcpy(infoPacket.UserName, this->username, infoPacket.cbUserName);
-
-        infoPacket.cbPassword = UTF8Len(password)*2;
-        memset(infoPacket.Password, 0, sizeof(infoPacket.Password));
-        memcpy(infoPacket.Password, password, infoPacket.cbPassword);
-
-        infoPacket.cbAlternateShell = UTF8Len(this->program)*2;
-        memcpy(infoPacket.AlternateShell, this->program, infoPacket.cbAlternateShell);
-
-        infoPacket.cbWorkingDir = UTF8Len(this->directory) * 2;
-        memcpy(infoPacket.WorkingDir, this->directory, infoPacket.cbWorkingDir);
-
-        TODO("CGR: it is really suprising these performance flags are related to tls status!!!"
-             "Looks like an error...")
-        infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER 
-                                                       | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG
-                                                                          | PERF_DISABLE_MENUANIMATIONS );
-
-        infoPacket.extendedInfoPacket.cbClientAddress = 2 * this->cbClientAddr;
-        memcpy(infoPacket.extendedInfoPacket.clientAddress, this->clientAddr, this->cbClientAddr);
-*/
-        TODO("CGR: it is really suprising these performance flags are related to tls status!!!"
-             "Looks like an error...")
-        uint32_t performanceFlags = PERF_DISABLE_WALLPAPER
-                                  | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS );
+        uint32_t perfFlags = (this->performanceFlags ? this->performanceFlags :
+            ( PERF_DISABLE_WALLPAPER | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS ) ) );
 
         InfoPacket infoPacket( this->use_rdp5
                              , this->domain
@@ -3613,7 +3595,7 @@ struct mod_rdp : public client_mod {
                              , password
                              , this->program
                              , this->directory
-                             , performanceFlags
+                             , perfFlags
                              , this->clientAddr
                              );
 

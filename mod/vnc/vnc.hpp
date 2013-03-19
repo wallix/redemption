@@ -1150,6 +1150,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                                                );
                 }
                 else {
+                    TODO("RZ: Don't reject clipboard update, this can block rdesktop.")
+
                     // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
                     // 03 00 02 00 00 00 00 00
 

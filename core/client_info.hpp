@@ -128,6 +128,8 @@ struct ClientInfo {
         memcpy(this->program, infoPacket.AlternateShell, sizeof(infoPacket.AlternateShell));
         memcpy(this->directory, infoPacket.WorkingDir, sizeof(infoPacket.WorkingDir));
 
+        this->rdp5_performanceflags = infoPacket.extendedInfoPacket.performanceFlags;
+
         const uint32_t mandatory_flags = INFO_MOUSE
                                        | INFO_DISABLECTRLALTDEL
                                        | INFO_UNICODE

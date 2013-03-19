@@ -176,15 +176,14 @@ class ssllib
         key[2] = 0x9e;
     }
 
-    TODO("Remove this method when all calls will use the second form below")
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    static void sign(uint8_t * signature, int siglen, const uint8_t * const session_key, int keylen, const uint8_t * const data, int datalen)
+    static void sign(Stream & signature, const Stream & key, const Stream & data)
     {
         uint8_t lenhdr[4];
-        buf_out_uint32(lenhdr, datalen);
+        buf_out_uint32(lenhdr, data.size());
 
         SslSha1 sha1;
-        sha1.update(session_key, keylen);
+        sha1.update(key.data, key.size());
         sha1.update(reinterpret_cast<const uint8_t *>(
                     "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
                     "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
@@ -194,13 +193,13 @@ class ssllib
         // Data we are signing
         TODO("pass in a stream and factorize with code in decrypt")
         sha1.update(lenhdr, sizeof(lenhdr));
-        sha1.update(data, datalen);
+        sha1.update(data.data, data.size());
 
         uint8_t shasig[20];
         sha1.final(shasig);
 
         SslMd5 md5;
-        md5.update(session_key, keylen);
+        md5.update(key.data, key.size());
         md5.update(reinterpret_cast<const uint8_t *>(
                     "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
                     "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
@@ -210,13 +209,7 @@ class ssllib
         uint8_t md5sig[MD5_DIGEST_LENGTH];
         md5.final(md5sig);
 
-        memcpy(signature, md5sig, siglen);
-    }
-
-    /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    static void sign(Stream & signature, const Stream & key, const Stream & data)
-    {
-        sign(signature.data, signature.capacity, key.data, key.size(), data.data, data.size());
+        memcpy(signature.data, md5sig, signature.capacity);
     }
 
     static void rdp_sec_generate_keyblock(uint8_t (& key_block)[48], uint8_t *client_random, uint8_t *server_random)
@@ -393,7 +386,7 @@ struct CryptContext
     {
         ssllib ssl;
 
-        RdOnlyStream key(this->sign_key, (this->encryptionMethod==1)?8:16);
+        FixedSizeStream key(this->sign_key, (this->encryptionMethod==1)?8:16);
 
         ssl.sign(signature, key, data);
     }

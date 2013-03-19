@@ -1673,12 +1673,12 @@ class SubStream : public Stream {
     void init(size_t v) {}
 };
 
-// RdOnlyStream does not allocate any buffer
-class RdOnlyStream : public Stream {
+// FixedSizeStream does not allocate/reallocate any buffer
+class FixedSizeStream : public Stream {
     public:
-    RdOnlyStream(){}  // not yet initialized
+    FixedSizeStream(){}  // not yet initialized
 
-    RdOnlyStream(uint8_t * data, size_t len){
+    FixedSizeStream(uint8_t * data, size_t len){
         this->p = this->data = data;
         this->capacity = len;
         this->end = this->data + this->capacity;
