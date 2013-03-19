@@ -30,6 +30,7 @@
 
 #include "stream.hpp"
 #include "transport.hpp"
+#include "testtransport.hpp"
 #include "RDP/x224.hpp"
 
 

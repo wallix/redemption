@@ -30,6 +30,7 @@
 
 #include "test_orders.hpp"
 #include "transport.hpp"
+#include "testtransport.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
 #include "image_capture.hpp"

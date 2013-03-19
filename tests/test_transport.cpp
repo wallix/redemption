@@ -31,6 +31,7 @@
 #include <unistd.h>
 
 #include "transport.hpp"
+#include "testtransport.hpp"
 #include "error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
