@@ -35,11 +35,10 @@
 BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
 {
     {
-        FileSequence * wrm_sequence = NULL;
         timeval now;
         now.tv_sec = 1352304810;
         now.tv_usec = 0;
-        OutmetaTransport wrm_trans("./", "xxx", now, 800, 600, &wrm_sequence);
+        OutmetaTransport wrm_trans("./", "xxx", now, 800, 600);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -47,16 +46,16 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
     } // brackets necessary to force closing sequence
 
     char meta_path[1024];
-    char file1[1024];
-    char file2[1024];
     snprintf(meta_path, 1024, "./xxx-%06u.mwrm", getpid());
     BOOST_CHECK_EQUAL(103, filesize(meta_path));
     BOOST_CHECK_EQUAL(0, ::unlink(meta_path));
 
+    char file1[1024];
     snprintf(file1, 1024, "./xxx-%06u-%06u.wrm", getpid(), 0);
     BOOST_CHECK_EQUAL(10, filesize(file1));
     BOOST_CHECK_EQUAL(0, ::unlink(file1));
 
+    char file2[1024];
     snprintf(file2, 1024, "./xxx-%06u-%06u.wrm", getpid(), 1);
     BOOST_CHECK_EQUAL(5, filesize(file2));
     BOOST_CHECK_EQUAL(0, ::unlink(file2));   
