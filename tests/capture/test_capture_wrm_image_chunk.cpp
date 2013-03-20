@@ -31,7 +31,7 @@
 #include "test_orders.hpp"
 #include "transport.hpp"
 #include "testtransport.hpp"
-#include "outbyfilenamesequencetransport.hpp"
+#include "outfilenametransport.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
 #include "image_capture.hpp"
@@ -266,48 +266,15 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
-    OutByFilenameSequenceTransport png_trans(sequence);
+    OutFilenameTransport png_trans("path file pid count extension", "./", "testimg", ".png");
     ::transport_dump_png24(&png_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    sequence.unlink(0);
+    png_trans.sequence.unlink(0);
     
 }
 
-BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport_V2)
-{
-    const char source_png[] =
-        "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
-        "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
-        "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00"             //.............
-        "\x3b\x37\xe9\xb1"                                                 //;7..
-        "\x00\x00\x00\x32\x49\x44\x41\x54"                                 //...2IDAT
-        "\x28\x91\x63\xfc\xcf\x80\x17\xfc\xff\xcf\xc0\xc8\x88\x4b\x92\x09" //(.c..........K..
-        "\xbf\x5e\xfc\x60\x88\x6a\x66\x41\xe3\x33\x32\xa0\x84\xe0\x7f\x54" //.^.`.jfA.32....T
-        "\x91\xff\x0c\x28\x81\x37\x70\xce\x66\x1c\xb0\x78\x06\x00\x69\xdc" //...(.7p.f..x..i.
-        "\x0a\x12"                                                         //..
-        "\x86\x4a\x0c\x44"                                                 //.J.D
-        "\x00\x00\x00\x00\x49\x45\x4e\x44"                                 //....IEND
-        "\xae\x42\x60\x82"                                                 //.B`.
-    ;
-    
-    RDPDrawable d(20, 10, true);
-    GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);   
-    ::transport_read_png24(&in_png_trans, d.drawable.data,
-                 d.drawable.width, d.drawable.height,
-                 d.drawable.rowsize
-                );
-    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
-    OutByFilenameSequenceTransport2 png_trans(sequence);
-    ::transport_dump_png24(&png_trans, d.drawable.data,
-                 d.drawable.width, d.drawable.height,
-                 d.drawable.rowsize
-                );
-    sequence.unlink(0);
-    
-}
 
 BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 {
@@ -361,76 +328,12 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
-    OutByFilenameSequenceTransport png_trans(sequence);
+    OutFilenameTransport png_trans("path file pid count extension", "./", "testimg", ".png");
     ::transport_dump_png24(&png_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    sequence.unlink(0);
-    
-}
-
-BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport_v2)
-{
-    const char source_png[] =
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x14\x00\x00\x00\x0a"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x08\x02\x00\x00\x00\x3b\x37\xe9"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xb1\x00\x00\x00\x32\x49\x44\x41"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x54\x28\x91\x63\xfc\xcf\x80\x17"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xfc\xff\xcf\xc0\xc8\x88\x4b\x92"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x09\xbf\x5e\xfc\x60\x88\x6a\x66"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x41\xe3\x33\x32\xa0\x84\xe0\x7f"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x54\x91\xff\x0c\x28\x81\x37\x70"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xce\x66\x1c\xb0\x78\x06\x00\x69"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xdc\x0a\x12\x86\x4a\x0c\x44\x00"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x49\x45\x4e\x44\xae"
-    /* 0000 */ "\x00\x10\x0b\x00\x00\x00\x01\x00" // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x42\x60\x82"
-    ;
-
-    GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
-    BStream stream(8);
-    in_png_trans.recv(&stream.end, 8); // skip first chunk header
-
-//    in_png_trans.recv(&stream.end, 107); // skip first chunk header
-
-    uint16_t chunk_type = stream.in_uint16_le();
-    uint32_t chunk_size = stream.in_uint32_le();
-    uint16_t chunk_count = stream.in_uint16_le();
-    (void)chunk_count;
-
-    InChunkedImageTransport chunk_trans(chunk_type, chunk_size, &in_png_trans);
-    
-    
-    RDPDrawable d(20, 10, true);
-    ::transport_read_png24(&chunk_trans, d.drawable.data,
-                 d.drawable.width, d.drawable.height,
-                 d.drawable.rowsize
-                );
-    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
-    OutByFilenameSequenceTransport2 png_trans(sequence);
-    ::transport_dump_png24(&png_trans, d.drawable.data,
-                 d.drawable.width, d.drawable.height,
-                 d.drawable.rowsize
-                );
-    sequence.unlink(0);
-    
+    png_trans.sequence.unlink(0);
 }
 
 BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
@@ -487,9 +390,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
 
-    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
-
-    OutByFilenameSequenceTransport out_png_trans(sequence);
+    OutFilenameTransport out_png_trans("path file pid count extension", "./", "testimg", ".png");
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
   
     player.add_consumer(&png_recorder);
@@ -498,78 +399,10 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, sequence.filesize(0));
-    sequence.unlink(0);
+    BOOST_CHECK_EQUAL(107, out_png_trans.sequence.filesize(0));
+    out_png_trans.sequence.unlink(0);
 }
 
-BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM_V2)
-{
-   const char source_wrm[] = 
-    /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24 PAD: 2 bytes
-               "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
-
-// Initial black PNG image               
-/* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
-/* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
-/* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
-/* 0020 */ "\xb1\x00\x00\x00\x0f\x49\x44\x41\x54\x28\x91\x63\x60\x18\x05\xa3" //.....IDAT(.c`...
-/* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
-/* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
-
-    /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-    /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x14\x00\x00\x00\x0a"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x08\x02\x00\x00\x00\x3b\x37\xe9"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xb1\x00\x00\x00\x32\x49\x44\x41"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x54\x28\x91\x63\xfc\xcf\x80\x17"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xfc\xff\xcf\xc0\xc8\x88\x4b\x92"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x09\xbf\x5e\xfc\x60\x88\x6a\x66"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x41\xe3\x33\x32\xa0\x84\xe0\x7f"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x54\x91\xff\x0c\x28\x81\x37\x70"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xce\x66\x1c\xb0\x78\x06\x00\x69"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xdc\x0a\x12\x86\x4a\x0c\x44\x00"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x49\x45\x4e\x44\xae"
-    /* 0000 */ "\x00\x10\x0b\x00\x00\x00\x01\x00" // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x42\x60\x82"
-        ;
-
-    GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);   
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-
-    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
-
-    OutByFilenameSequenceTransport2 out_png_trans(sequence);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
-  
-    player.add_consumer(&png_recorder);
-    BOOST_CHECK_EQUAL(1, player.nbconsumers);
-    while (player.next_order()){
-        player.interpret_order();
-    }
-    png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, sequence.filesize(0));
-    sequence.unlink(0);
-}
 
 BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
 {
@@ -627,13 +460,10 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
-
-    OutByFilenameSequenceTransport out_png_trans(sequence);
+    OutFilenameTransport out_png_trans("path file pid count extension", "./", "testimg", ".png");
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
 
-    FileSequence second_sequence("path file pid count extension", "./", "second_testimg", ".png");
-    OutByFilenameSequenceTransport second_out_png_trans(second_sequence);
+    OutFilenameTransport second_out_png_trans("path file pid count extension", "./", "second_testimg", ".png");
     ImageCapture second_png_recorder(second_out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     
     player.add_consumer(&png_recorder);
@@ -643,92 +473,12 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, sequence.filesize(0));
-    sequence.unlink(0);
+    BOOST_CHECK_EQUAL(107, out_png_trans.sequence.filesize(0));
+    out_png_trans.sequence.unlink(0);
 
     second_png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, second_sequence.filesize(0));
-    second_sequence.unlink(0);
-}
-
-BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers_V2)
-{
-   const char source_wrm[] = 
-    /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
-               "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
-
-// Initial black PNG image               
-/* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
-/* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
-/* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
-/* 0020 */ "\xb1\x00\x00\x00\x0f\x49\x44\x41\x54\x28\x91\x63\x60\x18\x05\xa3" //.....IDAT(.c`...
-/* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
-/* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
-
-
-    /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-    /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x14\x00\x00\x00\x0a"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x08\x02\x00\x00\x00\x3b\x37\xe9"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xb1\x00\x00\x00\x32\x49\x44\x41"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x54\x28\x91\x63\xfc\xcf\x80\x17"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xfc\xff\xcf\xc0\xc8\x88\x4b\x92"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x09\xbf\x5e\xfc\x60\x88\x6a\x66"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x41\xe3\x33\x32\xa0\x84\xe0\x7f"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x54\x91\xff\x0c\x28\x81\x37\x70"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xce\x66\x1c\xb0\x78\x06\x00\x69"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xdc\x0a\x12\x86\x4a\x0c\x44\x00"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x49\x45\x4e\x44\xae"
-    /* 0000 */ "\x00\x10\x0b\x00\x00\x00\x01\x00" // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x42\x60\x82"
-        
-        
-        ;
-
-    GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);   
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
-
-    OutByFilenameSequenceTransport2 out_png_trans(sequence);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
-
-    FileSequence second_sequence("path file pid count extension", "./", "second_testimg", ".png");
-    OutByFilenameSequenceTransport2 second_out_png_trans(second_sequence);
-    ImageCapture second_png_recorder(second_out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
-    
-    player.add_consumer(&png_recorder);
-    player.add_consumer(&second_png_recorder);
-    BOOST_CHECK_EQUAL(2, player.nbconsumers);
-    while (player.next_order()){
-        player.interpret_order();
-    }
-    png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, sequence.filesize(0));
-    sequence.unlink(0);
-
-    second_png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, second_sequence.filesize(0));
-    second_sequence.unlink(0);
+    BOOST_CHECK_EQUAL(107, second_out_png_trans.sequence.filesize(0));
+    second_out_png_trans.sequence.unlink(0);
 }
 
 
@@ -787,9 +537,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
-
-    OutByFilenameSequenceTransport out_png_trans(sequence);
+    OutFilenameTransport out_png_trans("path file pid count extension", "./", "testimg", ".png");
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
    
     player.add_consumer(&png_recorder);
@@ -799,78 +547,6 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     png_recorder.flush();
     BOOST_CHECK_EQUAL((unsigned)1004, (unsigned)player.synctime_now.tv_sec);
 
-    BOOST_CHECK_EQUAL((unsigned)107, sequence.filesize(0));
-    sequence.unlink(0);
-}
-
-
-BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk_V2)
-{
-   const char source_wrm[] = 
-    /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
-               "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
-
-// Initial black PNG image               
-/* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
-/* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
-/* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
-/* 0020 */ "\xb1\x00\x00\x00\x0f\x49\x44\x41\x54\x28\x91\x63\x60\x18\x05\xa3" //.....IDAT(.c`...
-/* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
-/* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
-
-    /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-    /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x14\x00\x00\x00\x0a"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x08\x02\x00\x00\x00\x3b\x37\xe9"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xb1\x00\x00\x00\x32\x49\x44\x41"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x54\x28\x91\x63\xfc\xcf\x80\x17"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xfc\xff\xcf\xc0\xc8\x88\x4b\x92"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x09\xbf\x5e\xfc\x60\x88\x6a\x66"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x41\xe3\x33\x32\xa0\x84\xe0\x7f"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x54\x91\xff\x0c\x28\x81\x37\x70"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xce\x66\x1c\xb0\x78\x06\x00\x69"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\xdc\x0a\x12\x86\x4a\x0c\x44\x00"
-    /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x00\x00\x00\x49\x45\x4e\x44\xae"
-    /* 0000 */ "\x00\x10\x0b\x00\x00\x00\x01\x00" // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-        "\x42\x60\x82"
-    /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-    /* 0000 */ "\x00\xD3\xD7\x3B\x00\x00\x00\x00" // 0x000000003bd7d300 = 1004000000
-       ;
-
-    GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);   
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
-
-    OutByFilenameSequenceTransport2 out_png_trans(sequence);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
-   
-    player.add_consumer(&png_recorder);
-    while (player.next_order()){
-        player.interpret_order();
-    }
-    png_recorder.flush();
-    BOOST_CHECK_EQUAL((unsigned)1004, (unsigned)player.synctime_now.tv_sec);
-
-    BOOST_CHECK_EQUAL((unsigned)107, sequence.filesize(0));
-    sequence.unlink(0);
+    BOOST_CHECK_EQUAL((unsigned)107, out_png_trans.sequence.filesize(0));
+    out_png_trans.sequence.unlink(0);
 }

@@ -83,20 +83,20 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         capture.flush(); // to close last wrm
         
-        BOOST_CHECK_EQUAL((unsigned)3051, (unsigned)capture.png_sequence->filesize(0));
-        capture.png_sequence->unlink(0);
-        BOOST_CHECK_EQUAL((unsigned)3082, (unsigned)capture.png_sequence->filesize(1));
-        capture.png_sequence->unlink(1);
-        BOOST_CHECK_EQUAL((unsigned)3102, (unsigned)capture.png_sequence->filesize(2));
-        capture.png_sequence->unlink(2);
-        BOOST_CHECK_EQUAL((unsigned)3109, (unsigned)capture.png_sequence->filesize(3));
-        capture.png_sequence->unlink(3);
-        BOOST_CHECK_EQUAL((unsigned)3136, (unsigned)capture.png_sequence->filesize(4));
-        capture.png_sequence->unlink(4);
-        BOOST_CHECK_EQUAL((unsigned)3145, (unsigned)capture.png_sequence->filesize(5));
-        capture.png_sequence->unlink(5);
-        BOOST_CHECK_EQUAL((unsigned)3176, (unsigned)capture.png_sequence->filesize(6));
-        capture.png_sequence->unlink(6);
+        BOOST_CHECK_EQUAL((unsigned)3051, (unsigned)capture.png_trans->sequence.filesize(0));
+        capture.png_trans->sequence.unlink(0);
+        BOOST_CHECK_EQUAL((unsigned)3082, (unsigned)capture.png_trans->sequence.filesize(1));
+        capture.png_trans->sequence.unlink(1);
+        BOOST_CHECK_EQUAL((unsigned)3102, (unsigned)capture.png_trans->sequence.filesize(2));
+        capture.png_trans->sequence.unlink(2);
+        BOOST_CHECK_EQUAL((unsigned)3109, (unsigned)capture.png_trans->sequence.filesize(3));
+        capture.png_trans->sequence.unlink(3);
+        BOOST_CHECK_EQUAL((unsigned)3136, (unsigned)capture.png_trans->sequence.filesize(4));
+        capture.png_trans->sequence.unlink(4);
+        BOOST_CHECK_EQUAL((unsigned)3145, (unsigned)capture.png_trans->sequence.filesize(5));
+        capture.png_trans->sequence.unlink(5);
+        BOOST_CHECK_EQUAL((unsigned)3176, (unsigned)capture.png_trans->sequence.filesize(6));
+        capture.png_trans->sequence.unlink(6);
 
         FileSequence wrm_seq("path file pid count extension", "./", "capture", ".wrm");        
         BOOST_CHECK_EQUAL((unsigned)1622, (unsigned)wrm_seq.filesize(0));

@@ -29,11 +29,11 @@ class WidgetImage : public Widget
 
 public:
     WidgetImage(ModApi* drawable, int x, int y, const char * filename, Widget* parent, NotifyApi* notifier, int id = 0)
-    : Widget(drawable, Rect(), parent, TYPE_IMAGE, notifier, id)
+    : Widget(drawable, Rect(), parent, notifier, id)
     , bmp(filename)
     {
         this->rect.x = x;
-        this->rect.y = y;
+            this->rect.y = y;
         this->rect.cx = this->bmp.cx;
         this->rect.cy = this->bmp.cy;
     }
@@ -41,18 +41,22 @@ public:
     virtual ~WidgetImage()
     {}
 
-    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip)
+    virtual void draw(const Rect& clip)
     {
+        screen_position s = this->position_in_screen();
         this->drawable->draw(
             RDPMemBlt(
                 0,
-                rect.offset(x, y),
+                Rect(std::max<int16_t>(s.x, 0),
+                     std::max<int16_t>(s.y, 0),
+                     s.clip.cx,
+                     s.clip.cy),
                 0xCC,
-                xclip - x,
-                yclip - y,
+                s.x < 0 ? -s.x : 0,
+                s.y < 0 ? -s.y : 0,
                 0
             ),
-            Rect(xclip, yclip, rect.cx, rect.cy),
+            clip,
             this->bmp
         );
     }

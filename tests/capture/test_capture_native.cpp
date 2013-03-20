@@ -29,7 +29,7 @@
 #define LOGNULL
 #include "test_orders.hpp"
 #include "transport.hpp"
-#include "outbyfilenamesequencetransport.hpp"
+#include "outfilenametransport.hpp"
 #include "image_capture.hpp"
 #include "nativecapture.hpp"
 #include "constants.hpp"
@@ -41,8 +41,7 @@
 BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 {
     Rect scr(0, 0, 800, 600);
-    FileSequence sequence("path file pid count extension", "./", "test", ".wrm");
-    OutByFilenameSequenceTransport trans(sequence);
+    OutFilenameTransport trans("path file pid count extension", "./", "test", ".wrm");
 
     struct timeval now;
     now.tv_sec = 1000;
@@ -62,9 +61,9 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     consumer.snapshot(now, 10, 10, true, false);
     ::close(trans.fd);
     
-    BOOST_CHECK_EQUAL((unsigned)1544, (unsigned)sequence.filesize(0));
-    sequence.unlink(0);
-    BOOST_CHECK_EQUAL((unsigned)3254, (unsigned)sequence.filesize(1));
-    sequence.unlink(1);
+    BOOST_CHECK_EQUAL((unsigned)1544, (unsigned)trans.sequence.filesize(0));
+    trans.sequence.unlink(0);
+    BOOST_CHECK_EQUAL((unsigned)3254, (unsigned)trans.sequence.filesize(1));
+    trans.sequence.unlink(1);
 }
 

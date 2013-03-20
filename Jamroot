@@ -321,6 +321,7 @@ unit-test test_zlib : tests/test_zlib.cpp z libboost_unit_test  ;
 unit-test test_parse_username : tests/test_parse_username.cpp libboost_unit_test  ;
 
 #unit-test test_widget2 : tests/test_widget2.cpp png z openssl crypto libboost_unit_test ;
-unit-test test_widget2_rect : tests/test_widget2_rect.cpp png z openssl crypto libboost_unit_test ;
 #unit-test test_widget2_clip : tests/test_widget2_clip.cpp libboost_unit_test ;
+unit-test test_widget2_rect : tests/test_widget2_rect.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_widget2_image : tests/test_widget2_image.cpp png z openssl crypto libboost_unit_test ;
 

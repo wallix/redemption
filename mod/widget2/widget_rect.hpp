@@ -26,31 +26,26 @@
 class WidgetRect : public Widget
 {
 public:
-    int bg_color;
-    int fg_color;
+    int color;
 
 public:
-    WidgetRect(ModApi * drawable, const Rect& rect, Widget * parent, int type, NotifyApi * notifier, int id = 0, int bgcolor = BLACK, int fgcolor = WHITE)
-    : Widget(drawable, rect, parent, type, notifier, id)
-    , bg_color(bgcolor)
-    , fg_color(fgcolor)
+    WidgetRect(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier, int id = 0, int color = BLACK)
+    : Widget(drawable, rect, parent, notifier, id)
+    , color(color)
     {
     }
 
-    void draw_rect(const Rect& rect, int16_t x, int16_t y, const Rect & clip)
+    virtual void draw(const Rect& clip)
     {
+        screen_position s = this->position_in_screen();
         this->drawable->draw(
             RDPOpaqueRect(
-                rect.offset(x,y),
-                this->bg_color
-            ), clip
+                Rect(s.x, s.y, s.clip.cx, s.clip.cy),
+                this->color
+            ), s.clip
         );
-    }
-
-    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip)
-    {
-        this->draw_rect(rect, x, y, Rect(xclip, yclip, rect.cx, rect.cy));
     }
 };
 
 #endif
+
