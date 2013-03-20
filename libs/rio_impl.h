@@ -183,23 +183,32 @@ SQ * sq_new_outfilename(RIO_ERROR * error, SQ_FORMAT format, const char * path, 
     return self;
 }
 
-RIO_ERROR sq_init_outtracker(SQ * self, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, timeval * tv, 
-        const char * header1, const char * header2, const char * header3)
+RIO_ERROR sq_init_outtracker(SQ * self, RIO * tracker, 
+    SQ_FORMAT format, 
+    const char * path, const char * filename, const char * extension,
+    timeval * tv, 
+    const char * header1, const char * header2, const char * header3)
 {
     self->sq_type = SQ_TYPE_OUTTRACKER;
-    self->err = sq_m_SQOuttracker_constructor(&(self->u.outtracker), tracker, format, prefix, extension, tv, header1, header2, header3);
+    self->err = sq_m_SQOuttracker_constructor(&(self->u.outtracker), tracker, 
+                                            format, 
+                                            path, filename, extension, 
+                                            tv, header1, header2, header3);
     return self->err;
 }
 
-SQ * sq_new_outtracker(RIO_ERROR * error, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, timeval * tv,
-                const char * header1, const char * header2, const char * header3)
+SQ * sq_new_outtracker(RIO_ERROR * error, RIO * tracker, 
+        SQ_FORMAT format, 
+        const char * path, const char * filename, const char * extension, 
+        timeval * tv,
+        const char * header1, const char * header2, const char * header3)
 {
     SQ * self = (SQ*)malloc(sizeof(SQ));
     if (self == 0){ 
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
-    RIO_ERROR res = sq_init_outtracker(self, tracker, format, prefix, extension, tv, header1, header2, header3);
+    RIO_ERROR res = sq_init_outtracker(self, tracker, format, path, filename, extension, tv, header1, header2, header3);
     if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
@@ -610,16 +619,16 @@ RIO * rio_new_insequence(RIO_ERROR * error, SQ * seq)
 }
 
 
-RIO_ERROR rio_init_outmeta(RIO * self, SQ ** seq, const char * prefix, const char * extension, 
+RIO_ERROR rio_init_outmeta(RIO * self, SQ ** seq, const char * path, const char * filename, const char * extension, 
                       const char * l1, const char * l2, const char * l3, timeval * tv)
 {
     self->rt_type = RIO_TYPE_OUTMETA;
-    self->err = rio_m_RIOOutmeta_constructor(&(self->u.outmeta), seq, prefix, extension, l1, l2, l3, tv);
+    self->err = rio_m_RIOOutmeta_constructor(&(self->u.outmeta), seq, path, filename, extension, l1, l2, l3, tv);
     return self->err;
 }
 
 
-RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension, 
+RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * path, const char * filename, const char * extension, 
                       const char * l1, const char * l2, const char * l3, timeval * tv)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
@@ -627,7 +636,7 @@ RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const c
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
-    RIO_ERROR res = rio_init_outmeta(self, seq, prefix, extension, l1, l2, l3, tv);
+    RIO_ERROR res = rio_init_outmeta(self, seq, path, filename, extension, l1, l2, l3, tv);
     if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);

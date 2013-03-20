@@ -39,13 +39,17 @@ extern "C" {
         timeval stop_tv;
         RIO * tracker;
         SQ_FORMAT format;
-        char prefix[512];
+        char path[1024];
+        char filename[1024];
         char extension[12];
         unsigned pid;
         unsigned count;
     };
 
-    static inline RIO_ERROR sq_m_SQOuttracker_constructor(SQOuttracker * self, RIO * tracker, SQ_FORMAT format, const char * prefix, const char * extension, struct timeval * tv, const char * header1, const char * header2, const char * header3)
+    static inline RIO_ERROR sq_m_SQOuttracker_constructor(SQOuttracker * self, RIO * tracker, 
+                    SQ_FORMAT format, 
+                    const char * path, const char * filename, const char * extension, 
+                    struct timeval * tv, const char * header1, const char * header2, const char * header3)
     {
         self->trans = NULL;
         self->tracker = tracker;
@@ -54,10 +58,14 @@ extern "C" {
         self->pid = getpid();
         self->start_tv.tv_sec = self->stop_tv.tv_sec = tv->tv_sec;
         self->start_tv.tv_usec = self->stop_tv.tv_usec = tv->tv_usec;
-        if (strlen(prefix) > sizeof(self->prefix) - 1){
-            return RIO_ERROR_STRING_PREFIX_TOO_LONG;
+        if (strlen(path) > sizeof(self->path) - 1){
+            return RIO_ERROR_STRING_PATH_TOO_LONG;
         }
-        strcpy(self->prefix, prefix);
+        strcpy(self->path, path);
+        if (strlen(filename) > sizeof(self->filename) - 1){
+            return RIO_ERROR_STRING_FILENAME_TOO_LONG;
+        }
+        strcpy(self->filename, filename);
         if (strlen(extension) > sizeof(self->extension) - 1){
             return RIO_ERROR_STRING_EXTENSION_TOO_LONG;
         }
@@ -82,17 +90,17 @@ extern "C" {
         size_t res = 0;
         switch (self->format){
         default:
-        case SQF_PREFIX_PID_COUNT_EXTENSION:
-            res = snprintf(buffer, size, "%s-%06u-%06u%s", self->prefix, self->pid, count, self->extension);
+        case SQF_PATH_FILE_PID_COUNT_EXTENSION:
+            res = snprintf(buffer, size, "%s%s-%06u-%06u%s", self->path, self->filename, self->pid, count, self->extension);
         break;
-        case SQF_PREFIX_COUNT_EXTENSION:
-            res = snprintf(buffer, size, "%s-%06u%s", self->prefix, count, self->extension);
+        case SQF_PATH_FILE_COUNT_EXTENSION:
+            res = snprintf(buffer, size, "%s%s-%06u%s", self->path, self->filename, count, self->extension);
         break;
-        case SQF_PREFIX_PID_EXTENSION:
-            res = snprintf(buffer, size, "%s-%06u%s", self->prefix, self->pid, self->extension);
+        case SQF_PATH_FILE_PID_EXTENSION:
+            res = snprintf(buffer, size, "%s%s-%06u%s", self->path, self->filename, self->pid, self->extension);
         break;
-        case SQF_PREFIX_EXTENSION:
-            res = snprintf(buffer, size, "%s%s", self->prefix, self->extension);
+        case SQF_PATH_FILE_EXTENSION:
+            res = snprintf(buffer, size, "%s%s%s", self->path, self->filename, self->extension);
         break;
         }
         return res;
@@ -103,20 +111,20 @@ extern "C" {
         size_t res = 0;
         switch (self->format){
         default:
-        case SQF_PREFIX_PID_COUNT_EXTENSION:
-            res = snprintf(buffer, size, "%s-%06u-%06u%s %u %u", self->prefix, self->pid, count, self->extension,
+        case SQF_PATH_FILE_PID_COUNT_EXTENSION:
+            res = snprintf(buffer, size, "%s%s-%06u-%06u%s %u %u", self->path, self->filename, self->pid, count, self->extension,
                 (unsigned)self->start_tv.tv_sec, (unsigned)self->stop_tv.tv_sec+1);
         break;
-        case SQF_PREFIX_COUNT_EXTENSION:
-            res = snprintf(buffer, size, "%s-%06u%s %u %u", self->prefix, count, self->extension,
+        case SQF_PATH_FILE_COUNT_EXTENSION:
+            res = snprintf(buffer, size, "%s%s-%06u%s %u %u", self->path, self->filename, count, self->extension,
                 (unsigned)self->start_tv.tv_sec, (unsigned)self->stop_tv.tv_sec+1);
         break;
-        case SQF_PREFIX_PID_EXTENSION:
-            res = snprintf(buffer, size, "%s-%06u%s %u %u", self->prefix, self->pid, self->extension,
+        case SQF_PATH_FILE_PID_EXTENSION:
+            res = snprintf(buffer, size, "%s%s-%06u%s %u %u", self->path, self->filename, self->pid, self->extension,
                 (unsigned)self->start_tv.tv_sec, (unsigned)self->stop_tv.tv_sec+1);
         break;
-        case SQF_PREFIX_EXTENSION:
-            res = snprintf(buffer, size, "%s%s %u %u", self->prefix, self->extension,
+        case SQF_PATH_FILE_EXTENSION:
+            res = snprintf(buffer, size, "%s%s%s %u %u", self->path, self->filename, self->extension,
                 (unsigned)self->start_tv.tv_sec, (unsigned)self->stop_tv.tv_sec+1);
         break;
         }

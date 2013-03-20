@@ -124,7 +124,7 @@
 //    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
 //    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
 
-//    FileSequence sequence(SQF_PREFIX_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png");
+//    FileSequence sequence(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png");
 //    OutFilenameTransport out_png_trans(sequence);
 //    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
 //    
@@ -238,7 +238,7 @@
 //    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
 //    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
 
-//    FileSequence sequence(SQF_PREFIX_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png");
+//    FileSequence sequence(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png");
 //    OutFilenameTransport out_png_trans(sequence);
 //    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
 //    
@@ -328,7 +328,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
 
-    OutFilenameTransport out_png_trans(SQF_PREFIX_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png");
+    OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png");
     FileSequence & sequence = out_png_trans.sequence;
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     

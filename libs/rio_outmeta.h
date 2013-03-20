@@ -39,11 +39,13 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RIO_ERROR rio_m_RIOOutmeta_constructor(RIOOutmeta * self, SQ ** seq, const char * prefix, const char * extension, 
+    inline RIO_ERROR rio_m_RIOOutmeta_constructor(RIOOutmeta * self, SQ ** seq, 
+                                                  const char * path, const char * filename, const char * extension, 
                                                   const char * header1, const char * header2, const char* header3, timeval * tv)
     {
-        char buffer[1024];
-        size_t res = snprintf(buffer, sizeof(buffer), "%s%s", prefix, extension);
+        TODO("use system constants for size")
+        char buffer[2048];
+        size_t res = snprintf(buffer, sizeof(buffer), "%s%s%s", path, filename, extension);
         if (res >= sizeof(buffer)){
             return RIO_ERROR_FILENAME_TOO_LONG;
         }
@@ -53,7 +55,7 @@ extern "C" {
         }
         RIO_ERROR status = RIO_ERROR_OK;
         RIO * meta = rio_new_outfile(&status, fd);
-        SQ * sequence = sq_new_outtracker(&status, meta, SQF_PREFIX_COUNT_EXTENSION, prefix, ".wrm", tv, header1, header2, header3);
+        SQ * sequence = sq_new_outtracker(&status, meta, SQF_PATH_FILE_COUNT_EXTENSION, path, filename, ".wrm", tv, header1, header2, header3);
         if (status != RIO_ERROR_OK){
             rio_delete(meta);
             return status;

@@ -78,16 +78,16 @@ extern "C" {
         size_t res = 0;
         switch (self->format){
         default:
-        case SQF_PREFIX_PID_COUNT_EXTENSION:
+        case SQF_PATH_FILE_PID_COUNT_EXTENSION:
             res = snprintf(buffer, size, "%s%s-%06u-%06u%s", self->path, self->filename, self->pid, count, self->extension);
         break;
-        case SQF_PREFIX_COUNT_EXTENSION:
+        case SQF_PATH_FILE_COUNT_EXTENSION:
             res = snprintf(buffer, size, "%s%s-%06u%s", self->path, self->filename, count, self->extension);
         break;
-        case SQF_PREFIX_PID_EXTENSION:
+        case SQF_PATH_FILE_PID_EXTENSION:
             res = snprintf(buffer, size, "%s%s-%06u%s", self->path, self->filename, self->pid, self->extension);
         break;
-        case SQF_PREFIX_EXTENSION:
+        case SQF_PATH_FILE_EXTENSION:
             res = snprintf(buffer, size, "%s%s%s", self->path, self->filename, self->extension);
         break;
         }

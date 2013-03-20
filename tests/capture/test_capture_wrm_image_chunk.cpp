@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    OutFilenameTransport png_trans(SQF_PREFIX_PID_COUNT_EXTENSION, "./", "testimg", ".png");
+    OutFilenameTransport png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png");
     ::transport_dump_png24(&png_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
@@ -328,7 +328,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    OutFilenameTransport png_trans(SQF_PREFIX_PID_COUNT_EXTENSION, "./", "testimg", ".png");
+    OutFilenameTransport png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png");
     ::transport_dump_png24(&png_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
@@ -390,7 +390,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
 
-    OutFilenameTransport out_png_trans(SQF_PREFIX_PID_COUNT_EXTENSION, "./", "testimg", ".png");
+    OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png");
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
   
     player.add_consumer(&png_recorder);
@@ -460,10 +460,10 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-    OutFilenameTransport out_png_trans(SQF_PREFIX_PID_COUNT_EXTENSION, "./", "testimg", ".png");
+    OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png");
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
 
-    OutFilenameTransport second_out_png_trans(SQF_PREFIX_PID_COUNT_EXTENSION, "./", "second_testimg", ".png");
+    OutFilenameTransport second_out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png");
     ImageCapture second_png_recorder(second_out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     
     player.add_consumer(&png_recorder);
@@ -537,7 +537,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-    OutFilenameTransport out_png_trans(SQF_PREFIX_PID_COUNT_EXTENSION, "./", "testimg", ".png");
+    OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png");
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
    
     player.add_consumer(&png_recorder);

@@ -44,10 +44,10 @@ public:
     {
         RIO_ERROR status = RIO_ERROR_OK;
         char filename[1024];
-        sprintf(filename, "%s%s-%06u", path, basename, getpid());
+        sprintf(filename, "%s-%06u", basename, getpid());
         char header1[1024];
         sprintf(header1, "%u %u", width, height);
-        this->rio = rio_new_outmeta(&status, &this->seq, filename, ".mwrm", header1, "0", "", &now);
+        this->rio = rio_new_outmeta(&status, &this->seq, path, filename, ".mwrm", header1, "0", "", &now);
         if (status < 0){
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }

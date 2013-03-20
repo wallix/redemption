@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(TestOutSequenceRIO3)
     tv.tv_usec = 0;
     tv.tv_sec = 1352304810;
     RIO_ERROR status_seq = RIO_ERROR_OK;
-    SQ * sequence = sq_new_outtracker(&status_seq, NULL, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", ".wrm", &tv, "800 600", "0", "");
+    SQ * sequence = sq_new_outtracker(&status_seq, NULL, SQF_PATH_FILE_COUNT_EXTENSION, "", "TESTOFS", ".wrm", &tv, "800 600", "0", "");
 
     RIO_ERROR status = RIO_ERROR_OK;
     RIO * rt = rio_new_outsequence(&status, sequence);
