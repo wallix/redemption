@@ -1688,4 +1688,26 @@ class FixedSizeStream : public Stream {
     void init(size_t v) {}
 };
 
+// StaticStream does not allocate/reallocate any buffer
+// All write operations are forbidden
+class StaticStream : public FixedSizeStream {
+    public:
+    StaticStream(){}  // not yet initialized
+
+    StaticStream(const uint8_t * data, size_t len){
+        this->p = this->data = const_cast<uint8_t *>(data);
+        this->capacity = len;
+        this->end = this->data + this->capacity;
+    }
+
+    StaticStream(const char * data, size_t len){
+        this->p = this->data = const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(data));
+        this->capacity = len;
+        this->end = this->data + this->capacity;
+    }
+
+    // Not allowed on SubStreams
+    void init(size_t v) {}
+};
+
 #endif
