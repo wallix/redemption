@@ -30,36 +30,13 @@ class FileSequence
 {
 public:
     SQ sq;
-    SQ_FORMAT sqf;
     FileSequence(
-        const char * const format,
+        SQ_FORMAT format,
         const char * const prefix,
         const char * const filename,
         const char * const extension)
-    : sqf(SQF_PREFIX_EXTENSION)
     {
-        if (0 == strcmp(format, "path file pid count extension")){
-            this->sqf = SQF_PREFIX_PID_COUNT_EXTENSION;
-        }
-        else if (0 == strcmp(format, "path file count extension")){
-            this->sqf = SQF_PREFIX_COUNT_EXTENSION;
-        }
-        else if (0 == strcmp(format, "path file pid extension")){
-            this->sqf = SQF_PREFIX_PID_EXTENSION;
-        }
-        else if (0 == strcmp(format, "path file extension")){
-            this->sqf = SQF_PREFIX_EXTENSION;
-        }
-        else {
-            LOG(LOG_ERR, "Unsupported sequence format string");
-            throw Error(ERR_TRANSPORT);
-        }
-
-        char path[1024];
-        snprintf(path, sizeof(path), "%s%s", prefix, filename);
-        TODO("sanity check check path len")
-
-        RIO_ERROR status = sq_init_outfilename(&this->sq, sqf, path, extension);
+        RIO_ERROR status = sq_init_outfilename(&this->sq, format, prefix, filename, extension);
         if (status < 0){
             LOG(LOG_ERR, "Sequence outfilename initialisation failed");
             throw Error(ERR_TRANSPORT);
@@ -78,7 +55,7 @@ public:
     char path[1024];
 
     OutFilenameTransport(
-            const char * const format,
+            SQ_FORMAT format,
             const char * const prefix,
             const char * const filename,
             const char * const extension,

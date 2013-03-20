@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         BOOST_CHECK_EQUAL((unsigned)3176, (unsigned)sq_outfilename_filesize(&(capture.png_trans->sequence.sq), 6));
         sq_outfilename_unlink(&(capture.png_trans->sequence.sq), 6);
 
-        FileSequence wrm_seq("path file pid count extension", "./", "capture", ".wrm");        
+        FileSequence wrm_seq(SQF_PREFIX_PID_COUNT_EXTENSION, "./", "capture", ".wrm");        
         BOOST_CHECK_EQUAL((unsigned)1622, (unsigned)sq_outfilename_filesize(&(wrm_seq.sq), 0));
         sq_outfilename_unlink(&(wrm_seq.sq), 0);
         BOOST_CHECK_EQUAL((unsigned)3392, (unsigned)sq_outfilename_filesize(&(wrm_seq.sq), 1));
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         sq_outfilename_unlink(&(wrm_seq.sq), 2);
         // The destruction of capture object will finalize the metafile content
     }
-    FileSequence meta_seq("path file pid extension", "./", "capture", ".mwrm");
+    FileSequence meta_seq(SQF_PREFIX_PID_EXTENSION, "./", "capture", ".mwrm");
     BOOST_CHECK_EQUAL((unsigned)125, (unsigned)sq_outfilename_filesize(&(meta_seq.sq), 0));
     sq_outfilename_unlink(&(meta_seq.sq), 0);
 }

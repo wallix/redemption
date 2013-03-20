@@ -430,7 +430,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     }
     InFileTransport in_wrm_trans(fd);
 
-    OutFilenameTransport out_png_trans("path file pid count extension", "./", "testcap", ".png");
+    OutFilenameTransport out_png_trans(SQF_PREFIX_PID_COUNT_EXTENSION, "./", "testcap", ".png");
 
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;

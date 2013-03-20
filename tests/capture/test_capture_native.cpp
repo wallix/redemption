@@ -41,7 +41,7 @@
 BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 {
     Rect scr(0, 0, 800, 600);
-    OutFilenameTransport trans("path file pid count extension", "./", "test", ".wrm");
+    OutFilenameTransport trans(SQF_PREFIX_PID_COUNT_EXTENSION, "./", "test", ".wrm");
 
     struct timeval now;
     now.tv_sec = 1000;

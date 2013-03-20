@@ -55,6 +55,8 @@ extern "C" {
         RIO_ERROR_FILENAME_TOO_LONG,
         RIO_ERROR_NOT_IMPLEMENTED,
         RIO_ERROR_STRING_PREFIX_TOO_LONG,
+        RIO_ERROR_STRING_PATH_TOO_LONG,
+        RIO_ERROR_STRING_FILENAME_TOO_LONG,
         RIO_ERROR_STRING_EXTENSION_TOO_LONG,
         RIO_ERROR_INVALID_START_TIMESTAMP,
         RIO_ERROR_INVALID_STOP_TIMESTAMP,
@@ -124,8 +126,8 @@ extern "C" {
     SQ * sq_new_one(RIO_ERROR * error, RIO * trans);
     RIO_ERROR sq_init_one(SQ * self, RIO * trans);
 
-    SQ * sq_new_outfilename(RIO_ERROR * error, SQ_FORMAT format, const char * prefix, const char * extension);
-    RIO_ERROR sq_init_outfilename(SQ * self, SQ_FORMAT format, const char * prefix, const char * extension);
+    SQ * sq_new_outfilename(RIO_ERROR * error, SQ_FORMAT format, const char * path, const char * filename, const char * extension);
+    RIO_ERROR sq_init_outfilename(SQ * self, SQ_FORMAT format, const char * path, const char * filename, const char * extension);
                 
     SQ * sq_new_outtracker(RIO_ERROR * error, RIO * tracker, 
                 SQ_FORMAT format, const char * prefix, const char * extension, 

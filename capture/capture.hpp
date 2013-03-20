@@ -53,7 +53,7 @@ public:
       , pnc(NULL)
     {
         if (this->capture_png){
-            this->png_trans = new OutFilenameTransport("path file pid count extension", path, basename, ".png");
+            this->png_trans = new OutFilenameTransport(SQF_PREFIX_PID_COUNT_EXTENSION, path, basename, ".png");
             this->psc = new StaticCapture(now, *this->png_trans, this->png_trans->sequence, width, height, ini);
         }
 

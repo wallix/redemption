@@ -160,21 +160,21 @@ SQ * sq_new_one(RIO_ERROR * error, RIO * trans)
 }
 
 
-RIO_ERROR sq_init_outfilename(SQ * self, SQ_FORMAT format, const char * prefix, const char * extension)
+RIO_ERROR sq_init_outfilename(SQ * self, SQ_FORMAT format, const char * path, const char * filename, const char * extension)
 {
     self->sq_type = SQ_TYPE_OUTFILENAME;
-    self->err = sq_m_SQOutfilename_constructor(&(self->u.outfilename), format, prefix, extension);
+    self->err = sq_m_SQOutfilename_constructor(&(self->u.outfilename), format, path, filename, extension);
     return self->err;
 }
 
-SQ * sq_new_outfilename(RIO_ERROR * error, SQ_FORMAT format, const char * prefix, const char * extension)
+SQ * sq_new_outfilename(RIO_ERROR * error, SQ_FORMAT format, const char * path, const char * filename, const char * extension)
 {
     SQ * self = (SQ*)malloc(sizeof(SQ));
     if (self == 0){ 
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
-    RIO_ERROR res = sq_init_outfilename(self, format, prefix, extension);
+    RIO_ERROR res = sq_init_outfilename(self, format, path, filename, extension);
     if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
