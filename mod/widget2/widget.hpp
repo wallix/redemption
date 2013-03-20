@@ -88,8 +88,6 @@ public:
     Rect rect;
     int type;
     int id;
-    int bg_color;
-    int fg_color;
     int tab_flag;
     bool has_focus;
 
@@ -101,8 +99,6 @@ public:
     , rect(rect)
     , type(type)
     , id(id)
-    , bg_color(BLACK)
-    , fg_color(WHITE)
     , tab_flag(NORMAL_TAB)
     , has_focus(false)
     {
@@ -149,20 +145,14 @@ public:
         return ret;
     }
 
-    void draw_rect(const Rect& rect, int16_t x, int16_t y, const Rect & clip)
-    {
-        this->drawable->draw(
-            RDPOpaqueRect(
-                rect.offset(x,y),
-                this->bg_color
-            ), clip
-        );
-    }
-
-    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip)
-    {
-        this->draw_rect(rect, x, y, Rect(xclip, yclip, rect.cx, rect.cy));
-    }
+    /**
+     * @param rect
+     * @param x  position x of @rect
+     * @param y  position y of @rect
+     * @param xclip  position x in the screen
+     * @param yclip  position y in the screen
+     */
+    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip) = 0;
 
     void refresh(const Rect & rect)
     {
