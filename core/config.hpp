@@ -120,7 +120,7 @@ struct Inifile {
         char target_device[512];
         char target_user[512];
         char auth_channel[512];
-        
+
         bool bitmap_cache;       // default true
         bool bitmap_compression; // default true
         int port;                // default 3389
@@ -220,11 +220,17 @@ struct Inifile {
 
     void init(){
             this->globals.capture_flags = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
-            this->globals.capture_wrm = true;
-            this->globals.capture_png = true;
-            this->globals.capture_flv = false;
-            this->globals.capture_ocr = false;
+            this->globals.capture_wrm   = true;
+            this->globals.capture_png   = true;
+            this->globals.capture_flv   = false;
+            this->globals.capture_ocr   = false;
             this->globals.capture_chunk = false;
+            this->globals.movie_path[0]    = 0;
+            this->globals.auth_user[0]     = 0;
+            this->globals.host[0]          = 0;
+            this->globals.target_device[0] = 0;
+            this->globals.target_user[0]   = 0;
+
             this->globals.bitmap_cache = true;
             this->globals.bitmap_compression = true;
             this->globals.port = 3389;
@@ -291,7 +297,7 @@ struct Inifile {
 
             // Section "client".
             this->globals.client.ignore_logon_password = false;
-//            this->globals.client.performance_flags_default = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
+//          this->globals.client.performance_flags_default = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
             this->globals.client.performance_flags_default = 0;
             this->globals.client.performance_flags_force_present = 0;
             this->globals.client.performance_flags_force_not_present = 0;
