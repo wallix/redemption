@@ -46,7 +46,7 @@
 
 #include "RDP/RDPDrawable.hpp"
 #include "config.hpp"
-#include "outbyfilenamesequencetransport.hpp"
+#include "outfilenametransport.hpp"
 
 struct StaticCaptureConfig {
     unsigned png_limit;

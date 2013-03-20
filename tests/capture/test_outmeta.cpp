@@ -29,7 +29,7 @@
 #define LOGNULL
 #include "transport.hpp"
 #include "outmetatransport.hpp"
-#include "outbyfilenamesequencetransport.hpp"
+#include "outfilenametransport.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
