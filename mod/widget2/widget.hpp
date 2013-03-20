@@ -130,9 +130,9 @@ public:
         {}
     };
 
-    screen_position position_in_screen()
+    screen_position position_in_screen(const Rect& clip)
     {
-        screen_position ret(this->rect);
+        screen_position ret(this->rect.intersect(clip));
         for (Widget * p = this->parent; p; p = p->parent){
             ret.clip = ret.clip.intersect(p->rect.cx, p->rect.cy);
             ret.clip.x += p->rect.x;

@@ -100,7 +100,7 @@ struct TestDraw : ModApi
         BOOST_CHECK(false);
     }
 
-    virtual void server_draw_text(int x, int y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
+    virtual void server_draw_text(int , int , const char* , uint32_t , const Rect& )
     {
         BOOST_CHECK(false);
     }
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
         "\xd2\xca\x0d\xa6\x3f\xa3\x75\x1c\xd5\x3c"
         "\x0c\xff\xd4\x4f\x56\x2d\x75\x2c\x66\xe1")){
         BOOST_CHECK_MESSAGE(false, message);
-        }
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
@@ -231,7 +231,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
         "\x69\xa3\x35\xb1\x1d\x7d\xd9\x8e\x3d\x7e"
         "\x54\x60\x9a\xc7\xc9\xd9\xae\xdc\xad\xf5")){
         BOOST_CHECK_MESSAGE(false, message);
-        }
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
@@ -254,6 +254,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
         "\x11\xe6\x83\x39\x2c\xf7\x8a\x9c\xb5\xc1"
         "\x70\xf8\x97\xa7\x52\xa2\xfa\xae\xf6\xcc")){
         BOOST_CHECK_MESSAGE(false, message);
-        }
+    }
 }
 

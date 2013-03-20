@@ -26,7 +26,7 @@
 #define LOGNULL
 #include "log.hpp"
 
-#include <widget2/widget_rect.hpp>
+#include <widget2/label.hpp>
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -35,14 +35,16 @@
 struct TestDraw : ModApi
 {
     RDPDrawable gd;
+    Font font;
 
     TestDraw(uint16_t w, uint16_t h)
     : gd(w, h, true)
+    , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
-    virtual void draw(const RDPOpaqueRect& cmd, const Rect& clip)
+    virtual void draw(const RDPOpaqueRect& cmd, const Rect& rect)
     {
-        gd.draw(cmd, clip);
+        this->gd.draw(cmd, rect);
     }
 
     virtual void draw(const RDPScrBlt&, const Rect&)
@@ -60,9 +62,9 @@ struct TestDraw : ModApi
         BOOST_CHECK(false);
     }
 
-    virtual void draw(const RDPMemBlt&, const Rect&, const Bitmap&)
+    virtual void draw(const RDPMemBlt& cmd, const Rect& rect, const Bitmap& bmp)
     {
-        BOOST_CHECK(false);
+        this->gd.draw(cmd, rect, bmp);
     }
 
     virtual void draw(const RDPLineTo&, const Rect&)
@@ -100,14 +102,26 @@ struct TestDraw : ModApi
         BOOST_CHECK(false);
     }
 
-    virtual void server_draw_text(int , int , const char* , uint32_t , const Rect& )
+    virtual void server_draw_text(int x, int y, const char* text, uint32_t fgcolor, const Rect& clip)
     {
-        BOOST_CHECK(false);
+        this->gd.server_draw_text(x, y, text, fgcolor, clip, this->font);
     }
 
-    virtual void text_metrics(const char* , int& , int& )
+    virtual void text_metrics(const char* text, int& width, int& height)
     {
-        BOOST_CHECK(false);
+        height = 0;
+        width = 0;
+        uint32_t uni[256];
+        size_t len_uni = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
+        if (len_uni){
+            for (size_t index = 0; index < len_uni; index++) {
+                FontChar *font_item = this->gd.get_font(this->font, uni[index]);
+                width += font_item->width + 2;
+                height = std::max(height, font_item->height);
+            }
+            if (len_uni > 1)
+                width -= 2;
+        }
     }
 
     void save_to_png(const char * filename)
@@ -119,152 +133,158 @@ struct TestDraw : ModApi
     }
 };
 
-BOOST_AUTO_TEST_CASE(TraceWidgetRect)
+BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetRect is a monochrome rectangular widget of size 800x600 at position 0,0 in it's parent context
+    // WidgetLabel is a label widget of size 100x20 at position 0,0 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int id = 0;
 
-    WidgetRect wrect(&drawable, Rect(0,0,800,600), parent, notifier, id, bgcolor);
+    WidgetLabel wlabel(&drawable, Rect(0,0, 100,20), parent, notifier, "test1", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, 0, 0);
+    wlabel.send_event(WM_DRAW, 0, 0, 0);
 
-    //drawable.save_to_png("/tmp/rect.png");
+    drawable.save_to_png("/tmp/label.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xea\xe1\x3b\x4b\xdb\xda\xa6\x75\xf1\x17"
-        "\xa2\xe8\x09\xf1\xd2\x42\x7a\xdf\x85\x6d")){
+        "\xa2\x84\xf8\x80\x33\xbb\x82\x4c\x64\x0c"
+        "\xd8\x2e\x0b\x25\xd5\x37\x62\x23\x6f\x46")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
+BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,-100 in it's parent context
+    // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int id = 0;
 
-    WidgetRect wrect(&drawable, Rect(-100,-100,200,200), parent, notifier, id, bgcolor);
+    WidgetLabel wlabel(&drawable, Rect(10,100, 100,20), parent, notifier, "test2", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, 0, 0);
+    wlabel.send_event(WM_DRAW, 0, 0, 0);
 
-    //drawable.save_to_png("/tmp/rect2.png");
+    drawable.save_to_png("/tmp/label2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x7c\x96\x36\xc6\x5a\x1e\x29\xb4\xd7\x4a"
-        "\x31\x64\x37\xec\x94\x5f\x7a\x3c\x4a\x52")){
+        "\x26\xed\x54\x49\x4e\x28\x20\xe8\x10\xd1"
+        "\xf7\x93\x43\x8b\x1c\xb8\x25\x71\x3e\x88")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
+BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,500 in it's parent context
+    // WidgetLabel is a label widget of size 100x20 at position -10,500 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int id = 0;
 
-    WidgetRect wrect(&drawable, Rect(-100,500,200,200), parent, notifier, id, bgcolor);
+    WidgetLabel wlabel(&drawable, Rect(-10,500, 100,20), parent, notifier, "test3", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, 0, 0);
+    wlabel.send_event(WM_DRAW, 0, 0, 0);
 
-    //drawable.save_to_png("/tmp/rect3.png");
+    drawable.save_to_png("/tmp/label3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x00\x57\x28\x73\x89\x49\xd5\x9e\xc0\xc1"
-        "\x77\xc9\xc5\x7b\x5e\x13\x88\xf0\xf6\x33")){
+        "\x8a\xea\xb9\xf8\x56\x84\xa5\xd4\x18\x56"
+        "\x19\xb5\xe3\x33\xeb\x74\xd2\x12\xaf\x2c")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
+BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,500 in it's parent context
+    // WidgetLabel is a label widget of size 100x20 at position 770,500 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int id = 0;
 
-    WidgetRect wrect(&drawable, Rect(700,500,200,200), parent, notifier, id, bgcolor);
+    WidgetLabel wlabel(&drawable, Rect(770,500, 100,20), parent, notifier, "test4", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, 0, 0);
+    wlabel.send_event(WM_DRAW, 0, 0, 0);
 
-    //drawable.save_to_png("/tmp/rect4.png");
+    drawable.save_to_png("/tmp/label4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xc8\x60\xbd\xc0\xe3\x38\x4a\xe5\xd3\x29"
-        "\x52\x7d\xf6\x9b\x3e\x83\x97\xf0\xbc\x90")){
+        "\x02\x9b\xb1\xe3\xe6\xd8\x06\xf3\x5a\xcc"
+        "\x0b\xec\x3c\x3d\x2f\x79\xb4\xbb\xc3\xa1")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
+BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
+    // WidgetLabel is a label widget of size 100x20 at position -20,-7 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int id = 0;
 
-    WidgetRect wrect(&drawable, Rect(700,-100,200,200), parent, notifier, id, bgcolor);
+    WidgetLabel wlabel(&drawable, Rect(-20,-7, 100,20), parent, notifier, "test5", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, 0, 0);
+    wlabel.send_event(WM_DRAW, 0, 0, 0);
 
-    //drawable.save_to_png("/tmp/rect5.png");
+    drawable.save_to_png("/tmp/label5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x9c\xbe\xee\x0d\xd5\xa6\x50\xfb\x99\x4b"
-        "\x2d\xae\xd9\xcc\x33\x65\x6f\xc1\x5e\x1e")){
+        "\xfe\x16\xc3\x5c\xab\x20\xb5\x12\x95\xfe"
+        "\x80\x9c\x0f\x0d\xc8\x79\x13\x12\x25\x01")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
+BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
+    // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int id = 0;
 
-    WidgetRect wrect(&drawable, Rect(300, 200,200,200), parent, notifier, id, bgcolor);
+    WidgetLabel wlabel(&drawable, Rect(760,-7, 100,20), parent, notifier, "test6", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, 0, 0);
+    wlabel.send_event(WM_DRAW, 0, 0, 0);
 
-    //drawable.save_to_png("/tmp/rect6.png");
+    drawable.save_to_png("/tmp/label6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x0a\x0f\xb8\xff\x34\x91\xe5\xd0\x60\x52"
-        "\x56\xcb\x3a\x56\x37\x21\xe8\xc4\x22\x19")){
+        "\xa4\x90\xbc\xb1\x0f\x1b\xd7\x3f\x40\x48"
+        "\x0f\x1e\xd9\x32\x31\x5e\xc2\x31\x6b\xab")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }

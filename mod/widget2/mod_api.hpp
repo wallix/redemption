@@ -30,7 +30,7 @@ public:
     virtual void begin_update() = 0;
     virtual void end_update() = 0;
 
-    virtual void server_draw_text(int x, int y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) = 0;
+    virtual void server_draw_text(int x, int y, const char * text, uint32_t fgcolor, const Rect & clip) = 0;
     virtual void text_metrics(const char * text, int & width, int & height) = 0;
 
     virtual ~ModApi()
