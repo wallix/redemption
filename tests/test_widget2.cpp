@@ -25,6 +25,8 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
+#include "log.hpp"
+
 #include <string>
 #include <boost/lexical_cast.hpp>
 #include <widget2/window.hpp>
@@ -219,6 +221,15 @@ struct TestDraw : ModApi
                 width -= 2;
         }
     }
+
+    void save_to_png(const char * filename)
+    {
+        std::FILE * file = fopen(filename, "w+");
+        dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
+                   this->gd.drawable.height, this->gd.drawable.rowsize);
+        fclose(file);
+    }
+
 };
 
 struct TestWidget
@@ -229,7 +240,7 @@ struct TestWidget
     WidgetEdit w2;
     WidgetButton w3;
 
-    TestWidget(TestDraw * drawable=0, TestNotify * notify=0)
+    TestWidget(ModApi * drawable=0, TestNotify * notify=0)
     : screen(drawable, 1000, 1000, notify)
     , win(drawable, Rect(30,30, 800, 600), &screen, notify, "Fenêtre 1")
     , w1(drawable, Rect(10, 40, 10, 10), &win, notify, "", 1)
@@ -249,14 +260,6 @@ struct TestWidget
     }
 };
 
-
-void save_to_png(TestDraw & drawable, const char * filename)
-{
-    std::FILE * file = fopen(filename, "w+");
-    dump_png24(file, drawable.gd.drawable.data, drawable.gd.drawable.width,
-               drawable.gd.drawable.height, drawable.gd.drawable.rowsize);
-    fclose(file);
-}
 
 inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
                       char * message, const char * shasig)
@@ -345,7 +348,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDraw)
     w.screen.send_event(WM_DRAW, 0, 0, 0);
     //or w.screen.refresh(w.screen.rect);
 
-    //save_to_png(drawable, "/tmp/a.png");
+    drawable.save_to_png("/tmp/a.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -369,7 +372,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     BOOST_CHECK(notify.s ==
       "event: 11 -- id: 2, type: 40\n");
 
-    //save_to_png(drawable, "/tmp/b.png");
+    drawable.save_to_png("/tmp/b.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -395,7 +398,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
     BOOST_CHECK(notify.s ==
         "event: 12 -- id: 0, type: 1\n");
 
-    //save_to_png(drawable, "/tmp/c.png");
+    drawable.save_to_png("/tmp/c.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -415,7 +418,7 @@ BOOST_AUTO_TEST_CASE(TraceDrawText)
     drawable.server_draw_text(10,30, "une phrase", BLACK, 55555, screen.rect);
     drawable.server_draw_text(-10,50, "une phrase", BLACK, 55555, screen.rect);
 
-    //save_to_png(drawable, "/tmp/d.png");
+    drawable.save_to_png("/tmp/d.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -491,7 +494,7 @@ BOOST_AUTO_TEST_CASE(TraceDrawImage)
     WidgetImage image3(&drawable, -100, 500, FIXTURES_PATH"/logo-redemption.bmp", &screen, 0);
     screen.refresh(screen.rect);
 
-    //save_to_png(drawable, "/tmp/e.png");
+    drawable.save_to_png("/tmp/e.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -511,7 +514,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowBox)
 
     screen.refresh(screen.rect);
 
-    //save_to_png(drawable, "/tmp/f.png");
+    drawable.save_to_png("/tmp/f.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -551,7 +554,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPager)
 
     screen.refresh(screen.rect);
 
-    //save_to_png(drawable, "/tmp/g.png");
+    drawable.save_to_png("/tmp/g.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -582,7 +585,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelector)
 
     screen.refresh(screen.rect);
 
-    //save_to_png(drawable, "/tmp/h.png");
+    drawable.save_to_png("/tmp/h.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -606,7 +609,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetYesNo)
 
     screen.refresh(screen.rect);
 
-    //save_to_png(drawable, "/tmp/i.png");
+    drawable.save_to_png("/tmp/i.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -627,7 +630,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialog)
 
     screen.refresh(screen.rect);
 
-    save_to_png(drawable, "/tmp/j.png");
+    drawable.save_to_png("/tmp/j.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
