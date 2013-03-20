@@ -293,8 +293,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 
 BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed_V2)
 {
-    const FileSequence sequence("path file pid count extension", "./", "test", ".png");
-    OutByFilenameSequenceTransport2 trans(sequence);
+    OutByFilenameSequenceTransport3 trans("path file pid count extension", "./", "test", ".png");
     ImageCapture d(trans, 800, 600);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
@@ -396,8 +395,8 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen_V2)
     now.tv_usec = 0;
 
     Rect screen_rect(0, 0, 800, 600);
-    FileSequence sequence("path file pid count extension", "./", "test", ".png");
-    OutByFilenameSequenceTransport2 trans(sequence);
+    OutByFilenameSequenceTransport3 trans("path file pid count extension", "./", "test", ".png");
+    FileSequence & sequence = trans.sequence;
     Inifile ini;
     ini.globals.png_interval = 1;
     ini.globals.png_limit = 3;
@@ -480,16 +479,15 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
 
 BOOST_AUTO_TEST_CASE(TestSmallImage_V2)
 {
-    const FileSequence sequence("path file pid count extension", "./", "sample", ".png");
-    OutByFilenameSequenceTransport2 trans(sequence, 0x100);
+    OutByFilenameSequenceTransport3 trans("path file pid count extension", "./", "sample", ".png", 0x100);
     Rect scr(0, 0, 20, 10);
     ImageCapture d(trans, scr.cx, scr.cy);
     d.draw(RDPOpaqueRect(scr, RED), scr);
     d.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     d.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     d.flush();
-    BOOST_CHECK_EQUAL(107, sequence.filesize(0));
-    sequence.unlink(0);
+    BOOST_CHECK_EQUAL(107, trans.sequence.filesize(0));
+    trans.sequence.unlink(0);
 }
 
 
@@ -520,8 +518,7 @@ BOOST_AUTO_TEST_CASE(TestScaleImage_V2)
 {
     const int width = 800;
     const int height = 600;
-    const FileSequence sequence("path file pid count extension", "./", "test_scale", ".png");
-    OutByFilenameSequenceTransport2 trans(sequence);
+    OutByFilenameSequenceTransport3 trans("path file pid count extension", "./", "test_scale", ".png");
     Rect scr(0, 0, width, height);
     ImageCapture d(trans, scr.cx, scr.cy);
     d.zoom(50);
@@ -534,8 +531,8 @@ BOOST_AUTO_TEST_CASE(TestScaleImage_V2)
         fclose(fd);
     }
     d.flush();
-    BOOST_CHECK_EQUAL(8176, sequence.filesize(0));
-    sequence.unlink(0);
+    BOOST_CHECK_EQUAL(8176, trans.sequence.filesize(0));
+    trans.sequence.unlink(0);
 }
 
 
@@ -665,8 +662,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 BOOST_AUTO_TEST_CASE(TestBogusBitmap_V2)
 {
     BOOST_CHECK(1);
-    const FileSequence sequence("path file pid count extension", "./", "bogus", ".png");
-    OutByFilenameSequenceTransport2 trans(sequence, 0x100);
+    OutByFilenameSequenceTransport3 trans("path file pid count extension", "./", "bogus", ".png", 0x100);
     Rect scr(0, 0, 800, 600);
     ImageCapture d(trans, scr.cx, scr.cy);
     d.draw(RDPOpaqueRect(scr, GREEN), scr);
@@ -781,8 +777,8 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap_V2)
     d.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx, bogus.cy), 0xCC, 0, 0, 0), scr, bogus);
 
     d.flush();
-    BOOST_CHECK_EQUAL(4094, sequence.filesize(0));
-    sequence.unlink(0);
+    BOOST_CHECK_EQUAL(4094, trans.sequence.filesize(0));
+    trans.sequence.unlink(0);
 }
 
 BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
@@ -842,8 +838,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
 BOOST_AUTO_TEST_CASE(TestBogusBitmap2_V2)
 {
     BOOST_CHECK(1);
-    const FileSequence sequence("path file pid count extension", "./", "bogus", ".png");
-    OutByFilenameSequenceTransport2 trans(sequence, 0x100);
+    OutByFilenameSequenceTransport3 trans("path file pid count extension", "./", "bogus", ".png", 0x100);
     Rect scr(0, 0, 800, 600);
     ImageCapture d(trans, scr.cx, scr.cy);
     d.draw(RDPOpaqueRect(scr, GREEN), scr);
@@ -887,7 +882,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2_V2)
     };
 
     d.flush();
-    BOOST_CHECK_EQUAL(2913, sequence.filesize(0));
-    sequence.unlink(0);
+    BOOST_CHECK_EQUAL(2913, trans.sequence.filesize(0));
+    trans.sequence.unlink(0);
 }
 

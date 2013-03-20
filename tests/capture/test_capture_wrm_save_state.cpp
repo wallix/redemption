@@ -351,8 +351,9 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates_V2)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
 
-    FileSequence sequence("path file pid count extension", "./", "TestContinuationOrderStates", ".png");
-    OutByFilenameSequenceTransport2 out_png_trans(sequence);
+//    FileSequence sequence("path file pid count extension", "./", "TestContinuationOrderStates", ".png");
+    OutByFilenameSequenceTransport3 out_png_trans("path file pid count extension", "./", "TestContinuationOrderStates", ".png");
+    FileSequence & sequence = out_png_trans.sequence;
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     
     player.add_consumer(&png_recorder);

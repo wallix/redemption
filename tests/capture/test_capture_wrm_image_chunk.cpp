@@ -299,13 +299,12 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport_V2)
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
-    OutByFilenameSequenceTransport2 png_trans(sequence);
+    OutByFilenameSequenceTransport3 png_trans("path file pid count extension", "./", "testimg", ".png");
     ::transport_dump_png24(&png_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    sequence.unlink(0);
+    png_trans.sequence.unlink(0);
     
 }
 
@@ -423,14 +422,12 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport_v2)
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
-    OutByFilenameSequenceTransport2 png_trans(sequence);
+    OutByFilenameSequenceTransport3 png_trans("path file pid count extension", "./", "testimg", ".png");
     ::transport_dump_png24(&png_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    sequence.unlink(0);
-    
+    png_trans.sequence.unlink(0);
 }
 
 BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
@@ -556,9 +553,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM_V2)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
 
-    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
-
-    OutByFilenameSequenceTransport2 out_png_trans(sequence);
+    OutByFilenameSequenceTransport3 out_png_trans("path file pid count extension", "./", "testimg", ".png");
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
   
     player.add_consumer(&png_recorder);
@@ -567,8 +562,8 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM_V2)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, sequence.filesize(0));
-    sequence.unlink(0);
+    BOOST_CHECK_EQUAL(107, out_png_trans.sequence.filesize(0));
+    out_png_trans.sequence.unlink(0);
 }
 
 BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
@@ -707,13 +702,10 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers_V2)
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
-
-    OutByFilenameSequenceTransport2 out_png_trans(sequence);
+    OutByFilenameSequenceTransport3 out_png_trans("path file pid count extension", "./", "testimg", ".png");
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
 
-    FileSequence second_sequence("path file pid count extension", "./", "second_testimg", ".png");
-    OutByFilenameSequenceTransport2 second_out_png_trans(second_sequence);
+    OutByFilenameSequenceTransport3 second_out_png_trans("path file pid count extension", "./", "second_testimg", ".png");
     ImageCapture second_png_recorder(second_out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     
     player.add_consumer(&png_recorder);
@@ -723,12 +715,12 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers_V2)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, sequence.filesize(0));
-    sequence.unlink(0);
+    BOOST_CHECK_EQUAL(107, out_png_trans.sequence.filesize(0));
+    out_png_trans.sequence.unlink(0);
 
     second_png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, second_sequence.filesize(0));
-    second_sequence.unlink(0);
+    BOOST_CHECK_EQUAL(107, second_out_png_trans.sequence.filesize(0));
+    second_out_png_trans.sequence.unlink(0);
 }
 
 
@@ -859,9 +851,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk_V2)
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-    FileSequence sequence("path file pid count extension", "./", "testimg", ".png");
-
-    OutByFilenameSequenceTransport2 out_png_trans(sequence);
+    OutByFilenameSequenceTransport3 out_png_trans("path file pid count extension", "./", "testimg", ".png");
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
    
     player.add_consumer(&png_recorder);
@@ -871,6 +861,6 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk_V2)
     png_recorder.flush();
     BOOST_CHECK_EQUAL((unsigned)1004, (unsigned)player.synctime_now.tv_sec);
 
-    BOOST_CHECK_EQUAL((unsigned)107, sequence.filesize(0));
-    sequence.unlink(0);
+    BOOST_CHECK_EQUAL((unsigned)107, out_png_trans.sequence.filesize(0));
+    out_png_trans.sequence.unlink(0);
 }

@@ -86,23 +86,18 @@ public:
     ModApi * drawable;
     NotifyApi * notifier;
     Rect rect;
-    int type;
     int id;
-    int bg_color;
-    int fg_color;
     int tab_flag;
     bool has_focus;
 
 public:
-    Widget(ModApi * drawable, const Rect& rect, Widget * parent, int type, NotifyApi * notifier, int id = 0)
+    Widget(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier, int id = 0)
     : parent(parent)
     , drawable(drawable)
     , notifier(notifier)
     , rect(rect)
     , type(type)
     , id(id)
-    , bg_color(BLACK)
-    , fg_color(WHITE)
     , tab_flag(NORMAL_TAB)
     , has_focus(false)
     {
@@ -149,20 +144,14 @@ public:
         return ret;
     }
 
-    void draw_rect(const Rect& rect, int16_t x, int16_t y, const Rect & clip)
-    {
-        this->drawable->draw(
-            RDPOpaqueRect(
-                rect.offset(x,y),
-                this->bg_color
-            ), clip
-        );
-    }
-
-    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip)
-    {
-        this->draw_rect(rect, x, y, Rect(xclip, yclip, rect.cx, rect.cy));
-    }
+    /**
+     * @param rect
+     * @param x  position x of @rect
+     * @param y  position y of @rect
+     * @param xclip  position x in the screen
+     * @param yclip  position y in the screen
+     */
+    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip) = 0;
 
     void refresh(const Rect & rect)
     {
@@ -190,7 +179,7 @@ public:
     virtual void send_event(EventType event, int param, int param2, Keymap2 * keymap)
     {
         if (event == WM_DRAW){
-            this->refresh(Rect(0,0,this->rect.cx, this->rect.cy));
+            this->draw(this->rect);
         }
     }
 
