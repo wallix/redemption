@@ -61,9 +61,9 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     consumer.snapshot(now, 10, 10, true, false);
     ::close(trans.fd);
     
-    BOOST_CHECK_EQUAL((unsigned)1544, (unsigned)trans.sequence.filesize(0));
-    trans.sequence.unlink(0);
-    BOOST_CHECK_EQUAL((unsigned)3254, (unsigned)trans.sequence.filesize(1));
-    trans.sequence.unlink(1);
+    BOOST_CHECK_EQUAL((unsigned)1544, (unsigned)sq_outfilename_filesize(&(trans.sequence.sq), 0));
+    sq_outfilename_unlink(&(trans.sequence.sq), 0);
+    BOOST_CHECK_EQUAL((unsigned)3254, (unsigned)sq_outfilename_filesize(&(trans.sequence.sq), 1));
+    sq_outfilename_unlink(&(trans.sequence.sq), 1);
 }
 

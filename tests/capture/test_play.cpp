@@ -95,15 +95,15 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     BOOST_CHECK_EQUAL((unsigned)1352304870, (unsigned)player.record_now.tv_sec);
 
     wrm_recorder.flush();
-    BOOST_CHECK_EQUAL((unsigned)21280, (unsigned)out_png_trans.sequence.filesize(0));
-    out_png_trans.sequence.unlink(0);
+    BOOST_CHECK_EQUAL((unsigned)21280, (unsigned)sq_outfilename_filesize(&(out_png_trans.sequence.sq), 0));
+    sq_outfilename_unlink(&(out_png_trans.sequence.sq), 0);
 
-    BOOST_CHECK_EQUAL((unsigned)500675, (unsigned)out_wrm_trans.sequence.filesize(0));
-    out_wrm_trans.sequence.unlink(0);
-    BOOST_CHECK_EQUAL((unsigned)1265693, (unsigned)out_wrm_trans.sequence.filesize(1));
-    out_wrm_trans.sequence.unlink(1);
-    BOOST_CHECK_EQUAL((unsigned)360488, (unsigned)out_wrm_trans.sequence.filesize(2));
-    out_wrm_trans.sequence.unlink(2);
+    BOOST_CHECK_EQUAL((unsigned)500675, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.sequence.sq), 0));
+    sq_outfilename_unlink(&(out_wrm_trans.sequence.sq), 0);
+    BOOST_CHECK_EQUAL((unsigned)1265693, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.sequence.sq), 1));
+    sq_outfilename_unlink(&(out_wrm_trans.sequence.sq), 1);
+    BOOST_CHECK_EQUAL((unsigned)360488, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.sequence.sq), 2));
+    sq_outfilename_unlink(&(out_wrm_trans.sequence.sq), 2);
 }
 
 BOOST_AUTO_TEST_CASE(TestSecondPart)
@@ -168,16 +168,16 @@ BOOST_AUTO_TEST_CASE(TestSecondPart)
 
     png_recorder.flush();
         
-    BOOST_CHECK_EQUAL((unsigned)47483, (unsigned)out_png_trans.sequence.filesize(0));
-    out_png_trans.sequence.unlink(0);
+    BOOST_CHECK_EQUAL((unsigned)47483, (unsigned)sq_outfilename_filesize(&(out_png_trans.sequence.sq), 0));
+    sq_outfilename_unlink(&(out_png_trans.sequence.sq), 0);
 
     wrm_recorder.flush();
-    BOOST_CHECK_EQUAL((unsigned)74803, (unsigned)out_wrm_trans.sequence.filesize(0));
-    out_wrm_trans.sequence.unlink(0);
-    BOOST_CHECK_EQUAL((unsigned)273774, (unsigned)out_wrm_trans.sequence.filesize(1));
-    out_wrm_trans.sequence.unlink(1);
-    BOOST_CHECK_EQUAL((unsigned)185108, (unsigned)out_wrm_trans.sequence.filesize(2));
-    out_wrm_trans.sequence.unlink(2);
+    BOOST_CHECK_EQUAL((unsigned)74803, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.sequence.sq), 0));
+    sq_outfilename_unlink(&(out_wrm_trans.sequence.sq), 0);
+    BOOST_CHECK_EQUAL((unsigned)273774, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.sequence.sq), 1));
+    sq_outfilename_unlink(&(out_wrm_trans.sequence.sq), 1);
+    BOOST_CHECK_EQUAL((unsigned)185108, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.sequence.sq), 2));
+    sq_outfilename_unlink(&(out_wrm_trans.sequence.sq), 2);
 }
 
 

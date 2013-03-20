@@ -86,10 +86,9 @@ public:
     void update_config(const Inifile & ini){
         if (ini.globals.png_limit < this->conf.png_limit){
             for(size_t i = this->conf.png_limit ; i > ini.globals.png_limit ; i--){
-                char path[1024];
                 if (this->trans.seqno >= i){
-                    this->sequence.get_name(path, sizeof(path), this->trans.seqno - i );
-                    ::unlink(path);  // unlink may fail, for instance if file does not exist, just don't care
+                    // unlink may fail, for instance if file does not exist, just don't care
+                    sq_outfilename_unlink(&(this->sequence.sq), this->trans.seqno - i);
                 }
             }
         }
@@ -119,9 +118,8 @@ public:
 
         if (this->conf.png_limit > 0){
             if (this->trans.seqno >= this->conf.png_limit){
-                char path[1024];
-                this->sequence.get_name(path, sizeof(path), this->trans.seqno - this->conf.png_limit);
-                ::unlink(path); // unlink may fail, for instance if file does not exist, just don't care
+                // unlink may fail, for instance if file does not exist, just don't care
+                sq_outfilename_unlink(&(this->sequence.sq), this->trans.seqno - this->conf.png_limit);
             }
             this->ImageCapture::flush();
             this->trans.next();

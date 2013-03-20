@@ -26,20 +26,17 @@
 #include "transport.hpp"
 #include "../libs/rio.h"
 
-
 class FileSequence
 {
-    SQ sq;
-    int pid;
-    SQ_FORMAT sqf;
 public:
+    SQ sq;
+    SQ_FORMAT sqf;
     FileSequence(
         const char * const format,
         const char * const prefix,
         const char * const filename,
         const char * const extension)
-    : pid(getpid())
-    , sqf(SQF_PREFIX_EXTENSION)
+    : sqf(SQF_PREFIX_EXTENSION)
     {
         if (0 == strcmp(format, "path file pid count extension")){
             this->sqf = SQF_PREFIX_PID_COUNT_EXTENSION;
@@ -73,24 +70,7 @@ public:
     {
         sq_clear(&this->sq);
     }
-
-    void get_name(char * const buffer, size_t len, uint32_t count) const {
-        sq_im_SQOutfilename_get_name(&(this->sq.u.outfilename), buffer, len, count);
-    }
-
-    ssize_t filesize(uint32_t count) const {
-        char filename[1024];
-        this->get_name(filename, sizeof(filename), count);
-        return ::filesize(filename);
-    }
-
-    ssize_t unlink(uint32_t count) const {
-        char filename[1024];
-        this->get_name(filename, sizeof(filename), count);
-        return ::unlink(filename);
-    }
 };
-
 
 class OutFilenameTransport : public OutFileTransport {
 public:
@@ -119,7 +99,7 @@ public:
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         if (this->fd == -1){
-            this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
+            sq_im_SQOutfilename_get_name(&(sequence.sq.u.outfilename), this->path, sizeof(this->path), this->seqno);
             this->fd = ::creat(this->path, 0777);
             if (this->fd == -1){
                 LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));

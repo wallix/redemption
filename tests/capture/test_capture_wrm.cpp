@@ -479,10 +479,8 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     // clear PNG files   
     size_t sz[6] = {1476, 2786, 2800, 2800, 2814, 2823};
     for (int i = 0; i < 6 ; i++){
-        char path[1024];
-        BOOST_CHECK_EQUAL(sz[i], out_png_trans.sequence.filesize(i));
-        out_png_trans.sequence.get_name(path, sizeof(path), i);
-        ::unlink(path);
+        BOOST_CHECK_EQUAL(sz[i], sq_outfilename_filesize(&(out_png_trans.sequence.sq), i));
+        sq_outfilename_unlink(&(out_png_trans.sequence.sq), i);
     }
    ::unlink("./testcap.wrm");
 }

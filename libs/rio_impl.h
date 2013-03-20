@@ -37,6 +37,8 @@
 #include <errno.h>
 #include <string.h>
 
+#include "../utils/fileutils.hpp"
+
 #include "rio.h"
 
 #include "sq_one.h"
@@ -850,5 +852,21 @@ void rio_delete(RIO * self)
     rio_clear(self);
     free(self);
 }
+
+inline ssize_t sq_outfilename_filesize(const SQ * seq, uint32_t count)
+{
+    char filename[1024];
+    sq_im_SQOutfilename_get_name(&(seq->u.outfilename), filename, sizeof(filename), count);
+    return ::filesize(filename);
+}
+
+inline ssize_t sq_outfilename_unlink(const SQ * seq, uint32_t count)
+{
+    char filename[1024];
+    sq_im_SQOutfilename_get_name(&(seq->u.outfilename), filename, sizeof(filename), count);
+    return ::unlink(filename);
+}
+
+
 
 #endif

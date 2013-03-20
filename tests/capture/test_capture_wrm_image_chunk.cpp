@@ -271,7 +271,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    png_trans.sequence.unlink(0);
+    sq_outfilename_unlink(&(png_trans.sequence.sq), 0);
     
 }
 
@@ -333,7 +333,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    png_trans.sequence.unlink(0);
+    sq_outfilename_unlink(&(png_trans.sequence.sq), 0);
 }
 
 BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
@@ -399,8 +399,8 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, out_png_trans.sequence.filesize(0));
-    out_png_trans.sequence.unlink(0);
+    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(out_png_trans.sequence.sq), 0));
+    sq_outfilename_unlink(&(out_png_trans.sequence.sq), 0);
 }
 
 
@@ -473,12 +473,12 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, out_png_trans.sequence.filesize(0));
-    out_png_trans.sequence.unlink(0);
+    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(out_png_trans.sequence.sq), 0));
+    sq_outfilename_unlink(&(out_png_trans.sequence.sq), 0);
 
     second_png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, second_out_png_trans.sequence.filesize(0));
-    second_out_png_trans.sequence.unlink(0);
+    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(second_out_png_trans.sequence.sq), 0));
+    sq_outfilename_unlink(&(second_out_png_trans.sequence.sq), 0);
 }
 
 
@@ -547,6 +547,6 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     png_recorder.flush();
     BOOST_CHECK_EQUAL((unsigned)1004, (unsigned)player.synctime_now.tv_sec);
 
-    BOOST_CHECK_EQUAL((unsigned)107, out_png_trans.sequence.filesize(0));
-    out_png_trans.sequence.unlink(0);
+    BOOST_CHECK_EQUAL((unsigned)107, sq_outfilename_filesize(&(out_png_trans.sequence.sq), 0));
+    sq_outfilename_unlink(&(out_png_trans.sequence.sq), 0);
 }

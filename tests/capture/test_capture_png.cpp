@@ -308,61 +308,61 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     consumer.draw(cmd, screen_rect);
 
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 0));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 1));
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
 
-    BOOST_CHECK_EQUAL(3051, sequence.filesize(0));
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(1));
+    BOOST_CHECK_EQUAL(3051, sq_outfilename_filesize(&(sequence.sq), 0));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 1));
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
 
-    BOOST_CHECK_EQUAL(3051, sequence.filesize(0));
-    BOOST_CHECK_EQUAL(3065, sequence.filesize(1));
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(2));
+    BOOST_CHECK_EQUAL(3051, sq_outfilename_filesize(&(sequence.sq), 0));
+    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(&(sequence.sq), 1));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 2));
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
 
-    BOOST_CHECK_EQUAL(3051, sequence.filesize(0));
-    BOOST_CHECK_EQUAL(3065, sequence.filesize(1));
-    BOOST_CHECK_EQUAL(3064, sequence.filesize(2));
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(3));
+    BOOST_CHECK_EQUAL(3051, sq_outfilename_filesize(&(sequence.sq), 0));
+    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(&(sequence.sq), 1));
+    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(&(sequence.sq), 2));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 3));
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
 
     ::close(trans.fd);
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
-    BOOST_CHECK_EQUAL(3065, sequence.filesize(1));
-    BOOST_CHECK_EQUAL(3064, sequence.filesize(2));
-    BOOST_CHECK_EQUAL(3054, sequence.filesize(3));
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 0));
+    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(&(sequence.sq), 1));
+    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(&(sequence.sq), 2));
+    BOOST_CHECK_EQUAL(3054, sq_outfilename_filesize(&(sequence.sq), 3));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 4));
 
     ini.globals.png_limit = 10;
     consumer.update_config(ini);
 
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
-    BOOST_CHECK_EQUAL(3065, sequence.filesize(1));
-    BOOST_CHECK_EQUAL(3064, sequence.filesize(2));
-    BOOST_CHECK_EQUAL(3054, sequence.filesize(3));
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 0));
+    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(&(sequence.sq), 1));
+    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(&(sequence.sq), 2));
+    BOOST_CHECK_EQUAL(3054, sq_outfilename_filesize(&(sequence.sq), 3));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 4));
 
     ini.globals.png_limit = 2;
     consumer.update_config(ini);
 
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(0));
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(1));
-    BOOST_CHECK_EQUAL(3064, sequence.filesize(2));
-    BOOST_CHECK_EQUAL(3054, sequence.filesize(3));
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 0));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 1));
+    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(&(sequence.sq), 2));
+    BOOST_CHECK_EQUAL(3054, sq_outfilename_filesize(&(sequence.sq), 3));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 4));
 
     ini.globals.png_limit = 0;
     consumer.update_config(ini);
 
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(1));
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(2));
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(3));
-    BOOST_CHECK_EQUAL(-1, sequence.filesize(4));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 1));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 2));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 3));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 4));
 }
 
 BOOST_AUTO_TEST_CASE(TestSmallImage)
@@ -374,8 +374,8 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
     d.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     d.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     d.flush();
-    BOOST_CHECK_EQUAL(107, trans.sequence.filesize(0));
-    trans.sequence.unlink(0);
+    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(trans.sequence.sq), 0));
+    sq_outfilename_unlink(&(trans.sequence.sq), 0);
 }
 
 
@@ -397,8 +397,8 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
         fclose(fd);
     }
     d.flush();
-    BOOST_CHECK_EQUAL(8176, trans.sequence.filesize(0));
-    trans.sequence.unlink(0);
+    BOOST_CHECK_EQUAL(8176, sq_outfilename_filesize(&(trans.sequence.sq), 0));
+    sq_outfilename_unlink(&(trans.sequence.sq), 0);
 }
 
 
@@ -520,8 +520,8 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     d.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx, bogus.cy), 0xCC, 0, 0, 0), scr, bogus);
 
     d.flush();
-    BOOST_CHECK_EQUAL(4094, trans.sequence.filesize(0));
-    trans.sequence.unlink(0);
+    BOOST_CHECK_EQUAL(4094, sq_outfilename_filesize(&(trans.sequence.sq), 0));
+    sq_outfilename_unlink(&(trans.sequence.sq), 0);
 }
 
 
@@ -572,7 +572,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
     };
 
     d.flush();
-    BOOST_CHECK_EQUAL(2913, trans.sequence.filesize(0));
-    trans.sequence.unlink(0);
+    BOOST_CHECK_EQUAL(2913, sq_outfilename_filesize(&(trans.sequence.sq), 0));
+    sq_outfilename_unlink(&(trans.sequence.sq), 0);
 }
 
