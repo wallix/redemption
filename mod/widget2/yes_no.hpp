@@ -46,20 +46,20 @@ public:
     , yes(drawable, Rect(), this, 0, yes, 0)
     , no(drawable, Rect(), this, 0, no, 1)
     {
-        int cx = std::max(this->no.label.context_text->cx, this->yes.label.context_text->cx) + 8;
-        int cy = std::max(this->no.label.context_text->cy, this->yes.label.context_text->cy) + 6;
+        int cx = std::max(this->no.label.context_text.cx, this->yes.label.context_text.cx) + 8;
+        int cy = std::max(this->no.label.context_text.cy, this->yes.label.context_text.cy) + 6;
         this->yes.rect.cx = cx;
         this->yes.rect.cy = cy;
         this->yes.rect.y = 0;
         this->yes.rect.x = 0;
-        this->yes.label.x_text = (cx - this->yes.label.context_text->cx) / 2;
-        this->yes.label.y_text = (cy - this->yes.label.context_text->cy) / 2;
+        this->yes.label.x_text = (cx - this->yes.label.context_text.cx) / 2;
+        this->yes.label.y_text = (cy - this->yes.label.context_text.cy) / 2;
         this->no.rect.cx = cx;
         this->no.rect.cy = cy;
         this->no.rect.y = 0;
         this->no.rect.x = this->yes.rect.cx + 5;
-        this->no.label.x_text = (cx - this->no.label.context_text->cx) / 2;
-        this->no.label.y_text = (cy - this->no.label.context_text->cy) / 2;
+        this->no.label.x_text = (cx - this->no.label.context_text.cx) / 2;
+        this->no.label.y_text = (cy - this->no.label.context_text.cy) / 2;
         this->rect.x = x;
         this->rect.y = y;
         this->rect.cx = cx * 2 + 5;

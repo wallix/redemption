@@ -33,22 +33,6 @@ public:
     virtual void server_draw_text(int x, int y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) = 0;
     virtual void text_metrics(const char * text, int & width, int & height) = 0;
 
-    class ContextText
-    {
-    public:
-        size_t cx;
-        size_t cy;
-
-        ContextText()
-        : cx(0)
-        , cy(0)
-        {}
-
-        virtual void draw_in(ModApi* drawable, const Rect& rect, int16_t x_screen, int16_t y_screen, int16_t xclip, int16_t yclip, int color) = 0;
-    };
-
-    virtual ContextText* create_context_text(const char * s) = 0;
-
     virtual ~ModApi()
     {}
 };
