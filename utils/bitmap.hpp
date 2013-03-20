@@ -1107,7 +1107,7 @@ public:
         SslSha1 sha1;
         uint16_t rowsize = (uint16_t)(this->cx * nbbytes(this->original_bpp));
         for (size_t y = 0; y < (size_t)this->cy; y++){
-            sha1.update(this->data_bitmap.get() + y * rowsize, rowsize);
+            sha1.update(FixedSizeStream(this->data_bitmap.get() + y * rowsize, rowsize));
         }
         sha1.final(sig);
     }

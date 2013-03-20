@@ -210,6 +210,19 @@ public:
         return channel;
     }
 
+    const ChannelDef * get(int chanid) const
+    {
+        const ChannelDef * channel = NULL;
+        for (size_t index = 0; index < this->size(); index++){
+            const ChannelDef & item = this->items[index];
+            if (item.chanid == chanid){
+                channel = &item;
+                break;
+            }
+        }
+        return channel;
+    }
+
     int get_index(const char * const name) const
     {
         int res = -1;

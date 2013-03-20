@@ -61,12 +61,6 @@ class SslSha1
         SHA1_Init(&this->sha1);
     }
 
-    TODO("Remove this method when all calls will use the second form below")
-    void update(const uint8_t * const data, uint32_t len)
-    {
-        SHA1_Update(&this->sha1, data, len);
-    }
-
     void update(const Stream & stream)
     {
         SHA1_Update(&this->sha1, stream.data, stream.size());
@@ -88,12 +82,6 @@ class SslMd5
         MD5_Init(&this->md5);
     }
 
-    TODO("Remove this method when all calls will use the second form below")
-    void update(const uint8_t * const data, uint32_t len)
-    {
-        MD5_Update(&this->md5, data, len);
-    }
-
     void update(const Stream & stream)
     {
         MD5_Update(&this->md5, stream.data, stream.size());
@@ -112,20 +100,9 @@ class SslRC4
     public:
     SslRC4(){}
 
-    TODO("Remove this method when all calls will use the second form below")
-    void set_key(uint8_t * key, size_t key_len)
-    {
-        RC4_set_key(&this->rc4, key_len, key);
-    }
-
     void set_key(const Stream & stream)
     {
         RC4_set_key(&this->rc4, stream.size(), stream.data);
-    }
-
-    TODO("Remove this method when all calls will use the second form below")
-    void crypt(uint8_t * data, size_t len){
-        RC4(&this->rc4, len, data, data);
     }
 
     void crypt(Stream & stream){
@@ -320,17 +297,19 @@ struct CryptContext
         md5.update(StaticStream(salt2, 32));
         md5.final(this->key);
 
-        // 40 bits encryption
         if (encryptionMethod == 1) {
+            // 40 bits encryption
+
             ssllib ssl;
             ssl.sec_make_40bit(this->key);
             memcpy(this->update_key, this->key, 16);
-            this->rc4.set_key(this->key, 8);
+            this->rc4.set_key(FixedSizeStream(this->key, 8));
         }
         else {
-        // 128 bits encryption
+            // 128 bits encryption
+
             memcpy(this->update_key, this->key, 16);
-            this->rc4.set_key(this->key, 16);
+            this->rc4.set_key(FixedSizeStream(this->key, 16));
         }
     }
 
@@ -367,7 +346,7 @@ struct CryptContext
             md5.update(FixedSizeStream(shasig, sizeof(shasig)));
             md5.final(this->key);
 
-            this->rc4.set_key(this->key, keylen);
+            this->rc4.set_key(FixedSizeStream(this->key, keylen));
 
             FixedSizeStream key(this->key, keylen);
             this->rc4.crypt(key);
@@ -375,7 +354,7 @@ struct CryptContext
             if (this->encryptionMethod == 1){
                 ssl.sec_make_40bit(this->key);
             }
-            this->rc4.set_key(this->key, keylen);
+            this->rc4.set_key(FixedSizeStream(this->key, keylen));
             this->use_count = 0;
         }
         this->rc4.crypt(stream);
