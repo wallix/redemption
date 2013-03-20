@@ -1841,6 +1841,11 @@ TODO("Pass font name as parameter in constructor")
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             TODO("We should also manage the DisconnectRequest case as it can also happen")
 
+            if (mcs.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                LOG(LOG_ERR, "Front::got MCS DisconnectProviderUltimatum");
+                throw Error(ERR_MCS);
+            }
+
             SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
             if (this->verbose & 128){
                 LOG(LOG_INFO, "sec decrypted payload:");

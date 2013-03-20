@@ -61,8 +61,8 @@ BOOST_AUTO_TEST_CASE(TestSeqOutfilename)
 
     // SQOutfilename is a Sequence for a chain of files used for writing defined by their names
     // the names follow one of the following formats:
-    // SQF_PREFIX_PID_COUNT_EXTENSION  
-    // SQF_PREFIX_COUNT_EXTENSION
+    // SQF_PATH_FILE_PID_COUNT_EXTENSION  
+    // SQF_PATH_FILE_COUNT_EXTENSION
     // prefix and extension are provided by caller
     // count is managed by the sequence (num_chunk - 1)
 
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(TestSeqOutfilename)
     timeval tv;
 
     RIO_ERROR status = RIO_ERROR_OK;    
-    SQ * sq = sq_new_outfilename(&status, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", ".wrm");
+    SQ * sq = sq_new_outfilename(&status, SQF_PATH_FILE_COUNT_EXTENSION, "", "TESTOFS", ".wrm");
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
     RIO * rt = NULL;

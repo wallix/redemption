@@ -83,33 +83,33 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         capture.flush(); // to close last wrm
         
-        BOOST_CHECK_EQUAL((unsigned)3051, (unsigned)capture.png_trans->sequence.filesize(0));
-        capture.png_trans->sequence.unlink(0);
-        BOOST_CHECK_EQUAL((unsigned)3082, (unsigned)capture.png_trans->sequence.filesize(1));
-        capture.png_trans->sequence.unlink(1);
-        BOOST_CHECK_EQUAL((unsigned)3102, (unsigned)capture.png_trans->sequence.filesize(2));
-        capture.png_trans->sequence.unlink(2);
-        BOOST_CHECK_EQUAL((unsigned)3109, (unsigned)capture.png_trans->sequence.filesize(3));
-        capture.png_trans->sequence.unlink(3);
-        BOOST_CHECK_EQUAL((unsigned)3136, (unsigned)capture.png_trans->sequence.filesize(4));
-        capture.png_trans->sequence.unlink(4);
-        BOOST_CHECK_EQUAL((unsigned)3145, (unsigned)capture.png_trans->sequence.filesize(5));
-        capture.png_trans->sequence.unlink(5);
-        BOOST_CHECK_EQUAL((unsigned)3176, (unsigned)capture.png_trans->sequence.filesize(6));
-        capture.png_trans->sequence.unlink(6);
+        BOOST_CHECK_EQUAL((unsigned)3051, (unsigned)sq_outfilename_filesize(&(capture.png_trans->sequence.sq), 0));
+        sq_outfilename_unlink(&(capture.png_trans->sequence.sq), 0);
+        BOOST_CHECK_EQUAL((unsigned)3082, (unsigned)sq_outfilename_filesize(&(capture.png_trans->sequence.sq), 1));
+        sq_outfilename_unlink(&(capture.png_trans->sequence.sq), 1);
+        BOOST_CHECK_EQUAL((unsigned)3102, (unsigned)sq_outfilename_filesize(&(capture.png_trans->sequence.sq), 2));
+        sq_outfilename_unlink(&(capture.png_trans->sequence.sq), 2);
+        BOOST_CHECK_EQUAL((unsigned)3109, (unsigned)sq_outfilename_filesize(&(capture.png_trans->sequence.sq), 3));
+        sq_outfilename_unlink(&(capture.png_trans->sequence.sq), 3);
+        BOOST_CHECK_EQUAL((unsigned)3136, (unsigned)sq_outfilename_filesize(&(capture.png_trans->sequence.sq), 4));
+        sq_outfilename_unlink(&(capture.png_trans->sequence.sq), 4);
+        BOOST_CHECK_EQUAL((unsigned)3145, (unsigned)sq_outfilename_filesize(&(capture.png_trans->sequence.sq), 5));
+        sq_outfilename_unlink(&(capture.png_trans->sequence.sq), 5);
+        BOOST_CHECK_EQUAL((unsigned)3176, (unsigned)sq_outfilename_filesize(&(capture.png_trans->sequence.sq), 6));
+        sq_outfilename_unlink(&(capture.png_trans->sequence.sq), 6);
 
-        FileSequence wrm_seq("path file pid count extension", "./", "capture", ".wrm");        
-        BOOST_CHECK_EQUAL((unsigned)1622, (unsigned)wrm_seq.filesize(0));
-        wrm_seq.unlink(0);
-        BOOST_CHECK_EQUAL((unsigned)3392, (unsigned)wrm_seq.filesize(1));
-        wrm_seq.unlink(1);
-        BOOST_CHECK_EQUAL((unsigned)3371, (unsigned)wrm_seq.filesize(2));
-        wrm_seq.unlink(2);
+        FileSequence wrm_seq(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "capture", ".wrm");        
+        BOOST_CHECK_EQUAL((unsigned)1622, (unsigned)sq_outfilename_filesize(&(wrm_seq.sq), 0));
+        sq_outfilename_unlink(&(wrm_seq.sq), 0);
+        BOOST_CHECK_EQUAL((unsigned)3392, (unsigned)sq_outfilename_filesize(&(wrm_seq.sq), 1));
+        sq_outfilename_unlink(&(wrm_seq.sq), 1);
+        BOOST_CHECK_EQUAL((unsigned)3371, (unsigned)sq_outfilename_filesize(&(wrm_seq.sq), 2));
+        sq_outfilename_unlink(&(wrm_seq.sq), 2);
         // The destruction of capture object will finalize the metafile content
     }
-    FileSequence meta_seq("path file pid extension", "./", "capture", ".mwrm");
-    BOOST_CHECK_EQUAL((unsigned)125, (unsigned)meta_seq.filesize(0));
-    meta_seq.unlink(0);
+    FileSequence meta_seq(SQF_PATH_FILE_PID_EXTENSION, "./", "capture", ".mwrm");
+    BOOST_CHECK_EQUAL((unsigned)125, (unsigned)sq_outfilename_filesize(&(meta_seq.sq), 0));
+    sq_outfilename_unlink(&(meta_seq.sq), 0);
 }
 
 

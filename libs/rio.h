@@ -55,6 +55,8 @@ extern "C" {
         RIO_ERROR_FILENAME_TOO_LONG,
         RIO_ERROR_NOT_IMPLEMENTED,
         RIO_ERROR_STRING_PREFIX_TOO_LONG,
+        RIO_ERROR_STRING_PATH_TOO_LONG,
+        RIO_ERROR_STRING_FILENAME_TOO_LONG,
         RIO_ERROR_STRING_EXTENSION_TOO_LONG,
         RIO_ERROR_INVALID_START_TIMESTAMP,
         RIO_ERROR_INVALID_STOP_TIMESTAMP,
@@ -66,10 +68,10 @@ extern "C" {
     } RIO_ERROR;
 
     typedef enum {
-        SQF_PREFIX_PID_COUNT_EXTENSION,
-        SQF_PREFIX_COUNT_EXTENSION,
-        SQF_PREFIX_PID_EXTENSION,
-        SQF_PREFIX_EXTENSION,
+        SQF_PATH_FILE_PID_COUNT_EXTENSION,
+        SQF_PATH_FILE_COUNT_EXTENSION,
+        SQF_PATH_FILE_PID_EXTENSION,
+        SQF_PATH_FILE_EXTENSION,
     } SQ_FORMAT;
 
     struct RIO;
@@ -109,9 +111,9 @@ extern "C" {
     RIO * rio_new_inmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension);
     RIO_ERROR rio_init_inmeta(RIO * self, const char * prefix, const char * extension);
 
-    RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension, 
+    RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * path, const char * filename, const char * extension, 
                       const char * l1, const char * l2, const char * l3, timeval * tv);
-    RIO_ERROR rio_init_outmeta(RIO * self, SQ ** seq, const char * prefix, const char * extension, 
+    RIO_ERROR rio_init_outmeta(RIO * self, SQ ** seq, const char * path, const char * filename, const char * extension, 
                       const char * l1, const char * l2, const char * l3, timeval * tv);
 
     void rio_delete(RIO * rt);
@@ -124,16 +126,18 @@ extern "C" {
     SQ * sq_new_one(RIO_ERROR * error, RIO * trans);
     RIO_ERROR sq_init_one(SQ * self, RIO * trans);
 
-    SQ * sq_new_outfilename(RIO_ERROR * error, SQ_FORMAT format, const char * prefix, const char * extension);
-    RIO_ERROR sq_init_outfilename(SQ * self, SQ_FORMAT format, const char * prefix, const char * extension);
+    SQ * sq_new_outfilename(RIO_ERROR * error, SQ_FORMAT format, const char * path, const char * filename, const char * extension);
+    RIO_ERROR sq_init_outfilename(SQ * self, SQ_FORMAT format, const char * path, const char * filename, const char * extension);
                 
     SQ * sq_new_outtracker(RIO_ERROR * error, RIO * tracker, 
-                SQ_FORMAT format, const char * prefix, const char * extension, 
+                SQ_FORMAT format,
+                const char * path, const char * filename, const char * extension,
                 timeval * tv, 
                 const char * header1, const char * header2, const char * header3);
     RIO_ERROR sq_init_outtracker(SQ * self, RIO * tracker,
-                SQ_FORMAT format, const char * prefix,
-                const char * extension, timeval * tv,
+                SQ_FORMAT format, 
+                const char * path, const char * filename, const char * extension,
+                timeval * tv,
                 const char * header1, const char * header2, const char * header3);
 
     SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker);

@@ -468,7 +468,7 @@ struct Session {
             this->front->disconnect();
         }
         catch(...){
-        };
+        }
         LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         this->front->stop_capture();
     }

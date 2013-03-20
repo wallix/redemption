@@ -40,7 +40,7 @@
 BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 {
     Rect screen_rect(0, 0, 800, 600);
-    OutFilenameTransport trans("path file pid count extension", "./", "test", ".png");
+    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png");
 
     struct timeval now;
     now.tv_sec = 1350998222;
@@ -70,9 +70,9 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     now.tv_sec++;
     ::close(trans.fd);
 
-    BOOST_CHECK_EQUAL(3092, trans.sequence.filesize(0));
-    BOOST_CHECK_EQUAL(3108, trans.sequence.filesize(1));
-    trans.sequence.unlink(0);
-    trans.sequence.unlink(1);
+    BOOST_CHECK_EQUAL(3092, sq_outfilename_filesize(&(trans.sequence.sq), 0));
+    BOOST_CHECK_EQUAL(3108, sq_outfilename_filesize(&(trans.sequence.sq), 1));
+    sq_outfilename_unlink(&(trans.sequence.sq), 0);
+    sq_outfilename_unlink(&(trans.sequence.sq), 1);
 }
 

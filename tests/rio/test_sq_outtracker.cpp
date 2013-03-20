@@ -61,8 +61,8 @@ BOOST_AUTO_TEST_CASE(TestSeqOuttracker)
 
     // SQOuttracker is a Sequence for a chain of files used for writing defined by their names
     // the names follow one of the following formats:
-    // SQF_PREFIX_PID_COUNT_EXTENSION  
-    // SQF_PREFIX_COUNT_EXTENSION
+    // SQF_PATH_FILE_PID_COUNT_EXTENSION  
+    // SQF_PATH_FILE_COUNT_EXTENSION
     // prefix and extension are provided by caller
     // count is managed by the sequence (num_chunk - 1)
     // names and timestamps of files will be writtent into tracker
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TestSeqOuttracker)
     tv.tv_usec = 0;
     tv.tv_sec = 1352304810;
    
-    SQ * sq = sq_new_outtracker(&status, &check, SQF_PREFIX_COUNT_EXTENSION, "TESTOFS", ".wrm", &tv, "800 600", "0", "");
+    SQ * sq = sq_new_outtracker(&status, &check, SQF_PATH_FILE_COUNT_EXTENSION, "", "TESTOFS", ".wrm", &tv, "800 600", "0", "");
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
     RIO * rt = NULL;

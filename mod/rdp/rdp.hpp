@@ -1074,15 +1074,15 @@ struct mod_rdp : public client_mod {
                                 memset(pad, 'A' + i, i + 1);
 
                                 SslSha1 sha1;
-                                sha1.update(pad, i + 1);
-                                sha1.update(pre_master_secret, 48);
-                                sha1.update(client_random, 32);
-                                sha1.update(lic.server_random, 32);
+                                sha1.update(FixedSizeStream(pad, i + 1));
+                                sha1.update(FixedSizeStream(pre_master_secret, 48));
+                                sha1.update(FixedSizeStream(client_random, 32));
+                                sha1.update(FixedSizeStream(lic.server_random, 32));
                                 sha1.final(shasig);
 
                                 SslMd5 md5;
-                                md5.update(pre_master_secret, 48);
-                                md5.update(shasig, 20);
+                                md5.update(FixedSizeStream(pre_master_secret, 48));
+                                md5.update(FixedSizeStream(shasig, sizeof(shasig)));
                                 md5.final(&master_secret[i * 16]);
                             }
 
@@ -1092,15 +1092,15 @@ struct mod_rdp : public client_mod {
                                 memset(pad, 'A' + i, i + 1);
 
                                 SslSha1 sha1;
-                                sha1.update(pad, i + 1);
-                                sha1.update(master_secret, 48);
-                                sha1.update(lic.server_random, 32);
-                                sha1.update(client_random, 32);
+                                sha1.update(FixedSizeStream(pad, i + 1));
+                                sha1.update(FixedSizeStream(master_secret, 48));
+                                sha1.update(FixedSizeStream(lic.server_random, 32));
+                                sha1.update(FixedSizeStream(client_random, 32));
                                 sha1.final(shasig);
 
                                 SslMd5 md5;
-                                md5.update(master_secret, 48);
-                                md5.update(shasig, 20);
+                                md5.update(FixedSizeStream(master_secret, 48));
+                                md5.update(FixedSizeStream(shasig, sizeof(shasig)));
                                 md5.final(&key_block[i * 16]);
                             }
 
@@ -1110,9 +1110,9 @@ struct mod_rdp : public client_mod {
                             // Generate RC4 key from next 16 bytes
                             // 16-byte transformation used to generate export keys (6.2.2).
                             SslMd5 md5;
-                            md5.update(key_block + 16, 16);
-                            md5.update(client_random, 32);
-                            md5.update(lic.server_random, 32);
+                            md5.update(FixedSizeStream(key_block + 16, 16));
+                            md5.update(FixedSizeStream(client_random, 32));
+                            md5.update(FixedSizeStream(lic.server_random, 32));
                             md5.final(this->lic_layer_license_key);
 
                             BStream x224_header(256);
@@ -1129,7 +1129,6 @@ struct mod_rdp : public client_mod {
                                 /* Generate a signature for the HWID buffer */
                                 uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
 
-//                                ssl.sign(signature, 16, this->lic_layer_license_sign_key, 16, hwid, sizeof(hwid));
                                 FixedSizeStream sig(signature, sizeof(signature));
                                 FixedSizeStream key(this->lic_layer_license_sign_key, sizeof(this->lic_layer_license_sign_key));
                                 FixedSizeStream data(hwid, sizeof(hwid));
@@ -1138,8 +1137,10 @@ struct mod_rdp : public client_mod {
                                 /* Now encrypt the HWID */
 
                                 SslRC4 rc4;
-                                rc4.set_key(this->lic_layer_license_key, 16);
-                                rc4.crypt(hwid, sizeof(hwid));
+                                rc4.set_key(FixedSizeStream(this->lic_layer_license_key, 16));
+
+                                FixedSizeStream hwid_stream(hwid, sizeof(hwid));
+                                rc4.crypt(hwid_stream);
 
                                 LIC::ClientLicenseInfo_Send(lic_data, this->use_rdp5?3:2,
                                     this->lic_layer_license_size, this->lic_layer_license_data, hwid, signature);
@@ -1177,8 +1178,9 @@ struct mod_rdp : public client_mod {
                             /* Decrypt the token. It should read TEST in Unicode. */
                             memcpy(decrypt_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
                             SslRC4 rc4_decrypt_token;
-                            rc4_decrypt_token.set_key(this->lic_layer_license_key, 16);
-                            rc4_decrypt_token.crypt(decrypt_token, LIC::LICENSE_TOKEN_SIZE);
+                            rc4_decrypt_token.set_key(FixedSizeStream(this->lic_layer_license_key, 16));
+                            FixedSizeStream decrypt_token_stream(decrypt_token, LIC::LICENSE_TOKEN_SIZE);
+                            rc4_decrypt_token.crypt(decrypt_token_stream);
 
                             /* Generate a signature for a buffer of token and HWID */
                             buf_out_uint32(hwid, 2);
@@ -1189,7 +1191,6 @@ struct mod_rdp : public client_mod {
                             memcpy(sealed_buffer + LIC::LICENSE_TOKEN_SIZE, hwid, LIC::LICENSE_HWID_SIZE);
 
                             ssllib ssl;
-//                            ssl.sign(out_sig, 16, this->lic_layer_license_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
 
                             FixedSizeStream sig(out_sig, sizeof(out_sig));
                             FixedSizeStream key(this->lic_layer_license_sign_key, sizeof(this->lic_layer_license_sign_key));
@@ -1200,8 +1201,9 @@ struct mod_rdp : public client_mod {
                             /* Now encrypt the HWID */
                             memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
                             SslRC4 rc4_hwid;
-                            rc4_hwid.set_key(this->lic_layer_license_key, 16);
-                            rc4_hwid.crypt(crypt_hwid, LIC::LICENSE_HWID_SIZE);
+                            rc4_hwid.set_key(FixedSizeStream(this->lic_layer_license_key, 16));
+                            FixedSizeStream crypt_hwid_stream(crypt_hwid, LIC::LICENSE_HWID_SIZE);
+                            rc4_hwid.crypt(crypt_hwid_stream);
 
                             BStream x224_header(256);
                             BStream mcs_header(256);
