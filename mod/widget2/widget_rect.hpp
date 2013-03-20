@@ -30,7 +30,7 @@ public:
 
 public:
     WidgetRect(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier, int id = 0, int color = BLACK)
-    : Widget(drawable, rect, parent, type, notifier, id)
+    : Widget(drawable, rect, parent, notifier, id)
     , color(color)
     {
     }
@@ -40,7 +40,7 @@ public:
         screen_position s = this->position_in_screen();
         this->drawable->draw(
             RDPOpaqueRect(
-                Rect(this->rect.x + s.x, this->rect.y + s.y, s.clip.cx, s.clip.cy),
+                Rect(s.x, s.y, s.clip.cx, s.clip.cy),
                 this->color
             ), s.clip
         );

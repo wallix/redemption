@@ -61,16 +61,16 @@ class Widget
 {
 public:
     //type & TYPE_WND -> WidgetComposite
-    enum WidgetType {
-        TYPE_WND     = 1,
-        TYPE_SCREEN  = 3,
-        TYPE_TEXT    = 1 << 3,
-        TYPE_BUTTON  = 1 << 4 | TYPE_TEXT,
-        TYPE_EDIT    = 1 << 5 | TYPE_TEXT,
-        TYPE_LABEL   = 1 << 6 | TYPE_TEXT,
-        TYPE_IMAGE   = 1 << 7,
-        TYPE_MULTIPLE= 1 << 8,
-    };
+    //enum WidgetType {
+    //    TYPE_WND     = 1,
+    //    TYPE_SCREEN  = 3,
+    //    TYPE_TEXT    = 1 << 3,
+    //    TYPE_BUTTON  = 1 << 4 | TYPE_TEXT,
+    //    TYPE_EDIT    = 1 << 5 | TYPE_TEXT,
+    //    TYPE_LABEL   = 1 << 6 | TYPE_TEXT,
+    //    TYPE_IMAGE   = 1 << 7,
+    //    TYPE_MULTIPLE= 1 << 8,
+    //};
 
     enum OptionTab {
         IGNORE_TAB = 0,
@@ -96,7 +96,6 @@ public:
     , drawable(drawable)
     , notifier(notifier)
     , rect(rect)
-    , type(type)
     , id(id)
     , tab_flag(NORMAL_TAB)
     , has_focus(false)
@@ -144,41 +143,35 @@ public:
         return ret;
     }
 
-    /**
-     * @param rect
-     * @param x  position x of @rect
-     * @param y  position y of @rect
-     * @param xclip  position x in the screen
-     * @param yclip  position y in the screen
-     */
-    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip) = 0;
+    virtual void draw(const Rect& clip) = 0;
 
-    void refresh(const Rect & rect)
-    {
-        if (!rect.isempty() && this->drawable){
-            Widget::screen_position sp = this->position_in_screen();
-            Rect clip = sp.clip.intersect(Rect(sp.x + rect.x, sp.y + rect.y, rect.cx, rect.cy));
-            if (clip.isempty()) {
-                return ;
-            }
-            int dx = clip.x - sp.x;
-            int dy = clip.y - sp.y;
-            Rect new_rect = Rect(dx,
-                                 dy,
-                                 clip.cx - (rect.x - dx),
-                                 clip.cy - (rect.y - dy)
-                                );
-            if (!new_rect.isempty()){
-                this->drawable->begin_update();
-                this->draw(new_rect, sp.x, sp.y, clip.x, clip.y);
-                this->drawable->end_update();
-            }
-        }
-    }
+    // NOTE move to WidgetComposite ?
+    //void refresh(const Rect & rect)
+    //{
+    //    if (!rect.isempty() && this->drawable){
+    //        Widget::screen_position sp = this->position_in_screen();
+    //        Rect clip = sp.clip.intersect(Rect(sp.x + rect.x, sp.y + rect.y, rect.cx, rect.cy));
+    //        if (clip.isempty()) {
+    //            return ;
+    //        }
+    //        int dx = clip.x - sp.x;
+    //        int dy = clip.y - sp.y;
+    //        Rect new_rect = Rect(dx,
+    //                             dy,
+    //                             clip.cx - (rect.x - dx),
+    //                             clip.cy - (rect.y - dy)
+    //                            );
+    //        if (!new_rect.isempty()){
+    //            this->drawable->begin_update();
+    //            this->draw(new_rect, sp.x, sp.y, clip.x, clip.y);
+    //            this->drawable->end_update();
+    //        }
+    //    }
+    //}
 
     virtual void send_event(EventType event, int param, int param2, Keymap2 * keymap)
     {
-        if (event == WM_DRAW){
+        if (event == WM_DRAW && this->drawable) {
             this->draw(this->rect);
         }
     }
