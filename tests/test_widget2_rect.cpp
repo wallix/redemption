@@ -113,7 +113,6 @@ struct TestDraw : ModApi
 
 BOOST_AUTO_TEST_CASE(TraceWidgetRect)
 {
-    
     TestDraw drawable(800, 600);
     
     // WidgetRect is a monochrome rectangular widget of size 800x600 at position 0,0 in it's parent context
@@ -136,3 +135,4 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
+
