@@ -31,7 +31,7 @@
 #include "test_orders.hpp"
 #include "transport.hpp"
 #include "testtransport.hpp"
-#include "outbyfilenamesequencetransport.hpp"
+#include "outfilenametransport.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
@@ -125,7 +125,7 @@
 //    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
 
 //    FileSequence sequence("path file pid count extension", "./", "TestReloadSaveCache", ".png");
-//    OutByFilenameSequenceTransport out_png_trans(sequence);
+//    OutFilenameTransport out_png_trans(sequence);
 //    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
 //    
 //    player.add_consumer(&png_recorder);
@@ -239,7 +239,7 @@
 //    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false);
 
 //    FileSequence sequence("path file pid count extension", "./", "TestReloadOrderStates", ".png");
-//    OutByFilenameSequenceTransport out_png_trans(sequence);
+//    OutFilenameTransport out_png_trans(sequence);
 //    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
 //    
 //    player.add_consumer(&png_recorder);
@@ -328,31 +328,8 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
 
-    FileSequence sequence("path file pid count extension", "./", "TestContinuationOrderStates", ".png");
-    OutByFilenameSequenceTransport out_png_trans(sequence);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
-    
-    player.add_consumer(&png_recorder);
-    BOOST_CHECK_EQUAL(1, player.nbconsumers);
-    while (player.next_order()){
-        player.interpret_order();
-    }
-    png_recorder.flush();
-    BOOST_CHECK_EQUAL(341, sequence.filesize(0));
-    sequence.unlink(0);
-}
-
-BOOST_AUTO_TEST_CASE(TestContinuationOrderStates_V2)
-{
-    GeneratorTransport in_wrm_trans(expected_continuation_wrm, sizeof(expected_continuation_wrm)-1);   
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-
 //    FileSequence sequence("path file pid count extension", "./", "TestContinuationOrderStates", ".png");
-    OutByFilenameSequenceTransport3 out_png_trans("path file pid count extension", "./", "TestContinuationOrderStates", ".png");
+    OutFilenameTransport out_png_trans("path file pid count extension", "./", "TestContinuationOrderStates", ".png");
     FileSequence & sequence = out_png_trans.sequence;
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     

@@ -24,16 +24,15 @@
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
 #include "outmetatransport.hpp"
-#include "outbyfilenamesequencetransport.hpp"
+#include "outfilenametransport.hpp"
 class Capture : public RDPGraphicDevice
 {
 public:
     const bool capture_wrm;
     const bool capture_drawable;
     const bool capture_png;
-    FileSequence * png_sequence;
 
-    OutByFilenameSequenceTransport * png_trans;
+    OutFilenameTransport * png_trans;
     StaticCapture * psc;
 
     OutmetaTransport * wrm_trans;
@@ -46,7 +45,6 @@ public:
       : capture_wrm(ini.globals.capture_wrm)
       , capture_drawable(ini.globals.capture_wrm)
       , capture_png(ini.globals.png_limit > 0)
-      , png_sequence(NULL)
       , png_trans(NULL)
       , psc(NULL)
       , wrm_trans(NULL)
@@ -55,9 +53,8 @@ public:
       , pnc(NULL)
     {
         if (this->capture_png){
-            this->png_sequence = new FileSequence("path file pid count extension", path, basename, ".png");
-            this->png_trans = new OutByFilenameSequenceTransport(*this->png_sequence);
-            this->psc = new StaticCapture(now, *this->png_trans, *this->png_sequence, width, height, ini);
+            this->png_trans = new OutFilenameTransport("path file pid count extension", path, basename, ".png");
+            this->psc = new StaticCapture(now, *this->png_trans, this->png_trans->sequence, width, height, ini);
         }
 
         if (this->capture_drawable){
@@ -74,7 +71,6 @@ public:
 
     ~Capture(){
         delete this->psc;
-        delete this->png_sequence;
         delete this->png_trans;
 
         delete this->pnc;

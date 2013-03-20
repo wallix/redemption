@@ -20,8 +20,8 @@
    Transport layer abstraction
 */
 
-#ifndef _REDEMPTION_CORE_OUTBYFILENAMESEQUENCETRANSPORT_HPP_
-#define _REDEMPTION_CORE_OUTBYFILENAMESEQUENCETRANSPORT_HPP_
+#ifndef _REDEMPTION_CORE_OUTFILENAMETRANSPORT_HPP_
+#define _REDEMPTION_CORE_OUTFILENAMETRANSPORT_HPP_
 
 #include "transport.hpp"
 #include "../libs/rio.h"
@@ -92,12 +92,12 @@ public:
 };
 
 
-class OutByFilenameSequenceTransport3 : public OutFileTransport {
+class OutFilenameTransport : public OutFileTransport {
 public:
     FileSequence sequence;
     char path[1024];
 
-    OutByFilenameSequenceTransport3(
+    OutFilenameTransport(
             const char * const format,
             const char * const prefix,
             const char * const filename,
@@ -108,7 +108,7 @@ public:
     {
     }
 
-    ~OutByFilenameSequenceTransport3()
+    ~OutFilenameTransport()
     {
         if (this->fd != -1){
             ::close(this->fd);
@@ -140,136 +140,5 @@ public:
     }
 };
 
-
-class OutByFilenameSequenceTransport2 : public OutFileTransport {
-public:
-    const FileSequence & sequence;
-    char path[1024];
-
-    OutByFilenameSequenceTransport2(const FileSequence & sequence, unsigned verbose = 0)
-    : OutFileTransport(-1, verbose)
-    , sequence(sequence)
-    {
-    }
-
-    ~OutByFilenameSequenceTransport2()
-    {
-        if (this->fd != -1){
-            ::close(this->fd);
-            this->fd = -1;
-        }
-    }
-
-    using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error) {
-        if (this->fd == -1){
-            this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
-            this->fd = ::creat(this->path, 0777);
-            if (this->fd == -1){
-                LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        OutFileTransport::send(buffer, len);
-    }
-
-    virtual bool next()
-    {
-        if (this->fd != -1){
-            ::close(this->fd);
-            this->fd = -1;
-        }
-        this->OutFileTransport::next();
-        return true;
-    }
-};
-
-
-
-class OutByFilenameSequenceTransport : public OutFileTransport {
-public:
-    const FileSequence & sequence;
-    char path[1024];
-
-    OutByFilenameSequenceTransport(const FileSequence & sequence, unsigned verbose = 0)
-    : OutFileTransport(-1, verbose)
-    , sequence(sequence)
-    {
-    }
-
-    ~OutByFilenameSequenceTransport()
-    {
-        if (this->fd != -1){
-            ::close(this->fd);
-            this->fd = -1;
-        }
-    }
-
-    using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error) {
-        if (this->fd == -1){
-            this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
-            this->fd = ::creat(this->path, 0777);
-            if (this->fd == -1){
-                LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        OutFileTransport::send(buffer, len);
-    }
-
-    virtual bool next()
-    {
-        if (this->fd != -1){
-            ::close(this->fd);
-            this->fd = -1;
-        }
-        this->OutFileTransport::next();
-        return true;
-    }
-};
-
-
-//class OutByFilenameSequenceTransport3 : public Transport {
-//public:
-//    SQ  * seq;
-//    RIO * rio;
-//    char path[1024];
-
-//    OutByFilenameSequenceTransport3(const char * path, const char * basename, const char * extension, unsigned verbose = 0)
-//    : rio(NULL)
-//    {
-//        RIO_ERROR status = RIO_ERROR_OK;
-//        this->seq = sq_new_outfilename(&status, SQF_PREFIX_PID_COUNT_EXTENSION, basename, extension);
-//        this->rio = rio_new_outsequence(&status, sequence);
-//    }
-
-//    ~OutByFilenameSequenceTransport3()
-//    {
-//    }
-
-//    using Transport::send;
-//    virtual void send(const char * const buffer, size_t len) throw (Error) {
-//        if (this->fd == -1){
-//            this->sequence.get_name(this->path, sizeof(this->path), this->seqno);
-//            this->fd = ::creat(this->path, 0777);
-//            if (this->fd == -1){
-//                LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
-//                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-//            }
-//        }
-//        OutFileTransport::send(buffer, len);
-//    }
-
-//    virtual bool next()
-//    {
-//        if (this->fd != -1){
-//            ::close(this->fd);
-//            this->fd = -1;
-//        }
-//        this->OutFileTransport::next();
-//        return true;
-//    }
-//};
 
 #endif
