@@ -183,29 +183,28 @@ class ssllib
         buf_out_uint32(lenhdr, data.size());
 
         SslSha1 sha1;
-        sha1.update(key.data, key.size());
-        sha1.update(reinterpret_cast<const uint8_t *>(
+        sha1.update(key);
+        sha1.update(StaticStream(
                     "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
                     "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
                     "\x36\x36\x36\x36\x36\x36\x36\x36"
-                    ), 40);
-                    
+                  , 40));
         // Data we are signing
         TODO("pass in a stream and factorize with code in decrypt")
-        sha1.update(lenhdr, sizeof(lenhdr));
-        sha1.update(data.data, data.size());
+        sha1.update(FixedSizeStream(lenhdr, sizeof(lenhdr)));
+        sha1.update(data);
 
         uint8_t shasig[20];
         sha1.final(shasig);
 
         SslMd5 md5;
-        md5.update(key.data, key.size());
-        md5.update(reinterpret_cast<const uint8_t *>(
-                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
-                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
-                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
-                    ), 48);
-        md5.update(shasig, 20);
+        md5.update(key);
+        md5.update(StaticStream(
+                   "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                   "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                   "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                 , 48));
+        md5.update(FixedSizeStream(shasig, sizeof(shasig)));
         uint8_t md5sig[MD5_DIGEST_LENGTH];
         md5.final(md5sig);
 
@@ -230,15 +229,15 @@ class ssllib
             memset(pad, 'A' + i, i + 1);
 
             SslSha1 sha1;
-            sha1.update(pad, i + 1);
-            sha1.update(pre_master_secret, 48);
-            sha1.update(client_random, 32);
-            sha1.update(server_random, 32);
+            sha1.update(FixedSizeStream(pad, i + 1));
+            sha1.update(FixedSizeStream(pre_master_secret, sizeof(pre_master_secret)));
+            sha1.update(FixedSizeStream(client_random, 32));
+            sha1.update(FixedSizeStream(server_random, 32));
             sha1.final(shasig);
 
             SslMd5 md5;
-            md5.update(pre_master_secret, 48);
-            md5.update(shasig, 20);
+            md5.update(FixedSizeStream(pre_master_secret, sizeof(pre_master_secret)));
+            md5.update(FixedSizeStream(shasig, sizeof(shasig)));
             md5.final(&master_secret[i * 16]);
         }
 
@@ -249,15 +248,15 @@ class ssllib
             memset(pad, 'X' + i, i + 1);
 
             SslSha1 sha1;
-            sha1.update(pad, i + 1);
-            sha1.update(master_secret, 48);
-            sha1.update(client_random, 32);
-            sha1.update(server_random, 32);
+            sha1.update(FixedSizeStream(pad, i + 1));
+            sha1.update(FixedSizeStream(master_secret, sizeof(master_secret)));
+            sha1.update(FixedSizeStream(client_random, 32));
+            sha1.update(FixedSizeStream(server_random, 32));
             sha1.final(shasig);
 
             SslMd5 md5;
-            md5.update(master_secret, 48);
-            md5.update(shasig, 20);
+            md5.update(FixedSizeStream(master_secret, sizeof(master_secret)));
+            md5.update(FixedSizeStream(shasig, sizeof(shasig)));
             md5.final(&key_block[i * 16]);
         }
     }
@@ -316,9 +315,9 @@ struct CryptContext
         this->encryptionMethod = encryptionMethod;
 
         SslMd5 md5;
-        md5.update(key_block, 16);
-        md5.update(salt1, 32);
-        md5.update(salt2, 32);
+        md5.update(FixedSizeStream(key_block, 16));
+        md5.update(StaticStream(salt1, 32));
+        md5.update(StaticStream(salt2, 32));
         md5.final(this->key);
 
         // 40 bits encryption
@@ -344,32 +343,34 @@ struct CryptContext
             size_t keylen = (this->encryptionMethod==1)?8:16;
 
             SslSha1 sha1;
-            sha1.update(this->update_key, keylen);
-            sha1.update(reinterpret_cast<const uint8_t *>(
-                    "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
-                    "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
-                    "\x36\x36\x36\x36\x36\x36\x36\x36"
-                    ), 40);
+            sha1.update(FixedSizeStream(this->update_key, keylen));
+            sha1.update(StaticStream(
+                        "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
+                        "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
+                        "\x36\x36\x36\x36\x36\x36\x36\x36"
+                      , 40));
 
             // Data we are signing
             TODO("pass in a stream and factorize with code in sign")
-            sha1.update(this->key, keylen);
+            sha1.update(FixedSizeStream(this->key, keylen));
 
             uint8_t shasig[20];
             sha1.final(shasig);
 
             SslMd5 md5;
-            md5.update(this->update_key, keylen);
-            md5.update(reinterpret_cast<const uint8_t *>(
-                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
-                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
-                    "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
-                    ), 48);
-            md5.update(shasig, 20);
+            md5.update(FixedSizeStream(this->update_key, keylen));
+            md5.update(StaticStream(
+                       "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                       "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                       "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
+                     , 48));
+            md5.update(FixedSizeStream(shasig, sizeof(shasig)));
             md5.final(this->key);
 
             this->rc4.set_key(this->key, keylen);
-            this->rc4.crypt(this->key, keylen);
+
+            FixedSizeStream key(this->key, keylen);
+            this->rc4.crypt(key);
 
             if (this->encryptionMethod == 1){
                 ssl.sec_make_40bit(this->key);
@@ -377,7 +378,7 @@ struct CryptContext
             this->rc4.set_key(this->key, keylen);
             this->use_count = 0;
         }
-        this->rc4.crypt(stream.data, stream.size());
+        this->rc4.crypt(stream);
         this->use_count++;
     }
 
