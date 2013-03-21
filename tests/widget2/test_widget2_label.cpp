@@ -102,6 +102,16 @@ struct TestDraw : ModApi
         BOOST_CHECK(false);
     }
 
+    static FontChar * get_font(Font& font, uint32_t c)
+    {
+        FontChar *font_item = font.glyph_defined(c) ? font.font_items[c] : 0;
+        if (!font_item) {
+            LOG(LOG_WARNING, "RDPDrawable::get_font() - character not defined >0x%02x<", c);
+            font_item = font.font_items['?'];
+        }
+        return font_item;
+    }
+
     virtual void server_draw_text(int x, int y, const char* text, uint32_t fgcolor, const Rect& clip)
     {
         this->gd.server_draw_text(x, y, text, fgcolor, clip, this->font);
@@ -153,7 +163,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     WidgetLabel wlabel(&drawable, Rect(0,0, 100,20), parent, notifier, "test1", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.send_event(WM_DRAW, 0, 0, 0);
+    wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
 
     drawable.save_to_png("/tmp/label.png");
 
@@ -179,7 +189,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     WidgetLabel wlabel(&drawable, Rect(10,100, 100,20), parent, notifier, "test2", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.send_event(WM_DRAW, 0, 0, 0);
+    wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
 
     drawable.save_to_png("/tmp/label2.png");
 
@@ -205,7 +215,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     WidgetLabel wlabel(&drawable, Rect(-10,500, 100,20), parent, notifier, "test3", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.send_event(WM_DRAW, 0, 0, 0);
+    wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
 
     drawable.save_to_png("/tmp/label3.png");
 
@@ -231,7 +241,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     WidgetLabel wlabel(&drawable, Rect(770,500, 100,20), parent, notifier, "test4", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.send_event(WM_DRAW, 0, 0, 0);
+    wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
 
     drawable.save_to_png("/tmp/label4.png");
 
@@ -257,7 +267,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     WidgetLabel wlabel(&drawable, Rect(-20,-7, 100,20), parent, notifier, "test5", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.send_event(WM_DRAW, 0, 0, 0);
+    wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
 
     drawable.save_to_png("/tmp/label5.png");
 
@@ -283,7 +293,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     WidgetLabel wlabel(&drawable, Rect(760,-7, 100,20), parent, notifier, "test6", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.send_event(WM_DRAW, 0, 0, 0);
+    wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
 
     drawable.save_to_png("/tmp/label6.png");
 
@@ -295,16 +305,63 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     }
 }
 
-TODO("Add some tests where WM_DRAW receive coordinates of rect to refresh (refresh is clipped)"
-     "proposal:"
-     "- param1 is 32 bits and contains 2 packed 16 bits values x and y"
-     "- param2 is 32 bits and contains 2  packed 16 bits values cx and cy")
-     
+BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
+    Widget * parent = NULL;
+    NotifyApi * notifier = NULL;
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int id = 0;
+
+    WidgetLabel wlabel(&drawable, Rect(760,-7, 100,20), parent, notifier, "test6", id, bg_color, fg_color);
+
+    // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
+    wlabel.send_event(WM_DRAW, (20<<16|0), (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
+
+    drawable.save_to_png("/tmp/label7.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x67\xfb\xbf\x76\x23\x48\x86\xb0\x08\x54"
+        "\x28\x94\x4a\x6c\xb4\x9a\xa3\x1a\xe4\xd3")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetLabel is a label widget of size 100x20 at position 10,7 in it's parent context
+    Widget * parent = NULL;
+    NotifyApi * notifier = NULL;
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int id = 0;
+
+    WidgetLabel wlabel(&drawable, Rect(0,0, 100,20), parent, notifier, "test6", id, bg_color, fg_color);
+
+    // ask to widget to redraw at position 30,12 and of size 30x10.
+    wlabel.send_event(WM_DRAW, (20<<16|5), (30<<16 | 10), 0);
+
+    drawable.save_to_png("/tmp/label8.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x8d\x38\xa4\x5c\x28\xd7\x3f\x22\x5e\xf4"
+        "\xf6\xa2\x6d\x94\x6d\xa2\xf0\x15\x58\xd5")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
 TODO("the entry point exists in module: it's rdp_input_invalidate"
      "je just have to change received values to widget messages")
-     
+
 TODO("As soon as composite widgets will be available, we will have to check these tests"
      " are still working with two combination layers (conversion of coordinates "
      "from parent coordinates to screen_coordinates can be tricky)")
-     
+
 TODO("add test with keyboard and mouse events to check they are transmitted as expected")

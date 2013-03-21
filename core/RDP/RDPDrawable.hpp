@@ -263,29 +263,42 @@ public:
     void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, const Rect& clip, Font& font)
     {
         if (text[0] != 0) {
+            Rect screen_rect = clip.intersect(this->drawable.width, this->drawable.height);
+            if (screen_rect.isempty()){
+                return ;
+            }
+
             uint32_t uni[128];
             size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
             if (!this->conf.bgr){
                 fgcolor = ((fgcolor << 16) & 0xFF0000) | (fgcolor & 0xFF00) |((fgcolor >> 16) & 0xFF);
             }
-            int16_t cx = std::max<int16_t>(this->drawable.width, clip.x + clip.cx);
-            for (size_t index = 0; index < part_len && x < cx; index++) {
-                FontChar *font_item = this->get_font(font, uni[index]);
-                if (font_item->width + x >= 0) {
-                    int16_t cy = std::min<int16_t>(font_item->height, this->drawable.height);
-                    int i = 0;
-                    for (int yy = 0 ; yy < cy && yy + y < clip.y + clip.cy; yy++){
-                        unsigned char oc = 1<<7;
-                        for (int xx = 0; xx < font_item->width; xx++){
-                            if (!oc) {
-                                oc = 1 << 7;
-                                ++i;
-                            }
-                            if (yy + y >= 0 && xx + x >= 0 && xx + x < this->drawable.width && font_item->data[i + yy] & oc) {
-                                this->drawable.opaquerect(Rect(x + xx, y + yy, 1, 1), fgcolor);
-                            }
-                            oc >>= 1;
+
+            size_t index = 0;
+            FontChar *font_item = 0;
+            for (; index < part_len && x < screen_rect.x; index++) {
+                font_item = this->get_font(font, uni[index]);
+                if (x + font_item->width > screen_rect.x) {
+                    break ;
+                }
+                x += font_item->width + 2;
+            }
+
+            for (; index < part_len && x < screen_rect.x + screen_rect.cx; index++) {
+                font_item = this->get_font(font, uni[index]);
+                int16_t cy = std::min<int16_t>(y + font_item->height, screen_rect.y + screen_rect.cy) - y;
+                int i = 0;
+                for (int yy = 0 ; yy < cy; yy++) {
+                    unsigned char oc = 1<<7;
+                    for (int xx = 0; xx < font_item->width; xx++) {
+                        if (!oc) {
+                            oc = 1 << 7;
+                            ++i;
                         }
+                        if (yy + y >= screen_rect.y && xx + x >= screen_rect.x && xx + x < screen_rect.x + screen_rect.cx && font_item->data[i + yy] & oc) {
+                            this->drawable.opaquerect(Rect(x + xx, y + yy, 1, 1), fgcolor);
+                        }
+                        oc >>= 1;
                     }
                 }
                 x += font_item->width + 2;

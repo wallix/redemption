@@ -99,23 +99,9 @@ public:
     , id(id)
     , tab_flag(NORMAL_TAB)
     , has_focus(false)
-    {
-        if (this->parent)
-            this->parent->attach_widget(this);
-    }
-
-    virtual ~Widget()
-    {
-        if (this->parent)
-            this->parent->detach_widget(this);
-    }
-
-protected:
-    TODO("attach and detach should not exist at this level, this is a composite behavior, remove them from here")
-    virtual void attach_widget(Widget *)
     {}
 
-    virtual void detach_widget(Widget *)
+    virtual ~Widget()
     {}
 
 public:
@@ -139,7 +125,7 @@ public:
          "relating them structurally does not looks like a good idea")
     screen_position position_in_screen(const Rect& clip)
     {
-        screen_position ret(this->rect.intersect(clip));
+        screen_position ret(clip.offset(this->rect.x, this->rect.y).intersect(this->rect));
         for (Widget * p = this->parent; p; p = p->parent){
             ret.clip = ret.clip.intersect(p->rect.cx, p->rect.cy);
             ret.clip.x += p->rect.x;
@@ -176,10 +162,11 @@ public:
     //    }
     //}
 
-    virtual void send_event(EventType event, int param, int param2, Keymap2 * keymap)
+    virtual void send_event(EventType event, unsigned param, unsigned param2, Keymap2 * keymap)
     {
         if (event == WM_DRAW && this->drawable) {
-            this->draw(this->rect);
+            this->draw(Rect(param >> 16, param & 0xFFFF,
+                            param2 >> 16, param2 & 0xFFFF));
         }
     }
 

@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage)
     WidgetImage wimage(&drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.send_event(WM_DRAW, 0, 0, 0);
+    wimage.send_event(WM_DRAW, 0, (wimage.rect.cx<<16 | wimage.rect.cy), 0);
 
     //drawable.save_to_png("/tmp/image.png");
 
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
     WidgetImage wimage(&drawable, 10,100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.send_event(WM_DRAW, 0, 0, 0);
+    wimage.send_event(WM_DRAW, 0, (wimage.rect.cx<<16 | wimage.rect.cy), 0);
 
     //drawable.save_to_png("/tmp/image2.png");
 
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
     WidgetImage wimage(&drawable, -100,500, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.send_event(WM_DRAW, 0, 0, 0);
+    wimage.send_event(WM_DRAW, 0, (wimage.rect.cx<<16 | wimage.rect.cy), 0);
 
     //drawable.save_to_png("/tmp/image3.png");
 
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
     WidgetImage wimage(&drawable, 700,500, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.send_event(WM_DRAW, 0, 0, 0);
+    wimage.send_event(WM_DRAW, 0, (wimage.rect.cx<<16 | wimage.rect.cy), 0);
 
     //drawable.save_to_png("/tmp/image4.png");
 
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
     WidgetImage wimage(&drawable, -100,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.send_event(WM_DRAW, 0, 0, 0);
+    wimage.send_event(WM_DRAW, 0, (wimage.rect.cx<<16 | wimage.rect.cy), 0);
 
     //drawable.save_to_png("/tmp/image5.png");
 
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
     WidgetImage wimage(&drawable, 700,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.send_event(WM_DRAW, 0, 0, 0);
+    wimage.send_event(WM_DRAW, 0, (wimage.rect.cx<<16 | wimage.rect.cy), 0);
 
     //drawable.save_to_png("/tmp/image6.png");
 
@@ -257,16 +257,57 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
     }
 }
 
-TODO("Add some tests where WM_DRAW receive coordinates of rect to refresh (refresh is clipped)"
-     "proposal:"
-     "- param1 is 32 bits and contains 2 packed 16 bits values x and y"
-     "- param2 is 32 bits and contains 2  packed 16 bits values cx and cy")
-     
+BOOST_AUTO_TEST_CASE(TraceWidgetImageClip)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
+    Widget * parent = NULL;
+    NotifyApi * notifier = NULL;
+
+    WidgetImage wimage(&drawable, 700,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
+
+    // ask to widget to redraw at position 780,10 and of size 50x100. After clip the size is of 20x15
+    wimage.send_event(WM_DRAW, (80<<16|10), (50<<16 | 100), 0);
+
+    drawable.save_to_png("/tmp/image7.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x61\xff\xa6\xd4\xb6\x17\xf1\x7f\x8d\x07"
+        "\xe7\x20\xa6\xdf\xa4\xdc\x55\xb4\xaa\xf9")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
+    Widget * parent = NULL;
+    NotifyApi * notifier = NULL;
+
+    WidgetImage wimage(&drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
+
+    // ask to widget to redraw at position 100,25 and of size 100x100.
+    wimage.send_event(WM_DRAW, (100<<16|25), (100<<16 | 100), 0);
+
+    drawable.save_to_png("/tmp/image8.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x0f\xad\x91\xdf\xa5\xbd\x7d\x2b\x3b\xd2"
+        "\x19\xaa\x15\xa9\x78\x80\x11\x7f\x36\x88")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
 TODO("the entry point exists in module: it's rdp_input_invalidate"
      "je just have to change received values to widget messages")
-     
+
 TODO("As soon as composite widgets will be available, we will have to check these tests"
      " are still working with two combination layers (conversion of coordinates "
      "from parent coordinates to screen_coordinates can be tricky)")
-     
+
 TODO("add test with keyboard and mouse events to check they are transmitted as expected")

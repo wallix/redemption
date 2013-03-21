@@ -52,11 +52,11 @@ public:
                      s.clip.cx,
                      s.clip.cy),
                 0xCC,
-                s.x < 0 ? -s.x : 0,
-                s.y < 0 ? -s.y : 0,
+                (s.x < 0 ? -s.x : 0) + clip.x,
+                (s.y < 0 ? -s.y : 0) + clip.y,
                 0
             ),
-            clip,
+            clip.offset(this->rect.x, this->rect.y).intersect(this->rect),
             this->bmp
         );
     }
