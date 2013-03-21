@@ -27,7 +27,7 @@
 #define _REDEMPTION_CORE_RDP_X224_HPP_
 
 #include <stdint.h>
-#include "transport.hpp"
+#include "../../transport/transport.hpp"
 #include "stream.hpp"
 #include "log.hpp"
 #include "error.hpp"

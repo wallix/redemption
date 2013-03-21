@@ -32,7 +32,7 @@
 #include "version.hpp"
 
 #include "fileutils.hpp"
-#include "inbymetasequencetransport.hpp"
+#include "../transport/inbymetasequencetransport.hpp"
 #include "capture.hpp"
 #include "FileToGraphic.hpp"
 

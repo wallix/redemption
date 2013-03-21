@@ -27,7 +27,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "outfilenametransport.hpp"
+#include "../../transport/outfilenametransport.hpp"
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"

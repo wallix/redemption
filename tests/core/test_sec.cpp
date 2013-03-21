@@ -29,8 +29,8 @@
 #include "log.hpp"
 
 #include "stream.hpp"
-#include "transport.hpp"
-#include "testtransport.hpp"
+#include "../../transport/transport.hpp"
+#include "../../transport/testtransport.hpp"
 #include "RDP/sec.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSend_SecExchangePacket)

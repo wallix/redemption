@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <png.h>
 
-#include "transport.hpp"
+#include "../transport/transport.hpp"
 
 static inline void png_write_data(png_structp png_ptr, png_bytep data, png_size_t length){
     ((Transport *)(png_ptr->io_ptr))->send(data, length);
