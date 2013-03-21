@@ -62,8 +62,8 @@ static inline bool bool_from_cstr(const char * str)
 static inline unsigned level_from_string(const char * str)
 { // low = 0, medium = 1, high = 2
     unsigned res = 0;
-    if (0 == strcmp("medium", str)) { res = 1; }
-    else if (0 == strcmp("high", str)) { res = 2; }
+    if (0 == strcasecmp("medium", str)) { res = 1; }
+    else if (0 == strcasecmp("high", str)) { res = 2; }
     return res;
 }
 
@@ -97,7 +97,6 @@ static inline void ask_string(const char * str, char buffer[], bool & flag)
         buffer[0] = 0;
     }
 }
-
 
 struct IniAccounts {
     char accountname[255];
@@ -141,7 +140,7 @@ struct Inifile {
         unsigned flv_frame_interval; 
         unsigned ocr_interval;
 
-        unsigned png_limit;     // number of png captures to keep
+        unsigned png_limit;    // number of png captures to keep
 
         int l_bitrate;         // bitrate for low quality
         int l_framerate;       // framerate for low quality
@@ -327,8 +326,6 @@ struct Inifile {
         };
     }
 
-
-
     void parseline(const char * line, char * context)
     {
         char key[128];
@@ -388,7 +385,7 @@ struct Inifile {
                 this->globals.bitmap_compression = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "port")){
-                this->globals.port = atol(value);
+                this->globals.port = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "nomouse")){
                 this->globals.nomouse = bool_from_cstr(value);
@@ -403,16 +400,16 @@ struct Inifile {
                 strcpy(this->globals.authip, value);
             }
             else if (0 == strcmp(key, "authport")){
-                this->globals.authport = atol(value);
+                this->globals.authport = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "autovalidate")){
                 this->globals.autovalidate = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "max_tick")){
-                this->globals.max_tick    = atol(value);
+                this->globals.max_tick = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "keepalive_grace_delay")){
-                this->globals.keepalive_grace_delay = atol(value);
+                this->globals.keepalive_grace_delay = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "internal_domain")){
                 this->globals.internal_domain = bool_from_cstr(value);
@@ -444,74 +441,74 @@ struct Inifile {
         }
         else if (0 == strcmp(context, "video")){ 
             if (0 == strcmp(key, "capture_flags")){
-                this->globals.capture_flags   = atol(value);
+                this->globals.capture_flags   = long_from_cstr(value);
                 this->globals.capture_png = 0 != (this->globals.capture_flags & 1);
                 this->globals.capture_wrm = 0 != (this->globals.capture_flags & 2);
                 this->globals.capture_flv = 0 != (this->globals.capture_flags & 4);
                 this->globals.capture_ocr = 0 != (this->globals.capture_flags & 8);
             }
             else if (0 == strcmp(key, "ocr_interval")){
-                this->globals.ocr_interval   = atol(value);
+                this->globals.ocr_interval   = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "png_interval")){
-                this->globals.png_interval   = atol(value);
+                this->globals.png_interval   = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "frame_interval")){
-                this->globals.frame_interval   = atol(value);
+                this->globals.frame_interval   = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "break_interval")){
-                this->globals.break_interval   = atol(value);
+                this->globals.break_interval   = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "png_limit")){
-                this->globals.png_limit   = atol(value);
+                this->globals.png_limit   = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "replay_path")){
                 strcpy(this->globals.replay_path, value);
             }
             else if (0 == strcmp(key, "l_bitrate")){
-                this->globals.l_bitrate   = atol(value);
+                this->globals.l_bitrate   = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_framerate")){
-                this->globals.l_framerate = atol(value);
+                this->globals.l_framerate = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_height")){
-                this->globals.l_height    = atol(value);
+                this->globals.l_height    = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_width")){
-                this->globals.l_width     = atol(value);
+                this->globals.l_width     = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_qscale")){
-                this->globals.l_qscale    = atol(value);
+                this->globals.l_qscale    = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_bitrate")){
-                this->globals.m_bitrate   = atol(value);
+                this->globals.m_bitrate   = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_framerate")){
-                this->globals.m_framerate = atol(value);
+                this->globals.m_framerate = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_height")){
-                this->globals.m_height    = atol(value);
+                this->globals.m_height    = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_width")){
-                this->globals.m_width     = atol(value);
+                this->globals.m_width     = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_qscale")){
-                this->globals.m_qscale    = atol(value);
+                this->globals.m_qscale    = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_bitrate")){
-                this->globals.h_bitrate   = atol(value);
+                this->globals.h_bitrate   = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_framerate")){
-                this->globals.h_framerate = atol(value);
+                this->globals.h_framerate = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_height")){
-                this->globals.h_height    = atol(value);
+                this->globals.h_height    = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_width")){
-                this->globals.h_width     = atol(value);
+                this->globals.h_width     = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_qscale")){
-                this->globals.h_qscale    = atol(value);
+                this->globals.h_qscale    = long_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -519,55 +516,55 @@ struct Inifile {
         }
         else if (0 == strcmp(context, "debug")){ 
             if (0 == strcmp(key, "x224")){
-                this->globals.debug.x224              = atol(value);
+                this->globals.debug.x224              = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "mcs")){
-                this->globals.debug.mcs               = atol(value);
+                this->globals.debug.mcs               = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "sec")){
-                this->globals.debug.sec               = atol(value);
+                this->globals.debug.sec               = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "rdp")){
-                this->globals.debug.rdp               = atol(value);
+                this->globals.debug.rdp               = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "primary_orders")){
-                this->globals.debug.primary_orders    = atol(value);
+                this->globals.debug.primary_orders    = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "secondary_orders")){
-                this->globals.debug.secondary_orders  = atol(value);
+                this->globals.debug.secondary_orders  = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "bitmap")){
-                this->globals.debug.bitmap            = atol(value);
+                this->globals.debug.bitmap            = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "capture")){
-                this->globals.debug.capture           = atol(value);
+                this->globals.debug.capture           = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "auth")){
-                this->globals.debug.auth              = atol(value);
+                this->globals.debug.auth              = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "session")){
-                this->globals.debug.session           = atol(value);
+                this->globals.debug.session           = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "front")){
-                this->globals.debug.front             = atol(value);
+                this->globals.debug.front             = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "mod_rdp")){
-                this->globals.debug.mod_rdp           = atol(value);
+                this->globals.debug.mod_rdp           = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "mod_vnc")){
-                this->globals.debug.mod_vnc           = atol(value);
+                this->globals.debug.mod_vnc           = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "mod_int")){
-                this->globals.debug.mod_int           = atol(value);
+                this->globals.debug.mod_int           = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "mod_xup")){
-                this->globals.debug.mod_xup           = atol(value);
+                this->globals.debug.mod_xup           = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "widget")){
-                this->globals.debug.widget            = atol(value);
+                this->globals.debug.widget            = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "input")){
-                this->globals.debug.input            = atol(value);
+                this->globals.debug.input             = long_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -578,14 +575,10 @@ struct Inifile {
         }
     }
 
-
     void cparse(const char * filename){
         ifstream inifile(filename);
         this->cparse(inifile);
     }
-
-
-
 };
 
 #endif

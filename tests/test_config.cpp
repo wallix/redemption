@@ -983,6 +983,30 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
 }
 
+BOOST_AUTO_TEST_CASE(TestConfigTools)
+{
+    BOOST_CHECK_EQUAL(0,    long_from_cstr("0"));
+    BOOST_CHECK_EQUAL(0,    long_from_cstr("0x"));
+
+    BOOST_CHECK_EQUAL(3,    long_from_cstr("3"));
+    BOOST_CHECK_EQUAL(3,    long_from_cstr("0x3"));
+
+    BOOST_CHECK_EQUAL(7,    long_from_cstr("0x00000007"));
+    BOOST_CHECK_EQUAL(7,    long_from_cstr("0x0000000000000007"));
+
+    BOOST_CHECK_EQUAL(1357, long_from_cstr("1357"));
+    BOOST_CHECK_EQUAL(4951, long_from_cstr("0x1357"));
+
+    BOOST_CHECK_EQUAL(10,   long_from_cstr("0x0A"));
+    BOOST_CHECK_EQUAL(10,   long_from_cstr("0x0a"));
+
+    BOOST_CHECK_EQUAL(0,    long_from_cstr("0x0000000I"));
+    BOOST_CHECK_EQUAL(0,    long_from_cstr("I"));
+
+    BOOST_CHECK_EQUAL(0,    level_from_string("LoW"));
+    BOOST_CHECK_EQUAL(1,    level_from_string("mEdIuM"));
+    BOOST_CHECK_EQUAL(2,    level_from_string("High"));
+}
 
 //BOOST_AUTO_TEST_CASE(TestAuthentificationKeywordRecognition)
 //{
