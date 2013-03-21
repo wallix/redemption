@@ -68,7 +68,8 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     now.tv_sec++;
     consumer.snapshot(now, 10, 10, true, false);
     now.tv_sec++;
-    ::close(trans.fd);
+
+    rio_clear(&trans.rio); // ensure file is closed to have accurate values for size
 
     BOOST_CHECK_EQUAL(3092, sq_outfilename_filesize(&(trans.seq), 0));
     BOOST_CHECK_EQUAL(3108, sq_outfilename_filesize(&(trans.seq), 1));

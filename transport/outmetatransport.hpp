@@ -82,7 +82,7 @@ public:
     virtual bool next()
     {
         sq_next(this->seq);
-        return true;
+        return Transport::next();
     }
 };
 

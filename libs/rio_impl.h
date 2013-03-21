@@ -873,7 +873,11 @@ inline ssize_t sq_outfilename_unlink(const SQ * seq, uint32_t count)
 {
     char filename[1024];
     sq_im_SQOutfilename_get_name(&(seq->u.outfilename), filename, sizeof(filename), count);
-    return ::unlink(filename);
+    int status = ::unlink(filename);
+    if (status < 0){
+        LOG(LOG_INFO, "removing file %s failed. Error [%u] : %s\n", filename, errno, strerror(errno));
+    }
+    return status;
 }
 
 inline void sq_outfilename_get_name(const SQ * seq, char * path, size_t len, uint32_t count)
