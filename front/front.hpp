@@ -2798,21 +2798,44 @@ TODO("Pass font name as parameter in constructor")
             if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT");
             }
+            // numberOfAreas (1 byte): An 8-bit, unsigned integer. The number of Inclusive Rectangle
+            // (section 2.2.11.1) structures in the areasToRefresh field.
+            
+            // pad3Octects (3 bytes): A 3-element array of 8-bit, unsigned integer values. Padding. 
+            // Values in this field MUST be ignored.
+
+            // areasToRefresh (variable): An array of TS_RECTANGLE16 structures (variable number of
+            // bytes). Array of screen area Inclusive Rectangles to redraw. The number of rectangles 
+            // is given by the numberOfAreas field.
+            
+            // 2.2.11.1 Inclusive Rectangle (TS_RECTANGLE16)
+            // =============================================
+            // The TS_RECTANGLE16 structure describes a rectangle expressed in inclusive coordinates 
+            // (the right and bottom coordinates are included in the rectangle bounds).
+            // left (2 bytes): A 16-bit, unsigned integer. The leftmost bound of the rectangle.
+            // top (2 bytes): A 16-bit, unsigned integer. The upper bound of the rectangle.
+            // right (2 bytes): A 16-bit, unsigned integer. The rightmost bound of the rectangle.
+            // bottom (2 bytes): A 16-bit, unsigned integer. The lower bound of the rectangle.
+
             {
-                /* int op = */ sdata_in.payload.in_uint32_le();
-                int left = sdata_in.payload.in_uint16_le();
-                int top = sdata_in.payload.in_uint16_le();
-                int right = sdata_in.payload.in_uint16_le();
-                int bottom = sdata_in.payload.in_uint16_le();
-                int cx = (right - left) + 1;
-                int cy = (bottom - top) + 1;
-                if (this->verbose & (64|4)){
-                    LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT"
-                        " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",
-                        left, top, right, bottom, cx, cy);
-                }
-                if (this->up_and_running){
-                    cb.rdp_input_invalidate(Rect(left, top, cx, cy));
+                size_t numberOfAreas = sdata_in.payload.in_uint8();
+                sdata_in.payload.in_skip_bytes(3);
+                
+                for (size_t i = 0; i < numberOfAreas ; i++){
+                    int left = sdata_in.payload.in_uint16_le();
+                    int top = sdata_in.payload.in_uint16_le();
+                    int right = sdata_in.payload.in_uint16_le();
+                    int bottom = sdata_in.payload.in_uint16_le();
+                    Rect rect(left, top, (right - left) + 1, (bottom - top) + 1);
+                    if (this->verbose & (64|4)){
+                        LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT"
+                            " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",
+                            left, top, right, bottom, rect.x, rect.cy);
+                    }
+                    TODO("we should consider adding to API some function to refresh several rects at once")
+                    if (this->up_and_running){
+                        cb.rdp_input_invalidate(rect);
+                    }
                 }
             }
         break;
