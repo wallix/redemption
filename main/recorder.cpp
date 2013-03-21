@@ -14,8 +14,9 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * Product name: redemption, a FLOSS RDP proxy
- * Copyright (C) Wallix 2010-2012
+ * Copyright (C) Wallix 2010-2013
  * Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ * Raphaël Zhou
  *
  * recorder main program
  *
@@ -43,8 +44,8 @@ int main(int argc, char** argv)
     const char * copyright_notice =
     "\n"
     "ReDemPtion RECorder" VERSION ": An RDP movie converter.\n"
-    "Copyright (C) Wallix 2010-2012.\n"
-    "Christophe Grosjean, Jonathan Poelen\n"
+    "Copyright (C) Wallix 2010-2013.\n"
+    "Christophe Grosjean, Jonathan Poelen and Raphaël Zhou\n"
     "\n"
     ;
 

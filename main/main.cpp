@@ -14,18 +14,15 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
+   Copyright (C) Wallix 2010-2013
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
-              Olivier Hervieu, Martin Potier
+              Olivier Hervieu, Martin Potier, Raphaël Zhou
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    main program
 
 */
 
-// #include <unistd.h>
-// #include <locale.h>
-// #include <stdio.h>
 #include <signal.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
@@ -182,9 +179,9 @@ namespace po = boost::program_options;
 const char * copyright_notice =
 "\n"
 "Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
-"Copyright (C) Wallix 2010-2012.\n"
+"Copyright (C) Wallix 2010-2013.\n"
 "Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
-"Martin Potier, Dominique Lafages and Jonathan Poelen\n"
+"Martin Potier, Dominique Lafages, Jonathan Poelen and Raphaël Zhou\n"
 "\n"
 ;
 
