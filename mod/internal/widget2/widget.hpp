@@ -105,31 +105,11 @@ public:
     {}
 
 public:
-    struct screen_position {
-        Rect clip;
-        int16_t x;
-        int16_t y;
-
-        explicit screen_position(const Rect & rect)
-        : clip(rect)
-        , x(rect.x)
-        , y(rect.y)
-        {}
-    };
-
-    TODO("screen position is too complicated it should probably be splitted in two independant functions"
-         "- one that will return drawing rect in screen coordinates"
-         "- one that will return clip in screen coordinates"
-         "it is not obvious to me that clipping width x height and drawing rect width x height "
-         " must always be identical (I believe the opposite)"
-         "relating them structurally does not looks like a good idea")
-    screen_position position_in_screen(const Rect& clip)
+    Rect position_in_screen(const Rect& clip)
     {
-        screen_position ret(clip.offset(this->rect.x, this->rect.y).intersect(this->rect));
+        Rect ret = clip.offset(this->rect.x, this->rect.y).intersect(this->rect);
         for (Widget * p = this->parent; p; p = p->parent){
-            ret.clip = ret.clip.intersect(p->rect.cx, p->rect.cy);
-            ret.clip.x += p->rect.x;
-            ret.clip.y += p->rect.y;
+            ret = ret.intersect(p->rect.cx, p->rect.cy);
             ret.x += p->rect.x;
             ret.y += p->rect.y;
         }

@@ -137,18 +137,12 @@ public:
     virtual void draw(const Rect& clip)
     {
         this->WidgetRect::draw(clip);
-        screen_position s = this->position_in_screen(clip);
-        //int dx = s.clip.x < 0 ? s.clip.x : s.clip.x;
-        //int dy = s.clip.y < 0 ? s.clip.y : s.clip.y;
-        this->drawable->server_draw_text(this->x_text + s.x - clip.x,
-                                         this->y_text + s.y - clip.y,
+        Rect screen_clip = this->position_in_screen(clip);
+        this->drawable->server_draw_text(this->x_text + screen_clip.x - clip.x,
+                                         this->y_text + screen_clip.y - clip.y,
                                          this->get_text(),
                                          this->fg_color,
-                                         /*Rect(s.clip.x - dx,
-                                              s.clip.y - dy,
-                                              s.clip.cx + dx,
-                                              s.clip.cy + dy
-                                             )*/s.clip
+                                         screen_clip
                                         );
     }
 

@@ -25,51 +25,35 @@
 #include <boost/test/auto_unit_test.hpp>
 
 // #define LOGNULL
-#include <widget2/widget.hpp>
-#include <widget2/widget_composite.hpp>
-
-
-bool operator==(const Widget::screen_position& a, const Widget::screen_position& b)
-{
-    return a.clip == b.clip && a.x == b.x && a.y == b.y;
-}
+#include <internal/widget2/widget_rect.hpp>
 
 BOOST_AUTO_TEST_CASE(TraceWidgetClip)
 {
-    WidgetComposite w1(0, Rect(0,0,100,100), 0, Widget::TYPE_WND, 0);
-    WidgetComposite w2(0, Rect(80,20,50,50), &w1, Widget::TYPE_WND, 0);
-    Widget w3(0, Rect(15,20,10,10), &w2, Widget::TYPE_BUTTON, 0);
-    WidgetComposite w4(0, Rect(0,0,15,20), &w2, Widget::TYPE_WND, 0);
-    Widget w5(0, Rect(0,0,5,5), &w4, Widget::TYPE_BUTTON, 0);
-    Widget w6(0, Rect(-10,-10,15,15), &w2, Widget::TYPE_BUTTON, 0);
+    WidgetRect w1(NULL, Rect(0,0,100,100), 0, NULL);
+    WidgetRect w2(NULL, Rect(80,20,50,50), &w1, NULL);
+    WidgetRect w3(NULL, Rect(15,20,10,10), &w2, NULL);
+    WidgetRect w4(NULL, Rect(0,0,15,20), &w2, NULL);
+    WidgetRect w5(NULL, Rect(0,0,5,5), &w4, NULL);
+    WidgetRect w6(NULL, Rect(-10,-10,15,15), &w2, NULL);
 
-    Widget::screen_position pscreen = w1.position_in_screen();
-    BOOST_CHECK(w1.rect == pscreen.clip);
-    BOOST_CHECK(0 == pscreen.x);
-    BOOST_CHECK(0 == pscreen.y);
+    Rect pscreen = w1.position_in_screen(Rect(0,0,w1.rect.cx,w1.rect.cy));
+    BOOST_CHECK(w1.rect == pscreen);
 
-    pscreen = w2.position_in_screen();
-    BOOST_CHECK(Rect(80,20,20,50) == pscreen.clip);
-    BOOST_CHECK(80 == pscreen.x);
-    BOOST_CHECK(20 == pscreen.y);
+    pscreen = w2.position_in_screen(Rect(0,0,w2.rect.cx,w2.rect.cy));
+    BOOST_CHECK(Rect(80,20,20,50) == pscreen);
 
-    pscreen = w3.position_in_screen();
-    BOOST_CHECK(Rect(95,40,5,10) == pscreen.clip);
-    BOOST_CHECK(95 == pscreen.x);
-    BOOST_CHECK(40 == pscreen.y);
+    pscreen = w3.position_in_screen(Rect(0,0,w3.rect.cx,w3.rect.cy));
+    BOOST_CHECK(Rect(95,40,5,10) == pscreen);
 
-    pscreen = w4.position_in_screen();
-    BOOST_CHECK(Rect(80,20,15,20) == pscreen.clip);
-    BOOST_CHECK(80 == pscreen.x);
-    BOOST_CHECK(20 == pscreen.y);
+    pscreen = w4.position_in_screen(Rect(0,0,w4.rect.cx,w4.rect.cy));
+    BOOST_CHECK(Rect(80,20,15,20) == pscreen);
 
-    pscreen = w5.position_in_screen();
-    BOOST_CHECK(Rect(80,20,5,5) == pscreen.clip);
-    BOOST_CHECK(80 == pscreen.x);
-    BOOST_CHECK(20 == pscreen.y);
+    pscreen = w5.position_in_screen(Rect(0,0,w5.rect.cx,w5.rect.cy));
+    BOOST_CHECK(Rect(80,20,5,5) == pscreen);
 
-    pscreen = w6.position_in_screen();
-    BOOST_CHECK(Rect(80,20,5,5) == pscreen.clip);
-    BOOST_CHECK(70 == pscreen.x);
-    BOOST_CHECK(10 == pscreen.y);
+    pscreen = w6.position_in_screen(Rect(0,0,w6.rect.cx,w6.rect.cy));
+    BOOST_CHECK(Rect(80,20,5,5) == pscreen);
+
+    pscreen = w2.position_in_screen(Rect(10,10,w2.rect.cx,w2.rect.cy));
+    BOOST_CHECK(Rect(90,30,10,40) == pscreen);
 }

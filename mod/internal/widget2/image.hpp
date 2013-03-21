@@ -33,7 +33,7 @@ public:
     , bmp(filename)
     {
         this->rect.x = x;
-            this->rect.y = y;
+        this->rect.y = y;
         this->rect.cx = this->bmp.cx;
         this->rect.cy = this->bmp.cy;
     }
@@ -43,17 +43,17 @@ public:
 
     virtual void draw(const Rect& clip)
     {
-        screen_position s = this->position_in_screen(clip);
+        Rect screen_clip = this->position_in_screen(clip);
         this->drawable->draw(
             RDPMemBlt(
                 0,
-                Rect(std::max<int16_t>(s.x, 0),
-                     std::max<int16_t>(s.y, 0),
-                     s.clip.cx,
-                     s.clip.cy),
+                Rect(std::max<int16_t>(screen_clip.x, 0),
+                     std::max<int16_t>(screen_clip.y, 0),
+                     screen_clip.cx,
+                     screen_clip.cy),
                 0xCC,
-                (s.x < 0 ? -s.x : 0) + clip.x,
-                (s.y < 0 ? -s.y : 0) + clip.y,
+                (screen_clip.x < 0 ? -screen_clip.x : 0) + clip.x,
+                (screen_clip.y < 0 ? -screen_clip.y : 0) + clip.y,
                 0
             ),
             clip.offset(this->rect.x, this->rect.y).intersect(this->rect),
