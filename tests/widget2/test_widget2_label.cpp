@@ -144,6 +144,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     int bg_color = YELLOW;
     int id = 0;
 
+
+    TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
+         "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
+         "these possibilities (and others) are supported in RDPGlyphIndex")
+    TODO("We may also consider some automatic size, where rect is computed from x,y position and text"
+         "instead of being provided from outside")
     WidgetLabel wlabel(&drawable, Rect(0,0, 100,20), parent, notifier, "test1", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
@@ -289,3 +295,16 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     }
 }
 
+TODO("Add some tests where WM_DRAW receive coordinates of rect to refresh (refresh is clipped)"
+     "proposal:"
+     "- param1 is 32 bits and contains 2 packed 16 bits values x and y"
+     "- param2 is 32 bits and contains 2  packed 16 bits values cx and cy")
+     
+TODO("the entry point exists in module: it's rdp_input_invalidate"
+     "je just have to change received values to widget messages")
+     
+TODO("As soon as composite widgets will be available, we will have to check these tests"
+     " are still working with two combination layers (conversion of coordinates "
+     "from parent coordinates to screen_coordinates can be tricky)")
+     
+TODO("add test with keyboard and mouse events to check they are transmitted as expected")

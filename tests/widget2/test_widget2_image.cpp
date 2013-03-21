@@ -26,7 +26,7 @@
 #define LOGNULL
 #include "log.hpp"
 
-#include <widget2/widget_rect.hpp>
+#include <widget2/image.hpp>
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -40,9 +40,9 @@ struct TestDraw : ModApi
     : gd(w, h, true)
     {}
 
-    virtual void draw(const RDPOpaqueRect& cmd, const Rect& clip)
+    virtual void draw(const RDPOpaqueRect&, const Rect&)
     {
-        gd.draw(cmd, clip);
+        BOOST_CHECK(false);
     }
 
     virtual void draw(const RDPScrBlt&, const Rect&)
@@ -60,9 +60,9 @@ struct TestDraw : ModApi
         BOOST_CHECK(false);
     }
 
-    virtual void draw(const RDPMemBlt&, const Rect&, const Bitmap&)
+    virtual void draw(const RDPMemBlt& cmd, const Rect& rect, const Bitmap& bmp)
     {
-        BOOST_CHECK(false);
+        this->gd.draw(cmd, rect, bmp);
     }
 
     virtual void draw(const RDPLineTo&, const Rect&)
@@ -119,153 +119,154 @@ struct TestDraw : ModApi
     }
 };
 
-BOOST_AUTO_TEST_CASE(TraceWidgetRect)
+BOOST_AUTO_TEST_CASE(TraceWidgetImage)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetRect is a monochrome rectangular widget of size 800x600 at position 0,0 in it's parent context
+    // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
 
-    WidgetRect wrect(&drawable, Rect(0,0,800,600), parent, notifier, id, bgcolor);
+    WidgetImage wimage(&drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, 0, 0);
+    wimage.send_event(WM_DRAW, 0, 0, 0);
 
-    //drawable.save_to_png("/tmp/rect.png");
+    //drawable.save_to_png("/tmp/image.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xea\xe1\x3b\x4b\xdb\xda\xa6\x75\xf1\x17"
-        "\xa2\xe8\x09\xf1\xd2\x42\x7a\xdf\x85\x6d")){
+        "\xea\x3a\xa7\xb0\x19\x23\x98\xfe\xe8\x5f"
+        "\x80\x3a\xae\xd3\xf8\x3e\x4f\x4f\xcd\xad")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
+BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,-100 in it's parent context
+    // WidgetImage is a image widget of size 256x125 at position 10,100 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
 
-    WidgetRect wrect(&drawable, Rect(-100,-100,200,200), parent, notifier, id, bgcolor);
+    WidgetImage wimage(&drawable, 10,100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, 0, 0);
+    wimage.send_event(WM_DRAW, 0, 0, 0);
 
-    //drawable.save_to_png("/tmp/rect2.png");
+    //drawable.save_to_png("/tmp/image2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x7c\x96\x36\xc6\x5a\x1e\x29\xb4\xd7\x4a"
-        "\x31\x64\x37\xec\x94\x5f\x7a\x3c\x4a\x52")){
+        "\x81\xdb\x77\xd3\x15\x74\x39\x60\x2e\x73"
+        "\x93\xf2\x61\x0b\x38\x18\x0f\x79\xd2\xa1")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
+BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,500 in it's parent context
+    // WidgetImage is a image widget of size 256x125 at position -100,500 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
 
-    WidgetRect wrect(&drawable, Rect(-100,500,200,200), parent, notifier, id, bgcolor);
+    WidgetImage wimage(&drawable, -100,500, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, 0, 0);
+    wimage.send_event(WM_DRAW, 0, 0, 0);
 
-    //drawable.save_to_png("/tmp/rect3.png");
+    //drawable.save_to_png("/tmp/image3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x00\x57\x28\x73\x89\x49\xd5\x9e\xc0\xc1"
-        "\x77\xc9\xc5\x7b\x5e\x13\x88\xf0\xf6\x33")){
+        "\x55\xd7\xc2\x12\xb1\x92\x26\x5f\xb7\x2c"
+        "\x32\xfe\xde\x84\x04\xb3\x97\x62\xb0\xd9")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
+BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,500 in it's parent context
+    // WidgetImage is a image widget of size 256x125 at position 700,500 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
 
-    WidgetRect wrect(&drawable, Rect(700,500,200,200), parent, notifier, id, bgcolor);
+    WidgetImage wimage(&drawable, 700,500, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, 0, 0);
+    wimage.send_event(WM_DRAW, 0, 0, 0);
 
-    //drawable.save_to_png("/tmp/rect4.png");
+    //drawable.save_to_png("/tmp/image4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xc8\x60\xbd\xc0\xe3\x38\x4a\xe5\xd3\x29"
-        "\x52\x7d\xf6\x9b\x3e\x83\x97\xf0\xbc\x90")){
+        "\xd2\xca\x0d\xa6\x3f\xa3\x75\x1c\xd5\x3c"
+        "\x0c\xff\xd4\x4f\x56\x2d\x75\x2c\x66\xe1")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
+BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
+    // WidgetImage is a image widget of size 256x125 at position -100,-100 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
 
-    WidgetRect wrect(&drawable, Rect(700,-100,200,200), parent, notifier, id, bgcolor);
+    WidgetImage wimage(&drawable, -100,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, 0, 0);
+    wimage.send_event(WM_DRAW, 0, 0, 0);
 
-    //drawable.save_to_png("/tmp/rect5.png");
+    //drawable.save_to_png("/tmp/image5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x9c\xbe\xee\x0d\xd5\xa6\x50\xfb\x99\x4b"
-        "\x2d\xae\xd9\xcc\x33\x65\x6f\xc1\x5e\x1e")){
+        "\x69\xa3\x35\xb1\x1d\x7d\xd9\x8e\x3d\x7e"
+        "\x54\x60\x9a\xc7\xc9\xd9\xae\xdc\xad\xf5")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
+BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
+    // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
-    int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
 
-    WidgetRect wrect(&drawable, Rect(300, 200,200,200), parent, notifier, id, bgcolor);
+    WidgetImage wimage(&drawable, 700,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, 0, 0);
+    wimage.send_event(WM_DRAW, 0, 0, 0);
 
-    //drawable.save_to_png("/tmp/rect6.png");
+    //drawable.save_to_png("/tmp/image6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x0a\x0f\xb8\xff\x34\x91\xe5\xd0\x60\x52"
-        "\x56\xcb\x3a\x56\x37\x21\xe8\xc4\x22\x19")){
+        "\x11\xe6\x83\x39\x2c\xf7\x8a\x9c\xb5\xc1"
+        "\x70\xf8\x97\xa7\x52\xa2\xfa\xae\xf6\xcc")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
+TODO("Add some tests where WM_DRAW receive coordinates of rect to refresh (refresh is clipped)"
+     "proposal:"
+     "- param1 is 32 bits and contains 2 packed 16 bits values x and y"
+     "- param2 is 32 bits and contains 2  packed 16 bits values cx and cy")
+     
+TODO("the entry point exists in module: it's rdp_input_invalidate"
+     "je just have to change received values to widget messages")
+     
+TODO("As soon as composite widgets will be available, we will have to check these tests"
+     " are still working with two combination layers (conversion of coordinates "
+     "from parent coordinates to screen_coordinates can be tricky)")
+     
+TODO("add test with keyboard and mouse events to check they are transmitted as expected")
