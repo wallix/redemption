@@ -876,6 +876,10 @@ inline ssize_t sq_outfilename_unlink(const SQ * seq, uint32_t count)
     return ::unlink(filename);
 }
 
+inline void sq_outfilename_get_name(const SQ * seq, char * path, size_t len, uint32_t count)
+{
+    sq_im_SQOutfilename_get_name(&(seq->u.outfilename), path, len, count);
+}
 
 
 #endif

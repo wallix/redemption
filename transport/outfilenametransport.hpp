@@ -58,7 +58,7 @@ public:
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         if (this->fd == -1){
-            sq_im_SQOutfilename_get_name(&(this->seq.u.outfilename), this->path, sizeof(this->path), this->seqno);
+            sq_outfilename_get_name(&this->seq, this->path, sizeof(this->path), this->seqno);
             this->fd = ::creat(this->path, 0777);
             if (this->fd == -1){
                 LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
