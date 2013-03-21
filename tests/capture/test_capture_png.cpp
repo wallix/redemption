@@ -26,7 +26,7 @@
 #define BOOST_TEST_MODULE TestPNGCapture
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include "test_orders.hpp"
 
 #include "../../transport/transport.hpp"
@@ -278,16 +278,16 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
     d.draw(cmd, screen_rect);
     d.flush();
 
-    BOOST_CHECK_EQUAL(2786, filesize(trans.path));
-    ::unlink(trans.path);
+    BOOST_CHECK_EQUAL(2786, sq_outfilename_filesize(&trans.seq, 0));
+    sq_outfilename_unlink(&trans.seq, 0);
 
     RDPOpaqueRect cmd2(Rect(50, 50, 100, 50), BLUE);
     d.draw(cmd2, screen_rect);
     trans.next();
     d.flush();
 
-    BOOST_CHECK_EQUAL(2806, filesize(trans.path));
-    ::unlink(trans.path);
+    BOOST_CHECK_EQUAL(2806, sq_outfilename_filesize(&trans.seq, 1));
+    sq_outfilename_filesize(&trans.seq, 1);
 }
 
 
@@ -298,7 +298,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     now.tv_usec = 0;
 
     Rect screen_rect(0, 0, 800, 600);
-    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png");
+    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "xxxtest", ".png");
     SQ * seq = &(trans.seq);
     Inifile ini;
     ini.globals.png_interval = 1;
@@ -310,6 +310,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 1));
+    
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
 
@@ -331,7 +332,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
 
-    ::close(trans.fd);
+    rio_clear(&trans.rio);
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
     BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(seq, 1));
     BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(seq, 2));

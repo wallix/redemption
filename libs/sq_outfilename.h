@@ -103,9 +103,16 @@ extern "C" {
     static inline RIO_ERROR sq_m_SQOutfilename_destructor(SQOutfilename * self)
     {
         if (self->trans){
+            char tmpname[1024];
+            sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
+            LOG(LOG_INFO, "closing file  %s", tmpname);
             TODO("check if close returns some error");
             rio_delete(self->trans);
-            close(self->fd);
+            int res = close(self->fd);
+            if (res < 0){
+                LOG(LOG_ERR, "closing file failed erro=%u : %s\n", errno, strerror(errno));
+                return RIO_ERROR_CLOSE_FAILED;
+            }
             self->trans = NULL;
         }
         return RIO_ERROR_OK;
@@ -117,7 +124,9 @@ extern "C" {
         if (!self->trans){
             char tmpname[1024];
             sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
-            self->fd = ::open(tmpname, O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR);
+            TODO("add rights information to constructor")
+            LOG(LOG_INFO, "opening file  %s", tmpname);
+            self->fd = ::open(tmpname, O_WRONLY|O_CREAT, S_IRUSR);
             if (self->fd < 0){
                 if (status) { *status = RIO_ERROR_CREAT; }
                 return self->trans;

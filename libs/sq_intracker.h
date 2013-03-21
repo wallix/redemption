@@ -265,7 +265,8 @@ extern "C" {
                 if (status) {*status = res;}
                 return NULL;
             }
-            self->fd = ::open(self->line, O_RDONLY, S_IRUSR|S_IRUSR);
+            TODO("add rights information to constructor")
+            self->fd = ::open(self->line, O_RDONLY, S_IRUSR);
             if (self->fd < 0){
                 self->rlstatus = RIO_ERROR_OPEN;
                 if (status) { *status = self->rlstatus; }

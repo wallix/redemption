@@ -26,10 +26,11 @@
 #include "transport.hpp"
 #include "../libs/rio.h"
 
-class OutFilenameTransport : public OutFileTransport {
+TODO("there seems there is some common base between OutFilename and OutMeta = create some common OutRIO ?")
+class OutFilenameTransport : public Transport {
 public:
     SQ seq;
-    char path[1024];
+    RIO rio;
 
     OutFilenameTransport(
             SQ_FORMAT format,
@@ -37,47 +38,52 @@ public:
             const char * const filename,
             const char * const extension,
             unsigned verbose = 0)
-    : OutFileTransport(-1, verbose)
     {
-        RIO_ERROR status = sq_init_outfilename(&this->seq, format, prefix, filename, extension);
-        if (status != RIO_ERROR_OK){
-            LOG(LOG_ERR, "Sequence outfilename initialisation failed (%u)", status);
+        RIO_ERROR status1 = sq_init_outfilename(&this->seq, format, prefix, filename, extension);
+        if (status1 != RIO_ERROR_OK){
+            LOG(LOG_ERR, "Sequence outfilename initialisation failed (%u)", status1);
+            throw Error(ERR_TRANSPORT);
+        }
+        RIO_ERROR status2 = rio_init_outsequence(&this->rio, &this->seq);
+        if (status2 != RIO_ERROR_OK){
+            LOG(LOG_ERR, "rio outsequence initialisation failed (%u)", status2);
             throw Error(ERR_TRANSPORT);
         }
     }
 
     ~OutFilenameTransport()
     {
+        rio_clear(&this->rio);
         sq_clear(&this->seq);
-        if (this->fd != -1){
-            ::close(this->fd);
-            this->fd = -1;
-        }
     }
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
-        if (this->fd == -1){
-            sq_outfilename_get_name(&this->seq, this->path, sizeof(this->path), this->seqno);
-            this->fd = ::creat(this->path, 0777);
-            if (this->fd == -1){
-                LOG(LOG_INFO, "OutByFilename transport write failed with error : %s", strerror(errno));
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
+        ssize_t res = rio_send(&this->rio, buffer, len);
+        if (res < 0){
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
-        OutFileTransport::send(buffer, len);
+    }
+
+    virtual void timestamp(timeval now)
+    {
+        this->future = now;
+        sq_timestamp(&this->seq, &now);
+    }
+
+    using Transport::recv;
+    virtual void recv(char**, size_t) throw (Error)
+    {  
+        LOG(LOG_INFO, "OutFileTransport used for recv");
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
 
     virtual bool next()
     {
-        if (this->fd != -1){
-            ::close(this->fd);
-            this->fd = -1;
-        }
-        this->OutFileTransport::next();
-        return true;
+        LOG(LOG_INFO, "OutFileName::next()");
+        sq_next(&this->seq);
+        return Transport::next();
     }
 };
-
 
 #endif

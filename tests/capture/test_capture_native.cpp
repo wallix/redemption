@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     consumer.snapshot(now, 10, 10, true, false);
     now.tv_sec += 6;
     consumer.snapshot(now, 10, 10, true, false);
-    ::close(trans.fd);
+    rio_clear(&trans.rio);
     
     BOOST_CHECK_EQUAL((unsigned)1544, (unsigned)sq_outfilename_filesize(&(trans.seq), 0));
     sq_outfilename_unlink(&(trans.seq), 0);
