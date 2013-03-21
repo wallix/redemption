@@ -27,9 +27,9 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "transport.hpp"
-#include "outmetatransport.hpp"
-#include "outfilenametransport.hpp"
+#include "../../transport/transport.hpp"
+#include "../../transport/outmetatransport.hpp"
+#include "../../transport/outfilenametransport.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestOutmetaTransport)

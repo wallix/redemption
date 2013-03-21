@@ -30,8 +30,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "transport.hpp"
-#include "testtransport.hpp"
+#include "../transport/transport.hpp"
+#include "../transport/testtransport.hpp"
 #include "error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestGeneratorTransport)

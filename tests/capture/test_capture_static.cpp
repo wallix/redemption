@@ -28,8 +28,8 @@
 
 #define LOGNULL
 #include "test_orders.hpp"
-#include "transport.hpp"
-#include "outfilenametransport.hpp"
+#include "../../transport/transport.hpp"
+#include "../../transport/outfilenametransport.hpp"
 #include "image_capture.hpp"
 #include "staticcapture.hpp"
 #include "constants.hpp"
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     Inifile ini;
     ini.globals.png_limit = 3;
     ini.globals.png_interval = 20;
-    StaticCapture consumer(now, trans, trans.sequence, 800, 600, ini);
+    StaticCapture consumer(now, trans, &(trans.seq), 800, 600, ini);
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     consumer.draw(cmd, screen_rect);
@@ -70,9 +70,9 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     now.tv_sec++;
     ::close(trans.fd);
 
-    BOOST_CHECK_EQUAL(3092, sq_outfilename_filesize(&(trans.sequence.sq), 0));
-    BOOST_CHECK_EQUAL(3108, sq_outfilename_filesize(&(trans.sequence.sq), 1));
-    sq_outfilename_unlink(&(trans.sequence.sq), 0);
-    sq_outfilename_unlink(&(trans.sequence.sq), 1);
+    BOOST_CHECK_EQUAL(3092, sq_outfilename_filesize(&(trans.seq), 0));
+    BOOST_CHECK_EQUAL(3108, sq_outfilename_filesize(&(trans.seq), 1));
+    sq_outfilename_unlink(&(trans.seq), 0);
+    sq_outfilename_unlink(&(trans.seq), 1);
 }
 

@@ -35,8 +35,8 @@
 #include "./test_orders.hpp"
 
 #include "stream.hpp"
-#include "transport.hpp"
-#include "testtransport.hpp"
+#include "../../transport/transport.hpp"
+#include "../../transport/testtransport.hpp"
 #include "constants.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/mcs.hpp"

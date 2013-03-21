@@ -25,7 +25,7 @@
 #ifndef _REDEMPTION_CAPTURE_CHUNKED_IMAGE_TRANSPORT_HPP_
 #define _REDEMPTION_CAPTURE_CHUNKED_IMAGE_TRANSPORT_HPP_
 
-#include "transport.hpp"
+#include "../transport/transport.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "png.hpp"
 

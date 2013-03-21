@@ -29,9 +29,9 @@
 #define LOGNULL
 
 #include "test_orders.hpp"
-#include "transport.hpp"
-#include "testtransport.hpp"
-#include "outfilenametransport.hpp"
+#include "../../transport/transport.hpp"
+#include "../../transport/testtransport.hpp"
+#include "../../transport/outfilenametransport.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
@@ -479,8 +479,8 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     // clear PNG files   
     size_t sz[6] = {1476, 2786, 2800, 2800, 2814, 2823};
     for (int i = 0; i < 6 ; i++){
-        BOOST_CHECK_EQUAL(sz[i], sq_outfilename_filesize(&(out_png_trans.sequence.sq), i));
-        sq_outfilename_unlink(&(out_png_trans.sequence.sq), i);
+        BOOST_CHECK_EQUAL(sz[i], sq_outfilename_filesize(&(out_png_trans.seq), i));
+        sq_outfilename_unlink(&(out_png_trans.seq), i);
     }
    ::unlink("./testcap.wrm");
 }

@@ -23,8 +23,8 @@
 
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
-#include "outmetatransport.hpp"
-#include "outfilenametransport.hpp"
+#include "../transport/outmetatransport.hpp"
+#include "../transport/outfilenametransport.hpp"
 class Capture : public RDPGraphicDevice
 {
 public:
@@ -54,7 +54,7 @@ public:
     {
         if (this->capture_png){
             this->png_trans = new OutFilenameTransport(SQF_PATH_FILE_PID_COUNT_EXTENSION, path, basename, ".png");
-            this->psc = new StaticCapture(now, *this->png_trans, this->png_trans->sequence, width, height, ini);
+            this->psc = new StaticCapture(now, *this->png_trans, &(this->png_trans->seq), width, height, ini);
         }
 
         if (this->capture_drawable){

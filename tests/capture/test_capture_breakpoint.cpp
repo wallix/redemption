@@ -83,33 +83,35 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         capture.flush(); // to close last wrm
         
-        BOOST_CHECK_EQUAL((unsigned)3051, (unsigned)sq_outfilename_filesize(&(capture.png_trans->sequence.sq), 0));
-        sq_outfilename_unlink(&(capture.png_trans->sequence.sq), 0);
-        BOOST_CHECK_EQUAL((unsigned)3082, (unsigned)sq_outfilename_filesize(&(capture.png_trans->sequence.sq), 1));
-        sq_outfilename_unlink(&(capture.png_trans->sequence.sq), 1);
-        BOOST_CHECK_EQUAL((unsigned)3102, (unsigned)sq_outfilename_filesize(&(capture.png_trans->sequence.sq), 2));
-        sq_outfilename_unlink(&(capture.png_trans->sequence.sq), 2);
-        BOOST_CHECK_EQUAL((unsigned)3109, (unsigned)sq_outfilename_filesize(&(capture.png_trans->sequence.sq), 3));
-        sq_outfilename_unlink(&(capture.png_trans->sequence.sq), 3);
-        BOOST_CHECK_EQUAL((unsigned)3136, (unsigned)sq_outfilename_filesize(&(capture.png_trans->sequence.sq), 4));
-        sq_outfilename_unlink(&(capture.png_trans->sequence.sq), 4);
-        BOOST_CHECK_EQUAL((unsigned)3145, (unsigned)sq_outfilename_filesize(&(capture.png_trans->sequence.sq), 5));
-        sq_outfilename_unlink(&(capture.png_trans->sequence.sq), 5);
-        BOOST_CHECK_EQUAL((unsigned)3176, (unsigned)sq_outfilename_filesize(&(capture.png_trans->sequence.sq), 6));
-        sq_outfilename_unlink(&(capture.png_trans->sequence.sq), 6);
+        BOOST_CHECK_EQUAL((unsigned)3051, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 0));
+        sq_outfilename_unlink(&(capture.png_trans->seq), 0);
+        BOOST_CHECK_EQUAL((unsigned)3082, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 1));
+        sq_outfilename_unlink(&(capture.png_trans->seq), 1);
+        BOOST_CHECK_EQUAL((unsigned)3102, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 2));
+        sq_outfilename_unlink(&(capture.png_trans->seq), 2);
+        BOOST_CHECK_EQUAL((unsigned)3109, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 3));
+        sq_outfilename_unlink(&(capture.png_trans->seq), 3);
+        BOOST_CHECK_EQUAL((unsigned)3136, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 4));
+        sq_outfilename_unlink(&(capture.png_trans->seq), 4);
+        BOOST_CHECK_EQUAL((unsigned)3145, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 5));
+        sq_outfilename_unlink(&(capture.png_trans->seq), 5);
+        BOOST_CHECK_EQUAL((unsigned)3176, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 6));
+        sq_outfilename_unlink(&(capture.png_trans->seq), 6);
 
-        FileSequence wrm_seq(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "capture", ".wrm");        
-        BOOST_CHECK_EQUAL((unsigned)1622, (unsigned)sq_outfilename_filesize(&(wrm_seq.sq), 0));
-        sq_outfilename_unlink(&(wrm_seq.sq), 0);
-        BOOST_CHECK_EQUAL((unsigned)3392, (unsigned)sq_outfilename_filesize(&(wrm_seq.sq), 1));
-        sq_outfilename_unlink(&(wrm_seq.sq), 1);
-        BOOST_CHECK_EQUAL((unsigned)3371, (unsigned)sq_outfilename_filesize(&(wrm_seq.sq), 2));
-        sq_outfilename_unlink(&(wrm_seq.sq), 2);
+        SQ wrm_seq;
+        sq_init_outfilename(&wrm_seq, SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "capture", ".wrm");        
+        BOOST_CHECK_EQUAL((unsigned)1622, (unsigned)sq_outfilename_filesize(&wrm_seq, 0));
+        sq_outfilename_unlink(&wrm_seq, 0);
+        BOOST_CHECK_EQUAL((unsigned)3392, (unsigned)sq_outfilename_filesize(&wrm_seq, 1));
+        sq_outfilename_unlink(&wrm_seq, 1);
+        BOOST_CHECK_EQUAL((unsigned)3371, (unsigned)sq_outfilename_filesize(&wrm_seq, 2));
+        sq_outfilename_unlink(&wrm_seq, 2);
         // The destruction of capture object will finalize the metafile content
     }
-    FileSequence meta_seq(SQF_PATH_FILE_PID_EXTENSION, "./", "capture", ".mwrm");
-    BOOST_CHECK_EQUAL((unsigned)125, (unsigned)sq_outfilename_filesize(&(meta_seq.sq), 0));
-    sq_outfilename_unlink(&(meta_seq.sq), 0);
+    SQ meta_seq;
+    sq_init_outfilename(&meta_seq, SQF_PATH_FILE_PID_EXTENSION, "./", "capture", ".mwrm");
+    BOOST_CHECK_EQUAL((unsigned)125, (unsigned)sq_outfilename_filesize(&meta_seq, 0));
+    sq_outfilename_unlink(&meta_seq, 0);
 }
 
 

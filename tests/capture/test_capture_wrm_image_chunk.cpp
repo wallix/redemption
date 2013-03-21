@@ -29,9 +29,9 @@
 #define LOGNULL
 
 #include "test_orders.hpp"
-#include "transport.hpp"
-#include "testtransport.hpp"
-#include "outfilenametransport.hpp"
+#include "../../transport/transport.hpp"
+#include "../../transport/testtransport.hpp"
+#include "../../transport/outfilenametransport.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
 #include "image_capture.hpp"
@@ -271,7 +271,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    sq_outfilename_unlink(&(png_trans.sequence.sq), 0);
+    sq_outfilename_unlink(&(png_trans.seq), 0);
     
 }
 
@@ -333,7 +333,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                 );
-    sq_outfilename_unlink(&(png_trans.sequence.sq), 0);
+    sq_outfilename_unlink(&(png_trans.seq), 0);
 }
 
 BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
@@ -399,8 +399,8 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(out_png_trans.sequence.sq), 0));
-    sq_outfilename_unlink(&(out_png_trans.sequence.sq), 0);
+    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(out_png_trans.seq), 0));
+    sq_outfilename_unlink(&(out_png_trans.seq), 0);
 }
 
 
@@ -473,12 +473,12 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(out_png_trans.sequence.sq), 0));
-    sq_outfilename_unlink(&(out_png_trans.sequence.sq), 0);
+    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(out_png_trans.seq), 0));
+    sq_outfilename_unlink(&(out_png_trans.seq), 0);
 
     second_png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(second_out_png_trans.sequence.sq), 0));
-    sq_outfilename_unlink(&(second_out_png_trans.sequence.sq), 0);
+    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(second_out_png_trans.seq), 0));
+    sq_outfilename_unlink(&(second_out_png_trans.seq), 0);
 }
 
 
@@ -547,6 +547,6 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     png_recorder.flush();
     BOOST_CHECK_EQUAL((unsigned)1004, (unsigned)player.synctime_now.tv_sec);
 
-    BOOST_CHECK_EQUAL((unsigned)107, sq_outfilename_filesize(&(out_png_trans.sequence.sq), 0));
-    sq_outfilename_unlink(&(out_png_trans.sequence.sq), 0);
+    BOOST_CHECK_EQUAL((unsigned)107, sq_outfilename_filesize(&(out_png_trans.seq), 0));
+    sq_outfilename_unlink(&(out_png_trans.seq), 0);
 }
