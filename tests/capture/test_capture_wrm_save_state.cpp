@@ -133,8 +133,8 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(298, sq_outfilename_filesize(&out_png_trans.sequence.sq, 0));
-    sq_outfilename_unlink(&out_png_trans.sequence.sq, 0);
+    BOOST_CHECK_EQUAL(298, sq_outfilename_filesize(&out_png_trans.seq, 0));
+    sq_outfilename_unlink(&out_png_trans.seq, 0);
 }
 
 const char expected_reset_rect_wrm[] = 
@@ -246,8 +246,8 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(341, sq_outfilename_filesize(&out_png_trans.sequence.sq, 0));
-    sq_outfilename_unlink(&out_png_trans.sequence.sq, 0);
+    BOOST_CHECK_EQUAL(341, sq_outfilename_filesize(&out_png_trans.seq, 0));
+    sq_outfilename_unlink(&out_png_trans.seq, 0);
 }
 
 const char expected_continuation_wrm[] = 
@@ -327,7 +327,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
 
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png");
-    SQ * seq = &(out_png_trans.sequence.sq);
+    SQ * seq = &(out_png_trans.seq);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
     
     player.add_consumer(&png_recorder);

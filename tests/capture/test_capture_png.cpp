@@ -299,11 +299,11 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     Rect screen_rect(0, 0, 800, 600);
     OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png");
-    SQ * seq = &(trans.sequence.sq);
+    SQ * seq = &(trans.seq);
     Inifile ini;
     ini.globals.png_interval = 1;
     ini.globals.png_limit = 3;
-    StaticCapture consumer(now, trans, &(trans.sequence.sq), 800, 600, ini);
+    StaticCapture consumer(now, trans, &(trans.seq), 800, 600, ini);
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     consumer.draw(cmd, screen_rect);
@@ -374,8 +374,8 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
     d.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     d.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     d.flush();
-    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(trans.sequence.sq), 0));
-    sq_outfilename_unlink(&(trans.sequence.sq), 0);
+    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(trans.seq), 0));
+    sq_outfilename_unlink(&(trans.seq), 0);
 }
 
 
@@ -397,8 +397,8 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
         fclose(fd);
     }
     d.flush();
-    BOOST_CHECK_EQUAL(8176, sq_outfilename_filesize(&(trans.sequence.sq), 0));
-    sq_outfilename_unlink(&(trans.sequence.sq), 0);
+    BOOST_CHECK_EQUAL(8176, sq_outfilename_filesize(&(trans.seq), 0));
+    sq_outfilename_unlink(&(trans.seq), 0);
 }
 
 
@@ -520,8 +520,8 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     d.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx, bogus.cy), 0xCC, 0, 0, 0), scr, bogus);
 
     d.flush();
-    BOOST_CHECK_EQUAL(4094, sq_outfilename_filesize(&(trans.sequence.sq), 0));
-    sq_outfilename_unlink(&(trans.sequence.sq), 0);
+    BOOST_CHECK_EQUAL(4094, sq_outfilename_filesize(&(trans.seq), 0));
+    sq_outfilename_unlink(&(trans.seq), 0);
 }
 
 
@@ -572,7 +572,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
     };
 
     d.flush();
-    BOOST_CHECK_EQUAL(2913, sq_outfilename_filesize(&(trans.sequence.sq), 0));
-    sq_outfilename_unlink(&(trans.sequence.sq), 0);
+    BOOST_CHECK_EQUAL(2913, sq_outfilename_filesize(&(trans.seq), 0));
+    sq_outfilename_unlink(&(trans.seq), 0);
 }
 
