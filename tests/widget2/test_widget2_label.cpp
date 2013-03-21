@@ -26,7 +26,7 @@
 #define LOGNULL
 #include "log.hpp"
 
-#include <widget2/label.hpp>
+#include "internal/widget2/label.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
