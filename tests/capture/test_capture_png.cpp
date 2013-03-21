@@ -299,70 +299,70 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     Rect screen_rect(0, 0, 800, 600);
     OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png");
-    FileSequence & sequence = trans.sequence;
+    SQ * seq = &(trans.sequence.sq);
     Inifile ini;
     ini.globals.png_interval = 1;
     ini.globals.png_limit = 3;
-    StaticCapture consumer(now, trans, sequence, 800, 600, ini);
+    StaticCapture consumer(now, trans, &(trans.sequence.sq), 800, 600, ini);
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     consumer.draw(cmd, screen_rect);
 
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 0));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 1));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 1));
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
 
-    BOOST_CHECK_EQUAL(3051, sq_outfilename_filesize(&(sequence.sq), 0));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 1));
+    BOOST_CHECK_EQUAL(3051, sq_outfilename_filesize(seq, 0));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 1));
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
 
-    BOOST_CHECK_EQUAL(3051, sq_outfilename_filesize(&(sequence.sq), 0));
-    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(&(sequence.sq), 1));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 2));
+    BOOST_CHECK_EQUAL(3051, sq_outfilename_filesize(seq, 0));
+    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(seq, 1));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 2));
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
 
-    BOOST_CHECK_EQUAL(3051, sq_outfilename_filesize(&(sequence.sq), 0));
-    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(&(sequence.sq), 1));
-    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(&(sequence.sq), 2));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 3));
+    BOOST_CHECK_EQUAL(3051, sq_outfilename_filesize(seq, 0));
+    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(seq, 1));
+    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(seq, 2));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 3));
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
 
     ::close(trans.fd);
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 0));
-    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(&(sequence.sq), 1));
-    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(&(sequence.sq), 2));
-    BOOST_CHECK_EQUAL(3054, sq_outfilename_filesize(&(sequence.sq), 3));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 4));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
+    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(seq, 1));
+    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(seq, 2));
+    BOOST_CHECK_EQUAL(3054, sq_outfilename_filesize(seq, 3));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 4));
 
     ini.globals.png_limit = 10;
     consumer.update_config(ini);
 
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 0));
-    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(&(sequence.sq), 1));
-    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(&(sequence.sq), 2));
-    BOOST_CHECK_EQUAL(3054, sq_outfilename_filesize(&(sequence.sq), 3));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 4));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
+    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(seq, 1));
+    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(seq, 2));
+    BOOST_CHECK_EQUAL(3054, sq_outfilename_filesize(seq, 3));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 4));
 
     ini.globals.png_limit = 2;
     consumer.update_config(ini);
 
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 0));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 1));
-    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(&(sequence.sq), 2));
-    BOOST_CHECK_EQUAL(3054, sq_outfilename_filesize(&(sequence.sq), 3));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 4));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 1));
+    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(seq, 2));
+    BOOST_CHECK_EQUAL(3054, sq_outfilename_filesize(seq, 3));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 4));
 
     ini.globals.png_limit = 0;
     consumer.update_config(ini);
 
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 1));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 2));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 3));
-    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(&(sequence.sq), 4));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 1));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 2));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 3));
+    BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 4));
 }
 
 BOOST_AUTO_TEST_CASE(TestSmallImage)

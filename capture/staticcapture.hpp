@@ -63,15 +63,15 @@ struct StaticCaptureConfig {
 class StaticCapture : public ImageCapture
 {
 public:
-    FileSequence & sequence;
+    SQ * seq;
     StaticCaptureConfig conf;
 
     struct timeval start_static_capture;
     uint64_t inter_frame_interval_static_capture;
 
-    StaticCapture(const timeval & now, Transport & trans, FileSequence & sequence, unsigned width, unsigned height, const Inifile & ini)
+    StaticCapture(const timeval & now, Transport & trans, SQ * seq, unsigned width, unsigned height, const Inifile & ini)
     : ImageCapture(trans, width, height)
-    , sequence(sequence)
+    , seq(seq)
     {
         this->start_static_capture = now;
         this->conf.png_interval = 3000; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
@@ -88,7 +88,7 @@ public:
             for(size_t i = this->conf.png_limit ; i > ini.globals.png_limit ; i--){
                 if (this->trans.seqno >= i){
                     // unlink may fail, for instance if file does not exist, just don't care
-                    sq_outfilename_unlink(&(this->sequence.sq), this->trans.seqno - i);
+                    sq_outfilename_unlink(this->seq, this->trans.seqno - i);
                 }
             }
         }
@@ -119,7 +119,7 @@ public:
         if (this->conf.png_limit > 0){
             if (this->trans.seqno >= this->conf.png_limit){
                 // unlink may fail, for instance if file does not exist, just don't care
-                sq_outfilename_unlink(&(this->sequence.sq), this->trans.seqno - this->conf.png_limit);
+                sq_outfilename_unlink(this->seq, this->trans.seqno - this->conf.png_limit);
             }
             this->ImageCapture::flush();
             this->trans.next();

@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     Inifile ini;
     ini.globals.png_limit = 3;
     ini.globals.png_interval = 20;
-    StaticCapture consumer(now, trans, trans.sequence, 800, 600, ini);
+    StaticCapture consumer(now, trans, &(trans.sequence.sq), 800, 600, ini);
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     consumer.draw(cmd, screen_rect);
