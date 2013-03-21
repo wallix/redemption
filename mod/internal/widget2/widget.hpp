@@ -111,6 +111,7 @@ public:
     }
 
 protected:
+    TODO("attach and detach should not exist at this level, this is a composite behavior, remove them from here")
     virtual void attach_widget(Widget *)
     {}
 
@@ -130,6 +131,12 @@ public:
         {}
     };
 
+    TODO("screen position is too complicated it should probably be splitted in two independant functions"
+         "- one that will return drawing rect in screen coordinates"
+         "- one that will return clip in screen coordinates"
+         "it is not obvious to me that clipping width x height and drawing rect width x height "
+         " must always be identical (I believe the opposite)"
+         "relating them structurally does not looks like a good idea")
     screen_position position_in_screen(const Rect& clip)
     {
         screen_position ret(this->rect.intersect(clip));
