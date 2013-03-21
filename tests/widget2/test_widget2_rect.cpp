@@ -91,14 +91,10 @@ struct TestDraw : ModApi
     }
 
     virtual void begin_update()
-    {
-        BOOST_CHECK(false);
-    }
+    {}
 
     virtual void end_update()
-    {
-        BOOST_CHECK(false);
-    }
+    {}
 
     virtual void server_draw_text(int , int , const char* , uint32_t , const Rect& )
     {
@@ -319,6 +315,47 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
     }
 }
 
+BOOST_AUTO_TEST_CASE(TraceWidgetRectEvent)
+{
+    struct WidgetReceiveEvent : public Widget {
+        Widget * sender;
+        NotifyApi::notify_event_t event;
+
+        WidgetReceiveEvent()
+        : Widget(NULL, Rect(), NULL, NULL)
+        {}
+
+        virtual void draw(const Rect&)
+        {}
+
+        virtual void notify(Widget* sender, NotifyApi::notify_event_t event,
+                            unsigned long, unsigned long)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } widget_for_receive_event;
+
+    Widget * parent = &widget_for_receive_event;
+    ModApi * drawable = NULL;
+    NotifyApi * notifier = NULL;
+
+    WidgetRect wrect(drawable, Rect(), parent, notifier);
+
+    wrect.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_UP);
+    wrect.send_event(CLIC_BUTTON1_DOWN, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_DOWN);
+    wrect.send_event(KEYUP, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    BOOST_CHECK(widget_for_receive_event.event == KEYUP);
+    wrect.send_event(KEYDOWN, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    BOOST_CHECK(widget_for_receive_event.event == KEYDOWN);
+}
+
 
 TODO("the entry point exists in module: it's rdp_input_invalidate"
      "je just have to change received values to widget messages")
@@ -326,5 +363,3 @@ TODO("the entry point exists in module: it's rdp_input_invalidate"
 TODO("As soon as composite widgets will be available, we will have to check these tests"
      " are still working with two combination layers (conversion of coordinates "
      "from parent coordinates to screen_coordinates can be tricky)")
-
-TODO("add test with keyboard and mouse events to check they are transmitted as expected")

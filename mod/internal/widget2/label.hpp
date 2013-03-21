@@ -115,6 +115,14 @@ public:
     {
     }
 
+    void set_center()
+    {
+        int w,h;
+        this->drawable->text_metrics(this->buffer, w,h);
+        this->rect.cx = this->x_text * 2 + w;
+        this->rect.cy = this->y_text * 2 + w;
+    }
+
     void set_text(const char * text)
     {
         this->buffer[0] = 0;

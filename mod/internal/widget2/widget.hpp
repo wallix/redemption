@@ -144,29 +144,36 @@ public:
 
     virtual void send_event(EventType event, unsigned param, unsigned param2, Keymap2 * keymap)
     {
-        if (event == WM_DRAW && this->drawable) {
-            this->draw(Rect(param >> 16, param & 0xFFFF,
-                            param2 >> 16, param2 & 0xFFFF));
+        if (event == WM_DRAW) {
+            if (this->drawable) {
+                this->draw(Rect(param >> 16, param & 0xFFFF,
+                                param2 >> 16, param2 & 0xFFFF));
+            }
+        } else {
+            this->notify_parent(event, param, param2);
         }
     }
 
-    void notify_self(NotifyApi::notify_event_t event)
+    virtual void notify(Widget * widget, NotifyApi::notify_event_t event,
+                        unsigned long param, unsigned long param2)
+    {
+        (void)widget;
+        this->notify_parent(event, param, param2);
+    }
+
+    void notify_parent(NotifyApi::notify_event_t event,
+                       unsigned long param, unsigned long param2)
+    {
+        if (this->parent) {
+            this->parent->notify(this, event, param, param2);
+        }
+    }
+
+    void notify_self(NotifyApi::notify_event_t event,
+                     unsigned long param, unsigned long param2)
     {
         if (this->notifier)
-            this->notifier->notify(this, event);
-    }
-
-    void notify_parent(EventType event)
-    {
-        if (this->parent)
-            this->parent->notify(this->id, event);
-    }
-
-    virtual void notify(int id, EventType event)
-    {
-        (void)id;
-        this->notify_self(event);
-        this->notify_parent(event);
+            this->notifier->notify(this, event, param, param2);
     }
 
     virtual Widget * widget_at_pos(int x, int y)
