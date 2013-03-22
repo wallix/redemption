@@ -141,8 +141,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = 0;
-    uint16_t y = 0;
+    int16_t x = 0;
+    int16_t y = 0;
     int xtext = 4;
     int ytext = 1;
 
@@ -172,8 +172,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton2)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = 10;
-    uint16_t y = 100;
+    int16_t x = 10;
+    int16_t y = 100;
 
     WidgetButton wbutton(&drawable, x, y, parent, notifier, "test2", auto_resize, id, bg_color, fg_color);
 
@@ -201,8 +201,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton3)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = -10;
-    uint16_t y = 500;
+    int16_t x = -10;
+    int16_t y = 500;
 
     WidgetButton wbutton(&drawable, x, y, parent, notifier, "test3", auto_resize, id, bg_color, fg_color);
 
@@ -230,8 +230,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton4)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = 770;
-    uint16_t y = 500;
+    int16_t x = 770;
+    int16_t y = 500;
 
     WidgetButton wbutton(&drawable, x, y, parent, notifier, "test4", auto_resize, id, bg_color, fg_color);
 
@@ -259,8 +259,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton5)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = -20;
-    uint16_t y = -7;
+    int16_t x = -20;
+    int16_t y = -7;
 
     WidgetButton wbutton(&drawable, x, y, parent, notifier, "test5", auto_resize, id, bg_color, fg_color);
 
@@ -288,8 +288,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton6)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = 760;
-    uint16_t y = -7;
+    int16_t x = 760;
+    int16_t y = -7;
 
     WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
 
@@ -317,8 +317,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = 760;
-    uint16_t y = -7;
+    int16_t x = 760;
+    int16_t y = -7;
 
     WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
 
@@ -346,8 +346,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip2)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = 0;
-    uint16_t y = 0;
+    int16_t x = 0;
+    int16_t y = 0;
 
     WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
 
@@ -399,8 +399,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonEvent)
     Widget * parent = &widget_for_receive_event;
     ModApi * drawable = NULL;
     bool auto_resize = false;
-    uint16_t x = 0;
-    uint16_t y = 0;
+    int16_t x = 0;
+    int16_t y = 0;
 
     WidgetButton wbutton(drawable, x, y, parent, &notifier, "", auto_resize);
 

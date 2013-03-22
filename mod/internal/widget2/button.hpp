@@ -61,8 +61,8 @@ public:
             case CLIC_BUTTON1_UP:
                 if (this->state & 1) {
                     this->state = 0;
-                    this->notify_self(NOTIFY_SUBMIT, 0, 0);
-                    this->notify_parent(WIDGET_SUBMIT, 0, 0);
+                    this->notify_self(NOTIFY_SUBMIT);
+                    this->notify_parent(WIDGET_SUBMIT);
                     //this->refresh(this->rect);
                 }
                 break;

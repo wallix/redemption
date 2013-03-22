@@ -141,8 +141,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = 0;
-    uint16_t y = 0;
+    int16_t x = 0;
+    int16_t y = 0;
     int xtext = 4;
     int ytext = 1;
 
@@ -175,8 +175,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = 10;
-    uint16_t y = 100;
+    int16_t x = 10;
+    int16_t y = 100;
 
     WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test2", auto_resize, id, bg_color, fg_color);
 
@@ -204,8 +204,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = -10;
-    uint16_t y = 500;
+    int16_t x = -10;
+    int16_t y = 500;
 
     WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test3", auto_resize, id, bg_color, fg_color);
 
@@ -233,8 +233,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = 770;
-    uint16_t y = 500;
+    int16_t x = 770;
+    int16_t y = 500;
 
     WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test4", auto_resize, id, bg_color, fg_color);
 
@@ -262,8 +262,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = -20;
-    uint16_t y = -7;
+    int16_t x = -20;
+    int16_t y = -7;
 
     WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test5", auto_resize, id, bg_color, fg_color);
 
@@ -291,8 +291,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = 760;
-    uint16_t y = -7;
+    int16_t x = 760;
+    int16_t y = -7;
 
     WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
 
@@ -320,8 +320,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = 760;
-    uint16_t y = -7;
+    int16_t x = 760;
+    int16_t y = -7;
 
     WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
 
@@ -349,8 +349,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
-    uint16_t x = 0;
-    uint16_t y = 0;
+    int16_t x = 0;
+    int16_t y = 0;
 
     WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
 
@@ -392,8 +392,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
     ModApi * drawable = NULL;
     NotifyApi * notifier = NULL;
     bool auto_resize = false;
-    uint16_t x = 0;
-    uint16_t y = 0;
+    int16_t x = 0;
+    int16_t y = 0;
 
     WidgetLabel wlabel(drawable, x, y, parent, notifier, "", auto_resize);
 

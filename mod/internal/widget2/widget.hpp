@@ -166,7 +166,7 @@ public:
     }
 
     void notify_parent(NotifyApi::notify_event_t event,
-                       unsigned long param, unsigned long param2)
+                       unsigned long param = 0, unsigned long param2 = 0)
     {
         if (this->parent) {
             this->parent->notify(this, event, param, param2);
@@ -174,7 +174,7 @@ public:
     }
 
     void notify_self(NotifyApi::notify_event_t event,
-                     unsigned long param, unsigned long param2)
+                     unsigned long param = 0, unsigned long param2 = 0)
     {
         if (this->notifier)
             this->notifier->notify(this, event, param, param2);
