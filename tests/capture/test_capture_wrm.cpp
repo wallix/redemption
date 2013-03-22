@@ -32,6 +32,7 @@
 #include "../../transport/transport.hpp"
 #include "../../transport/testtransport.hpp"
 #include "../../transport/outfilenametransport.hpp"
+#include "../../transport/outfiletransport.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
@@ -414,7 +415,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     consumer.timestamp(now);
     consumer.flush();
     BOOST_CHECK_EQUAL(0, 0);
-    ::close(trans.fd);
+    rio_clear(&trans.rio); // close file before reading filesize
     BOOST_CHECK_EQUAL(1588, filesize(filename));
     
     char in_path[1024];

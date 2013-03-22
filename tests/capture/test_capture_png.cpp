@@ -32,6 +32,7 @@
 #include "../../transport/transport.hpp"
 #include "../../transport/testtransport.hpp"
 #include "../../transport/outfilenametransport.hpp"
+#include "../../transport/outfiletransport.hpp"
 #include "image_capture.hpp"
 #include "staticcapture.hpp"
 #include "constants.hpp"
@@ -263,7 +264,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     d.draw(cmd, screen_rect);
     d.flush();
-    ::close(trans.fd);
+    rio_clear(&trans.rio); // close file before checking size
     BOOST_CHECK_EQUAL(2786, filesize(filename));
     ::unlink(filename);
 }

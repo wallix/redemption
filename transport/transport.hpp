@@ -39,8 +39,8 @@
 #include "log.hpp"
 #include "fileutils.hpp"
 #include "netutils.hpp"
-#include "../libs/rio.h"
-#include "../libs/rio_impl.h"
+#include "rio/rio.h"
+#include "rio/rio_impl.h"
 #include "stream.hpp"
 
 
@@ -65,7 +65,9 @@ public:
         status(true)
     {}
 
-    virtual ~Transport() {}
+    virtual ~Transport() 
+    {
+    }
 
     void tick() {
         quantum_count++;
@@ -116,55 +118,6 @@ public:
 
 };
 
-
-class OutFileTransport : public Transport {
-    public:
-    int fd;
-    uint32_t verbose;
-
-    OutFileTransport(int fd, unsigned verbose = 0)
-        : Transport()
-        , fd(fd)
-        , verbose(verbose) {}
-
-    virtual ~OutFileTransport() {}
-
-    // recv is not implemented for OutFileTransport
-    using Transport::recv;
-    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        LOG(LOG_INFO, "OutFileTransport used for recv");
-        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
-    }
-
-    using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error) {
-        if (this->verbose & 0x100){
-            LOG(LOG_INFO, "File (%u) sending %u bytes", this->fd, len);
-            hexdump_c(buffer, len);
-        }
-        ssize_t ret = 0;
-        size_t remaining_len = len;
-        size_t total_sent = 0;
-        while (remaining_len) {
-            ret = ::write(this->fd, buffer + total_sent, remaining_len);
-            if (ret > 0){
-                remaining_len -= ret;
-                total_sent += ret;
-            }
-            else {
-                if (errno == EINTR){
-                    continue;
-                }
-                LOG(LOG_INFO, "Outfile transport write failed with error %s", strerror(errno));
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
-            }
-        }
-        if (this->verbose & 0x100){
-            LOG(LOG_INFO, "File (%u) sent %u bytes", this->fd, len);
-        }
-    }
-
-};
 
 class InFileTransport : public Transport {
 

@@ -27,8 +27,8 @@
 #define LOGPRINT
 #include "log.hpp"
 
-#include "../libs/rio.h"
-#include "../libs/rio_impl.h"
+#include "rio/rio.h"
+#include "rio/rio_impl.h"
 
 // Outfile is a RIO object used to wrap system file writing
 // an already opened file descriptor is provided to it

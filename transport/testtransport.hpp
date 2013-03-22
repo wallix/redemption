@@ -23,6 +23,8 @@
 #ifndef _REDEMPTION_CORE_TESTTRANSPORT_HPP_
 #define _REDEMPTION_CORE_TESTTRANSPORT_HPP_
 
+#include "transport.hpp"
+
 class GeneratorTransport : public Transport {
 
     public:

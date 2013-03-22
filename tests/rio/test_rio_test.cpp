@@ -27,8 +27,8 @@
 #define LOGPRINT
 #include "log.hpp"
 
-#include "../libs/rio.h"
-#include "../libs/rio_impl.h"
+#include "rio/rio.h"
+#include "rio/rio_impl.h"
 
 
 // TestTransport is basically (and internally) a Generator comined with a Check Transport
