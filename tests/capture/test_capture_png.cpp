@@ -288,7 +288,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
     d.flush();
 
     BOOST_CHECK_EQUAL(2806, sq_outfilename_filesize(&trans.seq, 1));
-    sq_outfilename_filesize(&trans.seq, 1);
+    sq_outfilename_unlink(&trans.seq, 1);
 }
 
 

@@ -337,6 +337,6 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     }
     png_recorder.flush();
     BOOST_CHECK_EQUAL(341, sq_outfilename_filesize(seq, 0));
-    sq_outfilename_filesize(seq, 0);
+    sq_outfilename_unlink(seq, 0);
 }
 
