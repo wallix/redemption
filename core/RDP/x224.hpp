@@ -312,7 +312,14 @@ namespace X224
 
         RecvFactory(Transport & t, Stream & stream)
         {
-            t.recv(&stream.end, X224::TPKT_HEADER_LEN); /* 4 bytes */
+            /* 4 bytes */
+//            t.recv(&stream.end, X224::TPKT_HEADER_LEN); 
+            uint16_t length = stream.size();
+            if (length < X224::TPKT_HEADER_LEN){
+                t.recv(&stream.end, X224::TPKT_HEADER_LEN - length);
+            }
+            stream.p = stream.data;
+
             uint8_t tpkt_version = stream.in_uint8();
             if (tpkt_version != 3) {
                 LOG(LOG_ERR, "Tpkt type 3 slow-path PDU expected (version = %u)", tpkt_version);
@@ -333,7 +340,7 @@ namespace X224
             case X224::CC_TPDU: // Connection Confirm 1101 xxxx
             case X224::DR_TPDU: // Disconnect Request 1000 0000
             case X224::DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
-            case X224::ER_TPDU:  // TPDU Error        0111 0000
+            case X224::ER_TPDU: // TPDU Error         0111 0000
                 this->type = tpdu_type & 0xF0;
             break;
             default:

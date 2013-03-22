@@ -2159,7 +2159,6 @@ TODO("Pass font name as parameter in constructor")
         trans->send(stream);
     }
 
-
     /* store the number of client cursor cache in client_info */
     void capset_pointercache(Stream & stream, int len)
     {
