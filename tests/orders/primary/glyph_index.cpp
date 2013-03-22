@@ -31,7 +31,7 @@
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
-#include "./test_orders.hpp"
+#include "test_orders.hpp"
 
 BOOST_AUTO_TEST_CASE(TestGlyphIndex)
 {
@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
 
     {
         BStream stream(1000);
-     TODO(" actual data is much more complex  than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer includes cache management primitives")
+        TODO(" actual data is much more complex  than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives")
 
         RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));
         RDPGlyphIndex statecmd(0, 0, 0, 0, 0, 0, Rect(), Rect(), RDPBrush(), 0, 0, 0, (uint8_t*)"");
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
                 == cmd.brush)){
             BOOST_CHECK_EQUAL(true, false);
         }
-     TODO(" actual data is much more complex than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer includes cache management primitives")
+     TODO(" actual data is much more complex than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives")
         check<RDPGlyphIndex>(common_cmd, cmd,
             RDPOrderCommon(GLYPHINDEX, Rect(5, 0, 800, 600)),
             RDPGlyphIndex(1, 0x20, 1, 4,

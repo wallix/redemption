@@ -32,7 +32,7 @@
 #include <string.h>
 #include "constants.hpp"
 #include "stream.hpp"
-#include "../transport/transport.hpp"
+#include "transport.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/nego.hpp"
 #include "RDP/mcs.hpp"
@@ -43,6 +43,8 @@
 #include "RDP/sec.hpp"
 #include "colors.hpp"
 #include "RDP/capabilities.hpp"
+#include "RDP/fastpath.hpp"
+#include "RDP/slowpath.hpp"
 
 #include "ssl_calls.hpp"
 #include "bitfu.hpp"
@@ -656,7 +658,7 @@ TODO("Pass font name as parameter in constructor")
 //      If the Encryption Level (sections 5.3.2 and 2.2.1.4.3) selected by the
 //      server is ENCRYPTION_LEVEL_NONE (0) and the Encryption Method (sections
 //      5.3.2 and 2.2.1.4.3) selected by the server is ENCRYPTION_METHOD_NONE
-//      (0), then this header is not included in the PDU.
+//      (0), then this header is not include " in the PDU.
 
 //    shareDataHeader (18 bytes): Share Data Header (section 2.2.8.1.1.1.2)
 //      containing information about the packet. The type subfield of the
@@ -1331,7 +1333,7 @@ TODO("Pass font name as parameter in constructor")
             // subsequent RDP traffic.
 
             // From this point, all subsequent RDP traffic can be encrypted and a security
-            // header is included with the data if encryption is in force (the Client Info
+            // header is include " with the data if encryption is in force (the Client Info
             // and licensing PDUs are an exception in that they always have a security
             // header). The Security Header follows the X.224 and MCS Headers and indicates
             // whether the attached data is encrypted.
@@ -1817,12 +1819,21 @@ TODO("Pass font name as parameter in constructor")
 
 
         // Besides input and graphics data, other data that can be exchanged between
-        // client and server after the connection has been finalized includes
+        // client and server after the connection has been finalized include "
         // connection management information and virtual channel messages (exchanged
         // between client-side plug-ins and server-side applications).
         {
             ChannelDefArray & channel_list = this->channel_list;
             BStream stream(65536);
+
+            // Detect fast-path PDU
+            this->trans->recv(&stream.end, 1);
+            uint8_t byte = stream.in_uint8();
+            if ((byte & FASTPATH_OUTPUT_ACTION_X224) == 0){
+                LOG(LOG_INFO, "Front::Received fast-path PDU");
+                throw Error(ERR_X224);
+            }
+
             X224::RecvFactory fx224(*this->trans, stream);
             TODO("We shall put a specific case when we get Disconnect Request")
             if (fx224.type == X224::DR_TPDU){
@@ -2113,7 +2124,8 @@ TODO("Pass font name as parameter in constructor")
         caps_count++;
 
         InputCaps input_caps;
-        input_caps.inputFlags = 1;
+        input_caps.inputFlags = INPUT_FLAG_SCANCODES;
+//        input_caps.inputFlags = INPUT_FLAG_SCANCODES | INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2;
         input_caps.keyboardLayout = 0;
         input_caps.keyboardType = 0;
         input_caps.keyboardSubType = 0;
@@ -2158,7 +2170,6 @@ TODO("Pass font name as parameter in constructor")
         trans->send(sec_header);
         trans->send(stream);
     }
-
 
     /* store the number of client cursor cache in client_info */
     void capset_pointercache(Stream & stream, int len)
@@ -2445,7 +2456,7 @@ TODO("Pass font name as parameter in constructor")
 // If the Encryption Level (sections 5.3.2 and 2.2.1.4.3) selected by the server
 // is ENCRYPTION_LEVEL_NONE (0) and the Encryption Method (sections 5.3.2 and
 // 2.2.1.4.3) selected by the server is ENCRYPTION_METHOD_NONE (0), then this
-// header is not included in the PDU.
+// header is not include " in the PDU.
 
 // synchronizePduData (22 bytes): The contents of the Synchronize PDU as
 // described in section 2.2.1.14.1.
@@ -2707,6 +2718,9 @@ TODO("Pass font name as parameter in constructor")
         break;
         case PDUTYPE2_INPUT:   // 28(0x1c) Input PDU (section 2.2.8.1.1.3)
             {
+LOG(LOG_INFO, "***** PDUTYPE2_INPUT *****:");
+hexdump_d(sdata_in.payload.p, sdata_in.payload.in_remain());
+
                 int num_events = sdata_in.payload.in_uint16_le();
 
                 if (this->verbose & 4){
@@ -2714,8 +2728,8 @@ TODO("Pass font name as parameter in constructor")
                 }
 
                 const unsigned expected =
-                      2               /* pad(2) */
-                    + num_events * 12 /* time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2) */
+                      2               // pad(2)
+                    + num_events * 12 // time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)
                     ;
                 if (!sdata_in.payload.in_check_rem(expected))
                 {
@@ -2724,13 +2738,25 @@ TODO("Pass font name as parameter in constructor")
                     throw Error(ERR_MCS_PDU_TRUNCATED);
                 }
 
-                sdata_in.payload.in_skip_bytes(2); /* pad */
+                sdata_in.payload.in_skip_bytes(2); // pad
+//                SlowPath::SlowPathClientInputEventPDU_Recv SpCiep(sdata_in.payload);
+
                 for (int index = 0; index < num_events; index++) {
+//                for (int index = 0; index < SpCiep.numEvents; index++) {
                     int time = sdata_in.payload.in_uint32_le();
                     uint16_t msg_type = sdata_in.payload.in_uint16_le();
                     uint16_t device_flags = sdata_in.payload.in_uint16_le();
                     int16_t param1 = sdata_in.payload.in_sint16_le();
                     int16_t param2 = sdata_in.payload.in_sint16_le();
+/*
+                    int time = SpCiep.payload.in_uint32_le();
+                    uint16_t msg_type = SpCiep.payload.in_uint16_le();
+                    uint16_t device_flags = SpCiep.payload.in_uint16_le();
+                    int16_t param1 = SpCiep.payload.in_sint16_le();
+                    int16_t param2 = SpCiep.payload.in_sint16_le();
+*/
+LOG(LOG_INFO, "***** PDUTYPE2_INPUT *****: msg_type = 0x%X", msg_type);
+
 
                     TODO(" we should always call send_input with original data  if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it")
                     TODO(" with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.")
@@ -2811,7 +2837,7 @@ TODO("Pass font name as parameter in constructor")
             // 2.2.11.1 Inclusive Rectangle (TS_RECTANGLE16)
             // =============================================
             // The TS_RECTANGLE16 structure describes a rectangle expressed in inclusive coordinates 
-            // (the right and bottom coordinates are included in the rectangle bounds).
+            // (the right and bottom coordinates are include " in the rectangle bounds).
             // left (2 bytes): A 16-bit, unsigned integer. The leftmost bound of the rectangle.
             // top (2 bytes): A 16-bit, unsigned integer. The upper bound of the rectangle.
             // right (2 bytes): A 16-bit, unsigned integer. The rightmost bound of the rectangle.

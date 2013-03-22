@@ -92,7 +92,7 @@
 
 #include "RDP/RDPGraphicDevice.hpp"
 
-#include "../../transport/transport.hpp"
+#include "transport.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
 #include "difftimeval.hpp"

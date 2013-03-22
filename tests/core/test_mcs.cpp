@@ -29,8 +29,8 @@
 #include "log.hpp"
 
 #include "stream.hpp"
-#include "../../transport/transport.hpp"
-#include "../../transport/testtransport.hpp"
+#include "transport.hpp"
+#include "testtransport.hpp"
 #include "RDP/mcs.hpp"
 
 

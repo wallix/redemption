@@ -27,7 +27,7 @@
 #define _REDEMPTION_CORE_RDP_X224_HPP_
 
 #include <stdint.h>
-#include "../../transport/transport.hpp"
+#include "transport.hpp"
 #include "stream.hpp"
 #include "log.hpp"
 #include "error.hpp"
@@ -312,7 +312,14 @@ namespace X224
 
         RecvFactory(Transport & t, Stream & stream)
         {
-            t.recv(&stream.end, X224::TPKT_HEADER_LEN); /* 4 bytes */
+            /* 4 bytes */
+//            t.recv(&stream.end, X224::TPKT_HEADER_LEN); 
+            uint16_t length = stream.size();
+            if (length < X224::TPKT_HEADER_LEN){
+                t.recv(&stream.end, X224::TPKT_HEADER_LEN - length);
+            }
+            stream.p = stream.data;
+
             uint8_t tpkt_version = stream.in_uint8();
             if (tpkt_version != 3) {
                 LOG(LOG_ERR, "Tpkt type 3 slow-path PDU expected (version = %u)", tpkt_version);
@@ -333,7 +340,7 @@ namespace X224
             case X224::CC_TPDU: // Connection Confirm 1101 xxxx
             case X224::DR_TPDU: // Disconnect Request 1000 0000
             case X224::DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
-            case X224::ER_TPDU:  // TPDU Error        0111 0000
+            case X224::ER_TPDU: // TPDU Error         0111 0000
                 this->type = tpdu_type & 0xF0;
             break;
             default:
@@ -429,7 +436,7 @@ namespace X224
     // (used for load balancing) terminated by a carriage-return (CR) and line-feed
     // (LF) ANSI sequence. For more information about Terminal Server load balancing
     // and the routing token format, see [MSFT-SDLBTS]. The length of the routing
-    // token and CR+LF sequence is included in the X.224 Connection Request Length
+    // token and CR+LF sequence is include " in the X.224 Connection Request Length
     // Indicator field. If this field is present, then the cookie field MUST NOT be
     //  present.
 
@@ -437,12 +444,12 @@ namespace X224
     // by a carriage-return (CR) and line-feed (LF) ANSI sequence. This text string
     // MUST be "Cookie: mstshash=IDENTIFIER", where IDENTIFIER is an ANSI string
     //(an example cookie string is shown in section 4.1.1). The length of the entire
-    // cookie string and CR+LF sequence is included in the X.224 Connection Request
+    // cookie string and CR+LF sequence is include " in the X.224 Connection Request
     // Length Indicator field. This field MUST NOT be present if the routingToken
     // field is present.
 
     // rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
-    // structure. The length of this negotiation structure is included in the X.224
+    // structure. The length of this negotiation structure is include " in the X.224
     // Connection Request Length Indicator field.
 
     // 2.2.1.1.1 RDP Negotiation Request (RDP_NEG_REQ)
@@ -643,7 +650,7 @@ namespace X224
 
     // rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1)
     // structure or an optional RDP Negotiation Failure (section 2.2.1.2.2)
-    // structure. The length of the negotiation structure is included in the X.224
+    // structure. The length of the negotiation structure is include " in the X.224
     // Connection Confirm Length Indicator field.
 
     // 2.2.1.2.1 RDP Negotiation Response (RDP_NEG_RSP)

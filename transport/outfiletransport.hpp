@@ -17,45 +17,35 @@
    Copyright (C) Wallix 2012
    Author(s): Christophe Grosjean
 
-   Transport layer abstraction
+   Transport layer abstraction, outfile implementation
 */
 
-#ifndef _REDEMPTION_TRANSPORT_OUTFILENAMETRANSPORT_HPP_
-#define _REDEMPTION_TRANSPORT_OUTFILENAMETRANSPORT_HPP_
+#ifndef _REDEMPTION_TRANSPORT_OUTFILETRANSPORT_HPP_
+#define _REDEMPTION_TRANSPORT_OUTFILETRANSPORT_HPP_
 
 #include "transport.hpp"
 #include "rio/rio.h"
 
-TODO("there seems there is some common base between OutFilename and OutMeta = create some common OutRIO ?")
-class OutFilenameTransport : public Transport {
-public:
-    SQ seq;
+class OutFileTransport : public Transport {
+    public:
     RIO rio;
+    uint32_t verbose;
 
-    OutFilenameTransport(
-            SQ_FORMAT format,
-            const char * const prefix,
-            const char * const filename,
-            const char * const extension,
-            unsigned verbose = 0)
+    OutFileTransport(int fd, unsigned verbose = 0)
+        : verbose(verbose) 
     {
-        RIO_ERROR status1 = sq_init_outfilename(&this->seq, format, prefix, filename, extension);
-        if (status1 != RIO_ERROR_OK){
-            LOG(LOG_ERR, "Sequence outfilename initialisation failed (%u)", status1);
-            throw Error(ERR_TRANSPORT);
-        }
-        RIO_ERROR status2 = rio_init_outsequence(&this->rio, &this->seq);
-        if (status2 != RIO_ERROR_OK){
-            LOG(LOG_ERR, "rio outsequence initialisation failed (%u)", status2);
+        RIO_ERROR status = rio_init_outfile(&this->rio, fd);
+        if (status != RIO_ERROR_OK){
+            LOG(LOG_ERR, "rio outfile initialisation failed (%u)", status);
             throw Error(ERR_TRANSPORT);
         }
     }
 
-    ~OutFilenameTransport()
+    virtual ~OutFileTransport() 
     {
         rio_clear(&this->rio);
-        sq_clear(&this->seq);
     }
+
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
@@ -65,24 +55,11 @@ public:
         }
     }
 
-    virtual void timestamp(timeval now)
-    {
-        sq_timestamp(&this->seq, &now);
-        Transport::timestamp(now);
-    }
-
     using Transport::recv;
     virtual void recv(char**, size_t) throw (Error)
     {  
-        LOG(LOG_INFO, "OutFilenameTransport used for recv");
+        LOG(LOG_INFO, "OutFileTransport used for recv");
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
-    }
-
-    virtual bool next()
-    {
-        LOG(LOG_INFO, "OutFilename::next()");
-        sq_next(&this->seq);
-        return Transport::next();
     }
 };
 

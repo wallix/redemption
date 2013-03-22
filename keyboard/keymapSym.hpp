@@ -648,8 +648,8 @@
 //    implies                           2254     0x08ce
 //    identical                         2255     0x08cf
 //    radical                           2262     0x08d6
-//    includedin                        2266     0x08da
-//    includes                          2267     0x08db
+//    include "in                        2266     0x08da
+//    include "                          2267     0x08db
 //    intersection                      2268     0x08dc
 //    union                             2269     0x08dd
 //    logicaland                        2270     0x08de
@@ -1060,7 +1060,7 @@ struct KeymapSym {
 // +--------------------------+------------------------------------------------+
 // | 0x0100 KBDFLAGS_EXTENDED | The keystroke message contains an extended     |
 // |                          | scancode. For enhanced 101-key and 102-key     |
-// |                          | keyboards, extended keys include the right     |
+// |                          | keyboards, extended keys include "he right     |
 // |                          | ALT and right CTRL keys on the main section    |
 // |                          | of the keyboard; the INS, DEL, HOME, END,      |
 // |                          | PAGE UP, PAGE DOWN and ARROW keys in the       |

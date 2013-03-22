@@ -29,8 +29,8 @@
 #include "log.hpp"
 #define LOGNULL
 
-#include "../../transport/transport.hpp"
-#include "../../transport/testtransport.hpp"
+#include "transport.hpp"
+#include "testtransport.hpp"
 #include "RDP/gcc.hpp"
 
 BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)

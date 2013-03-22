@@ -28,7 +28,7 @@
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
-#include "../../transport/inbymetasequencetransport.hpp"
+#include "inbymetasequencetransport.hpp"
 
 struct test_internal_mod : public internal_mod {
 

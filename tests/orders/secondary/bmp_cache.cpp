@@ -31,7 +31,7 @@
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 
-#include "./test_orders.hpp"
+#include "test_orders.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
 {

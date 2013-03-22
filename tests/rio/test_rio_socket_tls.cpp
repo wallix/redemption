@@ -27,8 +27,8 @@
 #define LOGPRINT
 #include "log.hpp"
 
-#include "../libs/rio.h"
-#include "../libs/rio_impl.h"
+#include "rio/rio.h"
+#include "rio/rio_impl.h"
 
 // This test is somewhat tricky
 // The goal is to check that SocketTransport objects are working as expected

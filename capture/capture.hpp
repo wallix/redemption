@@ -23,8 +23,8 @@
 
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
-#include "../transport/outmetatransport.hpp"
-#include "../transport/outfilenametransport.hpp"
+#include "outmetatransport.hpp"
+#include "outfilenametransport.hpp"
 class Capture : public RDPGraphicDevice
 {
 public:

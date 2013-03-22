@@ -20,13 +20,13 @@
    Transport layer abstraction
 */
 
-#ifndef _REDEMPTION_CORE_OUTMETATRANSPORT_HPP_
-#define _REDEMPTION_CORE_OUTMETATRANSPORT_HPP_
+#ifndef _REDEMPTION_TRANSPORT_OUTMETATRANSPORT_HPP_
+#define _REDEMPTION_TRANSPORT_OUTMETATRANSPORT_HPP_
 
 #include "transport.hpp"
 #include "error.hpp"
 
-#include "../libs/rio.h"
+#include "rio/rio.h"
 
 class OutmetaTransport : public Transport {
 public:
@@ -66,17 +66,17 @@ public:
         }
     }
 
-    virtual void timestamp(timeval now)
-    {
-        this->future = now;
-        sq_timestamp(this->seq, &now);
-    }
-
     using Transport::recv;
     virtual void recv(char**, size_t) throw (Error)
     {  
-        LOG(LOG_INFO, "OutFileTransport used for recv");
+        LOG(LOG_INFO, "OutmetaTransport used for recv");
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
+    }
+
+    virtual void timestamp(timeval now)
+    {
+        sq_timestamp(this->seq, &now);
+        Transport::timestamp(now);
     }
 
     virtual bool next()

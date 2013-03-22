@@ -50,7 +50,7 @@
 
 //  These stored records allow the server to use the minimum amount of data when
 //  constructing an order; if a field is unchanged from the value that it had
-//  when the order type was last sent, it SHOULD NOT be included in the order
+//  when the order type was last sent, it SHOULD NOT be include " in the order
 //  being constructed. Hence, only fields that have new values are required to
 //  be sent to the client. The fields that are present in the order MUST be
 //  indicated by the fieldFlags field.
@@ -860,7 +860,7 @@ public:
 class RDPSecondaryOrderHeader {
     // MS-RDPEGDI : 2.2.2.2.1.2.1.1 Secondary Drawing Order Header
     // (SECONDARY_DRAWING_ORDER_HEADER)
-    // The SECONDARY_DRAWING_ORDER_HEADER structure is included in all secondary
+    // The SECONDARY_DRAWING_ORDER_HEADER structure is include " in all secondary
     // drawing orders.
 
     // controlFlags (1 byte): An 8-bit, unsigned integer. The control byte that

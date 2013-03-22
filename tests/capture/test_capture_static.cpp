@@ -28,8 +28,8 @@
 
 #define LOGNULL
 #include "test_orders.hpp"
-#include "../../transport/transport.hpp"
-#include "../../transport/outfilenametransport.hpp"
+#include "transport.hpp"
+#include "outfilenametransport.hpp"
 #include "image_capture.hpp"
 #include "staticcapture.hpp"
 #include "constants.hpp"
