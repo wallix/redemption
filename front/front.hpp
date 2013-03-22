@@ -43,6 +43,7 @@
 #include "RDP/sec.hpp"
 #include "colors.hpp"
 #include "RDP/capabilities.hpp"
+#include "RDP/fastpath.hpp"
 
 #include "ssl_calls.hpp"
 #include "bitfu.hpp"
@@ -1823,6 +1824,14 @@ TODO("Pass font name as parameter in constructor")
         {
             ChannelDefArray & channel_list = this->channel_list;
             BStream stream(65536);
+
+            this->trans->recv(&stream.end, 1);
+            uint8_t byte = stream.in_uint8();
+            if ((byte & 0x3) == 0){
+                LOG(LOG_INFO, "Front::Received fast-path PDU");
+                throw Error(ERR_X224);
+            }
+
             X224::RecvFactory fx224(*this->trans, stream);
             TODO("We shall put a specific case when we get Disconnect Request")
             if (fx224.type == X224::DR_TPDU){
@@ -2113,7 +2122,8 @@ TODO("Pass font name as parameter in constructor")
         caps_count++;
 
         InputCaps input_caps;
-        input_caps.inputFlags = 1;
+        input_caps.inputFlags = INPUT_FLAG_SCANCODES;
+//        input_caps.inputFlags = INPUT_FLAG_SCANCODES | INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2;
         input_caps.keyboardLayout = 0;
         input_caps.keyboardType = 0;
         input_caps.keyboardSubType = 0;

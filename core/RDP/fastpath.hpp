@@ -119,5 +119,68 @@
 
 TODO("To implement fastpath, the idea is to replace the current layer stack X224->Mcs->Sec with only one FastPath object. The FastPath layer would also handle legacy packets still using several independant layers. That should lead to a much simpler code in both front.hpp and rdp.hpp but still keep a flat easy to test model.")
 
+// 2.2.8.1.2.2 Fast-Path Input Event (TS_FP_INPUT_EVENT)
+// =====================================================
+
+// The TS_FP_INPUT_EVENT structure is used to describe the type and encapsulate
+//  the data for a fast-path input event sent from client to server. All
+//  fast-path input events conform to this basic structure (see sections
+//  2.2.8.1.2.2.1 to 2.2.8.1.2.2.5).
+
+// eventCode (3 bits): 3 bits. The type code of the input event.
+// +-----------------------------------+--------------------------------------+
+// | 3-Bit Codes                       | Meaning                              |
+// +-----------------------------------+--------------------------------------+
+// | 0x0 FASTPATH_INPUT_EVENT_SCANCODE | Indicates a Fast-Path Keyboard Event |
+// |                                   | (section 2.2.8.1.2.2.1).             |
+// +-----------------------------------+--------------------------------------+
+// | 0x1 FASTPATH_INPUT_EVENT_MOUSE    | Indicates a Fast-Path Mouse Event    |
+// |                                   | (section 2.2.8.1.2.2.3).             |
+// +-----------------------------------+--------------------------------------+
+// | 0x2 FASTPATH_INPUT_EVENT_MOUSEX   | Indicates a Fast-Path Extended Mouse |
+// |                                   | Event (section 2.2.8.1.2.2.4).       |
+// +-----------------------------------+--------------------------------------+
+// | 0x3 FASTPATH_INPUT_EVENT_SYNC     | Indicates a Fast-Path Synchronize    |
+// |                                   | Event (section 2.2.8.1.2.2.5).       |
+// +-----------------------------------+--------------------------------------+
+// | 0x4 FASTPATH_INPUT_EVENT_UNICODE  | Indicates a Fast-Path Unicode        |
+// |                                   | Keyboard Event (section              |
+// |                                   | 2.2.8.1.2.2.2).                      |
+// +-----------------------------------+--------------------------------------+
+
+enum {
+      FASTPATH_INPUT_EVENT_SCANCODE = 0x0
+    , FASTPATH_INPUT_EVENT_MOUSE    = 0x1
+    , FASTPATH_INPUT_EVENT_MOUSEX   = 0x2
+    , FASTPATH_INPUT_EVENT_SYNC     = 0x3
+    , FASTPATH_INPUT_EVENT_UNICODE  = 0x4
+};
+
+// +---------------------------------------+-----------------------------------+
+// | 5-Bit Codes                           | Meaning                           |
+// +---------------------------------------+-----------------------------------+
+// | 0x01 FASTPATH_INPUT_KBDFLAGS_RELEASE  | The absence of this flag          |
+// |                                       | indicates a key-down event,       |
+// |                                       | while its presence indicates a    |
+// |                                       | key-release event.                |
+// +---------------------------------------+-----------------------------------+
+// | 0x02 FASTPATH_INPUT_KBDFLAGS_EXTENDED | The keystroke message contains an |
+// |                                       | extended scancode. For enhanced   |
+// |                                       | 101-key and 102-key keyboards,    |
+// |                                       | extended keys include the right   |
+// |                                       | ALT and right CTRL keys on the    |
+// |                                       | main section of the keyboard; the |
+// |                                       | INS, DEL, HOME, END, PAGE UP,     |
+// |                                       | PAGE DOWN and ARROW keys in the   |
+// |                                       | clusters to the left of the       |
+// |                                       | numeric keypad; and the Divide    |
+// |                                       | ("/") and ENTER keys in the       |
+// |                                       | numeric keypad.                   |
+// +---------------------------------------+-----------------------------------+
+
+enum {
+      FASTPATH_INPUT_KBDFLAGS_RELEASE  = 0x01
+    , FASTPATH_INPUT_KBDFLAGS_EXTENDED = 0x02
+};
 
 #endif
