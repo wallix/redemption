@@ -28,9 +28,9 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
+#include"log.hpp"
 
-#include "rect.hpp"
+#include"rect.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestRect)
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(TestRect)
     BOOST_CHECK_EQUAL(Rect(-10, -20, 10, 1), Rect(10, 110, 10, 1).offset(-20, -130));
 
     /* test if a point is inside rect */
-    /* lower bounds are included, upper bounds are excluded */
+    /* lower bounds are include", upper bounds are excluded */
 
     BOOST_CHECK_EQUAL(true, r.contains_pt(15,115));
     BOOST_CHECK_EQUAL(true, r.contains_pt(19,119));
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(TestRect)
     {
         Rect i1(10, 110, 30, 30);
         Rect i2(20, 120, 10, 10);
-        /* here i2 is included in i1 : then it is the intersection */
+        /* here i2 is include" in i1 : then it is the intersection */
         Rect res = i1.intersect(i2);
         BOOST_CHECK_EQUAL(20, res.x);
         BOOST_CHECK_EQUAL(120, res.y);
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TestRect)
     {
         Rect i1(-10, -20, 110, 120);
         Rect i2(-5, -7, 155, 157);
-        /* here i2 is included in i1 : then it is the intersection */
+        /* here i2 is include" in i1 : then it is the intersection */
         Rect res = i1.intersect(i2);
         BOOST_CHECK_EQUAL(Rect(-5, -7, 105, 107), res);
     }

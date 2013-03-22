@@ -22,7 +22,7 @@
 #ifndef _REDEMPTION_MOD_MOD_API_HPP_
 #define _REDEMPTION_MOD_MOD_API_HPP_
 
-#include "RDP/RDPGraphicDevice.hpp"
+#include"RDP/RDPGraphicDevice.hpp"
 
 enum {
     BUTTON_STATE_UP   = 0,

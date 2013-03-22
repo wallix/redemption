@@ -34,29 +34,29 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "rdp/rdp_orders.hpp"
-#include "rdp/rdp_cursor.hpp"
+#include"rdp/rdp_orders.hpp"
+#include"rdp/rdp_cursor.hpp"
 
-/* include other h files */
-#include "stream.hpp"
-#include "ssl_calls.hpp"
-#include "constants.hpp"
-#include "client_mod.hpp"
+/* include "ther h files */
+#include"stream.hpp"
+#include"ssl_calls.hpp"
+#include"constants.hpp"
+#include"client_mod.hpp"
 
-#include "RDP/x224.hpp"
-#include "RDP/nego.hpp"
-#include "RDP/mcs.hpp"
-#include "RDP/lic.hpp"
-#include "RDP/logon.hpp"
-#include "channel_list.hpp"
-#include "RDP/gcc.hpp"
-#include "RDP/sec.hpp"
-#include "colors.hpp"
-#include "RDP/capabilities.hpp"
+#include"RDP/x224.hpp"
+#include"RDP/nego.hpp"
+#include"RDP/mcs.hpp"
+#include"RDP/lic.hpp"
+#include"RDP/logon.hpp"
+#include"channel_list.hpp"
+#include"RDP/gcc.hpp"
+#include"RDP/sec.hpp"
+#include"colors.hpp"
+#include"RDP/capabilities.hpp"
 
-#include "../acl/authentifier.hpp"
+#include"../acl/authentifier.hpp"
 
-#include "genrandom.hpp"
+#include"genrandom.hpp"
 
 
 
@@ -909,7 +909,7 @@ struct mod_rdp : public client_mod {
             // subsequent RDP traffic.
 
             // From this point, all subsequent RDP traffic can be encrypted and a security
-            // header is included with the data if encryption is in force (the Client Info
+            // header is include" with the data if encryption is in force (the Client Info
             // and licensing PDUs are an exception in that they always have a security
             // header). The Security Header follows the X.224 and MCS Headers and indicates
             // whether the attached data is encrypted.
@@ -1331,7 +1331,7 @@ struct mod_rdp : public client_mod {
 
 
             // Besides input and graphics data, other data that can be exchanged between
-            // client and server after the connection has been finalized includes
+            // client and server after the connection has been finalized include"
             // connection management information and virtual channel messages (exchanged
             // between client-side plug-ins and server-side applications).
 
@@ -1700,7 +1700,7 @@ struct mod_rdp : public client_mod {
 
         // sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see [T128] section 8.4.1 for more information regarding source descriptors).
 
-        // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the Demand Active PDU.
+        // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets include" in the Demand Active PDU.
 
         // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be ignored.
 
@@ -1745,7 +1745,7 @@ struct mod_rdp : public client_mod {
             stream.out_copy_bytes("MSTSC", 5);
 
             // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of
-            // capability sets included in the Demand Active PDU.
+            // capability sets include" in the Demand Active PDU.
             uint16_t offset_capscount = stream.get_offset();
             uint16_t capscount = 0;
             stream.out_uint16_le(0); /* num_caps */

@@ -25,9 +25,9 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
+#include"log.hpp"
 #include <fcntl.h>
-#include "fileutils.hpp"
+#include"fileutils.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestClearTargetFiles)

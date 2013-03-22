@@ -21,8 +21,8 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_WINDOW_HPP_)
 #define REDEMPTION_MOD_WIDGET2_WINDOW_HPP_
 
-#include "widget_composite.hpp"
-#include "label.hpp"
+#include"widget_composite.hpp"
+#include"label.hpp"
 
 class Window : public WidgetComposite
 {

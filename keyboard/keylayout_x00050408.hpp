@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X00050408_HPP_
 #define _REDEMPTION_KEYLAYOUT_X00050408_HPP_
 
-#include "keylayout.hpp"
+#include"keylayout.hpp"
 
 namespace x00050408 {    // Greek (Greece) // Greek Latin
 

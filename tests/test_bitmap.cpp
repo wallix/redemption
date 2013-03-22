@@ -29,12 +29,12 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "log.hpp"
+#include"log.hpp"
 #define LOGNULL
 
-#include "bitmap.hpp"
-#include "colors.hpp"
-#include "config.hpp"
+#include"bitmap.hpp"
+#include"colors.hpp"
+#include"config.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 {

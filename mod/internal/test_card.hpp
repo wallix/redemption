@@ -25,7 +25,7 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_TEST_CARD_HPP_
 #define _REDEMPTION_MOD_INTERNAL_TEST_CARD_HPP_
 
-#include "internal/internal_mod.hpp"
+#include"internal/internal_mod.hpp"
 
 struct test_card_mod : public internal_mod {
     BGRPalette palette332;

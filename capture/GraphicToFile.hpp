@@ -29,20 +29,20 @@
 #ifndef _REDEMPTION_CAPTURE_GRAPHICTOFILE_HPP_
 #define _REDEMPTION_CAPTURE_GRAPHICTOFILE_HPP_
 
-#include "RDP/x224.hpp"
-#include "RDP/mcs.hpp"
-#include "RDP/rdp.hpp"
-#include "RDP/sec.hpp"
-#include "RDP/lic.hpp"
-#include "RDP/RDPSerializer.hpp"
-#include "difftimeval.hpp"
-#include "png.hpp"
-#include "error.hpp"
-#include "config.hpp"
-#include "RDP/caches/bmpcache.hpp"
-#include "colors.hpp"
+#include"RDP/x224.hpp"
+#include"RDP/mcs.hpp"
+#include"RDP/rdp.hpp"
+#include"RDP/sec.hpp"
+#include"RDP/lic.hpp"
+#include"RDP/RDPSerializer.hpp"
+#include"difftimeval.hpp"
+#include"png.hpp"
+#include"error.hpp"
+#include"config.hpp"
+#include"RDP/caches/bmpcache.hpp"
+#include"colors.hpp"
 
-#include "RDP/RDPDrawable.hpp"
+#include"RDP/RDPDrawable.hpp"
 
 class WRMChunk_Send
 {

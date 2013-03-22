@@ -27,7 +27,7 @@
 
 #include <vector>
 #include <stdio.h>
-#include "rect.hpp"
+#include"rect.hpp"
 
 /* region */
 struct Region {

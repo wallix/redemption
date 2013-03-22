@@ -30,7 +30,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
+#include"log.hpp"
 
 #include <errno.h>
 #include <algorithm>
@@ -42,9 +42,9 @@
 #undef DEFAULT_FONT_NAME
 #define DEFAULT_FONT_NAME "sans-10.fv1"
 
-#include "listen.hpp"
-#include "session.hpp"
-#include "../../transport/testtransport.hpp"
+#include"listen.hpp"
+#include"session.hpp"
+#include "testtransport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 {
@@ -89,12 +89,12 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     const char outdata[] =
     {
-        #include "../tests/fixtures/trace_rdesktop_client_indata.hpp"
+        #include"../tests/fixtures/trace_rdesktop_client_indata.hpp"
     };
 
     const char indata[] =
     {
-        #include "../tests/fixtures/trace_rdesktop_client_outdata.hpp"
+        #include"../tests/fixtures/trace_rdesktop_client_outdata.hpp"
     };
 
     const char * name = "Test Front Transport";

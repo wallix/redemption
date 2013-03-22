@@ -21,7 +21,7 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_SCREEN_HPP_)
 #define REDEMPTION_MOD_WIDGET2_SCREEN_HPP_
 
-#include "widget_composite.hpp"
+#include"widget_composite.hpp"
 
 class WidgetScreen : public WidgetComposite
 {

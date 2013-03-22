@@ -25,13 +25,13 @@
 
 #include <stdlib.h>
 
-#include "log.hpp"
-#include "rect.hpp"
-#include "region.hpp"
-#include "bitmap.hpp"
-#include "region.hpp"
-#include "keymap2.hpp"
-#include "mod_api.hpp"
+#include"log.hpp"
+#include"rect.hpp"
+#include"region.hpp"
+#include"bitmap.hpp"
+#include"region.hpp"
+#include"keymap2.hpp"
+#include"mod_api.hpp"
 
 enum {
     WM_MOUSE_MOVE  = 2,

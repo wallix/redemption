@@ -25,8 +25,8 @@
 
 #ifndef _REDEMPTION_CORE_CALLBACK_HPP_
 #define _REDEMPTION_CORE_CALLBACK_HPP_
-#include "keymap2.hpp"
-#include "channel_list.hpp"
+#include"keymap2.hpp"
+#include"channel_list.hpp"
 
 enum {
     RDP_INPUT_SYNCHRONIZE          = 0,

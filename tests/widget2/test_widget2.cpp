@@ -25,7 +25,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
+#include"log.hpp"
 
 #include <string>
 #include <boost/lexical_cast.hpp>
@@ -35,9 +35,9 @@
 #include <widget2/label.hpp>
 #include <widget2/image.hpp>
 #include <widget2/yes_no.hpp>
-#include "ssl_calls.hpp"
-#include "RDP/RDPDrawable.hpp"
-#include "png.hpp"
+#include"ssl_calls.hpp"
+#include"RDP/RDPDrawable.hpp"
+#include"png.hpp"
 #include <stdio.h>
 #include <font.hpp>
 

@@ -27,9 +27,9 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
+#include"log.hpp"
 
-#include "RDP/logon.hpp"
+#include"RDP/logon.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestLogon)

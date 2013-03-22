@@ -29,12 +29,12 @@
 #include <string>
 
 #define LOGPRINT
-#include "version.hpp"
+#include"version.hpp"
 
-#include "fileutils.hpp"
-#include "../transport/inbymetasequencetransport.hpp"
-#include "capture.hpp"
-#include "FileToGraphic.hpp"
+#include"fileutils.hpp"
+#include"../transport/inbymetasequencetransport.hpp"
+#include"capture.hpp"
+#include"FileToGraphic.hpp"
 
 
 int main(int argc, char** argv)

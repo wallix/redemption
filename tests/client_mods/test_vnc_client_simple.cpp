@@ -28,18 +28,18 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "./test_orders.hpp"
+#include"./test_orders.hpp"
 
-#include "stream.hpp"
-#include "../../transport/transport.hpp"
-#include "../../transport/testtransport.hpp"
-#include "constants.hpp"
-#include "wait_obj.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
-#include "channel_list.hpp"
-#include "front_api.hpp"
-#include "client_info.hpp"
-#include "vnc/vnc.hpp"
+#include"stream.hpp"
+#include "transport.hpp"
+#include "testtransport.hpp"
+#include"constants.hpp"
+#include"wait_obj.hpp"
+#include"RDP/RDPGraphicDevice.hpp"
+#include"channel_list.hpp"
+#include"front_api.hpp"
+#include"client_info.hpp"
+#include"vnc/vnc.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)

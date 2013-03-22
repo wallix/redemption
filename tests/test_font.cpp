@@ -28,12 +28,12 @@
 #define BOOST_TEST_MODULE TestFont
 #include <boost/test/auto_unit_test.hpp>
 
-#include "log.hpp"
+#include"log.hpp"
 #define LOGNULL
 
-#include "font.hpp"
+#include"font.hpp"
 
-#include "constants.hpp"
+#include"constants.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCreateFont)
 {

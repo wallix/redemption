@@ -23,10 +23,10 @@
 #ifndef _REDEMPTION_CORE_OUTMETATRANSPORT_HPP_
 #define _REDEMPTION_CORE_OUTMETATRANSPORT_HPP_
 
-#include "transport.hpp"
-#include "error.hpp"
+#include"transport.hpp"
+#include"error.hpp"
 
-#include "rio/rio.h"
+#include"rio/rio.h"
 
 class OutmetaTransport : public Transport {
 public:

@@ -22,9 +22,9 @@
 #define REDEMPTION_MOD_WIDGET2_WIDGET_HPP_
 
 #include <vector>
-#include "notify_api.hpp"
-#include "mod_api.hpp"
-#include "notify_api.hpp"
+#include"notify_api.hpp"
+#include"mod_api.hpp"
+#include"notify_api.hpp"
 #include <rect.hpp>
 
 

@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X0002083B_HPP_
 #define _REDEMPTION_KEYLAYOUT_X0002083B_HPP_
 
-#include "keylayout.hpp"
+#include"keylayout.hpp"
 
 namespace x0002083b {    // Sami (Northern) (Sweden) // Sami Extended Finland-Sweden
 

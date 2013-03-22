@@ -26,9 +26,9 @@
 #define _REDEMPTION_CORE_CLIENT_INFO_HPP_
 
 #include <string.h>
-#include "config.hpp"
-#include "stream.hpp"
-#include "RDP/logon.hpp"
+#include"config.hpp"
+#include"stream.hpp"
+#include"RDP/logon.hpp"
 
 struct ClientInfo {
     int bpp;

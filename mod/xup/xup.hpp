@@ -30,8 +30,8 @@
 #include <netinet/tcp.h>
 #include <errno.h>
 
-/* include other h files */
-#include "stream.hpp"
+/* include "ther h files */
+#include"stream.hpp"
 
 struct xup_mod : public client_mod {
 

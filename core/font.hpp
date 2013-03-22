@@ -31,12 +31,12 @@
 #include <string.h>
 #include <errno.h>
 
-#include "log.hpp"
-#include "stream.hpp"
+#include"log.hpp"
+#include"stream.hpp"
 #include <unistd.h>
 #include <limits.h>
 #include <bits/posix1_lim.h>
-#include "bitfu.hpp"
+#include"bitfu.hpp"
 
 //##############################################################################
 struct FontChar

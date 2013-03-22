@@ -21,8 +21,8 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_YES_NO_HPP)
 #define REDEMPTION_MOD_WIDGET2_YES_NO_HPP
 
-#include "widget.hpp"
-#include "button.hpp"
+#include"widget.hpp"
+#include"button.hpp"
 #include <rect.hpp>
 
 class WidgetYesNo : public Widget

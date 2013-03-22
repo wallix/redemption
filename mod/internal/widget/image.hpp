@@ -22,8 +22,8 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_IMAGE_HPP_
 #define _REDEMPTION_MOD_INTERNAL_WIDGET_IMAGE_HPP_
 
-#include "widget.hpp"
-#include "mod_api.hpp"
+#include"widget.hpp"
+#include"mod_api.hpp"
 
 struct widget_image : public Widget {
     Bitmap bmp;

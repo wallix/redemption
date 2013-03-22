@@ -28,9 +28,9 @@
 
 #include <stdlib.h>
 
-#include "log.hpp"
-#include "channel_list.hpp"
-#include "stream.hpp"
+#include"log.hpp"
+#include"channel_list.hpp"
+#include"stream.hpp"
 
 
 /* RDP PDU codes */
@@ -69,7 +69,7 @@ enum {
 // section 8.3) present in slow-path I/O packets.
 
 // totalLength (2 bytes): A 16-bit, unsigned integer. The total length of the
-//   packet in bytes (the length includes the size of the Share Control Header).
+//   packet in bytes (the length include" the size of the Share Control Header).
 
 // pduType (2 bytes): A 16-bit, unsigned integer. It contains the PDU type and
 //   protocol version information. The format of the pduType word is described

@@ -25,10 +25,10 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_TEST_INTERNAL_HPP_
 #define _REDEMPTION_MOD_INTERNAL_TEST_INTERNAL_HPP_
 
-#include "FileToGraphic.hpp"
-#include "GraphicToFile.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
-#include "../../transport/inbymetasequencetransport.hpp"
+#include"FileToGraphic.hpp"
+#include"GraphicToFile.hpp"
+#include"RDP/RDPGraphicDevice.hpp"
+#include "inbymetasequencetransport.hpp"
 
 struct test_internal_mod : public internal_mod {
 

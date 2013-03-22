@@ -29,11 +29,11 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
+#include"log.hpp"
 
 #include <stdint.h>
 
-#include "modcontext.hpp"
+#include"modcontext.hpp"
 
 // Test the parsing of a string with two different separator characters : '@' and ':'
 // each separator can appear one or two time, with a different behaviour for each case
@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(TestParseUsername2)
 {
     ModContext mc;
 
-    // TEST 2 (three separators with a '@' included in User)
+    // TEST 2 (three separators with a '@' include" in User)
     char username_2[256] = "u@u1@d:p:a";
     mc.parse_username(username_2);
 

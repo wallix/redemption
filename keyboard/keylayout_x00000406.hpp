@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X00000406_HPP_
 #define _REDEMPTION_KEYLAYOUT_X00000406_HPP_
 
-#include "keylayout.hpp"
+#include"keylayout.hpp"
 
 namespace x00000406 {    // Danish (Denmark) // Danish
 

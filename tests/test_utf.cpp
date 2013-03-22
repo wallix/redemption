@@ -27,10 +27,10 @@
 #define BOOST_TEST_MODULE TestLul
 #include <boost/test/auto_unit_test.hpp>
 
-#include "log.hpp"
+#include"log.hpp"
 #define LOGNULL
 
-#include "utf.hpp"
+#include"utf.hpp"
 //#include <unicode/ustring.h>
 #include <stdio.h>
 

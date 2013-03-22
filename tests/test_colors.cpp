@@ -26,11 +26,11 @@
 #define BOOST_TEST_MODULE TestColors
 #include <boost/test/auto_unit_test.hpp>
 
-#include "log.hpp"
+#include"log.hpp"
 #define LOGNULL
 
 #include <stdint.h>
-#include "colors.hpp"
+#include"colors.hpp"
 
 BOOST_AUTO_TEST_CASE(TestColors)
 {

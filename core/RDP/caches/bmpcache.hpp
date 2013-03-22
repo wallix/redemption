@@ -26,7 +26,7 @@ enum {
     BITMAP_ADDED_TO_CACHE
 };
 
-#include "bitmap.hpp"
+#include"bitmap.hpp"
 
 struct BmpCache {
 

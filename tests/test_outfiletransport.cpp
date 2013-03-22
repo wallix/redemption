@@ -25,15 +25,15 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include "log.hpp"
+#include"log.hpp"
 
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../transport/transport.hpp"
-#include "../transport/testtransport.hpp"
-#include "../transport/outfiletransport.hpp"
-#include "error.hpp"
+#include"../transport/transport.hpp"
+#include"../transport/testtransport.hpp"
+#include"../transport/outfiletransport.hpp"
+#include"error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestFileTransport)
 {

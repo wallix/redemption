@@ -25,10 +25,10 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include "log.hpp"
+#include"log.hpp"
 
-#include "rio/rio.h"
-#include "rio/rio_impl.h"
+#include"rio/rio.h"
+#include"rio/rio_impl.h"
 
 // Sequence are used to control chaining of chunked RIO
 // Insequence provide RIOs that will be used for reading

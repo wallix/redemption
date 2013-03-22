@@ -30,7 +30,7 @@
 #include <errno.h>
 
 #include <stdint.h>
-#include "log.hpp"
+#include"log.hpp"
 
 
 class Random

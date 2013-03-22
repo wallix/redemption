@@ -21,7 +21,7 @@
 #if !defined(__TEST_CHECK_SIG_HPP__)
 #define __TEST_CHECK_SIG_HPP__
 
-#include "drawable.hpp"
+#include"drawable.hpp"
 
 inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
                      char * message, const char * shasig)

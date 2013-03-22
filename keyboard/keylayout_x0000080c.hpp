@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X0000080C_HPP_
 #define _REDEMPTION_KEYLAYOUT_X0000080C_HPP_
 
-#include "keylayout.hpp"
+#include"keylayout.hpp"
 
 namespace x0000080c {    // French (Belgium) // Belgian French
 

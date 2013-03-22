@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X0000046E_HPP_
 #define _REDEMPTION_KEYLAYOUT_X0000046E_HPP_
 
-#include "keylayout.hpp"
+#include"keylayout.hpp"
 
 namespace x0000046e {    // Luxembourgish (Luxembourg) // Luxembourgish
 

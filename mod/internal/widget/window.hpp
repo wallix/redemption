@@ -22,15 +22,15 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_WINDOW_HPP_
 #define _REDEMPTION_MOD_INTERNAL_WIDGET_WINDOW_HPP_
 
-#include "internal/widget/widget.hpp"
+#include"internal/widget/widget.hpp"
 
-#include "internal/widget/image.hpp"
-#include "internal/widget/button.hpp"
-#include "internal/widget/label.hpp"
+#include"internal/widget/image.hpp"
+#include"internal/widget/button.hpp"
+#include"internal/widget/label.hpp"
 
-#include "internal/widget/edit.hpp"
-#include "internal/widget/image.hpp"
-#include "modcontext.hpp"
+#include"internal/widget/edit.hpp"
+#include"internal/widget/image.hpp"
+#include"modcontext.hpp"
 
 struct window : public Widget
 {

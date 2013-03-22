@@ -40,7 +40,7 @@
 #include <unistd.h>
 #include <netdb.h>
 
-#include "log.hpp"
+#include"log.hpp"
 
 static inline bool try_again(int errnum){
     int res = false;
@@ -70,7 +70,7 @@ static inline int ip_connect(const char* ip, int port,
 {
     LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
     // we will try connection several time
-    // the trial process include socket opening, hostname resolution, etc
+    // the trial process include "ocket opening, hostname resolution, etc
     // because some problems can come from the local endpoint,
     // not necessarily from the remote endpoint.
     int sck = socket(PF_INET, SOCK_STREAM, 0);

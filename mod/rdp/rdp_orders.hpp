@@ -26,21 +26,21 @@
 
 #include <string.h>
 
-#include "log.hpp"
-#include "stream.hpp"
-#include "client_mod.hpp"
+#include"log.hpp"
+#include"stream.hpp"
+#include"client_mod.hpp"
 
-//#include "RDP/orders/RDPOrdersNames.hpp"
-#include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+//#include"RDP/orders/RDPOrdersNames.hpp"
+#include"RDP/orders/RDPOrdersCommon.hpp"
+#include"RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include"RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include"RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include"RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include"RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include"RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include"RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include"RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include"RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
 
 /* orders */

@@ -27,14 +27,14 @@
 #define BOOST_TEST_MODULE TestBitmapPerf
 #include <boost/test/auto_unit_test.hpp>
 
-#include "log.hpp"
+#include"log.hpp"
 #define LOGNULL
 
-#include "bitmap.hpp"
-#include "colors.hpp"
-#include "config.hpp"
-#include "difftimeval.hpp"
-#include "rdtsc.hpp"
+#include"bitmap.hpp"
+#include"colors.hpp"
+#include"config.hpp"
+#include"difftimeval.hpp"
+#include"rdtsc.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 {

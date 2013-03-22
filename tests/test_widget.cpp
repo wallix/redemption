@@ -28,12 +28,12 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include "log.hpp"
+#include"log.hpp"
 
-#include "client_mod.hpp"
+#include"client_mod.hpp"
 
-#include "internal/widget/screen.hpp"
-#include "internal/widget/window.hpp"
+#include"internal/widget/screen.hpp"
+#include"internal/widget/window.hpp"
 
 struct TestWidgetMod : mod_api
 {

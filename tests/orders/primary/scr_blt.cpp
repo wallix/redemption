@@ -28,10 +28,10 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <algorithm>
 
-#include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include"RDP/orders/RDPOrdersCommon.hpp"
+#include"RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 
-#include "./test_orders.hpp"
+#include"./test_orders.hpp"
 
 BOOST_AUTO_TEST_CASE(TestScrBlt)
 {

@@ -21,19 +21,19 @@
 #ifndef _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
 #define _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
 
-#include "drawable.hpp"
-#include "RDP/caches/bmpcache.hpp"
+#include"drawable.hpp"
+#include"RDP/caches/bmpcache.hpp"
 
-#include "RDP/RDPGraphicDevice.hpp"
-#include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "font.hpp"
+#include"RDP/RDPGraphicDevice.hpp"
+#include"RDP/orders/RDPOrdersCommon.hpp"
+#include"RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include"RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include"RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include"RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include"RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include"RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include"RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include"font.hpp"
 
 
 struct RDPDrawableConfig {

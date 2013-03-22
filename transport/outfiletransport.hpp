@@ -23,8 +23,8 @@
 #ifndef _REDEMPTION_CORE_OUTFILETRANSPORT_HPP_
 #define _REDEMPTION_CORE_OUTFILETRANSPORT_HPP_
 
-#include "transport.hpp"
-#include "rio/rio.h"
+#include"transport.hpp"
+#include"rio/rio.h"
 
 class OutFileTransport : public Transport {
     public:

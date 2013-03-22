@@ -25,20 +25,20 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_BOUNCER2_HPP_
 #define _REDEMPTION_MOD_INTERNAL_BOUNCER2_HPP_
 
-#include "client_mod.hpp"
-#include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include"client_mod.hpp"
+#include"RDP/orders/RDPOrdersCommon.hpp"
+#include"RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include"RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include"RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include"RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include"RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include"RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include"RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include"RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include"RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
-#include "internal_mod.hpp"
+#include"internal_mod.hpp"
 #include <unistd.h>
 
 struct bouncer2_mod : public internal_mod {

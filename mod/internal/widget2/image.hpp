@@ -21,7 +21,7 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_IMAGE_HPP)
 #define REDEMPTION_MOD_WIDGET2_IMAGE_HPP
 
-#include "widget.hpp"
+#include"widget.hpp"
 
 class WidgetImage : public Widget
 {

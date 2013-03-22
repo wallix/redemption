@@ -21,8 +21,8 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_MOD_API_HPP_)
 #define REDEMPTION_MOD_WIDGET2_MOD_API_HPP_
 
-#include "RDP/RDPGraphicDevice.hpp"
-#include "font.hpp"
+#include"RDP/RDPGraphicDevice.hpp"
+#include"font.hpp"
 
 class ModApi : public RDPGraphicDevice
 {

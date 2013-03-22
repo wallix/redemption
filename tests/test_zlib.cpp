@@ -24,9 +24,9 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
+#include"log.hpp"
 
-#include "zlib.hpp"
+#include"zlib.hpp"
 
 #include <iostream>
 

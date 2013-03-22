@@ -34,10 +34,10 @@
 #include <string.h>
 #include <map>
 
-#include "log.hpp"
-#include "config.hpp"
+#include"log.hpp"
+#include"config.hpp"
 
-#include "keywords.hpp"
+#include"keywords.hpp"
 
 enum {
     DICOBUFSIZE = 8192,

@@ -27,14 +27,14 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "test_orders.hpp"
-#include "../../transport/transport.hpp"
-#include "../../transport/outfilenametransport.hpp"
-#include "image_capture.hpp"
-#include "nativecapture.hpp"
-#include "constants.hpp"
-#include "RDP/caches/bmpcache.hpp"
-#include "config.hpp"
+#include"test_orders.hpp"
+#include "transport.hpp"
+#include "outfilenametransport.hpp"
+#include"image_capture.hpp"
+#include"nativecapture.hpp"
+#include"constants.hpp"
+#include"RDP/caches/bmpcache.hpp"
+#include"config.hpp"
 #include <png.h>
 
 

@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X00000419_HPP_
 #define _REDEMPTION_KEYLAYOUT_X00000419_HPP_
 
-#include "keylayout.hpp"
+#include"keylayout.hpp"
 
 namespace x00000419 {    // Russian (Russia) // Russian
 

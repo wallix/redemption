@@ -27,10 +27,10 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <stdio.h>
 
-#include "log.hpp"
+#include"log.hpp"
 #define LOGNULL
 
-#include "config.hpp"
+#include"config.hpp"
 #include <sstream>
 #include <string>
 

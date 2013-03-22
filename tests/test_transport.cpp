@@ -25,13 +25,13 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include "log.hpp"
+#include"log.hpp"
 
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../transport/transport.hpp"
-#include "error.hpp"
+#include"../transport/transport.hpp"
+#include"error.hpp"
 
 #include <unistd.h>
 #include <signal.h>
@@ -42,11 +42,11 @@
 #include <sys/socket.h>
 #include <netinet/tcp.h>
 
-#include "listen.hpp"
-#include "config.hpp"
-#include "ssl_calls.hpp"
-#include "wait_obj.hpp"
-#include "server.hpp"
+#include"listen.hpp"
+#include"config.hpp"
+#include"ssl_calls.hpp"
+#include"wait_obj.hpp"
+#include"server.hpp"
 
 
 // This test is somewhat tricky

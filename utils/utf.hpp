@@ -27,7 +27,7 @@
 #define _REDEMPTION_UTILS_UTF_HPP_
 
 #include <stdint.h>
-#include "log.hpp"
+#include"log.hpp"
 
 REDOC("Check if some string is valid utf8, zero terminated")
 static inline size_t UTF8Check(const uint8_t * source, size_t len)

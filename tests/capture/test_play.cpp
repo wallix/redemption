@@ -27,10 +27,10 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "../../transport/outfilenametransport.hpp"
-#include "staticcapture.hpp"
-#include "nativecapture.hpp"
-#include "FileToGraphic.hpp"
+#include "outfilenametransport.hpp"
+#include"staticcapture.hpp"
+#include"nativecapture.hpp"
+#include"FileToGraphic.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSample0WRM)
 {

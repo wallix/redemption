@@ -29,7 +29,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "RDP/sec.hpp"
+#include"RDP/sec.hpp"
 
 // Sent by server:
 // 0x01 LICENSE_REQUEST Indicates a License Request PDU ([MS-RDPELE] section 2.2.2.1).
@@ -998,12 +998,12 @@ namespace LIC
 
             // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
             // binary information in the blobData field. If wBlobLen is set to 0, then the
-            // blobData field is not included in the Licensing Binary BLOB structure and the
+            // blobData field is not include" in the Licensing Binary BLOB structure and the
             // contents of the wBlobType field SHOULD be ignored.
 
             // blobData (variable): Variable-length binary data. The size of this data in
             // bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field
-            // is not included in the Licensing Binary BLOB structure.
+            // is not include" in the Licensing Binary BLOB structure.
 
             stream.out_uint16_le(LIC::BB_RANDOM_BLOB);
             stream.out_uint16_le((SEC_MODULUS_SIZE + SEC_PADDING_SIZE));
@@ -1123,12 +1123,12 @@ namespace LIC
 
         // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
         // binary information in the blobData field. If wBlobLen is set to 0, then the
-        // blobData field is not included in the Licensing Binary BLOB structure and the
+        // blobData field is not include" in the Licensing Binary BLOB structure and the
         // contents of the wBlobType field SHOULD be ignored.
 
         // blobData (variable): Variable-length binary data. The size of this data in
         // bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field
-        // is not included in the Licensing Binary BLOB structure.
+        // is not include" in the Licensing Binary BLOB structure.
 
         // -------------------------------<<<<<<<<<<<<<<<<<
 
@@ -1222,12 +1222,12 @@ namespace LIC
 
             // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
             // binary information in the blobData field. If wBlobLen is set to 0, then the
-            // blobData field is not included in the Licensing Binary BLOB structure and the
+            // blobData field is not include" in the Licensing Binary BLOB structure and the
             // contents of the wBlobType field SHOULD be ignored.
 
             // blobData (variable): Variable-length binary data. The size of this data in
             // bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field
-            // is not included in the Licensing Binary BLOB structure.
+            // is not include" in the Licensing Binary BLOB structure.
 
             stream.in_skip_bytes(2); /* wBlobType */
             uint16_t lenLicensingBlob = stream.in_uint16_le();
@@ -1722,12 +1722,12 @@ namespace LIC
 
             // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
             // binary information in the blobData field. If wBlobLen is set to 0, then the
-            // blobData field is not included in the Licensing Binary BLOB structure and the
+            // blobData field is not include" in the Licensing Binary BLOB structure and the
             // contents of the wBlobType field SHOULD be ignored.
 
             // blobData (variable): Variable-length binary data. The size of this data in
             // bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field
-            // is not included in the Licensing Binary BLOB structure.
+            // is not include" in the Licensing Binary BLOB structure.
 
             // stream.out_uint16_le(LIC::BB_RANDOM_BLOB);
             stream.out_uint16_le(0);
@@ -1859,12 +1859,12 @@ namespace LIC
 
             // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
             // binary information in the blobData field. If wBlobLen is set to 0, then the
-            // blobData field is not included in the Licensing Binary BLOB structure and the
+            // blobData field is not include" in the Licensing Binary BLOB structure and the
             // contents of the wBlobType field SHOULD be ignored.
 
             // blobData (variable): Variable-length binary data. The size of this data in
             // bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field
-            // is not included in the Licensing Binary BLOB structure.
+            // is not include" in the Licensing Binary BLOB structure.
 
             stream.in_skip_bytes(2); /* wBlobType */
             uint16_t lenLicensingBlob = stream.in_uint16_le();
@@ -3025,7 +3025,7 @@ namespace LIC
 //     reason for the error is passed.
 
 // bbErrorInfo (variable): A LICENSE_BINARY_BLOB (section 2.2.1.12.1.2) structure which MUST contain a BLOB 
-//    of type BB_ERROR_BLOB (0x0004) that includes information relevant to the error code specified in dwErrorCode.
+//    of type BB_ERROR_BLOB (0x0004) that include" information relevant to the error code specified in dwErrorCode.
 
     struct ErrorAlert_Recv
     {
@@ -3294,7 +3294,7 @@ namespace LIC
 
             // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
             // the binary information in the blobData field. If wBlobLen is set to 0,
-            // then the blobData field is not included in the Licensing Binary BLOB
+            // then the blobData field is not include" in the Licensing Binary BLOB
             // structure and the contents of the wBlobType field SHOULD be ignored.
             stream.out_uint16_le(LIC::LICENSE_TOKEN_SIZE);
             stream.out_copy_bytes(out_token, LIC::LICENSE_TOKEN_SIZE);
@@ -3306,7 +3306,7 @@ namespace LIC
 
             // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
             // the binary information in the blobData field. If wBlobLen is set to 0,
-            // then the blobData field is not included in the Licensing Binary BLOB
+            // then the blobData field is not include" in the Licensing Binary BLOB
             // structure and the contents of the wBlobType field SHOULD be ignored.
             stream.out_uint16_le(LIC::LICENSE_HWID_SIZE);
             stream.out_copy_bytes(crypt_hwid, LIC::LICENSE_HWID_SIZE);

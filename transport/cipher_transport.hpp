@@ -21,8 +21,8 @@
 #ifndef _REDEMPTION_CORE_CIPHER_TRANSPORT_HPP_
 #define _REDEMPTION_CORE_CIPHER_TRANSPORT_HPP_
 
-#include "cipher.hpp"
-#include "transport.hpp"
+#include"cipher.hpp"
+#include"transport.hpp"
 
 class OutCipherTransport
 : public Transport

@@ -26,12 +26,12 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
+#include"log.hpp"
 
-#include "stream.hpp"
-#include "../../transport/transport.hpp"
-#include "../../transport/testtransport.hpp"
-#include "RDP/sec.hpp"
+#include"stream.hpp"
+#include "transport.hpp"
+#include "testtransport.hpp"
+#include"RDP/sec.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSend_SecExchangePacket)
 {

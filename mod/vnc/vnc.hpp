@@ -30,14 +30,14 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "colors.hpp"
+#include"colors.hpp"
 
-#include "stream.hpp"
-#include "d3des.hpp"
-#include "keymap2.hpp"
-#include "keymapSym.hpp"
-#include "client_mod.hpp"
-#include "channel_list.hpp"
+#include"stream.hpp"
+#include"d3des.hpp"
+#include"keymap2.hpp"
+#include"keymapSym.hpp"
+#include"client_mod.hpp"
+#include"channel_list.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -1057,7 +1057,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         switch (msgType) {
             // Client notify that a copy operation have occured. Two operations should be done :
             //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
-            //  - Only if clipboard content formats list include UNICODETEXT: send a request for it in that format
+            //  - Only if clipboard content formats list include "NICODETEXT: send a request for it in that format
             case ChannelDef::CB_FORMAT_LIST:
             {
                 // Always coming from front

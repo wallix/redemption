@@ -28,25 +28,25 @@
 #include <stdio.h>
 #include <png.h>
 
-#include "bitmap.hpp"
-#include "rect.hpp"
-#include "constants.hpp"
-#include "difftimeval.hpp"
+#include"bitmap.hpp"
+#include"rect.hpp"
+#include"constants.hpp"
+#include"difftimeval.hpp"
 
-#include "RDP/orders/RDPOrdersCommon.hpp"
-#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include"RDP/orders/RDPOrdersCommon.hpp"
+#include"RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include"RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include"RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include"RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
-#include "png.hpp"
-#include "error.hpp"
-#include "config.hpp"
-#include "RDP/caches/bmpcache.hpp"
-#include "colors.hpp"
+#include"png.hpp"
+#include"error.hpp"
+#include"config.hpp"
+#include"RDP/caches/bmpcache.hpp"
+#include"colors.hpp"
 
-#include "RDP/RDPDrawable.hpp"
+#include"RDP/RDPDrawable.hpp"
 
 class ImageCapture : public RDPDrawable
 {

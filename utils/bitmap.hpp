@@ -41,12 +41,12 @@
 #include <algorithm>
 #include <inttypes.h>
 
-#include "log.hpp"
-#include "bitfu.hpp"
-#include "colors.hpp"
-#include "stream.hpp"
-#include "ssl_calls.hpp"
-#include "rect.hpp"
+#include"log.hpp"
+#include"bitfu.hpp"
+#include"colors.hpp"
+#include"stream.hpp"
+#include"ssl_calls.hpp"
+#include"rect.hpp"
 
 
 class Bitmap {

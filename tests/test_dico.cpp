@@ -26,10 +26,10 @@
 #define BOOST_TEST_MODULE TestDico
 #include <boost/test/auto_unit_test.hpp>
 
-#include "log.hpp"
+#include"log.hpp"
 #define LOGNULL
 
-#include "dico.hpp"
+#include"dico.hpp"
 
 static ProtocolKeyword KeywordsDefinitions[] = {
     {"un", TYPE_TEXT, "!uno"},

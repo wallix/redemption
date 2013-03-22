@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X0001043A_HPP_
 #define _REDEMPTION_KEYLAYOUT_X0001043A_HPP_
 
-#include "keylayout.hpp"
+#include"keylayout.hpp"
 
 namespace x0001043a {    // Maltese (Malta) // Maltese 48-key
 

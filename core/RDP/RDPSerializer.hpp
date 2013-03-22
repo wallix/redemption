@@ -90,15 +90,15 @@
 //   field of the Drawing Order identifies the type of drawing order.
 
 
-#include "RDP/RDPGraphicDevice.hpp"
+#include"RDP/RDPGraphicDevice.hpp"
 
-#include "../../transport/transport.hpp"
+#include "transport.hpp"
 
-#include "RDP/caches/bmpcache.hpp"
-#include "difftimeval.hpp"
-#include "stream.hpp"
-#include "rect.hpp"
-#include "colors.hpp"
+#include"RDP/caches/bmpcache.hpp"
+#include"difftimeval.hpp"
+#include"stream.hpp"
+#include"rect.hpp"
+#include"colors.hpp"
 
 enum {
     TIMESTAMP = 1008,

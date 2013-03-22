@@ -30,10 +30,10 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
+#include"log.hpp"
 
 #include <string>
-#include "utf.hpp"
+#include"utf.hpp"
 
 BOOST_AUTO_TEST_CASE(TestString)
 {

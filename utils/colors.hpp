@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <stdlib.h>
-#include "log.hpp"
+#include"log.hpp"
 
 typedef uint32_t BGRColor;
 typedef BGRColor BGRPalette[256];

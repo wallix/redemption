@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X0000081A_HPP_
 #define _REDEMPTION_KEYLAYOUT_X0000081A_HPP_
 
-#include "keylayout.hpp"
+#include"keylayout.hpp"
 
 namespace x0000081a {    // Serbian (Latin, Serbia) // Serbian (Latin)
 

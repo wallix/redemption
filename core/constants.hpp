@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_CORE_CONSTANTS_HPP_
 #define _REDEMPTION_CORE_CONSTANTS_HPP_
 
-#include "log.hpp"
+#include"log.hpp"
 TODO("these constants should be dispatched between relevant ini files")
 
 #if !defined(SHARE_PATH)

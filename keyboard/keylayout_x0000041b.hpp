@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X0000041B_HPP_
 #define _REDEMPTION_KEYLAYOUT_X0000041B_HPP_
 
-#include "keylayout.hpp"
+#include"keylayout.hpp"
 
 namespace x0000041b {    // Slovak (Slovakia) // Slovak
 

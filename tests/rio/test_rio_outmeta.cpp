@@ -25,10 +25,10 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include "log.hpp"
+#include"log.hpp"
 
-#include "rio/rio.h"
-#include "rio/rio_impl.h"
+#include"rio/rio.h"
+#include"rio/rio_impl.h"
 
 // The OutMeta RIO use one inderection level to find out where data should be sent
 // the parts are sent to files controled by an outfilename sequence

@@ -29,13 +29,13 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "log.hpp"
+#include"log.hpp"
 #define LOGNULL
 
-#include "bitmap.hpp"
-#include "colors.hpp"
-#include "ssl_calls.hpp"
-#include "png.hpp"
+#include"bitmap.hpp"
+#include"colors.hpp"
+#include"ssl_calls.hpp"
+#include"png.hpp"
 
 
 // to see last result file, remove unlink
