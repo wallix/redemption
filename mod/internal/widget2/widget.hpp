@@ -142,13 +142,20 @@ public:
     //    }
     //}
 
+    void refresh(const Rect& clip)
+    {
+        if (this->drawable) {
+            this->drawable->begin_update();
+            this->draw(clip);
+            this->drawable->end_update();
+        }
+    }
+
     virtual void send_event(EventType event, unsigned param, unsigned param2, Keymap2 * keymap)
     {
         if (event == WM_DRAW) {
-            if (this->drawable) {
-                this->draw(Rect(param >> 16, param & 0xFFFF,
-                                param2 >> 16, param2 & 0xFFFF));
-            }
+            this->refresh(Rect(param >> 16, param & 0xFFFF,
+                               param2 >> 16, param2 & 0xFFFF));
         } else {
             this->notify_parent(event, param, param2);
         }
@@ -183,12 +190,12 @@ public:
         return 0;
     }
 
-    int dx() const
+    int16_t dx() const
     {
         return this->rect.x;
     }
 
-    int dy() const
+    int16_t dy() const
     {
         return this->rect.y;
     }
@@ -205,7 +212,7 @@ public:
 
     virtual Widget * widget_focused()
     {
-        return 0; ///TODO
+        return this->has_focus ? this : 0;
     }
 };
 

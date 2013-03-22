@@ -27,6 +27,7 @@
 #include "log.hpp"
 
 #include "internal/widget2/label.hpp"
+#include "internal/widget2/widget_composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -98,16 +99,6 @@ struct TestDraw : ModApi
     virtual void end_update()
     {}
 
-    static FontChar * get_font(Font& font, uint32_t c)
-    {
-        FontChar *font_item = font.glyph_defined(c) ? font.font_items[c] : 0;
-        if (!font_item) {
-            LOG(LOG_WARNING, "RDPDrawable::get_font() - character not defined >0x%02x<", c);
-            font_item = font.font_items['?'];
-        }
-        return font_item;
-    }
-
     virtual void server_draw_text(int x, int y, const char* text, uint32_t fgcolor, const Rect& clip)
     {
         this->gd.server_draw_text(x, y, text, fgcolor, clip, this->font);
@@ -143,20 +134,22 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetLabel is a label widget of size 100x20 at position 0,0 in it's parent context
+    // WidgetLabel is a label widget at position 0,0 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
-
+    bool auto_resize = true;
+    uint16_t x = 0;
+    uint16_t y = 0;
+    int xtext = 4;
+    int ytext = 1;
 
     TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
          "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
          "these possibilities (and others) are supported in RDPGlyphIndex")
-    TODO("We may also consider some automatic size, where rect is computed from x,y position and text"
-         "instead of being provided from outside")
-    WidgetLabel wlabel(&drawable, Rect(0,0, 100,20), parent, notifier, "test1", id, bg_color, fg_color);
+    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test1", auto_resize, id, bg_color, fg_color, xtext, ytext);
 
     // ask to widget to redraw at it's current position
     wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
@@ -165,8 +158,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xa2\x84\xf8\x80\x33\xbb\x82\x4c\x64\x0c"
-        "\xd8\x2e\x0b\x25\xd5\x37\x62\x23\x6f\x46")){
+        "\xfc\x7b\x97\x0f\xcf\x88\x82\xb1\x20\x11"
+        "\xe4\xd3\x51\x4e\xf0\xce\xce\xeb\xc0\x58")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -181,8 +174,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
+    bool auto_resize = true;
+    uint16_t x = 10;
+    uint16_t y = 100;
 
-    WidgetLabel wlabel(&drawable, Rect(10,100, 100,20), parent, notifier, "test2", id, bg_color, fg_color);
+    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test2", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
     wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
@@ -191,8 +187,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x26\xed\x54\x49\x4e\x28\x20\xe8\x10\xd1"
-        "\xf7\x93\x43\x8b\x1c\xb8\x25\x71\x3e\x88")){
+        "\x6c\x91\x76\x52\x46\xb1\x93\x8a\xf1\xf0"
+        "\x79\x78\xa8\x50\x30\x0a\x1c\xd8\x08\x98")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -207,8 +203,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
+    bool auto_resize = true;
+    uint16_t x = -10;
+    uint16_t y = 500;
 
-    WidgetLabel wlabel(&drawable, Rect(-10,500, 100,20), parent, notifier, "test3", id, bg_color, fg_color);
+    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test3", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
     wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
@@ -217,8 +216,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x8a\xea\xb9\xf8\x56\x84\xa5\xd4\x18\x56"
-        "\x19\xb5\xe3\x33\xeb\x74\xd2\x12\xaf\x2c")){
+        "\x8d\xf1\x81\xc0\xd5\x5b\x9b\x49\x37\x46"
+        "\x2a\x66\x6a\x16\xe9\x3d\xeb\x5e\x09\xac")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -233,8 +232,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
+    bool auto_resize = true;
+    uint16_t x = 770;
+    uint16_t y = 500;
 
-    WidgetLabel wlabel(&drawable, Rect(770,500, 100,20), parent, notifier, "test4", id, bg_color, fg_color);
+    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test4", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
     wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
@@ -243,8 +245,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x02\x9b\xb1\xe3\xe6\xd8\x06\xf3\x5a\xcc"
-        "\x0b\xec\x3c\x3d\x2f\x79\xb4\xbb\xc3\xa1")){
+        "\x97\xa2\x50\x07\x36\xfc\x5c\x4b\x77\x7c"
+        "\xd4\x84\xb4\xc6\x87\x0c\xed\xa3\x4b\x82")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -259,8 +261,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
+    bool auto_resize = true;
+    uint16_t x = -20;
+    uint16_t y = -7;
 
-    WidgetLabel wlabel(&drawable, Rect(-20,-7, 100,20), parent, notifier, "test5", id, bg_color, fg_color);
+    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test5", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
     wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
@@ -269,8 +274,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xfe\x16\xc3\x5c\xab\x20\xb5\x12\x95\xfe"
-        "\x80\x9c\x0f\x0d\xc8\x79\x13\x12\x25\x01")){
+        "\x23\x28\x0a\xb4\xe8\xde\x21\xb0\xa7\xbd"
+        "\x84\x97\x82\xcb\xb0\xe9\x72\x5d\x3b\xe9")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -285,8 +290,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
+    bool auto_resize = true;
+    uint16_t x = 760;
+    uint16_t y = -7;
 
-    WidgetLabel wlabel(&drawable, Rect(760,-7, 100,20), parent, notifier, "test6", id, bg_color, fg_color);
+    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
     wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
@@ -295,8 +303,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xa4\x90\xbc\xb1\x0f\x1b\xd7\x3f\x40\x48"
-        "\x0f\x1e\xd9\x32\x31\x5e\xc2\x31\x6b\xab")){
+        "\x81\x40\x2e\xae\x9d\x5b\x38\x94\x16\x5d"
+        "\x86\x19\xac\x2e\xd4\x2c\xe7\xd6\x53\xdb")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -311,8 +319,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
+    bool auto_resize = true;
+    uint16_t x = 760;
+    uint16_t y = -7;
 
-    WidgetLabel wlabel(&drawable, Rect(760,-7, 100,20), parent, notifier, "test6", id, bg_color, fg_color);
+    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wlabel.send_event(WM_DRAW, (20<<16|0), (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
@@ -321,8 +332,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x67\xfb\xbf\x76\x23\x48\x86\xb0\x08\x54"
-        "\x28\x94\x4a\x6c\xb4\x9a\xa3\x1a\xe4\xd3")){
+        "\x51\x61\x10\xd2\xe0\xcc\xef\xe0\x15\xc6"
+        "\x3c\x2a\x14\x62\xa0\xfb\xd5\xc6\x2c\x1d")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -337,8 +348,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
+    bool auto_resize = true;
+    uint16_t x = 0;
+    uint16_t y = 0;
 
-    WidgetLabel wlabel(&drawable, Rect(0,0, 100,20), parent, notifier, "test6", id, bg_color, fg_color);
+    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wlabel.send_event(WM_DRAW, (20<<16|5), (30<<16 | 10), 0);
@@ -347,8 +361,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x8d\x38\xa4\x5c\x28\xd7\x3f\x22\x5e\xf4"
-        "\xf6\xa2\x6d\x94\x6d\xa2\xf0\x15\x58\xd5")){
+        "\xa2\x85\x04\x67\x88\x91\x62\x24\xf9\x6d"
+        "\x79\x33\x7d\x21\x34\xe5\x67\x2c\xdb\x86")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -377,8 +391,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
     Widget * parent = &widget_for_receive_event;
     ModApi * drawable = NULL;
     NotifyApi * notifier = NULL;
+    bool auto_resize = false;
+    uint16_t x = 0;
+    uint16_t y = 0;
 
-    WidgetLabel wlabel(drawable, Rect(), parent, notifier, "");
+    WidgetLabel wlabel(drawable, x, y, parent, notifier, "", auto_resize);
 
     wlabel.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
     BOOST_CHECK(widget_for_receive_event.sender == &wlabel);
@@ -394,9 +411,59 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
     BOOST_CHECK(widget_for_receive_event.event == KEYDOWN);
 }
 
+BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetLabel is a label widget of size 256x125 at position 0,0 in it's parent context
+    Widget * parent = NULL;
+    NotifyApi * notifier = NULL;
+
+    WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);
+
+    WidgetLabel wlabel1(&drawable, 0,0, &wcomposite, notifier,
+                        "abababab", true, 0, YELLOW, BLACK);
+    WidgetLabel wlabel2(&drawable, 0,100, &wcomposite, notifier,
+                        "ggghdgh", true, 0, WHITE, RED);
+    WidgetLabel wlabel3(&drawable, 100,100, &wcomposite, notifier,
+                        "lldlslql", true, 0, BLUE, RED);
+    WidgetLabel wlabel4(&drawable, 300,300, &wcomposite, notifier,
+                        "LLLLMLLM", true, 0, PINK, DARK_GREEN);
+    WidgetLabel wlabel5(&drawable, 700,-10, &wcomposite, notifier,
+                        "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE);
+    WidgetLabel wlabel6(&drawable, -10,550, &wcomposite, notifier,
+                        "xxwwp", true, 0, DARK_GREY, PALE_GREEN);
+
+    wcomposite.child_list.push_back(&wlabel1);
+    wcomposite.child_list.push_back(&wlabel2);
+    wcomposite.child_list.push_back(&wlabel3);
+    wcomposite.child_list.push_back(&wlabel4);
+    wcomposite.child_list.push_back(&wlabel5);
+    wcomposite.child_list.push_back(&wlabel6);
+
+    // ask to widget to redraw at position 100,25 and of size 100x100.
+    wcomposite.send_event(WM_DRAW, (100<<16|25), (100<<16 | 100), 0);
+
+    drawable.save_to_png("/tmp/label9.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
+        "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // ask to widget to redraw at it's current position
+    wcomposite.send_event(WM_DRAW, 0, (wcomposite.cx()<<16 | wcomposite.cy()), 0);
+
+    drawable.save_to_png("/tmp/label10.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x85\x0a\x9c\x09\x57\xd9\x99\x52\xed\xa8"
+        "\x25\x71\x91\x6c\xf4\xf4\x21\x9a\xe5\x1a")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
 TODO("the entry point exists in module: it's rdp_input_invalidate"
      "je just have to change received values to widget messages")
-
-TODO("As soon as composite widgets will be available, we will have to check these tests"
-     " are still working with two combination layers (conversion of coordinates "
-     "from parent coordinates to screen_coordinates can be tricky)")

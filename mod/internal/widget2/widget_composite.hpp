@@ -31,8 +31,9 @@ class WidgetComposite : public Widget
 public:
     std::vector<Widget*> child_list;
 
-    WidgetComposite(ModApi * drawable, const Rect& rect, Widget * parent, int type, NotifyApi * notifier, int id = 0)
-    : Widget(drawable, rect, parent, type, notifier, id)
+    WidgetComposite(ModApi * drawable, const Rect& rect, Widget * parent,
+                    NotifyApi * notifier, int id = 0)
+    : Widget(drawable, rect, parent, notifier, id)
     , child_list()
     {
         this->tab_flag = DELEGATE_CONTROL_TAB;
@@ -41,25 +42,8 @@ public:
     virtual ~WidgetComposite()
     {
         for (size_t i = 0; i < this->child_list.size(); ++i) {
-            this->child_list[i]->parent = 0;
-        }
-    }
-
-protected:
-    virtual void attach_widget(Widget * widget)
-    {
-        this->child_list.push_back(widget);
-    }
-
-    virtual void detach_widget(Widget * widget)
-    {
-        size_t size = this->child_list.size();
-        for (size_t i = 0; i < size; ++i) {
-            if (this->child_list[i] == widget){
-                this->child_list[i] = this->child_list[size - 1];
-                this->child_list.resize(size - 1);
-                widget->parent = 0;
-                return ;
+            if (this->child_list[i]->parent == this) {
+                this->child_list[i]->parent = 0;
             }
         }
     }
@@ -72,7 +56,8 @@ public:
         Widget* ret = 0;
         x -= this->dx();
         y -= this->dy();
-        for (std::size_t i = 0; i < this->child_list.size() && ret == 0; ++i)
+        std::size_t size = this->child_list.size();
+        for (std::size_t i = 0; i < size && ret == 0; ++i)
         {
             ret = this->child_list[i]->widget_at_pos(x, y);
         }
@@ -81,7 +66,7 @@ public:
 
     virtual Widget* widget_focused()
     {
-        Widget* ret =  this->direct_child_focused();
+        Widget* ret = this->direct_child_focused();
         if (ret)
         {
             Widget* tmp = ret->widget_focused();
@@ -91,6 +76,7 @@ public:
         return ret;
     }
 
+#if 0
     static bool switch_focus(Widget * old_focus, Widget * new_focus)
     {
         bool res = true;
@@ -259,43 +245,32 @@ public:
             this->Widget::notify(id, event);
         }
     }
+#endif
 
-    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip)
+    void init_region_and_draw_children(Region & region, const Rect& new_clip)
     {
-        Region region;
-        region.rects.push_back(rect);
-        Rect clip(xclip, yclip, rect.cx, rect.cy);
-        for (std::size_t i = 0; i < this->child_list.size(); ++i) {
+        region.rects.push_back(new_clip);
+        std::size_t size = this->child_list.size();
+        for (std::size_t i = 0; i < size; ++i) {
             Widget *w = this->child_list[i];
-            Rect tmp = rect.intersect(w->rect);
-            if (!tmp.isempty()){
-                region.subtract_rect(tmp);
+            Rect rect = new_clip.intersect(w->rect);
+            if (!rect.isempty()){
+                region.subtract_rect(rect);
                 if (w->drawable) {
-                    Rect wrect(tmp.x - w->rect.x, tmp.y - w->rect.y, tmp.cx, tmp.cy);
-                    if (!wrect.isempty()){
-                        Rect new_clip = clip.intersect(Rect(
-                            x + w->rect.x + wrect.x,
-                            y + w->rect.y + wrect.y,
-                            wrect.cx,
-                            wrect.cy
-                        ));
-                        if (!new_clip.isempty()) {
-                            w->drawable->begin_update();
-                            w->draw(wrect, x + w->rect.x, y + w->rect.y, new_clip.x, new_clip.y);
-                            w->drawable->end_update();
-                        }
-                    }
+                    w->refresh(Rect(rect.x - w->rect.x,
+                                    rect.y - w->rect.y,
+                                    rect.cx, rect.cy
+                    ));
                 }
             }
         }
-        for (size_t i = 0, max = region.rects.size(); i < max; ++i) {
-            this->drawable->draw(
-                RDPOpaqueRect(
-                    region.rects[i].offset(x,y),
-                    this->bg_color
-                ), clip
-            );
-        }
+    }
+
+    virtual void draw(const Rect& clip)
+    {
+        Region region;
+        Rect new_clip = this->position_in_screen(clip);
+        this->init_region_and_draw_children(region, new_clip);
     }
 
 protected:

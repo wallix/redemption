@@ -97,30 +97,30 @@ public:
         }
     } context_text;
 #endif
+
     int x_text;
     int y_text;
+    bool auto_resize;
     int fg_color;
 
 public:
-    WidgetLabel(ModApi* drawable, const Rect& rect, Widget* parent, NotifyApi* notifier, const char * text, int id = 0, int bgcolor = BLACK, int fgcolor = WHITE, int xtext = 0, int ytext = 0)
-    : WidgetRect(drawable, rect, parent, notifier, id, bgcolor)
+    WidgetLabel(ModApi* drawable, int16_t x, int16_t y, Widget* parent,
+                NotifyApi* notifier, const char * text, bool auto_resize = true,
+                int id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
+                int xtext = 0, int ytext = 0)
+    : WidgetRect(drawable, Rect(), parent, notifier, id, bgcolor)
     , x_text(xtext)
     , y_text(ytext)
+    , auto_resize(auto_resize)
     , fg_color(fgcolor)
     {
         this->set_text(text);
+        this->rect.x = x;
+        this->rect.y = y;
     }
 
     virtual ~WidgetLabel()
     {
-    }
-
-    void set_center()
-    {
-        int w,h;
-        this->drawable->text_metrics(this->buffer, w,h);
-        this->rect.cx = this->x_text * 2 + w;
-        this->rect.cy = this->y_text * 2 + w;
     }
 
     void set_text(const char * text)
@@ -134,6 +134,13 @@ public:
             //if (this->drawable) {
             //    this->context_text.init_context_text(this->buffer);
             //}
+
+            if (this->auto_resize && this->drawable) {
+                int w,h;
+                this->drawable->text_metrics(this->buffer, w,h);
+                this->rect.cx = this->x_text * 2 + w;
+                this->rect.cy = this->y_text * 2 + h;
+            }
         }
     }
 
