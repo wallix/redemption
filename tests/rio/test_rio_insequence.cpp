@@ -27,8 +27,8 @@
 #define LOGPRINT
 #include "log.hpp"
 
-#include "../libs/rio.h"
-#include "../libs/rio_impl.h"
+#include "rio/rio.h"
+#include "rio/rio_impl.h"
 
 BOOST_AUTO_TEST_CASE(TestInsequence)
 {
@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(TestInsequence)
         struct timeval tv;
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
-        RIO * rt = rio_new_outmeta(&status, &seq, "TESTOFS", ".mwrm", "800 600", "", "", &tv);
+        RIO * rt = rio_new_outmeta(&status, &seq, "", "TESTOFS", ".mwrm", "800 600", "", "", &tv);
 
         BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
         tv.tv_sec+= 100;
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceMeta)
 }
 
 
-OOST_AUTO_TEST_CASE(TestInsequence2)
+BOOST_AUTO_TEST_CASE(TestInsequence2)
 {
 // 3rd simplest sequence is "intracker" sequence
 // - Behavior is identical to infilename sequence except the input pattern is

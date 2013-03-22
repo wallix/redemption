@@ -27,7 +27,7 @@
 #define _REDEMPTION_CORE_RDP_X224_HPP_
 
 #include <stdint.h>
-#include "../../transport/transport.hpp"
+#include "transport.hpp"
 #include "stream.hpp"
 #include "log.hpp"
 #include "error.hpp"
@@ -436,7 +436,7 @@ namespace X224
     // (used for load balancing) terminated by a carriage-return (CR) and line-feed
     // (LF) ANSI sequence. For more information about Terminal Server load balancing
     // and the routing token format, see [MSFT-SDLBTS]. The length of the routing
-    // token and CR+LF sequence is included in the X.224 Connection Request Length
+    // token and CR+LF sequence is include " in the X.224 Connection Request Length
     // Indicator field. If this field is present, then the cookie field MUST NOT be
     //  present.
 
@@ -444,12 +444,12 @@ namespace X224
     // by a carriage-return (CR) and line-feed (LF) ANSI sequence. This text string
     // MUST be "Cookie: mstshash=IDENTIFIER", where IDENTIFIER is an ANSI string
     //(an example cookie string is shown in section 4.1.1). The length of the entire
-    // cookie string and CR+LF sequence is included in the X.224 Connection Request
+    // cookie string and CR+LF sequence is include " in the X.224 Connection Request
     // Length Indicator field. This field MUST NOT be present if the routingToken
     // field is present.
 
     // rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
-    // structure. The length of this negotiation structure is included in the X.224
+    // structure. The length of this negotiation structure is include " in the X.224
     // Connection Request Length Indicator field.
 
     // 2.2.1.1.1 RDP Negotiation Request (RDP_NEG_REQ)
@@ -650,7 +650,7 @@ namespace X224
 
     // rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1)
     // structure or an optional RDP Negotiation Failure (section 2.2.1.2.2)
-    // structure. The length of the negotiation structure is included in the X.224
+    // structure. The length of the negotiation structure is include " in the X.224
     // Connection Confirm Length Indicator field.
 
     // 2.2.1.2.1 RDP Negotiation Response (RDP_NEG_RSP)

@@ -30,11 +30,11 @@
 #include <algorithm>
 
 #define LOGNULL
-#include "./test_orders.hpp"
+#include "test_orders.hpp"
 
 #include "stream.hpp"
-#include "../../transport/transport.hpp"
-#include "../../transport/testtransport.hpp"
+#include "transport.hpp"
+#include "testtransport.hpp"
 #include "constants.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/mcs.hpp"
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 //    ClientSocketTransport t(name, "10.10.14.88", 3389, 3, 1000, verbose);
 //    t.connect();
 
-    #include "./fixtures/dump_TLSw2008.hpp"
+    #include "fixtures/dump_TLSw2008.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests

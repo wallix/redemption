@@ -61,7 +61,7 @@
 //     |                                        | at the logon prompt.             |
 //     +----------------------------------------+----------------------------------+
 //     | 0x00000008 INFO_AUTOLOGON              | The client requests auto logon   |
-//     |                                        | using the included user name,    |
+//     |                                        | using the include " user name,    |
 //     |                                        | password and domain.             |
 //     +----------------------------------------+----------------------------------+
 //     | 0x00000010 INFO_UNICODE                | Indicates that the character set |
@@ -316,7 +316,7 @@ enum {
 //    0x0017 AF_INET6 The clientAddress field contains an IPv6 address.
 
 // cbClientAddress (2 bytes): A 16-bit, unsigned integer. The size in bytes of
-//    the character data in the clientAddress field. This size includes the length
+//    the character data in the clientAddress field. This size include " the length
 //    of the mandatory null terminator.
 
 // clientAddress (variable): Variable-length textual representation of the
@@ -325,7 +325,7 @@ enum {
 //    80 bytes for RDP 6.1 and 7.0.
 
 // cbClientDir (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
-//    character data in the clientDir field. This size includes the length of the
+//    character data in the clientDir field. This size include " the length of the
 //    mandatory null terminator.
 
 // clientDir (variable): Variable-length directory that contains either (a) the
@@ -785,7 +785,7 @@ struct InfoPacket {
 
         if (clientAddr){
             len = UTF8Len(clientAddr);
-            this->extendedInfoPacket.cbClientAddress = (len + 1) * 2; // This size includes the length of the mandatory null terminator.
+            this->extendedInfoPacket.cbClientAddress = (len + 1) * 2; // This size include " the length of the mandatory null terminator.
             memcpy(this->extendedInfoPacket.clientAddress, clientAddr, len);
             this->extendedInfoPacket.clientAddress[len] = 0;
         }

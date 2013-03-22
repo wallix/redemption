@@ -29,10 +29,10 @@
 #define LOGPRINT
 #include "test_orders.hpp"
 
-#include "../../transport/transport.hpp"
-#include "../../transport/testtransport.hpp"
-#include "../../transport/outfilenametransport.hpp"
-#include "../../transport/outfiletransport.hpp"
+#include "transport.hpp"
+#include "testtransport.hpp"
+#include "outfilenametransport.hpp"
+#include "outfiletransport.hpp"
 #include "image_capture.hpp"
 #include "staticcapture.hpp"
 #include "constants.hpp"

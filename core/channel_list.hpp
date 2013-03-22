@@ -69,7 +69,7 @@ enum {
 //    server endpoints should be prevented from exchanging data until the connection sequence has
 //    completed.
 //    Static virtual channel data must be broken up into chunks of up to 1600 bytes in size before being
-//    transmitted (this size does not include RDP headers). Each virtual channel acts as an independent
+//    transmitted (this size does not include "DP headers). Each virtual channel acts as an independent
 //    data stream. The client and server examine the data received on each virtual channel and route the
 //    data stream to the appropriate endpoint for further processing. A particular client or server
 //    implementation can decide whether to pass on individual chunks of data as they are received, or to

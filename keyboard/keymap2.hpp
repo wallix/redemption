@@ -207,7 +207,7 @@ struct Keymap2
 // +--------------------------+------------------------------------------------+
 // | 0x0100 KBDFLAGS_EXTENDED | The keystroke message contains an extended     |
 // |                          | scancode. For enhanced 101-key and 102-key     |
-// |                          | keyboards, extended keys include the right     |
+// |                          | keyboards, extended keys include "he right     |
 // |                          | ALT and right CTRL keys on the main section    |
 // |                          | of the keyboard; the INS, DEL, HOME, END,      |
 // |                          | PAGE UP, PAGE DOWN and ARROW keys in the       |

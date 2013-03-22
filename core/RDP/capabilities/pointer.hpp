@@ -58,7 +58,7 @@
 //    bit depth received in the New Pointer Update (section 2.2.9.1.1.4.5).
 
 //    If the value contained in this field is zero or the Pointer Capability Set
-//    sent from the client does not include this field, the server will not use
+//    sent from the client does not include "his field, the server will not use
 //    the New Pointer Update.
 
 enum {

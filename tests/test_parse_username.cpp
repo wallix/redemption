@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(TestParseUsername2)
 {
     ModContext mc;
 
-    // TEST 2 (three separators with a '@' included in User)
+    // TEST 2 (three separators with a '@' include " in User)
     char username_2[256] = "u@u1@d:p:a";
     mc.parse_username(username_2);
 

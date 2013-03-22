@@ -18,7 +18,7 @@
    Author(s): Christophe Grosjean, Dominique Lafages
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
-   header file. Global keyboard layouts include files
+   header file. Global keyboard layouts include "iles
 
 */
 

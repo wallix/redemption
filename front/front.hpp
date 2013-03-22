@@ -32,7 +32,7 @@
 #include <string.h>
 #include "constants.hpp"
 #include "stream.hpp"
-#include "../transport/transport.hpp"
+#include "transport.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/nego.hpp"
 #include "RDP/mcs.hpp"
@@ -657,7 +657,7 @@ TODO("Pass font name as parameter in constructor")
 //      If the Encryption Level (sections 5.3.2 and 2.2.1.4.3) selected by the
 //      server is ENCRYPTION_LEVEL_NONE (0) and the Encryption Method (sections
 //      5.3.2 and 2.2.1.4.3) selected by the server is ENCRYPTION_METHOD_NONE
-//      (0), then this header is not included in the PDU.
+//      (0), then this header is not include " in the PDU.
 
 //    shareDataHeader (18 bytes): Share Data Header (section 2.2.8.1.1.1.2)
 //      containing information about the packet. The type subfield of the
@@ -1332,7 +1332,7 @@ TODO("Pass font name as parameter in constructor")
             // subsequent RDP traffic.
 
             // From this point, all subsequent RDP traffic can be encrypted and a security
-            // header is included with the data if encryption is in force (the Client Info
+            // header is include " with the data if encryption is in force (the Client Info
             // and licensing PDUs are an exception in that they always have a security
             // header). The Security Header follows the X.224 and MCS Headers and indicates
             // whether the attached data is encrypted.
@@ -1818,7 +1818,7 @@ TODO("Pass font name as parameter in constructor")
 
 
         // Besides input and graphics data, other data that can be exchanged between
-        // client and server after the connection has been finalized includes
+        // client and server after the connection has been finalized include "
         // connection management information and virtual channel messages (exchanged
         // between client-side plug-ins and server-side applications).
         {
@@ -2454,7 +2454,7 @@ TODO("Pass font name as parameter in constructor")
 // If the Encryption Level (sections 5.3.2 and 2.2.1.4.3) selected by the server
 // is ENCRYPTION_LEVEL_NONE (0) and the Encryption Method (sections 5.3.2 and
 // 2.2.1.4.3) selected by the server is ENCRYPTION_METHOD_NONE (0), then this
-// header is not included in the PDU.
+// header is not include " in the PDU.
 
 // synchronizePduData (22 bytes): The contents of the Synchronize PDU as
 // described in section 2.2.1.14.1.
@@ -2820,7 +2820,7 @@ TODO("Pass font name as parameter in constructor")
             // 2.2.11.1 Inclusive Rectangle (TS_RECTANGLE16)
             // =============================================
             // The TS_RECTANGLE16 structure describes a rectangle expressed in inclusive coordinates 
-            // (the right and bottom coordinates are included in the rectangle bounds).
+            // (the right and bottom coordinates are include " in the rectangle bounds).
             // left (2 bytes): A 16-bit, unsigned integer. The leftmost bound of the rectangle.
             // top (2 bytes): A 16-bit, unsigned integer. The upper bound of the rectangle.
             // right (2 bytes): A 16-bit, unsigned integer. The rightmost bound of the rectangle.

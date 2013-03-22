@@ -45,7 +45,7 @@
 
 #include "config.hpp"
 #include "wait_obj.hpp"
-#include "../transport/transport.hpp"
+#include "transport.hpp"
 #include "bitmap.hpp"
 #include "modcontext.hpp"
 

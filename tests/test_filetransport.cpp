@@ -30,7 +30,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../transport/outfiletransport.hpp"
+#include "outfiletransport.hpp"
+#include "infiletransport.hpp"
 #include "error.hpp"
 
 BOOST_AUTO_TEST_CASE(TestFileTransport)

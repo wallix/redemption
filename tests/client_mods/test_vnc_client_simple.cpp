@@ -28,11 +28,11 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "./test_orders.hpp"
+#include "test_orders.hpp"
 
 #include "stream.hpp"
-#include "../../transport/transport.hpp"
-#include "../../transport/testtransport.hpp"
+#include "transport.hpp"
+#include "testtransport.hpp"
 #include "constants.hpp"
 #include "wait_obj.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
