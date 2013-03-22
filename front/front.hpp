@@ -44,6 +44,7 @@
 #include "colors.hpp"
 #include "RDP/capabilities.hpp"
 #include "RDP/fastpath.hpp"
+#include "RDP/slowpath.hpp"
 
 #include "ssl_calls.hpp"
 #include "bitfu.hpp"
@@ -1825,9 +1826,10 @@ TODO("Pass font name as parameter in constructor")
             ChannelDefArray & channel_list = this->channel_list;
             BStream stream(65536);
 
+            // Detect fast-path PDU
             this->trans->recv(&stream.end, 1);
             uint8_t byte = stream.in_uint8();
-            if ((byte & 0x3) == 0){
+            if ((byte & FASTPATH_OUTPUT_ACTION_X224) == 0){
                 LOG(LOG_INFO, "Front::Received fast-path PDU");
                 throw Error(ERR_X224);
             }
@@ -2716,6 +2718,9 @@ TODO("Pass font name as parameter in constructor")
         break;
         case PDUTYPE2_INPUT:   // 28(0x1c) Input PDU (section 2.2.8.1.1.3)
             {
+LOG(LOG_INFO, "***** PDUTYPE2_INPUT *****:");
+hexdump_d(sdata_in.payload.p, sdata_in.payload.in_remain());
+
                 int num_events = sdata_in.payload.in_uint16_le();
 
                 if (this->verbose & 4){
@@ -2723,8 +2728,8 @@ TODO("Pass font name as parameter in constructor")
                 }
 
                 const unsigned expected =
-                      2               /* pad(2) */
-                    + num_events * 12 /* time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2) */
+                      2               // pad(2)
+                    + num_events * 12 // time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)
                     ;
                 if (!sdata_in.payload.in_check_rem(expected))
                 {
@@ -2733,13 +2738,25 @@ TODO("Pass font name as parameter in constructor")
                     throw Error(ERR_MCS_PDU_TRUNCATED);
                 }
 
-                sdata_in.payload.in_skip_bytes(2); /* pad */
+                sdata_in.payload.in_skip_bytes(2); // pad
+//                SlowPath::SlowPathClientInputEventPDU_Recv SpCiep(sdata_in.payload);
+
                 for (int index = 0; index < num_events; index++) {
+//                for (int index = 0; index < SpCiep.numEvents; index++) {
                     int time = sdata_in.payload.in_uint32_le();
                     uint16_t msg_type = sdata_in.payload.in_uint16_le();
                     uint16_t device_flags = sdata_in.payload.in_uint16_le();
                     int16_t param1 = sdata_in.payload.in_sint16_le();
                     int16_t param2 = sdata_in.payload.in_sint16_le();
+/*
+                    int time = SpCiep.payload.in_uint32_le();
+                    uint16_t msg_type = SpCiep.payload.in_uint16_le();
+                    uint16_t device_flags = SpCiep.payload.in_uint16_le();
+                    int16_t param1 = SpCiep.payload.in_sint16_le();
+                    int16_t param2 = SpCiep.payload.in_sint16_le();
+*/
+LOG(LOG_INFO, "***** PDUTYPE2_INPUT *****: msg_type = 0x%X", msg_type);
+
 
                     TODO(" we should always call send_input with original data  if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it")
                     TODO(" with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.")

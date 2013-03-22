@@ -97,11 +97,11 @@
 //  field, in big-endian order (the length2 field contains the low-order bits).
 
 // length2 (1 byte): An 8-bit, unsigned integer. If the most significant bit of
-// the length1 field is not set, then the length2 field is not present. If the
-// most significant bit of the length1 field is set, then the overall PDU length
-// is given by the low 7 bits of the length1 field concatenated with the 8 bits
-// of the length2 field, in big-endian order (the length2 field contains the
-// low-order bits).
+//  the length1 field is not set, then the length2 field is not present. If the
+//  most significant bit of the length1 field is set, then the overall PDU
+//  length is given by the low 7 bits of the length1 field concatenated with the
+//  8 bits of the length2 field, in big-endian order (the length2 field contains
+//  the low-order bits).
 
 // fipsInformation (4 bytes): Optional FIPS header information, present when the
 //  Encryption Method selected by the server (sections 5.3.2 and 2.2.1.4.3) is
@@ -118,6 +118,52 @@
 // 2.2.9.1.2.1) structures to be processed by the client.
 
 TODO("To implement fastpath, the idea is to replace the current layer stack X224->Mcs->Sec with only one FastPath object. The FastPath layer would also handle legacy packets still using several independant layers. That should lead to a much simpler code in both front.hpp and rdp.hpp but still keep a flat easy to test model.")
+
+// 2.2.8.1.2 Client Fast-Path Input Event PDU (TS_FP_INPUT_PDU)
+// ============================================================
+// The Fast-Path Input Event PDU is used to transmit input events from client to
+//  server.<18> Fast-path revises client input packets from the first byte with
+//  the goal of improving bandwidth. The TPKT Header ([T123] section 8), X.224
+//  Class 0 Data TPDU ([X224] section 13.7), and MCS Send Data Request ([T125]
+//  section 11.32) are replaced; the Security Header (section 2.2.8.1.1.2) is
+//  collapsed into the fast-path input header, and the Share Data Header
+//  (section 2.2.8.1.1.1.2) is replaced by a new fast-path format. The contents
+//  of the input notification events (section 2.2.8.1.1.3.1.1) are also changed
+//  to reduce their size, particularly by removing or reducing headers. Support
+//  for fast-path input is advertised in the Input Capability Set (section
+//  2.2.7.1.6).
+
+// fpInputHeader (1 byte): An 8-bit, unsigned integer. One-byte, bit-packed
+//   header. This byte coincides with the first byte of the TPKT Header (see
+//   [T123] section 8). Three pieces of information are collapsed into this
+//   byte:
+//   1. Security flags
+//   2. Number of events in the fast-path input PDU
+//   3. Action code
+//   The format of the fpInputHeader byte is described by the following bitmask
+//   diagram.
+
+// action (2 bits): A 2-bit code indicating whether the PDU is in fast-path or
+//  slow-path format.
+
+// +------------------------------------+------------------------------------+
+// | 2-Bit Codes                        | Meaning                            |
+// +------------------------------------+------------------------------------+
+// | 0x0 FASTPATH_INPUT_ACTION_FASTPATH | Indicates the PDU is a fast-path   |
+// |                                    | input PDU.                         |
+// +------------------------------------+------------------------------------+
+// | 0x3 FASTPATH_INPUT_ACTION_X224     | Indicates the presence of a TPKT   |
+// |                                    | Header initial version byte, which |
+// |                                    | indicates that the PDU is a        |
+// |                                    | slow-path input PDU (in this case  |
+// |                                    | the full value of the initial byte |
+// |                                    | MUST be 0x03).                     |
+// +------------------------------------+------------------------------------+
+
+enum {
+      FASTPATH_OUTPUT_ACTION_FASTPATH = 0x0
+    , FASTPATH_OUTPUT_ACTION_X224     = 0x3
+};
 
 // 2.2.8.1.2.2 Fast-Path Input Event (TS_FP_INPUT_EVENT)
 // =====================================================

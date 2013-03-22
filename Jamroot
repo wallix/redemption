@@ -213,6 +213,7 @@ unit-test test_gcc : tests/core/test_gcc.cpp z openssl crypto dl libboost_unit_t
 unit-test test_sec : tests/core/test_sec.cpp z openssl crypto dl libboost_unit_test  ;
 unit-test test_lic : tests/core/test_lic.cpp z openssl crypto dl libboost_unit_test  ;
 unit-test test_rdp : tests/core/test_rdp.cpp z openssl crypto dl libboost_unit_test  ;
+unit-test test_slowpath : tests/core/test_slowpath.cpp z openssl crypto dl libboost_unit_test  ;
 
 unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test  : ;
 unit-test test_dico : tests/test_dico.cpp libboost_unit_test  ;
