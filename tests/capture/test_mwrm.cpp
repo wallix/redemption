@@ -27,9 +27,9 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include"staticcapture.hpp"
-#include"nativecapture.hpp"
-#include"FileToGraphic.hpp"
+#include "staticcapture.hpp"
+#include "nativecapture.hpp"
+#include "FileToGraphic.hpp"
 #include "inbymetasequencetransport.hpp"
 
 

@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X00000C0C_HPP_
 #define _REDEMPTION_KEYLAYOUT_X00000C0C_HPP_
 
-#include"keylayout.hpp"
+#include "keylayout.hpp"
 
 namespace x00000c0c {    // French (Canada) // Canadian French (Legacy)
 

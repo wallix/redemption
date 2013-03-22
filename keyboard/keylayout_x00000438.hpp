@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X00000438_HPP_
 #define _REDEMPTION_KEYLAYOUT_X00000438_HPP_
 
-#include"keylayout.hpp"
+#include "keylayout.hpp"
 
 namespace x00000438 {    // Faroese (Faroe Islands) // Faeroese
 

@@ -27,13 +27,13 @@
 #define BOOST_TEST_MODULE TestBitFu
 #include <boost/test/auto_unit_test.hpp>
 
-#include"log.hpp"
+#include "log.hpp"
 #define LOGNULL
 
-#include"bitfu.hpp"
+#include "bitfu.hpp"
 #include <stdio.h>
 
-//#include"rdtsc.hpp"
+//#include "rdtsc.hpp"
 
 //long long ustime() {
 //    struct timeval now;

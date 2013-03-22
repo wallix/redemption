@@ -31,7 +31,7 @@
 #include <errno.h>
 
 /* include "ther h files */
-#include"stream.hpp"
+#include "stream.hpp"
 
 struct xup_mod : public client_mod {
 

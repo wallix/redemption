@@ -29,7 +29,7 @@
 
 
 #define LOGNULL
-#include"log.hpp"
+#include "log.hpp"
 
 #include <errno.h>
 #include <algorithm>

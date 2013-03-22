@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYBMPCACHE_HPP_
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSSECONDARYBMPCACHE_HPP_
 
-#include"log.hpp"
+#include "log.hpp"
 
 /* RDP bitmap cache (version 2) constants */
 enum {

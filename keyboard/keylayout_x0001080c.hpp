@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X0001080C_HPP_
 #define _REDEMPTION_KEYLAYOUT_X0001080C_HPP_
 
-#include"keylayout.hpp"
+#include "keylayout.hpp"
 
 namespace x0001080c {    // French (Belgium) // Belgian (Comma)
 

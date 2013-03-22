@@ -26,8 +26,8 @@
 #define _REDEMPTION_MOD_INTERNAL_DIALOG_HPP_
 
 #include <stdlib.h>
-#include"log.hpp"
-#include"widget/window.hpp"
+#include "log.hpp"
+#include "widget/window.hpp"
 
 struct dialog_mod : public internal_mod {
     struct window_dialog * close_window;

@@ -26,7 +26,7 @@
 #define _REDEMPTION_MOD_INTERNAL_SELECTOR_HPP_
 
 #include <stdio.h>
-#include"colors.hpp"
+#include "colors.hpp"
 
 struct selector_mod : public internal_mod {
     struct TargetDevice {

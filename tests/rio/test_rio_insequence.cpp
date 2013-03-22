@@ -25,10 +25,10 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include"log.hpp"
+#include "log.hpp"
 
-#include"../libs/rio.h"
-#include"../libs/rio_impl.h"
+#include "../libs/rio.h"
+#include "../libs/rio_impl.h"
 
 BOOST_AUTO_TEST_CASE(TestInsequence)
 {

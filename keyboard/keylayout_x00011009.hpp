@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X00011009_HPP_
 #define _REDEMPTION_KEYLAYOUT_X00011009_HPP_
 
-#include"keylayout.hpp"
+#include "keylayout.hpp"
 
 namespace x00011009 {    // English (Canada) // Canadian Multilingual Standard
 

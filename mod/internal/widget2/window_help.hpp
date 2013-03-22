@@ -21,8 +21,8 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_WINDOW_HELP_HPP)
 #define REDEMPTION_MOD_WIDGET2_WINDOW_HELP_HPP
 
-#include"window.hpp"
-#include"multi_line.hpp"
+#include "window.hpp"
+#include "multi_line.hpp"
 
 class WindowHelp : public Window
 {

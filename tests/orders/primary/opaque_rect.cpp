@@ -28,10 +28,10 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <algorithm>
 
-#include"RDP/orders/RDPOrdersCommon.hpp"
-#include"RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "RDP/orders/RDPOrdersCommon.hpp"
+#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
-#include"./test_orders.hpp"
+#include "./test_orders.hpp"
 
 BOOST_AUTO_TEST_CASE(TestOpaqueRect)
 {
@@ -330,8 +330,8 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             0x7F,   // x, y, w, h, r, g, b coordinates changed
             0x0e,   // bounds absolutes : left, write, bottom
             0x2C, 0x01, // left bound = 300
-            0x35, 0x01, // right bound = 309   (bounds are include")
-            0x3F, 0x01, // bottom bound = 319  (bounds are include")
+            0x35, 0x01, // right bound = 309   (bounds are include ")
+            0x3F, 0x01, // bottom bound = 319  (bounds are include ")
             0x05, 0, // x = 0x005 = 5
             0x2C, 1, // y = 0x12C = 300
             25, 0,   // w = 25

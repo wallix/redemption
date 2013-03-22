@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYOPAQUERECT_HPP_
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYOPAQUERECT_HPP_
 
-#include"RDP/orders/RDPOrdersCommon.hpp"
+#include "RDP/orders/RDPOrdersCommon.hpp"
 
 class RDPOpaqueRect {
     public:

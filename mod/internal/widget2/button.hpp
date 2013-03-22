@@ -21,7 +21,7 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_BUTTON_HPP)
 #define REDEMPTION_MOD_WIDGET2_BUTTON_HPP
 
-#include"label.hpp"
+#include "label.hpp"
 
 class WidgetButton : public Widget
 {

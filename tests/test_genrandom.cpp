@@ -29,10 +29,10 @@
 #define BOOST_TEST_MODULE TestGenRandom
 #include <boost/test/auto_unit_test.hpp>
 
-#include"log.hpp"
+#include "log.hpp"
 #define LOGNULL
 
-#include"genrandom.hpp"
+#include "genrandom.hpp"
 
 BOOST_AUTO_TEST_CASE(TestGenRandom)
 {

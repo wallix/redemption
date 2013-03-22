@@ -34,7 +34,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <stddef.h>
-#include"log.hpp"
+#include "log.hpp"
 
 static inline int filesize(const char * path)
 {

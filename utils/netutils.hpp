@@ -40,7 +40,7 @@
 #include <unistd.h>
 #include <netdb.h>
 
-#include"log.hpp"
+#include "log.hpp"
 
 static inline bool try_again(int errnum){
     int res = false;

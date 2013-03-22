@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X0000043B_HPP_
 #define _REDEMPTION_KEYLAYOUT_X0000043B_HPP_
 
-#include"keylayout.hpp"
+#include "keylayout.hpp"
 
 namespace x0000043b {    // Sami (Northern) (Norway) // Norwegian with Sami
 

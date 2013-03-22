@@ -29,7 +29,7 @@
 #include <dirent.h>
 #include <stdio.h>
 
-#include"log.hpp"
+#include "log.hpp"
 
 #include <istream>
 #include <string>

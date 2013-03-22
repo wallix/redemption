@@ -26,12 +26,12 @@
 #define BOOST_TEST_MODULE TestGCC
 #include <boost/test/auto_unit_test.hpp>
 
-#include"log.hpp"
+#include "log.hpp"
 #define LOGNULL
 
 #include "transport.hpp"
 #include "testtransport.hpp"
-#include"RDP/gcc.hpp"
+#include "RDP/gcc.hpp"
 
 BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 {

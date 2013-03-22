@@ -22,7 +22,7 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_EDIT_HPP_
 #define _REDEMPTION_MOD_INTERNAL_WIDGET_EDIT_HPP_
 
-#include"widget.hpp"
+#include "widget.hpp"
 
 struct widget_edit : public Widget {
 

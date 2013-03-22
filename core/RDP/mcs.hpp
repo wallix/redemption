@@ -27,7 +27,7 @@
 
 #include <algorithm>
 
-#include"stream.hpp"
+#include "stream.hpp"
 
 namespace MCS
 {
@@ -233,7 +233,7 @@ namespace MCS
 //   2.2.1.3.5).
 
 // clientMonitorData (variable): Optional Client Monitor Data structure (section
-//   2.2.1.3.6). This field MUST NOT be include" if the server does not
+//   2.2.1.3.6). This field MUST NOT be include " if the server does not
 //   advertise support for extended client data blocks by using the
 //   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
 //   2.2.1.2.1.

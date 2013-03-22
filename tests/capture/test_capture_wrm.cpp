@@ -28,16 +28,16 @@
 
 #define LOGNULL
 
-#include"test_orders.hpp"
+#include "test_orders.hpp"
 #include "transport.hpp"
 #include "testtransport.hpp"
 #include "outfilenametransport.hpp"
 #include "outfiletransport.hpp"
-#include"nativecapture.hpp"
-#include"FileToGraphic.hpp"
-#include"GraphicToFile.hpp"
-#include"image_capture.hpp"
-#include"constants.hpp"
+#include "nativecapture.hpp"
+#include "FileToGraphic.hpp"
+#include "GraphicToFile.hpp"
+#include "image_capture.hpp"
+#include "constants.hpp"
 
 const char expected_stripped_wrm[] = 
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order

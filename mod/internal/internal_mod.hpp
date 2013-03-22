@@ -22,9 +22,9 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP_
 #define _REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP_
 
-#include"widget/screen.hpp"
-#include"modcontext.hpp"
-#include"client_mod.hpp"
+#include "widget/screen.hpp"
+#include "modcontext.hpp"
+#include "client_mod.hpp"
 
 struct internal_mod : public mod_api, public client_mod {
     public:

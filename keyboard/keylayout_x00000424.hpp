@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X00000424_HPP_
 #define _REDEMPTION_KEYLAYOUT_X00000424_HPP_
 
-#include"keylayout.hpp"
+#include "keylayout.hpp"
 
 namespace x00000424 {    // Slovenian (Slovenia) // Slovenian
 

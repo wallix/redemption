@@ -30,12 +30,12 @@
 #define LOGNULL
 #undef SHARE_PATH
 #define SHARE_PATH FIXTURES_PATH
-#include"RDP/RDPSerializer.hpp"
-#include"channel_list.hpp"
-#include"front_api.hpp"
-#include"wait_obj.hpp"
+#include "RDP/RDPSerializer.hpp"
+#include "channel_list.hpp"
+#include "front_api.hpp"
+#include "wait_obj.hpp"
 
-#include"internal/test_card.hpp"
+#include "internal/test_card.hpp"
 
 BOOST_AUTO_TEST_CASE(TestShowTestCard)
 {

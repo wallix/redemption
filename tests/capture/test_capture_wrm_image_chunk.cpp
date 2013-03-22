@@ -28,14 +28,14 @@
 
 #define LOGNULL
 
-#include"test_orders.hpp"
+#include "test_orders.hpp"
 #include "transport.hpp"
 #include "testtransport.hpp"
 #include "outfilenametransport.hpp"
-#include"FileToGraphic.hpp"
-#include"GraphicToFile.hpp"
-#include"image_capture.hpp"
-#include"constants.hpp"
+#include "FileToGraphic.hpp"
+#include "GraphicToFile.hpp"
+#include "image_capture.hpp"
+#include "constants.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestImageChunk)

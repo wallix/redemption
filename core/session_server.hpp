@@ -22,10 +22,10 @@
 #ifndef _REDEMPTION_CORE_SESSION_SERVER_HPP_
 #define _REDEMPTION_CORE_SESSION_SERVER_HPP_
 
-#include"config.hpp"
-#include"ssl_calls.hpp"
-#include"server.hpp"
-#include"session.hpp"
+#include "config.hpp"
+#include "ssl_calls.hpp"
+#include "server.hpp"
+#include "session.hpp"
 
 class SessionServer : public Server
 {

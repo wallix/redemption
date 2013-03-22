@@ -29,12 +29,12 @@
 #ifndef _REDEMPTION_CORE_RDP_GRAPHIC_UPDATE_PDU_HPP_
 #define _REDEMPTION_CORE_RDP_GRAPHIC_UPDATE_PDU_HPP_
 
-#include"RDP/x224.hpp"
-#include"RDP/mcs.hpp"
-#include"RDP/rdp.hpp"
-#include"RDP/sec.hpp"
-#include"RDP/lic.hpp"
-#include"RDP/RDPGraphicDevice.hpp"
+#include "RDP/x224.hpp"
+#include "RDP/mcs.hpp"
+#include "RDP/rdp.hpp"
+#include "RDP/sec.hpp"
+#include "RDP/lic.hpp"
+#include "RDP/RDPGraphicDevice.hpp"
 // MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
 // ================================================================
 // The TS_FP_UPDATE_ORDERS structure contains primary, secondary, and alternate

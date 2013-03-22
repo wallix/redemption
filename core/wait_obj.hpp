@@ -25,9 +25,9 @@
 #ifndef _REDEMPTION_CORE_WAIT_OBJ_HPP_
 #define _REDEMPTION_CORE_WAIT_OBJ_HPP_
 
-#include"error.hpp"
+#include "error.hpp"
 #include <stdint.h>
-#include"difftimeval.hpp"
+#include "difftimeval.hpp"
 
 class wait_obj
 {

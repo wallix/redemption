@@ -21,7 +21,7 @@
    - Using lib boost functions for testing
 */
 
-#include"RDP/orders/RDPOrdersCommon.hpp"
+#include "RDP/orders/RDPOrdersCommon.hpp"
 
 
 void check_datas(size_t lg_data, uint8_t * data,

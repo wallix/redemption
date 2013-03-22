@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_CORE_LISTEN_HPP_
 #define _REDEMPTION_CORE_LISTEN_HPP_
 
-#include"mainloop.hpp"
+#include "mainloop.hpp"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -34,8 +34,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include"log.hpp"
-#include"server.hpp"
+#include "log.hpp"
+#include "server.hpp"
 
 //using namespace std;
 

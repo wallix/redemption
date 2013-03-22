@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X00000809_HPP_
 #define _REDEMPTION_KEYLAYOUT_X00000809_HPP_
 
-#include"keylayout.hpp"
+#include "keylayout.hpp"
 
 namespace x00000809 {    // English (United Kingdom) // United Kingdom
 

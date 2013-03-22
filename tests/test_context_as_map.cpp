@@ -29,7 +29,7 @@
 #define BOOST_TEST_MODULE TestContextAsMap
 #include <boost/test/auto_unit_test.hpp>
 
-#include"log.hpp"
+#include "log.hpp"
 #define LOGNULL
 
 #include <string.h>

@@ -22,9 +22,9 @@
 #define REDEMPTION_MOD_WIDGET2_WIDGET_COMPOSITE_HPP_
 
 #include <vector>
-#include"widget.hpp"
+#include "widget.hpp"
 #include <region.hpp>
-#include"keymap2.hpp"
+#include "keymap2.hpp"
 
 class WidgetComposite : public Widget
 {

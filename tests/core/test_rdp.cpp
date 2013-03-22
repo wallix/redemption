@@ -27,11 +27,11 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include"log.hpp"
+#include "log.hpp"
 
-#include"stream.hpp"
-#include"RDP/x224.hpp"
-#include"RDP/rdp.hpp"
+#include "stream.hpp"
+#include "RDP/x224.hpp"
+#include "RDP/rdp.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestSendShareControlAndData)

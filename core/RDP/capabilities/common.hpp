@@ -25,9 +25,9 @@
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_COMMON_HPP_
 
 #include <stdint.h>
-#include"log.hpp"
-#include"stream.hpp"
-#include"RDP/orders/RDPOrdersCommon.hpp"
+#include "log.hpp"
+#include "stream.hpp"
+#include "RDP/orders/RDPOrdersCommon.hpp"
 
 // 2.2.1.13.1.1.1 Capability Set (TS_CAPS_SET)
 // ===========================================

@@ -28,9 +28,9 @@
 
 #define LOGNULL
 #include "outfilenametransport.hpp"
-#include"staticcapture.hpp"
-#include"nativecapture.hpp"
-#include"FileToGraphic.hpp"
+#include "staticcapture.hpp"
+#include "nativecapture.hpp"
+#include "FileToGraphic.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSample0WRM)
 {

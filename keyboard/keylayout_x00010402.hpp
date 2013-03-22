@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X00010402_HPP_
 #define _REDEMPTION_KEYLAYOUT_X00010402_HPP_
 
-#include"keylayout.hpp"
+#include "keylayout.hpp"
 
 namespace x00010402 {    // Bulgarian (Bulgaria) // Bulgare (latin)
 

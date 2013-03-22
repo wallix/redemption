@@ -26,17 +26,17 @@
 #ifndef _REDEMPTION_UTILS_STREAM_HPP_
 #define _REDEMPTION_UTILS_STREAM_HPP_
 
-#include"log.hpp"
+#include "log.hpp"
 
 #include <stdio.h>
 #include <string.h> // for memcpy, memset
 #include <algorithm>
 
-#include"constants.hpp"
-//#include"ssl_calls.hpp"
-#include"error.hpp"
-#include"bitfu.hpp"
-#include"utf.hpp"
+#include "constants.hpp"
+//#include "ssl_calls.hpp"
+#include "error.hpp"
+#include "bitfu.hpp"
+#include "utf.hpp"
 
 // using a template for default size of stream would make sense instead of always using the large buffer below
 enum {

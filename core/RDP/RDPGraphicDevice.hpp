@@ -28,18 +28,18 @@
 
 #ifndef _REDEMPTION_CORE_RDP_RDPGRAPHICDEVICE_HPP_
 #define _REDEMPTION_CORE_RDP_RDPGRAPHICDEVICE_HPP_
-#include"RDP/orders/RDPOrdersCommon.hpp"
-#include"RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include"RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include"RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include"RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include"RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include"RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include"RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
-#include"RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include"RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
-#include"RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
-#include"RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "RDP/orders/RDPOrdersCommon.hpp"
+#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
+#include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 
 struct RDPGraphicDevice
 {

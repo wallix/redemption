@@ -27,7 +27,7 @@
 
 #ifndef _REDEMPTION_UTILS_SSL_CALLS_HPP_
 #define _REDEMPTION_UTILS_SSL_CALLS_HPP_
-#include"bitfu.hpp"
+#include "bitfu.hpp"
 
 #include <stdint.h>
 #include <stdlib.h> /* needed for openssl headers */
@@ -39,9 +39,9 @@
 #include <openssl/x509v3.h>
 
 #include <string.h>
-#include"constants.hpp"
-#include"log.hpp"
-#include"stream.hpp"
+#include "constants.hpp"
+#include "log.hpp"
+#include "stream.hpp"
 
 enum {
     SEC_RANDOM_SIZE   = 32,

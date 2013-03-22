@@ -30,8 +30,8 @@
 #ifndef _REDEMPTION_CORE_RDP_GCC_HPP_
 #define _REDEMPTION_CORE_RDP_GCC_HPP_
 
-#include"stream.hpp"
-#include"ssl_calls.hpp"
+#include "stream.hpp"
+#include "ssl_calls.hpp"
 
 enum DATA_BLOCK_TYPE {
     //  The data block that follows contains Client Core Data (section 2.2.1.3.2).
@@ -360,7 +360,7 @@ namespace GCC
     // by the GCC Provider sourcing this PDU. The Tag parameter is assigned
     // by the source GCC Provider to be locally unique. It is used to
     // identify the returned UserIDIndication PDU. The Result parameter
-    // include" GCC-specific failure information sourced directly from
+    // include " GCC-specific failure information sourced directly from
     // the Result parameter in the GCC-Conference-Create response primitive.
     // If the Result parameter is anything except successful, the Result
     // parameter in the MCS-Connect-Provider response is set to
@@ -717,7 +717,7 @@ namespace GCC
         // how to set the DEFINE_KEYBOARD_TYPE in Platform.reg before including Keybd.reg.
 
         //    #define DEFINE_KEYBOARD_TYPE
-        //    #include"$(DRIVERS_DIR)\keybd\keybd.reg"
+        //    #include "$(DRIVERS_DIR)\keybd\keybd.reg"
         //    This will bring in the proper values for the current LOCALE, if it is
         //    supported. Logic in Keybd.reg sets these values. The following registry
         //    example shows this logic.

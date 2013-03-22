@@ -24,11 +24,11 @@
 #define _REDEMPTION_KEYBOARD_KEYMAP2_HPP_
 
 #include <stdio.h>
-#include"constants.hpp"
+#include "constants.hpp"
 #include <string.h>
 #include <string>
 
-#include"keylayouts.hpp"
+#include "keylayouts.hpp"
 
 using namespace std;
 

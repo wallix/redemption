@@ -22,30 +22,30 @@
 #define _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
 
 #include <errno.h>
-#include"bitmap.hpp"
-#include"rect.hpp"
-#include"constants.hpp"
-#include"difftimeval.hpp"
+#include "bitmap.hpp"
+#include "rect.hpp"
+#include "constants.hpp"
+#include "difftimeval.hpp"
 
-#include"RDP/orders/RDPOrdersCommon.hpp"
-#include"RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include"RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include "RDP/orders/RDPOrdersCommon.hpp"
+#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 
-#include"RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include"RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include"RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include"RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include"RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include"RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include"RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
-#include"error.hpp"
-#include"config.hpp"
-#include"RDP/caches/bmpcache.hpp"
-#include"colors.hpp"
+#include "error.hpp"
+#include "config.hpp"
+#include "RDP/caches/bmpcache.hpp"
+#include "colors.hpp"
 
-#include"GraphicToFile.hpp"
-#include"png.hpp"
+#include "GraphicToFile.hpp"
+#include "png.hpp"
 
 class NativeCapture : public RDPGraphicDevice
 {

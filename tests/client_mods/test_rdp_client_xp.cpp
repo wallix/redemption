@@ -31,25 +31,25 @@
 #include <algorithm>
 
 #define LOGNULL
-#include"./test_orders.hpp"
+#include "./test_orders.hpp"
 
-#include"stream.hpp"
+#include "stream.hpp"
 #include "transport.hpp"
 #include "testtransport.hpp"
-#include"constants.hpp"
-#include"RDP/x224.hpp"
-#include"RDP/mcs.hpp"
-#include"RDP/sec.hpp"
-#include"wait_obj.hpp"
-#include"RDP/RDPGraphicDevice.hpp"
-#include"channel_list.hpp"
-#include"front_api.hpp"
-#include"client_info.hpp"
-#include"rdp/rdp.hpp"
-#include"ssl_calls.hpp"
-#include"png.hpp"
-#include"RDP/RDPDrawable.hpp"
-#include"staticcapture.hpp"
+#include "constants.hpp"
+#include "RDP/x224.hpp"
+#include "RDP/mcs.hpp"
+#include "RDP/sec.hpp"
+#include "wait_obj.hpp"
+#include "RDP/RDPGraphicDevice.hpp"
+#include "channel_list.hpp"
+#include "front_api.hpp"
+#include "client_info.hpp"
+#include "rdp/rdp.hpp"
+#include "ssl_calls.hpp"
+#include "png.hpp"
+#include "RDP/RDPDrawable.hpp"
+#include "staticcapture.hpp"
 
 
 
@@ -291,7 +291,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 //    t.connect();
 
 
-    #include"./fixtures/dump_xp.hpp"
+    #include "./fixtures/dump_xp.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests

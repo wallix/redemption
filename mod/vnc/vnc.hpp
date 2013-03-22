@@ -30,14 +30,14 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include"colors.hpp"
+#include "colors.hpp"
 
-#include"stream.hpp"
-#include"d3des.hpp"
-#include"keymap2.hpp"
-#include"keymapSym.hpp"
-#include"client_mod.hpp"
-#include"channel_list.hpp"
+#include "stream.hpp"
+#include "d3des.hpp"
+#include "keymap2.hpp"
+#include "keymapSym.hpp"
+#include "client_mod.hpp"
+#include "channel_list.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto

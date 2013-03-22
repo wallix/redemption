@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X00000816_HPP_
 #define _REDEMPTION_KEYLAYOUT_X00000816_HPP_
 
-#include"keylayout.hpp"
+#include "keylayout.hpp"
 
 namespace x00000816 {    // Portuguese (Portugal) // Portuguese
 

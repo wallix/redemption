@@ -23,7 +23,7 @@
 #ifndef _REDEMPTION_MOD_CLI_CLI_MOD_HPP_
 #define _REDEMPTION_MOD_CLI_CLI_MOD_HPP_
 
-#include"transitory/transitory.hpp"
+#include "transitory/transitory.hpp"
 
 struct cli_mod : public transitory_mod {
     cli_mod(

@@ -28,13 +28,13 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include"RDP/rdp.hpp"
-#include"client_info.hpp"
-#include"constants.hpp"
+#include "RDP/rdp.hpp"
+#include "client_info.hpp"
+#include "constants.hpp"
 
 
 TODO(" ssl calls introduce some dependency on ssl system library  injecting it in the sec object would be better.")
-#include"ssl_calls.hpp"
+#include "ssl_calls.hpp"
 
 namespace SEC
 {
@@ -287,7 +287,7 @@ enum {
 // This PDU can be dropped because the Client Random (see section 5.3.4) is
 // redundant, since no security keys need to be generated. Furthermore, because
 // no security measures are in effect, the Security Header (see section 5.3.8)
-// will not be include" with any data sent on the wire, except for the Client
+// will not be include " with any data sent on the wire, except for the Client
 // Info (see section 3.2.5.3.11) and licensing PDUs (see [MS-RDPELE]), which
 // always contain the Security Header (see section 2.2.9.1.1.2). To protect the
 // confidentiality of client-to-server user data, an RDP server must ensure that
@@ -531,7 +531,7 @@ enum {
 
 // The Security Header essentially contains flags and a MAC signature taken over
 // the encrypted data (see section 5.3.6 for details on the MAC generation). In
-// FIPS scenarios, the header also include" the number of padding bytes appended
+// FIPS scenarios, the header also include " the number of padding bytes appended
 // to the data.
 
 // Fast-Path packets are more compact and formatted differently, but the
@@ -557,7 +557,7 @@ enum {
 
 // If no encryption is in effect, the Selected Encryption Method and Encryption
 // Level (see section 5.3.1) returned to the client is zero. The Security Header
-// will not be include" with any data sent on the wire, except for the Client
+// will not be include " with any data sent on the wire, except for the Client
 // Info (section 2.2.1.11) and licensing PDUs (for an example of a licensing PDU
 // see section 2.2.1.12), which always contain the Security Header.
 

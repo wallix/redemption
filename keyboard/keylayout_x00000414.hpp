@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X00000414_HPP_
 #define _REDEMPTION_KEYLAYOUT_X00000414_HPP_
 
-#include"keylayout.hpp"
+#include "keylayout.hpp"
 
 namespace x00000414 {    // Norwegian, Bokmål (Norway) // Norwegian
 

@@ -23,8 +23,8 @@
 #ifndef _REDEMPTION_KEYBOARD_KEYMAPSYM_HPP_
 #define _REDEMPTION_KEYBOARD_KEYMAPSYM_HPP_
 
-#include"constants.hpp"
-#include"log.hpp"
+#include "constants.hpp"
+#include "log.hpp"
 #include <string.h>
 
 
@@ -648,8 +648,8 @@
 //    implies                           2254     0x08ce
 //    identical                         2255     0x08cf
 //    radical                           2262     0x08d6
-//    include"in                        2266     0x08da
-//    include"                          2267     0x08db
+//    include "in                        2266     0x08da
+//    include "                          2267     0x08db
 //    intersection                      2268     0x08dc
 //    union                             2269     0x08dd
 //    logicaland                        2270     0x08de

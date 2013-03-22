@@ -24,9 +24,9 @@
 
 #include <string>
 
-#include"config.hpp"
-#include"log.hpp"
-#include"dico.hpp"
+#include "config.hpp"
+#include "log.hpp"
+#include "dico.hpp"
 
 using namespace std;
 

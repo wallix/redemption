@@ -29,14 +29,14 @@
 #ifndef _REDEMPTION_CAPTURE_FILETOGRAPHIC_HPP_
 #define _REDEMPTION_CAPTURE_FILETOGRAPHIC_HPP_
 
-#include"../transport/transport.hpp"
-#include"RDP/caches/bmpcache.hpp"
-#include"RDP/RDPGraphicDevice.hpp"
-#include"RDP/RDPDrawable.hpp"
-#include"RDP/RDPSerializer.hpp"
-#include"difftimeval.hpp"
+#include "../transport/transport.hpp"
+#include "RDP/caches/bmpcache.hpp"
+#include "RDP/RDPGraphicDevice.hpp"
+#include "RDP/RDPDrawable.hpp"
+#include "RDP/RDPSerializer.hpp"
+#include "difftimeval.hpp"
 
-#include"chunked_image_transport.hpp"
+#include "chunked_image_transport.hpp"
 
 struct FileToGraphic
 {

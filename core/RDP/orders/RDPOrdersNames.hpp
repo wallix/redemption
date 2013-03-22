@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSNAMES_HPP_
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSNAMES_HPP_
 
-#include"RDP/orders/RDPOrdersCommon.hpp"
+#include "RDP/orders/RDPOrdersCommon.hpp"
 
 namespace RDP {
     static const char * ordernames[28] = {

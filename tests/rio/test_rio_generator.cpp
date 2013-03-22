@@ -25,9 +25,9 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
-#include"log.hpp"
-#include"rio/rio.h"
-#include"rio/rio_impl.h"
+#include "log.hpp"
+#include "rio/rio.h"
+#include "rio/rio_impl.h"
 
 BOOST_AUTO_TEST_CASE(TestGenerator)
 {

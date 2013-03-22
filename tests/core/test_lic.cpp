@@ -27,10 +27,10 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include"log.hpp"
+#include "log.hpp"
 
-#include"stream.hpp"
-#include"RDP/lic.hpp"
+#include "stream.hpp"
+#include "RDP/lic.hpp"
 
 BOOST_AUTO_TEST_CASE(Test_lic_new_licence)
 {

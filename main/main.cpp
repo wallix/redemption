@@ -34,13 +34,13 @@
 #include <dirent.h>
 #include <stddef.h>
 
-#include"version.hpp"
+#include "version.hpp"
 
-#include"constants.hpp"
+#include "constants.hpp"
 
-#include"check_files.hpp"
-#include"mainloop.hpp"
-#include"log.hpp"
+#include "check_files.hpp"
+#include "mainloop.hpp"
+#include "log.hpp"
 
 
 void daemonize(const char * pid_file)

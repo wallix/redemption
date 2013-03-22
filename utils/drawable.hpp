@@ -22,10 +22,10 @@
 #define _REDEMPTION_UTILS_DRAWABLE_HPP_
 
 #include <algorithm>
-#include"bitmap.hpp"
+#include "bitmap.hpp"
 
-#include"colors.hpp"
-#include"rect.hpp"
+#include "colors.hpp"
+#include "rect.hpp"
 
 struct Drawable
 {

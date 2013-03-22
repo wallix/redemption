@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_KEYLAYOUT_X00000410_HPP_
 #define _REDEMPTION_KEYLAYOUT_X00000410_HPP_
 
-#include"keylayout.hpp"
+#include "keylayout.hpp"
 
 namespace x00000410 {    // Italian (Italy) // Italian
 
