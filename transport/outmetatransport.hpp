@@ -20,8 +20,8 @@
    Transport layer abstraction
 */
 
-#ifndef _REDEMPTION_CORE_OUTMETATRANSPORT_HPP_
-#define _REDEMPTION_CORE_OUTMETATRANSPORT_HPP_
+#ifndef _REDEMPTION_TRANSPORT_OUTMETATRANSPORT_HPP_
+#define _REDEMPTION_TRANSPORT_OUTMETATRANSPORT_HPP_
 
 #include "transport.hpp"
 #include "error.hpp"

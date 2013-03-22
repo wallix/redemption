@@ -28,6 +28,7 @@
 
 #define LOGNULL
 #include "outfilenametransport.hpp"
+#include "infiletransport.hpp"
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
 #include "FileToGraphic.hpp"

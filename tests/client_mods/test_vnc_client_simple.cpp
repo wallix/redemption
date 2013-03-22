@@ -28,7 +28,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "./test_orders.hpp"
+#include "test_orders.hpp"
 
 #include "stream.hpp"
 #include "transport.hpp"

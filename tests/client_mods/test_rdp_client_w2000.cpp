@@ -32,7 +32,7 @@
 
 #define LOGNULL
 //#define LOGPRINT
-#include "./test_orders.hpp"
+#include "test_orders.hpp"
 
 #include "stream.hpp"
 #include "transport.hpp"
@@ -292,7 +292,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 //    t.connect();
 
 
-    #include "./fixtures/dump_w2000.hpp"
+    #include "fixtures/dump_w2000.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests

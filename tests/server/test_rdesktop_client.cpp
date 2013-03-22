@@ -89,12 +89,12 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     const char outdata[] =
     {
-        #include "../tests/fixtures/trace_rdesktop_client_indata.hpp"
+        #include "fixtures/trace_rdesktop_client_indata.hpp"
     };
 
     const char indata[] =
     {
-        #include "../tests/fixtures/trace_rdesktop_client_outdata.hpp"
+        #include "fixtures/trace_rdesktop_client_outdata.hpp"
     };
 
     const char * name = "Test Front Transport";

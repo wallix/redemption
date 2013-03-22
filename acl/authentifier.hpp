@@ -28,6 +28,7 @@ TODO("Sesman is performing two largely unrelated tasks : finding out the next mo
 #include "config.hpp"
 #include "modcontext.hpp"
 #include "netutils.hpp"
+#include "sockettransport.hpp"
 
 class SessionManager {
 

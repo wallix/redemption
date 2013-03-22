@@ -29,7 +29,7 @@
 #include <algorithm>
 
 #define LOGNULL
-#include "./test_orders.hpp"
+#include "test_orders.hpp"
 
 #include "stream.hpp"
 #include "transport.hpp"
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 //    ClientSocketTransport t(name, "10.10.14.78", 3389, 3, 1000, verbose);
 //    t.connect();
 
-    #include "./fixtures/dump_w2008.hpp"
+    #include "fixtures/dump_w2008.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests

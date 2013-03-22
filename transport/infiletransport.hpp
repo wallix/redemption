@@ -17,49 +17,51 @@
    Copyright (C) Wallix 2012
    Author(s): Christophe Grosjean
 
-   Transport layer abstraction, outfile implementation
+   Transport layer abstraction
 */
 
-#ifndef _REDEMPTION_TRANSPORT_OUTFILETRANSPORT_HPP_
-#define _REDEMPTION_TRANSPORT_OUTFILETRANSPORT_HPP_
+#ifndef _REDEMPTION_TRANSPORT_INFILETRANSPORT_HPP_
+#define _REDEMPTION_TRANSPORT_INFILETRANSPORT_HPP_
 
 #include "transport.hpp"
 #include "rio/rio.h"
 
-class OutFileTransport : public Transport {
+class InFileTransport : public Transport {
     public:
     RIO rio;
     uint32_t verbose;
 
-    OutFileTransport(int fd, unsigned verbose = 0)
+    InFileTransport(int fd, unsigned verbose = 0)
         : verbose(verbose) 
     {
-        RIO_ERROR status = rio_init_outfile(&this->rio, fd);
+        RIO_ERROR status = rio_init_infile(&this->rio, fd);
         if (status != RIO_ERROR_OK){
-            LOG(LOG_ERR, "rio outfile initialisation failed (%u)", status);
+            LOG(LOG_ERR, "rio infile initialisation failed (%u)", status);
             throw Error(ERR_TRANSPORT);
         }
     }
 
-    virtual ~OutFileTransport() 
+    virtual ~InFileTransport() 
     {
         rio_clear(&this->rio);
     }
 
-
-    using Transport::send;
-    virtual void send(const char * const buffer, size_t len) throw (Error) {
-        ssize_t res = rio_send(&this->rio, buffer, len);
-        if (res < 0){
-            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+    using Transport::recv;
+    virtual void recv(char ** pbuffer, size_t len) throw (Error)
+    {
+        ssize_t res = rio_recv(&this->rio, *pbuffer, len);
+        if (res <= 0){
+            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        }
+        *pbuffer += res;
+        if (res != (ssize_t)len){
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
     }
 
-    using Transport::recv;
-    virtual void recv(char**, size_t) throw (Error)
-    {  
-        LOG(LOG_INFO, "OutFileTransport used for recv");
-        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
+        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV, 0);
     }
 };
 

@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#ifndef _REDEMPTION_CORE_CIPHER_TRANSPORT_HPP_
-#define _REDEMPTION_CORE_CIPHER_TRANSPORT_HPP_
+#ifndef _REDEMPTION_TRANSPORT_CIPHER_TRANSPORT_HPP_
+#define _REDEMPTION_TRANSPORT_CIPHER_TRANSPORT_HPP_
 
 #include "cipher.hpp"
 #include "transport.hpp"

@@ -32,7 +32,7 @@
 #include <string.h>
 #include "constants.hpp"
 #include "stream.hpp"
-#include "../transport/transport.hpp"
+#include "transport.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/nego.hpp"
 #include "RDP/mcs.hpp"

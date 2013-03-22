@@ -29,7 +29,7 @@
 
 #include "rio/rio.h"
 #include "rio/rio_impl.h"
-#include "../utils/fileutils.hpp"
+#include "fileutils.hpp"
 
 
 // Infile is a RIO object used to wrap system file reading

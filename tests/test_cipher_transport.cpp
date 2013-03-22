@@ -33,7 +33,7 @@
 
 #include "log.hpp"
 #include "error.hpp"
-#include "../transport/cipher_transport.hpp"
+#include "cipher_transport.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestCryptOpenSSL)
