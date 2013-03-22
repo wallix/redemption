@@ -27,9 +27,6 @@
 #include "notify_api.hpp"
 #include <rect.hpp>
 
-
-#include <iostream>
-
 class Keymap2;
 
 enum EventType {
@@ -50,11 +47,11 @@ enum EventType {
 };
 
 enum NotifyEventType {
-    NOTIFY_FOCUS_BEGIN,
-    NOTIFY_FOCUS_END,
+    NOTIFY_FOCUS_BEGIN = FOCUS_BEGIN,
+    NOTIFY_FOCUS_END = FOCUS_END,
     NOTIFY_TEXT_CHANGED = TEXT_CHANGED,
-    NOTIFY_SUBMIT,
-    NOTIFY_CANCEL,
+    NOTIFY_SUBMIT = WIDGET_SUBMIT,
+    NOTIFY_CANCEL = WIDGET_CANCEL,
 };
 
 class Widget

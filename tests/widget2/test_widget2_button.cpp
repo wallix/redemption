@@ -26,7 +26,7 @@
 #define LOGNULL
 #include "log.hpp"
 
-#include "internal/widget2/label.hpp"
+#include "internal/widget2/button.hpp"
 #include "internal/widget2/widget_composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
@@ -130,11 +130,11 @@ struct TestDraw : ModApi
     }
 };
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
+BOOST_AUTO_TEST_CASE(TraceWidgetButton)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetLabel is a label widget at position 0,0 in it's parent context
+    // WidgetButton is a button widget at position 0,0 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -146,15 +146,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     int xtext = 4;
     int ytext = 1;
 
-    TODO("I believe users of this widget may wish to control text position and behavior inside rectangle"
-         "ie: text may be centered, aligned left, aligned right, or even upside down, etc"
-         "these possibilities (and others) are supported in RDPGlyphIndex")
-    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test1", auto_resize, id, bg_color, fg_color, xtext, ytext);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test1", auto_resize, id, bg_color, fg_color, xtext, ytext);
 
     // ask to widget to redraw at it's current position
-    wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
+    wbutton.send_event(WM_DRAW, 0, (wbutton.rect.cx<<16 | wbutton.rect.cy), 0);
 
-   // drawable.save_to_png("/tmp/label.png");
+    drawable.save_to_png("/tmp/button.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -164,11 +161,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
+BOOST_AUTO_TEST_CASE(TraceWidgetButton2)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
+    // WidgetButton is a button widget of size 100x20 at position 10,100 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -178,12 +175,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     uint16_t x = 10;
     uint16_t y = 100;
 
-    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test2", auto_resize, id, bg_color, fg_color);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test2", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
+    wbutton.send_event(WM_DRAW, 0, (wbutton.rect.cx<<16 | wbutton.rect.cy), 0);
 
-   // drawable.save_to_png("/tmp/label2.png");
+    drawable.save_to_png("/tmp/button2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -193,11 +190,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
+BOOST_AUTO_TEST_CASE(TraceWidgetButton3)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetLabel is a label widget of size 100x20 at position -10,500 in it's parent context
+    // WidgetButton is a button widget of size 100x20 at position -10,500 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -207,12 +204,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     uint16_t x = -10;
     uint16_t y = 500;
 
-    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test3", auto_resize, id, bg_color, fg_color);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test3", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
+    wbutton.send_event(WM_DRAW, 0, (wbutton.rect.cx<<16 | wbutton.rect.cy), 0);
 
-   // drawable.save_to_png("/tmp/label3.png");
+    drawable.save_to_png("/tmp/button3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -222,11 +219,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
+BOOST_AUTO_TEST_CASE(TraceWidgetButton4)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetLabel is a label widget of size 100x20 at position 770,500 in it's parent context
+    // WidgetButton is a button widget of size 100x20 at position 770,500 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -236,12 +233,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     uint16_t x = 770;
     uint16_t y = 500;
 
-    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test4", auto_resize, id, bg_color, fg_color);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test4", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
+    wbutton.send_event(WM_DRAW, 0, (wbutton.rect.cx<<16 | wbutton.rect.cy), 0);
 
-   // drawable.save_to_png("/tmp/label4.png");
+    drawable.save_to_png("/tmp/button4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -251,11 +248,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
+BOOST_AUTO_TEST_CASE(TraceWidgetButton5)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetLabel is a label widget of size 100x20 at position -20,-7 in it's parent context
+    // WidgetButton is a button widget of size 100x20 at position -20,-7 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -265,12 +262,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     uint16_t x = -20;
     uint16_t y = -7;
 
-    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test5", auto_resize, id, bg_color, fg_color);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test5", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
+    wbutton.send_event(WM_DRAW, 0, (wbutton.rect.cx<<16 | wbutton.rect.cy), 0);
 
-   // drawable.save_to_png("/tmp/label5.png");
+    drawable.save_to_png("/tmp/button5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -280,11 +277,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
+BOOST_AUTO_TEST_CASE(TraceWidgetButton6)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
+    // WidgetButton is a button widget of size 100x20 at position 760,-7 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -294,12 +291,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     uint16_t x = 760;
     uint16_t y = -7;
 
-    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wlabel.send_event(WM_DRAW, 0, (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
+    wbutton.send_event(WM_DRAW, 0, (wbutton.rect.cx<<16 | wbutton.rect.cy), 0);
 
-   // drawable.save_to_png("/tmp/label6.png");
+    drawable.save_to_png("/tmp/button6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -309,11 +306,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
+BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
+    // WidgetButton is a button widget of size 100x20 at position 760,-7 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -323,12 +320,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     uint16_t x = 760;
     uint16_t y = -7;
 
-    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    wlabel.send_event(WM_DRAW, (20<<16|0), (wlabel.rect.cx<<16 | wlabel.rect.cy), 0);
+    wbutton.send_event(WM_DRAW, (20<<16|0), (wbutton.rect.cx<<16 | wbutton.rect.cy), 0);
 
-   // drawable.save_to_png("/tmp/label7.png");
+    drawable.save_to_png("/tmp/button7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -338,11 +335,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
+BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip2)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetLabel is a label widget of size 100x20 at position 10,7 in it's parent context
+    // WidgetButton is a button widget of size 100x20 at position 10,7 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -352,12 +349,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     uint16_t x = 0;
     uint16_t y = 0;
 
-    WidgetLabel wlabel(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    wlabel.send_event(WM_DRAW, (20<<16|5), (30<<16 | 10), 0);
+    wbutton.send_event(WM_DRAW, (20<<16|5), (30<<16 | 10), 0);
 
-   // drawable.save_to_png("/tmp/label8.png");
+    drawable.save_to_png("/tmp/button8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -367,7 +364,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
+BOOST_AUTO_TEST_CASE(TraceWidgetButtonEvent)
 {
     struct WidgetReceiveEvent : public Widget {
         Widget * sender;
@@ -388,69 +385,92 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
         }
     } widget_for_receive_event;
 
+    struct Notify : public NotifyApi {
+        Widget * sender;
+        notify_event_t event;
+        virtual void notify(Widget* sender, notify_event_t event,
+                            long unsigned int, long unsigned int)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } notifier;
+
     Widget * parent = &widget_for_receive_event;
     ModApi * drawable = NULL;
-    NotifyApi * notifier = NULL;
     bool auto_resize = false;
     uint16_t x = 0;
     uint16_t y = 0;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "", auto_resize);
+    WidgetButton wbutton(drawable, x, y, parent, &notifier, "", auto_resize);
 
-    wlabel.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wlabel);
-    BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_UP);
+    wbutton.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == 0);
+    BOOST_CHECK(widget_for_receive_event.event == 0);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
+    wbutton.send_event(CLIC_BUTTON1_DOWN, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == 0);
+    BOOST_CHECK(widget_for_receive_event.event == 0);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
+    wbutton.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == &wbutton);
+    BOOST_CHECK(widget_for_receive_event.event == NOTIFY_SUBMIT);
+    BOOST_CHECK(notifier.sender == &wbutton);
+    BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
+    notifier.sender = 0;
+    notifier.event = 0;
     widget_for_receive_event.sender = 0;
     widget_for_receive_event.event = 0;
-    wlabel.send_event(CLIC_BUTTON1_DOWN, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wlabel);
-    BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_DOWN);
-    widget_for_receive_event.sender = 0;
-    widget_for_receive_event.event = 0;
-    wlabel.send_event(KEYUP, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wlabel);
+    wbutton.send_event(KEYUP, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == &wbutton);
     BOOST_CHECK(widget_for_receive_event.event == KEYUP);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
     widget_for_receive_event.sender = 0;
     widget_for_receive_event.event = 0;
-    wlabel.send_event(KEYDOWN, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wlabel);
+    wbutton.send_event(KEYDOWN, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == &wbutton);
     BOOST_CHECK(widget_for_receive_event.event == KEYDOWN);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
+BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetLabel is a label widget of size 256x125 at position 0,0 in it's parent context
+    // WidgetButton is a button widget of size 256x125 at position 0,0 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);
 
-    WidgetLabel wlabel1(&drawable, 0,0, &wcomposite, notifier,
+    WidgetButton wbutton1(&drawable, 0,0, &wcomposite, notifier,
                         "abababab", true, 0, YELLOW, BLACK);
-    WidgetLabel wlabel2(&drawable, 0,100, &wcomposite, notifier,
+    WidgetButton wbutton2(&drawable, 0,100, &wcomposite, notifier,
                         "ggghdgh", true, 0, WHITE, RED);
-    WidgetLabel wlabel3(&drawable, 100,100, &wcomposite, notifier,
+    WidgetButton wbutton3(&drawable, 100,100, &wcomposite, notifier,
                         "lldlslql", true, 0, BLUE, RED);
-    WidgetLabel wlabel4(&drawable, 300,300, &wcomposite, notifier,
+    WidgetButton wbutton4(&drawable, 300,300, &wcomposite, notifier,
                         "LLLLMLLM", true, 0, PINK, DARK_GREEN);
-    WidgetLabel wlabel5(&drawable, 700,-10, &wcomposite, notifier,
+    WidgetButton wbutton5(&drawable, 700,-10, &wcomposite, notifier,
                         "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE);
-    WidgetLabel wlabel6(&drawable, -10,550, &wcomposite, notifier,
+    WidgetButton wbutton6(&drawable, -10,550, &wcomposite, notifier,
                         "xxwwp", true, 0, DARK_GREY, PALE_GREEN);
 
-    wcomposite.child_list.push_back(&wlabel1);
-    wcomposite.child_list.push_back(&wlabel2);
-    wcomposite.child_list.push_back(&wlabel3);
-    wcomposite.child_list.push_back(&wlabel4);
-    wcomposite.child_list.push_back(&wlabel5);
-    wcomposite.child_list.push_back(&wlabel6);
+    wcomposite.child_list.push_back(&wbutton1);
+    wcomposite.child_list.push_back(&wbutton2);
+    wcomposite.child_list.push_back(&wbutton3);
+    wcomposite.child_list.push_back(&wbutton4);
+    wcomposite.child_list.push_back(&wbutton5);
+    wcomposite.child_list.push_back(&wbutton6);
 
     // ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.send_event(WM_DRAW, (100<<16|25), (100<<16 | 100), 0);
 
-   // drawable.save_to_png("/tmp/label9.png");
+    drawable.save_to_png("/tmp/button9.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -462,7 +482,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     // ask to widget to redraw at it's current position
     wcomposite.send_event(WM_DRAW, 0, (wcomposite.cx()<<16 | wcomposite.cy()), 0);
 
-   // drawable.save_to_png("/tmp/label10.png");
+    drawable.save_to_png("/tmp/button10.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\x85\x0a\x9c\x09\x57\xd9\x99\x52\xed\xa8"

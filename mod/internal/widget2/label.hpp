@@ -160,25 +160,6 @@ public:
                                          screen_clip
                                         );
     }
-
-#if 0
-    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip)
-    {
-        this->Widget::draw(rect, x, y, xclip, yclip);
-        this->context_text.draw_in(
-            this->drawable,
-            Rect(rect.x,
-                 rect.y,
-                 rect.cx - this->x_text,
-                 rect.cy - this->y_text),
-            x + this->x_text,
-            y + this->y_text,
-            xclip + this->x_text,
-            yclip + this->y_text,
-            ~this->bg_color
-        );
-    }
-#endif
 };
 
 #endif

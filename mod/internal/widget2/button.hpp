@@ -27,45 +27,49 @@ class WidgetButton : public Widget
 {
 public:
     WidgetLabel label;
-    char buffer[256];
     int state;
-    bool is_down;
 
-    WidgetButton(ModApi* drawable, const Rect& rect, Widget* parent, NotifyApi* notifier, const char * text, int id = 0, int xtext = 0, int ytext = 0)
-    : Widget(drawable, rect, parent, Widget::TYPE_BUTTON, notifier, id)
-    , label(drawable, rect, this, 0, text, 0, xtext, ytext)
+    WidgetButton(ModApi* drawable, int16_t x, int16_t y, Widget* parent,
+                 NotifyApi* notifier, const char * text, bool auto_resize = true,
+                 int id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
+                 int xtext = 0, int ytext = 0)
+    : Widget(drawable, Rect(), parent, notifier, id)
+    , label(drawable, 0, 0, this, 0, text, auto_resize, 0, bgcolor, fgcolor, xtext, ytext)
     , state(0)
-    , is_down(false)
     {
+        this->rect.x = x;
+        this->rect.y = y;
+        this->rect.cx = this->label.cx();
+        this->rect.cy = this->label.cy();
     }
 
     virtual ~WidgetButton()
     {}
 
-    virtual void draw(const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip)
+    virtual void draw(const Rect& clip)
     {
-        this->label.draw(rect, x, y, xclip, yclip);
+        this->label.draw(clip);
     }
 
     virtual void send_event(EventType event, int param, int param2, Keymap2* keymap)
     {
         switch (event) {
             case CLIC_BUTTON1_DOWN:
-                this->is_down = true;
-                this->refresh(this->rect);
+                this->state = 1;
+                //this->refresh(this->rect);
                 break;
             case CLIC_BUTTON1_UP:
-                if (this->is_down) {
-                    this->is_down = false;
-                    this->notify_self(NOTIFY_SUBMIT);
-                    this->notify_parent(WIDGET_SUBMIT);
-                    this->refresh(this->rect);
+                if (this->state & 1) {
+                    this->state = 0;
+                    this->notify_self(NOTIFY_SUBMIT, 0, 0);
+                    this->notify_parent(WIDGET_SUBMIT, 0, 0);
+                    //this->refresh(this->rect);
                 }
                 break;
             case FOCUS_END:
-                if (this->is_down) {
-                    this->is_down = false;
-                    this->refresh(this->rect);
+                if (this->state & 1) {
+                    this->state = 0;
+                    //this->refresh(this->rect);
                 }
                 break;
             default:
