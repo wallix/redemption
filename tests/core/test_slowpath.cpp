@@ -54,6 +54,24 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
 
     BOOST_CHECK_EQUAL(8, cie.numEvents);
     BOOST_CHECK_EQUAL(96, cie.payload.size());
+
+    uint16_t messageTypes[8] = {
+          SlowPath::INPUT_EVENT_SCANCODE
+        , SlowPath::INPUT_EVENT_SYNC
+        , SlowPath::INPUT_EVENT_SCANCODE
+        , SlowPath::INPUT_EVENT_MOUSE
+        , SlowPath::INPUT_EVENT_MOUSE
+        , SlowPath::INPUT_EVENT_MOUSE
+        , SlowPath::INPUT_EVENT_MOUSE
+        , SlowPath::INPUT_EVENT_MOUSE
+    };
+
+    for (uint16_t i = 0; i < cie.numEvents; i++) {
+        SlowPath::InputEvent_Recv ie(cie.payload);
+
+        BOOST_CHECK_EQUAL(messageTypes[i], ie.messageType);
+//        BOOST_CHECK_EQUAL(6,               ie.payload.size());
+    }
 } // BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
 
 
@@ -73,4 +91,4 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
 
     BOOST_CHECK_EQUAL(4, cie.numEvents);
     BOOST_CHECK_EQUAL(48, cie.payload.size());
-} // BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
+} // BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2)

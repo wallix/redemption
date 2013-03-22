@@ -2718,8 +2718,6 @@ TODO("Pass font name as parameter in constructor")
         break;
         case PDUTYPE2_INPUT:   // 28(0x1c) Input PDU (section 2.2.8.1.1.3)
             {
-LOG(LOG_INFO, "***** PDUTYPE2_INPUT *****:");
-hexdump_d(sdata_in.payload.p, sdata_in.payload.in_remain());
 
                 int num_events = sdata_in.payload.in_uint16_le();
 
@@ -2755,8 +2753,6 @@ hexdump_d(sdata_in.payload.p, sdata_in.payload.in_remain());
                     int16_t param1 = SpCiep.payload.in_sint16_le();
                     int16_t param2 = SpCiep.payload.in_sint16_le();
 */
-LOG(LOG_INFO, "***** PDUTYPE2_INPUT *****: msg_type = 0x%X", msg_type);
-
 
                     TODO(" we should always call send_input with original data  if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it")
                     TODO(" with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.")
