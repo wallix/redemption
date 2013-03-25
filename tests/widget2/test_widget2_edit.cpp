@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
                      bg_color, fg_color, edit_pos, xtext, ytext);
 
     // ask to widget to redraw at it's current position
-    wedit.send_event(WM_DRAW, 0, (wedit.rect.cx<<16 | wedit.rect.cy), 0);
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.rect.cx, wedit.rect.cy));
 
     drawable.save_to_png("/tmp/edit.png");
 
@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test2", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wedit.send_event(WM_DRAW, 0, (wedit.rect.cx<<16 | wedit.rect.cy), 0);
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.rect.cx, wedit.rect.cy));
 
     drawable.save_to_png("/tmp/edit2.png");
 
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test3", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wedit.send_event(WM_DRAW, 0, (wedit.rect.cx<<16 | wedit.rect.cy), 0);
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.rect.cx, wedit.rect.cy));
 
     drawable.save_to_png("/tmp/edit3.png");
 
@@ -237,7 +237,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit4)
     WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test4", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wedit.send_event(WM_DRAW, 0, (wedit.rect.cx<<16 | wedit.rect.cy), 0);
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.rect.cx, wedit.rect.cy));
 
     drawable.save_to_png("/tmp/edit4.png");
 
@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit5)
     WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test5", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wedit.send_event(WM_DRAW, 0, (wedit.rect.cx<<16 | wedit.rect.cy), 0);
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.rect.cx, wedit.rect.cy));
 
     drawable.save_to_png("/tmp/edit5.png");
 
@@ -295,7 +295,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit6)
     WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test6", id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wedit.send_event(WM_DRAW, 0, (wedit.rect.cx<<16 | wedit.rect.cy), 0);
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.rect.cx, wedit.rect.cy));
 
     drawable.save_to_png("/tmp/edit6.png");
 
@@ -324,7 +324,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip)
     WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test6", id, bg_color, fg_color);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    wedit.send_event(WM_DRAW, (20<<16|0), (wedit.rect.cx<<16 | wedit.rect.cy), 0);
+    wedit.rdp_input_invalidate(Rect(20, 0, wedit.rect.cx, wedit.rect.cy));
 
     drawable.save_to_png("/tmp/edit7.png");
 
@@ -353,7 +353,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
     WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test6", id, bg_color, fg_color);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    wedit.send_event(WM_DRAW, (20<<16|5), (30<<16 | 10), 0);
+    wedit.rdp_input_invalidate(Rect(20, 5, 30, 10));
 
     drawable.save_to_png("/tmp/edit8.png");
 
@@ -406,7 +406,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 //
 //     WidgetEdit wedit(&drawable, x, y, cx, parent, &notifier, "abcdef", 0, YELLOW, BLUE);
 //
-//     parent->send_event(WM_DRAW, 0, parent->cx()<<16|parent->cy(), 0);
+//    parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
+
 //     drawable.save_to_png("/tmp/edit-e1.png");
 //     char message[1024];
 //     if (!check_sig(drawable.gd.drawable, message,
@@ -419,7 +420,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 //     keymap.push_kevent(Keymap2::KEVENT_KEY);
 //     keymap.push_char('a');
 //
-//     parent->send_event(WM_DRAW, 0, parent->cx()<<16|parent->cy(), 0);
+//    parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
 //     drawable.save_to_png("/tmp/edit-e2.png");
 //     if (!check_sig(drawable.gd.drawable, message,
 //         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
@@ -434,7 +435,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 //     BOOST_CHECK(notifier.sender == 0);
 //     BOOST_CHECK(notifier.event == 0);
 //
-//     parent->send_event(WM_DRAW, 0, parent->cx()<<16|parent->cy(), 0);
+//    parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
+
 //     drawable.save_to_png("/tmp/edit-e3.png");
 //     if (!check_sig(drawable.gd.drawable, message,
 //         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
@@ -449,7 +451,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 //     BOOST_CHECK(notifier.sender == 0);
 //     BOOST_CHECK(notifier.event == 0);
 //
-//     parent->send_event(WM_DRAW, 0, parent->cx()<<16|parent->cy(), 0);
+//    parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
 //     drawable.save_to_png("/tmp/edit-e4.png");
 //     if (!check_sig(drawable.gd.drawable, message,
 //         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
@@ -464,7 +466,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 //     BOOST_CHECK(notifier.sender == 0);
 //     BOOST_CHECK(notifier.event == 0);
 //
-//     parent->send_event(WM_DRAW, 0, parent->cx()<<16|parent->cy(), 0);
+//    parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
 //     drawable.save_to_png("/tmp/edit-e5.png");
 //     if (!check_sig(drawable.gd.drawable, message,
 //         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
@@ -479,7 +481,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 //     BOOST_CHECK(notifier.sender == 0);
 //     BOOST_CHECK(notifier.event == 0);
 //
-//     parent->send_event(WM_DRAW, 0, parent->cx()<<16|parent->cy(), 0);
+//    parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
 //     drawable.save_to_png("/tmp/edit-e6.png");
 //     if (!check_sig(drawable.gd.drawable, message,
 //         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
@@ -494,7 +496,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 //     BOOST_CHECK(notifier.sender == 0);
 //     BOOST_CHECK(notifier.event == 0);
 //
-//     parent->send_event(WM_DRAW, 0, parent->cx()<<16|parent->cy(), 0);
+//    parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
 //     drawable.save_to_png("/tmp/edit-e7.png");
 //     if (!check_sig(drawable.gd.drawable, message,
 //         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
@@ -509,7 +511,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 //     BOOST_CHECK(notifier.sender == 0);
 //     BOOST_CHECK(notifier.event == 0);
 //
-//     parent->send_event(WM_DRAW, 0, parent->cx()<<16|parent->cy(), 0);
+//    parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
 //     drawable.save_to_png("/tmp/edit-e8.png");
 //     if (!check_sig(drawable.gd.drawable, message,
 //         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
@@ -524,7 +526,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 //     BOOST_CHECK(notifier.sender == 0);
 //     BOOST_CHECK(notifier.event == 0);
 //
-//     parent->send_event(WM_DRAW, 0, parent->cx()<<16|parent->cy(), 0);
+//    parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
 //     drawable.save_to_png("/tmp/edit-e9.png");
 //     if (!check_sig(drawable.gd.drawable, message,
 //         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
@@ -542,7 +544,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 // //     widget_for_receive_event.sender = 0;
 // //     widget_for_receive_event.event = 0;
 // //
-// //     parent->send_event(WM_DRAW, 0, parent->cx()<<16|parent->cy(), 0);
+// //     parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
 // //     drawable.save_to_png("/tmp/edit-e10.png");
 // //     if (!check_sig(drawable.gd.drawable, message,
 // //         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
@@ -582,7 +584,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 //     wcomposite.child_list.push_back(&wedit6);
 //
 //     // ask to widget to redraw at position 100,25 and of size 100x100.
-//     wcomposite.send_event(WM_DRAW, (100<<16|25), (100<<16 | 100), 0);
+//     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
 //
 //     drawable.save_to_png("/tmp/edit9.png");
 //
@@ -594,7 +596,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 //     }
 //
 //     // ask to widget to redraw at it's current position
-//     wcomposite.send_event(WM_DRAW, 0, (wcomposite.cx()<<16 | wcomposite.cy()), 0);
+//     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 //
 //     drawable.save_to_png("/tmp/edit10.png");
 //
@@ -605,5 +607,3 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 //     }
 // }
 
-TODO("the entry point exists in module: it's rdp_input_invalidate"
-     "je just have to change received values to widget messages")

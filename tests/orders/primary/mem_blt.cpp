@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
             SMALL | CHANGE | STANDARD | BOUNDS | DELTA | LASTBOUNDS,
             MEMBLT,
             0xde,   // x, y, cx, cy, srcx, srcy coordinates changed
-            -10,    // x = -10 -> 300
+            246,    // x = -10 -> 300 (ie: 246 is -10 using 2's complement, this avoid a c++11 warning)
             +10,    // y = 390 +10 = 400
             +40,    // cx = 10 + 40 -> 50
             +50,    // cy = 10 + 50 -> 60

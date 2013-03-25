@@ -148,14 +148,32 @@ public:
         }
     }
 
+
+    // External world can generate 4 kind of events
+    // - keyboard event (scancode)
+    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
+    {
+    }
+
+    // - mouve event (mouse moves or a button went up or down)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+    {
+    }
+
+    // - synchronisation of capslock, numlock, etc state.
+    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+    {
+    }
+
+    // - part of screen should be redrawn
+    virtual void rdp_input_invalidate(const Rect & r)
+    {
+        this->refresh(r);
+    }
+
     virtual void send_event(EventType event, unsigned param, unsigned param2, Keymap2 * keymap)
     {
-        if (event == WM_DRAW) {
-            this->refresh(Rect(param >> 16, param & 0xFFFF,
-                               param2 >> 16, param2 & 0xFFFF));
-        } else {
-            this->notify_parent(event, param, param2);
-        }
+        this->notify_parent(event, param, param2);
     }
 
     virtual void notify(Widget * widget, NotifyApi::notify_event_t event,
