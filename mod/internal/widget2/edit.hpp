@@ -172,7 +172,7 @@ public:
                     break;
                 case Keymap2::KEVENT_RIGHT_ARROW:
                 case Keymap2::KEVENT_DOWN_ARROW:
-                    if (this->edit_pos < (int)this->num_chars) {
+                    if (this->edit_pos < this->num_chars) {
                         this->prev_cursor_px_pos = this->cursor_px_pos;
                         this->increment_edit_pos();
                         this->refresh(this->rect.wh());

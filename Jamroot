@@ -181,9 +181,11 @@ unit-test test_compact_to_aligned : tests/test_compact_to_aligned.cpp libboost_u
 unit-test test_region : tests/test_region.cpp libboost_unit_test  ;
 unit-test test_strings : tests/test_strings.cpp libboost_unit_test  ;
 
-unit-test test_transport : tests/test_transport.cpp openssl crypto z dl libboost_unit_test  ;
-unit-test test_filetransport : tests/test_filetransport.cpp openssl crypto z dl libboost_unit_test  ;
-unit-test test_testtransport : tests/test_testtransport.cpp openssl crypto z dl libboost_unit_test  ;
+unit-test test_transport : tests/transport/test_transport.cpp openssl crypto z dl libboost_unit_test  ;
+unit-test test_filetransport : tests/transport/test_filetransport.cpp openssl crypto z dl libboost_unit_test  ;
+unit-test test_testtransport : tests/transport/test_testtransport.cpp openssl crypto z dl libboost_unit_test  ;
+#unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test  ;
+unit-test test_cipher_transport : tests/transport/test_cipher_transport.cpp z openssl dl crypto png libboost_unit_test  ;
 
 unit-test test_capture_png : tests/capture/test_capture_png.cpp png z openssl crypto libboost_unit_test  ;
 unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp png z openssl crypto libboost_unit_test  ;
@@ -312,10 +314,6 @@ unit-test test_sq_inmeta : tests/rio/test_sq_inmeta.cpp openssl crypto z dl libb
 unit-test test_sq_inmeta : tests/rio/test_sq_inmeta.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
 #gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_rio_xxx.gcno bin/gcc-4.6/coverage/test_rio_xxx
-
-
-#unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test  ;
-unit-test test_cipher_transport : tests/test_cipher_transport.cpp z openssl dl crypto png libboost_unit_test  ;
 
 unit-test test_bitfu : tests/test_bitfu.cpp libboost_unit_test  ;
 
