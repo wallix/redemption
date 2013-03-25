@@ -120,6 +120,13 @@ extern "C" {
         return available_len;
     }
 
+    static inline RIO_ERROR rio_m_RIOCheck_get_status(RIOCheck * self)
+    {
+        if (!(self->status)) {
+            return self->err;
+        }
+        return RIO_ERROR_OK;
+    }
 };
 
 #endif

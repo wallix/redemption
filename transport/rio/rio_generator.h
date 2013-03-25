@@ -101,7 +101,13 @@ extern "C" {
          return -self->err;
     }
 
-
+    static inline RIO_ERROR rio_m_RIOGenerator_get_status(RIOGenerator * self)
+    {
+        if (!(self->status)) {
+            return self->err;
+        }
+        return RIO_ERROR_OK;
+    }
 };
 
 #endif

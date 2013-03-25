@@ -28,14 +28,13 @@
 class GeneratorTransport : public Transport {
 
     public:
-    RIO * rio;
+    RIO rio;
 
 
     GeneratorTransport(const char * data, size_t len)
         : Transport()
     {
-        RIO_ERROR status;
-        this->rio = rio_new_generator(&status, data, len);
+        RIO_ERROR status = rio_init_generator(&this->rio, data, len);
         if (status != RIO_ERROR_OK){ 
             throw Error(ERR_TRANSPORT, 0);
         }
@@ -43,12 +42,12 @@ class GeneratorTransport : public Transport {
 
     ~GeneratorTransport()
     {
-        rio_delete(this->rio);
+        rio_clear(&this->rio);
     }
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        ssize_t res = rio_recv(this->rio, *pbuffer, len);
+        ssize_t res = rio_recv(&this->rio, *pbuffer, len);
         if (res < 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
@@ -63,30 +62,30 @@ class GeneratorTransport : public Transport {
         // send perform like a /dev/null and does nothing in generator transport
     }
 
+    virtual bool get_status()
+    {
+        return rio_get_status(&this->rio) == RIO_ERROR_OK;
+    }
 
 };
 
 class CheckTransport : public Transport {
 
     public:
-    RIO * rio;
-    bool status;
+    RIO rio;
 
     CheckTransport(const char * data, size_t len, uint32_t verbose = 0)
         : Transport()
     {
-        this->status = true;
-        RIO_ERROR res = RIO_ERROR_OK;
-        this->rio = rio_new_check(&res, data, len);
+        RIO_ERROR res = rio_init_check(&this->rio, data, len);
         if (res != RIO_ERROR_OK){ 
-            this->status = false;
             throw Error(ERR_TRANSPORT, 0);
         }
     }
 
     ~CheckTransport()
     {
-        rio_delete(this->rio);
+        rio_clear(&this->rio);
     }
 
     using Transport::recv;
@@ -97,30 +96,32 @@ class CheckTransport : public Transport {
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
-        ssize_t res = rio_send(this->rio, buffer, len);
+        ssize_t res = rio_send(&this->rio, buffer, len);
         if (res < 0) {
-            this->status = false;
             throw Error(ERR_TRANSPORT_DIFFERS);
         }
         if (res < (ssize_t)len) {
-            this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
         return;
     }
+
+    virtual bool get_status()
+    {
+        return rio_get_status(&this->rio) == RIO_ERROR_OK;
+    }
+
 };
 
 class TestTransport : public Transport {
 
     public:
-    RIO * rio;
+    RIO rio;
     bool status;
 
     TestTransport(const char * name, const char * outdata, size_t outlen, const char * indata, size_t inlen, uint32_t verbose = 0)
     {
-        this->status = true;
-        RIO_ERROR res = RIO_ERROR_OK;
-        this->rio = rio_new_test(&res, indata, inlen, outdata, outlen);
+        RIO_ERROR res = rio_init_test(&this->rio, indata, inlen, outdata, outlen);
         if (res != RIO_ERROR_OK){ 
             this->status = false;
             throw Error(ERR_TRANSPORT, 0);
@@ -129,12 +130,12 @@ class TestTransport : public Transport {
 
     ~TestTransport()
     {
-        rio_delete(this->rio);
+        rio_clear(&this->rio);
     }
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        ssize_t res = rio_recv(this->rio, *pbuffer, len);
+        ssize_t res = rio_recv(&this->rio, *pbuffer, len);
         if (res < 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
@@ -146,16 +147,19 @@ class TestTransport : public Transport {
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
-        ssize_t res = rio_send(this->rio, buffer, len);
+        ssize_t res = rio_send(&this->rio, buffer, len);
         if (res < 0) {
-            this->status = false;
             throw Error(ERR_TRANSPORT_DIFFERS);
         }
         if (res < (ssize_t)len) {
-            this->status = false;
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
         return;
+    }
+
+    virtual bool get_status()
+    {
+        return rio_get_status(&this->rio) == RIO_ERROR_OK;
     }
 };
 

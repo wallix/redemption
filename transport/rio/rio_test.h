@@ -83,7 +83,12 @@ extern "C" {
             rio_m_RIOTest_destructor(self);
             return -err_check;
         }
-        return rio_recv(self->generator, data, len);
+        ssize_t res = rio_recv(self->generator, data, len);
+        if (res < 0){
+            rio_m_RIOTest_destructor(self);
+            return res;
+        }
+        return res;
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -106,6 +111,11 @@ extern "C" {
             return -err_check;
         }
         return rio_send(self->check, data, len);
+    }
+
+    static inline RIO_ERROR rio_m_RIOTest_get_status(RIOTest * self)
+    {
+        return rio_get_status(self->check);
     }
 
 };
