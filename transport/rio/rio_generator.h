@@ -31,8 +31,6 @@ extern "C" {
         size_t current;
         uint8_t * data;
         size_t len;
-        bool status;
-        RIO_ERROR err;
     };
 
     /* This method does not allocate space for object itself, 
@@ -45,8 +43,6 @@ extern "C" {
         if (!self->data) { return RIO_ERROR_MALLOC; }
         self->len = len;
         self->current = 0;
-        self->status = true;
-        self->err = RIO_ERROR_OK;
         memcpy(self->data, data, len);
         return RIO_ERROR_OK;
     }
@@ -56,7 +52,7 @@ extern "C" {
     static inline RIO_ERROR rio_m_RIOGenerator_destructor(RIOGenerator * self)
     {
         free(self->data);
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
 
     /* This method receive len bytes of data into buffer
@@ -68,23 +64,10 @@ extern "C" {
     */
     static inline ssize_t rio_m_RIOGenerator_recv(RIOGenerator * self, void * data, size_t len)
     {
-        if (!self->status){ 
-            if (self->err == RIO_ERROR_EOF){
-                return 0;
-            }
-            return -self->err; 
-        }
-        if (self->current + len > self->len){
-            size_t available_len = self->len - self->current;
-            memcpy(data, (char*)self->data + self->current, available_len);
-            self->current += available_len;
-            self->status = false; // next read will trigger EOF
-            self->err = RIO_ERROR_EOF;
-            return available_len;
-        }
-        memcpy(data, (char*)self->data + self->current, len);
-        self->current += len;
-        return len;
+        size_t rlen = (self->current + len > self->len)?self->len - self->current:len;
+        memcpy(data, (char*)self->data + self->current, rlen);
+        self->current += rlen;
+        return rlen;
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -96,16 +79,12 @@ extern "C" {
     */
     static inline ssize_t rio_m_RIOGenerator_send(RIOGenerator * self, const void * data, size_t len)
     {
-         self->status = false;
-         self->err = RIO_ERROR_RECV_ONLY;
-         return -self->err;
+         return -RIO_ERROR_RECV_ONLY;
     }
 
+    // actual errors are stored par generic rio, hence this method can be called only for OK
     static inline RIO_ERROR rio_m_RIOGenerator_get_status(RIOGenerator * self)
     {
-        if (!(self->status)) {
-            return self->err;
-        }
         return RIO_ERROR_OK;
     }
 };

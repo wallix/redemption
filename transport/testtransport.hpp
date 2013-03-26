@@ -117,13 +117,11 @@ class TestTransport : public Transport {
 
     public:
     RIO rio;
-    bool status;
 
     TestTransport(const char * name, const char * outdata, size_t outlen, const char * indata, size_t inlen, uint32_t verbose = 0)
     {
         RIO_ERROR res = rio_init_test(&this->rio, indata, inlen, outdata, outlen);
         if (res != RIO_ERROR_OK){ 
-            this->status = false;
             throw Error(ERR_TRANSPORT, 0);
         }
     }

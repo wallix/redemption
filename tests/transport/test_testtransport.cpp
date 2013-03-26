@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport)
     try{
         gt.send("pot", 3);
     } catch (const Error & e){
-        BOOST_CHECK_EQUAL((uint16_t)ERR_TRANSPORT_CLOSED, (uint16_t)e.id);
+        BOOST_CHECK_EQUAL((uint16_t)ERR_TRANSPORT_DIFFERS, (uint16_t)e.id);
     };
     BOOST_CHECK(!gt.get_status());
 }
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(TestCheckTransportInputOverflow)
         gt.send("0123456789ABCDEFGHI", 19);
     } catch (const Error & e)
     {
-        BOOST_CHECK_EQUAL((uint32_t)ERR_TRANSPORT_CLOSED, (uint32_t)e.id);
+        BOOST_CHECK_EQUAL((uint32_t)ERR_TRANSPORT_DIFFERS, (uint32_t)e.id);
     };
     BOOST_CHECK(!gt.get_status());
 }
@@ -159,21 +159,21 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     // and status is set to false (and will stay so) to allow tests to fail.
     // inside Transport, the difference is shown in trace logs.
     TestTransport gt("Test1", "OUTPUT", 6, "input", 5);
-    BOOST_CHECK_EQUAL(gt.status, true);
+    BOOST_CHECK_EQUAL(gt.get_status(), true);
     char buf[128] = {};
     char * p = buf;
     uint32_t sz = 3;
     gt.recv(&p, sz);
     BOOST_CHECK(0 == memcmp(p - sz, "OUT", sz));
     gt.send("in", 2);
-    BOOST_CHECK_EQUAL(gt.status, true);
+    BOOST_CHECK_EQUAL(gt.get_status(), true);
     sz = 3;
     gt.recv(&p, sz);
     BOOST_CHECK(0 == memcmp(p - sz, "PUT", sz));
     try {
         gt.send("pot", 3);
     } catch (const Error & e){
-        BOOST_CHECK_EQUAL((uint16_t)ERR_TRANSPORT_CLOSED, (uint16_t)e.id);
+        BOOST_CHECK_EQUAL((uint16_t)ERR_TRANSPORT_DIFFERS, (uint16_t)e.id);
     };
     BOOST_CHECK(!gt.get_status());
 }
