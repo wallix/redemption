@@ -30,8 +30,31 @@ TODO("Sesman is performing two largely unrelated tasks : finding out the next mo
 #include "netutils.hpp"
 #include "sockettransport.hpp"
 
-class SessionManager {
+typedef enum {
+    INTERNAL_NONE,
+    INTERNAL_LOGIN,
+    INTERNAL_DIALOG_DISPLAY_MESSAGE,
+    INTERNAL_DIALOG_VALID_MESSAGE,
+    INTERNAL_CLOSE,
+    INTERNAL_SELECTOR,
+    INTERNAL_BOUNCER2,
+    INTERNAL_TEST,
+    INTERNAL_CARD,
+} submodule_t;
 
+enum {
+    MCTX_STATUS_EXIT,
+    MCTX_STATUS_WAITING,
+    MCTX_STATUS_VNC,
+    MCTX_STATUS_RDP,
+    MCTX_STATUS_XUP,
+    MCTX_STATUS_INTERNAL,
+    MCTX_STATUS_TRANSITORY,
+    MCTX_STATUS_AUTH,
+    MCTX_STATUS_CLI,
+};
+
+class SessionManager {
     enum {
         MOD_STATE_INIT,
         MOD_STATE_DONE_RECEIVED_CREDENTIALS,
@@ -238,8 +261,24 @@ class SessionManager {
         return res;
     }
 
-    bool keep_alive_or_inactivity(fd_set & rfds, long & keepalive_time, long & now, Transport * trans)
+    bool keep_alive(fd_set & rfds, long & keepalive_time, long & now, Transport * trans)
     {
+//        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
+        if (MOD_STATE_DONE_CONNECTED == this->mod_state){
+            long enddate = atol(this->context.get(STRAUTHID_END_DATE_CNX));
+//            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu [%s])", keepalive_time, now, enddate, this->context.get(STRAUTHID_END_DATE_CNX));            
+            if (enddate != 0 && (now > enddate)) {
+                LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
+                this->mod_state = MOD_STATE_DONE_CLOSE;
+                return false;
+            }
+        }
+
+        if (keepalive_time == 0){
+            LOG(LOG_INFO, "keep_alive disabled");            
+            return true;
+        }
+
         TODO("we should manage a mode to disconnect on inactivity when we are on login box or on selector")
         if (keepalive_time && (now > (keepalive_time + this->keepalive_grace_delay))){
             LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
@@ -248,8 +287,7 @@ class SessionManager {
         }
         else if (keepalive_time && (now > keepalive_time)){
             if (this->verbose & 8){
-                LOG(LOG_INFO, "%llu bytes sent in last quantum,"
-                          " total: %llu tick:%d",
+                LOG(LOG_INFO, "%llu bytes sent in last quantum, total: %llu tick:%d",
                           trans->last_quantum_sent, trans->total_sent,
                           this->tick_count);
             }
@@ -257,6 +295,8 @@ class SessionManager {
                 this->tick_count++;
                 if (this->tick_count > this->max_tick){ // 15 minutes before closing on inactivity
                     this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed on inactivity");
+                    LOG(LOG_INFO, "Session ACL inactivity : closing");
+                    this->mod_state = MOD_STATE_DONE_CLOSE;
                     return false;
                 }
             }
@@ -267,42 +307,48 @@ class SessionManager {
         }
         
         // Keepalive Data exchange with sesman
-        if (this->auth_trans_t){
-            if (this->event(rfds)) {
-                if (this->verbose & 0x10){
-                    LOG(LOG_INFO, "auth::keep_alive_or_inactivity");
-                }
-                try {
-                    this->incoming();
-                    keepalive_time = now + this->keepalive_grace_delay;
-                }
-                catch (...){
-                    if (this->verbose & 0x10){
-                        LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (ACL closed)");
-                    }
-                    this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (ACL closed)");
-                    return false;
-                }
+        if (!this->auth_trans_t){
+            LOG(LOG_INFO, "auth trans closed ...");
+            return false;
+        }
+
+        if (this->event(rfds)) {
+            if (this->verbose & 0x10){
+                LOG(LOG_INFO, "auth::keep_alive_or_inactivity");
             }
-            if (keepalive_time && (now > keepalive_time)){
+            try {
+                LOG(LOG_INFO, "reading incoming");
+                this->incoming();
                 keepalive_time = now + this->keepalive_grace_delay;
-                BStream stream(8192);
-                stream.out_uint32_be(0); // skip length
-                // set data
-                this->context.ask(STRAUTHID_KEEPALIVE);
-                this->out_item(stream, STRAUTHID_KEEPALIVE);
-                // now set length in header
-                int total_length = stream.get_offset();
-                stream.p = stream.data;
-                stream.out_uint32_be(total_length); /* size */
-                // and send
-                this->auth_trans_t->send(stream.data, total_length);
+                LOG(LOG_INFO, "incoming received ok");                    
             }
+            catch (...){
+                this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (ACL closed)");
+                this->mod_state = MOD_STATE_DONE_CLOSE;
+                return false;
+            }
+        }
+        if (keepalive_time && (now > keepalive_time)){
+            keepalive_time = now + this->keepalive_grace_delay;
+            BStream stream(8192);
+            stream.out_uint32_be(0); // skip length
+            // set data
+            this->context.ask(STRAUTHID_KEEPALIVE);
+            this->out_item(stream, STRAUTHID_KEEPALIVE);
+            // now set length in header
+            int total_length = stream.get_offset();
+            stream.p = stream.data;
+            stream.out_uint32_be(total_length); /* size */
+            // and send
+            LOG(LOG_INFO, "sending keepalive");
+            this->auth_trans_t->send(stream.data, total_length);
+            LOG(LOG_INFO, "keepalive sent");
         }
         return true;
     }
 
-    int get_mod_from_protocol()
+
+    int get_mod_from_protocol(submodule_t & nextmod)
     {
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::get_mod_from_protocol");
@@ -343,7 +389,7 @@ class SessionManager {
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL bouncer2");
                 }
-                this->context.nextmod = ModContext::INTERNAL_BOUNCER2;
+                nextmod = INTERNAL_BOUNCER2;
             }
             else if (0 == strncmp(target, "autotest", 8)){
                 if (this->verbose & 0x4){
@@ -355,44 +401,47 @@ class SessionManager {
                 if (0 != strcmp(".mwrm", user + len_user - 5)){
                     strcpy(this->context.movie + len_user, ".mwrm");
                 }
-                this->context.nextmod = ModContext::INTERNAL_TEST;
+                nextmod = INTERNAL_TEST;
             }
             else if (0 == strcmp(target, "selector")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL selector");
                 }
-                this->context.nextmod = ModContext::INTERNAL_SELECTOR;
+                nextmod = INTERNAL_SELECTOR;
             }
             else if (0 == strcmp(target, "login")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
                 }
-                this->context.nextmod = ModContext::INTERNAL_LOGIN;
+                nextmod = INTERNAL_LOGIN;
             }
             else if (0 == strcmp(target, "close")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
                 }
-                this->context.nextmod = ModContext::INTERNAL_CLOSE;
+                nextmod = INTERNAL_CLOSE;
             }
             else {
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL card");
                 }
-                this->context.nextmod = ModContext::INTERNAL_CARD;
+                nextmod = INTERNAL_CARD;
             }
         }
         else {
             LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
                 protocol[0], protocol[1], protocol[2], protocol[3]);
-            this->context.nextmod = ModContext::INTERNAL_CARD;
+            nextmod = INTERNAL_CARD;
             assert(false);
         }
         return res;
     }
 
 
-    int ask_next_module(long & keepalive_time, const char * auth_host, int auth_port, bool & record_video, bool & keep_alive)
+    int ask_next_module(long & keepalive_time, 
+                        const char * auth_host, int auth_port, 
+                        bool & record_video, bool & keep_alive, 
+                        submodule_t & nextmod)
     {
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::ask_next_module");
@@ -432,37 +481,37 @@ class SessionManager {
         }
         {
             if (this->context.is_asked(STRAUTHID_AUTH_USER)){
-                this->context.nextmod = ModContext::INTERNAL_LOGIN;
                 this->mod_state = MOD_STATE_DONE_LOGIN;
+                nextmod = INTERNAL_LOGIN;
                 return MCTX_STATUS_INTERNAL;
             }
             else if (this->context.is_asked(STRAUTHID_PASSWORD)){
-                this->context.nextmod = ModContext::INTERNAL_LOGIN;
                 this->mod_state = MOD_STATE_DONE_LOGIN;
+                nextmod = INTERNAL_LOGIN;
                 return MCTX_STATUS_INTERNAL;
             }
             else if (!this->context.is_asked(STRAUTHID_SELECTOR)
                  &&   this->context.get_bool(STRAUTHID_SELECTOR)
                  &&  !this->context.is_asked(STRAUTHID_TARGET_DEVICE)
                  &&  !this->context.is_asked(STRAUTHID_TARGET_USER)){
-                this->context.nextmod = ModContext::INTERNAL_SELECTOR;
                 this->mod_state = MOD_STATE_DONE_SELECTOR;
+                nextmod = INTERNAL_SELECTOR;
                 return MCTX_STATUS_INTERNAL;
             }
             else if (this->context.is_asked(STRAUTHID_TARGET_DEVICE)
                  ||  this->context.is_asked(STRAUTHID_TARGET_USER)){
-                    this->context.nextmod = ModContext::INTERNAL_LOGIN;
                     this->mod_state = MOD_STATE_DONE_LOGIN;
+                    nextmod = INTERNAL_LOGIN;
                     return MCTX_STATUS_INTERNAL;
             }
             else if (this->context.is_asked(STRAUTHID_DISPLAY_MESSAGE)){
-                this->context.nextmod = ModContext::INTERNAL_DIALOG_DISPLAY_MESSAGE;
+                nextmod = INTERNAL_DIALOG_DISPLAY_MESSAGE;
                 this->mod_state = MOD_STATE_DONE_DISPLAY_MESSAGE;
                 return MCTX_STATUS_INTERNAL;
             }
             else if (this->context.is_asked(STRAUTHID_ACCEPT_MESSAGE)){
-                this->context.nextmod = ModContext::INTERNAL_DIALOG_VALID_MESSAGE;
                 this->mod_state = MOD_STATE_DONE_VALID_MESSAGE;
+                nextmod = INTERNAL_DIALOG_VALID_MESSAGE;
                 return MCTX_STATUS_INTERNAL;
             }
             else if (this->context.get_bool(STRAUTHID_AUTHENTICATED)){
@@ -472,7 +521,7 @@ class SessionManager {
                     context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "End of connection");
                 }
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
-                return this->get_mod_from_protocol();
+                return this->get_mod_from_protocol(nextmod);
             }
             else {
                 if (context.get(STRAUTHID_REJECTED)[0] != 0){
@@ -486,8 +535,8 @@ class SessionManager {
                     delete this->auth_trans_t;
                     this->auth_trans_t = 0;
                 }
-                this->context.nextmod = ModContext::INTERNAL_CLOSE;
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
+                nextmod = INTERNAL_CLOSE;
                 return MCTX_STATUS_INTERNAL;
             }
         }
@@ -496,8 +545,8 @@ class SessionManager {
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_CONNECTED state");
             }
-            this->context.nextmod = ModContext::INTERNAL_CLOSE;
             this->mod_state = MOD_STATE_DONE_CLOSE;
+            nextmod = INTERNAL_CLOSE;
             return MCTX_STATUS_INTERNAL;
         break;
         case MOD_STATE_DONE_CLOSE:
@@ -505,6 +554,7 @@ class SessionManager {
                 LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_CONNECTED state");
             }
             this->mod_state = MOD_STATE_DONE_EXIT;
+            nextmod = INTERNAL_CLOSE;
             return MCTX_STATUS_EXIT;
         break;
         case MOD_STATE_DONE_EXIT:
@@ -513,13 +563,13 @@ class SessionManager {
             }
             // we should never goes here, the main loop should have stopped before
             LOG(LOG_WARNING, "unexpected forced exit");
+            nextmod = INTERNAL_CLOSE;
             return MCTX_STATUS_EXIT;
         break;
         }
     }
 
     TODO("move that function to ModContext create specialized stream object ModContextStream")
-
     void out_item(Stream & stream, const char * key)
     {
         if (this->context.is_asked(key)){
