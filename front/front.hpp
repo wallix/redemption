@@ -19,7 +19,6 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    header file. Front object (server), used to communicate with RDP client
-
 */
 
 #ifndef _REDEMPTION_FRONT_FRONT_HPP_
@@ -70,7 +69,6 @@
 
 #include "front_api.hpp"
 #include "genrandom.hpp"
-
 
 class Front : public FrontAPI {
 public:
@@ -1831,24 +1829,17 @@ TODO("Pass font name as parameter in constructor")
             uint8_t byte = stream.in_uint8();
             if ((byte & FastPath::FASTPATH_OUTPUT_ACTION_X224) == 0){
                 LOG(LOG_INFO, "Front::Received fast-path PDU");
-//                throw Error(ERR_X224);
-
+//                throw Error(ERR_RDP_FASTPATH);
 ///////////////
 ///////////////
                 FastPath::ClientInputEventPDU_Recv cfpie(*this->trans, stream, this->decrypt);
 
-                uint8_t eventFlags;
-                uint8_t eventCode;
-                uint16_t pointerFlags;
-                uint16_t xPos;
-                uint16_t yPos;
-//                uint8_t keyCode;
                 uint8_t byte;
+                uint8_t eventCode;
 
                 for (uint8_t i = 0; i < cfpie.numEvents; i++){
                     byte = cfpie.payload.in_uint8();
 
-                    eventFlags = byte & 0x1F;
                     eventCode  = (byte & 0xE0) >> 5;
 
                     switch (eventCode){
@@ -1871,19 +1862,6 @@ TODO("Pass font name as parameter in constructor")
 
                         cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
                     }
-/*
-                        pointerFlags = cfpie.payload.in_uint16_le();
-                        xPos = cfpie.payload.in_uint16_le();
-                        yPos = cfpie.payload.in_uint16_le();
-
-                        this->mouse_x = xPos;
-                        this->mouse_y = yPos;
-                        if (this->up_and_running){
-                            cb.rdp_input_mouse(pointerFlags, xPos, yPos, &this->keymap);
-                        }
-
-                        LOG(LOG_INFO, "Front::Received fast-path PUD, mouse");
-*/
                     break;
 
                     case FastPath::FASTPATH_INPUT_EVENT_SYNC:
@@ -1894,15 +1872,10 @@ TODO("Pass font name as parameter in constructor")
 
                         cb.rdp_input_synchronize(0, 0, se.eventFlags, 0);
                     }
-/*
-                        cb.rdp_input_synchronize(0, 0, eventFlags, 0);
-
-                        LOG(LOG_INFO, "Front::Received fast-path PUD, sync");
-*/
                     break;
 
                     default:
-                        LOG(LOG_INFO, "Front::Received fast-path PUD, unknown event");
+                        LOG(LOG_INFO, "Front::Received unexpected fast-path PUD, eventCode = %u", eventCode);
                         throw Error(ERR_RDP_FASTPATH);
                     break;
                     }
@@ -2205,8 +2178,8 @@ TODO("Pass font name as parameter in constructor")
         caps_count++;
 
         InputCaps input_caps;
-//        input_caps.inputFlags = INPUT_FLAG_SCANCODES;
-        input_caps.inputFlags = INPUT_FLAG_SCANCODES | INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2;
+        input_caps.inputFlags = INPUT_FLAG_SCANCODES;
+//        input_caps.inputFlags = INPUT_FLAG_SCANCODES | INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2;
         input_caps.keyboardLayout = 0;
         input_caps.keyboardType = 0;
         input_caps.keyboardSubType = 0;
