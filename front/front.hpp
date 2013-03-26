@@ -1828,7 +1828,7 @@ TODO("Pass font name as parameter in constructor")
             // Detect fast-path PDU
             this->trans->recv(&stream.end, 1);
             uint8_t byte = stream.in_uint8();
-            if ((byte & FastPath::FASTPATH_OUTPUT_ACTION_X224) == 0){
+            if ((byte & FastPath::FASTPATH_INPUT_ACTION_X224) == 0){
                 LOG(LOG_INFO, "Front::Received fast-path PDU");
 //                throw Error(ERR_RDP_FASTPATH);
 ///////////////
@@ -2192,6 +2192,7 @@ TODO("Pass font name as parameter in constructor")
         caps_count++;
 
         InputCaps input_caps;
+// Slow/Fast-path
         input_caps.inputFlags = INPUT_FLAG_SCANCODES;
 //        input_caps.inputFlags = INPUT_FLAG_SCANCODES | INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2;
         input_caps.keyboardLayout = 0;

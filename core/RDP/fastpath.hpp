@@ -27,98 +27,6 @@
 
 #include "RDP/slowpath.hpp"
 
-// 2.2.9.1.2 Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-// ========================================================
-
-// Fast-path revises server output packets from the first byte with the goal of
-// improving bandwidth.
-
-// The TPKT Header ([T123] section 8), X.224 Class 0 Data TPDU ([X224] section
-//  13.7), and MCS Send Data Indication ([T125] section 11.33) are replaced; the
-//  Security Header (section 2.2.8.1.1.2) is collapsed into the fast-path output
-//  header; and the Share Data Header (section 2.2.8.1.1.1.2) is replaced by a
-//  new fast-path format. The contents of the graphics and pointer updates (see
-//  sections 2.2.9.1.1.3 and 2.2.9.1.1.4) are also changed to reduce their size,
-//  particularly by removing or reducing headers. Support for fast-path output
-//  is advertised in the General Capability Set (section 2.2.7.1.1).
-
-// fpOutputHeader (1 byte): An 8-bit, unsigned integer. One-byte, bit-packed
-//  header. This byte coincides with the first byte of the TPKT Header (see
-// [T123] section 8). Two pieces of information are collapsed into this byte:
-// - Encryption data
-// - Action code
-
-// actionCode (2 bits): Code indicating whether the PDU is in fast-path or
-// slow-path format.
-
-// +-------------------------------------+-----------------------------+
-// | 0x0 FASTPATH_OUTPUT_ACTION_FASTPATH | Indicates that the PDU is a |
-// |                                     | fast-path output PDU.       |
-// +-------------------------------------+-----------------------------+
-// | 0x3 FASTPATH_OUTPUT_ACTION_X224     | Indicates the presence of a |
-// |                                     | TPKT Header (see [T123]     |
-// |                                     | section 8) initial version  |
-// |                                     | byte which indicates that   |
-// |                                     | the PDU is a slow-path      |
-// |                                     | output PDU (in this case the|
-// |                                     | full value of the initial   |
-// |                                     | byte MUST be 0x03).         |
-// +-------------------------------------+-----------------------------+
-
-// reserved (4 bits): Unused bits reserved for future use. This bitfield MUST
-//  be set to 0.
-
-// encryptionFlags (2 bits): Flags describing cryptographic parameters of the
-//  PDU.
-
-// +-------------------------------------+-------------------------------------+
-// | 0x1 FASTPATH_OUTPUT_SECURE_CHECKSUM | Indicates that the MAC signature for|
-// |                                     | the PDU was generated using the     |
-// |                                     | "salted MAC generation" technique   |
-// |                                     | (see section 5.3.6.1.1). If this bit|
-// |                                     | is not set, then the standard       |
-// |                                     | technique was used (see sections    |
-// |                                     | 2.2.8.1.1.2.2 and 2.2.8.1.1.2.3).   |
-// +-------------------------------------+-------------------------------------+
-// | 0x2 FASTPATH_OUTPUT_ENCRYPTED       | Indicates that the PDU contains an  |
-// |                                     | 8-byte MAC signature after the      |
-// |                                     | optional length2 field (that is,    |
-// |                                     | the dataSignature field is present),|
-// |                                     | and the contents of the PDU are     |
-// |                                     | encrypted using the negotiated      |
-// |                                     | encryption package (see sections    |
-// |                                     | 5.3.2 and 5.3.6).                   |
-// +-------------------------------------+-------------------------------------+
-
-// length1 (1 byte): An 8-bit, unsigned integer. If the most significant bit of
-//  the length1 field is not set, then the size of the PDU is in the range 1 to
-//  127 bytes and the length1 field contains the overall PDU length (the length2
-//  field is not present in this case). However, if the most significant bit of
-//  the length1 field is set, then the overall PDU length is given by the low
-//  7 bits of the length1 field concatenated with the 8 bits of the length2
-//  field, in big-endian order (the length2 field contains the low-order bits).
-
-// length2 (1 byte): An 8-bit, unsigned integer. If the most significant bit of
-//  the length1 field is not set, then the length2 field is not present. If the
-//  most significant bit of the length1 field is set, then the overall PDU
-//  length is given by the low 7 bits of the length1 field concatenated with the
-//  8 bits of the length2 field, in big-endian order (the length2 field contains
-//  the low-order bits).
-
-// fipsInformation (4 bytes): Optional FIPS header information, present when the
-//  Encryption Method selected by the server (sections 5.3.2 and 2.2.1.4.3) is
-//  ENCRYPTION_METHOD_FIPS (0x00000010). The Fast-Path FIPS Information
-//  structure is specified in section 2.2.8.1.2.1.
-
-// dataSignature (8 bytes): MAC generated over the packet using one of the
-// techniques specified in section 5.3.6 (the FASTPATH_OUTPUT_SECURE_CHECKSUM
-// flag, which is set in the fpOutputHeader field, describes the method used to
-// generate the signature). This field MUST be present if the
-//  FASTPATH_OUTPUT_ENCRYPTED flag is set in the fpOutputHeader field.
-
-// fpOutputUpdates (variable): An array of Fast-Path Update (section
-// 2.2.9.1.2.1) structures to be processed by the client.
-
 TODO("To implement fastpath, the idea is to replace the current layer stack X224->Mcs->Sec with only one FastPath object. The FastPath layer would also handle legacy packets still using several independant layers. That should lead to a much simpler code in both front.hpp and rdp.hpp but still keep a flat easy to test model.")
 
 namespace FastPath {
@@ -198,8 +106,8 @@ namespace FastPath {
 // +------------------------------------+--------------------------------------+
 
     enum {
-          FASTPATH_OUTPUT_ACTION_FASTPATH = 0x0
-        , FASTPATH_OUTPUT_ACTION_X224     = 0x3
+          FASTPATH_INPUT_ACTION_FASTPATH = 0x0
+        , FASTPATH_INPUT_ACTION_X224     = 0x3
     };
 
 // numEvents (4 bits): Collapses the number of fast-path input events packed
@@ -327,8 +235,8 @@ namespace FastPath {
 
             TODO("RZ: Should we treat fipsInformation ?")
 
-            unsigned expected =
-                  8                               // dataSignature
+            const unsigned expected =
+                  8                                // dataSignature
                 + ((this->numEvents == 0) ? 1 : 0) // numEvent
                 ;
             if (!stream.in_check_rem(expected)) {
@@ -546,7 +454,7 @@ namespace FastPath {
                 throw Error(ERR_RDP_FASTPATH);
             }
 
-            unsigned expected =
+            const unsigned expected =
                   6; // pointerFlags(2) + xPos(2) + yPos(2)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR, "FastPath::MouseEvent: data truncated, expected=%u remains=%u",
@@ -610,6 +518,491 @@ namespace FastPath {
             this->eventFlags = eventHeader & 0x1F;
         }
     };
+
+// 2.2.9.1.2 Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+// ========================================================
+
+// Fast-path revises server output packets from the first byte with the goal of
+//  improving bandwidth. The TPKT Header ([T123] section 8), X.224 Class 0 Data
+//  TPDU ([X224] section 13.7), and MCS Send Data Indication ([T125] section
+//  11.33) are replaced; the Security Header (section 2.2.8.1.1.2) is collapsed
+//  into the fast-path output header; and the Share Data Header (section
+//  2.2.8.1.1.1.2) is replaced by a new fast-path format. The contents of the
+//  graphics and pointer updates (see sections 2.2.9.1.1.3 and 2.2.9.1.1.4) are
+//  also changed to reduce their size, particularly by removing or reducing
+//  headers. Support for fast-path output is advertised in the General
+//  Capability Set (section 2.2.7.1.1).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | fpOutputHeader|    length1    |    length1    |fipsInformation|
+// |               |               |   (optional)  |   (optional)  |
+// +---------------+---------------+---------------+---------------+
+// |                      ...                      | dataSignature |
+// |                                               |   (optional)  |
+// +-----------------------------------------------+---------------+
+// |                              ...                              |
+// +-----------------------------------------------+---------------+
+// |                      ...                      |fpOutputUpdates|
+// |                                               |   (variable)  |
+// +-----------------------------------------------+---------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// fpOutputHeader (1 byte): An 8-bit, unsigned integer. One-byte, bit-packed
+//  header. This byte coincides with the first byte of the TPKT Header (see
+//  [T123] section 8). Two pieces of information are collapsed into this byte:
+//  * Security flags
+//  * Action code
+//  The format of the fpOutputHeader byte is described by the following bitmask
+//   diagram.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |   |       | s |
+// | a |       | e |
+// | c |       | c |
+// | t | reser | F |
+// | i |  ved  | l |
+// | o |       | a | 
+// | n |       | g |
+// |   |       | s |
+// +---+-------+---+
+
+// action (2 bits): Code indicating whether the PDU is in fast-path or slow-path
+//  format.
+
+// +-------------------------------------+-------------------------------------+
+// | Value                               | Meaning                             |
+// +-------------------------------------+-------------------------------------+
+// | 0x0 FASTPATH_OUTPUT_ACTION_FASTPATH | Indicates that the PDU is a         |
+// |                                     | fast-path output PDU.               |
+// +-------------------------------------+-------------------------------------+
+// | 0x3 FASTPATH_OUTPUT_ACTION_X224     | Indicates the presence of a TPKT    |
+// |                                     | Header (see [T123] section 8)       |
+// |                                     | initial version byte which          |
+// |                                     | indicates that the PDU is a         |
+// |                                     | slow-path output PDU (in this case  |
+// |                                     | the full value of the initial byte  |
+// |                                     | MUST be 0x03).                      |
+// +-------------------------------------+-------------------------------------+
+
+    enum {
+          FASTPATH_OUTPUT_ACTION_FASTPATH = 0x0
+        , FASTPATH_OUTPUT_ACTION_X224     = 0x3
+    };
+
+// reserved (4 bits): Unused bits reserved for future use. This bitfield MUST be
+//  set to zero.
+
+// secFlags (2 bits): Flags describing cryptographic parameters of the PDU.
+
+// +-------------------------------------+-------------------------------------+
+// | Flags                               | Meaning                             |
+// +-------------------------------------+-------------------------------------+
+// | 0x1 FASTPATH_OUTPUT_SECURE_CHECKSUM | Indicates that the MAC signature    |
+// |                                     | for the PDU was generated using the |
+// |                                     | "salted MAC generation" technique   |
+// |                                     | (see section 5.3.6.1.1). If this    |
+// |                                     | bit is not set, then the standard   |
+// |                                     | technique was used (see sections    |
+// |                                     | 2.2.8.1.1.2.2 and 2.2.8.1.1.2.3).   |
+// +-------------------------------------+-------------------------------------+
+// | 0x2 FASTPATH_OUTPUT_ENCRYPTED       | Indicates that the PDU contains an  |
+// |                                     | 8-byte MAC signature after the      |
+// |                                     | optional length2 field (that is,    |
+// |                                     | the dataSignature field is          |
+// |                                     | present), and the contents of the   |
+// |                                     | PDU are encrypted using the         |
+// |                                     | negotiated encryption package (see  |
+// |                                     | sections 5.3.2 and 5.3.6).          |
+// +-------------------------------------+-------------------------------------+
+
+    enum {
+          FASTPATH_OUTPUT_SECURE_CHECKSUM = 0x1
+        , FASTPATH_OUTPUT_ENCRYPTED       = 0x2
+    };
+
+// length1 (1 byte): An 8-bit, unsigned integer. If the most significant bit of
+//  the length1 field is not set, then the size of the PDU is in the range 1 to
+//  127 bytes and the length1 field contains the overall PDU length (the length2
+//  field is not present in this case). However, if the most significant bit of
+//  the length1 field is set, then the overall PDU length is given by the low 7
+//  bits of the length1 field concatenated with the 8 bits of the length2 field,
+//  in big-endian order (the length2 field contains the low-order bits).
+
+// length2 (1 byte): An 8-bit, unsigned integer. If the most significant bit of
+//  the length1 field is not set, then the length2 field is not present. If the
+//  most significant bit of the length1 field is set, then the overall PDU
+//  length is given by the low 7 bits of the length1 field concatenated with the
+//  8 bits of the length2 field, in big-endian order (the length2 field contains
+//  the low-order bits).
+
+// fipsInformation (4 bytes): Optional FIPS header information, present when the
+//  Encryption Method selected by the server (sections 5.3.2 and 2.2.1.4.3) is
+//  ENCRYPTION_METHOD_FIPS (0x00000010). The Fast-Path FIPS Information
+//  structure is specified in section 2.2.8.1.2.1.
+
+// dataSignature (8 bytes): MAC generated over the packet using one of the
+//  techniques specified in section 5.3.6 (the FASTPATH_OUTPUT_SECURE_CHECKSUM
+//  flag, which is set in the fpOutputHeader field, describes the method used to
+//  generate the signature). This field MUST be present if the
+//  FASTPATH_OUTPUT_ENCRYPTED flag is set in the fpOutputHeader field.
+
+// fpOutputUpdates (variable): An array of Fast-Path Update (section
+//  2.2.9.1.2.1) structures to be processed by the client.
+
+    struct ServerUpdatePDU_Recv {
+        uint8_t secFlags;
+        uint32_t  fipsInformation;
+        uint8_t   dataSignature[8];
+        SubStream payload;
+
+        ServerUpdatePDU_Recv(Transport & trans, Stream & stream, CryptContext & decrypt)
+        : secFlags(0)
+        , fipsInformation(0)
+        , payload(stream) {
+            ::memset(dataSignature, 0, sizeof(dataSignature));
+
+            stream.rewind();
+
+            if (stream.size() < 1)
+                trans.recv(&stream.end, 1);
+
+            uint8_t byte;
+
+            byte = stream.in_uint8();
+
+            int action = byte & 0x03;
+            if (action != 0) {
+                LOG(LOG_INFO, "Fast-path PDU excepted: action=0x%X", action);
+                throw Error(ERR_RDP_FASTPATH);
+            }
+
+            this->secFlags = (byte & 0xC0) >> 6;
+
+            trans.recv(&stream.end, 1);
+
+            uint16_t length;
+            byte = stream.in_uint8();
+            if (byte & 0x80){
+                length = (byte & 0x7F) << 8;
+
+                trans.recv(&stream.end, 1);
+                byte = stream.in_uint8();
+                length += byte;
+            }
+            else{
+                length = byte;
+            }
+
+            trans.recv(&stream.end, length - stream.size());
+
+            TODO("RZ: Should we treat fipsInformation ?")
+
+            if (this->secFlags & FASTPATH_OUTPUT_ENCRYPTED) {
+                const unsigned expected = 8; // dataSignature
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR, "FastPath::ClientInputEventPDU: data truncated, expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RDP_FASTPATH);
+                }
+
+                stream.in_copy_bytes(this->dataSignature, 8);
+            }
+
+            this->payload.resize(stream, stream.in_remain());
+
+            if (this->secFlags & FASTPATH_OUTPUT_ENCRYPTED) {
+                decrypt.decrypt(payload);
+            }
+        }
+    };
+
+// 2.2.9.1.2.1 Fast-Path Update (TS_FP_UPDATE)
+// ===========================================
+
+// The TS_FP_UPDATE structure is used to describe and encapsulate the data for a
+//  fast-path update sent from server to client. All fast-path updates conform
+//  to this basic structure (see sections 2.2.9.1.2.1.1 to 2.2.9.1.2.1.10).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |  updateHeader |compressionFlag|              size             |
+// |               |  s(optional)  |                               |
+// +---------------+---------------+-------------------------------+
+// |                     updateData (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// updateHeader (1 byte): An 8-bit, unsigned integer. The TS_FP_UPDATE structure
+//  begins with a 1- byte, bit-packed update header field. Two pieces of
+//  information are collapsed into this byte:
+//  * Fast-path update type
+//  * Fast-path fragment sequencing
+//  * Compression usage indication
+//  The format of the updateHeader byte is described by the following bitmask
+//   diagram.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |       | f |   |
+// |       | r | c |
+// |       | a | o |
+// |       | g | m |
+// |       | m | p |
+// |       | e | r |
+// | updat | n | e |
+// | eCode | t | s |
+// |       | a | s |
+// |       | t | i |
+// |       | i | o |
+// |       | o | n |
+// |       | n |   |
+// +---------------+
+
+// updateCode (4 bits): Type code of the update.
+
+// +--------------------------------------+------------------------------------+
+// | Value                                | Meaning                            |
+// +--------------------------------------+------------------------------------+
+// | 0x0 FASTPATH_UPDATETYPE_ORDERS       | Indicates a Fast-Path Orders       |
+// |                                      | Update (see [MS-RDPEGDI] section   |
+// |                                      | 2.2.2.2).                          |
+// +--------------------------------------+------------------------------------+
+// | 0x1 FASTPATH_UPDATETYPE_BITMAP       | Indicates a Fast-Path Bitmap       |
+// |                                      | Update (see section                |
+// |                                      | 2.2.9.1.2.1.2).                    |
+// +--------------------------------------+------------------------------------+
+// | 0x2 FASTPATH_UPDATETYPE_PALETTE      | Indicates a Fast-Path Palette      |
+// |                                      | Update (see section                |
+// |                                      | 2.2.9.1.2.1.1).                    |
+// +--------------------------------------+------------------------------------+
+// | 0x3 FASTPATH_UPDATETYPE_SYNCHRONIZE  | Indicates a Fast-Path Synchronize  |
+// |                                      | Update (see                        |
+// |                                      | section 2.2.9.1.2.1.3).            |
+// +--------------------------------------+------------------------------------+
+// | 0x4 FASTPATH_UPDATETYPE_SURFCMDS     | Indicates a Fast-Path Surface      |
+// |                                      | Commands Update (see section       |
+// |                                      | 2.2.9.1.2.1.10).                   |
+// +--------------------------------------+------------------------------------+
+// | 0x5 FASTPATH_UPDATETYPE_PTR_NULL     | Indicates a Fast-Path System       |
+// |                                      | Pointer Hidden Update (see section |
+// |                                      | 2.2.9.1.2.1.5).                    |
+// +--------------------------------------+------------------------------------+
+// | 0x6 FASTPATH_UPDATETYPE_PTR_DEFAULT  | Indicates a Fast-Path System       |
+// |                                      | Pointer Default Update (see        |
+// |                                      | section 2.2.9.1.2.1.6).            |
+// +--------------------------------------+------------------------------------+
+// | 0x8 FASTPATH_UPDATETYPE_PTR_POSITION | Indicates a Fast-Path Pointer      |
+// |                                      | Position Update (see section       |
+// |                                      | 2.2.9.1.2.1.4).                    |
+// +--------------------------------------+------------------------------------+
+// | 0x9 FASTPATH_UPDATETYPE_COLOR        | Indicates a Fast-Path Color        |
+// |                                      | Pointer Update (see section        |
+// |                                      | 2.2.9.1.2.1.7).                    |
+// +--------------------------------------+------------------------------------+
+// | 0xA FASTPATH_UPDATETYPE_CACHED       | Indicates a Fast-Path Cached       |
+// |                                      | Pointer Update (see section        |
+// |                                      | 2.2.9.1.2.1.9).                    |
+// +--------------------------------------+------------------------------------+
+// | 0xB FASTPATH_UPDATETYPE_POINTER      | Indicates a Fast-Path New Pointer  |
+// |                                      | Update (see section                |
+// |                                      | 2.2.9.1.2.1.8).                    |
+// +--------------------------------------+------------------------------------+
+
+    enum {
+          FASTPATH_UPDATETYPE_ORDERS       = 0x0
+        , FASTPATH_UPDATETYPE_BITMAP       = 0x1
+        , FASTPATH_UPDATETYPE_PALETTE      = 0x2
+        , FASTPATH_UPDATETYPE_SYNCHRONIZE  = 0x3
+        , FASTPATH_UPDATETYPE_SURFCMDS     = 0x4
+        , FASTPATH_UPDATETYPE_PTR_NULL     = 0x5
+        , FASTPATH_UPDATETYPE_PTR_DEFAULT  = 0x6
+        , FASTPATH_UPDATETYPE_PTR_POSITION = 0x8
+        , FASTPATH_UPDATETYPE_COLOR        = 0x9
+        , FASTPATH_UPDATETYPE_CACHED       = 0xA
+        , FASTPATH_UPDATETYPE_POINTER      = 0xB
+    };
+
+// fragmentation (2 bits): Fast-path fragment sequencing information—support for
+//  fast-path fragmentation is specified in the Multifragment Update Capability
+//  Set (section 2.2.7.2.6).
+
+// +------------------------------+--------------------------------------------+
+// | Flag                         | Meaning                                    |
+// +------------------------------+--------------------------------------------+
+// | 0x0 FASTPATH_FRAGMENT_SINGLE | The fast-path data in the updateData field |
+// |                              | is not part of a sequence of fragments.    |
+// +------------------------------+--------------------------------------------+
+// | 0x1 FASTPATH_FRAGMENT_LAST   | The fast-path data in the updateData field |
+// |                              | contains the last fragment in a sequence   |
+// |                              | of fragments.                              |
+// +------------------------------+--------------------------------------------+
+// | 0x2 FASTPATH_FRAGMENT_FIRST  | The fast-path data in the updateData field |
+// |                              | contains the first fragment in a sequence  |
+// |                              | of fragments.                              |
+// +------------------------------+--------------------------------------------+
+// | 0x3 FASTPATH_FRAGMENT_NEXT   | The fast-path data in the updateData field |
+// |                              | contains the second or subsequent fragment |
+// |                              | in a sequence of fragments.                |
+// +------------------------------+--------------------------------------------+
+
+    enum {
+          FASTPATH_FRAGMENT_SINGLE = 0x0
+        , FASTPATH_FRAGMENT_LAST   = 0x1
+        , FASTPATH_FRAGMENT_FIRST  = 0x2
+        , FASTPATH_FRAGMENT_NEXT   = 0x3
+    };
+
+// compression (2 bits): Compression usage indication flags.
+
+// +--------------------------------------+------------------------------------+
+// | Flag                                 | Meaning                            |
+// +--------------------------------------+------------------------------------+
+// | 0x2 FASTPATH_OUTPUT_COMPRESSION_USED | Indicates that the                 |
+// |                                      | compressionFlags field is present. |
+// +--------------------------------------+------------------------------------+
+
+    enum {
+          FASTPATH_OUTPUT_COMPRESSION_USED = 0x2
+    };
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. Optional compression
+//  flags. The flags used in this field are exactly the same as the flags used
+//  in the compressedType field in the Share Data Header (section 2.2.8.1.1.1.2)
+//  and have the same meaning.
+
+// size (2 bytes): A 16-bit, unsigned integer. The size in bytes of the data in
+//  the updateData field.
+
+// updateData (variable): Optional and variable-length data specific to the
+//  update.
+
+    struct Update_Recv {
+        uint8_t   updateCode;
+        uint8_t   fragmentation;
+        uint8_t   compression;
+//        uint8_t   compressionFlags;
+        uint16_t  size;
+        SubStream payload;
+
+        Update_Recv(Stream & stream)
+        : updateCode(0)
+        , fragmentation(0)
+        , compression(0)
+//        , compressionFlags(0)
+        , size(0)
+        , payload(stream) {
+//            const unsigned expected = 4; // updateHeader(1) + compressionFlags(1) + size(2)
+            const unsigned expected = 3; // updateHeader(1) + size(2)
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDP_FASTPATH);
+            }
+
+            uint8_t byte = stream.in_uint8();
+
+            this->updateCode    = byte & 0xF;         // 4 bits
+            this->fragmentation = (byte & 0x30) >> 4; // 2 bits
+            this->compression   = (byte & 0xC0) >> 6; // 2 bits
+
+//            this->compressionFlags = stream.in_uint8();
+            this->size             = stream.in_uint16_le();
+
+            if ((this->size != 0) && !stream.in_check_rem(this->size)) {
+                LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%u",
+                    this->size, stream.in_remain());
+                throw Error(ERR_RDP_FASTPATH);
+            }
+
+            this->payload.resize(stream, this->size);
+
+            stream.in_skip_bytes(this->size);
+        }
+    };
+
+// 2.2.9.1.2.1.1 Fast-Path Palette Update (TS_FP_UPDATE_PALETTE)
+// =============================================================
+
+// The TS_FP_UPDATE_PALETTE structure is the fast-path variant of the
+//  TS_UPDATE_PALETTE (section 2.2.9.1.1.3.1.1) structure.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |  updateHeader |compressionFlag|              size             |
+// |               |  s(optional)  |                               |
+// +---------------+---------------+-------------------------------+
+// |                 paletteUpdateData (variable)                  |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field
+//  is the same as the updateHeader byte field, specified in the Fast-Path
+//  Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in
+//  size) MUST be set to FASTPATH_UPDATETYPE_PALETTE(2).
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this
+//  optional field (as well as the possible values) is the same as the
+//  compressionFlags field specified in the Fast-Path Update structure.
+
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well
+//  as the possible values) is the same as the size field specified in the
+//  Fast-Path Update structure.
+
+// paletteUpdateData (variable): Variable-length palette data. Both slow-path
+//  and fast-path utilize the same data format, a Palette Update Data (section
+//  2.2.9.1.1.3.1.1.1) structure, to represent this information.
+
+// 2.2.9.1.2.1.2 Fast-Path Bitmap Update (TS_FP_UPDATE_BITMAP)
+// ===========================================================
+
+// The TS_FP_UPDATE_BITMAP structure is the fast-path variant of the
+//  TS_UPDATE_BITMAP (section 2.2.9.1.1.3.1.2) structure.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |  updateHeader |compressionFlag|              size             |
+// |               |  s(optional)  |                               |
+// +---------------+---------------+-------------------------------+
+// |                  bitmapUpdateData (variable)                  |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field
+//  is the same as the updateHeader byte field specified in the Fast-Path Update
+//  (section 2.2.9.1.2.1) structure.
+
+// The updateCode bitfield (4 bits in size) MUST be set to
+//  FASTPATH_UPDATETYPE_BITMAP (1).
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this
+//  optional field (as well as the possible values) is the same as the
+//  compressionFlags field specified in the Fast-Path Update structure.
+
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well
+//  as the possible values) is the same as the size field specified in the
+//  Fast-Path Update structure.
+
+// bitmapUpdateData (variable): Variable-length bitmap data. Both slow-path and
+//  fast-path utilize the same data format, a Bitmap Update Data (section
+//  2.2.9.1.1.3.1.2.1) structure, to represent this information.
 
 } // namespace FastPath
 

@@ -1341,6 +1341,78 @@ struct mod_rdp : public client_mod {
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
             BStream stream(65536);
+
+            // Detect fast-path PDU
+            this->nego.trans->recv(&stream.end, 1);
+            uint8_t byte = stream.in_uint8();
+            if ((byte & FastPath::FASTPATH_OUTPUT_ACTION_X224) == 0){
+                if (this->verbose & 128){
+                    LOG(LOG_INFO, "mod::rdp: received fast-path PDU");
+                }
+
+                FastPath::ServerUpdatePDU_Recv su(*this->nego.trans, stream, this->decrypt);
+
+                while (su.payload.in_remain()) {
+                    FastPath::Update_Recv upd(su.payload);
+
+                    uint16_t updateType;
+
+                    switch (upd.updateCode) {
+                        case FastPath::FASTPATH_UPDATETYPE_ORDERS:
+                            {
+                                int count = upd.payload.in_uint16_le();
+
+                                this->front.begin_update();
+                                this->orders.process_orders(this->bpp, upd.payload, count, this);
+                                this->front.end_update();
+                            }
+                        break;
+
+                        case FastPath::FASTPATH_UPDATETYPE_BITMAP:
+                            upd.payload.in_skip_bytes(2); // updateType(2)
+
+                            this->front.begin_update();
+                            this->process_bitmap_updates(upd.payload, this);
+                            this->front.end_update();
+                        break;
+
+                        case FastPath::FASTPATH_UPDATETYPE_PALETTE:
+                            upd.payload.in_skip_bytes(2); // updateType(2)
+
+                            this->front.begin_update();
+                            this->process_palette(upd.payload, this);
+                            this->front.end_update();
+                        break;
+
+                        case FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE:
+                        case FastPath::FASTPATH_UPDATETYPE_PTR_NULL:
+                        case FastPath::FASTPATH_UPDATETYPE_PTR_DEFAULT:
+                        case FastPath::FASTPATH_UPDATETYPE_PTR_POSITION:
+                            if (this->verbose & 128){
+                                LOG(LOG_WARNING, "mod::rdp: fast-path update not yet supported, updateCode=%u",
+                                    upd.updateCode);
+                            }
+                        break;
+
+                        case FastPath::FASTPATH_UPDATETYPE_POINTER:
+                            this->process_new_pointer_pdu(upd.payload, this);
+                        break;
+
+                        case FastPath::FASTPATH_UPDATETYPE_CACHED:
+                            this->process_cached_pointer_pdu(upd.payload, this);
+                        break;
+
+                        default:
+                            LOG(LOG_INFO, "mod::rdp: received unexpected fast-path PUD, updateCode = %u",
+                                upd.updateCode);
+                            throw Error(ERR_RDP_FASTPATH);
+                        break;
+                    }
+                }
+
+                break;
+            }
+
             X224::RecvFactory f(*this->nego.trans, stream);
             X224::DT_TPDU_Recv x224(*this->nego.trans, stream);
             SubStream & mcs_data = x224.payload;
@@ -1759,7 +1831,9 @@ struct mod_rdp : public client_mod {
             uint16_t total_caplen = stream.get_offset();
 
             GeneralCaps general_caps;
+// Slow/Fast-path
             general_caps.extraflags = this->use_rdp5 ? NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:0;
+//            general_caps.extraflags = this->use_rdp5 ? FASTPATH_OUTPUT_SUPPORTED|NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:FASTPATH_OUTPUT_SUPPORTED;
             general_caps.log("Sending to server");
             general_caps.emit(stream);
             stream.mark_end();

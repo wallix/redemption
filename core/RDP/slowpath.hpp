@@ -685,6 +685,203 @@ namespace SlowPath {
         }
     };
 
+// 2.2.9.1.1.3.1.1.1 Palette Update Data (TS_UPDATE_PALETTE_DATA)
+// ==============================================================
+
+// The TS_UPDATE_PALETTE_DATA encapsulates the palette data that defines a
+//  Palette Update (section 2.2.9.1.1.3.1.1).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |          updateType           |           pad2Octets          |
+// +-------------------------------+-------------------------------+
+// |                          numberColors                         |
+// +---------------------------------------------------------------+
+// |                   paletteEntries (variable)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// updateType (2 bytes): A 16-bit, unsigned integer. The update type. This field
+//  MUST be set to UPDATETYPE_PALETTE (0x0002).
+
+// pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
+//  field MUST be ignored.
+
+// numberColors (4 bytes): A 32-bit, unsigned integer. The number of RGB
+//  triplets in the paletteData field. This field MUST be set to 256 (the number
+//  of entries in an 8 bpp palette).
+
+// paletteEntries (variable): An array of palette entries in RGB triplet format
+//  (section 2.2.9.1.1.3.1.1.2) packed on byte boundaries. The number of triplet
+//  entries is given by the numberColors field.
+
+// 2.2.9.1.1.3.1.1.2 RGB Palette Entry (TS_PALETTE_ENTRY)
+// ======================================================
+
+// The TS_PALETTE_ENTRY structure is used to express the red, green, and blue
+//  components necessary to reproduce a color in the additive RGB space.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |      red      |     green     |      blue     |
+// +---------------+---------------+---------------+
+
+// red (1 byte): An 8-bit, unsigned integer. The red RGB color component.
+
+// green (1 byte): An 8-bit, unsigned integer. The green RGB color component.
+
+// blue (1 byte): An 8-bit, unsigned integer. The blue RGB color component.
+
+/*
+    struct PaletteUpdateData_Recv {
+        uint32_t  numberColors;
+        SubStream payload;
+
+        PaletteUpdateData_Recv(Stream & stream)
+        : numberColors(0)
+        , payload(stream) {
+            stream.in_skip_bytes(2); // pad2Octets
+
+            this->numberColors = stream.in_uint32_le();
+
+            payload.resize(stream,
+                this->numberColors * 3 // red(1) + green(1) + blue(1)
+                );
+
+            stream.in_skip_bytes(
+                this->numberColors * 3 // red(1) + green(1) + blue(1)
+                );
+        }
+    };
+*/
+
+// 2.2.9.1.1.3.1.2.1 Bitmap Update Data (TS_UPDATE_BITMAP_DATA)
+// ============================================================
+
+// The TS_UPDATE_BITMAP_DATA structure encapsulates the bitmap data that defines
+//  a Bitmap Update (section 2.2.9.1.1.3.1.2).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |          updateType           |        numberRectangles       |
+// +-------------------------------+-------------------------------+
+// |                     rectangles (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// updateType (2 bytes): A 16-bit, unsigned integer. The update type. This field
+//  MUST be set to UPDATETYPE_BITMAP (0x0001).
+
+// numberRectangles (2 bytes): A 16-bit, unsigned integer. The number of screen
+//  rectangles present in the rectangles field.
+
+// rectangles (variable): Variable-length array of TS_BITMAP_DATA (section
+//  2.2.9.1.1.3.1.2.2) structures, each of which contains a rectangular clipping
+//  taken from the server-side screen frame buffer. The number of screen
+//  clippings in the array is specified by the numberRectangles field.
+
+// 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)
+// ==============================================
+
+// The TS_BITMAP_DATA structure wraps the bitmap data for a screen area
+//  rectangle containing a clipping taken from the server-side screen frame
+//  buffer.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |           destLeft            |            destTop            |
+// +-------------------------------+-------------------------------+
+// |           destRight           |           destBottom          |
+// +-------------------------------+-------------------------------+
+// |             width             |             height            |
+// +-------------------------------+-------------------------------+
+// |         bitsPerPixel          |             flags             |
+// +-------------------------------+-------------------------------+
+// |         bitmapLength          |   bitmapComprHdr (optional)   |
+// +-------------------------------+-------------------------------+
+// |                              ...                              |
+// +-------------------------------+-------------------------------+
+// |              ...              |  bitmapDataStream (variable)  |
+// +-------------------------------+-------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// destLeft (2 bytes): A 16-bit, unsigned integer. Left bound of the rectangle.
+
+// destTop (2 bytes): A 16-bit, unsigned integer. Top bound of the rectangle.
+
+// destRight (2 bytes): A 16-bit, unsigned integer. Inclusive right bound of the
+//  rectangle.
+
+// destBottom (2 bytes): A 16-bit, unsigned integer. Inclusive bottom bound of
+//  the rectangle.
+
+// width (2 bytes): A 16-bit, unsigned integer. The width of the rectangle.
+
+// height (2 bytes): A 16-bit, unsigned integer. The height of the rectangle.
+
+// bitsPerPixel (2 bytes): A 16-bit, unsigned integer. The color depth of the
+//  rectangle data in bits-per-pixel.
+
+// flags (2 bytes): A 16-bit, unsigned integer. The flags describing the format
+//  of the bitmap data in the bitmapDataStream field.
+
+// +----------------------------------+----------------------------------------+
+// | Flags                            | Meaning                                |
+// +----------------------------------+----------------------------------------+
+// | 0x0001 BITMAP_COMPRESSION        | Indicates that the bitmap data is      |
+// |                                  | compressed. The bitmapComprHdr field   |
+// |                                  | MUST be present if the                 |
+// |                                  | NO_BITMAP_COMPRESSION_HDR (0x0400)     |
+// |                                  | flag is not set.                       |
+// +----------------------------------+----------------------------------------+
+// | 0x0400 NO_BITMAP_COMPRESSION_HDR | Indicates that the bitmapComprHdr      |
+// |                                  | field is not present (removed for      |
+// |                                  | bandwidth efficiency to save 8 bytes). |
+// +----------------------------------+----------------------------------------+
+
+// bitmapLength (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
+//  data in the bitmapComprHdr and bitmapDataStream fields.
+
+// bitmapComprHdr (8 bytes): Optional Compressed Data Header structure (section
+//  2.2.9.1.1.3.1.2.3) specifying the bitmap data in the bitmapDataStream. This
+//  field MUST be present if the BITMAP_COMPRESSION (0x0001) flag is present in
+//  the Flags field, but the NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not.
+
+// bitmapDataStream (variable): A variable-length array of bytes describing a
+//  bitmap image. Bitmap data is either compressed or uncompressed, depending on
+//  whether the BITMAP_COMPRESSION flag is present in the Flags field.
+//  Uncompressed bitmap data is formatted as a bottom-up, left-to-right series
+//  of pixels. Each pixel is a whole number of bytes. Each row contains a
+//  multiple of four bytes (including up to three bytes of padding, as
+//  necessary). Compressed bitmaps not in 32 bpp format are compressed using
+//  Interleaved RLE and encapsulated in an RLE Compressed Bitmap Stream
+//  structure (section 2.2.9.1.1.3.1.2.4), while compressed bitmaps at a color
+//  depth of 32 bpp are compressed using RDP 6.0 Bitmap Compression and stored
+//  inside an RDP 6.0 Bitmap Compressed Stream structure ([MS-RDPEGDI] section
+//  2.2.2.5.1).
+
+/*
+    struct BitmapUpdateData_Recv {
+        uint16_t numberRectangles;
+
+        BitmapUpdateData_Recv(Stream & stream)
+        : numberRectangles(0) {
+            this->numberRectangles = stream.in_uint16_le();
+        }
+    };
+*/
+
 } // namespace SlowPath
 
 #endif // #ifndef _REDEMPTION_CORE_RDP_SLOWPATH_HPP_
