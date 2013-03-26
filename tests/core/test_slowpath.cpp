@@ -36,8 +36,7 @@
 #include "RDP/slowpath.hpp"
 
 BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
-    size_t payload_length = 100;
-    GeneratorTransport t(
+    const char *payload =
 /* 0000 */ "\x08\x00\x00\x00\xae\xcb\x72\x01\x04\x00\x00\x80\x0f\x00\x00\x00" // ......r......... |
 /* 0010 */ "\xae\xcb\x72\x01\x00\x00\x00\x00\x02\x00\x00\x00\xae\xcb\x72\x01" // ..r...........r. |
 /* 0020 */ "\x04\x00\x00\x80\x0f\x00\x00\x00\xae\xcb\x72\x01\x01\x80\x00\x08" // ..........r..... |
@@ -45,32 +44,152 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
 /* 0040 */ "\xb8\xcb\x72\x01\x01\x80\x00\x08\xd9\x01\x7b\x01\xc2\xcb\x72\x01" // ..r.......{...r. |
 /* 0050 */ "\x01\x80\x00\x08\xd2\x01\x86\x01\xcc\xcb\x72\x01\x01\x80\x00\x08" // ..........r..... |
 /* 0060 */ "\xc7\x01\x92\x01"                                                 // ....             |
-    , payload_length);
+        ;
+    size_t payload_length = 100;
 
-    BStream payload(65536);
-    t.recv(&payload.end, payload_length);
+    GeneratorTransport in_t(payload, payload_length);
+    CheckTransport out_t(payload, payload_length);
 
-    SlowPath::ClientInputEventPDU_Recv cie(payload);
+    BStream in_s(65536);
+    BStream out_s(65536);
 
-    BOOST_CHECK_EQUAL(8, cie.numEvents);
-    BOOST_CHECK_EQUAL(96, cie.payload.size());
+    in_t.recv(&in_s.end, payload_length);
+
+    SlowPath::ClientInputEventPDU_Recv in_cie(in_s);
+
+    BOOST_CHECK_EQUAL(8, in_cie.numEvents);
+    BOOST_CHECK_EQUAL(96, in_cie.payload.size());
+
+    SlowPath::ClientInputEventPDU_Send out_cie(out_s, in_cie.numEvents);
+
+    uint16_t messageTypes[8] = {
+          SlowPath::INPUT_EVENT_SCANCODE
+        , SlowPath::INPUT_EVENT_SYNC
+        , SlowPath::INPUT_EVENT_SCANCODE
+        , SlowPath::INPUT_EVENT_MOUSE
+        , SlowPath::INPUT_EVENT_MOUSE
+        , SlowPath::INPUT_EVENT_MOUSE
+        , SlowPath::INPUT_EVENT_MOUSE
+        , SlowPath::INPUT_EVENT_MOUSE
+    };
+
+    for (uint16_t i = 0; i < in_cie.numEvents; i++) {
+        SlowPath::InputEvent_Recv in_ie(in_cie.payload);
+
+        BOOST_CHECK_EQUAL(messageTypes[i], in_ie.messageType);
+        BOOST_CHECK_EQUAL(6,               in_ie.payload.size());
+
+        SlowPath::InputEvent_Send out_ie(out_s, in_ie.eventTime, in_ie.messageType);
+
+        switch (in_ie.messageType) {
+        case SlowPath::INPUT_EVENT_SCANCODE:
+        {
+            SlowPath::KeyboardEvent_Recv in_ke(in_ie.payload);
+
+            SlowPath::KeyboardEvent_Send out_ke(out_s, in_ke.keyboardFlags, in_ke.keyCode);
+        }
+
+        break;
+
+        case SlowPath::INPUT_EVENT_SYNC:
+        {
+            SlowPath::SynchronizeEvent_Recv in_se(in_ie.payload);
+
+            SlowPath::SynchronizeEvent_Send out_se(out_s, in_se.toggleFlags);
+        }
+        break;
+
+        case SlowPath::INPUT_EVENT_MOUSE:
+        {
+            SlowPath::MouseEvent_Recv in_me(in_ie.payload);
+
+            SlowPath::MouseEvent_Send out_me(out_s, in_me.pointerFlags, in_me.xPos, in_me.yPos);
+        }
+        break;
+
+        default:
+            BOOST_CHECK(false);
+        break;
+        }
+    }
+
+    out_t.send(out_s.data, out_s.size());
+
+    BOOST_CHECK_EQUAL(true, out_t.status);
 } // BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
 
 
 BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
-    size_t payload_length = 52;
-    GeneratorTransport t(
+    const char *payload =
 /* 0000 */ "\x04\x00\x00\x00\xd6\xcb\x72\x01\x04\x00\x00\x80\x0f\x00\x00\x00" // ......r......... |
 /* 0010 */ "\xd6\xcb\x72\x01\x00\x00\x00\x00\x02\x00\x00\x00\xd6\xcb\x72\x01" // ..r...........r. |
 /* 0020 */ "\x04\x00\x00\x80\x0f\x00\x00\x00\xd6\xcb\x72\x01\x01\x80\x00\x08" // ..........r..... |
 /* 0030 */ "\xbb\x01\xa0\x01"                                                 // ....             |
-    , payload_length);
+        ;
+    size_t payload_length = 52;
+    GeneratorTransport in_t(payload, payload_length);
+    CheckTransport out_t(payload, payload_length);
 
-    BStream payload(65536);
-    t.recv(&payload.end, payload_length);
+    BStream in_s(65536);
+    BStream out_s(65536);
 
-    SlowPath::ClientInputEventPDU_Recv cie(payload);
+    in_t.recv(&in_s.end, payload_length);
 
-    BOOST_CHECK_EQUAL(4, cie.numEvents);
-    BOOST_CHECK_EQUAL(48, cie.payload.size());
-} // BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
+    SlowPath::ClientInputEventPDU_Recv in_cie(in_s);
+
+    BOOST_CHECK_EQUAL(4, in_cie.numEvents);
+    BOOST_CHECK_EQUAL(48, in_cie.payload.size());
+
+    SlowPath::ClientInputEventPDU_Send out_cie(out_s, in_cie.numEvents);
+
+    uint16_t messageTypes[8] = {
+          SlowPath::INPUT_EVENT_SCANCODE
+        , SlowPath::INPUT_EVENT_SYNC
+        , SlowPath::INPUT_EVENT_SCANCODE
+        , SlowPath::INPUT_EVENT_MOUSE
+    };
+
+    for (uint16_t i = 0; i < in_cie.numEvents; i++) {
+        SlowPath::InputEvent_Recv in_ie(in_cie.payload);
+
+        BOOST_CHECK_EQUAL(messageTypes[i], in_ie.messageType);
+        BOOST_CHECK_EQUAL(6,               in_ie.payload.size());
+
+        SlowPath::InputEvent_Send out_ie(out_s, in_ie.eventTime, in_ie.messageType);
+
+        switch (in_ie.messageType) {
+        case SlowPath::INPUT_EVENT_SCANCODE:
+        {
+            SlowPath::KeyboardEvent_Recv in_ke(in_ie.payload);
+
+            SlowPath::KeyboardEvent_Send out_ke(out_s, in_ke.keyboardFlags, in_ke.keyCode);
+        }
+
+        break;
+
+        case SlowPath::INPUT_EVENT_SYNC:
+        {
+            SlowPath::SynchronizeEvent_Recv in_se(in_ie.payload);
+
+            SlowPath::SynchronizeEvent_Send out_se(out_s, in_se.toggleFlags);
+        }
+        break;
+
+        case SlowPath::INPUT_EVENT_MOUSE:
+        {
+            SlowPath::MouseEvent_Recv in_me(in_ie.payload);
+
+            SlowPath::MouseEvent_Send out_me(out_s, in_me.pointerFlags, in_me.xPos, in_me.yPos);
+        }
+        break;
+
+        default:
+            BOOST_CHECK(false);
+        break;
+        }
+    }
+
+    out_t.send(out_s.data, out_s.size());
+
+    BOOST_CHECK_EQUAL(true, out_t.status);
+} // BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2)
