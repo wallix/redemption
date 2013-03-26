@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(TestCheck)
     // If both strings match, return length of sent buffer
     BOOST_CHECK_EQUAL(7, rio_send(rt, "We read", 7));
     // if mismatch return the length of the common part (at least one)
-    BOOST_CHECK_EQUAL(8, rio_send(rt, " what we!!!", 11));
+    BOOST_CHECK_EQUAL(-RIO_ERROR_DATA_MISMATCH, rio_send(rt, " what we!!!", 11));
     // Now the next call will mismatch
     BOOST_CHECK_EQUAL(-RIO_ERROR_DATA_MISMATCH, rio_send(rt, "xxx", 3));
 
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(TestCheck2)
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
     BOOST_CHECK_EQUAL(7, rio_send(&rt, "We read", 7));
-    BOOST_CHECK_EQUAL(8, rio_send(&rt, " what we!!!", 11));
+    BOOST_CHECK_EQUAL(-RIO_ERROR_DATA_MISMATCH, rio_send(&rt, " what we!!!", 11));
     BOOST_CHECK_EQUAL(-RIO_ERROR_DATA_MISMATCH, rio_send(&rt, "xxx", 3));
 
     rio_clear(&rt);
@@ -87,7 +87,6 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport2)
     // if mismatch return the length of the common part (at least one)
     BOOST_CHECK_EQUAL(4, rio_send(rt, "tput", 4));
     // Now the next call mismatch
-    BOOST_CHECK_EQUAL(0, rio_send(rt, "xxx", 3));
     BOOST_CHECK_EQUAL(-RIO_ERROR_TRAILING_DATA, rio_send(rt, "xxx", 3));
 }
 

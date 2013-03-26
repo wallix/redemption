@@ -93,6 +93,10 @@ extern "C" {
          return RIO_ERROR_OK;
     }
 
+    static inline RIO_ERROR rio_m_RIOOutsequence_get_status(RIOOutsequence * self)
+    {
+        return RIO_ERROR_OK;
+    }
 };
 
 #endif

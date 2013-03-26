@@ -671,13 +671,62 @@ RIO * rio_new_inmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const ch
 
 RIO_ERROR rio_get_status(RIO * rt)
 {
+    /* if transport goes into error state it should be immediately flushed and closed (if it means something)
+       hence no need to close it again calling close
+    */
+    if (rt->err != RIO_ERROR_OK){ 
+        return rt->err; 
+    }
+    switch(rt->rt_type){
+        case RIO_TYPE_GENERATOR:
+            rt->err = rio_m_RIOGenerator_get_status(&(rt->u.generator));
+        break;
+        case RIO_TYPE_CHECK:
+            rt->err = rio_m_RIOCheck_get_status(&(rt->u.check));
+        break;
+        case RIO_TYPE_TEST:
+            rt->err = rio_m_RIOTest_get_status(&(rt->u.test));
+        break;
+        case RIO_TYPE_OUTFILE:
+            rt->err = rio_m_RIOOutfile_get_status(&(rt->u.outfile));
+        break;
+        case RIO_TYPE_INFILE:
+            rt->err = rio_m_RIOInfile_get_status(&(rt->u.infile));
+        break;
+        case RIO_TYPE_SOCKET:
+            rt->err = rio_m_RIOSocket_get_status(&(rt->u.socket));
+        break;
+        case RIO_TYPE_SOCKET_TLS:
+            rt->err = rio_m_RIOSocketTLS_get_status(&(rt->u.socket_tls));
+        break;
+        case RIO_TYPE_OUTSEQUENCE:
+            rt->err = rio_m_RIOOutsequence_get_status(&(rt->u.outsequence));
+        break;
+        case RIO_TYPE_INSEQUENCE:
+            rt->err = rio_m_RIOInsequence_get_status(&(rt->u.insequence));
+        break;
+        case RIO_TYPE_OUTMETA:
+            rt->err = rio_m_RIOOutmeta_get_status(&(rt->u.outmeta));
+        break;
+        case RIO_TYPE_INMETA:
+            rt->err = rio_m_RIOInmeta_get_status(&(rt->u.inmeta));
+        break;
+        default:
+            ;
+    }
     return rt->err;
 }
 
 
+
 ssize_t rio_recv(RIO * rt, void * data, size_t len)
 {
-    if (rt->err != RIO_ERROR_OK){ return -rt->err; }
+    if (rt->err != RIO_ERROR_OK){
+        if (rt->err == RIO_ERROR_EOF){
+            return 0;
+        }
+        return -rt->err;
+    }
     switch (rt->rt_type){
     case RIO_TYPE_GENERATOR:{
         ssize_t res = rio_m_RIOGenerator_recv(&(rt->u.generator), data, len);

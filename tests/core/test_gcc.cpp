@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 
     t.send(gcc_header.data, gcc_header.size());
     t.send(stream.data, stream.size());
-    BOOST_CHECK(t.status);
+    BOOST_CHECK(t.get_status());
 }
 
 

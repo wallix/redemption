@@ -27,9 +27,6 @@
 #include "notify_api.hpp"
 #include <rect.hpp>
 
-
-#include <iostream>
-
 class Keymap2;
 
 enum EventType {
@@ -50,11 +47,11 @@ enum EventType {
 };
 
 enum NotifyEventType {
-    NOTIFY_FOCUS_BEGIN,
-    NOTIFY_FOCUS_END,
+    NOTIFY_FOCUS_BEGIN = FOCUS_BEGIN,
+    NOTIFY_FOCUS_END = FOCUS_END,
     NOTIFY_TEXT_CHANGED = TEXT_CHANGED,
-    NOTIFY_SUBMIT,
-    NOTIFY_CANCEL,
+    NOTIFY_SUBMIT = WIDGET_SUBMIT,
+    NOTIFY_CANCEL = WIDGET_CANCEL,
 };
 
 class Widget
@@ -142,31 +139,63 @@ public:
     //    }
     //}
 
-    virtual void send_event(EventType event, unsigned param, unsigned param2, Keymap2 * keymap)
+    void refresh(const Rect& clip)
     {
-        if (event == WM_DRAW && this->drawable) {
-            this->draw(Rect(param >> 16, param & 0xFFFF,
-                            param2 >> 16, param2 & 0xFFFF));
+        if (this->drawable) {
+            this->drawable->begin_update();
+            this->draw(clip);
+            this->drawable->end_update();
         }
     }
 
-    void notify_self(NotifyApi::notify_event_t event)
+
+    // External world can generate 4 kind of events
+    // - keyboard event (scancode)
+    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
+    {
+    }
+
+    // - mouve event (mouse moves or a button went up or down)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+    {
+    }
+
+    // - synchronisation of capslock, numlock, etc state.
+    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+    {
+    }
+
+    // - part of screen should be redrawn
+    virtual void rdp_input_invalidate(const Rect & r)
+    {
+        this->refresh(r);
+    }
+
+    virtual void send_event(EventType event, unsigned param, unsigned param2, Keymap2 * keymap)
+    {
+        this->notify_parent(event, param, param2);
+    }
+
+    virtual void notify(Widget * widget, NotifyApi::notify_event_t event,
+                        unsigned long param, unsigned long param2)
+    {
+        (void)widget;
+        this->notify_parent(event, param, param2);
+    }
+
+    void notify_parent(NotifyApi::notify_event_t event,
+                       unsigned long param = 0, unsigned long param2 = 0)
+    {
+        if (this->parent) {
+            this->parent->notify(this, event, param, param2);
+        }
+    }
+
+    void notify_self(NotifyApi::notify_event_t event,
+                     unsigned long param = 0, unsigned long param2 = 0)
     {
         if (this->notifier)
-            this->notifier->notify(this, event);
-    }
-
-    void notify_parent(EventType event)
-    {
-        if (this->parent)
-            this->parent->notify(this->id, event);
-    }
-
-    virtual void notify(int id, EventType event)
-    {
-        (void)id;
-        this->notify_self(event);
-        this->notify_parent(event);
+            this->notifier->notify(this, event, param, param2);
     }
 
     virtual Widget * widget_at_pos(int x, int y)
@@ -176,12 +205,12 @@ public:
         return 0;
     }
 
-    int dx() const
+    int16_t dx() const
     {
         return this->rect.x;
     }
 
-    int dy() const
+    int16_t dy() const
     {
         return this->rect.y;
     }
@@ -198,7 +227,7 @@ public:
 
     virtual Widget * widget_focused()
     {
-        return 0; ///TODO
+        return this->has_focus ? this : 0;
     }
 };
 

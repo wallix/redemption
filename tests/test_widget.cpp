@@ -149,6 +149,7 @@ BOOST_AUTO_TEST_CASE(TestCreateScreen2)
         LOG(LOG_ERR, "got:\n %s\n", mod.buffer); 
         BOOST_CHECK(false);
     }
+    delete w;
     delete screen;
 }
 

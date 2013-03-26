@@ -28,7 +28,8 @@ class NotifyApi
 public:
     typedef int notify_event_t;
 
-    virtual void notify(Widget * sender, notify_event_t event) = 0;
+    virtual void notify(Widget * sender, notify_event_t event,
+                        unsigned long param, unsigned long param2) = 0;
 
     virtual ~NotifyApi()
     {}

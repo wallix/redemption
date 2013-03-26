@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDraw)
     Widget wid(&drawable, Rect(700, 500, 200, 200), &w.win, Widget::TYPE_BUTTON, 0);
     wid.bg_color = 10000000;
 
-    w.screen.send_event(WM_DRAW, 0, 0, 0);
+    w.rdp_input_invalidate(Rect(0, 0, 0, 0));
     //or w.screen.refresh(w.screen.rect);
 
     drawable.save_to_png("/tmp/a.png");
@@ -293,7 +293,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     TestDraw drawable;
     TestWidget w(&drawable, &notify);
 
-    w.screen.send_event(WM_DRAW, 0, 0, 0);
+    w.screen.rdp_input_invalidate(Rect(0, 0, 0, 0));
+
     Keymap2 keymap;
     keymap.push_kevent(Keymap2::KEVENT_KEY);
     keymap.push_char('a');

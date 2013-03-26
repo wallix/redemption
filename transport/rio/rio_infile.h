@@ -126,6 +126,14 @@ extern "C" {
          return -RIO_ERROR_RECV_ONLY;
     }
 
+    static inline RIO_ERROR rio_m_RIOInfile_get_status(RIOInfile * self)
+    {
+        if (!(self->status)) {
+            return self->err;
+        }
+        return RIO_ERROR_OK;
+    }
+
 };
 
 #endif

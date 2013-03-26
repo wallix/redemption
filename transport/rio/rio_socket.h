@@ -74,6 +74,8 @@ extern "C" {
                         select(self->sck + 1, &fds, NULL, NULL, &time);
                         continue;
                     }
+                    TODO("if recv fail with partial read we should return the amount of data received, "
+                         "close socket and store some delayed error value that will be sent back next call")
                     TODO("replace this with actual error management, EOF is not even an option for sockets")
                     rio_m_RIOSocket_destructor(self);
                     return -RIO_ERROR_EOF;
@@ -121,6 +123,12 @@ extern "C" {
             }
         }
         return len;
+    }
+    
+    static inline RIO_ERROR rio_m_RIOSocket_get_status(RIOSocket * self)
+    {
+        TODO("when we will keep error value needed for recv we should return the stored error status")
+        return RIO_ERROR_OK;
     }
 };
 

@@ -23,22 +23,19 @@
 
 #include "widget_composite.hpp"
 #include "label.hpp"
+#include "colors.hpp"
 
 class Window : public WidgetComposite
 {
 public:
     WidgetLabel titlebar;
 
-    Window(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier, const char * caption, int id = 0)
-    : WidgetComposite(drawable, rect, parent, Widget::TYPE_WND, notifier, id)
-    , titlebar(drawable, Rect(0,0, rect.cx, 15), this, 0, caption, -1)
+    Window(ModApi* drawable, const Rect& rect, Widget* parent, NotifyApi* notifier,
+           const char * caption, int id = 0)
+    : WidgetComposite(drawable, rect, parent, notifier, id)
+    , titlebar(drawable, 0,0, this, 0, caption, false, -1, WABGREEN, BLACK, 5, 0)
     {
-        this->titlebar.x_text = 5;
-        this->titlebar.tab_flag = IGNORE_TAB;
-        if (!caption) {
-            this->titlebar.rect.cx = 0;
-            this->titlebar.rect.cy = 0;
-        }
+        this->child_list.push_back(this->titlebar);
     }
 
     virtual ~Window()

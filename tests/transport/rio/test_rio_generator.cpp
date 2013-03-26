@@ -59,6 +59,9 @@ BOOST_AUTO_TEST_CASE(TestGenerator)
 
     // next call to rio_recv will return 0 (EOF)
     BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer+24, 1024)); // EOF
+
+    // next call to rio_recv will return 0 (EOF)
+    BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer+24, 1024)); // EOF
     
     rio_delete(rt);
 }
@@ -82,5 +85,8 @@ BOOST_AUTO_TEST_CASE(TestGenerator2)
     // next call to rio_recv will return 0 (EOF)
     BOOST_CHECK_EQUAL(0, rio_recv(&rt, buffer+24, 1024)); // EOF
     
+    // next call to rio_recv will return 0 (EOF)
+    BOOST_CHECK_EQUAL(0, rio_recv(&rt, buffer+24, 1024)); // EOF
+
     rio_clear(&rt);
 }

@@ -27,6 +27,7 @@
 #include "log.hpp"
 
 #include "internal/widget2/image.hpp"
+#include "internal/widget2/widget_composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -91,14 +92,10 @@ struct TestDraw : ModApi
     }
 
     virtual void begin_update()
-    {
-        BOOST_CHECK(false);
-    }
+    {}
 
     virtual void end_update()
-    {
-        BOOST_CHECK(false);
-    }
+    {}
 
     virtual void server_draw_text(int , int , const char* , uint32_t , const Rect& )
     {
@@ -130,9 +127,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage)
     WidgetImage wimage(&drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.send_event(WM_DRAW, 0, (wimage.rect.cx<<16 | wimage.rect.cy), 0);
+    wimage.rdp_input_invalidate(Rect(0, 0, wimage.rect.cx, wimage.rect.cy));
 
-    //drawable.save_to_png("/tmp/image.png");
+    ////drawable.save_to_png("/tmp/image.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -153,9 +150,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
     WidgetImage wimage(&drawable, 10,100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.send_event(WM_DRAW, 0, (wimage.rect.cx<<16 | wimage.rect.cy), 0);
+    wimage.rdp_input_invalidate(Rect(0, 0, wimage.rect.cx, wimage.rect.cy));
 
-    //drawable.save_to_png("/tmp/image2.png");
+    ////drawable.save_to_png("/tmp/image2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -176,9 +173,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
     WidgetImage wimage(&drawable, -100,500, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.send_event(WM_DRAW, 0, (wimage.rect.cx<<16 | wimage.rect.cy), 0);
+    wimage.rdp_input_invalidate(Rect(0, 0, wimage.rect.cx, wimage.rect.cy));
 
-    //drawable.save_to_png("/tmp/image3.png");
+    ////drawable.save_to_png("/tmp/image3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -199,9 +196,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
     WidgetImage wimage(&drawable, 700,500, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.send_event(WM_DRAW, 0, (wimage.rect.cx<<16 | wimage.rect.cy), 0);
+    wimage.rdp_input_invalidate(Rect(0, 0, wimage.rect.cx, wimage.rect.cy));
 
-    //drawable.save_to_png("/tmp/image4.png");
+    ////drawable.save_to_png("/tmp/image4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -222,9 +219,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
     WidgetImage wimage(&drawable, -100,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.send_event(WM_DRAW, 0, (wimage.rect.cx<<16 | wimage.rect.cy), 0);
+    wimage.rdp_input_invalidate(Rect(0, 0, wimage.rect.cx, wimage.rect.cy));
 
-    //drawable.save_to_png("/tmp/image5.png");
+    ////drawable.save_to_png("/tmp/image5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -245,9 +242,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
     WidgetImage wimage(&drawable, 700,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.send_event(WM_DRAW, 0, (wimage.rect.cx<<16 | wimage.rect.cy), 0);
+    wimage.rdp_input_invalidate(Rect(0, 0, wimage.rect.cx, wimage.rect.cy));
 
-    //drawable.save_to_png("/tmp/image6.png");
+    ////drawable.save_to_png("/tmp/image6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -267,10 +264,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip)
 
     WidgetImage wimage(&drawable, 700,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
-    // ask to widget to redraw at position 780,10 and of size 50x100. After clip the size is of 20x15
-    wimage.send_event(WM_DRAW, (80<<16|10), (50<<16 | 100), 0);
+    // ask to widget to redraw at position 80,10 and of size 50x100. After clip the size is of 20x15
+    wimage.rdp_input_invalidate(Rect(80, 10, 50, 100));
 
-    drawable.save_to_png("/tmp/image7.png");
+    //drawable.save_to_png("/tmp/image7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -291,9 +288,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
     WidgetImage wimage(&drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at position 100,25 and of size 100x100.
-    wimage.send_event(WM_DRAW, (100<<16|25), (100<<16 | 100), 0);
+    wimage.rdp_input_invalidate(Rect(100, 25, 100, 100));
 
-    drawable.save_to_png("/tmp/image8.png");
+    //drawable.save_to_png("/tmp/image8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -303,11 +300,98 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
     }
 }
 
-TODO("the entry point exists in module: it's rdp_input_invalidate"
-     "je just have to change received values to widget messages")
+BOOST_AUTO_TEST_CASE(TraceWidgetImageEvent)
+{
+    struct WidgetReceiveEvent : public Widget {
+        Widget * sender;
+        NotifyApi::notify_event_t event;
 
-TODO("As soon as composite widgets will be available, we will have to check these tests"
-     " are still working with two combination layers (conversion of coordinates "
-     "from parent coordinates to screen_coordinates can be tricky)")
+        WidgetReceiveEvent()
+        : Widget(NULL, Rect(), NULL, NULL)
+        {}
 
-TODO("add test with keyboard and mouse events to check they are transmitted as expected")
+        virtual void draw(const Rect&)
+        {}
+
+        virtual void notify(Widget* sender, NotifyApi::notify_event_t event,
+                            unsigned long, unsigned long)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } widget_for_receive_event;
+
+    Widget * parent = &widget_for_receive_event;
+    ModApi * drawable = NULL;
+    NotifyApi * notifier = NULL;
+
+    WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
+
+    wimage.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == &wimage);
+    BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_UP);
+    wimage.send_event(CLIC_BUTTON1_DOWN, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == &wimage);
+    BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_DOWN);
+    wimage.send_event(KEYUP, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == &wimage);
+    BOOST_CHECK(widget_for_receive_event.event == KEYUP);
+    wimage.send_event(KEYDOWN, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == &wimage);
+    BOOST_CHECK(widget_for_receive_event.event == KEYDOWN);
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetImageAndComposite)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
+    Widget * parent = NULL;
+    NotifyApi * notifier = NULL;
+
+    WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);
+
+    WidgetImage wimage1(&drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp",
+                        &wcomposite, notifier);
+    WidgetImage wimage2(&drawable, 0,100, FIXTURES_PATH"/logo-redemption.bmp",
+                        &wcomposite, notifier);
+    WidgetImage wimage3(&drawable, 100,100, FIXTURES_PATH"/logo-redemption.bmp",
+                        &wcomposite, notifier);
+    WidgetImage wimage4(&drawable, 300,300, FIXTURES_PATH"/logo-redemption.bmp",
+                        &wcomposite, notifier);
+    WidgetImage wimage5(&drawable, 700,-50, FIXTURES_PATH"/logo-redemption.bmp",
+                        &wcomposite, notifier);
+    WidgetImage wimage6(&drawable, -50,550, FIXTURES_PATH"/logo-redemption.bmp",
+                        &wcomposite, notifier);
+
+    wcomposite.child_list.push_back(&wimage1);
+    wcomposite.child_list.push_back(&wimage2);
+    wcomposite.child_list.push_back(&wimage3);
+    wcomposite.child_list.push_back(&wimage4);
+    wcomposite.child_list.push_back(&wimage5);
+    wcomposite.child_list.push_back(&wimage6);
+
+    // ask to widget to redraw at position 100,25 and of size 100x100.
+    wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
+
+    //drawable.save_to_png("/tmp/image9.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xa9\x05\x72\xca\xa4\xe1\x4e\x88\x48\x79"
+        "\xf0\x43\x37\xb8\xbc\xda\x77\x8d\x3d\x33")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // ask to widget to redraw at it's current position
+    wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
+
+    //drawable.save_to_png("/tmp/image10.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x76\xe4\xfd\xbb\x8e\x8e\x76\x2c\xc7\x37"
+        "\x5b\x46\xcd\xd4\xb2\x5a\xcd\x0a\x2d\x2b")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+

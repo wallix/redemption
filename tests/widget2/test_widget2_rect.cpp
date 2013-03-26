@@ -91,14 +91,10 @@ struct TestDraw : ModApi
     }
 
     virtual void begin_update()
-    {
-        BOOST_CHECK(false);
-    }
+    {}
 
     virtual void end_update()
-    {
-        BOOST_CHECK(false);
-    }
+    {}
 
     virtual void server_draw_text(int , int , const char* , uint32_t , const Rect& )
     {
@@ -132,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
     WidgetRect wrect(&drawable, Rect(0,0,800,600), parent, notifier, id, color);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, (wrect.rect.cx<<16 | wrect.rect.cy), 0);
+    wrect.rdp_input_invalidate(Rect(0, 0, wrect.rect.cx, wrect.rect.cy));
 
     //drawable.save_to_png("/tmp/rect.png");
 
@@ -157,7 +153,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
     WidgetRect wrect(&drawable, Rect(-100,-100,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, (wrect.rect.cx<<16 | wrect.rect.cy), 0);
+    wrect.rdp_input_invalidate(Rect(0, 0, wrect.rect.cx, wrect.rect.cy));
 
     //drawable.save_to_png("/tmp/rect2.png");
 
@@ -182,7 +178,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
     WidgetRect wrect(&drawable, Rect(-100,500,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, (wrect.rect.cx<<16 | wrect.rect.cy), 0);
+    wrect.rdp_input_invalidate(Rect(0, 0, wrect.rect.cx, wrect.rect.cy));
 
     //drawable.save_to_png("/tmp/rect3.png");
 
@@ -207,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
     WidgetRect wrect(&drawable, Rect(700,500,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, (wrect.rect.cx<<16 | wrect.rect.cy), 0);
+    wrect.rdp_input_invalidate(Rect(0, 0, wrect.rect.cx, wrect.rect.cy));
 
     //drawable.save_to_png("/tmp/rect4.png");
 
@@ -232,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
     WidgetRect wrect(&drawable, Rect(700,-100,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, (wrect.rect.cx<<16 | wrect.rect.cy), 0);
+    wrect.rdp_input_invalidate(Rect(0, 0, wrect.rect.cx, wrect.rect.cy));
 
     //drawable.save_to_png("/tmp/rect5.png");
 
@@ -257,7 +253,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
     WidgetRect wrect(&drawable, Rect(300, 200,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, (wrect.rect.cx<<16 | wrect.rect.cy), 0);
+    wrect.rdp_input_invalidate(Rect(0, 0, wrect.rect.cx, wrect.rect.cy));
 
     //drawable.save_to_png("/tmp/rect6.png");
 
@@ -282,7 +278,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
     WidgetRect wrect(&drawable, Rect(300,200, 200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at position 400,300 and of size 100x100. After clip the size is of 100x50
-    wrect.send_event(WM_DRAW, (150<<16 | 100), (100<<16 | 100), 0);
+    wrect.rdp_input_invalidate(Rect(150, 100, 100, 100));
 
     //drawable.save_to_png("/tmp/rect7.png");
 
@@ -307,7 +303,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
     WidgetRect wrect(&drawable, Rect(700,-100,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at position 720,20 and of size 50x50
-    wrect.send_event(WM_DRAW, (20<<16 | 120), (50<<16 | 50), 0);
+    wrect.rdp_input_invalidate(Rect(20, 120, 50, 50));
 
     //drawable.save_to_png("/tmp/rect8.png");
 
@@ -319,6 +315,47 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
     }
 }
 
+BOOST_AUTO_TEST_CASE(TraceWidgetRectEvent)
+{
+    struct WidgetReceiveEvent : public Widget {
+        Widget * sender;
+        NotifyApi::notify_event_t event;
+
+        WidgetReceiveEvent()
+        : Widget(NULL, Rect(), NULL, NULL)
+        {}
+
+        virtual void draw(const Rect&)
+        {}
+
+        virtual void notify(Widget* sender, NotifyApi::notify_event_t event,
+                            unsigned long, unsigned long)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } widget_for_receive_event;
+
+    Widget * parent = &widget_for_receive_event;
+    ModApi * drawable = NULL;
+    NotifyApi * notifier = NULL;
+
+    WidgetRect wrect(drawable, Rect(), parent, notifier);
+
+    wrect.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_UP);
+    wrect.send_event(CLIC_BUTTON1_DOWN, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_DOWN);
+    wrect.send_event(KEYUP, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    BOOST_CHECK(widget_for_receive_event.event == KEYUP);
+    wrect.send_event(KEYDOWN, 0, 0, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    BOOST_CHECK(widget_for_receive_event.event == KEYDOWN);
+}
+
 
 TODO("the entry point exists in module: it's rdp_input_invalidate"
      "je just have to change received values to widget messages")
@@ -326,5 +363,3 @@ TODO("the entry point exists in module: it's rdp_input_invalidate"
 TODO("As soon as composite widgets will be available, we will have to check these tests"
      " are still working with two combination layers (conversion of coordinates "
      "from parent coordinates to screen_coordinates can be tricky)")
-
-TODO("add test with keyboard and mouse events to check they are transmitted as expected")
