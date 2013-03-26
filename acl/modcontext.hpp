@@ -147,18 +147,6 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 #define STRAUTHID_VIDEO_QUALITY       "video_quality"
 #define STRAUTHID_TIMEZONE            "timezone"
 
-enum {
-    MCTX_STATUS_EXIT,
-    MCTX_STATUS_WAITING,
-    MCTX_STATUS_VNC,
-    MCTX_STATUS_RDP,
-    MCTX_STATUS_XUP,
-    MCTX_STATUS_INTERNAL,
-    MCTX_STATUS_TRANSITORY,
-    MCTX_STATUS_AUTH,
-    MCTX_STATUS_CLI,
-};
-
 // ModContext structure is used for modules to communicate with each other
 
 // status tell to session what should be done when a module terminates
@@ -308,24 +296,11 @@ static inline authid_t authid_from_string(const char * kw)
 
 struct ModContext : public Dico {
     unsigned selector_focus;
-    enum {
-        INTERNAL_NONE,
-        INTERNAL_LOGIN,
-        INTERNAL_DIALOG_DISPLAY_MESSAGE,
-        INTERNAL_DIALOG_VALID_MESSAGE,
-        INTERNAL_CLOSE,
-        INTERNAL_SELECTOR,
-        INTERNAL_BOUNCER2,
-        INTERNAL_TEST,
-        INTERNAL_CARD,
-    } nextmod;
-
     char movie[1024];
 
     public:
     ModContext()
         : Dico(KeywordsDefinitions, sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword))
-        , nextmod(INTERNAL_NONE)
     {
         this->selector_focus = 0;
     }
