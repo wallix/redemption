@@ -155,8 +155,6 @@ class Authentifier(object):
 
         p = iter(_data.split('\n'))
         self.dic.update(dict((x, y if not y.startswith('!') else y[1:]) for x, y in zip(p, p) if (x[:6] != 'trans_')))
-        print(self.dic)
-
 
         answer = {'authenticated': 'false'}
         _login = self.dic.get('login')
@@ -182,8 +180,14 @@ class Authentifier(object):
 
     def send(self):
         print("Sending", self.dic)
-        _data = ''.join(["%s\n" % v for tu in self.dic.iteritems() for v in tu])
+        _list = ["%s\n%s\n" % (key, ("!%s" % value) if value[:3] != "ASK" else "ASK") for key, value in self.dic.iteritems()]
+
+        for s in _list:
+            print("Sending %s=%s" % tuple(s.split('\n')[:2]))
+
+        _data = "".join(_list)
         _len = len(_data)
+        print("len=", _len,)
         self.sck.send(pack(">L", _len+4))
         self.sck.send(_data)
 

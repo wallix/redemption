@@ -2143,7 +2143,7 @@ namespace MCS
             this->_header_size = stream.get_offset();
 
             if (!stream.in_check_rem(this->payload_size)){
-                LOG(LOG_ERR, "Truncated SendDataIndication data: expected=%u remains=%u",
+                LOG(LOG_ERR, "Truncated SendDataIndication payload data: expected=%u remains=%u",
                     this->payload_size, stream.in_remain());
                 throw Error(ERR_MCS);
             }

@@ -127,10 +127,10 @@ class SessionManager {
             stream.out_uint32_be(0); // skip length
             this->context.ask(STRAUTHID_KEEPALIVE);
             this->out_item(stream, STRAUTHID_KEEPALIVE);
+            stream.mark_end();
             // now set length
             int total_length = stream.get_offset();
-            stream.p = stream.data;
-            stream.out_uint32_be(total_length);
+            stream.set_out_uint32_be(total_length, 0);
             this->auth_trans_t->send(stream.data, total_length);
             keepalive_time = ::time(NULL) + 30;
         }
@@ -285,13 +285,19 @@ class SessionManager {
             this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (timeout)");
             return false;
         }
-        
+
+        // Keepalive Data exchange with sesman
+        if (NULL == this->auth_trans_t){
+            LOG(LOG_INFO, "authentifier transport closed ...");
+            return false;
+        }
+
         if (now > keepalive_time){
-//            if (this->verbose & 8){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "%llu bytes sent in last quantum, total: %llu tick:%d",
                           trans->last_quantum_sent, trans->total_sent,
                           this->tick_count);
-//            }
+            }
             if (trans->last_quantum_sent == 0){
                 this->tick_count++;
                 if (this->tick_count > this->max_tick){ // 15 minutes before closing on inactivity
@@ -307,40 +313,43 @@ class SessionManager {
             trans->tick();
         }
         
-        // Keepalive Data exchange with sesman
-        if (NULL == this->auth_trans_t){
-            LOG(LOG_INFO, "authentifier transport closed ...");
-            return false;
-        }
-
         if (now > keepalive_time){
-            if (this->event(rfds)) {
-                if (this->verbose & 0x10){
-                    LOG(LOG_INFO, "auth::keep_alive_or_inactivity");
-                }
-                try {
-                    this->incoming();
-                    keepalive_time = now + this->keepalive_grace_delay;
-
-                    BStream stream(8192);
-                    stream.out_uint32_be(0); // skip length
-                    // set data
-                    this->context.ask(STRAUTHID_KEEPALIVE);
-                    this->out_item(stream, STRAUTHID_KEEPALIVE);
-                    // now set length in header
-                    int total_length = stream.get_offset();
-                    stream.p = stream.data;
-                    stream.out_uint32_be(total_length); /* size */
-                    // and send
-                    this->auth_trans_t->send(stream.data, total_length);
-                }
-                catch (...){
-                    this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (ACL closed)");
-                    this->mod_state = MOD_STATE_DONE_CLOSE;
-                    return false;
-                }
+            try {
+                BStream stream(8192);
+                stream.out_uint32_be(0); // skip length
+                // set data
+                this->out_item(stream, STRAUTHID_KEEPALIVE);
+                // now set length in header
+                int total_length = stream.get_offset();
+                stream.set_out_uint32_be(total_length, 0); /* size */
+                stream.mark_end();
+                this->auth_trans_t->send(stream.data, total_length);
+            }
+            catch (...){
+                this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (ACL closed)");
+                this->mod_state = MOD_STATE_DONE_CLOSE;
+                return false;
             }
         }
+
+        if (this->event(rfds)) {
+            if (this->verbose & 0x10){
+                LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
+            }
+            try {
+                this->incoming();
+                if (this->context.get_bool(STRAUTHID_KEEPALIVE)){
+                    keepalive_time = now + this->keepalive_grace_delay;
+                    this->context.ask(STRAUTHID_KEEPALIVE);
+                }
+            }
+            catch (...){
+                this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (ACL closed)");
+                this->mod_state = MOD_STATE_DONE_CLOSE;
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -649,10 +658,10 @@ class SessionManager {
             this->out_item(stream, STRAUTHID_TRANS_TARGET);
             this->out_item(stream, STRAUTHID_TRANS_DIAGNOSTIC);
             this->out_item(stream, STRAUTHID_TRANS_CONNECTION_CLOSED);
+            stream.mark_end();
 
             int total_length = stream.get_offset();
-            stream.p = stream.data;
-            stream.out_uint32_be(total_length); /* size */
+            stream.set_out_uint32_be(total_length, 0); /* size */
             this->auth_trans_t->send(stream.data, total_length);
 
         } catch (Error e) {
