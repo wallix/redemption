@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
 
     out_t.send(out_s.data, out_s.size());
 
-    BOOST_CHECK_EQUAL(out_t.status, true);
+    BOOST_CHECK_EQUAL(true, out_t.status);
 } // BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
 
 
@@ -191,5 +191,5 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
 
     out_t.send(out_s.data, out_s.size());
 
-    BOOST_CHECK_EQUAL(out_t.status, true);
+    BOOST_CHECK_EQUAL(true, out_t.status);
 } // BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2)

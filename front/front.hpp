@@ -156,6 +156,7 @@ TODO("Pass font name as parameter in constructor")
         memset(this->encrypt.key, 0, 16);
         memset(this->decrypt.update_key, 0, 16);
         memset(this->encrypt.update_key, 0, 16);
+
         switch (this->client_info.encryptionLevel) {
         case 1:
         case 2:
@@ -1843,45 +1844,58 @@ TODO("Pass font name as parameter in constructor")
                     eventCode  = (byte & 0xE0) >> 5;
 
                     switch (eventCode){
-                    case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
-                    {
-                        FastPath::KeyboardEvent_Recv ke(cfpie.payload, byte);
+                        case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
+                        {
+                            FastPath::KeyboardEvent_Recv ke(cfpie.payload, byte);
 
-                        LOG(LOG_INFO, "Front::Received fast-path PUD, scancode keyboardFlags=0x%X, keyCode=0x%X", ke.spKeyboardFlags, ke.keyCode);
+                            if (this->verbose & 4){
+                                LOG(LOG_INFO,
+                                    "Front::Received fast-path PUD, scancode keyboardFlags=0x%X, keyCode=0x%X",
+                                    ke.spKeyboardFlags, ke.keyCode);
+                            }
 
-                        this->keymap.event(ke.spKeyboardFlags, ke.keyCode);
-                        cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
-                    }
-                    break;
+                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode);
+                            cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                        }
+                        break;
 
-                    case FastPath::FASTPATH_INPUT_EVENT_MOUSE:
-                    {
-                        FastPath::MouseEvent_Recv me(cfpie.payload, byte);
+                        case FastPath::FASTPATH_INPUT_EVENT_MOUSE:
+                        {
+                            FastPath::MouseEvent_Recv me(cfpie.payload, byte);
 
-                        LOG(LOG_INFO, "Front::Received fast-path PUD, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X", me.pointerFlags, me.xPos, me.yPos);
+                            if (this->verbose & 4){
+                                LOG(LOG_INFO,
+                                    "Front::Received fast-path PUD, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
+                                    me.pointerFlags, me.xPos, me.yPos);
+                            }
 
-                        cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
-                    }
-                    break;
+                            cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                        }
+                        break;
 
-                    case FastPath::FASTPATH_INPUT_EVENT_SYNC:
-                    {
-                        FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
+                        case FastPath::FASTPATH_INPUT_EVENT_SYNC:
+                        {
+                            FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
 
-                        LOG(LOG_INFO, "Front::Received fast-path PUD, mouse eventFlags=0x%X", se.eventFlags);
+                            if (this->verbose & 4){
+                                LOG(LOG_INFO, "Front::Received fast-path PUD, mouse eventFlags=0x%X",
+                                    se.eventFlags);
+                            }
 
-                        cb.rdp_input_synchronize(0, 0, se.eventFlags, 0);
-                    }
-                    break;
+                            cb.rdp_input_synchronize(0, 0, se.eventFlags, 0);
+                        }
+                        break;
 
-                    default:
-                        LOG(LOG_INFO, "Front::Received unexpected fast-path PUD, eventCode = %u", eventCode);
-                        throw Error(ERR_RDP_FASTPATH);
-                    break;
+                        default:
+                            LOG(LOG_INFO, "Front::Received unexpected fast-path PUD, eventCode = %u", eventCode);
+                            throw Error(ERR_RDP_FASTPATH);
+                        break;
                     }
                 }
 
-                LOG(LOG_INFO, "Front::Received fast-path PUD, remains=%u", stream.in_remain());
+                if (cfpie.payload.in_remain() != 0) {
+                    LOG(LOG_WARNING, "Front::Received fast-path PUD, remains=%u", cfpie.payload.in_remain());
+                }
 
                 break;
 ///////////////
@@ -2784,56 +2798,56 @@ TODO("Pass font name as parameter in constructor")
                     TODO(" we should always call send_input with original data  if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it")
                     TODO(" with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.")
                     switch (ie.messageType) {
-                    case SlowPath::INPUT_EVENT_SYNC:
-                    {
-                        SlowPath::SynchronizeEvent_Recv se(ie.payload);
+                        case SlowPath::INPUT_EVENT_SYNC:
+                        {
+                            SlowPath::SynchronizeEvent_Recv se(ie.payload);
 
-                        if (this->verbose & 4){
-                            LOG(LOG_INFO, "SlowPath INPUT_EVENT_SYNC eventTime=%u toggleFlags=0x%04X",
-                                ie.eventTime, se.toggleFlags);
+                            if (this->verbose & 4){
+                                LOG(LOG_INFO, "SlowPath INPUT_EVENT_SYNC eventTime=%u toggleFlags=0x%04X",
+                                    ie.eventTime, se.toggleFlags);
+                            }
+                            // happens when client gets focus and sends key modifier info
+                            this->keymap.synchronize(se.toggleFlags & 0xFFFF);
+                            if (this->up_and_running){
+                                cb.rdp_input_synchronize(ie.eventTime, 0, se.toggleFlags & 0xFFFF, (se.toggleFlags & 0xFFFF0000) >> 16);
+                            }
                         }
-                        // happens when client gets focus and sends key modifier info
-                        this->keymap.synchronize(se.toggleFlags & 0xFFFF);
-                        if (this->up_and_running){
-                            cb.rdp_input_synchronize(ie.eventTime, 0, se.toggleFlags & 0xFFFF, (se.toggleFlags & 0xFFFF0000) >> 16);
-                        }
-                    }
-                    break;
+                        break;
 
-                    case SlowPath::INPUT_EVENT_MOUSE:
-                    {
-                        SlowPath::MouseEvent_Recv me(ie.payload);
+                        case SlowPath::INPUT_EVENT_MOUSE:
+                        {
+                            SlowPath::MouseEvent_Recv me(ie.payload);
 
-                        if (this->verbose & 4){
-                            LOG(LOG_INFO, "Slow-path INPUT_EVENT_MOUSE eventTime=%u pointerFlags=0x%04X, xPos=%u, yPos=%u)",
-                                ie.eventTime, me.pointerFlags, me.xPos, me.yPos);
+                            if (this->verbose & 4){
+                                LOG(LOG_INFO, "Slow-path INPUT_EVENT_MOUSE eventTime=%u pointerFlags=0x%04X, xPos=%u, yPos=%u)",
+                                    ie.eventTime, me.pointerFlags, me.xPos, me.yPos);
+                            }
+                            this->mouse_x = me.xPos;
+                            this->mouse_y = me.yPos;
+                            if (this->up_and_running){
+                                cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                            }
                         }
-                        this->mouse_x = me.xPos;
-                        this->mouse_y = me.yPos;
-                        if (this->up_and_running){
-                            cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
-                        }
-                    }
-                    break;
+                        break;
 
-                    case SlowPath::INPUT_EVENT_SCANCODE:
-                    {
-                        SlowPath::KeyboardEvent_Recv ke(ie.payload);
+                        case SlowPath::INPUT_EVENT_SCANCODE:
+                        {
+                            SlowPath::KeyboardEvent_Recv ke(ie.payload);
 
-                        if (this->verbose & 4){
-                            LOG(LOG_INFO, "Slow-path INPUT_EVENT_SYNC eventTime=%u keyboardFlags=0x%04X keyCode=0x%04X",
-                                ie.eventTime, ke.keyboardFlags, ke.keyCode);
+                            if (this->verbose & 4){
+                                LOG(LOG_INFO, "Slow-path INPUT_EVENT_SYNC eventTime=%u keyboardFlags=0x%04X keyCode=0x%04X",
+                                    ie.eventTime, ke.keyboardFlags, ke.keyCode);
+                            }
+                            this->keymap.event(ke.keyboardFlags, ke.keyCode);
+                            if (this->up_and_running){
+                                cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
+                            }
                         }
-                        this->keymap.event(ke.keyboardFlags, ke.keyCode);
-                        if (this->up_and_running){
-                            cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
-                        }
-                    }
-                    break;
+                        break;
 
-                    default:
-                        LOG(LOG_WARNING, "unsupported PDUTYPE2_INPUT message type %u", ie.messageType);
-                    break;
+                        default:
+                            LOG(LOG_WARNING, "unsupported PDUTYPE2_INPUT message type %u", ie.messageType);
+                        break;
                     }
                 }
                 if (this->verbose & 4){
