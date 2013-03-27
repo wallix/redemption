@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Javier Caverni
+   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    common fastpath layer at core module
@@ -142,8 +142,8 @@ namespace FastPath {
 // +------------------------------------+--------------------------------------+
 
     enum {
-          FASTPATH_INPUT_SECURE_CHECKSUM
-        , FASTPATH_INPUT_ENCRYPTED
+          FASTPATH_INPUT_SECURE_CHECKSUM = 0x1
+        , FASTPATH_INPUT_ENCRYPTED       = 0x2
     };
 
 // length1 (1 byte): An 8-bit, unsigned integer. If the most significant bit of
@@ -209,7 +209,7 @@ namespace FastPath {
 
             int action = byte & 0x03;
             if (action != 0) {
-                LOG(LOG_INFO, "Fast-path PDU excepted: action=0x%X", action);
+                LOG(LOG_ERR, "Fast-path PDU excepted: action=0x%X", action);
                 throw Error(ERR_RDP_FASTPATH);
             }
 
@@ -235,17 +235,19 @@ namespace FastPath {
 
             TODO("RZ: Should we treat fipsInformation ?")
 
-            const unsigned expected =
-                  8                                // dataSignature
-                + ((this->numEvents == 0) ? 1 : 0) // numEvent
-                ;
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "FastPath::ClientInputEventPDU: data truncated, expected=%u remains=%u",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDP_FASTPATH);
-            }
+            if (this->secFlags & FASTPATH_INPUT_ENCRYPTED) {
+                const unsigned expected =
+                      8                                // dataSignature
+                    + ((this->numEvents == 0) ? 1 : 0) // numEvent
+                    ;
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR, "FastPath::ClientInputEventPDU: data truncated, expected=%u remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RDP_FASTPATH);
+                }
 
-            stream.in_copy_bytes(this->dataSignature, 8);
+                stream.in_copy_bytes(this->dataSignature, 8);
+            }
 
             if (this->numEvents == 0){
                 this->numEvents = stream.in_uint8();
@@ -253,7 +255,9 @@ namespace FastPath {
 
             this->payload.resize(stream, stream.in_remain());
 
-            decrypt.decrypt(payload);
+            if (this->secFlags & FASTPATH_INPUT_ENCRYPTED) {
+                decrypt.decrypt(payload);
+            }
         }   // ClientInputEventPDU_Recv(Transport & trans, Stream & stream)
     };  // struct ClientInputEventPDU_Recv
 
@@ -679,7 +683,7 @@ namespace FastPath {
 
             int action = byte & 0x03;
             if (action != 0) {
-                LOG(LOG_INFO, "Fast-path PDU excepted: action=0x%X", action);
+                LOG(LOG_ERR, "Fast-path PDU excepted: action=0x%X", action);
                 throw Error(ERR_RDP_FASTPATH);
             }
 

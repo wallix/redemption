@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
-   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou
+   Author(s): Christophe Grosjean, Raphael Zhou
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    common slowpath layer at core module

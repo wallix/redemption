@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Dominique Lafages
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Dominique Lafages, Raphael Zhou
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    header file. Front object (server), used to communicate with RDP client
@@ -259,7 +259,6 @@ TODO("Pass font name as parameter in constructor")
         }
     }
 
-
     TODO(" implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
     virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
@@ -282,7 +281,7 @@ TODO("Pass font name as parameter in constructor")
             int distance_from_previous_fragment = 0;
             for (size_t index = 0; index < part_len; index++) {
                 int c = 0;
-                uint32_t charnum = uni[index]; // 
+                uint32_t charnum = uni[index];
                 FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
                 if (!font_item) {
                     LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
@@ -340,8 +339,7 @@ TODO("Pass font name as parameter in constructor")
         }
     }
 
-
-    // ==============================================================================
+    // ===========================================================================
     void start_capture(int width, int height, Inifile & ini, ModContext & context)
     {
         if (context.get_bool(STRAUTHID_OPT_MOVIE)){
@@ -401,8 +399,7 @@ TODO("Pass font name as parameter in constructor")
             this->capture = 0;
         }
     }
-    // ==============================================================================
-
+    // ===========================================================================
 
     virtual void reset(){
         if (this->verbose & 1){
@@ -410,7 +407,6 @@ TODO("Pass font name as parameter in constructor")
             LOG(LOG_INFO, "Front::reset::use_bitmap_comp=%u", this->client_info.use_bitmap_comp);
             LOG(LOG_INFO, "Front::reset::use_compact_packets=%u", this->client_info.use_compact_packets);
             LOG(LOG_INFO, "Front::reset::bitmap_cache_version=%u", this->client_info.bitmap_cache_version);
-
         }
 
         // reset outgoing orders and reset caches
@@ -731,7 +727,7 @@ TODO("Pass font name as parameter in constructor")
 //    color pointer, as specified in [T128] section 8.14.3. This pointer update
 //    is used for both monochrome and color pointers in RDP.
 
-    virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
+    virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw(Error)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
@@ -869,7 +865,7 @@ TODO("Pass font name as parameter in constructor")
 //      cached using either the Color Pointer Update (section 2.2.9.1.1.4.4) or
 //      New Pointer Update (section 2.2.9.1.1.4.5).
 
-    virtual void set_pointer(int cache_idx) throw (Error)
+    virtual void set_pointer(int cache_idx) throw(Error)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
@@ -911,10 +907,9 @@ TODO("Pass font name as parameter in constructor")
         if (this->verbose & 4){
             LOG(LOG_INFO, "Front::set_pointer done");
         }
-
     }
 
-    void incoming(Callback & cb) throw (Error)
+    void incoming(Callback & cb) throw(Error)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "Front::incoming()");
@@ -1093,7 +1088,7 @@ TODO("Pass font name as parameter in constructor")
             sc_net.emit(stream);
             // ------------------------------------------------------------------
             GCC::UserData::SCSecurity sc_sec1;
-           /*
+            /*
                For now rsa_keys are not in a configuration file any more, but as we were not changing keys
                the values have been embedded in code and the key generator file removed from source code.
 
@@ -1235,7 +1230,6 @@ TODO("Pass font name as parameter in constructor")
                 this->trans->send(x224_header);
                 this->trans->send(mcs_data);
             }
-
 
             TODO("The code below should be simplified and correctly manage channels (confirm only channels that are really supported)")
             {
@@ -1880,7 +1874,7 @@ TODO("Pass font name as parameter in constructor")
                             FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
 
                             if (this->verbose & 4){
-                                LOG(LOG_INFO, "Front::Received fast-path PUD, mouse eventFlags=0x%X",
+                                LOG(LOG_INFO, "Front::Received fast-path PUD, sync eventFlags=0x%X",
                                     se.eventFlags);
                             }
 
@@ -2108,8 +2102,6 @@ TODO("Pass font name as parameter in constructor")
         trans->send(sec_header);
         trans->send(stream);
     }
-
-
 
     /*****************************************************************************/
     void send_demand_active() throw (Error)
@@ -2664,8 +2656,6 @@ TODO("Pass font name as parameter in constructor")
         }
     }
 
-
-
     /*****************************************************************************/
     void send_fontmap() throw (Error)
     {
@@ -3173,7 +3163,6 @@ TODO("Pass font name as parameter in constructor")
         }
     }
 
-
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
@@ -3213,7 +3202,6 @@ TODO("Pass font name as parameter in constructor")
             if (this->capture){ this->capture->draw(cmd, clip); }
         }
     }
-
 
     void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
