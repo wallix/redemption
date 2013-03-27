@@ -114,11 +114,14 @@ public:
 
     Random * gen;
 
+    bool fastpath_support;
+
 TODO("Pass font name as parameter in constructor")
 
     Front ( Transport * trans
           , Random * gen
           , Inifile * ini
+          , bool fp_support // If true, fast-path must be supported
           )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
         , capture(NULL)
@@ -139,6 +142,7 @@ TODO("Pass font name as parameter in constructor")
         , glyph_cache()
         , state(CONNECTION_INITIATION)
         , gen(gen)
+        , fastpath_support(fp_support)
     {
         init_palette332(this->palette332);
         this->mod_palette_setted = false;
@@ -1829,8 +1833,6 @@ TODO("Pass font name as parameter in constructor")
             this->trans->recv(&stream.end, 1);
             uint8_t byte = stream.in_uint8();
             if ((byte & FastPath::FASTPATH_INPUT_ACTION_X224) == 0){
-                LOG(LOG_INFO, "Front::Received fast-path PDU");
-//                throw Error(ERR_RDP_FASTPATH);
 ///////////////
 ///////////////
                 FastPath::ClientInputEventPDU_Recv cfpie(*this->trans, stream, this->decrypt);
@@ -2193,8 +2195,12 @@ TODO("Pass font name as parameter in constructor")
 
         InputCaps input_caps;
 // Slow/Fast-path
-        input_caps.inputFlags = INPUT_FLAG_SCANCODES;
-//        input_caps.inputFlags = INPUT_FLAG_SCANCODES | INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2;
+        if (this->fastpath_support == false) {
+            input_caps.inputFlags = INPUT_FLAG_SCANCODES;
+        }
+        else {
+            input_caps.inputFlags = INPUT_FLAG_SCANCODES | INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2;
+        }
         input_caps.keyboardLayout = 0;
         input_caps.keyboardType = 0;
         input_caps.keyboardSubType = 0;

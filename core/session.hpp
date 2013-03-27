@@ -133,7 +133,7 @@ struct Session {
                                              , this->ini->globals.debug.auth);
             this->mod = 0;
             this->internal_state = SESSION_STATE_ENTRY;
-            this->front = new Front(&this->front_trans, &this->gen, ini);
+            this->front = new Front(&this->front_trans, &this->gen, ini, true);
             this->no_mod = new null_mod(*(this->front));
             this->mod = this->no_mod;
 
@@ -771,6 +771,7 @@ struct Session {
                                     this->sesman, // we give mod_rdp a direct access to sesman for auth_channel channel
                                     this->ini->globals.auth_channel,
                                     this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
+                                    true, // support fast-path
                                     this->ini->globals.debug.mod_rdp,
                                     true
                                     );

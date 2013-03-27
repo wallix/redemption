@@ -139,6 +139,8 @@ struct mod_rdp : public client_mod {
     bool opt_clipboard;  // true clipboard available, false clipboard unavailable
     uint32_t performanceFlags;
 
+    bool fastpath_support;
+
     mod_rdp(Transport * trans,
             const char * target_user,
             const char * target_password,
@@ -152,6 +154,7 @@ struct mod_rdp : public client_mod {
             SessionManager * sesman,
             const char * auth_channel,
             bool clipboard,
+            bool fp_support, // If true, fast-path must be supported
             uint32_t verbose = 0,
             bool enable_new_pointer = false)
             :
@@ -181,7 +184,8 @@ struct mod_rdp : public client_mod {
                     nego(tls, trans, target_user),
                     enable_new_pointer(enable_new_pointer),
                     opt_clipboard(clipboard),
-                    performanceFlags(info.rdp5_performanceflags)
+                    performanceFlags(info.rdp5_performanceflags),
+                    fastpath_support(fp_support)
     {
         if (this->verbose & 1){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
@@ -1346,10 +1350,8 @@ struct mod_rdp : public client_mod {
             this->nego.trans->recv(&stream.end, 1);
             uint8_t byte = stream.in_uint8();
             if ((byte & FastPath::FASTPATH_OUTPUT_ACTION_X224) == 0){
-                if (this->verbose & 128){
-                    LOG(LOG_INFO, "mod::rdp: received fast-path PDU");
-                }
-
+///////////////
+///////////////
                 FastPath::ServerUpdatePDU_Recv su(*this->nego.trans, stream, this->decrypt);
 
                 while (su.payload.in_remain()) {
@@ -1411,6 +1413,8 @@ struct mod_rdp : public client_mod {
                 }
 
                 break;
+///////////////
+///////////////
             }
 
             X224::RecvFactory f(*this->nego.trans, stream);
@@ -1832,8 +1836,12 @@ struct mod_rdp : public client_mod {
 
             GeneralCaps general_caps;
 // Slow/Fast-path
-            general_caps.extraflags = this->use_rdp5 ? NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:0;
-//            general_caps.extraflags = this->use_rdp5 ? FASTPATH_OUTPUT_SUPPORTED|NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:FASTPATH_OUTPUT_SUPPORTED;
+            if (!this->fastpath_support) {
+                general_caps.extraflags = this->use_rdp5 ? NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:0;
+            }
+            else {
+                general_caps.extraflags = this->use_rdp5 ? FASTPATH_OUTPUT_SUPPORTED|NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:FASTPATH_OUTPUT_SUPPORTED;
+            }
             general_caps.log("Sending to server");
             general_caps.emit(stream);
             stream.mark_end();
