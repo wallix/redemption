@@ -1432,6 +1432,12 @@ struct mod_rdp : public client_mod {
             X224::DT_TPDU_Recv x224(*this->nego.trans, stream);
             SubStream & mcs_data = x224.payload;
             MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
+
+            if (mcs.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                LOG(LOG_ERR, "mod_rdp: got MCS DisconnectProviderUltimatum");
+                throw Error(ERR_MCS);
+            }
+
             SEC::Sec_Recv sec(mcs.payload, false, this->decrypt, this->encryptionLevel, this->encryptionMethod);
 
             if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){

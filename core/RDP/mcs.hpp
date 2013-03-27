@@ -2109,46 +2109,58 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
 
-            const unsigned expected = 6; /* tag(1) + initiator(2) + channelId(2) + magic(1) */
-            if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated SendDataIndication data: expected=%u, remains=%u",
-                    expected, stream.in_remain());
+            if (!stream.in_check_rem(1)){ // tag
+                LOG(LOG_ERR, "SendDataIndication: truncated MCS PDU, expected=1 remains=%u",
+                    stream.in_remain());
                 throw Error(ERR_MCS);
             }
 
-            uint8_t tag = stream.in_uint8();
-            if (tag != (MCS::MCSPDU_SendDataIndication << 2)){
-                LOG(LOG_ERR, "SendDataIndication tag (%u) expected, got %u", MCS::MCSPDU_SendDataIndication << 2, tag);
+            uint8_t first_byte = stream.in_uint8();
+            uint8_t tag = first_byte >> 2;
+            if (tag == MCS::MCSPDU_SendDataIndication){
+                this->type = MCS::MCSPDU_SendDataIndication;
+
+                const unsigned expected = 5; /* initiator(2) + channelId(2) + magic(1) */
+                if (!stream.in_check_rem(expected)){
+                    LOG(LOG_ERR, "Truncated SendDataIndication data: expected=%u, remains=%u",
+                        expected, stream.in_remain());
+                    throw Error(ERR_MCS);
+                }
+
+                this->initiator = stream.in_uint16_be();
+                this->channelId = stream.in_uint16_be();
+                uint8_t magic = stream.in_uint8();
+                // dataPriority = high 2 bits,
+                this->dataPriority = (magic >> 6) & 3;
+                // segmentation = end 2 bits
+                this->segmentation = (magic >> 4) & 3;
+                // low 4 bits of magic are padding
+
+                // length of payload, per_encoded
+                bool in_result;
+                this->payload_size = stream.in_per_length_with_check(in_result);
+                if (!in_result){
+                    LOG(LOG_ERR, "Truncated SendDataIndication data: payload length");
+                    throw Error(ERR_MCS);
+                }
+
+                this->_header_size = stream.get_offset();
+
+                if (!stream.in_check_rem(this->payload_size)){
+                    LOG(LOG_ERR, "Truncated SendDataIndication payload data: expected=%u remains=%u",
+                        this->payload_size, stream.in_remain());
+                    throw Error(ERR_MCS);
+                }
+
+                this->payload.resize(stream, this->payload_size);
+            }
+            else if (tag == MCSPDU_DisconnectProviderUltimatum){
+                this->type = MCS::MCSPDU_DisconnectProviderUltimatum;
+            }
+            else{
+                LOG(LOG_ERR, "SendDataIndication tag (%u) expected, got %u", MCS::MCSPDU_SendDataIndication, tag);
                 throw Error(ERR_MCS);
             }
-            this->type = MCS::MCSPDU_SendDataIndication;
-
-            this->initiator = stream.in_uint16_be();
-            this->channelId = stream.in_uint16_be();
-            uint8_t magic = stream.in_uint8();
-            // dataPriority = high 2 bits,
-            this->dataPriority = (magic >> 6) & 3;
-            // segmentation = end 2 bits
-            this->segmentation = (magic >> 4) & 3;
-            // low 4 bits of magic are padding
-
-            // length of payload, per_encoded
-            bool in_result;
-            this->payload_size = stream.in_per_length_with_check(in_result);
-            if (!in_result){
-                LOG(LOG_ERR, "Truncated SendDataIndication data: payload length");
-                throw Error(ERR_MCS);
-            }
-
-            this->_header_size = stream.get_offset();
-
-            if (!stream.in_check_rem(this->payload_size)){
-                LOG(LOG_ERR, "Truncated SendDataIndication payload data: expected=%u remains=%u",
-                    this->payload_size, stream.in_remain());
-                throw Error(ERR_MCS);
-            }
-
-            this->payload.resize(stream, this->payload_size);
         }
     };
 
