@@ -32,9 +32,9 @@
 extern "C" {
 
     struct RIOSocketTLS {
+        int sck;
         bool tls;
         SSL * ssl;
-        int sck;
     };
 
     /* This method does not allocate space for object itself, 
@@ -240,7 +240,7 @@ extern "C" {
         return len;
     }
 
-    static inline RIO_ERROR rio_m_RIOSocketTLS_enableTLS(RIOSocketTLS * self)
+    static inline RIO_ERROR rio_m_RIOSocketTLS_enable_TLS_client(RIOSocketTLS * self)
     {
         LOG(LOG_INFO, "RIO *::enable_tls()");
         SSL_load_error_strings();

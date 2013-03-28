@@ -2578,7 +2578,6 @@ struct mod_rdp : public client_mod {
 // | 0x00001116 ERRINFO_SECURITYDATATOOSHORT7 | There is not enough data to    |
 // |                                          | read the clientAddressFamily   |
 // |                                          | and cbClientAddress fields in  |
-// |                                          | the Extended Info Packet       |
 // |                                          | (section 2.2.1.11.1.1.1).      |
 // +------------------------------------------+--------------------------------+
 // | 0x00001117 ERRINFO_SECURITYDATATOOSHORT8 | There is not enough data to    |
@@ -3252,7 +3251,12 @@ struct mod_rdp : public client_mod {
             if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::send_control");
             }
+
+            BStream x224_header(256);
+            BStream mcs_header(256);
+            BStream sec_header(256);
             BStream stream(65536);
+
             ShareControl sctrl(stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
             ShareData sdata(stream);
@@ -3268,9 +3272,6 @@ struct mod_rdp : public client_mod {
             sdata.emit_end();
             sctrl.emit_end();
 
-            BStream x224_header(256);
-            BStream mcs_header(256);
-            BStream sec_header(256);
             SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, this->encryptionMethod);
             MCS::SendDataRequest_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3,
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
