@@ -40,7 +40,7 @@ public:
     WidgetEdit(ModApi* drawable, int16_t x, int16_t y, uint16_t cx,
                Widget* parent, NotifyApi* notifier, const char * text,
                int id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
-               std::size_t edit_position = 0, int xtext = 0, int ytext = 0)
+               std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
     : Widget(drawable, Rect(x,y,cx,1), parent, notifier, id)
     , label(drawable, 0, 0, this, 0, text, false, 0, bgcolor, fgcolor, xtext, ytext)
     , h_text(0)
@@ -87,12 +87,12 @@ public:
 
     void draw_cursor(const Rect& clip)
     {
-        Rect screen_clip = this->position_in_screen(clip.intersect(
-            Rect(this->label.x_text + this->cursor_px_pos,
-                 this->label.y_text,
+        Rect screen_clip = this->label.position_in_screen(clip).intersect(
+            Rect(this->label.x_text + this->cursor_px_pos + this->label.sx(),
+                 this->label.y_text + this->label.sy(),
                  1,
                  this->h_text)
-        ));
+        );
         if (false == screen_clip.isempty()) {
             this->drawable->draw(
                 RDPOpaqueRect(
@@ -144,102 +144,122 @@ public:
         }
     }
 
-    void refresh_pos_cursor(size_t l, size_t r)
+//     void refresh_pos_cursor(size_t l, size_t r)
+//     {
+//         if (this->drawable) {
+//             Rect sp = this->position_in_screen(this->rect);
+//             Rect clip = sp.intersect(Rect(sp.x + l + this->label.x_text, sp.y + this->label.y_text, r - l + 1, this->h_text));
+//             if (!clip.isempty()) {
+//                 this->label.draw(Rect(r + this->label.x_text, this->label.y_text, 1, this->h_text));
+//                 this->draw_cursor(clip);
+//             }
+//         }
+//     }
+
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
-        if (this->drawable) {
-            Rect sp = this->position_in_screen(this->rect);
-            Rect clip = sp.intersect(Rect(sp.x + l + this->label.x_text, sp.y + this->label.y_text, r - l + 1, this->h_text));
-            if (!clip.isempty()) {
-                this->label.draw(Rect(r + this->label.x_text, this->label.y_text, 1, this->h_text));
-                this->draw_cursor(clip);
+        if (device_flags == CLIC_BUTTON1_DOWN) {
+            if (x > this->label.x_text && y > this->label.y_text) {
+                //move cursor
+            } else {
+                Widget::rdp_input_mouse(device_flags, x, y, keymap);
             }
+        } else {
+            Widget::rdp_input_mouse(device_flags, x, y, keymap);
         }
     }
 
-    virtual void send_event(EventType event, int param, int param2, Keymap2 * keymap)
+    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (event == KEYDOWN)
-        {
-            switch (keymap->top_kevent()) {
+        if (keymap->nb_kevent_available() > 0){
+            switch (keymap->top_kevent()){
                 case Keymap2::KEVENT_LEFT_ARROW:
                 case Keymap2::KEVENT_UP_ARROW:
+                    keymap->get_kevent();
                     if (this->edit_pos > 0) {
                         this->prev_cursor_px_pos = this->cursor_px_pos;
                         this->decrement_edit_pos();
-                        this->refresh(this->rect.wh());
-                        this->refresh_pos_cursor(this->cursor_px_pos, this->prev_cursor_px_pos);
+                        //this->refresh(this->rect.wh());
+                        //this->refresh_pos_cursor(this->cursor_px_pos, this->prev_cursor_px_pos);
                     }
                     break;
                 case Keymap2::KEVENT_RIGHT_ARROW:
                 case Keymap2::KEVENT_DOWN_ARROW:
+                    keymap->get_kevent();
                     if (this->edit_pos < this->num_chars) {
                         this->prev_cursor_px_pos = this->cursor_px_pos;
                         this->increment_edit_pos();
-                        this->refresh(this->rect.wh());
-                        this->refresh_pos_cursor(this->prev_cursor_px_pos, this->cursor_px_pos);
+                        //this->refresh(this->rect.wh());
+                        //this->refresh_pos_cursor(this->prev_cursor_px_pos, this->cursor_px_pos);
                     }
                     break;
                 case Keymap2::KEVENT_BACKSPACE:
+                    keymap->get_kevent();
                     if ((this->num_chars > 0) && (this->edit_pos > 0)) {
-                        std::size_t size = this->w_text - this->cursor_px_pos;
+                        //std::size_t size = this->w_text - this->cursor_px_pos;
                         this->decrement_edit_pos();
                         UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer), this->edit_pos);
                         this->num_chars--;
                         this->reload_context_text();
-                        this->refresh(Rect(this->cursor_px_pos + this->label.x_text, this->label.y_text, size, this->h_text));
+                        //this->refresh(Rect(this->cursor_px_pos + this->label.x_text, this->label.y_text, size, this->h_text));
                     }
                     break;
                 case Keymap2::KEVENT_DELETE:
+                    keymap->get_kevent();
                     if (this->num_chars > 0 && this->edit_pos < this->num_chars) {
                         UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer), this->edit_pos);
                         this->num_chars--;
-                        std::size_t size = this->w_text - this->cursor_px_pos - 1;
+                        //std::size_t size = this->w_text - this->cursor_px_pos - 1;
                         this->reload_context_text();
-                        this->refresh(Rect(this->cursor_px_pos + this->label.x_text + 1, this->label.y_text, size, this->h_text));
+                        //this->refresh(Rect(this->cursor_px_pos + this->label.x_text + 1, this->label.y_text, size, this->h_text));
                     }
                     break;
                 case Keymap2::KEVENT_END:
+                    keymap->get_kevent();
                     if (this->edit_pos < this->num_chars) {
                         this->edit_pos = this->num_chars;
                         this->edit_buffer_pos = this->buffer_size;
                         if (this->drawable) {
                             this->prev_cursor_px_pos = this->cursor_px_pos;
                             this->cursor_px_pos += this->w_text;
-                            this->refresh_pos_cursor(this->prev_cursor_px_pos, this->cursor_px_pos);
+                            //this->refresh_pos_cursor(this->prev_cursor_px_pos, this->cursor_px_pos);
                         }
                     }
                     break;
                 case Keymap2::KEVENT_HOME:
+                    keymap->get_kevent();
                     if (this->edit_pos > 0) {
                         this->edit_pos = 0;
                         this->edit_buffer_pos = 0;
                         this->prev_cursor_px_pos = this->cursor_px_pos;
                         this->cursor_px_pos = 0;
-                        this->refresh_pos_cursor(this->cursor_px_pos, this->prev_cursor_px_pos);
+                        //this->refresh_pos_cursor(this->cursor_px_pos, this->prev_cursor_px_pos);
                     }
                     break;
                 case Keymap2::KEVENT_KEY:
-                    {
+                    if (this->num_chars < 120) {
                         uint32_t c = keymap->top_char();
-                        if (this->num_chars < 120) {
-                            UTF8InsertOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer), this->edit_pos, c, 255);
-                            this->prev_cursor_px_pos = this->cursor_px_pos;
-                            size_t tmp = this->edit_buffer_pos;
-                            this->increment_edit_pos();
-                            this->buffer_size += tmp;
-                            this->num_chars++;
-                            this->reload_context_text();
-                            this->notify_self(NOTIFY_TEXT_CHANGED);
-                            this->refresh(Rect(this->prev_cursor_px_pos, 0, this->cursor_px_pos-this->prev_cursor_px_pos+2, this->h_text));
-                        }
+                        UTF8InsertOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer), this->edit_pos, c, 255);
+                        this->prev_cursor_px_pos = this->cursor_px_pos;
+                        size_t tmp = this->edit_buffer_pos;
+                        this->increment_edit_pos();
+                        this->buffer_size += tmp;
+                        this->num_chars++;
+                        this->reload_context_text();
+                        this->notify_self(NOTIFY_TEXT_CHANGED);
+                        //this->refresh(Rect(this->prev_cursor_px_pos, 0, this->cursor_px_pos-this->prev_cursor_px_pos+2, this->h_text));
                     }
+                    keymap->get_kevent();
+                    break;
+                case Keymap2::KEVENT_ENTER:
+                    keymap->get_kevent();
+                    this->notify_self(NOTIFY_SUBMIT);
+                    this->notify_parent(NOTIFY_SUBMIT);
                     break;
                 default:
-                    this->notify_parent(event);
+                    this->notify_parent(keymap->get_kevent());
                     break;
             }
-        } else {
-            this->Widget::send_event(event, param, param2, keymap);
         }
     }
 };

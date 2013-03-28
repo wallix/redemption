@@ -37,12 +37,12 @@ public:
 
     virtual void draw(const Rect& clip)
     {
-        Rect screen_clip = this->position_in_screen(clip);
+        Rect screen_rect = this->position_in_screen(clip);
         this->drawable->draw(
             RDPOpaqueRect(
-                screen_clip,
+                screen_rect,
                 this->color
-            ), screen_clip
+            ), screen_rect
         );
     }
 };
