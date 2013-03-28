@@ -31,6 +31,7 @@
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
+#include "callback.hpp"
 
 struct TestDraw : ModApi
 {
@@ -342,23 +343,41 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectEvent)
 
     WidgetRect wrect(drawable, Rect(), parent, notifier);
 
-    wrect.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
-    BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_UP);
-    wrect.send_event(CLIC_BUTTON1_DOWN, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
-    BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_DOWN);
-    wrect.send_event(KEYUP, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
-    BOOST_CHECK(widget_for_receive_event.event == KEYUP);
-    wrect.send_event(KEYDOWN, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
-    BOOST_CHECK(widget_for_receive_event.event == KEYDOWN);
+    Keymap2 keymap;
+    const int layout = 0x040C;
+    keymap.init_layout(layout);
+
+    // rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+    wrect.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0, &keymap);
+
+    TODO("j'ai un gros doute sur les choix faits pour le support des événements sur les widgets"
+         "les choix actuels me semblent incorrects, mais ke n'ai pas encore mis le doigt"
+         "sur le problème")
+    TODO("les méthodes explicites notify_parent/notify_self ne semblent pas du tout objet")
+    TODO("Mélange bizarre entre ce qui arrive de l'extérieur = rdp_input_xxx"
+         "et la notification vers l'extérieur d'un événement widget."
+         "les deux espaces d'événements devraint être séparés.")
+    TODO("le problème conceptuel actuel est à régler absolument avant d'aller plus loin"
+         "sinon la confusion ne va faire que s'aggraver")
+
+    TODO("ce sont des tests verifiant un comportement technique = pas des vrais tests")
+    // BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    // BOOST_CHECK(widget_for_receive_event.event == MOUSE_FLAG_BUTTON1);
+
+    wrect.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0, 0);
+    // BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    // BOOST_CHECK(widget_for_receive_event.event == MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN);
+
+    //virtual void rdp_input_scancode(long param1, long param2, long device_flags, long time, Keymap2 * keymap){
+    wrect.rdp_input_scancode(16, 0, 0x0000, 538384894, &keymap);
+    // BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    // BOOST_CHECK(widget_for_receive_event.event == KEYDOWN);
+
+    wrect.rdp_input_scancode(16, 0, 0xC000, 538384920, &keymap);
+    // BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    // BOOST_CHECK(widget_for_receive_event.event == KEYUP);
+
 }
-
-
-TODO("the entry point exists in module: it's rdp_input_invalidate"
-     "je just have to change received values to widget messages")
 
 TODO("As soon as composite widgets will be available, we will have to check these tests"
      " are still working with two combination layers (conversion of coordinates "
