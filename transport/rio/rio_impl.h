@@ -60,9 +60,7 @@
 #include "rio_inmeta.h"
 
 TODO("add filter class sample")
-TODO("replace Transport classes with calls to new methods")
 TODO("convert PNG transport to new format")
-TODO("write prototype python API for exposed methods")
 TODO("check and enhance test coverage for lib")
 TODO("check possible memory leaks (using valgrind on tests)")
 TODO("check possible closes missing (especially when exiting on errors)")

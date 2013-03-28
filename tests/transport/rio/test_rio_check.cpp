@@ -88,5 +88,7 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport2)
     BOOST_CHECK_EQUAL(4, rio_send(rt, "tput", 4));
     // Now the next call mismatch
     BOOST_CHECK_EQUAL(-RIO_ERROR_TRAILING_DATA, rio_send(rt, "xxx", 3));
+
+    rio_delete(rt);
 }
 
