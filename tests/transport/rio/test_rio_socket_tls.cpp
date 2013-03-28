@@ -193,6 +193,7 @@ BOOST_AUTO_TEST_CASE(TestSocket)
                             BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
                             return;
                         }
+                        
                     }
                 }
                 else {
