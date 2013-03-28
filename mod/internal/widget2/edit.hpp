@@ -238,6 +238,12 @@ public:
                     this->notify_parent(event);
                     break;
             }
+        } else if (event == CLIC_BUTTON1_DOWN) {
+            if (param > this->label.x_text && param2 > this->label.y_text) {
+                //find position
+            } else {
+                this->Widget::send_event(event, param, param2, keymap);
+            }
         } else {
             this->Widget::send_event(event, param, param2, keymap);
         }
