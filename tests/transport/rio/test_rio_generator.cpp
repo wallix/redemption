@@ -24,7 +24,7 @@
 #define BOOST_TEST_MODULE TestGeneratorRIO
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 #include "rio/rio.h"
 #include "rio/rio_impl.h"
