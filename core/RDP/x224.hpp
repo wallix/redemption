@@ -313,7 +313,6 @@ namespace X224
         RecvFactory(Transport & t, Stream & stream)
         {
             /* 4 bytes */
-//            t.recv(&stream.end, X224::TPKT_HEADER_LEN); 
             uint16_t length = stream.size();
             if (length < X224::TPKT_HEADER_LEN){
                 t.recv(&stream.end, X224::TPKT_HEADER_LEN - length);

@@ -74,5 +74,4 @@ struct Callback
     virtual void rdp_input_up_and_running() { /* LOG(LOG_ERR, "CB:UP_AND_RUNNING"); */}
 };
 
-
 #endif

@@ -144,7 +144,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     wcomposite.child_list.push_back(&wrect6);
 
     // ask to widget to redraw at position 0,500 and of size 800x600
-    wcomposite.send_event(WM_DRAW, 150<<16|150, (wcomposite.cx()<<16 | wcomposite.cy()), 0);
+    wcomposite.rdp_input_invalidate(Rect(150, 150, wcomposite.cx(), wcomposite.cy()));
+
 
     drawable.save_to_png("/tmp/composite.png");
 
@@ -156,8 +157,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     }
 
     // ask to widget to redraw at position 0,500 and of size 100x100
-    wcomposite.send_event(WM_DRAW, 0<<16|500, (100<<16|100), 0);
-
+    wcomposite.rdp_input_invalidate(Rect(0, 500, 100, 100));
     drawable.save_to_png("/tmp/composite2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     }
 
     // ask to widget to redraw at it's current position
-    wcomposite.send_event(WM_DRAW, 0, (wcomposite.cx()<<16 | wcomposite.cy()), 0);
+    wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 
     drawable.save_to_png("/tmp/composite3.png");
 

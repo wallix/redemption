@@ -90,6 +90,11 @@ extern "C" {
         return -RIO_ERROR_RECV_ONLY;
     }
 
+    static inline RIO_ERROR rio_m_RIOInmeta_get_status(RIOInmeta * self)
+    {
+        return rio_get_status(self->insequence);
+    }
+
 };
 
 #endif

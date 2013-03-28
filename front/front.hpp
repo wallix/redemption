@@ -15,11 +15,10 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Dominique Lafages
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Dominique Lafages, Raphael Zhou
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    header file. Front object (server), used to communicate with RDP client
-
 */
 
 #ifndef _REDEMPTION_FRONT_FRONT_HPP_
@@ -71,7 +70,6 @@
 #include "front_api.hpp"
 #include "genrandom.hpp"
 
-
 class Front : public FrontAPI {
 public:
     Capture * capture;
@@ -116,11 +114,14 @@ public:
 
     Random * gen;
 
+    bool fastpath_support;
+
 TODO("Pass font name as parameter in constructor")
 
     Front ( Transport * trans
           , Random * gen
           , Inifile * ini
+          , bool fp_support // If true, fast-path must be supported
           )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
         , capture(NULL)
@@ -141,6 +142,7 @@ TODO("Pass font name as parameter in constructor")
         , glyph_cache()
         , state(CONNECTION_INITIATION)
         , gen(gen)
+        , fastpath_support(fp_support)
     {
         init_palette332(this->palette332);
         this->mod_palette_setted = false;
@@ -158,6 +160,7 @@ TODO("Pass font name as parameter in constructor")
         memset(this->encrypt.key, 0, 16);
         memset(this->decrypt.update_key, 0, 16);
         memset(this->encrypt.update_key, 0, 16);
+
         switch (this->client_info.encryptionLevel) {
         case 1:
         case 2:
@@ -256,7 +259,6 @@ TODO("Pass font name as parameter in constructor")
         }
     }
 
-
     TODO(" implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
     virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
@@ -279,7 +281,7 @@ TODO("Pass font name as parameter in constructor")
             int distance_from_previous_fragment = 0;
             for (size_t index = 0; index < part_len; index++) {
                 int c = 0;
-                uint32_t charnum = uni[index]; // 
+                uint32_t charnum = uni[index];
                 FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
                 if (!font_item) {
                     LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
@@ -337,8 +339,7 @@ TODO("Pass font name as parameter in constructor")
         }
     }
 
-
-    // ==============================================================================
+    // ===========================================================================
     void start_capture(int width, int height, Inifile & ini, ModContext & context)
     {
         if (context.get_bool(STRAUTHID_OPT_MOVIE)){
@@ -398,8 +399,7 @@ TODO("Pass font name as parameter in constructor")
             this->capture = 0;
         }
     }
-    // ==============================================================================
-
+    // ===========================================================================
 
     virtual void reset(){
         if (this->verbose & 1){
@@ -407,7 +407,6 @@ TODO("Pass font name as parameter in constructor")
             LOG(LOG_INFO, "Front::reset::use_bitmap_comp=%u", this->client_info.use_bitmap_comp);
             LOG(LOG_INFO, "Front::reset::use_compact_packets=%u", this->client_info.use_compact_packets);
             LOG(LOG_INFO, "Front::reset::bitmap_cache_version=%u", this->client_info.bitmap_cache_version);
-
         }
 
         // reset outgoing orders and reset caches
@@ -728,7 +727,7 @@ TODO("Pass font name as parameter in constructor")
 //    color pointer, as specified in [T128] section 8.14.3. This pointer update
 //    is used for both monochrome and color pointers in RDP.
 
-    virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
+    virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw(Error)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
@@ -866,7 +865,7 @@ TODO("Pass font name as parameter in constructor")
 //      cached using either the Color Pointer Update (section 2.2.9.1.1.4.4) or
 //      New Pointer Update (section 2.2.9.1.1.4.5).
 
-    virtual void set_pointer(int cache_idx) throw (Error)
+    virtual void set_pointer(int cache_idx) throw(Error)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
@@ -908,10 +907,9 @@ TODO("Pass font name as parameter in constructor")
         if (this->verbose & 4){
             LOG(LOG_INFO, "Front::set_pointer done");
         }
-
     }
 
-    void incoming(Callback & cb) throw (Error)
+    void incoming(Callback & cb) throw(Error)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "Front::incoming()");
@@ -1090,7 +1088,7 @@ TODO("Pass font name as parameter in constructor")
             sc_net.emit(stream);
             // ------------------------------------------------------------------
             GCC::UserData::SCSecurity sc_sec1;
-           /*
+            /*
                For now rsa_keys are not in a configuration file any more, but as we were not changing keys
                the values have been embedded in code and the key generator file removed from source code.
 
@@ -1232,7 +1230,6 @@ TODO("Pass font name as parameter in constructor")
                 this->trans->send(x224_header);
                 this->trans->send(mcs_data);
             }
-
 
             TODO("The code below should be simplified and correctly manage channels (confirm only channels that are really supported)")
             {
@@ -1829,9 +1826,76 @@ TODO("Pass font name as parameter in constructor")
             // Detect fast-path PDU
             this->trans->recv(&stream.end, 1);
             uint8_t byte = stream.in_uint8();
-            if ((byte & FASTPATH_OUTPUT_ACTION_X224) == 0){
-                LOG(LOG_INFO, "Front::Received fast-path PDU");
-                throw Error(ERR_X224);
+            if ((byte & FastPath::FASTPATH_INPUT_ACTION_X224) == 0){
+///////////////
+///////////////
+                FastPath::ClientInputEventPDU_Recv cfpie(*this->trans, stream, this->decrypt);
+
+                uint8_t byte;
+                uint8_t eventCode;
+
+                for (uint8_t i = 0; i < cfpie.numEvents; i++){
+                    byte = cfpie.payload.in_uint8();
+
+                    eventCode  = (byte & 0xE0) >> 5;
+
+                    switch (eventCode){
+                        case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
+                        {
+                            FastPath::KeyboardEvent_Recv ke(cfpie.payload, byte);
+
+                            if (this->verbose & 4){
+                                LOG(LOG_INFO,
+                                    "Front::Received fast-path PUD, scancode keyboardFlags=0x%X, keyCode=0x%X",
+                                    ke.spKeyboardFlags, ke.keyCode);
+                            }
+
+                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode);
+                            cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                        }
+                        break;
+
+                        case FastPath::FASTPATH_INPUT_EVENT_MOUSE:
+                        {
+                            FastPath::MouseEvent_Recv me(cfpie.payload, byte);
+
+                            if (this->verbose & 4){
+                                LOG(LOG_INFO,
+                                    "Front::Received fast-path PUD, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
+                                    me.pointerFlags, me.xPos, me.yPos);
+                            }
+
+                            cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                        }
+                        break;
+
+                        case FastPath::FASTPATH_INPUT_EVENT_SYNC:
+                        {
+                            FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
+
+                            if (this->verbose & 4){
+                                LOG(LOG_INFO, "Front::Received fast-path PUD, sync eventFlags=0x%X",
+                                    se.eventFlags);
+                            }
+
+                            cb.rdp_input_synchronize(0, 0, se.eventFlags, 0);
+                        }
+                        break;
+
+                        default:
+                            LOG(LOG_INFO, "Front::Received unexpected fast-path PUD, eventCode = %u", eventCode);
+                            throw Error(ERR_RDP_FASTPATH);
+                        break;
+                    }
+                }
+
+                if (cfpie.payload.in_remain() != 0) {
+                    LOG(LOG_WARNING, "Front::Received fast-path PUD, remains=%u", cfpie.payload.in_remain());
+                }
+
+                break;
+///////////////
+///////////////
             }
 
             X224::RecvFactory fx224(*this->trans, stream);
@@ -2039,8 +2103,6 @@ TODO("Pass font name as parameter in constructor")
         trans->send(stream);
     }
 
-
-
     /*****************************************************************************/
     void send_demand_active() throw (Error)
     {
@@ -2124,8 +2186,13 @@ TODO("Pass font name as parameter in constructor")
         caps_count++;
 
         InputCaps input_caps;
-        input_caps.inputFlags = INPUT_FLAG_SCANCODES;
-//        input_caps.inputFlags = INPUT_FLAG_SCANCODES | INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2;
+// Slow/Fast-path
+        if (this->fastpath_support == false) {
+            input_caps.inputFlags = INPUT_FLAG_SCANCODES;
+        }
+        else {
+            input_caps.inputFlags = INPUT_FLAG_SCANCODES | INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2;
+        }
         input_caps.keyboardLayout = 0;
         input_caps.keyboardType = 0;
         input_caps.keyboardSubType = 0;
@@ -2589,8 +2656,6 @@ TODO("Pass font name as parameter in constructor")
         }
     }
 
-
-
     /*****************************************************************************/
     void send_fontmap() throw (Error)
     {
@@ -2718,84 +2783,67 @@ TODO("Pass font name as parameter in constructor")
         break;
         case PDUTYPE2_INPUT:   // 28(0x1c) Input PDU (section 2.2.8.1.1.3)
             {
-LOG(LOG_INFO, "***** PDUTYPE2_INPUT *****:");
-hexdump_d(sdata_in.payload.p, sdata_in.payload.in_remain());
-
-                int num_events = sdata_in.payload.in_uint16_le();
+                SlowPath::ClientInputEventPDU_Recv cie(sdata_in.payload);
 
                 if (this->verbose & 4){
-                    LOG(LOG_INFO, "PDUTYPE2_INPUT num_events=%u", num_events);
+                    LOG(LOG_INFO, "PDUTYPE2_INPUT num_events=%u", cie.numEvents);
                 }
 
-                const unsigned expected =
-                      2               // pad(2)
-                    + num_events * 12 // time(4) + mes_type(2) + device_flags(2) + param1(2) + param2(2)
-                    ;
-                if (!sdata_in.payload.in_check_rem(expected))
-                {
-                    LOG(LOG_ERR, "truncated client input event PDU: expected=%u remains=%u",
-                        expected, sdata_in.payload.in_remain());
-                    throw Error(ERR_MCS_PDU_TRUNCATED);
-                }
-
-                sdata_in.payload.in_skip_bytes(2); // pad
-//                SlowPath::SlowPathClientInputEventPDU_Recv SpCiep(sdata_in.payload);
-
-                for (int index = 0; index < num_events; index++) {
-//                for (int index = 0; index < SpCiep.numEvents; index++) {
-                    int time = sdata_in.payload.in_uint32_le();
-                    uint16_t msg_type = sdata_in.payload.in_uint16_le();
-                    uint16_t device_flags = sdata_in.payload.in_uint16_le();
-                    int16_t param1 = sdata_in.payload.in_sint16_le();
-                    int16_t param2 = sdata_in.payload.in_sint16_le();
-/*
-                    int time = SpCiep.payload.in_uint32_le();
-                    uint16_t msg_type = SpCiep.payload.in_uint16_le();
-                    uint16_t device_flags = SpCiep.payload.in_uint16_le();
-                    int16_t param1 = SpCiep.payload.in_sint16_le();
-                    int16_t param2 = SpCiep.payload.in_sint16_le();
-*/
-LOG(LOG_INFO, "***** PDUTYPE2_INPUT *****: msg_type = 0x%X", msg_type);
-
+                for (int index = 0; index < cie.numEvents; index++) {
+                    SlowPath::InputEvent_Recv ie(cie.payload);
 
                     TODO(" we should always call send_input with original data  if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it")
                     TODO(" with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.")
-                    switch (msg_type) {
-                    case RDP_INPUT_SYNCHRONIZE:
-                        if (this->verbose & 4){
-                            LOG(LOG_INFO, "RDP_INPUT_SYNCHRONIZE");
-                        }
-                        /* happens when client gets focus and sends key modifier info */
-                        this->keymap.synchronize(param1);
-                        if (this->up_and_running){
-                            cb.rdp_input_synchronize(time, device_flags, param1, param2);
-                        }
-                        break;
-                    case RDP_INPUT_SCANCODE:
+                    switch (ie.messageType) {
+                        case SlowPath::INPUT_EVENT_SYNC:
                         {
+                            SlowPath::SynchronizeEvent_Recv se(ie.payload);
+
                             if (this->verbose & 4){
-                                LOG(LOG_INFO, "RDP_INPUT_SCANCODE time=%u flags=%04x param1=%04x param2=%04x",
-                                    time, device_flags, param1, param2
-                                );
+                                LOG(LOG_INFO, "SlowPath INPUT_EVENT_SYNC eventTime=%u toggleFlags=0x%04X",
+                                    ie.eventTime, se.toggleFlags);
                             }
-                            this->keymap.event(device_flags, param1);
+                            // happens when client gets focus and sends key modifier info
+                            this->keymap.synchronize(se.toggleFlags & 0xFFFF);
                             if (this->up_and_running){
-                                cb.rdp_input_scancode(param1, param2, device_flags, time, &this->keymap);
+                                cb.rdp_input_synchronize(ie.eventTime, 0, se.toggleFlags & 0xFFFF, (se.toggleFlags & 0xFFFF0000) >> 16);
                             }
                         }
                         break;
-                    case RDP_INPUT_MOUSE:
-                        if (this->verbose & 4){
-                            LOG(LOG_INFO, "RDP_INPUT_MOUSE(device_flags=%u, param1=%u, param2=%u)", device_flags, param1, param2);
-                        }
-                        this->mouse_x = param1;
-                        this->mouse_y = param2;
-                        if (this->up_and_running){
-                            cb.rdp_input_mouse(device_flags, param1, param2, &this->keymap);
+
+                        case SlowPath::INPUT_EVENT_MOUSE:
+                        {
+                            SlowPath::MouseEvent_Recv me(ie.payload);
+
+                            if (this->verbose & 4){
+                                LOG(LOG_INFO, "Slow-path INPUT_EVENT_MOUSE eventTime=%u pointerFlags=0x%04X, xPos=%u, yPos=%u)",
+                                    ie.eventTime, me.pointerFlags, me.xPos, me.yPos);
+                            }
+                            this->mouse_x = me.xPos;
+                            this->mouse_y = me.yPos;
+                            if (this->up_and_running){
+                                cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                            }
                         }
                         break;
-                    default:
-                        LOG(LOG_WARNING, "unsupported PDUTYPE2_INPUT msg %u", msg_type);
+
+                        case SlowPath::INPUT_EVENT_SCANCODE:
+                        {
+                            SlowPath::KeyboardEvent_Recv ke(ie.payload);
+
+                            if (this->verbose & 4){
+                                LOG(LOG_INFO, "Slow-path INPUT_EVENT_SYNC eventTime=%u keyboardFlags=0x%04X keyCode=0x%04X",
+                                    ie.eventTime, ke.keyboardFlags, ke.keyCode);
+                            }
+                            this->keymap.event(ke.keyboardFlags, ke.keyCode);
+                            if (this->up_and_running){
+                                cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
+                            }
+                        }
+                        break;
+
+                        default:
+                            LOG(LOG_WARNING, "unsupported PDUTYPE2_INPUT message type %u", ie.messageType);
                         break;
                     }
                 }
@@ -3115,7 +3163,6 @@ LOG(LOG_INFO, "***** PDUTYPE2_INPUT *****: msg_type = 0x%X", msg_type);
         }
     }
 
-
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
@@ -3155,7 +3202,6 @@ LOG(LOG_INFO, "***** PDUTYPE2_INPUT *****: msg_type = 0x%X", msg_type);
             if (this->capture){ this->capture->draw(cmd, clip); }
         }
     }
-
 
     void draw(const RDPPatBlt & cmd, const Rect & clip)
     {

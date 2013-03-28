@@ -15,11 +15,10 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Dominique Lafages
+   Author(s): Christophe Grosjean, Javier Caverni, Dominique Lafages, Raphael Zhou
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    rdp module main header file
-
 */
 
 #ifndef _REDEMPTION_MOD_RDP_RDP_HPP_
@@ -139,6 +138,8 @@ struct mod_rdp : public client_mod {
     bool opt_clipboard;  // true clipboard available, false clipboard unavailable
     uint32_t performanceFlags;
 
+    bool fastpath_support;
+
     mod_rdp(Transport * trans,
             const char * target_user,
             const char * target_password,
@@ -152,6 +153,7 @@ struct mod_rdp : public client_mod {
             SessionManager * sesman,
             const char * auth_channel,
             bool clipboard,
+            bool fp_support, // If true, fast-path must be supported
             uint32_t verbose = 0,
             bool enable_new_pointer = false)
             :
@@ -181,7 +183,8 @@ struct mod_rdp : public client_mod {
                     nego(tls, trans, target_user),
                     enable_new_pointer(enable_new_pointer),
                     opt_clipboard(clipboard),
-                    performanceFlags(info.rdp5_performanceflags)
+                    performanceFlags(info.rdp5_performanceflags),
+                    fastpath_support(fp_support)
     {
         if (this->verbose & 1){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
@@ -1341,10 +1344,100 @@ struct mod_rdp : public client_mod {
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
             BStream stream(65536);
+
+            // Detect fast-path PDU
+            this->nego.trans->recv(&stream.end, 1);
+            uint8_t byte = stream.in_uint8();
+            if ((byte & FastPath::FASTPATH_OUTPUT_ACTION_X224) == 0){
+///////////////
+///////////////
+                FastPath::ServerUpdatePDU_Recv su(*this->nego.trans, stream, this->decrypt);
+                while (su.payload.in_remain()) {
+                    FastPath::Update_Recv upd(su.payload);
+
+                    switch (upd.updateCode) {
+                        case FastPath::FASTPATH_UPDATETYPE_ORDERS:
+                            {
+                                int count = upd.payload.in_uint16_le();
+
+                                this->front.begin_update();
+                                this->orders.process_orders(this->bpp, upd.payload, count, this);
+                                this->front.end_update();
+                            }
+
+                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_ORDERS"); }
+                        break;
+
+                        case FastPath::FASTPATH_UPDATETYPE_BITMAP:
+                            upd.payload.in_skip_bytes(2); // updateType(2)
+
+                            this->front.begin_update();
+                            this->process_bitmap_updates(upd.payload, this);
+                            this->front.end_update();
+
+                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_BITMAP"); }
+                        break;
+
+                        case FastPath::FASTPATH_UPDATETYPE_PALETTE:
+                            upd.payload.in_skip_bytes(2); // updateType(2)
+
+                            this->front.begin_update();
+                            this->process_palette(upd.payload, this);
+                            this->front.end_update();
+
+                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PALETTE"); }
+                        break;
+
+                        case FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE:
+                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_SYNCHRONIZE, not yet supported"); }
+                        break;
+
+                        case FastPath::FASTPATH_UPDATETYPE_PTR_NULL:
+                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_NULL, not yet supported"); }
+                        break;
+
+                        case FastPath::FASTPATH_UPDATETYPE_PTR_DEFAULT:
+                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_DEFAULT, not yet supported"); }
+                        break;
+
+                        case FastPath::FASTPATH_UPDATETYPE_PTR_POSITION:
+                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_POSITION, not yet supported"); }
+                        break;
+
+                        case FastPath::FASTPATH_UPDATETYPE_POINTER:
+                            this->process_new_pointer_pdu(upd.payload, this);
+
+                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_POINTER"); }
+                        break;
+
+                        case FastPath::FASTPATH_UPDATETYPE_CACHED:
+                            this->process_cached_pointer_pdu(upd.payload, this);
+
+                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_CACHED"); }
+                        break;
+
+                        default:
+                            LOG(LOG_INFO, "mod::rdp: received unexpected fast-path PUD, updateCode = %u",
+                                upd.updateCode);
+                            throw Error(ERR_RDP_FASTPATH);
+                        break;
+                    }
+                }
+                break;
+///////////////
+///////////////
+            }
+
             X224::RecvFactory f(*this->nego.trans, stream);
             X224::DT_TPDU_Recv x224(*this->nego.trans, stream);
             SubStream & mcs_data = x224.payload;
             MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
+
+            if (mcs.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                LOG(LOG_ERR, "mod_rdp: got MCS DisconnectProviderUltimatum");
+                throw Error(ERR_MCS);
+            }
+
             SEC::Sec_Recv sec(mcs.payload, false, this->decrypt, this->encryptionLevel, this->encryptionMethod);
 
             if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){
@@ -1759,7 +1852,13 @@ struct mod_rdp : public client_mod {
             uint16_t total_caplen = stream.get_offset();
 
             GeneralCaps general_caps;
-            general_caps.extraflags = this->use_rdp5 ? NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:0;
+// Slow/Fast-path
+            if (!this->fastpath_support) {
+                general_caps.extraflags = this->use_rdp5 ? NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:0;
+            }
+            else {
+                general_caps.extraflags = this->use_rdp5 ? FASTPATH_OUTPUT_SUPPORTED|NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:FASTPATH_OUTPUT_SUPPORTED;
+            }
             general_caps.log("Sending to server");
             general_caps.emit(stream);
             stream.mark_end();
@@ -2069,9 +2168,12 @@ struct mod_rdp : public client_mod {
 // |                                         | the server running in the user's|
 // |                                         | session.                        |
 // +-----------------------------------------+---------------------------------+
+// | 0x0000000C ERRINFO_LOGOFF_BY_USER       | The disconnection was initiated |
+// |                                         | by the user logging off his or  |
+// |                                         | her session on the server.      |
+// +-----------------------------------------+---------------------------------+
 
 // Protocol-independent licensing codes:
-
 // +-------------------------------------------+-------------------------------+
 // | 0x00000100 ERRINFO_LICENSE_INTERNAL       | An internal error has occurred|
 // |                                           | in the Terminal Services      |
@@ -2123,6 +2225,67 @@ struct mod_rdp : public client_mod {
 // | ERRINFO_LICENSE_NO_REMOTE_CONNECTIONS | licensed to accept remote         |
 // |                                       |  connections.                     |
 // +---------------------------------------+-----------------------------------+
+
+// Protocol-independent codes generated by Connection Broker:
+// +----------------------------------------------+----------------------------+
+// | Value                                        | Meaning                    |
+// +----------------------------------------------+----------------------------+
+// | 0x0000400                                    | The target endpoint could  |
+// | ERRINFO_CB_DESTINATION_NOT_FOUND             | not be found.              |
+// +----------------------------------------------+----------------------------+
+// | 0x0000402                                    | The target endpoint to     |
+// | ERRINFO_CB_LOADING_DESTINATION               | which the client is being  |
+// |                                              | redirected is              |
+// |                                              | disconnecting from the     |
+// |                                              | Connection Broker.         |
+// +----------------------------------------------+----------------------------+
+// | 0x0000404                                    | An error occurred while    |
+// | ERRINFO_CB_REDIRECTING_TO_DESTINATION        | the connection was being   |
+// |                                              | redirected to the target   |
+// |                                              | endpoint.                  |
+// +----------------------------------------------+----------------------------+
+// | 0x0000405                                    | An error occurred while    |
+// | ERRINFO_CB_SESSION_ONLINE_VM_WAKE            | the target endpoint (a     |
+// |                                              | virtual machine) was being |
+// |                                              | awakened.                  |
+// +----------------------------------------------+----------------------------+
+// | 0x0000406                                    | An error occurred while    |
+// | ERRINFO_CB_SESSION_ONLINE_VM_BOOT            | the target endpoint (a     |
+// |                                              | virtual machine) was being |
+// |                                              | started.                   |
+// +----------------------------------------------+----------------------------+
+// | 0x0000407                                    | The IP address of the      |
+// | ERRINFO_CB_SESSION_ONLINE_VM_NO_DNS          | target endpoint (a virtual |
+// |                                              | machine) cannot be         |
+// |                                              | determined.                |
+// +----------------------------------------------+----------------------------+
+// | 0x0000408                                    | There are no available     |
+// | ERRINFO_CB_DESTINATION_POOL_NOT_FREE         | endpoints in the pool      |
+// |                                              | managed by the Connection  |
+// |                                              | Broker.                    |
+// +----------------------------------------------+----------------------------+
+// | 0x0000409                                    | Processing of the          |
+// | ERRINFO_CB_CONNECTION_CANCELLED              | connection has been        |
+// |                                              | cancelled.                 |
+// +----------------------------------------------+----------------------------+
+// | 0x0000410                                    | The settings contained in  |
+// | ERRINFO_CB_CONNECTION_ERROR_INVALID_SETTINGS | the routingToken field of  |
+// |                                              | the X.224 Connection       |
+// |                                              | Request PDU (section       |
+// |                                              | 2.2.1.1) cannot be         |
+// |                                              | validated.                 |
+// +----------------------------------------------+----------------------------+
+// | 0x0000411                                    | A time-out occurred while  |
+// | ERRINFO_CB_SESSION_ONLINE_VM_BOOT_TIMEOUT    | the target endpoint (a     |
+// |                                              | virtual machine) was being |
+// |                                              | started.                   |
+// +----------------------------------------------+----------------------------+
+// | 0x0000412                                    | A session monitoring error |
+// | ERRINFO_CB_SESSION_ONLINE_VM_SESSMON_FAILED  | occurred while the target  |
+// |                                              | endpoint (a virtual        |
+// |                                              | machine) was being         |
+// |                                              | started.                   |
+// +----------------------------------------------+----------------------------+
 
 // RDP specific codes:
 // +------------------------------------+--------------------------------------+
@@ -2522,7 +2685,10 @@ struct mod_rdp : public client_mod {
 // |                                          | Channel Capability Set         |
 // |                                          | (section 2.2.7.1.10).          |
 // +------------------------------------------+--------------------------------+
-// | 0x0000112C ERRINFO_RESERVED              | Reserved for future use.       |
+// | 0x0000112C ERRINFO_BAD_FRAME_ACK_DATA    | There is not enough data to    |
+// |                                          | read a                         |
+// |                                          | TS_FRAME_ACKNOWLEDGE_PDU ([MS- |
+// |                                          | RDPRFX] section 2.2.3.1).      |
 // +------------------------------------------+--------------------------------+
 // | 0x0000112D                               | The graphics mode requested by |
 // | ERRINFO_GRAPHICSMODENOTSUPPORTED         | the client is not supported by |
@@ -2530,6 +2696,30 @@ struct mod_rdp : public client_mod {
 // +------------------------------------------+--------------------------------+
 // | 0x0000112E                               | The server-side graphics       |
 // | ERRINFO_GRAPHICSSUBSYSTEMRESETFAILED     | subsystem failed to reset.     |
+// +------------------------------------------+--------------------------------+
+// | 0x0000112F                               | The server-side graphics       |
+// | ERRINFO_GRAPHICSSUBSYSTEMFAILED          | subsystem is in an error state |
+// |                                          | and unable to continue         |
+// |                                          | graphics encoding.             |
+// +------------------------------------------+--------------------------------+
+// | 0x00001130                               | There is not enough data to    |
+// | ERRINFO_TIMEZONEKEYNAMELENGTHTOOSHORT    | read the                       |
+// |                                          | cbDynamicDSTTimeZoneKeyName    |
+// |                                          | field in the Extended Info     |
+// |                                          | Packet (section                |
+// |                                          | 2.2.1.11.1.1.1).               |
+// +------------------------------------------+--------------------------------+
+// | 0x00001131                               | The length reported in the     |
+// | ERRINFO_TIMEZONEKEYNAMELENGTHTOOLONG     | cbDynamicDSTTimeZoneKeyName    |
+// |                                          | field of the Extended Info     |
+// |                                          | Packet (section                |
+// |                                          | 2.2.1.11.1.1.1) is too long.   |
+// +------------------------------------------+--------------------------------+
+// | 0x00001132                               | The                            |
+// | ERRINFO_DYNAMICDSTDISABLEDFIELDMISSING   | dynamicDaylightTimeDisabled    |
+// |                                          | field is not present in the    |
+// |                                          | Extended Info Packet (section  |
+// |                                          | 2.2.1.11.1.1.1).               |
 // +------------------------------------------+--------------------------------+
 // | 0x00001191                               | An attempt to update the       |
 // | ERRINFO_UPDATESESSIONKEYFAILED           | session keys while using       |
@@ -2576,6 +2766,7 @@ struct mod_rdp : public client_mod {
             ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES    = 0x00000009,
             ERRINFO_SERVER_FRESH_CREDENTIALS_REQUIRED = 0x0000000A,
             ERRINFO_RPC_INITIATED_DISCONNECT_BYUSER   = 0x0000000B,
+            ERRINFO_LOGOFF_BY_USER                    = 0x0000000C,
             ERRINFO_LICENSE_INTERNAL                  = 0x00000100,
             ERRINFO_LICENSE_NO_LICENSE_SERVER         = 0x00000101,
             ERRINFO_LICENSE_NO_LICENSE                = 0x00000102,
@@ -2587,6 +2778,19 @@ struct mod_rdp : public client_mod {
             ERRINFO_LICENSE_BAD_CLIENT_ENCRYPTION     = 0x00000108,
             ERRINFO_LICENSE_CANT_UPGRADE_LICENSE      = 0x00000109,
             ERRINFO_LICENSE_NO_REMOTE_CONNECTIONS     = 0x0000010A,
+
+            ERRINFO_CB_DESTINATION_NOT_FOUND             = 0x00000400,
+            ERRINFO_CB_LOADING_DESTINATION               = 0x00000402,
+            ERRINFO_CB_REDIRECTING_TO_DESTINATION        = 0x00000404,
+            ERRINFO_CB_SESSION_ONLINE_VM_WAKE            = 0x00000405,
+            ERRINFO_CB_SESSION_ONLINE_VM_BOOT            = 0x00000406,
+            ERRINFO_CB_SESSION_ONLINE_VM_NO_DNS          = 0x00000407,
+            ERRINFO_CB_DESTINATION_POOL_NOT_FREE         = 0x00000408,
+            ERRINFO_CB_CONNECTION_CANCELLED              = 0x00000409,
+            ERRINFO_CB_CONNECTION_ERROR_INVALID_SETTINGS = 0x00000410,
+            ERRINFO_CB_SESSION_ONLINE_VM_BOOT_TIMEOUT    = 0x00000411,
+            ERRINFO_CB_SESSION_ONLINE_VM_SESSMON_FAILED  = 0x00000412,
+
             ERRINFO_UNKNOWNPDUTYPE2                   = 0x000010C9,
             ERRINFO_UNKNOWNPDUTYPE                    = 0x000010CA,
             ERRINFO_DATAPDUSEQUENCE                   = 0x000010CB,
@@ -2649,9 +2853,13 @@ struct mod_rdp : public client_mod {
             ERRINFO_BADMONITORDATA                    = 0x00001129,
             ERRINFO_VCDECOMPRESSEDREASSEMBLEFAILED    = 0x0000112A,
             ERRINFO_VCDATATOOLONG                     = 0x0000112B,
-            ERRINFO_RESERVED                          = 0x0000112C,
+            ERRINFO_BAD_FRAME_ACK_DATA                = 0x0000112C,
             ERRINFO_GRAPHICSMODENOTSUPPORTED          = 0x0000112D,
             ERRINFO_GRAPHICSSUBSYSTEMRESETFAILED      = 0x0000112E,
+            ERRINFO_GRAPHICSSUBSYSTEMFAILED           = 0x0000112F,
+            ERRINFO_TIMEZONEKEYNAMELENGTHTOOSHORT     = 0x00001130,
+            ERRINFO_TIMEZONEKEYNAMELENGTHTOOLONG      = 0x00001131,
+            ERRINFO_DYNAMICDSTDISABLEDFIELDMISSING    = 0x00001132,
             ERRINFO_UPDATESESSIONKEYFAILED            = 0x00001191,
             ERRINFO_DECRYPTFAILED                     = 0x00001192,
             ERRINFO_ENCRYPTFAILED                     = 0x00001193,
@@ -2693,6 +2901,9 @@ struct mod_rdp : public client_mod {
             case ERRINFO_RPC_INITIATED_DISCONNECT_BYUSER:
                 LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "RPC_INITIATED_DISCONNECT_BYUSER");
             break;
+            case ERRINFO_LOGOFF_BY_USER:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LOGOFF_BY_USER");
+            break;
             case ERRINFO_LICENSE_INTERNAL:
                 LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_INTERNAL");
             break;
@@ -2725,6 +2936,39 @@ struct mod_rdp : public client_mod {
             break;
             case ERRINFO_LICENSE_NO_REMOTE_CONNECTIONS:
                 LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "LICENSE_NO_REMOTE_CONNECTIONS");
+            break;
+            case ERRINFO_CB_DESTINATION_NOT_FOUND:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_DESTINATION_NOT_FOUND");
+            break;
+            case ERRINFO_CB_LOADING_DESTINATION:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_LOADING_DESTINATION");
+            break;
+            case ERRINFO_CB_REDIRECTING_TO_DESTINATION:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_REDIRECTING_TO_DESTINATION");
+            break;
+            case ERRINFO_CB_SESSION_ONLINE_VM_WAKE:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_SESSION_ONLINE_VM_WAKE");
+            break;
+            case ERRINFO_CB_SESSION_ONLINE_VM_BOOT:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_SESSION_ONLINE_VM_BOOT");
+            break;
+            case ERRINFO_CB_SESSION_ONLINE_VM_NO_DNS:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_SESSION_ONLINE_VM_NO_DNS");
+            break;
+            case ERRINFO_CB_DESTINATION_POOL_NOT_FREE:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_DESTINATION_POOL_NOT_FREE");
+            break;
+            case ERRINFO_CB_CONNECTION_CANCELLED:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_CONNECTION_CANCELLED");
+            break;
+            case ERRINFO_CB_CONNECTION_ERROR_INVALID_SETTINGS:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_CONNECTION_ERROR_INVALID_SETTINGS");
+            break;
+            case ERRINFO_CB_SESSION_ONLINE_VM_BOOT_TIMEOUT:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_SESSION_ONLINE_VM_BOOT_TIMEOUT");
+            break;
+            case ERRINFO_CB_SESSION_ONLINE_VM_SESSMON_FAILED:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "CB_SESSION_ONLINE_VM_SESSMON_FAILED");
             break;
             case ERRINFO_UNKNOWNPDUTYPE2:
                 LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "UNKNOWNPDUTYPE2");
@@ -2912,14 +3156,26 @@ struct mod_rdp : public client_mod {
             case ERRINFO_VCDATATOOLONG:
                 LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "VCDATATOOLONG");
             break;
-            case ERRINFO_RESERVED:
-                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "RESERVED");
+            case ERRINFO_BAD_FRAME_ACK_DATA:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "BAD_FRAME_ACK_DATA");
             break;
             case ERRINFO_GRAPHICSMODENOTSUPPORTED:
                 LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "GRAPHICSMODENOTSUPPORTED");
             break;
             case ERRINFO_GRAPHICSSUBSYSTEMRESETFAILED:
                 LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "GRAPHICSSUBSYSTEMRESETFAILED");
+            break;
+            case ERRINFO_GRAPHICSSUBSYSTEMFAILED:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "GRAPHICSSUBSYSTEMFAILED");
+            break;
+            case ERRINFO_TIMEZONEKEYNAMELENGTHTOOSHORT:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "TIMEZONEKEYNAMELENGTHTOOSHORT");
+            break;
+            case ERRINFO_TIMEZONEKEYNAMELENGTHTOOLONG:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "TIMEZONEKEYNAMELENGTHTOOLONG");
+            break;
+            case ERRINFO_DYNAMICDSTDISABLEDFIELDMISSING:
+                LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "DYNAMICDSTDISABLEDFIELDMISSING");
             break;
             case ERRINFO_UPDATESESSIONKEYFAILED:
                 LOG(LOG_INFO, "process disconnect pdu : code = %8x error=%s", errorInfo, "UPDATESESSIONKEYFAILED");
@@ -3588,17 +3844,12 @@ struct mod_rdp : public client_mod {
         }
         BStream stream(1024);
 
-/*
-        uint32_t perfFlags = (this->performanceFlags ? this->performanceFlags :
-            ( PERF_DISABLE_WALLPAPER | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS ) ) );
-*/
         InfoPacket infoPacket( this->use_rdp5
                              , this->domain
                              , this->username
                              , password
                              , this->program
                              , this->directory
-//                             , perfFlags
                              , this->performanceFlags
                              , this->clientAddr
                              );

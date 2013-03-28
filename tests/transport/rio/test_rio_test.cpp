@@ -53,7 +53,6 @@ BOOST_AUTO_TEST_CASE(TestTestRIO)
     // if mismatch return the length of the common part (at least one)
     BOOST_CHECK_EQUAL(4, rio_send(rt, "tput", 4));
     // Now the next call mismatch
-    BOOST_CHECK_EQUAL(0, rio_send(rt, "xxx", 3));
     BOOST_CHECK_EQUAL(-RIO_ERROR_TRAILING_DATA, rio_send(rt, "xxx", 3));
 
     rio_delete(rt);
@@ -73,7 +72,7 @@ BOOST_AUTO_TEST_CASE(TestTestRIO2)
     BOOST_CHECK_EQUAL(0, memcmp("We ", buffer, 3));
     BOOST_CHECK_EQUAL(21, rio_recv(rt, buffer+3, 1024));
     BOOST_CHECK_EQUAL(0, memcmp("We read what we provide!", buffer, 24));
-    BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer+24, 1024));
+    BOOST_CHECK_EQUAL((ssize_t)0, rio_recv(rt, buffer+24, 1024));
     
     rio_delete(rt);
 }
@@ -97,7 +96,7 @@ BOOST_AUTO_TEST_CASE(TestTestRIO3)
     BOOST_CHECK_EQUAL(2, rio_recv(rt, buffer, 2));
     BOOST_CHECK_EQUAL(0, memcmp("ut", buffer, 2));
 
-    BOOST_CHECK_EQUAL(0, rio_send(rt, "xxx", 3));
+    BOOST_CHECK_EQUAL(-RIO_ERROR_TRAILING_DATA, rio_send(rt, "xxx", 3));
     BOOST_CHECK_EQUAL(-RIO_ERROR_TRAILING_DATA, rio_send(rt, "xxx", 3));
 
     // Now subsequent calls to send or recv always return the same error
@@ -126,7 +125,7 @@ BOOST_AUTO_TEST_CASE(TestTestRIO4)
     BOOST_CHECK_EQUAL(2, rio_recv(&rt, buffer, 2));
     BOOST_CHECK_EQUAL(0, memcmp("ut", buffer, 2));
 
-    BOOST_CHECK_EQUAL(0, rio_send(&rt, "xxx", 3));
+    BOOST_CHECK_EQUAL(-RIO_ERROR_TRAILING_DATA, rio_send(&rt, "xxx", 3));
     BOOST_CHECK_EQUAL(-RIO_ERROR_TRAILING_DATA, rio_send(&rt, "xxx", 3));
 
     // Now subsequent calls to send or recv always return the same error

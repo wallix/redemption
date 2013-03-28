@@ -149,7 +149,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton)
     WidgetButton wbutton(&drawable, x, y, parent, notifier, "test1", auto_resize, id, bg_color, fg_color, xtext, ytext);
 
     // ask to widget to redraw at it's current position
-    wbutton.send_event(WM_DRAW, 0, (wbutton.rect.cx<<16 | wbutton.rect.cy), 0);
+    wbutton.rdp_input_invalidate(Rect(0, 0, wbutton.cx(), wbutton.cy()));
+
 
     drawable.save_to_png("/tmp/button.png");
 
@@ -178,7 +179,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton2)
     WidgetButton wbutton(&drawable, x, y, parent, notifier, "test2", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wbutton.send_event(WM_DRAW, 0, (wbutton.rect.cx<<16 | wbutton.rect.cy), 0);
+    wbutton.rdp_input_invalidate(Rect(0, 0, wbutton.rect.cx, wbutton.rect.cy));
 
     drawable.save_to_png("/tmp/button2.png");
 
@@ -207,7 +208,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton3)
     WidgetButton wbutton(&drawable, x, y, parent, notifier, "test3", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wbutton.send_event(WM_DRAW, 0, (wbutton.rect.cx<<16 | wbutton.rect.cy), 0);
+    wbutton.rdp_input_invalidate(Rect(0, 0, wbutton.rect.cx, wbutton.rect.cy));
 
     drawable.save_to_png("/tmp/button3.png");
 
@@ -236,7 +237,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton4)
     WidgetButton wbutton(&drawable, x, y, parent, notifier, "test4", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wbutton.send_event(WM_DRAW, 0, (wbutton.rect.cx<<16 | wbutton.rect.cy), 0);
+    wbutton.rdp_input_invalidate(Rect(0, 0, wbutton.rect.cx, wbutton.rect.cy));
 
     drawable.save_to_png("/tmp/button4.png");
 
@@ -265,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton5)
     WidgetButton wbutton(&drawable, x, y, parent, notifier, "test5", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wbutton.send_event(WM_DRAW, 0, (wbutton.rect.cx<<16 | wbutton.rect.cy), 0);
+    wbutton.rdp_input_invalidate(Rect(0, 0, wbutton.rect.cx, wbutton.rect.cy));
 
     drawable.save_to_png("/tmp/button5.png");
 
@@ -294,7 +295,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton6)
     WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wbutton.send_event(WM_DRAW, 0, (wbutton.rect.cx<<16 | wbutton.rect.cy), 0);
+    wbutton.rdp_input_invalidate(Rect(0, 0, wbutton.rect.cx, wbutton.rect.cy));
 
     drawable.save_to_png("/tmp/button6.png");
 
@@ -323,7 +324,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip)
     WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    wbutton.send_event(WM_DRAW, (20<<16|0), (wbutton.rect.cx<<16 | wbutton.rect.cy), 0);
+    wbutton.rdp_input_invalidate(Rect(20, 0, wbutton.rect.cx, wbutton.rect.cy));
 
     drawable.save_to_png("/tmp/button7.png");
 
@@ -352,7 +353,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip2)
     WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    wbutton.send_event(WM_DRAW, (20<<16|5), (30<<16 | 10), 0);
+    wbutton.rdp_input_invalidate(Rect(20, 5, 30, 10));
 
     drawable.save_to_png("/tmp/button8.png");
 
@@ -468,7 +469,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
     wcomposite.child_list.push_back(&wbutton6);
 
     // ask to widget to redraw at position 100,25 and of size 100x100.
-    wcomposite.send_event(WM_DRAW, (100<<16|25), (100<<16 | 100), 0);
+    wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
 
     drawable.save_to_png("/tmp/button9.png");
 
@@ -480,7 +481,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
     }
 
     // ask to widget to redraw at it's current position
-    wcomposite.send_event(WM_DRAW, 0, (wcomposite.cx()<<16 | wcomposite.cy()), 0);
+    wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 
     drawable.save_to_png("/tmp/button10.png");
 
@@ -491,5 +492,3 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
     }
 }
 
-TODO("the entry point exists in module: it's rdp_input_invalidate"
-     "je just have to change received values to widget messages")

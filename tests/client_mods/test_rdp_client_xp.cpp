@@ -301,12 +301,12 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    struct client_mod * mod = new mod_rdp(&t, "xavier", "SecureLinux", "10.10.9.161", front, "test", false, info, &gen, 7, NULL, "", true, verbose, false);
+    struct client_mod * mod = new mod_rdp(&t, "xavier", "SecureLinux", "10.10.9.161", front, "test", false, info, &gen, 7, NULL, "", true, false, verbose, false);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.status);
+    BOOST_CHECK(t.get_status());
     BOOST_CHECK_EQUAL(mod->front_width, 800);
     BOOST_CHECK_EQUAL(mod->front_height, 600);
 

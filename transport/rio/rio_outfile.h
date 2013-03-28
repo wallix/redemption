@@ -119,6 +119,10 @@ extern "C" {
         return total_sent;
     }
 
+    static inline RIO_ERROR rio_m_RIOOutfile_get_status(RIOOutfile * self)
+    {
+        return RIO_ERROR_OK;
+    }
 };
 
 #endif

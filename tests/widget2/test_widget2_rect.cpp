@@ -31,6 +31,7 @@
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
+#include "callback.hpp"
 
 struct TestDraw : ModApi
 {
@@ -128,7 +129,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
     WidgetRect wrect(&drawable, Rect(0,0,800,600), parent, notifier, id, color);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, (wrect.rect.cx<<16 | wrect.rect.cy), 0);
+    wrect.rdp_input_invalidate(Rect(0, 0, wrect.rect.cx, wrect.rect.cy));
 
     //drawable.save_to_png("/tmp/rect.png");
 
@@ -153,7 +154,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
     WidgetRect wrect(&drawable, Rect(-100,-100,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, (wrect.rect.cx<<16 | wrect.rect.cy), 0);
+    wrect.rdp_input_invalidate(Rect(0, 0, wrect.rect.cx, wrect.rect.cy));
 
     //drawable.save_to_png("/tmp/rect2.png");
 
@@ -178,7 +179,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
     WidgetRect wrect(&drawable, Rect(-100,500,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, (wrect.rect.cx<<16 | wrect.rect.cy), 0);
+    wrect.rdp_input_invalidate(Rect(0, 0, wrect.rect.cx, wrect.rect.cy));
 
     //drawable.save_to_png("/tmp/rect3.png");
 
@@ -203,7 +204,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
     WidgetRect wrect(&drawable, Rect(700,500,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, (wrect.rect.cx<<16 | wrect.rect.cy), 0);
+    wrect.rdp_input_invalidate(Rect(0, 0, wrect.rect.cx, wrect.rect.cy));
 
     //drawable.save_to_png("/tmp/rect4.png");
 
@@ -228,7 +229,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
     WidgetRect wrect(&drawable, Rect(700,-100,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, (wrect.rect.cx<<16 | wrect.rect.cy), 0);
+    wrect.rdp_input_invalidate(Rect(0, 0, wrect.rect.cx, wrect.rect.cy));
 
     //drawable.save_to_png("/tmp/rect5.png");
 
@@ -253,7 +254,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
     WidgetRect wrect(&drawable, Rect(300, 200,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at it's current position
-    wrect.send_event(WM_DRAW, 0, (wrect.rect.cx<<16 | wrect.rect.cy), 0);
+    wrect.rdp_input_invalidate(Rect(0, 0, wrect.rect.cx, wrect.rect.cy));
 
     //drawable.save_to_png("/tmp/rect6.png");
 
@@ -278,7 +279,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
     WidgetRect wrect(&drawable, Rect(300,200, 200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at position 400,300 and of size 100x100. After clip the size is of 100x50
-    wrect.send_event(WM_DRAW, (150<<16 | 100), (100<<16 | 100), 0);
+    wrect.rdp_input_invalidate(Rect(150, 100, 100, 100));
 
     //drawable.save_to_png("/tmp/rect7.png");
 
@@ -303,7 +304,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
     WidgetRect wrect(&drawable, Rect(700,-100,200,200), parent, notifier, id, bgcolor);
 
     // ask to widget to redraw at position 720,20 and of size 50x50
-    wrect.send_event(WM_DRAW, (20<<16 | 120), (50<<16 | 50), 0);
+    wrect.rdp_input_invalidate(Rect(20, 120, 50, 50));
 
     //drawable.save_to_png("/tmp/rect8.png");
 
@@ -342,23 +343,41 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectEvent)
 
     WidgetRect wrect(drawable, Rect(), parent, notifier);
 
-    wrect.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
-    BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_UP);
-    wrect.send_event(CLIC_BUTTON1_DOWN, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
-    BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_DOWN);
-    wrect.send_event(KEYUP, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
-    BOOST_CHECK(widget_for_receive_event.event == KEYUP);
-    wrect.send_event(KEYDOWN, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wrect);
-    BOOST_CHECK(widget_for_receive_event.event == KEYDOWN);
+    Keymap2 keymap;
+    const int layout = 0x040C;
+    keymap.init_layout(layout);
+
+    // rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+    wrect.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0, &keymap);
+
+    TODO("j'ai un gros doute sur les choix faits pour le support des événements sur les widgets"
+         "les choix actuels me semblent incorrects, mais ke n'ai pas encore mis le doigt"
+         "sur le problème")
+    TODO("les méthodes explicites notify_parent/notify_self ne semblent pas du tout objet")
+    TODO("Mélange bizarre entre ce qui arrive de l'extérieur = rdp_input_xxx"
+         "et la notification vers l'extérieur d'un événement widget."
+         "les deux espaces d'événements devraint être séparés.")
+    TODO("le problème conceptuel actuel est à régler absolument avant d'aller plus loin"
+         "sinon la confusion ne va faire que s'aggraver")
+
+    TODO("ce sont des tests verifiant un comportement technique = pas des vrais tests")
+    // BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    // BOOST_CHECK(widget_for_receive_event.event == MOUSE_FLAG_BUTTON1);
+
+    wrect.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0, 0);
+    // BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    // BOOST_CHECK(widget_for_receive_event.event == MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN);
+
+    //virtual void rdp_input_scancode(long param1, long param2, long device_flags, long time, Keymap2 * keymap){
+    wrect.rdp_input_scancode(16, 0, 0x0000, 538384894, &keymap);
+    // BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    // BOOST_CHECK(widget_for_receive_event.event == KEYDOWN);
+
+    wrect.rdp_input_scancode(16, 0, 0xC000, 538384920, &keymap);
+    // BOOST_CHECK(widget_for_receive_event.sender == &wrect);
+    // BOOST_CHECK(widget_for_receive_event.event == KEYUP);
+
 }
-
-
-TODO("the entry point exists in module: it's rdp_input_invalidate"
-     "je just have to change received values to widget messages")
 
 TODO("As soon as composite widgets will be available, we will have to check these tests"
      " are still working with two combination layers (conversion of coordinates "

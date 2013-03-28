@@ -52,8 +52,8 @@
 #include <stdarg.h>
 
 typedef struct _code {
-	const char	*c_name;
-	int	c_val;
+    const char *c_name;
+    int c_val;
 } CODE;
 
 #ifdef LOGPRINT
@@ -156,7 +156,6 @@ static inline void hexdump(const unsigned char * data, size_t size)
 {
     hexdump((const char*)data, size);
 }
-
 
 static inline void hexdump_d(const char * data, size_t size)
 {

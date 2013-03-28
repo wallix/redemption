@@ -118,6 +118,15 @@ extern "C" {
     {
          return RIO_ERROR_OUT_ONLY;
     }
+    
+    static inline RIO_ERROR rio_m_RIOInsequence_get_status(RIOInsequence * self)
+    {
+        if (!(self->status)) {
+            return self->err;
+        }
+        return RIO_ERROR_OK;
+    }
+
 };
 
 #endif
