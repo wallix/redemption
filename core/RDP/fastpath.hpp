@@ -218,18 +218,18 @@ namespace FastPath {
 
             trans.recv(&stream.end, 1);
 
-            uint16_t length;
-            byte = stream.in_uint8();
-            if (byte & 0x80){
-                length = (byte & 0x7F) << 8;
+             uint16_t length;
+             byte = stream.in_uint8();
+             if (byte & 0x80){
+                 length = (byte & 0x7F) << 8;
 
-                trans.recv(&stream.end, 1);
-                byte = stream.in_uint8();
-                length += byte;
-            }
-            else{
-                length = byte;
-            }
+                 trans.recv(&stream.end, 1);
+                 byte = stream.in_uint8();
+                 length += byte;
+             }
+             else{
+                 length = byte;
+             }
 
             trans.recv(&stream.end, length - stream.size());
 
@@ -241,7 +241,7 @@ namespace FastPath {
                     + ((this->numEvents == 0) ? 1 : 0) // numEvent
                     ;
                 if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "FastPath::ClientInputEventPDU: data truncated, expected=%u remains=%u",
+                    LOG(LOG_ERR, "FastPath::ClientInputEventPDU_Recv: data truncated, expected=%u remains=%u",
                         expected, stream.in_remain());
                     throw Error(ERR_RDP_FASTPATH);
                 }
@@ -260,6 +260,65 @@ namespace FastPath {
             }
         }   // ClientInputEventPDU_Recv(Transport & trans, Stream & stream)
     };  // struct ClientInputEventPDU_Recv
+
+    struct ClientInputEventPDU_Send {
+        ClientInputEventPDU_Send( Stream & stream
+                                , Stream & data
+                                , uint8_t numEvents
+                                , uint8_t secFlags
+                                , CryptContext & crypt
+                                , Stream * fipsInformation = NULL) {
+            stream.reset();
+
+            if ((fipsInformation != NULL) && (fipsInformation->size() < 4)) {
+                LOG(LOG_ERR, "FastPath::ClientInputEventPDU_Send: fipsInformation too short, expected=4 got=%u",
+                    fipsInformation->size());
+                throw Error(ERR_RDP_FASTPATH);
+            }
+
+            uint8_t fpInputHeader =
+                  FASTPATH_INPUT_ACTION_FASTPATH
+                | ((numEvents > 15) ? 0 : numEvents) << 2
+                | secFlags << 6
+                ;
+
+            stream.out_uint8(fpInputHeader);
+
+            uint16_t length =
+                  1                                               // fpInputHeader
+                + ((data.size() > 127) ? 2 : 1)                   // length
+                + ((fipsInformation != NULL) ? 4 : 0)
+                + ((secFlags & FASTPATH_INPUT_ENCRYPTED) ? 8 : 0) // dataSignature
+                + ((numEvents > 15) ? 1 : 0)
+                + data.size()
+                ;
+
+            stream.out_per_length(length);
+
+            if (fipsInformation != NULL) {
+                if (fipsInformation->size() < 4) {
+                    LOG(LOG_ERR, "FastPath::ClientInputEventPDU_Send: fipsInformation too short, expected=4 got=%u",
+                        fipsInformation->size());
+                    throw Error(ERR_RDP_FASTPATH);
+                }
+
+                stream.out_copy_bytes(fipsInformation->data, 4);
+            }
+
+            if (secFlags & FASTPATH_INPUT_ENCRYPTED) {
+                SubStream signature(stream, stream.get_offset(), 8);
+
+                // <signature> is an output parameter
+                crypt.sign(signature, data);
+                stream.p += 8;
+                crypt.decrypt(data);
+            }
+
+            if (numEvents > 15) {
+                stream.out_uint8(numEvents);
+            }
+        }
+    };
 
 // 2.2.8.1.2.2 Fast-Path Input Event (TS_FP_INPUT_EVENT)
 // =====================================================
@@ -413,6 +472,17 @@ namespace FastPath {
         }
     };
 
+    struct KeyboardEvent_Send {
+        KeyboardEvent_Send(Stream & stream, uint8_t eventFlags, uint8_t keyCode) {
+            stream.out_uint8(                          // eventHeader
+                  (FASTPATH_INPUT_EVENT_SCANCODE << 5)
+                | eventFlags
+            );
+
+            stream.out_uint8(keyCode);
+        }
+    };
+
 // 2.2.8.1.2.2.3 Fast-Path Mouse Event (TS_FP_POINTER_EVENT)
 // =========================================================
 
@@ -472,6 +542,19 @@ namespace FastPath {
         }
     };
 
+    struct MouseEvent_Send {
+        MouseEvent_Send( Stream & stream
+                       , uint16_t pointerFlags
+                       , uint16_t xPos
+                       , uint16_t yPos) {
+            stream.out_uint8(FASTPATH_INPUT_EVENT_MOUSE << 5); // eventHeader
+
+            stream.out_uint16_le(pointerFlags);
+            stream.out_uint16_le(xPos);
+            stream.out_uint16_le(yPos);
+        }
+    };
+
 // 2.2.8.1.2.2.5 Fast-Path Synchronize Event (TS_FP_SYNC_EVENT)
 // ============================================================
 
@@ -520,6 +603,15 @@ namespace FastPath {
             }
 
             this->eventFlags = eventHeader & 0x1F;
+        }
+    };
+
+    struct SynchronizeEvent_Send {
+        SynchronizeEvent_Send(Stream & stream, uint8_t eventFlags) {
+            stream.out_uint8(                      // eventHeader
+                  (FASTPATH_INPUT_EVENT_SYNC << 5)
+                | eventFlags
+            );
         }
     };
 

@@ -45,8 +45,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     size_t payload_length = 14;
 
     GeneratorTransport in_t(payload, payload_length);
+    CheckTransport     out_t(payload, payload_length);
 
     BStream in_s(65536);
+    BStream out_s(65536);
 
     FastPath::ClientInputEventPDU_Recv in_cie(in_t, in_s, decrypt);
 
@@ -61,6 +63,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
 
     uint8_t byte;
     uint8_t eventCode;
+    BStream out_payload(65536);
 
     for (uint8_t i = 0; i < in_cie.numEvents; i++){
         byte = in_cie.payload.in_uint8();
@@ -73,18 +76,24 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
             case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
             {
                 FastPath::KeyboardEvent_Recv ke(in_cie.payload, byte);
+
+                FastPath::KeyboardEvent_Send(out_payload, ke.eventFlags, ke.keyCode);
             }
             break;
 
             case FastPath::FASTPATH_INPUT_EVENT_MOUSE:
             {
                 FastPath::MouseEvent_Recv me(in_cie.payload, byte);
+
+                FastPath::MouseEvent_Send(out_payload, me.pointerFlags, me.xPos, me.yPos);
             }
             break;
 
             case FastPath::FASTPATH_INPUT_EVENT_SYNC:
             {
                 FastPath::SynchronizeEvent_Recv se(in_cie.payload, byte);
+
+                FastPath::SynchronizeEvent_Send(out_payload, se.eventFlags);
             }
             break;
 
@@ -95,8 +104,14 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     }
 
     BOOST_CHECK_EQUAL(0, in_cie.payload.in_remain());
-}
 
+    FastPath::ClientInputEventPDU_Send out_cie(out_s, out_payload, in_cie.numEvents, 0, decrypt);
+
+    out_t.send(out_s.data, out_s.size());
+    out_t.send(out_payload.data, out_payload.size());
+
+    BOOST_CHECK_EQUAL(true, out_t.status);
+}
 
 BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     CryptContext decrypt;
@@ -109,8 +124,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     size_t payload_length = 39;
 
     GeneratorTransport in_t(payload, payload_length);
+    CheckTransport     out_t(payload, payload_length);
 
     BStream in_s(65536);
+    BStream out_s(65536);
 
     FastPath::ClientInputEventPDU_Recv in_cie(in_t, in_s, decrypt);
 
@@ -127,6 +144,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
 
     uint8_t byte;
     uint8_t eventCode;
+    BStream out_payload(65536);
 
     for (uint8_t i = 0; i < in_cie.numEvents; i++){
         byte = in_cie.payload.in_uint8();
@@ -139,18 +157,24 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
             case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
             {
                 FastPath::KeyboardEvent_Recv ke(in_cie.payload, byte);
+
+                FastPath::KeyboardEvent_Send(out_payload, ke.eventFlags, ke.keyCode);
             }
             break;
 
             case FastPath::FASTPATH_INPUT_EVENT_MOUSE:
             {
                 FastPath::MouseEvent_Recv me(in_cie.payload, byte);
+
+                FastPath::MouseEvent_Send(out_payload, me.pointerFlags, me.xPos, me.yPos);
             }
             break;
 
             case FastPath::FASTPATH_INPUT_EVENT_SYNC:
             {
                 FastPath::SynchronizeEvent_Recv se(in_cie.payload, byte);
+
+                FastPath::SynchronizeEvent_Send(out_payload, se.eventFlags);
             }
             break;
 
@@ -161,6 +185,13 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     }
 
     BOOST_CHECK_EQUAL(0, in_cie.payload.in_remain());
+
+    FastPath::ClientInputEventPDU_Send out_cie(out_s, out_payload, in_cie.numEvents, 0, decrypt);
+
+    out_t.send(out_s.data, out_s.size());
+    out_t.send(out_payload.data, out_payload.size());
+
+    BOOST_CHECK_EQUAL(true, out_t.status);
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {

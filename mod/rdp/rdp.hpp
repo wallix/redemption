@@ -138,7 +138,8 @@ struct mod_rdp : public client_mod {
     bool opt_clipboard;  // true clipboard available, false clipboard unavailable
     uint32_t performanceFlags;
 
-    bool fastpath_support;
+    bool server_fastpath_update_support;
+    bool client_fastpath_input_event_support;
 
     mod_rdp(Transport * trans,
             const char * target_user,
@@ -184,7 +185,8 @@ struct mod_rdp : public client_mod {
                     enable_new_pointer(enable_new_pointer),
                     opt_clipboard(clipboard),
                     performanceFlags(info.rdp5_performanceflags),
-                    fastpath_support(fp_support)
+                    server_fastpath_update_support(fp_support),
+                    client_fastpath_input_event_support(false)
     {
         if (this->verbose & 1){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
@@ -1853,7 +1855,7 @@ struct mod_rdp : public client_mod {
 
             GeneralCaps general_caps;
 // Slow/Fast-path
-            if (!this->fastpath_support) {
+            if (!this->server_fastpath_update_support) {
                 general_caps.extraflags = this->use_rdp5 ? NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:0;
             }
             else {
@@ -3234,10 +3236,20 @@ struct mod_rdp : public client_mod {
                     OrderCaps order_caps;
                     order_caps.recv(stream, capset_length);
                     order_caps.log("Received from server");
-                    break;
                 }
+                break;
+                case CAPSTYPE_INPUT:
+                {
+                    InputCaps input_caps;
+                    input_caps.recv(stream, capset_length);
+                    input_caps.log("Received from server");
+
+                    this->client_fastpath_input_event_support =
+                        ((input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)) != 0);
+                }
+                break;
                 default:
-                    break;
+                break;
                 }
                 stream.p = next;
             }
