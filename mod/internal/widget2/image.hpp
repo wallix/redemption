@@ -36,6 +36,8 @@ public:
         this->rect.y = y;
         this->rect.cx = this->bmp.cx;
         this->rect.cy = this->bmp.cy;
+        this->x_absolute += this->rect.x;
+        this->y_absolute += this->rect.y;
     }
 
     virtual ~WidgetImage()

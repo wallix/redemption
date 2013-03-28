@@ -36,7 +36,7 @@ public:
     : Widget(drawable, rect, parent, notifier, id)
     , child_list()
     {
-        this->tab_flag = DELEGATE_CONTROL_TAB;
+        //this->tab_flag = DELEGATE_CONTROL_TAB;
     }
 
     virtual ~WidgetComposite()
@@ -247,13 +247,13 @@ public:
     }
 #endif
 
-    void init_region_and_draw_children(Region & region, const Rect& new_clip)
+    void init_region_and_draw_children(Region & region, const Rect& clip)
     {
-        region.rects.push_back(new_clip);
+        region.rects.push_back(clip);
         std::size_t size = this->child_list.size();
         for (std::size_t i = 0; i < size; ++i) {
             Widget *w = this->child_list[i];
-            Rect rect = new_clip.intersect(w->rect);
+            Rect rect = clip.intersect(w->rect);
             if (!rect.isempty()){
                 region.subtract_rect(rect);
                 if (w->drawable) {

@@ -33,12 +33,10 @@ public:
                  NotifyApi* notifier, const char * text, bool auto_resize = true,
                  int id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
                  int xtext = 0, int ytext = 0)
-    : Widget(drawable, Rect(), parent, notifier, id)
+    : Widget(drawable, Rect(x,y,1,1), parent, notifier, id)
     , label(drawable, 0, 0, this, 0, text, auto_resize, 0, bgcolor, fgcolor, xtext, ytext)
     , state(0)
     {
-        this->rect.x = x;
-        this->rect.y = y;
         this->rect.cx = this->label.cx();
         this->rect.cy = this->label.cy();
     }
@@ -51,9 +49,9 @@ public:
         this->label.draw(clip);
     }
 
-    virtual void send_event(EventType event, int param, int param2, Keymap2* keymap)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
-        switch (event) {
+        switch (device_flags) {
             case CLIC_BUTTON1_DOWN:
                 this->state = 1;
                 //this->refresh(this->rect);
@@ -73,7 +71,7 @@ public:
                 }
                 break;
             default:
-                this->Widget::send_event(event, param, param2, keymap);
+                this->Widget::rdp_input_mouse(device_flags, x, y, keymap);
                 break;
         }
     }
