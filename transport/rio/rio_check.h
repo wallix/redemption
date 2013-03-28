@@ -66,6 +66,7 @@ extern "C" {
     */
     static inline ssize_t rio_m_RIOCheck_recv(RIOCheck * self, void * data, size_t len)
     {
+         rio_m_RIOCheck_destructor(self);
          return -RIO_ERROR_SEND_ONLY;
     }
 
