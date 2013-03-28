@@ -138,8 +138,9 @@ struct mod_rdp : public client_mod {
     bool opt_clipboard;  // true clipboard available, false clipboard unavailable
     uint32_t performanceFlags;
 
-    bool server_fastpath_update_support;
-    bool client_fastpath_input_event_support;
+    bool fastpath_support;                    // choice of programmer
+    bool server_fastpath_update_support;      // = choice of programmer
+    bool client_fastpath_input_event_support; // choice of programmer + capability of server
 
     mod_rdp(Transport * trans,
             const char * target_user,
@@ -185,6 +186,7 @@ struct mod_rdp : public client_mod {
                     enable_new_pointer(enable_new_pointer),
                     opt_clipboard(clipboard),
                     performanceFlags(info.rdp5_performanceflags),
+                    fastpath_support(fp_support),
                     server_fastpath_update_support(fp_support),
                     client_fastpath_input_event_support(false)
     {
@@ -262,41 +264,78 @@ struct mod_rdp : public client_mod {
 
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long time, Keymap2 * keymap){
         if (UP_AND_RUNNING == this->connection_finalization_state) {
-//            LOG(LOG_INFO, "Direct parameter transmission ");
-            this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
+//            LOG(LOG_INFO, "Direct parameter transmission");
+
+            if (this->client_fastpath_input_event_support) {
+                BStream out_s(256);
+                BStream out_payload(256);
+
+                FastPath::KeyboardEvent_Send ke(out_payload, (uint16_t)device_flags, param1);
+                FastPath::ClientInputEventPDU_Send out_cie(out_s, out_payload, 1, this->encrypt, this->encryptionLevel, this->encryptionMethod);
+
+                this->nego.trans->send(out_s);
+                this->nego.trans->send(out_payload);
+            }
+            else {
+                this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
+            }
         }
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
-            this->send_input(0, RDP_INPUT_SYNCHRONIZE, device_flags, param1, 0);
+            if (this->client_fastpath_input_event_support) {
+                BStream out_s(256);
+                BStream out_payload(256);
+
+                FastPath::SynchronizeEvent_Send se(out_payload, param1);
+                FastPath::ClientInputEventPDU_Send out_cie(out_s, out_payload, 1, this->encrypt, this->encryptionLevel, this->encryptionMethod);
+
+                this->nego.trans->send(out_s);
+                this->nego.trans->send(out_payload);
+            }
+            else {
+                this->send_input(0, RDP_INPUT_SYNCHRONIZE, device_flags, param1, 0);
+            }
         }
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
-            TODO("CGR: is decoding and reencoding really necessary  a simple pass-through from front to back-end should be enough")
-            if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_MOVE, x, y);
+            if (this->client_fastpath_input_event_support) {
+                BStream out_s(256);
+                BStream out_payload(256);
+
+                FastPath::MouseEvent_Send me(out_payload, device_flags, x, y);
+                FastPath::ClientInputEventPDU_Send out_cie(out_s, out_payload, 1, this->encrypt, this->encryptionLevel, this->encryptionMethod);
+
+                this->nego.trans->send(out_s);
+                this->nego.trans->send(out_payload);
             }
-            if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON1 | (device_flags & MOUSE_FLAG_DOWN), x, y);
-            }
-            if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON2 | (device_flags & MOUSE_FLAG_DOWN), x, y);
-            }
-            if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON3 | (device_flags & MOUSE_FLAG_DOWN), x, y);
-            }
-            if (device_flags == MOUSE_FLAG_BUTTON4 || /* 0x0280 */ device_flags == 0x0278) {
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4 | MOUSE_FLAG_DOWN, x, y);
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4, x, y);
-            }
-            if (device_flags == MOUSE_FLAG_BUTTON5 || /* 0x0380 */ device_flags == 0x0388) {
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5 | MOUSE_FLAG_DOWN, x, y);
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5, x, y);
+            else {
+                TODO("CGR: is decoding and reencoding really necessary  a simple pass-through from front to back-end should be enough")
+                if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
+                    this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_MOVE, x, y);
+                }
+                if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
+                    this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON1 | (device_flags & MOUSE_FLAG_DOWN), x, y);
+                }
+                if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
+                    this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON2 | (device_flags & MOUSE_FLAG_DOWN), x, y);
+                }
+                if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
+                    this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON3 | (device_flags & MOUSE_FLAG_DOWN), x, y);
+                }
+                if (device_flags == MOUSE_FLAG_BUTTON4 || /* 0x0280 */ device_flags == 0x0278) {
+                    this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4 | MOUSE_FLAG_DOWN, x, y);
+                    this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4, x, y);
+                }
+                if (device_flags == MOUSE_FLAG_BUTTON5 || /* 0x0380 */ device_flags == 0x0388) {
+                    this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5 | MOUSE_FLAG_DOWN, x, y);
+                    this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5, x, y);
+                }
             }
         }
     }
@@ -1707,7 +1746,21 @@ struct mod_rdp : public client_mod {
                             this->send_synchronise();
                             this->send_control(RDP_CTL_COOPERATE);
                             this->send_control(RDP_CTL_REQUEST_CONTROL);
-                            this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
+
+                            if (this->client_fastpath_input_event_support) {
+                                BStream out_s(256);
+                                BStream out_payload(256);
+
+                                FastPath::SynchronizeEvent_Send se(out_payload, 0);
+                                FastPath::ClientInputEventPDU_Send out_cie(out_s, out_payload, 1, this->encrypt, this->encryptionLevel, this->encryptionMethod);
+
+                                this->nego.trans->send(out_s);
+                                this->nego.trans->send(out_payload);
+                            }
+                            else {
+                                this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
+                            }
+
                             /* Including RDP 5.0 capabilities */
                             if (this->use_rdp5){
                                 LOG(LOG_INFO, "use rdp5");
@@ -3245,7 +3298,7 @@ struct mod_rdp : public client_mod {
                     input_caps.log("Received from server");
 
                     this->client_fastpath_input_event_support =
-                        ((input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)) != 0);
+                        ((this->fastpath_support && (input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2))) != 0);
                 }
                 break;
                 default:
@@ -3387,7 +3440,6 @@ struct mod_rdp : public client_mod {
 
         void enum_bmpcache2()
         {
-
         }
 
         void send_input(int time, int message_type,

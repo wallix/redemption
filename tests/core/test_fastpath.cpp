@@ -105,10 +105,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
 
     BOOST_CHECK_EQUAL(0, in_cie.payload.in_remain());
 
-    FastPath::ClientInputEventPDU_Send out_cie(out_s, out_payload, in_cie.numEvents, 0, decrypt);
+    FastPath::ClientInputEventPDU_Send out_cie(out_s, out_payload, in_cie.numEvents, decrypt, 0, 0);
 
-    out_t.send(out_s.data, out_s.size());
-    out_t.send(out_payload.data, out_payload.size());
+    out_t.send(out_s);
+    out_t.send(out_payload);
 
     BOOST_CHECK_EQUAL(true, out_t.status);
 }
@@ -186,10 +186,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
 
     BOOST_CHECK_EQUAL(0, in_cie.payload.in_remain());
 
-    FastPath::ClientInputEventPDU_Send out_cie(out_s, out_payload, in_cie.numEvents, 0, decrypt);
+    FastPath::ClientInputEventPDU_Send out_cie(out_s, out_payload, in_cie.numEvents, decrypt, 0, 0);
 
-    out_t.send(out_s.data, out_s.size());
-    out_t.send(out_payload.data, out_payload.size());
+    out_t.send(out_s);
+    out_t.send(out_payload);
 
     BOOST_CHECK_EQUAL(true, out_t.status);
 }
@@ -205,8 +205,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     size_t payload_length = 46;
 
     GeneratorTransport in_t(payload, payload_length);
+    CheckTransport     out_t(payload, payload_length);
 
     BStream in_s(65536);
+    BStream out_s(65536);
 
     FastPath::ServerUpdatePDU_Recv in_su(in_t, in_s, decrypt);
 
@@ -218,11 +220,14 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     };
 
     uint8_t i = 0;
+    BStream out_payload(65536);
 
     while (in_su.payload.in_remain()) {
         FastPath::Update_Recv in_upd(in_su.payload);
 
         BOOST_CHECK_EQUAL(in_upd.updateCode, updateCodes[i++]);
+
+//        FastPath::Update_Send out_upd(in_su.payload);
     }
 
     BOOST_CHECK_EQUAL(i, 4);
@@ -293,25 +298,33 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
     size_t payload_length = 7;
 
     GeneratorTransport in_t(payload, payload_length);
+    CheckTransport     out_t(payload, payload_length);
 
     BStream in_s(65536);
+    BStream out_s(256);
 
     FastPath::ServerUpdatePDU_Recv in_su(in_t, in_s, decrypt);
 
-    uint8_t updateCodes[1] = {
-          FastPath::FASTPATH_UPDATETYPE_CACHED
-    };
+    uint8_t updateCode = FastPath::FASTPATH_UPDATETYPE_CACHED;
 
-    uint8_t i = 0;
-
-    while (in_su.payload.in_remain()) {
+    if (in_su.payload.in_remain()) {
         FastPath::Update_Recv in_upd(in_su.payload);
 
-        BOOST_CHECK_EQUAL(in_upd.updateCode, updateCodes[i++]);
+        if (in_upd.updateCode == updateCode) {
+            BStream out_upd_s(256);
+
+            FastPath::Update_Send out_upd(out_upd_s, in_upd.payload, in_upd.updateCode, in_upd.fragmentation);
+
+            FastPath::ServerUpdatePDU_Send out_su(out_s, out_upd_s.size() + in_upd.payload.size(), in_su.secFlags, decrypt);
+
+            out_t.send(out_s);          // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+            out_t.send(out_upd_s);      // Fast-Path Update (TS_FP_UPDATE)
+            out_t.send(in_upd.payload); // updateData
+        }
     }
 
-    BOOST_CHECK_EQUAL(i, 1);
-
     BOOST_CHECK_EQUAL(0, in_su.payload.in_remain());
+
+    BOOST_CHECK_EQUAL(true, out_t.status);
 }
 

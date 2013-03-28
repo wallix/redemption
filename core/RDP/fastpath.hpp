@@ -265,8 +265,9 @@ namespace FastPath {
         ClientInputEventPDU_Send( Stream & stream
                                 , Stream & data
                                 , uint8_t numEvents
-                                , uint8_t secFlags
                                 , CryptContext & crypt
+                                , uint32_t encryptionLevel
+                                , uint32_t encryptionMethod
                                 , Stream * fipsInformation = NULL) {
             stream.reset();
 
@@ -275,6 +276,8 @@ namespace FastPath {
                     fipsInformation->size());
                 throw Error(ERR_RDP_FASTPATH);
             }
+
+            uint8_t secFlags = (encryptionLevel | encryptionMethod) ? FASTPATH_INPUT_ENCRYPTED : 0;
 
             uint8_t fpInputHeader =
                   FASTPATH_INPUT_ACTION_FASTPATH
@@ -296,12 +299,6 @@ namespace FastPath {
             stream.out_per_length(length);
 
             if (fipsInformation != NULL) {
-                if (fipsInformation->size() < 4) {
-                    LOG(LOG_ERR, "FastPath::ClientInputEventPDU_Send: fipsInformation too short, expected=4 got=%u",
-                        fipsInformation->size());
-                    throw Error(ERR_RDP_FASTPATH);
-                }
-
                 stream.out_copy_bytes(fipsInformation->data, 4);
             }
 
@@ -317,8 +314,10 @@ namespace FastPath {
             if (numEvents > 15) {
                 stream.out_uint8(numEvents);
             }
-        }
-    };
+
+            stream.mark_end();
+        } // ClientInputEventPDU_Send(Stream & stream, ...
+    }; // struct ClientInputEventPDU_Send
 
 // 2.2.8.1.2.2 Fast-Path Input Event (TS_FP_INPUT_EVENT)
 // =====================================================
@@ -458,7 +457,7 @@ namespace FastPath {
                 this->spKeyboardFlags |= SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE;
             }
 
-            if (this->eventFlags & FastPath::FASTPATH_INPUT_KBDFLAGS_EXTENDED){
+            if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_EXTENDED){
                 this->spKeyboardFlags |= SlowPath::KBDFLAGS_EXTENDED; 
             }
 
@@ -480,6 +479,29 @@ namespace FastPath {
             );
 
             stream.out_uint8(keyCode);
+
+            stream.mark_end();
+        }
+
+        KeyboardEvent_Send(Stream & stream, uint16_t spKeyboardFlags, uint8_t keyCode) {
+            uint8_t eventFlags = 0;
+
+            if (spKeyboardFlags & (SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE)) {
+                    eventFlags |= FASTPATH_INPUT_KBDFLAGS_RELEASE;
+            }
+
+            if (spKeyboardFlags & SlowPath::KBDFLAGS_EXTENDED) {
+                    eventFlags |= FASTPATH_INPUT_KBDFLAGS_EXTENDED;
+            }
+
+            stream.out_uint8(                          // eventHeader
+                  (FASTPATH_INPUT_EVENT_SCANCODE << 5)
+                | eventFlags
+            );
+
+            stream.out_uint8(keyCode);
+
+            stream.mark_end();
         }
     };
 
@@ -552,6 +574,8 @@ namespace FastPath {
             stream.out_uint16_le(pointerFlags);
             stream.out_uint16_le(xPos);
             stream.out_uint16_le(yPos);
+
+            stream.mark_end();
         }
     };
 
@@ -612,6 +636,8 @@ namespace FastPath {
                   (FASTPATH_INPUT_EVENT_SYNC << 5)
                 | eventFlags
             );
+
+            stream.mark_end();
         }
     };
 
@@ -816,6 +842,55 @@ namespace FastPath {
             if (this->secFlags & FASTPATH_OUTPUT_ENCRYPTED) {
                 decrypt.decrypt(payload);
             }
+        } // ServerUpdatePDU_Recv(Transport & trans, Stream & stream, CryptContext & decrypt)
+    }; // struct ServerUpdatePDU_Recv
+
+    struct ServerUpdatePDU_Send {
+        ServerUpdatePDU_Send( Stream & stream
+                            , uint16_t datalen
+                            , uint8_t secFlags
+                            , CryptContext & crypt
+                            , Stream * fipsInformation = NULL) {
+            stream.reset();
+
+            if ((fipsInformation != NULL) && (fipsInformation->size() < 4)) {
+                LOG(LOG_ERR, "FastPath::Update_Send: fipsInformation too short, expected=4 got=%u",
+                    fipsInformation->size());
+                throw Error(ERR_RDP_FASTPATH);
+            }
+
+            uint8_t fpOutputHeader =
+                  FASTPATH_OUTPUT_ACTION_FASTPATH
+                | secFlags << 6
+                ;
+
+            stream.out_uint8(fpOutputHeader);
+
+            uint16_t length =
+                  1                                               // fpOutputHeader
+                + ((datalen > 127) ? 2 : 1)                   // length
+                + ((fipsInformation != NULL) ? 4 : 0)
+                + ((secFlags & FASTPATH_INPUT_ENCRYPTED) ? 8 : 0) // dataSignature
+                + datalen
+                ;
+
+            stream.out_per_length(length);
+
+            if (fipsInformation != NULL) {
+                stream.out_copy_bytes(fipsInformation->data, 4);
+            }
+
+/*
+            if (secFlags & FASTPATH_OUTPUT_ENCRYPTED) {
+                SubStream signature(stream, stream.get_offset(), 8);
+
+                // <signature> is an output parameter
+                crypt.sign(signature, data);
+                stream.p += 8;
+                crypt.decrypt(data);
+            }
+*/
+            stream.mark_end();
         }
     };
 
@@ -1028,6 +1103,27 @@ namespace FastPath {
         }
     };
 
+    struct Update_Send {
+        Update_Send( Stream & stream
+                   , Stream & data
+                   , uint8_t updateCode
+                   , uint8_t fragmentation
+//                   , uint8_t compressionFlags
+                   ) {
+            stream.out_uint8(
+                  updateCode
+                | fragmentation << 4 // fragmentation
+//                | 0 << 6             // compression
+                );
+
+//            stream.out_uint8(compressionFlags);
+
+            stream.out_uint16_le(data.size());
+
+            stream.mark_end();
+        }
+    };
+
 // 2.2.9.1.2.1.1 Fast-Path Palette Update (TS_FP_UPDATE_PALETTE)
 // =============================================================
 
@@ -1099,6 +1195,41 @@ namespace FastPath {
 // bitmapUpdateData (variable): Variable-length bitmap data. Both slow-path and
 //  fast-path utilize the same data format, a Bitmap Update Data (section
 //  2.2.9.1.1.3.1.2.1) structure, to represent this information.
+
+// 2.2.9.1.2.1.9 Fast-Path Cached Pointer Update (TS_FP_CACHEDPOINTERATTRIBUTE)
+// ============================================================================
+
+// The TS_FP_CACHEDPOINTERATTRIBUTE structure is the fast-path variant of the
+//   TS_CACHEDPOINTERATTRIBUTE (section 2.2.9.1.1.4.6) structure.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |  updateHeader |compressionFlag|              size             |
+// |               |  s(optional)  |                               |
+// +---------------+---------------+-------------------------------+
+// |    cachedPointerUpdateData    |
+// +-------------------------------+
+
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field
+//  is the same as the updateHeader byte field specified in the Fast-Path Update
+//  (section 2.2.9.1.2.1) structure.
+
+// The updateCode bitfield (4 bits in size) MUST be set to
+//  FASTPATH_UPDATETYPE_CACHED (10).
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this
+//  optional field (as well as the possible values) is the same as the
+//  compressionFlags field specified in the Fast-Path Update structure.
+
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well
+//  as the possible values) is the same as the size field specified in the
+//  Fast-Path Update structure.
+
+// cachedPointerUpdateData (2 bytes): Cached pointer data. Both slow-path and
+//  fast-path utilize the same data format, a Cached Pointer Update (section
+//  2.2.9.1.1.4.6) structure, to represent this information.
 
 } // namespace FastPath
 
