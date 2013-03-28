@@ -72,6 +72,7 @@ extern "C" {
     */
     static inline ssize_t rio_m_RIOGenerator_send(RIOGenerator * self, const void * data, size_t len)
     {
+         rio_m_RIOGenerator_destructor(self);
          return -RIO_ERROR_RECV_ONLY;
     }
 
