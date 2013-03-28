@@ -32,9 +32,9 @@
 extern "C" {
 
     struct RIOSocketTLS {
+        int sck;
         bool tls;
         SSL * ssl;
-        int sck;
     };
 
     /* This method does not allocate space for object itself, 
@@ -240,14 +240,66 @@ extern "C" {
         return len;
     }
 
-    static inline RIO_ERROR rio_m_RIOSocketTLS_enableTLS(RIOSocketTLS * self)
+    static inline RIO_ERROR rio_m_RIOSocketTLS_enable_TLS_client(RIOSocketTLS * self)
     {
         LOG(LOG_INFO, "RIO *::enable_tls()");
+
+        // -------- Start of system wide SSL_Ctx option ------------------------------
+
+        
+        // ERR_load_crypto_strings() registers the error strings for all libcrypto 
+        // functions. SSL_load_error_strings() does the same, but also registers the
+        // libssl error strings.
+
+        // One of these functions should be called before generating textual error 
+        // messages. However, this is not required when memory usage is an issue.
+
+        // ERR_free_strings() frees all previously loaded error strings. 
+        
         SSL_load_error_strings();
+
+        // SSL_library_init() registers the available SSL/TLS ciphers and digests.
+        // OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms 
+        // for SSL_library_init(). 
+        
+        // - SSL_library_init() must be called before any other action takes place. 
+        // - SSL_library_init() is not reentrant. 
+        // - SSL_library_init() always returns "1", so it is safe to discard the return
+        // value.
+        
+        // Note: OpenSSL 0.9.8o and 1.0.0a and later added SHA2 algorithms to 
+        // SSL_library_init(). Applications which need to use SHA2 in earlier versions
+        // of OpenSSL should call OpenSSL_add_all_algorithms() as well. 
+        
         SSL_library_init();
 
-        LOG(LOG_INFO, "RIO *::SSL_CTX_new()");
-        SSL_CTX* ctx = SSL_CTX_new(TLSv1_client_method());
+        // SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled functions
+        // ------------------------------------------------------------------------------------
+        
+        // SSL_CTX_new() creates a new SSL_CTX object as framework to establish TLS/SSL enabled
+        // connections. 
+        
+        // The SSL_CTX data structure is the global context structure which is created by a server
+        // or client *once* per program life-time and which holds mainly default values for the SSL
+        // structures which are later created for the connections.
+        
+        // Various options regarding certificates, algorithms, etc. can be set in this object.
+
+        // SSL_CTX_new() receive a data structure of type SSL_METHOD (SSL Method), which is 
+        // a dispatch structure describing the internal ssl library methods/functions which 
+        // implement the various protocol versions (SSLv1, SSLv2 and TLSv1). An SSL_METHOD
+        // is necessary to create an SSL_CTX.
+
+        // The SSL_CTX object uses method as connection method. The methods exist in a generic
+        // type (for client and server use), a server only type, and a client only type. method
+        // can be of several types (server, client, generic, support SSLv2, TLSv1, TLSv1.1, etc.)
+        
+        // TLSv1_client_method(void): A TLS/SSL connection established with this methods will 
+        // only understand the TLSv1 protocol. A client will send out TLSv1 client hello messages
+        // and will indicate that it only understands TLSv1.
+        
+        const SSL_METHOD *method = TLSv1_client_method();
+        SSL_CTX* ctx = SSL_CTX_new(method);
 
         /*
          * This is necessary, because the Microsoft TLS implementation is not perfect.
@@ -257,11 +309,176 @@ extern "C" {
          * block padding is normally used, but the Microsoft TLS implementation
          * won't recognize it and will disconnect you after sending a TLS alert.
          */
+         
+        // SSL_CTX_set_options() adds the options set via bitmask in options to ctx. 
+        // Options already set before are not cleared! 
+        
+         // During a handshake, the option settings of the SSL object are used. When
+         // a new SSL object is created from a context using SSL_new(), the current 
+         // option setting is copied. Changes to ctx do not affect already created 
+         // SSL objects. SSL_clear() does not affect the settings.
+
+         // The following bug workaround options are available:
+
+         // SSL_OP_MICROSOFT_SESS_ID_BUG
+
+         // www.microsoft.com - when talking SSLv2, if session-id reuse is performed,
+         // the session-id passed back in the server-finished message is different 
+         // from the one decided upon.
+         
+         // SSL_OP_NETSCAPE_CHALLENGE_BUG
+
+         // Netscape-Commerce/1.12, when talking SSLv2, accepts a 32 byte challenge 
+         // but then appears to only use 16 bytes when generating the encryption keys. 
+         // Using 16 bytes is ok but it should be ok to use 32. According to the SSLv3
+         // spec, one should use 32 bytes for the challenge when operating in SSLv2/v3
+         // compatibility mode, but as mentioned above, this breaks this server so 
+         // 16 bytes is the way to go.
+
+         // SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG
+
+         // As of OpenSSL 0.9.8q and 1.0.0c, this option has no effect.
+        
+        // SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG
+
+        //  ...
+
+        // SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER
+
+        // ...
+
+        // SSL_OP_MSIE_SSLV2_RSA_PADDING
+
+        // As of OpenSSL 0.9.7h and 0.9.8a, this option has no effect.
+
+        // SSL_OP_SSLEAY_080_CLIENT_DH_BUG
+        // ...
+
+        // SSL_OP_TLS_D5_BUG
+        //    ...
+
+        // SSL_OP_TLS_BLOCK_PADDING_BUG
+        //   ...
+
+        // SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
+
+        // Disables a countermeasure against a SSL 3.0/TLS 1.0 protocol vulnerability
+        // affecting CBC ciphers, which cannot be handled by some broken SSL implementations.
+        // This option has no effect for connections using other ciphers.
+
+        // SSL_OP_ALL
+        // All of the above bug workarounds.
+
+        // It is usually safe to use SSL_OP_ALL to enable the bug workaround options if
+        // compatibility with somewhat broken implementations is desired.
+
+        // The following modifying options are available:
+
+        // SSL_OP_TLS_ROLLBACK_BUG
+
+        // Disable version rollback attack detection.
+
+        // During the client key exchange, the client must send the same information about
+        // acceptable SSL/TLS protocol levels as during the first hello. Some clients violate
+        // this rule by adapting to the server's answer. (Example: the client sends a SSLv2
+        // hello and accepts up to SSLv3.1=TLSv1, the server only understands up to SSLv3.
+        // In this case the client must still use the same SSLv3.1=TLSv1 announcement. Some
+        // clients step down to SSLv3 with respect to the server's answer and violate the 
+        // version rollback protection.)
+
+        // SSL_OP_SINGLE_DH_USE
+
+        // Always create a new key when using temporary/ephemeral DH parameters (see
+        // SSL_CTX_set_tmp_dh_callback(3)). This option must be used to prevent small subgroup
+        // attacks, when the DH parameters were not generated using ``strong'' primes (e.g. 
+        // when using DSA-parameters, see dhparam(1)). If ``strong'' primes were used, it is
+        // not strictly necessary to generate a new DH key during each handshake but it is
+        // also recommended. SSL_OP_SINGLE_DH_USE should therefore be enabled whenever 
+        // temporary/ephemeral DH parameters are used.
+        
+        // SSL_OP_EPHEMERAL_RSA
+
+        // Always use ephemeral (temporary) RSA key when doing RSA operations (see 
+        // SSL_CTX_set_tmp_rsa_callback(3)). According to the specifications this is only done,
+        // when a RSA key can only be used for signature operations (namely under export ciphers
+        // with restricted RSA keylength). By setting this option, ephemeral RSA keys are always
+        // used. This option breaks compatibility with the SSL/TLS specifications and may lead
+        // to interoperability problems with clients and should therefore never be used. Ciphers
+        // with EDH (ephemeral Diffie-Hellman) key exchange should be used instead.
+
+        // SSL_OP_CIPHER_SERVER_PREFERENCE
+
+        // When choosing a cipher, use the server's preferences instead of the client preferences.
+        // When not set, the SSL server will always follow the clients preferences. When set, the
+        // SSLv3/TLSv1 server will choose following its own preferences. Because of the different
+        // protocol, for SSLv2 the server will send its list of preferences to the client and the
+        // client chooses.
+
+        // SSL_OP_PKCS1_CHECK_1
+        //  ...
+
+        // SSL_OP_PKCS1_CHECK_2
+        //  ...
+
+        // SSL_OP_NETSCAPE_CA_DN_BUG
+        // If we accept a netscape connection, demand a client cert, have a non-self-signed CA
+        // which does not have its CA in netscape, and the browser has a cert, it will crash/hang.
+        // Works for 3.x and 4.xbeta
+
+        // SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG
+        //    ...
+
+        // SSL_OP_NO_SSLv2
+        // Do not use the SSLv2 protocol.
+
+        // SSL_OP_NO_SSLv3
+        // Do not use the SSLv3 protocol.
+
+        // SSL_OP_NO_TLSv1
+
+        // Do not use the TLSv1 protocol.
+        // SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
+
+        // When performing renegotiation as a server, always start a new session (i.e., session
+        // resumption requests are only accepted in the initial handshake). This option is not
+        // needed for clients.
+
+        // SSL_OP_NO_TICKET
+        // Normally clients and servers will, where possible, transparently make use of RFC4507bis
+        // tickets for stateless session resumption.
+
+        // If this option is set this functionality is disabled and tickets will not be used by
+        // clients or servers.
+
+        // SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
+
+        // Allow legacy insecure renegotiation between OpenSSL and unpatched clients or servers.
+        // See the SECURE RENEGOTIATION section for more details.
+
+        // SSL_OP_LEGACY_SERVER_CONNECT
+        // Allow legacy insecure renegotiation between OpenSSL and unpatched servers only: this option
+        // is currently set by default. See the SECURE RENEGOTIATION section for more details.
+        
         LOG(LOG_INFO, "RIO *::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
+        
+        // -------- End of system wide SSL_Ctx option ----------------------------------
+        
+        // --------Start of session specific init code ---------------------------------
+        
+        // SSL_new() creates a new SSL structure which is needed to hold the data for a TLS/SSL 
+        // connection. The new structure inherits the settings of the underlying context ctx:
+        // - connection method (SSLv2/v3/TLSv1),
+        // - options, 
+        // - verification settings, 
+        // - timeout settings. 
         LOG(LOG_INFO, "RIO *::SSL_new()");
         self->ssl = SSL_new(ctx);
 
+        // return value: NULL: The creation of a new SSL structure failed. Check the error stack 
+        // to find out the reason.
+
+        TODO("I should probably not be doing that here ? Is it really necessary")
         int flags = fcntl(self->sck, F_GETFL);
         fcntl(self->sck, F_SETFL, flags & ~(O_NONBLOCK));
 

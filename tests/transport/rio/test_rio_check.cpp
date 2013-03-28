@@ -24,7 +24,7 @@
 #define BOOST_TEST_MODULE TestCheckRIO
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include "rio/rio.h"
@@ -88,5 +88,22 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport2)
     BOOST_CHECK_EQUAL(4, rio_send(rt, "tput", 4));
     // Now the next call mismatch
     BOOST_CHECK_EQUAL(-RIO_ERROR_TRAILING_DATA, rio_send(rt, "xxx", 3));
+
+    rio_delete(rt);
+}
+
+// test_check is output only
+BOOST_AUTO_TEST_CASE(TestCheckOutputOnly)
+{
+    RIO rt;
+    RIO_ERROR status = rio_init_check(&rt, "We read what we provide!", 24);
+    BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
+
+    char buffer[16];
+    // recv not supported on check
+    BOOST_CHECK_EQUAL(RIO_ERROR_SEND_ONLY, static_cast<RIO_ERROR>(-rio_recv(&rt, buffer, 7)));
+    // from now on always will raise an error
+    BOOST_CHECK_EQUAL(RIO_ERROR_SEND_ONLY, static_cast<RIO_ERROR>(-rio_send(&rt, "We read", 7)));
+    rio_clear(&rt);
 }
 

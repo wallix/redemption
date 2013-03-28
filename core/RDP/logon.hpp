@@ -61,7 +61,7 @@
 //     |                                        | at the logon prompt.             |
 //     +----------------------------------------+----------------------------------+
 //     | 0x00000008 INFO_AUTOLOGON              | The client requests auto logon   |
-//     |                                        | using the include " user name,    |
+//     |                                        | using the include user name,     |
 //     |                                        | password and domain.             |
 //     +----------------------------------------+----------------------------------+
 //     | 0x00000010 INFO_UNICODE                | Indicates that the character set |

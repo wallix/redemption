@@ -55,7 +55,7 @@ class SocketTransport : public Transport {
 
     virtual void enable_tls() throw (Error)
     {
-        rio_m_RIOSocketTLS_enableTLS(&this->rio.u.socket_tls);
+        rio_m_RIOSocketTLS_enable_TLS_client(&this->rio.u.socket_tls);
     }
 
     void disconnect(){

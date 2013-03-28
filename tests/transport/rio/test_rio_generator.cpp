@@ -24,7 +24,7 @@
 #define BOOST_TEST_MODULE TestGeneratorRIO
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 #include "rio/rio.h"
 #include "rio/rio_impl.h"
@@ -87,6 +87,21 @@ BOOST_AUTO_TEST_CASE(TestGenerator2)
     
     // next call to rio_recv will return 0 (EOF)
     BOOST_CHECK_EQUAL(0, rio_recv(&rt, buffer+24, 1024)); // EOF
+
+    rio_clear(&rt);
+}
+
+BOOST_AUTO_TEST_CASE(TestGenerator2InputOnly)
+{
+    // same test as above but using object allocated on stack 
+    // instead of mallocated on heap
+    RIO rt;
+    RIO_ERROR status = rio_init_generator(&rt, "We read what we provide!", 24);
+    BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
+    
+    BOOST_CHECK_EQUAL(RIO_ERROR_RECV_ONLY, static_cast<RIO_ERROR>(-rio_send(&rt, "xxx", 3)));
+    uint8_t buffer[1024];
+    BOOST_CHECK_EQUAL(RIO_ERROR_RECV_ONLY, static_cast<RIO_ERROR>(-rio_recv(&rt, buffer+24, 1024))); // EOF
 
     rio_clear(&rt);
 }

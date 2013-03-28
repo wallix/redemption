@@ -164,14 +164,18 @@ BOOST_AUTO_TEST_CASE(TestSocket)
         int num = select(max + 1, &rfds, &wfds, 0, &timeout);
     
         switch (num) {
+        // +++++++++++++++ SELECT TIMEOUT ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         case 0: // this is timeout : as everything is automated it should never happen
             BOOST_CHECK(false);
             return;
         break;
         default:
+        // +++++++++++++++ SOCKET EVENTS : both client and server ++++++++++++++++++++++++++++++++
         {
+            // =============== CLIENT EVENTS (only one outgoing connection) ======================
+            TODO("we should write code opening several client connections for symmetry with server side")
             if (FD_ISSET(client_sck, &wfds)){
-                 // connected client
+                // ---------------------------- CLIENT CONNECTION --------------------------------
                 if (client_rt == NULL){
                     int res = ::connect(client_sck, &ucs.s, sizeof(ucs));
                     if (res < 0){
@@ -189,10 +193,11 @@ BOOST_AUTO_TEST_CASE(TestSocket)
                             BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
                             return;
                         }
+                        
                     }
                 }
                 else {
-                    // send data on client socket
+                    // ----------------------- CONNECTED CLIENT : SENDING DATA TO SERVER ---------
                     if (data_sent < 20){
                         int res = rio_send(client_rt, "AAAAXBBBBXCCCCXDDDDX" + data_sent, 20 - data_sent);
                         if (res < 0){
@@ -203,27 +208,35 @@ BOOST_AUTO_TEST_CASE(TestSocket)
                     }
                 }
             }
+            // ********************************************************************************
 
+            // ================== SERVER EVENTS (support several connection) ==================
             for (int i = 0 ; i < nb_recv_sck ; i++){
+                // -------------- SERVER EVENTS received data on connected socket i -----------
                 // received data on connected socket (server side)
                 if (FD_ISSET(recv_sck[i], & rfds)){
                     LOG(LOG_INFO, "received data activity on %d", recv_sck[i]);
                     int len = rio_recv(sck_rt[i], &(((char*)p)[nb_inbuffer]), 5);
                     if (len < 0){
                         BOOST_CHECK_EQUAL(RIO_ERROR_OK, (RIO_ERROR)(-len));
-                        return;
+                        run = false;
+                        continue;
                     }
                     nb_inbuffer += len;
                     LOG(LOG_INFO, "received %*s\n", nb_inbuffer, buffer);
                     if (0 != memcmp("AAAAXBBBBXCCCCXDDDDX", buffer, nb_inbuffer)){
                         BOOST_CHECK(false);
-                        return;
+                        run = false;
+                        continue;
                     }
                     if (nb_inbuffer >= 20){
+                        // This one is the expected end of test
+                        BOOST_CHECK_EQUAL(20, nb_inbuffer);
                         run = false;
                     }
                 }
             }
+            // ----- SERVER EVENTS : incoming connection, will be added to connected socket ----
             // accept new connection on server socket
             if (FD_ISSET(listener_sck, &rfds)){
                 char ip_source[128];
@@ -245,7 +258,7 @@ BOOST_AUTO_TEST_CASE(TestSocket)
                     if (!try_again(errno)){
                         LOG(LOG_ERR, "accept failed with error %s", strerror(errno));
                         BOOST_CHECK(false);
-                        return;
+                        run = false;
                     }
                 }
                 else {
@@ -255,17 +268,22 @@ BOOST_AUTO_TEST_CASE(TestSocket)
                     if ((server_rt == NULL) || (status != RIO_ERROR_OK)){
                         BOOST_CHECK(NULL != server_rt);
                         BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
-                        return;
+                        run = false;
                     }
-                    sck_rt[nb_recv_sck] = server_rt;
-                    nb_recv_sck++;
+                    else {
+                        sck_rt[nb_recv_sck] = server_rt;
+                        nb_recv_sck++;
+                    }
                 }
             }
         }
+        // ********************************************************************************
         break;
+        // +++++++++++++++ ERROR EVENT (should not happen) ++++++++++++++++++++++++++++++++
         case -1:
             if ((errno == EINTR)||(errno==EAGAIN)) { continue; }
             LOG(LOG_INFO, "select stopped on error [%d] %s\n", num, strerror(errno));
+            BOOST_CHECK(false);
             run = false;
         }
     }

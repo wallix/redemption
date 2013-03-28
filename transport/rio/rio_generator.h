@@ -57,10 +57,7 @@ extern "C" {
 
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data
-       returns len actually received (may be 0),
-       or negative value to signal some error.
-       If an error occurs after reading some data the amount read will be returned
-       and an error returned on subsequent call.
+       returns asked len or available len if we are at end of data (may be 0).
     */
     static inline ssize_t rio_m_RIOGenerator_recv(RIOGenerator * self, void * data, size_t len)
     {
@@ -71,14 +68,11 @@ extern "C" {
     }
 
     /* This method send len bytes of data from buffer to current transport
-       buffer must actually contains the amount of data requested to send.
-       returns len actually sent (may be 0),
-       or negative value to signal some error.
-       If an error occurs after sending some data the amount sent will be returned
-       and an error returned on subsequent call.
+       as generator is an input only transport, it return an error.
     */
     static inline ssize_t rio_m_RIOGenerator_send(RIOGenerator * self, const void * data, size_t len)
     {
+         rio_m_RIOGenerator_destructor(self);
          return -RIO_ERROR_RECV_ONLY;
     }
 

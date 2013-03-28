@@ -53,6 +53,7 @@ extern "C" {
     static inline RIO_ERROR rio_m_RIOCheck_destructor(RIOCheck * self)
     {
         free(self->data);
+        self->data = NULL;
         return RIO_ERROR_CLOSED;
     }
 
@@ -65,6 +66,7 @@ extern "C" {
     */
     static inline ssize_t rio_m_RIOCheck_recv(RIOCheck * self, void * data, size_t len)
     {
+         rio_m_RIOCheck_destructor(self);
          return -RIO_ERROR_SEND_ONLY;
     }
 
@@ -93,6 +95,7 @@ extern "C" {
             hexdump(&((const char *)self->data)[self->current+differs], available_len - differs);
             LOG(LOG_INFO, "=============== Got ===============");
             hexdump_c(&(((const char *)data)[differs]), available_len - differs);
+            rio_m_RIOCheck_destructor(self);
             return -RIO_ERROR_DATA_MISMATCH;
         }
         self->current += available_len;
@@ -102,6 +105,7 @@ extern "C" {
             hexdump_c(&(((const char *)data)[0]), available_len);
             LOG(LOG_INFO, "=============== Got Unexpected Data ==========");
             hexdump_c(&(((const char *)data)[available_len]), len - available_len);
+            rio_m_RIOCheck_destructor(self);
             return -RIO_ERROR_TRAILING_DATA;
         }
         return available_len;

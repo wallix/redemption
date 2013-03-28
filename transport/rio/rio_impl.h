@@ -60,9 +60,7 @@
 #include "rio_inmeta.h"
 
 TODO("add filter class sample")
-TODO("replace Transport classes with calls to new methods")
 TODO("convert PNG transport to new format")
-TODO("write prototype python API for exposed methods")
 TODO("check and enhance test coverage for lib")
 TODO("check possible memory leaks (using valgrind on tests)")
 TODO("check possible closes missing (especially when exiting on errors)")
@@ -73,7 +71,6 @@ TODO("write lib modification and tagging procedure")
 TODO("create debian packager .deb (use git-builder as base sample) to build rio.deb package from github source")
 TODO("extension: metadata files could be used to store non filename lines (meta lines could start with some reserved characters like ; ou #)"
      "This would be handy for large metadata that may not fit on one line")
-TODO("C equivalent of LOG function (? PLAIN_C_LOG => PCLOG) : looks not necessary we can compile using C++ compiler we just have to provide C linkage entry points")
 
 #include "rio.h"
 

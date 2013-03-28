@@ -29,8 +29,6 @@
 extern "C" {
     struct RIOInfile {
         int fd;
-        bool status;
-        RIO_ERROR err;    
     };
 
     /* This method does not allocate space for object itself, 
@@ -40,8 +38,6 @@ extern "C" {
     inline RIO_ERROR rio_m_RIOInfile_constructor(RIOInfile * self, int fd)
     {
         self->fd = fd;
-        self->status = true;
-        self->err = RIO_ERROR_OK;        
         return RIO_ERROR_OK;
     }
 
@@ -63,50 +59,45 @@ extern "C" {
     */
     inline ssize_t rio_m_RIOInfile_recv(RIOInfile * self, void * data, size_t len)
     {
-        if (!self->status){ 
-            if (self->err == RIO_ERROR_EOF){
-                return 0;
-            }
-            return -self->err; 
-        }
-        size_t ret = 0;
+        ssize_t ret = 0;
         size_t remaining_len = len;
         while (remaining_len) {
             ret = ::read(self->fd, &(((char*)data)[len - remaining_len]), remaining_len);
             if (ret < 0){
                 if (errno == EINTR){ continue; }
-                self->status = false;
-                switch (errno){
-                    case EAGAIN:
-                        self->err = RIO_ERROR_EAGAIN;
-                        break;
-                    case EBADF:
-                        self->err = RIO_ERROR_EBADF;
-                        break;
-                    case EFAULT:
-                        self->err = RIO_ERROR_EFAULT;
-                        break;
-                    case EINVAL:
-                        self->err = RIO_ERROR_EINVAL;
-                        break;
-                    case EIO:
-                        self->err = RIO_ERROR_EIO;
-                        break;
-                    case EISDIR:
-                        self->err = RIO_ERROR_EISDIR;
-                        break;
-                    default:
-                        self->err = RIO_ERROR_POSIX;
-                        break;
-                }
+                // Error should still be there next time we try to read
                 if (remaining_len != len){
                     return len - remaining_len;
                 }
-                return -self->err;
+                RIO_ERROR err = RIO_ERROR_OK;
+                switch (errno){
+                    case EAGAIN:
+                        err = RIO_ERROR_EAGAIN;
+                        break;
+                    case EBADF:
+                        err = RIO_ERROR_EBADF;
+                        break;
+                    case EFAULT:
+                        err = RIO_ERROR_EFAULT;
+                        break;
+                    case EINVAL:
+                        err = RIO_ERROR_EINVAL;
+                        break;
+                    case EIO:
+                        err = RIO_ERROR_EIO;
+                        break;
+                    case EISDIR:
+                        err = RIO_ERROR_EISDIR;
+                        break;
+                    default:
+                        err = RIO_ERROR_POSIX;
+                        break;
+                }
+                rio_m_RIOInfile_destructor(self);
+                return -err;
             }
+            // We must exit loop or we will enter infinite loop
             if (ret == 0){
-                self->status = false;
-                self->err = RIO_ERROR_EOF;
                 break;
             }
             remaining_len -= ret;
@@ -123,14 +114,13 @@ extern "C" {
     */
     inline ssize_t rio_m_RIOInfile_send(RIOInfile * self, const void * data, size_t len)
     {
+         rio_m_RIOInfile_destructor(self);
          return -RIO_ERROR_RECV_ONLY;
     }
 
     static inline RIO_ERROR rio_m_RIOInfile_get_status(RIOInfile * self)
     {
-        if (!(self->status)) {
-            return self->err;
-        }
+        // either OK, or error has already been intercepted
         return RIO_ERROR_OK;
     }
 
