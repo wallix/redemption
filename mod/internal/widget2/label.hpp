@@ -117,6 +117,8 @@ public:
         this->set_text(text);
         this->rect.x = x;
         this->rect.y = y;
+        this->x_absolute += this->rect.x;
+        this->y_absolute += this->rect.y;
     }
 
     virtual ~WidgetLabel()

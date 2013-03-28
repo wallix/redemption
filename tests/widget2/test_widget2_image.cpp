@@ -20,7 +20,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWidgetRect
+#define BOOST_TEST_MODULE TestWidgetImage
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
@@ -341,57 +341,57 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageEvent)
     BOOST_CHECK(widget_for_receive_event.event == KEYDOWN);
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetImageAndComposite)
-{
-    TestDraw drawable(800, 600);
-
-    // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    Widget * parent = NULL;
-    NotifyApi * notifier = NULL;
-
-    WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);
-
-    WidgetImage wimage1(&drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp",
-                        &wcomposite, notifier);
-    WidgetImage wimage2(&drawable, 0,100, FIXTURES_PATH"/logo-redemption.bmp",
-                        &wcomposite, notifier);
-    WidgetImage wimage3(&drawable, 100,100, FIXTURES_PATH"/logo-redemption.bmp",
-                        &wcomposite, notifier);
-    WidgetImage wimage4(&drawable, 300,300, FIXTURES_PATH"/logo-redemption.bmp",
-                        &wcomposite, notifier);
-    WidgetImage wimage5(&drawable, 700,-50, FIXTURES_PATH"/logo-redemption.bmp",
-                        &wcomposite, notifier);
-    WidgetImage wimage6(&drawable, -50,550, FIXTURES_PATH"/logo-redemption.bmp",
-                        &wcomposite, notifier);
-
-    wcomposite.child_list.push_back(&wimage1);
-    wcomposite.child_list.push_back(&wimage2);
-    wcomposite.child_list.push_back(&wimage3);
-    wcomposite.child_list.push_back(&wimage4);
-    wcomposite.child_list.push_back(&wimage5);
-    wcomposite.child_list.push_back(&wimage6);
-
-    // ask to widget to redraw at position 100,25 and of size 100x100.
-    wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
-
-    //drawable.save_to_png("/tmp/image9.png");
-
-    char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
-        "\xa9\x05\x72\xca\xa4\xe1\x4e\x88\x48\x79"
-        "\xf0\x43\x37\xb8\xbc\xda\x77\x8d\x3d\x33")){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
-
-    // ask to widget to redraw at it's current position
-    wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
-
-    //drawable.save_to_png("/tmp/image10.png");
-
-    if (!check_sig(drawable.gd.drawable, message,
-        "\x76\xe4\xfd\xbb\x8e\x8e\x76\x2c\xc7\x37"
-        "\x5b\x46\xcd\xd4\xb2\x5a\xcd\x0a\x2d\x2b")){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
-}
+// BOOST_AUTO_TEST_CASE(TraceWidgetImageAndComposite)
+// {
+//     TestDraw drawable(800, 600);
+//
+//     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
+//     Widget * parent = NULL;
+//     NotifyApi * notifier = NULL;
+//
+//     WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);
+//
+//     WidgetImage wimage1(&drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp",
+//                         &wcomposite, notifier);
+//     WidgetImage wimage2(&drawable, 0,100, FIXTURES_PATH"/logo-redemption.bmp",
+//                         &wcomposite, notifier);
+//     WidgetImage wimage3(&drawable, 100,100, FIXTURES_PATH"/logo-redemption.bmp",
+//                         &wcomposite, notifier);
+//     WidgetImage wimage4(&drawable, 300,300, FIXTURES_PATH"/logo-redemption.bmp",
+//                         &wcomposite, notifier);
+//     WidgetImage wimage5(&drawable, 700,-50, FIXTURES_PATH"/logo-redemption.bmp",
+//                         &wcomposite, notifier);
+//     WidgetImage wimage6(&drawable, -50,550, FIXTURES_PATH"/logo-redemption.bmp",
+//                         &wcomposite, notifier);
+//
+//     wcomposite.child_list.push_back(&wimage1);
+//     wcomposite.child_list.push_back(&wimage2);
+//     wcomposite.child_list.push_back(&wimage3);
+//     wcomposite.child_list.push_back(&wimage4);
+//     wcomposite.child_list.push_back(&wimage5);
+//     wcomposite.child_list.push_back(&wimage6);
+//
+//     // ask to widget to redraw at position 100,25 and of size 100x100.
+//     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
+//
+//     //drawable.save_to_png("/tmp/image9.png");
+//
+//     char message[1024];
+//     if (!check_sig(drawable.gd.drawable, message,
+//         "\xa9\x05\x72\xca\xa4\xe1\x4e\x88\x48\x79"
+//         "\xf0\x43\x37\xb8\xbc\xda\x77\x8d\x3d\x33")){
+//         BOOST_CHECK_MESSAGE(false, message);
+//     }
+//
+//     // ask to widget to redraw at it's current position
+//     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
+//
+//     //drawable.save_to_png("/tmp/image10.png");
+//
+//     if (!check_sig(drawable.gd.drawable, message,
+//         "\x76\xe4\xfd\xbb\x8e\x8e\x76\x2c\xc7\x37"
+//         "\x5b\x46\xcd\xd4\xb2\x5a\xcd\x0a\x2d\x2b")){
+//         BOOST_CHECK_MESSAGE(false, message);
+//     }
+// }
 

@@ -20,7 +20,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWidgetRect
+#define BOOST_TEST_MODULE TestWidgetButton
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
@@ -405,37 +405,21 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonEvent)
 
     WidgetButton wbutton(drawable, x, y, parent, &notifier, "", auto_resize);
 
-    wbutton.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
+    wbutton.rdp_input_mouse(CLIC_BUTTON1_UP, 0, 0, 0);
     BOOST_CHECK(widget_for_receive_event.sender == 0);
     BOOST_CHECK(widget_for_receive_event.event == 0);
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
-    wbutton.send_event(CLIC_BUTTON1_DOWN, 0, 0, 0);
+    wbutton.rdp_input_mouse(CLIC_BUTTON1_DOWN, 0, 0, 0);
     BOOST_CHECK(widget_for_receive_event.sender == 0);
     BOOST_CHECK(widget_for_receive_event.event == 0);
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
-    wbutton.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
+    wbutton.rdp_input_mouse(CLIC_BUTTON1_UP, 0, 0, 0);
     BOOST_CHECK(widget_for_receive_event.sender == &wbutton);
     BOOST_CHECK(widget_for_receive_event.event == NOTIFY_SUBMIT);
     BOOST_CHECK(notifier.sender == &wbutton);
     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
-    notifier.sender = 0;
-    notifier.event = 0;
-    widget_for_receive_event.sender = 0;
-    widget_for_receive_event.event = 0;
-    wbutton.send_event(KEYUP, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wbutton);
-    BOOST_CHECK(widget_for_receive_event.event == KEYUP);
-    BOOST_CHECK(notifier.sender == 0);
-    BOOST_CHECK(notifier.event == 0);
-    widget_for_receive_event.sender = 0;
-    widget_for_receive_event.event = 0;
-    wbutton.send_event(KEYDOWN, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wbutton);
-    BOOST_CHECK(widget_for_receive_event.event == KEYDOWN);
-    BOOST_CHECK(notifier.sender == 0);
-    BOOST_CHECK(notifier.event == 0);
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)

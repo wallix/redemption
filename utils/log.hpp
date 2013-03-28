@@ -93,7 +93,7 @@ static inline void LOGSYSLOG__REDEMPTION__INTERNAL(int priority, const char *for
     vsnprintf(message, 8191, format, vl);
     va_end(vl);
     syslog(priority, "%s (%d/%d) -- %s", prioritynames[priority].c_name, getpid(), getpid(), message);
-};
+}
 
 static inline void LOGPRINT__REDEMPTION__INTERNAL(int priority, const char *format, ...)
 {
@@ -115,7 +115,7 @@ static inline void LOGPRINT__REDEMPTION__INTERNAL(int priority, const char *form
     vsnprintf(message, 8191, format, vl);
     va_end(vl);
     printf("%s (%d/%d) -- %s\n", prioritynames[priority].c_name, getpid(), getpid(), message);
-};
+}
 
 static inline void LOGNULL__REDEMPTION__INTERNAL(int priority, const char *format, ...)
 {
