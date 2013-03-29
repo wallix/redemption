@@ -27,7 +27,7 @@
 #include "log.hpp"
 
 #include "internal/widget2/image.hpp"
-#include "internal/widget2/widget_composite.hpp"
+// #include "internal/widget2/widget_composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -127,9 +127,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage)
     WidgetImage wimage(&drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.rdp_input_invalidate(Rect(0, 0, wimage.rect.cx, wimage.rect.cy));
+    wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
+                                     0 + wimage.dy(),
+                                     wimage.rect.cx,
+                                     wimage.rect.cy));
 
-    ////drawable.save_to_png("/tmp/image.png");
+    //drawable.save_to_png("/tmp/image.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -150,9 +153,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
     WidgetImage wimage(&drawable, 10,100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.rdp_input_invalidate(Rect(0, 0, wimage.rect.cx, wimage.rect.cy));
+    wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
+                                     0 + wimage.dy(),
+                                     wimage.rect.cx,
+                                     wimage.rect.cy));
 
-    ////drawable.save_to_png("/tmp/image2.png");
+    //drawable.save_to_png("/tmp/image2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -173,9 +179,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
     WidgetImage wimage(&drawable, -100,500, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.rdp_input_invalidate(Rect(0, 0, wimage.rect.cx, wimage.rect.cy));
+    wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
+                                     0 + wimage.dy(),
+                                     wimage.rect.cx,
+                                     wimage.rect.cy));
 
-    ////drawable.save_to_png("/tmp/image3.png");
+    //drawable.save_to_png("/tmp/image3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -196,9 +205,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
     WidgetImage wimage(&drawable, 700,500, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.rdp_input_invalidate(Rect(0, 0, wimage.rect.cx, wimage.rect.cy));
+    wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
+                                     0 + wimage.dy(),
+                                     wimage.rect.cx,
+                                     wimage.rect.cy));
 
-    ////drawable.save_to_png("/tmp/image4.png");
+    //drawable.save_to_png("/tmp/image4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -219,9 +231,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
     WidgetImage wimage(&drawable, -100,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.rdp_input_invalidate(Rect(0, 0, wimage.rect.cx, wimage.rect.cy));
+    wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
+                                     0 + wimage.dy(),
+                                     wimage.rect.cx,
+                                     wimage.rect.cy));
 
-    ////drawable.save_to_png("/tmp/image5.png");
+    //drawable.save_to_png("/tmp/image5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -242,9 +257,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
     WidgetImage wimage(&drawable, 700,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at it's current position
-    wimage.rdp_input_invalidate(Rect(0, 0, wimage.rect.cx, wimage.rect.cy));
+    wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
+                                     0 + wimage.dy(),
+                                     wimage.rect.cx,
+                                     wimage.rect.cy));
 
-    ////drawable.save_to_png("/tmp/image6.png");
+    //drawable.save_to_png("/tmp/image6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -265,14 +283,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip)
     WidgetImage wimage(&drawable, 700,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at position 80,10 and of size 50x100. After clip the size is of 20x15
-    wimage.rdp_input_invalidate(Rect(80, 10, 50, 100));
+    wimage.rdp_input_invalidate(Rect(80 + wimage.dx(),
+                                     10 + wimage.dy(),
+                                     50,
+                                     100));
 
     //drawable.save_to_png("/tmp/image7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x61\xff\xa6\xd4\xb6\x17\xf1\x7f\x8d\x07"
-        "\xe7\x20\xa6\xdf\xa4\xdc\x55\xb4\xaa\xf9")){
+        "\xe2\x17\xab\x79\xd8\x69\x05\x14\x70\xe4"
+        "\xba\x9c\x35\xe8\x39\x45\xa9\x63\x74\x20")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -288,7 +309,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
     WidgetImage wimage(&drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
 
     // ask to widget to redraw at position 100,25 and of size 100x100.
-    wimage.rdp_input_invalidate(Rect(100, 25, 100, 100));
+    wimage.rdp_input_invalidate(Rect(100 + wimage.dx(),
+                                     25 + wimage.dy(),
+                                     100,
+                                     100));
 
     //drawable.save_to_png("/tmp/image8.png");
 

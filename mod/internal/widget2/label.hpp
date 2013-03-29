@@ -108,17 +108,15 @@ public:
                 NotifyApi* notifier, const char * text, bool auto_resize = true,
                 int id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
                 int xtext = 0, int ytext = 0)
-    : WidgetRect(drawable, Rect(), parent, notifier, id, bgcolor)
+    : WidgetRect(drawable, Rect(x,y,1,1), parent, notifier, id, bgcolor)
     , x_text(xtext)
     , y_text(ytext)
     , auto_resize(auto_resize)
     , fg_color(fgcolor)
     {
+        this->rect.cx = 0;
+        this->rect.cy = 0;
         this->set_text(text);
-        this->rect.x = x;
-        this->rect.y = y;
-        this->x_absolute += this->rect.x;
-        this->y_absolute += this->rect.y;
     }
 
     virtual ~WidgetLabel()
@@ -154,12 +152,11 @@ public:
     virtual void draw(const Rect& clip)
     {
         this->WidgetRect::draw(clip);
-        Rect screen_clip = this->position_in_screen(clip);
-        this->drawable->server_draw_text(this->x_text + screen_clip.x - clip.x,
-                                         this->y_text + screen_clip.y - clip.y,
+        this->drawable->server_draw_text(this->x_text + this->dx(),
+                                         this->y_text + this->dy(),
                                          this->get_text(),
                                          this->fg_color,
-                                         screen_clip
+                                         this->rect.intersect(clip)
                                         );
     }
 };

@@ -87,18 +87,18 @@ public:
 
     void draw_cursor(const Rect& clip)
     {
-        Rect screen_clip = this->label.position_in_screen(clip).intersect(
-            Rect(this->label.x_text + this->cursor_px_pos + this->label.sx(),
-                 this->label.y_text + this->label.sy(),
+        Rect cursor_clip = clip.intersect(
+            Rect(this->label.x_text + this->cursor_px_pos + this->label.dx(),
+                 this->label.y_text + this->label.dy(),
                  1,
                  this->h_text)
         );
-        if (false == screen_clip.isempty()) {
+        if (!cursor_clip.isempty()) {
             this->drawable->draw(
                 RDPOpaqueRect(
-                    screen_clip,
+                    cursor_clip,
                     this->label.fg_color
-                ), screen_clip
+                ), this->rect
             );
         }
     }

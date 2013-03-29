@@ -36,8 +36,8 @@ public:
         this->rect.y = y;
         this->rect.cx = this->bmp.cx;
         this->rect.cy = this->bmp.cy;
-        this->x_absolute += this->rect.x;
-        this->y_absolute += this->rect.y;
+        this->parent_offset_x += this->rect.x;
+        this->parent_offset_y += this->rect.y;
     }
 
     virtual ~WidgetImage()
@@ -45,20 +45,18 @@ public:
 
     virtual void draw(const Rect& clip)
     {
-        Rect screen_clip = this->position_in_screen(clip);
+        int16_t mx = std::max<int16_t>(clip.x, 0);
+        int16_t my = std::max<int16_t>(clip.y, 0);
         this->drawable->draw(
             RDPMemBlt(
                 0,
-                Rect(std::max<int16_t>(screen_clip.x, 0),
-                     std::max<int16_t>(screen_clip.y, 0),
-                     screen_clip.cx,
-                     screen_clip.cy),
+                Rect(mx, my, clip.cx, clip.cy),
                 0xCC,
-                (screen_clip.x < 0 ? -screen_clip.x : 0) + clip.x,
-                (screen_clip.y < 0 ? -screen_clip.y : 0) + clip.y,
+                mx - this->dx(),
+                my - this->dy(),
                 0
             ),
-            clip.offset(this->rect.x, this->rect.y).intersect(this->rect),
+            this->rect,
             this->bmp
         );
     }

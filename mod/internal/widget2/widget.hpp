@@ -83,8 +83,8 @@ public:
     ModApi * drawable;
     NotifyApi * notifier;
     Rect rect;
-    int16_t x_absolute;
-    int16_t y_absolute;
+    int16_t parent_offset_x;
+    int16_t parent_offset_y;
     int id;
     //int tab_flag;
     bool has_focus;
@@ -94,9 +94,13 @@ public:
     : parent(parent)
     , drawable(drawable)
     , notifier(notifier)
-    , rect(rect)
-    , x_absolute(rect.x + (parent ? parent->dx() : 0))
-    , y_absolute(rect.y + (parent ? parent->dy() : 0))
+    , rect(Rect(rect.x + (parent ? parent->dx() : 0),
+                rect.y + (parent ? parent->dy() : 0),
+                rect.cx,
+                rect.cy
+    ))
+    , parent_offset_x(rect.x)
+    , parent_offset_y(rect.y)
     , id(id)
     //, tab_flag(NORMAL_TAB)
     , has_focus(false)
@@ -104,18 +108,6 @@ public:
 
     virtual ~Widget()
     {}
-
-    Rect position_in_screen(const Rect& clip)
-    {
-        //Rect ret = clip.offset(this->rect.x, this->rect.y).intersect(this->rect);
-        //for (Widget * p = this->parent; p; p = p->parent){
-        //   ret = ret.intersect(p->rect.cx, p->rect.cy);
-        //   ret.x += p->rect.x;
-        //   ret.y += p->rect.y;
-        //}
-        //return ret;
-        return Rect(this->sx() + clip.x, this->sy() + clip.y, clip.cx, clip.cy);
-    }
 
     virtual void draw(const Rect& clip) = 0;
 
@@ -145,19 +137,14 @@ public:
 
     void refresh(const Rect& clip)
     {
-        this->rect.intersect(clip);
         if (this->drawable) {
-            Rect new_clip = clip.offset(this->dx(), this->dy()).intersect(this->rect);
-            if (!new_clip.isempty()){
-                new_clip.x -= this->dx();
-                new_clip.y -= this->dy();
+            if (!clip.isempty()){
                 this->drawable->begin_update();
-                this->draw(new_clip);
+                this->draw(clip);
                 this->drawable->end_update();
             }
         }
     }
-
 
     // External world can generate 4 kind of events
     // - keyboard event (scancode)
@@ -219,13 +206,13 @@ public:
         return 0;
     }
 
-    ///Return x position in it's parent
+    ///Return x position in it's screen
     int16_t dx() const
     {
         return this->rect.x;
     }
 
-    ///Return y position in it's parent
+    ///Return y position in it's screen
     int16_t dy() const
     {
         return this->rect.y;
@@ -243,16 +230,16 @@ public:
         return this->rect.cy;
     }
 
-    ///Return x position in it's screen
-    int16_t sx() const
+    ///Return x position in it's parent
+    int16_t px() const
     {
-        return this->x_absolute;
+        return this->parent_offset_y;
     }
 
-    ///Return y position in it's screen
-    int16_t sy() const
+    ///Return y position in it's parent
+    int16_t py() const
     {
-        return this->y_absolute;
+        return this->parent_offset_x;
     }
 
     virtual Widget * widget_focused()
