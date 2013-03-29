@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
     size_t payload_length = 100;
 
     GeneratorTransport in_t(payload, payload_length);
-    CheckTransport out_t(payload, payload_length);
+    CheckTransport     out_t(payload, payload_length);
 
     BStream in_s(65536);
     BStream out_s(65536);
