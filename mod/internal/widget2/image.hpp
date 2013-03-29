@@ -29,15 +29,11 @@ class WidgetImage : public Widget
 
 public:
     WidgetImage(ModApi* drawable, int x, int y, const char * filename, Widget* parent, NotifyApi* notifier, int id = 0)
-    : Widget(drawable, Rect(), parent, notifier, id)
+    : Widget(drawable, Rect(x,y,1,1), parent, notifier, id)
     , bmp(filename)
     {
-        this->rect.x = x;
-        this->rect.y = y;
         this->rect.cx = this->bmp.cx;
         this->rect.cy = this->bmp.cy;
-        this->parent_offset_x += this->rect.x;
-        this->parent_offset_y += this->rect.y;
     }
 
     virtual ~WidgetImage()

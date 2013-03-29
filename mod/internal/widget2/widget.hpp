@@ -26,6 +26,7 @@
 #include "mod_api.hpp"
 #include "notify_api.hpp"
 #include <rect.hpp>
+#include <callback.hpp>
 
 class Keymap2;
 
@@ -54,7 +55,7 @@ enum NotifyEventType {
     NOTIFY_CANCEL = WIDGET_CANCEL,
 };
 
-class Widget
+class Widget : public RdpInput, public NotifyApi
 {
 public:
     //type & TYPE_WND -> WidgetComposite
@@ -83,8 +84,6 @@ public:
     ModApi * drawable;
     NotifyApi * notifier;
     Rect rect;
-    int16_t parent_offset_x;
-    int16_t parent_offset_y;
     int id;
     //int tab_flag;
     bool has_focus;
@@ -99,8 +98,6 @@ public:
                 rect.cx,
                 rect.cy
     ))
-    , parent_offset_x(rect.x)
-    , parent_offset_y(rect.y)
     , id(id)
     //, tab_flag(NORMAL_TAB)
     , has_focus(false)
@@ -168,35 +165,18 @@ public:
         this->refresh(r);
     }
 
-    virtual void send_event(EventType event, unsigned param, unsigned param2, Keymap2 * keymap)
+    void send_notify(NotifyApi::notify_event_t event,
+                     unsigned long param = 0, unsigned long param2 = 0)
     {
-        this->notify_parent(event, param, param2);
+        if (this->notifier)
+            this->notifier->notify(this, event, param, param2);
     }
 
     virtual void notify(Widget * widget, NotifyApi::notify_event_t event,
                         unsigned long param, unsigned long param2)
     {
         (void)widget;
-        if (this->notifier) {
-            this->notifier->notify(this, event, param, param2);
-        }
-    }
-
-    TODO("remove")
-    void notify_parent(NotifyApi::notify_event_t event,
-                       unsigned long param = 0, unsigned long param2 = 0)
-    {
-        if (this->parent) {
-            this->parent->notify(this, event, param, param2);
-        }
-    }
-
-    TODO("remove")
-    void notify_self(NotifyApi::notify_event_t event,
-                     unsigned long param = 0, unsigned long param2 = 0)
-    {
-        if (this->notifier)
-            this->notifier->notify(this, event, param, param2);
+        this->send_notify(event, param, param2);
     }
 
     virtual Widget * widget_at_pos(int x, int y)
@@ -233,13 +213,13 @@ public:
     ///Return x position in it's parent
     int16_t px() const
     {
-        return this->parent_offset_y;
+        return this->parent ? this->dx() - this->parent->dx() : this->dx();
     }
 
     ///Return y position in it's parent
     int16_t py() const
     {
-        return this->parent_offset_x;
+        return this->parent ? this->dy() - this->parent->dy() : this->dy();
     }
 
     virtual Widget * widget_focused()

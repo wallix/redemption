@@ -329,5 +329,6 @@ unit-test test_widget2_image : tests/widget2/test_widget2_image.cpp png z openss
 unit-test test_widget2_label : tests/widget2/test_widget2_label.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_widget2_button : tests/widget2/test_widget2_button.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_widget2_edit : tests/widget2/test_widget2_edit.cpp png z openssl crypto libboost_unit_test ;
-# unit-test test_widget2_composite : tests/widget2/test_widget2_composite.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_widget2_composite : tests/widget2/test_widget2_composite.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_widget2_window : tests/widget2/test_widget2_window.cpp png z openssl crypto libboost_unit_test ;
 

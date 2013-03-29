@@ -54,20 +54,16 @@ public:
         switch (device_flags) {
             case CLIC_BUTTON1_DOWN:
                 this->state = 1;
-                //this->refresh(this->rect);
                 break;
             case CLIC_BUTTON1_UP:
                 if (this->state & 1) {
                     this->state = 0;
-                    this->notify_self(NOTIFY_SUBMIT);
-                    this->notify_parent(WIDGET_SUBMIT);
-                    //this->refresh(this->rect);
+                    this->send_notify(NOTIFY_SUBMIT);
                 }
                 break;
             case FOCUS_END:
                 if (this->state & 1) {
                     this->state = 0;
-                    //this->refresh(this->rect);
                 }
                 break;
             default:

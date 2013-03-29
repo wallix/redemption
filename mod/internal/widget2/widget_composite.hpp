@@ -23,7 +23,6 @@
 
 #include <vector>
 #include "widget.hpp"
-#include <region.hpp>
 #include "keymap2.hpp"
 
 class WidgetComposite : public Widget
@@ -49,19 +48,17 @@ public:
     }
 
 public:
-    virtual Widget * widget_at_pos(int x, int y)
+    virtual Widget * widget_at_pos(int16_t x, int16_t y)
     {
         if (!this->rect.contains_pt(x, y))
             return 0;
         Widget* ret = 0;
-        x -= this->dx();
-        y -= this->dy();
         std::size_t size = this->child_list.size();
         for (std::size_t i = 0; i < size && ret == 0; ++i)
         {
             ret = this->child_list[i]->widget_at_pos(x, y);
         }
-        return ret;
+        return ret ? ret : this;
     }
 
     virtual Widget* widget_focused()
@@ -247,30 +244,19 @@ public:
     }
 #endif
 
-    void init_region_and_draw_children(Region & region, const Rect& clip)
-    {
-        region.rects.push_back(clip);
-        std::size_t size = this->child_list.size();
-        for (std::size_t i = 0; i < size; ++i) {
-            Widget *w = this->child_list[i];
-            Rect rect = clip.intersect(w->rect);
-            if (!rect.isempty()){
-                region.subtract_rect(rect);
-                if (w->drawable) {
-                    w->refresh(Rect(rect.x - w->rect.x,
-                                    rect.y - w->rect.y,
-                                    rect.cx, rect.cy
-                    ));
-                }
-            }
-        }
-    }
-
     virtual void draw(const Rect& clip)
     {
-        Region region;
-        Rect new_clip = this->position_in_screen(clip);
-        this->init_region_and_draw_children(region, new_clip);
+        Rect new_clip = clip.intersect(this->rect);
+        std::size_t size = this->child_list.size();
+
+        for (std::size_t i = 0; i < size; ++i) {
+            Widget *w = this->child_list[i];
+            Rect rect = new_clip.intersect(w->rect);
+
+            if (!rect.isempty()) {
+                w->refresh(new_clip);
+            }
+        }
     }
 
 protected:

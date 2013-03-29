@@ -20,14 +20,14 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWidgetComposite
+#define BOOST_TEST_MODULE TestWidgetWindow
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
 #include "log.hpp"
 
 #include "internal/widget2/widget_rect.hpp"
-#include "internal/widget2/widget_composite.hpp"
+#include "internal/widget2/window.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -116,96 +116,105 @@ struct TestDraw : ModApi
     }
 };
 
-class WidgetCompositeRect : public WidgetComposite
-{
-public:
-    int color;
-
-    WidgetCompositeRect(TestDraw & drawable)
-    : WidgetComposite(&drawable, Rect(0, 0,
-                                      drawable.gd.drawable.width,
-                                      drawable.gd.drawable.height),
-                      NULL, NULL)
-    , color(0x27642F)
-    {}
-
-    virtual ~WidgetCompositeRect()
-    {}
-
-    virtual void draw(const Rect& clip)
-    {
-        this->drawable->draw(RDPOpaqueRect(clip, color), this->rect);
-        this->WidgetComposite::draw(clip);
-    }
-};
-
-BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
+BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
 {
     TestDraw drawable(800, 600);
     NotifyApi * notifier = NULL;
+    Widget * parent = NULL;
     int id = 0;
 
-    WidgetCompositeRect wcomposite(drawable);
+    Window window(&drawable, Rect(30,40,500,400), parent, notifier, "Window 1");
     WidgetRect wrect1(&drawable, Rect(0,0,100,100),
-                      &wcomposite, notifier, id++, YELLOW);
+                      &window, notifier, id++, YELLOW);
     WidgetRect wrect2(&drawable, Rect(0,100,100,100),
-                      &wcomposite, notifier, id++, RED);
+                      &window, notifier, id++, RED);
     WidgetRect wrect3(&drawable, Rect(100,100,100,100),
-                      &wcomposite, notifier, id++, BLUE);
+                      &window, notifier, id++, BLUE);
     WidgetRect wrect4(&drawable, Rect(300,300,100,100),
-                      &wcomposite, notifier, id++, GREEN);
+                      &window, notifier, id++, GREEN);
     WidgetRect wrect5(&drawable, Rect(700,-50,100,100),
-                      &wcomposite, notifier, id++, WHITE);
+                      &window, notifier, id++, WHITE);
     WidgetRect wrect6(&drawable, Rect(-50,550,100,100),
-                      &wcomposite, notifier, id++, GREY);
-    wcomposite.child_list.push_back(&wrect1);
-    wcomposite.child_list.push_back(&wrect2);
-    wcomposite.child_list.push_back(&wrect3);
-    wcomposite.child_list.push_back(&wrect4);
-    wcomposite.child_list.push_back(&wrect5);
-    wcomposite.child_list.push_back(&wrect6);
+                      &window, notifier, id++, GREY);
+    window.child_list.push_back(&wrect1);
+    window.child_list.push_back(&wrect2);
+    window.child_list.push_back(&wrect3);
+    window.child_list.push_back(&wrect4);
+    window.child_list.push_back(&wrect5);
+    window.child_list.push_back(&wrect6);
 
     // ask to widget to redraw at position 150,500 and of size 800x600
-    wcomposite.rdp_input_invalidate(Rect(150 + wcomposite.dx(),
-                                         150 + wcomposite.dy(),
-                                         wcomposite.cx(),
-                                         wcomposite.cy()));
+    window.rdp_input_invalidate(Rect(150 + window.dx(),
+                                     150 + window.dy(),
+                                     window.cx(),
+                                     window.cy()));
 
-    //drawable.save_to_png("/tmp/composite.png");
+    //drawable.save_to_png("/tmp/window.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x6a\xb7\x7d\xbc\x3b\xa1\xce\xf9\xa7\x20"
-        "\xba\x8f\xd5\xc0\x87\x81\x37\x95\x7c\x28")){
+        "\x92\x57\x70\xc1\xca\x27\x0f\xb3\x89\x2b"
+        "\xb6\xad\xe7\x85\xdd\x6f\xc5\x66\xdb\x82")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // ask to widget to redraw at position 0,500 and of size 100x100
-    wcomposite.rdp_input_invalidate(Rect(0 + wcomposite.dx(),
-                                         500 + wcomposite.dy(),
-                                         100,
-                                         100));
+    window.rdp_input_invalidate(Rect(0 + window.dx(),
+                                     500 + window.dy(),
+                                     100,
+                                     100));
 
-    //drawable.save_to_png("/tmp/composite2.png");
+    //drawable.save_to_png("/tmp/window2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\x77\xb1\xf1\xb4\x52\x65\x5d\x74\x49\x45"
-        "\xeb\xb2\x31\xc2\xc4\x31\x75\x0d\x39\x5c")){
+        "\x92\x57\x70\xc1\xca\x27\x0f\xb3\x89\x2b"
+        "\xb6\xad\xe7\x85\xdd\x6f\xc5\x66\xdb\x82")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // ask to widget to redraw at it's current position
-    wcomposite.rdp_input_invalidate(Rect(0 + wcomposite.dx(),
-                                         0 + wcomposite.dy(),
-                                         wcomposite.cx(),
-                                         wcomposite.cy()));
+    window.rdp_input_invalidate(Rect(0 + window.dx(),
+                                     0 + window.dy(),
+                                     window.cx(),
+                                     window.cy()));
 
-    //drawable.save_to_png("/tmp/composite3.png");
+    //drawable.save_to_png("/tmp/window3.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\x3e\xe9\x99\x2d\x99\x28\xcc\x4f\x26\x8b"
-        "\x68\xe7\x53\x26\xb9\x3c\xea\xd5\xae\xec")){
+        "\x54\xb8\xf6\x10\x0f\xe5\x65\xb5\xc2\xff"
+        "\xb1\xa1\xed\x6f\xf1\xb1\x09\x83\x23\x73")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
+BOOST_AUTO_TEST_CASE(EventWidgetWindow)
+{
+    struct TestNotify : NotifyApi
+    {
+        Widget * sender;
+        notify_event_t event;
+
+        TestNotify()
+        : sender(0)
+        , event(0)
+        {}
+
+        virtual void notify(Widget* sender, notify_event_t event,
+                            long unsigned int, long unsigned int)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } notifier;
+    ModApi * drawable = 0;
+    Widget * parent = NULL;
+    int id = 0;
+
+    Window window(drawable, Rect(30,40,500,400), parent, &notifier, "Window 1");
+    window.button_close.rdp_input_mouse(CLIC_BUTTON1_DOWN, 0,0,0);
+    BOOST_CHECK(notifier.event == 0);
+    BOOST_CHECK(notifier.sender == 0);
+    window.button_close.rdp_input_mouse(CLIC_BUTTON1_UP, 0,0,0);
+    BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
+    BOOST_CHECK(notifier.sender == &window);
+}

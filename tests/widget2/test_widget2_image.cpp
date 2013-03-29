@@ -324,46 +324,46 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetImageEvent)
-{
-    struct WidgetReceiveEvent : public Widget {
-        Widget * sender;
-        NotifyApi::notify_event_t event;
-
-        WidgetReceiveEvent()
-        : Widget(NULL, Rect(), NULL, NULL)
-        {}
-
-        virtual void draw(const Rect&)
-        {}
-
-        virtual void notify(Widget* sender, NotifyApi::notify_event_t event,
-                            unsigned long, unsigned long)
-        {
-            this->sender = sender;
-            this->event = event;
-        }
-    } widget_for_receive_event;
-
-    Widget * parent = &widget_for_receive_event;
-    ModApi * drawable = NULL;
-    NotifyApi * notifier = NULL;
-
-    WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
-
-    wimage.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wimage);
-    BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_UP);
-    wimage.send_event(CLIC_BUTTON1_DOWN, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wimage);
-    BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_DOWN);
-    wimage.send_event(KEYUP, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wimage);
-    BOOST_CHECK(widget_for_receive_event.event == KEYUP);
-    wimage.send_event(KEYDOWN, 0, 0, 0);
-    BOOST_CHECK(widget_for_receive_event.sender == &wimage);
-    BOOST_CHECK(widget_for_receive_event.event == KEYDOWN);
-}
+// BOOST_AUTO_TEST_CASE(TraceWidgetImageEvent)
+// {
+//     struct WidgetReceiveEvent : public Widget {
+//         Widget * sender;
+//         NotifyApi::notify_event_t event;
+//
+//         WidgetReceiveEvent()
+//         : Widget(NULL, Rect(), NULL, NULL)
+//         {}
+//
+//         virtual void draw(const Rect&)
+//         {}
+//
+//         virtual void notify(Widget* sender, NotifyApi::notify_event_t event,
+//                             unsigned long, unsigned long)
+//         {
+//             this->sender = sender;
+//             this->event = event;
+//         }
+//     } widget_for_receive_event;
+//
+//     Widget * parent = &widget_for_receive_event;
+//     ModApi * drawable = NULL;
+//     NotifyApi * notifier = NULL;
+//
+//     WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
+//
+//     wimage.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
+//     BOOST_CHECK(widget_for_receive_event.sender == &wimage);
+//     BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_UP);
+//     wimage.send_event(CLIC_BUTTON1_DOWN, 0, 0, 0);
+//     BOOST_CHECK(widget_for_receive_event.sender == &wimage);
+//     BOOST_CHECK(widget_for_receive_event.event == CLIC_BUTTON1_DOWN);
+//     wimage.send_event(KEYUP, 0, 0, 0);
+//     BOOST_CHECK(widget_for_receive_event.sender == &wimage);
+//     BOOST_CHECK(widget_for_receive_event.event == KEYUP);
+//     wimage.send_event(KEYDOWN, 0, 0, 0);
+//     BOOST_CHECK(widget_for_receive_event.sender == &wimage);
+//     BOOST_CHECK(widget_for_receive_event.event == KEYDOWN);
+// }
 
 // BOOST_AUTO_TEST_CASE(TraceWidgetImageAndComposite)
 // {

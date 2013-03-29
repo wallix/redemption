@@ -23,84 +23,16 @@
 
 #include "widget_rect.hpp"
 
-class WidgetLabel : public WidgetRect
+class WidgetLabel : public Widget
 {
 public:
     static const size_t buffer_size = 256;
 
     char buffer[buffer_size];
-
-#if 0
-    class ContextText
-    {
-    public:
-        size_t cx;
-        size_t cy;
-        std::vector<Rect> rects;
-
-        ContextText()
-        : cx(0)
-        , cy(0)
-        {}
-
-        void init_context_text(const char * s)
-        {
-            if (s[0] != 0) {
-                uint32_t uni[128];
-                size_t part_len = UTF8toUnicode(reinterpthis_cast<const uint8_t *>(s), uni, sizeof(uni)/sizeof(uni[0]));
-                this->rects.reserve(part_len * 10);
-                for (size_t index = 0; index < part_len; index++) {
-                    FontChar *font_item = this->get_font(uni[index]);
-                    int i = 0;
-                    for (int y = 0 ; y < font_item->height; y++){
-                        unsigned char oc = 1<<7;
-                        for (int x = 0; x < font_item->width; x++){
-                            if (!oc) {
-                                oc = 1 << 7;
-                                ++i;
-                            }
-                            if (font_item->data[i + y] & oc) {
-                                this->rects.push_back(Rect(this->cx+x, y, 1,1));
-                            }
-                            oc >>= 1;
-                        }
-                    }
-                    this->cy = std::max<size_t>(this->cy, font_item->height);
-                    this->cx += font_item->width + 2;
-                }
-                if (part_len > 1)
-                    this->cx -= 2;
-            }
-        }
-
-        void draw_in(ModApi* drawable, const Rect& rect, int16_t x, int16_t y, int16_t xclip, int16_t yclip, int color)
-        {
-            Rect clip(
-                std::max<int16_t>(rect.x + x, xclip),
-                std::max<int16_t>(rect.y + y, yclip),
-                std::min<int>(rect.x, xclip) + rect.cx,
-                std::min<int>(rect.y, yclip) + rect.cy
-            );
-
-            if (clip.isempty()) {
-                return ;
-            }
-            for (size_t i = 0; i < this->rects.size(); ++i) {
-                Rect rectd = rect.intersect(this->rects[i]);
-                if (!rectd.isempty()) {
-                    drawable->draw(
-                        RDPOpaqueRect(rectd.offset(x, y), color),
-                        clip
-                    );
-                }
-            }
-        }
-    } context_text;
-#endif
-
     int x_text;
     int y_text;
     bool auto_resize;
+    int bg_color;
     int fg_color;
 
 public:
@@ -108,10 +40,11 @@ public:
                 NotifyApi* notifier, const char * text, bool auto_resize = true,
                 int id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
                 int xtext = 0, int ytext = 0)
-    : WidgetRect(drawable, Rect(x,y,1,1), parent, notifier, id, bgcolor)
+    : Widget(drawable, Rect(x,y,1,1), parent, notifier, id)
     , x_text(xtext)
     , y_text(ytext)
     , auto_resize(auto_resize)
+    , bg_color(bgcolor)
     , fg_color(fgcolor)
     {
         this->rect.cx = 0;
@@ -126,15 +59,10 @@ public:
     void set_text(const char * text)
     {
         this->buffer[0] = 0;
-        //this->context_text.rects.clear();
         if (text) {
             const size_t max = buffer_size - 1;
             memcpy(buffer, text, max);
             this->buffer[max] = 0;
-            //if (this->drawable) {
-            //    this->context_text.init_context_text(this->buffer);
-            //}
-
             if (this->auto_resize && this->drawable) {
                 int w,h;
                 this->drawable->text_metrics(this->buffer, w,h);
@@ -151,7 +79,7 @@ public:
 
     virtual void draw(const Rect& clip)
     {
-        this->WidgetRect::draw(clip);
+        this->drawable->draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
         this->drawable->server_draw_text(this->x_text + this->dx(),
                                          this->y_text + this->dy(),
                                          this->get_text(),

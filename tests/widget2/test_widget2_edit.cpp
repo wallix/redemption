@@ -389,190 +389,192 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
     }
 }
 
-// BOOST_AUTO_TEST_CASE(TraceWidgetEditEvent)
-// {
-//     TestDraw drawable(800, 600);
-//
-//     struct WidgetReceiveEvent : public WidgetComposite {
-//         Widget * sender;
-//         NotifyApi::notify_event_t event;
-//
-//         WidgetReceiveEvent(ModApi * drawable)
-//         : WidgetComposite(drawable, Rect(0,0,800,600), 0, 0)
-//         {}
-//
-//         virtual void notify(Widget * sender, NotifyApi::notify_event_t event,
-//                             unsigned long, unsigned long)
-//         {
-//             this->sender = sender;
-//             this->event = event;
-//         }
-//     } widget_for_receive_event(&drawable);
-//
-//     struct Notify : public NotifyApi {
-//         Widget * sender;
-//         notify_event_t event;
-//         virtual void notify(Widget* sender, notify_event_t event,
-//                             long unsigned int, long unsigned int)
-//         {
-//             this->sender = sender;
-//             this->event = event;
-//         }
-//     } notifier;
-//
-//     Widget * parent = &widget_for_receive_event;
-//     int16_t x = 0;
-//     int16_t y = 0;
-//     uint16_t cx = 100;
-//
-//     WidgetEdit wedit(&drawable, x, y, cx, parent, &notifier, "abcdef", 0, GREEN, RED);
-//     widget_for_receive_event.child_list.push_back(&wedit);
-//
-//     parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
-//     //drawable.save_to_png("/tmp/edit-e1.png");
-//     char message[1024];
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\x2b\x02\x93\x2d\x22\x83\x01\x96\x23\x2d"
-//         "\x06\x51\x9b\xbc\x65\xb8\xe5\x28\x7a\x4b")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-//
-//     Keymap2 keymap;
-//     keymap.push_kevent(Keymap2::KEVENT_KEY);
-//     keymap.push_char('a');
-//
-//     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-//     parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
-//     //drawable.save_to_png("/tmp/edit-e2.png");
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
-//         "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-//
-//     keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
-//     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+BOOST_AUTO_TEST_CASE(EventWidgetEdit)
+{
+    TestDraw drawable(800, 600);
+
+    struct Notify : public NotifyApi {
+        Widget * sender;
+        notify_event_t event;
+        Notify()
+        : sender(0)
+        , event(0)
+        {}
+        virtual void notify(Widget* sender, notify_event_t event,
+                            long unsigned int, long unsigned int)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } notifier;
+
+    Widget * parent = 0;
+    int16_t x = 0;
+    int16_t y = 0;
+    uint16_t cx = 100;
+
+    WidgetEdit wedit(&drawable, x, y, cx, parent, &notifier, "abcdef", 0, GREEN, RED);
+
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
+    drawable.save_to_png("/tmp/edit-e1.png");
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x2b\x02\x93\x2d\x22\x83\x01\x96\x23\x2d"
+        "\x06\x51\x9b\xbc\x65\xb8\xe5\x28\x7a\x4b")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    Keymap2 keymap;
+    keymap.init_layout(0x040C);
+
+    keymap.event(0, 16); // 'a'
+    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 16);
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
+    drawable.save_to_png("/tmp/edit-e2-1.png");
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xa7\x37\xe0\x04\x2f\x24\xc4\x4b\xbd\x16"
+        "\xbd\x46\x00\x70\xf9\xf9\x31\xb1\xa9\x42")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+    BOOST_CHECK(notifier.sender == &wedit);
+    BOOST_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
+    notifier.event = 0;
+    notifier.sender = 0;
+
+    keymap.event(0, 17); // 'z'
+    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17);
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
+    drawable.save_to_png("/tmp/edit-e2-2.png");
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x92\x30\x93\x5a\x19\x1c\x48\x35\x38\x79"
+        "\x20\x26\xa3\xac\xa8\x74\x1b\x19\x0a\x18")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+    BOOST_CHECK(notifier.sender == &wedit);
+    BOOST_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
+    notifier.event = 0;
+    notifier.sender = 0;
+
+    keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
+    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
+    drawable.save_to_png("/tmp/edit-e3.png");
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xbf\xaf\x97\x2a\xec\x3f\x5b\x74\x31\x91"
+        "\x45\x04\x90\xad\xb7\x64\x05\x95\x16\xcf")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
+
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
+    drawable.save_to_png("/tmp/edit-e4.png");
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x92\x30\x93\x5a\x19\x1c\x48\x35\x38\x79"
+        "\x20\x26\xa3\xac\xa8\x74\x1b\x19\x0a\x18")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
+    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
+    drawable.save_to_png("/tmp/edit-e5.png");
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xa7\x37\xe0\x04\x2f\x24\xc4\x4b\xbd\x16"
+        "\xbd\x46\x00\x70\xf9\xf9\x31\xb1\xa9\x42")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
+    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
+    drawable.save_to_png("/tmp/edit-e6.png");
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xf0\x85\xb7\x90\x22\x91\xfa\x8c\x04\x5b"
+        "\x0d\x3d\xe0\xa0\x78\xad\xe6\x2a\xfb\xa8")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
+    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
+    drawable.save_to_png("/tmp/edit-e7.png");
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xf6\x5b\xd3\x2c\x55\x62\xdb\x4c\x1e\xa2"
+        "\xe8\x0a\xb6\x4d\xcc\x8f\x9e\x94\x0d\xe3")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    keymap.push_kevent(Keymap2::KEVENT_DELETE);
+    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
+
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
+    drawable.save_to_png("/tmp/edit-e8.png");
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x6c\x16\x21\xab\xbc\xf3\x60\x21\x13\xa9"
+        "\xc9\x90\x53\x92\x3a\x02\x73\x55\x80\x26")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    keymap.push_kevent(Keymap2::KEVENT_END);
+    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
+
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
+    drawable.save_to_png("/tmp/edit-e9.png");
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x0e\x55\xe6\x11\x78\xbc\xfc\x9f\xd6\x8b"
+        "\x57\xc7\x9f\xee\xf3\x32\xa3\xd7\xcc\xaf")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    keymap.push_kevent(Keymap2::KEVENT_HOME);
+    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
+
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
+    drawable.save_to_png("/tmp/edit-e10.png");
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x9e\xc1\x1b\x31\x1c\x40\xc3\x49\x07\xfc"
+        "\xc4\x0f\x1a\xb8\x46\x25\x5f\x74\x02\x05")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    BOOST_CHECK(notifier.sender == &wedit);
+    BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
+
+//     wedit.send_event(CLIC_BUTTON1_DOWN, 10, 3, 0);
 //     BOOST_CHECK(widget_for_receive_event.sender == 0);
 //     BOOST_CHECK(widget_for_receive_event.event == 0);
 //     BOOST_CHECK(notifier.sender == 0);
 //     BOOST_CHECK(notifier.event == 0);
+//     notifier.sender = 0;
+//     notifier.event = 0;
+//     widget_for_receive_event.sender = 0;
+//     widget_for_receive_event.event = 0;
 //
-//     parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
-//     //drawable.save_to_png("/tmp/edit-e3.png");
+//     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
+//     //drawable.save_to_png("/tmp/edit-e10.png");
 //     if (!check_sig(drawable.gd.drawable, message,
 //         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
 //         "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
 //         BOOST_CHECK_MESSAGE(false, message);
 //     }
-//
-//     keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
-//     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-//     BOOST_CHECK(widget_for_receive_event.sender == 0);
-//     BOOST_CHECK(widget_for_receive_event.event == 0);
-//     BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(notifier.event == 0);
-//
-//     parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
-//     //drawable.save_to_png("/tmp/edit-e4.png");
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
-//         "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-//
-//     keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
-//     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-//     BOOST_CHECK(widget_for_receive_event.sender == 0);
-//     BOOST_CHECK(widget_for_receive_event.event == 0);
-//     BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(notifier.event == 0);
-//
-//     parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
-//     //drawable.save_to_png("/tmp/edit-e5.png");
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
-//         "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-//
-//     keymap.push_kevent(Keymap2::KEVENT_DELETE);
-//     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-//     BOOST_CHECK(widget_for_receive_event.sender == 0);
-//     BOOST_CHECK(widget_for_receive_event.event == 0);
-//     BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(notifier.event == 0);
-//
-//     parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
-//     //drawable.save_to_png("/tmp/edit-e6.png");
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
-//         "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-//
-//     keymap.push_kevent(Keymap2::KEVENT_END);
-//     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-//     BOOST_CHECK(widget_for_receive_event.sender == 0);
-//     BOOST_CHECK(widget_for_receive_event.event == 0);
-//     BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(notifier.event == 0);
-//
-//     parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
-//     //drawable.save_to_png("/tmp/edit-e7.png");
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
-//         "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-//
-//     keymap.push_kevent(Keymap2::KEVENT_HOME);
-//     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-//     BOOST_CHECK(widget_for_receive_event.sender == 0);
-//     BOOST_CHECK(widget_for_receive_event.event == 0);
-//     BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(notifier.event == 0);
-//
-//     parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
-//     //drawable.save_to_png("/tmp/edit-e8.png");
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
-//         "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-//
-//     keymap.push_kevent(Keymap2::KEVENT_ENTER);
-//     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-//     BOOST_CHECK(widget_for_receive_event.sender == 0);
-//     BOOST_CHECK(widget_for_receive_event.event == 0);
-//     BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(notifier.event == 0);
-//
-//     parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
-//     //drawable.save_to_png("/tmp/edit-e9.png");
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
-//         "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-//
-// //     wedit.send_event(CLIC_BUTTON1_DOWN, 10, 3, 0);
-// //     BOOST_CHECK(widget_for_receive_event.sender == 0);
-// //     BOOST_CHECK(widget_for_receive_event.event == 0);
-// //     BOOST_CHECK(notifier.sender == 0);
-// //     BOOST_CHECK(notifier.event == 0);
-// //     notifier.sender = 0;
-// //     notifier.event = 0;
-// //     widget_for_receive_event.sender = 0;
-// //     widget_for_receive_event.event = 0;
-// //
-// //     parent->rdp_input_invalidate(Rect(0, 0, parent->cx(), parent->cx()));
-// //     //drawable.save_to_png("/tmp/edit-e10.png");
-// //     if (!check_sig(drawable.gd.drawable, message,
-// //         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
-// //         "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
-// //         BOOST_CHECK_MESSAGE(false, message);
-// //     }
-// }
+}
 //
 // BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
 // {
