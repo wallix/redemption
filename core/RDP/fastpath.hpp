@@ -847,7 +847,7 @@ namespace FastPath {
 
     struct ServerUpdatePDU_Send {
         ServerUpdatePDU_Send( Stream & stream
-                            , uint16_t datalen
+                            , Stream & data
                             , uint8_t secFlags
                             , CryptContext & crypt
                             , Stream * fipsInformation = NULL) {
@@ -868,11 +868,11 @@ namespace FastPath {
 
             uint16_t length =
                   1                                               // fpOutputHeader
-                + ((datalen > 127) ? 2 : 1)                   // length
                 + ((fipsInformation != NULL) ? 4 : 0)
                 + ((secFlags & FASTPATH_INPUT_ENCRYPTED) ? 8 : 0) // dataSignature
-                + datalen
+                + data.size()                                     // fpOutputUpdates
                 ;
+            length += ((length >= 127) ? 2 : 1);                  // length
 
             stream.out_per_length(length);
 
@@ -880,7 +880,6 @@ namespace FastPath {
                 stream.out_copy_bytes(fipsInformation->data, 4);
             }
 
-/*
             if (secFlags & FASTPATH_OUTPUT_ENCRYPTED) {
                 SubStream signature(stream, stream.get_offset(), 8);
 
@@ -889,7 +888,7 @@ namespace FastPath {
                 stream.p += 8;
                 crypt.decrypt(data);
             }
-*/
+
             stream.mark_end();
         }
     };
@@ -1105,7 +1104,7 @@ namespace FastPath {
 
     struct Update_Send {
         Update_Send( Stream & stream
-                   , Stream & data
+                   , uint16_t datalen
                    , uint8_t updateCode
                    , uint8_t fragmentation
 //                   , uint8_t compressionFlags
@@ -1118,9 +1117,14 @@ namespace FastPath {
 
 //            stream.out_uint8(compressionFlags);
 
-            stream.out_uint16_le(data.size());
+              stream.out_uint16_le(datalen);
 
             stream.mark_end();
+        }
+
+        // Returns size of TS_FP_UPDATE structure.
+        static size_t GetSize() {
+            return 3;
         }
     };
 

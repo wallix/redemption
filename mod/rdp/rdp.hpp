@@ -60,7 +60,6 @@
 
 
 struct mod_rdp : public client_mod {
-
     /* mod data */
     BStream in_stream;
     ChannelDefArray mod_channel_list;
@@ -139,8 +138,8 @@ struct mod_rdp : public client_mod {
     uint32_t performanceFlags;
 
     bool fastpath_support;                    // choice of programmer
-    bool server_fastpath_update_support;      // = choice of programmer
     bool client_fastpath_input_event_support; // choice of programmer + capability of server
+    bool server_fastpath_update_support;      // = choice of programmer
 
     mod_rdp(Transport * trans,
             const char * target_user,
@@ -187,8 +186,8 @@ struct mod_rdp : public client_mod {
                     opt_clipboard(clipboard),
                     performanceFlags(info.rdp5_performanceflags),
                     fastpath_support(fp_support),
-                    server_fastpath_update_support(fp_support),
-                    client_fastpath_input_event_support(false)
+                    client_fastpath_input_event_support(false),
+                    server_fastpath_update_support(fp_support)
     {
         if (this->verbose & 1){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
@@ -3297,7 +3296,7 @@ struct mod_rdp : public client_mod {
                     input_caps.log("Received from server");
 
                     this->client_fastpath_input_event_support =
-                        ((this->fastpath_support && (input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2))) != 0);
+                        (this->fastpath_support && ((input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)) != 0));
                 }
                 break;
                 default:
