@@ -676,15 +676,15 @@ struct mod_vnc : public client_mod {
                     throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
                 }
 
+                this->front.begin_update();
                 for (uint16_t yy = y ; yy < y + cy ; yy += 16){
                     uint8_t * tmp = raw;
                     uint16_t cyy = std::min<uint16_t>(16, cy-(yy-y));
                     this->t->recv(&tmp, cyy*cx*Bpp);
-                    this->front.begin_update();
 //                    LOG(LOG_INFO, "draw vnc: x=%d y=%d cx=%d cy=%d", x, yy, cx, cyy);
                     this->front.draw_vnc(Rect(x, yy, cx, cyy), this->bpp, this->palette332, raw, cx*16*Bpp);
-                    this->front.end_update();
                 }
+                this->front.end_update();
                 free(raw);
             }
             break;

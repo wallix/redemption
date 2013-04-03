@@ -63,7 +63,7 @@ extern "C" {
         size_t remaining_len = len;
 
         while (remaining_len > 0) {
-            ssize_t res = ::recv(self->sck, pbuffer, len, 0);
+            ssize_t res = ::recv(self->sck, pbuffer, remaining_len, 0);
             switch (res) {
                 case -1: /* error, maybe EAGAIN */
                     if (try_again(errno)) {
