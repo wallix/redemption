@@ -36,9 +36,11 @@
 struct TestDraw : ModApi
 {
     RDPDrawable gd;
+    Font font;
 
     TestDraw(uint16_t w, uint16_t h)
     : gd(w, h, true)
+    , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
     virtual void draw(const RDPOpaqueRect& cmd, const Rect& rect)
@@ -97,14 +99,26 @@ struct TestDraw : ModApi
     virtual void end_update()
     {}
 
-    virtual void server_draw_text(int, int, const char*, uint32_t, const Rect&)
+    virtual void server_draw_text(int x, int y, const char* text,
+                                  uint32_t fgcolor, const Rect& clip)
     {
-        BOOST_CHECK(false);
+        this->gd.server_draw_text(x, y, text, fgcolor, clip, this->font);
     }
 
-    virtual void text_metrics(const char* , int& , int& )
+    virtual void text_metrics(const char* text, int& width, int& height)
     {
-        BOOST_CHECK(false);
+        height = 0;
+        width = 0;
+        uint32_t uni[256];
+        size_t len_uni = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
+        if (len_uni){
+            for (size_t index = 0; index < len_uni; index++) {
+                FontChar *font_item = this->gd.get_font(this->font, uni[index]);
+                width += font_item->width + 2;
+                height = std::max(height, font_item->height);
+            }
+            width -= 2;
+        }
     }
 
     void save_to_png(const char * filename)
@@ -124,11 +138,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
     int id = 0;
 
     Window window(&drawable, Rect(30,40,500,400), parent, notifier, "Window 1");
-    WidgetRect wrect1(&drawable, Rect(0,0,100,100),
+    window.resize_titlebar();
+    WidgetRect wrect1(&drawable, Rect(0,window.titlebar.cy()+0,100,100),
                       &window, notifier, id++, YELLOW);
-    WidgetRect wrect2(&drawable, Rect(0,100,100,100),
+    WidgetRect wrect2(&drawable, Rect(0,window.titlebar.cy()+100,100,100),
                       &window, notifier, id++, RED);
-    WidgetRect wrect3(&drawable, Rect(100,100,100,100),
+    WidgetRect wrect3(&drawable, Rect(100,window.titlebar.cy()+100,100,100),
                       &window, notifier, id++, BLUE);
     WidgetRect wrect4(&drawable, Rect(300,300,100,100),
                       &window, notifier, id++, GREEN);
@@ -149,12 +164,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
                                      window.cx(),
                                      window.cy()));
 
-    //drawable.save_to_png("/tmp/window.png");
+    drawable.save_to_png("/tmp/window.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x92\x57\x70\xc1\xca\x27\x0f\xb3\x89\x2b"
-        "\xb6\xad\xe7\x85\xdd\x6f\xc5\x66\xdb\x82")){
+        "\xb0\x5f\x19\xc1\x3d\x16\xcc\x97\x3d\xc6"
+        "\xc4\x12\x4e\xb2\x0e\x39\xa8\x63\x1b\x7e")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -164,25 +179,22 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
                                      100,
                                      100));
 
-    //drawable.save_to_png("/tmp/window2.png");
+    drawable.save_to_png("/tmp/window2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\x92\x57\x70\xc1\xca\x27\x0f\xb3\x89\x2b"
-        "\xb6\xad\xe7\x85\xdd\x6f\xc5\x66\xdb\x82")){
+        "\xb0\x5f\x19\xc1\x3d\x16\xcc\x97\x3d\xc6"
+        "\xc4\x12\x4e\xb2\x0e\x39\xa8\x63\x1b\x7e")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // ask to widget to redraw at it's current position
-    window.rdp_input_invalidate(Rect(0 + window.dx(),
-                                     0 + window.dy(),
-                                     window.cx(),
-                                     window.cy()));
+    window.rdp_input_invalidate(window.rect);
 
-    //drawable.save_to_png("/tmp/window3.png");
+    drawable.save_to_png("/tmp/window3.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\x54\xb8\xf6\x10\x0f\xe5\x65\xb5\xc2\xff"
-        "\xb1\xa1\xed\x6f\xf1\xb1\x09\x83\x23\x73")){
+        "\xba\x3a\xc0\xe0\x94\x28\x2d\x4b\xf4\x7e"
+        "\x87\x12\xfc\x8a\x3d\x30\x19\x8f\x80\x6c")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -208,7 +220,6 @@ BOOST_AUTO_TEST_CASE(EventWidgetWindow)
     } notifier;
     ModApi * drawable = 0;
     Widget * parent = NULL;
-    int id = 0;
 
     Window window(drawable, Rect(30,40,500,400), parent, &notifier, "Window 1");
     window.button_close.rdp_input_mouse(CLIC_BUTTON1_DOWN, 0,0,0);

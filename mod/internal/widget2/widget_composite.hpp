@@ -254,7 +254,7 @@ public:
             Rect rect = new_clip.intersect(w->rect);
 
             if (!rect.isempty()) {
-                w->refresh(new_clip);
+                w->refresh(rect);
             }
         }
     }

@@ -37,13 +37,24 @@ public:
     Window(ModApi* drawable, const Rect& rect, Widget* parent, NotifyApi* notifier,
            const char * caption, int bgcolor = DARK_WABGREEN, int id = 0)
     : WidgetComposite(drawable, rect, parent, notifier, id)
-    , titlebar(drawable, this->dx(), this->dy(), this, NULL, caption, false, -1, WABGREEN, BLACK, 5)
-    , button_close(drawable, this->titlebar.cx() - 10, this->titlebar.cy() - 10,
-                   this, this, "X", false, -2, DARK_GREEN, WHITE)
+    , titlebar(drawable, 0, 0, this, NULL, caption, false, -1, WABGREEN, BLACK, 5)
+    , button_close(drawable, 0, 0, this, this, "X", true, -2, DARK_GREEN, WHITE, 3, 0)
     , bg_color(bgcolor)
     {
         this->child_list.push_back(&this->titlebar);
         this->child_list.push_back(&this->button_close);
+    }
+
+    void resize_titlebar()
+    {
+        int w,h;
+        this->drawable->text_metrics(this->titlebar.buffer, w,h);
+        this->titlebar.rect.cx = this->cx();
+        this->titlebar.rect.cy = h;
+        this->titlebar.y_text = std::max((this->button_close.cy() + 4 - h)/4, 0);
+        this->titlebar.rect.cy += this->titlebar.y_text*2;
+        this->button_close.rect.x = this->dx() + this->cx() - this->button_close.cx() - 5;
+        this->button_close.label.rect.x = this->button_close.dx() + 2;
     }
 
     virtual ~Window()
@@ -63,10 +74,7 @@ public:
     virtual void draw(const Rect& clip)
     {
         this->WidgetComposite::draw(clip);
-        Rect new_clip = clip.intersect(Rect(this->dx(),
-                                            this->dy() - this->titlebar.cy(),
-                                            this->cx(),
-                                            this->cy() - this->titlebar.cy()));
+        Rect new_clip = clip.intersect(this->rect);
         Region region;
         region.rects.push_back(new_clip);
 
