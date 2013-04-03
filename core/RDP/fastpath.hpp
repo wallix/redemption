@@ -854,14 +854,14 @@ namespace FastPath {
             stream.reset();
 
             if ((fipsInformation != NULL) && (fipsInformation->size() < 4)) {
-                LOG(LOG_ERR, "FastPath::Update_Send: fipsInformation too short, expected=4 got=%u",
+                LOG(LOG_ERR, "FastPath::ServerUpdatePDU_Send: fipsInformation too short, expected=4 got=%u",
                     fipsInformation->size());
                 throw Error(ERR_RDP_FASTPATH);
             }
 
             uint8_t fpOutputHeader =
                   FASTPATH_OUTPUT_ACTION_FASTPATH
-                | secFlags << 6
+                | ((secFlags & 0x03) << 6)
                 ;
 
             stream.out_uint8(fpOutputHeader);
