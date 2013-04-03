@@ -301,9 +301,11 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
     CheckTransport     out_t(payload, payload_length);
 
     BStream in_s(65536);
-    BStream out_s(256);
+    BStream out_s(65536);
 
     FastPath::ServerUpdatePDU_Recv in_su(in_t, in_s, decrypt);
+
+    out_s.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
 
     uint8_t updateCode = FastPath::FASTPATH_UPDATETYPE_CACHED;
 
@@ -311,15 +313,27 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
         FastPath::Update_Recv in_upd(in_su.payload);
 
         if (in_upd.updateCode == updateCode) {
-            BStream out_upd_s(256);
+            out_s.out_copy_bytes(in_upd.payload.data, in_upd.payload.size());
+            out_s.mark_end();
 
-            FastPath::Update_Send out_upd(out_upd_s, in_upd.payload, in_upd.updateCode, in_upd.fragmentation);
+            SubStream Upd_s(out_s, 0, FastPath::Update_Send::GetSize());
 
-            FastPath::ServerUpdatePDU_Send out_su(out_s, out_upd_s.size() + in_upd.payload.size(), in_su.secFlags, decrypt);
+            FastPath::Update_Send Upd( Upd_s
+                                     , out_s.size() - FastPath::Update_Send::GetSize()
+                                     , in_upd.updateCode
+                                     , in_upd.fragmentation);
 
-            out_t.send(out_s);          // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-            out_t.send(out_upd_s);      // Fast-Path Update (TS_FP_UPDATE)
-            out_t.send(in_upd.payload); // updateData
+            BStream SvrUpdPDU_s(256);
+
+            FastPath::ServerUpdatePDU_Send SvrUpdPDU(
+                  SvrUpdPDU_s
+                , out_s
+                , in_su.secFlags
+                , decrypt
+                );
+
+            out_t.send(SvrUpdPDU_s); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+            out_t.send(out_s);       // Fast-Path Update (TS_FP_UPDATE)
         }
     }
 

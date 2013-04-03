@@ -35,6 +35,7 @@
 #include "RDP/sec.hpp"
 #include "RDP/lic.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
+#include "RDP/fastpath.hpp"
 // MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
 // ================================================================
 // The TS_FP_UPDATE_ORDERS structure contains primary, secondary, and alternate
@@ -106,6 +107,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
     int & shareid;
     int & encryptionLevel;
     CryptContext & encrypt;
+    bool fastpath_support;
 
     GraphicsUpdatePDU(Transport * trans,
                       uint16_t & userid,
@@ -117,7 +119,8 @@ struct GraphicsUpdatePDU : public RDPSerializer
                       BmpCache & bmp_cache,
                       const int bitmap_cache_version,
                       const int use_bitmap_comp,
-                      const int op2)
+                      const int op2,
+                      bool fastpath_support)
         : RDPSerializer(trans, this->buffer_stream,
             bpp, bmp_cache, bitmap_cache_version, use_bitmap_comp, op2, ini),
         buffer_stream(65536),
@@ -126,7 +129,8 @@ struct GraphicsUpdatePDU : public RDPSerializer
         userid(userid),
         shareid(shareid),
         encryptionLevel(encryptionLevel),
-        encrypt(encrypt)
+        encrypt(encrypt),
+        fastpath_support(fastpath_support)
     {
         this->init();
     }
@@ -140,19 +144,27 @@ struct GraphicsUpdatePDU : public RDPSerializer
         if (this->sctrl){ delete this->sctrl; }
         if (this->sdata){ delete this->sdata; }
 
-        if (this->ini.globals.debug.primary_orders > 3){
-            LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
+        if (this->fastpath_support == false) {
+            if (this->ini.globals.debug.primary_orders > 3){
+                LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
+            }
+            this->sctrl = new ShareControl(this->stream);
+            this->sctrl->emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
+            this->sdata = new ShareData(this->stream);
+            this->sdata->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
+            TODO("this is to kind of header, to be treated like other headers")
+            this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
+            this->stream.out_clear_bytes(2); /* pad */
+            this->offset_order_count = this->stream.get_offset();
+            this->stream.out_clear_bytes(2); /* number of orders, set later */
+            this->stream.out_clear_bytes(2); /* pad */
         }
-        this->sctrl = new ShareControl(this->stream);
-        this->sctrl->emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE );
-        this->sdata = new ShareData(this->stream);
-        this->sdata->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED );
-        TODO("this is to kind of header, to be treated like other headers")
-        this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
-        this->stream.out_clear_bytes(2); /* pad */
-        this->offset_order_count = this->stream.get_offset();
-        this->stream.out_clear_bytes(2); /* number of orders, set later */
-        this->stream.out_clear_bytes(2); /* pad */
+        else {
+            this->stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+
+            this->offset_order_count = this->stream.get_offset();
+            this->stream.out_clear_bytes(2);  // number of orders, set later
+        }
     }
 
     virtual void flush()
@@ -161,27 +173,53 @@ struct GraphicsUpdatePDU : public RDPSerializer
             if (this->ini.globals.debug.primary_orders > 3){
                 LOG(LOG_INFO, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             }
+
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
-
-            this->sdata->emit_end();
-            this->sctrl->emit_end();
-            this->stream.mark_end();    
-
-            BStream x224_header(256);
-            BStream mcs_header(256);
-            BStream sec_header(256);
-
-            SEC::Sec_Send sec(sec_header, this->stream, 0, this->encrypt, this->encryptionLevel, 0);
-            MCS::SendDataIndication_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + this->stream.size(), MCS::PER_ENCODING);
-            X224::DT_TPDU_Send(x224_header, sec_header.size() + this->stream.size() + mcs_header.size());
-
-
-            this->trans->send(x224_header);
-            this->trans->send(mcs_header);
-            this->trans->send(sec_header);
-            
             this->stream.mark_end();
-            this->trans->send(this->stream);
+
+            if (this->fastpath_support == false) {
+                this->sdata->emit_end();
+                this->sctrl->emit_end();
+
+                BStream x224_header(256);
+                BStream mcs_header(256);
+                BStream sec_header(256);
+
+                SEC::Sec_Send sec(sec_header, this->stream, 0, this->encrypt, this->encryptionLevel, 0);
+                MCS::SendDataIndication_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + this->stream.size(), MCS::PER_ENCODING);
+                X224::DT_TPDU_Send(x224_header, sec_header.size() + this->stream.size() + mcs_header.size());
+
+                this->trans->send(x224_header);
+                this->trans->send(mcs_header);
+                this->trans->send(sec_header);
+
+                this->trans->send(this->stream);
+            }
+            else {
+                if (this->ini.globals.debug.primary_orders > 3){
+                    LOG(LOG_INFO, "GraphicsUpdatePDU::flush: fast-path");
+                }
+
+                SubStream Upd_s(this->stream, 0, FastPath::Update_Send::GetSize());
+
+                FastPath::Update_Send Upd( Upd_s
+                                         , this->stream.size() - FastPath::Update_Send::GetSize()
+                                         , FastPath::FASTPATH_UPDATETYPE_ORDERS
+                                         , FastPath::FASTPATH_FRAGMENT_SINGLE);
+
+                BStream SvrUpdPDU_s(256);
+
+                FastPath::ServerUpdatePDU_Send SvrUpdPDU(
+                      SvrUpdPDU_s
+                    , this->stream
+                    , 0 // ((this->encryptionLevel != 0) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                    , this->encrypt
+                    );
+
+                this->trans->send(SvrUpdPDU_s);  // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+                this->trans->send(this->stream); // Fast-Path Update (TS_FP_UPDATE)
+            }
+
             this->order_count = 0;
             this->stream.reset();
             this->init();

@@ -114,7 +114,9 @@ public:
 
     Random * gen;
 
-    bool fastpath_support;
+    bool fastpath_support;                    // choice of programmer
+    bool client_fastpath_input_event_support; // = choice of programmer
+    bool server_fastpath_update_support;      // choice of programmer + capability of client
 
 TODO("Pass font name as parameter in constructor")
 
@@ -143,6 +145,8 @@ TODO("Pass font name as parameter in constructor")
         , state(CONNECTION_INITIATION)
         , gen(gen)
         , fastpath_support(fp_support)
+        , client_fastpath_input_event_support(fp_support)
+        , server_fastpath_update_support(false)
     {
         init_palette332(this->palette332);
         this->mod_palette_setted = false;
@@ -431,7 +435,9 @@ TODO("Pass font name as parameter in constructor")
                         *this->bmp_cache,
                         this->client_info.bitmap_cache_version,
                         this->client_info.use_bitmap_comp,
-                        this->client_info.use_compact_packets);
+                        this->client_info.use_compact_packets,
+                        this->server_fastpath_update_support);
+//                        false);
 
         this->pointer_cache.reset(this->client_info);
         this->brush_cache.reset(this->client_info);
@@ -561,57 +567,92 @@ TODO("Pass font name as parameter in constructor")
     // The number of RGB triplets in the paletteData field.
     // This field MUST be set to NUM_8BPP_PAL_ENTRIES (256).
 
+    void GeneratePaletteUpdateData(Stream & stream) {
+        const BGRPalette & palette = (this->mod_bpp == 8)?this->memblt_mod_palette:this->palette332;
+
+        // Payload
+        stream.out_uint16_le(RDP_UPDATE_PALETTE);
+        stream.out_uint16_le(0);
+        stream.out_uint32_le(256); /* # of colors */
+        for (int i = 0; i < 256; i++) {
+            int color = palette[i];
+            uint8_t r = color >> 16;
+            uint8_t g = color >> 8;
+            uint8_t b = color;
+            stream.out_uint8(b);
+            stream.out_uint8(g);
+            stream.out_uint8(r);
+        }
+        stream.mark_end();
+    }
+
     void send_global_palette() throw (Error)
     {
         if (!this->palette_sent && (this->client_info.bpp == 8)){
-
-            const BGRPalette & palette = (this->mod_bpp == 8)?this->memblt_mod_palette:this->palette332;
-
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
+
             BStream stream(65536);
-            ShareControl sctrl(stream);
-            sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
-            ShareData sdata(stream);
-            sdata.emit_begin(PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
-            // Payload
-            stream.out_uint16_le(RDP_UPDATE_PALETTE);
-            stream.out_uint16_le(0);
-            stream.out_uint32_le(256); /* # of colors */
-            for (int i = 0; i < 256; i++) {
-                int color = palette[i];
-                uint8_t r = color >> 16;
-                uint8_t g = color >> 8;
-                uint8_t b = color;
-                stream.out_uint8(b);
-                stream.out_uint8(g);
-                stream.out_uint8(r);
+            if (this->server_fastpath_update_support == false) {
+                ShareControl sctrl(stream);
+                sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
+                ShareData sdata(stream);
+                sdata.emit_begin(PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
+
+                GeneratePaletteUpdateData(stream);
+
+                // Packet trailer
+                sdata.emit_end();
+                sctrl.emit_end();
+
+                BStream x224_header(256);
+                BStream mcs_header(256);
+                BStream sec_header(256);
+
+                if (this->verbose & 128){
+                    LOG(LOG_INFO, "Sec clear payload to send:");
+                    hexdump_d(stream.data, stream.size());
+                }
+
+                SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+                MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+                X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+                this->trans->send(x224_header);
+                this->trans->send(mcs_header);
+                this->trans->send(sec_header);
+                this->trans->send(stream);
             }
-            stream.mark_end();
+            else {
+                if (this->verbose & 4){
+                    LOG(LOG_INFO, "Front::send_global_palette: fast-path");
+                }
 
-            // Packet trailer
-            sdata.emit_end();
-            sctrl.emit_end();
+                stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
 
-            BStream x224_header(256);
-            BStream mcs_header(256);
-            BStream sec_header(256);
+                GeneratePaletteUpdateData(stream);
 
-            if (this->verbose & 128){
-                LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(stream.data, stream.size());
+                SubStream Upd_s(stream, 0, FastPath::Update_Send::GetSize());
+
+                FastPath::Update_Send Upd( Upd_s
+                                         , stream.size() - FastPath::Update_Send::GetSize()
+                                         , FastPath::FASTPATH_UPDATETYPE_PALETTE
+                                         , FastPath::FASTPATH_FRAGMENT_SINGLE);
+
+                BStream SvrUpdPDU_s(256);
+
+                FastPath::ServerUpdatePDU_Send SvrUpdPDU(
+                      SvrUpdPDU_s
+                    , stream
+                    , 0 // ((this->encryptionLevel != 0) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                    , this->encrypt
+                    );
+
+                this->trans->send(SvrUpdPDU_s); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+                this->trans->send(stream);      // Fast-Path Update (TS_FP_UPDATE)
             }
-
-            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
-            MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-            X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-
-            trans->send(x224_header);
-            trans->send(mcs_header);
-            trans->send(sec_header);
-            trans->send(stream);
 
             this->palette_sent = true;
         }
@@ -727,18 +768,12 @@ TODO("Pass font name as parameter in constructor")
 //    color pointer, as specified in [T128] section 8.14.3. This pointer update
 //    is used for both monochrome and color pointers in RDP.
 
-    virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw(Error)
-    {
-        if (this->verbose & 4){
-            LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
-        }
-
-        BStream stream(65536);
-        ShareControl sctrl(stream);
-        sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
-        ShareData sdata(stream);
-        sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
-
+    void GenerateColorPointerUpdateData( Stream & stream
+                                       , int cache_idx
+                                       , uint8_t * data
+                                       , uint8_t * mask
+                                       , int x
+                                       , int y) {
         // Payload
         stream.out_uint16_le(RDP_POINTER_COLOR);
         stream.out_uint16_le(0); /* pad */
@@ -806,28 +841,74 @@ TODO("Pass font name as parameter in constructor")
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
         stream.mark_end();
+    }
 
-        // Packet trailer
-        sdata.emit_end();
-        sctrl.emit_end();
-
-        BStream x224_header(256);
-        BStream mcs_header(256);
-        BStream sec_header(256);
-
-        if (((this->verbose & 4)!=0)&&((this->verbose & 4)!=0)){
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.data, stream.size());
+    virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw(Error)
+    {
+        if (this->verbose & 4){
+            LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
         }
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+        BStream stream(65536);
 
-        trans->send(x224_header);
-        trans->send(mcs_header);
-        trans->send(sec_header);
-        trans->send(stream);
+        if (this->server_fastpath_update_support == false) {
+            ShareControl sctrl(stream);
+            sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
+            ShareData sdata(stream);
+            sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
+
+            GenerateColorPointerUpdateData(stream, cache_idx, data, mask, x, y);
+
+            // Packet trailer
+            sdata.emit_end();
+            sctrl.emit_end();
+
+            BStream x224_header(256);
+            BStream mcs_header(256);
+            BStream sec_header(256);
+
+            if (((this->verbose & 4)!=0)&&((this->verbose & 4)!=0)){
+                LOG(LOG_INFO, "Sec clear payload to send:");
+                hexdump_d(stream.data, stream.size());
+            }
+
+            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+            MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+            X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+
+            trans->send(x224_header);
+            trans->send(mcs_header);
+            trans->send(sec_header);
+            trans->send(stream);
+        }
+        else {
+            if (this->verbose & 4){
+                LOG(LOG_INFO, "Front::send_pointer: fast-path");
+            }
+
+            stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+
+            GenerateColorPointerUpdateData(stream, cache_idx, data, mask, x, y);
+
+            SubStream Upd_s(stream, 0, FastPath::Update_Send::GetSize());
+
+            FastPath::Update_Send Upd( Upd_s
+                                     , stream.size() - FastPath::Update_Send::GetSize()
+                                     , FastPath::FASTPATH_UPDATETYPE_COLOR
+                                     , FastPath::FASTPATH_FRAGMENT_SINGLE);
+
+            BStream SvrUpdPDU_s(256);
+
+            FastPath::ServerUpdatePDU_Send SvrUpdPDU(
+                  SvrUpdPDU_s
+                , stream
+                , 0 // ((this->encryptionLevel != 0) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                , this->encrypt
+                );
+
+            this->trans->send(SvrUpdPDU_s); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+            this->trans->send(stream);      // Fast-Path Update (TS_FP_UPDATE)
+        }
 
         if (this->verbose & 4){
             LOG(LOG_INFO, "Front::send_pointer done");
@@ -2131,6 +2212,9 @@ TODO("Pass font name as parameter in constructor")
         uint8_t * caps_ptr = stream.p;
 
         GeneralCaps general_caps;
+        if (this->server_fastpath_update_support) {
+            general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
+        }
         general_caps.log("Sending to client");
         general_caps.emit(stream);
         caps_count++;
@@ -2187,7 +2271,7 @@ TODO("Pass font name as parameter in constructor")
 
         InputCaps input_caps;
 // Slow/Fast-path
-        if (this->fastpath_support == false) {
+        if (this->client_fastpath_input_event_support == false) {
             input_caps.inputFlags = INPUT_FLAG_SCANCODES;
         }
         else {
@@ -2319,6 +2403,9 @@ TODO("Pass font name as parameter in constructor")
                     general.recv(stream, capset_length);
                     general.log("Receiving from client");
                     this->client_info.use_compact_packets = (general.extraflags & NO_BITMAP_COMPRESSION_HDR)?1:0;
+
+                    this->server_fastpath_update_support =
+                        (this->fastpath_support && ((general.extraflags & FASTPATH_OUTPUT_SUPPORTED) != 0));
                 }
                 break;
             case CAPSTYPE_BITMAP: {
