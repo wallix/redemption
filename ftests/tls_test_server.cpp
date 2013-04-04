@@ -68,29 +68,16 @@ static int rdp_serve(SSL * ssl, int s, BIO *bio_err)
 
 int main(int argc, char **argv)
 {
-    int s;
-    BIO *sbio;
-    SSL_CTX *ctx;
-    SSL *ssl;
-    int r;
-    pid_t pid;
-    BIO *bio_err=0;
-
-    
-    if(!bio_err){
-      /* Global system initialization*/
-      SSL_library_init();
-      SSL_load_error_strings();
-      
-      /* An error write context */
-      bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
-    }
+    SSL_library_init();
+    SSL_load_error_strings();
+     
+    BIO * bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
     /* Set up a SIGPIPE handler */
     signal(SIGPIPE, SIG_IGN);
     
     /* Create our context*/
-    ctx=SSL_CTX_new(SSLv23_method());
+    SSL_CTX * ctx = SSL_CTX_new(SSLv23_method());
 
     /* Load our keys and certificates*/
     if(!(SSL_CTX_use_certificate_chain_file(ctx, "ftests/fixtures/rdpproxy-cert.pem")))
@@ -121,7 +108,7 @@ int main(int argc, char **argv)
 
     ret=PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
     BIO_free(bio);
-    if(SSL_CTX_set_tmp_dh(ctx,ret)<0)
+    if(SSL_CTX_set_tmp_dh(ctx, ret)<0)
     {
         BIO_printf(bio_err,"Couldn't set DH parameters\n");
         ERR_print_errors(bio_err);
@@ -160,21 +147,24 @@ int main(int argc, char **argv)
     listen(sock,5);  
 
     while(1){
-      s = accept(sock,0,0);
+      int s = accept(sock,0,0);
       if(s < 0){
         fprintf(stderr,"Problem accepting\n");
         exit(0);
       }
 
-      if((pid=fork())){
-        close(s);
-      }
-      else {
-        sbio=BIO_new_socket(s,BIO_NOCLOSE);
-        ssl=SSL_new(ctx);
-        SSL_set_bio(ssl,sbio,sbio);
+     pid_t pid = fork();
+
+     if(pid){
+       close(s);
+     }
+     else {
+        BIO * sbio = BIO_new_socket(s, BIO_NOCLOSE);
+        SSL * ssl = SSL_new(ctx);
+        SSL_set_bio(ssl, sbio, sbio);
         
-        if((r=SSL_accept(ssl)<=0))
+        int r = SSL_accept(ssl);
+        if(r <= 0)
         {
             BIO_printf(bio_err, "SSL accept error\n");
             ERR_print_errors(bio_err);
