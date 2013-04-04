@@ -543,22 +543,22 @@ RIO * rio_new_socket(RIO_ERROR * error, int sck)
     return self;
 }
 
-RIO_ERROR rio_init_socket_tls(RIO * self, int sck)
+RIO_ERROR rio_init_socket_tls(RIO * self, SSL * ssl)
 {
     self->rt_type = RIO_TYPE_SOCKET_TLS;
-    self->err = rio_m_RIOSocketTLS_constructor(&(self->u.socket_tls), sck);
+    self->err = rio_m_RIOSocketTLS_constructor(&(self->u.socket_tls), ssl);
     return self->err;
 }
 
 
-RIO * rio_new_socket_tls(RIO_ERROR * error, int sck)
+RIO * rio_new_socket_tls(RIO_ERROR * error, SSL * ssl)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
     if (self == 0){ 
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
-    RIO_ERROR res = rio_init_socket(self, sck);
+    RIO_ERROR res = rio_init_socket_tls(self, ssl);
     if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
