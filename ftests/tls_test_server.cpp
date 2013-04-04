@@ -17,20 +17,16 @@
 #include <openssl/err.h>
 #include "rio/rio_impl.h"
 
-#define PORT	4433
-#define PASSWORD "password"
-
-static char *pass;
-
 static int password_cb0(char *buf, int num, int rwflag, void *userdata)
 {
-    printf("password cb\n");
-    if(num<strlen(pass)+1){
+    printf("password cb num=%u\n", num);
+    const char * pass = (char*)userdata;
+    if(num < strlen(pass)+1){
       return(0);
     }
 
-    strcpy(buf,pass);
-    return(strlen(pass));
+    strcpy(buf, pass);
+    return strlen(pass);
 }
 
 static int http_serve(SSL * ssl, int s, BIO *bio_err)
@@ -104,8 +100,8 @@ int main(int argc, char **argv)
         exit(0);
     }
 
-    pass=PASSWORD;
     SSL_CTX_set_default_passwd_cb(ctx, password_cb0);
+    SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)"inquisition");
     if(!(SSL_CTX_use_PrivateKey_file(ctx, "ftests/fixtures/rdpproxy-key.pem", SSL_FILETYPE_PEM)))
     {
         BIO_printf(bio_err,"Can't read key file\n");
@@ -136,27 +132,28 @@ int main(int argc, char **argv)
     struct sockaddr_in sin;
     int val=1;
 
-    int sock = sock=socket(AF_INET,SOCK_STREAM,0);
-    if(sock<0) {
-        fprintf(stderr,"Couldn't make socket\n");
+    int sock = socket(AF_INET,SOCK_STREAM,0);
+    if(sock < 0) {
+        fprintf(stderr, "Failed to make socket\n");
         exit(0);
     }
 
-    memset(&sin,0,sizeof(sin));
-    sin.sin_addr.s_addr=INADDR_ANY;
-    sin.sin_family=AF_INET;
-    sin.sin_port=htons(PORT);
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_addr.s_addr = INADDR_ANY;
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons(4433);
     setsockopt(sock,SOL_SOCKET,SO_REUSEADDR, &val,sizeof(val));
 
-    if(bind(sock,(struct sockaddr *)&sin,  sizeof(sin))<0){
-        fprintf(stderr, "Couldn't bind\n");
+    int bind_res = bind(sock,(struct sockaddr *)&sin,  sizeof(sin));
+    if(bind_res < 0){
+        fprintf(stderr, "Failed to bind\n");
         exit(0);
     }
     listen(sock,5);  
 
     while(1){
-      if((s=accept(sock,0,0))<0)
-      {
+      s = accept(sock,0,0);
+      if(s < 0){
         fprintf(stderr,"Problem accepting\n");
         exit(0);
       }
