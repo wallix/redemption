@@ -282,8 +282,8 @@ unit-test test_rio_test : tests/transport/rio/test_rio_test.cpp openssl crypto z
 unit-test test_rio_socket : tests/transport/rio/test_rio_socket.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_rio_socket : tests/transport/rio/test_rio_socket.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_rio_socket_tls : tests/transport/rio/test_rio_socket_tls.cpp openssl crypto z dl libboost_unit_test ;
-unit-test test_rio_socket_tls : tests/transport/rio/test_rio_socket_tls.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+#unit-test test_rio_socket_tls : tests/transport/rio/test_rio_socket_tls.cpp openssl crypto z dl libboost_unit_test ;
+#unit-test test_rio_socket_tls : tests/transport/rio/test_rio_socket_tls.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_rio_insequence : tests/transport/rio/test_rio_insequence.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_rio_insequence : tests/transport/rio/test_rio_insequence.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;

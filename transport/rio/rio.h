@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_LIBS_RIO_CONSTANTS_H_
 #define _REDEMPTION_LIBS_RIO_CONSTANTS_H_
 
+#include </usr/include/openssl/ssl.h>
+
 extern "C" {
 
     typedef enum {
@@ -102,6 +104,9 @@ extern "C" {
 
     RIO * rio_new_socket(RIO_ERROR * error, int fd);
     RIO_ERROR rio_init_socket(RIO * self, int fd);
+
+    RIO * rio_new_socket_tls(RIO_ERROR * error, SSL * ssl);
+    RIO_ERROR rio_init_socket_tls(RIO * self, SSL * ssl);
 
     RIO * rio_new_outsequence(RIO_ERROR * error, SQ * seq);
     RIO_ERROR rio_init_outsequence(RIO * self, SQ * seq);
