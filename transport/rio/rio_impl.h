@@ -15,10 +15,9 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Raphael Zhou
 
    Main entry point file for RIO *Transport library
-
 */
 
 #ifndef _REDEMPTION_LIBS_RIO_H_
@@ -58,6 +57,7 @@
 #include "rio_insequence.h"
 #include "rio_outmeta.h"
 #include "rio_inmeta.h"
+#include "rio_crypto.h"
 
 TODO("add filter class sample")
 TODO("convert PNG transport to new format")
@@ -92,6 +92,7 @@ typedef enum {
     RIO_TYPE_INSEQUENCE,
     RIO_TYPE_OUTMETA,
     RIO_TYPE_INMETA,
+    RIO_TYPE_CRYPTO,
 } RIO_TYPE;
 
 typedef enum {
@@ -107,11 +108,11 @@ struct SQ {
     unsigned sq_type;
     RIO_ERROR err;
     union {
-      struct SQOne one;
+      struct SQOne         one;
       struct SQOutfilename outfilename;
-      struct SQOuttracker outtracker;
-      struct SQIntracker intracker;
-      struct SQInmeta inmeta;
+      struct SQOuttracker  outtracker;
+      struct SQIntracker   intracker;
+      struct SQInmeta      inmeta;
     } u;
 };
 
@@ -119,19 +120,21 @@ struct RIO {
     unsigned rt_type;
     RIO_ERROR err;
     union {
-      struct RIOGenerator generator;
-      struct RIOCheck check;
-      struct RIOTest test;
-      struct RIOOutfile outfile;
-      struct RIOInfile infile;
-      struct RIOSocket socket;
-      struct RIOSocketTLS socket_tls;
+      struct RIOGenerator   generator;
+      struct RIOCheck       check;
+      struct RIOTest        test;
+      struct RIOOutfile     outfile;
+      struct RIOInfile      infile;
+      struct RIOSocket      socket;
+      struct RIOSocketTLS   socket_tls;
       struct RIOOutsequence outsequence;
-      struct RIOInsequence insequence;
-      struct RIOOutmeta outmeta;
-      struct RIOInmeta inmeta;
+      struct RIOInsequence  insequence;
+      struct RIOOutmeta     outmeta;
+      struct RIOInmeta      inmeta;
+      struct RIOCrypto      crypto;
     } u;
 };
+
 
 RIO_ERROR sq_init_one(SQ * self, RIO * trans)
 {
@@ -179,6 +182,7 @@ SQ * sq_new_outfilename(RIO_ERROR * error, SQ_FORMAT format, const char * path, 
     }
     return self;
 }
+
 
 RIO_ERROR sq_init_outtracker(SQ * self, RIO * tracker, 
     SQ_FORMAT format, 
@@ -238,6 +242,7 @@ SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker)
     return self;
 }
 
+
 RIO_ERROR sq_init_inmeta(SQ * self, const char * prefix, const char * extension)
 {
     self->sq_type = SQ_TYPE_INMETA;
@@ -287,7 +292,6 @@ RIO_ERROR sq_get_chunk_info(SQ * seq, unsigned * num_chunk, char * path, size_t 
     }
     return res;
 }
-
 
 RIO_ERROR sq_timestamp(SQ * seq, timeval * tv)
 {
@@ -402,13 +406,13 @@ void sq_delete(SQ * self)
     free(self);
 }
 
+
 RIO_ERROR rio_init_outfile(RIO * self, int fd)
 {
     self->rt_type = RIO_TYPE_OUTFILE;
     self->err = rio_m_RIOOutfile_constructor(&(self->u.outfile), fd);
     return self->err;
 }
-
 
 RIO * rio_new_outfile(RIO_ERROR * error, int fd)
 {
@@ -425,6 +429,7 @@ RIO * rio_new_outfile(RIO_ERROR * error, int fd)
     }
     return self;
 }
+
 
 RIO_ERROR rio_init_infile(RIO * self, int fd)
 {
@@ -449,6 +454,7 @@ RIO * rio_new_infile(RIO_ERROR * error, int fd)
     return self;
 }
 
+
 RIO_ERROR rio_init_generator(RIO * self, const void * data, size_t len)
 {
     self->rt_type = RIO_TYPE_GENERATOR;
@@ -471,6 +477,7 @@ RIO * rio_new_generator(RIO_ERROR * error, const void * data, size_t len)
     }
     return self;
 }
+
 
 RIO_ERROR rio_init_check(RIO * self, const void * data, size_t len)
 {
@@ -495,13 +502,13 @@ RIO * rio_new_check(RIO_ERROR * error, const void * data, size_t len)
     return self;
 }
 
+
 RIO_ERROR rio_init_test(RIO * self, const void * data_check, size_t len_check, const void * data_gen, size_t len_gen)
 {
     self->rt_type = RIO_TYPE_TEST;
     self->err = rio_m_RIOTest_constructor(&(self->u.test), data_check, len_check, data_gen, len_gen);
     return self->err;
 }
-
 
 RIO * rio_new_test(RIO_ERROR * error, const void * data_check, size_t len_check, const void * data_gen, size_t len_gen)
 {
@@ -519,13 +526,13 @@ RIO * rio_new_test(RIO_ERROR * error, const void * data_check, size_t len_check,
     return self;
 }
 
+
 RIO_ERROR rio_init_socket(RIO * self, int sck)
 {
     self->rt_type = RIO_TYPE_SOCKET;
     self->err = rio_m_RIOSocket_constructor(&(self->u.socket), sck);
     return self->err;
 }
-
 
 RIO * rio_new_socket(RIO_ERROR * error, int sck)
 {
@@ -543,13 +550,13 @@ RIO * rio_new_socket(RIO_ERROR * error, int sck)
     return self;
 }
 
+
 RIO_ERROR rio_init_socket_tls(RIO * self, SSL * ssl)
 {
     self->rt_type = RIO_TYPE_SOCKET_TLS;
     self->err = rio_m_RIOSocketTLS_constructor(&(self->u.socket_tls), ssl);
     return self->err;
 }
-
 
 RIO * rio_new_socket_tls(RIO_ERROR * error, SSL * ssl)
 {
@@ -567,13 +574,13 @@ RIO * rio_new_socket_tls(RIO_ERROR * error, SSL * ssl)
     return self;
 }
 
+
 RIO_ERROR rio_init_outsequence(RIO * self, SQ * seq)
 {
     self->rt_type = RIO_TYPE_OUTSEQUENCE;
     self->err = rio_m_RIOOutsequence_constructor(&(self->u.outsequence), seq);
     return self->err;
 }
-
 
 RIO * rio_new_outsequence(RIO_ERROR * error, SQ * seq)
 {
@@ -591,13 +598,13 @@ RIO * rio_new_outsequence(RIO_ERROR * error, SQ * seq)
     return self;
 }
 
+
 RIO_ERROR rio_init_insequence(RIO * self, SQ * seq)
 {
     self->rt_type = RIO_TYPE_INSEQUENCE;
     self->err = rio_m_RIOInsequence_constructor(&(self->u.insequence), seq);
     return self->err;
 }
-
 
 RIO * rio_new_insequence(RIO_ERROR * error, SQ * seq)
 {
@@ -624,7 +631,6 @@ RIO_ERROR rio_init_outmeta(RIO * self, SQ ** seq, const char * path, const char 
     return self->err;
 }
 
-
 RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * path, const char * filename, const char * extension, 
                       const char * l1, const char * l2, const char * l3, timeval * tv)
 {
@@ -642,13 +648,13 @@ RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * path, const cha
     return self;
 }
 
+
 RIO_ERROR rio_init_inmeta(RIO * self, SQ ** seq, const char * prefix, const char * extension)
 {
     self->rt_type = RIO_TYPE_INMETA;
     self->err = rio_m_RIOInmeta_constructor(&(self->u.inmeta), seq, prefix, extension);
     return self->err;
 }
-
 
 RIO * rio_new_inmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension)
 {
@@ -665,6 +671,7 @@ RIO * rio_new_inmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const ch
     }
     return self;
 }
+
 
 RIO_ERROR rio_get_status(RIO * rt)
 {
@@ -708,13 +715,14 @@ RIO_ERROR rio_get_status(RIO * rt)
         case RIO_TYPE_INMETA:
             rt->err = rio_m_RIOInmeta_get_status(&(rt->u.inmeta));
         break;
+        case RIO_TYPE_CRYPTO:
+            rt->err = rio_m_RIOCrypto_get_status(&(rt->u.crypto));
+        break;
         default:
             ;
     }
     return rt->err;
 }
-
-
 
 ssize_t rio_recv(RIO * rt, void * data, size_t len)
 {
@@ -777,6 +785,11 @@ ssize_t rio_recv(RIO * rt, void * data, size_t len)
     }
     case RIO_TYPE_INMETA:{
         ssize_t res = rio_m_RIOInmeta_recv(&(rt->u.inmeta), data, len);
+        if (res < 0){ rt->err = (RIO_ERROR)-res; }
+        return res;
+    }
+    case RIO_TYPE_CRYPTO:{
+        ssize_t res = rio_m_RIOCrypto_recv(&(rt->u.crypto), data, len);
         if (res < 0){ rt->err = (RIO_ERROR)-res; }
         return res;
     }
@@ -845,6 +858,11 @@ ssize_t rio_send(RIO * rt, const void * data, size_t len)
         if (res < 0){ rt->err = (RIO_ERROR)-res; }
         return res;
     }
+    case RIO_TYPE_CRYPTO: {
+        ssize_t res = rio_m_RIOCrypto_send(&(rt->u.crypto), data, len);
+        if (res < 0){ rt->err = (RIO_ERROR)-res; }
+        return res;
+    }
     default:
         rt->err = RIO_ERROR_UNKNOWN_TYPE;
     }
@@ -893,6 +911,9 @@ void rio_clear(RIO * rt)
         case RIO_TYPE_INMETA:
             rio_m_RIOInmeta_destructor(&(rt->u.inmeta));
         break;
+        case RIO_TYPE_CRYPTO:
+            rio_m_RIOCrypto_destructor(&(rt->u.crypto));
+        break;
         default:
             ;
     }
@@ -907,6 +928,7 @@ void rio_delete(RIO * self)
     rio_clear(self);
     free(self);
 }
+
 
 inline ssize_t sq_outfilename_filesize(const SQ * seq, uint32_t count)
 {
@@ -931,5 +953,28 @@ inline void sq_outfilename_get_name(const SQ * seq, char * path, size_t len, uin
     sq_im_SQOutfilename_get_name(&(seq->u.outfilename), path, len, count);
 }
 
+
+RIO_ERROR rio_init_crypto(RIO * self, const char * file, int oflag)
+{
+    self->rt_type = RIO_TYPE_CRYPTO;
+    self->err = rio_m_RIOCrypto_constructor(&(self->u.crypto), file, oflag);
+    return self->err;
+}
+
+RIO * rio_new_crypto(RIO_ERROR * error, const char * file, int oflag)
+{
+    RIO * self = (RIO *)malloc(sizeof(RIO));
+    if (self == 0){ 
+        if (error){ *error = RIO_ERROR_MALLOC; }
+        return NULL;
+    }
+    RIO_ERROR res = rio_init_crypto(self, file, oflag);
+    if (error) { *error = res; }
+    if (res != RIO_ERROR_OK){
+        free(self);
+        return NULL;
+    }
+    return self;
+}
 
 #endif
