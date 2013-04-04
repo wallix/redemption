@@ -41,10 +41,8 @@ public:
         this->resize_titlebar();
         this->rect.cy = this->titlebar.cy() + this->lines.cy() + this->ok.cy() + 30;
         this->lines.rect.y += this->titlebar.cy();
-        this->ok.rect.x = this->dx() + this->rect.cx - this->ok.cx() - 10;
-        this->ok.rect.y = this->dy() + this->rect.cy - this->ok.cy() - 10;
-        this->ok.label.rect.x = this->ok.dx() + 2;
-        this->ok.label.rect.y = this->ok.dy() + 2;
+        this->ok.set_button_x(this->dx() + this->rect.cx - this->ok.cx() - 10);
+        this->ok.set_button_y(this->dy() + this->rect.cy - this->ok.cy() - 10);
         this->child_list.push_back(&this->lines);
         this->child_list.push_back(&this->ok);
     }

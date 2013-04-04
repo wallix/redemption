@@ -341,3 +341,5 @@ unit-test test_widget2_multiline : tests/widget2/test_widget2_multiline.cpp png 
 unit-test test_widget2_msgbox : tests/widget2/test_widget2_msgbox.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_widget2_password : tests/widget2/test_widget2_password.cpp png z openssl crypto libboost_unit_test ;
 
+unit-test test_widget2_login : tests/widget2/test_widget2_login.cpp png z openssl crypto libboost_unit_test ;
+

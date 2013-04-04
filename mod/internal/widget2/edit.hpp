@@ -59,7 +59,6 @@ public:
                 int w, h;
                 this->drawable->text_metrics(&this->label.buffer[this->edit_buffer_pos], w, h);
                 this->w_text += w;
-                this->drawable->text_metrics("Lp", w, this->h_text);
             }
         } else {
             this->buffer_size = 0;
@@ -68,6 +67,10 @@ public:
             this->edit_pos = 0;
             this->cursor_px_pos = 0;
         }
+        if (this->drawable) {
+            int w;
+            this->drawable->text_metrics("Lp", w, this->h_text);
+        }
         this->rect.cy = this->h_text + this->label.y_text * 2;
         this->label.rect.cx = this->rect.cx;
         this->label.rect.cy = this->rect.cy;
@@ -75,6 +78,18 @@ public:
 
     virtual ~WidgetEdit()
     {}
+
+    void set_edit_x(int x)
+    {
+        this->rect.x = x;
+        this->label.rect.x = x + this->label.x_text + 2;
+    }
+
+    void set_edit_y(int y)
+    {
+        this->rect.y = y;
+        this->label.rect.y = y + this->label.y_text + 2;
+    }
 
     virtual void draw(const Rect& clip)
     {
@@ -120,7 +135,7 @@ public:
     size_t utf8len_current_char()
     {
         size_t len = 1;
-        while (this->label.buffer[this->edit_buffer_pos - len] >> 6 == 2){
+        while (this->label.buffer[this->edit_buffer_pos + len] >> 6 == 2){
             ++len;
         }
         return len;
@@ -128,7 +143,10 @@ public:
 
     void decrement_edit_pos()
     {
-        size_t len = this->utf8len_current_char();
+        size_t len = 1;
+        while (this->edit_buffer_pos - len - 1 >= 0 && this->label.buffer[this->edit_buffer_pos - len - 1] >> 6 == 2){
+            ++len;
+        }
         this->edit_pos--;
         if (this->drawable) {
             char c = this->label.buffer[this->edit_buffer_pos];
@@ -146,10 +164,19 @@ public:
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
         if (device_flags == CLIC_BUTTON1_DOWN) {
-            if (x > this->label.x_text && y > this->label.y_text) {
-                //move cursor
+            if (x <= this->dx() + this->label.x_text) {
+                this->edit_pos = 0;
+                this->edit_buffer_pos = 0;
+                this->cursor_px_pos = 0;
+            }
+            else if (x >= int(this->cursor_px_pos + this->label.dx() + this->label.x_text)) {
+                if (this->edit_pos < this->num_chars) {
+                    this->edit_pos = this->num_chars;
+                    this->edit_buffer_pos = this->buffer_size;
+                    this->cursor_px_pos = this->w_text;
+                }
             } else {
-                Widget::rdp_input_mouse(device_flags, x, y, keymap);
+                TODO("move cursor")
             }
         } else {
             Widget::rdp_input_mouse(device_flags, x, y, keymap);
@@ -203,18 +230,14 @@ public:
                     if (this->edit_pos < this->num_chars) {
                         this->edit_pos = this->num_chars;
                         this->edit_buffer_pos = this->buffer_size;
-                        if (this->drawable) {
-                            this->cursor_px_pos = this->w_text;
-                        }
+                        this->cursor_px_pos = this->w_text;
                     }
                     break;
                 case Keymap2::KEVENT_HOME:
                     keymap->get_kevent();
-                    if (this->edit_pos > 0) {
-                        this->edit_pos = 0;
-                        this->edit_buffer_pos = 0;
-                        this->cursor_px_pos = 0;
-                    }
+                    this->edit_pos = 0;
+                    this->edit_buffer_pos = 0;
+                    this->cursor_px_pos = 0;
                     break;
                 case Keymap2::KEVENT_KEY:
                     if (this->num_chars < WidgetLabel::buffer_size - 5) {

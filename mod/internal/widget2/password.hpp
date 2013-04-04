@@ -60,7 +60,6 @@ public:
     {
         this->buffer[0] = 0;
         this->display_pass[0] = 0;
-        this->rect.cy = 0;
         if (text && *text) {
             this->buf_size = std::min(buffer_size - 1, strlen(text));
             this->buffer[this->num_chars] = 0;
@@ -71,10 +70,11 @@ public:
                 this->display_pass[n] = '*';
             }
             this->display_pass[this->num_chars] = 0;
-            if (this->drawable) {
-                this->drawable->text_metrics("*", this->w_char, this->h_char);
-                this->rect.cy = this->y_text * 2 + this->h_char;
-            }
+        }
+        this->rect.cy = 0;
+        if (this->drawable) {
+            this->drawable->text_metrics("*", this->w_char, this->h_char);
+            this->rect.cy = this->y_text * 2 + this->h_char;
         }
     }
 
@@ -114,10 +114,25 @@ public:
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
         if (device_flags == CLIC_BUTTON1_DOWN) {
-            if (x > this->x_text && y > this->y_text) {
-                //move cursor
+            if (x <= this->dx() + this->x_text) {
+                this->edit_pos = 0;
+                this->buf_pos = 0;
+            }
+            else if (x <= this->dx() + this->x_text + this->w_char) {
+                if (this->num_chars) {
+                    this->edit_pos = 1;
+                    this->buf_pos = 0;
+                    this->buf_pos = this->utf8len_current_char();
+                }
+            }
+            else if (x >= int(this->num_chars * (this->w_char+2) + this->dx() + this->x_text)) {
+                if (this->edit_pos < this->num_chars) {
+                    this->edit_pos = this->num_chars;
+                    this->buf_pos = this->buf_size-1;
+                }
             } else {
-                Widget::rdp_input_mouse(device_flags, x, y, keymap);
+                this->edit_pos = std::min<size_t>((x - this->dx() + this->x_text) / (this->w_char+2), this->num_chars-1);
+                this->buf_pos = UTF8GetPos(reinterpret_cast<uint8_t*>(&this->buffer[0]), this->edit_pos);
             }
         } else {
             Widget::rdp_input_mouse(device_flags, x, y, keymap);
@@ -126,11 +141,20 @@ public:
 
     size_t utf8len_current_char()
     {
-        size_t len = 1;
-        while (this->buffer[this->buf_size - len] >> 6 == 2){
+        size_t len = 0;
+        while (this->buffer[this->buf_pos + len] >> 6 == 2){
             ++len;
         }
         return len;
+    }
+
+    size_t utf8len_prevent_char()
+    {
+        size_t len = 1;
+        while (this->buffer[this->buf_pos - len] >> 6 == 2){
+            ++len;
+        }
+        return len-1;
     }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
@@ -142,7 +166,7 @@ public:
                     keymap->get_kevent();
                     if (this->edit_pos > 0) {
                         --this->edit_pos;
-                        this->buf_pos -= this->utf8len_current_char();
+                        this->buf_pos -= this->utf8len_prevent_char();
                     }
                     break;
                 case Keymap2::KEVENT_RIGHT_ARROW:
@@ -188,10 +212,8 @@ public:
                     break;
                 case Keymap2::KEVENT_HOME:
                     keymap->get_kevent();
-                    if (this->edit_pos > 0) {
-                        this->edit_pos = 0;
-                        this->buf_pos = 0;
-                    }
+                    this->edit_pos = 0;
+                    this->buf_pos = 0;
                     break;
                 case Keymap2::KEVENT_KEY:
                     if (this->num_chars < this->buffer_size - 5) {

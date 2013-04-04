@@ -193,8 +193,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
     //drawable.save_to_png("/tmp/window3.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\xba\x3a\xc0\xe0\x94\x28\x2d\x4b\xf4\x7e"
-        "\x87\x12\xfc\x8a\x3d\x30\x19\x8f\x80\x6c")){
+        "\x02\x3f\xca\x1b\x48\x0b\x07\xab\xd8\x36"
+        "\xbb\x03\xff\x90\x84\xa4\xac\x15\x50\xd8")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }

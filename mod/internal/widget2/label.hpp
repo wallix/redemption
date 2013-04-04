@@ -68,6 +68,9 @@ public:
                 this->drawable->text_metrics(this->buffer, w,h);
                 this->rect.cx = this->x_text * 2 + w;
                 this->rect.cy = this->y_text * 2 + h;
+                if (max == 1) {
+                    this->rect.cx -= 2;
+                }
             }
         }
     }
