@@ -32,9 +32,8 @@ public:
     size_t edit_buffer_pos;
     size_t edit_pos;
     size_t cursor_px_pos;
-    int h_text;
     int w_text;
-    int state;
+    int h_text;
 
     WidgetEdit(ModApi* drawable, int16_t x, int16_t y, uint16_t cx,
                Widget* parent, NotifyApi* notifier, const char * text,
@@ -42,9 +41,8 @@ public:
                std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
     : Widget(drawable, Rect(x,y,cx,1), parent, notifier, id)
     , label(drawable, 0, 0, this, 0, text, false, 0, bgcolor, fgcolor, xtext, ytext)
-    , h_text(0)
     , w_text(0)
-    , state(0)
+    , h_text(0)
     {
         if (text) {
             this->buffer_size = strlen(text);
@@ -178,7 +176,7 @@ public:
                     break;
                 case Keymap2::KEVENT_BACKSPACE:
                     keymap->get_kevent();
-                    if ((this->num_chars > 0) && (this->edit_pos > 0)) {
+                    if (this->edit_pos > 0) {
                         this->num_chars--;
                         size_t pxtmp = this->cursor_px_pos;
                         this->decrement_edit_pos();
@@ -188,7 +186,7 @@ public:
                     break;
                 case Keymap2::KEVENT_DELETE:
                     keymap->get_kevent();
-                    if (this->num_chars > 0 && this->edit_pos < this->num_chars) {
+                    if (this->edit_pos < this->num_chars) {
                         size_t len = this->utf8len_current_char();
                         char c = this->label.buffer[this->edit_buffer_pos + len];
                         this->label.buffer[this->edit_buffer_pos + len] = 0;
@@ -219,9 +217,9 @@ public:
                     }
                     break;
                 case Keymap2::KEVENT_KEY:
-                    if (this->num_chars < 120) {
+                    if (this->num_chars < WidgetLabel::buffer_size - 5) {
                         uint32_t c = keymap->get_char();
-                        UTF8InsertOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0, c, 255 - this->edit_buffer_pos);
+                        UTF8InsertOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0, c, WidgetLabel::buffer_size - 1 - this->edit_buffer_pos);
                         size_t tmp = this->edit_buffer_pos;
                         size_t pxtmp = this->cursor_px_pos;
                         this->increment_edit_pos();

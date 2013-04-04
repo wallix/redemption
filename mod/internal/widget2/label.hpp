@@ -31,9 +31,9 @@ public:
     char buffer[buffer_size];
     int x_text;
     int y_text;
-    bool auto_resize;
     int bg_color;
     int fg_color;
+    bool auto_resize;
 
 public:
     WidgetLabel(ModApi* drawable, int16_t x, int16_t y, Widget* parent,
@@ -43,9 +43,9 @@ public:
     : Widget(drawable, Rect(x,y,1,1), parent, notifier, id)
     , x_text(xtext)
     , y_text(ytext)
-    , auto_resize(auto_resize)
     , bg_color(bgcolor)
     , fg_color(fgcolor)
+    , auto_resize(auto_resize)
     {
         this->rect.cx = 0;
         this->rect.cy = 0;
@@ -60,8 +60,8 @@ public:
     {
         this->buffer[0] = 0;
         if (text) {
-            const size_t max = buffer_size - 1;
-            memcpy(buffer, text, max);
+            const size_t max = std::min(buffer_size - 1, strlen(text));
+            memcpy(this->buffer, text, max);
             this->buffer[max] = 0;
             if (this->auto_resize && this->drawable) {
                 int w,h;
