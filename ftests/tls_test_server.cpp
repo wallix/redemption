@@ -159,6 +159,9 @@ int main(int argc, char **argv)
        close(s);
      }
      else {
+     
+         TODO("test behavior if we wai for receiving some data on unencrypted socket before commuting to SSL")
+
         BIO * sbio = BIO_new_socket(s, BIO_NOCLOSE);
         SSL * ssl = SSL_new(ctx);
         SSL_set_bio(ssl, sbio, sbio);
