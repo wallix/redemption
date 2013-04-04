@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
                                      window.cx(),
                                      window.cy()));
 
-    drawable.save_to_png("/tmp/window.png");
+    //drawable.save_to_png("/tmp/window.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
                                      100,
                                      100));
 
-    drawable.save_to_png("/tmp/window2.png");
+    //drawable.save_to_png("/tmp/window2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\xb0\x5f\x19\xc1\x3d\x16\xcc\x97\x3d\xc6"
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
     // ask to widget to redraw at it's current position
     window.rdp_input_invalidate(window.rect);
 
-    drawable.save_to_png("/tmp/window3.png");
+    //drawable.save_to_png("/tmp/window3.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\xba\x3a\xc0\xe0\x94\x28\x2d\x4b\xf4\x7e"

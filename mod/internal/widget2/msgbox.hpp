@@ -18,19 +18,21 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_DIALOG_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_DIALOG_HPP
+#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_MSGBOX_HPP)
+#define REDEMPTION_MOD_INTERNAL_WIDGET2_MSGBOX_HPP
 
 #include "window.hpp"
 #include "multiline.hpp"
 
-class WidgetDialog : public Window
+class MessageBox : public Window
 {
 public:
     WidgetMultiLine lines;
     WidgetButton ok;
 
-    WidgetDialog(ModApi* drawable, int16_t x, int16_t y, Widget* parent, NotifyApi* notifier, const char * caption, const char * text, int id = 0, int bgcolor = BLACK, int fgcolor = WHITE)
+    MessageBox(ModApi* drawable, int16_t x, int16_t y, Widget* parent,
+                     NotifyApi* notifier, const char * caption, const char * text,
+                     int id = 0, int bgcolor = BLACK, int fgcolor = WHITE)
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, id)
     , lines(drawable, 10, 10 + this->titlebar.cx(), this, NULL, text, true, -10, bgcolor, fgcolor)
     , ok(drawable, 0,0, this, this, "Ok", true, -11, bgcolor, fgcolor, 5, 1)
@@ -47,7 +49,7 @@ public:
         this->child_list.push_back(&this->ok);
     }
 
-    virtual ~WidgetDialog()
+    virtual ~MessageBox()
     {}
 
     virtual void notify(Widget* widget, notify_event_t event, long unsigned int param, long unsigned int param2)
