@@ -15,6 +15,7 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include "rio/rio_impl.h"
 
 #define PORT	4433
 #define PASSWORD "password"
@@ -35,83 +36,39 @@ static int password_cb0(char *buf, int num, int rwflag, void *userdata)
 static int http_serve(SSL * ssl, int s, BIO *bio_err)
 {
     char buf[1024];
-    
-    BIO * io=BIO_new(BIO_f_buffer());
-    BIO * ssl_bio=BIO_new(BIO_f_ssl());
-    BIO_set_ssl(ssl_bio, ssl, BIO_CLOSE);
-    BIO_push(io, ssl_bio);
-    
-    int r = SSL_ERROR_NONE;
-    while(1){
-      r = BIO_gets(io, buf, sizeof(buf)-1);
-      int error = SSL_get_error(ssl, r);
-      switch(error){
-        case SSL_ERROR_NONE:
-          break;
-        default:
-        {
-            uint32_t errcount = 0;
-            errcount++;
-            fprintf(stderr, "%s", ERR_error_string(error, NULL));
-            while ((error = ERR_get_error()) != 0){
-                errcount++;
-                fprintf(stderr, "%s", ERR_error_string(error, NULL));
-            }
-            exit(0);
-        }
-      }
-      /* Look for the blank line that signals the end of Client Hello */
-      if(!strcmp(buf,"\r\n"))
-        break;
-    }
+    RIO rio;
+    RIO_ERROR status = rio_init_socket_tls(&rio, ssl);
+    ssize_t r = rio_recv(&rio, buf, 14);
 
-    if((r=BIO_puts(io,"Server: Redemption Server\r\n\r\n"))<=0)
-    {
-        fprintf(stderr,"Write error\n");
+    if(r != 14 || (0 != strcmp(buf, "REDEMPTION\r\n\r\n"))){
+        fprintf(stderr,"failed to read expected hello\n");
         exit(0);
     }
 
-    if((r=BIO_puts(io,"Server test page\r\n"))<=0)
-    {
-        fprintf(stderr,"Write error\n");
+    r = rio_send(&rio, "Server: Redemption Server\r\n\r\n", 29);
+    if(r < 0){
+        fprintf(stderr, "Write error 1\n");
+        exit(0);
+    }
+    r = rio_send(&rio, "Server test page\r\n", 18);
+    if(r < 0){
+        fprintf(stderr, "Write error 2\n");
         exit(0);
     }
     
-    if((r=BIO_flush(io))<0)
-    {
-        fprintf(stderr,"Error flushing BIO\n");
-        exit(0);
-    }
-    
-    r=SSL_shutdown(ssl);
+    r = SSL_shutdown(ssl);
     if(!r){
-      /* If we called SSL_shutdown() first then
-         we always get return value of '0'. In
-         this case, try again, but first send a
-         TCP FIN to trigger the other side's
-         close_notify*/
-      shutdown(s,1);
+      /* If we called SSL_shutdown() first then we always get return value of '0'. 
+         In this case, try again, but first send a TCP FIN to trigger the other side's close_notify*/
+      shutdown(s, 1);
       r=SSL_shutdown(ssl);
     }
       
-    switch(r){  
-      case 1:
-        break; /* Success */
-      case 0:
-      case -1:
-      default:
-      {
-            BIO_printf(bio_err, "Shutdown failed\n");
-            ERR_print_errors(bio_err);
-            exit(0);
-      }
-    }
-
     SSL_free(ssl);
     close(s);
 
     return(0);
-  }
+}
 
 int main(int argc, char **argv)
 {
