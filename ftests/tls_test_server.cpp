@@ -21,7 +21,7 @@ static int password_cb0(char *buf, int num, int rwflag, void *userdata)
 {
     printf("password cb num=%u\n", num);
     const char * pass = (char*)userdata;
-    if(num < strlen(pass)+1){
+    if(num < (int)strlen(pass)+1){
       return(0);
     }
 
@@ -29,11 +29,11 @@ static int password_cb0(char *buf, int num, int rwflag, void *userdata)
     return strlen(pass);
 }
 
-static int http_serve(SSL * ssl, int s, BIO *bio_err)
+static int rdp_serve(SSL * ssl, int s, BIO *bio_err)
 {
     char buf[1024];
     RIO rio;
-    RIO_ERROR status = rio_init_socket_tls(&rio, ssl);
+    rio_init_socket_tls(&rio, ssl); /* I do not bother to check return code, as I know it can't fail in current implementation */
     ssize_t r = rio_recv(&rio, buf, 14);
 
     if(r != 14 || (0 != strcmp(buf, "REDEMPTION\r\n\r\n"))){
@@ -129,7 +129,15 @@ int main(int argc, char **argv)
     }
   }
  
-    struct sockaddr_in sin;
+    union
+    {
+      struct sockaddr s;
+      struct sockaddr_storage ss;
+      struct sockaddr_in s4;
+      struct sockaddr_in6 s6;
+    } ucs;
+    memset(&ucs, 0, sizeof(ucs));
+ 
     int val=1;
 
     int sock = socket(AF_INET,SOCK_STREAM,0);
@@ -138,13 +146,13 @@ int main(int argc, char **argv)
         exit(0);
     }
 
-    memset(&sin, 0, sizeof(sin));
-    sin.sin_addr.s_addr = INADDR_ANY;
-    sin.sin_family = AF_INET;
-    sin.sin_port = htons(4433);
+    memset(&ucs.s4, 0, sizeof(ucs));
+    ucs.s4.sin_addr.s_addr = INADDR_ANY;
+    ucs.s4.sin_family = AF_INET;
+    ucs.s4.sin_port = htons(4433);
     setsockopt(sock,SOL_SOCKET,SO_REUSEADDR, &val,sizeof(val));
 
-    int bind_res = bind(sock,(struct sockaddr *)&sin,  sizeof(sin));
+    int bind_res = bind(sock,&ucs.s,  sizeof(ucs));
     if(bind_res < 0){
         fprintf(stderr, "Failed to bind\n");
         exit(0);
@@ -173,7 +181,7 @@ int main(int argc, char **argv)
             exit(0);
         }
         
-        http_serve(ssl, s, bio_err);
+        rdp_serve(ssl, s, bio_err);
         exit(0);
       }
     }
