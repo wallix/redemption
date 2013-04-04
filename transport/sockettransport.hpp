@@ -849,6 +849,13 @@ class SocketTransport : public Transport {
             LOG(LOG_INFO, "RIO *::crypto_cert_get_public_key: SSL_get_peer_certificate() failed");
             return;
         }
+        
+        LOG(LOG_INFO, "dumping X509 peer certificate\n");
+        FILE * fp = fopen("/tmp/X509.pem", "w+");
+        PEM_write_X509(fp, px509);
+        fclose(fp);
+        LOG(LOG_INFO, "dumped X509 peer certificate\n");
+
 //        SSL_get_verify_result();
         
         // SSL_get_verify_result - get result of peer certificate verification 

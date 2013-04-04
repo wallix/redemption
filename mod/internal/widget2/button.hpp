@@ -28,8 +28,8 @@ class WidgetButton : public Widget
 public:
     WidgetLabel label;
     int state;
-    int border_top_right;
-    int border_bottom_left;
+    int color_border_top_right;
+    int color_border_bottom_left;
 
     WidgetButton(ModApi* drawable, int16_t x, int16_t y, Widget* parent,
                  NotifyApi* notifier, const char * text, bool auto_resize = true,
@@ -44,35 +44,47 @@ public:
         const int c1 = (this->label.bg_color & 0xFF0000) >> 16;
         const int c2 = (this->label.bg_color & 0x00FF00) >> 8;
         const int c3 = (this->label.bg_color & 0x0000FF);
-        this->border_top_right = (std::max(c1 - 0x35, 0) << 16) + (std::max(c2 - 0x35, 0) << 8) + std::max(c3 - 0x35, 0);
-        this->border_bottom_left = (std::max(c1 - 0x70, 0) << 16) + (std::max(c2 - 0x70, 0) << 8) + std::max(c3 - 0x70, 0);
+        this->color_border_top_right = (std::max(c1 - 0x35, 0) << 16) + (std::max(c2 - 0x35, 0) << 8) + std::max(c3 - 0x35, 0);
+        this->color_border_bottom_left = (std::max(c1 - 0x70, 0) << 16) + (std::max(c2 - 0x70, 0) << 8) + std::max(c3 - 0x70, 0);
     }
 
     virtual ~WidgetButton()
     {}
+
+    void set_button_x(int x)
+    {
+        this->rect.x = x;
+        this->label.rect.x = x + 2;
+    }
+
+    void set_button_y(int y)
+    {
+        this->rect.y = y;
+        this->label.rect.y = y + 2;
+    }
 
     virtual void draw(const Rect& clip)
     {
         this->label.draw(clip);
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + 2, this->dy(), this->cx() - 2, 2
-        )), this->border_top_right), this->rect);
+        )), this->color_border_top_right), this->rect);
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 2, this->dy() + 2, 2, this->cy() - 2)
-        ), this->border_top_right), this->rect);
+        ), this->color_border_top_right), this->rect);
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy(), 2, this->cy()
-        )), this->border_bottom_left), this->rect);
+        )), this->color_border_bottom_left), this->rect);
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + 2, this->dy() + this->cy() - 2, this->cx() - 4, 2
-        )), this->border_bottom_left), this->rect);
+        )), this->color_border_bottom_left), this->rect);
     }
 
     void swap_border_color()
     {
-        this->border_bottom_left ^= this->border_top_right;
-        this->border_top_right ^= this->border_bottom_left;
-        this->border_bottom_left ^= this->border_top_right;
+        this->color_border_bottom_left ^= this->color_border_top_right;
+        this->color_border_top_right ^= this->color_border_bottom_left;
+        this->color_border_bottom_left ^= this->color_border_top_right;
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
