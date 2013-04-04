@@ -157,6 +157,12 @@ exe redrec
         <link>static
     ;
 
+#
+# Functional tests (run by hand)
+#
+
+exe tls_test_client : ftests/tls_test_client.cpp openssl crypto png z dl : <link>static ;
+exe tls_test_server : ftests/tls_test_server.cpp openssl crypto png z dl : <link>static ;
 
 #
 # Unit Tests
