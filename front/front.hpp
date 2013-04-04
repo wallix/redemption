@@ -647,7 +647,7 @@ TODO("Pass font name as parameter in constructor")
                 FastPath::ServerUpdatePDU_Send SvrUpdPDU(
                       SvrUpdPDU_s
                     , stream
-                    , 0 // ((this->encryptionLevel != 0) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                    , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                     , this->encrypt
                     );
 
@@ -903,7 +903,7 @@ TODO("Pass font name as parameter in constructor")
             FastPath::ServerUpdatePDU_Send SvrUpdPDU(
                   SvrUpdPDU_s
                 , stream
-                , 0 // ((this->encryptionLevel != 0) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                 , this->encrypt
                 );
 
@@ -1012,7 +1012,7 @@ TODO("Pass font name as parameter in constructor")
             FastPath::ServerUpdatePDU_Send SvrUpdPDU(
                   SvrUpdPDU_s
                 , stream
-                , 0 // ((this->encryptionLevel != 0) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                 , this->encrypt
                 );
 
@@ -2242,7 +2242,7 @@ TODO("Pass font name as parameter in constructor")
             FastPath::ServerUpdatePDU_Send SvrUpdPDU(
                   SvrUpdPDU_s
                 , stream
-                , 0 // ((this->encryptionLevel != 0) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                 , this->encrypt
                 );
 

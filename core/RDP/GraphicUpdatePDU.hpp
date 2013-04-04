@@ -212,7 +212,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
                 FastPath::ServerUpdatePDU_Send SvrUpdPDU(
                       SvrUpdPDU_s
                     , this->stream
-                    , 0 // ((this->encryptionLevel != 0) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                    , ((this->encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                     , this->encrypt
                     );
 
