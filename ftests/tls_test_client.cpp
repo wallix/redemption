@@ -223,6 +223,9 @@ int main(int argc, char ** argv)
     /* Connect the TCP socket*/
     int sock = tcp_connect(host, port);
 
+
+    TODO("test behavior if we send some data on unencrypted socket before commuting to SSL")
+
     /* Connect the SSL socket */
     SSL *ssl = SSL_new(ctx);
     BIO *sbio = BIO_new_socket(sock, BIO_NOCLOSE);
@@ -233,7 +236,6 @@ int main(int argc, char ** argv)
         ERR_print_errors(bio_err);
         exit(0);
     }
-
 
     if(require_server_auth){
         X509 * px509 = SSL_get_peer_certificate(ssl);

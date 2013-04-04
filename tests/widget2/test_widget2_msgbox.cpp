@@ -20,13 +20,13 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWidgetDialog
+#define BOOST_TEST_MODULE TestMessageBox
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
 #include "log.hpp"
 
-#include "internal/widget2/dialog.hpp"
+#include "internal/widget2/msgbox.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -129,11 +129,11 @@ struct TestDraw : ModApi
     }
 };
 
-BOOST_AUTO_TEST_CASE(TraceWidgetDialog)
+BOOST_AUTO_TEST_CASE(TraceMessageBox)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetDialog is a dialog widget at position 0,0 in it's parent context
+    // MessageBox is a msgbox widget at position 0,0 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialog)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetDialog wdialog(&drawable, x, y, parent, notifier, "test1",
+    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test1",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -152,24 +152,24 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialog)
                          id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wdialog.rdp_input_invalidate(Rect(0, 0, wdialog.cx(), wdialog.cy()));
+    wmsgbox.rdp_input_invalidate(Rect(0, 0, wmsgbox.cx(), wmsgbox.cy()));
 
 
-    drawable.save_to_png("/tmp/dialog.png");
+    //drawable.save_to_png("/tmp/msgbox.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x60\x64\x28\xc8\xa8\xdf\x2c\x3e\xd2\x01"
-        "\xcd\xb0\xf9\xa0\x13\x66\x84\xff\xa5\x18")){
+        "\x99\x9b\x2c\x26\x59\x34\x2d\x72\x0b\xa6"
+        "\xec\x34\x3e\x5c\xfe\xe2\xc4\xb8\xfb\x22")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetDialog2)
+BOOST_AUTO_TEST_CASE(TraceMessageBox2)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetDialog is a dialog widget of size 100x20 at position 10,100 in it's parent context
+    // MessageBox is a msgbox widget of size 100x20 at position 10,100 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialog2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WidgetDialog wdialog(&drawable, x, y, parent, notifier, "test2",
+    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test2",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -188,26 +188,26 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialog2)
                          id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wdialog.rdp_input_invalidate(Rect(0 + wdialog.dx(),
-                                      0 + wdialog.dy(),
-                                      wdialog.cx(),
-                                      wdialog.cy()));
+    wmsgbox.rdp_input_invalidate(Rect(0 + wmsgbox.dx(),
+                                      0 + wmsgbox.dy(),
+                                      wmsgbox.cx(),
+                                      wmsgbox.cy()));
 
-    drawable.save_to_png("/tmp/dialog2.png");
+    //drawable.save_to_png("/tmp/msgbox2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xdb\x03\xc9\xaa\x39\x2c\x8c\xf1\xcd\xd5"
-        "\x10\x73\xa4\x82\x0c\x66\x65\xdc\x44\xed")){
+        "\xfd\x0a\xa6\x6b\x96\x37\x8e\x5a\x21\xfa"
+        "\x78\x5f\xce\xf9\x0e\x9b\xb3\xa3\x7a\x14")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetDialog3)
+BOOST_AUTO_TEST_CASE(TraceMessageBox3)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetDialog is a dialog widget of size 100x20 at position -10,500 in it's parent context
+    // MessageBox is a msgbox widget of size 100x20 at position -10,500 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialog3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WidgetDialog wdialog(&drawable, x, y, parent, notifier, "test3",
+    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test3",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -226,26 +226,26 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialog3)
                          id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wdialog.rdp_input_invalidate(Rect(0 + wdialog.dx(),
-                                      0 + wdialog.dy(),
-                                      wdialog.cx(),
-                                      wdialog.cy()));
+    wmsgbox.rdp_input_invalidate(Rect(0 + wmsgbox.dx(),
+                                      0 + wmsgbox.dy(),
+                                      wmsgbox.cx(),
+                                      wmsgbox.cy()));
 
-    drawable.save_to_png("/tmp/dialog3.png");
+    //drawable.save_to_png("/tmp/msgbox3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x23\xa6\x27\x12\x69\xaf\x18\x50\x49\x3b"
-        "\x55\x40\x71\x86\xa1\x6f\xe7\xc1\xb1\x0c")){
+        "\x31\xc3\x3f\x92\x33\x71\xe3\x57\xb7\xba"
+        "\xb0\x34\xfe\xa7\x5a\x11\x5f\xaf\xa9\x73")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetDialog4)
+BOOST_AUTO_TEST_CASE(TraceMessageBox4)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetDialog is a dialog widget of size 100x20 at position 770,500 in it's parent context
+    // MessageBox is a msgbox widget of size 100x20 at position 770,500 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialog4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WidgetDialog wdialog(&drawable, x, y, parent, notifier, "test4",
+    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test4",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -264,12 +264,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialog4)
                          id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wdialog.rdp_input_invalidate(Rect(0 + wdialog.dx(),
-                                      0 + wdialog.dy(),
-                                      wdialog.cx(),
-                                      wdialog.cy()));
+    wmsgbox.rdp_input_invalidate(Rect(0 + wmsgbox.dx(),
+                                      0 + wmsgbox.dy(),
+                                      wmsgbox.cx(),
+                                      wmsgbox.cy()));
 
-    drawable.save_to_png("/tmp/dialog4.png");
+    //drawable.save_to_png("/tmp/msgbox4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -279,11 +279,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialog4)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetDialog5)
+BOOST_AUTO_TEST_CASE(TraceMessageBox5)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetDialog is a dialog widget of size 100x20 at position -20,-7 in it's parent context
+    // MessageBox is a msgbox widget of size 100x20 at position -20,-7 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -292,7 +292,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialog5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WidgetDialog wdialog(&drawable, x, y, parent, notifier, "test5",
+    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test5",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -302,26 +302,26 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialog5)
                          id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wdialog.rdp_input_invalidate(Rect(0 + wdialog.dx(),
-                                      0 + wdialog.dy(),
-                                      wdialog.cx(),
-                                      wdialog.cy()));
+    wmsgbox.rdp_input_invalidate(Rect(0 + wmsgbox.dx(),
+                                      0 + wmsgbox.dy(),
+                                      wmsgbox.cx(),
+                                      wmsgbox.cy()));
 
-    drawable.save_to_png("/tmp/dialog5.png");
+    //drawable.save_to_png("/tmp/msgbox5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x9b\xcb\x37\x35\xba\x96\x66\x95\x5d\xb9"
-        "\x35\xef\x1e\x64\xa9\x6a\xff\x41\x69\x15")){
+        "\x35\x20\x7c\xf8\xee\x51\xfe\xb5\xd6\xbe"
+        "\x2a\x05\x33\xa0\xca\x68\x26\x1f\xc7\x6f")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetDialog6)
+BOOST_AUTO_TEST_CASE(TraceMessageBox6)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetDialog is a dialog widget of size 100x20 at position 760,-7 in it's parent context
+    // MessageBox is a msgbox widget of size 100x20 at position 760,-7 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -330,7 +330,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialog6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetDialog wdialog(&drawable, x, y, parent, notifier, "test6",
+    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test6",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -340,12 +340,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialog6)
                          id, bg_color, fg_color);
 
     // ask to widget to redraw at it's current position
-    wdialog.rdp_input_invalidate(Rect(0 + wdialog.dx(),
-                                      0 + wdialog.dy(),
-                                      wdialog.cx(),
-                                      wdialog.cy()));
+    wmsgbox.rdp_input_invalidate(Rect(0 + wmsgbox.dx(),
+                                      0 + wmsgbox.dy(),
+                                      wmsgbox.cx(),
+                                      wmsgbox.cy()));
 
-    drawable.save_to_png("/tmp/dialog6.png");
+    //drawable.save_to_png("/tmp/msgbox6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -355,11 +355,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialog6)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetDialogClip)
+BOOST_AUTO_TEST_CASE(TraceMessageBoxClip)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetDialog is a dialog widget of size 100x20 at position 760,-7 in it's parent context
+    // MessageBox is a msgbox widget of size 100x20 at position 760,-7 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -368,7 +368,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialogClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetDialog wdialog(&drawable, x, y, parent, notifier, "test6",
+    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test6",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -378,12 +378,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialogClip)
                          id, bg_color, fg_color);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    wdialog.rdp_input_invalidate(Rect(20 + wdialog.dx(),
-                                      0 + wdialog.dy(),
-                                      wdialog.cx(),
-                                      wdialog.cy()));
+    wmsgbox.rdp_input_invalidate(Rect(20 + wmsgbox.dx(),
+                                      0 + wmsgbox.dy(),
+                                      wmsgbox.cx(),
+                                      wmsgbox.cy()));
 
-    drawable.save_to_png("/tmp/dialog7.png");
+    //drawable.save_to_png("/tmp/msgbox7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -393,11 +393,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialogClip)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetDialogClip2)
+BOOST_AUTO_TEST_CASE(TraceMessageBoxClip2)
 {
     TestDraw drawable(800, 600);
 
-    // WidgetDialog is a dialog widget of size 100x20 at position 10,7 in it's parent context
+    // MessageBox is a msgbox widget of size 100x20 at position 10,7 in it's parent context
     Widget * parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
@@ -406,7 +406,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialogClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetDialog wdialog(&drawable, x, y, parent, notifier, "test6",
+    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test6",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -416,12 +416,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetDialogClip2)
                          id, bg_color, fg_color);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    wdialog.rdp_input_invalidate(Rect(20 + wdialog.dx(),
-                                      5 + wdialog.dy(),
+    wmsgbox.rdp_input_invalidate(Rect(20 + wmsgbox.dx(),
+                                      5 + wmsgbox.dy(),
                                       30,
                                       10));
 
-    drawable.save_to_png("/tmp/dialog8.png");
+    //drawable.save_to_png("/tmp/msgbox8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -457,7 +457,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     int16_t x = 10;
     int16_t y = 10;
 
-    WidgetDialog wdialog(&drawable, x, y, parent, &notifier, "test6",
+    MessageBox wmsgbox(&drawable, x, y, parent, &notifier, "test6",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -469,11 +469,11 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
 
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
-    wdialog.ok.rdp_input_mouse(CLIC_BUTTON1_DOWN, 15, 15, NULL);
+    wmsgbox.ok.rdp_input_mouse(CLIC_BUTTON1_DOWN, 15, 15, NULL);
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
-    wdialog.ok.rdp_input_mouse(CLIC_BUTTON1_UP, 15, 15, NULL);
-    BOOST_CHECK(notifier.sender == &wdialog);
+    wmsgbox.ok.rdp_input_mouse(CLIC_BUTTON1_UP, 15, 15, NULL);
+    BOOST_CHECK(notifier.sender == &wmsgbox);
     BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
 }
 
