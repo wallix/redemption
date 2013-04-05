@@ -1083,6 +1083,10 @@ TODO("Pass font name as parameter in constructor")
                 
                 X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
                 this->trans->send(stream);
+
+                if (this->tls_support){
+                    this->trans->enable_server_tls();
+                }
             }
             // Basic Settings Exchange
             // -----------------------

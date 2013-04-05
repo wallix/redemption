@@ -236,7 +236,7 @@ struct RdpNego
             if (x224.rdp_neg_type == X224::RDP_NEG_RESP
             && x224.rdp_neg_code == X224::RDP_NEG_PROTOCOL_TLS){
                 LOG(LOG_INFO, "activating SSL");
-                this->trans->enable_tls();
+                this->trans->enable_client_tls();
                 this->state = NEGO_STATE_FINAL;
             }
             else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE
