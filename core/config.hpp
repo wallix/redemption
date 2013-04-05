@@ -131,7 +131,6 @@ struct Inifile {
         bool autovalidate;       // dialog autovalidation for test
         char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
 
-
         unsigned capture_flags;  // 1 PNG capture, 2 WRM
         unsigned png_interval;   // time between 2 png captures (in 1/10 seconds)
         unsigned frame_interval; // time between 2 frame captures (in 1/100 seconds)
@@ -187,6 +186,8 @@ struct Inifile {
             uint32_t mod_xup;
             uint32_t widget;
             uint32_t input;
+
+            bool encrypt_log;
         } debug;
 
         // Section "client"
@@ -288,6 +289,8 @@ struct Inifile {
             this->globals.debug.mod_xup           = 0;
             this->globals.debug.widget            = 0;
             this->globals.debug.input             = 0;
+
+            this->globals.debug.encrypt_log = false;
 
             memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
             strcpy(this->account.accountname, "");
@@ -565,6 +568,9 @@ struct Inifile {
             }
             else if (0 == strcmp(key, "input")){
                 this->globals.debug.input             = long_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "encrypt_log")){
+                this->globals.debug.encrypt_log = bool_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

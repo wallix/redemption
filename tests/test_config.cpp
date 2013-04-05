@@ -122,6 +122,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.debug.encrypt_log);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
@@ -212,6 +213,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.debug.encrypt_log);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
@@ -234,6 +236,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     "performance_flags_default=0x00000007\n"
     "performance_flags_force_present=0x1\n"
     "performance_flags_force_not_present=0x0\n"
+    "[debug]\n"
+    "encrypt_log=true"
     "\n"
     );
 
@@ -315,6 +319,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.debug.encrypt_log);
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(7,                                ini.globals.client.performance_flags_default);
@@ -416,6 +421,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(false,                             ini.globals.debug.encrypt_log);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(7,                                ini.globals.client.performance_flags_default);
@@ -516,6 +522,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.debug.encrypt_log);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(7,                                ini.globals.client.performance_flags_default);
@@ -614,6 +621,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.debug.encrypt_log);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
@@ -624,6 +632,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     std::stringstream oss2(
     "[globals]\n"
     "bitmap_compression=no\n"
+    "[debug]\n"
+    "encrypt_log=yes\n"
     );
     ini.cparse(oss2);
 
@@ -703,6 +713,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.debug.encrypt_log);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
@@ -795,6 +806,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.debug.encrypt_log);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
@@ -891,6 +903,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.debug.encrypt_log);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
@@ -976,6 +989,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.debug.encrypt_log);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
