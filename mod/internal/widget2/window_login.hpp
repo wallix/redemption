@@ -26,6 +26,45 @@
 #include "button.hpp"
 #include "password.hpp"
 #include "window.hpp"
+#include "multiline.hpp"
+
+class WindowHelp : public Window
+{
+public:
+    WidgetMultiLine help;
+
+    WindowHelp(ModApi* drawable, Widget* parent, NotifyApi* notifier, const char* caption, int id = 0, int bgcolor = DARK_WABGREEN, int fgcolor = BLACK)
+    : Window(drawable, Rect(), parent, notifier, caption, bgcolor, id)
+    , help(drawable, 0, 0, this, notifier,
+           "You must be authenticated before using this<br>"
+           "session.<br>"
+           "<br>"
+           "Enter a valid username in the username edit box.<br>"
+           "Enter the password in the password edit box.<br>"
+           "<br>"
+           "Both the username and password are case<br>"
+           "sensitive.<br>"
+           "<br>"
+           "Contact your system administrator if you are<br>"
+           "having problems logging on.<br>",
+           true, -15, bgcolor, fgcolor, 10, 2)
+    {
+        this->child_list.push_back(&this->help);
+
+        this->rect.cx = this->help.cx();
+        this->rect.x = (parent->cx() - this->cx()) / 2;
+
+        this->resize_titlebar();
+
+        this->rect.cy = this->help.cy() + this->titlebar.dy();
+        this->rect.y = (parent->cy() - this->cy()) / 2;
+        this->help.rect.x = this->dx();
+        this->help.rect.y = this->dy() + this->titlebar.dy();
+    }
+
+    virtual ~WindowHelp()
+    {}
+};
 
 class WindowLogin : public Window
 {
@@ -35,54 +74,102 @@ public:
     WidgetPassword password_edit;
     WidgetLabel password_label;
     WidgetButton ok;
+    WidgetButton cancel;
+    WidgetButton help;
+    WindowHelp * window_help;
 
-    WindowLogin(ModApi* drawable, int16_t x, int16_t y, Widget* parent, NotifyApi* notifier, const char* caption, int id = 0, int bgcolor = DARK_WABGREEN)
+    WindowLogin(ModApi* drawable, int16_t x, int16_t y, Widget* parent,
+                NotifyApi* notifier, const char* caption, int id = 0,
+                const char * login = 0, const char * password = 0,
+                int bgcolor = DARK_WABGREEN, int fgcolor = BLACK)
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, id)
-    , login_edit(drawable, 0, 0, 100, this, NULL, NULL, -10, WHITE, BLACK)
-    , login_label(drawable, 10, 0, this, NULL, "login:", true, -11, WHITE, BLACK)
-    , password_edit(drawable, 0, 0, 100, this, NULL, NULL, -12, WHITE, BLACK)
-    , password_label(drawable, 10, 0, this, NULL, "password:", true, -13, WHITE, BLACK)
-    , ok(drawable, 0, 0, this, this, "Ok", true, -14, WHITE, BLACK, 4)
+    , login_edit(drawable, 0, 0, 100, this, NULL, login, -10, WHITE, BLACK, -1u, 1, 1)
+    , login_label(drawable, 10, 0, this, NULL, "login:", true, -11, bgcolor, fgcolor)
+    , password_edit(drawable, 0, 0, 100, this, NULL, password, -12, WHITE, BLACK, -1u, 1, 1)
+    , password_label(drawable, 10, 0, this, NULL, "password:", true, -13, bgcolor, fgcolor)
+    , ok(drawable, 0, 0, this, this, "Ok", true, -14, WHITE, BLACK, 6, 2)
+    , cancel(drawable, 0, 0, this, this, "Cancel", true, -15, WHITE, BLACK, 6, 2)
+    , help(drawable, 0, 0, this, this, "Help", true, -16, WHITE, BLACK, 6, 2)
+    , window_help(NULL)
     {
         this->child_list.push_back(&this->login_edit);
         this->child_list.push_back(&this->login_label);
         this->child_list.push_back(&this->password_edit);
         this->child_list.push_back(&this->password_label);
         this->child_list.push_back(&this->ok);
+        this->child_list.push_back(&this->cancel);
+        this->child_list.push_back(&this->help);
 
         x = this->dx() + std::max(this->login_label.cx(), this->password_label.cx()) + 20;
-        this->login_edit.rect.x = x;
-        this->login_edit.label.rect.x = x;
-        this->password_edit.rect.x = x;
+        this->login_edit.set_edit_x(x);
         this->password_edit.rect.x = x;
         this->rect.cx = x + std::max(this->login_edit.cx(), this->password_edit.cx()) + 10;
-        this->ok.set_button_x(this->rect.cx - this->ok.cx() - 10);
+        this->help.set_button_x(this->rect.cx - this->help.cx());
+        this->cancel.set_button_x(this->help.dx() - this->cancel.cx() - 10);
+        this->ok.set_button_x(this->cancel.dx() - this->ok.cx() - 10);
+
+        this->login_edit.set_edit_cx(this->cx() - (this->login_edit.dx() - this->dx()) - 10);
+        this->password_edit.rect.cx = this->login_edit.cx();
 
         this->resize_titlebar();
 
-        y = this->dy() + this->titlebar.cy() + this->login_label.cy();
-        this->login_label.rect.y = y;
-        this->login_edit.rect.y = y;
-        this->login_edit.label.rect.y = this->login_edit.dy() + this->login_edit.label.y_text;
+        y = this->dy() + this->titlebar.cy() + 10;
+        this->login_label.rect.y = y + (this->login_edit.cy() - this->login_label.cy()) / 2;
+        this->login_edit.set_edit_y(y);
         y += this->login_label.cy() * 2;
-        this->password_label.rect.y = y;
+        this->password_label.rect.y = y + (this->password_edit.cy() - this->password_label.cy()) / 2;
         this->password_edit.rect.y = y;
-        this->password_edit.rect.y = this->password_edit.dy() + this->password_edit.y_text;
-        y += this->password_label.cy() + 10;
+        y += this->password_label.cy() * 2;
         this->ok.set_button_y(y);
+        this->cancel.set_button_y(y);
+        this->help.set_button_y(y);
         this->rect.cy = y + this->ok.cy() + 5 - this->dy();
     }
 
-    virtual void notify(Widget* widget, notify_event_t event,
+    virtual ~WindowLogin()
+    {
+        if (this->window_help)
+            this->close_window_help();
+    }
+
+    virtual void notify(Widget* widget, NotifyApi::notify_event_t event,
                         long unsigned int param, long unsigned int param2)
     {
-        if (widget == &this->ok) {
-            this->send_notify(NOTIFY_SUBMIT);
+        if (widget == &this->help) {
+            if (this->parent) {
+                Widget * p = this->parent;
+                while (p->parent)
+                    p = p->parent;
+                this->window_help = new WindowHelp(this->drawable, p, this, "Help");
+                static_cast<WidgetComposite*>(p)->child_list.push_back(this->window_help);
+            }
+        } else if (widget == this->window_help) {
+            this->close_window_help();
+            this->window_help = 0;
+        } else if (event == NOTIFY_CANCEL) {
+            if (this->window_help) {
+                this->close_window_help();
+                this->window_help = 0;
+            }
+            this->send_notify(NOTIFY_CANCEL);
+        } else {
+            Window::notify(widget, event, param, param2);
         }
     }
 
-    virtual ~WindowLogin()
-    {}
+private:
+    void close_window_help()
+    {
+        std::vector<Widget*>& widgets = static_cast<WidgetComposite*>(this->window_help->parent)->child_list;
+        for (size_t i = 0; i < widgets.size(); ++i) {
+            if (widgets[i] == this->window_help) {
+                widgets[i] = widgets[widgets.size()-1];
+                widgets.pop_back();
+                break;
+            }
+        }
+        delete this->window_help;
+    }
 };
 
 #endif

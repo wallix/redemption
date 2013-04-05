@@ -115,8 +115,7 @@ struct TestDraw : ModApi
                 width += font_item->width + 2;
                 height = std::max(height, font_item->height);
             }
-            if (len_uni > 1)
-                width -= 2;
+            width -= 2;
         }
     }
 
@@ -138,19 +137,19 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
     NotifyApi * notifier = NULL;
     int16_t x = 0;
     int16_t y = 0;
+    int id = 0;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test1");
+    WindowLogin window_login(&drawable, x, y, parent, notifier, "test1", id, "rec", "rec");
 
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(window_login.rect);
 
-
-    drawable.save_to_png("/tmp/window_login.png");
+    //drawable.save_to_png("/tmp/window_login.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xe5\xee\x38\x08\x56\x53\x82\xfd\x80\x5f"
-        "\xe9\xdd\x13\x03\xcf\xe6\x57\x6a\xfd\x32")){
+        "\x48\x75\x6d\x3e\x3f\xa2\x52\x25\xca\x80"
+        "\x55\xd6\x65\xb5\x85\x21\x23\xa1\x30\xda")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -173,12 +172,12 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin2)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png("/tmp/window_login2.png");
+    //drawable.save_to_png("/tmp/window_login2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x95\xd9\x04\x16\x08\x3f\x90\x2b\xbc\x33"
-        "\xcc\x61\x9f\x71\xb4\x36\x8c\x9f\x7d\x8a")){
+        "\x01\x9e\x9d\x0c\x14\x89\x2a\x56\x11\xea"
+        "\xb8\x9b\x5f\xfb\xbf\xb3\x76\xcc\xfd\xac")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -201,12 +200,12 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin3)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png("/tmp/window_login3.png");
+    //drawable.save_to_png("/tmp/window_login3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x04\x6f\xd3\x44\xdb\x33\x2e\xce\xad\x91"
-        "\x25\x67\x45\x55\x08\x64\xa1\x74\x1b\xee")){
+        "\x2c\xf5\xbb\x02\x87\x32\xac\x21\x73\xd7"
+        "\x11\x6b\xee\x9a\x0d\x90\x19\x91\x9e\x5c")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -229,12 +228,12 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin4)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png("/tmp/window_login4.png");
+    //drawable.save_to_png("/tmp/window_login4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xd2\xfa\xf1\xb3\x89\x9e\x67\x4c\x45\x19"
-        "\x1c\xcb\xf0\x6e\xd0\x5a\x4c\xa6\xe1\xcb")){
+        "\x18\x36\xdf\xa9\x0e\x78\x20\xff\xff\x0c"
+        "\x47\x32\xf6\x8e\x4b\xa0\x2f\xda\x69\x9d")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -257,12 +256,12 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin5)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png("/tmp/window_login5.png");
+    //drawable.save_to_png("/tmp/window_login5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xc6\x7e\xfe\x30\x85\x65\x48\x30\x1a\xca"
-        "\x82\x8d\x89\x21\x54\xa2\xe3\x6b\x4b\x59")){
+        "\x80\x39\x54\x54\xc4\xab\x60\x5f\xcb\x6f"
+        "\x5b\xbd\x21\x48\xf0\x72\x49\x0f\x82\x21")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -285,12 +284,12 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin6)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png("/tmp/window_login6.png");
+    //drawable.save_to_png("/tmp/window_login6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xd0\xbb\x99\x14\x3d\x69\x98\x21\x6c\x34"
-        "\xf3\x58\xef\x29\xaf\xd7\xd8\x6c\xcc\x3a")){
+        "\xb9\x0f\x65\x96\xe2\xd0\x99\x91\xa2\x5b"
+        "\x52\x46\x7c\x15\xea\x01\x48\xfa\x84\x87")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -313,12 +312,12 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png("/tmp/window_login7.png");
+    //drawable.save_to_png("/tmp/window_login7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xec\xa9\xde\x23\xe7\x57\xb8\x5a\xc4\x16"
-        "\x08\x3a\xf8\xba\x53\xa5\x57\x60\x9b\x0b")){
+        "\x9c\xc6\xfb\xba\x72\x6a\xc2\x31\x20\x2e"
+        "\x68\x7d\x7c\x97\x38\xcc\x9b\x8d\xda\x90")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -341,12 +340,12 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip2)
                                       30,
                                       10));
 
-    drawable.save_to_png("/tmp/window_login8.png");
+    //drawable.save_to_png("/tmp/window_login8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x37\xb7\xc1\xbf\x7d\x8d\x7d\x23\x00\x22"
-        "\x61\x05\xff\xbc\x41\xd1\x1c\xb8\x82\x51")){
+        "\x75\xbd\xe4\x8e\xb6\x24\x84\x0a\xc1\xc8"
+        "\x49\x43\x66\x4a\x90\x47\x8b\xc5\xea\x9e")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -386,4 +385,42 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     BOOST_CHECK(notifier.sender == &window_login);
     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
 }
+
+// BOOST_AUTO_TEST_CASE(EventWidgetHelp)
+// {
+//     TestDraw drawable(800, 600);
+//
+//     WidgetComposite parent(&drawable, Rect(0,0,800,600), 0, 0);
+//
+//     int16_t x = 10;
+//     int16_t y = 10;
+//
+//     WindowLogin window_login(&drawable, x, y, &parent, 0, "test6");
+//     parent.child_list.push_back(&window_login);
+//
+//     parent.rdp_input_invalidate(parent.rect);
+//
+//     window_login.help.send_notify(NOTIFY_SUBMIT);
+//     parent.rdp_input_invalidate(parent.rect);
+//
+//     drawable.save_to_png("/tmp/window_login-help.png");
+//
+//     char message[1024];
+//     if (!check_sig(drawable.gd.drawable, message,
+//         "\x75\xbd\xe4\x8e\xb6\x24\x84\x0a\xc1\xc8"
+//         "\x49\x43\x66\x4a\x90\x47\x8b\xc5\xea\x9e")){
+//         BOOST_CHECK_MESSAGE(false, message);
+//     }
+//
+//     window_login.window_help->send_notify(NOTIFY_SUBMIT);
+//     parent.rdp_input_invalidate(parent.rect);
+//
+//     drawable.save_to_png("/tmp/window_login-help2.png");
+//
+//     if (!check_sig(drawable.gd.drawable, message,
+//         "\x75\xbd\xe4\x8e\xb6\x24\x84\x0a\xc1\xc8"
+//         "\x49\x43\x66\x4a\x90\x47\x8b\xc5\xea\x9e")){
+//         BOOST_CHECK_MESSAGE(false, message);
+//     }
+// }
 

@@ -40,7 +40,7 @@ public:
                int id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
                std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
     : Widget(drawable, Rect(x,y,cx,1), parent, notifier, id)
-    , label(drawable, 0, 0, this, 0, text, false, 0, bgcolor, fgcolor, xtext, ytext)
+    , label(drawable, 0, 0, this, 0, text, false, 0, bgcolor, fgcolor, xtext+1, ytext)
     , w_text(0)
     , h_text(0)
     {
@@ -55,6 +55,9 @@ public:
                 this->label.buffer[this->edit_buffer_pos] = 0;
                 this->drawable->text_metrics(this->label.buffer, this->w_text, this->h_text);
                 this->cursor_px_pos = this->w_text;
+                if (this->edit_pos) {
+                    this->cursor_px_pos += 2;
+                }
                 this->label.buffer[this->edit_buffer_pos] = c;
                 int w, h;
                 this->drawable->text_metrics(&this->label.buffer[this->edit_buffer_pos], w, h);
@@ -74,6 +77,10 @@ public:
         this->rect.cy = this->h_text + this->label.y_text * 2;
         this->label.rect.cx = this->rect.cx;
         this->label.rect.cy = this->rect.cy;
+        ++this->label.rect.x;
+        ++this->label.rect.y;
+        this->rect.cx += 2;
+        this->rect.cy += 2;
     }
 
     virtual ~WidgetEdit()
@@ -82,25 +89,54 @@ public:
     void set_edit_x(int x)
     {
         this->rect.x = x;
-        this->label.rect.x = x + this->label.x_text + 2;
+        this->label.rect.x = x + 1;
     }
 
     void set_edit_y(int y)
     {
         this->rect.y = y;
-        this->label.rect.y = y + this->label.y_text + 2;
+        this->label.rect.y = y + 1;
+    }
+
+    void set_edit_cx(int w)
+    {
+        this->rect.cx = w;
+        this->label.rect.cx = w - 2;
+    }
+
+    void set_edit_cy(int h)
+    {
+        this->rect.cy = h;
+        this->label.rect.cy = h - 2;
     }
 
     virtual void draw(const Rect& clip)
     {
         this->label.draw(clip);
         this->draw_cursor(clip);
+
+        //top
+        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy(), this->cx(), 1
+        )), 0x888888), this->rect);
+        //left
+        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy() + 1, 1, this->cy() - 2
+        )), 0x888888), this->rect);
+        //right
+        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx() + this->cx() - 1, this->dy() + 1, 1, this->cy() - 2
+        )), 0x888888), this->rect);
+        //bottom
+        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
+        )), 0x888888), this->rect);
     }
 
     void draw_cursor(const Rect& clip)
     {
         Rect cursor_clip = clip.intersect(
-            Rect(this->label.x_text + this->cursor_px_pos + this->label.dx(),
+            Rect(this->label.x_text + this->cursor_px_pos + this->label.dx() - 1,
                  this->label.y_text + this->label.dy(),
                  1,
                  this->h_text)
@@ -109,7 +145,7 @@ public:
             this->drawable->draw(
                 RDPOpaqueRect(
                     cursor_clip,
-                    this->label.fg_color
+                    0x888888
                 ), this->rect
             );
         }
@@ -231,6 +267,9 @@ public:
                         this->edit_pos = this->num_chars;
                         this->edit_buffer_pos = this->buffer_size;
                         this->cursor_px_pos = this->w_text;
+                        if (this->edit_pos) {
+                            this->cursor_px_pos += 2;
+                        }
                     }
                     break;
                 case Keymap2::KEVENT_HOME:
