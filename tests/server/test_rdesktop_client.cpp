@@ -100,7 +100,9 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     const char * name = "Test Front Transport";
     TestTransport front_trans(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
-    Front front(&front_trans, &gen, &ini, false);
+    bool tls_support = false;
+    bool fastpath_support = false;
+    Front front(&front_trans, &gen, &ini, fastpath_support, tls_support);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0){

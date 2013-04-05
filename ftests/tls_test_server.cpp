@@ -29,39 +29,57 @@ static int password_cb0(char *buf, int num, int rwflag, void *userdata)
     return strlen(pass);
 }
 
-static int rdp_serve(SSL * ssl, int s, BIO *bio_err)
+static int rdp_serve(SSL_CTX * ctx, int sock, BIO *bio_err)
 {
+     TODO("test behavior if we wai for receiving some data on unencrypted socket before commuting to SSL")
+
     char buf[1024];
     RIO rio;
-    rio_init_socket_tls(&rio, ssl); /* I do not bother to check return code, as I know it can't fail in current implementation */
-    ssize_t r = rio_recv(&rio, buf, 14);
+    rio_init_socket(&rio, sock); /* I do not bother to check return code, as I know it can't fail in current implementation */
+    ssize_t r1 = rio_recv(&rio, buf, 14);
 
-    if(r != 14 || (0 != strcmp(buf, "REDEMPTION\r\n\r\n"))){
+    if(r1 != 14 || (0 != strcmp(buf, "REDEMPTION\r\n\r\n"))){
         fprintf(stderr,"failed to read expected hello\n");
         exit(0);
     }
 
-    r = rio_send(&rio, "Server: Redemption Server\r\n\r\n", 29);
-    if(r < 0){
+    printf("received plain text HELLO, going TLS\n");
+
+    rio_clear(&rio);
+    BIO * sbio = BIO_new_socket(sock, BIO_NOCLOSE);
+    SSL * ssl = SSL_new(ctx);
+    SSL_set_bio(ssl, sbio, sbio);
+    
+    int r = SSL_accept(ssl);
+    if(r <= 0)
+    {
+        BIO_printf(bio_err, "SSL accept error\n");
+        ERR_print_errors(bio_err);
+        exit(0);
+    }
+    rio_init_socket_tls(&rio, ssl);
+
+    r1 = rio_send(&rio, "Server: Redemption Server\r\n\r\n", 29);
+    if(r1 < 0){
         fprintf(stderr, "Write error 1\n");
         exit(0);
     }
-    r = rio_send(&rio, "Server test page\r\n", 18);
-    if(r < 0){
+    r1 = rio_send(&rio, "Server test page\r\n", 18);
+    if(r1 < 0){
         fprintf(stderr, "Write error 2\n");
         exit(0);
     }
     
-    r = SSL_shutdown(ssl);
+//    r = SSL_shutdown(ssl);
     if(!r){
       /* If we called SSL_shutdown() first then we always get return value of '0'. 
          In this case, try again, but first send a TCP FIN to trigger the other side's close_notify*/
-      shutdown(s, 1);
-      r=SSL_shutdown(ssl);
+      shutdown(sock, 1);
+//      r=SSL_shutdown(ssl);
     }
       
-    SSL_free(ssl);
-    close(s);
+//    SSL_free(ssl);
+    close(sock);
 
     return(0);
 }
@@ -96,7 +114,6 @@ int main(int argc, char **argv)
         exit(0);
     }
    
-  {
     DH *ret=0;
     BIO *bio;
 
@@ -114,7 +131,6 @@ int main(int argc, char **argv)
         ERR_print_errors(bio_err);
         exit(0);
     }
-  }
  
     union
     {
@@ -127,7 +143,7 @@ int main(int argc, char **argv)
  
     int val=1;
 
-    int sock = socket(AF_INET,SOCK_STREAM,0);
+    int sock = socket(AF_INET, SOCK_STREAM,0);
     if(sock < 0) {
         fprintf(stderr, "Failed to make socket\n");
         exit(0);
@@ -159,22 +175,7 @@ int main(int argc, char **argv)
        close(s);
      }
      else {
-     
-         TODO("test behavior if we wai for receiving some data on unencrypted socket before commuting to SSL")
-
-        BIO * sbio = BIO_new_socket(s, BIO_NOCLOSE);
-        SSL * ssl = SSL_new(ctx);
-        SSL_set_bio(ssl, sbio, sbio);
-        
-        int r = SSL_accept(ssl);
-        if(r <= 0)
-        {
-            BIO_printf(bio_err, "SSL accept error\n");
-            ERR_print_errors(bio_err);
-            exit(0);
-        }
-        
-        rdp_serve(ssl, s, bio_err);
+        rdp_serve(ctx, s, bio_err);
         exit(0);
       }
     }

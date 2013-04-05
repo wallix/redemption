@@ -117,6 +117,7 @@ public:
     bool fastpath_support;                    // choice of programmer
     bool client_fastpath_input_event_support; // = choice of programmer
     bool server_fastpath_update_support;      // choice of programmer + capability of client
+    bool tls_support;                         // choice of programmer, front support tls
 
 TODO("Pass font name as parameter in constructor")
 
@@ -124,6 +125,7 @@ TODO("Pass font name as parameter in constructor")
           , Random * gen
           , Inifile * ini
           , bool fp_support // If true, fast-path must be supported
+          , bool tls_support // If true, tls must be supported
           )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
         , capture(NULL)
@@ -147,6 +149,7 @@ TODO("Pass font name as parameter in constructor")
         , fastpath_support(fp_support)
         , client_fastpath_input_event_support(fp_support)
         , server_fastpath_update_support(false)
+        , tls_support(tls_support)
     {
         init_palette332(this->palette332);
         this->mod_palette_setted = false;
@@ -1066,8 +1069,24 @@ TODO("Pass font name as parameter in constructor")
             }
             {
                 BStream stream(256);
-                X224::CC_TPDU_Send x224(stream, 0, 0, 0);
+                uint8_t rdp_neg_type = 0;
+                uint8_t rdp_neg_flags = 0;
+                uint32_t rdp_neg_code = 0;
+                if (this->tls_support){
+                    LOG(LOG_INFO, "-----------------> Front::TLS Support Enabled");
+                    rdp_neg_type = X224::CC_TPDU_TYPE_RDP_NEG_RSP;
+                    rdp_neg_code = X224::CC_TPDU_PROTOCOL_HYBRID;
+                }
+                else {
+                    LOG(LOG_INFO, "-----------------> Front::TLS Support not Enabled");
+                }
+                
+                X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
                 this->trans->send(stream);
+
+                if (this->tls_support){
+                    this->trans->enable_server_tls();
+                }
             }
             // Basic Settings Exchange
             // -----------------------

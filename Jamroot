@@ -79,7 +79,7 @@ install install-share
     ;
 
 install install-etc
-    : [ glob sys/etc/rdpproxy/*ini ]
+    : [ glob sys/etc/rdpproxy/*ini sys/etc/rdpproxy/*pem ]
     :
     : <location>/etc/rdpproxy
     ;

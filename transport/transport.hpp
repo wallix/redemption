@@ -75,7 +75,12 @@ public:
         last_quantum_sent = 0;
     }
 
-    virtual void enable_tls()
+    virtual void enable_client_tls()
+    {
+        // default enable_tls do nothing
+    }
+
+    virtual void enable_server_tls()
     {
         // default enable_tls do nothing
     }
