@@ -387,25 +387,6 @@ namespace X224
         }
     };
 
-    struct Send
-    {
-        enum {
-            OFFSET_TPKT_LEN = 2,
-            OFFSET_LI       = 4
-        };
-
-        void header(Stream & stream) {
-            stream.out_uint8(0x03); // version 3
-            stream.out_uint8(0x00);
-            stream.out_skip_bytes(3);
-        }
-
-        void trailer(Stream & stream) {
-            stream.set_out_uint16_be(stream.p - stream.data, OFFSET_TPKT_LEN);
-            stream.set_out_uint8(stream.p - stream.data - 5, OFFSET_LI);
-            stream.mark_end();
-        }
-    };
     // ################################ END OF COMMON CODE #################################
 
     // 2.2.1.1 Client X.224 Connection Request PDU
@@ -481,6 +462,12 @@ namespace X224
     // |                            | SHOULD also be set because Transport Layer   |
     // |                            | Security (TLS) is a subset of CredSSP.       |
     // +----------------------------+----------------------------------------------+
+
+    enum {
+        CR_TPDU_PROTOCOL_RDP    = 0,
+        CR_TPDU_PROTOCOL_SSL    = 1,
+        CR_TPDU_PROTOCOL_HYBRID = 2
+    };
 
 
     struct CR_TPDU_Recv : public Recv
@@ -594,18 +581,21 @@ namespace X224
     }; // END CLASS CR_TPDU_Recv
 
 
-    struct CR_TPDU_Send : public Send
+    struct CR_TPDU_Send
     {
         CR_TPDU_Send(Stream & stream, const char * cookie, uint8_t rdp_neg_type, uint8_t rdp_neg_flags, uint32_t rdp_neg_code)
         {
-            this->header(stream);
+            stream.out_uint8(0x03); // version 3
+            stream.out_uint8(0x00);
+            size_t cookie_len = strlen(cookie);
+            stream.out_uint16_be(11 + cookie_len + (rdp_neg_type?8:0));
+            stream.out_uint8(11 + cookie_len + (rdp_neg_type?8:0) - 5);
 
             stream.out_uint8(X224::CR_TPDU); // CR_TPDU code
             stream.out_uint16_be(0x0000); // DST-REF
             stream.out_uint16_be(0x0000); // SRC-REF
             stream.out_uint8(0x00); // CLASS OPTION
 
-            size_t cookie_len = strlen(cookie);
             if (cookie_len){
                 stream.out_copy_bytes(cookie, cookie_len);
             }
@@ -616,8 +606,7 @@ namespace X224
                 stream.out_uint32_le(rdp_neg_code);
             }
 
-            this->trailer(stream);
-
+            stream.mark_end();
         }
     };
 
@@ -741,6 +730,19 @@ namespace X224
     // |                                      | 5.4.5.2).                          |
     // +--------------------------------------+------------------------------------+
 
+    enum {
+        CC_TPDU_TYPE_RDP_NEG_RSP = 2
+    };
+    
+    enum {
+        CC_TPDU_PROTOCOL_RDP    = 0,
+        CC_TPDU_PROTOCOL_SSL    = 1,
+        CC_TPDU_PROTOCOL_HYBRID = 2,
+    };
+
+    enum {
+        CC_TPDU_EXTENDED_CLIENT_DATA_SUPPORTED    = 1,
+    };
 
     struct CC_TPDU_Recv : public Recv
     {
@@ -818,11 +820,14 @@ namespace X224
                     LOG(LOG_INFO, "Found RDP Negotiation %s Structure",
                         (this->rdp_neg_type == X224::RDP_NEG_RESP)?"Response":"Failure");
                 }
-
+                //NEGTYPE=2 NEGFLAGS=0 NEGLENGTH=8 NEGCODE=1
                 this->rdp_neg_flags = stream.in_uint8();
                 this->rdp_neg_length = stream.in_uint16_le();
                 this->rdp_neg_code = stream.in_uint32_le();
 
+                LOG(LOG_INFO, "NEGTYPE=%d NEGFLAGS=%d NEGLENGTH=%d NEGCODE=%d\n",
+                    this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_code);
+                    
                 switch (this->rdp_neg_type){
                 case X224::RDP_NEG_RESP:
                     switch (this->rdp_neg_code){
@@ -874,11 +879,14 @@ namespace X224
         }
     }; // END CLASS CC_TPDU_Recv
 
-    struct CC_TPDU_Send : public Send
+    struct CC_TPDU_Send
     {
         CC_TPDU_Send(Stream & stream, uint8_t rdp_neg_type, uint8_t rdp_neg_flags, uint32_t rdp_neg_code)
         {
-            this->header(stream);
+            stream.out_uint8(0x03); // version 3
+            stream.out_uint8(0x00);
+            stream.out_uint16_be(11 + (rdp_neg_type?8:0));
+            stream.out_uint8(11 + (rdp_neg_type?8:0) - 5);
 
             stream.out_uint8(X224::CC_TPDU); // CC_TPDU code
             stream.out_uint16_be(0x0000); // DST-REF
@@ -886,13 +894,57 @@ namespace X224
             stream.out_uint8(0x00); // CLASS OPTION
 
             if (rdp_neg_type){
+                switch (rdp_neg_type){
+                case X224::RDP_NEG_RESP:
+                    switch (rdp_neg_code){
+                    case X224::RDP_NEG_PROTOCOL_RDP:
+                        LOG(LOG_INFO, "PROTOCOL RDP");
+                    break;
+                    case X224::RDP_NEG_PROTOCOL_TLS:
+                        LOG(LOG_INFO, "PROTOCOL TLS 1.0");
+                    break;
+                    case X224::RDP_NEG_PROTOCOL_HYBRID:
+                        LOG(LOG_INFO, "PROTOCOL HYBRID");
+                    break;
+                    default:
+                        LOG(LOG_INFO, "Unknown protocol code %u", rdp_neg_code);
+                    break;
+                    }
+                break;
+                case X224::RDP_NEG_FAILURE:
+                    switch (rdp_neg_code){
+                    case X224::SSL_REQUIRED_BY_SERVER:
+                        LOG(LOG_INFO, "SSL_REQUIRED_BY_SERVER");
+                    break;
+                    case X224::SSL_NOT_ALLOWED_BY_SERVER:
+                        LOG(LOG_INFO, "SSL_NOT_ALLOWED_BY_SERVER");
+                    break;
+                    case X224::SSL_CERT_NOT_ON_SERVER:
+                        LOG(LOG_INFO, "SSL_CERT_NOT_ON_SERVER");
+                    break;
+                    case X224::INCONSISTENT_FLAGS:
+                        LOG(LOG_INFO, "INCONSISTENT_FLAGS");
+                    break;
+                    case X224::HYBRID_REQUIRED_BY_SERVER:
+                        LOG(LOG_INFO, "HYBRID_REQUIRED_BY_SERVER");
+                        break;
+                    default:
+                        LOG(LOG_INFO, "Unknown failure code %u", rdp_neg_code);
+                        break;
+                    }
+                break;
+                default:
+                    LOG(LOG_INFO, "Unknown negociation response code %u", rdp_neg_code);
+                break;
+                }
+
                 stream.out_uint8(rdp_neg_type);
                 stream.out_uint8(rdp_neg_flags);
                 stream.out_uint16_le(8);
                 stream.out_uint32_le(rdp_neg_code);
             }
 
-            this->trailer(stream);
+            stream.mark_end();
         }
     };
 
@@ -959,18 +1011,21 @@ namespace X224
     }; // END CLASS DR_TPDU_Recv
 
 
-    struct DR_TPDU_Send : public Send
+    struct DR_TPDU_Send
     {
          DR_TPDU_Send( Stream & stream, uint8_t reason)
         {
-            this->header(stream);
+            stream.out_uint8(0x03); // version 3
+            stream.out_uint8(0x00);
+            stream.out_uint16_be(11); // packet len, inclusive
+            stream.out_uint8(11 - 5); // LI
 
             stream.out_uint8(X224::DR_TPDU);
             stream.out_uint16_be(0x0000); // DST-REF
             stream.out_uint16_be(0x0000); // SRC-REF
             stream.out_uint8(reason);
 
-            this->trailer(stream);
+            stream.mark_end();
         }
     };
 
@@ -1074,11 +1129,14 @@ namespace X224
         }
     }; // END CLASS ER_TPDU_Recv
 
-    struct ER_TPDU_Send : public Send
+    struct ER_TPDU_Send
     {
         ER_TPDU_Send(Stream & stream, uint8_t cause, uint8_t vl, uint8_t * invalid)
         {
-            this->header(stream);
+            stream.out_uint8(0x03); // version 3
+            stream.out_uint8(0x00);
+            stream.out_uint16_be(11 + vl); // packet len, inclusive
+            stream.out_uint8(11 + vl - 5); // LI
 
             stream.out_uint8(X224::ER_TPDU);
             stream.out_uint16_be(0x0000); // DST-REF
@@ -1088,7 +1146,7 @@ namespace X224
             stream.out_uint8(vl);
             stream.out_copy_bytes(invalid, vl);
 
-            this->trailer(stream);
+            stream.mark_end();
         }
     };
 
@@ -1166,17 +1224,18 @@ namespace X224
         }
     }; // END CLASS DT_TPDU_Recv
 
-    struct DT_TPDU_Send : public Send
+    struct DT_TPDU_Send
     {
         DT_TPDU_Send(Stream & stream, size_t payload_len)
         {
-            this->header(stream);
+            stream.out_uint8(0x03); // version 3
+            stream.out_uint8(0x00);
+            stream.out_uint16_be(7 + payload_len); // packet len, inclusive
+            stream.out_uint8(7 - 5); // LI
 
             stream.out_uint8(X224::DT_TPDU);
             stream.out_uint8(X224::EOT_EOT);
 
-            stream.set_out_uint16_be(7 + payload_len, Send::OFFSET_TPKT_LEN);
-            stream.set_out_uint8(2, Send::OFFSET_LI);
             stream.mark_end();
         }
     };

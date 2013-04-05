@@ -74,12 +74,15 @@ extern "C" {
                         select(self->sck + 1, &fds, NULL, NULL, &time);
                         continue;
                     }
-                    TODO("if recv fail with partial read we should return the amount of data received, "
-                         "close socket and store some delayed error value that will be sent back next call")
+                    if (len != remaining_len){
+                        return len - remaining_len;
+                    }
                     TODO("replace this with actual error management, EOF is not even an option for sockets")
                     rio_m_RIOSocket_destructor(self);
                     return -RIO_ERROR_EOF;
                 case 0: /* no data received, socket closed */
+                    // if we were not able to receive the amount of data required, this is an error
+                    // not need to process the received data as it will end badly
                     rio_m_RIOSocket_destructor(self);
                     return -RIO_ERROR_EOF;
                 default: /* some data received */

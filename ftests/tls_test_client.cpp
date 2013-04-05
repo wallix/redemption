@@ -22,7 +22,6 @@
 
 int tcp_connect(const char *host, int port)
 {
-    
     union
     {
       struct sockaddr s;
@@ -55,60 +54,69 @@ int tcp_connect(const char *host, int port)
     }
 
     return sock;
-  }
+}
 
-static int http_request(SSL * ssl, const char * host, int port, BIO *bio_err)
+static int rdp_request(SSL_CTX *ctx, int sock, BIO *bio_err)
 {
-    char buf[1024];
-    int len;
-    
+
     const char *request = "REDEMPTION\r\n\r\n";
 
     /* Find the exact request_len */
     int request_len = strlen(request);
 
-    printf("writing %d bytes\n", request_len);
-    int r = SSL_write(ssl, request, request_len);
-    switch(SSL_get_error(ssl,r)){      
-      case SSL_ERROR_NONE:
-        if(request_len != r)
-        {
-            fprintf(stderr, "Incomplete write!\n");
-            exit(0);
-        }
-        break;
-        default:
-        {
-            BIO_printf(bio_err,"SSL write problem\n");
-            ERR_print_errors(bio_err);
-            exit(0);
-        }
-    }
-    
-    /* Now read the server's response, assuming that it's terminated by a close */
-    while(1){
-      r = SSL_read(ssl, buf, sizeof(buf));
-      switch(SSL_get_error(ssl,r)){
-        case SSL_ERROR_NONE:
-          len=r;
-          break;
-        case SSL_ERROR_ZERO_RETURN:
-          goto shutdown;
-        case SSL_ERROR_SYSCALL:
-          fprintf(stderr, "SSL Error: Premature close\n");
-          goto done;
-        default:
-        {
-            BIO_printf(bio_err,"SSL read problem\n");
-            ERR_print_errors(bio_err);
-            exit(0);
-        }
-      }
+    char buf[1024];
+    RIO rio;
+    rio_init_socket(&rio, sock); /* I do not bother to check return code, as I know it can't fail in current implementation */
 
-      fwrite(buf,1,len,stdout);
+    ssize_t r = rio_send(&rio, request, request_len);
+    if (r < 0){
+        exit(0);
     }
+
+    printf("HELLO sent, going TLS\n");
+
     
-  shutdown:
+    SSL *ssl = SSL_new(ctx);
+    BIO *sbio = BIO_new_socket(sock, BIO_NOCLOSE);
+    SSL_set_bio(ssl, sbio, sbio);
+
+    if(SSL_connect(ssl)<=0){
+        BIO_printf(bio_err, "SSL connect error\n");
+        ERR_print_errors(bio_err);
+        exit(0);
+    }
+
+//        X509 * px509 = SSL_get_peer_certificate(ssl);
+//        if (!px509) {
+//            fprintf(stderr, "RIO *::crypto_cert_get_public_key: SSL_get_peer_certificate() failed");
+//            exit(0);
+//        }
+
+//        fprintf(stderr, "dumping X509 peer certificate\n");
+//        FILE * fp = fopen("X509.pem", "w+");
+//        PEM_write_X509(fp, px509);
+//        fclose(fp);
+//        fprintf(stderr, "dumped X509 peer certificate\n");
+
+    rio_clear(&rio);
+    rio_init_socket_tls(&rio, ssl);
+    
+    ssize_t len = rio_recv(&rio, buf, 29);
+    if (len < 0){
+        printf("len=%ld\n", len);
+        exit(0);
+    }
+    fwrite(buf,1,len,stdout);
+
+    len = rio_recv(&rio, buf, 18);
+    if (len < 0){
+        printf("len=%ld\n", len);
+        exit(0);
+    }
+    fwrite(buf,1,len,stdout);
+
+    rio_clear(&rio);
+    
     r=SSL_shutdown(ssl);
     switch(r){
       case 1:
@@ -123,7 +131,6 @@ static int http_request(SSL * ssl, const char * host, int port, BIO *bio_err)
       }
     }
     
-  done:
     SSL_free(ssl);
     return(0);
 }
@@ -211,85 +218,18 @@ int main(int argc, char ** argv)
 {
     const char *host = "localhost";
     int port = 4433;
-    int require_server_auth = 1;
 
     SSL_library_init();
     SSL_load_error_strings();
   
     BIO *bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
-   
     SSL_CTX *ctx = SSL_CTX_new(SSLv23_method());
 
     /* Connect the TCP socket*/
     int sock = tcp_connect(host, port);
 
-
-    TODO("test behavior if we send some data on unencrypted socket before commuting to SSL")
-
-    /* Connect the SSL socket */
-    SSL *ssl = SSL_new(ctx);
-    BIO *sbio = BIO_new_socket(sock, BIO_NOCLOSE);
-    SSL_set_bio(ssl, sbio, sbio);
-
-    if(SSL_connect(ssl)<=0){
-        BIO_printf(bio_err, "SSL connect error\n");
-        ERR_print_errors(bio_err);
-        exit(0);
-    }
-
-    if(require_server_auth){
-        X509 * px509 = SSL_get_peer_certificate(ssl);
-        if (!px509) {
-            fprintf(stderr, "RIO *::crypto_cert_get_public_key: SSL_get_peer_certificate() failed");
-            exit(0);
-        }
-
-        fprintf(stderr, "dumping X509 peer certificate\n");
-        FILE * fp = fopen("X509.pem", "w+");
-        PEM_write_X509(fp, px509);
-        fclose(fp);
-        fprintf(stderr, "dumped X509 peer certificate\n");
-        
-//        // extract the public key
-//        EVP_PKEY* pkey = X509_get_pubkey(px509);
-//        if (!pkey){
-//            fprintf(stderr, "RIO *::crypto_cert_get_public_key: X509_get_pubkey() failed");
-//            exit(0);
-//        }
-
-/*        int r = SSL_get_verify_result(ssl);*/
-/*        printf("verify_result=%d\n", r);*/
-/*        if(r != X509_V_OK)*/
-/*        {*/
-/*            int error = SSL_get_error(ssl, r);*/
-/*            BIO_printf(bio_err,"Certificate doesn't verify, r = %d error=%d\n", r, error);*/
-/*            uint32_t errcount = 0;*/
-/*            error = ERR_get_error();*/
-/*            while (error != 0){*/
-/*                errcount++;*/
-/*                fprintf(stderr, "%u:%s", errcount, ERR_error_string(error, NULL));*/
-/*                error = ERR_get_error();*/
-/*            }*/
-/*            exit(0);*/
-/*        }*/
-
-        /*Check the cert chain. The chain length
-          is automatically checked by OpenSSL when
-          we set the verify depth in the ctx */
-
-    /* Check the common name*/
-    /*    X509 *peer;*/
-    /*    char peer_CN[256];*/
-    /*    peer=SSL_get_peer_certificate(ssl);*/
-    /*    X509_NAME_get_text_by_NID(X509_get_subject_name(peer), NID_commonName, peer_CN, 256);*/
-    /*    if(strcasecmp(peer_CN,host)) {*/
-    /*        fprintf(stderr, "Common name doesn't match host name\n");*/
-    /*        exit(0);*/
-    /*    }*/
-    }
- 
     /* Now make our HTTP request */
-    http_request(ssl, host, port, bio_err);
+    rdp_request(ctx, sock, bio_err);
 
     /* Shutdown the socket */
     SSL_CTX_free(ctx);
