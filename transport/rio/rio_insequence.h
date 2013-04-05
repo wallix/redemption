@@ -34,7 +34,7 @@ struct RIOInsequence {
 
 extern "C" {
 
-    /* This method does not allocate space for object itself, 
+    /* This method does not allocate space for object itself,
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
@@ -50,7 +50,7 @@ extern "C" {
     */
     inline RIO_ERROR rio_m_RIOInsequence_destructor(RIOInsequence * self)
     {
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
 
     /* This method receive len bytes of data into buffer
@@ -118,7 +118,7 @@ extern "C" {
     {
          return RIO_ERROR_OUT_ONLY;
     }
-    
+
     static inline RIO_ERROR rio_m_RIOInsequence_get_status(RIOInsequence * self)
     {
         if (!(self->status)) {

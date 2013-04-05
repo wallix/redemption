@@ -46,8 +46,8 @@ extern "C" {
         unsigned count;
     };
 
-    static inline RIO_ERROR sq_m_SQOutfilename_constructor(SQOutfilename * self, 
-                SQ_FORMAT format, 
+    static inline RIO_ERROR sq_m_SQOutfilename_constructor(SQOutfilename * self,
+                SQ_FORMAT format,
                 const char * path, const char * filename, const char * extension)
     {
         self->trans = NULL;
@@ -115,7 +115,7 @@ extern "C" {
             }
             self->trans = NULL;
         }
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
 
     static inline RIO * sq_m_SQOutfilename_get_trans(SQOutfilename * self, RIO_ERROR * status)

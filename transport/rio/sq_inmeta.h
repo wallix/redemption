@@ -69,18 +69,18 @@ extern "C" {
     {
         if (self->status != RIO_ERROR_OK) { return self->status; }
         sq_m_SQIntracker_destructor(&self->impl);
-        close(self->fd);        
+        close(self->fd);
         rio_delete(self->tracker);
         self->tracker = NULL;
         self->status = RIO_ERROR_DESTRUCTED;
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
 
     static inline RIO * sq_m_SQInmeta_get_trans(SQInmeta * self, RIO_ERROR * status)
     {
         if (self->status != RIO_ERROR_OK) {
             if (status) { *status = self->status; }
-            return NULL; 
+            return NULL;
         }
         RIO_ERROR status_res = RIO_ERROR_OK;
         RIO * res = sq_m_SQIntracker_get_trans(&self->impl, &status_res);

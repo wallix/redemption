@@ -108,7 +108,7 @@ extern "C" {
             rio_delete(self->trans);
             self->trans = NULL;
         }
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
 
     static inline RIO_ERROR sq_m_SQIntracker_next(SQIntracker * self)
@@ -136,7 +136,7 @@ extern "C" {
         self->eollen = 0;
         self->rlstatus = RIO_ERROR_OK;
         self->num_chunk = 0;
-        
+
         // First header line
         self->begin_line = self->eol;
         self->rlstatus = sq_m_SQIntracker_readline(self);
@@ -146,7 +146,7 @@ extern "C" {
         TODO("Add header sanity check")
         memcpy(self->header1, self->buffer + self->begin_line, self->end_line-self->begin_line);
         self->header1[self->eol-self->begin_line] = 0;
-        
+
         // Second header line
         self->begin_line = self->eol;
         self->rlstatus = sq_m_SQIntracker_readline(self);
@@ -166,7 +166,7 @@ extern "C" {
         TODO("Add header sanity check")
         memcpy(self->header3, self->buffer + self->begin_line, self->end_line-self->begin_line);
         self->header3[self->eol-self->begin_line] = 0;
-        
+
         // First real filename line
         self->begin_line = self->eol;
         TODO("check what should happen if a file has no chunk")
