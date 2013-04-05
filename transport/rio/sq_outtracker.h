@@ -46,9 +46,9 @@ extern "C" {
         unsigned count;
     };
 
-    static inline RIO_ERROR sq_m_SQOuttracker_constructor(SQOuttracker * self, RIO * tracker, 
-                    SQ_FORMAT format, 
-                    const char * path, const char * filename, const char * extension, 
+    static inline RIO_ERROR sq_m_SQOuttracker_constructor(SQOuttracker * self, RIO * tracker,
+                    SQ_FORMAT format,
+                    const char * path, const char * filename, const char * extension,
                     struct timeval * tv, const char * header1, const char * header2, const char * header3)
     {
         self->trans = NULL;
@@ -155,7 +155,7 @@ extern "C" {
             close(self->fd);
             self->trans = NULL;
         }
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
 
     static inline RIO * sq_m_SQOuttracker_get_trans(SQOuttracker * self, RIO_ERROR * status)

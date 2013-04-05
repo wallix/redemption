@@ -32,7 +32,7 @@ extern "C" {
         struct RIO * insequence;
     };
 
-    /* This method does not allocate space for object itself, 
+    /* This method does not allocate space for object itself,
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
@@ -62,9 +62,8 @@ extern "C" {
         self->insequence = NULL;
         sq_delete(self->seq);
         self->seq = NULL;
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
-
 
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data

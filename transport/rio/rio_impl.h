@@ -146,7 +146,7 @@ RIO_ERROR sq_init_one(SQ * self, RIO * trans)
 SQ * sq_new_one(RIO_ERROR * error, RIO * trans)
 {
     SQ * self = (SQ*)malloc(sizeof(SQ));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -191,21 +191,21 @@ RIO_ERROR sq_init_outtracker(SQ * self, RIO * tracker,
     const char * header1, const char * header2, const char * header3)
 {
     self->sq_type = SQ_TYPE_OUTTRACKER;
-    self->err = sq_m_SQOuttracker_constructor(&(self->u.outtracker), tracker, 
-                                            format, 
-                                            path, filename, extension, 
-                                            tv, header1, header2, header3);
+    self->err = sq_m_SQOuttracker_constructor( &(self->u.outtracker)
+                                             , tracker, format, path, filename
+                                             , extension, tv, header1, header2
+                                             , header3);
     return self->err;
 }
 
-SQ * sq_new_outtracker(RIO_ERROR * error, RIO * tracker, 
-        SQ_FORMAT format, 
-        const char * path, const char * filename, const char * extension, 
+SQ * sq_new_outtracker(RIO_ERROR * error, RIO * tracker,
+        SQ_FORMAT format,
+        const char * path, const char * filename, const char * extension,
         timeval * tv,
         const char * header1, const char * header2, const char * header3)
 {
     SQ * self = (SQ*)malloc(sizeof(SQ));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -229,7 +229,7 @@ RIO_ERROR sq_init_intracker(SQ * self, RIO * tracker)
 SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker)
 {
     SQ * self = (SQ*)malloc(sizeof(SQ));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -253,7 +253,7 @@ RIO_ERROR sq_init_inmeta(SQ * self, const char * prefix, const char * extension)
 SQ * sq_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extension)
 {
     SQ * self = (SQ*)malloc(sizeof(SQ));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -417,7 +417,7 @@ RIO_ERROR rio_init_outfile(RIO * self, int fd)
 RIO * rio_new_outfile(RIO_ERROR * error, int fd)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -441,7 +441,7 @@ RIO_ERROR rio_init_infile(RIO * self, int fd)
 RIO * rio_new_infile(RIO_ERROR * error, int fd)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -465,7 +465,7 @@ RIO_ERROR rio_init_generator(RIO * self, const void * data, size_t len)
 RIO * rio_new_generator(RIO_ERROR * error, const void * data, size_t len)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -489,7 +489,7 @@ RIO_ERROR rio_init_check(RIO * self, const void * data, size_t len)
 RIO * rio_new_check(RIO_ERROR * error, const void * data, size_t len)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -513,7 +513,7 @@ RIO_ERROR rio_init_test(RIO * self, const void * data_check, size_t len_check, c
 RIO * rio_new_test(RIO_ERROR * error, const void * data_check, size_t len_check, const void * data_gen, size_t len_gen)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -537,7 +537,7 @@ RIO_ERROR rio_init_socket(RIO * self, int sck)
 RIO * rio_new_socket(RIO_ERROR * error, int sck)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -561,7 +561,7 @@ RIO_ERROR rio_init_socket_tls(RIO * self, SSL * ssl)
 RIO * rio_new_socket_tls(RIO_ERROR * error, SSL * ssl)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -585,7 +585,7 @@ RIO_ERROR rio_init_outsequence(RIO * self, SQ * seq)
 RIO * rio_new_outsequence(RIO_ERROR * error, SQ * seq)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -609,7 +609,7 @@ RIO_ERROR rio_init_insequence(RIO * self, SQ * seq)
 RIO * rio_new_insequence(RIO_ERROR * error, SQ * seq)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -635,7 +635,7 @@ RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * path, const cha
                       const char * l1, const char * l2, const char * l3, timeval * tv)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -659,7 +659,7 @@ RIO_ERROR rio_init_inmeta(RIO * self, SQ ** seq, const char * prefix, const char
 RIO * rio_new_inmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -678,8 +678,8 @@ RIO_ERROR rio_get_status(RIO * rt)
     /* if transport goes into error state it should be immediately flushed and closed (if it means something)
        hence no need to close it again calling close
     */
-    if (rt->err != RIO_ERROR_OK){ 
-        return rt->err; 
+    if (rt->err != RIO_ERROR_OK){
+        return rt->err;
     }
     switch(rt->rt_type){
         case RIO_TYPE_GENERATOR:
@@ -719,6 +719,7 @@ RIO_ERROR rio_get_status(RIO * rt)
             rt->err = rio_m_RIOCrypto_get_status(&(rt->u.crypto));
         break;
         default:
+            rt->err = RIO_ERROR_UNKNOWN_TYPE;
             ;
     }
     return rt->err;
@@ -874,56 +875,54 @@ void rio_clear(RIO * rt)
     /* if transport goes into error state it should be immediately flushed and closed (if it means something)
        hence no need to close it again calling close
     */
-    if (rt->err != RIO_ERROR_OK){ 
-        return; 
+    if (rt->err != RIO_ERROR_OK){
+        return;
     }
     switch(rt->rt_type){
         case RIO_TYPE_GENERATOR:
-            rio_m_RIOGenerator_destructor(&(rt->u.generator));
+            rt->err = rio_m_RIOGenerator_destructor(&(rt->u.generator));
         break;
         case RIO_TYPE_CHECK:
-            rio_m_RIOCheck_destructor(&(rt->u.check));
+            rt->err = rio_m_RIOCheck_destructor(&(rt->u.check));
         break;
         case RIO_TYPE_TEST:
-            rio_m_RIOTest_destructor(&(rt->u.test));
+            rt->err = rio_m_RIOTest_destructor(&(rt->u.test));
         break;
         case RIO_TYPE_OUTFILE:
-            rio_m_RIOOutfile_destructor(&(rt->u.outfile));
+            rt->err = rio_m_RIOOutfile_destructor(&(rt->u.outfile));
         break;
         case RIO_TYPE_INFILE:
-            rio_m_RIOInfile_destructor(&(rt->u.infile));
+            rt->err = rio_m_RIOInfile_destructor(&(rt->u.infile));
         break;
         case RIO_TYPE_SOCKET:
-            rio_m_RIOSocket_destructor(&(rt->u.socket));
+            rt->err = rio_m_RIOSocket_destructor(&(rt->u.socket));
         break;
         case RIO_TYPE_SOCKET_TLS:
-            rio_m_RIOSocketTLS_destructor(&(rt->u.socket_tls));
+            rt->err = rio_m_RIOSocketTLS_destructor(&(rt->u.socket_tls));
         break;
         case RIO_TYPE_OUTSEQUENCE:
-            rio_m_RIOOutsequence_destructor(&(rt->u.outsequence));
+            rt->err = rio_m_RIOOutsequence_destructor(&(rt->u.outsequence));
         break;
         case RIO_TYPE_INSEQUENCE:
-            rio_m_RIOInsequence_destructor(&(rt->u.insequence));
+            rt->err = rio_m_RIOInsequence_destructor(&(rt->u.insequence));
         break;
         case RIO_TYPE_OUTMETA:
-            rio_m_RIOOutmeta_destructor(&(rt->u.outmeta));
+            rt->err = rio_m_RIOOutmeta_destructor(&(rt->u.outmeta));
         break;
         case RIO_TYPE_INMETA:
-            rio_m_RIOInmeta_destructor(&(rt->u.inmeta));
+            rt->err = rio_m_RIOInmeta_destructor(&(rt->u.inmeta));
         break;
         case RIO_TYPE_CRYPTO:
-            rio_m_RIOCrypto_destructor(&(rt->u.crypto));
+            rt->err = rio_m_RIOCrypto_destructor(&(rt->u.crypto));
         break;
         default:
-            ;
+            rt->err = RIO_ERROR_UNKNOWN_TYPE;
     }
     /* after a close any subsequent call to recv/send/etc. raise an error */
-    rt->err = RIO_ERROR_CLOSED;
-    return;
 }
 
 void rio_delete(RIO * self)
-{   
+{
     if (!self) { return; }
     rio_clear(self);
     free(self);
@@ -964,7 +963,7 @@ RIO_ERROR rio_init_crypto(RIO * self, const char * file, int oflag)
 RIO * rio_new_crypto(RIO_ERROR * error, const char * file, int oflag)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
