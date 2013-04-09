@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     BOOST_CHECK_EQUAL((uint8_t)X224::RDP_NEG_REQ, x224.rdp_neg_type);
     BOOST_CHECK_EQUAL(0, x224.rdp_neg_flags);
     BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
-    BOOST_CHECK_EQUAL((uint32_t)X224::RDP_NEG_PROTOCOL_TLS, x224.rdp_neg_code);
+    BOOST_CHECK_EQUAL((uint32_t)X224::RDP_NEG_PROTOCOL_TLS, x224.rdp_neg_requestedProtocols);
 
     BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
     BOOST_CHECK_EQUAL(x224._header_size, stream.size());

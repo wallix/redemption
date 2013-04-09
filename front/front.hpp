@@ -118,6 +118,7 @@ public:
     bool client_fastpath_input_event_support; // = choice of programmer
     bool server_fastpath_update_support;      // choice of programmer + capability of client
     bool tls_support;                         // choice of programmer, front support tls
+    int clientRequestedProtocols;
 
 TODO("Pass font name as parameter in constructor")
 
@@ -150,6 +151,7 @@ TODO("Pass font name as parameter in constructor")
         , client_fastpath_input_event_support(fp_support)
         , server_fastpath_update_support(false)
         , tls_support(tls_support)
+        , clientRequestedProtocols(X224::CR_TPDU_PROTOCOL_RDP)
     {
         init_palette332(this->palette332);
         this->mod_palette_setted = false;
@@ -1062,6 +1064,7 @@ TODO("Pass font name as parameter in constructor")
                     LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
                                  " %d bytes remains", stream.size() - x224._header_size);
                 }
+                this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
             }
 
             if (this->verbose & 1){
@@ -1087,6 +1090,24 @@ TODO("Pass font name as parameter in constructor")
 
                 if (this->tls_support){
                     this->trans->enable_server_tls();
+
+            // 2.2.10.2 Early User Authorization Result PDU
+            // ============================================
+            
+            // The Early User Authorization Result PDU is sent from server to client and is used
+            // to convey authorization information to the client. This PDU is only sent by the server
+            // if the client advertised support for it by specifying the PROTOCOL_HYBRID_EX (0x00000008)
+            // flag in the requestedProtocols field of the RDP Negotiation Request (section 2.2.1.1.1)
+            // structure and it MUST be sent immediately after the CredSSP handshake (section 5.4.5.2) has completed.
+
+            // authorizationResult (4 bytes): A 32-bit unsigned integer. Specifies the authorization result.
+            
+            // +---------------------------------+--------------------------------------------------------+
+            // | AUTHZ_SUCCESS 0x00000000        | The user has permission to access the server.          |
+            // +---------------------------------+--------------------------------------------------------+    
+            // | AUTHZ _ACCESS_DENIED 0x0000052E | The user does not have permission to access the server.|
+            // +---------------------------------+--------------------------------------------------------+    
+
                 }
             }
             // Basic Settings Exchange
@@ -1111,6 +1132,8 @@ TODO("Pass font name as parameter in constructor")
                 LOG(LOG_INFO, "Front::incoming::Basic Settings Exchange");
                 LOG(LOG_INFO, "Front::incoming::channel_list : %u", this->channel_list.size());
             }
+
+
 
             BStream x224_data(65536);
             X224::RecvFactory f(*this->trans, x224_data);
@@ -1174,7 +1197,7 @@ TODO("Pass font name as parameter in constructor")
                             memcpy(channel_item.name, cs_net.channelDefArray[index].name, 8);
                             channel_item.flags = cs_net.channelDefArray[index].options;
                             channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
-                            channel_list.push_back(channel_item);
+                            this->channel_list.push_back(channel_item);
                         }
                         cs_net.log("Received from Client");
                     }
@@ -1210,6 +1233,10 @@ TODO("Pass font name as parameter in constructor")
             // ------------------------------------------------------------------
             GCC::UserData::SCCore sc_core;
             sc_core.version = 0x00080004;
+            if (this->tls_support){
+                sc_core.length = 12;
+                sc_core.clientRequestedProtocols = this->clientRequestedProtocols;
+            }
             sc_core.log("Sending to client");
             sc_core.emit(stream);
             // ------------------------------------------------------------------
@@ -1223,11 +1250,13 @@ TODO("Pass font name as parameter in constructor")
             sc_net.log("Sending to client");
             sc_net.emit(stream);
             // ------------------------------------------------------------------
-            if (0 && this->tls_support){
+            if (this->tls_support){
                 GCC::UserData::SCSecurity sc_sec1;
-                sc_sec1.length = 12;
                 sc_sec1.encryptionMethod = 0;
                 sc_sec1.encryptionLevel = 0;
+                sc_sec1.length = 12;
+                sc_sec1.serverRandomLen = 0;
+                sc_sec1.serverCertLen = 0;
                 sc_sec1.log("Sending to client");
                 sc_sec1.emit(stream);
             }
@@ -1352,8 +1381,11 @@ TODO("Pass font name as parameter in constructor")
             }
             {
                 BStream x224_data(256);
+                LOG(LOG_INFO, "Front::incoming::RecvFactory");
                 X224::RecvFactory f(*this->trans, x224_data);
+                LOG(LOG_INFO, "Front::incoming::RecvX224");
                 X224::DT_TPDU_Recv x224(*trans, x224_data);
+                LOG(LOG_INFO, "Front::incoming::RecvMCS");
                 MCS::ErectDomainRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
             if (this->verbose){
@@ -1970,7 +2002,6 @@ TODO("Pass font name as parameter in constructor")
         // connection management information and virtual channel messages (exchanged
         // between client-side plug-ins and server-side applications).
         {
-            ChannelDefArray & channel_list = this->channel_list;
             BStream stream(65536);
 
             // Detect fast-path PDU
@@ -2086,9 +2117,9 @@ TODO("Pass font name as parameter in constructor")
             }
 
             if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
-                size_t num_channel_src = channel_list.size();
-                for (size_t index = 0; index < channel_list.size(); index++){
-                    if (channel_list[index].chanid == mcs.channelId){
+                size_t num_channel_src = this->channel_list.size();
+                for (size_t index = 0; index < this->channel_list.size(); index++){
+                    if (this->channel_list[index].chanid == mcs.channelId){
                         num_channel_src = index;
                         break;
                     }
@@ -2098,12 +2129,12 @@ TODO("Pass font name as parameter in constructor")
                     LOG(LOG_INFO, "Front::incoming::channel_data channelId=%u", mcs.channelId);
                 }
 
-                if (num_channel_src >= channel_list.size()) {
+                if (num_channel_src >= this->channel_list.size()) {
                     LOG(LOG_ERR, "Front::incoming::Unknown Channel");
                     throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                 }
 
-                const ChannelDef & channel = channel_list[num_channel_src];
+                const ChannelDef & channel = this->channel_list[num_channel_src];
                 if (this->verbose & 16){
                     channel.log(mcs.channelId);
                 }
