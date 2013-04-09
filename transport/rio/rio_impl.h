@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -57,7 +57,12 @@
 #include "rio_insequence.h"
 #include "rio_outmeta.h"
 #include "rio_inmeta.h"
-#include "rio_crypto.h"
+
+#ifdef PUBLIC
+    #include "rio_crypto.h"
+#else
+    #include "../../../transport/rio_crypto.h"
+#endif
 
 TODO("add filter class sample")
 TODO("convert PNG transport to new format")
@@ -93,6 +98,8 @@ typedef enum {
     RIO_TYPE_OUTMETA,
     RIO_TYPE_INMETA,
     RIO_TYPE_CRYPTO,
+    RIO_TYPE_CRYPTOOUTMETA,
+    RIO_TYPE_CRYPTOINMETA,
 } RIO_TYPE;
 
 typedef enum {
@@ -101,6 +108,10 @@ typedef enum {
     SQ_TYPE_OUTTRACKER,
     SQ_TYPE_INTRACKER,
     SQ_TYPE_INMETA,
+    SQ_TYPE_CRYPTOOUTFILENAME,
+    SQ_TYPE_CRYPTOOUTTRACKER,
+    SQ_TYPE_CRYPTOINTRACKER,
+    SQ_TYPE_CRYPTOINMETA,
 } SQ_TYPE;
 
 
@@ -108,11 +119,15 @@ struct SQ {
     unsigned sq_type;
     RIO_ERROR err;
     union {
-      struct SQOne         one;
-      struct SQOutfilename outfilename;
-      struct SQOuttracker  outtracker;
-      struct SQIntracker   intracker;
-      struct SQInmeta      inmeta;
+      struct SQOne               one;
+      struct SQOutfilename       outfilename;
+      struct SQCryptoOutfilename cryptooutfilename;
+      struct SQOuttracker        outtracker;
+      struct SQCryptoOuttracker  cryptoouttracker;
+      struct SQIntracker         intracker;
+      struct SQCryptoIntracker   cryptointracker;
+      struct SQInmeta            inmeta;
+      struct SQCryptoInmeta      cryptoinmeta;
     } u;
 };
 
@@ -120,18 +135,20 @@ struct RIO {
     unsigned rt_type;
     RIO_ERROR err;
     union {
-      struct RIOGenerator   generator;
-      struct RIOCheck       check;
-      struct RIOTest        test;
-      struct RIOOutfile     outfile;
-      struct RIOInfile      infile;
-      struct RIOSocket      socket;
-      struct RIOSocketTLS   socket_tls;
-      struct RIOOutsequence outsequence;
-      struct RIOInsequence  insequence;
-      struct RIOOutmeta     outmeta;
-      struct RIOInmeta      inmeta;
-      struct RIOCrypto      crypto;
+      struct RIOGenerator     generator;
+      struct RIOCheck         check;
+      struct RIOTest          test;
+      struct RIOOutfile       outfile;
+      struct RIOInfile        infile;
+      struct RIOSocket        socket;
+      struct RIOSocketTLS     socket_tls;
+      struct RIOOutsequence   outsequence;
+      struct RIOInsequence    insequence;
+      struct RIOOutmeta       outmeta;
+      struct RIOInmeta        inmeta;
+      struct RIOCrypto        crypto;
+      struct RIOCryptoOutmeta cryptooutmeta;
+      struct RIOCryptoInmeta  cryptoinmeta;
     } u;
 };
 
@@ -146,7 +163,7 @@ RIO_ERROR sq_init_one(SQ * self, RIO * trans)
 SQ * sq_new_one(RIO_ERROR * error, RIO * trans)
 {
     SQ * self = (SQ*)malloc(sizeof(SQ));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -170,7 +187,7 @@ RIO_ERROR sq_init_outfilename(SQ * self, SQ_FORMAT format, const char * path, co
 SQ * sq_new_outfilename(RIO_ERROR * error, SQ_FORMAT format, const char * path, const char * filename, const char * extension)
 {
     SQ * self = (SQ*)malloc(sizeof(SQ));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -184,32 +201,91 @@ SQ * sq_new_outfilename(RIO_ERROR * error, SQ_FORMAT format, const char * path, 
 }
 
 
-RIO_ERROR sq_init_outtracker(SQ * self, RIO * tracker, 
-    SQ_FORMAT format, 
+RIO_ERROR sq_init_cryptooutfilename(SQ * self, SQ_FORMAT format, const char * path, const char * filename, const char * extension)
+{
+    self->sq_type = SQ_TYPE_CRYPTOOUTFILENAME;
+    self->err = sq_m_SQCryptoOutfilename_constructor(&(self->u.cryptooutfilename), format, path, filename, extension);
+    return self->err;
+}
+
+SQ * sq_new_cryptooutfilename(RIO_ERROR * error, SQ_FORMAT format, const char * path, const char * filename, const char * extension)
+{
+    SQ * self = (SQ*)malloc(sizeof(SQ));
+    if (self == 0){
+        if (error){ *error = RIO_ERROR_MALLOC; }
+        return NULL;
+    }
+    RIO_ERROR res = sq_init_cryptooutfilename(self, format, path, filename, extension);
+    if (error) { *error = res; }
+    if (res != RIO_ERROR_OK){
+        free(self);
+        return NULL;
+    }
+    return self;
+}
+
+
+RIO_ERROR sq_init_outtracker(SQ * self, RIO * tracker,
+    SQ_FORMAT format,
     const char * path, const char * filename, const char * extension,
-    timeval * tv, 
+    timeval * tv,
     const char * header1, const char * header2, const char * header3)
 {
     self->sq_type = SQ_TYPE_OUTTRACKER;
-    self->err = sq_m_SQOuttracker_constructor(&(self->u.outtracker), tracker, 
-                                            format, 
-                                            path, filename, extension, 
+    self->err = sq_m_SQOuttracker_constructor(&(self->u.outtracker), tracker,
+                                            format,
+                                            path, filename, extension,
                                             tv, header1, header2, header3);
     return self->err;
 }
 
-SQ * sq_new_outtracker(RIO_ERROR * error, RIO * tracker, 
-        SQ_FORMAT format, 
-        const char * path, const char * filename, const char * extension, 
+SQ * sq_new_outtracker(RIO_ERROR * error, RIO * tracker,
+        SQ_FORMAT format,
+        const char * path, const char * filename, const char * extension,
         timeval * tv,
         const char * header1, const char * header2, const char * header3)
 {
     SQ * self = (SQ*)malloc(sizeof(SQ));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
     RIO_ERROR res = sq_init_outtracker(self, tracker, format, path, filename, extension, tv, header1, header2, header3);
+    if (error) { *error = res; }
+    if (res != RIO_ERROR_OK){
+        free(self);
+        return NULL;
+    }
+    return self;
+}
+
+
+RIO_ERROR sq_init_cryptoouttracker(SQ * self, RIO * tracker,
+    SQ_FORMAT format,
+    const char * path, const char * filename, const char * extension,
+    timeval * tv,
+    const char * header1, const char * header2, const char * header3)
+{
+    self->sq_type = SQ_TYPE_CRYPTOOUTTRACKER;
+    self->err = sq_m_SQCryptoOuttracker_constructor(&(self->u.cryptoouttracker), tracker,
+                                            format,
+                                            path, filename, extension,
+                                            tv, header1, header2, header3);
+    return self->err;
+}
+
+SQ * sq_new_cryptoouttracker(RIO_ERROR * error, RIO * tracker,
+        SQ_FORMAT format,
+        const char * path, const char * filename, const char * extension,
+        timeval * tv,
+        const char * header1, const char * header2, const char * header3)
+{
+    SQ * self = (SQ*)malloc(sizeof(SQ));
+    if (self == 0){
+        if (error){ *error = RIO_ERROR_MALLOC; }
+        return NULL;
+    }
+    RIO_ERROR res = sq_init_cryptoouttracker(self, tracker, format, path, filename, extension, tv, header1, header2, header3);
     if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
@@ -229,11 +305,35 @@ RIO_ERROR sq_init_intracker(SQ * self, RIO * tracker)
 SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker)
 {
     SQ * self = (SQ*)malloc(sizeof(SQ));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
     RIO_ERROR res = sq_init_intracker(self, tracker);
+    if (res != RIO_ERROR_OK){
+        if (error) { *error = res; }
+        free(self);
+        return NULL;
+    }
+    return self;
+}
+
+
+RIO_ERROR sq_init_cryptointracker(SQ * self, RIO * tracker)
+{
+    self->sq_type = SQ_TYPE_CRYPTOINTRACKER;
+    self->err = sq_m_SQCryptoIntracker_constructor(&(self->u.cryptointracker), tracker);
+    return self->err;
+}
+
+SQ * sq_new_cryptointracker(RIO_ERROR * error, RIO * tracker)
+{
+    SQ * self = (SQ*)malloc(sizeof(SQ));
+    if (self == 0){
+        if (error){ *error = RIO_ERROR_MALLOC; }
+        return NULL;
+    }
+    RIO_ERROR res = sq_init_cryptointracker(self, tracker);
     if (res != RIO_ERROR_OK){
         if (error) { *error = res; }
         free(self);
@@ -253,12 +353,36 @@ RIO_ERROR sq_init_inmeta(SQ * self, const char * prefix, const char * extension)
 SQ * sq_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extension)
 {
     SQ * self = (SQ*)malloc(sizeof(SQ));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
-    self->sq_type = SQ_TYPE_INMETA;
+//    self->sq_type = SQ_TYPE_INMETA;
     RIO_ERROR res = sq_init_inmeta(self, prefix, extension);
+    if (error) { *error = res; }
+    if (res != RIO_ERROR_OK){
+        free(self);
+        return NULL;
+    }
+    return self;
+}
+
+
+RIO_ERROR sq_init_cryptoinmeta(SQ * self, const char * prefix, const char * extension)
+{
+    self->sq_type = SQ_TYPE_CRYPTOINMETA;
+    self->err = sq_m_SQCryptoInmeta_constructor(&(self->u.cryptoinmeta), prefix, extension);
+    return self->err;
+}
+
+SQ * sq_new_cryptoinmeta(RIO_ERROR * error, const char * prefix, const char * extension)
+{
+    SQ * self = (SQ*)malloc(sizeof(SQ));
+    if (self == 0){
+        if (error){ *error = RIO_ERROR_MALLOC; }
+        return NULL;
+    }
+    RIO_ERROR res = sq_init_cryptoinmeta(self, prefix, extension);
     if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
@@ -278,14 +402,26 @@ RIO_ERROR sq_get_chunk_info(SQ * seq, unsigned * num_chunk, char * path, size_t 
     case SQ_TYPE_OUTFILENAME:
         res = sq_m_SQOutfilename_get_chunk_info(&(seq->u.outfilename), num_chunk, path, path_len, begin, end);
         break;
+    case SQ_TYPE_CRYPTOOUTFILENAME:
+        res = sq_m_SQCryptoOutfilename_get_chunk_info(&(seq->u.cryptooutfilename), num_chunk, path, path_len, begin, end);
+        break;
     case SQ_TYPE_OUTTRACKER:
         res = sq_m_SQOuttracker_get_chunk_info(&(seq->u.outtracker), num_chunk, path, path_len, begin, end);
+        break;
+    case SQ_TYPE_CRYPTOOUTTRACKER:
+        res = sq_m_SQCryptoOuttracker_get_chunk_info(&(seq->u.cryptoouttracker), num_chunk, path, path_len, begin, end);
         break;
     case SQ_TYPE_INTRACKER:
         res = sq_m_SQIntracker_get_chunk_info(&(seq->u.intracker), num_chunk, path, path_len, begin, end);
         break;
+    case SQ_TYPE_CRYPTOINTRACKER:
+        res = sq_m_SQCryptoIntracker_get_chunk_info(&(seq->u.cryptointracker), num_chunk, path, path_len, begin, end);
+        break;
     case SQ_TYPE_INMETA:
         res = sq_m_SQInmeta_get_chunk_info(&(seq->u.inmeta), num_chunk, path, path_len, begin, end);
+        break;
+    case SQ_TYPE_CRYPTOINMETA:
+        res = sq_m_SQCryptoInmeta_get_chunk_info(&(seq->u.cryptoinmeta), num_chunk, path, path_len, begin, end);
         break;
     default:
         res = RIO_ERROR_TYPE_MISMATCH;
@@ -303,14 +439,26 @@ RIO_ERROR sq_timestamp(SQ * seq, timeval * tv)
     case SQ_TYPE_OUTFILENAME:
         res = sq_m_SQOutfilename_timestamp(&(seq->u.outfilename), tv);
         break;
+    case SQ_TYPE_CRYPTOOUTFILENAME:
+        res = sq_m_SQCryptoOutfilename_timestamp(&(seq->u.cryptooutfilename), tv);
+        break;
     case SQ_TYPE_OUTTRACKER:
         res = sq_m_SQOuttracker_timestamp(&(seq->u.outtracker), tv);
+        break;
+    case SQ_TYPE_CRYPTOOUTTRACKER:
+        res = sq_m_SQCryptoOuttracker_timestamp(&(seq->u.cryptoouttracker), tv);
         break;
     case SQ_TYPE_INTRACKER:
         res = sq_m_SQIntracker_timestamp(&(seq->u.intracker), tv);
         break;
+    case SQ_TYPE_CRYPTOINTRACKER:
+        res = sq_m_SQCryptoIntracker_timestamp(&(seq->u.cryptointracker), tv);
+        break;
     case SQ_TYPE_INMETA:
         res = sq_m_SQInmeta_timestamp(&(seq->u.inmeta), tv);
+        break;
+    case SQ_TYPE_CRYPTOINMETA:
+        res = sq_m_SQCryptoInmeta_timestamp(&(seq->u.cryptoinmeta), tv);
         break;
     default:
         res = RIO_ERROR_TYPE_MISMATCH;
@@ -328,14 +476,26 @@ RIO_ERROR sq_next(SQ * seq)
     case SQ_TYPE_OUTFILENAME:
         res = sq_m_SQOutfilename_next(&(seq->u.outfilename));
         break;
+    case SQ_TYPE_CRYPTOOUTFILENAME:
+        res = sq_m_SQCryptoOutfilename_next(&(seq->u.cryptooutfilename));
+        break;
     case SQ_TYPE_OUTTRACKER:
         res = sq_m_SQOuttracker_next(&(seq->u.outtracker));
+        break;
+    case SQ_TYPE_CRYPTOOUTTRACKER:
+        res = sq_m_SQCryptoOuttracker_next(&(seq->u.cryptoouttracker));
         break;
     case SQ_TYPE_INTRACKER:
         res = sq_m_SQIntracker_next(&(seq->u.intracker));
         break;
+    case SQ_TYPE_CRYPTOINTRACKER:
+        res = sq_m_SQCryptoIntracker_next(&(seq->u.cryptointracker));
+        break;
     case SQ_TYPE_INMETA:
         res = sq_m_SQInmeta_next(&(seq->u.inmeta));
+        break;
+    case SQ_TYPE_CRYPTOINMETA:
+        res = sq_m_SQCryptoInmeta_next(&(seq->u.cryptoinmeta));
         break;
     default:
         res = RIO_ERROR_TYPE_MISMATCH;
@@ -354,14 +514,26 @@ RIO * sq_get_trans(SQ * seq, RIO_ERROR * error)
     case SQ_TYPE_OUTFILENAME:
         trans = sq_m_SQOutfilename_get_trans(&(seq->u.outfilename), &status);
         break;
+    case SQ_TYPE_CRYPTOOUTFILENAME:
+        trans = sq_m_SQCryptoOutfilename_get_trans(&(seq->u.cryptooutfilename), &status);
+        break;
     case SQ_TYPE_OUTTRACKER:
         trans = sq_m_SQOuttracker_get_trans(&(seq->u.outtracker), &status);
+        break;
+    case SQ_TYPE_CRYPTOOUTTRACKER:
+        trans = sq_m_SQCryptoOuttracker_get_trans(&(seq->u.cryptoouttracker), &status);
         break;
     case SQ_TYPE_INTRACKER:
         trans = sq_m_SQIntracker_get_trans(&(seq->u.intracker), &status);
         break;
+    case SQ_TYPE_CRYPTOINTRACKER:
+        trans = sq_m_SQCryptoIntracker_get_trans(&(seq->u.cryptointracker), &status);
+        break;
     case SQ_TYPE_INMETA:
         trans = sq_m_SQInmeta_get_trans(&(seq->u.inmeta), &status);
+        break;
+    case SQ_TYPE_CRYPTOINMETA:
+        trans = sq_m_SQCryptoInmeta_get_trans(&(seq->u.cryptoinmeta), &status);
         break;
     default:
         status = RIO_ERROR_TYPE_MISMATCH;
@@ -383,14 +555,26 @@ void sq_clear(SQ * sq)
         case SQ_TYPE_OUTFILENAME:
             sq_m_SQOutfilename_destructor(&(sq->u.outfilename));
         break;
+        case SQ_TYPE_CRYPTOOUTFILENAME:
+            sq_m_SQCryptoOutfilename_destructor(&(sq->u.cryptooutfilename));
+        break;
         case SQ_TYPE_OUTTRACKER:
             sq_m_SQOuttracker_destructor(&(sq->u.outtracker));
+        break;
+        case SQ_TYPE_CRYPTOOUTTRACKER:
+            sq_m_SQCryptoOuttracker_destructor(&(sq->u.cryptoouttracker));
         break;
         case SQ_TYPE_INTRACKER:
             sq_m_SQIntracker_destructor(&(sq->u.intracker));
         break;
+        case SQ_TYPE_CRYPTOINTRACKER:
+            sq_m_SQCryptoIntracker_destructor(&(sq->u.cryptointracker));
+        break;
         case SQ_TYPE_INMETA:
             sq_m_SQInmeta_destructor(&(sq->u.inmeta));
+        break;
+        case SQ_TYPE_CRYPTOINMETA:
+            sq_m_SQCryptoInmeta_destructor(&(sq->u.cryptoinmeta));
         break;
         default:
             ;
@@ -400,7 +584,7 @@ void sq_clear(SQ * sq)
 }
 
 void sq_delete(SQ * self)
-{   
+{
     if (!self) { return; }
     sq_clear(self);
     free(self);
@@ -417,7 +601,7 @@ RIO_ERROR rio_init_outfile(RIO * self, int fd)
 RIO * rio_new_outfile(RIO_ERROR * error, int fd)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -441,7 +625,7 @@ RIO_ERROR rio_init_infile(RIO * self, int fd)
 RIO * rio_new_infile(RIO_ERROR * error, int fd)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -465,7 +649,7 @@ RIO_ERROR rio_init_generator(RIO * self, const void * data, size_t len)
 RIO * rio_new_generator(RIO_ERROR * error, const void * data, size_t len)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -482,14 +666,14 @@ RIO * rio_new_generator(RIO_ERROR * error, const void * data, size_t len)
 RIO_ERROR rio_init_check(RIO * self, const void * data, size_t len)
 {
     self->rt_type = RIO_TYPE_CHECK;
-    self->err  = rio_m_RIOCheck_constructor(&(self->u.check), data, len);
+    self->err = rio_m_RIOCheck_constructor(&(self->u.check), data, len);
     return self->err;
 }
 
 RIO * rio_new_check(RIO_ERROR * error, const void * data, size_t len)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -513,7 +697,7 @@ RIO_ERROR rio_init_test(RIO * self, const void * data_check, size_t len_check, c
 RIO * rio_new_test(RIO_ERROR * error, const void * data_check, size_t len_check, const void * data_gen, size_t len_gen)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -537,7 +721,7 @@ RIO_ERROR rio_init_socket(RIO * self, int sck)
 RIO * rio_new_socket(RIO_ERROR * error, int sck)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -561,7 +745,7 @@ RIO_ERROR rio_init_socket_tls(RIO * self, SSL * ssl)
 RIO * rio_new_socket_tls(RIO_ERROR * error, SSL * ssl)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -585,7 +769,7 @@ RIO_ERROR rio_init_outsequence(RIO * self, SQ * seq)
 RIO * rio_new_outsequence(RIO_ERROR * error, SQ * seq)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -609,7 +793,7 @@ RIO_ERROR rio_init_insequence(RIO * self, SQ * seq)
 RIO * rio_new_insequence(RIO_ERROR * error, SQ * seq)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
@@ -623,7 +807,7 @@ RIO * rio_new_insequence(RIO_ERROR * error, SQ * seq)
 }
 
 
-RIO_ERROR rio_init_outmeta(RIO * self, SQ ** seq, const char * path, const char * filename, const char * extension, 
+RIO_ERROR rio_init_outmeta(RIO * self, SQ ** seq, const char * path, const char * filename, const char * extension,
                       const char * l1, const char * l2, const char * l3, timeval * tv)
 {
     self->rt_type = RIO_TYPE_OUTMETA;
@@ -631,15 +815,41 @@ RIO_ERROR rio_init_outmeta(RIO * self, SQ ** seq, const char * path, const char 
     return self->err;
 }
 
-RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * path, const char * filename, const char * extension, 
+RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * path, const char * filename, const char * extension,
                       const char * l1, const char * l2, const char * l3, timeval * tv)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
     RIO_ERROR res = rio_init_outmeta(self, seq, path, filename, extension, l1, l2, l3, tv);
+    if (error) { *error = res; }
+    if (res != RIO_ERROR_OK){
+        free(self);
+        return NULL;
+    }
+    return self;
+}
+
+
+RIO_ERROR rio_init_cryptooutmeta(RIO * self, SQ ** seq, const char * path, const char * filename, const char * extension,
+                      const char * l1, const char * l2, const char * l3, timeval * tv)
+{
+    self->rt_type = RIO_TYPE_CRYPTOOUTMETA;
+    self->err = rio_m_RIOCryptoOutmeta_constructor(&(self->u.cryptooutmeta), seq, path, filename, extension, l1, l2, l3, tv);
+    return self->err;
+}
+
+RIO * rio_new_cryptooutmeta(RIO_ERROR * error, SQ ** seq, const char * path, const char * filename, const char * extension,
+                      const char * l1, const char * l2, const char * l3, timeval * tv)
+{
+    RIO * self = (RIO *)malloc(sizeof(RIO));
+    if (self == 0){
+        if (error){ *error = RIO_ERROR_MALLOC; }
+        return NULL;
+    }
+    RIO_ERROR res = rio_init_cryptooutmeta(self, seq, path, filename, extension, l1, l2, l3, tv);
     if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
@@ -659,11 +869,35 @@ RIO_ERROR rio_init_inmeta(RIO * self, SQ ** seq, const char * prefix, const char
 RIO * rio_new_inmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
     RIO_ERROR res = rio_init_inmeta(self, seq, prefix, extension);
+    if (error) { *error = res; }
+    if (res != RIO_ERROR_OK){
+        free(self);
+        return NULL;
+    }
+    return self;
+}
+
+
+RIO_ERROR rio_init_cryptoinmeta(RIO * self, SQ ** seq, const char * prefix, const char * extension)
+{
+    self->rt_type = RIO_TYPE_CRYPTOINMETA;
+    self->err = rio_m_RIOCryptoInmeta_constructor(&(self->u.cryptoinmeta), seq, prefix, extension);
+    return self->err;
+}
+
+RIO * rio_new_cryptoinmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension)
+{
+    RIO * self = (RIO *)malloc(sizeof(RIO));
+    if (self == 0){
+        if (error){ *error = RIO_ERROR_MALLOC; }
+        return NULL;
+    }
+    RIO_ERROR res = rio_init_cryptoinmeta(self, seq, prefix, extension);
     if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
@@ -678,7 +912,7 @@ RIO_ERROR rio_get_status(RIO * rt)
     /* if transport goes into error state it should be immediately flushed and closed (if it means something)
        hence no need to close it again calling close
     */
-    if (rt->err != RIO_ERROR_OK){ 
+    if (rt->err != RIO_ERROR_OK){
         return rt->err; 
     }
     switch(rt->rt_type){
@@ -717,6 +951,12 @@ RIO_ERROR rio_get_status(RIO * rt)
         break;
         case RIO_TYPE_CRYPTO:
             rt->err = rio_m_RIOCrypto_get_status(&(rt->u.crypto));
+        break;
+        case RIO_TYPE_CRYPTOOUTMETA:
+            rt->err = rio_m_RIOCryptoOutmeta_get_status(&(rt->u.cryptooutmeta));
+        break;
+        case RIO_TYPE_CRYPTOINMETA:
+            rt->err = rio_m_RIOCryptoInmeta_get_status(&(rt->u.cryptoinmeta));
         break;
         default:
             ;
@@ -793,6 +1033,16 @@ ssize_t rio_recv(RIO * rt, void * data, size_t len)
         if (res < 0){ rt->err = (RIO_ERROR)-res; }
         return res;
     }
+    case RIO_TYPE_CRYPTOOUTMETA:{
+        ssize_t res = rio_m_RIOCryptoOutmeta_recv(&(rt->u.cryptooutmeta), data, len);
+        if (res < 0){ rt->err = (RIO_ERROR)-res; }
+        return res;
+    }
+    case RIO_TYPE_CRYPTOINMETA:{
+        ssize_t res = rio_m_RIOCryptoInmeta_recv(&(rt->u.cryptoinmeta), data, len);
+        if (res < 0){ rt->err = (RIO_ERROR)-res; }
+        return res;
+    }
     default:
         rt->err = RIO_ERROR_UNKNOWN_TYPE;
     }
@@ -863,6 +1113,16 @@ ssize_t rio_send(RIO * rt, const void * data, size_t len)
         if (res < 0){ rt->err = (RIO_ERROR)-res; }
         return res;
     }
+    case RIO_TYPE_CRYPTOOUTMETA: {
+        ssize_t res = rio_m_RIOCryptoOutmeta_send(&(rt->u.cryptooutmeta), data, len);
+        if (res < 0){ rt->err = (RIO_ERROR)-res; }
+        return res;
+    }
+    case RIO_TYPE_CRYPTOINMETA: {
+        ssize_t res = rio_m_RIOCryptoInmeta_send(&(rt->u.cryptoinmeta), data, len);
+        if (res < 0){ rt->err = (RIO_ERROR)-res; }
+        return res;
+    }
     default:
         rt->err = RIO_ERROR_UNKNOWN_TYPE;
     }
@@ -874,8 +1134,8 @@ void rio_clear(RIO * rt)
     /* if transport goes into error state it should be immediately flushed and closed (if it means something)
        hence no need to close it again calling close
     */
-    if (rt->err != RIO_ERROR_OK){ 
-        return; 
+    if (rt->err != RIO_ERROR_OK){
+        return;
     }
     switch(rt->rt_type){
         case RIO_TYPE_GENERATOR:
@@ -913,6 +1173,12 @@ void rio_clear(RIO * rt)
         break;
         case RIO_TYPE_CRYPTO:
             rio_m_RIOCrypto_destructor(&(rt->u.crypto));
+        break;
+        case RIO_TYPE_CRYPTOOUTMETA:
+            rio_m_RIOCryptoOutmeta_destructor(&(rt->u.cryptooutmeta));
+        break;
+        case RIO_TYPE_CRYPTOINMETA:
+            rio_m_RIOCryptoInmeta_destructor(&(rt->u.cryptoinmeta));
         break;
         default:
             ;
@@ -953,6 +1219,29 @@ inline void sq_outfilename_get_name(const SQ * seq, char * path, size_t len, uin
     sq_im_SQOutfilename_get_name(&(seq->u.outfilename), path, len, count);
 }
 
+inline ssize_t sq_cryptooutfilename_filesize(const SQ * seq, uint32_t count)
+{
+    char filename[1024];
+    sq_im_SQCryptoOutfilename_get_name(&(seq->u.cryptooutfilename), filename, sizeof(filename), count);
+    return ::filesize(filename);
+}
+
+inline ssize_t sq_cryptooutfilename_unlink(const SQ * seq, uint32_t count)
+{
+    char filename[1024];
+    sq_im_SQCryptoOutfilename_get_name(&(seq->u.cryptooutfilename), filename, sizeof(filename), count);
+    int status = ::unlink(filename);
+    if (status < 0){
+        LOG(LOG_INFO, "removing file %s failed. Error [%u] : %s\n", filename, errno, strerror(errno));
+    }
+    return status;
+}
+
+inline void sq_cryptooutfilename_get_name(const SQ * seq, char * path, size_t len, uint32_t count)
+{
+    sq_im_SQCryptoOutfilename_get_name(&(seq->u.cryptooutfilename), path, len, count);
+}
+
 
 RIO_ERROR rio_init_crypto(RIO * self, const char * file, int oflag)
 {
@@ -964,7 +1253,7 @@ RIO_ERROR rio_init_crypto(RIO * self, const char * file, int oflag)
 RIO * rio_new_crypto(RIO_ERROR * error, const char * file, int oflag)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){ 
+    if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }

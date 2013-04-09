@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    Template for new OutSequence RedTransport class
-
 */
 
 #ifndef _REDEMPTION_LIBS_RIO_OUTSEQUENCE_H_
@@ -31,7 +30,7 @@ extern "C" {
         struct SQ * seq;
     };
 
-    /* This method does not allocate space for object itself, 
+    /* This method does not allocate space for object itself,
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
@@ -77,7 +76,7 @@ extern "C" {
              if (res < 0){
                 rio_m_RIOOutsequence_destructor(self);
              }
-             return res;           
+             return res;
          }
          else {
             rio_m_RIOOutsequence_destructor(self);

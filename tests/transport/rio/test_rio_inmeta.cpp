@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -16,7 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -42,18 +41,18 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
 
     {
         RIO_ERROR status = RIO_ERROR_OK;
-        SQ * seq  = NULL;
+        SQ * seq = NULL;
         struct timeval tv;
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
         RIO * rt = rio_new_outmeta(&status, &seq, "", "TESTOFS", ".mwrm", "800 600", "", "", &tv);
 
-        BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
-        tv.tv_sec+= 100;
+        BOOST_CHECK_EQUAL(5, rio_send(rt, "AAAAX", 5));
+        tv.tv_sec += 100;
         sq_timestamp(seq, &tv);
         BOOST_CHECK_EQUAL(RIO_ERROR_OK, sq_next(seq));
         BOOST_CHECK_EQUAL(10, rio_send(rt, "BBBBXCCCCX", 10));
-        tv.tv_sec+= 100;
+        tv.tv_sec += 100;
         sq_timestamp(seq, &tv);
 
         rio_clear(rt);
@@ -64,24 +63,24 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
         SQ * inseq = NULL;
         RIO_ERROR status = RIO_ERROR_OK;
         RIO * rt = rio_new_inmeta(&status, &inseq, "TESTOFS", ".mwrm");
-        BOOST_CHECK( rt != NULL);
+        BOOST_CHECK(rt != NULL);
 
         char buffer[1024] = {};
-        BOOST_CHECK_EQUAL(15, rio_recv(rt, buffer,  15));
+        BOOST_CHECK_EQUAL(15, rio_recv(rt, buffer, 15));
         if (0 != memcmp(buffer, "AAAAXBBBBXCCCCX", 15)){
             BOOST_CHECK_EQUAL(0, buffer[15]); // this one should not have changed
             buffer[15] = 0;
             LOG(LOG_ERR, "expected \"AAAAXBBBBXCCCCX\" got \"%s\"", buffer);
             BOOST_CHECK(false);
         }
-    }    
-    
+    }
+
     const char * file[] = {
         "TESTOFS.mwrm",
         "TESTOFS-000000.wrm",
         "TESTOFS-000001.wrm"
     };
-    for (size_t i = 0 ; i < sizeof(file)/sizeof(char*) ; ++i){
+    for (size_t i = 0; i < sizeof(file)/sizeof(char*); ++i){
         if (::unlink(file[i]) < 0){
             BOOST_CHECK(false);
             LOG(LOG_ERR, "failed to unlink %s", file[i]);
@@ -91,8 +90,9 @@ BOOST_AUTO_TEST_CASE(TestInmeta)
 
 BOOST_AUTO_TEST_CASE(TestInmeta2)
 {
-        RIO_ERROR status = RIO_ERROR_OK;
-        SQ * seq = NULL;
-        RIO * rio = rio_new_inmeta(&status, &seq, "TESTOFSXXX", ".mwrm");
-        rio_delete(rio);
+    RIO_ERROR status = RIO_ERROR_OK;
+    SQ * seq = NULL;
+    RIO * rio = rio_new_inmeta(&status, &seq, "TESTOFSXXX", ".mwrm");
+    rio_delete(rio);
 }
+

@@ -122,7 +122,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.debug.encrypt_log);
+    // log file
+    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
@@ -213,7 +215,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.debug.encrypt_log);
+    // log
+    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
@@ -237,7 +241,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     "performance_flags_force_present=0x1\n"
     "performance_flags_force_not_present=0x0\n"
     "[debug]\n"
-    "encrypt_log=true"
+    "log_type=file\n"
+    "log_file_path=/var/log/redemption.log\n"
     "\n"
     );
 
@@ -319,7 +324,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.debug.encrypt_log);
+    // log
+    BOOST_CHECK_EQUAL(3,                                ini.globals.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string("/var/log/redemption.log"),
+                                                        std::string(ini.globals.debug.log_file_path));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(7,                                ini.globals.client.performance_flags_default);
@@ -421,7 +429,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
-    BOOST_CHECK_EQUAL(false,                             ini.globals.debug.encrypt_log);
+    // log
+    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(7,                                ini.globals.client.performance_flags_default);
@@ -522,7 +532,9 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.debug.encrypt_log);
+    // log
+    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(7,                                ini.globals.client.performance_flags_default);
@@ -621,7 +633,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.debug.encrypt_log);
+    // log
+    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
@@ -633,7 +647,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     "[globals]\n"
     "bitmap_compression=no\n"
     "[debug]\n"
-    "encrypt_log=yes\n"
+    "log_type=encryptedfile\n"
     );
     ini.cparse(oss2);
 
@@ -713,7 +727,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.debug.encrypt_log);
+    // log
+    BOOST_CHECK_EQUAL(4,                                ini.globals.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
@@ -806,7 +822,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.debug.encrypt_log);
+    // log
+    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
@@ -903,7 +921,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.debug.encrypt_log);
+    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
@@ -989,7 +1008,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.debug.encrypt_log);
+    // log
+    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
@@ -1007,6 +1028,7 @@ BOOST_AUTO_TEST_CASE(TestConfigTools)
 
     BOOST_CHECK_EQUAL(7,    long_from_cstr("0x00000007"));
     BOOST_CHECK_EQUAL(7,    long_from_cstr("0x0000000000000007"));
+    BOOST_CHECK_EQUAL(7,    long_from_cstr("0x0007    "));
 
     BOOST_CHECK_EQUAL(1357, long_from_cstr("1357"));
     BOOST_CHECK_EQUAL(4951, long_from_cstr("0x1357"));
@@ -1017,9 +1039,22 @@ BOOST_AUTO_TEST_CASE(TestConfigTools)
     BOOST_CHECK_EQUAL(0,    long_from_cstr("0x0000000I"));
     BOOST_CHECK_EQUAL(0,    long_from_cstr("I"));
 
-    BOOST_CHECK_EQUAL(0,    level_from_string("LoW"));
-    BOOST_CHECK_EQUAL(1,    level_from_string("mEdIuM"));
-    BOOST_CHECK_EQUAL(2,    level_from_string("High"));
+    BOOST_CHECK_EQUAL(0,    level_from_cstr("LoW"));
+    BOOST_CHECK_EQUAL(1,    level_from_cstr("mEdIuM"));
+    BOOST_CHECK_EQUAL(2,    level_from_cstr("High"));
+
+    BOOST_CHECK_EQUAL(0,    logtype_from_cstr(""));
+    BOOST_CHECK_EQUAL(0,    logtype_from_cstr("null"));
+    BOOST_CHECK_EQUAL(0,    logtype_from_cstr("NULL"));
+    BOOST_CHECK_EQUAL(0,    logtype_from_cstr("unknown"));
+    BOOST_CHECK_EQUAL(1,    logtype_from_cstr("print"));
+    BOOST_CHECK_EQUAL(1,    logtype_from_cstr("Print"));
+    BOOST_CHECK_EQUAL(2,    logtype_from_cstr("syslog"));
+    BOOST_CHECK_EQUAL(2,    logtype_from_cstr("SYSLOG"));
+    BOOST_CHECK_EQUAL(3,    logtype_from_cstr("file"));
+    BOOST_CHECK_EQUAL(3,    logtype_from_cstr("FiLe"));
+    BOOST_CHECK_EQUAL(4,    logtype_from_cstr("encryptedfile"));
+    BOOST_CHECK_EQUAL(4,    logtype_from_cstr("EncryptedFile"));
 }
 
 //BOOST_AUTO_TEST_CASE(TestAuthentificationKeywordRecognition)

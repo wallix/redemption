@@ -65,7 +65,7 @@ public:
         status(true)
     {}
 
-    virtual ~Transport() 
+    virtual ~Transport()
     {
     }
 
@@ -116,7 +116,5 @@ public:
         return true;
     }
 };
-
-
 
 #endif
