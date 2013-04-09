@@ -2035,8 +2035,9 @@ namespace GCC
             };
             uint32_t encryptionLevel;
             uint32_t serverRandomLen;
-            uint32_t serverCertLen;
             uint8_t serverRandom[32];
+
+            uint32_t serverCertLen;
 
             uint8_t pri_exp[64];
             uint8_t pub_sig[64];
@@ -2186,73 +2187,97 @@ namespace GCC
             void emit(Stream & stream)
             {
                 stream.out_uint16_le(SC_SECURITY);
-                stream.out_uint16_le(this->length); // length, including tag and length fields
-                stream.out_uint32_le(this->encryptionMethod); // key len 1 = 40 bit 2 = 128 bit
-                stream.out_uint32_le(this->encryptionLevel);
 
-                stream.out_uint32_le(this->serverRandomLen);  // random len
-                stream.out_uint32_le(this->serverCertLen); // len of rsa info(certificate)
-                stream.out_copy_bytes(this->serverRandom, this->serverRandomLen);
-
-                // --------------------------------------------------------------
-                /* here to end is certificate */
-                /* HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TermService\Parameters\Certificate */
-                stream.out_uint32_le( this->dwVersion 
-                                    | (this->temporary << 31));
-
-                if ((this->dwVersion & 0x7FFFFFFF) == CERT_CHAIN_VERSION_1){
-                    stream.out_uint32_le(this->proprietaryCertificate.dwSigAlgId);
-                    stream.out_uint32_le(this->proprietaryCertificate.dwKeyAlgId);
-
-                    stream.out_uint16_le(this->proprietaryCertificate.wPublicKeyBlobType);
-                    stream.out_uint16_le(this->proprietaryCertificate.wPublicKeyBlobLen);
-                    stream.out_uint32_le(this->proprietaryCertificate.RSAPK.magic);
-                    stream.out_uint32_le(this->proprietaryCertificate.RSAPK.keylen);
-                    stream.out_uint32_le(this->proprietaryCertificate.RSAPK.bitlen);
-                    stream.out_uint32_le(this->proprietaryCertificate.RSAPK.datalen);
-                    stream.out_copy_bytes(this->proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
-                    stream.out_copy_bytes(this->proprietaryCertificate.RSAPK.modulus, SEC_MODULUS_SIZE);
-                    stream.out_clear_bytes(SEC_PADDING_SIZE);
-
-                    stream.out_uint16_le(this->proprietaryCertificate.wSignatureBlobType);
-                    stream.out_uint16_le(this->proprietaryCertificate.wSignatureBlobLen); /* len */
-                    stream.out_copy_bytes(this->proprietaryCertificate.wSignatureBlob, 64); /* pub sig */
-                    stream.out_clear_bytes(8); /* pad */
+                if ((this->encryptionMethod == 0) && (this->encryptionLevel == 0)){
+                    stream.out_uint16_le(20); // length, including tag and length fields
+                    stream.out_uint32_le(0); // key len 1 = 40 bit 2 = 128 bit
+                    stream.out_uint32_le(0); // encryptionMethod
+                    stream.out_uint32_le(0); // encryptionLevel
+                    stream.out_uint32_le(0);  // random len
+                    stream.out_uint32_le(0); // len of rsa info(certificate)
                 }
                 else {
-                    // send chain of certificates
-                }
-                /* end certificate */
-                // --------------------------------------------------------------
+                    stream.out_uint16_le(this->length); // length, including tag and length fields
+                    stream.out_uint32_le(this->encryptionMethod); // key len 1 = 40 bit 2 = 128 bit
+                    stream.out_uint32_le(this->encryptionLevel);
+                    stream.out_uint32_le(this->serverRandomLen);  // random len
+                    stream.out_uint32_le(this->serverCertLen); // len of rsa info(certificate)
+                    stream.out_copy_bytes(this->serverRandom, this->serverRandomLen);
 
+                    // --------------------------------------------------------------
+                    /* here to end is certificate */
+                    /* HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TermService\Parameters\Certificate */
+                    stream.out_uint32_le(this->dwVersion|(this->temporary << 31));
+
+                    if ((this->dwVersion & 0x7FFFFFFF) == CERT_CHAIN_VERSION_1){
+                        stream.out_uint32_le(this->proprietaryCertificate.dwSigAlgId);
+                        stream.out_uint32_le(this->proprietaryCertificate.dwKeyAlgId);
+
+                        stream.out_uint16_le(this->proprietaryCertificate.wPublicKeyBlobType);
+                        stream.out_uint16_le(this->proprietaryCertificate.wPublicKeyBlobLen);
+                        stream.out_uint32_le(this->proprietaryCertificate.RSAPK.magic);
+                        stream.out_uint32_le(this->proprietaryCertificate.RSAPK.keylen);
+                        stream.out_uint32_le(this->proprietaryCertificate.RSAPK.bitlen);
+                        stream.out_uint32_le(this->proprietaryCertificate.RSAPK.datalen);
+                        stream.out_copy_bytes(this->proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
+                        stream.out_copy_bytes(this->proprietaryCertificate.RSAPK.modulus, SEC_MODULUS_SIZE);
+                        stream.out_clear_bytes(SEC_PADDING_SIZE);
+
+                        stream.out_uint16_le(this->proprietaryCertificate.wSignatureBlobType);
+                        stream.out_uint16_le(this->proprietaryCertificate.wSignatureBlobLen); /* len */
+                        stream.out_copy_bytes(this->proprietaryCertificate.wSignatureBlob, 64); /* pub sig */
+                        stream.out_clear_bytes(8); /* pad */
+                    }
+                    else {
+                        // send chain of certificates
+                    }
+                    /* end certificate */
+                    // --------------------------------------------------------------
+                }
                 stream.mark_end();
             }
 
             void recv(Stream & stream)
             {
+                TODO("check we are not reading outside stream. Create substream based on len to ensure that")
+
                 this->userDataType = stream.in_uint16_le();
                 this->length = stream.in_uint16_le();
                 this->encryptionMethod = stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
                 this->encryptionLevel = stream.in_uint32_le();  /* 1 = low, 2 = medium, 3 = high */
 
-                if (this->length == 12) return;
+                if ((this->encryptionMethod == 0) && (this->encryptionMethod == 0)){
+                    if (this->length == 12) return;
+                }
+                
                 // serverRandomLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of
                 // the serverRandom field. If the encryptionMethod and encryptionLevel fields
                 // are both set to 0 then the contents of this field MUST be ignored and the
                 // serverRandom field MUST NOT be present. Otherwise, this field MUST be set to
                 // 32 bytes.
                 this->serverRandomLen = stream.in_uint32_le();
-                if (this->serverRandomLen != SEC_RANDOM_SIZE) {
-                    LOG(LOG_ERR, "SCSecutity recv: serverRandomLen %d, expected %d",
-                         this->serverRandomLen, SEC_RANDOM_SIZE);
-                    throw Error(ERR_GCC);
+
+                if ((this->encryptionMethod == 0) && (this->encryptionMethod == 0)){
+                    if (this->length == 16) return;                
                 }
+
                 // serverCertLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of the
                 //  serverCertificate field. If the encryptionMethod and encryptionLevel fields
                 //  are both set to 0 then the contents of this field MUST be ignored and the
                 // serverCertificate field MUST NOT be present.
 
                 this->serverCertLen = stream.in_uint32_le();
+
+                if ((this->encryptionMethod == 0) && (this->encryptionMethod == 0)){
+                    if (this->length == 20) return;                
+                }
+
+                if (this->serverRandomLen != SEC_RANDOM_SIZE) {
+                    LOG(LOG_ERR, "SCSecutity recv: serverRandomLen %d, expected %d",
+                         this->serverRandomLen, SEC_RANDOM_SIZE);
+                    throw Error(ERR_GCC);
+                }
+
                 if (!stream.in_check_rem(this->serverCertLen)) {
                     LOG(LOG_ERR, "SCSecutity recv: serverCertLen %d, not enough data available (%u)",
                          this->serverCertLen, stream.size() - stream.get_offset());
@@ -2349,7 +2374,9 @@ namespace GCC
                 LOG(LOG_INFO, "sc_security::encryptionLevel  = %u", this->encryptionLevel);
                 if (this->length == 12) { return; }
                 LOG(LOG_INFO, "sc_security::serverRandomLen  = %u", this->serverRandomLen);
+                if (this->length == 16) { return; }
                 LOG(LOG_INFO, "sc_security::serverCertLen    = %u", this->serverCertLen);
+                if (this->length == 20) { return; }
                 LOG(LOG_INFO, "sc_security::dwVersion = %x", this->dwVersion);
                 LOG(LOG_INFO, "sc_security::temporary = %s", this->temporary?"true":"false");
                 if (this->dwVersion == GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {

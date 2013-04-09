@@ -52,7 +52,7 @@ public:
     , edit_pos(0)
     , w_char(0)
     , h_char(0)
-    , x_text(xtext)
+    , x_text(xtext+1)
     , y_text(ytext)
     , bg_color(bgcolor)
     , fg_color(fgcolor)
@@ -75,29 +75,58 @@ public:
         if (this->drawable) {
             this->drawable->text_metrics("*", this->w_char, this->h_char);
             this->rect.cy = this->y_text * 2 + this->h_char;
+            this->rect.cy += 2;
+            this->rect.cx += 2;
         }
     }
 
     virtual ~WidgetPassword()
     {}
 
+    void set_password_x(int x)
+    {
+        this->rect.x = x;
+    }
+
+    void set_password_y(int y)
+    {
+        this->rect.y = y;
+    }
+
     virtual void draw(const Rect& clip)
     {
         this->drawable->draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
-        this->drawable->server_draw_text(this->x_text + this->dx(),
-                                         this->y_text + this->dy(),
+        this->drawable->server_draw_text(this->x_text + this->dx() + 1,
+                                         this->y_text + this->dy() + 1,
                                          this->display_pass,
                                          this->fg_color,
                                          this->rect.intersect(clip)
                                          );
         this->draw_cursor(clip);
+
+        //top
+        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy(), this->cx(), 1
+        )), 0x888888), this->rect);
+        //left
+        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy() + 1, 1, this->cy() - 2
+        )), 0x888888), this->rect);
+        //right
+        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx() + this->cx() - 1, this->dy() + 1, 1, this->cy() - 2
+        )), 0x888888), this->rect);
+        //bottom
+        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
+        )), 0x888888), this->rect);
     }
 
     void draw_cursor(const Rect& clip)
     {
         Rect cursor_clip = clip.intersect(
-            Rect(this->x_text + this->edit_pos * this->w_char + (this->edit_pos ? (this->edit_pos-1)*2 : 0) + this->dx(),
-                 this->y_text + this->dy(),
+            Rect(this->x_text + this->edit_pos * (this->w_char + 2) + this->dx(),
+                 this->y_text + this->dy() + 1,
                  1,
                  this->h_char)
         );
@@ -105,7 +134,7 @@ public:
             this->drawable->draw(
                 RDPOpaqueRect(
                     cursor_clip,
-                    this->fg_color
+                    0x888888
                 ), this->rect
             );
         }

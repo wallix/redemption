@@ -30,7 +30,7 @@ extern "C" {
         int reserved;
     };
 
-    /* This method does not allocate space for object itself, 
+    /* This method does not allocate space for object itself,
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */

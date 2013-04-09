@@ -152,7 +152,7 @@ extern "C" {
             close(self->fd);
             self->trans = NULL;
         }
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
 
     static inline RIO * sq_m_SQOuttracker_get_trans(SQOuttracker * self, RIO_ERROR * status)

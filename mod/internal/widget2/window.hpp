@@ -43,18 +43,22 @@ public:
     {
         this->child_list.push_back(&this->titlebar);
         this->child_list.push_back(&this->button_close);
+
+        this->button_close.label.y_text -= 2;
+        this->button_close.label.rect.cy -= 3;
+        this->button_close.rect.cy -= 3;
+
+        if (this->drawable) {
+            int w,h;
+            this->drawable->text_metrics(this->titlebar.buffer, w,h);
+            this->titlebar.rect.cy = std::max<int>(h - 2, this->button_close.cy()) + this->titlebar.y_text * 2;
+        }
     }
 
     void resize_titlebar()
     {
-        int w,h;
-        this->drawable->text_metrics(this->titlebar.buffer, w,h);
-        this->titlebar.rect.cx = this->cx();
-        this->titlebar.rect.cy = h;
-        this->titlebar.y_text = std::max((this->button_close.cy() + 4 - h)/4, 0);
-        this->titlebar.rect.cy += this->titlebar.y_text*2;
-        this->button_close.rect.x = this->dx() + this->cx() - this->button_close.cx() - 5;
-        this->button_close.label.rect.x = this->button_close.dx() + 2;
+        this->titlebar.rect.cx = this->cx() - this->button_close.cx();
+        this->button_close.set_button_x(this->dx() + this->cx() - this->button_close.cx());
     }
 
     virtual ~Window()
@@ -64,9 +68,9 @@ public:
     {
         if (this->notifier) {
             if (widget == &this->button_close) {
-                this->notifier->notify(this, NOTIFY_CANCEL, 0, 0);
+                this->send_notify(NOTIFY_CANCEL);
             } else {
-                this->WidgetComposite::notify(this, event, param, param2);
+                this->WidgetComposite::notify(widget, event, param, param2);
             }
         }
     }

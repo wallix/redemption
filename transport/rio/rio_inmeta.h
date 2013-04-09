@@ -61,7 +61,7 @@ extern "C" {
         self->insequence = NULL;
         sq_delete(self->seq);
         self->seq = NULL;
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
 
     /* This method receive len bytes of data into buffer

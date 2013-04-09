@@ -39,7 +39,7 @@ extern "C" {
 
     inline RIO_ERROR sq_m_SQOne_destructor(SQOne * self)
     {
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
 
     inline RIO * sq_m_SQOne_get_trans(SQOne * self, RIO_ERROR * status)
@@ -51,7 +51,7 @@ extern "C" {
     {
         return RIO_ERROR_OK;
     }
-    
+
     static inline RIO_ERROR sq_m_SQOne_timestamp(SQOne * self, timeval * tv)
     {
         return RIO_ERROR_OK;

@@ -232,10 +232,10 @@ RIO_ERROR sq_init_outtracker(SQ * self, RIO * tracker,
     const char * header1, const char * header2, const char * header3)
 {
     self->sq_type = SQ_TYPE_OUTTRACKER;
-    self->err = sq_m_SQOuttracker_constructor(&(self->u.outtracker), tracker,
-                                            format,
-                                            path, filename, extension,
-                                            tv, header1, header2, header3);
+    self->err = sq_m_SQOuttracker_constructor( &(self->u.outtracker)
+                                             , tracker, format, path, filename
+                                             , extension, tv, header1, header2
+                                             , header3);
     return self->err;
 }
 
@@ -913,7 +913,7 @@ RIO_ERROR rio_get_status(RIO * rt)
        hence no need to close it again calling close
     */
     if (rt->err != RIO_ERROR_OK){
-        return rt->err; 
+        return rt->err;
     }
     switch(rt->rt_type){
         case RIO_TYPE_GENERATOR:
@@ -959,6 +959,7 @@ RIO_ERROR rio_get_status(RIO * rt)
             rt->err = rio_m_RIOCryptoInmeta_get_status(&(rt->u.cryptoinmeta));
         break;
         default:
+            rt->err = RIO_ERROR_UNKNOWN_TYPE;
             ;
     }
     return rt->err;
@@ -1139,40 +1140,40 @@ void rio_clear(RIO * rt)
     }
     switch(rt->rt_type){
         case RIO_TYPE_GENERATOR:
-            rio_m_RIOGenerator_destructor(&(rt->u.generator));
+            rt->err = rio_m_RIOGenerator_destructor(&(rt->u.generator));
         break;
         case RIO_TYPE_CHECK:
-            rio_m_RIOCheck_destructor(&(rt->u.check));
+            rt->err = rio_m_RIOCheck_destructor(&(rt->u.check));
         break;
         case RIO_TYPE_TEST:
-            rio_m_RIOTest_destructor(&(rt->u.test));
+            rt->err = rio_m_RIOTest_destructor(&(rt->u.test));
         break;
         case RIO_TYPE_OUTFILE:
-            rio_m_RIOOutfile_destructor(&(rt->u.outfile));
+            rt->err = rio_m_RIOOutfile_destructor(&(rt->u.outfile));
         break;
         case RIO_TYPE_INFILE:
-            rio_m_RIOInfile_destructor(&(rt->u.infile));
+            rt->err = rio_m_RIOInfile_destructor(&(rt->u.infile));
         break;
         case RIO_TYPE_SOCKET:
-            rio_m_RIOSocket_destructor(&(rt->u.socket));
+            rt->err = rio_m_RIOSocket_destructor(&(rt->u.socket));
         break;
         case RIO_TYPE_SOCKET_TLS:
-            rio_m_RIOSocketTLS_destructor(&(rt->u.socket_tls));
+            rt->err = rio_m_RIOSocketTLS_destructor(&(rt->u.socket_tls));
         break;
         case RIO_TYPE_OUTSEQUENCE:
-            rio_m_RIOOutsequence_destructor(&(rt->u.outsequence));
+            rt->err = rio_m_RIOOutsequence_destructor(&(rt->u.outsequence));
         break;
         case RIO_TYPE_INSEQUENCE:
-            rio_m_RIOInsequence_destructor(&(rt->u.insequence));
+            rt->err = rio_m_RIOInsequence_destructor(&(rt->u.insequence));
         break;
         case RIO_TYPE_OUTMETA:
-            rio_m_RIOOutmeta_destructor(&(rt->u.outmeta));
+            rt->err = rio_m_RIOOutmeta_destructor(&(rt->u.outmeta));
         break;
         case RIO_TYPE_INMETA:
-            rio_m_RIOInmeta_destructor(&(rt->u.inmeta));
+            rt->err = rio_m_RIOInmeta_destructor(&(rt->u.inmeta));
         break;
         case RIO_TYPE_CRYPTO:
-            rio_m_RIOCrypto_destructor(&(rt->u.crypto));
+            rt->err = rio_m_RIOCrypto_destructor(&(rt->u.crypto));
         break;
         case RIO_TYPE_CRYPTOOUTMETA:
             rio_m_RIOCryptoOutmeta_destructor(&(rt->u.cryptooutmeta));
@@ -1181,15 +1182,13 @@ void rio_clear(RIO * rt)
             rio_m_RIOCryptoInmeta_destructor(&(rt->u.cryptoinmeta));
         break;
         default:
-            ;
+            rt->err = RIO_ERROR_UNKNOWN_TYPE;
     }
     /* after a close any subsequent call to recv/send/etc. raise an error */
-    rt->err = RIO_ERROR_CLOSED;
-    return;
 }
 
 void rio_delete(RIO * self)
-{   
+{
     if (!self) { return; }
     rio_clear(self);
     free(self);

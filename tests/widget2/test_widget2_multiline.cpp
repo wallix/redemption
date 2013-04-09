@@ -116,8 +116,7 @@ struct TestDraw : ModApi
                 width += font_item->width + 2;
                 height = std::max(height, font_item->height);
             }
-            if (len_uni > 1)
-                width -= 2;
+            width -= 2;
         }
     }
 

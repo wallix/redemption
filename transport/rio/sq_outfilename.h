@@ -113,7 +113,7 @@ extern "C" {
             }
             self->trans = NULL;
         }
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
 
     static inline RIO * sq_m_SQOutfilename_get_trans(SQOutfilename * self, RIO_ERROR * status)

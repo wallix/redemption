@@ -117,6 +117,7 @@ public:
     bool fastpath_support;                    // choice of programmer
     bool client_fastpath_input_event_support; // = choice of programmer
     bool server_fastpath_update_support;      // choice of programmer + capability of client
+    bool tls_support;                         // choice of programmer, front support tls
 
 TODO("Pass font name as parameter in constructor")
 
@@ -124,6 +125,7 @@ TODO("Pass font name as parameter in constructor")
           , Random * gen
           , Inifile * ini
           , bool fp_support // If true, fast-path must be supported
+          , bool tls_support // If true, tls must be supported
           )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
         , capture(NULL)
@@ -147,6 +149,7 @@ TODO("Pass font name as parameter in constructor")
         , fastpath_support(fp_support)
         , client_fastpath_input_event_support(fp_support)
         , server_fastpath_update_support(false)
+        , tls_support(tls_support)
     {
         init_palette332(this->palette332);
         this->mod_palette_setted = false;
@@ -539,7 +542,7 @@ TODO("Pass font name as parameter in constructor")
             hexdump_d(stream.data, stream.size());
         }
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, channel.chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
@@ -616,7 +619,7 @@ TODO("Pass font name as parameter in constructor")
                     hexdump_d(stream.data, stream.size());
                 }
 
-                SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+                SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
@@ -872,7 +875,7 @@ TODO("Pass font name as parameter in constructor")
                 hexdump_d(stream.data, stream.size());
             }
 
-            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
             MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
@@ -979,7 +982,7 @@ TODO("Pass font name as parameter in constructor")
                 hexdump_d(stream.data, stream.size());
             }
 
-            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
             MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
@@ -1066,8 +1069,25 @@ TODO("Pass font name as parameter in constructor")
             }
             {
                 BStream stream(256);
-                X224::CC_TPDU_Send x224(stream, 0, 0, 0);
+                uint8_t rdp_neg_type = 0;
+                uint8_t rdp_neg_flags = 0;
+                uint32_t rdp_neg_code = 0;
+                if (this->tls_support){
+                    LOG(LOG_INFO, "-----------------> Front::TLS Support Enabled");
+                    rdp_neg_type = X224::CC_TPDU_TYPE_RDP_NEG_RSP;
+                    rdp_neg_code = X224::CC_TPDU_PROTOCOL_SSL;
+                    this->client_info.encryptionLevel = 0;
+                }
+                else {
+                    LOG(LOG_INFO, "-----------------> Front::TLS Support not Enabled");
+                }
+                
+                X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
                 this->trans->send(stream);
+
+                if (this->tls_support){
+                    this->trans->enable_server_tls();
+                }
             }
             // Basic Settings Exchange
             // -----------------------
@@ -1203,62 +1223,73 @@ TODO("Pass font name as parameter in constructor")
             sc_net.log("Sending to client");
             sc_net.emit(stream);
             // ------------------------------------------------------------------
-            GCC::UserData::SCSecurity sc_sec1;
-            /*
-               For now rsa_keys are not in a configuration file any more, but as we were not changing keys
-               the values have been embedded in code and the key generator file removed from source code.
+            if (0 && this->tls_support){
+                GCC::UserData::SCSecurity sc_sec1;
+                sc_sec1.length = 12;
+                sc_sec1.encryptionMethod = 0;
+                sc_sec1.encryptionLevel = 0;
+                sc_sec1.log("Sending to client");
+                sc_sec1.emit(stream);
+            }
+            else {
+                GCC::UserData::SCSecurity sc_sec1;
+                /*
+                   For now rsa_keys are not in a configuration file any more, but as we were not changing keys
+                   the values have been embedded in code and the key generator file removed from source code.
 
-               It will be put back at some later time using a clean parser/writer module and sll calls
-               coherent with the remaining of ReDemPtion code. For reference to historical key generator code
-               look for utils/keygen.cpp in old repository code.
+                   It will be put back at some later time using a clean parser/writer module and sll calls
+                   coherent with the remaining of ReDemPtion code. For reference to historical key generator code
+                   look for utils/keygen.cpp in old repository code.
 
-               references for RSA Keys: http://www.securiteam.com/windowsntfocus/5EP010KG0G.html
-            */
-            uint8_t rsa_keys_pub_mod[64] = {
-                0x67, 0xab, 0x0e, 0x6a, 0x9f, 0xd6, 0x2b, 0xa3, 0x32, 0x2f, 0x41, 0xd1, 0xce, 0xee, 0x61, 0xc3,
-                0x76, 0x0b, 0x26, 0x11, 0x70, 0x48, 0x8a, 0x8d, 0x23, 0x81, 0x95, 0xa0, 0x39, 0xf7, 0x5b, 0xaa,
-                0x3e, 0xf1, 0xed, 0xb8, 0xc4, 0xee, 0xce, 0x5f, 0x6a, 0xf5, 0x43, 0xce, 0x5f, 0x60, 0xca, 0x6c,
-                0x06, 0x75, 0xae, 0xc0, 0xd6, 0xa4, 0x0c, 0x92, 0xa4, 0xc6, 0x75, 0xea, 0x64, 0xb2, 0x50, 0x5b
-            };
-            memcpy(this->pub_mod, rsa_keys_pub_mod, 64);
+                   references for RSA Keys: http://www.securiteam.com/windowsntfocus/5EP010KG0G.html
+                */
+                uint8_t rsa_keys_pub_mod[64] = {
+                    0x67, 0xab, 0x0e, 0x6a, 0x9f, 0xd6, 0x2b, 0xa3, 0x32, 0x2f, 0x41, 0xd1, 0xce, 0xee, 0x61, 0xc3,
+                    0x76, 0x0b, 0x26, 0x11, 0x70, 0x48, 0x8a, 0x8d, 0x23, 0x81, 0x95, 0xa0, 0x39, 0xf7, 0x5b, 0xaa,
+                    0x3e, 0xf1, 0xed, 0xb8, 0xc4, 0xee, 0xce, 0x5f, 0x6a, 0xf5, 0x43, 0xce, 0x5f, 0x60, 0xca, 0x6c,
+                    0x06, 0x75, 0xae, 0xc0, 0xd6, 0xa4, 0x0c, 0x92, 0xa4, 0xc6, 0x75, 0xea, 0x64, 0xb2, 0x50, 0x5b
+                };
+                memcpy(this->pub_mod, rsa_keys_pub_mod, 64);
 
-            uint8_t rsa_keys_pri_exp[64] = {
-                0x41, 0x93, 0x05, 0xB1, 0xF4, 0x38, 0xFC, 0x47, 0x88, 0xC4, 0x7F, 0x83, 0x8C, 0xEC, 0x90, 0xDA,
-                0x0C, 0x8A, 0xB5, 0xAE, 0x61, 0x32, 0x72, 0xF5, 0x2B, 0xD1, 0x7B, 0x5F, 0x44, 0xC0, 0x7C, 0xBD,
-                0x8A, 0x35, 0xFA, 0xAE, 0x30, 0xF6, 0xC4, 0x6B, 0x55, 0xA7, 0x65, 0xEF, 0xF4, 0xB2, 0xAB, 0x18,
-                0x4E, 0xAA, 0xE6, 0xDC, 0x71, 0x17, 0x3B, 0x4C, 0xC2, 0x15, 0x4C, 0xF7, 0x81, 0xBB, 0xF0, 0x03
-            };
-            memcpy(sc_sec1.pri_exp, rsa_keys_pri_exp, 64);
-            memcpy(this->pri_exp, sc_sec1.pri_exp, 64);
+                uint8_t rsa_keys_pri_exp[64] = {
+                    0x41, 0x93, 0x05, 0xB1, 0xF4, 0x38, 0xFC, 0x47, 0x88, 0xC4, 0x7F, 0x83, 0x8C, 0xEC, 0x90, 0xDA,
+                    0x0C, 0x8A, 0xB5, 0xAE, 0x61, 0x32, 0x72, 0xF5, 0x2B, 0xD1, 0x7B, 0x5F, 0x44, 0xC0, 0x7C, 0xBD,
+                    0x8A, 0x35, 0xFA, 0xAE, 0x30, 0xF6, 0xC4, 0x6B, 0x55, 0xA7, 0x65, 0xEF, 0xF4, 0xB2, 0xAB, 0x18,
+                    0x4E, 0xAA, 0xE6, 0xDC, 0x71, 0x17, 0x3B, 0x4C, 0xC2, 0x15, 0x4C, 0xF7, 0x81, 0xBB, 0xF0, 0x03
+                };
+                memcpy(sc_sec1.pri_exp, rsa_keys_pri_exp, 64);
+                memcpy(this->pri_exp, sc_sec1.pri_exp, 64);
 
-            uint8_t rsa_keys_pub_sig[64] = {
-                0x6a, 0x41, 0xb1, 0x43, 0xcf, 0x47, 0x6f, 0xf1, 0xe6, 0xcc, 0xa1, 0x72, 0x97, 0xd9, 0xe1, 0x85,
-                0x15, 0xb3, 0xc2, 0x39, 0xa0, 0xa6, 0x26, 0x1a, 0xb6, 0x49, 0x01, 0xfa, 0xa6, 0xda, 0x60, 0xd7,
-                0x45, 0xf7, 0x2c, 0xee, 0xe4, 0x8e, 0x64, 0x2e, 0x37, 0x49, 0xf0, 0x4c, 0x94, 0x6f, 0x08, 0xf5,
-                0x63, 0x4c, 0x56, 0x29, 0x55, 0x5a, 0x63, 0x41, 0x2c, 0x20, 0x65, 0x95, 0x99, 0xb1, 0x15, 0x7c
-            };
+                uint8_t rsa_keys_pub_sig[64] = {
+                    0x6a, 0x41, 0xb1, 0x43, 0xcf, 0x47, 0x6f, 0xf1, 0xe6, 0xcc, 0xa1, 0x72, 0x97, 0xd9, 0xe1, 0x85,
+                    0x15, 0xb3, 0xc2, 0x39, 0xa0, 0xa6, 0x26, 0x1a, 0xb6, 0x49, 0x01, 0xfa, 0xa6, 0xda, 0x60, 0xd7,
+                    0x45, 0xf7, 0x2c, 0xee, 0xe4, 0x8e, 0x64, 0x2e, 0x37, 0x49, 0xf0, 0x4c, 0x94, 0x6f, 0x08, 0xf5,
+                    0x63, 0x4c, 0x56, 0x29, 0x55, 0x5a, 0x63, 0x41, 0x2c, 0x20, 0x65, 0x95, 0x99, 0xb1, 0x15, 0x7c
+                };
 
-            uint8_t rsa_keys_pub_exp[4] = {
-                0x01,0x00,0x01,0x00
-            };
+                uint8_t rsa_keys_pub_exp[4] = {
+                    0x01,0x00,0x01,0x00
+                };
 
-            sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
-            sc_sec1.encryptionLevel = client_info.encryptionLevel;
-            sc_sec1.serverRandomLen = 32;
-            this->gen->random(this->server_random, 32);
-            memcpy(sc_sec1.serverRandom, this->server_random, 32);
-            sc_sec1.dwVersion = GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1;
-            sc_sec1.temporary = false;
-            memcpy(sc_sec1.proprietaryCertificate.RSAPK.pubExp, rsa_keys_pub_exp, SEC_EXPONENT_SIZE);
-            memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus, this->pub_mod, 64);
-            memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus + 64,
-                "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
-            memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob, rsa_keys_pub_sig, 64);
-            memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob + 64,
-                "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
+                sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
+                sc_sec1.encryptionLevel = client_info.encryptionLevel;
+                sc_sec1.serverRandomLen = 32;
+                this->gen->random(this->server_random, 32);
+                memcpy(sc_sec1.serverRandom, this->server_random, 32);
+                sc_sec1.dwVersion = GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1;
+                sc_sec1.temporary = false;
+                memcpy(sc_sec1.proprietaryCertificate.RSAPK.pubExp, rsa_keys_pub_exp, SEC_EXPONENT_SIZE);
+                memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus, this->pub_mod, 64);
+                memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus + 64,
+                    "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
+                memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob, rsa_keys_pub_sig, 64);
+                memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob + 64,
+                    "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
 
-            sc_sec1.log("Sending to client");
-            sc_sec1.emit(stream);
+                sc_sec1.log("Sending to client");
+                sc_sec1.emit(stream);
+            }
+
 
             // ------------------------------------------------------------------
             BStream gcc_header(256);
@@ -1317,7 +1348,7 @@ TODO("Pass font name as parameter in constructor")
             }
 
             if (this->verbose){
-                LOG(LOG_INFO, "Front::incoming:: Recv MCS::ErectDomainRequest");
+                LOG(LOG_INFO, "Front::incoming::Recv MCS::ErectDomainRequest");
             }
             {
                 BStream x224_data(256);
@@ -1326,7 +1357,7 @@ TODO("Pass font name as parameter in constructor")
                 MCS::ErectDomainRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
             if (this->verbose){
-                LOG(LOG_INFO, "Front::incoming:: Recv MCS::AttachUserRequest");
+                LOG(LOG_INFO, "Front::incoming::Recv MCS::AttachUserRequest");
             }
             {
                 BStream x224_data(256);
@@ -1335,7 +1366,7 @@ TODO("Pass font name as parameter in constructor")
                 MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             }
             if (this->verbose){
-                LOG(LOG_INFO, "Front::incoming:: Send MCS::AttachUserConfirm", this->userid);
+                LOG(LOG_INFO, "Front::incoming::Send MCS::AttachUserConfirm", this->userid);
             }
             {
                 BStream x224_header(256);
@@ -1458,7 +1489,7 @@ TODO("Pass font name as parameter in constructor")
 
             // Client                                                     Server
             //    |------Security Exchange PDU ---------------------------> |
-
+            if (!this->tls_support)
             {
                 BStream pdu(65536);
                 X224::RecvFactory f(*this->trans, pdu);
@@ -1505,6 +1536,9 @@ TODO("Pass font name as parameter in constructor")
                 this->decrypt.generate_key(&key_block[32], client_random, this->server_random, this->encrypt.encryptionMethod);
                 this->encrypt.generate_key(&key_block[16], client_random, this->server_random, this->encrypt.encryptionMethod);
             }
+            else {
+                LOG(LOG_INFO, "TLS mode: exchange packet disabled");
+            }
             this->state = WAITING_FOR_LOGON_INFO;
         }
         break;
@@ -1529,7 +1563,7 @@ TODO("Pass font name as parameter in constructor")
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             TODO("We should also manage the DisconnectRequest case as it can also happen")
 
-            SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
+            SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if (this->verbose & 128){
                 LOG(LOG_INFO, "sec decrypted payload:");
                 hexdump_d(sec.payload.data, sec.payload.size());
@@ -1583,7 +1617,7 @@ TODO("Pass font name as parameter in constructor")
                         hexdump_d(stream.data, stream.size());
                     }
 
-                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0, 0);
+                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0);
                     MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                     X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
@@ -1683,7 +1717,7 @@ TODO("Pass font name as parameter in constructor")
                     hexdump_d(stream.data, stream.size());
                 }
 
-                SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
+                SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
@@ -1710,7 +1744,7 @@ TODO("Pass font name as parameter in constructor")
             X224::DT_TPDU_Recv x224(*this->trans, stream);
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
             TODO("We should also manage the DisconnectRequest case as it can also happen")
-            SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
+            SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if ((this->verbose & (128|2)) == (128|2)){
                 LOG(LOG_INFO, "sec decrypted payload:");
                 hexdump_d(sec.payload.data, sec.payload.size());
@@ -1782,7 +1816,7 @@ TODO("Pass font name as parameter in constructor")
                         hexdump_d(stream.data, stream.size());
                     }
 
-                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0, 0);
+                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
                     MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                     X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
@@ -1943,6 +1977,8 @@ TODO("Pass font name as parameter in constructor")
             this->trans->recv(&stream.end, 1);
             uint8_t byte = stream.in_uint8();
             if ((byte & FastPath::FASTPATH_INPUT_ACTION_X224) == 0){
+            
+            LOG(LOG_INFO, "FASTPATH\n");
 ///////////////
 ///////////////
                 FastPath::ClientInputEventPDU_Recv cfpie(*this->trans, stream, this->decrypt);
@@ -2014,6 +2050,8 @@ TODO("Pass font name as parameter in constructor")
 ///////////////
             }
 
+            LOG(LOG_INFO, "SLOWPATH\n");
+
             X224::RecvFactory fx224(*this->trans, stream);
             TODO("We shall put a specific case when we get Disconnect Request")
             if (fx224.type == X224::DR_TPDU){
@@ -2037,7 +2075,7 @@ TODO("Pass font name as parameter in constructor")
                 throw Error(ERR_MCS);
             }
 
-            SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->client_info.encryptionLevel, 0);
+            SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if (this->verbose & 128){
                 LOG(LOG_INFO, "sec decrypted payload:");
                 hexdump_d(sec.payload.data, sec.payload.size());
@@ -2211,7 +2249,7 @@ TODO("Pass font name as parameter in constructor")
                 hexdump_d(stream.data, stream.size());
             }
 
-            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
             MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
@@ -2379,7 +2417,7 @@ TODO("Pass font name as parameter in constructor")
             hexdump_d(stream.data, stream.size());
         }
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
@@ -2730,7 +2768,7 @@ TODO("Pass font name as parameter in constructor")
             hexdump_d(stream.data, stream.size());
         }
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
@@ -2796,7 +2834,7 @@ TODO("Pass font name as parameter in constructor")
             hexdump_d(stream.data, stream.size());
         }
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
@@ -2864,7 +2902,7 @@ TODO("Pass font name as parameter in constructor")
             hexdump_d(stream.data, stream.size());
         }
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
@@ -3117,7 +3155,7 @@ TODO("Pass font name as parameter in constructor")
                     hexdump_d(stream.data, stream.size());
                 }
 
-                SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+                SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
@@ -3304,7 +3342,7 @@ TODO("Pass font name as parameter in constructor")
             hexdump_d(stream.data, stream.size());
         }
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel, 0);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 

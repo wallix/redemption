@@ -115,8 +115,7 @@ struct TestDraw : ModApi
                 width += font_item->width + 2;
                 height = std::max(height, font_item->height);
             }
-            if (len_uni > 1)
-                width -= 2;
+            width -= 2;
         }
     }
 
@@ -159,8 +158,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x99\x9b\x2c\x26\x59\x34\x2d\x72\x0b\xa6"
-        "\xec\x34\x3e\x5c\xfe\xe2\xc4\xb8\xfb\x22")){
+        "\xc9\x77\x6a\x27\x35\xce\xd9\x93\xed\xec"
+        "\x3a\x17\x4f\xbc\x33\x58\xae\x0a\x75\x12")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -197,8 +196,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xfd\x0a\xa6\x6b\x96\x37\x8e\x5a\x21\xfa"
-        "\x78\x5f\xce\xf9\x0e\x9b\xb3\xa3\x7a\x14")){
+        "\x2c\xe5\x3e\xb5\xdf\x9c\xec\x73\x66\x1b"
+        "\xbf\x9c\x2a\x2e\x5f\xa7\xde\x85\x43\xcf")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -235,8 +234,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x31\xc3\x3f\x92\x33\x71\xe3\x57\xb7\xba"
-        "\xb0\x34\xfe\xa7\x5a\x11\x5f\xaf\xa9\x73")){
+        "\x05\x1f\xea\xd7\x3c\x57\x21\xaf\x3f\x6b"
+        "\x2d\x14\x69\xbf\xcb\xd8\x23\x61\xd8\x62")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -273,8 +272,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x6f\x9e\x8b\xdf\xc2\x90\x9b\x26\x54\x00"
-        "\x18\x8c\x8e\xaf\xdc\xd2\xe6\x25\x98\xdd")){
+        "\x8b\x3b\x57\xd5\x4f\xad\x13\x46\xce\x0c"
+        "\x63\x0f\x25\x73\xdb\xbb\xb7\x8b\x32\x90")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -311,8 +310,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x35\x20\x7c\xf8\xee\x51\xfe\xb5\xd6\xbe"
-        "\x2a\x05\x33\xa0\xca\x68\x26\x1f\xc7\x6f")){
+        "\x5e\x15\x6e\x8b\x30\xde\x10\xaf\x93\xe5"
+        "\xcd\xff\xd0\x9c\x3d\x77\xa9\x5a\xc1\x05")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -349,8 +348,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x9d\x6b\xd6\xce\x4f\x86\xa8\x62\xde\xa1"
-        "\x22\xe7\x44\x36\xa4\x55\x0f\xac\x4f\xb2")){
+        "\x82\x34\x4e\xc6\xcd\xad\xbb\x3c\x09\x8d"
+        "\x15\x8c\x1b\xd7\x29\x6c\x0e\xc0\x58\x0a")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -387,8 +386,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBoxClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xa0\x2b\x24\x57\x08\x16\x5a\xb4\x00\x32"
-        "\x54\x1c\x38\xc4\xf5\x8e\xb6\x8a\x40\x98")){
+        "\x33\x83\x80\x5c\x48\x4a\xe9\x72\x3c\x30"
+        "\xa6\x19\x99\x03\x01\xf2\xa9\x5d\xf9\x51")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -425,8 +424,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBoxClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x37\xb7\xc1\xbf\x7d\x8d\x7d\x23\x00\x22"
-        "\x61\x05\xff\xbc\x41\xd1\x1c\xb8\x82\x51")){
+        "\x75\xbd\xe4\x8e\xb6\x24\x84\x0a\xc1\xc8"
+        "\x49\x43\x66\x4a\x90\x47\x8b\xc5\xea\x9e")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }

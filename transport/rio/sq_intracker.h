@@ -106,7 +106,7 @@ extern "C" {
             rio_delete(self->trans);
             self->trans = NULL;
         }
-        return RIO_ERROR_OK;
+        return RIO_ERROR_CLOSED;
     }
 
     static inline RIO_ERROR sq_m_SQIntracker_next(SQIntracker * self)

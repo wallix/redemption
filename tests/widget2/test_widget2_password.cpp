@@ -159,8 +159,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x0b\x9a\x72\x8b\x2d\xc6\xd1\x70\x33\x80"
-        "\x41\x77\x8d\x19\xd2\xc7\x0d\x37\x3b\xf4")){
+        "\x56\x8c\x5a\x16\xdf\xcc\x5c\x34\x04\xdc"
+        "\x61\x7e\xa5\x31\xae\x1b\x6f\x5a\x2a\xa4")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -191,8 +191,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x52\xef\xb2\x80\xf1\x4e\xc3\x08\xfa\x1a"
-        "\x0e\xe8\xa9\x62\x7e\xd3\xe6\x8e\xd7\xdc")){
+        "\x9c\x4a\x73\xba\x18\x9c\xc4\xde\x5a\x6f"
+        "\xd7\xbb\xea\x97\x69\x37\xe3\xc8\x05\xa3")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -223,8 +223,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x87\x73\x8e\x2e\xee\x1d\x59\x44\x79\x49"
-        "\xf5\x8b\x74\x3c\x29\x63\x27\x8c\x87\xb5")){
+        "\x38\xf1\x00\x4f\x9d\xe6\xa5\xa7\x36\x81"
+        "\x7e\x49\x03\x3b\x21\xae\x86\x7b\xa9\x9a")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -255,8 +255,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x3c\xac\xca\x87\xb1\xc8\xe2\xe6\x56\x67"
-        "\xa2\xc9\x1a\x55\xd2\xf6\x77\x3d\x4d\xf5")){
+        "\x1b\xfb\xdf\x50\x47\xb7\x02\xe5\x54\x46"
+        "\x15\xe7\x34\xf4\x4a\xef\x35\x72\xc7\xd5")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -287,8 +287,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x4c\x9b\x8a\x9b\xb3\x66\x17\xf8\x50\x8c"
-        "\x60\xb6\xe6\x9a\x01\x61\xbb\x93\xb2\x23")){
+        "\xba\xe7\x54\x31\x41\x5c\xb2\x78\x80\x20"
+        "\x46\x65\xd4\x7b\xf2\x9c\x2b\xd2\x07\x30")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -319,8 +319,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xe8\x16\xe9\x21\xc1\xe7\x4e\x5b\x6d\xab"
-        "\x40\xed\xc4\x1d\xb0\xf2\xb4\xed\x18\x18")){
+        "\xbd\xb4\xf0\x29\xfe\x50\x73\x9c\x0f\x67"
+        "\x01\x75\x40\xb2\x59\xf9\xf4\xfc\x62\x59")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -351,8 +351,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xc4\x5e\xac\xd3\x24\x6a\x76\xc4\x33\x97"
-        "\x56\xce\x21\x2f\x25\x05\x0b\x46\xb5\x68")){
+        "\xb7\x65\xdf\x56\xd0\x36\x89\xb0\xf1\x02"
+        "\xbf\x1d\x57\xb4\xb9\xe2\xa1\xff\x59\xe2")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -383,8 +383,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x73\x16\xab\xc1\x14\x4c\xaa\xaf\x40\x14"
-        "\x75\x97\x68\x49\x8f\x63\xf5\xf5\x50\x21")){
+        "\xbd\x4c\x99\xc3\x90\x02\xf4\x76\x35\x9a"
+        "\x46\xb4\x61\xa4\x42\x17\xca\x49\x94\x6f")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -419,8 +419,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     //drawable.save_to_png("/tmp/password-e1.png");
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x19\x0e\x94\x4e\x6c\x78\x2b\x73\xa4\xa4"
-        "\x1d\x87\xb3\x6f\x84\xbe\x1f\xad\xb7\x28")){
+        "\xf8\x7c\x12\x8b\x4d\xee\xdb\xe2\x83\x1c"
+        "\x18\xcc\xac\xec\x9a\xf9\xf9\x56\xaf\x46")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -433,8 +433,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e2-1.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x5c\x3b\xfd\x38\x49\x3a\xaa\xf3\xd5\xed"
-        "\xcf\xc3\xfc\x05\x3b\x1d\xf9\x84\xf8\x34")){
+        "\x90\x07\x42\x25\x8c\x8e\x10\x6f\x0c\xa5"
+        "\xce\xa7\x3e\x44\x9f\xe7\xe3\x5c\x69\x28")){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == &wpassword);
@@ -448,8 +448,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e2-2.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x18\x30\x72\x17\x4d\x91\xd0\x9f\xa5\xa9"
-        "\x1d\xae\xd2\x1f\xa3\x6a\xc4\xcf\xb1\x4d")){
+        "\xcc\x03\x8c\x7b\xff\xd2\xa0\x3d\x33\x7f"
+        "\x98\xe0\x35\x4d\x88\x5f\x4a\xb7\x68\xe8")){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == &wpassword);
@@ -462,8 +462,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e3.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\xc7\x7e\x4b\x4e\xc8\x90\x52\x27\xe7\x4f"
-        "\x56\x6d\x1d\x2e\x32\x87\x72\xdc\x02\xd5")){
+        "\x86\x71\x8c\x76\x5d\x6a\xdf\xfe\x0d\xda"
+        "\xb6\x4e\xfb\x0f\x9c\x69\x14\x4d\x0b\xa9")){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == 0);
@@ -475,8 +475,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e4.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x18\x30\x72\x17\x4d\x91\xd0\x9f\xa5\xa9"
-        "\x1d\xae\xd2\x1f\xa3\x6a\xc4\xcf\xb1\x4d")){
+        "\xcc\x03\x8c\x7b\xff\xd2\xa0\x3d\x33\x7f"
+        "\x98\xe0\x35\x4d\x88\x5f\x4a\xb7\x68\xe8")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -486,8 +486,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e5.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x5c\x3b\xfd\x38\x49\x3a\xaa\xf3\xd5\xed"
-        "\xcf\xc3\xfc\x05\x3b\x1d\xf9\x84\xf8\x34")){
+        "\x90\x07\x42\x25\x8c\x8e\x10\x6f\x0c\xa5"
+        "\xce\xa7\x3e\x44\x9f\xe7\xe3\x5c\x69\x28")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -496,8 +496,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e6.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x20\xab\x44\xba\xcf\xbe\x03\xee\x25\xec"
-        "\x94\x2b\x52\x50\x5d\x12\x74\xa6\xcf\x22")){
+        "\x5b\xbe\x78\x8a\x2d\x91\xe8\xdb\xa0\x86"
+        "\x32\xf2\x59\x55\x5b\xba\xf8\x15\x51\x25")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -506,8 +506,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e7.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x3a\xfc\x64\x8f\x27\xd3\xb1\xdd\x84\xde"
-        "\x43\xeb\xf7\x01\x9a\xf8\x49\xf1\xa7\x7b")){
+        "\x61\x99\xd8\x06\xde\xa1\x9c\x13\x8d\xea"
+        "\x02\x17\x7f\x56\x20\x21\x14\x78\x1d\x23")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -519,8 +519,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e8.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x1f\x9f\xf7\x15\x89\x52\x0b\x6e\xb3\x6a"
-        "\xb9\xbd\x55\x54\x48\x2b\x70\x99\xc1\x96")){
+        "\x3d\x17\xfa\x0c\xcd\x5e\x0f\x5f\x8d\xd3"
+        "\xce\xbc\xf1\xeb\x5f\x8d\xe8\x0a\xb1\x37")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -532,8 +532,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e9.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x19\x0e\x94\x4e\x6c\x78\x2b\x73\xa4\xa4"
-        "\x1d\x87\xb3\x6f\x84\xbe\x1f\xad\xb7\x28")){
+        "\xf8\x7c\x12\x8b\x4d\xee\xdb\xe2\x83\x1c"
+        "\x18\xcc\xac\xec\x9a\xf9\xf9\x56\xaf\x46")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -545,8 +545,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e10.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\xfd\x5d\x58\xee\x00\xb5\x1f\xe3\xb1\xc8"
-        "\x99\x1c\xe2\x12\x72\x93\x7a\xc0\xf5\x10")){
+        "\x6e\x0a\x3a\x2f\xc3\xb2\xa7\x65\xb9\x4a"
+        "\xa0\x27\xd1\xc4\x5b\x0b\xc2\xbb\x8f\xd3")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
