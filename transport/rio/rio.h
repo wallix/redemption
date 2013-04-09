@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,10 +15,9 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Raphael Zhou
 
    Constants used by RIO *lib
-
 */
 
 #ifndef _REDEMPTION_LIBS_RIO_CONSTANTS_H_
@@ -90,10 +89,10 @@ extern "C" {
     RIO_ERROR rio_init_check(RIO * self, const void * data, size_t len);
 
     RIO * rio_new_test(RIO_ERROR * error,
-                         const void * data_check, size_t len_check, 
+                         const void * data_check, size_t len_check,
                          const void * data_gen, size_t len_gen);
     RIO_ERROR rio_init_test(RIO * self,
-                         const void * data_check, size_t len_check, 
+                         const void * data_check, size_t len_check,
                          const void * data_gen, size_t len_gen);
 
     RIO * rio_new_outfile(RIO_ERROR * error, int fd);
@@ -111,15 +110,20 @@ extern "C" {
     RIO * rio_new_outsequence(RIO_ERROR * error, SQ * seq);
     RIO_ERROR rio_init_outsequence(RIO * self, SQ * seq);
 
-    RIO * rio_new_insequence(RIO_ERROR * error, SQ * seq);    
-    RIO_ERROR rio_init_insequence(RIO * self, SQ * seq);    
+    RIO * rio_new_insequence(RIO_ERROR * error, SQ * seq);
+    RIO_ERROR rio_init_insequence(RIO * self, SQ * seq);
 
     RIO * rio_new_inmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, const char * extension);
     RIO_ERROR rio_init_inmeta(RIO * self, const char * prefix, const char * extension);
 
-    RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * path, const char * filename, const char * extension, 
+    RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * path, const char * filename, const char * extension,
                       const char * l1, const char * l2, const char * l3, timeval * tv);
-    RIO_ERROR rio_init_outmeta(RIO * self, SQ ** seq, const char * path, const char * filename, const char * extension, 
+    RIO_ERROR rio_init_outmeta(RIO * self, SQ ** seq, const char * path, const char * filename, const char * extension,
+                      const char * l1, const char * l2, const char * l3, timeval * tv);
+
+    RIO * rio_new_cryptooutmeta(RIO_ERROR * error, SQ ** seq, const char * path, const char * filename, const char * extension,
+                      const char * l1, const char * l2, const char * l3, timeval * tv);
+    RIO_ERROR rio_init_cryptooutmeta(RIO * self, SQ ** seq, const char * path, const char * filename, const char * extension,
                       const char * l1, const char * l2, const char * l3, timeval * tv);
 
     void rio_delete(RIO * rt);
@@ -134,14 +138,28 @@ extern "C" {
 
     SQ * sq_new_outfilename(RIO_ERROR * error, SQ_FORMAT format, const char * path, const char * filename, const char * extension);
     RIO_ERROR sq_init_outfilename(SQ * self, SQ_FORMAT format, const char * path, const char * filename, const char * extension);
-                
-    SQ * sq_new_outtracker(RIO_ERROR * error, RIO * tracker, 
+
+    SQ * sq_new_cryptooutfilename(RIO_ERROR * error, SQ_FORMAT format, const char * path, const char * filename, const char * extension);
+    RIO_ERROR sq_init_cryptooutfilename(SQ * self, SQ_FORMAT format, const char * path, const char * filename, const char * extension);
+
+    SQ * sq_new_outtracker(RIO_ERROR * error, RIO * tracker,
                 SQ_FORMAT format,
                 const char * path, const char * filename, const char * extension,
-                timeval * tv, 
+                timeval * tv,
                 const char * header1, const char * header2, const char * header3);
     RIO_ERROR sq_init_outtracker(SQ * self, RIO * tracker,
-                SQ_FORMAT format, 
+                SQ_FORMAT format,
+                const char * path, const char * filename, const char * extension,
+                timeval * tv,
+                const char * header1, const char * header2, const char * header3);
+
+    SQ * sq_new_cryptoouttracker(RIO_ERROR * error, RIO * tracker,
+                SQ_FORMAT format,
+                const char * path, const char * filename, const char * extension,
+                timeval * tv,
+                const char * header1, const char * header2, const char * header3);
+    RIO_ERROR sq_init_cryptoouttracker(SQ * self, RIO * tracker,
+                SQ_FORMAT format,
                 const char * path, const char * filename, const char * extension,
                 timeval * tv,
                 const char * header1, const char * header2, const char * header3);
@@ -149,8 +167,14 @@ extern "C" {
     SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker);
     RIO_ERROR sq_init_intracker(SQ * self, RIO * tracker);
 
+    SQ * sq_new_cryptointracker(RIO_ERROR * error, RIO * tracker);
+    RIO_ERROR sq_init_cryptointracker(SQ * self, RIO * tracker);
+
     SQ * sq_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extension);
     RIO_ERROR sq_init_inmeta(SQ * self, const char * prefix, const char * extension);
+
+    SQ * sq_new_cryptoinmeta(RIO_ERROR * error, const char * prefix, const char * extension);
+    RIO_ERROR sq_init_cryptoinmeta(SQ * self, const char * prefix, const char * extension);
 
     void sq_delete(SQ * rt);
     void sq_clear(SQ * rt);
@@ -159,7 +183,9 @@ extern "C" {
     RIO_ERROR sq_timestamp(SQ * seq, timeval * tv);
     RIO_ERROR sq_get_chunk_info(SQ * seq, unsigned & num_chunk, char * path, size_t path_len, timeval * begin, timeval * end);
 
-
+    RIO * rio_new_crypto(RIO_ERROR * error, const char * file, int oflag);
+    RIO_ERROR rio_init_crypto(RIO * self, const char * file, int oflag);
 }
 
 #endif
+

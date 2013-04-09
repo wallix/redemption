@@ -1312,6 +1312,7 @@ class SocketTransport : public Transport {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
         *pbuffer += res;
+
         if ((size_t)res < len){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
@@ -1321,6 +1322,9 @@ class SocketTransport : public Transport {
 //            hexdump_c(start, total_len);
 //            LOG(LOG_INFO, "Dump done on %s (%u) %u bytes", this->name, this->sck, total_len);
 //        }
+
+        this->total_received += len;
+        this->last_quantum_received += len;
     }
 
     using Transport::send;
@@ -1333,7 +1337,9 @@ class SocketTransport : public Transport {
         if (res < (ssize_t)len) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        return;
+
+        this->total_sent += len;
+        this->last_quantum_sent += len;
     }
 
     virtual bool get_status()

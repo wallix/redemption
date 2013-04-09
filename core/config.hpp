@@ -43,6 +43,7 @@
 
 using namespace std;
 
+/*
 static inline bool bool_from_string(string str)
 {
     return (boost::iequals(string("1"),str))
@@ -50,6 +51,7 @@ static inline bool bool_from_string(string str)
         || (boost::iequals(string("on"),str))
         || (boost::iequals(string("true"),str));
 }
+*/
 
 static inline bool bool_from_cstr(const char * str)
 {
@@ -59,11 +61,21 @@ static inline bool bool_from_cstr(const char * str)
         || (0 == strcasecmp("true",str));
 }
 
-static inline unsigned level_from_string(const char * str)
+static inline unsigned level_from_cstr(const char * str)
 { // low = 0, medium = 1, high = 2
     unsigned res = 0;
     if (0 == strcasecmp("medium", str)) { res = 1; }
     else if (0 == strcasecmp("high", str)) { res = 2; }
+    return res;
+}
+
+static inline unsigned logtype_from_cstr(const char * str)
+{ // null = 0, print = 1, syslog = 2, file = 3, encryptedfile = 4
+    unsigned res = 0;
+         if (0 == strcasecmp("print",         str)) { res = 1; }
+    else if (0 == strcasecmp("syslog",        str)) { res = 2; }
+    else if (0 == strcasecmp("file",          str)) { res = 3; }
+    else if (0 == strcasecmp("encryptedfile", str)) { res = 4; }
     return res;
 }
 
@@ -131,7 +143,6 @@ struct Inifile {
         bool autovalidate;       // dialog autovalidation for test
         char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
 
-
         unsigned capture_flags;  // 1 PNG capture, 2 WRM
         unsigned png_interval;   // time between 2 png captures (in 1/10 seconds)
         unsigned frame_interval; // time between 2 frame captures (in 1/100 seconds)
@@ -187,6 +198,9 @@ struct Inifile {
             uint32_t mod_xup;
             uint32_t widget;
             uint32_t input;
+
+            int  log_type;
+            char log_file_path[1024]; // log file location
         } debug;
 
         // Section "client"
@@ -235,7 +249,7 @@ struct Inifile {
             this->globals.port = 3389;
             this->globals.nomouse = false;
             this->globals.notimestamp = false;
-            this->globals.encryptionLevel = level_from_string("low");
+            this->globals.encryptionLevel = level_from_cstr("low");
             strcpy(this->globals.authip, "127.0.0.1");
             this->globals.authport = 3350;
             this->globals.autovalidate = false;
@@ -288,6 +302,9 @@ struct Inifile {
             this->globals.debug.mod_xup           = 0;
             this->globals.debug.widget            = 0;
             this->globals.debug.input             = 0;
+
+            this->globals.debug.log_type         = 2; // syslog by default
+            this->globals.debug.log_file_path[0] = 0;
 
             memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
             strcpy(this->account.accountname, "");
@@ -394,7 +411,7 @@ struct Inifile {
                 this->globals.notimestamp = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "encryptionLevel")){
-                this->globals.encryptionLevel = level_from_string(value);
+                this->globals.encryptionLevel = level_from_cstr(value);
             }
             else if (0 == strcmp(key, "authip")){
                 strcpy(this->globals.authip, value);
@@ -565,6 +582,12 @@ struct Inifile {
             }
             else if (0 == strcmp(key, "input")){
                 this->globals.debug.input             = long_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "log_type")){
+                this->globals.debug.log_type = logtype_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "log_file_path")){
+                strcpy(this->globals.debug.log_file_path, value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
