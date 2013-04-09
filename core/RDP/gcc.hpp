@@ -563,17 +563,47 @@ namespace GCC
         //  minor version number is stored in the low two bytes.
 
         // 0x00080001 RDP 4.0 servers
-        // 0x00080004 RDP 5.0, 5.1, 5.2, 6.0, 6.1, and 7.0 servers
+        // 0x00080004 RDP 5.0, 5.1, 5.2, 6.0, 6.1, 7.0, 7.1 and 8.0 servers
 
         // If the server advertises a version number greater than or equal to 0x00080004,
         // it MUST support a maximum length of 512 bytes for the UserName field in the
         // Info Packet (section 2.2.1.11.1.1).
 
         // clientRequestedProtocols (4 bytes): A 32-bit, unsigned integer that contains
-        //  the flags sent by the client in the requestedProtocols field of the RDP
-        //  Negotiation Request (section 2.2.1.1.1). In the event that an RDP
-        //  Negotiation Request was not received from the client, this field MUST be
-        //  initialized to PROTOCOL_RDP (0).
+        // the flags sent by the client in the requestedProtocols field of the RDP 
+        // Negotiation Request (section 2.2.1.1.1). In the event that an RDP Negotiation
+        // Request was not received from the client, this field MUST be initialized to
+        // PROTOCOL_RDP (0). If this field is not present, all of the subsequent
+        // fields MUST NOT be present.
+
+        // earlyCapabilityFlags (4 bytes): A 32-bit, unsigned integer that specifies
+        // capabilities early in the connection sequence. If this field is present, all
+        // of the preceding fields MUST also be present.
+
+        // +----------------------------------+-----------------------------------------+
+        // |             0x00000001           | Indicates that the following key        |
+        // | RNS_UD_SC_EDGE_ACTIONS_SUPPORTED | combinations are reserved by the server | 
+        // |                                  | operating system:                       |
+        // |                                  |             - WIN + Z                   |
+        // |                                  |             - WIN + CTRL + TAB          |
+        // |                                  |             - WIN + C                   |
+        // |                                  |             - WIN + .                   |
+        // |                                  |             - WIN + SHIFT + .           |
+        // |                                  | In addition, the monitor boundaries of  |
+        // |                                  | the remote session are employed by the  |
+        // |                                  | server operating system to trigger user |
+        // |                                  | interface elements via touch or mouse   |
+        // |                                  | gestures.                               |
+        // +----------------------------------+-----------------------------------------+
+        // |             0x00000002           | Indicates that the server supports      |
+        // | RNS_UD_SC_DYNAMIC_DST_SUPPORTED  | Dynamic DST. Dynamic DST information is |
+        // |                                  | provided by the client in the           |
+        // |                                  | cbDynamicDSTTimeZoneKeyName,            |
+        // |                                  | dynamicDSTTimeZoneKeyName and           |
+        // |                                  | dynamicDaylightTimeDisabled fields of   |
+        // |                                  | the Extended Info Packet (section       |
+        // |                                  | 2.2.1.11.1.1.1).                        |
+        // +----------------------------------+-----------------------------------------+
 
         // Exemple:
         //01 0c 0c 00 -> TS_UD_HEADER::type = SC_CORE (0x0c01), length = 12 bytes
@@ -584,15 +614,15 @@ namespace GCC
             uint16_t userDataType;
             uint16_t length;
             uint32_t version;
-            bool option_clientRequestedProtocols;
             uint32_t clientRequestedProtocols;
+            uint32_t earlyCapabilityFlags;
 
             SCCore()
             : userDataType(SC_CORE)
             , length(8)
             , version(0x00080001)
-            , option_clientRequestedProtocols(false)
             , clientRequestedProtocols(0)
+            , earlyCapabilityFlags(0)
             {
             }
 
@@ -601,18 +631,17 @@ namespace GCC
                 stream.out_uint16_le(this->userDataType);
                 stream.out_uint16_le(this->length);
                 stream.out_uint32_le(this->version);
-                this->emit_optionals(stream);
+
+                if (this->length >= 12){
+                    stream.out_uint32_le(this->clientRequestedProtocols);
+                }
+                if (this->length >= 16){
+                    stream.out_uint32_le(this->earlyCapabilityFlags);
+                }
                 stream.mark_end();
+                TODO("add sanity check if provided length does not match 8, 12 or 16")
             }
 
-            private:
-            void emit_optionals(Stream & stream)
-            {
-                if (this->length < 12){ return; }
-                stream.out_uint32_le(this->clientRequestedProtocols);
-            }
-
-            public:
             void recv(Stream & stream)
             {
                 this->userDataType = stream.in_uint16_le();
@@ -620,6 +649,8 @@ namespace GCC
                 this->version = stream.in_uint32_le();
                 if (this->length < 12) { return; }
                 this->clientRequestedProtocols = stream.in_uint32_le();
+                if (this->length < 16) { return; }
+                this->earlyCapabilityFlags = stream.in_uint32_le();
             }
 
             void log(const char * msg)
@@ -631,8 +662,10 @@ namespace GCC
                      :(this->version==0x00080004) ? "RDP 5.0, 5.1, 5.2, and 6.0 clients)"
                                                   : "Unknown client");
                 if (this->length < 12) { return; }
-                this->option_clientRequestedProtocols = true;
                 LOG(LOG_INFO, "sc_core::clientRequestedProtocols  = %u", this->clientRequestedProtocols);
+                if (this->length < 16) { return; }
+                LOG(LOG_INFO, "sc_core::earlyCapabilityFlags  = %u", this->earlyCapabilityFlags);
+
             }
         };
 
@@ -1672,7 +1705,7 @@ namespace GCC
 
             void emit(Stream & stream)
             {
-                this->length = 8 + 2 * this->channelCount + 2 * (this->channelCount & 1);
+                this->length = 8 + 4 * ((this->channelCount+1) >> 1);
                 stream.out_uint16_le(this->userDataType);
                 stream.out_uint16_le(this->length);
                 stream.out_uint16_le(this->MCSChannelId);
@@ -1703,6 +1736,7 @@ namespace GCC
             void log(const char * msg)
             {
                 // --------------------- Base Fields ---------------------------------------
+                this->length = 8 + 4 * ((this->channelCount+1) >> 1);
                 LOG(LOG_INFO, "%s GCC User Data SC_NET (%u bytes)", msg, this->length);
                 LOG(LOG_INFO, "sc_net::MCSChannelId   = %u", this->MCSChannelId);
                 LOG(LOG_INFO, "sc_net::channelCount   = %u", this->channelCount);
@@ -1712,6 +1746,9 @@ namespace GCC
                         , GCC::MCS_GLOBAL_CHANNEL + i + 1
                         , this->channelDefArray[i].id
                         );
+                }
+                if (this->channelCount & 1){
+                    LOG(LOG_INFO, "sc_net::padding 2 bytes 0000");
                 }
             }
         };
@@ -1775,16 +1812,17 @@ namespace GCC
         // See section 5.3.1 for a description of each of the low, client-compatible,
         // high, and FIPS encryption levels.
 
-        // serverRandomLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of
-        // the serverRandom field. If the encryptionMethod and encryptionLevel fields
-        // are both set to 0 then the contents of this field MUST be ignored and the
-        // serverRandom field MUST NOT be present. Otherwise, this field MUST be set to
-        // 32 bytes.
+        // serverRandomLen (4 bytes): An optional 32-bit, unsigned integer that specifies
+        // the size in bytes of the serverRandom field. If the encryptionMethod and 
+        // encryptionLevel fields are both set to zero, then this field MUST NOT be present
+        // and the length of the serverRandom field MUST be zero. If either the 
+        // encryptionMethod or encryptionLevel field is non-zero, this field MUST be set 
+        // to 0x00000020 (32 bytes serverRandom).
 
-        // serverCertLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of the
-        //  serverCertificate field. If the encryptionMethod and encryptionLevel fields
-        //  are both set to 0 then the contents of this field MUST be ignored and the
-        // serverCertificate field MUST NOT be present.
+        // serverCertLen (4 bytes): An optional 32-bit, unsigned integer that specifies 
+        // the size in bytes of the serverCertificate field. If the encryptionMethod and
+        // encryptionLevel fields are both set to zero, then this field MUST NOT be present
+        // and the length of the serverCertificate field MUST be zero.
 
         // serverRandom (variable): The variable-length server random value used to
         // derive session keys (see sections 5.3.4 and 5.3.5). The length in bytes is
@@ -2189,12 +2227,12 @@ namespace GCC
                 stream.out_uint16_le(SC_SECURITY);
 
                 if ((this->encryptionMethod == 0) && (this->encryptionLevel == 0)){
-                    stream.out_uint16_le(20); // length, including tag and length fields
-                    stream.out_uint32_le(0); // key len 1 = 40 bit 2 = 128 bit
-                    stream.out_uint32_le(0); // encryptionMethod
-                    stream.out_uint32_le(0); // encryptionLevel
-                    stream.out_uint32_le(0);  // random len
-                    stream.out_uint32_le(0); // len of rsa info(certificate)
+                    this->length = 12;
+                    this->serverRandomLen = 0;
+                    this->encryptionLevel = 0;
+                    stream.out_uint16_le(this->length); // length, including tag and length fields
+                    stream.out_uint32_le(this->encryptionMethod); // encryptionMethod
+                    stream.out_uint32_le(this->encryptionLevel); // encryptionLevel
                 }
                 else {
                     stream.out_uint16_le(this->length); // length, including tag and length fields
@@ -2247,8 +2285,11 @@ namespace GCC
                 this->encryptionLevel = stream.in_uint32_le();  /* 1 = low, 2 = medium, 3 = high */
 
                 if ((this->encryptionMethod == 0) && (this->encryptionMethod == 0)){
-                    if (this->length == 12) return;
+                    this->serverRandomLen = 0;
+                    this->encryptionLevel = 0;
                 }
+                TODO("add sanity check if crypto is NONE and length not 12")
+                if (this->length == 12) return;
                 
                 // serverRandomLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of
                 // the serverRandom field. If the encryptionMethod and encryptionLevel fields
@@ -2257,20 +2298,12 @@ namespace GCC
                 // 32 bytes.
                 this->serverRandomLen = stream.in_uint32_le();
 
-                if ((this->encryptionMethod == 0) && (this->encryptionMethod == 0)){
-                    if (this->length == 16) return;                
-                }
-
                 // serverCertLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of the
                 //  serverCertificate field. If the encryptionMethod and encryptionLevel fields
                 //  are both set to 0 then the contents of this field MUST be ignored and the
                 // serverCertificate field MUST NOT be present.
 
                 this->serverCertLen = stream.in_uint32_le();
-
-                if ((this->encryptionMethod == 0) && (this->encryptionMethod == 0)){
-                    if (this->length == 20) return;                
-                }
 
                 if (this->serverRandomLen != SEC_RANDOM_SIZE) {
                     LOG(LOG_ERR, "SCSecutity recv: serverRandomLen %d, expected %d",
@@ -2374,9 +2407,7 @@ namespace GCC
                 LOG(LOG_INFO, "sc_security::encryptionLevel  = %u", this->encryptionLevel);
                 if (this->length == 12) { return; }
                 LOG(LOG_INFO, "sc_security::serverRandomLen  = %u", this->serverRandomLen);
-                if (this->length == 16) { return; }
                 LOG(LOG_INFO, "sc_security::serverCertLen    = %u", this->serverCertLen);
-                if (this->length == 20) { return; }
                 LOG(LOG_INFO, "sc_security::dwVersion = %x", this->dwVersion);
                 LOG(LOG_INFO, "sc_security::temporary = %s", this->temporary?"true":"false");
                 if (this->dwVersion == GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {

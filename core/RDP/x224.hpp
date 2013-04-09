@@ -488,7 +488,7 @@ namespace X224
         uint8_t rdp_neg_type;
         uint8_t rdp_neg_flags;
         uint16_t rdp_neg_length;
-        uint32_t rdp_neg_code;
+        uint32_t rdp_neg_requestedProtocols;
 
         CR_TPDU_Recv(Transport & t, Stream & stream, uint32_t verbose = 0)
         : Recv(t, stream)
@@ -550,15 +550,15 @@ namespace X224
                 this->rdp_neg_type = stream.in_uint8();
                 this->rdp_neg_flags = stream.in_uint8();
                 this->rdp_neg_length = stream.in_uint16_le();
-                this->rdp_neg_code = stream.in_uint32_le();
+                this->rdp_neg_requestedProtocols = stream.in_uint32_le();
 
                 if (this->rdp_neg_type != X224::RDP_NEG_REQ){
                     LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
-                        this->tpdu_hdr.LI, this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_code);
+                        this->tpdu_hdr.LI, this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_requestedProtocols);
                     throw Error(ERR_X224);
                 }
 
-                switch (this->rdp_neg_code){
+                switch (this->rdp_neg_requestedProtocols){
                     case X224::RDP_NEG_PROTOCOL_RDP:
                         LOG(LOG_INFO, "PROTOCOL RDP");
                         break;
@@ -583,7 +583,7 @@ namespace X224
 
     struct CR_TPDU_Send
     {
-        CR_TPDU_Send(Stream & stream, const char * cookie, uint8_t rdp_neg_type, uint8_t rdp_neg_flags, uint32_t rdp_neg_code)
+        CR_TPDU_Send(Stream & stream, const char * cookie, uint8_t rdp_neg_type, uint8_t rdp_neg_flags, uint32_t rdp_neg_requestedProtocols)
         {
             stream.out_uint8(0x03); // version 3
             stream.out_uint8(0x00);
@@ -603,7 +603,7 @@ namespace X224
                 stream.out_uint8(rdp_neg_type);
                 stream.out_uint8(rdp_neg_flags);
                 stream.out_uint16_le(8);
-                stream.out_uint32_le(rdp_neg_code);
+                stream.out_uint32_le(rdp_neg_requestedProtocols);
             }
 
             stream.mark_end();

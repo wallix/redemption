@@ -797,31 +797,29 @@ enum {
                     throw Error(ERR_SEC);
                 }
                 this->flags = stream.in_uint32_le();
-            }
-            if (this->flags & SEC::SEC_ENCRYPT){
-                const unsigned need = 8; /* signature(8) */
-                if (!stream.in_check_rem(need))
-                {
-                    LOG(LOG_ERR, "signature expected: need=%u remains=%u",
-                        need, stream.in_remain());
-                    throw Error(ERR_SEC);
-                }
+                if (this->flags & SEC::SEC_ENCRYPT){
+                    
+                    const unsigned need = 8; /* signature(8) */
+                    if (!stream.in_check_rem(need))
+                    {
+                        LOG(LOG_ERR, "signature expected: need=%u remains=%u",
+                            need, stream.in_remain());
+                        throw Error(ERR_SEC);
+                    }
 
-                TODO(" shouldn't we check signature ?")
-                stream.in_skip_bytes(8); /* signature */
-                this->payload.resize(stream, stream.in_remain());
-                if (this->verbose >= 0x200){
-                    LOG(LOG_INFO, "Receiving encrypted TPDU");
-                    hexdump_c((char*)payload.data, payload.size());
+                    TODO("shouldn't we check signature ?")
+                    stream.in_skip_bytes(8); /* signature */
+                    this->payload.resize(stream, stream.in_remain());
+                    if (this->verbose >= 0x200){
+                        LOG(LOG_INFO, "Receiving encrypted TPDU");
+                        hexdump_c((char*)payload.data, payload.size());
+                    }
+                    crypt.decrypt(this->payload);
+                    if (this->verbose >= 0x80){
+                        LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
+                        hexdump_c((char*)payload.data, payload.size());
+                    }
                 }
-                crypt.decrypt(this->payload);
-                if (this->verbose >= 0x80){
-                    LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
-                    hexdump_c((char*)payload.data, payload.size());
-                }
-            }
-            else {
-                this->payload.resize(stream, stream.in_remain());
             }
         }
     };
