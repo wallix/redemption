@@ -185,7 +185,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
                 BStream mcs_header(256);
                 BStream sec_header(256);
 
-                SEC::Sec_Send sec(sec_header, this->stream, 0, this->encrypt, this->encryptionLevel, 0);
+                SEC::Sec_Send sec(sec_header, this->stream, 0, this->encrypt, this->encryptionLevel);
                 MCS::SendDataIndication_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + this->stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, sec_header.size() + this->stream.size() + mcs_header.size());
 

@@ -321,7 +321,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 ////    BOOST_CHECK_EQUAL((uint32_t)322, stream.size()); 
 
 ////    CryptContext decrypt;
-////    SEC::Sec_Recv sec(stream, true, decrypt, 0, 0);
+////    SEC::Sec_Recv sec(stream, decrypt, 0, 0);
 ////    BOOST_CHECK_EQUAL((uint32_t)SEC::SEC_LICENSE_PKT, sec.flags);
 ////    BOOST_CHECK_EQUAL((uint32_t)(datalen - 4), sec.payload.size());
 ////    BOOST_CHECK_EQUAL((uint32_t)318, sec.payload.size());

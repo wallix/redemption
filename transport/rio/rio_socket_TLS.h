@@ -54,6 +54,8 @@ extern "C" {
 
     static inline size_t rio_m_RIOSocketTLS_recv(RIOSocketTLS * self, void * data, size_t len)
     {
+//        LOG(LOG_INFO, "TLS receive for %u bytes", (unsigned)len);
+
         char * pbuffer = (char*)data;
         size_t remaining_len = len;
         while (remaining_len > 0) {
@@ -86,6 +88,8 @@ extern "C" {
                     continue;
 
                 case SSL_ERROR_ZERO_RETURN:
+                    LOG(LOG_WARNING, "TLS receive for %u bytes, ZERO RETURN got %u", 
+                        (unsigned)len, (unsigned)(remaining_len - len));
                     return remaining_len - len;
                 default:
                 {

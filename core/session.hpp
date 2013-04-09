@@ -133,7 +133,7 @@ struct Session {
                                              , this->ini->globals.debug.auth);
             this->mod = 0;
             this->internal_state = SESSION_STATE_ENTRY;
-            this->front = new Front(&this->front_trans, &this->gen, ini, true, false);
+            this->front = new Front(&this->front_trans, &this->gen, ini, false, true);
             this->no_mod = new null_mod(*(this->front));
             this->mod = this->no_mod;
 

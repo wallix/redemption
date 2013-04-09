@@ -524,7 +524,7 @@ class SocketTransport : public Transport {
         
         BIO * bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
         
-        SSL_CTX* ctx = SSL_CTX_new(TLSv1_client_method());
+        SSL_CTX* ctx = SSL_CTX_new(TLSv1_server_method());
 
         /*
          * This is necessary, because the Microsoft TLS implementation is not perfect.

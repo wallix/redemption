@@ -424,7 +424,7 @@ struct mod_rdp : public client_mod {
         stream.out_copy_bytes(data, strlen(data));
         stream.mark_end();
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, 0);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, 
             this->auth_channel_chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
@@ -459,7 +459,7 @@ struct mod_rdp : public client_mod {
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, this->encryptionMethod);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
         MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channel.chanid, 1, 3,
                                       sec_header.size() + stream.size() , MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
@@ -1086,7 +1086,7 @@ struct mod_rdp : public client_mod {
             SubStream & mcs_data = x224.payload;
             MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
 
-            SEC::Sec_Recv sec(mcs.payload, true, this->decrypt, this->encryptionLevel, this->encryptionMethod);
+            SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
 
             if (sec.flags & SEC::SEC_LICENSE_PKT) {
                 LIC::RecvFactory flic(sec.payload);
@@ -1192,7 +1192,7 @@ struct mod_rdp : public client_mod {
                                 LIC::NewLicenseRequest_Send(lic_data, this->use_rdp5?3:2, username, hostname);
                             }
 
-                            SEC::Sec_Send sec(sec_header, lic_data, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
+                            SEC::Sec_Send sec(sec_header, lic_data, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
                             MCS::SendDataRequest_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3,
                                                           sec_header.size() + lic_data.size() , MCS::PER_ENCODING);
                             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + lic_data.size());
@@ -1254,7 +1254,7 @@ struct mod_rdp : public client_mod {
                             BStream lic_data(65535);
 
                             LIC::ClientPlatformChallengeResponse_Send(lic_data, this->use_rdp5?3:2, out_token, crypt_hwid, out_sig);
-                            SEC::Sec_Send sec(sec_header, lic_data, SEC::SEC_LICENSE_PKT, this->encrypt, 0, 0);
+                            SEC::Sec_Send sec(sec_header, lic_data, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
                             MCS::SendDataRequest_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3,
                                                           sec_header.size() + lic_data.size() , MCS::PER_ENCODING);
                             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + lic_data.size());
@@ -1478,7 +1478,7 @@ struct mod_rdp : public client_mod {
                 throw Error(ERR_MCS);
             }
 
-            SEC::Sec_Recv sec(mcs.payload, false, this->decrypt, this->encryptionLevel, this->encryptionMethod);
+            SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
 
             if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){
                 if (this->verbose & 16){
@@ -2058,7 +2058,7 @@ struct mod_rdp : public client_mod {
             BStream x224_header(256);
             BStream mcs_header(256);
             BStream sec_header(256);
-            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, this->encryptionMethod);
+            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
             MCS::SendDataRequest_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3,
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
@@ -3336,7 +3336,7 @@ struct mod_rdp : public client_mod {
             sdata.emit_end();
             sctrl.emit_end();
 
-            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, this->encryptionMethod);
+            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
             MCS::SendDataRequest_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3,
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
@@ -3375,7 +3375,7 @@ struct mod_rdp : public client_mod {
             BStream x224_header(256);
             BStream mcs_header(256);
             BStream sec_header(256);
-            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, this->encryptionMethod);
+            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
             MCS::SendDataRequest_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3,
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
@@ -3415,7 +3415,7 @@ struct mod_rdp : public client_mod {
             BStream x224_header(256);
             BStream mcs_header(256);
             BStream sec_header(256);
-            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, this->encryptionMethod);
+            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
             MCS::SendDataRequest_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3,
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
@@ -3471,7 +3471,7 @@ struct mod_rdp : public client_mod {
             BStream x224_header(256);
             BStream mcs_header(256);
             BStream sec_header(256);
-            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, this->encryptionMethod);
+            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
             MCS::SendDataRequest_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3,
                                           sec_header.size() + stream.size() , MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
@@ -3515,7 +3515,7 @@ struct mod_rdp : public client_mod {
                     BStream x224_header(256);
                     BStream mcs_header(256);
                     BStream sec_header(256);
-                    SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel, this->encryptionMethod);
+                    SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
                     MCS::SendDataRequest_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3,
                                                   sec_header.size() + stream.size() , MCS::PER_ENCODING);
                     X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
@@ -3926,7 +3926,7 @@ struct mod_rdp : public client_mod {
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel, this->encryptionMethod);
+        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel);
         MCS::SendDataRequest_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3,
                                       sec_header.size() + stream.size() , MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());

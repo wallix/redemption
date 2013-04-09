@@ -731,16 +731,64 @@ enum {
         }
     };
 
+
+    class SecSpecialPacket_Recv
+    {
+        public:
+        uint32_t flags;
+        SubStream payload;
+        uint32_t verbose;
+        SecSpecialPacket_Recv(Stream & stream, CryptContext & crypt, uint32_t encryptionLevel) 
+            : flags(0), payload(stream), verbose(0)
+        {
+            const unsigned need = 4; /* flags(4) */
+            if (!stream.in_check_rem(need)){
+                LOG(LOG_ERR, "flags expected: need=%u remains=%u", need, stream.in_remain());
+                throw Error(ERR_SEC);
+            }
+            this->flags = stream.in_uint32_le();
+
+            if (this->flags & SEC::SEC_ENCRYPT){
+                if (encryptionLevel == 0){
+                    LOG(LOG_ERR, "RDP Packet headers says packet is encrypted, but RDP encryption is disabled");
+                    throw Error(ERR_SEC);
+                }
+                const unsigned need = 8; /* signature(8) */
+                if (!stream.in_check_rem(need)){
+                    LOG(LOG_ERR, "signature expected: need=%u remains=%u", need, stream.in_remain());
+                    throw Error(ERR_SEC);
+                }
+
+                TODO("we should check signature")
+                stream.in_skip_bytes(8); /* signature */
+                this->payload.resize(stream, stream.in_remain());
+                if (this->verbose >= 0x200){
+                    LOG(LOG_INFO, "Receiving encrypted TPDU");
+                    hexdump_c((char*)payload.data, payload.size());
+                }
+                crypt.decrypt(this->payload);
+                if (this->verbose >= 0x80){
+                    LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
+                    hexdump_c((char*)payload.data, payload.size());
+                }
+            }
+            else{
+                this->payload.resize(stream, stream.in_remain());
+            }
+        }
+    };
+
+
     class Sec_Recv
     {
         public:
         uint32_t flags;
         SubStream payload;
         uint32_t verbose;
-        Sec_Recv(Stream & stream, bool specialPacket, CryptContext & crypt, uint32_t encryptionLevel, uint32_t encryptionMethod) 
+        Sec_Recv(Stream & stream, CryptContext & crypt, uint32_t encryptionLevel) 
             : flags(0), payload(stream), verbose(0)
         {
-            if (specialPacket || encryptionLevel | encryptionMethod){
+            if (encryptionLevel){
                 const unsigned need = 4; /* flags(4) */
                 if (!stream.in_check_rem(need))
                 {
@@ -748,7 +796,6 @@ enum {
                         need, stream.in_remain());
                     throw Error(ERR_SEC);
                 }
-
                 this->flags = stream.in_uint32_le();
             }
             if (this->flags & SEC::SEC_ENCRYPT){
@@ -781,8 +828,8 @@ enum {
 
     struct Sec_Send
     {
-        Sec_Send(Stream & stream, Stream & data, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel, uint32_t encryptionMethod){
-            flags |= (encryptionMethod | encryptionLevel)?SEC_ENCRYPT:0;
+        Sec_Send(Stream & stream, Stream & data, uint32_t flags, CryptContext & crypt, uint32_t encryptionLevel){
+            flags |= encryptionLevel?SEC_ENCRYPT:0;
             if (flags) {
                 stream.out_uint32_le(flags);
             }
