@@ -26,7 +26,6 @@
 #include </usr/include/openssl/ssl.h>
 
 extern "C" {
-
     typedef enum {
         RIO_ERROR_OK,
         RIO_ERROR_ANY,
@@ -98,8 +97,14 @@ extern "C" {
     RIO * rio_new_outfile(RIO_ERROR * error, int fd);
     RIO_ERROR rio_init_outfile(RIO * self, int fd);
 
+    RIO * rio_new_cryptooutfilename(RIO_ERROR * error, const char * filename);
+    RIO_ERROR rio_init_cryptooutfilename(RIO * self, const char * filename);
+
     RIO * rio_new_infile(RIO_ERROR * error, int fd);
     RIO_ERROR rio_init_infile(RIO * self, int fd);
+
+    RIO * rio_new_cryptoinfilename(RIO_ERROR * error, const char * filename);
+    RIO_ERROR rio_init_cryptoinfilename(RIO * self, const char * filename);
 
     RIO * rio_new_socket(RIO_ERROR * error, int fd);
     RIO_ERROR rio_init_socket(RIO * self, int fd);

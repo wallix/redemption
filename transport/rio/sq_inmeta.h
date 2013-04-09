@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean, Raphael Zhou
 
-   Template for new SQ_Intracker sequence class
+   Template for new SQ_Inmeta sequence class
 */
 
 #ifndef _REDEMPTION_LIBS_SQ_INMETA_H_

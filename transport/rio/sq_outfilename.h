@@ -17,8 +17,7 @@
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean
 
-   Template for new SQ_One sequence class
-
+   Template for new SQ_Outfilename sequence class
 */
 
 #ifndef _REDEMPTION_LIBS_SQ_OUTFILENAME_H_
