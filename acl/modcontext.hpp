@@ -87,6 +87,8 @@ typedef enum{
     AUTHID_MODE_CONSOLE,
     AUTHID_VIDEO_QUALITY,
     AUTHID_TIMEZONE,
+    // Encryption
+    AUTHID_OPT_FILE_ENCRYPTION, // file encryption
     MAX_AUTHID
 } authid_t;
 
@@ -146,6 +148,7 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 #define STRAUTHID_MODE_CONSOLE        "mode_console"
 #define STRAUTHID_VIDEO_QUALITY       "video_quality"
 #define STRAUTHID_TIMEZONE            "timezone"
+#define STRAUTHID_OPT_FILE_ENCRYPTION "file_encryption"
 
 // ModContext structure is used for modules to communicate with each other
 
@@ -221,6 +224,8 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     {STRAUTHID_MODE_CONSOLE, TYPE_TEXT, "!allow"},
     {STRAUTHID_VIDEO_QUALITY, TYPE_TEXT, "!medium"},
     {STRAUTHID_TIMEZONE, TYPE_INTEGER, "!-3600"},
+    // Encryption
+    {STRAUTHID_OPT_FILE_ENCRYPTION, TYPE_BOOLEAN, "!False"},
 };
 
 
@@ -280,6 +285,7 @@ static inline authid_t authid_from_string(const char * kw)
     STRAUTHID_MODE_CONSOLE,
     STRAUTHID_VIDEO_QUALITY,
     STRAUTHID_TIMEZONE,
+    STRAUTHID_OPT_FILE_ENCRYPTION,
     };
 
     string str = string(kw);
