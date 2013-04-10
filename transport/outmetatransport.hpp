@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2012
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Raphael Zhou
 
    Transport layer abstraction
 */
@@ -70,6 +70,70 @@ public:
     virtual void recv(char**, size_t) throw (Error)
     {  
         LOG(LOG_INFO, "OutmetaTransport used for recv");
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
+    }
+
+    virtual void timestamp(timeval now)
+    {
+        sq_timestamp(this->seq, &now);
+        Transport::timestamp(now);
+    }
+
+    virtual bool next()
+    {
+        sq_next(this->seq);
+        return Transport::next();
+    }
+};
+
+
+
+/*************************
+* CryptoOutmetaTransport *
+*************************/
+
+class CryptoOutmetaTransport : public Transport {
+public:
+    timeval now;
+    char meta_path[1024];
+    char path[1024];
+
+    RIO * rio;
+    SQ * seq;
+
+    CryptoOutmetaTransport(const char * path, const char * basename, timeval now, uint16_t width, uint16_t height, unsigned verbose = 0)
+    : now(now)
+    , rio(NULL)
+    , seq(NULL)
+    {
+        RIO_ERROR status = RIO_ERROR_OK;
+        char filename[1024];
+        sprintf(filename, "%s-%06u", basename, getpid());
+        char header1[1024];
+        sprintf(header1, "%u %u", width, height);
+        this->rio = rio_new_cryptooutmeta(&status, &this->seq, path, filename, ".mwrm", header1, "0", "", &now);
+        if (status < 0){
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+    }
+
+    ~CryptoOutmetaTransport()
+    {
+        rio_delete(this->rio);
+    }
+
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
+        ssize_t res = rio_send(this->rio, buffer, len);
+        if (res < 0){
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        }
+    }
+
+    using Transport::recv;
+    virtual void recv(char**, size_t) throw (Error)
+    {  
+        LOG(LOG_INFO, "CryptoOutmetaTransport used for recv");
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
 
