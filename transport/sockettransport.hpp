@@ -524,7 +524,7 @@ class SocketTransport : public Transport {
         
         BIO * bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
         
-        SSL_CTX* ctx = SSL_CTX_new(TLSv1_server_method());
+        SSL_CTX* ctx = SSL_CTX_new(SSLv23_server_method());
 
         /*
          * This is necessary, because the Microsoft TLS implementation is not perfect.
@@ -692,7 +692,7 @@ class SocketTransport : public Transport {
         // --------Start of session specific init code ---------------------------------
 
         /* Load our keys and certificates*/
-        if(!(SSL_CTX_use_certificate_chain_file(ctx, CFG_PATH "/rdpproxy-cert.pem")))
+        if(!(SSL_CTX_use_certificate_chain_file(ctx, CFG_PATH "/rdpproxy.crt")))
         {
             BIO_printf(bio_err, "Can't read certificate file\n");
             ERR_print_errors(bio_err);
@@ -701,7 +701,7 @@ class SocketTransport : public Transport {
 
         SSL_CTX_set_default_passwd_cb(ctx, password_cb0);
         SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)"inquisition");
-        if(!(SSL_CTX_use_PrivateKey_file(ctx, CFG_PATH "/rdpproxy-key.pem", SSL_FILETYPE_PEM)))
+        if(!(SSL_CTX_use_PrivateKey_file(ctx, CFG_PATH "/rdpproxy.key", SSL_FILETYPE_PEM)))
         {
             BIO_printf(bio_err,"Can't read key file\n");
             ERR_print_errors(bio_err);
