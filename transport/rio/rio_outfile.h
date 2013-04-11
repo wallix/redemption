@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    New Outfile RedTransport class
-
 */
 
 #ifndef _REDEMPTION_LIBS_RIO_OUTFILE_H_
@@ -26,11 +25,10 @@
 
 #include "rio.h"
 
-struct RIOOutfile {
-    int fd;
-};
-
 extern "C" {
+    struct RIOOutfile {
+        int fd;
+    };
 
     /* This method does not allocate space for object itself,
         but initialize it's properties

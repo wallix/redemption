@@ -377,6 +377,8 @@ TODO("Pass font name as parameter in constructor")
             strncpy(ini.globals.target_user, context.get(STRAUTHID_TARGET_USER), sizeof(ini.globals.target_user)-1);
             ini.globals.target_user[sizeof(ini.globals.target_user)-1] = 0;
 
+            ini.globals.enable_file_encryption = context.get(STRAUTHID_OPT_FILE_ENCRYPTION);
+
             char path[1024];
             char basename[1024];
             char extension[128];

@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean, Raphael Zhou
 
-   Template for new SQ_One sequence class
+   Template for new SQ_Outtracker sequence class
 */
 
 #ifndef _REDEMPTION_LIBS_SQ_OUTTRACKER_H_

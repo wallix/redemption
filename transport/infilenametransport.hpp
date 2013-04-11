@@ -20,28 +20,32 @@
    Transport layer abstraction
 */
 
-#ifndef _REDEMPTION_TRANSPORT_INFILETRANSPORT_HPP_
-#define _REDEMPTION_TRANSPORT_INFILETRANSPORT_HPP_
+#ifndef _REDEMPTION_TRANSPORT_INFILENAMETRANSPORT_HPP_
+#define _REDEMPTION_TRANSPORT_INFILENAMETRANSPORT_HPP_
 
 #include "transport.hpp"
 #include "rio/rio.h"
 
-class InFileTransport : public Transport {
+/****************************
+* CryptoInFilenameTransport *
+****************************/
+
+class CryptoInFilenameTransport : public Transport {
     public:
     RIO rio;
     uint32_t verbose;
 
-    InFileTransport(int fd, unsigned verbose = 0)
+    CryptoInFilenameTransport(const char * filename, unsigned verbose = 0)
         : verbose(verbose)
     {
-        RIO_ERROR status = rio_init_infile(&this->rio, fd);
+        RIO_ERROR status = rio_init_cryptoinfilename(&this->rio, filename);
         if (status != RIO_ERROR_OK){
             LOG(LOG_ERR, "rio infile initialisation failed (%u)", status);
             throw Error(ERR_TRANSPORT);
         }
     }
 
-    virtual ~InFileTransport() 
+    virtual ~CryptoInFilenameTransport() 
     {
         rio_clear(&this->rio);
     }

@@ -180,6 +180,9 @@ struct Inifile {
         char replay_path[1024];
         bool internal_domain;
 
+        bool enable_file_encryption;
+
+        // Section "debug"
         struct {
             uint32_t x224;
             uint32_t mcs;
@@ -206,6 +209,7 @@ struct Inifile {
         // Section "client"
         struct {
             bool ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default false
+
             uint32_t performance_flags_default;
             uint32_t performance_flags_force_present;
             uint32_t performance_flags_force_not_present;
@@ -285,6 +289,15 @@ struct Inifile {
             this->globals.keepalive_grace_delay = 30;
             strcpy(this->globals.replay_path, "/tmp/");
             this->globals.internal_domain = false;
+            this->globals.enable_file_encryption = false;
+
+            memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
+
+            strcpy(this->account.accountname, "");
+            strcpy(this->account.username,    "");
+            strcpy(this->account.password,    "");
+
+            // Section "debug".
             this->globals.debug.x224              = 0;
             this->globals.debug.mcs               = 0;
             this->globals.debug.sec               = 0;
@@ -306,16 +319,11 @@ struct Inifile {
             this->globals.debug.log_type         = 2; // syslog by default
             this->globals.debug.log_file_path[0] = 0;
 
-            memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
-            strcpy(this->account.accountname, "");
-            strcpy(this->account.username, "");
-            strcpy(this->account.password, "");
-
             // Section "client".
-            this->globals.client.ignore_logon_password = false;
-//          this->globals.client.performance_flags_default = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
-            this->globals.client.performance_flags_default = 0;
-            this->globals.client.performance_flags_force_present = 0;
+            this->globals.client.ignore_logon_password               = false;
+//          this->globals.client.performance_flags_default           = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
+            this->globals.client.performance_flags_default           = 0;
+            this->globals.client.performance_flags_force_present     = 0;
             this->globals.client.performance_flags_force_not_present = 0;
     };
 
@@ -437,6 +445,9 @@ struct Inifile {
             else if (0 == strcmp(key, "auth_channel")){
                 strncpy(this->globals.auth_channel, value, 8);
                 this->globals.auth_channel[7] = 0;
+            }
+            else if (0 == strcmp(key, "enable_file_encryption")){
+                this->globals.enable_file_encryption = bool_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

@@ -57,6 +57,8 @@
 #include "rio_insequence.h"
 #include "rio_outmeta.h"
 #include "rio_inmeta.h"
+#include "rio_outfilename.h"
+#include "rio_infilename.h"
 
 #ifdef PUBLIC
     #include "rio_crypto.h"
@@ -100,6 +102,8 @@ typedef enum {
     RIO_TYPE_CRYPTO,
     RIO_TYPE_CRYPTOOUTMETA,
     RIO_TYPE_CRYPTOINMETA,
+    RIO_TYPE_CRYPTOOUTFILENAME,
+    RIO_TYPE_CRYPTOINFILENAME,
 } RIO_TYPE;
 
 typedef enum {
@@ -135,20 +139,22 @@ struct RIO {
     unsigned rt_type;
     RIO_ERROR err;
     union {
-      struct RIOGenerator     generator;
-      struct RIOCheck         check;
-      struct RIOTest          test;
-      struct RIOOutfile       outfile;
-      struct RIOInfile        infile;
-      struct RIOSocket        socket;
-      struct RIOSocketTLS     socket_tls;
-      struct RIOOutsequence   outsequence;
-      struct RIOInsequence    insequence;
-      struct RIOOutmeta       outmeta;
-      struct RIOInmeta        inmeta;
-      struct RIOCrypto        crypto;
-      struct RIOCryptoOutmeta cryptooutmeta;
-      struct RIOCryptoInmeta  cryptoinmeta;
+      struct RIOGenerator         generator;
+      struct RIOCheck             check;
+      struct RIOTest              test;
+      struct RIOOutfile           outfile;
+      struct RIOInfile            infile;
+      struct RIOSocket            socket;
+      struct RIOSocketTLS         socket_tls;
+      struct RIOOutsequence       outsequence;
+      struct RIOInsequence        insequence;
+      struct RIOOutmeta           outmeta;
+      struct RIOInmeta            inmeta;
+      struct RIOCrypto            crypto;
+      struct RIOCryptoOutmeta     cryptooutmeta;
+      struct RIOCryptoInmeta      cryptoinmeta;
+      struct RIOCryptoOutfilename cryptooutfilename;
+      struct RIOCryptoInfilename  cryptoinfilename;
     } u;
 };
 
@@ -615,6 +621,30 @@ RIO * rio_new_outfile(RIO_ERROR * error, int fd)
 }
 
 
+RIO_ERROR rio_init_cryptooutfilename(RIO * self, const char * filename)
+{
+    self->rt_type = RIO_TYPE_CRYPTOOUTFILENAME;
+    self->err = rio_m_RIOCryptoOutfilename_constructor(&(self->u.cryptooutfilename), filename);
+    return self->err;
+}
+
+RIO * rio_new_cryptooutfilename(RIO_ERROR * error, const char * filename)
+{
+    RIO * self = (RIO *)malloc(sizeof(RIO));
+    if (self == 0){
+        if (error){ *error = RIO_ERROR_MALLOC; }
+        return NULL;
+    }
+    RIO_ERROR res = rio_init_cryptooutfilename(self, filename);
+    if (error) { *error = res; }
+    if (res != RIO_ERROR_OK){
+        free(self);
+        return NULL;
+    }
+    return self;
+}
+
+
 RIO_ERROR rio_init_infile(RIO * self, int fd)
 {
     self->rt_type = RIO_TYPE_INFILE;
@@ -630,6 +660,30 @@ RIO * rio_new_infile(RIO_ERROR * error, int fd)
         return NULL;
     }
     RIO_ERROR res = rio_init_infile(self, fd);
+    if (error) { *error = res; }
+    if (res != RIO_ERROR_OK){
+        free(self);
+        return NULL;
+    }
+    return self;
+}
+
+
+RIO_ERROR rio_init_cryptoinfilename(RIO * self, const char * filename)
+{
+    self->rt_type = RIO_TYPE_CRYPTOINFILENAME;
+    self->err = rio_m_RIOCryptoInfilename_constructor(&(self->u.cryptoinfilename), filename);
+    return self->err;
+}
+
+RIO * rio_new_cryptoinfilename(RIO_ERROR * error, const char * filename)
+{
+    RIO * self = (RIO *)malloc(sizeof(RIO));
+    if (self == 0){
+        if (error){ *error = RIO_ERROR_MALLOC; }
+        return NULL;
+    }
+    RIO_ERROR res = rio_init_cryptoinfilename(self, filename);
     if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
@@ -958,6 +1012,12 @@ RIO_ERROR rio_get_status(RIO * rt)
         case RIO_TYPE_CRYPTOINMETA:
             rt->err = rio_m_RIOCryptoInmeta_get_status(&(rt->u.cryptoinmeta));
         break;
+        case RIO_TYPE_CRYPTOOUTFILENAME:
+            rt->err = rio_m_RIOCryptoOutfilename_get_status(&(rt->u.cryptooutfilename));
+        break;
+        case RIO_TYPE_CRYPTOINFILENAME:
+            rt->err = rio_m_RIOCryptoInfilename_get_status(&(rt->u.cryptoinfilename));
+        break;
         default:
             rt->err = RIO_ERROR_UNKNOWN_TYPE;
             ;
@@ -1044,6 +1104,16 @@ ssize_t rio_recv(RIO * rt, void * data, size_t len)
         if (res < 0){ rt->err = (RIO_ERROR)-res; }
         return res;
     }
+    case RIO_TYPE_CRYPTOOUTFILENAME:{
+        ssize_t res = rio_m_RIOCryptoOutfilename_recv(&(rt->u.cryptooutfilename), data, len);
+        if (res < 0){ rt->err = (RIO_ERROR)-res; }
+        return res;
+    }
+    case RIO_TYPE_CRYPTOINFILENAME:{
+        ssize_t res = rio_m_RIOCryptoInfilename_recv(&(rt->u.cryptoinfilename), data, len);
+        if (res < 0){ rt->err = (RIO_ERROR)-res; }
+        return res;
+    }
     default:
         rt->err = RIO_ERROR_UNKNOWN_TYPE;
     }
@@ -1124,6 +1194,16 @@ ssize_t rio_send(RIO * rt, const void * data, size_t len)
         if (res < 0){ rt->err = (RIO_ERROR)-res; }
         return res;
     }
+    case RIO_TYPE_CRYPTOOUTFILENAME: {
+        ssize_t res = rio_m_RIOCryptoOutfilename_send(&(rt->u.cryptooutfilename), data, len);
+        if (res < 0){ rt->err = (RIO_ERROR)-res; }
+        return res;
+    }
+    case RIO_TYPE_CRYPTOINFILENAME: {
+        ssize_t res = rio_m_RIOCryptoInfilename_send(&(rt->u.cryptoinfilename), data, len);
+        if (res < 0){ rt->err = (RIO_ERROR)-res; }
+        return res;
+    }
     default:
         rt->err = RIO_ERROR_UNKNOWN_TYPE;
     }
@@ -1180,6 +1260,12 @@ void rio_clear(RIO * rt)
         break;
         case RIO_TYPE_CRYPTOINMETA:
             rio_m_RIOCryptoInmeta_destructor(&(rt->u.cryptoinmeta));
+        break;
+        case RIO_TYPE_CRYPTOOUTFILENAME:
+            rt->err = rio_m_RIOCryptoOutfilename_destructor(&(rt->u.cryptooutfilename));
+        break;
+        case RIO_TYPE_CRYPTOINFILENAME:
+            rt->err = rio_m_RIOCryptoInfilename_destructor(&(rt->u.cryptoinfilename));
         break;
         default:
             rt->err = RIO_ERROR_UNKNOWN_TYPE;

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -17,8 +17,7 @@
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean
 
-   New Outfile RedTransport class
-
+   New Infile RedTransport class
 */
 
 #ifndef _REDEMPTION_LIBS_RIO_INFILE_H_
@@ -31,7 +30,7 @@ extern "C" {
         int fd;
     };
 
-    /* This method does not allocate space for object itself, 
+    /* This method does not allocate space for object itself,
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
@@ -47,7 +46,6 @@ extern "C" {
     {
         return RIO_ERROR_CLOSED;
     }
-
 
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data
@@ -123,7 +121,6 @@ extern "C" {
         // either OK, or error has already been intercepted
         return RIO_ERROR_OK;
     }
-
 };
 
 #endif

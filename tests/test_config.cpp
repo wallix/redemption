@@ -39,6 +39,93 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 {
     // test we can read from a file (and not only from a stream)
     Inifile ini(FIXTURES_PATH "/rdpproxy.ini");
+
+    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
+    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
+    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user));
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
+
+    BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_compression);
+    BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
+    BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.authip));
+    BOOST_CHECK_EQUAL(3350,                             ini.globals.authport);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.nomouse);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
+    BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
+
+    BOOST_CHECK_EQUAL(1,                                ini.globals.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.globals.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.globals.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.break_interval);
+    BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
+    BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.globals.ocr_interval);
+
+    BOOST_CHECK_EQUAL(3,                                ini.globals.png_limit);
+
+    BOOST_CHECK_EQUAL(20000,                            ini.globals.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.globals.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.globals.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.globals.l_qscale);
+
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.globals.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.m_qscale);
+
+    BOOST_CHECK_EQUAL(200000,                           ini.globals.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.globals.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.h_qscale);
+
+    BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
+    BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
+
+    BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
+
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.primary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.secondary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.bitmap);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.capture);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.auth);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.session);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.front);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_vnc);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_int);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    // log file
+    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
+
+    BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
+    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
@@ -104,6 +191,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -198,6 +287,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
 
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
+
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
@@ -234,6 +325,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     "bitmap_compression=true\n"
     "port=3390\n"
     "encryptionLevel=low\n"
+    "enable_file_encryption=yes\n"
     "\n"
     "[client]\n"
     "ignore_logon_password=yes\n"
@@ -307,6 +399,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
 
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption);
+
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
@@ -344,6 +438,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     "bitmap_cache=true\n"
     "bitmap_compression=on\n"
     "encryptionLevel=medium\n"
+    "enable_file_encryption=no\n"
     "[client]\n"
     "performance_flags_default=7\n"
     "performance_flags_force_present=1\n"
@@ -412,6 +507,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
 
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
+
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
@@ -447,6 +544,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     "bitmap_cache=no\n"
     "bitmap_compression=false\n"
     "encryptionLevel=high\n"
+    "enable_file_encryption=true\n"
     "[client]\n"
     "performance_flags_default=07\n"
     "performance_flags_force_present=1\n"
@@ -515,6 +613,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
 
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption);
+
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
@@ -552,6 +652,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     "bitmap_compression=TRuE\n"
     "port=3390\n"
     "encryptionLevel=low\n"
+    "enable_file_encryption=False\n"
     "\n"
     );
 
@@ -616,6 +717,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
 
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
+
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
@@ -646,6 +749,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     std::stringstream oss2(
     "[globals]\n"
     "bitmap_compression=no\n"
+    "enable_file_encryption=yes\n"
     "[debug]\n"
     "log_type=encryptedfile\n"
     );
@@ -709,6 +813,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption);
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -804,6 +910,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -904,6 +1012,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
 
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
+
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
@@ -990,6 +1100,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
