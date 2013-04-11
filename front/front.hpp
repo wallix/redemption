@@ -151,7 +151,7 @@ TODO("Pass font name as parameter in constructor")
         , client_fastpath_input_event_support(fp_support)
         , server_fastpath_update_support(false)
         , tls_support(tls_support)
-        , clientRequestedProtocols(X224::CR_TPDU_PROTOCOL_RDP)
+        , clientRequestedProtocols(X224::PROTOCOL_RDP)
     {
         init_palette332(this->palette332);
         this->mod_palette_setted = false;
@@ -1077,8 +1077,8 @@ TODO("Pass font name as parameter in constructor")
                 uint32_t rdp_neg_code = 0;
                 if (this->tls_support){
                     LOG(LOG_INFO, "-----------------> Front::TLS Support Enabled");
-                    rdp_neg_type = X224::CC_TPDU_TYPE_RDP_NEG_RSP;
-                    rdp_neg_code = X224::CC_TPDU_PROTOCOL_SSL;
+                    rdp_neg_type = X224::RDP_NEG_RSP;
+                    rdp_neg_code = X224::PROTOCOL_TLS;
                     this->client_info.encryptionLevel = 0;
                 }
                 else {
@@ -1130,10 +1130,7 @@ TODO("Pass font name as parameter in constructor")
 
             if (this->verbose & 1){
                 LOG(LOG_INFO, "Front::incoming::Basic Settings Exchange");
-                LOG(LOG_INFO, "Front::incoming::channel_list : %u", this->channel_list.size());
             }
-
-
 
             BStream x224_data(65536);
             X224::RecvFactory f(*this->trans, x224_data);
@@ -1320,20 +1317,48 @@ TODO("Pass font name as parameter in constructor")
             }
 
 
+            stream.mark_end();
+
             // ------------------------------------------------------------------
             BStream gcc_header(256);
             GCC::Create_Response_Send(gcc_header, stream.size());
+            gcc_header.mark_end();
+            
+            
             // ------------------------------------------------------------------
             BStream mcs_header(256);
             MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, gcc_header.size() + stream.size(), MCS::BER_ENCODING);
+            mcs_header.mark_end();
             // ------------------------------------------------------------------
             BStream x224_header(256);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + gcc_header.size() + stream.size());
+            x224_header.mark_end();
             // ------------------------------------------------------------------
+            LOG(LOG_INFO, "x224_header size = %u", (unsigned)x224_header.size()); 
             this->trans->send(x224_header);
+            LOG(LOG_INFO, "mcs_header size = %u", (unsigned)mcs_header.size()); 
             this->trans->send(mcs_header);
+            LOG(LOG_INFO, "gcc_header size = %u", (unsigned)gcc_header.size()); 
             this->trans->send(gcc_header);
+            LOG(LOG_INFO, "stream size = %u", (unsigned)stream.size()); 
             this->trans->send(stream);
+            
+            // as TLS conversation stops with mstsc, try to add some padding until getting some protocol error
+//            if (this->tls_support){
+//                BStream pad;
+//                pad.out_uint8(0);
+//                pad.out_uint8(0);
+//                pad.out_uint8(0);
+//                pad.out_uint8(0);
+//                pad.out_uint8(0);
+//                pad.out_uint8(0);
+//                pad.out_uint8(0);
+//                pad.out_uint8(0);
+//                pad.out_uint8(0);
+//                pad.out_uint8(0);
+//                pad.mark_end();
+//                this->trans->send(pad);
+//            }
             // ------------------------------------------------------------------
 
             // Channel Connection
