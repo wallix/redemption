@@ -66,7 +66,7 @@ class SessionServer : public Server
             int nodelay = 1;
             if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
                 wait_obj front_event(sck);
-                SocketTransport front_trans("RDP Client", sck, ini.globals.debug.front);
+//                SocketTransport front_trans("RDP Client", sck, ini.globals.debug.front);
 
                 // Create session file
                 int child_pid = getpid();
@@ -86,7 +86,8 @@ class SessionServer : public Server
 
                 // Launch session
                 LOG(LOG_INFO, "New session on %u (pid=%u) from %s", (unsigned)sck, (unsigned)child_pid, ip_source);
-                Session session(front_event, front_trans, ip_source, this->refreshconf, &ini);
+//                Session session(front_event, front_trans, ip_source, this->refreshconf, &ini);
+                Session session(front_event, sck, ip_source, this->refreshconf, &ini);
 
                 // Suppress session file
                 unlink(session_file);

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,8 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2012
-   Author(s): Christophe Grosjean, Javier Caverni
-
+   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou
 */
 
 #ifndef _REDEMPTION_CORE_SESSION_HPP_
@@ -94,7 +93,7 @@ struct Session {
     int * refreshconf;
 
     wait_obj & front_event;
-    SocketTransport & front_trans;
+//    SocketTransport & front_trans;
 
     Inifile * ini;
     uint32_t & verbose;
@@ -114,15 +113,18 @@ struct Session {
     SessionManager * sesman;
     UdevRandom gen;
 
-    Session(wait_obj & front_event, SocketTransport & front_trans, const char * ip_source, int * refreshconf, Inifile * ini)
+//    Session(wait_obj & front_event, SocketTransport & front_trans, const char * ip_source, int * refreshconf, Inifile * ini)
+    Session(wait_obj & front_event, int sck, const char * ip_source, int * refreshconf, Inifile * ini)
         : refreshconf(refreshconf)
         , front_event(front_event)
-        , front_trans(front_trans)
+//        , front_trans(front_trans)
         , ini(ini)
         , verbose(this->ini->globals.debug.session)
         , context(NULL)
         , nextmod(INTERNAL_NONE)
     {
+        SocketTransport front_trans("RDP Client", sck, ini->globals.debug.front);
+
         try {
             this->context = new ModContext();
             this->context->cpy(STRAUTHID_HOST, ip_source);
@@ -135,7 +137,8 @@ struct Session {
             this->internal_state = SESSION_STATE_ENTRY;
             const bool enable_fastpath = false;
             const bool tls_support = true;
-            this->front = new Front(&this->front_trans, &this->gen, ini, enable_fastpath, tls_support);
+//            this->front = new Front(&this->front_trans, &this->gen, ini, enable_fastpath, tls_support);
+            this->front = new Front(&front_trans, &this->gen, ini, enable_fastpath, tls_support);
             this->no_mod = new null_mod(*(this->front));
             this->mod = this->no_mod;
 
@@ -318,7 +321,8 @@ struct Session {
                         time_t timestamp = time(NULL);
                         this->front->periodic_snapshot(this->mod->get_pointer_displayed());
 
-                        if (this->sesman && !this->sesman->keep_alive(rfds, this->keep_alive_time, timestamp, &this->front_trans)){
+//                        if (this->sesman && !this->sesman->keep_alive(rfds, this->keep_alive_time, timestamp, &this->front_trans)){
+                        if (this->sesman && !this->sesman->keep_alive(rfds, this->keep_alive_time, timestamp, &front_trans)){
                             this->nextmod = INTERNAL_CLOSE;
                             this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context, this->nextmod);
                             this->keep_alive_time = 0;
@@ -326,7 +330,7 @@ struct Session {
                             this->front->stop_capture();
                             delete this->sesman;
                             this->sesman = NULL;
-                        }                        
+                        }
                         // Check if sesman received an answer to auth_channel_target
                         if (this->ini->globals.auth_channel[0]) {
                             // Get sesman answer to AUTHCHANNEL_TARGET
@@ -450,7 +454,7 @@ struct Session {
                                             this->sesman = NULL;
                                             this->internal_state = SESSION_STATE_RUNNING;
                                             this->front->stop_capture();
-                                            LOG(LOG_INFO, "Session::capture stopped, authentifier stopped");                                 
+                                            LOG(LOG_INFO, "Session::capture stopped, authentifier stopped");
                                         }
                                     }
                                     else {
@@ -482,7 +486,6 @@ struct Session {
         LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         this->front->stop_capture();
     }
-
 
     ~Session()
     {
@@ -797,8 +800,8 @@ struct Session {
                     this->mod = this->no_mod;
                 }
                 static const char * name = "VNC Target";
-                
-                
+
+
                 int client_sck = ip_connect(this->context->get(STRAUTHID_TARGET_DEVICE),
                                             atoi(this->context->get(STRAUTHID_TARGET_PORT)),
                                             3, 1000,
