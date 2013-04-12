@@ -189,11 +189,19 @@ struct GraphicsUpdatePDU : public RDPSerializer
                 MCS::SendDataIndication_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + this->stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, sec_header.size() + this->stream.size() + mcs_header.size());
 
-                this->trans->send(x224_header);
-                this->trans->send(mcs_header);
-                this->trans->send(sec_header);
-
-                this->trans->send(this->stream);
+                {
+                    BStream one(65535);
+                    one.out_copy_bytes(x224_header);
+                    one.out_copy_bytes(mcs_header);
+                    one.out_copy_bytes(sec_header);
+                    one.out_copy_bytes(this->stream);
+                    one.mark_end();
+                    this->trans->send(one);
+                }
+//                this->trans->send(x224_header);
+//                this->trans->send(mcs_header);
+//                this->trans->send(sec_header);
+//                this->trans->send(this->stream);
             }
             else {
                 if (this->ini.globals.debug.primary_orders > 3){

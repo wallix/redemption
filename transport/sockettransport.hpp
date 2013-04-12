@@ -925,6 +925,7 @@ class SocketTransport : public Transport {
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error)
     {
+        if (len == 0) { return; }
         ssize_t res = rio_send(&this->rio, buffer, len);
         if (res < 0) {
             throw Error(ERR_TRANSPORT_DIFFERS);
