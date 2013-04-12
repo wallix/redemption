@@ -90,7 +90,7 @@ struct Listen {
 //        u.s4.sin_addr.s_addr = INADDR_ANY;
         u.s4.sin_addr.s_addr = this->s_addr;
 
-        LOG(LOG_INFO, "Listen: binding socket %d on port %d", this->sck, this->port);
+        LOG(LOG_INFO, "Listen: binding socket %d on %s:%d", this->sck, ::inet_ntoa(u.s4.sin_addr), this->port);
         if (0 != bind(this->sck, &u.s, sizeof(u))) {
             LOG(LOG_ERR, "Listen: error binding socket [errno=%u] %s", errno, strerror(errno));
             ((this->sck) && (shutdown(this->sck, 2), close(this->sck)));

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,10 +15,9 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010 - 2012
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Raphael Zhou
 
    Main loop
-
 */
 
 #include <unistd.h>
@@ -181,9 +180,7 @@ void redemption_new_session()
     int nodelay = 1;
     if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
         wait_obj front_event(sck);
-//        SocketTransport front_trans("RDP Client", sck, ini.globals.debug.front);
 
-//        Session session(front_event, front_trans, ip_source, &refreshconf, &ini);
         Session session(front_event, sck, ip_source, &refreshconf, &ini);
 
         if (ini.globals.debug.session){
@@ -206,8 +203,8 @@ void redemption_main_loop()
     SessionServer ss(&refreshconf);
     Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     uint32_t s_addr = inet_addr(ini.globals.listen_address);
-    if (s_addr == /*IPADDR_NONE*/0xFFFFFFFF) { s_addr = /*IPADDR_ANY*/0; }
+    if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
     int port = ini.globals.port;
-    Listen listener(ss, /* INADDR_ANY */s_addr, port);
+    Listen listener(ss, s_addr, port);
     listener.run();
 }

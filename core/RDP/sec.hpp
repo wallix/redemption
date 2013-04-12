@@ -748,7 +748,7 @@ enum {
             }
             this->flags = stream.in_uint32_le();
 
-            if (this->flags & SEC::SEC_ENCRYPT){
+            if (encryptionLevel > 0 && this->flags & SEC::SEC_ENCRYPT){
                 if (encryptionLevel == 0){
                     LOG(LOG_ERR, "RDP Packet headers says packet is encrypted, but RDP encryption is disabled");
                     throw Error(ERR_SEC);
@@ -773,6 +773,8 @@ enum {
                 }
             }
             else{
+                TODO("find a better name instead of resize: the function resize is used to set payload to remaining data in stream (start at stream.p, size in_remain)"
+                     "maybe something like resize(stream, stream.get_offset(), stream.in_remain())")
                 this->payload.resize(stream, stream.in_remain());
             }
         }
