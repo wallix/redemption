@@ -285,14 +285,15 @@ namespace X224
     enum {
         RDP_NEG_NONE    = 0,
         RDP_NEG_REQ     = 1,
-        RDP_NEG_RESP    = 2,
+        RDP_NEG_RSP    = 2,
         RDP_NEG_FAILURE = 3
     };
 
     enum {
-        RDP_NEG_PROTOCOL_RDP    = 0,
-        RDP_NEG_PROTOCOL_TLS    = 1,
-        RDP_NEG_PROTOCOL_HYBRID = 2,
+        PROTOCOL_RDP    = 0,
+        PROTOCOL_TLS    = 1,
+        PROTOCOL_HYBRID = 2,
+        PROTOCOL_HYBRID_EX = 8,
     };
 
     enum {
@@ -424,7 +425,7 @@ namespace X224
     // by a carriage-return (CR) and line-feed (LF) ANSI sequence. This text string
     // MUST be "Cookie: mstshash=IDENTIFIER", where IDENTIFIER is an ANSI string
     //(an example cookie string is shown in section 4.1.1). The length of the entire
-    // cookie string and CR+LF sequence is include " in the X.224 Connection Request
+    // cookie string and CR+LF sequence is included in the X.224 Connection Request
     // Length Indicator field. This field MUST NOT be present if the routingToken
     // field is present.
 
@@ -451,24 +452,75 @@ namespace X224
     // requestedProtocols (4 bytes): A 32-bit, unsigned integer. Flags indicating
     // the supported security protocols.
 
-    // +----------------------------+----------------------------------------------+
-    // | 0x00000000 PROTOCOL_RDP    | Standard RDP Security (section 5.3).         |
-    // +----------------------------+----------------------------------------------+
-    // | 0x00000001 PROTOCOL_SSL    | TLS 1.0 (section 5.4.5.1).                   |
-    // +----------------------------+----------------------------------------------+
-    // | 0x00000002 PROTOCOL_HYBRID | Credential Security Support Provider protocol|
-    // |                            | (CredSSP) (section 5.4.5.2). If this flag is |
-    // |                            | set, then the PROTOCOL_SSL (0x00000001)      |
-    // |                            | SHOULD also be set because Transport Layer   |
-    // |                            | Security (TLS) is a subset of CredSSP.       |
-    // +----------------------------+----------------------------------------------+
+    // +-------------------------------+----------------------------------------------+
+    // | 0x00000000 PROTOCOL_RDP       | Standard RDP Security (section 5.3).         |
+    // +-------------------------------+----------------------------------------------+
+    // | 0x00000001 PROTOCOL_SSL       | TLS 1.0 (section 5.4.5.1).                   |
+    // +-------------------------------+----------------------------------------------+
+    // | 0x00000002 PROTOCOL_HYBRID    | Credential Security Support Provider protocol|
+    // |                               | (CredSSP) (section 5.4.5.2). If this flag is |
+    // |                               | set, then the PROTOCOL_SSL (0x00000001)      |
+    // |                               | SHOULD also be set because Transport Layer   |
+    // |                               | Security (TLS) is a subset of CredSSP.       |
+    // +-------------------------------+----------------------------------------------+
+    // | 0x00000008 PROTOCOL_HYBRID_EX | Credential Security Support Provider protocol|
+    // |                               | (CredSSP) (section 5.4.5.2) coupled with the |
+    // |                               | Early User Authorization Result PDU (section |
+    // |                               | 2.2.10.2). If this flag is set, then the     |
+    // |                               | PROTOCOL_HYBRID (0x00000002) flag SHOULD     |
+    // |                               | also be set. For more information on the     |
+    // |                               | sequencing of the CredSSP messages and the   |
+    // |                               | Early User Authorization Result PDU, see     |
+    // |                               | sections 5.4.2.1 and 5.4.2.2.CredSSP         |
+    // |                               | (section 5.4.5.2)                            |
+    // +-------------------------------+----------------------------------------------+
 
-    enum {
-        CR_TPDU_PROTOCOL_RDP    = 0,
-        CR_TPDU_PROTOCOL_SSL    = 1,
-        CR_TPDU_PROTOCOL_HYBRID = 2
-    };
 
+    // 3.3.5.3.1 Processing X.224 Connection Request PDU
+    // =================================================
+
+    // The structure and fields of the X.224 Connection Request PDU are specified 
+    // in section 2.2.1.1.
+
+    // The embedded length fields within the tpktHeader field ([T123] section 8) 
+    // MUST be examined for consistency with the received data. If there is any 
+    // discrepancy, the connection SHOULD be dropped. Other reasons for dropping 
+    // the connection include:
+
+    // The length of the X.224 Connection Request PDU is less than 11 bytes.
+
+    // The X.224 Connection Request PDU is not Class 0 ([X224] section 13.7).
+
+    // The Destination reference, Source reference, and Class and options fields
+    // within the x224Crq field SHOULD be ignored.
+
+    // If the optional routingToken field exists, it MUST be ignored because the
+    // routing token is intended to be inspected and parsed by external networking
+    // hardware along the connection path (for more information about load balancing
+    // of Remote Desktop sessions and the routing token format, see [MSFT-SDLBTS] 
+    // "Load-Balanced Configurations", "Revectoring Clients", and "Routing Token Format").
+
+    // If the optional cookie field is present, it MUST be ignored.
+
+    // If both the routingToken and cookie fields are present, the server SHOULD
+    //  continue with the connection. Since the server does not process either
+    //  the routingToken or cookie fields, a client violation of the protocol
+    //  specification in section 2.2.1.1 is not an issue. However, including
+    //  both the routingToken and the cookie fields will most likely result
+    //  in problems when the X.224 Connection Request is inspected and parsed
+    // by networking hardware that is used for load balancing Remote Desktop sessions.
+
+    // If the rdpNegData field is not present, it is assumed that the client does
+    // not support Enhanced RDP Security (section 5.4) and negotiation data MUST NOT
+    // be sent to the client as part of the X.224 Connection Confirm PDU (section 2.2.1.2).
+    // If the rdpNegData field is present, it is parsed to check that it contains an RDP
+    // Negotiation Request structure, as specified in section 2.2.1.1.1. If this is the case,
+    // the flags describing the supported security protocols in the requestedProtocols field
+    // are saved in the Received Client Data store (section 3.3.1.1).
+
+    // Once the X.224 Connection Request PDU has been processed successfully, the server MUST
+    // send the X.224 Connection Confirm PDU to the client (section 3.3.5.3.2) and update the
+    // Connection Start Time store (section 3.3.1.12).
 
     struct CR_TPDU_Recv : public Recv
     {
@@ -490,8 +542,7 @@ namespace X224
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_requestedProtocols;
 
-        CR_TPDU_Recv(Transport & t, Stream & stream, uint32_t verbose = 0)
-        : Recv(t, stream)
+        CR_TPDU_Recv(Transport & t, Stream & stream, uint32_t verbose = 0) : Recv(t, stream)
         {
             unsigned expected = 7; /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
             if (!stream.in_check_rem(expected)){
@@ -558,19 +609,26 @@ namespace X224
                     throw Error(ERR_X224);
                 }
 
-                switch (this->rdp_neg_requestedProtocols){
-                    case X224::RDP_NEG_PROTOCOL_RDP:
-                        LOG(LOG_INFO, "PROTOCOL RDP");
-                        break;
-                    case X224::RDP_NEG_PROTOCOL_TLS:
-                        LOG(LOG_INFO, "PROTOCOL TLS 1.0");
-                        break;
-                    case X224::RDP_NEG_PROTOCOL_HYBRID:
-                        LOG(LOG_INFO, "PROTOCOL HYBRID");
-                        break;
+                if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_RDP){
+                    LOG(LOG_INFO, "PROTOCOL RDP");
+                }
+                if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_TLS){
+                    LOG(LOG_INFO, "PROTOCOL TLS 1.0");
+                }                    
+                if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID){
+                    LOG(LOG_INFO, "PROTOCOL HYBRID");
+                }
+                if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID_EX){
+                    LOG(LOG_INFO, "PROTOCOL HYBRID EX");
+                }
+                if (this->rdp_neg_requestedProtocols 
+                & ~(X224::PROTOCOL_RDP
+                   |X224::PROTOCOL_TLS
+                   |X224::PROTOCOL_HYBRID
+                   |X224::PROTOCOL_HYBRID_EX)){
+                    LOG(LOG_INFO, "Unknown protocol flags %x", this->rdp_neg_requestedProtocols);
                 }
             }
-
             if (end_of_header != stream.p){
                 LOG(LOG_ERR, "CR TPDU header should be terminated, got trailing data %u", end_of_header - stream.p);
                 hexdump_c(stream.data, stream.size());
@@ -654,24 +712,44 @@ namespace X224
 
     // flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags.
 
-    // +-------------------------------------+-------------------------------------+
-    // | 0x01 EXTENDED_CLIENT_DATA_SUPPORTED | The server supports Extended Client |
-    // |                                     | Data Blocks in the GCC Conference   |
-    // |                                     | Create Request user data (section   |
-    // |                                     | 2.2.1.3).                           |
-    // +-------------------------------------+-------------------------------------+
+    // +-------------------------------------+---------------------------------------+
+    // | 0x01 EXTENDED_CLIENT_DATA_SUPPORTED | The server supports Extended Client   |
+    // |                                     | Data Blocks in the GCC Conference     |
+    // |                                     | Create Request user data (section     |
+    // |                                     | 2.2.1.3).                             |
+    // +-------------------------------------+---------------------------------------+
+    // | 0x02 DYNVC_GFX_PROTOCOL_SUPPORTED   | The server supports the Graphics      |
+    // |                                     | Pipeline Extension Protocol described |
+    // |                                     | in [MS-RDPEGFX] sections 1, 2, and 3. |
+    // +-------------------------------------+---------------------------------------+
+    // | 0x04 RDP_NEGRSP_RESERVED            | An unused flag that is reserved for   |
+    // |                                     | future use.                           |
+    // +-------------------------------------+---------------------------------------+
 
-    // length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This field MUST be set to 0x0008 (8 bytes)
+    // length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This 
+    //   field MUST be set to 0x0008 (8 bytes)
 
-    // selectedProtocol (4 bytes): A 32-bit, unsigned integer. Field indicating the selected security protocol.
+    // selectedProtocol (4 bytes): A 32-bit, unsigned integer. Field indicating the 
+    //  selected security protocol.
 
-    // +----------------------------+----------------------------------------------+
-    // | 0x00000000 PROTOCOL_RDP    | Standard RDP Security (section 5.3)          |
-    // +----------------------------+----------------------------------------------+
-    // | 0x00000001 PROTOCOL_SSL    | TLS 1.0 (section 5.4.5.1)                    |
-    // +----------------------------+----------------------------------------------+
-    // | 0x00000002 PROTOCOL_HYBRID | CredSSP (section 5.4.5.2)                    |
-    // +----------------------------+----------------------------------------------+
+    // +-------------------------------+----------------------------------------------+
+    // | 0x00000000 PROTOCOL_RDP       | Standard RDP Security (section 5.3)          |
+    // +-------------------------------+----------------------------------------------+
+    // | 0x00000001 PROTOCOL_SSL       | TLS 1.0 (section 5.4.5.1)                    |
+    // +-------------------------------+----------------------------------------------+
+    // | 0x00000002 PROTOCOL_HYBRID    | CredSSP (section 5.4.5.2)                    |
+    // +-------------------------------+----------------------------------------------+
+    // | 0x00000008 PROTOCOL_HYBRID_EX | Credential Security Support Provider protocol|
+    // |                               | (CredSSP) (section 5.4.5.2) coupled with the |
+    // |                               | Early User Authorization Result PDU (section |
+    // |                               | 2.2.10.2). If this flag is set, then the     |
+    // |                               | PROTOCOL_HYBRID (0x00000002) flag SHOULD     |
+    // |                               | also be set. For more information on the     |
+    // |                               | sequencing of the CredSSP messages and the   |
+    // |                               | Early User Authorization Result PDU, see     |
+    // |                               | sections 5.4.2.1 and 5.4.2.2.CredSSP         |
+    // |                               | (section 5.4.5.2)                            |
+    // +-------------------------------+----------------------------------------------+
 
     // 2.2.1.2.2 RDP Negotiation Failure (RDP_NEG_FAILURE)
     // ===================================================
@@ -731,17 +809,9 @@ namespace X224
     // +--------------------------------------+------------------------------------+
 
     enum {
-        CC_TPDU_TYPE_RDP_NEG_RSP = 2
-    };
-    
-    enum {
-        CC_TPDU_PROTOCOL_RDP    = 0,
-        CC_TPDU_PROTOCOL_SSL    = 1,
-        CC_TPDU_PROTOCOL_HYBRID = 2,
-    };
-
-    enum {
         CC_TPDU_EXTENDED_CLIENT_DATA_SUPPORTED    = 1,
+        CC_TPDU_DYNVC_GFX_PROTOCOL_SUPPORTED      = 2,
+        CC_TPDU_RDP_NEGRSP_RESERVED               = 4,
     };
 
     struct CC_TPDU_Recv : public Recv
@@ -761,8 +831,7 @@ namespace X224
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_code; // selected_protocol or failure_code
 
-        CC_TPDU_Recv(Transport & t, Stream & stream, uint32_t verbose = 0)
-        : Recv(t, stream)
+        CC_TPDU_Recv(Transport & t, Stream & stream, uint32_t verbose = 0) : Recv(t, stream)
         {
             unsigned expected = 7; /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
             if (!stream.in_check_rem(expected)){
@@ -803,11 +872,11 @@ namespace X224
                 this->rdp_neg_type = stream.in_uint8();
 
                 if ((this->rdp_neg_type != X224::RDP_NEG_FAILURE)
-                &&  (this->rdp_neg_type != X224::RDP_NEG_RESP)){
+                &&  (this->rdp_neg_type != X224::RDP_NEG_RSP)){
                     this->rdp_neg_flags = stream.in_uint8();
                     this->rdp_neg_length = stream.in_uint16_le();
                     this->rdp_neg_code = stream.in_uint32_le();
-                    LOG(LOG_ERR, "X224:RDP_NEG_RESP or X224:RDP_NEG_FAILURE Expected, got LI=%u %x %x %x %x",
+                    LOG(LOG_ERR, "X224:RDP_NEG_RSP or X224:RDP_NEG_FAILURE Expected, got LI=%u %x %x %x %x",
                         this->tpdu_hdr.LI,
                         this->rdp_neg_type,
                         this->rdp_neg_flags,
@@ -818,27 +887,30 @@ namespace X224
 
                 if (verbose){
                     LOG(LOG_INFO, "Found RDP Negotiation %s Structure",
-                        (this->rdp_neg_type == X224::RDP_NEG_RESP)?"Response":"Failure");
+                        (this->rdp_neg_type == X224::RDP_NEG_RSP)?"Response":"Failure");
                 }
                 //NEGTYPE=2 NEGFLAGS=0 NEGLENGTH=8 NEGCODE=1
                 this->rdp_neg_flags = stream.in_uint8();
                 this->rdp_neg_length = stream.in_uint16_le();
                 this->rdp_neg_code = stream.in_uint32_le();
 
-                LOG(LOG_INFO, "NEGTYPE=%d NEGFLAGS=%d NEGLENGTH=%d NEGCODE=%d\n",
+                LOG(LOG_INFO, "NEG_RSP_TYPE=%d NEG_RSP_FLAGS=%d NEG_RSP_LENGTH=%d NEG_RSP_SELECTED_PROTOCOL=%d\n",
                     this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_code);
                     
                 switch (this->rdp_neg_type){
-                case X224::RDP_NEG_RESP:
+                case X224::RDP_NEG_RSP:
                     switch (this->rdp_neg_code){
-                        case X224::RDP_NEG_PROTOCOL_RDP:
+                        case X224::PROTOCOL_RDP:
                             LOG(LOG_INFO, "PROTOCOL RDP");
                             break;
-                        case X224::RDP_NEG_PROTOCOL_TLS:
+                        case X224::PROTOCOL_TLS:
                             LOG(LOG_INFO, "PROTOCOL TLS 1.0");
                             break;
-                        case X224::RDP_NEG_PROTOCOL_HYBRID:
+                        case X224::PROTOCOL_HYBRID:
                             LOG(LOG_INFO, "PROTOCOL HYBRID");
+                            break;
+                        case X224::PROTOCOL_HYBRID_EX:
+                            LOG(LOG_INFO, "PROTOCOL HYBRID EX");
                             break;
                         default:
                             LOG(LOG_INFO, "Unknown protocol code %u", this->rdp_neg_code);
@@ -895,16 +967,19 @@ namespace X224
 
             if (rdp_neg_type){
                 switch (rdp_neg_type){
-                case X224::RDP_NEG_RESP:
+                case X224::RDP_NEG_RSP:
                     switch (rdp_neg_code){
-                    case X224::RDP_NEG_PROTOCOL_RDP:
+                    case X224::PROTOCOL_RDP:
                         LOG(LOG_INFO, "PROTOCOL RDP");
                     break;
-                    case X224::RDP_NEG_PROTOCOL_TLS:
+                    case X224::PROTOCOL_TLS:
                         LOG(LOG_INFO, "PROTOCOL TLS 1.0");
                     break;
-                    case X224::RDP_NEG_PROTOCOL_HYBRID:
+                    case X224::PROTOCOL_HYBRID:
                         LOG(LOG_INFO, "PROTOCOL HYBRID");
+                    break;
+                    case X224::PROTOCOL_HYBRID_EX:
+                        LOG(LOG_INFO, "PROTOCOL HYBRID EX");
                     break;
                     default:
                         LOG(LOG_INFO, "Unknown protocol code %u", rdp_neg_code);
@@ -975,11 +1050,7 @@ namespace X224
             uint8_t reason;
         } tpdu_hdr;
 
-        // CONSTRUCTOR
-        //==============================================================================
-        DR_TPDU_Recv(Transport & t, Stream & stream)
-        //==============================================================================
-        : Recv(t, stream)
+        DR_TPDU_Recv(Transport & t, Stream & stream) : Recv(t, stream)
         {
             const unsigned expected = 7; /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + reason(1) */
             if (!stream.in_check_rem(expected)){
@@ -1062,8 +1133,7 @@ namespace X224
             uint8_t invalid[256];
         } tpdu_hdr;
 
-        ER_TPDU_Recv(Transport & t, Stream & stream)
-        : Recv(t, stream)
+        ER_TPDU_Recv(Transport & t, Stream & stream) : Recv(t, stream)
         {
             unsigned expected = 7; /* LI(1) + code(1) + dst_ref(2) + reject_cause(1) */
             if (!stream.in_check_rem(expected)){

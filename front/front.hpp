@@ -151,8 +151,43 @@ TODO("Pass font name as parameter in constructor")
         , client_fastpath_input_event_support(fp_support)
         , server_fastpath_update_support(false)
         , tls_support(tls_support)
-        , clientRequestedProtocols(X224::CR_TPDU_PROTOCOL_RDP)
+        , clientRequestedProtocols(X224::PROTOCOL_RDP)
     {
+
+        // init TLS
+        // --------------------------------------------------------
+
+
+        // -------- Start of system wide SSL_Ctx option ------------------------------
+        
+        // ERR_load_crypto_strings() registers the error strings for all libcrypto 
+        // functions. SSL_load_error_strings() does the same, but also registers the
+        // libssl error strings.
+
+        // One of these functions should be called before generating textual error 
+        // messages. However, this is not required when memory usage is an issue.
+
+        // ERR_free_strings() frees all previously loaded error strings. 
+        
+        SSL_load_error_strings();
+
+        // SSL_library_init() registers the available SSL/TLS ciphers and digests.
+        // OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms 
+        // for SSL_library_init(). 
+        
+        // - SSL_library_init() must be called before any other action takes place. 
+        // - SSL_library_init() is not reentrant. 
+        // - SSL_library_init() always returns "1", so it is safe to discard the return
+        // value.
+        
+        // Note: OpenSSL 0.9.8o and 1.0.0a and later added SHA2 algorithms to 
+        // SSL_library_init(). Applications which need to use SHA2 in earlier versions
+        // of OpenSSL should call OpenSSL_add_all_algorithms() as well. 
+        
+        SSL_library_init();
+
+        // --------------------------------------------------------
+
         init_palette332(this->palette332);
         this->mod_palette_setted = false;
         this->palette_sent = false;
@@ -1079,8 +1114,8 @@ TODO("Pass font name as parameter in constructor")
                 uint32_t rdp_neg_code = 0;
                 if (this->tls_support){
                     LOG(LOG_INFO, "-----------------> Front::TLS Support Enabled");
-                    rdp_neg_type = X224::CC_TPDU_TYPE_RDP_NEG_RSP;
-                    rdp_neg_code = X224::CC_TPDU_PROTOCOL_SSL;
+                    rdp_neg_type = X224::RDP_NEG_RSP;
+                    rdp_neg_code = X224::PROTOCOL_TLS;
                     this->client_info.encryptionLevel = 0;
                 }
                 else {
@@ -1132,10 +1167,7 @@ TODO("Pass font name as parameter in constructor")
 
             if (this->verbose & 1){
                 LOG(LOG_INFO, "Front::incoming::Basic Settings Exchange");
-                LOG(LOG_INFO, "Front::incoming::channel_list : %u", this->channel_list.size());
             }
-
-
 
             BStream x224_data(65536);
             X224::RecvFactory f(*this->trans, x224_data);
@@ -1321,22 +1353,35 @@ TODO("Pass font name as parameter in constructor")
                 sc_sec1.emit(stream);
             }
 
+            stream.mark_end();
 
             // ------------------------------------------------------------------
             BStream gcc_header(256);
-            GCC::Create_Response_Send(gcc_header, stream.size());
-            // ------------------------------------------------------------------
             BStream mcs_header(256);
-            MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, gcc_header.size() + stream.size(), MCS::BER_ENCODING);
-            // ------------------------------------------------------------------
             BStream x224_header(256);
+
+            GCC::Create_Response_Send(gcc_header, stream.size());
+            gcc_header.mark_end();
+                      
+            MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, gcc_header.size() + stream.size(), MCS::BER_ENCODING);
+            mcs_header.mark_end();
+
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + gcc_header.size() + stream.size());
-            // ------------------------------------------------------------------
-            this->trans->send(x224_header);
-            this->trans->send(mcs_header);
-            this->trans->send(gcc_header);
-            this->trans->send(stream);
-            // ------------------------------------------------------------------
+            x224_header.mark_end();
+
+//            this->trans->send(x224_header);
+//            this->trans->send(mcs_header);
+//            this->trans->send(gcc_header);
+//            this->trans->send(stream);
+
+            BStream one(32768);
+
+            one.out_copy_bytes(x224_header);
+            one.out_copy_bytes(mcs_header);
+            one.out_copy_bytes(gcc_header);
+            one.out_copy_bytes(stream);
+            one.mark_end();
+            this->trans->send(one);
 
             // Channel Connection
             // ------------------
@@ -2011,7 +2056,6 @@ TODO("Pass font name as parameter in constructor")
             uint8_t byte = stream.in_uint8();
             if ((byte & FastPath::FASTPATH_INPUT_ACTION_X224) == 0){
             
-            LOG(LOG_INFO, "FASTPATH\n");
 ///////////////
 ///////////////
                 FastPath::ClientInputEventPDU_Recv cfpie(*this->trans, stream, this->decrypt);
@@ -2082,8 +2126,6 @@ TODO("Pass font name as parameter in constructor")
 ///////////////
 ///////////////
             }
-
-            LOG(LOG_INFO, "SLOWPATH\n");
 
             X224::RecvFactory fx224(*this->trans, stream);
             TODO("We shall put a specific case when we get Disconnect Request")

@@ -100,7 +100,7 @@ struct RdpNego
         break;
         default:
         case NEGO_STATE_TLS:
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_RDP");
+            LOG(LOG_INFO, "RdpNego::NEGO_STATE_TLS");
             this->recv_connection_confirm();
         break;
         case NEGO_STATE_RDP:
@@ -233,8 +233,8 @@ struct RdpNego
         }
 
         if (this->tls){
-            if (x224.rdp_neg_type == X224::RDP_NEG_RESP
-            && x224.rdp_neg_code == X224::RDP_NEG_PROTOCOL_TLS){
+            if (x224.rdp_neg_type == X224::RDP_NEG_RSP
+            && x224.rdp_neg_code == X224::PROTOCOL_TLS){
                 LOG(LOG_INFO, "activating SSL");
                 this->trans->enable_client_tls();
                 this->state = NEGO_STATE_FINAL;
@@ -253,8 +253,8 @@ struct RdpNego
             TODO("Other cases are errors, set an appropriate error message");
         }
         else {
-            if (x224.rdp_neg_type == X224::RDP_NEG_RESP 
-            && x224.rdp_neg_code == X224::RDP_NEG_PROTOCOL_RDP){
+            if (x224.rdp_neg_type == X224::RDP_NEG_RSP 
+            && x224.rdp_neg_code == X224::PROTOCOL_RDP){
                 this->state = NEGO_STATE_FINAL;
             }
             TODO("Check tpdu has no embedded negotiation code")
@@ -304,9 +304,9 @@ struct RdpNego
         snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
 
         X224::CR_TPDU_Send(stream, cookie, 
-                this->tls?X224::RDP_NEG_REQ:0, 
-                0, 
-                this->tls?X224::RDP_NEG_PROTOCOL_TLS:0); 
+            this->tls?(X224::RDP_NEG_REQ):(X224::RDP_NEG_NONE), 
+            0, 
+            this->tls?(X224::PROTOCOL_TLS):(X224::PROTOCOL_RDP)); 
         this->trans->send(stream);
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
     }

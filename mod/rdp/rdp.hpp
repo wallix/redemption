@@ -621,10 +621,19 @@ struct mod_rdp : public client_mod {
                     BStream x224_header(256);
                     X224::DT_TPDU_Send(x224_header, mcs_header.size() + gcc_header.size() + stream.size());
 
-                    this->nego.trans->send(x224_header);
-                    this->nego.trans->send(mcs_header);
-                    this->nego.trans->send(gcc_header);
-                    this->nego.trans->send(stream);
+//                    this->nego.trans->send(x224_header);
+//                    this->nego.trans->send(mcs_header);
+//                    this->nego.trans->send(gcc_header);
+//                    this->nego.trans->send(stream);
+
+                    BStream one(32768);
+
+                    one.out_copy_bytes(x224_header);
+                    one.out_copy_bytes(mcs_header);
+                    one.out_copy_bytes(gcc_header);
+                    one.out_copy_bytes(stream);
+                    one.mark_end();
+                    this->nego.trans->send(one);
 
                     this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
                 }

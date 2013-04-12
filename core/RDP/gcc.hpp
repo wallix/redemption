@@ -659,7 +659,7 @@ namespace GCC
                 LOG(LOG_INFO, "%s GCC User Data SC_CORE (%u bytes)", msg, this->length);
                 LOG(LOG_INFO, "sc_core::version [%04x] %s", this->version,
                       (this->version==0x00080001) ? "RDP 4 client"
-                     :(this->version==0x00080004) ? "RDP 5.0, 5.1, 5.2, and 6.0 clients)"
+                     :(this->version==0x00080004) ? "RDP 5.0, 5.1, 5.2, 6.0, 6.1, 7.0, 7.1 and 8.0 servers)"
                                                   : "Unknown client");
                 if (this->length < 12) { return; }
                 LOG(LOG_INFO, "sc_core::clientRequestedProtocols  = %u", this->clientRequestedProtocols);
@@ -684,7 +684,7 @@ namespace GCC
         //
         //         Value Meaning
         //         0x00080001 RDP 4.0 clients
-        //         0x00080004 RDP 5.0, 5.1, 5.2, 6.0, 6.1, and 7.0 clients
+        //         0x00080004 RDP 5.0, 5.1, 5.2, 6.0, 6.1, 7.0, 7.1 and 8.0 clients
 
         // desktopWidth (2 bytes): A 16-bit, unsigned integer. The requested
         //                         desktop width in pixels (up to a maximum
@@ -990,7 +990,7 @@ namespace GCC
             // (drawback: danger is different, not swapping parameters, but we may forget to define some...)
             CSCore()
             : userDataType(CS_CORE)
-            , length(216) // default: everything except serverSelectedProtocol
+            , length(216) // default: everything including serverSelectedProtocol
             , version(0x00080001)  // RDP version. 1 == RDP4, 4 == RDP5.
             , colorDepth(0xca01)
             , SASSequence(0xaa03)
@@ -1292,20 +1292,30 @@ namespace GCC
 
         //          Value                              Meaning
         // -------------------------------------------------------------------------
+        // REDIRECTION_VERSION1                If REDIRECTION_SUPPORTED is set,
+        //          0x00                       server session redirection version 1
+        //    (Flag = 0x00)                    is supported by the client.
+        // -------------------------------------------------------------------------
+        // REDIRECTION_VERSION2                If REDIRECTION_SUPPORTED is set,
+        //          0x01                       server session redirection version 2
+        //    (Flag = 0x04)                    is supported by the client.
+        // -------------------------------------------------------------------------
         // REDIRECTION_VERSION3                If REDIRECTION_SUPPORTED is set,
         //          0x02                       server session redirection version 3
-        //                                     is supported by the client.
+        //    (Flag = 0x08)                    is supported by the client.
         // -------------------------------------------------------------------------
         // REDIRECTION_VERSION4                If REDIRECTION_SUPPORTED is set,
         //          0x03                       server session redirection version 4
-        //                                     is supported by the client.
+        //    (Flag = 0x0C)                    is supported by the client.
         // -------------------------------------------------------------------------
         // REDIRECTION_VERSION5                If REDIRECTION_SUPPORTED is set,
         //          0x04                       server session redirection version 5
-        //                                     is supported by the client.
+        //    (Flag = 0x10)                    is supported by the client.
         // -------------------------------------------------------------------------
-
-        // Note by CGR: encoding let imagine there should be a V1 an V2 redirection
+        // REDIRECTION_VERSION6                If REDIRECTION_SUPPORTED is set,
+        //          0x05                       server session redirection version 6
+        //    (Flag = 0x20)                    is supported by the client.
+        // -------------------------------------------------------------------------
 
         // The version values cannot be combined; only one value MUST be specified
         // if the REDIRECTED_SESSIONID_FIELD_VALID (0x00000002) flag is present in

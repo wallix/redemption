@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     BOOST_CHECK_EQUAL((uint8_t)X224::RDP_NEG_REQ, x224.rdp_neg_type);
     BOOST_CHECK_EQUAL(0, x224.rdp_neg_flags);
     BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
-    BOOST_CHECK_EQUAL((uint32_t)X224::RDP_NEG_PROTOCOL_TLS, x224.rdp_neg_requestedProtocols);
+    BOOST_CHECK_EQUAL((uint32_t)X224::PROTOCOL_TLS, x224.rdp_neg_requestedProtocols);
 
     BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
     BOOST_CHECK_EQUAL(x224._header_size, stream.size());
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet)
     BStream stream(256); 
     X224::CR_TPDU_Send(stream,
             "Cookie: mstshash=administrateur@qa\x0D\x0A", 
-            X224::RDP_NEG_REQ, 0, X224::RDP_NEG_PROTOCOL_TLS);
+            X224::RDP_NEG_REQ, 0, X224::PROTOCOL_TLS);
     BOOST_CHECK_EQUAL(55, stream.size());
     BOOST_CHECK_EQUAL(0, memcmp(
 /* 0000 */ "\x03\x00\x00\x37\x32\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...72......Cooki |
@@ -160,10 +160,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_TLS_with_factory)
     BOOST_CHECK_EQUAL(0, x224.tpdu_hdr.src_ref);
     BOOST_CHECK_EQUAL(14, x224.tpdu_hdr.LI);
 
-    BOOST_CHECK_EQUAL((uint8_t)X224::RDP_NEG_RESP, x224.rdp_neg_type);
+    BOOST_CHECK_EQUAL((uint8_t)X224::RDP_NEG_RSP, x224.rdp_neg_type);
     BOOST_CHECK_EQUAL(0, x224.rdp_neg_flags);
     BOOST_CHECK_EQUAL(8, x224.rdp_neg_length);
-    BOOST_CHECK_EQUAL((uint32_t)X224::RDP_NEG_PROTOCOL_TLS, x224.rdp_neg_code);
+    BOOST_CHECK_EQUAL((uint32_t)X224::PROTOCOL_TLS, x224.rdp_neg_code);
 
     BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
     BOOST_CHECK_EQUAL(x224._header_size, stream.size());
@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_TLS_with_factory)
 BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU_TLS)
 {
     BStream stream(256); 
-    X224::CC_TPDU_Send x224(stream, X224::RDP_NEG_RESP, 0, X224::RDP_NEG_PROTOCOL_TLS);
+    X224::CC_TPDU_Send x224(stream, X224::RDP_NEG_RSP, 0, X224::PROTOCOL_TLS);
     BOOST_CHECK_EQUAL(19, stream.size());
     BOOST_CHECK_EQUAL(0, 
         memcmp("\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x01\x00\x00\x00", stream.data, 19));
