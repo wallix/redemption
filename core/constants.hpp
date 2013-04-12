@@ -43,6 +43,10 @@ TODO("these constants should be dispatched between relevant ini files")
 #define LICENSE_PATH "/var/certs/redemption"
 #endif
 
+#if !defined(VIEW_PATH)
+#define VIEW_PATH "/tmp"
+#endif
+
 #define LOGIN_LOGO24 "ad24b.bmp"
 #define CURSOR0 "cursor0.cur"
 #define CURSOR1 "cursor1.cur"
