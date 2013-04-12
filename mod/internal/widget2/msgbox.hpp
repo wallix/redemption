@@ -27,24 +27,28 @@
 class MessageBox : public Window
 {
 public:
-    WidgetMultiLine lines;
+    WidgetMultiLine msg;
     WidgetButton ok;
 
     MessageBox(ModApi* drawable, int16_t x, int16_t y, Widget* parent,
                      NotifyApi* notifier, const char * caption, const char * text,
                      int id = 0, int bgcolor = BLACK, int fgcolor = WHITE)
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, id)
-    , lines(drawable, 10, 10 + this->titlebar.cx(), this, NULL, text, true, -10, bgcolor, fgcolor)
-    , ok(drawable, 0,0, this, this, "Ok", true, -11, bgcolor, fgcolor, 5, 1)
+    , msg(drawable, 0, 0, this, NULL, text, true, -10, bgcolor, fgcolor, 10, 2)
+    , ok(drawable, 0,0, this, this, "Ok", true, -11, bgcolor, fgcolor, 6, 2)
     {
-        this->rect.cx = this->lines.cx() + 20;
-        this->resize_titlebar();
-        this->rect.cy = this->titlebar.cy() + this->lines.cy() + this->ok.cy() + 30;
-        this->lines.rect.y += this->titlebar.cy();
-        this->ok.set_button_x(this->dx() + this->rect.cx - this->ok.cx() - 10);
-        this->ok.set_button_y(this->dy() + this->rect.cy - this->ok.cy() - 10);
-        this->child_list.push_back(&this->lines);
+        this->child_list.push_back(&this->msg);
         this->child_list.push_back(&this->ok);
+
+        this->rect.cx = std::max<int>(this->msg.cx(), this->ok.cx() + 20);
+        this->msg.rect.x += (this->cx() - this->msg.cx()) / 2;
+
+        this->resize_titlebar();
+
+        this->rect.cy = this->titlebar.cy() + this->msg.cy() + this->ok.cy() + 10;
+        this->msg.rect.y += this->titlebar.cy() + 5;
+        this->ok.set_button_x(this->dx() + this->cx() - this->ok.cx() - 10);
+        this->ok.set_button_y(this->dy() + this->cy() - this->ok.cy() - 5);
     }
 
     virtual ~MessageBox()
@@ -52,8 +56,12 @@ public:
 
     virtual void notify(Widget* widget, notify_event_t event, long unsigned int param, long unsigned int param2)
     {
-        if (this->notifier && widget == &ok) {
-            this->send_notify(NOTIFY_CANCEL);
+        if (this->notifier) {
+            if (widget == &this->ok) {
+                this->send_notify(NOTIFY_CANCEL);
+            } else {
+                Window::notify(widget, event, param, param2);
+            }
         }
     }
 };

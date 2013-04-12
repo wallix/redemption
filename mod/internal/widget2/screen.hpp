@@ -18,27 +18,21 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_SCREEN_HPP_)
-#define REDEMPTION_MOD_WIDGET2_SCREEN_HPP_
+#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_SCREEN_HPP)
+#define REDEMPTION_MOD_INTERNAL_WIDGET2_SCREEN_HPP
 
 #include "widget_composite.hpp"
 
 class WidgetScreen : public WidgetComposite
 {
 public:
-    WidgetScreen(ModApi * drawable, uint16_t width, uint16_t height, NotifyApi * notifier)
-    : WidgetComposite(drawable, Rect(0, 0, width, height), 0, Widget::TYPE_SCREEN, notifier)
+    WidgetScreen(ModApi * drawable, uint16_t width, uint16_t height, NotifyApi * notifier = NULL)
+    : WidgetComposite(drawable, Rect(0, 0, width, height), NULL, notifier)
     {
-        this->has_focus = true;
     }
 
     virtual ~WidgetScreen()
     {}
-
-    void paint()
-    {
-
-    }
 };
 
 #endif

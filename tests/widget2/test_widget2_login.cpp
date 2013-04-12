@@ -148,8 +148,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x48\x75\x6d\x3e\x3f\xa2\x52\x25\xca\x80"
-        "\x55\xd6\x65\xb5\x85\x21\x23\xa1\x30\xda")){
+        "\x6b\x3b\x27\x06\x73\xbe\xa8\xc3\x8b\x45"
+        "\x22\xc7\xf4\xb5\x37\xac\x68\x3e\xca\x42")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -176,8 +176,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x01\x9e\x9d\x0c\x14\x89\x2a\x56\x11\xea"
-        "\xb8\x9b\x5f\xfb\xbf\xb3\x76\xcc\xfd\xac")){
+        "\x93\x85\x19\xb4\x48\xed\xfb\x6f\xd2\xbd"
+        "\x44\x10\x85\xb6\x23\xcc\xba\xcd\x01\xa5")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -204,8 +204,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x2c\xf5\xbb\x02\x87\x32\xac\x21\x73\xd7"
-        "\x11\x6b\xee\x9a\x0d\x90\x19\x91\x9e\x5c")){
+        "\x1e\x7f\xf7\xb8\xae\x34\xb2\x1c\x82\x7e"
+        "\x7b\x25\x2f\x69\xec\xa9\x1a\x84\x26\x17")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -232,8 +232,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x18\x36\xdf\xa9\x0e\x78\x20\xff\xff\x0c"
-        "\x47\x32\xf6\x8e\x4b\xa0\x2f\xda\x69\x9d")){
+        "\x6d\x8a\x48\xc8\x71\xfe\x8c\x32\x65\x1e"
+        "\x6f\xdc\x5c\x2e\x67\xa1\x0e\x07\xce\x12")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -260,8 +260,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x80\x39\x54\x54\xc4\xab\x60\x5f\xcb\x6f"
-        "\x5b\xbd\x21\x48\xf0\x72\x49\x0f\x82\x21")){
+        "\x3b\x1e\x56\x9c\x60\x8c\x66\x27\xfe\x1b"
+        "\xbd\xd4\x50\x22\xa0\x10\x33\xbf\xa3\x99")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -288,8 +288,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xb9\x0f\x65\x96\xe2\xd0\x99\x91\xa2\x5b"
-        "\x52\x46\x7c\x15\xea\x01\x48\xfa\x84\x87")){
+        "\xf0\x62\xab\x54\x12\xac\xc7\x00\x35\xb6"
+        "\x0c\xb3\x29\xe7\x56\xea\x7c\xa1\x4e\xa4")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -316,8 +316,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x9c\xc6\xfb\xba\x72\x6a\xc2\x31\x20\x2e"
-        "\x68\x7d\x7c\x97\x38\xcc\x9b\x8d\xda\x90")){
+        "\xdb\x23\x33\xa8\x7a\xa6\xc3\x9c\xc0\x9c"
+        "\xf1\xd6\x99\xd5\xd9\x46\x6f\xa6\x7c\x1a")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -386,41 +386,72 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
 }
 
-// BOOST_AUTO_TEST_CASE(EventWidgetHelp)
-// {
-//     TestDraw drawable(800, 600);
-//
-//     WidgetComposite parent(&drawable, Rect(0,0,800,600), 0, 0);
-//
-//     int16_t x = 10;
-//     int16_t y = 10;
-//
-//     WindowLogin window_login(&drawable, x, y, &parent, 0, "test6");
-//     parent.child_list.push_back(&window_login);
-//
-//     parent.rdp_input_invalidate(parent.rect);
-//
-//     window_login.help.send_notify(NOTIFY_SUBMIT);
-//     parent.rdp_input_invalidate(parent.rect);
-//
-//     drawable.save_to_png("/tmp/window_login-help.png");
-//
-//     char message[1024];
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\x75\xbd\xe4\x8e\xb6\x24\x84\x0a\xc1\xc8"
-//         "\x49\x43\x66\x4a\x90\x47\x8b\xc5\xea\x9e")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-//
-//     window_login.window_help->send_notify(NOTIFY_SUBMIT);
-//     parent.rdp_input_invalidate(parent.rect);
-//
-//     drawable.save_to_png("/tmp/window_login-help2.png");
-//
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\x75\xbd\xe4\x8e\xb6\x24\x84\x0a\xc1\xc8"
-//         "\x49\x43\x66\x4a\x90\x47\x8b\xc5\xea\x9e")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-// }
+BOOST_AUTO_TEST_CASE(EventWidgetHelp)
+{
+    TestDraw drawable(800, 600);
+
+    class Screen : public WidgetComposite {
+    public:
+        Screen(ModApi* drawable)
+        : WidgetComposite(drawable, Rect(0,0,800,600), 0, 0)
+        {}
+
+        virtual ~Screen()
+        {}
+
+        virtual void draw(const Rect& clip)
+        {
+            this->WidgetComposite::draw(clip);
+            Rect new_clip = clip.intersect(this->rect);
+            Region region;
+            region.rects.push_back(new_clip);
+
+            for (std::size_t i = 0, size = this->child_list.size(); i < size; ++i) {
+                Rect rect = new_clip.intersect(this->child_list[i]->rect);
+
+                if (!rect.isempty()) {
+                    region.subtract_rect(rect);
+                }
+            }
+
+            for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
+                this->drawable->draw(RDPOpaqueRect(region.rects[i], 0x000000),
+                                     region.rects[i]);
+            }
+        }
+    };
+
+    Screen parent(&drawable);
+
+    int16_t x = 10;
+    int16_t y = 10;
+
+    WindowLogin window_login(&drawable, x, y, &parent, 0, "test6");
+    parent.child_list.push_back(&window_login);
+
+    parent.rdp_input_invalidate(parent.rect);
+
+    window_login.help.send_notify(NOTIFY_SUBMIT);
+    parent.rdp_input_invalidate(parent.rect);
+
+    drawable.save_to_png("/tmp/window_login-help.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x7a\xd3\xb0\x5e\x30\x64\x19\xcb\x52\x2e"
+        "\x89\xcd\xca\x36\xea\x0f\x7a\x00\xd9\x54")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    //close window_help and redraw
+    window_login.window_help->button_close.send_notify(NOTIFY_SUBMIT);
+
+    //drawable.save_to_png("/tmp/window_login-help2.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x5d\x23\x54\xd1\xa5\x08\xfd\x8c\x04\xbb"
+        "\x39\x76\x13\xfa\xf5\x44\xdd\x03\x21\x5d")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
 
