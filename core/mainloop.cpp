@@ -205,7 +205,9 @@ void redemption_main_loop()
 
     SessionServer ss(&refreshconf);
     Inifile ini(CFG_PATH "/" RDPPROXY_INI);
+    uint32_t s_addr = inet_addr(ini.globals.listen_address);
+    if (s_addr == /*IPADDR_NONE*/0xFFFFFFFF) { s_addr = /*IPADDR_ANY*/0; }
     int port = ini.globals.port;
-    Listen listener(ss, port);
+    Listen listener(ss, /* INADDR_ANY */s_addr, port);
     listener.run();
 }

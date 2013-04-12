@@ -181,6 +181,8 @@ struct Inifile {
         bool internal_domain;
 
         bool enable_file_encryption;
+        bool enable_tls;
+        char listen_address[256];
 
         // Section "debug"
         struct {
@@ -290,6 +292,8 @@ struct Inifile {
             strcpy(this->globals.replay_path, "/tmp/");
             this->globals.internal_domain = false;
             this->globals.enable_file_encryption = false;
+            this->globals.enable_tls             = false;
+            strcpy(this->globals.listen_address, "0.0.0.0");
 
             memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
 
@@ -448,6 +452,12 @@ struct Inifile {
             }
             else if (0 == strcmp(key, "enable_file_encryption")){
                 this->globals.enable_file_encryption = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "enable_tls")){
+                this->globals.enable_tls = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "listen_address")){
+                strcpy(this->globals.listen_address, value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
