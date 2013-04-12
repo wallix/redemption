@@ -102,12 +102,12 @@ extern "C" {
         if (self->trans){
             char tmpname[1024];
             sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
-            LOG(LOG_INFO, "closing file  %s", tmpname);
+//            LOG(LOG_INFO, "closing file  %s", tmpname);
             TODO("check if close returns some error");
             rio_delete(self->trans);
             int res = close(self->fd);
             if (res < 0){
-                LOG(LOG_ERR, "closing file failed erro=%u : %s\n", errno, strerror(errno));
+//                LOG(LOG_ERR, "closing file failed erro=%u : %s\n", errno, strerror(errno));
                 return RIO_ERROR_CLOSE_FAILED;
             }
             self->trans = NULL;
@@ -122,7 +122,7 @@ extern "C" {
             char tmpname[1024];
             sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
             TODO("add rights information to constructor")
-            LOG(LOG_INFO, "opening file  %s", tmpname);
+//            LOG(LOG_INFO, "opening file  %s", tmpname);
             self->fd = ::open(tmpname, O_WRONLY|O_CREAT, S_IRUSR);
             if (self->fd < 0){
                 if (status) { *status = RIO_ERROR_CREAT; }
@@ -223,7 +223,7 @@ extern "C" {
         if (self->trans){
             char tmpname[1024];
             sq_im_SQCryptoOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
-            LOG(LOG_INFO, "closing file  %s", tmpname);
+//            LOG(LOG_INFO, "closing file  %s", tmpname);
             TODO("check if close returns some error");
             rio_delete(self->trans);
             self->trans = NULL;

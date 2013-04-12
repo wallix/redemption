@@ -462,6 +462,11 @@ class Stream {
         this->out_copy_bytes((uint8_t*)v, len);
     }
 
+
+    void out_copy_bytes(Stream & stream) {
+        this->out_copy_bytes(stream.data, stream.size());
+    }
+
     void out_copy_bytes(const uint8_t * v, size_t n) {
         REDASSERT(this->has_room(n));
         memcpy(this->p, v, n);

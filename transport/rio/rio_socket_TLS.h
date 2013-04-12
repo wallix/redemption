@@ -113,8 +113,6 @@ extern "C" {
 
     static inline ssize_t rio_m_RIOSocketTLS_send(RIOSocketTLS * self, const void * data, size_t len)
     {
-        LOG(LOG_INFO, "TLS send %u bytes", (unsigned)len);
-
         const char * const buffer = (const char * const)data;
         size_t remaining_len = len;
         size_t offset = 0;
@@ -125,7 +123,6 @@ extern "C" {
             switch (error)
             {
                 case SSL_ERROR_NONE:
-                    LOG(LOG_INFO, "TLS send SSL_ERROR_NONE %u bytes", (unsigned)ret);
                     remaining_len -= ret;
                     offset += ret;
                     break;
@@ -153,7 +150,6 @@ extern "C" {
                 }
             }
         }
-        LOG(LOG_INFO, "return from TLS send %u bytes (remaining_len=%u)", (unsigned)len, (unsigned)remaining_len);
         return len;
     }
 
