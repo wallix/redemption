@@ -90,6 +90,41 @@ public:
     }
     virtual void recv(char ** pbuffer, size_t len) throw (Error) = 0;
     virtual void send(const char * const buffer, size_t len) throw (Error) = 0;
+
+    void send(Stream & header1, Stream & header2, Stream & header3, Stream & header4, Stream & stream) {
+        BStream one(65535);
+        one.out_copy_bytes(header1);
+        one.out_copy_bytes(header2);
+        one.out_copy_bytes(header3);
+        one.out_copy_bytes(header4);
+        one.out_copy_bytes(stream);
+        one.mark_end();
+        this->send(one);
+    }
+    void send(Stream & header1, Stream & header2, Stream & header3, Stream & stream) {
+        BStream one(65535);
+        one.out_copy_bytes(header1);
+        one.out_copy_bytes(header2);
+        one.out_copy_bytes(header3);
+        one.out_copy_bytes(stream);
+        one.mark_end();
+        this->send(one);
+    }
+    void send(Stream & header1, Stream & header2, Stream & stream) {
+        BStream one(65535);
+        one.out_copy_bytes(header1);
+        one.out_copy_bytes(header2);
+        one.out_copy_bytes(stream);
+        one.mark_end();
+        this->send(one);
+    }
+    void send(Stream & header, Stream & stream) {
+        BStream one(65535);
+        one.out_copy_bytes(header);
+        one.out_copy_bytes(stream);
+        one.mark_end();
+        this->send(one);
+    }
     void send(Stream & stream) throw(Error) {
         this->send(stream.data, stream.size());
     }

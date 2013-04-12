@@ -41,13 +41,15 @@
 
 struct Listen {
     Server & server;
+    uint32_t s_addr;
     int port;
     int sck;
     bool exit_on_timeout;
     int timeout_sec;
 
-    Listen(Server & server, int port, bool exit_on_timeout = false, int timeout_sec = 60) 
+    Listen(Server & server, uint32_t s_addr, int port, bool exit_on_timeout = false, int timeout_sec = 60) 
         : server(server)
+        , s_addr(s_addr)
         , port(port)
         , sck(0)
         , exit_on_timeout(exit_on_timeout)
@@ -85,9 +87,10 @@ struct Listen {
         memset(&u, 0, sizeof(u));
         u.s4.sin_family = AF_INET;
         u.s4.sin_port = htons(this->port);
-        u.s4.sin_addr.s_addr = INADDR_ANY;
+//        u.s4.sin_addr.s_addr = INADDR_ANY;
+        u.s4.sin_addr.s_addr = this->s_addr;
 
-        LOG(LOG_INFO, "Listen: binding socket %d on port %d", this->sck, this->port);
+        LOG(LOG_INFO, "Listen: binding socket %d on %s:%d", this->sck, ::inet_ntoa(u.s4.sin_addr), this->port);
         if (0 != bind(this->sck, &u.s, sizeof(u))) {
             LOG(LOG_ERR, "Listen: error binding socket [errno=%u] %s", errno, strerror(errno));
             ((this->sck) && (shutdown(this->sck, 2), close(this->sck)));

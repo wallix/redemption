@@ -188,20 +188,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
                 SEC::Sec_Send sec(sec_header, this->stream, 0, this->encrypt, this->encryptionLevel);
                 MCS::SendDataIndication_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + this->stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, sec_header.size() + this->stream.size() + mcs_header.size());
-
-                {
-                    BStream one(65535);
-                    one.out_copy_bytes(x224_header);
-                    one.out_copy_bytes(mcs_header);
-                    one.out_copy_bytes(sec_header);
-                    one.out_copy_bytes(this->stream);
-                    one.mark_end();
-                    this->trans->send(one);
-                }
-//                this->trans->send(x224_header);
-//                this->trans->send(mcs_header);
-//                this->trans->send(sec_header);
-//                this->trans->send(this->stream);
+                this->trans->send(x224_header, mcs_header, sec_header, this->stream);
             }
             else {
                 if (this->ini.globals.debug.primary_orders > 3){
@@ -215,17 +202,16 @@ struct GraphicsUpdatePDU : public RDPSerializer
                                          , FastPath::FASTPATH_UPDATETYPE_ORDERS
                                          , FastPath::FASTPATH_FRAGMENT_SINGLE);
 
-                BStream SvrUpdPDU_s(256);
+                BStream fastpath_header(256);
 
                 FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-                      SvrUpdPDU_s
+                      fastpath_header
                     , this->stream
                     , ((this->encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                     , this->encrypt
                     );
 
-                this->trans->send(SvrUpdPDU_s);  // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-                this->trans->send(this->stream); // Fast-Path Update (TS_FP_UPDATE)
+                this->trans->send(fastpath_header, this->stream);
             }
 
             this->order_count = 0;

@@ -533,15 +533,8 @@ TODO("Pass font name as parameter in constructor")
         BStream mcs_data(256);
         MCS::DisconnectProviderUltimatum_Send(mcs_data, 0, MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_data.size());
-        {
-            BStream one(65535);
-            one.out_copy_bytes(x224_header);
-            one.out_copy_bytes(mcs_data);
-            one.mark_end();
-            this->trans->send(one);
-        }
-//        this->trans->send(x224_header);
-//        this->trans->send(mcs_data);
+
+        this->trans->send(x224_header, mcs_data);
     }
 
     void set_console_session(bool b)
@@ -590,20 +583,7 @@ TODO("Pass font name as parameter in constructor")
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, channel.chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-
-        {
-            BStream one(65535);
-            one.out_copy_bytes(x224_header);
-            one.out_copy_bytes(mcs_header);
-            one.out_copy_bytes(sec_header);
-            one.out_copy_bytes(stream);
-            one.mark_end();
-            this->trans->send(one);
-        }
-//        this->trans->send(x224_header);
-//        this->trans->send(mcs_header);
-//        this->trans->send(sec_header);
-//        this->trans->send(stream);
+        this->trans->send(x224_header, mcs_header, sec_header, stream);
 
         if (this->verbose & 16){
             LOG(LOG_INFO, "Front::send_to_channel done");
@@ -676,19 +656,7 @@ TODO("Pass font name as parameter in constructor")
                 SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-                {
-                    BStream one(65535);
-                    one.out_copy_bytes(x224_header);
-                    one.out_copy_bytes(mcs_header);
-                    one.out_copy_bytes(sec_header);
-                    one.out_copy_bytes(stream);
-                    one.mark_end();
-                    this->trans->send(one);
-                }
-//                this->trans->send(x224_header);
-//                this->trans->send(mcs_header);
-//                this->trans->send(sec_header);
-//                this->trans->send(stream);
+                this->trans->send(x224_header, mcs_header, sec_header, stream);
             }
             else {
                 if (this->verbose & 4){
@@ -715,15 +683,9 @@ TODO("Pass font name as parameter in constructor")
                     , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                     , this->encrypt
                     );
-                {
-                    BStream one(65535);
-                    one.out_copy_bytes(SvrUpdPDU_s);
-                    one.out_copy_bytes(stream);
-                    one.mark_end();
-                    this->trans->send(one);
-                }
-//                this->trans->send(SvrUpdPDU_s); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-//                this->trans->send(stream);      // Fast-Path Update (TS_FP_UPDATE)
+                // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+                // Fast-Path Update (TS_FP_UPDATE)
+                this->trans->send(SvrUpdPDU_s, stream);
             }
 
             this->palette_sent = true;
@@ -946,19 +908,7 @@ TODO("Pass font name as parameter in constructor")
             SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
             MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-            {
-                BStream one(65535);
-                one.out_copy_bytes(x224_header);
-                one.out_copy_bytes(mcs_header);
-                one.out_copy_bytes(sec_header);
-                one.out_copy_bytes(stream);
-                one.mark_end();
-                this->trans->send(one);
-            }
-//            this->trans->send(x224_header);
-//            this->trans->send(mcs_header);
-//            this->trans->send(sec_header);
-//            this->trans->send(stream);
+            this->trans->send(x224_header, mcs_header, sec_header, stream);
         }
         else {
             if (this->verbose & 4){
@@ -977,23 +927,15 @@ TODO("Pass font name as parameter in constructor")
                                      , FastPath::FASTPATH_FRAGMENT_SINGLE
                                      );
 
-            BStream SvrUpdPDU_s(256);
+            BStream fastpath_header(256);
 
             FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-                  SvrUpdPDU_s
+                  fastpath_header
                 , stream
                 , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                 , this->encrypt
                 );
-            {
-                BStream one(65535);
-                one.out_copy_bytes(SvrUpdPDU_s);
-                one.out_copy_bytes(stream);
-                one.mark_end();
-                this->trans->send(one);
-            }
-//            this->trans->send(SvrUpdPDU_s); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-//            this->trans->send(stream);      // Fast-Path Update (TS_FP_UPDATE)
+            this->trans->send(fastpath_header, stream);
         }
 
         if (this->verbose & 4){
@@ -1067,19 +1009,7 @@ TODO("Pass font name as parameter in constructor")
             SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
             MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-            {
-                BStream one(65535);
-                one.out_copy_bytes(x224_header);
-                one.out_copy_bytes(mcs_header);
-                one.out_copy_bytes(sec_header);
-                one.out_copy_bytes(stream);
-                one.mark_end();
-                this->trans->send(one);
-            }
-//            this->trans->send(x224_header);
-//            this->trans->send(mcs_header);
-//            this->trans->send(sec_header);
-//            this->trans->send(stream);
+            this->trans->send(x224_header, mcs_header, sec_header, stream);
         }
         else {
             if (this->verbose & 4){
@@ -1100,23 +1030,16 @@ TODO("Pass font name as parameter in constructor")
                                      , FastPath::FASTPATH_FRAGMENT_SINGLE
                                      );
 
-            BStream SvrUpdPDU_s(256);
+            BStream fastpath_header(256);
 
+             // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
             FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-                  SvrUpdPDU_s
+                  fastpath_header
                 , stream
                 , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                 , this->encrypt
                 );
-            {
-                BStream one(65535);
-                one.out_copy_bytes(SvrUpdPDU_s);
-                one.out_copy_bytes(stream);
-                one.mark_end();
-                this->trans->send(one);
-            }
-//            this->trans->send(SvrUpdPDU_s); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-//            this->trans->send(stream);      // Fast-Path Update (TS_FP_UPDATE)
+            this->trans->send(fastpath_header, stream);
         }
 
         if (this->verbose & 4){
@@ -1229,13 +1152,13 @@ TODO("Pass font name as parameter in constructor")
             BStream x224_data(65536);
             X224::RecvFactory f(*this->trans, x224_data);
             X224::DT_TPDU_Recv x224(*this->trans, x224_data);
-
             MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
 
             // GCC User Data
             // -------------
             SubStream & gcc_data = mcs_ci.payload;
             GCC::Create_Request_Recv gcc_cr(gcc_data);
+
 
             while (gcc_cr.payload.in_check_rem(4)) {
                 GCC::UserData::RecvFactory f(gcc_cr.payload);
@@ -1322,6 +1245,8 @@ TODO("Pass font name as parameter in constructor")
             // ------------------------------------------------------------------
             BStream stream(65536);
             // ------------------------------------------------------------------
+//            GCC::UserData::ServerToClient_Send(stream, this->clientRequestedProtocols, this->channel_list.size());
+            
             GCC::UserData::SCCore sc_core;
             sc_core.version = 0x00080004;
             if (this->tls_support){
@@ -1387,9 +1312,7 @@ TODO("Pass font name as parameter in constructor")
                     0x63, 0x4c, 0x56, 0x29, 0x55, 0x5a, 0x63, 0x41, 0x2c, 0x20, 0x65, 0x95, 0x99, 0xb1, 0x15, 0x7c
                 };
 
-                uint8_t rsa_keys_pub_exp[4] = {
-                    0x01,0x00,0x01,0x00
-                };
+                uint8_t rsa_keys_pub_exp[4] = { 0x01, 0x00, 0x01, 0x00 };
 
                 sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
                 sc_sec1.encryptionLevel = client_info.encryptionLevel;
@@ -1409,7 +1332,6 @@ TODO("Pass font name as parameter in constructor")
                 sc_sec1.log("Sending to client");
                 sc_sec1.emit(stream);
             }
-
             stream.mark_end();
 
             // ------------------------------------------------------------------
@@ -1420,22 +1342,7 @@ TODO("Pass font name as parameter in constructor")
             GCC::Create_Response_Send(gcc_header, stream.size());
             MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, gcc_header.size() + stream.size(), MCS::BER_ENCODING);
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + gcc_header.size() + stream.size());
-
-            {
-                BStream one(32768);
-
-                one.out_copy_bytes(x224_header);
-                one.out_copy_bytes(mcs_header);
-                one.out_copy_bytes(gcc_header);
-                one.out_copy_bytes(stream);
-                one.mark_end();
-                this->trans->send(one);
-            }
-//            this->trans->send(x224_header);
-//            this->trans->send(mcs_header);
-//            this->trans->send(gcc_header);
-//            this->trans->send(stream);
-
+            this->trans->send(x224_header, mcs_header, gcc_header, stream);
 
             // Channel Connection
             // ------------------
@@ -1503,16 +1410,7 @@ TODO("Pass font name as parameter in constructor")
                 BStream mcs_data(256);
                 MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_data.size());
-
-                {
-                    BStream one(32768);
-                    one.out_copy_bytes(x224_header);
-                    one.out_copy_bytes(mcs_data);
-                    one.mark_end();
-                    this->trans->send(one);
-                }
-//                this->trans->send(x224_header);
-//                this->trans->send(mcs_data);
+                this->trans->send(x224_header, mcs_data);
             }
 
             TODO("The code below should be simplified and correctly manage channels (confirm only channels that are really supported)")
@@ -1534,16 +1432,7 @@ TODO("Pass font name as parameter in constructor")
                                              true, mcs.channelId,
                                              MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
-
-                {
-                    BStream one(32768);
-                    one.out_copy_bytes(x224_header);
-                    one.out_copy_bytes(mcs_cjcf_data);
-                    one.mark_end();
-                    this->trans->send(one);
-                }
-//                this->trans->send(x224_header);
-//                this->trans->send(mcs_cjcf_data);
+                this->trans->send(x224_header, mcs_cjcf_data);
             }
 
             {
@@ -1565,16 +1454,7 @@ TODO("Pass font name as parameter in constructor")
                                              true, mcs.channelId,
                                              MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
-                
-                {
-                    BStream one(32768);
-                    one.out_copy_bytes(x224_header);
-                    one.out_copy_bytes(mcs_cjcf_data);
-                    one.mark_end();
-                    this->trans->send(one);
-                }
-//                this->trans->send(x224_header);
-//                this->trans->send(mcs_cjcf_data);
+                this->trans->send(x224_header, mcs_cjcf_data);
             }
 
             for (size_t i = 0 ; i < this->channel_list.size() ; i++){
@@ -1601,16 +1481,7 @@ TODO("Pass font name as parameter in constructor")
                                              true, mcs.channelId,
                                              MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
-
-                {
-                    BStream one(32768);
-                    one.out_copy_bytes(x224_header);
-                    one.out_copy_bytes(mcs_cjcf_data);
-                    one.mark_end();
-                    this->trans->send(one);
-                }
-//                this->trans->send(x224_header);
-//                this->trans->send(mcs_cjcf_data);
+                this->trans->send(x224_header, mcs_cjcf_data);
 
                 this->channel_list.set_chanid(i, mcs.channelId);
             }
@@ -1654,8 +1525,7 @@ TODO("Pass font name as parameter in constructor")
                 X224::RecvFactory f(*this->trans, pdu);
                 X224::DT_TPDU_Recv x224(*this->trans, pdu);
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                SubStream & payload = mcs.payload;
-                SEC::SecExchangePacket_Recv sec(payload, mcs.payload_size);
+                SEC::SecExchangePacket_Recv sec(mcs.payload, mcs.payload_size);
 
                 ssllib ssl;
                 uint8_t client_random[64];
@@ -1779,20 +1649,7 @@ TODO("Pass font name as parameter in constructor")
                     SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0);
                     MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                     X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-
-                    {
-                        BStream one(65535);
-                        one.out_copy_bytes(x224_header);
-                        one.out_copy_bytes(mcs_header);
-                        one.out_copy_bytes(sec_header);
-                        one.out_copy_bytes(stream);
-                        one.mark_end();
-                        this->trans->send(one);
-                    }
-//                    this->trans->send(x224_header);
-//                    this->trans->send(mcs_header);
-//                    this->trans->send(sec_header);
-//                    this->trans->send(stream);
+                    this->trans->send(x224_header, mcs_header, sec_header, stream);
                 }
                 // proceed with capabilities exchange
 
@@ -1888,22 +1745,7 @@ TODO("Pass font name as parameter in constructor")
                 SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-
-
-                {
-                    BStream one(65535);
-                    one.out_copy_bytes(x224_header);
-                    one.out_copy_bytes(mcs_header);
-                    one.out_copy_bytes(sec_header);
-                    one.out_copy_bytes(stream);
-                    one.mark_end();
-                    this->trans->send(one);
-                }
-
-//                this->trans->send(x224_header);
-//                this->trans->send(mcs_header);
-//                this->trans->send(sec_header);
-//                this->trans->send(stream);
+                this->trans->send(x224_header, mcs_header, sec_header, stream);
 
                 if (this->verbose & 2){
                     LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
@@ -1998,20 +1840,7 @@ TODO("Pass font name as parameter in constructor")
                     SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
                     MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                     X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-
-                    {
-                        BStream one(65535);
-                        one.out_copy_bytes(x224_header);
-                        one.out_copy_bytes(mcs_header);
-                        one.out_copy_bytes(sec_header);
-                        one.out_copy_bytes(stream);
-                        one.mark_end();
-                        this->trans->send(one);
-                    }
-//                    this->trans->send(x224_header);
-//                    this->trans->send(mcs_header);
-//                    this->trans->send(sec_header);
-//                    this->trans->send(stream);
+                    this->trans->send(x224_header, mcs_header, sec_header, stream);
                 }
                 break;
                 case LIC::PLATFORM_CHALLENGE_RESPONSE:
@@ -2395,18 +2224,9 @@ TODO("Pass font name as parameter in constructor")
 
         MCS::SendDataIndication_Send mcs(mcs_header, userid, channelId, 1, 3, stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
-
-        {
-            BStream one(65535);
-            one.out_copy_bytes(x224_header);
-            one.out_copy_bytes(mcs_header);
-            one.out_copy_bytes(stream);
-            one.mark_end();
-            this->trans->send(one);
-        }
-//        this->trans->send(x224_header);
-//        this->trans->send(mcs_header);
-//        this->trans->send(stream);
+        TODO("shouldn't there be sec layer here ? even if it's disabled when there is not encryption server to client ?")
+//        this->trans->send(x224_header, mcs_header, sec_header, stream);
+        this->trans->send(x224_header, mcs_header, stream);
     }
 
     /*****************************************************************************/
@@ -2415,9 +2235,10 @@ TODO("Pass font name as parameter in constructor")
         if (this->verbose & 1){
             LOG(LOG_INFO, "Front::send_data_update_sync");
         }
-        BStream stream(65536);
 
         if (this->server_fastpath_update_support == false) {
+            BStream stream(65536);
+
             ShareControl sctrl(stream);
             sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
             ShareData sdata(stream);
@@ -2444,28 +2265,14 @@ TODO("Pass font name as parameter in constructor")
             SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
             MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-
-            {
-                BStream one(65535);
-                one.out_copy_bytes(x224_header);
-                one.out_copy_bytes(mcs_header);
-                one.out_copy_bytes(sec_header);
-                one.out_copy_bytes(stream);
-                one.mark_end();
-                this->trans->send(one);
-            }
-//            this->trans->send(x224_header);
-//            this->trans->send(mcs_header);
-//            this->trans->send(sec_header);
-//            this->trans->send(stream);
+            this->trans->send(x224_header, mcs_header, sec_header, stream);
         }
         else {
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::send_data_update_sync: fast-path");
             }
-
+            BStream stream(65536);
             stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
-
             stream.mark_end();
 
             SubStream Upd_s(stream, 0, FastPath::Update_Send::GetSize());
@@ -2476,25 +2283,15 @@ TODO("Pass font name as parameter in constructor")
                                      , FastPath::FASTPATH_FRAGMENT_SINGLE
                                      );
 
-            BStream SvrUpdPDU_s(256);
+            BStream fastpath_header(256);
 
             FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-                  SvrUpdPDU_s
+                  fastpath_header
                 , stream
                 , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                 , this->encrypt
                 );
-
-            {
-                BStream one(65535);
-                one.out_copy_bytes(SvrUpdPDU_s);
-                one.out_copy_bytes(stream);
-                one.mark_end();
-                this->trans->send(one);
-            }
-
-//            this->trans->send(SvrUpdPDU_s); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-//            this->trans->send(stream);      // Fast-Path Update (TS_FP_UPDATE)
+            this->trans->send(fastpath_header, stream);
         }
     }
 
@@ -2599,7 +2396,7 @@ TODO("Pass font name as parameter in constructor")
         input_caps.emit(stream);
         caps_count++;
 
-        TODO("Check if this padding is necessary and if so how it should actually be computed. Padding is usually here for memory alignment purpose but this one looks strange")
+        TODO("Check if this padding is necessary and, if so, how it should actually be computed. Padding is usually here for memory alignment purpose but this one looks strange")
         stream.out_clear_bytes(4); /* pad */
 
         size_t caps_size = stream.p - caps_ptr;
@@ -2629,20 +2426,7 @@ TODO("Pass font name as parameter in constructor")
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-
-        {
-            BStream one(65535);
-            one.out_copy_bytes(x224_header);
-            one.out_copy_bytes(mcs_header);
-            one.out_copy_bytes(sec_header);
-            one.out_copy_bytes(stream);
-            one.mark_end();
-            this->trans->send(one);
-        }
-//        this->trans->send(x224_header);
-//        this->trans->send(mcs_header);
-//        this->trans->send(sec_header);
-//        this->trans->send(stream);
+        this->trans->send(x224_header, mcs_header, sec_header, stream);
     }
 
     /* store the number of client cursor cache in client_info */
@@ -2989,20 +2773,7 @@ TODO("Pass font name as parameter in constructor")
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-
-        {
-            BStream one(65535);
-            one.out_copy_bytes(x224_header);
-            one.out_copy_bytes(mcs_header);
-            one.out_copy_bytes(sec_header);
-            one.out_copy_bytes(stream);
-            one.mark_end();
-            this->trans->send(one);
-        }
-//        this->trans->send(x224_header);
-//        this->trans->send(mcs_header);
-//        this->trans->send(sec_header);
-//        this->trans->send(stream);
+        this->trans->send(x224_header, mcs_header, sec_header, stream);
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_synchronize done");
         }
@@ -3064,20 +2835,7 @@ TODO("Pass font name as parameter in constructor")
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-
-        {
-            BStream one(65535);
-            one.out_copy_bytes(x224_header);
-            one.out_copy_bytes(mcs_header);
-            one.out_copy_bytes(sec_header);
-            one.out_copy_bytes(stream);
-            one.mark_end();
-            this->trans->send(one);
-        }
-//        trans->send(x224_header);
-//        trans->send(mcs_header);
-//        trans->send(sec_header);
-//        trans->send(stream);
+        this->trans->send(x224_header, mcs_header, sec_header, stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_control action=%u", action);
@@ -3141,20 +2899,7 @@ TODO("Pass font name as parameter in constructor")
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-
-        {
-            BStream one(65535);
-            one.out_copy_bytes(x224_header);
-            one.out_copy_bytes(mcs_header);
-            one.out_copy_bytes(sec_header);
-            one.out_copy_bytes(stream);
-            one.mark_end();
-            this->trans->send(one);
-        }
-//        this->trans->send(x224_header);
-//        this->trans->send(mcs_header);
-//        this->trans->send(sec_header);
-//        this->trans->send(stream);
+        this->trans->send(x224_header, mcs_header, sec_header, stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_fontmap");
@@ -3403,20 +3148,7 @@ TODO("Pass font name as parameter in constructor")
                 SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-
-                {
-                    BStream one(65535);
-                    one.out_copy_bytes(x224_header);
-                    one.out_copy_bytes(mcs_header);
-                    one.out_copy_bytes(sec_header);
-                    one.out_copy_bytes(stream);
-                    one.mark_end();
-                    this->trans->send(one);
-                }
-//                this->trans->send(x224_header);
-//                this->trans->send(mcs_header);
-//                this->trans->send(sec_header);
-//                this->trans->send(stream);
+                this->trans->send(x224_header, mcs_header, sec_header, stream);
             }
         break;
         case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
@@ -3599,19 +3331,7 @@ TODO("Pass font name as parameter in constructor")
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-        {
-            BStream one(65535);
-            one.out_copy_bytes(x224_header);
-            one.out_copy_bytes(mcs_header);
-            one.out_copy_bytes(sec_header);
-            one.out_copy_bytes(stream);
-            one.mark_end();
-            this->trans->send(one);
-        }
-//        this->trans->send(x224_header);
-//        this->trans->send(mcs_header);
-//        this->trans->send(sec_header);
-//        this->trans->send(stream);
+        this->trans->send(x224_header, mcs_header, sec_header, stream);
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_deactive done");
         }
