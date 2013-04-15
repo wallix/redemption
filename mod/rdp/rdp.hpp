@@ -265,54 +265,21 @@ struct mod_rdp : public client_mod {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
 //            LOG(LOG_INFO, "Direct parameter transmission");
 
-            if (this->client_fastpath_input_event_support) {
-                BStream fastpath_header(256);
-                BStream stream(256);
-
-                FastPath::KeyboardEvent_Send ke(stream, (uint16_t)device_flags, param1);
-                FastPath::ClientInputEventPDU_Send out_cie(fastpath_header, stream, 1, this->encrypt, this->encryptionLevel, this->encryptionMethod);
-
-                this->nego.trans->send(fastpath_header, stream);
-            }
-            else {
-                this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
-            }
+            this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
         }
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
-            if (this->client_fastpath_input_event_support) {
-                BStream fastpath_header(256);
-                BStream stream(256);
-
-                FastPath::SynchronizeEvent_Send se(stream, param1);
-                FastPath::ClientInputEventPDU_Send out_cie(fastpath_header, stream, 1, this->encrypt, this->encryptionLevel, this->encryptionMethod);
-
-                this->nego.trans->send(fastpath_header, stream);
-            }
-            else {
-                this->send_input(0, RDP_INPUT_SYNCHRONIZE, device_flags, param1, 0);
-            }
+            this->send_input(0, RDP_INPUT_SYNCHRONIZE, device_flags, param1, 0);
         }
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
-            if (this->client_fastpath_input_event_support) {
-                BStream fastpath_header(256);
-                BStream out_payload(256);
-
-                FastPath::MouseEvent_Send me(out_payload, device_flags, x, y);
-                FastPath::ClientInputEventPDU_Send out_cie(fastpath_header, out_payload, 1, this->encrypt, this->encryptionLevel, this->encryptionMethod);
-
-                this->nego.trans->send(fastpath_header, out_payload);
-            }
-            else {
-                this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
-            }
+            this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
         }
     }
 
@@ -1699,18 +1666,7 @@ struct mod_rdp : public client_mod {
                             this->send_control(RDP_CTL_COOPERATE);
                             this->send_control(RDP_CTL_REQUEST_CONTROL);
 
-                            if (this->client_fastpath_input_event_support) {
-                                BStream fastpath_header(256);
-                                BStream out_payload(256);
-
-                                FastPath::SynchronizeEvent_Send se(out_payload, 0);
-                                FastPath::ClientInputEventPDU_Send out_cie(fastpath_header, out_payload, 1, this->encrypt, this->encryptionLevel, this->encryptionMethod);
-
-                                this->nego.trans->send(fastpath_header, out_payload);
-                            }
-                            else {
-                                this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
-                            }
+                            this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
 
                             /* Including RDP 5.0 capabilities */
                             if (this->use_rdp5){
@@ -3382,10 +3338,10 @@ struct mod_rdp : public client_mod {
         {
         }
 
-        void send_input(int time, int message_type, int device_flags, int param1, int param2) throw(Error)
+        void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) throw(Error)
         {
             if (this->verbose & 4){
-                LOG(LOG_INFO, "mod_rdp::send_input");
+                LOG(LOG_INFO, "mod_rdp::send_input_slowpath");
             }
             BStream stream(65536);
             ShareControl sctrl(stream);
@@ -3418,7 +3374,58 @@ struct mod_rdp : public client_mod {
             this->nego.trans->send(x224_header, mcs_header, sec_header, stream);
 
             if (this->verbose & 4){
-                LOG(LOG_INFO, "mod_rdp::send_input done");
+                LOG(LOG_INFO, "mod_rdp::send_input_slowpath done");
+            }
+        }
+
+        void send_input_fastpath(int time, int message_type, int device_flags, int param1, int param2) throw(Error) {
+            if (this->verbose & 4) {
+                LOG(LOG_INFO, "mod_rdp::send_input_fastpath");
+            }
+
+            BStream fastpath_header(256);
+            BStream stream(256);
+
+            switch (message_type) {
+            case RDP_INPUT_SCANCODE:
+                {
+                    FastPath::KeyboardEvent_Send ke(stream, (uint16_t)device_flags, param1);
+                }
+            break;
+
+            case RDP_INPUT_SYNCHRONIZE:
+                {
+                    FastPath::SynchronizeEvent_Send se(stream, param1);
+                }
+            break;
+
+            case RDP_INPUT_MOUSE:
+                {
+                    FastPath::MouseEvent_Send me(stream, (uint16_t)device_flags, param1, param2);
+                }
+            break;
+
+            default:
+                LOG(LOG_WARNING, "unsupported fast-path input message type 0x%x", message_type);
+                throw Error(ERR_RDP_FASTPATH);
+            break;
+            }
+
+            FastPath::ClientInputEventPDU_Send out_cie(fastpath_header, stream, 1, this->encrypt, this->encryptionLevel, this->encryptionMethod);
+
+            this->nego.trans->send(fastpath_header, stream);
+
+            if (this->verbose & 4) {
+                LOG(LOG_INFO, "mod_rdp::send_input_fastpath done");
+            }
+        }
+
+        void send_input(int time, int message_type, int device_flags, int param1, int param2) throw(Error) {
+            if (this->client_fastpath_input_event_support == false) {
+                send_input_slowpath(time, message_type, device_flags, param1, param2);
+            }
+            else {
+                send_input_fastpath(time, message_type, device_flags, param1, param2);
             }
         }
 
