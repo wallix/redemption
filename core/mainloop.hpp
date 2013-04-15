@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,18 +15,19 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    main include "ile
-
 */
 
 #ifndef _REDEMPTION_CORE_MAINLOOP_HPP_
 #define _REDEMPTION_CORE_MAINLOOP_HPP_
 
+#include "config.hpp"
+
 int g_is_term(void);
-void redemption_main_loop();
+void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid);
 void redemption_new_session();
 
 #endif

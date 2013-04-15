@@ -196,12 +196,12 @@ void redemption_new_session()
 
 }
 
-void redemption_main_loop()
+void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid)
 {
     init_signals();
 
-    SessionServer ss(&refreshconf);
-    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
+    SessionServer ss(&refreshconf, uid, gid);
+//    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     uint32_t s_addr = inet_addr(ini.globals.listen_address);
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
     int port = ini.globals.port;

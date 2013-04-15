@@ -183,6 +183,7 @@ struct Inifile {
         bool enable_file_encryption;
         bool enable_tls;
         char listen_address[256];
+        bool enable_ip_transparent;
 
         // Section "debug"
         struct {
@@ -294,6 +295,7 @@ struct Inifile {
             this->globals.enable_file_encryption = false;
             this->globals.enable_tls             = false;
             strcpy(this->globals.listen_address, "0.0.0.0");
+            this->globals.enable_ip_transparent  = false;
 
             memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
 
@@ -458,6 +460,9 @@ struct Inifile {
             }
             else if (0 == strcmp(key, "listen_address")){
                 strcpy(this->globals.listen_address, value);
+            }
+            else if (0 == strcmp(key, "enable_ip_transparent")){
+                this->globals.enable_ip_transparent = bool_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

@@ -31,8 +31,15 @@ class SessionServer : public Server
 {
     int * refreshconf ;
 
+    // Used for enable transparent proxying on accepted socket (ini.globals.enable_ip_transparent = true).
+    unsigned uid;
+    unsigned gid;
+
     public:
-    SessionServer(int * refreshconf) : refreshconf(refreshconf) {
+    SessionServer(int * refreshconf, unsigned uid, unsigned gid) :
+      refreshconf(refreshconf)
+    , uid(uid)
+    , gid(gid) {
     }
 
     virtual Server_status start(int incoming_sck)
@@ -61,6 +68,18 @@ class SessionServer : public Server
             Inifile ini(CFG_PATH "/" RDPPROXY_INI);
             if (ini.globals.debug.session){
                 LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
+            }
+
+            if (ini.globals.enable_ip_transparent) {
+                int optval = 1;
+
+                if (setsockopt(sck, SOL_IP, IP_TRANSPARENT, &optval, sizeof(optval))) {
+                    LOG(LOG_ERR, "Failed to enable transparent proxying on accepted socket.\n");
+                    _exit(1);
+                }
+
+                setgid(this->gid);
+                setuid(this->uid);
             }
 
             int nodelay = 1;

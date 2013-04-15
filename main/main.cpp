@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -16,11 +16,10 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
-              Olivier Hervieu, Martin Potier, Raphaël Zhou
+              Olivier Hervieu, Martin Potier, Raphael Zhou
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    main program
-
 */
 
 #include <signal.h>
@@ -38,6 +37,7 @@
 
 #include "constants.hpp"
 
+#include "config.hpp"
 #include "check_files.hpp"
 #include "mainloop.hpp"
 #include "log.hpp"
@@ -168,7 +168,6 @@ int shutdown(const char * pid_file)
             "/var/run/redemption" , errno, strerror(errno));
     }
 
-
     return 0;
 }
 
@@ -181,7 +180,7 @@ const char * copyright_notice =
 "Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
 "Copyright (C) Wallix 2010-2013.\n"
 "Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
-"Martin Potier, Dominique Lafages, Jonathan Poelen and Raphaël Zhou\n"
+"Martin Potier, Dominique Lafages, Jonathan Poelen and Raphael Zhou\n"
 "\n"
 ;
 
@@ -197,6 +196,8 @@ int main(int argc, char** argv)
 
     unsigned uid = getuid();
     unsigned gid = getgid();
+using namespace std;
+cout << "uid = " << uid << ", euid = " << geteuid() << "\n";
 
     po::options_description desc("Options");
     desc.add_options()
@@ -332,11 +333,16 @@ int main(int argc, char** argv)
         daemonize(PID_PATH "/redemption/" LOCKFILE);
     }
 
-    setgid(gid);
-    setuid(uid);
+    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
+
+cout << "uid = " << uid << ", euid = " << geteuid() << "\n";
+    if (!ini.globals.enable_ip_transparent) {
+        setgid(gid);
+        setuid(uid);
+    }
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
-    redemption_main_loop();
+    redemption_main_loop(ini, uid, gid);
 
     /* delete the .pid file if it exists */
     /* don't care about errors. */
