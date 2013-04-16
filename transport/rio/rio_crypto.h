@@ -44,6 +44,12 @@ extern "C" {
         return RIO_ERROR_NOT_IMPLEMENTED;
     }
 
+    /* This method return a signature based on the data written
+    */
+    static inline RIO_ERROR rio_m_RIOCrypto_sign(RIOCrypto * self, unsigned char * buf, size_t size, size_t & len) {
+        return RIO_ERROR_NOT_IMPLEMENTED;
+    }
+
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data
        returns len actually received (may be 0),

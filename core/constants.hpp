@@ -57,4 +57,8 @@ TODO("these constants should be dispatched between relevant ini files")
 #define RSAKEYS_INI "rsakeys.ini"
 #define RDPPROXY_INI "rdpproxy.ini"
 
+#if !defined(IP_TRANSPARENT)
+#define IP_TRANSPARENT 19
+#endif
+
 #endif

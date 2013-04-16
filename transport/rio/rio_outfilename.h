@@ -53,6 +53,14 @@ extern "C" {
         return RIO_ERROR_CLOSED;
     }
 
+    /* This method return a signature based on the data written
+    */
+    static inline RIO_ERROR rio_m_RIOCryptoOutfilename_sign(RIOCryptoOutfilename * self, unsigned char * buf, size_t size, size_t & len) {
+        memset(buf, 0, size);
+        len = 0;
+        return RIO_ERROR_OK;
+    }
+
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data
        returns len actually received (may be 0),

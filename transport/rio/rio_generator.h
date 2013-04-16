@@ -55,6 +55,14 @@ extern "C" {
         return RIO_ERROR_CLOSED;
     }
 
+    /* This method return a signature based on the data written
+    */
+    static inline RIO_ERROR rio_m_RIOGenerator_sign(RIOGenerator * self, unsigned char * buf, size_t size, size_t & len) {
+        memset(buf, 0, size);
+        len = 0;
+        return RIO_ERROR_OK;
+    }
+
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data
        returns asked len or available len if we are at end of data (may be 0).
