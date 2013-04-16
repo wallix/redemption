@@ -196,8 +196,6 @@ int main(int argc, char** argv)
 
     unsigned uid = getuid();
     unsigned gid = getgid();
-using namespace std;
-cout << "uid = " << uid << ", euid = " << geteuid() << "\n";
 
     po::options_description desc("Options");
     desc.add_options()
@@ -335,7 +333,6 @@ cout << "uid = " << uid << ", euid = " << geteuid() << "\n";
 
     Inifile ini(CFG_PATH "/" RDPPROXY_INI);
 
-cout << "uid = " << uid << ", euid = " << geteuid() << "\n";
     if (!ini.globals.enable_ip_transparent) {
         setgid(gid);
         setuid(uid);

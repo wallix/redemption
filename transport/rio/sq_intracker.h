@@ -463,7 +463,24 @@ extern "C" {
         }
         memcpy(self->line, &(self->buffer[self->begin_line]), name_size);
         self->line[name_size] = 0;
+
+        // Line format "fffff sssss eeeee hhhhh HHHHH"
+        //                               ^  ^  ^  ^
+        //                               |  |  |  |
+        //                               |hash1|  |
+        //                               |     |  |
+        //                           space3    |hash2
+        //                                     |
+        //                                   space4
         ssize_t i = name_size - 1;
+
+        while (self->line[i] != ' ')
+            i--;                     // skip hash2
+        i--;                         // skip space4
+        while (self->line[i] != ' ')
+            i--;                     // skip hash1
+        i--;                         // skip space3
+
         unsigned stop_sec = 0;
         {
             unsigned old_stop_sec = 0;
