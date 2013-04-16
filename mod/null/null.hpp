@@ -28,7 +28,7 @@
 
 struct null_mod : public mod_api {
 
-    null_mod(FrontAPI & front) : mod_api(front, 0, 0)
+    null_mod(FrontAPI & front) : mod_api(0, 0)
     {
 
     }

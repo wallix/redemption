@@ -61,6 +61,7 @@
 
 struct mod_rdp : public mod_api {
     /* mod data */
+    FrontAPI & front;
     BStream in_stream;
     ChannelDefArray mod_channel_list;
 
@@ -157,37 +158,37 @@ struct mod_rdp : public mod_api {
             bool fp_support, // If true, fast-path must be supported
             uint32_t verbose = 0,
             bool enable_new_pointer = false)
-            :
-                mod_api(front, info.width, info.height),
-                    in_stream(65536),
-                    use_rdp5(1),
-                    keylayout(info.keylayout),
-                    orders(0),
-                    share_id(0),
-                    bitmap_compression(1),
-                    version(0),
-                    userid(0),
-                    bpp(bpp),
-                    encryptionLevel(0),
-                    server_public_key_len(0),
-                    connection_finalization_state(EARLY),
-                    state(MOD_RDP_NEGO),
-                    console_session(info.console_session),
-                    brush_cache_code(info.brush_cache_code),
-                    front_bpp(info.bpp),
-                    gen(gen),
-                    verbose(verbose),
-                    sesman(sesman),
-                    auth_channel_flags(0),
-                    auth_channel_chanid(0),
-                    auth_channel_state(0), // 0 means unused
-                    nego(tls, trans, target_user),
-                    enable_new_pointer(enable_new_pointer),
-                    opt_clipboard(clipboard),
-                    performanceFlags(info.rdp5_performanceflags),
-                    fastpath_support(fp_support),
-                    client_fastpath_input_event_support(false),
-                    server_fastpath_update_support(fp_support)
+        : mod_api(info.width, info.height)
+        , front(front)
+        , in_stream(65536)
+        , use_rdp5(1)
+        , keylayout(info.keylayout)
+        , orders(0)
+        , share_id(0)
+        , bitmap_compression(1)
+        , version(0)
+        , userid(0)
+        , bpp(bpp)
+        , encryptionLevel(0)
+        , server_public_key_len(0)
+        , connection_finalization_state(EARLY)
+        , state(MOD_RDP_NEGO)
+        , console_session(info.console_session)
+        , brush_cache_code(info.brush_cache_code)
+        , front_bpp(info.bpp)
+        , gen(gen)
+        , verbose(verbose)
+        , sesman(sesman)
+        , auth_channel_flags(0)
+        , auth_channel_chanid(0)
+        , auth_channel_state(0) // 0 means unused
+        ,  nego(tls, trans, target_user)
+        , enable_new_pointer(enable_new_pointer)
+        , opt_clipboard(clipboard)
+        , performanceFlags(info.rdp5_performanceflags)
+        , fastpath_support(fp_support)
+        , client_fastpath_input_event_support(false)
+        , server_fastpath_update_support(fp_support)
     {
         if (this->verbose & 1){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
@@ -1340,7 +1341,7 @@ struct mod_rdp : public mod_api {
                             upd.payload.in_skip_bytes(2); // updateType(2)
 
                             this->front.begin_update();
-                            this->process_bitmap_updates(upd.payload, this);
+                            this->process_bitmap_updates(upd.payload);
                             this->front.end_update();
 
                             if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_BITMAP"); }
@@ -1350,7 +1351,7 @@ struct mod_rdp : public mod_api {
                             upd.payload.in_skip_bytes(2); // updateType(2)
 
                             this->front.begin_update();
-                            this->process_palette(upd.payload, this);
+                            this->process_palette(upd.payload);
                             this->front.end_update();
 
                             if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PALETTE"); }
@@ -1373,13 +1374,13 @@ struct mod_rdp : public mod_api {
                         break;
 
                         case FastPath::FASTPATH_UPDATETYPE_POINTER:
-                            this->process_new_pointer_pdu(upd.payload, this);
+                            this->process_new_pointer_pdu(upd.payload);
 
                             if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_POINTER"); }
                         break;
 
                         case FastPath::FASTPATH_UPDATETYPE_CACHED:
-                            this->process_cached_pointer_pdu(upd.payload, this);
+                            this->process_cached_pointer_pdu(upd.payload);
 
                             if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_CACHED"); }
                         break;
@@ -1597,13 +1598,13 @@ struct mod_rdp : public mod_api {
                                 case RDP_UPDATE_BITMAP:
                                     if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_BITMAP");}
                                     this->front.begin_update();
-                                    this->process_bitmap_updates(sdata.payload, this);
+                                    this->process_bitmap_updates(sdata.payload);
                                     this->front.end_update();
                                     break;
                                 case RDP_UPDATE_PALETTE:
                                     if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_PALETTE");}
                                     this->front.begin_update();
-                                    this->process_palette(sdata.payload, this);
+                                    this->process_palette(sdata.payload);
                                     this->front.end_update();
                                     break;
                                 case RDP_UPDATE_SYNCHRONIZE:
@@ -1999,7 +2000,7 @@ struct mod_rdp : public mod_api {
                 if (this->verbose & 4){
                     LOG(LOG_INFO, "Process pointer cached");
                 }
-                this->process_cached_pointer_pdu(stream, mod);
+                this->process_cached_pointer_pdu(stream);
                 if (this->verbose & 4){
                     LOG(LOG_INFO, "Process pointer cached done");
                 }
@@ -2008,12 +2009,12 @@ struct mod_rdp : public mod_api {
                 if (this->verbose & 4){
                     LOG(LOG_INFO, "Process pointer color");
                 }
-                this->process_system_pointer_pdu(stream, mod);
+                this->process_system_pointer_pdu(stream);
                 if (this->verbose & 4){
                     LOG(LOG_INFO, "Process pointer system done");
                 }
                 break;
-                this->process_color_pointer_pdu(stream, mod);
+                this->process_color_pointer_pdu(stream);
                 if (this->verbose & 4){
                     LOG(LOG_INFO, "Process pointer color done");
                 }
@@ -2023,7 +2024,7 @@ struct mod_rdp : public mod_api {
                     LOG(LOG_INFO, "Process pointer new");
                 }
                 if (enable_new_pointer) {
-                    this->process_new_pointer_pdu(stream, mod); // Pointer with arbitrary color depth
+                    this->process_new_pointer_pdu(stream); // Pointer with arbitrary color depth
                 }
                 if (this->verbose & 4){
                     LOG(LOG_INFO, "Process pointer new done");
@@ -2049,7 +2050,7 @@ struct mod_rdp : public mod_api {
             }
         }
 
-        void process_palette(Stream & stream, mod_api * mod)
+        void process_palette(Stream & stream)
         {
             if (this->verbose & 4){
                 LOG(LOG_INFO, "mod_rdp::process_palette");
@@ -2067,7 +2068,7 @@ struct mod_rdp : public mod_api {
                 this->orders.global_palette[i] = (r << 16)|(g << 8)|b;
                 this->orders.memblt_palette[i] = (b << 16)|(g << 8)|r;
             }
-            mod->front.set_mod_palette(this->orders.global_palette);
+            this->front.set_mod_palette(this->orders.global_palette);
             if (this->verbose & 4){
                 LOG(LOG_INFO, "mod_rdp::process_palette done");
             }
@@ -3478,7 +3479,7 @@ struct mod_rdp : public mod_api {
             }
         }
 
-    void process_color_pointer_pdu(Stream & stream, mod_api * mod) throw(Error)
+    void process_color_pointer_pdu(Stream & stream) throw(Error)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu");
@@ -3506,13 +3507,13 @@ struct mod_rdp : public mod_api {
         memcpy(cursor->data, stream.in_uint8p(dlen), dlen);
         memcpy(cursor->mask, stream.in_uint8p(mlen), mlen);
 
-        mod->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
+        this->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
         }
     }
 
-    void process_cached_pointer_pdu(Stream & stream, mod_api * mod)
+    void process_cached_pointer_pdu(Stream & stream)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
@@ -3526,13 +3527,13 @@ struct mod_rdp : public mod_api {
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
         struct rdp_cursor* cursor = this->cursors + cache_idx;
-        mod->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
+        this->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
         }
     }
 
-    void process_system_pointer_pdu(Stream & stream, mod_api * mod)
+    void process_system_pointer_pdu(Stream & stream)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
@@ -3544,8 +3545,8 @@ struct mod_rdp : public mod_api {
                 struct rdp_cursor cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
                 TODO("CGR: we should pass in a cursor to set_pointer instead of individual fields")
-                mod->front.server_set_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);
-                mod->set_pointer_display();
+                this->front.server_set_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);
+                this->set_pointer_display();
             }
             break;
         default:
@@ -3649,7 +3650,7 @@ struct mod_rdp : public mod_api {
     }
 
 
-    void process_new_pointer_pdu(Stream & stream, mod_api * mod) throw(Error)
+    void process_new_pointer_pdu(Stream & stream) throw(Error)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
@@ -3682,13 +3683,13 @@ struct mod_rdp : public mod_api {
         to_regular_pointer(stream, dlen, data_bpp, cursor->data, sizeof(cursor->data)); 
         to_regular_mask(stream, mlen, data_bpp, cursor->mask, sizeof(cursor->mask)); 
 
-        mod->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
+        this->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
         }
     }
 
-    void process_bitmap_updates(Stream & stream, mod_api * mod)
+    void process_bitmap_updates(Stream & stream)
     {
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
@@ -3841,7 +3842,7 @@ struct mod_rdp : public mod_api {
                 LOG(LOG_WARNING, "final_size should be size of decompressed bitmap [%u != %u] width=%u height=%u bpp=%u",
                     final_size, bitmap.bmp_size, width, height, bpp);
             }
-            mod->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
+            this->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
         }
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");

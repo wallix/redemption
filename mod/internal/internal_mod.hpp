@@ -28,6 +28,7 @@
 
 struct internal_mod : public mod_api {
     public:
+    FrontAPI & front;
     BackEvent_t signal;
 
     widget_screen screen;
@@ -39,7 +40,8 @@ struct internal_mod : public mod_api {
     RDPBrush brush;
 
     internal_mod(FrontAPI & front, uint16_t front_width, uint16_t front_height)
-            : mod_api(front, front_width, front_height)
+            : mod_api(front_width, front_height)
+            , front(front)
             , signal(BACK_EVENT_NONE)
             , screen(this, front_width, front_height)
     {

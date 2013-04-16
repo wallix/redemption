@@ -29,8 +29,8 @@
 
 struct test_card_mod : public internal_mod {
     BGRPalette palette332;
-    test_card_mod(FrontAPI & front, uint16_t width, uint16_t height):
-            internal_mod(front, width, height)
+    test_card_mod(FrontAPI & front, uint16_t width, uint16_t height)
+        : internal_mod(front, width, height)
     {
         init_palette332(this->palette332);
     }

@@ -49,6 +49,7 @@
 struct mod_vnc : public mod_api {
 //###############################################################################################################
     /* mod data */
+    FrontAPI & front;
     char mod_name[256];
     uint8_t mod_mouse_state;
     BGRPalette palette;
@@ -97,7 +98,8 @@ struct mod_vnc : public mod_api {
             , uint32_t verbose
             )
     //==============================================================================================================
-        : mod_api(front, front_width, front_height)
+        : mod_api(front_width, front_height)
+        , front(front)
         , verbose(verbose)
         , keymapSym(verbose)
         , incr(0)

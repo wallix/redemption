@@ -28,9 +28,8 @@
 
 struct transitory_mod : public mod_api {
     transitory_mod(FrontAPI & front, uint16_t front_width, uint16_t front_height)
-            : mod_api(front, front_width, front_height)
+            : mod_api(front_width, front_height)
     {
-
     }
 
     virtual ~transitory_mod()

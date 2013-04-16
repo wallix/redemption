@@ -57,6 +57,7 @@ enum {
 };
 
     /* mod data */
+    FrontAPI & front;
     int width;
     int height;
     int bpp;
@@ -66,7 +67,8 @@ enum {
     BGRPalette palette332;
 
     xup_mod(Transport * t, struct ModContext & context, struct FrontAPI & front, uint16_t front_width, uint16_t front_height)
-        : mod_api(front, front_width, front_height)
+        : mod_api(front_width, front_height)
+        , front(front)
     {
         this->width = atoi(context.get(STRAUTHID_OPT_WIDTH));
         this->height = atoi(context.get(STRAUTHID_OPT_HEIGHT));

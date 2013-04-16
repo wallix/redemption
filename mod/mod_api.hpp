@@ -45,16 +45,14 @@ enum BackEvent_t {
 struct mod_api : public Callback, public RDPGraphicDevice {
 
     wait_obj event;
-    FrontAPI & front;
     RDPPen pen;
     bool pointer_displayed;
 
     uint16_t front_width;
     uint16_t front_height;
 
-    mod_api(FrontAPI & front, const uint16_t front_width, const uint16_t front_height)
+    mod_api(const uint16_t front_width, const uint16_t front_height)
         : event(-1)
-        , front(front)
         , front_width(front_width)
         , front_height(front_height)
     {

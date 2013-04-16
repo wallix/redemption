@@ -40,7 +40,7 @@ struct TestWidgetMod : mod_api
     char buffer[32768];
     char * result;
     TestWidgetMod() 
-    : mod_api((FrontAPI&)(*(FrontAPI*)NULL), 0, 0)
+    : mod_api(0, 0)
     , result(this->buffer) {
     }
     virtual void mod_event(int event_id) {}
