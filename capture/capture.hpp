@@ -35,7 +35,7 @@ public:
     const bool enable_file_encryption;
 
     OutFilenameTransport * png_trans;
-    StaticCapture * psc;
+    StaticCapture        * psc;
 
     OutmetaTransport       * wrm_trans;
     CryptoOutmetaTransport * crypto_wrm_trans;
@@ -55,9 +55,44 @@ public:
       , wrm_trans(NULL)
       , crypto_wrm_trans(NULL)
       , pnc_bmp_cache(NULL)
-      , drawable(NULL)
       , pnc(NULL)
+      , drawable(NULL)
     {
+#ifndef PUBLIC
+        /************************
+        * Manage encryption key *
+        ************************/
+        if (this->enable_file_encryption) {
+            /* gl_crypto_key is a copy of the master key ("wabcryptofile.c").
+             */
+            extern char gl_crypto_key[32];
+
+            unsigned int  i;
+            int           fd_test;
+            unsigned char hash[32];
+
+            if ((fd_test = crypto_open(CFG_PATH "/" RDPPROXY_INI, O_RDONLY)) != -1) {
+                crypto_close(fd_test, hash);
+            }
+
+            for (i = 0; i < 32; i++)
+                if (gl_crypto_key[i])
+                    break;
+
+            if (i == 32) {
+                // Generate the random key used bye "webcryptofile" library.
+                for (i = 0; i < 32; i++)
+                    gl_crypto_key[i] = i;
+
+                LOG(LOG_INFO, "Use default encryption key");
+            }
+            else {
+                LOG(LOG_INFO, "Use WAB encryption key");
+            }
+        }
+#endif
+
+
         if (this->capture_png){
             this->png_trans = new OutFilenameTransport(SQF_PATH_FILE_PID_COUNT_EXTENSION, path, basename, ".png");
             this->psc = new StaticCapture(now, *this->png_trans, &(this->png_trans->seq), width, height, ini);

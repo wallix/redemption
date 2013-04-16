@@ -26,6 +26,13 @@
 #include "rio.h"
 
 extern "C" {
+    /* gl_crypto_key is a copy of the master key
+     */
+    char gl_crypto_key[32] = {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
+
     struct RIOCrypto {
         int reserved;
     };
