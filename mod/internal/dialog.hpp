@@ -290,6 +290,25 @@ struct dialog_mod : public internal_mod {
         return 0;
     }
 
+    void server_draw_dragging_rect(const Rect & r, const Rect & clip)
+    {
+        this->begin_update();
+
+        RDPBrush brush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55");
+
+        // draw rectangles by drawing each edge top/bottom/left/right
+        // 0x66 = xor -> pat_blt( ... 0x5A ...
+        // 0xAA = noop -> pat_blt( ... 0xFB ...
+        // 0xCC = copy -> pat_blt( ... 0xF0 ...
+        // 0x88 = and -> pat_blt( ...  0xC0 ...
+
+        this->draw(RDPPatBlt(Rect(r.x, r.y, r.cx, 5), 0x5A, BLACK, WHITE, brush), clip);
+        this->draw(RDPPatBlt(Rect(r.x, r.y + (r.cy - 5), r.cx, 5), 0x5A, BLACK, WHITE, brush), clip);
+        this->draw(RDPPatBlt(Rect(r.x, r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, brush), clip);
+        this->draw(RDPPatBlt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, brush), clip);
+        this->end_update();
+    }
+
 };
 
 #endif

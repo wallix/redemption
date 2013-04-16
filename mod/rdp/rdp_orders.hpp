@@ -119,6 +119,18 @@ struct rdp_orders {
         }
     }
 
+    void server_add_char(int font, int character,
+                    int offset, int baseline,
+                    int width, int height, const uint8_t* data,
+                    mod_api * mod)
+    {
+        struct FontChar fi(offset, baseline, width, height, 0);
+        memcpy(fi.data, data, fi.datasize());
+
+        RDPGlyphCache cmd(font, 1, character, fi.offset, fi.baseline, fi.width, fi.height, fi.data);
+        mod->draw(cmd);
+    }
+
     void process_fontcache(Stream & stream, int flags, mod_api * mod)
     {
         if (this->verbose & 64){
@@ -135,7 +147,7 @@ struct rdp_orders {
             int datasize = (height * nbbytes(width) + 3) & ~3;
             const uint8_t *data = stream.in_uint8p(datasize);
 
-            mod->server_add_char(font, character, offset, baseline, width, height, data);
+            this->server_add_char(font, character, offset, baseline, width, height, data, mod);
         }
         if (this->verbose & 64){
             LOG(LOG_INFO, "rdp_orders_process_fontcache done");
@@ -151,7 +163,9 @@ struct rdp_orders {
         RDPColCache colormap;
         colormap.receive(stream, control, header);
         memcpy(this->cache_colormap[colormap.cacheIndex], &colormap.palette, sizeof(BGRPalette));
-        mod->front.color_cache(colormap.palette, colormap.cacheIndex);
+        RDPColCache cmd(colormap.cacheIndex, colormap.palette);
+        mod->draw(cmd);
+
         if (this->verbose & 64){
             LOG(LOG_INFO, "process_colormap done");
         }
@@ -215,27 +229,27 @@ struct rdp_orders {
                 switch (this->common.order) {
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
-                    mod->front.draw(this->glyph_index, cmd_clip);
+                    mod->draw(this->glyph_index, cmd_clip);
                     break;
                 case DESTBLT:
                     this->destblt.receive(stream, header);
-                    mod->front.draw(this->destblt, cmd_clip);
+                    mod->draw(this->destblt, cmd_clip);
                     break;
                 case PATBLT:
                     this->patblt.receive(stream, header);
-                    mod->front.draw(this->patblt, cmd_clip);
+                    mod->draw(this->patblt, cmd_clip);
                     break;
                 case SCREENBLT:
                     this->scrblt.receive(stream, header);
-                    mod->front.draw(this->scrblt, cmd_clip);
+                    mod->draw(this->scrblt, cmd_clip);
                     break;
                 case LINE:
                     this->lineto.receive(stream, header);
-                    mod->front.draw(this->lineto, cmd_clip);
+                    mod->draw(this->lineto, cmd_clip);
                     break;
                 case RECT:
                     this->opaquerect.receive(stream, header);
-                    mod->front.draw(this->opaquerect, cmd_clip);
+                    mod->draw(this->opaquerect, cmd_clip);
                     break;
                 case MEMBLT:
                     this->memblt.receive(stream, header);
@@ -249,7 +263,7 @@ struct rdp_orders {
                         TODO("CGR: check if bitmap has the right palette...")
                         TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps")
                         if (bitmap) {
-                            mod->front.draw(this->memblt, cmd_clip, *bitmap);
+                            mod->draw(this->memblt, cmd_clip, *bitmap);
                         }
                     }
                     break;

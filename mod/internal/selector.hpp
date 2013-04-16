@@ -3902,6 +3902,39 @@ struct selector_mod : public internal_mod {
 
     }
 
+    void draw_edit(const Rect & r, char password_char, char * buffer, size_t edit_pos, bool has_focus, const Rect & clip){
+//        this->draw(RDPOpaqueRect(Rect(r.x+1, r.y+1, r.cx - 3, r.cy - 3), DARK_GREEN), clip);
+        this->front.draw(RDPOpaqueRect(Rect(r.x+1, r.y+1, r.cx - 3, r.cy - 3), WHITE), clip);
+        this->front.draw(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), BLACK), clip);
+        this->front.draw(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), BLACK), clip);
+        this->front.draw(RDPOpaqueRect(Rect(r.x, r.y + r.cy - 1, r.cx, 1), WHITE), clip);
+        this->front.draw(RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), WHITE), clip);
+
+        /* draw text */
+        char text[255];
+        const size_t len = strlen(buffer);
+        if (password_char != 0) {
+            memset(text, password_char, len);
+            text[len] = 0;
+        }
+        else {
+            memcpy(text, buffer, len+1);
+        }
+
+        this->server_draw_text(r.x + 4, r.y + 2, text, WHITE, BLACK, clip);
+
+        /* draw xor box(cursor) */
+        if (has_focus) {
+            UTF8TruncateAtPos(text, std::min<unsigned>(edit_pos, 255));
+            int width = 0; int height = 0;
+            TODO("As we are just looking for the end of bounding box to draw cursor, calling text_metrics is overkill."
+                 "It would need some simpler function only computing width")
+            this->text_metrics(text, width, height);
+            this->front.draw(
+                RDPOpaqueRect(Rect(r.x + 4 + width, r.y + 3, 2, r.cy - 6), BLACK),
+                clip);
+        }
+    }
 
     void draw(const Rect & clip)
     {

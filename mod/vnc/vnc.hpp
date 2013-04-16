@@ -836,7 +836,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         this->front.set_mod_palette(this->palette);
         this->front.send_global_palette();
         this->front.begin_update();
-        this->front.color_cache(this->palette, 0);
+        RDPColCache cmd(0, this->palette);
+        this->front.draw(cmd);
         this->front.end_update();
 
     } // lib_palette_update

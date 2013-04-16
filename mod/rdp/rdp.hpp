@@ -3895,6 +3895,11 @@ struct mod_rdp : public mod_api {
         this->front.begin_update();
     }
 
+    virtual void draw(const RDPGlyphCache & cmd)
+    {
+        this->front.draw(cmd);
+    }
+
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         this->front.draw(cmd, clip);
@@ -3940,6 +3945,10 @@ struct mod_rdp : public mod_api {
         this->front.text_metrics(text, width, height);
     }
 
+    virtual void draw(const RDPColCache & cmd) 
+    {
+        this->front.draw(cmd);
+    }
 };
 
 #endif

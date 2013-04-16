@@ -51,13 +51,66 @@ struct widget_button : public Widget
         for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
             const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
 
-            this->mod->draw_button(scr_r,
+            this->draw_button(scr_r,
                 this->caption1,
                 this->state,
                 this->has_focus,
                 region_clip);
         }
     }
+    
+    void draw_button(const Rect & r, const char * caption, int state, bool has_focus, const Rect & clip){
+
+        int bevel = (state == BUTTON_STATE_DOWN)?1:0;
+
+        this->mod->draw(RDPOpaqueRect(r, GREY), clip);
+        if (state == BUTTON_STATE_DOWN) {
+            this->mod->draw(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), BLACK), clip);
+            this->mod->draw(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), BLACK), clip);
+            this->mod->draw(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), DARK_GREY), clip);
+            this->mod->draw(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), DARK_GREY), clip);
+            this->mod->draw(RDPOpaqueRect(Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), DARK_GREY), clip);
+            this->mod->draw(RDPOpaqueRect(Rect(r.x + (r.cx - 2), r.y + 1, 1, r.cy - 1), DARK_GREY), clip);
+            this->mod->draw(RDPOpaqueRect(Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK), clip);
+            this->mod->draw(RDPOpaqueRect(Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK), clip);
+        } else {
+            this->mod->draw(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), WHITE), clip);
+            this->mod->draw(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), WHITE), clip);
+            this->mod->draw(RDPOpaqueRect(Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), DARK_GREY), clip);
+            this->mod->draw(RDPOpaqueRect(Rect((r.x + r.cx) - 2, r.y + 1, 1, r.cy - 1), DARK_GREY), clip);
+            this->mod->draw(RDPOpaqueRect(Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK), clip);
+            this->mod->draw(RDPOpaqueRect(Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK), clip);
+        }
+
+        TODO("There is probably a way to move text_metrics into server_draw_text, or something similar")
+        int w = 0;
+        int h = 0;
+        this->mod->text_metrics(caption, w, h);
+        this->mod->server_draw_text(
+            r.x + r.cx / 2 - w / 2 + bevel,
+            r.y + r.cy / 2 - h / 2 + bevel,
+            caption, GREY, BLACK, clip);
+        // focus rect
+        if (has_focus) {
+            this->mod->draw(
+                RDPPatBlt(Rect(r.x + 3 + bevel, r.y + 3 + bevel, r.cx - 8, 2),
+                    0xF0, GREY, BLACK,
+                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")), clip);
+            this->mod->draw(
+                RDPPatBlt(Rect(r.x + 3 + bevel, r.y + 3 + bevel, 2, r.cy - 8),
+                    0xF0, GREY, BLACK,
+                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")), clip);
+            this->mod->draw(
+                RDPPatBlt(Rect(r.x + r.cx - 6 + bevel, r.y + 3 + bevel, 2, r.cy - 8),
+                    0xF0, GREY, BLACK,
+                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")), clip);
+            this->mod->draw(
+                RDPPatBlt(Rect(r.x + 3 + bevel, r.y + r.cy - 6 + bevel, r.cx - 8, 2),
+                    0xF0, GREY, BLACK,
+                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")), clip);
+        }
+    }
+
 };
 
 #endif

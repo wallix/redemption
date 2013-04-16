@@ -277,7 +277,8 @@ enum {
                     {
                         int style = stream.in_uint16_le();
                         int width = stream.in_uint16_le();
-                        this->server_set_pen(style, width);
+                        this->pen.style = style;
+                        this->pen.width = width;
                     }
                     break;
                     case 18:

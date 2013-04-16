@@ -2173,7 +2173,10 @@ TODO("Pass font name as parameter in constructor")
                         // resizing done
                         BGRPalette palette;
                         init_palette332(palette);
-                        this->color_cache(palette, 0);
+                        {
+                            RDPColCache cmd(0, palette);
+                            this->orders->draw(cmd);
+                        }
                         this->init_pointers();
                         if (this->verbose & 1){
                             LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
@@ -3211,7 +3214,8 @@ TODO("Pass font name as parameter in constructor")
                 if (this->client_info.bpp == 8){
                     BGRPalette palette;
                     init_palette332(palette);
-                    this->color_cache(palette, 0);
+                    RDPColCache cmd(0, palette);
+                    this->orders->draw(cmd);
                 }
                 this->init_pointers();
 
@@ -3472,7 +3476,8 @@ TODO("Pass font name as parameter in constructor")
         const uint8_t palette_id = 0;
         if (this->client_info.bpp == 8){
             if (!this->palette_memblt_sent[palette_id]) {
-                this->color_cache(bitmap.original_palette, palette_id);
+                RDPColCache cmd(palette_id, bitmap.original_palette);
+                this->orders->draw(cmd);
                 this->palette_memblt_sent[palette_id] = true;
             }
         }
@@ -3603,9 +3608,8 @@ TODO("Pass font name as parameter in constructor")
         }
     }
 
-    void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
+    virtual void draw(const RDPColCache & cmd) 
     {
-        RDPColCache cmd(cacheIndex, palette);
         this->orders->draw(cmd);
     }
 

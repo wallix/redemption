@@ -60,12 +60,46 @@ struct widget_edit : public Widget {
         for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
             const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
 
-            this->mod->draw_edit(scr_r,
+            this->draw_edit(scr_r,
                 this->password_char,
                 this->buffer,
                 this->edit_pos,
                 this->has_focus,
                 region_clip);
+        }
+    }
+
+    void draw_edit(const Rect & r, char password_char, char * buffer, size_t edit_pos, bool has_focus, const Rect & clip){
+//        this->mod->draw(RDPOpaqueRect(Rect(r.x+1, r.y+1, r.cx - 3, r.cy - 3), DARK_GREEN), clip);
+        this->mod->draw(RDPOpaqueRect(Rect(r.x+1, r.y+1, r.cx - 3, r.cy - 3), WHITE), clip);
+        this->mod->draw(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), BLACK), clip);
+        this->mod->draw(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), BLACK), clip);
+        this->mod->draw(RDPOpaqueRect(Rect(r.x, r.y + r.cy - 1, r.cx, 1), WHITE), clip);
+        this->mod->draw(RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), WHITE), clip);
+
+        /* draw text */
+        char text[255];
+        const size_t len = strlen(buffer);
+        if (password_char != 0) {
+            memset(text, password_char, len);
+            text[len] = 0;
+        }
+        else {
+            memcpy(text, buffer, len+1);
+        }
+
+        this->mod->server_draw_text(r.x + 4, r.y + 2, text, WHITE, BLACK, clip);
+
+        /* draw xor box(cursor) */
+        if (has_focus) {
+            UTF8TruncateAtPos(text, std::min<unsigned>(edit_pos, 255));
+            int width = 0; int height = 0;
+            TODO("As we are just looking for the end of bounding box to draw cursor, calling text_metrics is overkill."
+                 "It would need some simpler function only computing width")
+            this->mod->text_metrics(text, width, height);
+            this->mod->draw(
+                RDPOpaqueRect(Rect(r.x + 4 + width, r.y + 3, 2, r.cy - 6), BLACK),
+                clip);
         }
     }
 
