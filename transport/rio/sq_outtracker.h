@@ -298,11 +298,29 @@ extern "C" {
     static inline RIO_ERROR sq_m_SQCryptoOuttracker_destructor(SQCryptoOuttracker * self)
     {
         if (self->trans){
+            unsigned char hash[32];
+            size_t        res_len;
+
+            TODO("check if sign returns some error");
+            rio_sign(self->trans, hash, sizeof(hash), res_len);
             if (self->tracker) {
                 char buffer[1024];
                 size_t len = sq_im_SQCryptoOuttracker_get_line(self, buffer, sizeof(buffer)-1, self->count);
-                buffer[len] = '\n';
-                rio_send(self->tracker, buffer, len + 1);
+                rio_send(self->tracker, buffer, len);
+
+                char *p = buffer;
+
+                *p++ = ' ';                           //    1 octet
+                for (int i = 0; i < 16; i++, p += 2)
+                    sprintf(p, "%02x", hash[i]);      //   32 octets (hash1)
+
+                *p++ = ' ';                           //    1 octet
+                for (int i = 16; i < 32; i++, p += 2)
+                    sprintf(p, "%02x", hash[i]);      //   32 octets (hash2)
+                *p++ = '\n';                          //    1 octet
+
+                rio_send(self->tracker, buffer, 67);  // = 76 octets
+
                 self->start_tv.tv_sec = self->stop_tv.tv_sec;
                 self->start_tv.tv_usec = self->stop_tv.tv_usec;
             }
