@@ -105,8 +105,8 @@ struct Session {
     time_t keep_alive_time;
 
 
-    struct client_mod * mod; /* module interface */
-    struct client_mod * no_mod;
+    struct mod_api * mod; /* module interface */
+    struct mod_api * no_mod;
 
     struct Front* front;
 

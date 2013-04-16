@@ -448,7 +448,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         LOG(LOG_INFO, "--------- CREATION OF MOD VNC ------------------------");
     }
 
-    struct client_mod * mod = new mod_vnc(&t, "10.10.3.103", "SecureLinux", front, info.width, info.height, info.keylayout, 0, true, verbose);
+    struct mod_api * mod = new mod_vnc(&t, "10.10.3.103", "SecureLinux", front, info.width, info.height, info.keylayout, 0, true, verbose);
     mod->event.set();
 
     if (verbose > 2){

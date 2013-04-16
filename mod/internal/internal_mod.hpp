@@ -24,9 +24,9 @@
 
 #include "widget/screen.hpp"
 #include "modcontext.hpp"
-#include "client_mod.hpp"
+#include "mod_api.hpp"
 
-struct internal_mod : public mod_api, public client_mod {
+struct internal_mod : public mod_api {
     public:
     BackEvent_t signal;
 
@@ -39,7 +39,7 @@ struct internal_mod : public mod_api, public client_mod {
     RDPBrush brush;
 
     internal_mod(FrontAPI & front, uint16_t front_width, uint16_t front_height)
-            : client_mod(front, front_width, front_height)
+            : mod_api(front, front_width, front_height)
             , signal(BACK_EVENT_NONE)
             , screen(this, front_width, front_height)
     {
@@ -51,6 +51,15 @@ struct internal_mod : public mod_api, public client_mod {
         this->draggingdx = 0; // distance between mouse and top angle of dragged window
         this->draggingdy = 0; // distance between mouse and left angle of dragged window
         this->dragging_window = 0;
+    }
+
+
+    virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags)
+    {
+        const ChannelDef * front_channel = this->front.get_channel_list().get(mod_channel_name);
+        if (front_channel){
+            this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
+        }
     }
 
     virtual void mod_event(int event_id)

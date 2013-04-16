@@ -36,7 +36,7 @@
 #include "d3des.hpp"
 #include "keymap2.hpp"
 #include "keymapSym.hpp"
-#include "client_mod.hpp"
+#include "mod_api.hpp"
 #include "channel_list.hpp"
 
 // got extracts of VNC documentation from
@@ -46,7 +46,7 @@
 #define MAX_VNC_2_RDP_CLIP_DATA_SIZE 8000
 
 //###############################################################################################################
-struct mod_vnc : public client_mod {
+struct mod_vnc : public mod_api {
 //###############################################################################################################
     /* mod data */
     char mod_name[256];
@@ -97,7 +97,7 @@ struct mod_vnc : public client_mod {
             , uint32_t verbose
             )
     //==============================================================================================================
-        : client_mod(front, front_width, front_height)
+        : mod_api(front, front_width, front_height)
         , verbose(verbose)
         , keymapSym(verbose)
         , incr(0)
@@ -1367,6 +1367,70 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             LOG( LOG_INFO, "mod_vnc::send_to_vnc done" );
         }
     } // send_to_vnc
+    
+    virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags)
+    {
+        const ChannelDef * front_channel = this->front.get_channel_list().get(mod_channel_name);
+        if (front_channel){
+            this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
+        }
+    }
+    
+    virtual void begin_update()
+    {
+        this->front.begin_update();
+    }
+
+    virtual void end_update()
+    {
+        this->front.begin_update();
+    }
+
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
+    {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
+    {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPDestBlt & cmd, const Rect &clip)
+    {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
+    {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
+    {
+        this->front.draw(cmd, clip, bmp);
+    }
+
+    virtual void draw(const RDPLineTo& cmd, const Rect & clip)
+    {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
+    {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+    {
+        this->front.server_draw_text(x, y, text, fgcolor, bgcolor, clip);
+    }
+
+    virtual void text_metrics(const char * text, int & width, int & height)
+    {
+        this->front.text_metrics(text, width, height);
+    }
+
 };
 
 #endif

@@ -25,7 +25,6 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_BOUNCER2_HPP_
 #define _REDEMPTION_MOD_INTERNAL_BOUNCER2_HPP_
 
-#include "client_mod.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"

@@ -27,6 +27,8 @@
 
 #include "error.hpp"
 #include <stdint.h>
+#include <sys/un.h>
+#include <arpa/inet.h>
 #include "difftimeval.hpp"
 
 class wait_obj

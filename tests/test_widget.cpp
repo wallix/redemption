@@ -30,7 +30,7 @@
 #define LOGPRINT
 #include "log.hpp"
 
-#include "client_mod.hpp"
+#include "mod_api.hpp"
 
 #include "internal/widget/screen.hpp"
 #include "internal/widget/window.hpp"
@@ -39,7 +39,9 @@ struct TestWidgetMod : mod_api
 {
     char buffer[32768];
     char * result;
-    TestWidgetMod() : result(this->buffer) {
+    TestWidgetMod() 
+    : mod_api((FrontAPI&)(*(FrontAPI*)NULL), 0, 0)
+    , result(this->buffer) {
     }
     virtual void mod_event(int event_id) {}
     virtual void begin_update() { result += sprintf(result, "begin_update()\n"); }
@@ -83,6 +85,13 @@ struct TestWidgetMod : mod_api
     {
         result += sprintf(result, "draw(RDPGlyphIndex(), clip(%d, %d, %d, %d))\n", clip.x, clip.y, clip.cx, clip.cy);
     }
+    
+    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) {}
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) {}
+    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) {}
+    virtual void rdp_input_invalidate(const Rect & r) {}
+    virtual void send_to_front_channel(const char*, uint8_t*, size_t, size_t, int){}
+    virtual BackEvent_t draw_event(){ return BACK_EVENT_NONE; }
 };
 
 

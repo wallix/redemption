@@ -40,7 +40,7 @@
 #include "stream.hpp"
 #include "ssl_calls.hpp"
 #include "constants.hpp"
-#include "client_mod.hpp"
+#include "mod_api.hpp"
 
 #include "RDP/x224.hpp"
 #include "RDP/nego.hpp"
@@ -52,14 +52,14 @@
 #include "RDP/sec.hpp"
 #include "colors.hpp"
 #include "RDP/capabilities.hpp"
-
+#include "RDP/fastpath.hpp"
 #include "authentifier.hpp"
 
 #include "genrandom.hpp"
 
 
 
-struct mod_rdp : public client_mod {
+struct mod_rdp : public mod_api {
     /* mod data */
     BStream in_stream;
     ChannelDefArray mod_channel_list;
@@ -158,7 +158,7 @@ struct mod_rdp : public client_mod {
             uint32_t verbose = 0,
             bool enable_new_pointer = false)
             :
-                client_mod(front, info.width, info.height),
+                mod_api(front, info.width, info.height),
                     in_stream(65536),
                     use_rdp5(1),
                     keylayout(info.keylayout),
@@ -280,6 +280,14 @@ struct mod_rdp : public client_mod {
     {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
+        }
+    }
+
+    virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags)
+    {
+        const ChannelDef * front_channel = this->front.get_channel_list().get(mod_channel_name);
+        if (front_channel){
+            this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
         }
     }
 
@@ -1653,7 +1661,6 @@ struct mod_rdp : public client_mod {
                     case PDUTYPE_DEMANDACTIVEPDU:
                         {
                             if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU"); }
-                            client_mod * mod = this;
                             this->share_id = sctrl.payload.in_uint32_le();
                             uint16_t lengthSourceDescriptor = sctrl.payload.in_uint16_le();
                             uint16_t lengthCombinedCapabilities = sctrl.payload.in_uint16_le();
@@ -1661,7 +1668,7 @@ struct mod_rdp : public client_mod {
                             this->process_server_caps(sctrl.payload, lengthCombinedCapabilities);
                             uint32_t sessionId = sctrl.payload.in_uint32_le();
 
-                            this->send_confirm_active(mod);
+                            this->send_confirm_active(this);
                             this->send_synchronise();
                             this->send_control(RDP_CTL_COOPERATE);
                             this->send_control(RDP_CTL_REQUEST_CONTROL);
@@ -1764,7 +1771,7 @@ struct mod_rdp : public client_mod {
         // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
 
 
-        void send_confirm_active(client_mod * mod) throw(Error)
+        void send_confirm_active(mod_api * mod) throw(Error)
         {
             if (this->verbose & 1){
                 LOG(LOG_INFO, "mod_rdp::send_confirm_active");
@@ -1979,7 +1986,7 @@ struct mod_rdp : public client_mod {
             }
         }
 
-        void process_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
+        void process_pointer_pdu(Stream & stream, mod_api * mod) throw(Error)
         {
             if (this->verbose & 4){
                 LOG(LOG_INFO, "mod_rdp::process_pointer_pdu");
@@ -2042,7 +2049,7 @@ struct mod_rdp : public client_mod {
             }
         }
 
-        void process_palette(Stream & stream, client_mod * mod)
+        void process_palette(Stream & stream, mod_api * mod)
         {
             if (this->verbose & 4){
                 LOG(LOG_INFO, "mod_rdp::process_palette");
@@ -3471,7 +3478,7 @@ struct mod_rdp : public client_mod {
             }
         }
 
-    void process_color_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
+    void process_color_pointer_pdu(Stream & stream, mod_api * mod) throw(Error)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu");
@@ -3505,7 +3512,7 @@ struct mod_rdp : public client_mod {
         }
     }
 
-    void process_cached_pointer_pdu(Stream & stream, client_mod * mod)
+    void process_cached_pointer_pdu(Stream & stream, mod_api * mod)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
@@ -3525,7 +3532,7 @@ struct mod_rdp : public client_mod {
         }
     }
 
-    void process_system_pointer_pdu(Stream & stream, client_mod * mod)
+    void process_system_pointer_pdu(Stream & stream, mod_api * mod)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
@@ -3642,7 +3649,7 @@ struct mod_rdp : public client_mod {
     }
 
 
-    void process_new_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
+    void process_new_pointer_pdu(Stream & stream, mod_api * mod) throw(Error)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
@@ -3681,7 +3688,7 @@ struct mod_rdp : public client_mod {
         }
     }
 
-    void process_bitmap_updates(Stream & stream, client_mod * mod)
+    void process_bitmap_updates(Stream & stream, mod_api * mod)
     {
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
@@ -3876,6 +3883,61 @@ struct mod_rdp : public client_mod {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu done");
         }
+    }
+
+    virtual void begin_update()
+    {
+        this->front.begin_update();
+    }
+
+    virtual void end_update()
+    {
+        this->front.begin_update();
+    }
+
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
+    {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
+    {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPDestBlt & cmd, const Rect &clip)
+    {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
+    {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
+    {
+        this->front.draw(cmd, clip, bmp);
+    }
+
+    virtual void draw(const RDPLineTo& cmd, const Rect & clip)
+    {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
+    {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+    {
+        this->front.server_draw_text(x, y, text, fgcolor, bgcolor, clip);
+    }
+
+    virtual void text_metrics(const char * text, int & width, int & height)
+    {
+        this->front.text_metrics(text, width, height);
     }
 
 };

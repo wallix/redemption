@@ -28,7 +28,7 @@
 
 #include "log.hpp"
 #include "stream.hpp"
-#include "client_mod.hpp"
+#include "mod_api.hpp"
 
 //#include "RDP/orders/RDPOrdersNames.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"
@@ -119,7 +119,7 @@ struct rdp_orders {
         }
     }
 
-    void process_fontcache(Stream & stream, int flags, client_mod * mod)
+    void process_fontcache(Stream & stream, int flags, mod_api * mod)
     {
         if (this->verbose & 64){
             LOG(LOG_INFO, "rdp_orders_process_fontcache");
@@ -143,7 +143,7 @@ struct rdp_orders {
     }
 
 
-    void process_colormap(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header, client_mod * mod)
+    void process_colormap(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header, mod_api * mod)
     {
         if (this->verbose & 64){
             LOG(LOG_INFO, "process_colormap");
@@ -158,7 +158,7 @@ struct rdp_orders {
     }
 
     /*****************************************************************************/
-    int process_orders(uint8_t bpp, Stream & stream, int num_orders, client_mod * mod)
+    int process_orders(uint8_t bpp, Stream & stream, int num_orders, mod_api * mod)
     {
         if (this->verbose & 64){
             LOG(LOG_INFO, "process_orders bpp=%u", bpp);

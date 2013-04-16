@@ -22,13 +22,13 @@
 #ifndef _REDEMPTION_MOD_NULL_NULL_HPP_
 #define _REDEMPTION_MOD_NULL_NULL_HPP_
 
-#include "client_mod.hpp"
+#include "mod_api.hpp"
 
 // Null module receive every event and does nothing. It allow session code to always have a receiving module active, thus avoidind to test that so back_end is available.
 
-struct null_mod : public client_mod {
+struct null_mod : public mod_api {
 
-    null_mod(FrontAPI & front) : client_mod(front, 0, 0)
+    null_mod(FrontAPI & front) : mod_api(front, 0, 0)
     {
 
     }
@@ -65,6 +65,18 @@ struct null_mod : public client_mod {
         return BACK_EVENT_NONE;
     }
 
+    virtual void begin_update() {}
+    virtual void end_update() {}
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) {}
+    virtual void draw(const RDPScrBlt & cmd, const Rect &clip) {}
+    virtual void draw(const RDPDestBlt & cmd, const Rect &clip) {}
+    virtual void draw(const RDPPatBlt & cmd, const Rect &clip) {}
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) {}
+    virtual void draw(const RDPLineTo& cmd, const Rect & clip) {}
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) {}
+    virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) {}
+    virtual void text_metrics(const char * text, int & width, int & height) {}
+    virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags) {}
 };
 
 #endif

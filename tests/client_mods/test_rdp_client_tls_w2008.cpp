@@ -209,7 +209,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     }
     const bool tls = true;
 
-    struct client_mod * mod = new mod_rdp(&t, "administrateur@qa", "S3cur3!1nux", "10.10.9.161", front, "195-132-203-212", tls, info, &gen, 7, NULL, "", true, false, 511, false);
+    struct mod_api * mod = new mod_rdp(&t, "administrateur@qa", "S3cur3!1nux", "10.10.9.161", front, "195-132-203-212", tls, info, &gen, 7, NULL, "", true, false, 511, false);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
