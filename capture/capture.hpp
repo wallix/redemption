@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -14,8 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2013
-   Author(s): Christophe Grosjean
+   Copyright (C) Wallix 2010-2013
+   Author(s): Christophe Grosjean, Raphael Zhou
 */
 
 #ifndef _REDEMPTION_CAPTURE_CAPTURE_HPP_
@@ -32,22 +32,28 @@ public:
     const bool capture_drawable;
     const bool capture_png;
 
+    const bool enable_file_encryption;
+
     OutFilenameTransport * png_trans;
     StaticCapture * psc;
 
-    OutmetaTransport * wrm_trans;
-    BmpCache * pnc_bmp_cache;
+    OutmetaTransport       * wrm_trans;
+    CryptoOutmetaTransport * crypto_wrm_trans;
+    BmpCache               * pnc_bmp_cache;
+    NativeCapture          * pnc;
+
     RDPDrawable * drawable;
-    NativeCapture * pnc;
-    
+
     TODO("capture_wrm flag should be changed to some configuration parameter in inifile")
-    Capture(const timeval & now, int width, int height, const char * path, const char * basename, const Inifile & ini) 
+    Capture(const timeval & now, int width, int height, const char * path, const char * basename, const Inifile & ini)
       : capture_wrm(ini.globals.capture_wrm)
       , capture_drawable(ini.globals.capture_wrm)
       , capture_png(ini.globals.png_limit > 0)
+      , enable_file_encryption(ini.globals.enable_file_encryption)
       , png_trans(NULL)
       , psc(NULL)
       , wrm_trans(NULL)
+      , crypto_wrm_trans(NULL)
       , pnc_bmp_cache(NULL)
       , drawable(NULL)
       , pnc(NULL)
@@ -62,9 +68,16 @@ public:
         }
 
         if (this->capture_wrm){
-            this->wrm_trans = new OutmetaTransport(path, basename, now, width, height);
-            this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288); 
-            this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
+            if (this->enable_file_encryption == false) {
+                this->wrm_trans = new OutmetaTransport(path, basename, now, width, height);
+                this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
+                this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
+            }
+            else {
+                this->crypto_wrm_trans = new CryptoOutmetaTransport(path, basename, now, width, height);
+                this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
+                this->pnc = new NativeCapture(now, *this->crypto_wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
+            }
             this->pnc->recorder.send_input = true;
         }
    }
@@ -74,11 +87,17 @@ public:
         delete this->png_trans;
 
         delete this->pnc;
-        delete this->wrm_trans;
+        if (this->enable_file_encryption == false) {
+            delete this->wrm_trans;
+        }
+        else {
+            delete this->crypto_wrm_trans;
+        }
+
         delete this->pnc_bmp_cache;
         delete this->drawable;
     }
-    
+
     void update_config(const Inifile & ini){
 //        if (this->capture_drawable){
 //            this->drawable->update_config(ini);
@@ -117,8 +136,8 @@ public:
         }
     }
 
-    virtual void set_row(size_t rownum, const uint8_t * data) 
-    { 
+    virtual void set_row(size_t rownum, const uint8_t * data)
+    {
         if (this->capture_drawable){
             this->drawable->set_row(rownum, data);
         }
@@ -136,7 +155,7 @@ public:
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip);
         }
-        if (this->capture_png){ 
+        if (this->capture_png){
             this->psc->draw(cmd, clip);
         }
         if (this->capture_wrm){
@@ -149,7 +168,7 @@ public:
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip);
         }
-        if (this->capture_png){ 
+        if (this->capture_png){
             this->psc->draw(cmd, clip);
         }
         if (this->capture_wrm){
@@ -162,7 +181,7 @@ public:
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip);
         }
-        if (this->capture_png){ 
+        if (this->capture_png){
             this->psc->draw(cmd, clip);
         }
         if (this->capture_wrm){
@@ -175,7 +194,7 @@ public:
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip, bmp);
         }
-        if (this->capture_png){ 
+        if (this->capture_png){
             this->psc->draw(cmd, clip, bmp);
         }
         if (this->capture_wrm){
@@ -188,7 +207,7 @@ public:
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip);
         }
-        if (this->capture_png){ 
+        if (this->capture_png){
             this->psc->draw(cmd, clip);
         }
         if (this->capture_wrm){
@@ -215,7 +234,6 @@ public:
 //        this->drawable->draw(cmd, clip);
 //        this->pnc->glyph_index(cmd, clip);
     }
-
 };
 
 #endif
