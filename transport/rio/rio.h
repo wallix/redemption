@@ -66,6 +66,7 @@ extern "C" {
         RIO_ERROR_OUT_ONLY,
         RIO_ERROR_OUT_SEQ_ONLY,
         RIO_ERROR_DESTRUCTED,
+        RIO_ERROR_MORE_DATA,
     } RIO_ERROR;
 
     typedef enum {
@@ -133,6 +134,9 @@ extern "C" {
 
     void rio_delete(RIO * rt);
     void rio_clear(RIO * rt);
+
+    RIO_ERROR rio_sign(RIO * rt, unsigned char * buf, size_t size, size_t & len);
+
     ssize_t rio_recv(RIO * rt, void * data, size_t len);
     ssize_t rio_send(RIO * rt, const void * data, size_t len);
 

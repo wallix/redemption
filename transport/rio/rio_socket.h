@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    new Socket RedTransport class
-
 */
 
 #ifndef _REDEMPTION_LIBS_RIO_SOCKET_H_
@@ -32,7 +31,7 @@ extern "C" {
         int sck;
     };
 
-    /* This method does not allocate space for object itself, 
+    /* This method does not allocate space for object itself,
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
@@ -47,6 +46,14 @@ extern "C" {
     inline RIO_ERROR rio_m_RIOSocket_destructor(RIOSocket * self)
     {
         return RIO_ERROR_CLOSED;
+    }
+
+    /* This method return a signature based on the data written
+    */
+    static inline RIO_ERROR rio_m_RIOSocket_sign(RIOSocket * self, unsigned char * buf, size_t size, size_t & len) {
+        memset(buf, 0, size);
+        len = 0;
+        return RIO_ERROR_OK;
     }
 
     /* This method receive len bytes of data into buffer
@@ -127,7 +134,7 @@ extern "C" {
         }
         return len;
     }
-    
+
     static inline RIO_ERROR rio_m_RIOSocket_get_status(RIOSocket * self)
     {
         TODO("when we will keep error value needed for recv we should return the stored error status")

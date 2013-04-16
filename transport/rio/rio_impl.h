@@ -1020,7 +1020,6 @@ RIO_ERROR rio_get_status(RIO * rt)
         break;
         default:
             rt->err = RIO_ERROR_UNKNOWN_TYPE;
-            ;
     }
     return rt->err;
 }
@@ -1271,6 +1270,69 @@ void rio_clear(RIO * rt)
             rt->err = RIO_ERROR_UNKNOWN_TYPE;
     }
     /* after a close any subsequent call to recv/send/etc. raise an error */
+}
+
+RIO_ERROR rio_sign(RIO * rt, unsigned char * buf, size_t size, size_t & len)
+{
+    /* if transport goes into error state it should be immediately flushed and closed (if it means something)
+       hence no need to close it again calling close
+    */
+    if (rt->err != RIO_ERROR_OK){
+        return rt->err;
+    }
+    switch(rt->rt_type){
+        case RIO_TYPE_GENERATOR:
+            rt->err = rio_m_RIOGenerator_sign(&(rt->u.generator), buf, size, len);
+        break;
+        case RIO_TYPE_CHECK:
+            rt->err = rio_m_RIOCheck_sign(&(rt->u.check), buf, size, len);
+        break;
+        case RIO_TYPE_TEST:
+            rt->err = rio_m_RIOTest_sign(&(rt->u.test), buf, size, len);
+        break;
+        case RIO_TYPE_OUTFILE:
+            rt->err = rio_m_RIOOutfile_sign(&(rt->u.outfile), buf, size, len);
+        break;
+        case RIO_TYPE_INFILE:
+            rt->err = rio_m_RIOInfile_sign(&(rt->u.infile), buf, size, len);
+        break;
+        case RIO_TYPE_SOCKET:
+            rt->err = rio_m_RIOSocket_sign(&(rt->u.socket), buf, size, len);
+        break;
+        case RIO_TYPE_SOCKET_TLS:
+            rt->err = rio_m_RIOSocketTLS_sign(&(rt->u.socket_tls), buf, size, len);
+        break;
+        case RIO_TYPE_OUTSEQUENCE:
+            rt->err = rio_m_RIOOutsequence_sign(&(rt->u.outsequence), buf, size, len);
+        break;
+        case RIO_TYPE_INSEQUENCE:
+            rt->err = rio_m_RIOInsequence_sign(&(rt->u.insequence), buf, size, len);
+        break;
+        case RIO_TYPE_OUTMETA:
+            rt->err = rio_m_RIOOutmeta_sign(&(rt->u.outmeta), buf, size, len);
+        break;
+        case RIO_TYPE_INMETA:
+            rt->err = rio_m_RIOInmeta_sign(&(rt->u.inmeta), buf, size, len);
+        break;
+        case RIO_TYPE_CRYPTO:
+            rt->err = rio_m_RIOCrypto_sign(&(rt->u.crypto), buf, size, len);
+        break;
+        case RIO_TYPE_CRYPTOOUTMETA:
+            rio_m_RIOCryptoOutmeta_sign(&(rt->u.cryptooutmeta), buf, size, len);
+        break;
+        case RIO_TYPE_CRYPTOINMETA:
+            rio_m_RIOCryptoInmeta_sign(&(rt->u.cryptoinmeta), buf, size, len);
+        break;
+        case RIO_TYPE_CRYPTOOUTFILENAME:
+            rt->err = rio_m_RIOCryptoOutfilename_sign(&(rt->u.cryptooutfilename), buf, size, len);
+        break;
+        case RIO_TYPE_CRYPTOINFILENAME:
+            rt->err = rio_m_RIOCryptoInfilename_sign(&(rt->u.cryptoinfilename), buf, size, len);
+        break;
+        default:
+            rt->err = RIO_ERROR_UNKNOWN_TYPE;
+    }
+    return rt->err;
 }
 
 void rio_delete(RIO * self)

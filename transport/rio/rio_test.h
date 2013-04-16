@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    new Test RedTransport class
-
 */
 
 #ifndef _REDEMPTION_LIBS_RIO_TEST_H_
@@ -62,6 +61,13 @@ extern "C" {
         return RIO_ERROR_CLOSED;
     }
 
+    /* This method return a signature based on the data written
+    */
+    static inline RIO_ERROR rio_m_RIOTest_sign(RIOTest * self, unsigned char * buf, size_t size, size_t & len) {
+        memset(buf, 0, size);
+        len = 0;
+        return RIO_ERROR_OK;
+    }
 
     /* This method receive len bytes of data into buffer
        target buffer *MUST* be large enough to contains len data
@@ -116,7 +122,6 @@ extern "C" {
     {
         return rio_get_status(self->check);
     }
-
 };
 
 #endif

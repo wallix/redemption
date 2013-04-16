@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    new Socket RedTransport class
-
 */
 
 #ifndef _REDEMPTION_LIBS_RIO_SOCKET_TLS_H_
@@ -30,7 +29,6 @@
 #include </usr/include/openssl/err.h>
 
 extern "C" {
-
     struct RIOSocketTLS {
         SSL * ssl;
     };
@@ -50,6 +48,14 @@ extern "C" {
     static inline RIO_ERROR rio_m_RIOSocketTLS_destructor(RIOSocketTLS * self)
     {
         return RIO_ERROR_CLOSED;
+    }
+
+    /* This method return a signature based on the data written
+    */
+    static inline RIO_ERROR rio_m_RIOSocketTLS_sign(RIOSocketTLS * self, unsigned char * buf, size_t size, size_t & len) {
+        memset(buf, 0, size);
+        len = 0;
+        return RIO_ERROR_OK;
     }
 
     static inline size_t rio_m_RIOSocketTLS_recv(RIOSocketTLS * self, void * data, size_t len)
@@ -86,7 +92,7 @@ extern "C" {
                     continue;
 
                 case SSL_ERROR_ZERO_RETURN:
-                    LOG(LOG_WARNING, "TLS receive for %u bytes, ZERO RETURN got %u", 
+                    LOG(LOG_WARNING, "TLS receive for %u bytes, ZERO RETURN got %u",
                         (unsigned)len, (unsigned)(remaining_len - len));
                     return remaining_len - len;
                 default:
@@ -153,13 +159,11 @@ extern "C" {
         return len;
     }
 
-    
     static inline RIO_ERROR rio_m_RIOSocketTLS_get_status(RIOSocketTLS * self)
     {
         TODO("when we will keep error value needed for recv we should return the stored error status")
         return RIO_ERROR_OK;
     }
-
 };
 
 #endif
