@@ -1107,9 +1107,15 @@ TODO("Pass font name as parameter in constructor")
                 uint32_t rdp_neg_code = 0;
                 if (this->tls_support){
                     LOG(LOG_INFO, "-----------------> Front::TLS Support Enabled");
-                    rdp_neg_type = X224::RDP_NEG_RSP;
-                    rdp_neg_code = X224::PROTOCOL_TLS;
-                    this->client_info.encryptionLevel = 0;
+                    if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
+                        rdp_neg_type = X224::RDP_NEG_RSP;
+                        rdp_neg_code = X224::PROTOCOL_TLS;
+                        this->client_info.encryptionLevel = 0;
+                    }
+                    else {
+                        rdp_neg_type = X224::RDP_NEG_FAILURE;
+                        rdp_neg_code = X224::SSL_REQUIRED_BY_SERVER;
+                    }
                 }
                 else {
                     LOG(LOG_INFO, "-----------------> Front::TLS Support not Enabled");
