@@ -128,7 +128,6 @@ struct internal_mod : public mod_api {
 
     virtual ~internal_mod()
     {
-//        this->screen.delete_all_childs();
     }
 
     size_t nb_windows()

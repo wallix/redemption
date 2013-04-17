@@ -437,7 +437,7 @@ struct window_login : public window
         return 0;
     }
 
-    ~window_login(){
+    virtual ~window_login(){
     }
 };
 
@@ -454,11 +454,10 @@ struct window_dialog : public window
                   const char * refuse)
     : window(mod, r, parent, bg_color, title)
     {
-        struct Widget* but;
         this->context = &context;
         this->esc_button = NULL;
 
-        but = new widget_button(this->mod, Rect(200, r.cy - 40, 60, 25), this, 3, 1, "OK");
+        struct Widget* but = new widget_button(this->mod, Rect(200, r.cy - 40, 60, 25), this, 3, 1, "OK");
         this->default_button = but;
 
         if (refuse) {
@@ -495,7 +494,7 @@ struct window_dialog : public window
         }
         TODO(" use symbolic button ids instead of constants 2 and 3")
         if (msg == 1) { /* click */
-            LOG(LOG_INFO, "windget_window_dialog::notify id=%d msg=%d", id, msg);
+            LOG(LOG_INFO, "widget_window_dialog::notify id=%d msg=%d", id, msg);
             switch (id) {
             case 2: /* cancel button -> Esc */
                 this->context->cpy(
@@ -514,6 +513,7 @@ struct window_dialog : public window
             default:
             break;
             }
+            LOG(LOG_INFO, "widget_window_dialog::notify done");
         }
         return;
     }

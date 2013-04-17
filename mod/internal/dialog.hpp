@@ -30,7 +30,7 @@
 #include "widget/window.hpp"
 
 struct dialog_mod : public internal_mod {
-    struct window_dialog * close_window;
+    struct window_dialog * dialog_box;
     Widget* button_down;
     bool refuse_flag;
     ModContext & context;
@@ -79,7 +79,7 @@ struct dialog_mod : public internal_mod {
             log_height);
 
         this->front.begin_update();
-        this->close_window = new window_dialog(this,
+        this->dialog_box = new window_dialog(this,
             r, context,
             &this->screen, // parent
             GREY,
@@ -88,16 +88,15 @@ struct dialog_mod : public internal_mod {
             regular,
             message,
             refuse);
-        this->screen.child_list.push_back(this->close_window);
-        assert(this->close_window->mod == this);
 
-        this->close_window->focus(this->close_window->rect);
-        this->close_window->has_focus = true;
+        this->dialog_box->focus(this->dialog_box->rect);
+        this->dialog_box->has_focus = true;
         this->screen.refresh(this->get_screen_rect().wh());
         this->front.end_update();
 
     }
-    ~dialog_mod() {
+    virtual ~dialog_mod() {
+        delete this->dialog_box;
     }
 
     virtual void rdp_input_invalidate(const Rect & rect)
