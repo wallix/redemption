@@ -53,6 +53,7 @@ enum NotifyEventType {
     NOTIFY_TEXT_CHANGED = TEXT_CHANGED,
     NOTIFY_SUBMIT = WIDGET_SUBMIT,
     NOTIFY_CANCEL = WIDGET_CANCEL,
+    NOTIFY_SELECTION_CHANGED,
 };
 
 class Widget : public RdpInput, public NotifyApi

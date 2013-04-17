@@ -34,10 +34,10 @@ class WindowLogin : public Window
 {
 public:
     WidgetImage img;
-    WidgetEdit login_edit;
     WidgetLabel login_label;
-    WidgetPassword password_edit;
+    WidgetEdit login_edit;
     WidgetLabel password_label;
+    WidgetPassword password_edit;
     WidgetButton ok;
     WidgetButton cancel;
     WidgetButton help;
@@ -48,14 +48,14 @@ public:
                 const char * login = 0, const char * password = 0,
                 int bgcolor = DARK_WABGREEN, int fgcolor = BLACK)
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, id)
-    , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_LOGO24, this, NULL, -17)
-    , login_edit(drawable, 0, 0, 200, this, NULL, login, -10, WHITE, BLACK, -1u, 1, 1)
-    , login_label(drawable, this->img.cx() + 20, 0, this, NULL, "login:", true, -11, bgcolor, fgcolor)
-    , password_edit(drawable, 0, 0, 200, this, NULL, password, -12, WHITE, BLACK, -1u, 1, 1)
-    , password_label(drawable, this->img.cx() + 20, 0, this, NULL, "password:", true, -13, bgcolor, fgcolor)
-    , ok(drawable, 0, 0, this, this, "Ok", true, -14, WHITE, BLACK, 6, 2)
-    , cancel(drawable, 0, 0, this, this, "Cancel", true, -15, WHITE, BLACK, 6, 2)
-    , help(drawable, 0, 0, this, this, "Help", true, -16, WHITE, BLACK, 6, 2)
+    , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_LOGO24, this, NULL, -10)
+    , login_label(drawable, this->img.cx() + 20, 0, this, NULL, "Login:", true, -11, bgcolor, fgcolor)
+    , login_edit(drawable, 0, 0, 200, this, NULL, login, -12, WHITE, BLACK, -1u, 1, 1)
+    , password_label(drawable, this->img.cx() + 20, 0, this, NULL, "Password:", true, -13, bgcolor, fgcolor)
+    , password_edit(drawable, 0, 0, 200, this, NULL, password, -14, WHITE, BLACK, -1u, 1, 1)
+    , ok(drawable, 0, 0, this, this, "Ok", true, -15, WHITE, BLACK, 6, 2)
+    , cancel(drawable, 0, 0, this, this, "Cancel", true, -16, WHITE, BLACK, 6, 2)
+    , help(drawable, 0, 0, this, this, "Help", true, -17, WHITE, BLACK, 6, 2)
     , window_help(NULL)
     {
         this->child_list.push_back(&this->login_edit);
