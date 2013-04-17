@@ -72,7 +72,7 @@ public:
         line_t * line = this->lines;
         do {
             str = strstr(text, "<br>");
-            size_t size = std::min<size_t>(str ? (str-text) : strlen(text), &this->buffer[this->buffer_size]-pbuf-1);
+            size_t size = std::min<size_t>(str ? (str-text) : strlen(text), &this->buffer[this->buffer_size-1]-pbuf);
             memcpy(pbuf, text, size);
             line->str = pbuf;
             pbuf += size;

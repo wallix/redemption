@@ -343,4 +343,5 @@ unit-test test_widget2_password : tests/widget2/test_widget2_password.cpp png z 
 
 unit-test test_widget2_dialog : tests/widget2/test_widget2_dialog.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_widget2_login : tests/widget2/test_widget2_login.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_widget2_wab_close : tests/widget2/test_widget2_wab_close.cpp png z openssl crypto libboost_unit_test ;
 
