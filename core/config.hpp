@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,13 +15,11 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2012
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Raphael Zhou
 
    configuration file,
    parsing config file rdpproxy.ini
-
 */
-
 
 #ifndef _REDEMPTION_CORE_CONFIG_HPP_
 #define _REDEMPTION_CORE_CONFIG_HPP_
@@ -216,6 +214,8 @@ struct Inifile {
             uint32_t performance_flags_default;
             uint32_t performance_flags_force_present;
             uint32_t performance_flags_force_not_present;
+
+            bool tls_fallback_legacy;
         } client;
     } globals;
 
@@ -293,7 +293,7 @@ struct Inifile {
             strcpy(this->globals.replay_path, "/tmp/");
             this->globals.internal_domain = false;
             this->globals.enable_file_encryption = false;
-            this->globals.enable_tls             = false;
+            this->globals.enable_tls             = true;
             strcpy(this->globals.listen_address, "0.0.0.0");
             this->globals.enable_ip_transparent  = false;
 
@@ -331,6 +331,7 @@ struct Inifile {
             this->globals.client.performance_flags_default           = 0;
             this->globals.client.performance_flags_force_present     = 0;
             this->globals.client.performance_flags_force_not_present = 0;
+            this->globals.client.tls_fallback_legacy                 = false;
     };
 
     void cparse(istream & ifs){
@@ -480,6 +481,9 @@ struct Inifile {
             }
             else if (0 == strcmp(key, "performance_flags_force_not_present")){
                 this->globals.client.performance_flags_force_not_present = long_from_cstr(value);
+            }
+            if (0 == strcmp(key, "tls_fallback_legacy")){
+                this->globals.client.tls_fallback_legacy = bool_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "video")){ 

@@ -1082,6 +1082,19 @@ TODO("Pass font name as parameter in constructor")
                                  " %d bytes remains", stream.size() - x224._header_size);
                 }
                 this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
+
+                
+                if (
+                    // Proxy supportes TLS.
+                       this->tls_support
+                    // RDP client doesn't support TLS.
+                    && !(this->clientRequestedProtocols & X224::PROTOCOL_TLS)
+                    // Fallback to legacy security protocol (RDP) is allowed.
+                    && this->ini->globals.client.tls_fallback_legacy) {
+                    LOG(LOG_INFO, "Fallback to legacy security protocol");
+
+                    this->tls_support = false;
+                }
             }
 
             if (this->verbose & 1){
@@ -1101,7 +1114,7 @@ TODO("Pass font name as parameter in constructor")
                 else {
                     LOG(LOG_INFO, "-----------------> Front::TLS Support not Enabled");
                 }
-                
+
                 X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
                 this->trans->send(stream);
 
@@ -1992,10 +2005,9 @@ TODO("Pass font name as parameter in constructor")
             // Detect fast-path PDU
             this->trans->recv(&stream.end, 1);
             uint8_t byte = stream.in_uint8();
-            if ((byte & FastPath::FASTPATH_INPUT_ACTION_X224) == 0){
             
-///////////////
-///////////////
+            
+            if ((byte & FastPath::FASTPATH_INPUT_ACTION_X224) == 0){
                 FastPath::ClientInputEventPDU_Recv cfpie(*this->trans, stream, this->decrypt);
 
                 uint8_t byte;
@@ -2019,6 +2031,7 @@ TODO("Pass font name as parameter in constructor")
 
                             this->keymap.event(ke.spKeyboardFlags, ke.keyCode);
                             cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                            
                         }
                         break;
 
@@ -2054,167 +2067,168 @@ TODO("Pass font name as parameter in constructor")
                             throw Error(ERR_RDP_FASTPATH);
                         break;
                     }
+                    if (this->verbose & 4){
+                        LOG(LOG_INFO, "Front::Received fast-path PUD done");
+                    }
                 }
 
                 if (cfpie.payload.in_remain() != 0) {
                     LOG(LOG_WARNING, "Front::Received fast-path PUD, remains=%u", cfpie.payload.in_remain());
                 }
-
                 break;
-///////////////
-///////////////
             }
-
-            X224::RecvFactory fx224(*this->trans, stream);
-            TODO("We shall put a specific case when we get Disconnect Request")
-            if (fx224.type == X224::DR_TPDU){
-                TODO("What is the clean way to actually disconnect ?")
-                X224::DR_TPDU_Recv x224(*this->trans, stream);
-                LOG(LOG_INFO, "Front::Received Disconnect Request from RDP client");
-                throw Error(ERR_X224_EXPECTED_DATA_PDU);
-            }
-            else if (fx224.type != X224::DT_TPDU){
-                LOG(LOG_ERR, "Front::Unexpected non data PDU (got %u)", fx224.type);
-                throw Error(ERR_X224_EXPECTED_DATA_PDU);
-            }
-
-            X224::DT_TPDU_Recv x224(*this->trans, stream);
-
-            MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-            TODO("We should also manage the DisconnectRequest case as it can also happen")
-
-            if (mcs.type == MCS::MCSPDU_DisconnectProviderUltimatum){
-                LOG(LOG_ERR, "Front::got MCS DisconnectProviderUltimatum");
-                throw Error(ERR_MCS);
-            }
-
-            SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
-            if (this->verbose & 128){
-                LOG(LOG_INFO, "sec decrypted payload:");
-                hexdump_d(sec.payload.data, sec.payload.size());
-            }
-
-            if (this->verbose & 8){
-                LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
-            }
-
-            if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
-                size_t num_channel_src = this->channel_list.size();
-                for (size_t index = 0; index < this->channel_list.size(); index++){
-                    if (this->channel_list[index].chanid == mcs.channelId){
-                        num_channel_src = index;
-                        break;
-                    }
+            else {
+                X224::RecvFactory fx224(*this->trans, stream);
+                TODO("We shall put a specific case when we get Disconnect Request")
+                if (fx224.type == X224::DR_TPDU){
+                    TODO("What is the clean way to actually disconnect ?")
+                    X224::DR_TPDU_Recv x224(*this->trans, stream);
+                    LOG(LOG_INFO, "Front::Received Disconnect Request from RDP client");
+                    throw Error(ERR_X224_EXPECTED_DATA_PDU);
+                }
+                else if (fx224.type != X224::DT_TPDU){
+                    LOG(LOG_ERR, "Front::Unexpected non data PDU (got %u)", fx224.type);
+                    throw Error(ERR_X224_EXPECTED_DATA_PDU);
                 }
 
-                if (this->verbose & 16){
-                    LOG(LOG_INFO, "Front::incoming::channel_data channelId=%u", mcs.channelId);
-                }
+                X224::DT_TPDU_Recv x224(*this->trans, stream);
 
-                if (num_channel_src >= this->channel_list.size()) {
-                    LOG(LOG_ERR, "Front::incoming::Unknown Channel");
-                    throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
-                }
+                MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                TODO("We should also manage the DisconnectRequest case as it can also happen")
 
-                const ChannelDef & channel = this->channel_list[num_channel_src];
-                if (this->verbose & 16){
-                    channel.log(mcs.channelId);
-                }
-
-                const unsigned expected = 8; /* length(4) + flags(4) */
-                if (!sec.payload.in_check_rem(expected)){
-                    LOG(LOG_ERR, "Front::incoming::data truncated, need=%u remains=%u",
-                        expected, sec.payload.in_remain());
+                if (mcs.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                    LOG(LOG_ERR, "Front::got MCS DisconnectProviderUltimatum");
                     throw Error(ERR_MCS);
                 }
 
-                int length = sec.payload.in_uint32_le();
-                int flags = sec.payload.in_uint32_le();
+                SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
+                if (this->verbose & 128){
+                    LOG(LOG_INFO, "sec decrypted payload:");
+                    hexdump_d(sec.payload.data, sec.payload.size());
+                }
 
-                size_t chunk_size = sec.payload.in_remain();
+                if (this->verbose & 8){
+                    LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
+                }
 
-                if (this->up_and_running){
-                    if (this->verbose & 16){
-                        LOG(LOG_INFO, "Front::send_to_mod_channel");
+                if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
+                    size_t num_channel_src = this->channel_list.size();
+                    for (size_t index = 0; index < this->channel_list.size(); index++){
+                        if (this->channel_list[index].chanid == mcs.channelId){
+                            num_channel_src = index;
+                            break;
+                        }
                     }
-                    SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
 
-                    cb.send_to_mod_channel(channel.name, chunk, length, flags);
+                    if (this->verbose & 16){
+                        LOG(LOG_INFO, "Front::incoming::channel_data channelId=%u", mcs.channelId);
+                    }
+
+                    if (num_channel_src >= this->channel_list.size()) {
+                        LOG(LOG_ERR, "Front::incoming::Unknown Channel");
+                        throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
+                    }
+
+                    const ChannelDef & channel = this->channel_list[num_channel_src];
+                    if (this->verbose & 16){
+                        channel.log(mcs.channelId);
+                    }
+
+                    const unsigned expected = 8; /* length(4) + flags(4) */
+                    if (!sec.payload.in_check_rem(expected)){
+                        LOG(LOG_ERR, "Front::incoming::data truncated, need=%u remains=%u",
+                            expected, sec.payload.in_remain());
+                        throw Error(ERR_MCS);
+                    }
+
+                    int length = sec.payload.in_uint32_le();
+                    int flags = sec.payload.in_uint32_le();
+
+                    size_t chunk_size = sec.payload.in_remain();
+
+                    if (this->up_and_running){
+                        if (this->verbose & 16){
+                            LOG(LOG_INFO, "Front::send_to_mod_channel");
+                        }
+                        SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
+
+                        cb.send_to_mod_channel(channel.name, chunk, length, flags);
+                    }
+                    else {
+                        if (this->verbose & 16){
+                            LOG(LOG_INFO, "Front::not up_and_running send_to_mod_channel dropped");
+                        }
+                    }
+                    sec.payload.p += chunk_size;
                 }
                 else {
-                    if (this->verbose & 16){
-                        LOG(LOG_INFO, "Front::not up_and_running send_to_mod_channel dropped");
-                    }
-                }
-                sec.payload.p += chunk_size;
-            }
-            else {
-                while (sec.payload.p < sec.payload.end) {
-                    ShareControl sctrl(sec.payload);
-                    sctrl.recv_begin();
+                    while (sec.payload.p < sec.payload.end) {
+                        ShareControl sctrl(sec.payload);
+                        sctrl.recv_begin();
 
-                    switch (sctrl.pdu_type1) {
-                    case PDUTYPE_DEMANDACTIVEPDU:
-                        if (this->verbose & 1){
-                            LOG(LOG_INFO, "Front received DEMANDACTIVEPDU (unsupported)");
+                        switch (sctrl.pdu_type1) {
+                        case PDUTYPE_DEMANDACTIVEPDU:
+                            if (this->verbose & 1){
+                                LOG(LOG_INFO, "Front received DEMANDACTIVEPDU (unsupported)");
+                            }
+                            break;
+                        case PDUTYPE_CONFIRMACTIVEPDU:
+                            if (this->verbose & 1){
+                                LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU");
+                            }
+                            {
+                                uint32_t share_id = sctrl.payload.in_uint32_le();
+                                uint16_t originatorId = sctrl.payload.in_uint16_le();
+                                this->process_confirm_active(sctrl.payload);
+                            }
+                            // reset caches, etc.
+                            this->reset();
+                            // resizing done
+                            BGRPalette palette;
+                            init_palette332(palette);
+                            {
+                                RDPColCache cmd(0, palette);
+                                this->orders->draw(cmd);
+                            }
+                            this->init_pointers();
+                            if (this->verbose & 1){
+                                LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
+                            }
+                            break;
+                        case PDUTYPE_DATAPDU: /* 7 */
+                            if (this->verbose & 8){
+                                LOG(LOG_INFO, "Front received DATAPDU");
+                            }
+                            // this is rdp_process_data that will set up_and_running to 1
+                            // when fonts have been received
+                            // we will not exit this loop until we are in this state.
+    //                        LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
+                            this->process_data(sctrl.payload, cb);
+                            if (this->verbose & 8){
+                                LOG(LOG_INFO, "Front received DATAPDU done");
+                            }
+                            break;
+                        case PDUTYPE_DEACTIVATEALLPDU:
+                            if (this->verbose & 1){
+                                LOG(LOG_INFO, "Front received DEACTIVATEALLPDU (unsupported)");
+                            }
+                            break;
+                        case PDUTYPE_SERVER_REDIR_PKT:
+                            if (this->verbose & 1){
+                                LOG(LOG_INFO, "Front received SERVER_REDIR_PKT (unsupported)");
+                            }
+                            break;
+                        default:
+                            LOG(LOG_WARNING, "Front received unknown PDU type in session_data (%d)\n", sctrl.pdu_type1);
+                            break;
                         }
-                        break;
-                    case PDUTYPE_CONFIRMACTIVEPDU:
-                        if (this->verbose & 1){
-                            LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU");
-                        }
-                        {
-                            uint32_t share_id = sctrl.payload.in_uint32_le();
-                            uint16_t originatorId = sctrl.payload.in_uint16_le();
-                            this->process_confirm_active(sctrl.payload);
-                        }
-                        // reset caches, etc.
-                        this->reset();
-                        // resizing done
-                        BGRPalette palette;
-                        init_palette332(palette);
-                        {
-                            RDPColCache cmd(0, palette);
-                            this->orders->draw(cmd);
-                        }
-                        this->init_pointers();
-                        if (this->verbose & 1){
-                            LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
-                        }
-                        break;
-                    case PDUTYPE_DATAPDU: /* 7 */
-                        if (this->verbose & 8){
-                            LOG(LOG_INFO, "Front received DATAPDU");
-                        }
-                        // this is rdp_process_data that will set up_and_running to 1
-                        // when fonts have been received
-                        // we will not exit this loop until we are in this state.
-//                        LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
-                        this->process_data(sctrl.payload, cb);
-                        if (this->verbose & 8){
-                            LOG(LOG_INFO, "Front received DATAPDU done");
-                        }
-                        break;
-                    case PDUTYPE_DEACTIVATEALLPDU:
-                        if (this->verbose & 1){
-                            LOG(LOG_INFO, "Front received DEACTIVATEALLPDU (unsupported)");
-                        }
-                        break;
-                    case PDUTYPE_SERVER_REDIR_PKT:
-                        if (this->verbose & 1){
-                            LOG(LOG_INFO, "Front received SERVER_REDIR_PKT (unsupported)");
-                        }
-                        break;
-                    default:
-                        LOG(LOG_WARNING, "Front received unknown PDU type in session_data (%d)\n", sctrl.pdu_type1);
-                        break;
+    //                    sctrl.end = sctrl.p;
+                        sctrl.recv_end();
+                        sec.payload.p = sctrl.payload.p;
                     }
-//                    sctrl.end = sctrl.p;
-                    sctrl.recv_end();
-                    sec.payload.p = sctrl.payload.p;
                 }
+                TODO("check all data have been consumed")
             }
-            TODO("check all data have been consumed")
         }
         break;
         }

@@ -115,7 +115,8 @@ struct Widget {
         : mod(mod) 
         , type(type)
         , rect(rect)
-        , parent(parent) 
+        , parent(parent)
+        , state(0)
     {
         if (this->parent) {
             this->parent->child_list.push_back(this);
@@ -170,28 +171,6 @@ struct Widget {
 
     REDOC("invalidate(rect): message sent to Widget whenever some part of the widget client area must be redrawn")
     virtual void invalidate(const Rect & rect) {}
-
-    /*****************************************************************************/
-    // called for screen
-    int delete_all_childs()
-    {
-        {
-            size_t index = this->child_list.size();
-            while (index > 0) {
-                index--;
-                this->child_list[index]->refresh(this->child_list[index]->rect.wh());
-            }
-        }
-        {
-            size_t index = this->child_list.size();
-            while (index > 0) {
-                index--;
-                delete this->child_list[index];
-            }
-        }
-        this->child_list.clear();
-        return 0;
-    }
 
     /*****************************************************************************/
     /* return the window at x, y on the screen */

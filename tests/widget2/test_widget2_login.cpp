@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(window_login.rect);
 
-    //drawable.save_to_png("/tmp/window_login.png");
+    drawable.save_to_png("/tmp/window_login.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin2)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    //drawable.save_to_png("/tmp/window_login2.png");
+    drawable.save_to_png("/tmp/window_login2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin3)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    //drawable.save_to_png("/tmp/window_login3.png");
+    drawable.save_to_png("/tmp/window_login3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin4)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    //drawable.save_to_png("/tmp/window_login4.png");
+    drawable.save_to_png("/tmp/window_login4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -256,7 +256,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin5)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    //drawable.save_to_png("/tmp/window_login5.png");
+    drawable.save_to_png("/tmp/window_login5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -284,7 +284,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin6)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    //drawable.save_to_png("/tmp/window_login6.png");
+    drawable.save_to_png("/tmp/window_login6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -312,7 +312,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    //drawable.save_to_png("/tmp/window_login7.png");
+    drawable.save_to_png("/tmp/window_login7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -340,7 +340,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip2)
                                       30,
                                       10));
 
-    //drawable.save_to_png("/tmp/window_login8.png");
+    drawable.save_to_png("/tmp/window_login8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -446,7 +446,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
     //close window_help and redraw
     window_login.window_help->button_close.send_notify(NOTIFY_SUBMIT);
 
-    //drawable.save_to_png("/tmp/window_login-help2.png");
+    drawable.save_to_png("/tmp/window_login-help2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\x5d\x23\x54\xd1\xa5\x08\xfd\x8c\x04\xbb"
