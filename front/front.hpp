@@ -1082,6 +1082,19 @@ TODO("Pass font name as parameter in constructor")
                                  " %d bytes remains", stream.size() - x224._header_size);
                 }
                 this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
+
+                
+                if (
+                    // Proxy supportes TLS.
+                       this->tls_support
+                    // RDP client doesn't support TLS.
+                    && !(this->clientRequestedProtocols & X224::PROTOCOL_TLS)
+                    // Fallback to legacy security protocol (RDP) is allowed.
+                    && this->ini->globals.client.tls_fallback_legacy) {
+                    LOG(LOG_INFO, "Fallback to legacy security protocol");
+
+                    this->tls_support = false;
+                }
             }
 
             if (this->verbose & 1){
@@ -1101,7 +1114,7 @@ TODO("Pass font name as parameter in constructor")
                 else {
                     LOG(LOG_INFO, "-----------------> Front::TLS Support not Enabled");
                 }
-                
+
                 X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
                 this->trans->send(stream);
 

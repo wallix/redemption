@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -14,13 +14,13 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2012
-   Author(s): Christophe Grosjean
+   Copyright (C) Wallix 2012-2013
+   Author(s): Christophe Grosjean, Raphael Zhou
 
    Unit test to config.cpp file
    Using lib boost functions, some tests need to be added
-
 */
+
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestConfig
@@ -33,7 +33,6 @@
 #include "config.hpp"
 #include <sstream>
 #include <string>
-
 
 BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 {
@@ -129,6 +128,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
@@ -225,6 +225,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigDefault)
@@ -323,6 +324,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfig1)
@@ -344,6 +346,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     "performance_flags_default=0x00000007\n"
     "performance_flags_force_present=0x1\n"
     "performance_flags_force_not_present=0x0\n"
+    "tls_fallback_legacy=yes\n"
     "[debug]\n"
     "log_type=file\n"
     "log_file_path=/var/log/redemption.log\n"
@@ -442,6 +445,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(7,                                ini.globals.client.performance_flags_default);
     BOOST_CHECK_EQUAL(1,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.tls_fallback_legacy);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfig1bis)
@@ -555,6 +559,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(7,                                ini.globals.client.performance_flags_default);
     BOOST_CHECK_EQUAL(1,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfig2)
@@ -667,8 +672,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(7,                                ini.globals.client.performance_flags_default);
     BOOST_CHECK_EQUAL(1,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
 }
-
 
 BOOST_AUTO_TEST_CASE(TestMultiple)
 {
@@ -777,6 +782,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
+
 
     // see we can change configuration using parse without default setting of existing ini
     std::stringstream oss2(
@@ -880,6 +887,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
 }
 
 BOOST_AUTO_TEST_CASE(TestNewConf)
@@ -980,6 +988,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
 
 
     std::stringstream ifs2(
@@ -1084,6 +1093,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
+
 
     // back to default values
     ini.init();
@@ -1177,6 +1188,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigTools)
