@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -14,13 +14,12 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Copyright (C) Wallix 2010-2013
+   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    X224 class 0 packets management, complies with
    RFC 1006, ISO transport services on top of the TCP
-
 */
 
 #ifndef _REDEMPTION_CORE_RDP_X224_HPP_
@@ -542,7 +541,12 @@ namespace X224
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_requestedProtocols;
 
-        CR_TPDU_Recv(Transport & t, Stream & stream, uint32_t verbose = 0) : Recv(t, stream)
+        CR_TPDU_Recv(Transport & t, Stream & stream, uint32_t verbose = 0)
+        : Recv(t, stream)
+        , rdp_neg_type(0)
+        , rdp_neg_flags(0)
+        , rdp_neg_length(0)
+        , rdp_neg_requestedProtocols(0)
         {
             unsigned expected = 7; /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
             if (!stream.in_check_rem(expected)){
@@ -578,7 +582,7 @@ namespace X224
 
             uint8_t * end_of_header = stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
             for (uint8_t * p = stream.p + 1; p < end_of_header ; p++){
-                if (p[-1] == 0x0D &&  p[0]  == 0x0A){
+                if (p[-1] == 0x0D && p[0] == 0x0A){
                     this->cookie_len = p - (stream.data + 11) + 1;
                     if (cookie_len > 1023){
                         LOG(LOG_ERR, "Bad Connection Request X224 header, cookie too large (length = %u)", cookie_len);
@@ -610,23 +614,23 @@ namespace X224
                 }
 
                 if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_RDP){
-                    LOG(LOG_INFO, "PROTOCOL RDP");
+                    LOG(LOG_INFO, "CR Recv: PROTOCOL RDP");
                 }
                 if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_TLS){
-                    LOG(LOG_INFO, "PROTOCOL TLS 1.0");
+                    LOG(LOG_INFO, "CR Recv: PROTOCOL TLS 1.0");
                 }                    
                 if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID){
-                    LOG(LOG_INFO, "PROTOCOL HYBRID");
+                    LOG(LOG_INFO, "CR Recv: PROTOCOL HYBRID");
                 }
                 if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID_EX){
-                    LOG(LOG_INFO, "PROTOCOL HYBRID EX");
+                    LOG(LOG_INFO, "CR Recv: PROTOCOL HYBRID EX");
                 }
                 if (this->rdp_neg_requestedProtocols 
                 & ~(X224::PROTOCOL_RDP
                    |X224::PROTOCOL_TLS
                    |X224::PROTOCOL_HYBRID
                    |X224::PROTOCOL_HYBRID_EX)){
-                    LOG(LOG_INFO, "Unknown protocol flags %x", this->rdp_neg_requestedProtocols);
+                    LOG(LOG_INFO, "CR Recv: Unknown protocol flags %x", this->rdp_neg_requestedProtocols);
                 }
             }
             if (end_of_header != stream.p){
@@ -901,19 +905,19 @@ namespace X224
                 case X224::RDP_NEG_RSP:
                     switch (this->rdp_neg_code){
                         case X224::PROTOCOL_RDP:
-                            LOG(LOG_INFO, "PROTOCOL RDP");
+                            LOG(LOG_INFO, "CC Recv: PROTOCOL RDP");
                             break;
                         case X224::PROTOCOL_TLS:
-                            LOG(LOG_INFO, "PROTOCOL TLS 1.0");
+                            LOG(LOG_INFO, "CC Recv: PROTOCOL TLS 1.0");
                             break;
                         case X224::PROTOCOL_HYBRID:
-                            LOG(LOG_INFO, "PROTOCOL HYBRID");
+                            LOG(LOG_INFO, "CC Recv: PROTOCOL HYBRID");
                             break;
                         case X224::PROTOCOL_HYBRID_EX:
-                            LOG(LOG_INFO, "PROTOCOL HYBRID EX");
+                            LOG(LOG_INFO, "CC Recv: PROTOCOL HYBRID EX");
                             break;
                         default:
-                            LOG(LOG_INFO, "Unknown protocol code %u", this->rdp_neg_code);
+                            LOG(LOG_INFO, "CC Recv: Unknown protocol code %u", this->rdp_neg_code);
                             break;
                     }
                     break;
@@ -970,19 +974,19 @@ namespace X224
                 case X224::RDP_NEG_RSP:
                     switch (rdp_neg_code){
                     case X224::PROTOCOL_RDP:
-                        LOG(LOG_INFO, "PROTOCOL RDP");
+                        LOG(LOG_INFO, "CC Send: PROTOCOL RDP");
                     break;
                     case X224::PROTOCOL_TLS:
-                        LOG(LOG_INFO, "PROTOCOL TLS 1.0");
+                        LOG(LOG_INFO, "CC Send: PROTOCOL TLS 1.0");
                     break;
                     case X224::PROTOCOL_HYBRID:
-                        LOG(LOG_INFO, "PROTOCOL HYBRID");
+                        LOG(LOG_INFO, "CC Send: PROTOCOL HYBRID");
                     break;
                     case X224::PROTOCOL_HYBRID_EX:
-                        LOG(LOG_INFO, "PROTOCOL HYBRID EX");
+                        LOG(LOG_INFO, "CC Send: PROTOCOL HYBRID EX");
                     break;
                     default:
-                        LOG(LOG_INFO, "Unknown protocol code %u", rdp_neg_code);
+                        LOG(LOG_INFO, "CC Send: Unknown protocol code %u", rdp_neg_code);
                     break;
                     }
                 break;
@@ -1309,7 +1313,6 @@ namespace X224
             stream.mark_end();
         }
     };
-
 }; // end namespace X224
 
 #endif
