@@ -94,7 +94,7 @@ public:
 
 
         if (this->capture_png){
-            this->png_trans = new OutFilenameTransport(SQF_PATH_FILE_PID_COUNT_EXTENSION, path, basename, ".png");
+            this->png_trans = new OutFilenameTransport(SQF_PATH_FILE_PID_COUNT_EXTENSION, PNG_PATH "/", basename, ".png");
             this->psc = new StaticCapture(now, *this->png_trans, &(this->png_trans->seq), width, height, ini);
         }
 

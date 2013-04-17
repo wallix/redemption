@@ -417,7 +417,7 @@ TODO("Pass font name as parameter in constructor")
             char path[1024];
             char basename[1024];
             char extension[128];
-            strcpy(path, "/tmp/"); // default value, actual one should come from movie_path
+            strcpy(path, WRM_PATH "/"); // default value, actual one should come from movie_path
             strcpy(basename, "redemption"); // default value actual one should come from movie_path
             strcpy(extension, ""); // extension is currently ignored
             canonical_path(ini.globals.movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));

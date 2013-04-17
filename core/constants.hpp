@@ -43,8 +43,20 @@ TODO("these constants should be dispatched between relevant ini files")
 #define LICENSE_PATH "/var/certs/redemption"
 #endif
 
-#if !defined(VIEW_PATH)
-#define VIEW_PATH "/tmp"
+#if !defined(FLV_PATH)
+#define FLV_PATH "/tmp"
+#endif
+
+#if !defined(OCR_PATH)
+#define OCR_PATH "/tmp"
+#endif
+
+#if !defined(PNG_PATH)
+#define PNG_PATH "/tmp"
+#endif
+
+#if !defined(WRM_PATH)
+#define WRM_PATH "/tmp"
 #endif
 
 #define LOGIN_LOGO24 "ad24b.bmp"
