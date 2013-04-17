@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,15 +15,13 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Raphael Zhou
 
    File related utility functions
-
 */
 
 #ifndef _REDEMPTION_UTILS_FILEUTILS_HPP_
 #define _REDEMPTION_UTILS_FILEUTILS_HPP_
-
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -152,5 +150,58 @@ void clear_files_flv_meta_png(const char * path, const char * prefix)
     }
 }
 
+static inline int _internal_make_directory(const char *directory, mode_t mode) {
+    struct stat st;
+    int         status;
+
+    status = 0;
+
+    if (stat(directory, &st) != 0) {
+        /* Directory is not exist. */
+        if ((mkdir(directory, mode) != 0) && (errno != EEXIST)) {
+            status = -1;
+        }
+    }
+    else if (!S_ISDIR(st.st_mode)) {
+        errno = ENOTDIR;
+        status = -1;
+    }
+
+    return status;
+}
+
+static inline int recursive_create_directory(const char *directory, mode_t mode) {
+    int    status;
+    char * copy_directory;
+    char * pTemp;
+    char * pSearch;
+
+    status         = 0;
+    copy_directory = strdup(directory);
+
+    if (copy_directory == NULL) {
+        return -1;
+    }
+
+    for ( pTemp = copy_directory
+        ; (status == 0) && ((pSearch = strchr(pTemp, '/')) != 0)
+        ; pTemp = pSearch + 1) {
+        if (pSearch == pTemp) {
+            continue;
+        }
+
+        *pSearch = '\0';
+        status = _internal_make_directory(copy_directory, mode);
+        *pSearch = '/';
+    }
+
+    if (status == 0) {
+        status = _internal_make_directory(directory, mode);
+    }
+
+    free(copy_directory);
+
+    return status;
+}
 
 #endif

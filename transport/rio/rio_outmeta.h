@@ -48,7 +48,7 @@ extern "C" {
         if (res >= sizeof(buffer)){
             return RIO_ERROR_FILENAME_TOO_LONG;
         }
-        int fd = ::open(buffer, O_WRONLY|O_CREAT, S_IRUSR|S_IRUSR);
+        int fd = ::open(buffer, O_WRONLY|O_CREAT, S_IRUSR);
         if (fd < 0){
             return RIO_ERROR_CREAT;
         }

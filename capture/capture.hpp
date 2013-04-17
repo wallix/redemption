@@ -94,6 +94,10 @@ public:
 
 
         if (this->capture_png){
+            if (recursive_create_directory(PNG_PATH "/", S_IRUSR|S_IWUSR) != 0) {
+                LOG(LOG_INFO, "Failed to create directory: \"%s\"", PNG_PATH "/");
+            }
+
             this->png_trans = new OutFilenameTransport(SQF_PATH_FILE_PID_COUNT_EXTENSION, PNG_PATH "/", basename, ".png");
             this->psc = new StaticCapture(now, *this->png_trans, &(this->png_trans->seq), width, height, ini);
         }
@@ -103,6 +107,10 @@ public:
         }
 
         if (this->capture_wrm){
+            if (recursive_create_directory(path, S_IRUSR|S_IWUSR) != 0) {
+                LOG(LOG_INFO, "Failed to create directory: \"%s\"", path);
+            }
+
             if (this->enable_file_encryption == false) {
                 this->wrm_trans = new OutmetaTransport(path, basename, now, width, height);
                 this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
