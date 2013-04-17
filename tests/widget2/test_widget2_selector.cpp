@@ -20,13 +20,13 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWindowWabClose
+#define BOOST_TEST_MODULE TestWidgetSelector
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
 #include "log.hpp"
 
-#include "internal/widget2/window_wab_close.hpp"
+#include "internal/widget2/selector.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -128,24 +128,34 @@ struct TestDraw : ModApi
     }
 };
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabClose)
+BOOST_AUTO_TEST_CASE(TraceWidgetSelector)
 {
     TestDraw drawable(800, 600);
 
-    // WindowWabClose is a window_wab_close widget at position 0,0 in it's parent context
-    Widget * parent = NULL;
+    // WidgetSelector is a selector widget at position 0,0 in it's parent context
     NotifyApi * notifier = NULL;
-    int16_t x = 0;
-    int16_t y = 0;
-    int id = 0;
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+    ModContext ctx;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
-                                    "abc<br>def", id, "rec", "rec");
+    WidgetSelector selector(ctx, &drawable, w, h, notifier);
+
+    selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "dministrateur@qa@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "dministrateur@qa@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "dministrateur@qa@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "dministrateur@qa@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.set_index_list(0);
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(window_wab_close.rect);
+    selector.rdp_input_invalidate(selector.rect);
 
-    //drawable.save_to_png("/tmp/window_wab_close.png");
+    drawable.save_to_png("/tmp/selector.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -155,40 +165,25 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabClose2)
+BOOST_AUTO_TEST_CASE(TraceWidgetSelector2)
 {
     TestDraw drawable(800, 600);
 
-    // WindowWabClose is a window_wab_close widget of size 100x20 at position 10,100 in it's parent context
-    Widget * parent = NULL;
+    // WidgetSelector is a selector widget of size 100x20 at position 10,100 in it's parent context
     NotifyApi * notifier = NULL;
-    int16_t x = 10;
-    int16_t y = 100;
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+    ModContext ctx;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
-        "Lorem ipsum dolor sit amet, consectetur<br>"
-        "adipiscing elit. Nam purus lacus, luctus sit<br>"
-        "amet suscipit vel, posuere quis turpis. Sed<br>"
-        "venenatis rutrum sem ac posuere. Phasellus<br>"
-        "feugiat dui eu mauris adipiscing sodales.<br>"
-        "Mauris rutrum molestie purus, in tempor lacus<br>"
-        "tincidunt et. Sed eu ligula mauris, a rutrum<br>"
-        "est. Vestibulum in nunc vel massa condimentum<br>"
-        "iaculis nec in arcu. Pellentesque accumsan,<br>"
-        "quam sit amet aliquam mattis, odio purus<br>"
-        "porttitor tortor, sit amet tincidunt odio<br>"
-        "erat ut ligula. Fusce sit amet mauris neque.<br>"
-        "Sed orci augue, luctus in ornare sed,<br>"
-        "adipiscing et arcu."
-    );
+    WidgetSelector selector(ctx, &drawable, w, h, notifier);
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(Rect(0 + window_wab_close.dx(),
-                                      0 + window_wab_close.dy(),
-                                      window_wab_close.cx(),
-                                      window_wab_close.cy()));
+    selector.rdp_input_invalidate(Rect(0 + selector.dx(),
+                                      0 + selector.dy(),
+                                      selector.cx(),
+                                      selector.cy()));
 
-    //drawable.save_to_png("/tmp/window_wab_close2.png");
+    drawable.save_to_png("/tmp/selector2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -198,26 +193,25 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose2)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabClose3)
+BOOST_AUTO_TEST_CASE(TraceWidgetSelector3)
 {
     TestDraw drawable(800, 600);
 
-    // WindowWabClose is a window_wab_close widget of size 100x20 at position -10,500 in it's parent context
-    Widget * parent = NULL;
+    // WidgetSelector is a selector widget of size 100x20 at position -10,500 in it's parent context
     NotifyApi * notifier = NULL;
-    int16_t x = -10;
-    int16_t y = 500;
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+    ModContext ctx;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
-                                    "abc<br>def");
+    WidgetSelector selector(ctx, &drawable, w, h, notifier);
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(Rect(0 + window_wab_close.dx(),
-                                      0 + window_wab_close.dy(),
-                                      window_wab_close.cx(),
-                                      window_wab_close.cy()));
+    selector.rdp_input_invalidate(Rect(0 + selector.dx(),
+                                      0 + selector.dy(),
+                                      selector.cx(),
+                                      selector.cy()));
 
-    //drawable.save_to_png("/tmp/window_wab_close3.png");
+    drawable.save_to_png("/tmp/selector3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -227,26 +221,25 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose3)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabClose4)
+BOOST_AUTO_TEST_CASE(TraceWidgetSelector4)
 {
     TestDraw drawable(800, 600);
 
-    // WindowWabClose is a window_wab_close widget of size 100x20 at position 770,500 in it's parent context
-    Widget * parent = NULL;
+    // WidgetSelector is a selector widget of size 100x20 at position 770,500 in it's parent context
     NotifyApi * notifier = NULL;
-    int16_t x = 770;
-    int16_t y = 500;
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+    ModContext ctx;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
-                                    "abc<br>def");
+    WidgetSelector selector(ctx, &drawable, w, h, notifier);
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(Rect(0 + window_wab_close.dx(),
-                                      0 + window_wab_close.dy(),
-                                      window_wab_close.cx(),
-                                      window_wab_close.cy()));
+    selector.rdp_input_invalidate(Rect(0 + selector.dx(),
+                                      0 + selector.dy(),
+                                      selector.cx(),
+                                      selector.cy()));
 
-    //drawable.save_to_png("/tmp/window_wab_close4.png");
+    drawable.save_to_png("/tmp/selector4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -256,26 +249,25 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose4)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabClose5)
+BOOST_AUTO_TEST_CASE(TraceWidgetSelector5)
 {
     TestDraw drawable(800, 600);
 
-    // WindowWabClose is a window_wab_close widget of size 100x20 at position -20,-7 in it's parent context
-    Widget * parent = NULL;
+    // WidgetSelector is a selector widget of size 100x20 at position -20,-7 in it's parent context
     NotifyApi * notifier = NULL;
-    int16_t x = -20;
-    int16_t y = -7;
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+    ModContext ctx;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
-                                    "abc<br>def");
+    WidgetSelector selector(ctx, &drawable, w, h, notifier);
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(Rect(0 + window_wab_close.dx(),
-                                      0 + window_wab_close.dy(),
-                                      window_wab_close.cx(),
-                                      window_wab_close.cy()));
+    selector.rdp_input_invalidate(Rect(0 + selector.dx(),
+                                      0 + selector.dy(),
+                                      selector.cx(),
+                                      selector.cy()));
 
-    //drawable.save_to_png("/tmp/window_wab_close5.png");
+    drawable.save_to_png("/tmp/selector5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -285,26 +277,25 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose5)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabClose6)
+BOOST_AUTO_TEST_CASE(TraceWidgetSelector6)
 {
     TestDraw drawable(800, 600);
 
-    // WindowWabClose is a window_wab_close widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    // WidgetSelector is a selector widget of size 100x20 at position 760,-7 in it's parent context
     NotifyApi * notifier = NULL;
-    int16_t x = 760;
-    int16_t y = -7;
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+    ModContext ctx;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
-                                    "abc<br>def");
+    WidgetSelector selector(ctx, &drawable, w, h, notifier);
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(Rect(0 + window_wab_close.dx(),
-                                      0 + window_wab_close.dy(),
-                                      window_wab_close.cx(),
-                                      window_wab_close.cy()));
+    selector.rdp_input_invalidate(Rect(0 + selector.dx(),
+                                      0 + selector.dy(),
+                                      selector.cx(),
+                                      selector.cy()));
 
-    //drawable.save_to_png("/tmp/window_wab_close6.png");
+    drawable.save_to_png("/tmp/selector6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -314,26 +305,25 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose6)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip)
+BOOST_AUTO_TEST_CASE(TraceWidgetSelectorClip)
 {
     TestDraw drawable(800, 600);
 
-    // WindowWabClose is a window_wab_close widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    // WidgetSelector is a selector widget of size 100x20 at position 760,-7 in it's parent context
     NotifyApi * notifier = NULL;
-    int16_t x = 760;
-    int16_t y = -7;
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+    ModContext ctx;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
-                                    "abc<br>def");
+    WidgetSelector selector(ctx, &drawable, w, h, notifier);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    window_wab_close.rdp_input_invalidate(Rect(20 + window_wab_close.dx(),
-                                      0 + window_wab_close.dy(),
-                                      window_wab_close.cx(),
-                                      window_wab_close.cy()));
+    selector.rdp_input_invalidate(Rect(20 + selector.dx(),
+                                      0 + selector.dy(),
+                                      selector.cx(),
+                                      selector.cy()));
 
-    //drawable.save_to_png("/tmp/window_wab_close7.png");
+    drawable.save_to_png("/tmp/selector7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -343,26 +333,25 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip2)
+BOOST_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
 {
     TestDraw drawable(800, 600);
 
-    // WindowWabClose is a window_wab_close widget of size 100x20 at position 10,7 in it's parent context
-    Widget * parent = NULL;
+    // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
     NotifyApi * notifier = NULL;
-    int16_t x = 0;
-    int16_t y = 0;
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+    ModContext ctx;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
-                                    "abc<br>def");
+    WidgetSelector selector(ctx, &drawable, w, h, notifier);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    window_wab_close.rdp_input_invalidate(Rect(20 + window_wab_close.dx(),
-                                      5 + window_wab_close.dy(),
+    selector.rdp_input_invalidate(Rect(20 + selector.dx(),
+                                      5 + selector.dy(),
                                       30,
                                       10));
 
-    //drawable.save_to_png("/tmp/window_wab_close8.png");
+    drawable.save_to_png("/tmp/selector8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,

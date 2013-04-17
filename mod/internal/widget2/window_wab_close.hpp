@@ -46,7 +46,7 @@ private:
 
         temporary_text(const char * lhs, const char * rhs)
         {
-            if (rhs) {
+            if (rhs && *rhs) {
                 size_t len = std::min(WidgetLabel::buffer_size - 1, strlen(lhs));
                 memcpy(this->buffer, lhs, len);
                 size_t len2 = std::min(WidgetLabel::buffer_size - 1 - len, strlen(rhs));
