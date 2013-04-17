@@ -296,11 +296,12 @@ namespace X224
     };
 
     enum {
-        SSL_REQUIRED_BY_SERVER    = 0x00000001,
-        SSL_NOT_ALLOWED_BY_SERVER = 0x00000002,
-        SSL_CERT_NOT_ON_SERVER    = 0x00000003,
-        INCONSISTENT_FLAGS        = 0x00000004,
-        HYBRID_REQUIRED_BY_SERVER = 0x00000005,
+        SSL_REQUIRED_BY_SERVER                = 0x00000001,
+        SSL_NOT_ALLOWED_BY_SERVER             = 0x00000002,
+        SSL_CERT_NOT_ON_SERVER                = 0x00000003,
+        INCONSISTENT_FLAGS                    = 0x00000004,
+        HYBRID_REQUIRED_BY_SERVER             = 0x00000005,
+        SSL_WITH_USER_AUTH_REQUIRED_BY_SERVER = 0x00000006,
     };
 
     // Factory just read enough data to know the type of packet we are dealing with
@@ -811,6 +812,14 @@ namespace X224
     // |                                      | (section 5.4) with CredSSP (section|
     // |                                      | 5.4.5.2).                          |
     // +--------------------------------------+------------------------------------+
+    // | 0x00000006                            | Credential Security Support       |
+    // | SSL_WITH_USER_AUTH_REQUIRED_BY_SERVER | The server requires that the      |
+    // |                                       | client support Enhanced RDP       |
+    // |                                       | Security (section 5.4) with TLS   |
+    // |                                       | 1.0, 1.1 or 1.2 (section 5.4.5.1) |
+    // |                                       | and certificate-based client      |
+    // |                                       | authentication.<2>                |
+    // +---------------------------------------+-----------------------------------+
 
     enum {
         CC_TPDU_EXTENDED_CLIENT_DATA_SUPPORTED    = 1,
