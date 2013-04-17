@@ -21,7 +21,10 @@ rule defines ( properties * )
     defs += <define>CFG_PATH='\"/etc/rdpproxy\"' ;
     defs += <define>FIXTURES_PATH='\"./tests/fixtures\"' ;
     defs += <define>LICENSE_PATH='\"/var/certs/redemption\"' ;
-    defs += <define>VIEW_PATH='\"/tmp\"' ;
+    defs += <define>FLV_PATH='\"/tmp\"' ;
+    defs += <define>OCR_PATH='\"/tmp\"' ;
+    defs += <define>PNG_PATH='\"/tmp\"' ;
+    defs += <define>WRM_PATH='\"/tmp\"' ;
     if [ os.environ VERBOSE ]
     {
         defs += <define>VERBOSE ;
@@ -172,105 +175,105 @@ exe tls_test_server : ftests/tls_test_server.cpp openssl crypto png z dl : <link
 
 import testing ;
 
-unit-test test_stream : tests/test_stream.cpp libboost_unit_test  ;
+unit-test test_stream : tests/test_stream.cpp libboost_unit_test ;
 unit-test test_stream : tests/test_stream.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_utf : tests/test_utf.cpp libboost_unit_test  ;
+unit-test test_utf : tests/test_utf.cpp libboost_unit_test ;
 unit-test test_utf : tests/test_utf.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_widget : tests/test_widget.cpp d3des openssl crypto png z dl libboost_unit_test  ;
-unit-test test_bitmap : tests/test_bitmap.cpp libboost_unit_test  ;
-unit-test test_logon : tests/test_logon.cpp libboost_unit_test  ;
-unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp libboost_unit_test  ;
-unit-test test_config : tests/test_config.cpp libboost_unit_test  ;
-unit-test test_font : tests/test_font.cpp libboost_unit_test  ;
-unit-test test_rect : tests/test_rect.cpp libboost_unit_test  ;
-unit-test test_compact_to_aligned : tests/test_compact_to_aligned.cpp libboost_unit_test  ;
-unit-test test_region : tests/test_region.cpp libboost_unit_test  ;
-unit-test test_strings : tests/test_strings.cpp libboost_unit_test  ;
+unit-test test_widget : tests/test_widget.cpp d3des openssl crypto png z dl libboost_unit_test ;
+unit-test test_bitmap : tests/test_bitmap.cpp libboost_unit_test ;
+unit-test test_logon : tests/test_logon.cpp libboost_unit_test ;
+unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp libboost_unit_test ;
+unit-test test_config : tests/test_config.cpp libboost_unit_test ;
+unit-test test_font : tests/test_font.cpp libboost_unit_test ;
+unit-test test_rect : tests/test_rect.cpp libboost_unit_test ;
+unit-test test_compact_to_aligned : tests/test_compact_to_aligned.cpp libboost_unit_test ;
+unit-test test_region : tests/test_region.cpp libboost_unit_test ;
+unit-test test_strings : tests/test_strings.cpp libboost_unit_test ;
 
-unit-test test_transport : tests/transport/test_transport.cpp openssl crypto z dl libboost_unit_test  ;
-unit-test test_filetransport : tests/transport/test_filetransport.cpp openssl crypto z dl libboost_unit_test  ;
-unit-test test_testtransport : tests/transport/test_testtransport.cpp openssl crypto z dl libboost_unit_test  ;
-#unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test  ;
-unit-test test_cipher_transport : tests/transport/test_cipher_transport.cpp z openssl dl crypto png libboost_unit_test  ;
+unit-test test_transport : tests/transport/test_transport.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_filetransport : tests/transport/test_filetransport.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_testtransport : tests/transport/test_testtransport.cpp openssl crypto z dl libboost_unit_test ;
+#unit-test test_crypt_openssl : tests/test_crypt_openssl.cpp z dl crypto png libboost_unit_test ;
+unit-test test_cipher_transport : tests/transport/test_cipher_transport.cpp z openssl dl crypto png libboost_unit_test ;
 
-unit-test test_capture_png : tests/capture/test_capture_png.cpp png z openssl crypto libboost_unit_test  ;
-unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp png z openssl crypto libboost_unit_test  ;
-unit-test test_play : tests/capture/test_play.cpp png z libboost_unit_test  z openssl crypto ;
-unit-test test_capture_static : tests/capture/test_capture_static.cpp png z openssl crypto libboost_unit_test  ;
-unit-test test_capture_native : tests/capture/test_capture_native.cpp png z openssl crypto libboost_unit_test  ;
-unit-test test_capture_wrm_image_chunk : tests/capture/test_capture_wrm_image_chunk.cpp png z openssl crypto libboost_unit_test  ;
-unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp png z openssl crypto libboost_unit_test  ;
-unit-test test_capture_breakpoint : tests/capture/test_capture_breakpoint.cpp png z openssl crypto dl libboost_unit_test  ;
-unit-test test_mwrm : tests/capture/test_mwrm.cpp png z openssl crypto dl libboost_unit_test  ;
-unit-test test_outmeta : tests/capture/test_outmeta.cpp png z openssl crypto dl libboost_unit_test  ;
+unit-test test_capture_png : tests/capture/test_capture_png.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_play : tests/capture/test_play.cpp png z libboost_unit_test z openssl crypto ;
+unit-test test_capture_static : tests/capture/test_capture_static.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_capture_native : tests/capture/test_capture_native.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_capture_wrm_image_chunk : tests/capture/test_capture_wrm_image_chunk.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_capture_breakpoint : tests/capture/test_capture_breakpoint.cpp png z openssl crypto dl libboost_unit_test ;
+unit-test test_mwrm : tests/capture/test_mwrm.cpp png z openssl crypto dl libboost_unit_test ;
+unit-test test_outmeta : tests/capture/test_outmeta.cpp png z openssl crypto dl libboost_unit_test ;
 
 
-unit-test test_primary_order_opaque_rect : tests/orders/primary/opaque_rect.cpp libboost_unit_test  ;
-unit-test test_primary_order_scr_blt : tests/orders/primary/scr_blt.cpp libboost_unit_test  ;
-unit-test test_primary_order_mem_blt : tests/orders/primary/mem_blt.cpp libboost_unit_test  ;
-unit-test test_primary_order_dest_blt : tests/orders/primary/dest_blt.cpp libboost_unit_test  ;
-unit-test test_primary_order_pat_blt : tests/orders/primary/pat_blt.cpp libboost_unit_test  ;
-unit-test test_primary_order_line_to : tests/orders/primary/line_to.cpp libboost_unit_test  ;
-unit-test test_primary_order_glyph_index : tests/orders/primary/glyph_index.cpp libboost_unit_test  ;
-unit-test test_secondary_order_col_cache : tests/orders/secondary/col_cache.cpp libboost_unit_test  ;
-unit-test test_secondary_order_bmp_cache : tests/orders/secondary/bmp_cache.cpp libboost_unit_test  ;
+unit-test test_primary_order_opaque_rect : tests/orders/primary/opaque_rect.cpp libboost_unit_test ;
+unit-test test_primary_order_scr_blt : tests/orders/primary/scr_blt.cpp libboost_unit_test ;
+unit-test test_primary_order_mem_blt : tests/orders/primary/mem_blt.cpp libboost_unit_test ;
+unit-test test_primary_order_dest_blt : tests/orders/primary/dest_blt.cpp libboost_unit_test ;
+unit-test test_primary_order_pat_blt : tests/orders/primary/pat_blt.cpp libboost_unit_test ;
+unit-test test_primary_order_line_to : tests/orders/primary/line_to.cpp libboost_unit_test ;
+unit-test test_primary_order_glyph_index : tests/orders/primary/glyph_index.cpp libboost_unit_test ;
+unit-test test_secondary_order_col_cache : tests/orders/secondary/col_cache.cpp libboost_unit_test ;
+unit-test test_secondary_order_bmp_cache : tests/orders/secondary/bmp_cache.cpp libboost_unit_test ;
 
-unit-test test_x224 : tests/core/test_x224.cpp z openssl crypto dl libboost_unit_test  ;
-unit-test test_mcs : tests/core/test_mcs.cpp z openssl crypto dl libboost_unit_test  ;
-unit-test test_gcc : tests/core/test_gcc.cpp z openssl crypto dl libboost_unit_test  ;
-unit-test test_sec : tests/core/test_sec.cpp z openssl crypto dl libboost_unit_test  ;
-unit-test test_lic : tests/core/test_lic.cpp z openssl crypto dl libboost_unit_test  ;
-unit-test test_rdp : tests/core/test_rdp.cpp z openssl crypto dl libboost_unit_test  ;
-unit-test test_fastpath : tests/core/test_fastpath.cpp z openssl crypto dl libboost_unit_test  ;
-unit-test test_slowpath : tests/core/test_slowpath.cpp z openssl crypto dl libboost_unit_test  ;
+unit-test test_x224 : tests/core/test_x224.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_mcs : tests/core/test_mcs.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_gcc : tests/core/test_gcc.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_sec : tests/core/test_sec.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_lic : tests/core/test_lic.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_rdp : tests/core/test_rdp.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_fastpath : tests/core/test_fastpath.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_slowpath : tests/core/test_slowpath.cpp z openssl crypto dl libboost_unit_test ;
 
-unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test  : ;
-unit-test test_dico : tests/test_dico.cpp libboost_unit_test  ;
-unit-test test_colors : tests/test_colors.cpp libboost_unit_test  ;
-unit-test test_libpng : tests/test_libpng.cpp png z libboost_unit_test  ;
-unit-test test_drawable : tests/test_drawable.cpp png z openssl crypto libboost_unit_test  ;
-#unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp png z openssl crypto libboost_unit_test  ;
+unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test ;
+unit-test test_dico : tests/test_dico.cpp libboost_unit_test ;
+unit-test test_colors : tests/test_colors.cpp libboost_unit_test ;
+unit-test test_libpng : tests/test_libpng.cpp png z libboost_unit_test ;
+unit-test test_drawable : tests/test_drawable.cpp png z openssl crypto libboost_unit_test ;
+#unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp png z openssl crypto libboost_unit_test ;
 
-unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp z openssl crypto libboost_unit_test  ;
-unit-test test_rdp_client_w2000 : tests/client_mods/test_rdp_client_w2000.cpp png openssl crypto d3des z dl libboost_unit_test  ;
-unit-test test_rdp_client_w2008 : tests/client_mods/test_rdp_client_w2008.cpp png openssl crypto d3des z dl libboost_unit_test  ;
+unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp z openssl crypto libboost_unit_test ;
+unit-test test_rdp_client_w2000 : tests/client_mods/test_rdp_client_w2000.cpp png openssl crypto d3des z dl libboost_unit_test ;
+unit-test test_rdp_client_w2008 : tests/client_mods/test_rdp_client_w2008.cpp png openssl crypto d3des z dl libboost_unit_test ;
 
-unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp png openssl crypto d3des z dl libboost_unit_test  ;
-unit-test test_rdp_client_xp : tests/client_mods/test_rdp_client_xp.cpp png openssl crypto d3des z dl libboost_unit_test  ;
-unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp openssl crypto d3des z dl libboost_unit_test  ;
-unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp d3des openssl crypto z dl png libboost_unit_test  ;
+unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp png openssl crypto d3des z dl libboost_unit_test ;
+unit-test test_rdp_client_xp : tests/client_mods/test_rdp_client_xp.cpp png openssl crypto d3des z dl libboost_unit_test ;
+unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp openssl crypto d3des z dl libboost_unit_test ;
+unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp d3des openssl crypto z dl png libboost_unit_test ;
 
-unit-test test_capability_activate : tests/capabilities/activate.cpp libboost_unit_test  ;
-unit-test test_capability_bitmap : tests/capabilities/bitmap.cpp libboost_unit_test  ;
-unit-test test_capability_bmpcache : tests/capabilities/bmpcache.cpp libboost_unit_test  ;
-unit-test test_capability_bitmapcachehostsupport : tests/capabilities/bitmapcachehostsupport.cpp libboost_unit_test  ;
-unit-test test_capability_brushcache : tests/capabilities/brushcache.cpp libboost_unit_test  ;
-unit-test test_capability_compdesk : tests/capabilities/compdesk.cpp libboost_unit_test  ;
-unit-test test_capability_control : tests/capabilities/control.cpp libboost_unit_test  ;
-unit-test test_capability_drawgdiplus : tests/capabilities/drawgdiplus.cpp libboost_unit_test  ;
-unit-test test_capability_drawninegridcache : tests/capabilities/drawninegridcache.cpp libboost_unit_test  ;
-unit-test test_capability_font : tests/capabilities/font.cpp libboost_unit_test  ;
-unit-test test_capability_frameacknowledge : tests/capabilities/frameacknowledge.cpp libboost_unit_test  ;
-unit-test test_capability_general : tests/capabilities/general.cpp libboost_unit_test  ;
-unit-test test_capability_glyphcache : tests/capabilities/glyphcache.cpp libboost_unit_test  ;
-unit-test test_capability_input : tests/capabilities/input.cpp libboost_unit_test  ;
-unit-test test_capability_largepointer : tests/capabilities/largepointer.cpp libboost_unit_test  ;
-unit-test test_capability_multifragmentupdate : tests/capabilities/multifragmentupdate.cpp libboost_unit_test  ;
-unit-test test_capability_offscreencache : tests/capabilities/offscreencache.cpp libboost_unit_test  ;
-unit-test test_capability_order : tests/capabilities/order.cpp libboost_unit_test  ;
-unit-test test_capability_pointer : tests/capabilities/pointer.cpp libboost_unit_test  ;
-unit-test test_capability_rail : tests/capabilities/rail.cpp libboost_unit_test  ;
-unit-test test_capability_share : tests/capabilities/share.cpp libboost_unit_test  ;
-unit-test test_capability_sound : tests/capabilities/sound.cpp libboost_unit_test  ;
-unit-test test_capability_surfacecommands : tests/capabilities/surfacecommands.cpp libboost_unit_test  ;
-unit-test test_capability_virtualchannel : tests/capabilities/virtualchannel.cpp libboost_unit_test  ;
-unit-test test_capability_window : tests/capabilities/window.cpp libboost_unit_test  ;
+unit-test test_capability_activate : tests/capabilities/activate.cpp libboost_unit_test ;
+unit-test test_capability_bitmap : tests/capabilities/bitmap.cpp libboost_unit_test ;
+unit-test test_capability_bmpcache : tests/capabilities/bmpcache.cpp libboost_unit_test ;
+unit-test test_capability_bitmapcachehostsupport : tests/capabilities/bitmapcachehostsupport.cpp libboost_unit_test ;
+unit-test test_capability_brushcache : tests/capabilities/brushcache.cpp libboost_unit_test ;
+unit-test test_capability_compdesk : tests/capabilities/compdesk.cpp libboost_unit_test ;
+unit-test test_capability_control : tests/capabilities/control.cpp libboost_unit_test ;
+unit-test test_capability_drawgdiplus : tests/capabilities/drawgdiplus.cpp libboost_unit_test ;
+unit-test test_capability_drawninegridcache : tests/capabilities/drawninegridcache.cpp libboost_unit_test ;
+unit-test test_capability_font : tests/capabilities/font.cpp libboost_unit_test ;
+unit-test test_capability_frameacknowledge : tests/capabilities/frameacknowledge.cpp libboost_unit_test ;
+unit-test test_capability_general : tests/capabilities/general.cpp libboost_unit_test ;
+unit-test test_capability_glyphcache : tests/capabilities/glyphcache.cpp libboost_unit_test ;
+unit-test test_capability_input : tests/capabilities/input.cpp libboost_unit_test ;
+unit-test test_capability_largepointer : tests/capabilities/largepointer.cpp libboost_unit_test ;
+unit-test test_capability_multifragmentupdate : tests/capabilities/multifragmentupdate.cpp libboost_unit_test ;
+unit-test test_capability_offscreencache : tests/capabilities/offscreencache.cpp libboost_unit_test ;
+unit-test test_capability_order : tests/capabilities/order.cpp libboost_unit_test ;
+unit-test test_capability_pointer : tests/capabilities/pointer.cpp libboost_unit_test ;
+unit-test test_capability_rail : tests/capabilities/rail.cpp libboost_unit_test ;
+unit-test test_capability_share : tests/capabilities/share.cpp libboost_unit_test ;
+unit-test test_capability_sound : tests/capabilities/sound.cpp libboost_unit_test ;
+unit-test test_capability_surfacecommands : tests/capabilities/surfacecommands.cpp libboost_unit_test ;
+unit-test test_capability_virtualchannel : tests/capabilities/virtualchannel.cpp libboost_unit_test ;
+unit-test test_capability_window : tests/capabilities/window.cpp libboost_unit_test ;
 
-unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test  : ;
-unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test  : ;
-unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test  ;
+unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test ;
+unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test ;
+unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test ;
 
 unit-test test_rio_generator : tests/transport/rio/test_rio_generator.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_rio_generator : tests/transport/rio/test_rio_generator.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
@@ -322,13 +325,13 @@ unit-test test_sq_inmeta : tests/transport/rio/test_sq_inmeta.cpp openssl crypto
 
 #gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_rio_xxx.gcno bin/gcc-4.6/coverage/test_rio_xxx
 
-unit-test test_bitfu : tests/test_bitfu.cpp libboost_unit_test  ;
+unit-test test_bitfu : tests/test_bitfu.cpp libboost_unit_test ;
 
-unit-test test_fileutils : tests/test_fileutils.cpp libboost_unit_test  ;
+unit-test test_fileutils : tests/test_fileutils.cpp libboost_unit_test ;
 
-unit-test test_zlib : tests/test_zlib.cpp z libboost_unit_test  ;
+unit-test test_zlib : tests/test_zlib.cpp z libboost_unit_test ;
 
-unit-test test_parse_username : tests/test_parse_username.cpp libboost_unit_test  ;
+unit-test test_parse_username : tests/test_parse_username.cpp libboost_unit_test ;
 
 unit-test test_widget2_rect : tests/widget2/test_widget2_rect.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_widget2_image : tests/widget2/test_widget2_image.cpp png z openssl crypto libboost_unit_test ;

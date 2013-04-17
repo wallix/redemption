@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,8 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat
-
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Raphael Zhou
 */
 
 #ifndef _REDEMPTION_ACL_AUTHENTIFIER_HPP_
@@ -68,11 +67,10 @@ class SessionManager {
         MOD_STATE_DONE_EXIT,
     } mod_state;
 
-
     ModContext & context;
     int tick_count;
-    public:
 
+    public:
     struct SocketTransport * auth_trans_t;
     wait_obj * auth_event;
     int keepalive_grace_delay;
@@ -181,7 +179,6 @@ class SessionManager {
         this->auth_trans_t->send(stream.data, total_length);
     }
 
-
     void in_items(Stream & stream)
     {
         if (this->verbose & 0x40){
@@ -190,7 +187,6 @@ class SessionManager {
         for (; stream.p < stream.end ; this->in_item(stream)){
             ;
         }
-
     }
 
     void in_item(Stream & stream)
@@ -266,7 +262,7 @@ class SessionManager {
 //        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
         if (MOD_STATE_DONE_CONNECTED == this->mod_state){
             long enddate = atol(this->context.get(STRAUTHID_END_DATE_CNX));
-//            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu [%s])", keepalive_time, now, enddate, this->context.get(STRAUTHID_END_DATE_CNX));            
+//            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu [%s])", keepalive_time, now, enddate, this->context.get(STRAUTHID_END_DATE_CNX));
             if (enddate != 0 && (now > enddate)) {
                 LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
                 this->mod_state = MOD_STATE_DONE_CLOSE;
@@ -275,7 +271,7 @@ class SessionManager {
         }
 
         if (keepalive_time == 0){
-//            LOG(LOG_INFO, "keep_alive disabled");            
+//            LOG(LOG_INFO, "keep_alive disabled");
             return true;
         }
 
@@ -294,25 +290,34 @@ class SessionManager {
 
         if (now > keepalive_time){
             if (this->verbose & 8){
+/*
                 LOG(LOG_INFO, "%llu bytes sent in last quantum, total: %llu tick:%d",
                           trans->last_quantum_sent, trans->total_sent,
                           this->tick_count);
+*/
+                LOG(LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d",
+                          trans->last_quantum_received, trans->total_received,
+                          this->tick_count);
             }
-            if (trans->last_quantum_sent == 0){
+//            if (trans->last_quantum_sent == 0){
+            if (trans->last_quantum_received == 0){
                 this->tick_count++;
+LOG(LOG_INFO, "now=%lu, tick_count = %u", now, this->tick_count);
                 if (this->tick_count > this->max_tick){ // 15 minutes before closing on inactivity
                     this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed on inactivity");
                     LOG(LOG_INFO, "Session ACL inactivity : closing");
                     this->mod_state = MOD_STATE_DONE_CLOSE;
                     return false;
                 }
+
+                keepalive_time = now + this->keepalive_grace_delay;
             }
             else {
                 this->tick_count = 0;
             }
             trans->tick();
         }
-        
+
         if (now > keepalive_time){
             try {
                 BStream stream(8192);
@@ -352,7 +357,6 @@ class SessionManager {
 
         return true;
     }
-
 
     int get_mod_from_protocol(submodule_t & nextmod)
     {
@@ -443,10 +447,9 @@ class SessionManager {
         return res;
     }
 
-
     int ask_next_module(long & keepalive_time, 
-                        const char * auth_host, int auth_port, 
-                        bool & record_video, bool & keep_alive, 
+                        const char * auth_host, int auth_port,
+                        bool & record_video, bool & keep_alive,
                         submodule_t & nextmod)
     {
         if (this->verbose & 0x10){
@@ -714,7 +717,6 @@ class SessionManager {
         }
         this->mod_state = MOD_STATE_DONE_RECEIVED_CREDENTIALS;
     }
-
 };
 
 #endif
