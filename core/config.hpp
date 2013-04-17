@@ -293,7 +293,7 @@ struct Inifile {
             strcpy(this->globals.replay_path, "/tmp/");
             this->globals.internal_domain = false;
             this->globals.enable_file_encryption = false;
-            this->globals.enable_tls             = false;
+            this->globals.enable_tls             = true;
             strcpy(this->globals.listen_address, "0.0.0.0");
             this->globals.enable_ip_transparent  = false;
 
