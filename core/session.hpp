@@ -123,11 +123,14 @@ struct Session {
         , context(NULL)
         , nextmod(INTERNAL_NONE)
     {
-        SocketTransport front_trans("RDP Client", sck, "", 0, ini->globals.debug.front);
+        SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->globals.debug.front);
 
         try {
             this->context = new ModContext();
             this->context->cpy(STRAUTHID_HOST, ip_source);
+            this->context->cpy(STRAUTHID_OPT_FILE_ENCRYPTION,
+                (this->ini->globals.enable_file_encryption ? "True" : "False"));
+
             this->sesman = new SessionManager(*this->context
                                              , this->ini->globals.keepalive_grace_delay
                                              , this->ini->globals.max_tick
