@@ -627,7 +627,12 @@ LOG(LOG_INFO, "now=%lu, tick_count = %u", now, this->tick_count);
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                this->auth_trans_t = new SocketTransport(name, client_sck, this->verbose);
+                this->auth_trans_t = new SocketTransport(
+                      name
+                    , client_sck
+                    , auth_host
+                    , authport
+                    , this->verbose);
                 delete this->auth_event;
                 this->auth_event = new wait_obj(this->auth_trans_t->sck);
             }

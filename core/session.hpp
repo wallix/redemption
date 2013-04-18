@@ -123,7 +123,7 @@ struct Session {
         , context(NULL)
         , nextmod(INTERNAL_NONE)
     {
-        SocketTransport front_trans("RDP Client", sck, ini->globals.debug.front);
+        SocketTransport front_trans("RDP Client", sck, "", 0, ini->globals.debug.front);
 
         try {
             this->context = new ModContext();
@@ -717,7 +717,12 @@ struct Session {
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                SocketTransport * t = new SocketTransport(name, client_sck, this->ini->globals.debug.mod_xup);
+                SocketTransport * t = new SocketTransport(
+                      name
+                    , client_sck
+                    , this->context->get(STRAUTHID_TARGET_DEVICE)
+                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
+                    , this->ini->globals.debug.mod_xup);
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote X host");
                 this->mod = new xup_mod(t, *this->context, *(this->front),
                                         this->front->client_info.width,
@@ -760,7 +765,16 @@ struct Session {
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                SocketTransport * t = new SocketTransport(name, client_sck, this->ini->globals.debug.mod_rdp);
+                TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
+                SocketTransport * t = new SocketTransport(
+                      name
+                    , client_sck
+                    , this->context->get(STRAUTHID_TARGET_DEVICE)
+                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
+                    , this->ini->globals.debug.mod_rdp
+                    , this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)
+                    , 8192
+                    );
 
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote RDP host");
                 this->mod = new mod_rdp(t,
@@ -812,7 +826,12 @@ struct Session {
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                SocketTransport * t = new SocketTransport(name, client_sck, this->ini->globals.debug.mod_vnc);
+                SocketTransport * t = new SocketTransport(
+                      name
+                    , client_sck
+                    , this->context->get(STRAUTHID_TARGET_DEVICE)
+                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
+                    ,this->ini->globals.debug.mod_vnc);
 
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote VNC host");
 
