@@ -73,9 +73,9 @@ public:
         this->login_edit.set_edit_x(x);
         this->password_edit.rect.x = x;
         this->rect.cx = x - this->dx() + std::max(this->login_edit.cx(), this->password_edit.cx()) + 10;
-        this->help.set_button_x(this->cx() - this->help.cx() - 10);
-        this->cancel.set_button_x(this->help.dx() - this->cancel.cx() - 10);
-        this->ok.set_button_x(this->cancel.dx() - this->ok.cx() - 10);
+        this->help.set_button_x(this->dx() + this->cx() - (this->help.cx() + 10));
+        this->cancel.set_button_x(this->help.dx() - (this->cancel.cx() + 10));
+        this->ok.set_button_x(this->cancel.dx() - (this->ok.cx() + 10));
 
         this->login_edit.set_edit_cx(this->cx() - (this->login_edit.dx() - this->dx()) - 10);
         this->password_edit.rect.cx = this->login_edit.cx();

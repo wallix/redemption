@@ -251,11 +251,7 @@ public:
 
         for (std::size_t i = 0; i < size; ++i) {
             Widget *w = this->child_list[i];
-            Rect rect = new_clip.intersect(w->rect);
-
-            if (!rect.isempty()) {
-                w->refresh(rect);
-            }
+            w->refresh(new_clip.intersect(w->rect));
         }
     }
 

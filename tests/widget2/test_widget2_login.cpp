@@ -148,8 +148,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x6b\x3b\x27\x06\x73\xbe\xa8\xc3\x8b\x45"
-        "\x22\xc7\xf4\xb5\x37\xac\x68\x3e\xca\x42")){
+        "\x98\x2d\x22\x02\xaf\xb3\xc8\xbd\xa7\xfe"
+        "\xec\x08\x5e\xc9\x1d\xb3\xd5\x31\x79\x42")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -176,8 +176,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x93\x85\x19\xb4\x48\xed\xfb\x6f\xd2\xbd"
-        "\x44\x10\x85\xb6\x23\xcc\xba\xcd\x01\xa5")){
+        "\x9e\xac\x80\xf3\x1d\x89\xf9\x71\x51\x66"
+        "\xe8\xf7\x49\x0b\x48\xb1\xde\xfb\x2d\x86")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -204,8 +204,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x1e\x7f\xf7\xb8\xae\x34\xb2\x1c\x82\x7e"
-        "\x7b\x25\x2f\x69\xec\xa9\x1a\x84\x26\x17")){
+        "\xe6\xda\x0e\x1b\x73\x5a\x38\x70\x5a\x57"
+        "\xfa\x53\xa5\x88\x34\x59\xdb\xc5\xba\xe7")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -260,8 +260,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x3b\x1e\x56\x9c\x60\x8c\x66\x27\xfe\x1b"
-        "\xbd\xd4\x50\x22\xa0\x10\x33\xbf\xa3\x99")){
+        "\x44\x34\x14\x95\x17\x0a\x4f\x26\xcb\x90"
+        "\x8e\xa3\xd6\xcc\x62\x5e\x72\x16\xc4\x1d")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -438,8 +438,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x7a\xd3\xb0\x5e\x30\x64\x19\xcb\x52\x2e"
-        "\x89\xcd\xca\x36\xea\x0f\x7a\x00\xd9\x54")){
+        "\x34\x39\x02\x46\xc3\x33\xbc\x57\x64\x22"
+        "\xe0\x35\xe1\x01\x06\xac\x80\x20\xc4\xb4")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -449,8 +449,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
     drawable.save_to_png("/tmp/window_login-help2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\x5d\x23\x54\xd1\xa5\x08\xfd\x8c\x04\xbb"
-        "\x39\x76\x13\xfa\xf5\x44\xdd\x03\x21\x5d")){
+        "\xe1\x6c\xf8\x2d\x6d\x0a\x13\x92\x02\xf3"
+        "\x58\x53\x1f\xe2\x6c\x05\xb1\x6a\x9e\x67")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
