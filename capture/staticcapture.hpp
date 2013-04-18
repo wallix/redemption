@@ -81,6 +81,13 @@ public:
 
     ~StaticCapture()
     {
+        // delete all captured files at the end of the RDP client session
+        for(size_t i = this->conf.png_limit ; i > 0 ; i--) {
+            if (this->trans.seqno >= i){
+                // unlink may fail, for instance if file does not exist, just don't care
+                sq_outfilename_unlink(this->seq, this->trans.seqno - i);
+            }
+        }
     }
 
     void update_config(const Inifile & ini){
@@ -103,11 +110,10 @@ public:
 
     virtual void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
-        if ((unsigned)difftimeval(now, this->start_static_capture) 
+        if ((unsigned)difftimeval(now, this->start_static_capture)
          >= (unsigned)this->inter_frame_interval_static_capture){
             this->breakpoint(now);
         }
-    
     }
 
     void breakpoint(const timeval & now)
@@ -136,7 +142,6 @@ public:
     void glyph_index(const RDPGlyphIndex & glyph_index, const Rect & clip)
     {
     }
-
 };
 
 #endif

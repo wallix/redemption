@@ -94,7 +94,7 @@ public:
 
 
         if (this->capture_png){
-            if (recursive_create_directory(PNG_PATH "/", S_IRUSR|S_IWUSR) != 0) {
+            if (recursive_create_directory(PNG_PATH "/", S_IRUSR | S_IWUSR | S_IXUSR) != 0) {
                 LOG(LOG_INFO, "Failed to create directory: \"%s\"", PNG_PATH "/");
             }
 
@@ -107,7 +107,7 @@ public:
         }
 
         if (this->capture_wrm){
-            if (recursive_create_directory(path, S_IRUSR|S_IWUSR) != 0) {
+            if (recursive_create_directory(path, S_IRUSR | S_IWUSR | S_IXUSR) != 0) {
                 LOG(LOG_INFO, "Failed to create directory: \"%s\"", path);
             }
 
