@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Raphael Zhou
 
    Transport layer abstraction, socket implementation with TLS support
 */
@@ -34,7 +34,7 @@
     {
         char* buffer = NULL;
         BIO* outBIO = BIO_new(BIO_s_mem());
-    
+
         if (X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0)
         {
             unsigned long size = BIO_number_written(outBIO);
@@ -166,13 +166,13 @@ class SocketTransport : public Transport {
          * block padding is normally used, but the Microsoft TLS implementation
          * won't recognize it and will disconnect you after sending a TLS alert.
          */
-         
-        // SSL_CTX_set_options() adds the options set via bitmask in options to ctx. 
+
+        // SSL_CTX_set_options() adds the options set via bitmask in options to ctx.
         // Options already set before are not cleared! 
-        
+
          // During a handshake, the option settings of the SSL object are used. When
-         // a new SSL object is created from a context using SSL_new(), the current 
-         // option setting is copied. Changes to ctx do not affect already created 
+         // a new SSL object is created from a context using SSL_new(), the current
+         // option setting is copied. Changes to ctx do not affect already created
          // SSL objects. SSL_clear() does not affect the settings.
 
          // The following bug workaround options are available:
@@ -180,22 +180,22 @@ class SocketTransport : public Transport {
          // SSL_OP_MICROSOFT_SESS_ID_BUG
 
          // www.microsoft.com - when talking SSLv2, if session-id reuse is performed,
-         // the session-id passed back in the server-finished message is different 
+         // the session-id passed back in the server-finished message is different
          // from the one decided upon.
-         
+
          // SSL_OP_NETSCAPE_CHALLENGE_BUG
 
-         // Netscape-Commerce/1.12, when talking SSLv2, accepts a 32 byte challenge 
-         // but then appears to only use 16 bytes when generating the encryption keys. 
+         // Netscape-Commerce/1.12, when talking SSLv2, accepts a 32 byte challenge
+         // but then appears to only use 16 bytes when generating the encryption keys.
          // Using 16 bytes is ok but it should be ok to use 32. According to the SSLv3
          // spec, one should use 32 bytes for the challenge when operating in SSLv2/v3
-         // compatibility mode, but as mentioned above, this breaks this server so 
+         // compatibility mode, but as mentioned above, this breaks this server so
          // 16 bytes is the way to go.
 
          // SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG
 
          // As of OpenSSL 0.9.8q and 1.0.0c, this option has no effect.
-        
+
         // SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG
 
         //  ...
@@ -240,22 +240,22 @@ class SocketTransport : public Transport {
         // this rule by adapting to the server's answer. (Example: the client sends a SSLv2
         // hello and accepts up to SSLv3.1=TLSv1, the server only understands up to SSLv3.
         // In this case the client must still use the same SSLv3.1=TLSv1 announcement. Some
-        // clients step down to SSLv3 with respect to the server's answer and violate the 
+        // clients step down to SSLv3 with respect to the server's answer and violate the
         // version rollback protection.)
 
         // SSL_OP_SINGLE_DH_USE
 
         // Always create a new key when using temporary/ephemeral DH parameters (see
         // SSL_CTX_set_tmp_dh_callback(3)). This option must be used to prevent small subgroup
-        // attacks, when the DH parameters were not generated using ``strong'' primes (e.g. 
+        // attacks, when the DH parameters were not generated using ``strong'' primes (e.g.
         // when using DSA-parameters, see dhparam(1)). If ``strong'' primes were used, it is
         // not strictly necessary to generate a new DH key during each handshake but it is
-        // also recommended. SSL_OP_SINGLE_DH_USE should therefore be enabled whenever 
+        // also recommended. SSL_OP_SINGLE_DH_USE should therefore be enabled whenever
         // temporary/ephemeral DH parameters are used.
-        
+
         // SSL_OP_EPHEMERAL_RSA
 
-        // Always use ephemeral (temporary) RSA key when doing RSA operations (see 
+        // Always use ephemeral (temporary) RSA key when doing RSA operations (see
         // SSL_CTX_set_tmp_rsa_callback(3)). According to the specifications this is only done,
         // when a RSA key can only be used for signature operations (namely under export ciphers
         // with restricted RSA keylength). By setting this option, ephemeral RSA keys are always
@@ -315,12 +315,12 @@ class SocketTransport : public Transport {
         // SSL_OP_LEGACY_SERVER_CONNECT
         // Allow legacy insecure renegotiation between OpenSSL and unpatched servers only: this option
         // is currently set by default. See the SECURE RENEGOTIATION section for more details.
-        
+
         LOG(LOG_INFO, "RIO *::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
-        
+
         // -------- End of system wide SSL_Ctx option ----------------------------------
-        
+
         // --------Start of session specific init code ---------------------------------
 
         /* Load our keys and certificates*/
@@ -339,7 +339,7 @@ class SocketTransport : public Transport {
             ERR_print_errors(bio_err);
             exit(0);
         }
-       
+
         DH *ret=0;
         BIO *bio;
 
@@ -357,15 +357,15 @@ class SocketTransport : public Transport {
             ERR_print_errors(bio_err);
             exit(0);
         }
-        
-        // SSL_new() creates a new SSL structure which is needed to hold the data for a TLS/SSL 
+
+        // SSL_new() creates a new SSL structure which is needed to hold the data for a TLS/SSL
         // connection. The new structure inherits the settings of the underlying context ctx:
         // - connection method (SSLv2/v3/TLSv1),
         // - options,
         // - verification settings,
         // - timeout settings.
 
-        // return value: NULL: The creation of a new SSL structure failed. Check the error stack 
+        // return value: NULL: The creation of a new SSL structure failed. Check the error stack
         // to find out the reason.
         TODO("add error management")
         BIO * sbio = BIO_new_socket(this->sck, BIO_NOCLOSE);
@@ -723,14 +723,14 @@ class SocketTransport : public Transport {
         }
 
         LOG(LOG_INFO, "RIO *::SSL_get_peer_certificate()");
-        
+
         // SSL_get_peer_certificate - get the X509 certificate of the peer
         // ---------------------------------------------------------------
-        
+
         // SSL_get_peer_certificate() returns a pointer to the X509 certificate
         // the peer presented. If the peer did not present a certificate, NULL
-        // is returned. 
-        
+        // is returned.
+
         // Due to the protocol definition, a TLS/SSL server will always send a
         // certificate, if present. A client will only send a certificate when
         // explicitly requested to do so by the server (see SSL_CTX_set_verify(3)).
@@ -743,7 +743,7 @@ class SocketTransport : public Transport {
         // The reference count of the X509 object is incremented by one, so that
         // it will not be destroyed when the session containing the peer certificate
         // is freed. The X509 object must be explicitly freed using X509_free().
-        
+
         // RETURN VALUES The following return values can occur:
 
         // NULL : no certificate was presented by the peer or no connection was established.
@@ -820,7 +820,7 @@ class SocketTransport : public Transport {
                 (strcmp(fingerprint_existing, fingerprint))) {
                 if (this->error_message_buffer && this->error_message_len) {
                     snprintf(this->error_message_buffer, this->error_message_len,
-                        "The certificate for host %s:%d has been changed!\n\n"
+                        "The certificate for this host has been changed!\n\n"
                         "Old\n"
                         "\tIssuer = \"%s\"\n"
                         "\tSubject = \"%s\"\n"
@@ -918,14 +918,14 @@ class SocketTransport : public Transport {
         uint8_t * tmp = public_key_data;
         i2d_PublicKey(pkey, &tmp);
 
-        ;
+
         X509* xcert = px509;
         X509_STORE* cert_ctx = X509_STORE_new();
 
             // OpenSSL_add_all_algorithms(3SSL)
             // --------------------------------
 
-            // OpenSSL keeps an internal table of digest algorithms and ciphers. It uses this table 
+            // OpenSSL keeps an internal table of digest algorithms and ciphers. It uses this table
             // to lookup ciphers via functions such as EVP_get_cipher_byname().
 
            // OpenSSL_add_all_digests() adds all digest algorithms to the table.
@@ -950,7 +950,7 @@ class SocketTransport : public Transport {
                                           X509_STORE_CTX_init(csc, cert_ctx, xcert, 0);
                                           X509_verify_cert(csc);
                                       X509_STORE_CTX_free(csc);
-                              
+
         X509_STORE_free(cert_ctx);
 
 //        int index = X509_NAME_get_index_by_NID(subject_name, NID_commonName, -1);
