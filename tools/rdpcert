@@ -27,6 +27,7 @@ my $extfile = "/tmp/tlssrv_x509v3ext";
 #my $clearpkey = "/tmp/clearRdpproxyPrivateKey.pem";
 my $pass = "inquisition";
 my $hostname = `hostname -f`;
+chomp $hostname;
 
 if (-e $pkey and not $force){
   print STDERR "private key file already exist, leaving as is\n";
