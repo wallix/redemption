@@ -29,7 +29,8 @@ my $pass = "inquisition";
 my $hostname = `hostname -f`;
 
 if (-e $pkey and not $force){
-  die "private key file already exist, aborting\n";
+  print STDERR "private key file already exist, leaving as is\n";
+  exit 0;
 }
 
 `openssl genrsa -out $pkey -des3 -passout "pass:$pass" 2048`;
