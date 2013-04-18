@@ -25,6 +25,7 @@ rule defines ( properties * )
     defs += <define>OCR_PATH='\"/tmp\"' ;
     defs += <define>PNG_PATH='\"/tmp\"' ;
     defs += <define>WRM_PATH='\"/tmp\"' ;
+    defs += <define>CERTIF_PATH='\"/etc/rdpproxy/certificate\"' ;
     if [ os.environ VERBOSE ]
     {
         defs += <define>VERBOSE ;

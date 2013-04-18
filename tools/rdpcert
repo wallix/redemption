@@ -1,0 +1,60 @@
+#!/usr/bin/perl
+ 
+use Getopt::Long;
+use File::Path;
+
+my $force = '';
+
+GetOptions ('force' => \$force);
+
+my $confpath = '';
+if (@ARGV > 0){
+    $confpath = @ARGV[0];
+}
+
+$confpath =~ s/^(.*[^\/]+)[\/]*$/$1/;
+$confpath or die "redemption:configuration path must be provided\n";
+
+mkpath $confpath unless -d $confpath 
+    or die "redemption:configuration path does not exists and failed to create configuration path \"$confpath\"\n";
+
+
+my $pkey = "$confpath/rdpproxy.key";
+my $certreq = "/tmp/rdpproxy.csr";
+my $cert = "$confpath/rdpproxy.crt";
+my $p12 = "/tmp/rdpproxy.p12";
+my $extfile = "/tmp/tlssrv_x509v3ext";
+#my $clearpkey = "/tmp/clearRdpproxyPrivateKey.pem";
+my $pass = "inquisition";
+my $hostname = `hostname -f`;
+chomp $hostname;
+
+if (-e $pkey and not $force){
+  print STDERR "private key file already exist, leaving as is\n";
+  exit 0;
+}
+
+`openssl genrsa -out $pkey -des3 -passout "pass:$pass" 2048`;
+die "rdpproxy:failed to create ReDemPtion server private key" if $?;
+    
+`openssl req -new -key $pkey -passin "pass:$pass" -out $certreq -subj "/CN=$hostname"`;
+die "failed to create ReDemPtion server certificate request" if $?;
+
+open(my $fh, ">", $extfile);
+print $fh   "keyUsage=keyEncipherment,dataEncipherment\n"
+           ."extendedKeyUsage=serverAuth\n";
+close $fh;
+
+`openssl x509 -req -days 7300 -in $certreq -signkey $pkey -passin "pass:$pass" -out $cert -extfile $extfile`;
+die "failed to create ReDemPtion server certificate" if $?;
+
+
+# to get clear x509 certificate (no key)
+#`openssl rsa -in $pkey -passin "pass:$pass" -out $clearpkey`;
+
+#to get p12 certificate
+#`openssl pkcs12 -export -in $cert -inkey $pkey -passin "pass:$pass" -name $hostname -out $p12 -passout "pass:$p12key";
+
+unlink $certreq;
+unlink $extfile;
+
