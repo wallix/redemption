@@ -95,7 +95,7 @@ public:
 
         if (this->capture_png){
             if (recursive_create_directory(PNG_PATH "/", S_IRUSR | S_IWUSR | S_IXUSR) != 0) {
-                LOG(LOG_INFO, "Failed to create directory: \"%s\"", PNG_PATH "/");
+                LOG(LOG_ERR, "Failed to create directory: \"%s\"", PNG_PATH "/");
             }
 
             this->png_trans = new OutFilenameTransport(SQF_PATH_FILE_PID_COUNT_EXTENSION, PNG_PATH "/", basename, ".png");
@@ -108,7 +108,7 @@ public:
 
         if (this->capture_wrm){
             if (recursive_create_directory(path, S_IRUSR | S_IWUSR | S_IXUSR) != 0) {
-                LOG(LOG_INFO, "Failed to create directory: \"%s\"", path);
+                LOG(LOG_ERR, "Failed to create directory: \"%s\"", path);
             }
 
             if (this->enable_file_encryption == false) {
@@ -121,6 +121,7 @@ public:
                 this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
                 this->pnc = new NativeCapture(now, *this->crypto_wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
             }
+
             this->pnc->recorder.send_input = true;
         }
    }
