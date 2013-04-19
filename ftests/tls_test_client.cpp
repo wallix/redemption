@@ -103,14 +103,14 @@ static int rdp_request(SSL_CTX *ctx, int sock, BIO *bio_err)
     
     ssize_t len = rio_recv(&rio, buf, 29);
     if (len < 0){
-        printf("len=%ld\n", len);
+        printf("len=%d\n", (int)len);
         exit(0);
     }
     fwrite(buf,1,len,stdout);
 
     len = rio_recv(&rio, buf, 18);
     if (len < 0){
-        printf("len=%ld\n", len);
+        printf("len=%d\n", (int)len);
         exit(0);
     }
     fwrite(buf,1,len,stdout);
