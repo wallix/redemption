@@ -110,6 +110,13 @@ public:
         this->labels.clear();
     }
 
+    void init_current_index(uint idx)
+    {
+        this->current_index = idx;
+        this->labels[idx]->bg_color = this->current_bg_color;
+        this->labels[idx]->fg_color = this->current_fg_color;
+    }
+
     void set_current_index(uint idx)
     {
         if (idx != this->current_index) {
@@ -478,6 +485,11 @@ public:
             protocols += size_protocols + 1;
             endtimes += size_endtimes + 1;
         }
+
+        this->account_device_lines.init_current_index(0);
+        this->device_group_lines.init_current_index(0);
+        this->close_time_lines.init_current_index(0);
+        this->protocol_lines.init_current_index(0);
     }
 
 

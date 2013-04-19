@@ -139,7 +139,10 @@ public:
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.set_index_list(0);
+
+        this->front.begin_update();
+        this->selector.refresh(this->selector.rect);
+        this->front.end_update();
     }
 
     virtual ~widget2_mod()
@@ -155,12 +158,14 @@ public:
 
     virtual void rdp_input_invalidate(const Rect& r)
     {
-        this->rdp_input_invalidate(r);
+        this->front.begin_update();
+        this->selector.rdp_input_invalidate(r);
+        this->front.end_update();
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
-        //this->rdp_input_mouse(device_flags, x, y, keymap);
+        //this->selector.rdp_input_mouse(device_flags, x, y, keymap);
     }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
