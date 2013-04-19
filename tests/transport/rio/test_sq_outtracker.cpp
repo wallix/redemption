@@ -86,7 +86,8 @@ BOOST_AUTO_TEST_CASE(TestSeqOuttracker)
     tv.tv_usec = 0;
     tv.tv_sec = 1352304810;
    
-    SQ * sq = sq_new_outtracker(&status, &check, SQF_PATH_FILE_COUNT_EXTENSION, "", "TESTOFS", ".wrm", &tv, "800 600", "0", "");
+    const int groupid = 0;
+    SQ * sq = sq_new_outtracker(&status, &check, SQF_PATH_FILE_COUNT_EXTENSION, "", "TESTOFS", ".wrm", &tv, "800 600", "0", "", groupid);
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
     RIO * rt = NULL;

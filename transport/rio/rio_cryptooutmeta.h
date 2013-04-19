@@ -20,25 +20,29 @@
    Template for new Outmeta RedTransport class
 */
 
-#ifndef _REDEMPTION_LIBS_RIO_OUTMETA_H_
-#define _REDEMPTION_LIBS_RIO_OUTMETA_H_
+#ifndef _REDEMPTION_TRANSPORT_RIO_CRYPTOOUTMETA_H_
+#define _REDEMPTION_TRANSPORT_RIO_CRYPTOOUTMETA_H_
 
 #include "rio.h"
 
 extern "C" {
-    struct RIOOutmeta {
+
+    /*******************
+    * RIOCryptoOutmeta *
+    *******************/
+
+    struct RIOCryptoOutmeta {
         int lastcount;
         struct RIO * meta;
         struct SQ * seq;
         struct RIO * out;
-        int fd;
     };
 
     /* This method does not allocate space for object itself,
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RIO_ERROR rio_m_RIOOutmeta_constructor(RIOOutmeta * self, SQ ** seq,
+    inline RIO_ERROR rio_m_RIOCryptoOutmeta_constructor(RIOCryptoOutmeta * self, SQ ** seq,
                                                   const char * path, const char * filename, const char * extension,
                                                   const char * header1, const char * header2, const char* header3, timeval * tv,
                                                   const int groupid)
@@ -49,30 +53,15 @@ extern "C" {
         if (res >= sizeof(buffer)){
             return RIO_ERROR_FILENAME_TOO_LONG;
         }
-        int fd = ::open(buffer, O_WRONLY|O_CREAT, S_IRUSR);
-        if (fd < 0){
-            return RIO_ERROR_CREAT;
-        }
-        if (groupid){
-            if (chown(buffer, (uid_t)-1, groupid) < 0){
-                LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", buffer, groupid, strerror(errno), errno);
-            }
-            if (chmod(buffer, S_IRUSR|S_IRGRP) == -1){
-                LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", buffer, strerror(errno), errno);
-            }
-        }
-        
         RIO_ERROR status = RIO_ERROR_OK;
-        RIO * meta = rio_new_outfile(&status, fd);
-        SQ * sequence = sq_new_outtracker(&status, meta, SQF_PATH_FILE_COUNT_EXTENSION, path, filename, ".wrm", tv, header1, header2, header3, groupid);
+        RIO * meta = rio_new_crypto(&status, buffer, O_WRONLY);
+        SQ * sequence = sq_new_cryptoouttracker(&status, meta, SQF_PATH_FILE_COUNT_EXTENSION, path, filename, ".wrm", tv, header1, header2, header3, groupid);
         if (status != RIO_ERROR_OK){
-            close(self->fd);
             rio_delete(meta);
             return status;
         }
         RIO * out = rio_new_outsequence(&status, sequence);
         if (status != RIO_ERROR_OK){
-            close(self->fd);
             sq_delete(sequence);
             rio_delete(meta);
             return status;
@@ -87,18 +76,17 @@ extern "C" {
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RIO_ERROR rio_m_RIOOutmeta_destructor(RIOOutmeta * self)
+    inline RIO_ERROR rio_m_RIOCryptoOutmeta_destructor(RIOCryptoOutmeta * self)
     {
         rio_delete(self->out);
         sq_delete(self->seq);
         rio_delete(self->meta);
-        close(self->fd);
         return RIO_ERROR_CLOSED;
     }
 
     /* This method return a signature based on the data written
     */
-    static inline RIO_ERROR rio_m_RIOOutmeta_sign(RIOOutmeta * self, unsigned char * buf, size_t size, size_t & len) {
+    static inline RIO_ERROR rio_m_RIOCryptoOutmeta_sign(RIOCryptoOutmeta * self, unsigned char * buf, size_t size, size_t & len) {
         memset(buf, 0, size);
         len = 0;
         return RIO_ERROR_OK;
@@ -111,7 +99,7 @@ extern "C" {
        If an error occurs after reading some data the amount read will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rio_m_RIOOutmeta_recv(RIOOutmeta * self, void * data, size_t len)
+    inline ssize_t rio_m_RIOCryptoOutmeta_recv(RIOCryptoOutmeta * self, void * data, size_t len)
     {
          return -RIO_ERROR_SEND_ONLY;
     }
@@ -123,12 +111,12 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rio_m_RIOOutmeta_send(RIOOutmeta * self, const void * data, size_t len)
+    inline ssize_t rio_m_RIOCryptoOutmeta_send(RIOCryptoOutmeta * self, const void * data, size_t len)
     {
         return rio_send(self->out, data, len);
     }
 
-    static inline RIO_ERROR rio_m_RIOOutmeta_get_status(RIOOutmeta * self)
+    static inline RIO_ERROR rio_m_RIOCryptoOutmeta_get_status(RIOCryptoOutmeta * self)
     {
         return rio_get_status(self->out);
     }

@@ -47,7 +47,8 @@ BOOST_AUTO_TEST_CASE(TestInsequence)
         struct timeval tv;
         tv.tv_usec = 0;
         tv.tv_sec = 1352304810;
-        RIO * rt = rio_new_outmeta(&status, &seq, "", "TESTOFS", ".mwrm", "800 600", "", "", &tv);
+        const int groupid = 0;
+        RIO * rt = rio_new_outmeta(&status, &seq, "", "TESTOFS", ".mwrm", "800 600", "", "", &tv, groupid);
 
         BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
         tv.tv_sec+= 100;

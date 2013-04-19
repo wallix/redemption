@@ -272,7 +272,8 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
 
 BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 {
-    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png");
+    const int groupid = 0;
+    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
     ImageCapture d(trans, 800, 600);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
@@ -299,7 +300,8 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     now.tv_usec = 0;
 
     Rect screen_rect(0, 0, 800, 600);
-    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "xxxtest", ".png");
+    const int groupid = 0;
+    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "xxxtest", ".png", groupid);
     SQ * seq = &(trans.seq);
     Inifile ini;
     ini.globals.png_interval = 1;
@@ -369,7 +371,8 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
 BOOST_AUTO_TEST_CASE(TestSmallImage)
 {
-    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", 0x100);
+    const int groupid = 0;
+    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", 0, 0x100);
     Rect scr(0, 0, 20, 10);
     ImageCapture d(trans, scr.cx, scr.cy);
     d.draw(RDPOpaqueRect(scr, RED), scr);
@@ -386,7 +389,8 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
 {
     const int width = 800;
     const int height = 600;
-    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png");
+    const int groupid = 0;
+    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid);
     Rect scr(0, 0, width, height);
     ImageCapture d(trans, scr.cx, scr.cy);
     d.zoom(50);
@@ -407,7 +411,8 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
 BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 {
     BOOST_CHECK(1);
-    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", 0x100);
+    const int groupid = 0;    
+    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", 0, 0x100);
     Rect scr(0, 0, 800, 600);
     ImageCapture d(trans, scr.cx, scr.cy);
     d.draw(RDPOpaqueRect(scr, GREEN), scr);
@@ -530,7 +535,8 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
 {
     BOOST_CHECK(1);
-    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", 0x100);
+    const int groupid = 0;    
+    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, 0x100);
     Rect scr(0, 0, 800, 600);
     ImageCapture d(trans, scr.cx, scr.cy);
     d.draw(RDPOpaqueRect(scr, GREEN), scr);

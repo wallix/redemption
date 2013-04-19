@@ -759,7 +759,7 @@ class SocketTransport : public Transport {
 
 
         // ensures the certificate directory exists
-        if (recursive_create_directory(CERTIF_PATH "/", S_IRUSR | S_IWUSR | S_IXUSR) != 0) {
+        if (recursive_create_directory(CERTIF_PATH "/", S_IRUSR | S_IWUSR | S_IXUSR, 0) != 0) {
             LOG(LOG_ERR, "cannot create certificate directory: " CERTIF_PATH "/");
             throw Error(ERR_TRANSPORT, 0);
         }

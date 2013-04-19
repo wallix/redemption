@@ -20,8 +20,8 @@
    Template for new SQ_Outfilename sequence class
 */
 
-#ifndef _REDEMPTION_LIBS_SQ_OUTFILENAME_H_
-#define _REDEMPTION_LIBS_SQ_OUTFILENAME_H_
+#ifndef _REDEMPTION_LIBS_SQ_CRYPTOOUTFILENAME_H_
+#define _REDEMPTION_LIBS_SQ_CRYPTOOUTFILENAME_H_
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -30,8 +30,11 @@
 #include "rio.h"
 
 extern "C" {
-    struct SQOutfilename {
-        int fd;
+    /**********************
+    * SQCryptoOutfilename *
+    **********************/
+
+    struct SQCryptoOutfilename {
         RIO * trans;
         timeval start_tv;
         timeval stop_tv;
@@ -45,14 +48,15 @@ extern "C" {
         int groupid;
     };
 
-    static inline RIO_ERROR sq_m_SQOutfilename_constructor(SQOutfilename * self,
-                SQ_FORMAT format,
-                const char * path, const char * filename, const char * extension, const int groupid)
+    static inline RIO_ERROR sq_m_SQCryptoOutfilename_constructor(SQCryptoOutfilename * self,
+        SQ_FORMAT format, const char * path, const char * filename,
+        const char * extension, const int groupid)
     {
-        self->trans = NULL;
-        self->count = 0;
+        self->trans  = NULL;
+        self->count  = 0;
         self->format = format;
-        self->pid = getpid();
+        self->pid    = getpid();
+
         if (strlen(path) > sizeof(self->path) - 1){
             return RIO_ERROR_STRING_PATH_TOO_LONG;
         }
@@ -73,7 +77,7 @@ extern "C" {
     // internal utility method, used to get name of files used for target transports
     // it is called internally, but actual goal is to enable tests to check and remove the created files afterward.
     // not a part of external sequence API
-    static inline size_t sq_im_SQOutfilename_get_name(const SQOutfilename * self, char * buffer, size_t size, int count)
+    static inline size_t sq_im_SQCryptoOutfilename_get_name(const SQCryptoOutfilename * self, char * buffer, size_t size, int count)
     {
         size_t res = 0;
         switch (self->format){
@@ -94,39 +98,34 @@ extern "C" {
         return res;
     }
 
-    static RIO_ERROR sq_m_SQOutfilename_timestamp(SQOutfilename * self, timeval * tv)
+    static RIO_ERROR sq_m_SQCryptoOutfilename_timestamp(SQCryptoOutfilename * self, timeval * tv)
     {
         return RIO_ERROR_OK;
     }
 
-    static inline RIO_ERROR sq_m_SQOutfilename_destructor(SQOutfilename * self)
+    static inline RIO_ERROR sq_m_SQCryptoOutfilename_destructor(SQCryptoOutfilename * self)
     {
         if (self->trans){
             char tmpname[1024];
-            sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
+            sq_im_SQCryptoOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
+//            LOG(LOG_INFO, "closing file  %s", tmpname);
+            TODO("check if close returns some error");
             rio_delete(self->trans);
-            int res = close(self->fd);
-            if (res < 0){
-                LOG(LOG_ERR, "closing file failed erro=%u : %s\n", errno, strerror(errno));
-                return RIO_ERROR_CLOSE_FAILED;
-            }
             self->trans = NULL;
         }
-        return RIO_ERROR_CLOSED;
+        return RIO_ERROR_OK;
     }
 
-    static inline RIO * sq_m_SQOutfilename_get_trans(SQOutfilename * self, RIO_ERROR * status)
+    static inline RIO * sq_m_SQCryptoOutfilename_get_trans(SQCryptoOutfilename * self, RIO_ERROR * status)
     {
         if (status && (*status != RIO_ERROR_OK)) { return self->trans; }
         if (!self->trans){
             char tmpname[1024];
-            sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
+            sq_im_SQCryptoOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
             TODO("add rights information to constructor")
-            self->fd = ::open(tmpname, O_WRONLY|O_CREAT, S_IRUSR);
-            if (self->fd < 0){
-                if (status) { *status = RIO_ERROR_CREAT; }
-                return self->trans;
-            }
+            LOG(LOG_INFO, "opening file %s", tmpname);
+            self->trans = rio_new_crypto(status, tmpname, O_WRONLY);
+            TODO("maybe we should put groupid management into rio_new_crypto")
             if (self->groupid){
                 if (chown(tmpname, (uid_t)-1, self->groupid) < 0){
                     LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", tmpname, self->groupid, strerror(errno), errno);
@@ -135,19 +134,18 @@ extern "C" {
                     LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", tmpname, strerror(errno), errno);
                 }
             }
-            self->trans = rio_new_outfile(status, self->fd);
         }
         return self->trans;
     }
 
-    static inline RIO_ERROR sq_m_SQOutfilename_next(SQOutfilename * self)
+    static inline RIO_ERROR sq_m_SQCryptoOutfilename_next(SQCryptoOutfilename * self)
     {
-        sq_m_SQOutfilename_destructor(self);
+        sq_m_SQCryptoOutfilename_destructor(self);
         self->count += 1;
         return RIO_ERROR_OK;
     }
 
-    static inline RIO_ERROR sq_m_SQOutfilename_get_chunk_info(SQOutfilename * self, unsigned * num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
+    static inline RIO_ERROR sq_m_SQCryptoOutfilename_get_chunk_info(SQCryptoOutfilename * self, unsigned * num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
     {
         return RIO_ERROR_OK;
     }

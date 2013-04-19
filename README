@@ -77,8 +77,8 @@ informations for all architecture are kept together in bin directory.
 The main drawback of bjam is the smaller user base.
 
 But keeping in mind the complexity of make (or worse autotools + make), bjam is
-a great help. There's also a cmake version of the build script for those who
-prefer, although it may not always be up-to-date.
+a great help. We also used to have an alternative cmake build system, but it was
+more complex than bjam and not maintained, so was removed.
 
 
 Q - Fine, now how do I compile and run ReDemPtion ?

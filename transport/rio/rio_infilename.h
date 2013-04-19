@@ -27,10 +27,10 @@
 
 extern "C" {
     /**********************
-    * RIOCryptoInfilename *
+    * RIOInfilename *
     **********************/
 
-    struct RIOCryptoInfilename {
+    struct RIOInfilename {
         RIO *trans;
     };
 
@@ -38,7 +38,7 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RIO_ERROR rio_m_RIOCryptoInfilename_constructor(RIOCryptoInfilename * self, const char * filename)
+    inline RIO_ERROR rio_m_RIOInfilename_constructor(RIOInfilename * self, const char * filename)
     {
         RIO_ERROR error;
         self->trans = rio_new_crypto(&error, filename, O_RDONLY);
@@ -47,7 +47,7 @@ extern "C" {
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RIO_ERROR rio_m_RIOCryptoInfilename_destructor(RIOCryptoInfilename * self)
+    inline RIO_ERROR rio_m_RIOInfilename_destructor(RIOInfilename * self)
     {
         rio_delete(self->trans);
         return RIO_ERROR_CLOSED;
@@ -55,7 +55,7 @@ extern "C" {
 
     /* This method return a signature based on the data written
     */
-    static inline RIO_ERROR rio_m_RIOCryptoInfilename_sign(RIOCryptoInfilename * self, unsigned char * buf, size_t size, size_t & len) {
+    static inline RIO_ERROR rio_m_RIOInfilename_sign(RIOInfilename * self, unsigned char * buf, size_t size, size_t & len) {
         memset(buf, 0, size);
         len = 0;
         return RIO_ERROR_OK;
@@ -69,7 +69,7 @@ extern "C" {
        has been changed but an error is returned anyway
        and an error returned on subsequent call.
     */
-    inline ssize_t rio_m_RIOCryptoInfilename_recv(RIOCryptoInfilename * self, void * data, size_t len)
+    inline ssize_t rio_m_RIOInfilename_recv(RIOInfilename * self, void * data, size_t len)
     {
         return rio_recv(self->trans, data, len);
     }
@@ -81,13 +81,13 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rio_m_RIOCryptoInfilename_send(RIOCryptoInfilename * self, const void * data, size_t len)
+    inline ssize_t rio_m_RIOInfilename_send(RIOInfilename * self, const void * data, size_t len)
     {
-         rio_m_RIOCryptoInfilename_destructor(self);
+         rio_m_RIOInfilename_destructor(self);
          return -RIO_ERROR_RECV_ONLY;
     }
 
-    static inline RIO_ERROR rio_m_RIOCryptoInfilename_get_status(RIOCryptoInfilename * self)
+    static inline RIO_ERROR rio_m_RIOInfilename_get_status(RIOInfilename * self)
     {
         // either OK, or error has already been intercepted
         return RIO_ERROR_OK;

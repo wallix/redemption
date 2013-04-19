@@ -98,8 +98,11 @@ extern "C" {
     RIO * rio_new_outfile(RIO_ERROR * error, int fd);
     RIO_ERROR rio_init_outfile(RIO * self, int fd);
 
-    RIO * rio_new_cryptooutfilename(RIO_ERROR * error, const char * filename);
-    RIO_ERROR rio_init_cryptooutfilename(RIO * self, const char * filename);
+    RIO * rio_new_outfilename(RIO_ERROR * error, const char * filename, const int groupid);
+    RIO_ERROR rio_init_outfilename(RIO * self, const char * filename, const int groupid);
+
+    RIO * rio_new_cryptooutfilename(RIO_ERROR * error, const char * filename, const int groupid);
+    RIO_ERROR rio_init_cryptooutfilename(RIO * self, const char * filename, const int groupid);
 
     RIO * rio_new_infile(RIO_ERROR * error, int fd);
     RIO_ERROR rio_init_infile(RIO * self, int fd);
@@ -123,14 +126,14 @@ extern "C" {
     RIO_ERROR rio_init_inmeta(RIO * self, const char * prefix, const char * extension);
 
     RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * path, const char * filename, const char * extension,
-                      const char * l1, const char * l2, const char * l3, timeval * tv);
+                      const char * l1, const char * l2, const char * l3, timeval * tv, const int groupid);
     RIO_ERROR rio_init_outmeta(RIO * self, SQ ** seq, const char * path, const char * filename, const char * extension,
-                      const char * l1, const char * l2, const char * l3, timeval * tv);
+                      const char * l1, const char * l2, const char * l3, timeval * tv, const int groupid);
 
     RIO * rio_new_cryptooutmeta(RIO_ERROR * error, SQ ** seq, const char * path, const char * filename, const char * extension,
-                      const char * l1, const char * l2, const char * l3, timeval * tv);
+                      const char * l1, const char * l2, const char * l3, timeval * tv, const int groupid);
     RIO_ERROR rio_init_cryptooutmeta(RIO * self, SQ ** seq, const char * path, const char * filename, const char * extension,
-                      const char * l1, const char * l2, const char * l3, timeval * tv);
+                      const char * l1, const char * l2, const char * l3, timeval * tv, const int groupid);
 
     void rio_delete(RIO * rt);
     void rio_clear(RIO * rt);
@@ -145,33 +148,41 @@ extern "C" {
     SQ * sq_new_one(RIO_ERROR * error, RIO * trans);
     RIO_ERROR sq_init_one(SQ * self, RIO * trans);
 
-    SQ * sq_new_outfilename(RIO_ERROR * error, SQ_FORMAT format, const char * path, const char * filename, const char * extension);
-    RIO_ERROR sq_init_outfilename(SQ * self, SQ_FORMAT format, const char * path, const char * filename, const char * extension);
+    SQ * sq_new_outfilename(RIO_ERROR * error, 
+        SQ_FORMAT format, const char * path, const char * filename, const char * extension, 
+        const int groupid);
+    RIO_ERROR sq_init_outfilename(SQ * self, 
+        SQ_FORMAT format, const char * path, const char * filename, const char * extension, 
+        const int groupid);
 
-    SQ * sq_new_cryptooutfilename(RIO_ERROR * error, SQ_FORMAT format, const char * path, const char * filename, const char * extension);
-    RIO_ERROR sq_init_cryptooutfilename(SQ * self, SQ_FORMAT format, const char * path, const char * filename, const char * extension);
+    SQ * sq_new_cryptooutfilename(RIO_ERROR * error, 
+        SQ_FORMAT format, const char * path, const char * filename, const char * extension, 
+        const int groupid);
+    RIO_ERROR sq_init_cryptooutfilename(SQ * self, 
+        SQ_FORMAT format, const char * path, const char * filename, 
+        const char * extension);
 
     SQ * sq_new_outtracker(RIO_ERROR * error, RIO * tracker,
                 SQ_FORMAT format,
                 const char * path, const char * filename, const char * extension,
                 timeval * tv,
-                const char * header1, const char * header2, const char * header3);
+                const char * header1, const char * header2, const char * header3, const int groupid);
     RIO_ERROR sq_init_outtracker(SQ * self, RIO * tracker,
                 SQ_FORMAT format,
                 const char * path, const char * filename, const char * extension,
                 timeval * tv,
-                const char * header1, const char * header2, const char * header3);
+                const char * header1, const char * header2, const char * header3, const int groupid);
 
     SQ * sq_new_cryptoouttracker(RIO_ERROR * error, RIO * tracker,
                 SQ_FORMAT format,
                 const char * path, const char * filename, const char * extension,
                 timeval * tv,
-                const char * header1, const char * header2, const char * header3);
+                const char * header1, const char * header2, const char * header3, const int groupid);
     RIO_ERROR sq_init_cryptoouttracker(SQ * self, RIO * tracker,
                 SQ_FORMAT format,
                 const char * path, const char * filename, const char * extension,
                 timeval * tv,
-                const char * header1, const char * header2, const char * header3);
+                const char * header1, const char * header2, const char * header3, const int groupid);
 
     SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker);
     RIO_ERROR sq_init_intracker(SQ * self, RIO * tracker);
