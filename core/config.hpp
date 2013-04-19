@@ -148,6 +148,7 @@ struct Inifile {
         uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
         unsigned flv_frame_interval; 
         unsigned ocr_interval;
+        unsigned capture_groupid;
 
         unsigned png_limit;    // number of png captures to keep
 
@@ -271,6 +272,7 @@ struct Inifile {
             this->globals.break_interval = 600;
             this->globals.flv_break_interval = 600000000l;
             this->globals.flv_frame_interval = 1000000L; 
+            this->globals.capture_groupid = 0; 
 
             this->globals.png_limit = 3;
             this->globals.l_bitrate   = 20000;
@@ -499,6 +501,9 @@ struct Inifile {
             }
             else if (0 == strcmp(key, "png_interval")){
                 this->globals.png_interval   = long_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "capture_groupid")){
+                this->globals.capture_groupid   = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "frame_interval")){
                 this->globals.frame_interval   = long_from_cstr(value);
