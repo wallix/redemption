@@ -96,7 +96,7 @@ public:
             const int groupid = 33; 
 
         if (this->capture_png){
-            if (recursive_create_directory(PNG_PATH "/", S_IRUSR | S_IWUSR | S_IXUSR) != 0) {
+            if (recursive_create_directory(PNG_PATH "/", S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, 33) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", PNG_PATH "/");
             }
 
@@ -109,7 +109,7 @@ public:
         }
 
         if (this->capture_wrm){
-            if (recursive_create_directory(path, S_IRUSR | S_IWUSR | S_IXUSR) != 0) {
+            if (recursive_create_directory(path, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, 33) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", path);
             }
 

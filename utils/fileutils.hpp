@@ -150,29 +150,35 @@ void clear_files_flv_meta_png(const char * path, const char * prefix)
     }
 }
 
-static inline int _internal_make_directory(const char *directory, mode_t mode) {
+static inline int _internal_make_directory(const char *directory, mode_t mode, const int groupid) {
     struct stat st;
-    int         status;
+    int status = 0;
 
-    status = 0;
-
-    if ((*directory != '\0') && strcmp(directory, ".")) {
+    if ((directory[0] != 0) && strcmp(directory, ".") && strcmp(directory, "..")) {
         if (stat(directory, &st) != 0) {
-            /* Directory is not exist. */
+            /* Directory does not exist. */
             if ((mkdir(directory, mode) != 0) && (errno != EEXIST)) {
                 status = -1;
+                LOG(LOG_ERR, "failed to create directory %s : %s [%u]", directory, strerror(errno), errno);
             }
+            if (groupid){
+                if (chown(directory, (uid_t)-1, groupid) < 0){
+                    LOG(LOG_ERR, "can't set directory %s group to %u : %s [%u]", directory, groupid, strerror(errno), errno);
+                }
+            }
+
         }
         else if (!S_ISDIR(st.st_mode)) {
             errno = ENOTDIR;
+            LOG(LOG_ERR, "expecting directory name, got filename, for %s");
             status = -1;
         }
     }
-
     return status;
 }
 
-static inline int recursive_create_directory(const char *directory, mode_t mode) {
+TODO("Add unit tests for recursive_create_directory")
+static inline int recursive_create_directory(const char *directory, mode_t mode, const int groupid) {
     int    status;
     char * copy_directory;
     char * pTemp;
@@ -192,13 +198,13 @@ static inline int recursive_create_directory(const char *directory, mode_t mode)
             continue;
         }
 
-        *pSearch = '\0';
-        status = _internal_make_directory(copy_directory, mode);
+        pSearch[0] = 0;
+        status = _internal_make_directory(copy_directory, mode, groupid);
         *pSearch = '/';
     }
 
     if (status == 0) {
-        status = _internal_make_directory(directory, mode);
+        status = _internal_make_directory(directory, mode, groupid);
     }
 
     free(copy_directory);
