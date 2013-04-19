@@ -40,6 +40,8 @@
 #include <fcntl.h>
 #include <algorithm>
 #include <inttypes.h>
+#include <error.h>
+#include <errno.h>
 
 #include "log.hpp"
 #include "bitfu.hpp"
@@ -47,7 +49,6 @@
 #include "stream.hpp"
 #include "ssl_calls.hpp"
 #include "rect.hpp"
-
 
 class Bitmap {
 
@@ -247,14 +248,9 @@ public:
         } header;
 
         TODO(" reading of file and bitmap decoding should be kept appart  putting both together makes testing hard. And what if I want to read a bitmap from some network socket instead of a disk file ?")
-        /* Code related to g_file_open os_call */
-        int fd =  open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+        int fd =  open(filename, O_RDONLY);
         if (fd == -1) {
-            /* can't open read / write, try to open read only */
-            fd =  open(filename, O_RDONLY);
-        }
-        if (fd == -1) {
-            LOG(LOG_ERR, "Widget_load: error loading bitmap from file [%s]\n", filename);
+            LOG(LOG_ERR, "Widget_load: error loading bitmap from file [%s] %s(%u)\n", filename, strerror(errno), errno);
             throw Error(ERR_BITMAP_LOAD_FAILED);
         }
 
