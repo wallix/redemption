@@ -73,7 +73,8 @@ BOOST_AUTO_TEST_CASE(TestSeqOutfilename)
     timeval tv;
 
     RIO_ERROR status = RIO_ERROR_OK;    
-    SQ * sq = sq_new_outfilename(&status, SQF_PATH_FILE_COUNT_EXTENSION, "", "TESTOFS", ".wrm");
+    const int groupid = 0;
+    SQ * sq = sq_new_outfilename(&status, SQF_PATH_FILE_COUNT_EXTENSION, "", "TESTOFS", ".wrm", groupid);
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
     RIO * rt = NULL;

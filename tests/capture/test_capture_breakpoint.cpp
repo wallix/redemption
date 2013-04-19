@@ -31,6 +31,7 @@
 
 BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 {
+    const int groupid = 0;
     {
         // Timestamps are applied only when flushing
         struct timeval now;
@@ -99,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         sq_outfilename_unlink(&(capture.png_trans->seq), 6);
 
         SQ wrm_seq;
-        sq_init_outfilename(&wrm_seq, SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "capture", ".wrm");        
+        sq_init_outfilename(&wrm_seq, SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "capture", ".wrm", groupid);        
         BOOST_CHECK_EQUAL((unsigned)1622, (unsigned)sq_outfilename_filesize(&wrm_seq, 0));
         sq_outfilename_unlink(&wrm_seq, 0);
         BOOST_CHECK_EQUAL((unsigned)3392, (unsigned)sq_outfilename_filesize(&wrm_seq, 1));
@@ -109,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         // The destruction of capture object will finalize the metafile content
     }
     SQ meta_seq;
-    sq_init_outfilename(&meta_seq, SQF_PATH_FILE_PID_EXTENSION, "./", "capture", ".mwrm");
+    sq_init_outfilename(&meta_seq, SQF_PATH_FILE_PID_EXTENSION, "./", "capture", ".mwrm", groupid);
     BOOST_CHECK_EQUAL((unsigned)125, (unsigned)sq_outfilename_filesize(&meta_seq, 0));
     sq_outfilename_unlink(&meta_seq, 0);
 }

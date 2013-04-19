@@ -92,13 +92,15 @@ public:
         }
 #endif
 
+        TODO("33 below is some ugly hardcoded groupid to test behavior, in the (near) future it will be provided in configuration parameters")
+            const int groupid = 33; 
 
         if (this->capture_png){
             if (recursive_create_directory(PNG_PATH "/", S_IRUSR | S_IWUSR | S_IXUSR) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", PNG_PATH "/");
             }
 
-            this->png_trans = new OutFilenameTransport(SQF_PATH_FILE_PID_COUNT_EXTENSION, PNG_PATH "/", basename, ".png");
+            this->png_trans = new OutFilenameTransport(SQF_PATH_FILE_PID_COUNT_EXTENSION, PNG_PATH "/", basename, ".png", groupid);
             this->psc = new StaticCapture(now, *this->png_trans, &(this->png_trans->seq), width, height, ini);
         }
 
@@ -112,12 +114,12 @@ public:
             }
 
             if (this->enable_file_encryption == false) {
-                this->wrm_trans = new OutmetaTransport(path, basename, now, width, height);
+                this->wrm_trans = new OutmetaTransport(path, basename, now, width, height, groupid);
                 this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
                 this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
             }
             else {
-                this->crypto_wrm_trans = new CryptoOutmetaTransport(path, basename, now, width, height);
+                this->crypto_wrm_trans = new CryptoOutmetaTransport(path, basename, now, width, height, groupid);
                 this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
                 this->pnc = new NativeCapture(now, *this->crypto_wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
             }

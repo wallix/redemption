@@ -37,9 +37,10 @@ public:
             const char * const prefix,
             const char * const filename,
             const char * const extension,
+            const int groupid,
             unsigned verbose = 0)
     {
-        RIO_ERROR status1 = sq_init_outfilename(&this->seq, format, prefix, filename, extension);
+        RIO_ERROR status1 = sq_init_outfilename(&this->seq, format, prefix, filename, extension, groupid);
         if (status1 != RIO_ERROR_OK){
             LOG(LOG_ERR, "Sequence outfilename initialisation failed (%u)", status1);
             throw Error(ERR_TRANSPORT);

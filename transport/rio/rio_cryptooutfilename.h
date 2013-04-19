@@ -15,41 +15,47 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Raphael Zhou
 
-   Template for new OutSequence RedTransport class
+   New Outfilename RedTransport class
 */
 
-#ifndef _REDEMPTION_TRANSPORT_RIO_RIO_OUTSEQUENCE_H_
-#define _REDEMPTION_TRANSPORT_RIO_RIO_OUTSEQUENCE_H_
+#ifndef _REDEMPTION_LIBS_RIO_CRYPTOOUTFILENAME_H_
+#define _REDEMPTION_LIBS_RIO_CRYPTOOUTFILENAME_H_
 
 #include "rio.h"
 
 extern "C" {
-    struct RIOOutsequence {
-        struct SQ * seq;
+    /***********************
+    * RIOCryptoOutfilename *
+    ***********************/
+
+    struct RIOCryptoOutfilename {
+        RIO *trans;
     };
 
     /* This method does not allocate space for object itself,
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RIO_ERROR rio_m_RIOOutsequence_constructor(RIOOutsequence * self, SQ * seq)
+    inline RIO_ERROR rio_m_RIOCryptoOutfilename_constructor(RIOCryptoOutfilename * self, const char * filename, const int groupid)
     {
-        self->seq = seq;
-        return RIO_ERROR_OK;
+        RIO_ERROR error;
+        self->trans = rio_new_crypto(&error, filename, O_WRONLY);
+        return error;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RIO_ERROR rio_m_RIOOutsequence_destructor(RIOOutsequence * self)
+    inline RIO_ERROR rio_m_RIOCryptoOutfilename_destructor(RIOCryptoOutfilename * self)
     {
+        rio_delete(self->trans);
         return RIO_ERROR_CLOSED;
     }
 
     /* This method return a signature based on the data written
     */
-    static inline RIO_ERROR rio_m_RIOOutsequence_sign(RIOOutsequence * self, unsigned char * buf, size_t size, size_t & len) {
+    static inline RIO_ERROR rio_m_RIOCryptoOutfilename_sign(RIOCryptoOutfilename * self, unsigned char * buf, size_t size, size_t & len) {
         memset(buf, 0, size);
         len = 0;
         return RIO_ERROR_OK;
@@ -59,12 +65,13 @@ extern "C" {
        target buffer *MUST* be large enough to contains len data
        returns len actually received (may be 0),
        or negative value to signal some error.
-       If an error occurs after reading some data the amount read will be returned
+       If an error occurs after reading some data, the return buffer
+       has been changed but an error is returned anyway
        and an error returned on subsequent call.
     */
-    inline ssize_t rio_m_RIOOutsequence_recv(RIOOutsequence * self, void * data, size_t len)
+    inline ssize_t rio_m_RIOCryptoOutfilename_recv(RIOCryptoOutfilename * self, void * data, size_t len)
     {
-         rio_m_RIOOutsequence_destructor(self);
+         rio_m_RIOCryptoOutfilename_destructor(self);
          return -RIO_ERROR_SEND_ONLY;
     }
 
@@ -75,32 +82,12 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rio_m_RIOOutsequence_send(RIOOutsequence * self, const void * data, size_t len)
+    inline ssize_t rio_m_RIOCryptoOutfilename_send(RIOCryptoOutfilename * self, const void * data, size_t len)
     {
-         RIO_ERROR status = RIO_ERROR_OK;
-         RIO * trans = sq_get_trans(self->seq, &status);
-         if (status == RIO_ERROR_OK){
-             ssize_t res = rio_send(trans, data, len);
-             if (res < 0){
-                rio_m_RIOOutsequence_destructor(self);
-             }
-             return res;
-         }
-         else {
-            rio_m_RIOOutsequence_destructor(self);
-            return -status;
-         }
+        return rio_send(self->trans, data, len);
     }
 
-    /* This method flush current chunk and start a new one
-       default: do nothing if the current file does not support chunking
-    */
-    inline RIO_ERROR rio_m_RIOOutsequence_next(RIOOutsequence * self)
-    {
-         return RIO_ERROR_OK;
-    }
-
-    static inline RIO_ERROR rio_m_RIOOutsequence_get_status(RIOOutsequence * self)
+    static inline RIO_ERROR rio_m_RIOCryptoOutfilename_get_status(RIOCryptoOutfilename * self)
     {
         return RIO_ERROR_OK;
     }

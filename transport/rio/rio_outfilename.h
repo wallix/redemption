@@ -27,10 +27,11 @@
 
 extern "C" {
     /***********************
-    * RIOCryptoOutfilename *
+    * RIOOutfilename *
     ***********************/
 
-    struct RIOCryptoOutfilename {
+    struct RIOOutfilename {
+        int fd;
         RIO *trans;
     };
 
@@ -38,24 +39,34 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RIO_ERROR rio_m_RIOCryptoOutfilename_constructor(RIOCryptoOutfilename * self, const char * filename)
+    inline RIO_ERROR rio_m_RIOOutfilename_constructor(RIOOutfilename * self, const char * filename, const int groupid)
     {
-        RIO_ERROR error;
-        self->trans = rio_new_crypto(&error, filename, O_WRONLY);
+        RIO_ERROR error = RIO_ERROR_OK;
+        self->fd = ::open(filename, O_WRONLY|O_CREAT, S_IRUSR);
+        if (self->fd < 0){
+            return RIO_ERROR_CREAT;
+        }
+        self->trans = rio_new_outfile(&error, self->fd);
         return error;
     }
 
     /* This method deallocate any space used for subfields if any
     */
-    inline RIO_ERROR rio_m_RIOCryptoOutfilename_destructor(RIOCryptoOutfilename * self)
+    inline RIO_ERROR rio_m_RIOOutfilename_destructor(RIOOutfilename * self)
     {
         rio_delete(self->trans);
+        int res = close(self->fd);
+        if (res < 0){
+//                LOG(LOG_ERR, "closing file failed erro=%u : %s\n", errno, strerror(errno));
+            return RIO_ERROR_CLOSE_FAILED;
+        }
+        self->trans = NULL;
         return RIO_ERROR_CLOSED;
     }
 
     /* This method return a signature based on the data written
     */
-    static inline RIO_ERROR rio_m_RIOCryptoOutfilename_sign(RIOCryptoOutfilename * self, unsigned char * buf, size_t size, size_t & len) {
+    static inline RIO_ERROR rio_m_RIOOutfilename_sign(RIOOutfilename * self, unsigned char * buf, size_t size, size_t & len) {
         memset(buf, 0, size);
         len = 0;
         return RIO_ERROR_OK;
@@ -69,9 +80,9 @@ extern "C" {
        has been changed but an error is returned anyway
        and an error returned on subsequent call.
     */
-    inline ssize_t rio_m_RIOCryptoOutfilename_recv(RIOCryptoOutfilename * self, void * data, size_t len)
+    inline ssize_t rio_m_RIOOutfilename_recv(RIOOutfilename * self, void * data, size_t len)
     {
-         rio_m_RIOCryptoOutfilename_destructor(self);
+         rio_m_RIOOutfilename_destructor(self);
          return -RIO_ERROR_SEND_ONLY;
     }
 
@@ -82,12 +93,12 @@ extern "C" {
        If an error occurs after sending some data the amount sent will be returned
        and an error returned on subsequent call.
     */
-    inline ssize_t rio_m_RIOCryptoOutfilename_send(RIOCryptoOutfilename * self, const void * data, size_t len)
+    inline ssize_t rio_m_RIOOutfilename_send(RIOOutfilename * self, const void * data, size_t len)
     {
         return rio_send(self->trans, data, len);
     }
 
-    static inline RIO_ERROR rio_m_RIOCryptoOutfilename_get_status(RIOCryptoOutfilename * self)
+    static inline RIO_ERROR rio_m_RIOOutfilename_get_status(RIOOutfilename * self)
     {
         return RIO_ERROR_OK;
     }

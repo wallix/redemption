@@ -20,8 +20,8 @@
    Template for new SQ_Outtracker sequence class
 */
 
-#ifndef _REDEMPTION_TRANSPORT_RIO_SQ_OUTTRACKER_H_
-#define _REDEMPTION_TRANSPORT_RIO_SQ_OUTTRACKER_H_
+#ifndef _REDEMPTION_TRANSPORT_RIO_SQ_CRYPTOOUTTRACKER_H_
+#define _REDEMPTION_TRANSPORT_RIO_SQ_CRYPTOOUTTRACKER_H_
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -30,8 +30,12 @@
 #include "rio.h"
 
 extern "C" {
-    struct SQOuttracker {
-        int fd;
+
+    /*********************
+    * SQCryptoOuttracker *
+    *********************/
+
+    struct SQCryptoOuttracker {
         RIO * trans;
         timeval start_tv;
         timeval stop_tv;
@@ -44,7 +48,7 @@ extern "C" {
         unsigned count;
     };
 
-    static inline RIO_ERROR sq_m_SQOuttracker_constructor(SQOuttracker * self, RIO * tracker,
+    static inline RIO_ERROR sq_m_SQCryptoOuttracker_constructor(SQCryptoOuttracker * self, RIO * tracker,
                     SQ_FORMAT format,
                     const char * path, const char * filename, const char * extension,
                     struct timeval * tv, const char * header1, const char * header2, const char * header3,
@@ -84,7 +88,7 @@ extern "C" {
     // internal utility method, used to get name of files used for target transports
     // it is called internally, but actual goal is to enable tests to check and remove the created files afterward.
     // not a part of external sequence API
-    static inline size_t sq_im_SQOuttracker_get_name(SQOuttracker * self, char * buffer, size_t size, int count)
+    static inline size_t sq_im_SQCryptoOuttracker_get_name(SQCryptoOuttracker * self, char * buffer, size_t size, int count)
     {
         size_t res = 0;
         switch (self->format){
@@ -105,7 +109,7 @@ extern "C" {
         return res;
     }
 
-    static inline size_t sq_im_SQOuttracker_get_line(SQOuttracker * self, char * buffer, size_t size, int count)
+    static inline size_t sq_im_SQCryptoOuttracker_get_line(SQCryptoOuttracker * self, char * buffer, size_t size, int count)
     {
         size_t res = 0;
         switch (self->format){
@@ -130,57 +134,69 @@ extern "C" {
         return res;
     }
 
-    static RIO_ERROR sq_m_SQOuttracker_timestamp(SQOuttracker * self, timeval * tv)
+    static RIO_ERROR sq_m_SQCryptoOuttracker_timestamp(SQCryptoOuttracker * self, timeval * tv)
     {
         self->stop_tv.tv_sec = tv->tv_sec;
         self->stop_tv.tv_usec = tv->tv_usec;
         return RIO_ERROR_OK;
     }
 
-    static inline RIO_ERROR sq_m_SQOuttracker_destructor(SQOuttracker * self)
+    static inline RIO_ERROR sq_m_SQCryptoOuttracker_destructor(SQCryptoOuttracker * self)
     {
         if (self->trans){
+            unsigned char hash[32];
+            size_t        res_len;
+
+            TODO("check if sign returns some error");
+            rio_sign(self->trans, hash, sizeof(hash), res_len);
             if (self->tracker) {
                 char buffer[1024];
-                size_t len = sq_im_SQOuttracker_get_line(self, buffer, sizeof(buffer)-1, self->count);
-                buffer[len] = '\n';
-                rio_send(self->tracker, buffer, len + 1);
+                size_t len = sq_im_SQCryptoOuttracker_get_line(self, buffer, sizeof(buffer)-1, self->count);
+                rio_send(self->tracker, buffer, len);
+
+                char *p = buffer;
+
+                *p++ = ' ';                           //    1 octet
+                for (int i = 0; i < 16; i++, p += 2)
+                    sprintf(p, "%02x", hash[i]);      //   32 octets (hash1)
+
+                *p++ = ' ';                           //    1 octet
+                for (int i = 16; i < 32; i++, p += 2)
+                    sprintf(p, "%02x", hash[i]);      //   32 octets (hash2)
+                *p++ = '\n';                          //    1 octet
+
+                rio_send(self->tracker, buffer, 67);  // = 76 octets
+
                 self->start_tv.tv_sec = self->stop_tv.tv_sec;
                 self->start_tv.tv_usec = self->stop_tv.tv_usec;
             }
             TODO("check if close returns some error");
             rio_delete(self->trans);
-            close(self->fd);
             self->trans = NULL;
         }
-        return RIO_ERROR_CLOSED;
+        return RIO_ERROR_OK;
     }
 
-    static inline RIO * sq_m_SQOuttracker_get_trans(SQOuttracker * self, RIO_ERROR * status)
+    static inline RIO * sq_m_SQCryptoOuttracker_get_trans(SQCryptoOuttracker * self, RIO_ERROR * status)
     {
         if (status && (*status != RIO_ERROR_OK)) { return self->trans; }
         if (!self->trans){
             char tmpname[1024];
-            sq_im_SQOuttracker_get_name(self, tmpname, sizeof(tmpname), self->count);
+            sq_im_SQCryptoOuttracker_get_name(self, tmpname, sizeof(tmpname), self->count);
             TODO("add rights information to constructor")
-            self->fd = ::open(tmpname, O_WRONLY|O_CREAT, S_IRUSR);
-            if (self->fd < 0){
-                if (status) { *status = RIO_ERROR_CREAT; }
-                return self->trans;
-            }
-            self->trans = rio_new_outfile(status, self->fd);
+            self->trans = rio_new_crypto(status, tmpname, O_WRONLY);
         }
         return self->trans;
     }
 
-    static inline RIO_ERROR sq_m_SQOuttracker_next(SQOuttracker * self)
+    static inline RIO_ERROR sq_m_SQCryptoOuttracker_next(SQCryptoOuttracker * self)
     {
-        sq_m_SQOuttracker_destructor(self);
+        sq_m_SQCryptoOuttracker_destructor(self);
         self->count += 1;
         return RIO_ERROR_OK;
     }
 
-    static inline RIO_ERROR sq_m_SQOuttracker_get_chunk_info(SQOuttracker * self, unsigned * num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
+    static inline RIO_ERROR sq_m_SQCryptoOuttracker_get_chunk_info(SQCryptoOuttracker * self, unsigned * num_chunk, char * path, size_t path_len, timeval * begin, timeval * end)
     {
         return RIO_ERROR_OK;
     }

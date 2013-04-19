@@ -38,7 +38,8 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
         timeval now;
         now.tv_sec = 1352304810;
         now.tv_usec = 0;
-        OutmetaTransport wrm_trans("./", "xxx", now, 800, 600);
+        const int groupid = 0;
+        OutmetaTransport wrm_trans("./", "xxx", now, 800, 600, groupid);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();

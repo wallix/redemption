@@ -59,13 +59,14 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     ini.globals.debug.primary_orders = 0;
     ini.globals.debug.secondary_orders = 0;
 
-    OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png");
+    const int groupid = 0;
+    OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
         
     png_recorder.update_config(ini);
     player.add_consumer(&png_recorder);
 
-    OutFilenameTransport out_wrm_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm");
+    OutFilenameTransport out_wrm_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
     ini.globals.frame_interval = 10;
     ini.globals.break_interval = 20;
     
@@ -133,13 +134,14 @@ BOOST_AUTO_TEST_CASE(TestSecondPart)
     ini.globals.debug.primary_orders = 0;
     ini.globals.debug.secondary_orders = 0;
 
-    OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".png");
+    const int groupid = 0;
+    OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".png", groupid);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
         
     png_recorder.update_config(ini);
     player.add_consumer(&png_recorder);
 
-    OutFilenameTransport out_wrm_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".wrm");
+    OutFilenameTransport out_wrm_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".wrm", groupid);
     ini.globals.frame_interval = 10;
     ini.globals.break_interval = 20;
     

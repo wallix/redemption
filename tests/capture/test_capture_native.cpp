@@ -41,7 +41,8 @@
 BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 {
     Rect scr(0, 0, 800, 600);
-    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".wrm");
+    const int groupid = 0;
+    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".wrm", groupid);
 
     struct timeval now;
     now.tv_sec = 1000;
