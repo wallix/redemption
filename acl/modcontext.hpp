@@ -89,6 +89,7 @@ typedef enum{
     AUTHID_TIMEZONE,
     // Encryption
     AUTHID_OPT_FILE_ENCRYPTION, // file encryption
+    AUTHID_TRACE_SEAL,          // after closing trace file trace is sealed using a signature hash
     MAX_AUTHID
 } authid_t;
 
@@ -149,7 +150,7 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 #define STRAUTHID_VIDEO_QUALITY       "video_quality"
 #define STRAUTHID_TIMEZONE            "timezone"
 #define STRAUTHID_OPT_FILE_ENCRYPTION "file_encryption"
-
+#define STRAUTHID_TRACE_SEAL          "trace_seal"
 // ModContext structure is used for modules to communicate with each other
 
 // status tell to session what should be done when a module terminates
@@ -226,6 +227,7 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     {STRAUTHID_TIMEZONE, TYPE_INTEGER, "!-3600"},
     // Encryption
     {STRAUTHID_OPT_FILE_ENCRYPTION, TYPE_BOOLEAN, "!False"},
+    {STRAUTHID_TRACE_SEAL, TYPE_TEXT, "!"},
 };
 
 
@@ -286,6 +288,7 @@ static inline authid_t authid_from_string(const char * kw)
     STRAUTHID_VIDEO_QUALITY,
     STRAUTHID_TIMEZONE,
     STRAUTHID_OPT_FILE_ENCRYPTION,
+    STRAUTHID_TRACE_SEAL,
     };
 
     string str = string(kw);

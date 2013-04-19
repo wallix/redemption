@@ -310,7 +310,7 @@ struct mod_rdp : public mod_api {
             }
 
             if (!chunk.in_check_rem(2)){
-                LOG(LOG_INFO, "mod_vnc::send_to_vnc truncated msgType, need=2 remains=%u",
+                LOG(LOG_INFO, "mod_vnc::send_to_mod_channel truncated msgType, need=2 remains=%u",
                     chunk.in_remain());
                 throw Error(ERR_VNC);
             }

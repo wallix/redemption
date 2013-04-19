@@ -30,6 +30,7 @@
     // Each line (for multiline formats) is indented by indent spaces.
     // The output format can be extensively customised by use of the flags parameter.
 
+    TODO("we should be able to simplify that to just put expected value in a provided buffer");
     static inline char* crypto_print_name(X509_NAME* name)
     {
         char* buffer = NULL;
@@ -820,20 +821,21 @@ class SocketTransport : public Transport {
                 (strcmp(fingerprint_existing, fingerprint))) {
                 if (this->error_message_buffer && this->error_message_len) {
                     snprintf(this->error_message_buffer, this->error_message_len,
-                        "The certificate for this host has been changed!\n\n"
-                        "Old\n"
+                        "The certificate for host %s:%d has changed\n\n"
+                        "Previous Certificate\n"
                         "\tIssuer = \"%s\"\n"
                         "\tSubject = \"%s\"\n"
                         "\tFingerprint = \"%s\"\n\n"
-                        "New\n"
+                        "New Certificate\n"
                         "\tIssuer = \"%s\"\n"
                         "\tSubject = \"%s\"\n"
                         "\tFingerprint = \"%s\"\n",
                         this->ip_address, this->port,
-                        issuer_existing, subject_existing, fingerprint_existing, issuer, subject, fingerprint);
+                        issuer_existing, subject_existing, fingerprint_existing,
+                        issuer, subject, fingerprint);
                     this->error_message_buffer[this->error_message_len - 1] = 0;
                 }
-                LOG(LOG_ERR, "The certificate for host %s:%d has been changed! Old=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"\n",
+                LOG(LOG_ERR, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"\n",
                     this->ip_address, this->port,
                     issuer_existing, subject_existing, fingerprint_existing, issuer, subject, fingerprint);
                 throw Error(ERR_TRANSPORT, 0);
