@@ -23,7 +23,7 @@
 
 #include "widget.hpp"
 
-class WidgetMultiLine : public Widget
+class WidgetMultiLine : public Widget2
 {
 public:
     static const size_t buffer_size = 1024;
@@ -43,12 +43,12 @@ public:
     int fg_color;
 
 public:
-    WidgetMultiLine(ModApi* drawable, int16_t x, int16_t y, Widget* parent,
+    WidgetMultiLine(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
                     NotifyApi* notifier, const char * text,
                     bool auto_resize = true,
                     int id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
                     int xtext = 0, int ytext = 0)
-    : Widget(drawable, Rect(x,y,1,1), parent, notifier, id)
+    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, id)
     , x_text(xtext)
     , y_text(ytext)
     , cy_text(0)

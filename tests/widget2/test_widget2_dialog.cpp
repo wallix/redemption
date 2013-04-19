@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog)
     TestDraw drawable(800, 600);
 
     // WindowDialog is a window_dialog widget at position 0,0 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 0;
     int16_t y = 0;
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog2)
     TestDraw drawable(800, 600);
 
     // WindowDialog is a window_dialog widget of size 100x20 at position 10,100 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 10;
     int16_t y = 100;
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog3)
     TestDraw drawable(800, 600);
 
     // WindowDialog is a window_dialog widget of size 100x20 at position -10,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = -10;
     int16_t y = 500;
@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog4)
     TestDraw drawable(800, 600);
 
     // WindowDialog is a window_dialog widget of size 100x20 at position 770,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 770;
     int16_t y = 500;
@@ -262,7 +262,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog5)
     TestDraw drawable(800, 600);
 
     // WindowDialog is a window_dialog widget of size 100x20 at position -20,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = -20;
     int16_t y = -7;
@@ -295,7 +295,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog6)
     TestDraw drawable(800, 600);
 
     // WindowDialog is a window_dialog widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 760;
     int16_t y = -7;
@@ -328,7 +328,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialogClip)
     TestDraw drawable(800, 600);
 
     // WindowDialog is a window_dialog widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 760;
     int16_t y = -7;
@@ -361,7 +361,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialogClip2)
     TestDraw drawable(800, 600);
 
     // WindowDialog is a window_dialog widget of size 100x20 at position 10,7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 0;
     int16_t y = 0;
@@ -393,9 +393,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 {
     TestDraw drawable(800, 600);
 
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     struct Notify : NotifyApi {
-        Widget * sender;
+        Widget2* sender;
         notify_event_t event;
 
         Notify()
@@ -403,7 +403,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
         , event(0)
         {}
 
-        virtual void notify(Widget* sender, notify_event_t event, long unsigned int param, long unsigned int param2)
+        virtual void notify(Widget2* sender, notify_event_t event, long unsigned int param, long unsigned int param2)
         {
             this->sender = sender;
             this->event = event;

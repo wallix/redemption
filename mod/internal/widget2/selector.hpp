@@ -32,7 +32,7 @@
 //#include "pager.hpp"
 //#include "selectline.hpp"
 
-class WidgetSelectLine : public Widget
+class WidgetSelectLine : public Widget2
 {
 public:
     uint current_index;
@@ -50,13 +50,13 @@ public:
     std::vector<WidgetLabel*> labels;
 
     WidgetSelectLine(ModApi* drawable, const Rect& rect,
-                     Widget* parent, NotifyApi* notifier, int id = 0,
+                     Widget2* parent, NotifyApi* notifier, int id = 0,
                      int bgcolor = GREY, uint border_height = 1,
                      int bgcolor1 = WABGREEN, int bgcolor2 = GREEN,
                      int current_bgcolor = DARK_GREEN, int fgcolor1 = BLACK,
                      int fgcolor2 = BLACK, int current_fgcolor = BLACK,
                      int xtext = 0, int ytext = 0)
-    : Widget(drawable, rect, parent, notifier, id)
+    : Widget2(drawable, rect, parent, notifier, id)
     , current_index(-1u)
     , current_bg_color(current_bgcolor)
     , bg_color(bgcolor)
@@ -112,15 +112,19 @@ public:
 
     void set_current_index(uint idx)
     {
-        if (this->current_index < this->labels.size()) {
-            this->labels[this->current_index]->bg_color = this->current_index & 1
-            ? this->bg_color1 : this->bg_color2;
-            this->labels[this->current_index]->fg_color = this->current_index & 1
-            ? this->fg_color1 : this->fg_color2;
+        if (idx != this->current_index) {
+            if (this->current_index < this->labels.size()) {
+                this->labels[this->current_index]->bg_color = this->current_index & 1
+                ? this->bg_color1 : this->bg_color2;
+                this->labels[this->current_index]->fg_color = this->current_index & 1
+                ? this->fg_color1 : this->fg_color2;
+                this->refresh(this->labels[this->current_index]->rect);
+            }
+            this->current_index = idx;
+            this->labels[idx]->bg_color = this->current_bg_color;
+            this->labels[idx]->fg_color = this->current_fg_color;
+            this->refresh(this->labels[this->current_index]->rect);
         }
-        this->current_index = idx;
-        this->labels[idx]->bg_color = this->current_bg_color;
-        this->labels[idx]->fg_color = this->current_fg_color;
     }
 
     virtual void draw(const Rect& clip)
@@ -129,8 +133,8 @@ public:
         std::size_t size = this->labels.size();
 
         for (std::size_t i = 0; i < size; ++i) {
-            Widget *w = this->labels[i];
-            Rect rect = new_clip.intersect(w->rect);
+            Widget2 * w = this->labels[i];
+                Rect rect = new_clip.intersect(w->rect);
 
             w->refresh(rect);
 
@@ -180,7 +184,7 @@ public:
                 }
             }
         }
-        Widget::rdp_input_mouse(device_flags, x, y, keymap);
+        Widget2::rdp_input_mouse(device_flags, x, y, keymap);
     }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
@@ -257,11 +261,11 @@ public:
 
 private:
     struct temporary_number_of_page {
-        char buffer[WidgetLabel::buffer_size];
+        char buffer[15];
 
         temporary_number_of_page(const char * s)
         {
-            size_t len = std::min(WidgetLabel::buffer_size - 2, strlen(s));
+            size_t len = std::min(size_t(15 - 2), strlen(s));
             this->buffer[0] = '/';
             memcpy(&this->buffer[1], s, len);
             this->buffer[len + 1] = '\0';
@@ -383,7 +387,7 @@ public:
         }
     }
 
-    virtual void notify(Widget* widget, notify_event_t event, long unsigned int param, long unsigned int param2)
+    virtual void notify(Widget2* widget, notify_event_t event, long unsigned int param, long unsigned int param2)
     {
         if (widget == &this->device_group_lines
          || widget == &this->account_device_lines
@@ -460,7 +464,6 @@ public:
             targets[size_targets] = c_target;
             protocols[size_protocols] = c_protocol;
             endtimes[size_endtimes] = c_endtime;
-
 
             if (c_group    == '\n' || !c_group
             ||  c_target   == '\n' || !c_target

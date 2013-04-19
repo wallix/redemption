@@ -64,6 +64,8 @@
 #include "transitory/transitory.hpp"
 #include "cli/cli_mod.hpp"
 
+#include "internal/widget2/widget2_mod.hpp"
+
 using namespace std;
 
 enum {
@@ -691,6 +693,20 @@ struct Session {
                                         );
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::internal module 'selector' ready");
+                        }
+                    break;
+                    case INTERNAL_WIDGET2_TEST:
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::Creation of internal module 'widget2_test'");
+                        }
+                        this->mod = new widget2_mod(
+                            *this->context,
+                            *this->front,
+                            this->front->client_info.width,
+                            this->front->client_info.height
+                        );
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::internal module 'widget2_test' ready");
                         }
                     break;
                     default:

@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
 {
     TestDraw drawable(800, 600);
     NotifyApi * notifier = NULL;
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     int id = 0;
 
     Window window(&drawable, Rect(30,40,500,400), parent, notifier, "Window 1");
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetWindow)
 {
     struct TestNotify : NotifyApi
     {
-        Widget * sender;
+        Widget2* sender;
         notify_event_t event;
 
         TestNotify()
@@ -211,7 +211,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetWindow)
         , event(0)
         {}
 
-        virtual void notify(Widget* sender, notify_event_t event,
+        virtual void notify(Widget2* sender, notify_event_t event,
                             long unsigned int, long unsigned int)
         {
             this->sender = sender;
@@ -219,7 +219,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetWindow)
         }
     } notifier;
     ModApi * drawable = 0;
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
 
     Window window(drawable, Rect(30,40,500,400), parent, &notifier, "Window 1");
     window.button_close.rdp_input_mouse(CLIC_BUTTON1_DOWN, 0,0,0);

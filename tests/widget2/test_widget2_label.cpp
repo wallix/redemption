@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position -10,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -235,7 +235,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 770,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -267,7 +267,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position -20,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -299,7 +299,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -363,7 +363,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 10,7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -393,7 +393,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
 // BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
 // {
 //     struct WidgetReceiveEvent : public Widget {
-//         Widget * sender;
+//         Widget2* sender;
 //         NotifyApi::notify_event_t event;
 //
 //         WidgetReceiveEvent()
@@ -403,7 +403,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
 //         virtual void draw(const Rect&)
 //         {}
 //
-//         virtual void notify(Widget * sender, NotifyApi::notify_event_t event,
+//         virtual void notify(Widget2* sender, NotifyApi::notify_event_t event,
 //                             unsigned long, unsigned long)
 //         {
 //             this->sender = sender;
@@ -411,7 +411,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
 //         }
 //     } widget_for_receive_event;
 //
-//     Widget * parent = &widget_for_receive_event;
+//     Widget2* parent = &widget_for_receive_event;
 //     ModApi * drawable = NULL;
 //     NotifyApi * notifier = NULL;
 //     bool auto_resize = false;
@@ -445,7 +445,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
 //     TestDraw drawable(800, 600);
 //
 //     // WidgetLabel is a label widget of size 256x125 at position 0,0 in it's parent context
-//     Widget * parent = NULL;
+//     Widget2* parent = NULL;
 //     NotifyApi * notifier = NULL;
 //
 //     WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);

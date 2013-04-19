@@ -56,21 +56,9 @@ enum NotifyEventType {
     NOTIFY_SELECTION_CHANGED,
 };
 
-class Widget : public RdpInput, public NotifyApi
+class Widget2 : public RdpInput, public NotifyApi
 {
 public:
-    //type & TYPE_WND -> WidgetComposite
-    //enum WidgetType {
-    //    TYPE_WND     = 1,
-    //    TYPE_SCREEN  = 3,
-    //    TYPE_TEXT    = 1 << 3,
-    //    TYPE_BUTTON  = 1 << 4 | TYPE_TEXT,
-    //    TYPE_EDIT    = 1 << 5 | TYPE_TEXT,
-    //    TYPE_LABEL   = 1 << 6 | TYPE_TEXT,
-    //    TYPE_IMAGE   = 1 << 7,
-    //    TYPE_MULTIPLE= 1 << 8,
-    //};
-
     enum OptionTab {
         IGNORE_TAB = 0,
         NORMAL_TAB = 1,
@@ -81,7 +69,7 @@ public:
     };
 
 public:
-    Widget * parent;
+    Widget2 * parent;
     ModApi * drawable;
     NotifyApi * notifier;
     Rect rect;
@@ -90,7 +78,7 @@ public:
     bool has_focus;
 
 public:
-    Widget(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier, int id = 0)
+    Widget2(ModApi * drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int id = 0)
     : parent(parent)
     , drawable(drawable)
     , notifier(notifier)
@@ -104,16 +92,16 @@ public:
     , has_focus(false)
     {}
 
-    virtual ~Widget()
+    virtual ~Widget2()
     {}
 
     virtual void draw(const Rect& clip) = 0;
 
-    // NOTE move to WidgetComposite ?
+    // NOTE move to Widget2Composite ?
     //void refresh(const Rect & rect)
     //{
     //    if (!rect.isempty() && this->drawable){
-    //        Widget::screen_position sp = this->position_in_screen();
+    //        Widget2::screen_position sp = this->position_in_screen();
     //        Rect clip = sp.clip.intersect(Rect(sp.x + rect.x, sp.y + rect.y, rect.cx, rect.cy));
     //        if (clip.isempty()) {
     //            return ;
@@ -173,14 +161,14 @@ public:
             this->notifier->notify(this, event, param, param2);
     }
 
-    virtual void notify(Widget * widget, NotifyApi::notify_event_t event,
+    virtual void notify(Widget2 * widget, NotifyApi::notify_event_t event,
                         unsigned long param, unsigned long param2)
     {
         (void)widget;
         this->send_notify(event, param, param2);
     }
 
-    virtual Widget * widget_at_pos(int x, int y)
+    virtual Widget2 * widget_at_pos(int x, int y)
     {
         if (this->rect.contains_pt(x, y))
             return this;
@@ -223,7 +211,7 @@ public:
         return this->parent ? this->dy() - this->parent->dy() : this->dy();
     }
 
-    virtual Widget * widget_focused()
+    virtual Widget2 * widget_focused()
     {
         return this->has_focus ? this : 0;
     }

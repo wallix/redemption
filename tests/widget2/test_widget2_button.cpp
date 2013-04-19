@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget at position 0,0 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton2)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget of size 100x20 at position 10,100 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton3)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget of size 100x20 at position -10,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -230,7 +230,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton4)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget of size 100x20 at position 770,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -262,7 +262,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton5)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget of size 100x20 at position -20,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -294,7 +294,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton6)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -326,7 +326,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -358,7 +358,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip2)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget of size 100x20 at position 10,7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -389,7 +389,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
 {
     TestDraw drawable(800, 600);
 
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -439,7 +439,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
 // BOOST_AUTO_TEST_CASE(TraceWidgetButtonEvent)
 // {
 //     struct WidgetReceiveEvent : public Widget {
-//         Widget * sender;
+//         Widget2* sender;
 //         NotifyApi::notify_event_t event;
 //
 //         WidgetReceiveEvent()
@@ -449,7 +449,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
 //         virtual void draw(const Rect&)
 //         {}
 //
-//         virtual void notify(Widget * sender, NotifyApi::notify_event_t event,
+//         virtual void notify(Widget2* sender, NotifyApi::notify_event_t event,
 //                             unsigned long, unsigned long)
 //         {
 //             this->sender = sender;
@@ -458,9 +458,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
 //     } widget_for_receive_event;
 //
 //     struct Notify : public NotifyApi {
-//         Widget * sender;
+//         Widget2* sender;
 //         notify_event_t event;
-//         virtual void notify(Widget* sender, notify_event_t event,
+//         virtual void notify(Widget2* sender, notify_event_t event,
 //                             long unsigned int, long unsigned int)
 //         {
 //             this->sender = sender;
@@ -468,7 +468,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
 //         }
 //     } notifier;
 //
-//     Widget * parent = &widget_for_receive_event;
+//     Widget2* parent = &widget_for_receive_event;
 //     ModApi * drawable = NULL;
 //     bool auto_resize = false;
 //     int16_t x = 0;
@@ -498,7 +498,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
 //     TestDraw drawable(800, 600);
 //
 //     // WidgetButton is a button widget of size 256x125 at position 0,0 in it's parent context
-//     Widget * parent = NULL;
+//     Widget2* parent = NULL;
 //     NotifyApi * notifier = NULL;
 //
 //     WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);

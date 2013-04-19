@@ -23,13 +23,13 @@
 
 #include "widget.hpp"
 
-class WidgetImage : public Widget
+class WidgetImage : public Widget2
 {
     Bitmap bmp;
 
 public:
-    WidgetImage(ModApi* drawable, int x, int y, const char * filename, Widget* parent, NotifyApi* notifier, int id = 0)
-    : Widget(drawable, Rect(x,y,1,1), parent, notifier, id)
+    WidgetImage(ModApi* drawable, int x, int y, const char * filename, Widget2* parent, NotifyApi* notifier, int id = 0)
+    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, id)
     , bmp(filename)
     {
         this->rect.cx = this->bmp.cx;

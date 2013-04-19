@@ -23,7 +23,7 @@
 
 #include "label.hpp"
 
-class WidgetButton : public Widget
+class WidgetButton : public Widget2
 {
 public:
     WidgetLabel label;
@@ -32,11 +32,11 @@ public:
     int color_border_right_bottom2;
     int color_border_left_top;
 
-    WidgetButton(ModApi* drawable, int16_t x, int16_t y, Widget* parent,
+    WidgetButton(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
                  NotifyApi* notifier, const char * text, bool auto_resize = true,
                  int id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
                  int xtext = 0, int ytext = 0)
-    : Widget(drawable, Rect(x,y,1,1), parent, notifier, id)
+    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, id)
     , label(drawable, 1, 1, this, 0, text, auto_resize, 0, bgcolor, fgcolor, xtext, ytext)
     , state(0)
     {
@@ -144,7 +144,7 @@ public:
                 }
                 break;
             default:
-                this->Widget::rdp_input_mouse(device_flags, x, y, keymap);
+                this->Widget2::rdp_input_mouse(device_flags, x, y, keymap);
                 break;
         }
     }

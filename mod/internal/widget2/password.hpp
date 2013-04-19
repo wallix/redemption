@@ -23,7 +23,7 @@
 
 #include "label.hpp"
 
-class WidgetPassword : public Widget
+class WidgetPassword : public Widget2
 {
 public:
     static const size_t buffer_size = 256;
@@ -42,10 +42,10 @@ public:
     bool auto_resize;
 
     WidgetPassword(ModApi* drawable, int16_t x, int16_t y, uint16_t cx,
-                   Widget* parent, NotifyApi* notifier, const char * text,
+                   Widget2* parent, NotifyApi* notifier, const char * text,
                    int id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
                    std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
-    : Widget(drawable, Rect(x,y,cx,1), parent, notifier, id)
+    : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, id)
     , buf_size(0)
     , buf_pos(0)
     , num_chars(0)
@@ -164,7 +164,7 @@ public:
                 this->buf_pos = UTF8GetPos(reinterpret_cast<uint8_t*>(&this->buffer[0]), this->edit_pos);
             }
         } else {
-            Widget::rdp_input_mouse(device_flags, x, y, keymap);
+            Widget2::rdp_input_mouse(device_flags, x, y, keymap);
         }
     }
 

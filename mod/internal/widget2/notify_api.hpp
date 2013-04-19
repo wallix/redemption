@@ -21,14 +21,14 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_NOTIFYAPI_HPP_)
 #define REDEMPTION_MOD_WIDGET2_NOTIFYAPI_HPP_
 
-class Widget;
+class Widget2;
 
 class NotifyApi
 {
 public:
     typedef int notify_event_t;
 
-    virtual void notify(Widget * sender, notify_event_t event,
+    virtual void notify(Widget2 * sender, notify_event_t event,
                         unsigned long param, unsigned long param2) = 0;
 
     virtual ~NotifyApi()

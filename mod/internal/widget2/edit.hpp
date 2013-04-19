@@ -24,7 +24,7 @@
 #include "label.hpp"
 #include <keymap2.hpp>
 
-class WidgetEdit : public Widget {
+class WidgetEdit : public Widget2 {
 public:
     WidgetLabel label;
     size_t buffer_size;
@@ -36,10 +36,10 @@ public:
     int h_text;
 
     WidgetEdit(ModApi* drawable, int16_t x, int16_t y, uint16_t cx,
-               Widget* parent, NotifyApi* notifier, const char * text,
+               Widget2* parent, NotifyApi* notifier, const char * text,
                int id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
                std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
-    : Widget(drawable, Rect(x,y,cx,1), parent, notifier, id)
+    : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, id)
     , label(drawable, 0, 0, this, 0, text, false, 0, bgcolor, fgcolor, xtext+1, ytext)
     , w_text(0)
     , h_text(0)
@@ -215,7 +215,7 @@ public:
                 TODO("move cursor")
             }
         } else {
-            Widget::rdp_input_mouse(device_flags, x, y, keymap);
+            Widget2::rdp_input_mouse(device_flags, x, y, keymap);
         }
     }
 

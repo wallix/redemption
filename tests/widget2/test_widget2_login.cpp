@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget at position 0,0 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 0;
     int16_t y = 0;
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(window_login.rect);
 
-    drawable.save_to_png("/tmp/window_login.png");
+    //drawable.save_to_png("/tmp/window_login.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin2)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget of size 100x20 at position 10,100 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 10;
     int16_t y = 100;
@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin2)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png("/tmp/window_login2.png");
+    //drawable.save_to_png("/tmp/window_login2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin3)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget of size 100x20 at position -10,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = -10;
     int16_t y = 500;
@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin3)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png("/tmp/window_login3.png");
+    //drawable.save_to_png("/tmp/window_login3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin4)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget of size 100x20 at position 770,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 770;
     int16_t y = 500;
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin4)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png("/tmp/window_login4.png");
+    //drawable.save_to_png("/tmp/window_login4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -243,7 +243,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin5)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget of size 100x20 at position -20,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = -20;
     int16_t y = -7;
@@ -256,7 +256,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin5)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png("/tmp/window_login5.png");
+    //drawable.save_to_png("/tmp/window_login5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -271,7 +271,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin6)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 760;
     int16_t y = -7;
@@ -284,7 +284,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin6)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png("/tmp/window_login6.png");
+    //drawable.save_to_png("/tmp/window_login6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -299,7 +299,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 760;
     int16_t y = -7;
@@ -312,7 +312,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png("/tmp/window_login7.png");
+    //drawable.save_to_png("/tmp/window_login7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -327,7 +327,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip2)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget of size 100x20 at position 10,7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 0;
     int16_t y = 0;
@@ -340,7 +340,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip2)
                                       30,
                                       10));
 
-    drawable.save_to_png("/tmp/window_login8.png");
+    //drawable.save_to_png("/tmp/window_login8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -354,9 +354,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
 {
     TestDraw drawable(800, 600);
 
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     struct Notify : NotifyApi {
-        Widget * sender;
+        Widget2* sender;
         notify_event_t event;
 
         Notify()
@@ -364,7 +364,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
         , event(0)
         {}
 
-        virtual void notify(Widget* sender, notify_event_t event, long unsigned int param, long unsigned int param2)
+        virtual void notify(Widget2* sender, notify_event_t event, long unsigned int param, long unsigned int param2)
         {
             this->sender = sender;
             this->event = event;
@@ -434,7 +434,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
     window_login.help.send_notify(NOTIFY_SUBMIT);
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png("/tmp/window_login-help.png");
+    //drawable.save_to_png("/tmp/window_login-help.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -446,7 +446,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
     //close window_help and redraw
     window_login.window_help->button_close.send_notify(NOTIFY_SUBMIT);
 
-    drawable.save_to_png("/tmp/window_login-help2.png");
+    //drawable.save_to_png("/tmp/window_login-help2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\xe1\x6c\xf8\x2d\x6d\x0a\x13\x92\x02\xf3"

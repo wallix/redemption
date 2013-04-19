@@ -33,7 +33,7 @@ public:
     WidgetButton ok;
 
     WindowDialog(ModApi* drawable, int16_t x, int16_t y,
-                 Widget* parent, NotifyApi* notifier,
+                 Widget2* parent, NotifyApi* notifier,
                  const char* caption, const char * text, int id = 0,
                  const char * ok_text = "Ok", const char * cancel_text = "Cancel",
                  int bgcolor = DARK_WABGREEN, int fgcolor = BLACK)
@@ -62,7 +62,7 @@ public:
     virtual ~WindowDialog()
     {}
 
-    virtual void notify(Widget* widget, notify_event_t event,
+    virtual void notify(Widget2* widget, notify_event_t event,
                         long unsigned int param, long unsigned int param2)
     {
         if (this->notifier) {

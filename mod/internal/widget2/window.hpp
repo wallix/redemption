@@ -34,7 +34,7 @@ public:
     WidgetButton button_close;
     int bg_color;
 
-    Window(ModApi* drawable, const Rect& rect, Widget* parent, NotifyApi* notifier,
+    Window(ModApi* drawable, const Rect& rect, Widget2* parent, NotifyApi* notifier,
            const char * caption, int bgcolor = DARK_WABGREEN, int id = 0)
     : WidgetComposite(drawable, rect, parent, notifier, id)
     , titlebar(drawable, 0, 0, this, NULL, caption, false, -1, WABGREEN, BLACK, 5)
@@ -64,7 +64,7 @@ public:
     virtual ~Window()
     {}
 
-    virtual void notify(Widget* widget, notify_event_t event, long unsigned int param, long unsigned int param2)
+    virtual void notify(Widget2* widget, notify_event_t event, long unsigned int param, long unsigned int param2)
     {
         if (this->notifier) {
             if (widget == &this->button_close) {

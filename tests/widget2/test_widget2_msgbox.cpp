@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox)
     TestDraw drawable(800, 600);
 
     // MessageBox is a msgbox widget at position 0,0 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox2)
     TestDraw drawable(800, 600);
 
     // MessageBox is a msgbox widget of size 100x20 at position 10,100 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -207,7 +207,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox3)
     TestDraw drawable(800, 600);
 
     // MessageBox is a msgbox widget of size 100x20 at position -10,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox4)
     TestDraw drawable(800, 600);
 
     // MessageBox is a msgbox widget of size 100x20 at position 770,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -283,7 +283,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox5)
     TestDraw drawable(800, 600);
 
     // MessageBox is a msgbox widget of size 100x20 at position -20,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -321,7 +321,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox6)
     TestDraw drawable(800, 600);
 
     // MessageBox is a msgbox widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -359,7 +359,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBoxClip)
     TestDraw drawable(800, 600);
 
     // MessageBox is a msgbox widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -397,7 +397,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBoxClip2)
     TestDraw drawable(800, 600);
 
     // MessageBox is a msgbox widget of size 100x20 at position 10,7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -434,9 +434,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
 {
     TestDraw drawable(800, 600);
 
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     struct Notify : NotifyApi {
-        Widget * sender;
+        Widget2* sender;
         notify_event_t event;
 
         Notify()
@@ -444,7 +444,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
         , event(0)
         {}
 
-        virtual void notify(Widget* sender, notify_event_t event, long unsigned int param, long unsigned int param2)
+        virtual void notify(Widget2* sender, notify_event_t event, long unsigned int param, long unsigned int param2)
         {
             this->sender = sender;
             this->event = event;

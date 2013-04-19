@@ -22,14 +22,14 @@
 #define REDEMPTION_MOD_WIDGET2_WINDOW_HELP_HPP
 
 #include "window.hpp"
-#include "multi_line.hpp"
+#include "multiline.hpp"
 
 class WindowHelp : public Window
 {
 public:
     WidgetMultiLine multi_line;
 
-    WindowHelp(ModApi* drawable, const Rect& rect, Widget* parent, NotifyApi* notifier, const char* caption, int id = 0)
+    WindowHelp(ModApi* drawable, const Rect& rect, Widget2 * parent, NotifyApi* notifier, const char* caption, int id = 0)
     : Window(drawable, rect, parent, notifier, caption, id)
     , multi_line(drawable, Rect(20,
                                 this->titlebar.rect.cy + 2,

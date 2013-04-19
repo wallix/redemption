@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 800x600 at position 0,0 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; // unique identifier of widget used par parent, it will be sent back in case of event
     int color = 0x04F6CC; /* BGR */
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,-100 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0x04F6CC; /* BGR */
@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0x04F6CC; /* BGR */
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0x04F6CC; /* BGR */
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0x04F6CC; /* BGR */
@@ -261,7 +261,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0x04F6CC; /* BGR */
@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0x04F6CC; /* BGR */
@@ -317,7 +317,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0x04F6CC; /* BGR */
@@ -342,18 +342,18 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
 
 BOOST_AUTO_TEST_CASE(TraceWidgetRectEvent)
 {
-    struct WidgetReceiveEvent : public Widget {
-        Widget * sender;
+    struct WidgetReceiveEvent : public Widget2 {
+        Widget2* sender;
         NotifyApi::notify_event_t event;
 
         WidgetReceiveEvent()
-        : Widget(NULL, Rect(), NULL, NULL)
+        : Widget2(NULL, Rect(), NULL, NULL)
         {}
 
         virtual void draw(const Rect&)
         {}
 
-        virtual void notify(Widget* sender, NotifyApi::notify_event_t event,
+        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event,
                             unsigned long, unsigned long)
         {
             this->sender = sender;
@@ -361,7 +361,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectEvent)
         }
     } widget_for_receive_event;
 
-    Widget * parent = &widget_for_receive_event;
+    Widget2* parent = &widget_for_receive_event;
     ModApi * drawable = NULL;
     NotifyApi * notifier = NULL;
 

@@ -77,7 +77,7 @@ struct internal_mod : public mod_api {
 
     virtual void end_update()
     {
-        this->front.begin_update();
+        this->front.end_update();
     }
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)

@@ -30,9 +30,9 @@ public:
     WidgetMultiLine msg;
     WidgetButton ok;
 
-    MessageBox(ModApi* drawable, int16_t x, int16_t y, Widget* parent,
-                     NotifyApi* notifier, const char * caption, const char * text,
-                     int id = 0, int bgcolor = BLACK, int fgcolor = WHITE)
+    MessageBox(ModApi* drawable, int16_t x, int16_t y, Widget2 * parent,
+               NotifyApi* notifier, const char * caption, const char * text,
+               int id = 0, int bgcolor = BLACK, int fgcolor = WHITE)
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, id)
     , msg(drawable, 0, 0, this, NULL, text, true, -10, bgcolor, fgcolor, 10, 2)
     , ok(drawable, 0,0, this, this, "Ok", true, -11, bgcolor, fgcolor, 6, 2)
@@ -54,7 +54,7 @@ public:
     virtual ~MessageBox()
     {}
 
-    virtual void notify(Widget* widget, notify_event_t event, long unsigned int param, long unsigned int param2)
+    virtual void notify(Widget2 * widget, notify_event_t event, long unsigned int param, long unsigned int param2)
     {
         if (this->notifier) {
             if (widget == &this->ok) {

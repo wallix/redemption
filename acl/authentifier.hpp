@@ -39,6 +39,7 @@ typedef enum {
     INTERNAL_BOUNCER2,
     INTERNAL_TEST,
     INTERNAL_CARD,
+    INTERNAL_WIDGET2_TEST,
 } submodule_t;
 
 enum {
@@ -431,6 +432,12 @@ LOG(LOG_INFO, "now=%lu, tick_count = %u", now, this->tick_count);
                 }
                 nextmod = INTERNAL_CLOSE;
             }
+            else if (0 == strcmp(target, "widget2_test")){
+                if (this->verbose & 0x4){
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_test");
+                }
+                nextmod = INTERNAL_WIDGET2_TEST;
+            }
             else {
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL card");
@@ -447,7 +454,7 @@ LOG(LOG_INFO, "now=%lu, tick_count = %u", now, this->tick_count);
         return res;
     }
 
-    int ask_next_module(long & keepalive_time, 
+    int ask_next_module(long & keepalive_time,
                         const char * auth_host, int auth_port,
                         bool & record_video, bool & keep_alive,
                         submodule_t & nextmod)

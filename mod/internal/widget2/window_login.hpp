@@ -43,7 +43,7 @@ public:
     WidgetButton help;
     MessageBox * window_help;
 
-    WindowLogin(ModApi* drawable, int16_t x, int16_t y, Widget* parent,
+    WindowLogin(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
                 NotifyApi* notifier, const char* caption, int id = 0,
                 const char * login = 0, const char * password = 0,
                 int bgcolor = DARK_WABGREEN, int fgcolor = BLACK)
@@ -116,12 +116,12 @@ public:
             this->close_window_help();
     }
 
-    virtual void notify(Widget* widget, NotifyApi::notify_event_t event,
+    virtual void notify(Widget2* widget, NotifyApi::notify_event_t event,
                         long unsigned int param, long unsigned int param2)
     {
         if (widget == &this->help) {
             if (this->parent) {
-                Widget * p = this->parent;
+                Widget2 * p = this->parent;
                 while (p->parent)
                     p = p->parent;
                 this->window_help = new MessageBox(
@@ -175,7 +175,7 @@ public:
 private:
     void close_window_help()
     {
-        std::vector<Widget*>& widgets = static_cast<WidgetComposite*>(this->window_help->parent)->child_list;
+        std::vector<Widget2*>& widgets = static_cast<WidgetComposite*>(this->window_help->parent)->child_list;
         for (size_t i = 0; i < widgets.size(); ++i) {
             if (widgets[i] == this->window_help) {
                 widgets[i] = widgets[widgets.size()-1];

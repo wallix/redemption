@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     TestDraw drawable(800, 600);
 
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     TestDraw drawable(800, 600);
 
     // WidgetEdit is a edit widget of size 100x20 at position 10,100 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     TestDraw drawable(800, 600);
 
     // WidgetEdit is a edit widget of size 100x20 at position -10,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -234,7 +234,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit4)
     TestDraw drawable(800, 600);
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit5)
     TestDraw drawable(800, 600);
 
     // WidgetEdit is a edit widget of size 100x20 at position -20,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -298,7 +298,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit6)
     TestDraw drawable(800, 600);
 
     // WidgetEdit is a edit widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -330,7 +330,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip)
     TestDraw drawable(800, 600);
 
     // WidgetEdit is a edit widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -362,7 +362,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
     TestDraw drawable(800, 600);
 
     // WidgetEdit is a edit widget of size 100x20 at position 10,7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -394,13 +394,13 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     TestDraw drawable(800, 600);
 
     struct Notify : public NotifyApi {
-        Widget * sender;
+        Widget2* sender;
         notify_event_t event;
         Notify()
         : sender(0)
         , event(0)
         {}
-        virtual void notify(Widget* sender, notify_event_t event,
+        virtual void notify(Widget2* sender, notify_event_t event,
                             long unsigned int, long unsigned int)
         {
             this->sender = sender;
@@ -408,7 +408,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
         }
     } notifier;
 
-    Widget * parent = 0;
+    Widget2* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
@@ -581,7 +581,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
 //     TestDraw drawable(800, 600);
 //
 //     // WidgetEdit is a edit widget of size 256x125 at position 0,0 in it's parent context
-//     Widget * parent = NULL;
+//     Widget2* parent = NULL;
 //     NotifyApi * notifier = NULL;
 //
 //     WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);

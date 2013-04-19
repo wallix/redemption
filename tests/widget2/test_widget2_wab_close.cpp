@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose)
     TestDraw drawable(800, 600);
 
     // WindowWabClose is a window_wab_close widget at position 0,0 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 0;
     int16_t y = 0;
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose2)
     TestDraw drawable(800, 600);
 
     // WindowWabClose is a window_wab_close widget of size 100x20 at position 10,100 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 10;
     int16_t y = 100;
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose3)
     TestDraw drawable(800, 600);
 
     // WindowWabClose is a window_wab_close widget of size 100x20 at position -10,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = -10;
     int16_t y = 500;
@@ -232,7 +232,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose4)
     TestDraw drawable(800, 600);
 
     // WindowWabClose is a window_wab_close widget of size 100x20 at position 770,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 770;
     int16_t y = 500;
@@ -261,7 +261,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose5)
     TestDraw drawable(800, 600);
 
     // WindowWabClose is a window_wab_close widget of size 100x20 at position -20,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = -20;
     int16_t y = -7;
@@ -290,7 +290,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose6)
     TestDraw drawable(800, 600);
 
     // WindowWabClose is a window_wab_close widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 760;
     int16_t y = -7;
@@ -319,7 +319,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip)
     TestDraw drawable(800, 600);
 
     // WindowWabClose is a window_wab_close widget of size 100x20 at position 760,-7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 760;
     int16_t y = -7;
@@ -348,7 +348,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip2)
     TestDraw drawable(800, 600);
 
     // WindowWabClose is a window_wab_close widget of size 100x20 at position 10,7 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int16_t x = 0;
     int16_t y = 0;

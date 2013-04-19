@@ -25,14 +25,14 @@
 #include "widget.hpp"
 #include "keymap2.hpp"
 
-class WidgetComposite : public Widget
+class WidgetComposite : public Widget2
 {
 public:
-    std::vector<Widget*> child_list;
+    std::vector<Widget2*> child_list;
 
-    WidgetComposite(ModApi * drawable, const Rect& rect, Widget * parent,
+    WidgetComposite(ModApi * drawable, const Rect& rect, Widget2 * parent,
                     NotifyApi * notifier, int id = 0)
-    : Widget(drawable, rect, parent, notifier, id)
+    : Widget2(drawable, rect, parent, notifier, id)
     , child_list()
     {
         //this->tab_flag = DELEGATE_CONTROL_TAB;
@@ -48,11 +48,11 @@ public:
     }
 
 public:
-    virtual Widget * widget_at_pos(int16_t x, int16_t y)
+    virtual Widget2 * widget_at_pos(int16_t x, int16_t y)
     {
         if (!this->rect.contains_pt(x, y))
             return 0;
-        Widget* ret = 0;
+        Widget2 * ret = 0;
         std::size_t size = this->child_list.size();
         for (std::size_t i = 0; i < size && ret == 0; ++i)
         {
@@ -61,12 +61,12 @@ public:
         return ret ? ret : this;
     }
 
-    virtual Widget* widget_focused()
+    virtual Widget2 * widget_focused()
     {
-        Widget* ret = this->direct_child_focused();
+        Widget2 * ret = this->direct_child_focused();
         if (ret)
         {
-            Widget* tmp = ret->widget_focused();
+            Widget2 * tmp = ret->widget_focused();
             if (tmp)
                 ret = tmp;
         }
@@ -74,7 +74,7 @@ public:
     }
 
 #if 0
-    static bool switch_focus(Widget * old_focus, Widget * new_focus)
+    static bool switch_focus(Widget2 * old_focus, Widget2 * new_focus)
     {
         bool res = true;
         new_focus->has_focus = true;
@@ -83,9 +83,9 @@ public:
         return res;
     }
 
-    bool _control_childs_tab(Widget * old, std::size_t n, OptionTab dtab)
+    bool _control_childs_tab(Widget2 * old, std::size_t n, OptionTab dtab)
     {
-        Widget * w = this->child_list[n];
+        Widget2 * w = this->child_list[n];
         if (w->tab_flag == NORMAL_TAB) {
             this->switch_focus(old, w);
             return true;
@@ -99,7 +99,7 @@ public:
         return false;
     }
 
-    bool _control_tab_impl(Widget * old, std::size_t n, std::size_t last)
+    bool _control_tab_impl(Widget2 * old, std::size_t n, std::size_t last)
     {
         for (; n < last; ++n) {
             if (this->_control_childs_tab(old, n, REWIND_TAB)) {
@@ -109,7 +109,7 @@ public:
         return false;
     }
 
-    bool _control_backtab_impl(Widget * old, std::size_t n, std::size_t last)
+    bool _control_backtab_impl(Widget2 * old, std::size_t n, std::size_t last)
     {
         for (; n >= last; --n) {
             if (this->_control_childs_tab(old, n, REWIND_BACKTAB)) {
@@ -119,7 +119,7 @@ public:
         return false;
     }
 
-    bool control_tab(OptionTab dtab, Widget * pold = 0)
+    bool control_tab(OptionTab dtab, Widget2 * pold = 0)
     {
         size_t size = this->child_list.size();
         if (size != 0) {
@@ -127,8 +127,8 @@ public:
             bool nidx = (idx == -1u);
             if (nidx)
                 idx = 0;
-            Widget * w = this->child_list[idx];
-            Widget * old = pold ? pold : w;
+            Widget2 * w = this->child_list[idx];
+            Widget2 * old = pold ? pold : w;
             if (w->tab_flag & DELEGATE_CONTROL_TAB) {
                 if (static_cast<WidgetComposite*>(w)->control_tab(dtab, old)) {
                     return true;
@@ -157,7 +157,7 @@ public:
 
     bool _focus_on_impl(OptionTab dtab, std::size_t n)
     {
-        Widget * w = this->child_list[n];
+        Widget2 * w = this->child_list[n];
         if (w->tab_flag == NORMAL_TAB) {
             w->has_focus = true;
             w->notify_self(NOTIFY_FOCUS_BEGIN);
@@ -228,7 +228,7 @@ public:
         if (event == FOCUS_BEGIN){
             for (std::size_t i = 0; i < this->child_list.size(); ++i)
             {
-                Widget * wchild = this->child_list[i];
+                Widget2 * wchild = this->child_list[i];
                 if (wchild->has_focus && wchild->id != id) {
                     wchild->has_focus = false;
                     wchild->notify_self(NOTIFY_FOCUS_END);
@@ -239,7 +239,7 @@ public:
                 this->notify_parent(FOCUS_BEGIN);
             }
         } else {
-            this->Widget::notify(id, event);
+            this->Widget2::notify(id, event);
         }
     }
 #endif
@@ -250,13 +250,13 @@ public:
         std::size_t size = this->child_list.size();
 
         for (std::size_t i = 0; i < size; ++i) {
-            Widget *w = this->child_list[i];
+            Widget2 *w = this->child_list[i];
             w->refresh(new_clip.intersect(w->rect));
         }
     }
 
 protected:
-    Widget* direct_child_focused() const
+    Widget2 * direct_child_focused() const
     {
         for (std::size_t i = 0; i < this->child_list.size(); ++i)
         {
@@ -276,11 +276,11 @@ protected:
         return -1;
     }
 
-    Widget* get_child_by_id(int id) const
+    Widget2 * get_child_by_id(int id) const
     {
         for (size_t i = 0; i < this->child_list.size(); i++)
         {
-            struct Widget * w = this->child_list[i];
+            struct Widget2 * w = this->child_list[i];
             if (w->id == id)
                 return w;
         }

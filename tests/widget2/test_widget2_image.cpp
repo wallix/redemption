@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(&drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position 10,100 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(&drawable, 10,100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position -100,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(&drawable, -100,500, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position 700,500 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(&drawable, 700,500, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
@@ -225,7 +225,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position -100,-100 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(&drawable, -100,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
@@ -251,7 +251,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(&drawable, 700,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
@@ -277,7 +277,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(&drawable, 700,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    Widget * parent = NULL;
+    Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(&drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
@@ -327,7 +327,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 // BOOST_AUTO_TEST_CASE(TraceWidgetImageEvent)
 // {
 //     struct WidgetReceiveEvent : public Widget {
-//         Widget * sender;
+//         Widget2* sender;
 //         NotifyApi::notify_event_t event;
 //
 //         WidgetReceiveEvent()
@@ -337,7 +337,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //         virtual void draw(const Rect&)
 //         {}
 //
-//         virtual void notify(Widget* sender, NotifyApi::notify_event_t event,
+//         virtual void notify(Widget2* sender, NotifyApi::notify_event_t event,
 //                             unsigned long, unsigned long)
 //         {
 //             this->sender = sender;
@@ -345,7 +345,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //         }
 //     } widget_for_receive_event;
 //
-//     Widget * parent = &widget_for_receive_event;
+//     Widget2* parent = &widget_for_receive_event;
 //     ModApi * drawable = NULL;
 //     NotifyApi * notifier = NULL;
 //
@@ -370,7 +370,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //     TestDraw drawable(800, 600);
 //
 //     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-//     Widget * parent = NULL;
+//     Widget2* parent = NULL;
 //     NotifyApi * notifier = NULL;
 //
 //     WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);

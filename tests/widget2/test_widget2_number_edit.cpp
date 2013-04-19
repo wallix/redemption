@@ -134,13 +134,13 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     TestDraw drawable(800, 600);
 
     struct Notify : public NotifyApi {
-        Widget * sender;
+        Widget2* sender;
         notify_event_t event;
         Notify()
         : sender(0)
         , event(0)
         {}
-        virtual void notify(Widget* sender, notify_event_t event,
+        virtual void notify(Widget2* sender, notify_event_t event,
                             long unsigned int, long unsigned int)
         {
             this->sender = sender;
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
         }
     } notifier;
 
-    Widget * parent = 0;
+    Widget2* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     WidgetNumberEdit wnumber_edit(&drawable, x, y, cx, parent, &notifier, "123456", 0, GREEN, RED);
 
     wnumber_edit.rdp_input_invalidate(wnumber_edit.rect);
-    drawable.save_to_png("/tmp/number_edit-e1.png");
+    //drawable.save_to_png("/tmp/number_edit-e1.png");
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
         "\xfe\x9b\x44\x91\xc5\x7c\x67\x8a\x16\x76"
@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     keymap.push('a');
     wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.rect);
-    drawable.save_to_png("/tmp/number_edit-e2-1.png");
+    //drawable.save_to_png("/tmp/number_edit-e2-1.png");
     if (!check_sig(drawable.gd.drawable, message,
         "\xfe\x9b\x44\x91\xc5\x7c\x67\x8a\x16\x76"
         "\x44\x14\x9e\x88\xba\xf5\xd1\x39\x36\xe1")){
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     keymap.push('2');
     wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.rect);
-    drawable.save_to_png("/tmp/number_edit-e2-2.png");
+    //drawable.save_to_png("/tmp/number_edit-e2-2.png");
     if (!check_sig(drawable.gd.drawable, message,
         "\x49\xe3\x17\x70\xf8\x5c\xab\xce\xa2\x94"
         "\xeb\xea\xde\xa4\x83\x44\x12\x24\x55\x2e")){

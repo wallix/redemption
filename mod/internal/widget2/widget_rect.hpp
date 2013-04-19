@@ -23,14 +23,14 @@
 
 #include "widget.hpp"
 
-class WidgetRect : public Widget
+class WidgetRect : public Widget2
 {
 public:
     int color;
 
 public:
-    WidgetRect(ModApi * drawable, const Rect& rect, Widget * parent, NotifyApi * notifier, int id = 0, int color = BLACK)
-    : Widget(drawable, rect, parent, notifier, id)
+    WidgetRect(ModApi * drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int id = 0, int color = BLACK)
+    : Widget2(drawable, rect, parent, notifier, id)
     , color(color)
     {
     }
