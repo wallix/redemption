@@ -46,6 +46,7 @@ extern "C" {
         char extension[12];
         unsigned pid;
         unsigned count;
+        int groupid;
     };
 
     static inline RIO_ERROR sq_m_SQCryptoOuttracker_constructor(SQCryptoOuttracker * self, RIO * tracker,
@@ -82,6 +83,7 @@ extern "C" {
             rio_send(tracker, header3, strlen(header3));
             rio_send(tracker, "\n", 1);
         }
+        self->groupid = groupid;
         return RIO_ERROR_OK;
     }
 
@@ -185,6 +187,14 @@ extern "C" {
             sq_im_SQCryptoOuttracker_get_name(self, tmpname, sizeof(tmpname), self->count);
             TODO("add rights information to constructor")
             self->trans = rio_new_crypto(status, tmpname, O_WRONLY);
+            if (self->groupid){
+                if (chown(tmpname, (uid_t)-1, self->groupid) < 0){
+                    LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", tmpname, self->groupid, strerror(errno), errno);
+                }
+                if (chmod(tmpname, S_IRUSR|S_IRGRP) == -1){
+                    LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", tmpname, strerror(errno), errno);
+                }
+            }
         }
         return self->trans;
     }

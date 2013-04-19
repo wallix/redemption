@@ -393,7 +393,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
 
     const int groupid = 0;
-    OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", 0);
+    OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
   
     player.add_consumer(&png_recorder);

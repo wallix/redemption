@@ -42,6 +42,7 @@ extern "C" {
         char extension[12];
         unsigned pid;
         unsigned count;
+        int groupid;
     };
 
     static inline RIO_ERROR sq_m_SQOutfilename_constructor(SQOutfilename * self,
@@ -65,6 +66,7 @@ extern "C" {
             return RIO_ERROR_STRING_EXTENSION_TOO_LONG;
         }
         strcpy(self->extension, extension);
+        self->groupid = groupid;
         return RIO_ERROR_OK;
     }
 
@@ -124,6 +126,14 @@ extern "C" {
             if (self->fd < 0){
                 if (status) { *status = RIO_ERROR_CREAT; }
                 return self->trans;
+            }
+            if (self->groupid){
+                if (chown(tmpname, (uid_t)-1, self->groupid) < 0){
+                    LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", tmpname, self->groupid, strerror(errno), errno);
+                }
+                if (chmod(tmpname, S_IRUSR|S_IRGRP) == -1){
+                    LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", tmpname, strerror(errno), errno);
+                }
             }
             self->trans = rio_new_outfile(status, self->fd);
         }

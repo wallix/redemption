@@ -20,8 +20,8 @@
    New Outfilename RedTransport class
 */
 
-#ifndef _REDEMPTION_LIBS_RIO_OUTFILENAME_H_
-#define _REDEMPTION_LIBS_RIO_OUTFILENAME_H_
+#ifndef _REDEMPTION_TRANSPORT_RIO_RIO_OUTFILENAME_H_
+#define _REDEMPTION_TRANSPORT_RIO_RIO_OUTFILENAME_H_
 
 #include "rio.h"
 
@@ -45,6 +45,14 @@ extern "C" {
         self->fd = ::open(filename, O_WRONLY|O_CREAT, S_IRUSR);
         if (self->fd < 0){
             return RIO_ERROR_CREAT;
+        }
+        if (groupid){
+            if (chown(filename, (uid_t)-1, groupid) == -1){
+                LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", filename, groupid, strerror(errno), errno);
+            }
+            if (chmod(filename, S_IRUSR|S_IRGRP) == -1){
+                LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", filename, strerror(errno), errno);
+            }
         }
         self->trans = rio_new_outfile(&error, self->fd);
         return error;
