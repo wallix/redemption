@@ -654,18 +654,10 @@ LOG(LOG_INFO, "now=%lu, tick_count = %u", now, this->tick_count);
             this->out_item(stream, STRAUTHID_OPT_WIDTH);
             this->out_item(stream, STRAUTHID_OPT_HEIGHT);
             this->out_item(stream, STRAUTHID_OPT_BPP);
-            /* translation message */
-            this->out_item(stream, STRAUTHID_TRANS_BUTTON_OK);
-            this->out_item(stream, STRAUTHID_TRANS_BUTTON_CANCEL);
-            this->out_item(stream, STRAUTHID_TRANS_BUTTON_HELP);
-            this->out_item(stream, STRAUTHID_TRANS_BUTTON_CLOSE);
-            this->out_item(stream, STRAUTHID_TRANS_BUTTON_REFUSED);
-            this->out_item(stream, STRAUTHID_TRANS_LOGIN);
-            this->out_item(stream, STRAUTHID_TRANS_USERNAME);
-            this->out_item(stream, STRAUTHID_TRANS_PASSWORD);
-            this->out_item(stream, STRAUTHID_TRANS_TARGET);
-            this->out_item(stream, STRAUTHID_TRANS_DIAGNOSTIC);
-            this->out_item(stream, STRAUTHID_TRANS_CONNECTION_CLOSED);
+            // send trace seal if and only if there is one
+            if (this->context.get(STRAUTHID_TRACE_SEAL)){
+                this->out_item(stream, STRAUTHID_TRACE_SEAL);
+            }
             stream.mark_end();
 
             int total_length = stream.get_offset();
