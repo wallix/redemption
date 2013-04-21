@@ -20,8 +20,8 @@
    new Crypto RedTransport class
 */
 
-#ifndef _REDEMPTION_LIBS_RIO_CRYPTO_H_
-#define _REDEMPTION_LIBS_RIO_CRYPTO_H_
+#ifndef _REDEMPTION_TRANSPORTS_RIO_RIO_CRYPTO_H_
+#define _REDEMPTION_TRANSPORTS_RIO_RIO_CRYPTO_H_
 
 #include "rio.h"
 
@@ -33,28 +33,45 @@ extern "C" {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
 
+    TODO("this is a place holder implementation without cryptography...")
     struct RIOCrypto {
-        int reserved;
+        int fd;
+        RIO *trans;
     };
 
     /* This method does not allocate space for object itself,
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    static inline RIO_ERROR rio_m_RIOCrypto_constructor(RIOCrypto * self, const char * file, int oflag) {
-        return RIO_ERROR_NOT_IMPLEMENTED;
+    static inline RIO_ERROR rio_m_RIOCrypto_constructor(RIOCrypto * self, const char * filename, int oflag) {
+        RIO_ERROR error = RIO_ERROR_OK;
+        self->fd = ::open(filename, oflag, S_IRUSR);
+        if (self->fd < 0){
+            return RIO_ERROR_CREAT;
+        }
+        self->trans = rio_new_outfile(&error, self->fd);
+        return error;
     }
 
     /* This method deallocate any space used for subfields if any
     */
     static inline RIO_ERROR rio_m_RIOCrypto_destructor(RIOCrypto * self) {
-        return RIO_ERROR_NOT_IMPLEMENTED;
+        rio_delete(self->trans);
+        int res = close(self->fd);
+        if (res < 0){
+            LOG(LOG_ERR, "closing file failed erro=%u : %s\n", errno, strerror(errno));
+            return RIO_ERROR_CLOSE_FAILED;
+        }
+        self->trans = NULL;
+        return RIO_ERROR_CLOSED;
     }
 
     /* This method return a signature based on the data written
     */
     static inline RIO_ERROR rio_m_RIOCrypto_sign(RIOCrypto * self, unsigned char * buf, size_t size, size_t & len) {
-        return RIO_ERROR_NOT_IMPLEMENTED;
+        memset(buf, 0, size);
+        len = 0;
+        return RIO_ERROR_OK;
     }
 
     /* This method receive len bytes of data into buffer
@@ -65,7 +82,8 @@ extern "C" {
        and an error returned on subsequent call.
     */
     static inline ssize_t rio_m_RIOCrypto_recv(RIOCrypto * self, void * data, size_t len) {
-        return RIO_ERROR_NOT_IMPLEMENTED;
+         rio_m_RIOCrypto_destructor(self);
+         return -RIO_ERROR_SEND_ONLY;
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -76,11 +94,11 @@ extern "C" {
        and an error returned on subsequent call.
     */
     static inline ssize_t rio_m_RIOCrypto_send(RIOCrypto * self, const void * data, size_t len) {
-        return RIO_ERROR_NOT_IMPLEMENTED;
+        return rio_send(self->trans, data, len);
     }
 
     static inline RIO_ERROR rio_m_RIOCrypto_get_status(RIOCrypto * self) {
-        return RIO_ERROR_NOT_IMPLEMENTED;
+        return RIO_ERROR_OK;
     }
 };
 

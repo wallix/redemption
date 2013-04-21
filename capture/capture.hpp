@@ -58,49 +58,15 @@ public:
       , pnc(NULL)
       , drawable(NULL)
     {
-#ifndef PUBLIC
         /************************
         * Manage encryption key *
         ************************/
-        if (this->enable_file_encryption) {
-            /* gl_crypto_key is a copy of the master key ("wabcryptofile.c").
-             */
-            extern char gl_crypto_key[32];
-
-            unsigned int  i;
-            int           fd_test;
-            unsigned char hash[32];
-
-            if ((fd_test = crypto_open(CFG_PATH "/" RDPPROXY_INI, O_RDONLY)) != -1) {
-                crypto_close(fd_test, hash);
-            }
-
-            for (i = 0; i < 32; i++)
-                if (gl_crypto_key[i])
-                    break;
-
-            if (i == 32) {
-                // Generate the random key used bye "webcryptofile" library.
-                for (i = 0; i < 32; i++)
-                    gl_crypto_key[i] = i;
-
-                LOG(LOG_INFO, "Use default encryption key");
-            }
-            else {
-                LOG(LOG_INFO, "Use WAB encryption key");
-            }
-        }
-#endif
-
-        TODO("33 below is some ugly hardcoded groupid to test behavior, in the (near) future it will be provided in configuration parameters")
-            const int groupid = 33; 
-
         if (this->capture_png){
-            if (recursive_create_directory(PNG_PATH "/", S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, ini.globals.capture_groupid) != 0) {
+            if (recursive_create_directory(PNG_PATH "/", S_IRWXU|S_IRWXG, ini.globals.capture_groupid) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", PNG_PATH "/");
             }
 
-            this->png_trans = new OutFilenameTransport(SQF_PATH_FILE_PID_COUNT_EXTENSION, PNG_PATH "/", basename, ".png", groupid);
+            this->png_trans = new OutFilenameTransport(SQF_PATH_FILE_PID_COUNT_EXTENSION, PNG_PATH "/", basename, ".png", ini.globals.capture_groupid);
             this->psc = new StaticCapture(now, *this->png_trans, &(this->png_trans->seq), width, height, ini);
         }
 
@@ -109,17 +75,17 @@ public:
         }
 
         if (this->capture_wrm){
-            if (recursive_create_directory(path, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, ini.globals.capture_groupid) != 0) {
+            if (recursive_create_directory(path, S_IRWXU|S_IRGRP|S_IXGRP, ini.globals.capture_groupid) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", path);
             }
 
             if (this->enable_file_encryption == false) {
-                this->wrm_trans = new OutmetaTransport(path, basename, now, width, height, groupid);
+                this->wrm_trans = new OutmetaTransport(path, basename, now, width, height, ini.globals.capture_groupid);
                 this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
                 this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
             }
             else {
-                this->crypto_wrm_trans = new CryptoOutmetaTransport(path, basename, now, width, height, groupid);
+                this->crypto_wrm_trans = new CryptoOutmetaTransport(path, basename, now, width, height, ini.globals.capture_groupid);
                 this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
                 this->pnc = new NativeCapture(now, *this->crypto_wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
             }

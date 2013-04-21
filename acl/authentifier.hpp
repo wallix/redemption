@@ -303,7 +303,7 @@ class SessionManager {
 //            if (trans->last_quantum_sent == 0){
             if (trans->last_quantum_received == 0){
                 this->tick_count++;
-LOG(LOG_INFO, "now=%lu, tick_count = %u", now, this->tick_count);
+LOG(LOG_INFO, "now=%lu, tick_count = %u max_tick = %u", now, this->tick_count, this->max_tick);
                 if (this->tick_count > this->max_tick){ // 15 minutes before closing on inactivity
                     this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed on inactivity");
                     LOG(LOG_INFO, "Session ACL inactivity : closing");

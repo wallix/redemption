@@ -40,8 +40,21 @@ extern "C" {
     */
     inline RIO_ERROR rio_m_RIOCryptoOutfilename_constructor(RIOCryptoOutfilename * self, const char * filename, const int groupid)
     {
-        RIO_ERROR error;
-        self->trans = rio_new_crypto(&error, filename, O_WRONLY);
+        RIO_ERROR error = RIO_ERROR_OK;
+        self->trans = rio_new_crypto(&error, filename, O_WRONLY|O_CREAT);
+        if (error != RIO_ERROR_OK){
+            LOG(LOG_ERR, "Failed to create encrypted trace file %s %u : %s [%u]", filename, strerror(errno), errno);
+        }
+        else {
+            if (groupid){
+                if (chown(filename, (uid_t)-1, groupid) == -1){
+                    LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", filename, groupid, strerror(errno), errno);
+                }
+                if (chmod(filename, S_IRUSR|S_IRGRP) == -1){
+                    LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", filename, strerror(errno), errno);
+                }
+            }
+        }
         return error;
     }
 
