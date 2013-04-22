@@ -38,34 +38,33 @@
 
 #include "fileutils.hpp"
 
-#include "rio.h"
+#include "rio/rio.h"
 
-#include "sq_one.h"
-#include "sq_outfilename.h"
-#include "sq_cryptooutfilename.h"
-#include "sq_outtracker.h"
-#include "sq_cryptoouttracker.h"
-#include "sq_intracker.h"
-#include "sq_inmeta.h"
+#include "rio/sq_one.h"
+#include "rio/sq_outfilename.h"
+#include "rio/sq_cryptooutfilename.h"
+#include "rio/sq_outtracker.h"
+#include "rio/sq_cryptoouttracker.h"
+#include "rio/sq_intracker.h"
+#include "rio/sq_inmeta.h"
 
-#include "rio_generator.h"
-#include "rio_check.h"
-#include "rio_test.h"
-#include "rio_outfile.h"
-#include "rio_infile.h"
-#include "rio_socket.h"
-#include "rio_socket_TLS.h"
-#include "rio_outsequence.h"
-#include "rio_insequence.h"
-#include "rio_outmeta.h"
-#include "rio_cryptooutmeta.h"
-#include "rio_inmeta.h"
-#include "rio_outfilename.h"
-#include "rio_cryptooutfilename.h"
-#include "rio_infilename.h"
-#include "rio_cryptoinfilename.h"
-
+#include "rio/rio_generator.h"
+#include "rio/rio_check.h"
+#include "rio/rio_test.h"
+#include "rio/rio_outfile.h"
+#include "rio/rio_infile.h"
+#include "rio/rio_socket.h"
+#include "rio/rio_socket_TLS.h"
+#include "rio/rio_outsequence.h"
+#include "rio/rio_insequence.h"
+#include "rio/rio_outmeta.h"
 #include "rio/rio_crypto.h"
+#include "rio/rio_cryptooutmeta.h"
+#include "rio/rio_inmeta.h"
+#include "rio/rio_outfilename.h"
+#include "rio/rio_cryptooutfilename.h"
+#include "rio/rio_infilename.h"
+#include "rio/rio_cryptoinfilename.h"
 
 TODO("add filter class sample")
 TODO("convert PNG transport to new format")
@@ -79,8 +78,6 @@ TODO("write lib modification and tagging procedure")
 TODO("create debian packager .deb (use git-builder as base sample) to build rio.deb package from github source")
 TODO("extension: metadata files could be used to store non filename lines (meta lines could start with some reserved characters like ; ou #)"
      "This would be handy for large metadata that may not fit on one line")
-
-#include "rio.h"
 
 extern "C" {
     const char * rio_version(){

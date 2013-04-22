@@ -24,7 +24,6 @@
 #define _REDEMPTION_TRANSPORT_RIO_RIO_CRYPTOOUTMETA_H_
 
 #include "rio.h"
-#include "rio/rio_crypto.h"
 
 extern "C" {
 
