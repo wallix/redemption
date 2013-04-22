@@ -20,8 +20,8 @@
    new Crypto RedTransport class
 */
 
-#ifndef _REDEMPTION_TRANSPORTS_RIO_RIO_CRYPTO_H_
-#define _REDEMPTION_TRANSPORTS_RIO_RIO_CRYPTO_H_
+#ifndef _REDEMPTION_TRANSPORT_RIO_RIO_CRYPTO_H_
+#define _REDEMPTION_TRANSPORT_RIO_RIO_CRYPTO_H_
 
 #include "rio.h"
 
