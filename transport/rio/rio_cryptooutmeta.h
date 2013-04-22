@@ -110,8 +110,8 @@ extern "C" {
             }
             else {
                 ssize_t sent_len = rio_m_RIOCrypto_send(&hasher, hash, res_len);
-                if ((RIO_ERROR)sent_len != RIO_ERROR_OK){
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s\n", self->hasher_filename);
+                if (sent_len < 0){
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [%u]\n", self->hasher_filename, -res_len);
                 }
                 else {
                     rio_m_RIOCrypto_destructor(&hasher);
