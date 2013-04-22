@@ -104,7 +104,7 @@ extern "C" {
 
             TODO("check errors when storing hash")
             RIOCrypto hasher;
-            RIO_ERROR status = rio_m_RIOCrypto_constructor(&hasher, self->hasher_filename, O_WRONLY|O_CREAT);
+            RIO_ERROR status = rio_m_RIOCrypto_constructor(&hasher, self->hasher_filename, O_WRONLY);
             if (status != RIO_ERROR_OK){
                 LOG(LOG_ERR, "Failed to open hash file %s\n", self->hasher_filename);
             }
