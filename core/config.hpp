@@ -272,7 +272,7 @@ struct Inifile {
             this->globals.break_interval = 600;
             this->globals.flv_break_interval = 600000000l;
             this->globals.flv_frame_interval = 1000000L; 
-            this->globals.capture_groupid = 0; 
+            this->globals.capture_groupid = 33; 
 
             this->globals.png_limit = 3;
             this->globals.l_bitrate   = 20000;

@@ -126,7 +126,7 @@ class SocketTransport : public Transport {
             TODO("this should be an error, no need to commute two times to TLS")
             return;
         }
-        LOG(LOG_INFO, "RIO *::enable_server_tls() done");
+        LOG(LOG_INFO, "RIO *::enable_server_tls() start");
 
         rio_clear(&this->rio);
 
@@ -402,9 +402,10 @@ class SocketTransport : public Transport {
             TODO("this should be an error, no need to commute two times to TLS")
             return;
         }
+        LOG(LOG_INFO, "RIO *::enable_client_tls() start");
+ 
         rio_clear(&this->rio);
 
-        LOG(LOG_INFO, "RIO *::enable_client_tls()");
 
         // SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled functions
         // ------------------------------------------------------------------------------------
@@ -759,7 +760,7 @@ class SocketTransport : public Transport {
 
 
         // ensures the certificate directory exists
-        if (recursive_create_directory(CERTIF_PATH "/", S_IRUSR | S_IWUSR | S_IXUSR, 0) != 0) {
+        if (recursive_create_directory(CERTIF_PATH "/", S_IRWXU|S_IRWXG, 0) != 0) {
             LOG(LOG_ERR, "cannot create certificate directory: " CERTIF_PATH "/");
             throw Error(ERR_TRANSPORT, 0);
         }
