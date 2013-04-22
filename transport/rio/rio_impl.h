@@ -65,11 +65,7 @@
 #include "rio_infilename.h"
 #include "rio_cryptoinfilename.h"
 
-#ifdef PUBLIC
-    #include "rio_crypto.h"
-#else
-    #include "../../../transport/rio_crypto.h"
-#endif
+#include "rio_crypto.h"
 
 TODO("add filter class sample")
 TODO("convert PNG transport to new format")
