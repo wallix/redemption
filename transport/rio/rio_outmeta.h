@@ -54,9 +54,9 @@ extern "C" {
             return RIO_ERROR_CREAT;
         }
         if (groupid){
-            if (chown(buffer, (uid_t)-1, groupid) < 0){
-                LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", buffer, groupid, strerror(errno), errno);
-            }
+//            if (chown(buffer, (uid_t)-1, groupid) < 0){
+//                LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", buffer, groupid, strerror(errno), errno);
+//            }
             if (chmod(buffer, S_IRUSR|S_IRGRP) == -1){
                 LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", buffer, strerror(errno), errno);
             }

@@ -47,9 +47,9 @@ extern "C" {
         }
         else {
             if (groupid){
-                if (chown(filename, (uid_t)-1, groupid) == -1){
-                    LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", filename, groupid, strerror(errno), errno);
-                }
+//                if (chown(filename, (uid_t)-1, groupid) == -1){
+//                    LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", filename, groupid, strerror(errno), errno);
+//                }
                 if (chmod(filename, S_IRUSR|S_IRGRP) == -1){
                     LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", filename, strerror(errno), errno);
                 }

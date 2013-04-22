@@ -127,9 +127,9 @@ extern "C" {
             self->trans = rio_new_crypto(status, tmpname, O_WRONLY);
             TODO("maybe we should put groupid management into rio_new_crypto")
             if (self->groupid){
-                if (chown(tmpname, (uid_t)-1, self->groupid) < 0){
-                    LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", tmpname, self->groupid, strerror(errno), errno);
-                }
+//                if (chown(tmpname, (uid_t)-1, self->groupid) < 0){
+//                    LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", tmpname, self->groupid, strerror(errno), errno);
+//                }
                 if (chmod(tmpname, S_IRUSR|S_IRGRP) == -1){
                     LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", tmpname, strerror(errno), errno);
                 }
