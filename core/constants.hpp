@@ -51,6 +51,10 @@ TODO("these constants should be dispatched between relevant ini files")
 #define WRM_PATH "/tmp"
 #endif
 
+#if !defined(HASH_PATH)
+#define HASH_PATH "/tmp/hash/"
+#endif
+
 #if !defined(CERTIF_PATH)
 #define CERTIF_PATH "/etc/rdpproxy/certificate"
 #endif
