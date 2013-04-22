@@ -76,6 +76,10 @@ public:
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", wrm_path);
             }
 
+            if (recursive_create_directory(hash_path, S_IRWXU|S_IRGRP|S_IXGRP, ini.globals.capture_groupid) != 0) {
+                LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
+            }
+
             TODO("there should only be one outmeta, not two. Capture code should not really care if file is encrypted or not."
                  "Here is not the right level to manage anything related to encryption.")
             TODO("Also we may wonder why we are encrypting wrm and not png"
