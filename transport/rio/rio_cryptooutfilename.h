@@ -41,7 +41,7 @@ extern "C" {
     inline RIO_ERROR rio_m_RIOCryptoOutfilename_constructor(RIOCryptoOutfilename * self, const char * filename, const int groupid)
     {
         RIO_ERROR error = RIO_ERROR_OK;
-        self->trans = rio_new_crypto(&error, filename, O_WRONLY|O_CREAT);
+        self->trans = rio_new_crypto(&error, filename, O_WRONLY);
         if (error != RIO_ERROR_OK){
             LOG(LOG_ERR, "Failed to create encrypted trace file %s %u : %s [%u]", filename, strerror(errno), errno);
         }

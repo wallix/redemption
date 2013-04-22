@@ -62,7 +62,10 @@ extern "C" {
         }
 
         RIO_ERROR status = RIO_ERROR_OK;
-        RIO * meta = rio_new_crypto(&status, buffer, O_WRONLY|O_CREAT);
+        RIO * meta = rio_new_crypto(&status, buffer, O_WRONLY);
+        if (status != RIO_ERROR_OK){
+            
+        }
 
         SQ * sequence = sq_new_cryptoouttracker(&status, meta, SQF_PATH_FILE_COUNT_EXTENSION, path, filename, ".wrm", tv, header1, header2, header3, groupid);
         if (status != RIO_ERROR_OK){

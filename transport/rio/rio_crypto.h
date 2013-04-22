@@ -45,7 +45,7 @@ extern "C" {
     */
     static inline RIO_ERROR rio_m_RIOCrypto_constructor(RIOCrypto * self, const char * filename, int oflag) {
         RIO_ERROR error = RIO_ERROR_OK;
-        self->fd = ::open(filename, oflag, S_IRUSR);
+        self->fd = ::open(filename, oflag | O_CREAT, S_IRUSR);
         if (self->fd < 0){
             return RIO_ERROR_CREAT;
         }
