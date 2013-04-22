@@ -20,8 +20,8 @@
    New Outfile RedTransport class
 */
 
-#ifndef _REDEMPTION_LIBS_RIO_OUTFILE_H_
-#define _REDEMPTION_LIBS_RIO_OUTFILE_H_
+#ifndef _REDEMPTION_TRANSPORT_RIO_RIO_OUTFILE_H_
+#define _REDEMPTION_TRANSPORT_RIO_RIO_OUTFILE_H_
 
 #include "rio.h"
 
@@ -49,9 +49,9 @@ extern "C" {
 
     /* This method return a signature based on the data written
     */
-    static inline RIO_ERROR rio_m_RIOOutfile_sign(RIOOutfile * self, unsigned char * buf, size_t size, size_t & len) {
-        memset(buf, 0, size);
-        len = 0;
+    static inline RIO_ERROR rio_m_RIOOutfile_sign(RIOOutfile * self, unsigned char * buf, size_t size, size_t * len) {
+        memset(buf, 0, (size>=32)?32:size);
+        *len = (size>=32)?32:size;
         return RIO_ERROR_OK;
     }
 

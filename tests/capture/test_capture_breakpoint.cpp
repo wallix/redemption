@@ -26,11 +26,12 @@
 #define BOOST_TEST_MODULE TestWrmCapture
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include "capture.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 {
+    Inifile ini;
     const int groupid = 0;
     {
         // Timestamps are applied only when flushing
@@ -40,7 +41,6 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         Rect scr(0, 0, 800, 600);
         
-        Inifile ini;
         ini.globals.frame_interval = 100; // one timestamp every second
         ini.globals.break_interval = 3;   // one WRM file every 5 seconds
 
@@ -48,7 +48,9 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.globals.png_interval = 10; // one snapshot by second
 
         ini.globals.capture_wrm = true;
-        Capture capture(now, scr.cx, scr.cy, "./", "capture", ini);
+        ini.globals.capture_png = true;
+        ini.globals.enable_file_encryption = false;
+        Capture capture(now, scr.cx, scr.cy, "./", "./", "/tmp/", "capture", false, ini);
 
         capture.draw(RDPOpaqueRect(scr, GREEN), scr);
         now.tv_sec++;
@@ -113,6 +115,12 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
     sq_init_outfilename(&meta_seq, SQF_PATH_FILE_PID_EXTENSION, "./", "capture", ".mwrm", groupid);
     BOOST_CHECK_EQUAL((unsigned)125, (unsigned)sq_outfilename_filesize(&meta_seq, 0));
     sq_outfilename_unlink(&meta_seq, 0);
+
+    if (ini.globals.enable_file_encryption){
+        sq_init_outfilename(&meta_seq, SQF_PATH_FILE_PID_EXTENSION, "/tmp/", "capture", ".mwrm", groupid);
+        BOOST_CHECK_EQUAL((unsigned)32, (unsigned)sq_outfilename_filesize(&meta_seq, 0));
+        sq_outfilename_unlink(&meta_seq, 0);
+    }
 }
 
 

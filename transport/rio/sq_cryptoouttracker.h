@@ -150,7 +150,7 @@ extern "C" {
             size_t        res_len;
 
             TODO("check if sign returns some error");
-            rio_sign(self->trans, hash, sizeof(hash), res_len);
+            rio_sign(self->trans, hash, sizeof(hash), &res_len);
             if (self->tracker) {
                 char buffer[1024];
                 size_t len = sq_im_SQCryptoOuttracker_get_line(self, buffer, sizeof(buffer)-1, self->count);
@@ -186,7 +186,7 @@ extern "C" {
             char tmpname[1024];
             sq_im_SQCryptoOuttracker_get_name(self, tmpname, sizeof(tmpname), self->count);
             TODO("add rights information to constructor")
-            self->trans = rio_new_crypto(status, tmpname, O_WRONLY);
+            self->trans = rio_new_crypto(status, tmpname, O_WRONLY|O_CREAT);
             if (self->groupid){
                 if (chown(tmpname, (uid_t)-1, self->groupid) < 0){
                     LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", tmpname, self->groupid, strerror(errno), errno);

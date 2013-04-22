@@ -20,8 +20,8 @@
    Main entry point file for RIO *Transport library
 */
 
-#ifndef _REDEMPTION_LIBS_RIO_H_
-#define _REDEMPTION_LIBS_RIO_H_
+#ifndef _REDEMPTION_TRANSPORT_RIO_RIO_IMPL_H_
+#define _REDEMPTION_TRANSPORT_RIO_RIO_IMPL_H_
 
 #define RIOVERSION "0.1"
 
@@ -898,15 +898,15 @@ RIO * rio_new_outmeta(RIO_ERROR * error, SQ ** seq, const char * path, const cha
 }
 
 
-RIO_ERROR rio_init_cryptooutmeta(RIO * self, SQ ** seq, const char * path, const char * filename, const char * extension,
+RIO_ERROR rio_init_cryptooutmeta(RIO * self, SQ ** seq, const char * path, const char * hash_path, const char * filename, const char * extension,
                       const char * l1, const char * l2, const char * l3, timeval * tv, const int groupid)
 {
     self->rt_type = RIO_TYPE_CRYPTOOUTMETA;
-    self->err = rio_m_RIOCryptoOutmeta_constructor(&(self->u.cryptooutmeta), seq, path, filename, extension, l1, l2, l3, tv, groupid);
+    self->err = rio_m_RIOCryptoOutmeta_constructor(&(self->u.cryptooutmeta), seq, path, hash_path, filename, extension, l1, l2, l3, tv, groupid);
     return self->err;
 }
 
-RIO * rio_new_cryptooutmeta(RIO_ERROR * error, SQ ** seq, const char * path, const char * filename, const char * extension,
+RIO * rio_new_cryptooutmeta(RIO_ERROR * error, SQ ** seq, const char * path, const char * hash_path, const char * filename, const char * extension,
                       const char * l1, const char * l2, const char * l3, timeval * tv, const int groupid)
 {
     RIO * self = (RIO *)malloc(sizeof(RIO));
@@ -914,7 +914,7 @@ RIO * rio_new_cryptooutmeta(RIO_ERROR * error, SQ ** seq, const char * path, con
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
-    RIO_ERROR res = rio_init_cryptooutmeta(self, seq, path, filename, extension, l1, l2, l3, tv, groupid);
+    RIO_ERROR res = rio_init_cryptooutmeta(self, seq, path, hash_path, filename, extension, l1, l2, l3, tv, groupid);
     if (error) { *error = res; }
     if (res != RIO_ERROR_OK){
         free(self);
@@ -1283,7 +1283,7 @@ void rio_clear(RIO * rt)
     /* after a close any subsequent call to recv/send/etc. raise an error */
 }
 
-RIO_ERROR rio_sign(RIO * rt, unsigned char * buf, size_t size, size_t & len)
+RIO_ERROR rio_sign(RIO * rt, unsigned char * buf, size_t size, size_t * len)
 {
     /* if transport goes into error state it should be immediately flushed and closed (if it means something)
        hence no need to close it again calling close

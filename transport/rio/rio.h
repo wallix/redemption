@@ -20,8 +20,8 @@
    Constants used by RIO *lib
 */
 
-#ifndef _REDEMPTION_LIBS_RIO_CONSTANTS_H_
-#define _REDEMPTION_LIBS_RIO_CONSTANTS_H_
+#ifndef _REDEMPTION_TRANSPORT_RIO_RIO_H_
+#define _REDEMPTION_TRANSPORT_RIO_RIO_H_
 
 #include </usr/include/openssl/ssl.h>
 
@@ -130,15 +130,15 @@ extern "C" {
     RIO_ERROR rio_init_outmeta(RIO * self, SQ ** seq, const char * path, const char * filename, const char * extension,
                       const char * l1, const char * l2, const char * l3, timeval * tv, const int groupid);
 
-    RIO * rio_new_cryptooutmeta(RIO_ERROR * error, SQ ** seq, const char * path, const char * filename, const char * extension,
+    RIO * rio_new_cryptooutmeta(RIO_ERROR * error, SQ ** seq, const char * path, const char * hash_path, const char * filename, const char * extension,
                       const char * l1, const char * l2, const char * l3, timeval * tv, const int groupid);
-    RIO_ERROR rio_init_cryptooutmeta(RIO * self, SQ ** seq, const char * path, const char * filename, const char * extension,
+    RIO_ERROR rio_init_cryptooutmeta(RIO * self, SQ ** seq, const char * path, const char * hash_path, const char * filename, const char * extension,
                       const char * l1, const char * l2, const char * l3, timeval * tv, const int groupid);
 
     void rio_delete(RIO * rt);
     void rio_clear(RIO * rt);
 
-    RIO_ERROR rio_sign(RIO * rt, unsigned char * buf, size_t size, size_t & len);
+    RIO_ERROR rio_sign(RIO * rt, unsigned char * buf, size_t size, size_t * len);
 
     ssize_t rio_recv(RIO * rt, void * data, size_t len);
     ssize_t rio_send(RIO * rt, const void * data, size_t len);

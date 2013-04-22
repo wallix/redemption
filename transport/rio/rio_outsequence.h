@@ -49,9 +49,9 @@ extern "C" {
 
     /* This method return a signature based on the data written
     */
-    static inline RIO_ERROR rio_m_RIOOutsequence_sign(RIOOutsequence * self, unsigned char * buf, size_t size, size_t & len) {
-        memset(buf, 0, size);
-        len = 0;
+    static inline RIO_ERROR rio_m_RIOOutsequence_sign(RIOOutsequence * self, unsigned char * buf, size_t size, size_t * len) {
+        memset(buf, 0, (size>=32)?32:size);
+        *len = (size>=32)?32:size;
         return RIO_ERROR_OK;
     }
 

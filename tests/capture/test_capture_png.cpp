@@ -306,7 +306,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     Inifile ini;
     ini.globals.png_interval = 1;
     ini.globals.png_limit = 3;
-    StaticCapture consumer(now, trans, &(trans.seq), 800, 600, ini);
+    StaticCapture consumer(now, trans, &(trans.seq), 800, 600, false, ini);
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     consumer.draw(cmd, screen_rect);
@@ -372,7 +372,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 BOOST_AUTO_TEST_CASE(TestSmallImage)
 {
     const int groupid = 0;
-    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", 0, 0x100);
+    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, 0x100);
     Rect scr(0, 0, 20, 10);
     ImageCapture d(trans, scr.cx, scr.cy);
     d.draw(RDPOpaqueRect(scr, RED), scr);
@@ -412,7 +412,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 {
     BOOST_CHECK(1);
     const int groupid = 0;    
-    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", 0, 0x100);
+    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, 0x100);
     Rect scr(0, 0, 800, 600);
     ImageCapture d(trans, scr.cx, scr.cy);
     d.draw(RDPOpaqueRect(scr, GREEN), scr);

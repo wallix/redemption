@@ -20,8 +20,8 @@
    Template for new SQ_Outfilename sequence class
 */
 
-#ifndef _REDEMPTION_LIBS_SQ_CRYPTOOUTFILENAME_H_
-#define _REDEMPTION_LIBS_SQ_CRYPTOOUTFILENAME_H_
+#ifndef _REDEMPTION_TRANSPORT_RIO_SQ_CRYPTOOUTFILENAME_H_
+#define _REDEMPTION_TRANSPORT_RIO_SQ_CRYPTOOUTFILENAME_H_
 
 #include <sys/types.h>
 #include <sys/stat.h>

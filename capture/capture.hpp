@@ -45,7 +45,7 @@ public:
     RDPDrawable * drawable;
 
     TODO("capture_wrm flag should be changed to some configuration parameter in inifile")
-    Capture(const timeval & now, int width, int height, const char * path, const char * basename, const Inifile & ini)
+    Capture(const timeval & now, int width, int height, const char * wrm_path, const char * png_path, const char * hash_path, const char * basename, bool clear_png, const Inifile & ini)
       : capture_wrm(ini.globals.capture_wrm)
       , capture_drawable(ini.globals.capture_wrm)
       , capture_png(ini.globals.png_limit > 0)
@@ -58,16 +58,13 @@ public:
       , pnc(NULL)
       , drawable(NULL)
     {
-        /************************
-        * Manage encryption key *
-        ************************/
         if (this->capture_png){
-            if (recursive_create_directory(PNG_PATH "/", S_IRWXU|S_IRWXG, ini.globals.capture_groupid) != 0) {
-                LOG(LOG_ERR, "Failed to create directory: \"%s\"", PNG_PATH "/");
+            if (recursive_create_directory(png_path, S_IRWXU|S_IRWXG, ini.globals.capture_groupid) != 0) {
+                LOG(LOG_ERR, "Failed to create directory: \"%s\"", png_path);
             }
 
-            this->png_trans = new OutFilenameTransport(SQF_PATH_FILE_PID_COUNT_EXTENSION, PNG_PATH "/", basename, ".png", ini.globals.capture_groupid);
-            this->psc = new StaticCapture(now, *this->png_trans, &(this->png_trans->seq), width, height, ini);
+            this->png_trans = new OutFilenameTransport(SQF_PATH_FILE_PID_COUNT_EXTENSION, png_path, basename, ".png", ini.globals.capture_groupid);
+            this->psc = new StaticCapture(now, *this->png_trans, &(this->png_trans->seq), width, height, clear_png, ini);
         }
 
         if (this->capture_drawable){
@@ -75,21 +72,26 @@ public:
         }
 
         if (this->capture_wrm){
-            if (recursive_create_directory(path, S_IRWXU|S_IRGRP|S_IXGRP, ini.globals.capture_groupid) != 0) {
-                LOG(LOG_ERR, "Failed to create directory: \"%s\"", path);
+            if (recursive_create_directory(wrm_path, S_IRWXU|S_IRGRP|S_IXGRP, ini.globals.capture_groupid) != 0) {
+                LOG(LOG_ERR, "Failed to create directory: \"%s\"", wrm_path);
             }
 
-            if (this->enable_file_encryption == false) {
-                this->wrm_trans = new OutmetaTransport(path, basename, now, width, height, ini.globals.capture_groupid);
-                this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
-                this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
-            }
-            else {
-                this->crypto_wrm_trans = new CryptoOutmetaTransport(path, basename, now, width, height, ini.globals.capture_groupid);
+            TODO("there should only be one outmeta, not two. Capture code should not really care if file is encrypted or not."
+                 "Here is not the right level to manage anything related to encryption.")
+            TODO("Also we may wonder why we are encrypting wrm and not png"
+                 "(This is related to the path split between png and wrm)."
+                 "We should stop and consider what we should actually do")
+            if (this->enable_file_encryption) {
+                this->crypto_wrm_trans = new CryptoOutmetaTransport(wrm_path, hash_path, basename, now, width, height, ini.globals.capture_groupid);
                 this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
                 this->pnc = new NativeCapture(now, *this->crypto_wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
             }
-
+            else
+            {
+                this->wrm_trans = new OutmetaTransport(wrm_path, basename, now, width, height, ini.globals.capture_groupid);
+                this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
+                this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
+            }
             this->pnc->recorder.send_input = true;
         }
    }

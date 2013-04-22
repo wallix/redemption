@@ -20,8 +20,8 @@
    Template for new SQ_One sequence class
 */
 
-#ifndef _REDEMPTION_LIBS_SQ_ONE_H_
-#define _REDEMPTION_LIBS_SQ_ONE_H_
+#ifndef _REDEMPTION_TRANSPORT_RIO_SQ_ONE_H_
+#define _REDEMPTION_TRANSPORT_RIO_SQ_ONE_H_
 
 #include "rio.h"
 

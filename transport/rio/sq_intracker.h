@@ -20,8 +20,8 @@
    Template for new SQ_Intracker sequence class
 */
 
-#ifndef _REDEMPTION_LIBS_SQ_INTRACKER_H_
-#define _REDEMPTION_LIBS_SQ_INTRACKER_H_
+#ifndef _REDEMPTION_TRANSPORT_RIO_SQ_INTRACKER_H_
+#define _REDEMPTION_TRANSPORT_RIO_SQ_INTRACKER_H_
 
 #include <sys/types.h>
 #include <sys/stat.h>

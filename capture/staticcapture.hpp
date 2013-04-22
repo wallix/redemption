@@ -63,14 +63,16 @@ struct StaticCaptureConfig {
 class StaticCapture : public ImageCapture
 {
 public:
+    bool clear_png;
     SQ * seq;
     StaticCaptureConfig conf;
 
     struct timeval start_static_capture;
     uint64_t inter_frame_interval_static_capture;
 
-    StaticCapture(const timeval & now, Transport & trans, SQ * seq, unsigned width, unsigned height, const Inifile & ini)
+    StaticCapture(const timeval & now, Transport & trans, SQ * seq, unsigned width, unsigned height, bool clear_png, const Inifile & ini)
     : ImageCapture(trans, width, height)
+    , clear_png(clear_png)
     , seq(seq)
     {
         this->start_static_capture = now;
@@ -82,10 +84,12 @@ public:
     ~StaticCapture()
     {
         // delete all captured files at the end of the RDP client session
-        for(size_t i = this->conf.png_limit ; i > 0 ; i--) {
-            if (this->trans.seqno >= i){
-                // unlink may fail, for instance if file does not exist, just don't care
-                sq_outfilename_unlink(this->seq, this->trans.seqno - i);
+        if (this->clear_png){
+            for(size_t i = this->conf.png_limit ; i > 0 ; i--) {
+                if (this->trans.seqno >= i){
+                    // unlink may fail, for instance if file does not exist, just don't care
+                    sq_outfilename_unlink(this->seq, this->trans.seqno - i);
+                }
             }
         }
     }

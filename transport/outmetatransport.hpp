@@ -101,7 +101,7 @@ public:
     RIO * rio;
     SQ * seq;
 
-    CryptoOutmetaTransport(const char * path, const char * basename, timeval now, uint16_t width, uint16_t height, const int groupid, unsigned verbose = 0)
+    CryptoOutmetaTransport(const char * path, const char * hash_path, const char * basename, timeval now, uint16_t width, uint16_t height, const int groupid, unsigned verbose = 0)
     : now(now)
     , rio(NULL)
     , seq(NULL)
@@ -111,7 +111,7 @@ public:
         sprintf(filename, "%s-%06u", basename, getpid());
         char header1[1024];
         sprintf(header1, "%u %u", width, height);
-        this->rio = rio_new_cryptooutmeta(&status, &this->seq, path, filename, ".mwrm", header1, "0", "", &now, groupid);
+        this->rio = rio_new_cryptooutmeta(&status, &this->seq, path, hash_path, filename, ".mwrm", header1, "0", "", &now, groupid);
         if (status < 0){
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
