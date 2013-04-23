@@ -2,12 +2,37 @@
  
 use Getopt::Long;
 use File::Path;
+use File::Copy;
+
+eval {
 
 my $force = '';
+my $keyfile = '';
+my $x509file = '';
+my $key = '';
+my $x509 = '';
 
-GetOptions ('force' => \$force);
+GetOptions (
+    'force' => \$force,
+    'key' => \$key,
+    'x509' => \$x509,
+    'inkey=s' => \$keyfile,
+    'inx509=s' => \$x509file,
+);
+
+if (not $key and not $x509){
+    print STDERR "usage: rdpcert confpath [parameters]\n\n" 
+        ."--key          : set RDP Proxy server private key (x509 is mandatory if changing key)\n"
+        ."--inkey=<file> : user provider file containing private 2048 bit rsa key, PEM format\n"
+        ."--x509         : set RDP Proxy server X509 certificate\n"
+        ."--inx509=<file>: user provider X509 certificate matching private key, PEM format\n"
+        ."--force        :force erasing existing key or user provided certificate\n"
+        ;
+    die;
+}
 
 my $confpath = '';
+$confpath = '/etc/opt/wab/rdp/' if -e '/etc/opt/wab/rdp/';
 if (@ARGV > 0){
     $confpath = @ARGV[0];
 }
@@ -16,7 +41,7 @@ $confpath =~ s/^(.*[^\/]+)[\/]*$/$1/;
 $confpath or die "redemption:configuration path must be provided\n";
 
 mkpath $confpath unless -d $confpath 
-    or die "redemption:configuration path does not exists and failed to create configuration path \"$confpath\"\n";
+or die "redemption:configuration path does not exists and failed to create configuration path \"$confpath\"\n";
 
 
 my $pkey = "$confpath/rdpproxy.key";
@@ -24,30 +49,85 @@ my $certreq = "/tmp/rdpproxy.csr";
 my $cert = "$confpath/rdpproxy.crt";
 my $p12 = "/tmp/rdpproxy.p12";
 my $extfile = "/tmp/tlssrv_x509v3ext";
+my $user_X509 = "$confpath/USER_X509";
 #my $clearpkey = "/tmp/clearRdpproxyPrivateKey.pem";
 my $pass = "inquisition";
 my $hostname = `hostname -f`;
 chomp $hostname;
 
-if (-e $pkey and not $force){
-  print STDERR "private key file already exist, leaving as is\n";
-  exit 0;
+if ($key){
+    if (-e $pkey and not $force){
+      print STDERR "RDP proxy private key file already exist and no --force parameter, keeping current key\n";
+    }
+    else {
+        if ($keyfile){
+            print STDERR "Setting RDP proxy server user defined private key\n";
+            -e $keyfile or die "User private key file not found\n";
+            `openssl rsa -in $keyfile -out $pkey -des3 -passout "pass:$pass"`;
+            die "rdpproxy:failed to set ReDemPtion server private key\n" if $?;
+        }
+        else {
+            print STDERR "Setting new RDP proxy server private key\n";
+            `openssl genrsa -out $pkey -des3 -passout "pass:$pass" 2048`;
+             die "rdpproxy:failed to create ReDemPtion server private key" if $?;
+        }
+        $x509 = 1; # force regeneration of key
+    }
+    print STDERR "changing ownership\n";
+    ($login,$pass,$uid,$gid) = getpwnam('wabuser');
+    if (not $!){
+        chown $uid, $gid, $pkey;
+    }
 }
 
-`openssl genrsa -out $pkey -des3 -passout "pass:$pass" 2048`;
-die "rdpproxy:failed to create ReDemPtion server private key" if $?;
-    
-`openssl req -new -key $pkey -passin "pass:$pass" -out $certreq -subj "/CN=$hostname"`;
-die "failed to create ReDemPtion server certificate request" if $?;
+if ($x509){
+    print STDERR "Setting x509\n";
+    if (not -e $pkey){
+      die "No private key available, X509 certificate won't be set\n";
+    }
 
-open(my $fh, ">", $extfile);
-print $fh   "keyUsage=keyEncipherment,dataEncipherment\n"
-           ."extendedKeyUsage=serverAuth\n";
-close $fh;
+    if ($x509file){
+        if (not -e $x509file){
+          die "User provided X509 certificate file not found\n";
+        }
+        copy($x509file, $cert) 
+        or die "Setting up RDP proxy server with user provided x509 pem certificate failed $!";
 
-`openssl x509 -req -days 7300 -in $certreq -signkey $pkey -passin "pass:$pass" -out $cert -extfile $extfile`;
-die "failed to create ReDemPtion server certificate" if $?;
+        open(my $fh, ">", $user_X509);
+        close $fh;
+        
+        ($login,$pass,$uid,$gid) = getpwnam('wabuser');
+        if (not $!){
+            chown $uid, $gid, $user_X509;
+            chown $uid, $gid, $cert;
+        }
+    }
+    else {
+        if (-e $user_X509 and -e $cert and not $force) {
+            die "Certificate is user provided, use --force to change to create a new autosigned certificate\n";        
+        }
+        print STDERR "Creating new rdp proxy autosigned certificate\n";
+        `openssl req -new -key $pkey -passin "pass:$pass" -out $certreq -subj "/CN=$hostname"`;
+        die "failed to create ReDemPtion server certificate request" if $?;
 
+        open(my $fh, ">", $extfile);
+        print $fh   "keyUsage=keyEncipherment,dataEncipherment\n"
+                   ."extendedKeyUsage=serverAuth\n";
+        close $fh;
+
+        `openssl x509 -req -days 7300 -in $certreq -signkey $pkey -passin "pass:$pass" -out $cert -extfile $extfile`;
+        die "failed to create ReDemPtion server certificate" if $?;
+
+        ($login,$pass,$uid,$gid) = getpwnam('wabuser');
+        if (not $!){
+            chown $uid, $gid, $cert;
+        }
+
+        unlink $user_X509;
+        unlink $certreq;
+        unlink $extfile;
+    }
+}
 
 # to get clear x509 certificate (no key)
 #`openssl rsa -in $pkey -passin "pass:$pass" -out $clearpkey`;
@@ -55,6 +135,7 @@ die "failed to create ReDemPtion server certificate" if $?;
 #to get p12 certificate
 #`openssl pkcs12 -export -in $cert -inkey $pkey -passin "pass:$pass" -name $hostname -out $p12 -passout "pass:$p12key";
 
-unlink $certreq;
-unlink $extfile;
+};
 
+print STDERR $@;
+exit $!;

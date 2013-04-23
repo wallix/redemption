@@ -95,7 +95,6 @@ struct Session {
     int * refreshconf;
 
     wait_obj & front_event;
-//    SocketTransport & front_trans;
 
     Inifile * ini;
     uint32_t & verbose;
@@ -115,11 +114,9 @@ struct Session {
     SessionManager * sesman;
     UdevRandom gen;
 
-//    Session(wait_obj & front_event, SocketTransport & front_trans, const char * ip_source, int * refreshconf, Inifile * ini)
     Session(wait_obj & front_event, int sck, const char * ip_source, int * refreshconf, Inifile * ini)
         : refreshconf(refreshconf)
         , front_event(front_event)
-//        , front_trans(front_trans)
         , ini(ini)
         , verbose(this->ini->globals.debug.session)
         , context(NULL)
