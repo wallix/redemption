@@ -406,7 +406,7 @@ LOG(LOG_INFO, "%s", certificate_password);
             TODO("this should be an error, no need to commute two times to TLS")
             return;
         }
-        LOG(LOG_INFO, "RIO *::enable_client_tls() start");
+        LOG(LOG_INFO, "Client TLS start");
  
         rio_clear(&this->rio);
 
@@ -596,7 +596,7 @@ LOG(LOG_INFO, "%s", certificate_password);
         // Allow legacy insecure renegotiation between OpenSSL and unpatched servers only: this option
         // is currently set by default. See the SECURE RENEGOTIATION section for more details.
 
-        LOG(LOG_INFO, "RIO *::SSL_CTX_set_options()");
+//        LOG(LOG_INFO, "RIO *::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
 
         // -------- End of system wide SSL_Ctx option ----------------------------------
@@ -642,7 +642,7 @@ LOG(LOG_INFO, "%s", certificate_password);
         TODO("add error management")
         SSL_set_fd(ssl, this->sck);
 
-        LOG(LOG_INFO, "RIO *::SSL_connect()");
+        LOG(LOG_INFO, "SSL_connect()");
     again:
         // SSL_connect - initiate the TLS/SSL handshake with an TLS/SSL server
         // -------------------------------------------------------------------
@@ -728,7 +728,7 @@ LOG(LOG_INFO, "%s", certificate_password);
             }
         }
 
-        LOG(LOG_INFO, "RIO *::SSL_get_peer_certificate()");
+        LOG(LOG_INFO, "SSL_get_peer_certificate()");
 
         // SSL_get_peer_certificate - get the X509 certificate of the peer
         // ---------------------------------------------------------------
@@ -758,14 +758,15 @@ LOG(LOG_INFO, "%s", certificate_password);
 
         X509 * px509 = SSL_get_peer_certificate(ssl);
         if (!px509) {
-            LOG(LOG_INFO, "RIO *::crypto_cert_get_public_key: SSL_get_peer_certificate() failed");
+            LOG(LOG_INFO, "SSL_get_peer_certificate() failed");
             return;
         }
 
 
         // ensures the certificate directory exists
         if (recursive_create_directory(CERTIF_PATH "/", S_IRWXU|S_IRWXG, 0) != 0) {
-            LOG(LOG_ERR, "cannot create certificate directory: " CERTIF_PATH "/");
+            LOG(LOG_ERR, "Failed to create certificate directory: " CERTIF_PATH "/");
+            strcpy(error_message_buffer, "Failed to create certificate directory: " CERTIF_PATH "/");
             throw Error(ERR_TRANSPORT, 0);
         }
 
@@ -780,7 +781,8 @@ LOG(LOG_INFO, "%s", certificate_password);
         if (!fp) {
             if (errno != ENOENT) {
                 // failed to open stored certificate file
-                LOG(LOG_ERR, "cannot open stored certificate: \"%s\"\n", filename);
+                LOG(LOG_ERR, "Failed to open stored certificate: \"%s\"\n", filename);
+                sprintf(error_message_buffer, "Failed to open stored certificate: \"%s\"\n", filename);
                 throw Error(ERR_TRANSPORT, 0);
             }
             else {
@@ -797,7 +799,8 @@ LOG(LOG_INFO, "%s", certificate_password);
             px509Existing = PEM_read_X509(fp, NULL, NULL, NULL);
             if (!px509Existing) {
                 // failed to read stored certificate file
-                LOG(LOG_ERR, "cannot read stored certificate: \"%s\"\n", filename);
+                LOG(LOG_ERR, "Failed to read stored certificate: \"%s\"\n", filename);
+                sprintf(error_message_buffer, "Failed to read stored certificate: \"%s\"\n", filename);
                 throw Error(ERR_TRANSPORT, 0);
             }
 
