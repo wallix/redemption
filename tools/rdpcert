@@ -73,11 +73,6 @@ if ($key){
         }
         $x509 = 1; # force regeneration of key
     }
-    print STDERR "changing ownership\n";
-    ($login,$pass,$uid,$gid) = getpwnam('wabuser');
-    if (not $!){
-        chown $uid, $gid, $pkey;
-    }
 }
 
 if ($x509){
@@ -126,6 +121,12 @@ if ($x509){
         unlink $user_X509;
         unlink $certreq;
         unlink $extfile;
+    }
+    if (-e $pkey){
+        ($login,$pass,$uid,$gid) = getpwnam('wabuser');
+        if (not $!){
+            chown $uid, $gid, $pkey;
+        }
     }
 }
 
