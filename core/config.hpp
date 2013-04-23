@@ -183,6 +183,7 @@ struct Inifile {
         bool enable_tls;
         char listen_address[256];
         bool enable_ip_transparent;
+        char certificate_password[256];
 
         // Section "debug"
         struct {
@@ -298,6 +299,7 @@ struct Inifile {
             this->globals.enable_tls             = true;
             strcpy(this->globals.listen_address, "0.0.0.0");
             this->globals.enable_ip_transparent  = false;
+            strcpy(this->globals.certificate_password, "inquisition");
 
             memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
 
@@ -466,6 +468,9 @@ struct Inifile {
             }
             else if (0 == strcmp(key, "enable_ip_transparent")){
                 this->globals.enable_ip_transparent = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "certificate_password")){
+                strcpy(this->globals.certificate_password, value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

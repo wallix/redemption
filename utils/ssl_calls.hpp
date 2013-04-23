@@ -34,6 +34,7 @@
 #include <openssl/rc4.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
+#include <openssl/hmac.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/x509v3.h>
@@ -107,6 +108,29 @@ class SslRC4
 
     void crypt(Stream & stream){
         RC4(&this->rc4, stream.size(), stream.data, stream.data);
+    }
+};
+
+class SslHMAC
+{
+    HMAC_CTX hmac;
+
+    public:
+    SslHMAC(Stream & key)
+    {
+        HMAC_Init(&this->hmac, key.data, key.size(), EVP_md5());
+    }
+
+    void update(const Stream & stream)
+    {
+        HMAC_Update(&this->hmac, stream.data, stream.size());
+    }
+
+    void final(Stream & stream)
+    {
+        unsigned int len = 0;
+
+        HMAC_Final(&this->hmac, stream.data, &len);
     }
 };
 

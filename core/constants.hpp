@@ -52,7 +52,7 @@ TODO("these constants should be dispatched between relevant ini files")
 #endif
 
 #if !defined(HASH_PATH)
-#define HASH_PATH "/tmp/hash/"
+#define HASH_PATH "/tmp/hash"
 #endif
 
 #if !defined(CERTIF_PATH)
