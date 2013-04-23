@@ -146,7 +146,7 @@ extern "C" {
     static inline RIO_ERROR sq_m_SQCryptoOuttracker_destructor(SQCryptoOuttracker * self)
     {
         if (self->trans){
-            unsigned char hash[32];
+            unsigned char hash[HASH_LEN];
             size_t        res_len;
 
             TODO("check if sign returns some error");
@@ -158,16 +158,16 @@ extern "C" {
 
                 char *p = buffer;
 
-                *p++ = ' ';                           //    1 octet
-                for (int i = 0; i < 16; i++, p += 2)
-                    sprintf(p, "%02x", hash[i]);      //   32 octets (hash1)
+                *p++ = ' ';                           //     1 octet
+                for (int i = 0; i < HASH_LEN / 2; i++, p += 2)
+                    sprintf(p, "%02x", hash[i]);      //    64 octets (hash1)
 
-                *p++ = ' ';                           //    1 octet
-                for (int i = 16; i < 32; i++, p += 2)
-                    sprintf(p, "%02x", hash[i]);      //   32 octets (hash2)
-                *p++ = '\n';                          //    1 octet
+                *p++ = ' ';                           //     1 octet
+                for (int i = HASH_LEN / 2; i < HASH_LEN; i++, p += 2)
+                    sprintf(p, "%02x", hash[i]);      //    64 octets (hash2)
+                *p++ = '\n';                          //     1 octet
 
-                rio_send(self->tracker, buffer, 67);  // = 76 octets
+                rio_send(self->tracker, buffer, 131);  // = 131 octets
 
                 self->start_tv.tv_sec = self->stop_tv.tv_sec;
                 self->start_tv.tv_usec = self->stop_tv.tv_usec;
