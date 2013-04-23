@@ -66,7 +66,11 @@ extern "C" {
         RIO_ERROR status = RIO_ERROR_OK;
         RIO * meta = rio_new_crypto(&status, buffer, O_WRONLY);
         if (status != RIO_ERROR_OK){
-            
+            return status;
+        }
+
+        if (chmod(buffer, S_IRUSR|S_IRGRP) == -1){
+            LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", buffer, strerror(errno), errno);
         }
 
         SQ * sequence = sq_new_cryptoouttracker(&status, meta, SQF_PATH_FILE_COUNT_EXTENSION, path, filename, ".wrm", tv, header1, header2, header3, groupid);
@@ -117,6 +121,10 @@ extern "C" {
                 }
                 else {
                     rio_m_RIOCrypto_destructor(&hasher);
+                }
+
+                if (chmod(self->hasher_filename, S_IRUSR|S_IRGRP) == -1){
+                    LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", self->hasher_filename, strerror(errno), errno);
                 }
             }
             TODO("check if close returns some error");
