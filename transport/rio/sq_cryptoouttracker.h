@@ -29,6 +29,8 @@
 
 #include "rio.h"
 
+#define HASH_LEN 64
+
 extern "C" {
 
     /*********************
