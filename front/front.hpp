@@ -1128,7 +1128,7 @@ TODO("Pass font name as parameter in constructor")
                 this->trans->send(stream);
 
                 if (this->tls_support){
-                    this->trans->enable_server_tls();
+                    this->trans->enable_server_tls(this->ini->globals.certificate_password);
 
             // 2.2.10.2 Early User Authorization Result PDU
             // ============================================

@@ -99,6 +99,8 @@ class SocketTransport : public Transport {
         char * error_message_buffer;
         size_t error_message_len;
 
+        
+
     SocketTransport(const char * name, int sck, const char *ip_address, int port, uint32_t verbose, char * error_message_buffer = NULL, size_t error_message_len = 0)
         : Transport(), tls(false), name(name), verbose(verbose), error_message_buffer(error_message_buffer), error_message_len(error_message_len)
     {
@@ -120,7 +122,7 @@ class SocketTransport : public Transport {
         }
     }
 
-    virtual void enable_server_tls() throw (Error)
+    virtual void enable_server_tls(const char * certificate_password) throw (Error)
     {
         if (this->tls) {
             TODO("this should be an error, no need to commute two times to TLS")
@@ -333,7 +335,9 @@ class SocketTransport : public Transport {
         }
 
         SSL_CTX_set_default_passwd_cb(ctx, password_cb0);
-        SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)"inquisition");
+//        SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)"inquisition");
+LOG(LOG_INFO, "%s", certificate_password);
+        SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)certificate_password);
         if(!(SSL_CTX_use_PrivateKey_file(ctx, CFG_PATH "/rdpproxy.key", SSL_FILETYPE_PEM)))
         {
             BIO_printf(bio_err,"Can't read key file\n");

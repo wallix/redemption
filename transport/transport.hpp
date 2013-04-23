@@ -80,7 +80,7 @@ public:
         // default enable_tls do nothing
     }
 
-    virtual void enable_server_tls()
+    virtual void enable_server_tls(const char * certificate_password)
     {
         // default enable_tls do nothing
     }
