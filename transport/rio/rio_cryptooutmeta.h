@@ -25,6 +25,8 @@
 
 #include "rio.h"
 
+#define HASH_LEN 64
+
 extern "C" {
 
     /*******************
@@ -97,7 +99,7 @@ extern "C" {
         sq_delete(self->seq);
 
         if (self->meta){
-            unsigned char hash[32];
+            unsigned char hash[HASH_LEN];
             size_t        res_len;
             TODO("check if sign returns some error");
             rio_sign(self->meta, hash, sizeof(hash), &res_len);
@@ -127,8 +129,8 @@ extern "C" {
     /* This method return a signature based on the data written
     */
     static inline RIO_ERROR rio_m_RIOCryptoOutmeta_sign(RIOCryptoOutmeta * self, unsigned char * buf, size_t size, size_t * len) {
-        memset(buf, 0, (size>=32)?32:size);
-        *len = (size>=32)?32:size;
+        memset(buf, 0, (size>=HASH_LEN)?HASH_LEN:size);
+        *len = (size>=HASH_LEN)?HASH_LEN:size;
         return RIO_ERROR_OK;
     }
 
