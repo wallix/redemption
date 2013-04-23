@@ -25,6 +25,8 @@
 
 #include "rio.h"
 
+#define HASH_LEN 64
+
 extern "C" {
     /* gl_crypto_key is a copy of the master key
      */
@@ -69,8 +71,8 @@ extern "C" {
     /* This method return a signature based on the data written
     */
     static inline RIO_ERROR rio_m_RIOCrypto_sign(RIOCrypto * self, unsigned char * buf, size_t size, size_t * len) {
-        memset(buf, 1, (size>=32)?32:size);
-        *len = (size>=32)?32:size;
+        memset(buf, 1, (size>=HASH_LEN)?HASH_LEN:size);
+        *len = (size>=HASH_LEN)?HASH_LEN:size;
         return RIO_ERROR_OK;
     }
 
