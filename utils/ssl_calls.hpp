@@ -118,7 +118,7 @@ class SslHMAC
     public:
     SslHMAC(Stream & key)
     {
-        HMAC_Init(&this->hmac, key.data, key.size(), EVP_md5());
+        HMAC_Init(&this->hmac, key.data, key.size(), EVP_sha256());
     }
 
     void update(const Stream & stream)
