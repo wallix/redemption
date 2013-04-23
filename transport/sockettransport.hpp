@@ -794,16 +794,53 @@ LOG(LOG_INFO, "%s", certificate_password);
             }
         }
         else {
-            X509 *px509Existing;
-
-            px509Existing = PEM_read_X509(fp, NULL, NULL, NULL);
+            X509 *px509Existing = PEM_read_X509(fp, NULL, NULL, NULL);
             if (!px509Existing) {
                 // failed to read stored certificate file
                 LOG(LOG_ERR, "Failed to read stored certificate: \"%s\"\n", filename);
                 sprintf(error_message_buffer, "Failed to read stored certificate: \"%s\"\n", filename);
                 throw Error(ERR_TRANSPORT, 0);
             }
+            ::fclose(fp);
 
+            char tmpfilename[1024];
+            // temp file for certificate binary check
+            snprintf(tmpfilename, sizeof(tmpfilename) - 1, "/tmp/X509-%s-%dXXXXXX", this->ip_address, this->port);
+            tmpfilename[sizeof(tmpfilename) - 1] = 0;
+            int tmpfd = ::mkostemp(tmpfilename, O_RDWR|O_CREAT);
+            FILE * tmpfp = ::fdopen(tmpfd, "w+");
+            PEM_write_X509(tmpfp, px509);
+
+            ::fclose(tmpfp);
+
+            fp = ::fopen(filename, "r");
+            tmpfp = ::fopen(tmpfilename, "r");
+            
+//            ::rewind(fp);
+//            ::rewind(tmpfp);
+
+            char buffer1[2048];
+            char buffer2[2048];
+            int binary_check_failed = false;
+
+            for (;;){
+                size_t nb1 = fread(buffer1, sizeof(buffer1[0]), sizeof(buffer1)/sizeof(buffer1[0]), fp);
+                size_t nb2 = fread(buffer2, sizeof(buffer2[0]), sizeof(buffer2)/sizeof(buffer1[1]), tmpfp);
+                LOG(LOG_INFO, "nb1=%u nb2=%u\n", nb1, nb2);
+                if ((nb1 != nb2) || (0 != memcmp(buffer1, buffer2, nb1 * sizeof(buffer1[0])))) {
+                    binary_check_failed = true;
+                    break;
+                }
+                if (feof(tmpfp) && feof(fp)){
+                    break;
+                } 
+                if (ferror(tmpfp)||ferror(fp)||feof(tmpfp)||feof(fp)){
+                    binary_check_failed = true;
+                    break;
+                }
+            }
+            ::fclose(tmpfp);
+            ::unlink(tmpfilename);
             ::fclose(fp);
 
             char * issuer               = NULL;
@@ -824,9 +861,10 @@ LOG(LOG_INFO, "%s", certificate_password);
             LOG(LOG_INFO, "TLS::X509 existing::subject=%s", subject_existing);
             LOG(LOG_INFO, "TLS::X509 existing::fingerprint=%s", fingerprint_existing);
 
-            if ((strcmp(issuer_existing, issuer)) ||
-                (strcmp(subject_existing, subject)) ||
-                (strcmp(fingerprint_existing, fingerprint))) {
+            if (binary_check_failed 
+            || (0 != strcmp(issuer_existing, issuer)) 
+            || (0 != strcmp(subject_existing, subject)) 
+            || (0 != strcmp(fingerprint_existing, fingerprint))) {
                 if (this->error_message_buffer && this->error_message_len) {
                     snprintf(this->error_message_buffer, this->error_message_len,
                         "The certificate for host %s:%d has changed\n\n"
