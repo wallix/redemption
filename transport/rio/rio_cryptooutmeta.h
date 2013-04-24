@@ -105,6 +105,14 @@ extern "C" {
         if (self->meta){
             unsigned char hash[HASH_LEN];
             size_t        res_len;
+            char          path[1024];
+            char          basename[1024];
+            char          extension[256];
+            char          filename[2048];
+
+            canonical_path(self->hasher_filename, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
+            snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
             TODO("check if sign returns some error");
             rio_sign(self->meta, hash, sizeof(hash), &res_len);
 
@@ -115,8 +123,10 @@ extern "C" {
                 LOG(LOG_ERR, "Failed to open hash file %s\n", self->hasher_filename);
             }
             else {
-                ssize_t sent_len = rio_m_RIOCrypto_send(&hasher, hash, res_len);
-                if (sent_len < 0){
+                ssize_t sent_len;
+                if (((sent_len = rio_m_RIOCrypto_send(&hasher, filename, strlen(filename))) < 0) ||
+                    ((sent_len = rio_m_RIOCrypto_send(&hasher, " ", 1)) < 0) ||
+                    ((sent_len = rio_m_RIOCrypto_send(&hasher, hash, res_len)) < 0)) {
                     LOG(LOG_ERR, "Failed writing signature to hash file %s [%u]\n", self->hasher_filename, -res_len);
                 }
                 else {
