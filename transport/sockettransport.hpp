@@ -1042,6 +1042,22 @@ LOG(LOG_INFO, "%s", certificate_password);
         this->sck_closed = 1;
     }
 
+    virtual bool connect()
+    {
+        if (this->sck_closed == 1){
+            this->sck = ip_connect(this->ip_address,
+                                    this->port,
+                                    3, 1000,
+                                    this->verbose);
+            RIO_ERROR res = rio_init_socket(&this->rio, this->sck);
+            if (res != RIO_ERROR_OK){ 
+                throw Error(ERR_TRANSPORT, 0);
+            }
+            this->sck_closed = 0;
+        }
+        return true;
+    }
+
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error)
     {
