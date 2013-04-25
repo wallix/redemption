@@ -306,7 +306,7 @@ struct RdpNego
         X224::CR_TPDU_Send(stream, cookie, 
             this->tls?(X224::RDP_NEG_REQ):(X224::RDP_NEG_NONE), 
             0, 
-            this->tls?(X224::PROTOCOL_TLS|X224::PROTOCOL_RDP):(X224::PROTOCOL_RDP)); 
+            this->tls?(X224::PROTOCOL_TLS):(X224::PROTOCOL_RDP)); 
         this->trans->send(stream);
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
     }
