@@ -105,10 +105,10 @@ extern "C" {
         if (self->meta){
             unsigned char hash[HASH_LEN];
             size_t        res_len;
-            char          path[1024];
-            char          basename[1024];
-            char          extension[256];
-            char          filename[2048];
+            char          path[1024] = {};
+            char          basename[1024] = {};
+            char          extension[256] = {};
+            char          filename[2048] = {};
 
             canonical_path(self->hasher_filename, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
             snprintf(filename, sizeof(filename), "%s%s", basename, extension);
