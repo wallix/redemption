@@ -40,7 +40,7 @@ public:
                int id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
                std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
     : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, id)
-    , label(drawable, 0, 0, this, 0, text, false, 0, bgcolor, fgcolor, xtext+1, ytext)
+    , label(drawable, 0, 0, this, 0, text, false, 0, bgcolor, fgcolor, xtext, ytext)
     , w_text(0)
     , h_text(0)
     {
@@ -55,9 +55,6 @@ public:
                 this->label.buffer[this->edit_buffer_pos] = 0;
                 this->drawable->text_metrics(this->label.buffer, this->w_text, this->h_text);
                 this->cursor_px_pos = this->w_text;
-                if (this->edit_pos) {
-                    this->cursor_px_pos += 2;
-                }
                 this->label.buffer[this->edit_buffer_pos] = c;
                 int w, h;
                 this->drawable->text_metrics(&this->label.buffer[this->edit_buffer_pos], w, h);
@@ -113,7 +110,7 @@ public:
     virtual void draw(const Rect& clip)
     {
         this->label.draw(clip);
-        this->draw_cursor(clip);
+        this->draw_cursor(clip.intersect(this->get_cursor_rect()));
 
         //top
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
@@ -133,21 +130,18 @@ public:
         )), 0x888888), this->rect);
     }
 
+    Rect get_cursor_rect() const
+    {
+        return Rect(this->label.x_text + this->cursor_px_pos + this->label.dx() + 1,
+                    this->label.y_text + this->label.dy(),
+                    1,
+                    this->h_text);
+    }
+
     void draw_cursor(const Rect& clip)
     {
-        Rect cursor_clip = clip.intersect(
-            Rect(this->label.x_text + this->cursor_px_pos + this->label.dx() - 1,
-                 this->label.y_text + this->label.dy(),
-                 1,
-                 this->h_text)
-        );
-        if (!cursor_clip.isempty()) {
-            this->drawable->draw(
-                RDPOpaqueRect(
-                    cursor_clip,
-                    0x888888
-                ), this->rect
-            );
+        if (!clip.isempty()) {
+            this->drawable->draw(RDPOpaqueRect(clip, 0x888888), this->rect);
         }
     }
 
@@ -161,8 +155,6 @@ public:
             int w;
             this->drawable->text_metrics(this->label.buffer + this->edit_buffer_pos, w, this->h_text);
             this->cursor_px_pos += w;
-            if (this->num_chars > 0)
-                this->cursor_px_pos += 2;
             this->label.buffer[this->edit_buffer_pos + n] = c;
         }
         this->edit_buffer_pos += n;
@@ -191,28 +183,81 @@ public:
             this->drawable->text_metrics(this->label.buffer + this->edit_buffer_pos - len, w, this->h_text);
             this->cursor_px_pos -= w;
             this->label.buffer[this->edit_buffer_pos] = c;
-            if (this->num_chars > 0)
-                this->cursor_px_pos -= 2;
         }
         this->edit_buffer_pos -= len;
     }
 
+    void move_to_last_character()
+    {
+        Rect crect = this->get_cursor_rect();
+        this->edit_pos = this->num_chars;
+        this->edit_buffer_pos = this->buffer_size;
+        this->cursor_px_pos = this->w_text;
+        if (this->drawable) {
+            this->drawable->begin_update();
+            this->draw_cursor(this->get_cursor_rect());
+            this->label.draw(crect);
+            this->drawable->end_update();
+        }
+    }
+
+    void move_to_first_character()
+    {
+        Rect crect = this->get_cursor_rect();
+        this->edit_pos = 0;
+        this->edit_buffer_pos = 0;
+        this->cursor_px_pos = 0;
+        if (this->drawable) {
+            this->drawable->begin_update();
+            this->draw_cursor(this->get_cursor_rect());
+            this->label.draw(crect);
+            this->drawable->end_update();
+        }
+    }
+
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
-        if (device_flags == CLIC_BUTTON1_DOWN) {
+        if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
             if (x <= this->dx() + this->label.x_text) {
-                this->edit_pos = 0;
-                this->edit_buffer_pos = 0;
-                this->cursor_px_pos = 0;
+                if (this->edit_pos) {
+                    this->move_to_first_character();
+                }
             }
-            else if (x >= int(this->cursor_px_pos + this->label.dx() + this->label.x_text)) {
+            else if (x >= int(this->w_text + this->dx() + this->label.x_text)) {
                 if (this->edit_pos < this->num_chars) {
-                    this->edit_pos = this->num_chars;
-                    this->edit_buffer_pos = this->buffer_size;
-                    this->cursor_px_pos = this->w_text;
+                    this->move_to_last_character();
                 }
             } else {
-                TODO("move cursor")
+                TODO("Bug")
+                Rect crect = this->get_cursor_rect();
+                int xx = this->dx() + this->label.x_text;
+                size_t e = this->edit_pos;
+                this->edit_pos = 0;
+                this->edit_buffer_pos = 0;
+                size_t len = this->utf8len_current_char();
+                this->edit_buffer_pos += this->utf8len_current_char();
+                while (this->edit_buffer_pos < this->buffer_size) {
+                    char c = this->label.buffer[this->edit_buffer_pos];
+                    this->label.buffer[this->edit_buffer_pos] = 0;
+                    int w;
+                    this->drawable->text_metrics(this->label.buffer + this->edit_buffer_pos - len, w, this->h_text);
+                    xx += w;
+                    if (xx >= x) {
+                        xx -= w;
+                        break;
+                    }
+                    this->label.buffer[this->edit_buffer_pos] = c;
+                    len = this->utf8len_current_char();
+                    this->edit_buffer_pos += this->utf8len_current_char();
+                    ++this->edit_pos;
+                }
+                this->cursor_px_pos = xx - (this->dx() + this->label.x_text);
+                if (e != this->edit_pos && this->drawable) {
+                    this->drawable->begin_update();
+                    this->draw_cursor(this->get_cursor_rect());
+                    this->label.draw(crect);
+                    this->drawable->end_update();
+                }
             }
         } else {
             Widget2::rdp_input_mouse(device_flags, x, y, keymap);
@@ -227,14 +272,28 @@ public:
                 case Keymap2::KEVENT_UP_ARROW:
                     keymap->get_kevent();
                     if (this->edit_pos > 0) {
+                        Rect crect = this->get_cursor_rect();
                         this->decrement_edit_pos();
+                        if (this->drawable) {
+                            this->drawable->begin_update();
+                            this->label.draw(crect);
+                            this->draw_cursor(this->get_cursor_rect());
+                            this->drawable->end_update();
+                        }
                     }
                     break;
                 case Keymap2::KEVENT_RIGHT_ARROW:
                 case Keymap2::KEVENT_DOWN_ARROW:
                     keymap->get_kevent();
                     if (this->edit_pos < this->num_chars) {
+                        Rect crect = this->get_cursor_rect();
                         this->increment_edit_pos();
+                        if (this->drawable) {
+                            this->drawable->begin_update();
+                            this->label.draw(crect);
+                            this->draw_cursor(this->get_cursor_rect());
+                            this->drawable->end_update();
+                        }
                     }
                     break;
                 case Keymap2::KEVENT_BACKSPACE:
@@ -242,8 +301,23 @@ public:
                     if (this->edit_pos > 0) {
                         this->num_chars--;
                         size_t pxtmp = this->cursor_px_pos;
+                        Rect crect = this->get_cursor_rect();
+                        size_t ebpos = this->edit_buffer_pos;
                         this->decrement_edit_pos();
                         UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
+                        this->buffer_size += this->edit_buffer_pos - ebpos;
+                        if (this->drawable) {
+                            this->drawable->begin_update();
+                            this->drawable->draw(RDPOpaqueRect(crect, 0x888888), this->rect);
+                            this->draw_cursor(this->get_cursor_rect());
+                            this->label.draw(Rect(
+                                this->dx() + this->cursor_px_pos + this->label.x_text + 3,
+                                this->dy() + this->label.y_text + 1,
+                                this->w_text - this->cursor_px_pos,
+                                this->h_text
+                            ));
+                            this->drawable->end_update();
+                        }
                         this->w_text -= pxtmp - this->cursor_px_pos;
                     }
                     break;
@@ -255,28 +329,34 @@ public:
                         this->label.buffer[this->edit_buffer_pos + len] = 0;
                         int w;
                         this->drawable->text_metrics(this->label.buffer + this->edit_buffer_pos, w, this->h_text);
-                        this->w_text -= w + 2;
                         this->label.buffer[this->edit_buffer_pos + len] = c;
                         UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
+                        this->buffer_size -= len;
                         this->num_chars--;
+                        if (this->drawable) {
+                            this->drawable->begin_update();
+                            this->draw(Rect(
+                                this->dx() + this->cursor_px_pos + this->label.x_text + 3,
+                                this->dy() + this->label.y_text + 1,
+                                this->w_text - this->cursor_px_pos,
+                                this->h_text
+                            ));
+                            this->drawable->end_update();
+                        }
+                        this->w_text -= w;
                     }
                     break;
                 case Keymap2::KEVENT_END:
                     keymap->get_kevent();
                     if (this->edit_pos < this->num_chars) {
-                        this->edit_pos = this->num_chars;
-                        this->edit_buffer_pos = this->buffer_size;
-                        this->cursor_px_pos = this->w_text;
-                        if (this->edit_pos) {
-                            this->cursor_px_pos += 2;
-                        }
+                        this->move_to_last_character();
                     }
                     break;
                 case Keymap2::KEVENT_HOME:
                     keymap->get_kevent();
-                    this->edit_pos = 0;
-                    this->edit_buffer_pos = 0;
-                    this->cursor_px_pos = 0;
+                    if (this->edit_pos) {
+                        this->move_to_first_character();
+                    }
                     break;
                 case Keymap2::KEVENT_KEY:
                     if (this->num_chars < WidgetLabel::buffer_size - 5) {
@@ -285,10 +365,21 @@ public:
                         size_t tmp = this->edit_buffer_pos;
                         size_t pxtmp = this->cursor_px_pos;
                         this->increment_edit_pos();
-                        this->w_text += this->cursor_px_pos - pxtmp;
                         this->buffer_size += this->edit_buffer_pos - tmp;
                         this->num_chars++;
                         this->send_notify(NOTIFY_TEXT_CHANGED);
+                        this->w_text += this->cursor_px_pos - pxtmp;
+                        if (this->drawable) {
+                            this->drawable->begin_update();
+                            this->label.draw(Rect(
+                               this->dx() + pxtmp + this->label.x_text + 1,
+                               this->dy() + this->label.y_text + 1,
+                               this->w_text - pxtmp,
+                               this->h_text
+                            ));
+                            this->draw_cursor(this->get_cursor_rect());
+                            this->drawable->end_update();
+                        }
                     }
                     keymap->get_kevent();
                     break;

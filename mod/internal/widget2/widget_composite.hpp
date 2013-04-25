@@ -52,12 +52,7 @@ public:
     {
         if (!this->rect.contains_pt(x, y))
             return 0;
-        Widget2 * ret = 0;
-        std::size_t size = this->child_list.size();
-        for (std::size_t i = 0; i < size && ret == 0; ++i)
-        {
-            ret = this->child_list[i]->widget_at_pos(x, y);
-        }
+        Widget2 * ret = this->child_at_pos(x, y);
         return ret ? ret : this;
     }
 
@@ -71,6 +66,17 @@ public:
                 ret = tmp;
         }
         return ret;
+    }
+
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+    {
+        if (this->rect.contains_pt(x, y)) {
+            Widget2 * w = this->child_at_pos(x,y);
+            if (w) {
+                w->rdp_input_mouse(device_flags, x, y, keymap);
+            }
+        }
+        //this->selector.rdp_input_mouse(device_flags, x, y, keymap);
     }
 
 #if 0
@@ -285,6 +291,17 @@ protected:
                 return w;
         }
         return 0;
+    }
+
+    virtual Widget2 * child_at_pos(int16_t x, int16_t y)
+    {
+        Widget2 * ret = 0;
+        std::size_t size = this->child_list.size();
+        for (std::size_t i = 0; i < size && ret == 0; ++i)
+        {
+            ret = this->child_list[i]->widget_at_pos(x, y);
+        }
+        return ret;
     }
 };
 

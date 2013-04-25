@@ -176,13 +176,13 @@ public:
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
-        if (device_flags == CLIC_BUTTON1_DOWN) {
+        if (device_flags == MOUSE_FLAG_BUTTON1) {
             int lcy = (this->h_text + this->y_text * 2 + this->h_border);
             if (int16_t(y) >= this->dy()
              && y < int(this->dy() + this->labels.size() * lcy - this->h_border)
              && (y - this->dy()) % lcy != 0) {
                 int p = (y - this->dy()) / lcy;
-                if (p != lcy && (uint)p != this->current_index) {
+                if ((uint)p != this->current_index) {
                     int old_current_index = this->current_index;
                     this->set_current_index(p);
                     this->send_notify(NOTIFY_SELECTION_CHANGED,
@@ -266,6 +266,8 @@ public:
 
     ModContext & context;
 
+    Widget2 * widget_focused;
+
 private:
     struct temporary_number_of_page {
         char buffer[15];
@@ -304,10 +306,11 @@ public:
     , number_page(drawable, 0, 0, this, NULL, temporary_number_of_page(context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES)).buffer, true, -24, GREY, BLACK)
     , next_page(drawable, 0, 0, this, this, ">>", true, -25, WHITE, BLACK, 8, 4)
     , last_page(drawable, 0, 0, this, this, ">", true, -26, WHITE, BLACK, 8, 4)
-    , logout(drawable, 0, 0, this, this, "Logout", true, -27, WHITE, BLACK, 8, 4)
-    , apply(drawable, 0, 0, this, this, "Appy", true, -28, WHITE, BLACK, 8, 4)
-    , connect(drawable, 0, 0, this, this, "Connect", true, -29, WHITE, BLACK, 8, 4)
+    , logout(drawable, 0, 0, this, notifier, "Logout", true, -27, WHITE, BLACK, 8, 4)
+    , apply(drawable, 0, 0, this, notifier, "Appy", true, -28, WHITE, BLACK, 8, 4)
+    , connect(drawable, 0, 0, this, notifier, "Connect", true, -29, WHITE, BLACK, 8, 4)
     , context(context)
+    , widget_focused(&this->filter_account_device/*device_group_lines*/)
     {
         this->child_list.push_back(&this->device_label);
         this->child_list.push_back(&this->device_group_label);
@@ -368,6 +371,8 @@ public:
 //         this->account_device_lines.rect.cy = this->device_group_lines.cy();
 //         this->protocol_lines.rect.cy = this->device_group_lines.cy();
 //         this->close_time_lines.rect.cy = this->device_group_lines.cy();
+
+        this->refresh_context();
     }
 
     virtual ~WidgetSelector()
@@ -408,15 +413,37 @@ public:
                 this->set_index_list(static_cast<WidgetSelectLine*>(widget)->current_index);
             }
         }
-        else if (widget == &this->apply
-         || (NOTIFY_SUBMIT == event
-          && (widget == &this->filter_account_device
-           || widget == &this->filter_device_group
-        ))) {
-            this->send_notify(NOTIFY_SUBMIT, 2);
+    }
+
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+    {
+        if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+            Widget2 * w = this->child_at_pos(x,y);
+            if (w == &this->filter_account_device
+             || w == &this->filter_device_group
+             || w == &this->current_page
+             || w == &this->device_group_lines
+             || w == &this->account_device_lines
+             || w == &this->protocol_lines
+             || w == &this->close_time_lines) {
+                this->widget_focused = w;
+                w->rdp_input_mouse(device_flags, x, y, keymap);
+                return ;
+            }
+            else {
+                this->widget_focused = NULL;
+            }
         }
-        else if (widget == &this->connect) {
-            this->send_notify(NOTIFY_SUBMIT);
+        WidgetComposite::rdp_input_mouse(device_flags, x, y, keymap);
+    }
+
+
+    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+    {
+        if (this->widget_focused) {
+            this->drawable->begin_update();
+            this->widget_focused->rdp_input_scancode(param1, param2, param3, param4, keymap);
+            this->drawable->end_update();
         }
     }
 
