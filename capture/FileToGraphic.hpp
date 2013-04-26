@@ -370,16 +370,23 @@ struct FileToGraphic
                         this->stream.p = this->stream.end;
 
                         StaticStream ss(this->input, this->input_len);
-                        uint32_t     key;
 
-                        while (ss.in_check_rem(sizeof(uint32_t))) {
-                            key = ss.in_uint32_le();
+                        for (size_t i = 0; i < this->nbconsumers ; i++){
+                            this->consumers[i]->input(ss);
+                        }
 
-                            LOG(LOG_INFO, "TIMESTAMP %u.%u keyboard '%c'(0x%X)"
-                                , this->record_now.tv_sec
-                                , this->record_now.tv_usec
-                                , key
-                                , key);
+                        if (this->verbose > 16) {
+                            uint32_t key;
+
+                            while (ss.in_check_rem(sizeof(uint32_t))) {
+                                key = ss.in_uint32_le();
+
+                                LOG(LOG_INFO, "TIMESTAMP %u.%u keyboard '%c'(0x%X)"
+                                    , this->record_now.tv_sec
+                                    , this->record_now.tv_usec
+                                    , key
+                                    , key);
+                            }
                         }
                     }
                 }
