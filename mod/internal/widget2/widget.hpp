@@ -73,12 +73,12 @@ public:
     ModApi * drawable;
     NotifyApi * notifier;
     Rect rect;
-    int id;
+    int group_id;
     //int tab_flag;
     bool has_focus;
 
 public:
-    Widget2(ModApi * drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int id = 0)
+    Widget2(ModApi * drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0)
     : parent(parent)
     , drawable(drawable)
     , notifier(notifier)
@@ -87,7 +87,7 @@ public:
                 rect.cx,
                 rect.cy
     ))
-    , id(id)
+    , group_id(group_id)
     //, tab_flag(NORMAL_TAB)
     , has_focus(false)
     {}

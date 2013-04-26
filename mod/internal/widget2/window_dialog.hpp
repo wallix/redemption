@@ -34,10 +34,10 @@ public:
 
     WindowDialog(ModApi* drawable, int16_t x, int16_t y,
                  Widget2* parent, NotifyApi* notifier,
-                 const char* caption, const char * text, int id = 0,
+                 const char* caption, const char * text, int group_id = 0,
                  const char * ok_text = "Ok", const char * cancel_text = "Cancel",
                  int bgcolor = DARK_WABGREEN, int fgcolor = BLACK)
-    : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, id)
+    : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
     , dialog(drawable, 0, 0, this, NULL, text, true, -10, bgcolor, fgcolor, 10, 2)
     , cancel(drawable, 0, 0, this, this, cancel_text, true, -11, WHITE, BLACK, 6, 2)
     , ok(drawable, 0, 0, this, this, ok_text, true, -12, WHITE, BLACK, 6, 2)

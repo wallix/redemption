@@ -62,10 +62,10 @@ private:
 
 public:
     WindowWabClose(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
-                   NotifyApi* notifier, const char * diagnostic_text, int id = 0,
+                   NotifyApi* notifier, const char * diagnostic_text, int group_id = 0,
                    const char * username = 0, const char * target = 0,
                    int bgcolor = DARK_WABGREEN, int fgcolor = BLACK)
-    : Window(drawable, Rect(x,y,1,1), parent, notifier, "Connection closed", bgcolor, id)
+    : Window(drawable, Rect(x,y,1,1), parent, notifier, "Connection closed", bgcolor, group_id)
     , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_LOGO24, this, NULL, -10)
     , username_label(drawable, this->img.cx() + 20, 0, this, NULL,
                      temporary_text("Username: ", username).text,

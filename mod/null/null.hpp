@@ -74,7 +74,7 @@ struct null_mod : public mod_api {
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) {}
     virtual void draw(const RDPLineTo& cmd, const Rect & clip) {}
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) {}
-    virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) {}
+    virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) {}
     virtual void text_metrics(const char * text, int & width, int & height) {}
     virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags) {}
 };

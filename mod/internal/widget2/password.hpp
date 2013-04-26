@@ -43,9 +43,9 @@ public:
 
     WidgetPassword(ModApi* drawable, int16_t x, int16_t y, uint16_t cx,
                    Widget2* parent, NotifyApi* notifier, const char * text,
-                   int id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
+                   int group_id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
                    std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
-    : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, id)
+    : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, group_id)
     , buf_size(0)
     , buf_pos(0)
     , num_chars(0)

@@ -44,10 +44,10 @@ public:
     MessageBox * window_help;
 
     WindowLogin(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
-                NotifyApi* notifier, const char* caption, int id = 0,
+                NotifyApi* notifier, const char* caption, int group_id = 0,
                 const char * login = 0, const char * password = 0,
                 int bgcolor = DARK_WABGREEN, int fgcolor = BLACK)
-    : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, id)
+    : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
     , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_LOGO24, this, NULL, -10)
     , login_label(drawable, this->img.cx() + 20, 0, this, NULL, "Login:", true, -11, bgcolor, fgcolor)
     , login_edit(drawable, 0, 0, 200, this, NULL, login, -12, WHITE, BLACK, -1u, 1, 1)

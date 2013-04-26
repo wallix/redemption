@@ -41,8 +41,8 @@ public:
     WidgetYesNo(ModApi* drawable, int x, int y,
                 Widget* parent, NotifyApi* notifier,
                 const char * yes = "submit",
-                const char * no = "cancel", int id = 0)
-    : Widget(drawable, Rect(), parent, Widget::TYPE_BUTTON, notifier, id)
+                const char * no = "cancel", int group_id = 0)
+    : Widget(drawable, Rect(), parent, Widget::TYPE_BUTTON, notifier, group_id)
     , yes(drawable, Rect(), this, 0, yes, 0)
     , no(drawable, Rect(), this, 0, no, 1)
     {
@@ -90,12 +90,12 @@ public:
         }
     }
 
-    virtual void notify(int id, EventType event)
+    virtual void notify(int group_id, EventType event)
     {
-        if (event == WIDGET_SUBMIT && (id == this->yes.id || id == this->no.id)) {
+        if (event == WIDGET_SUBMIT && (id == this->yes.id || id == this->no.group_id)) {
             this->notify_self(id == this->yes.id ? NOTIFY_YES : NOTIFY_NO);
         } else {
-            this->Widget::notify(id, event);
+            this->Widget::notify(group_id, event);
         }
     }
 

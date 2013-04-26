@@ -26,119 +26,26 @@
 #include "mod_api.hpp"
 #include "internal/internal_mod.hpp"
 #include "selector.hpp"
+#include "notify/notify_selector.hpp"
 
 class widget2_mod : public internal_mod
 {
-    class WidgetModApi : public ModApi {
+    class Notifier : public NotifySelector {
         widget2_mod * api;
 
     public:
-        WidgetModApi(widget2_mod * mod)
-        : api(mod)
+        Notifier(ModContext& context, widget2_mod * mod)
+        : NotifySelector(context, NULL)
+        , api(mod)
         {}
 
-        virtual ~WidgetModApi()
-        {}
-
-        virtual void begin_update()
-        {
-            this->api->begin_update();
-        }
-
-        virtual void end_update()
-        {
-            this->api->end_update();
-        }
-
-        virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
-        {
-            this->api->draw(cmd, clip);
-        }
-
-        virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
-        {
-            this->api->draw(cmd, clip);
-        }
-
-        virtual void draw(const RDPDestBlt & cmd, const Rect &clip)
-        {
-            this->api->draw(cmd, clip);
-        }
-
-        virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
-        {
-            this->api->draw(cmd, clip);
-        }
-
-        virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
-        {
-            this->api->draw(cmd, clip, bmp);
-        }
-
-        virtual void draw(const RDPLineTo& cmd, const Rect & clip)
-        {
-            this->api->draw(cmd, clip);
-        }
-
-        virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
-        {
-            this->api->draw(cmd, clip);
-        }
-
-        virtual void server_draw_text(int x, int y, const char* text, uint32_t fgcolor, const Rect& clip)
-        {
-            this->api->server_draw_text(x, y, text, WHITE, fgcolor, clip);
-            //Front& front = static_cast<Front&>(this->api->front);
-            //front.capture->drawable->server_draw_text(x,y,text,fgcolor, clip, front.font);
-        }
-
-        virtual void text_metrics(const char * text, int & width, int & height)
-        {
-            this->api->text_metrics(text, width, height);
-            //Front& front = static_cast<Front&>(this->api->front);
-            //height = 0;
-            //width = 0;
-            //uint32_t uni[256];
-            //size_t len_uni = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
-            //if (len_uni){
-            //    for (size_t index = 0; index < len_uni; index++) {
-            //        FontChar *font_item = front.capture->drawable->get_font(front.font, uni[index]);
-            //        width += font_item->width + 2;
-            //        height = std::max(height, font_item->height);
-            //    }
-            //    width -= 2;
-            //}
-            //this->api->text_metrics(text, width, height);
-        }
-    } widget_mod_api;
-
-    class Notifier : public NotifyApi {
-        widget2_mod * api;
-
-    public:
-        Notifier(widget2_mod * mod)
-        : api(mod)
-        {}
         virtual void notify(Widget2 * sender, notify_event_t event,
                             unsigned long param, unsigned long param2)
         {
-            if (NOTIFY_SUBMIT == event) {
-                if (sender == &this->api->selector.logout) {
-                    this->api->selector.context.ask(STRAUTHID_AUTH_USER);
-                    this->api->selector.context.ask(STRAUTHID_PASSWORD);
-                    this->api->selector.context.ask(STRAUTHID_TARGET_USER);
-                    this->api->selector.context.ask(STRAUTHID_TARGET_DEVICE);
-                    this->api->selector.context.ask(STRAUTHID_SELECTOR);
-                    this->api->signal = BACK_EVENT_NEXT;
-                    this->api->event.set();
-                }
-                else if (sender == &this->api->selector.connect) {
-                }
-                else if (sender == &this->api->selector.apply
-                      || sender == &this->api->selector.filter_account_device
-                      || sender == &this->api->selector.filter_device_group
-                ) {
-                }
+            NotifySelector::notify(sender, event, param, param2);
+            if (NOTIFY_SUBMIT == event && sender == &this->api->selector.logout) {
+                this->api->signal = BACK_EVENT_NEXT;
+                this->api->event.set();
             }
         }
     } notifier;
@@ -148,10 +55,14 @@ class widget2_mod : public internal_mod
 public:
     widget2_mod(ModContext& context, Front& front, uint16_t width, uint16_t height)
     : internal_mod(front, width, height)
-    , widget_mod_api(this)
-    , notifier(this)
-    , selector(context, &this->widget_mod_api, "bidule", width, height, &this->notifier)
+    , notifier(context, this)
+    , selector(this, "bidule", width, height, &this->notifier,
+               context.get(STRAUTHID_SELECTOR_CURRENT_PAGE),
+               context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES))
     {
+        this->notifier.selector = &this->selector;
+        this->notifier.refresh_context();
+
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");

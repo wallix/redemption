@@ -14,28 +14,34 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *   Product name: redemption, a FLOSS RDP proxy
- *   Copyright (C) Wallix 2010-2012
+ *   Copyright (C) Wallix 2010-2013
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_MOD_API_HPP_)
-#define REDEMPTION_MOD_WIDGET2_MOD_API_HPP_
+#if !defined(REDEMPTION_MOD_DRAW_API_HPP)
+#define REDEMPTION_MOD_DRAW_API_HPP
 
-#include "../../draw_api.hpp"
+#include "RDP/RDPGraphicDevice.hpp"
 
-typedef DrawApi ModApi;
+class DrawApi : public RDPGraphicDevice
+{
+public:
+    virtual ~DrawApi()
+    {}
 
-// class ModApi : public draw_api
-// {
-// public:
-//     virtual void begin_update() = 0;
-//     virtual void end_update() = 0;
-//
-//     virtual void server_draw_text(int x, int y, const char * text, uint32_t fgcolor, const Rect & clip) = 0;
-//     virtual void text_metrics(const char * text, int & width, int & height) = 0;
-//
-//     virtual ~ModApi()
-//     {}
-// };
+    virtual void begin_update() = 0;
+    virtual void end_update() = 0;
+
+    virtual void text_metrics(const char * text, int & width, int & height) = 0;
+
+    virtual void server_draw_text(int16_t x, int16_t y, const char * text,
+                                  uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) = 0;
+
+    virtual void server_draw_text(int16_t x, int16_t y, const char * text,
+                                  uint32_t fgcolor, const Rect & clip)
+    {
+        this->server_draw_text(x, y, text, fgcolor, ~fgcolor, clip);
+    }
+};
 
 #endif

@@ -37,9 +37,9 @@ public:
 
     WidgetEdit(ModApi* drawable, int16_t x, int16_t y, uint16_t cx,
                Widget2* parent, NotifyApi* notifier, const char * text,
-               int id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
+               int group_id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
                std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
-    : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, id)
+    : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, group_id)
     , label(drawable, 0, 0, this, 0, text, false, 0, bgcolor, fgcolor, xtext, ytext)
     , w_text(0)
     , h_text(0)
