@@ -373,7 +373,7 @@ struct FileToGraphic
                         uint32_t     key;
 
                         while (ss.in_check_rem(sizeof(uint32_t))) {
-                            uint32_t key = ss.in_uint32_le();
+                            key = ss.in_uint32_le();
 
                             LOG(LOG_INFO, "TIMESTAMP %u.%u mouse '%c'(0x%X)"
                                 , this->record_now.tv_sec
