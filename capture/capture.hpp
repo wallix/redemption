@@ -167,6 +167,11 @@ public:
         }
     }
 
+    void input(Stream & input_data_32) {
+        if (this->capture_wrm){
+            this->pnc->input(input_data_32);
+        }
+    }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {

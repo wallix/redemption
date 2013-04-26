@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Christophe Grosjean, Dominique Lafages
+   Author(s): Christophe Grosjean, Dominique Lafages, Raphael Zhou
 
    header file. Keymap2 object, used to manage key stroke events
 */
@@ -174,7 +174,6 @@ struct Keymap2
 
         this->key_flags = 0;
         this->last_chr_unicode = 0;
-
     } // END Constructor
 
 
@@ -228,7 +227,7 @@ struct Keymap2
 
 
     //==============================================================================
-    void event(const uint16_t keyboardFlags, const uint16_t keyCode)
+    void event(const uint16_t keyboardFlags, const uint16_t keyCode, Stream & decoded_data)
     //==============================================================================
     {
         // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
@@ -351,6 +350,7 @@ struct Keymap2
                             uint8_t sym = map[extendedKeyCode];
                             // Translate the X11 scancode to an unicode code point
                             uint32_t uchar = (*layout)[sym];
+                            if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(uchar); }
                             this->push(uchar);
                         }
                         // if numlock is not activated OR shift is down, keys are NOT printable characters
@@ -478,6 +478,7 @@ struct Keymap2
                                      if (this->deadkey_pending_def.secondKeys[i].secondKey == uchar) {
 
                                         // push the translation into keyboard buffer
+                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(this->deadkey_pending_def.secondKeys[i].modifiedKey); }
                                         this->push(this->deadkey_pending_def.secondKeys[i].modifiedKey);
                                         deadkeyTranslated = true;
                                         break;
@@ -486,7 +487,9 @@ struct Keymap2
                                 // If that second key is not associated with that deadkey,
                                 // push both deadkey uchar and unmodified second key uchar in keyboard buffer
                                 if (not deadkeyTranslated) {
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(this->deadkey_pending_def.uchar); }
                                     this->push(this->deadkey_pending_def.uchar);
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(uchar); }
                                     this->push(uchar);
                                 }
                                 this->deadkey = DEADKEY_NONE;
@@ -496,6 +499,7 @@ struct Keymap2
                                 if (this->verbose){
                                     LOG(LOG_INFO, "not dead key - so pushing char %02x", uchar);
                                 }
+                                if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(uchar); }
                                 this->push(uchar);
                             }
                         }
@@ -560,23 +564,29 @@ struct Keymap2
                                         this->push_kevent(KEVENT_BACKTAB);
                                     }
                                     else {
+                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x0F); }
                                         this->push_kevent(KEVENT_TAB);
                                     }
                                     break;
                                 // backspace
                                 case 0x0E:
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x0E); }
                                     this->push_kevent(KEVENT_BACKSPACE);
                                     break;
                                 case 0xD3: // delete
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0xD3); }
                                     this->push_kevent(KEVENT_DELETE);
                                     break;
                                 case 0x53: // numpad delete
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x53); }
                                     this->push_kevent(KEVENT_DELETE);
                                     break;
                                 case 0x1C: // enter
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x1C); }
                                     this->push_kevent(KEVENT_ENTER);
                                     break;
                                 case 0x9C: // numpad enter
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x9C); }
                                     this->push_kevent(KEVENT_ENTER);
                                     break;
                                 default:

@@ -2038,7 +2038,15 @@ TODO("Pass font name as parameter in constructor")
                                     ke.spKeyboardFlags, ke.keyCode);
                             }
 
-                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode);
+                            BStream decoded_data(256);
+
+                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode, decoded_data);
+                            decoded_data.mark_end();
+
+                            if (this->capture && decoded_data.size()) {
+                                this->capture->input(decoded_data);
+                            }
+
                             cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
                             
                         }
@@ -3043,7 +3051,16 @@ TODO("Pass font name as parameter in constructor")
                                 LOG(LOG_INFO, "Slow-path INPUT_EVENT_SYNC eventTime=%u keyboardFlags=0x%04X keyCode=0x%04X",
                                     ie.eventTime, ke.keyboardFlags, ke.keyCode);
                             }
-                            this->keymap.event(ke.keyboardFlags, ke.keyCode);
+
+                            BStream decoded_data(256);
+
+                            this->keymap.event(ke.keyboardFlags, ke.keyCode, decoded_data);
+                            decoded_data.mark_end();
+
+                            if (this->capture && decoded_data.size()) {
+                                this->capture->input(decoded_data);
+                            }
+
                             if (this->up_and_running){
                                 cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
                             }

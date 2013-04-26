@@ -103,6 +103,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
+    BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
+    BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -201,6 +203,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
+    BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
+    BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -301,6 +305,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
+    BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
+    BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -344,6 +350,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     "listen_address=192.168.1.1\n"
     "enable_ip_transparent=yes\n"
     "certificate_password=redemption\n"
+    "png_path=/var/tmp/wab/recorded/rdp\n"
+    "wrm_path=/var/wab/recorded/rdp\n"
     "\n"
     "[client]\n"
     "ignore_logon_password=yes\n"
@@ -423,6 +431,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(std::string("192.168.1.1"),       std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("redemption"),        std::string(ini.globals.certificate_password));
+    BOOST_CHECK_EQUAL(std::string("/var/tmp/wab/recorded/rdp"),
+                                                        std::string(ini.globals.png_path));
+    BOOST_CHECK_EQUAL(std::string("/var/wab/recorded/rdp"),
+                                                        std::string(ini.globals.wrm_path));
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -467,6 +479,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     "listen_address=0.0.0.0\n"
     "enable_ip_transparent=no\n"
     "certificate_password=\n"
+    "png_path=/var/tmp/wab/recorded/rdp\n"
+    "wrm_path=/var/wab/recorded/rdp\n"
     "[client]\n"
     "performance_flags_default=7\n"
     "performance_flags_force_present=1\n"
@@ -540,6 +554,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.certificate_password));
+    BOOST_CHECK_EQUAL(std::string("/var/tmp/wab/recorded/rdp"),
+                                                        std::string(ini.globals.png_path));
+    BOOST_CHECK_EQUAL(std::string("/var/wab/recorded/rdp"),
+                                                        std::string(ini.globals.wrm_path));
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -582,6 +600,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     "listen_address=127.0.0.1\n"
     "certificate_password=rdpproxy\n"
     "enable_ip_transparent=true\n"
+    "png_path=/var/tmp/wab/recorded/rdp\n"
+    "wrm_path=/var/wab/recorded/rdp\n"
     "[client]\n"
     "performance_flags_default=07\n"
     "performance_flags_force_present=1\n"
@@ -655,6 +675,10 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("rdpproxy"),          std::string(ini.globals.certificate_password));
+    BOOST_CHECK_EQUAL(std::string("/var/tmp/wab/recorded/rdp"),
+                                                        std::string(ini.globals.png_path));
+    BOOST_CHECK_EQUAL(std::string("/var/wab/recorded/rdp"),
+                                                        std::string(ini.globals.wrm_path));
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -767,6 +791,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("redemption"),        std::string(ini.globals.certificate_password));
+    BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
+    BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -874,6 +900,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("192.168.1.1"),       std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.certificate_password));
+    BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
+    BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -976,6 +1004,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
+    BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
+    BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -1082,6 +1112,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
+    BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
+    BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -1178,6 +1210,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
+    BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
+    BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);

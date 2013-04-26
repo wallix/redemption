@@ -58,6 +58,8 @@ struct RDPGraphicDevice
     virtual void draw(const RDPColCache & cmd) {};
     virtual void draw(const RDPGlyphCache & cmd) {};
 
+    virtual void input(Stream & input_data_32) {};
+
     virtual void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp) {}
 
 protected:
