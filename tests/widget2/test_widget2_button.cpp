@@ -39,7 +39,7 @@ struct TestDraw : ModApi
     Font font;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, true)
+    : gd(w, h, false)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test1", auto_resize, id, bg_color, fg_color, xtext, ytext);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test1", auto_resize, id, fg_color, bg_color, xtext, ytext);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0, 0, wbutton.cx(), wbutton.cy()));
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test2", auto_resize, id, bg_color, fg_color);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test2", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -207,7 +207,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test3", auto_resize, id, bg_color, fg_color);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test3", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -239,7 +239,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test4", auto_resize, id, bg_color, fg_color);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test4", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -271,7 +271,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test5", auto_resize, id, bg_color, fg_color);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test5", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -335,7 +335,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wbutton.rdp_input_invalidate(Rect(20 + wbutton.dx(),
@@ -367,7 +367,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wbutton.rdp_input_invalidate(Rect(20 + wbutton.dx(),
@@ -400,7 +400,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, bg_color, fg_color, xtext, ytext);
+    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, xtext, ytext);
 
     wbutton.rdp_input_invalidate(wbutton.rect);
 

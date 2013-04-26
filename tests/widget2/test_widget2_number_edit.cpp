@@ -39,7 +39,7 @@ struct TestDraw : ModApi
     Font font;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, true)
+    : gd(w, h, false)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 

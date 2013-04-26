@@ -64,7 +64,7 @@
 #include "transitory/transitory.hpp"
 #include "cli/cli_mod.hpp"
 
-#include "internal/widget2/widget2_mod.hpp"
+#include "internal/widget2/selector_mod.hpp"
 
 using namespace std;
 
@@ -694,9 +694,9 @@ struct Session {
                     break;
                     case INTERNAL_WIDGET2_TEST:
                         if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'widget2_test'");
+                            LOG(LOG_INFO, "Session::Creation of internal module 'widget2_selecteur_test'");
                         }
-                        this->mod = new widget2_mod(
+                        this->mod = new SelectorMod(
                             *this->context,
                             *this->front,
                             this->front->client_info.width,

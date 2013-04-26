@@ -36,11 +36,11 @@ public:
                  Widget2* parent, NotifyApi* notifier,
                  const char* caption, const char * text, int group_id = 0,
                  const char * ok_text = "Ok", const char * cancel_text = "Cancel",
-                 int bgcolor = DARK_WABGREEN, int fgcolor = BLACK)
+                 int fgcolor = BLACK, int bgcolor = DARK_WABGREEN)
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
     , dialog(drawable, 0, 0, this, NULL, text, true, -10, bgcolor, fgcolor, 10, 2)
-    , cancel(drawable, 0, 0, this, this, cancel_text, true, -11, WHITE, BLACK, 6, 2)
-    , ok(drawable, 0, 0, this, this, ok_text, true, -12, WHITE, BLACK, 6, 2)
+    , cancel(drawable, 0, 0, this, this, cancel_text, true, -11, BLACK, WHITE, 6, 2)
+    , ok(drawable, 0, 0, this, this, ok_text, true, -12, BLACK, WHITE, 6, 2)
     {
         this->child_list.push_back(&this->dialog);
         this->child_list.push_back(&this->cancel);

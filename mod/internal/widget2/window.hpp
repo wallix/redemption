@@ -37,8 +37,8 @@ public:
     Window(ModApi* drawable, const Rect& rect, Widget2* parent, NotifyApi* notifier,
            const char * caption, int bgcolor = DARK_WABGREEN, int group_id = 0)
     : WidgetComposite(drawable, rect, parent, notifier, group_id)
-    , titlebar(drawable, 0, 0, this, NULL, caption, false, -1, WABGREEN, BLACK, 5)
-    , button_close(drawable, 0, 0, this, this, "X", true, -2, DARK_GREEN, WHITE, 3, 0)
+    , titlebar(drawable, 0, 0, this, NULL, caption, false, -1, BLACK, WABGREEN, 5)
+    , button_close(drawable, 0, 0, this, this, "X", true, -2, WHITE, DARK_GREEN, 3, 0)
     , bg_color(bgcolor)
     {
         this->child_list.push_back(&this->titlebar);

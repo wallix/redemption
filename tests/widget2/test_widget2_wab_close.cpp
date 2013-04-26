@@ -149,8 +149,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xdc\xb7\x3c\x08\xeb\xdf\xb3\xa1\xa2\x9a"
-        "\xce\x2d\x6f\x73\x22\x2c\x26\xcf\x02\x01")){
+        "\xf2\x26\x84\x58\x51\x98\xf1\xf9\x8e\x84"
+        "\x80\xcc\x70\xa2\xf9\x90\x68\xce\x5b\x74")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -183,17 +183,14 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose2)
     );
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(Rect(0 + window_wab_close.dx(),
-                                      0 + window_wab_close.dy(),
-                                      window_wab_close.cx(),
-                                      window_wab_close.cy()));
+    window_wab_close.rdp_input_invalidate(window_wab_close.rect);
 
     //drawable.save_to_png("/tmp/window_wab_close2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x06\xc2\xde\x8a\xa6\x4f\x43\x85\x1c\x57"
-        "\xe5\x1a\xb7\x90\x60\x44\x36\x6a\x57\x78")){
+        "\x63\xa5\xba\x27\x5b\x29\x4d\xd0\xdd\x4d"
+        "\x96\x13\x62\xdc\x2e\x39\x7c\x3d\x35\xfd")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -212,17 +209,14 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose3)
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(Rect(0 + window_wab_close.dx(),
-                                      0 + window_wab_close.dy(),
-                                      window_wab_close.cx(),
-                                      window_wab_close.cy()));
+    window_wab_close.rdp_input_invalidate(window_wab_close.rect);
 
     //drawable.save_to_png("/tmp/window_wab_close3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x40\x2a\x2a\xe3\xfa\xaa\xa2\xbc\x09\x0b"
-        "\x32\x1e\x01\xe2\xd2\x1d\x7e\x51\x2c\xe2")){
+        "\xb3\x20\x82\x6a\x77\xbd\xe9\x51\x06\x1c"
+        "\x98\x04\x03\x3b\xfd\x5d\x89\x9f\x6d\x03")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -241,10 +235,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose4)
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(Rect(0 + window_wab_close.dx(),
-                                      0 + window_wab_close.dy(),
-                                      window_wab_close.cx(),
-                                      window_wab_close.cy()));
+    window_wab_close.rdp_input_invalidate(window_wab_close.rect);
 
     //drawable.save_to_png("/tmp/window_wab_close4.png");
 
@@ -270,17 +261,14 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose5)
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(Rect(0 + window_wab_close.dx(),
-                                      0 + window_wab_close.dy(),
-                                      window_wab_close.cx(),
-                                      window_wab_close.cy()));
+    window_wab_close.rdp_input_invalidate(window_wab_close.rect);
 
     //drawable.save_to_png("/tmp/window_wab_close5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x37\x43\x15\xf6\x04\x8a\x5b\xe4\xbc\xba"
-        "\xa8\x15\xbd\xc8\x5d\xc0\x79\xb3\x02\x3f")){
+        "\xfc\x31\x21\x0e\x6b\xfe\xc7\x84\x64\x77"
+        "\xaa\xcf\xd7\xec\xfd\xea\x8d\x5a\x15\x04")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -299,10 +287,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose6)
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(Rect(0 + window_wab_close.dx(),
-                                      0 + window_wab_close.dy(),
-                                      window_wab_close.cx(),
-                                      window_wab_close.cy()));
+    window_wab_close.rdp_input_invalidate(window_wab_close.rect);
 
     //drawable.save_to_png("/tmp/window_wab_close6.png");
 
@@ -328,10 +313,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip)
                                     "abc<br>def");
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    window_wab_close.rdp_input_invalidate(Rect(20 + window_wab_close.dx(),
-                                      0 + window_wab_close.dy(),
-                                      window_wab_close.cx(),
-                                      window_wab_close.cy()));
+    window_wab_close.rdp_input_invalidate(window_wab_close.rect.offset(20,0));
 
     //drawable.save_to_png("/tmp/window_wab_close7.png");
 

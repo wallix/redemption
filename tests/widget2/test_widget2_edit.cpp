@@ -39,7 +39,7 @@ struct TestDraw : ModApi
     Font font;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, true)
+    : gd(w, h, false)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     size_t edit_pos = 2;
 
     WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test1", id,
-                     bg_color, fg_color, edit_pos, xtext, ytext);
+                     fg_color, bg_color, edit_pos, xtext, ytext);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     int16_t y = 100;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test2", id, bg_color, fg_color, 0);
+    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test2", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -211,7 +211,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test3", id, bg_color, fg_color, 0);
+    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test3", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -243,7 +243,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit4)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test4", id, bg_color, fg_color, 0);
+    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test4", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -275,7 +275,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit5)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test5", id, bg_color, fg_color, 0);
+    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test5", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -307,7 +307,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit6)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test6", id, bg_color, fg_color, 0);
+    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -339,7 +339,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test6", id, bg_color, fg_color, 0);
+    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wedit.rdp_input_invalidate(Rect(20 + wedit.dx(),
@@ -371,7 +371,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
     int16_t y = 0;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test6", id, bg_color, fg_color, 0);
+    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wedit.rdp_input_invalidate(Rect(20 + wedit.dx(),

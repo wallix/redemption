@@ -46,16 +46,16 @@ public:
     WindowLogin(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
                 NotifyApi* notifier, const char* caption, int group_id = 0,
                 const char * login = 0, const char * password = 0,
-                int bgcolor = DARK_WABGREEN, int fgcolor = BLACK)
+                int fgcolor = BLACK, int bgcolor = DARK_WABGREEN)
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
     , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_LOGO24, this, NULL, -10)
     , login_label(drawable, this->img.cx() + 20, 0, this, NULL, "Login:", true, -11, bgcolor, fgcolor)
-    , login_edit(drawable, 0, 0, 200, this, NULL, login, -12, WHITE, BLACK, -1u, 1, 1)
+    , login_edit(drawable, 0, 0, 200, this, NULL, login, -12, BLACK, WHITE, -1u, 1, 1)
     , password_label(drawable, this->img.cx() + 20, 0, this, NULL, "Password:", true, -13, bgcolor, fgcolor)
-    , password_edit(drawable, 0, 0, 200, this, NULL, password, -14, WHITE, BLACK, -1u, 1, 1)
-    , ok(drawable, 0, 0, this, this, "Ok", true, -15, WHITE, BLACK, 6, 2)
-    , cancel(drawable, 0, 0, this, this, "Cancel", true, -16, WHITE, BLACK, 6, 2)
-    , help(drawable, 0, 0, this, this, "Help", true, -17, WHITE, BLACK, 6, 2)
+    , password_edit(drawable, 0, 0, 200, this, NULL, password, -14, BLACK, WHITE, -1u, 1, 1)
+    , ok(drawable, 0, 0, this, this, "Ok", true, -15, BLACK, WHITE, 6, 2)
+    , cancel(drawable, 0, 0, this, this, "Cancel", true, -16, BLACK, WHITE, 6, 2)
+    , help(drawable, 0, 0, this, this, "Help", true, -17, BLACK, WHITE, 6, 2)
     , window_help(NULL)
     {
         this->child_list.push_back(&this->login_edit);

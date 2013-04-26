@@ -39,7 +39,7 @@ struct TestDraw : ModApi
     Font font;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, true)
+    : gd(w, h, false)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
     // WidgetMultiLine is a multiline widget at position 0,0 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, bg_color, fg_color, xtext, ytext);
+                               auto_resize, id, fg_color, bg_color, xtext, ytext);
 
     // ask to widget to redraw at it's current position
     wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
@@ -162,12 +162,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-     //drawable.save_to_png("/tmp/multiline.png");
+    //drawable.save_to_png("/tmp/multiline.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x13\xf6\x25\x98\x16\x57\x1d\x04\xa6\xfd"
-        "\x42\x8c\x32\xba\x81\x8a\x3f\xe5\xad\xec")){
+        "\xee\xa2\x81\x4c\x50\xf0\x0d\x1e\x13\x42"
+        "\x3e\xa2\x08\xf8\xc6\x7c\xea\x1d\x84\x87")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,100 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -192,7 +192,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, bg_color, fg_color);
+                               auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
@@ -204,8 +204,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x6c\xac\x5b\xc2\xd8\x65\xd6\x48\xd7\x6a"
-        "\x90\xfe\x2f\x2e\xb4\x95\x82\xe3\x2e\x85")){
+        "\x44\x7f\x61\x29\x32\x6d\x8b\x64\xd3\x73"
+        "\x39\xf0\x52\x64\x80\xb5\x4a\xcc\x38\x9c")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
     // WidgetMultiLine is a multiline widget of size 100x20 at position -10,500 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -230,7 +230,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, bg_color, fg_color);
+                               auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
@@ -242,8 +242,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xfc\x18\xcd\x4c\x3a\x9a\x3b\x11\x3c\xa4"
-        "\xb0\xf4\x1f\x13\x58\x2b\xf1\x6f\xed\x73")){
+        "\x2c\xca\x26\x71\x79\xec\x2d\x34\xa5\x49"
+        "\xe9\xc2\xd8\x50\x6c\xda\x50\xb7\xfb\x41")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -255,7 +255,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
     // WidgetMultiLine is a multiline widget of size 100x20 at position 770,500 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, bg_color, fg_color);
+                               auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
@@ -280,8 +280,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xb6\x60\x93\xa4\x89\x79\xaf\xc7\x98\x88"
-        "\xc8\x12\x04\x23\x48\xd8\x8c\xed\x4c\x7a")){
+        "\xf4\x3a\x68\xcd\xe4\x9d\x3f\xc4\x9c\x29"
+        "\x96\x88\x7f\xcc\xf5\x2a\xb0\x6e\xa1\xeb")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -293,7 +293,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
     // WidgetMultiLine is a multiline widget of size 100x20 at position -20,-7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -306,7 +306,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, bg_color, fg_color);
+                               auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
@@ -318,8 +318,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xc2\x14\x1b\x6f\x29\xbe\x8c\xde\xb5\x8b"
-        "\x65\xde\xab\xc8\x67\x56\x9c\x16\x40\x29")){
+        "\x67\x7a\x68\x4e\x01\x53\xbf\xa1\x6b\x23"
+        "\x0f\x73\xb9\x31\x75\x36\xe5\xf5\xcb\x9a")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -344,7 +344,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, bg_color, fg_color);
+                               auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmultiline.rdp_input_invalidate(Rect(0 + wmultiline.dx(),
@@ -356,8 +356,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x74\x16\x3e\x10\x81\x8e\x45\x33\xd6\x64"
-        "\xf7\x6c\x05\xc5\x55\xed\x3e\x37\x4e\xb2")){
+        "\x7f\xc3\xfa\x61\x18\x42\x67\x11\xac\xa2"
+        "\xbd\xc6\x7f\x75\x1c\x48\xb4\x38\x30\x92")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -369,7 +369,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -382,7 +382,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, bg_color, fg_color);
+                               auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wmultiline.rdp_input_invalidate(Rect(20 + wmultiline.dx(),
@@ -390,12 +390,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-     //drawable.save_to_png("/tmp/multiline7.png");
+    //drawable.save_to_png("/tmp/multiline7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xe2\xd4\x45\x61\x0c\xca\x37\x3c\xcf\xd5"
-        "\x67\x2a\xd6\x77\x0a\xb5\xe6\xaf\xba\xee")){
+        "\xce\x65\x54\x35\xed\x19\x84\x1d\x48\xfd"
+        "\x64\xc0\x4f\xfc\xd9\x56\x24\x93\xa2\x4d")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -407,7 +407,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -420,7 +420,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               auto_resize, id, bg_color, fg_color);
+                               auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wmultiline.rdp_input_invalidate(Rect(20 + wmultiline.dx(),
@@ -432,8 +432,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x33\xef\xc8\x21\x88\x76\xef\x04\xc1\x16"
-        "\x20\x85\x4b\xb2\xa5\xf8\x01\x69\xf5\xf2")){
+        "\x03\xe6\x2d\xc8\x57\x6b\x08\x5f\xb4\xef"
+        "\x12\x29\x98\x00\xa9\xe3\xc0\xb4\x08\xa7")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -445,7 +445,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -458,8 +458,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
                                "Nam non magna sit amet dui vestibulum feugiat.<br>"
                                "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                                "Nam lacinia purus luctus ante congue facilisis.<br>"
-                               "Donec sodales mauris luctus ante ultrices blandit.<br>",
-                               auto_resize, id, bg_color, fg_color);
+                               "Donec sodales mauris luctus ante ultrices blandit.",
+                               auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wmultiline.rdp_input_invalidate(wmultiline.rect);
@@ -468,8 +468,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x2f\xda\xed\x89\x79\xca\x99\x59\x2c\x88"
-        "\x04\x24\x41\x1f\x9a\x4a\x70\x36\x6e\xbf")){
+        "\x8f\xc4\x4d\xb3\xb7\xcd\x94\x7f\xc9\xcc"
+        "\xda\x3c\x50\xe5\xd1\x45\x3b\x58\xb7\xda")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }

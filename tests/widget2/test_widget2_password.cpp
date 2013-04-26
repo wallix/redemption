@@ -39,7 +39,7 @@ struct TestDraw : ModApi
     Font font;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, true)
+    : gd(w, h, false)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword)
     // WidgetPassword is a password widget at position 0,0 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = 0;
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword)
     size_t password_pos = 2;
 
     WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test1", id,
-                     bg_color, fg_color, password_pos, xtext, ytext);
+                     fg_color, bg_color, password_pos, xtext, ytext);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -155,12 +155,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword)
                                     wpassword.cx(),
                                     wpassword.cy()));
 
-    //drawable.save_to_png("/tmp/password.png");
+    drawable.save_to_png("/tmp/password.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x56\x8c\x5a\x16\xdf\xcc\x5c\x34\x04\xdc"
-        "\x61\x7e\xa5\x31\xae\x1b\x6f\x5a\x2a\xa4")){
+        "\xad\xc6\xf8\x7f\x7e\x45\x8b\x3b\x00\x36"
+        "\x65\x6d\x15\x86\x70\x04\x2f\x67\x54\x36")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -172,14 +172,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword2)
     // WidgetPassword is a password widget of size 100x20 at position 10,100 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = 10;
     int16_t y = 100;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test2", id, bg_color, fg_color, 0);
+    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test2", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -187,12 +187,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword2)
                                     wpassword.cx(),
                                     wpassword.cy()));
 
-    //drawable.save_to_png("/tmp/password2.png");
+    drawable.save_to_png("/tmp/password2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x9c\x4a\x73\xba\x18\x9c\xc4\xde\x5a\x6f"
-        "\xd7\xbb\xea\x97\x69\x37\xe3\xc8\x05\xa3")){
+        "\xa2\x07\x9a\xce\xd3\xa5\x83\x9f\x40\x3c"
+        "\x4a\xb7\x60\x67\x1a\xa3\x16\x1b\x2d\xec")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -204,14 +204,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword3)
     // WidgetPassword is a password widget of size 100x20 at position -10,500 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = -10;
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test3", id, bg_color, fg_color, 0);
+    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test3", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -219,12 +219,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword3)
                                     wpassword.cx(),
                                     wpassword.cy()));
 
-    //drawable.save_to_png("/tmp/password3.png");
+    drawable.save_to_png("/tmp/password3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x38\xf1\x00\x4f\x9d\xe6\xa5\xa7\x36\x81"
-        "\x7e\x49\x03\x3b\x21\xae\x86\x7b\xa9\x9a")){
+        "\x94\x37\xe1\x3b\x5f\x54\xf7\xe4\xb4\x80"
+        "\x4f\x33\x02\x03\x53\x76\xcd\x0b\x36\x6a")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -236,14 +236,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword4)
     // WidgetPassword is a password widget of size 100x20 at position 770,500 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = 770;
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test4", id, bg_color, fg_color, 0);
+    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test4", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -251,12 +251,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword4)
                                     wpassword.cx(),
                                     wpassword.cy()));
 
-    //drawable.save_to_png("/tmp/password4.png");
+    drawable.save_to_png("/tmp/password4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x1b\xfb\xdf\x50\x47\xb7\x02\xe5\x54\x46"
-        "\x15\xe7\x34\xf4\x4a\xef\x35\x72\xc7\xd5")){
+        "\xd6\x16\xae\xf8\xc0\x74\x70\x35\xc5\x9c"
+        "\x4d\xb0\xce\xa2\x25\xd2\xf2\x81\x7e\x00")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -268,14 +268,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword5)
     // WidgetPassword is a password widget of size 100x20 at position -20,-7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = -20;
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test5", id, bg_color, fg_color, 0);
+    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test5", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -283,12 +283,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword5)
                                     wpassword.cx(),
                                     wpassword.cy()));
 
-    //drawable.save_to_png("/tmp/password5.png");
+    drawable.save_to_png("/tmp/password5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xba\xe7\x54\x31\x41\x5c\xb2\x78\x80\x20"
-        "\x46\x65\xd4\x7b\xf2\x9c\x2b\xd2\x07\x30")){
+        "\x17\xe0\xaa\xf8\x8f\x87\x43\x84\x4e\x41"
+        "\x7a\x60\x6c\x97\x7b\x00\x98\x19\x66\xbf")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -300,14 +300,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword6)
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = 760;
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test6", id, bg_color, fg_color, 0);
+    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -315,12 +315,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword6)
                                     wpassword.cx(),
                                     wpassword.cy()));
 
-    //drawable.save_to_png("/tmp/password6.png");
+    drawable.save_to_png("/tmp/password6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xbd\xb4\xf0\x29\xfe\x50\x73\x9c\x0f\x67"
-        "\x01\x75\x40\xb2\x59\xf9\xf4\xfc\x62\x59")){
+        "\xef\xab\x93\xed\x43\x65\x61\xf7\x06\xad"
+        "\x6a\x9d\x66\x98\xf7\x50\x2a\x8b\xad\x07")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -332,14 +332,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip)
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = 760;
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test6", id, bg_color, fg_color, 0);
+    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wpassword.rdp_input_invalidate(Rect(20 + wpassword.dx(),
@@ -347,12 +347,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip)
                                     wpassword.cx(),
                                     wpassword.cy()));
 
-    //drawable.save_to_png("/tmp/password7.png");
+    drawable.save_to_png("/tmp/password7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xb7\x65\xdf\x56\xd0\x36\x89\xb0\xf1\x02"
-        "\xbf\x1d\x57\xb4\xb9\xe2\xa1\xff\x59\xe2")){
+        "\x67\x8c\x9c\x0c\x0b\x68\xf2\x3f\x8a\x1a"
+        "\x28\xeb\xfc\x26\x42\xd8\xf0\x0f\x0b\xe3")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -364,14 +364,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
     // WidgetPassword is a password widget of size 100x20 at position 10,7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = RED;
+    int fg_color = 0xFF0000; //red
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test6", id, bg_color, fg_color, 0);
+    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wpassword.rdp_input_invalidate(Rect(20 + wpassword.dx(),
@@ -379,12 +379,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
                                     30,
                                     10));
 
-    //drawable.save_to_png("/tmp/password8.png");
+    drawable.save_to_png("/tmp/password8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xbd\x4c\x99\xc3\x90\x02\xf4\x76\x35\x9a"
-        "\x46\xb4\x61\xa4\x42\x17\xca\x49\x94\x6f")){
+        "\x25\xb0\x8d\xea\xd3\x3d\xae\x20\x7f\xee"
+        "\xd1\x87\xc5\x99\x54\x61\x61\xc9\x10\x66")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -413,14 +413,14 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, &notifier, "abcdef", 0, GREEN, RED);
+    WidgetPassword wpassword(&drawable, x, y, cx, parent, &notifier, "abcdef", 0, 0x00FFFF, 0x0000FF);
 
     wpassword.rdp_input_invalidate(wpassword.rect);
-    //drawable.save_to_png("/tmp/password-e1.png");
+    drawable.save_to_png("/tmp/password-e1.png");
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xf8\x7c\x12\x8b\x4d\xee\xdb\xe2\x83\x1c"
-        "\x18\xcc\xac\xec\x9a\xf9\xf9\x56\xaf\x46")){
+        "\x29\x3f\x2a\x59\x5a\x6c\x80\xbc\x0d\x23"
+        "\x59\x80\xfe\x37\xa6\x9e\x61\xcc\x8b\xdb")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -431,10 +431,10 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 16);
     wpassword.rdp_input_invalidate(wpassword.rect);
-    //drawable.save_to_png("/tmp/password-e2-1.png");
+    drawable.save_to_png("/tmp/password-e2-1.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x90\x07\x42\x25\x8c\x8e\x10\x6f\x0c\xa5"
-        "\xce\xa7\x3e\x44\x9f\xe7\xe3\x5c\x69\x28")){
+        "\x4a\x83\xd6\x99\xe6\x91\x24\xaf\x30\xe5"
+        "\x92\x3f\x11\x58\x0c\x95\xbe\x40\x6e\x64")){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == &wpassword);
@@ -446,10 +446,10 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17);
     wpassword.rdp_input_invalidate(wpassword.rect);
-    //drawable.save_to_png("/tmp/password-e2-2.png");
+    drawable.save_to_png("/tmp/password-e2-2.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\xcc\x03\x8c\x7b\xff\xd2\xa0\x3d\x33\x7f"
-        "\x98\xe0\x35\x4d\x88\x5f\x4a\xb7\x68\xe8")){
+        "\x61\xdc\xdb\x01\x24\xf7\x76\x7e\x9d\x27"
+        "\xf5\xbe\x3c\xb8\x12\x3e\xae\xa2\xff\xbf")){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == &wpassword);
@@ -460,10 +460,10 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.rect);
-    //drawable.save_to_png("/tmp/password-e3.png");
+    drawable.save_to_png("/tmp/password-e3.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x86\x71\x8c\x76\x5d\x6a\xdf\xfe\x0d\xda"
-        "\xb6\x4e\xfb\x0f\x9c\x69\x14\x4d\x0b\xa9")){
+        "\xa4\x18\x63\xb0\x11\x25\x41\x42\x62\x4f"
+        "\xaa\xac\x3e\x91\xa9\xa2\x9d\xbe\x4a\x76")){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == 0);
@@ -473,10 +473,10 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     wpassword.rdp_input_invalidate(wpassword.rect);
-    //drawable.save_to_png("/tmp/password-e4.png");
+    drawable.save_to_png("/tmp/password-e4.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\xcc\x03\x8c\x7b\xff\xd2\xa0\x3d\x33\x7f"
-        "\x98\xe0\x35\x4d\x88\x5f\x4a\xb7\x68\xe8")){
+        "\x61\xdc\xdb\x01\x24\xf7\x76\x7e\x9d\x27"
+        "\xf5\xbe\x3c\xb8\x12\x3e\xae\xa2\xff\xbf")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -484,30 +484,30 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     wpassword.rdp_input_invalidate(wpassword.rect);
-    //drawable.save_to_png("/tmp/password-e5.png");
+    drawable.save_to_png("/tmp/password-e5.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x90\x07\x42\x25\x8c\x8e\x10\x6f\x0c\xa5"
-        "\xce\xa7\x3e\x44\x9f\xe7\xe3\x5c\x69\x28")){
+        "\x4a\x83\xd6\x99\xe6\x91\x24\xaf\x30\xe5"
+        "\x92\x3f\x11\x58\x0c\x95\xbe\x40\x6e\x64")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.rect);
-    //drawable.save_to_png("/tmp/password-e6.png");
+    drawable.save_to_png("/tmp/password-e6.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x5b\xbe\x78\x8a\x2d\x91\xe8\xdb\xa0\x86"
-        "\x32\xf2\x59\x55\x5b\xba\xf8\x15\x51\x25")){
+        "\x94\x1e\xb1\x3f\x3d\x7a\xfb\xb2\xc9\x65"
+        "\x24\xa9\x8a\x7a\xe5\x56\x04\x91\x30\x3b")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.rect);
-    //drawable.save_to_png("/tmp/password-e7.png");
+    drawable.save_to_png("/tmp/password-e7.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x61\x99\xd8\x06\xde\xa1\x9c\x13\x8d\xea"
-        "\x02\x17\x7f\x56\x20\x21\x14\x78\x1d\x23")){
+        "\x2b\x52\xe5\x7b\xe0\x0b\xf8\x4c\x0c\x68"
+        "\x11\xb6\x1b\xfb\xf7\x5a\xa5\x88\xae\x43")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -517,10 +517,10 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     BOOST_CHECK(notifier.event == 0);
 
     wpassword.rdp_input_invalidate(wpassword.rect);
-    //drawable.save_to_png("/tmp/password-e8.png");
+    drawable.save_to_png("/tmp/password-e8.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x3d\x17\xfa\x0c\xcd\x5e\x0f\x5f\x8d\xd3"
-        "\xce\xbc\xf1\xeb\x5f\x8d\xe8\x0a\xb1\x37")){
+        "\xa3\x74\x36\x09\x57\xe3\xac\x39\xba\x20"
+        "\xe8\x5c\x58\x87\x56\xaa\xb5\x6e\x74\xdf")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -530,10 +530,10 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     BOOST_CHECK(notifier.event == 0);
 
     wpassword.rdp_input_invalidate(wpassword.rect);
-    //drawable.save_to_png("/tmp/password-e9.png");
+    drawable.save_to_png("/tmp/password-e9.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\xf8\x7c\x12\x8b\x4d\xee\xdb\xe2\x83\x1c"
-        "\x18\xcc\xac\xec\x9a\xf9\xf9\x56\xaf\x46")){
+        "\x29\x3f\x2a\x59\x5a\x6c\x80\xbc\x0d\x23"
+        "\x59\x80\xfe\x37\xa6\x9e\x61\xcc\x8b\xdb")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -543,10 +543,10 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     BOOST_CHECK(notifier.event == 0);
 
     wpassword.rdp_input_invalidate(wpassword.rect);
-    //drawable.save_to_png("/tmp/password-e10.png");
+    drawable.save_to_png("/tmp/password-e10.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x6e\x0a\x3a\x2f\xc3\xb2\xa7\x65\xb9\x4a"
-        "\xa0\x27\xd1\xc4\x5b\x0b\xc2\xbb\x8f\xd3")){
+        "\x60\xeb\x74\x18\x22\x17\xd4\xf9\xbb\x76"
+        "\xc2\x45\xc8\xe1\xa6\x31\x98\xe9\x85\x37")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -568,7 +568,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
 //     widget_for_receive_event.event = 0;
 //
 //     wpassword.rdp_input_invalidate(Rect(0, 0, wpassword.cx(), wpassword.cx()));
-//     //drawable.save_to_png("/tmp/password-e10.png");
+//     drawable.save_to_png("/tmp/password-e10.png");
 //     if (!check_sig(drawable.gd.drawable, message,
 //         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
 //         "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
@@ -609,7 +609,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
 //     // ask to widget to redraw at position 100,25 and of size 100x100.
 //     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
 //
-//     //drawable.save_to_png("/tmp/password9.png");
+//     drawable.save_to_png("/tmp/password9.png");
 //
 //     char message[1024];
 //     if (!check_sig(drawable.gd.drawable, message,
@@ -621,7 +621,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
 //     // ask to widget to redraw at it's current position
 //     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 //
-//     //drawable.save_to_png("/tmp/password10.png");
+//     drawable.save_to_png("/tmp/password10.png");
 //
 //     if (!check_sig(drawable.gd.drawable, message,
 //         "\x85\x0a\x9c\x09\x57\xd9\x99\x52\xed\xa8"

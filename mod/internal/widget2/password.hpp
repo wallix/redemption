@@ -43,7 +43,7 @@ public:
 
     WidgetPassword(ModApi* drawable, int16_t x, int16_t y, uint16_t cx,
                    Widget2* parent, NotifyApi* notifier, const char * text,
-                   int group_id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
+                   int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
                    std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
     : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, group_id)
     , buf_size(0)
@@ -100,6 +100,7 @@ public:
                                          this->y_text + this->dy() + 1,
                                          this->display_pass,
                                          this->fg_color,
+                                         this->bg_color,
                                          this->rect.intersect(clip)
                                          );
         this->draw_cursor(clip);

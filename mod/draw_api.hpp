@@ -36,12 +36,6 @@ public:
 
     virtual void server_draw_text(int16_t x, int16_t y, const char * text,
                                   uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) = 0;
-
-    virtual void server_draw_text(int16_t x, int16_t y, const char * text,
-                                  uint32_t fgcolor, const Rect & clip)
-    {
-        this->server_draw_text(x, y, text, fgcolor, ~fgcolor, clip);
-    }
 };
 
 #endif

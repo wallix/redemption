@@ -50,11 +50,12 @@ public:
 
     WidgetSelectLine(ModApi* drawable, const Rect& rect,
                      Widget2* parent, NotifyApi* notifier, int group_id = 0,
-                     int bgcolor = GREY, uint border_height = 1,
+                     int fgcolor1 = BLACK, int fgcolor2 = BLACK,
+                     int current_fgcolor = BLACK,
                      int bgcolor1 = WABGREEN, int bgcolor2 = GREEN,
-                     int current_bgcolor = DARK_GREEN, int fgcolor1 = BLACK,
-                     int fgcolor2 = BLACK, int current_fgcolor = BLACK,
-                     int xtext = 0, int ytext = 0)
+                     int current_bgcolor = DARK_GREEN,
+                     int xtext = 0, int ytext = 0,
+                     int bgcolor = GREY, uint border_height = 1)
     : Widget2(drawable, rect, parent, notifier, group_id)
     , current_index(-1u)
     , current_bg_color(current_bgcolor)
@@ -92,8 +93,8 @@ public:
             0,
             this->labels.size() * (lcy + this->h_border),
             this, NULL, line, false, 0,
-            b ? this->bg_color1 : this->bg_color2,
             b ? this->fg_color1 : this->fg_color2,
+            b ? this->bg_color1 : this->bg_color2,
             this->x_text, this->y_text
         );
         label->rect.cx = this->cx();
@@ -140,7 +141,7 @@ public:
 
         for (std::size_t i = 0; i < size; ++i) {
             Widget2 * w = this->labels[i];
-                Rect rect = new_clip.intersect(w->rect);
+            Rect rect = new_clip.intersect(w->rect);
 
             w->refresh(rect);
 
@@ -283,34 +284,34 @@ public:
                    uint16_t width, uint16_t height, NotifyApi* notifier,
                    const char * current_page, const char * number_of_page)
     : WidgetComposite(drawable, Rect(0,0,width,height), NULL, notifier)
-    , device_label(drawable, 20, 10, this, NULL, device_name, true, -10, GREY, BLACK)
-    , device_group_label(drawable, 20, 0, this, NULL, "Device Group", true, -10, GREY, BLACK)
-    , account_device_label(drawable, 150, 0, this, NULL, "Account Device", true, -10, GREY, BLACK)
-    , protocol_label(drawable, 500, 0, this, NULL, "Protocol", true, -10, GREY, BLACK)
-    , close_time_label(drawable, 620, 0, this, NULL, "Close Time", true, -10, GREY, BLACK)
-    , device_group_lines(drawable, Rect(15,0,130,1), this, this, -11, GREY, 1,
-                         0xEEFAEE, 0xCCEEDD, 0XAAFFAA, BLACK, BLACK, BLACK, 5, 1)
-    , account_device_lines(drawable, Rect(145,0,350,1), this, this, -11, GREY, 1,
-                           0xEEFAEE, 0xCCEEDD, 0XAAFFAA, BLACK, BLACK, BLACK, 5, 1)
-    , protocol_lines(drawable, Rect(495,0,120,1), this, this, -11, GREY, 1,
-                     0xEEFAEE, 0xCCEEDD, 0XAAFFAA, BLACK, BLACK, BLACK, 5, 1)
-    , close_time_lines(drawable, Rect(615,0,170,1), this, this, -11, GREY, 1,
-                       0xEEFAEE, 0xCCEEDD, 0XAAFFAA, BLACK, BLACK, BLACK, 5, 1)
-    , filter_device_group(drawable, 20, 0, 120, this, this, NULL, -12, WHITE, BLACK, -1, 1, 1)
-    , filter_account_device(drawable, 150, 0, 340, this, this, NULL, -12, WHITE, BLACK, -1, 1, 1)
+    , device_label(drawable, 20, 10, this, NULL, device_name, true, -10, BLACK, GREY)
+    , device_group_label(drawable, 20, 0, this, NULL, "Device Group", true, -10, BLACK, GREY)
+    , account_device_label(drawable, 150, 0, this, NULL, "Account Device", true, -10, BLACK, GREY)
+    , protocol_label(drawable, 500, 0, this, NULL, "Protocol", true, -10, BLACK, GREY)
+    , close_time_label(drawable, 620, 0, this, NULL, "Close Time", true, -10, BLACK, GREY)
+    , device_group_lines(drawable, Rect(15,0,130,1), this, this, -11,
+                         BLACK, BLACK, BLACK, 0xEEFAEE, 0xCCEEDD, 0XAAFFAA, 5, 1, GREY, 1)
+    , account_device_lines(drawable, Rect(145,0,350,1), this, this, -11,
+                           BLACK, BLACK, BLACK, 0xEEFAEE, 0xCCEEDD, 0XAAFFAA, 5, 1, GREY, 1)
+    , protocol_lines(drawable, Rect(495,0,120,1), this, this, -11,
+                     BLACK, BLACK, BLACK, 0xEEFAEE, 0xCCEEDD, 0XAAFFAA, 5, 1, GREY, 1)
+    , close_time_lines(drawable, Rect(615,0,170,1), this, this, -11,
+                       BLACK, BLACK, BLACK, 0xEEFAEE, 0xCCEEDD, 0XAAFFAA, 5, 1, GREY, 1)
+    , filter_device_group(drawable, 20, 0, 120, this, this, NULL, -12, BLACK, WHITE, -1, 1, 1)
+    , filter_account_device(drawable, 150, 0, 340, this, this, NULL, -12, BLACK, WHITE, -1, 1, 1)
     //BEGIN WidgetPager
-    , first_page(drawable, 0, 0, this, notifier, "<<", true, -15, WHITE, BLACK, 8, 4)
-    , prev_page(drawable, 0, 0, this, notifier, "<", true, -15, WHITE, BLACK, 8, 4)
+    , first_page(drawable, 0, 0, this, notifier, "<<", true, -15, BLACK, WHITE, 8, 4)
+    , prev_page(drawable, 0, 0, this, notifier, "<", true, -15, BLACK, WHITE, 8, 4)
     , current_page(drawable, 0, 0, this->first_page.cy(), this, notifier,
-                   current_page, -15, WHITE, BLACK, -1, 1, 1)
+                   current_page, -15, BLACK, WHITE, -1, 1, 1)
     , number_page(drawable, 0, 0, this, NULL, temporary_number_of_page(number_of_page).buffer,
-                  true, -15, GREY, BLACK)
-    , next_page(drawable, 0, 0, this, notifier, ">>", true, -15, WHITE, BLACK, 8, 4)
-    , last_page(drawable, 0, 0, this, notifier, ">", true, -15, WHITE, BLACK, 8, 4)
+                  true, -15, BLACK, GREY)
+    , next_page(drawable, 0, 0, this, notifier, ">>", true, -15, BLACK, WHITE, 8, 4)
+    , last_page(drawable, 0, 0, this, notifier, ">", true, -15, BLACK, WHITE, 8, 4)
     //END WidgetPager
-    , logout(drawable, 0, 0, this, notifier, "Logout", true, -16, WHITE, BLACK, 8, 4)
-    , apply(drawable, 0, 0, this, notifier, "Appy", true, -17, WHITE, BLACK, 8, 4)
-    , connect(drawable, 0, 0, this, notifier, "Connect", true, -18, WHITE, BLACK, 8, 4)
+    , logout(drawable, 0, 0, this, notifier, "Logout", true, -16, BLACK, WHITE, 8, 4)
+    , apply(drawable, 0, 0, this, notifier, "Appy", true, -17, BLACK, WHITE, 8, 4)
+    , connect(drawable, 0, 0, this, notifier, "Connect", true, -18, BLACK, WHITE, 8, 4)
     , widget_focused(&this->filter_account_device/*device_group_lines*/)
     {
         this->child_list.push_back(&this->device_label);
@@ -409,9 +410,10 @@ public:
     {
         if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
             Widget2 * w = this->child_at_pos(x,y);
-            if (w->group_id == this->filter_account_device.group_id
+            if (w && (
+                w->group_id == this->filter_account_device.group_id
              || w->group_id == this->device_group_lines.group_id
-             || w == &this->current_page) {
+             || w == &this->current_page)) {
                 this->widget_focused = w;
                 w->rdp_input_mouse(device_flags, x, y, keymap);
                 return ;

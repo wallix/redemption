@@ -26,28 +26,20 @@
 #include "mod_api.hpp"
 #include "internal/internal_mod.hpp"
 #include "selector.hpp"
-#include "notify/notify_selector.hpp"
+
+TODO("Old SelectorMod Test")
 
 class widget2_mod : public internal_mod
 {
-    class Notifier : public NotifySelector {
-        widget2_mod * api;
-
+    class Notifier : public NotifyApi
+    {
     public:
-        Notifier(ModContext& context, widget2_mod * mod)
-        : NotifySelector(context, NULL)
-        , api(mod)
+        Notifier()
         {}
 
         virtual void notify(Widget2 * sender, notify_event_t event,
                             unsigned long param, unsigned long param2)
-        {
-            NotifySelector::notify(sender, event, param, param2);
-            if (NOTIFY_SUBMIT == event && sender == &this->api->selector.logout) {
-                this->api->signal = BACK_EVENT_NEXT;
-                this->api->event.set();
-            }
-        }
+        {}
     } notifier;
 
     WidgetSelector selector;
@@ -55,14 +47,11 @@ class widget2_mod : public internal_mod
 public:
     widget2_mod(ModContext& context, Front& front, uint16_t width, uint16_t height)
     : internal_mod(front, width, height)
-    , notifier(context, this)
+    , notifier()
     , selector(this, "bidule", width, height, &this->notifier,
                context.get(STRAUTHID_SELECTOR_CURRENT_PAGE),
                context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES))
     {
-        this->notifier.selector = &this->selector;
-        this->notifier.refresh_context();
-
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
@@ -90,14 +79,6 @@ public:
 
     virtual ~widget2_mod()
     {}
-
-//     virtual BackEvent_t draw_event()
-//     {
-//         this->refresh();
-//         //this->event.reset();
-//         this->event.set(33333); // 0.3s is 30fps
-//         return BACK_EVENT_NONE;
-//     }
 
     virtual void rdp_input_invalidate(const Rect& r)
     {
