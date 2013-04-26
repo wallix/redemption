@@ -227,28 +227,27 @@ public:
                 if (this->edit_pos < this->num_chars) {
                     this->move_to_last_character();
                 }
-            } else {
-                TODO("Bug")
+            }
+            else {
                 Rect crect = this->get_cursor_rect();
                 int xx = this->dx() + this->label.x_text;
                 size_t e = this->edit_pos;
                 this->edit_pos = 0;
                 this->edit_buffer_pos = 0;
                 size_t len = this->utf8len_current_char();
-                this->edit_buffer_pos += this->utf8len_current_char();
                 while (this->edit_buffer_pos < this->buffer_size) {
                     char c = this->label.buffer[this->edit_buffer_pos];
-                    this->label.buffer[this->edit_buffer_pos] = 0;
+                    this->label.buffer[this->edit_buffer_pos + len] = 0;
                     int w;
-                    this->drawable->text_metrics(this->label.buffer + this->edit_buffer_pos - len, w, this->h_text);
+                    this->drawable->text_metrics(this->label.buffer + this->edit_buffer_pos, w, this->h_text);
                     xx += w;
                     if (xx >= x) {
                         xx -= w;
                         break;
                     }
-                    this->label.buffer[this->edit_buffer_pos] = c;
+                    this->label.buffer[this->edit_buffer_pos + len] = c;
                     len = this->utf8len_current_char();
-                    this->edit_buffer_pos += this->utf8len_current_char();
+                    this->edit_buffer_pos += len;
                     ++this->edit_pos;
                 }
                 this->cursor_px_pos = xx - (this->dx() + this->label.x_text);
