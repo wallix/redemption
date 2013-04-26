@@ -185,6 +185,9 @@ struct Inifile {
         bool enable_ip_transparent;
         char certificate_password[256];
 
+        char png_path[1024];
+        char wrm_path[1024];
+
         // Section "debug"
         struct {
             uint32_t x224;
@@ -300,6 +303,8 @@ struct Inifile {
             strcpy(this->globals.listen_address, "0.0.0.0");
             this->globals.enable_ip_transparent  = false;
             strcpy(this->globals.certificate_password, "inquisition");
+            strcpy(this->globals.png_path, PNG_PATH);
+            strcpy(this->globals.wrm_path, WRM_PATH);
 
             memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
 
@@ -471,6 +476,12 @@ struct Inifile {
             }
             else if (0 == strcmp(key, "certificate_password")){
                 strcpy(this->globals.certificate_password, value);
+            }
+            else if (0 == strcmp(key, "png_path")){
+                strcpy(this->globals.png_path, value);
+            }
+            else if (0 == strcmp(key, "wrm_path")){
+                strcpy(this->globals.wrm_path, value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
