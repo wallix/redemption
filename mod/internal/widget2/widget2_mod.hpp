@@ -111,15 +111,47 @@ class widget2_mod : public internal_mod
             //this->api->text_metrics(text, width, height);
         }
     } widget_mod_api;
+
+    class Notifier : public NotifyApi {
+        widget2_mod * api;
+
+    public:
+        Notifier(widget2_mod * mod)
+        : api(mod)
+        {}
+        virtual void notify(Widget2 * sender, notify_event_t event,
+                            unsigned long param, unsigned long param2)
+        {
+            if (NOTIFY_SUBMIT == event) {
+                if (sender == &this->api->selector.logout) {
+                    this->api->selector.context.ask(STRAUTHID_AUTH_USER);
+                    this->api->selector.context.ask(STRAUTHID_PASSWORD);
+                    this->api->selector.context.ask(STRAUTHID_TARGET_USER);
+                    this->api->selector.context.ask(STRAUTHID_TARGET_DEVICE);
+                    this->api->selector.context.ask(STRAUTHID_SELECTOR);
+                    this->api->signal = BACK_EVENT_NEXT;
+                    this->api->event.set();
+                }
+                else if (sender == &this->api->selector.connect) {
+                }
+                else if (sender == &this->api->selector.apply
+                      || sender == &this->api->selector.filter_account_device
+                      || sender == &this->api->selector.filter_device_group
+                ) {
+                }
+            }
+        }
+    } notifier;
+
     WidgetSelector selector;
 
 public:
     widget2_mod(ModContext& context, Front& front, uint16_t width, uint16_t height)
     : internal_mod(front, width, height)
     , widget_mod_api(this)
-    , selector(context, &this->widget_mod_api, "bidule", width, height, NULL)
+    , notifier(this)
+    , selector(context, &this->widget_mod_api, "bidule", width, height, &this->notifier)
     {
-        this->selector.refresh_context();
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
@@ -165,14 +197,12 @@ public:
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
-        //this->selector.rdp_input_mouse(device_flags, x, y, keymap);
+        this->selector.rdp_input_mouse(device_flags, x, y, keymap);
     }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        this->front.begin_update();
-        this->selector.account_device_lines.rdp_input_scancode(param1, param2, param3, param4, keymap);
-        this->front.end_update();
+        this->selector.rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
@@ -183,6 +213,12 @@ public:
         this->front.begin_update();
         this->selector.refresh(this->selector.rect);
         this->front.end_update();
+    }
+
+    virtual BackEvent_t draw_event()
+    {
+        this->event.reset();
+        return this->signal;
     }
 };
 

@@ -62,9 +62,9 @@ public:
         this->label.rect.y = y + 1;
     }
 
-    virtual void draw(const Rect& clip)
+    void update_draw_state(const Rect& clip)
     {
-        if (this->state == 1) {
+        if (this->state & 1) {
             ++this->label.rect.x;
             ++this->label.rect.y;
             --this->label.rect.cx;
@@ -100,6 +100,11 @@ public:
                 this->dx(), this->dy() + 1, 1, this->cy() - 2
             )), this->color_border_left_top), this->rect);
         }
+    }
+
+    virtual void draw(const Rect& clip)
+    {
+        this->update_draw_state(clip);
         //right
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
@@ -121,32 +126,24 @@ public:
         this->color_border_left_top ^= this->color_border_right_bottom;
         this->color_border_right_bottom ^= this->color_border_left_top;
         this->color_border_left_top ^= this->color_border_right_bottom;
+        this->drawable->begin_update();
+        this->update_draw_state(this->rect);
+        this->drawable->end_update();
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
-        switch (device_flags) {
-            case CLIC_BUTTON1_DOWN:
-                this->state = 1;
-                this->swap_border_color();
-                break;
-            case CLIC_BUTTON1_UP:
-                if (this->state & 1) {
-                    this->state = 0;
-                    this->swap_border_color();
-                    this->send_notify(NOTIFY_SUBMIT);
-                }
-                break;
-            case FOCUS_END:
-                if (this->state & 1) {
-                    this->state = 0;
-                    this->swap_border_color();
-                }
-                break;
-            default:
-                this->Widget2::rdp_input_mouse(device_flags, x, y, keymap);
-                break;
+        if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN) && (this->state & 1) == 0) {
+            this->state |= 1;
+            this->swap_border_color();
         }
+        else if (device_flags == MOUSE_FLAG_BUTTON1 && this->state & 1) {
+            this->state &= ~1;
+            this->swap_border_color();
+            this->send_notify(NOTIFY_SUBMIT);
+        }
+        else
+            this->Widget2::rdp_input_mouse(device_flags, x, y, keymap);
     }
 };
 
