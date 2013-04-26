@@ -368,6 +368,19 @@ struct FileToGraphic
                         this->stream.in_copy_bytes(this->input, this->input_len);
                         this->input[this->input_len] = 0;
                         this->stream.p = this->stream.end;
+
+                        StaticStream ss(this->input, this->input_len);
+                        uint32_t     key;
+
+                        while (ss.in_check_rem(sizeof(uint32_t))) {
+                            uint32_t key = ss.in_uint32_le();
+
+                            LOG(LOG_INFO, "TIMESTAMP %u.%u mouse '%c'(0x%X)"
+                                , this->record_now.tv_sec
+                                , this->record_now.tv_usec
+                                , key
+                                , key);
+                        }
                     }
                 }
 

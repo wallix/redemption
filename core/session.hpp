@@ -137,7 +137,7 @@ struct Session {
                                              , this->ini->globals.debug.auth);
             this->mod = 0;
             this->internal_state = SESSION_STATE_ENTRY;
-            const bool enable_fastpath = false;
+            const bool enable_fastpath = true;
             const bool tls_support = this->ini->globals.enable_tls;
 //            this->front = new Front(&this->front_trans, &this->gen, ini, enable_fastpath, tls_support);
             this->front = new Front(&front_trans, &this->gen, ini, enable_fastpath, tls_support);
