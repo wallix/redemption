@@ -64,7 +64,7 @@
 #include "transitory/transitory.hpp"
 #include "cli/cli_mod.hpp"
 
-#include "internal/widget2/widget2_mod.hpp"
+#include "internal/widget2/selector_mod.hpp"
 
 using namespace std;
 
@@ -137,7 +137,7 @@ struct Session {
                                              , this->ini->globals.debug.auth);
             this->mod = 0;
             this->internal_state = SESSION_STATE_ENTRY;
-            const bool enable_fastpath = false;
+            const bool enable_fastpath = true;
             const bool tls_support = this->ini->globals.enable_tls;
 //            this->front = new Front(&this->front_trans, &this->gen, ini, enable_fastpath, tls_support);
             this->front = new Front(&front_trans, &this->gen, ini, enable_fastpath, tls_support);
@@ -694,9 +694,9 @@ struct Session {
                     break;
                     case INTERNAL_WIDGET2_TEST:
                         if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'widget2_test'");
+                            LOG(LOG_INFO, "Session::Creation of internal module 'widget2_selecteur_test'");
                         }
-                        this->mod = new widget2_mod(
+                        this->mod = new SelectorMod(
                             *this->context,
                             *this->front,
                             this->front->client_info.width,

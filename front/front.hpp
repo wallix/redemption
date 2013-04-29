@@ -304,7 +304,7 @@ TODO("Pass font name as parameter in constructor")
     }
 
     TODO(" implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
-    virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+    virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
         this->send_global_palette();
 
@@ -2038,7 +2038,17 @@ TODO("Pass font name as parameter in constructor")
                                     ke.spKeyboardFlags, ke.keyCode);
                             }
 
-                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode);
+                            BStream decoded_data(256);
+
+                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode, decoded_data);
+                            decoded_data.mark_end();
+
+                            if (this->capture && decoded_data.size()) {
+                                struct timeval now = tvtime();
+
+                                this->capture->input(now, decoded_data);
+                            }
+
                             cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
                             
                         }
@@ -3043,7 +3053,18 @@ TODO("Pass font name as parameter in constructor")
                                 LOG(LOG_INFO, "Slow-path INPUT_EVENT_SYNC eventTime=%u keyboardFlags=0x%04X keyCode=0x%04X",
                                     ie.eventTime, ke.keyboardFlags, ke.keyCode);
                             }
-                            this->keymap.event(ke.keyboardFlags, ke.keyCode);
+
+                            BStream decoded_data(256);
+
+                            this->keymap.event(ke.keyboardFlags, ke.keyCode, decoded_data);
+                            decoded_data.mark_end();
+
+                            if (this->capture && decoded_data.size()) {
+                                struct timeval now = tvtime();
+
+                                this->capture->input(now, decoded_data);
+                            }
+
                             if (this->up_and_running){
                                 cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
                             }

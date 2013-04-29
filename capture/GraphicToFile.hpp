@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Jonathan Poelen
+   Author(s): Christophe Grosjean, Jonathan Poelen, Raphael Zhou
 
    RDPGraphicDevice is an abstract class that describe a device able to
    proceed RDP Drawing Orders. How the drawing will be actually done
@@ -23,7 +23,6 @@
    - It may be sent on the wire,
    - Used to draw on some internal bitmap,
    - etc.
-
 */
 
 #ifndef _REDEMPTION_CAPTURE_GRAPHICTOFILE_HPP_
@@ -53,7 +52,7 @@ class WRMChunk_Send
         stream.out_uint32_le(8 + data_size);
         stream.out_uint16_le(count);
         stream.mark_end();
-    } 
+    }
 };
 
 template <size_t SZ>
@@ -78,7 +77,7 @@ public:
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error)
-    {   
+    {
         size_t to_buffer_len = len;
         while (this->stream.size() + to_buffer_len > max){
             BStream header(8);
@@ -88,7 +87,7 @@ public:
             size_t to_send = max - this->stream.size();
             this->trans->send(buffer + len - to_buffer_len, to_send);
             to_buffer_len -= to_send;
-            this->stream.reset();    
+            this->stream.reset();
         }
         this->stream.out_copy_bytes(buffer + len - to_buffer_len, to_buffer_len);
         REDOC("Marking end here is necessary for chunking")
@@ -111,6 +110,10 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
       " starting with chunk_type, chunk_size"
       " and order_count (whatever it means, depending on chunks")
 {
+    enum {
+        GTF_SIZE_KEYBUF_REC = 1024
+    };
+
     Transport * trans;
     BStream buffer_stream;
 
@@ -123,6 +126,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     uint16_t mouse_y;
     bool send_input;
     RDPDrawable * drawable;
+
+    BStream keyboard_buffer_32;
 
     GraphicToFile(const timeval& now
                 , Transport * trans
@@ -144,11 +149,12 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     , mouse_y(0)
     , send_input(false)
     , drawable(drawable)
+    , keyboard_buffer_32(GTF_SIZE_KEYBUF_REC * sizeof(uint32_t))
     {
         last_sent_timer.tv_sec = 0;
         last_sent_timer.tv_usec = 0;
         this->order_count = 0;
-        
+
         this->send_meta_chunk();
         this->send_image_chunk();
     }
@@ -174,6 +180,12 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->mouse_y = mouse_y;
     }
 
+    virtual void input(const timeval & now, Stream & input_data_32) {
+        uint32_t count  = input_data_32.size() / sizeof(uint32_t);
+
+        size_t c = min<size_t>(count, keyboard_buffer_32.room() / sizeof(uint32_t));
+        keyboard_buffer_32.out_copy_bytes(input_data_32.data, c * sizeof(uint32_t));
+    }
 
     void send_meta_chunk(void)
     {
@@ -216,6 +228,18 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         if (this->send_input){
             payload.out_uint16_le(this->mouse_x);
             payload.out_uint16_le(this->mouse_y);
+
+            keyboard_buffer_32.mark_end();
+
+            for (uint32_t i = 0, c = keyboard_buffer_32.size() / sizeof(uint32_t);
+                 i < c; i++) {
+                LOG(LOG_INFO, "send_timestamp_chunk: '%c'(0x%X)",
+                    ((uint32_t *)keyboard_buffer_32.data)[i],
+                    ((uint32_t *)keyboard_buffer_32.data)[i]);
+            }
+
+            payload.out_copy_bytes(keyboard_buffer_32.data, keyboard_buffer_32.size());
+            keyboard_buffer_32.rewind();
         }
         payload.mark_end();
 
@@ -326,8 +350,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         WRMChunk_Send chunk(header, SAVE_STATE, payload.size(), 1);
         this->trans->send(header);
         this->trans->send(payload);
-    }    
-
+    }
 
     void save_bmp_caches()
     {
@@ -382,8 +405,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->stream.reset();
     }
 
-
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) 
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         this->drawable->draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
@@ -424,7 +446,6 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->drawable->draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
-
 };
 
 #endif

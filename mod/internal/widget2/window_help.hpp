@@ -29,8 +29,8 @@ class WindowHelp : public Window
 public:
     WidgetMultiLine multi_line;
 
-    WindowHelp(ModApi* drawable, const Rect& rect, Widget2 * parent, NotifyApi* notifier, const char* caption, int id = 0)
-    : Window(drawable, rect, parent, notifier, caption, id)
+    WindowHelp(ModApi* drawable, const Rect& rect, Widget2 * parent, NotifyApi* notifier, const char* caption, int group_id = 0)
+    : Window(drawable, rect, parent, notifier, caption, group_id)
     , multi_line(drawable, Rect(20,
                                 this->titlebar.rect.cy + 2,
                                 rect.cx - 40,
@@ -47,7 +47,7 @@ public:
                  "<br>"
                  "Contact your system administrator if you are<br>"
                  "having problems logging on.",
-                 id)
+                 group_id)
     {
     }
 

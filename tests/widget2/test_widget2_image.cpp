@@ -97,7 +97,7 @@ struct TestDraw : ModApi
     virtual void end_update()
     {}
 
-    virtual void server_draw_text(int , int , const char* , uint32_t , const Rect& )
+    virtual void server_draw_text(int16_t , int16_t , const char* , uint32_t , uint32_t , const Rect& )
     {
         BOOST_CHECK(false);
     }

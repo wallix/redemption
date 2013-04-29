@@ -62,22 +62,22 @@ private:
 
 public:
     WindowWabClose(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
-                   NotifyApi* notifier, const char * diagnostic_text, int id = 0,
+                   NotifyApi* notifier, const char * diagnostic_text, int group_id = 0,
                    const char * username = 0, const char * target = 0,
-                   int bgcolor = DARK_WABGREEN, int fgcolor = BLACK)
-    : Window(drawable, Rect(x,y,1,1), parent, notifier, "Connection closed", bgcolor, id)
+                   int fgcolor = BLACK, int bgcolor = DARK_WABGREEN)
+    : Window(drawable, Rect(x,y,1,1), parent, notifier, "Connection closed", bgcolor, group_id)
     , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_LOGO24, this, NULL, -10)
     , username_label(drawable, this->img.cx() + 20, 0, this, NULL,
                      temporary_text("Username: ", username).text,
-                     true, -11, bgcolor, fgcolor)
+                     true, -11, fgcolor, bgcolor)
     , target_label(drawable, this->img.cx() + 20, 0, this, NULL,
                    temporary_text("Target: ", target).text,
-                   true, -12, bgcolor, fgcolor)
-    , cancel(drawable, 0, 0, this, this, "Cancel", true, -13, WHITE, BLACK, 6, 2)
+                   true, -12, fgcolor, bgcolor)
+    , cancel(drawable, 0, 0, this, this, "Cancel", true, -13, BLACK, WHITE, 6, 2)
     , diagnostic(drawable, this->img.cx() + 20, 0, this, NULL,
-                 "Diagnostic:", true, -15, bgcolor, fgcolor)
+                 "Diagnostic:", true, -15, fgcolor, bgcolor)
     , diagnostic_lines(drawable, this->img.cx() + 20, 0, this, NULL,
-                       diagnostic_text, true, -16, bgcolor, fgcolor)
+                       diagnostic_text, true, -16, fgcolor, bgcolor)
     {
         this->child_list.push_back(&this->img);
         this->child_list.push_back(&this->username_label);

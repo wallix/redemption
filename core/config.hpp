@@ -185,6 +185,9 @@ struct Inifile {
         bool enable_ip_transparent;
         char certificate_password[256];
 
+        char png_path[1024];
+        char wrm_path[1024];
+
         // Section "debug"
         struct {
             uint32_t x224;
@@ -300,6 +303,8 @@ struct Inifile {
             strcpy(this->globals.listen_address, "0.0.0.0");
             this->globals.enable_ip_transparent  = false;
             strcpy(this->globals.certificate_password, "inquisition");
+            strcpy(this->globals.png_path, PNG_PATH);
+            strcpy(this->globals.wrm_path, WRM_PATH);
 
             memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
 
@@ -433,7 +438,8 @@ struct Inifile {
                 this->globals.encryptionLevel = level_from_cstr(value);
             }
             else if (0 == strcmp(key, "authip")){
-                strcpy(this->globals.authip, value);
+                strncpy(this->globals.authip, value, sizeof(this->globals.authip));
+                this->globals.authip[sizeof(this->globals.authip) - 1] = 0;
             }
             else if (0 == strcmp(key, "authport")){
                 this->globals.authport = long_from_cstr(value);
@@ -451,7 +457,8 @@ struct Inifile {
                 this->globals.internal_domain = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "dynamic_conf_path")){
-                strcpy(this->globals.dynamic_conf_path, value);
+                strncpy(this->globals.dynamic_conf_path, value, sizeof(this->globals.dynamic_conf_path));
+                this->globals.dynamic_conf_path[sizeof(this->globals.dynamic_conf_path) - 1] = 0;
             }
             else if (0 == strcmp(key, "auth_channel")){
                 strncpy(this->globals.auth_channel, value, 8);
@@ -464,13 +471,23 @@ struct Inifile {
                 this->globals.enable_tls = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "listen_address")){
-                strcpy(this->globals.listen_address, value);
+                strncpy(this->globals.listen_address, value, sizeof(this->globals.listen_address));
+                this->globals.listen_address[sizeof(this->globals.listen_address) - 1] = 0;
             }
             else if (0 == strcmp(key, "enable_ip_transparent")){
                 this->globals.enable_ip_transparent = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "certificate_password")){
-                strcpy(this->globals.certificate_password, value);
+                strncpy(this->globals.certificate_password, value, sizeof(this->globals.certificate_password));
+                this->globals.certificate_password[sizeof(this->globals.certificate_password) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "png_path")){
+                strncpy(this->globals.png_path, value, sizeof(this->globals.png_path));
+                this->globals.png_path[sizeof(this->globals.png_path) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "wrm_path")){
+                strncpy(this->globals.wrm_path, value, sizeof(this->globals.wrm_path));
+                this->globals.wrm_path[sizeof(this->globals.wrm_path) - 1] = 0;
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -520,7 +537,8 @@ struct Inifile {
                 this->globals.png_limit   = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "replay_path")){
-                strcpy(this->globals.replay_path, value);
+                strncpy(this->globals.replay_path, value, sizeof(this->globals.replay_path));
+                this->globals.replay_path[sizeof(this->globals.replay_path) - 1] = 0;
             }
             else if (0 == strcmp(key, "l_bitrate")){
                 this->globals.l_bitrate   = long_from_cstr(value);
@@ -627,7 +645,8 @@ struct Inifile {
                 this->globals.debug.log_type = logtype_from_cstr(value);
             }
             else if (0 == strcmp(key, "log_file_path")){
-                strcpy(this->globals.debug.log_file_path, value);
+                strncpy(this->globals.debug.log_file_path, value, sizeof(this->globals.debug.log_file_path));
+                this->globals.debug.log_file_path[sizeof(this->globals.debug.log_file_path) - 1] = 0;
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

@@ -38,7 +38,7 @@ struct TestDraw : ModApi
     Font font;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, true)
+    : gd(w, h, false)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
@@ -98,7 +98,7 @@ struct TestDraw : ModApi
     virtual void end_update()
     {}
 
-    virtual void server_draw_text(int x, int y, const char* text, uint32_t fgcolor, const Rect& clip)
+    virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, const Rect& clip)
     {
         this->gd.server_draw_text(x, y, text, fgcolor, clip, this->font);
     }
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox)
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, bg_color, fg_color);
+                         id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmsgbox.rdp_input_invalidate(Rect(0, 0, wmsgbox.cx(), wmsgbox.cy()));
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox2)
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, bg_color, fg_color);
+                         id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmsgbox.rdp_input_invalidate(Rect(0 + wmsgbox.dx(),
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox3)
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, bg_color, fg_color);
+                         id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmsgbox.rdp_input_invalidate(Rect(0 + wmsgbox.dx(),
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox4)
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, bg_color, fg_color);
+                         id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmsgbox.rdp_input_invalidate(Rect(0 + wmsgbox.dx(),
@@ -298,7 +298,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox5)
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, bg_color, fg_color);
+                         id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmsgbox.rdp_input_invalidate(Rect(0 + wmsgbox.dx(),
@@ -336,7 +336,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox6)
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, bg_color, fg_color);
+                         id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmsgbox.rdp_input_invalidate(Rect(0 + wmsgbox.dx(),
@@ -374,7 +374,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBoxClip)
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, bg_color, fg_color);
+                         id, fg_color, bg_color);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wmsgbox.rdp_input_invalidate(Rect(20 + wmsgbox.dx(),
@@ -412,7 +412,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBoxClip2)
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, bg_color, fg_color);
+                         id, fg_color, bg_color);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wmsgbox.rdp_input_invalidate(Rect(20 + wmsgbox.dx(),
@@ -463,7 +463,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, bg_color, fg_color);
+                         id, fg_color, bg_color);
 
 
     BOOST_CHECK(notifier.sender == 0);
