@@ -25,6 +25,7 @@
 #ifndef _REDEMPTION_CORE_FRONT_API_HPP_
 #define _REDEMPTION_CORE_FRONT_API_HPP_
 
+#include "RDP/RDPGraphicDevice.hpp"
 
 class FrontAPI : public RDPGraphicDevice {
     public:
@@ -43,7 +44,7 @@ class FrontAPI : public RDPGraphicDevice {
     virtual void end_update() = 0;
     virtual void set_mod_palette(const BGRPalette & palette) = 0;
     virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask) = 0;
-    virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) = 0;
+    virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) = 0;
     virtual void text_metrics(const char * text, int & width, int & height) = 0;
     virtual int server_resize(int width, int height, int bpp) = 0;
     virtual void update_config(const timeval & now, const Inifile & ini){}

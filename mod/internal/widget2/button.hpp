@@ -34,16 +34,16 @@ public:
 
     WidgetButton(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
                  NotifyApi* notifier, const char * text, bool auto_resize = true,
-                 int id = 0, int bgcolor = BLACK, int fgcolor = WHITE,
+                 int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
                  int xtext = 0, int ytext = 0)
-    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, id)
-    , label(drawable, 1, 1, this, 0, text, auto_resize, 0, bgcolor, fgcolor, xtext, ytext)
+    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
+    , label(drawable, 1, 1, this, 0, text, auto_resize, 0, fgcolor, bgcolor, xtext, ytext)
     , state(0)
     {
         this->rect.cx = this->label.cx() + 3;
         this->rect.cy = this->label.cy() + 3;
         this->color_border_right_bottom = BLACK;
-        this->color_border_left_top = WHITE;
+        this->color_border_left_top = 0xCCCCCC;
         this->color_border_right_bottom2 = 0x888888;
     }
 

@@ -39,7 +39,7 @@ struct TestDraw : ModApi
     Font font;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, true)
+    : gd(w, h, false)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
@@ -99,7 +99,7 @@ struct TestDraw : ModApi
     virtual void end_update()
     {}
 
-    virtual void server_draw_text(int x, int y, const char* text, uint32_t fgcolor, const Rect& clip)
+    virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, const Rect& clip)
     {
         this->gd.server_draw_text(x, y, text, fgcolor, clip, this->font);
     }

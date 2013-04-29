@@ -46,7 +46,7 @@ struct TestWidgetMod : mod_api
     virtual void mod_event(int event_id) {}
     virtual void begin_update() { result += sprintf(result, "begin_update()\n"); }
     virtual void end_update() {result += sprintf(result, "end_update()\n");}
-    virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+    virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
         result += sprintf(result, "server_draw_text()\n");
     }

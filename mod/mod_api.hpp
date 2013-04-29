@@ -28,6 +28,7 @@
 #include "callback.hpp"
 #include "modcontext.hpp"
 #include "font.hpp"
+#include "draw_api.hpp"
 
 enum {
     BUTTON_STATE_UP   = 0,
@@ -42,7 +43,7 @@ enum BackEvent_t {
 };
 
 
-struct mod_api : public Callback, public RDPGraphicDevice {
+struct mod_api : public Callback, public DrawApi {
 
     wait_obj event;
     RDPPen pen;
@@ -67,12 +68,8 @@ struct mod_api : public Callback, public RDPGraphicDevice {
     TODO("remove event from mod api")
     virtual void mod_event(int event_id) {}
 
-    virtual void begin_update() = 0;
-    virtual void end_update() = 0;
-    virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) = 0;
-    virtual void text_metrics(const char * text, int & width, int & height) = 0;
     virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags) = 0;
-    
+
     // draw_event is run when mod socket received some data (drawing order),
     // these order could also be auto-generated, say to comply to some refresh.
 

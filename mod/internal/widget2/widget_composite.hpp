@@ -31,8 +31,8 @@ public:
     std::vector<Widget2*> child_list;
 
     WidgetComposite(ModApi * drawable, const Rect& rect, Widget2 * parent,
-                    NotifyApi * notifier, int id = 0)
-    : Widget2(drawable, rect, parent, notifier, id)
+                    NotifyApi * notifier, int group_id = 0)
+    : Widget2(drawable, rect, parent, notifier, group_id)
     , child_list()
     {
         //this->tab_flag = DELEGATE_CONTROL_TAB;
@@ -229,13 +229,13 @@ public:
         }
     }
 
-    virtual void notify(int id, EventType event)
+    virtual void notify(int group_id, EventType event)
     {
         if (event == FOCUS_BEGIN){
             for (std::size_t i = 0; i < this->child_list.size(); ++i)
             {
                 Widget2 * wchild = this->child_list[i];
-                if (wchild->has_focus && wchild->id != id) {
+                if (wchild->has_focus && wchild->id != group_id) {
                     wchild->has_focus = false;
                     wchild->notify_self(NOTIFY_FOCUS_END);
                 }
@@ -245,7 +245,7 @@ public:
                 this->notify_parent(FOCUS_BEGIN);
             }
         } else {
-            this->Widget2::notify(id, event);
+            this->Widget2::notify(group_id, event);
         }
     }
 #endif
@@ -282,12 +282,12 @@ protected:
         return -1;
     }
 
-    Widget2 * get_child_by_id(int id) const
+    Widget2 * get_child_by_group_id(int group_id) const
     {
         for (size_t i = 0; i < this->child_list.size(); i++)
         {
             struct Widget2 * w = this->child_list[i];
-            if (w->id == id)
+            if (w->group_id == group_id)
                 return w;
         }
         return 0;
