@@ -372,7 +372,7 @@ struct FileToGraphic
                         StaticStream ss(this->input, this->input_len);
 
                         for (size_t i = 0; i < this->nbconsumers ; i++){
-                            this->consumers[i]->input(ss);
+                            this->consumers[i]->input(this->record_now, ss);
                         }
 
                         if (this->verbose > 16) {

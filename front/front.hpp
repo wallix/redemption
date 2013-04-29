@@ -2044,7 +2044,9 @@ TODO("Pass font name as parameter in constructor")
                             decoded_data.mark_end();
 
                             if (this->capture && decoded_data.size()) {
-                                this->capture->input(decoded_data);
+                                struct timeval now = tvtime();
+
+                                this->capture->input(now, decoded_data);
                             }
 
                             cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
@@ -3058,7 +3060,9 @@ TODO("Pass font name as parameter in constructor")
                             decoded_data.mark_end();
 
                             if (this->capture && decoded_data.size()) {
-                                this->capture->input(decoded_data);
+                                struct timeval now = tvtime();
+
+                                this->capture->input(now, decoded_data);
                             }
 
                             if (this->up_and_running){

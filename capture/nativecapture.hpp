@@ -127,8 +127,8 @@ public:
         this->recorder.flush();
     }
 
-    virtual void input(Stream & input_data_32) {
-        this->recorder.input(input_data_32);
+    virtual void input(const timeval & now, Stream & input_data_32) {
+        this->recorder.input(now, input_data_32);
     }
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip)

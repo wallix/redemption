@@ -180,7 +180,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->mouse_y = mouse_y;
     }
 
-    virtual void input(Stream & input_data_32) {
+    virtual void input(const timeval & now, Stream & input_data_32) {
         uint32_t count  = input_data_32.size() / sizeof(uint32_t);
 
         size_t c = min<size_t>(count, keyboard_buffer_32.room() / sizeof(uint32_t));

@@ -167,9 +167,9 @@ public:
         }
     }
 
-    void input(Stream & input_data_32) {
+    void input(const timeval & now, Stream & input_data_32) {
         if (this->capture_wrm){
-            this->pnc->input(input_data_32);
+            this->pnc->input(now, input_data_32);
         }
     }
 
