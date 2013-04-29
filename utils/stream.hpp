@@ -1583,7 +1583,7 @@ TODO("check if implementation below is conforming to obfuscated text above (I ha
             this->out_uint8((uint8_t)(in_count / 2 - 16));
         }
         else{
-            this->out_uint8(0xf | mask);
+            this->out_uint8(0xf0 | mask);
             this->out_uint16_le(in_count / 2);
         }
     }
