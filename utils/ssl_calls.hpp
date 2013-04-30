@@ -116,7 +116,7 @@ class SslHMAC
     HMAC_CTX hmac;
 
     public:
-    SslHMAC(Stream & key, const EVP_MD *md = EVP_sha256())
+    SslHMAC(const Stream & key, const EVP_MD *md = EVP_sha256())
     {
         HMAC_Init(&this->hmac, key.data, key.size(), md);
     }
