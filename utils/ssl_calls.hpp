@@ -121,6 +121,11 @@ class SslHMAC
         HMAC_Init(&this->hmac, key.data, key.size(), EVP_sha256());
     }
 
+    ~SslHMAC()
+    {
+        HMAC_cleanup(&this->hmac);
+    }
+
     void update(const Stream & stream)
     {
         HMAC_Update(&this->hmac, stream.data, stream.size());
