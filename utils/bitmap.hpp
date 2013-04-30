@@ -863,7 +863,11 @@ public:
                     flags = 2;
                     return mix_count;
                 }
-                unsigned fom_count = this->get_fom_count_fill(Bpp, pmin, pmax, p + mix_count * Bpp, foreground);
+                
+                unsigned fom_count = 0;
+                if ((p2 >= pmin) && (p2 < pmax)) {
+                    fom_count = this->get_fom_count_fill(Bpp, pmin, pmax, p2, foreground);
+                }
                 if (fom_count){
                     flags = 3;
                     return mix_count + fom_count;
@@ -915,14 +919,16 @@ public:
             }
             p3 += Bpp;
             mix_count += 1;
-        }
-
-        if (mix_count >= 8) {
-            return 0;
+            if (mix_count >= 8) {
+                return 0;
+            }
         }
 
         if (mix_count){
-            unsigned fom_count = this->get_fom_count_fill(Bpp, pmin, pmax, p + mix_count * Bpp, foreground);
+            unsigned fom_count = 0;
+            if  (p3 >= pmin && p3 < pmax) {
+                fom_count = this->get_fom_count_fill(Bpp, pmin, pmax, p3, foreground);
+            }
             return fom_count ? mix_count + fom_count : 0;
         }
 
@@ -933,11 +939,6 @@ public:
     TODO(" derecursive it")
     unsigned get_fom_count_fill(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * pmax, const uint8_t * p, unsigned foreground) const
     {
-
-        if  (p < pmin || p >= pmax) {
-            return 0;
-        }
-
         unsigned fill_count = 0;
         const uint8_t * p2 = p;
         while  (p2 + Bpp <= pmax) {
@@ -950,16 +951,27 @@ public:
             fill_count = fill_count + 1;
         }
 
+        unsigned fom_count_fill = 0;
+        if (fill_count && (fill_count < 9)) {
+            fom_count_fill = fill_count;
+            unsigned mix_count2 = 0;
+            const uint8_t * p3 = p + fill_count * Bpp;
+            while (p3 < pmax){
+                if (this->get_pixel_above(Bpp, pmin, p3) ^ foreground ^ this->get_pixel(Bpp, p3)){
+                    break;
+                }
+                p3 += Bpp;
+                mix_count2 += 1;
+            }
 
-        if (fill_count >= 9) {
-            return 0;
+            if (mix_count2 && (mix_count2 < 9)) {
+                fom_count_fill += mix_count2;
+                if  (p3 >= pmin && p3 < pmax) {
+                    fom_count_fill += this->get_fom_count_fill(Bpp, pmin, pmax, p3, foreground);
+                }
+            }
         }
-
-        if (!fill_count){
-            return 0;
-        }
-
-        return fill_count + this->get_fom_count_mix(Bpp, pmin, pmax, p + fill_count * Bpp, foreground);
+        return fom_count_fill;
     }
 
 
@@ -973,17 +985,17 @@ public:
             }
             p2 += Bpp;
             mix_count += 1;
+            if (mix_count >= 9) {
+                return 0;
+            }
         }
 
-        if (mix_count >= 9) {
-            return 0;
+        if (mix_count){
+            if  ((p2 >= pmin) && (p2 < pmax)) {
+                mix_count += this->get_fom_count_fill(Bpp, pmin, pmax, p2, foreground);
+            }
         }
-
-        if (!mix_count){
-            return 0;
-        }
-
-        return mix_count + this->get_fom_count_fill(Bpp, pmin, pmax, p + mix_count * Bpp, foreground);
+        return mix_count;
     }
 
     TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.")
