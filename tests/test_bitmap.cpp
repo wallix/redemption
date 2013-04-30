@@ -253,20 +253,34 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 
         // Line above first line is black
         uint8_t masks[512];
-        BOOST_CHECK_EQUAL(0, bmp.get_fom_count(::nbbytes(bpp), pmin, pmax, bmp.data()+15, white));
-        BOOST_CHECK_EQUAL(2, bmp.get_fom_count(::nbbytes(bpp), pmin, pmax, bmp.data()+14, white));
+        unsigned flags = 0;
+        unsigned color = white;
+        BOOST_CHECK_EQUAL(1, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+15, color, flags));
+        BOOST_CHECK_EQUAL(white, color);
+        BOOST_CHECK_EQUAL(Bitmap::FLAG_FILL, flags);
+        BOOST_CHECK_EQUAL(2, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+14, color, flags));
+        BOOST_CHECK_EQUAL(white, color);
+        BOOST_CHECK_EQUAL(Bitmap::FLAG_FOM, flags);
         bmp.get_fom_masks(::nbbytes(bpp), pmin, pmin+14, masks, 2);
         BOOST_CHECK_EQUAL(0x01, masks[0]);
 
 
-        BOOST_CHECK_EQUAL(4, bmp.get_fom_count(::nbbytes(bpp), pmin, pmax, bmp.data()+12, white));
+        BOOST_CHECK_EQUAL(4, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+12, color, flags));
+        BOOST_CHECK_EQUAL(white, color);
+        BOOST_CHECK_EQUAL(Bitmap::FLAG_FOM, flags);
         bmp.get_fom_masks(::nbbytes(bpp), pmin, pmin+12, masks, 4);
         BOOST_CHECK_EQUAL(0x07, masks[0]);
 
-        BOOST_CHECK_EQUAL(5, bmp.get_fom_count(::nbbytes(bpp), pmin, pmax, bmp.data()+11, white));
-        BOOST_CHECK_EQUAL(6, bmp.get_fom_count(::nbbytes(bpp), pmin, pmax, bmp.data()+10, white));
+        BOOST_CHECK_EQUAL(5, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+11, color, flags));
+        BOOST_CHECK_EQUAL(white, color);
+        BOOST_CHECK_EQUAL(Bitmap::FLAG_FOM, flags);
 
-        BOOST_CHECK_EQUAL(12, bmp.get_fom_count(::nbbytes(bpp), pmin, pmax, bmp.data()+4, white));
+        BOOST_CHECK_EQUAL(6, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+10, color, flags));
+        BOOST_CHECK_EQUAL(white, color);
+        BOOST_CHECK_EQUAL(Bitmap::FLAG_FOM, flags);
+        BOOST_CHECK_EQUAL(12, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+4, color, flags));
+        BOOST_CHECK_EQUAL(white, color);
+        BOOST_CHECK_EQUAL(Bitmap::FLAG_FOM, flags);
         bmp.get_fom_masks(::nbbytes(bpp), pmin, pmin+4, masks, 12);
         BOOST_CHECK_EQUAL(0xA5, masks[0]);
         BOOST_CHECK_EQUAL(0x07, masks[1]);
@@ -292,6 +306,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         foreground = white;
         BOOST_CHECK_EQUAL(4, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, p, foreground, flags));
         BOOST_CHECK_EQUAL(0x04, foreground);
+        BOOST_CHECK_EQUAL(Bitmap::FLAG_MIX, flags);
     }
 
 
@@ -316,7 +331,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         unsigned flags = 0;
         BOOST_CHECK_EQUAL(2, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, p, foreground, flags));
         BOOST_CHECK_EQUAL(4, foreground);
-        BOOST_CHECK_EQUAL(3, flags); // MIX then FILL
+        BOOST_CHECK_EQUAL(Bitmap::FLAG_FOM, flags); // MIX then FILL
 
     }
 
