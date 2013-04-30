@@ -907,13 +907,13 @@ public:
         // it to black, as it's useless because fill_count allready does that.
         // Hence it's ok to check them independently.
 
-        const uint8_t * p2 = p;
+        const uint8_t * p3 = p;
         unsigned mix_count = 0;
-        while (p2 < pmax){
-            if (this->get_pixel_above(Bpp, pmin, p2) ^ foreground ^ this->get_pixel(Bpp, p2)){
+        while (p3 < pmax){
+            if (this->get_pixel_above(Bpp, pmin, p3) ^ foreground ^ this->get_pixel(Bpp, p3)){
                 break;
             }
-            p2 += Bpp;
+            p3 += Bpp;
             mix_count += 1;
         }
 
