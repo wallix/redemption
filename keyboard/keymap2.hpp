@@ -358,22 +358,27 @@ struct Keymap2
                             switch (extendedKeyCode){
                                /* kEYPAD LEFT ARROW */
                                 case 0x4b:
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2190); }
                                     this->push_kevent(KEVENT_LEFT_ARROW);
                                     break;
                                 /* kEYPAD UP ARROW */
                                 case 0x48:
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2191); }
                                     this->push_kevent(KEVENT_UP_ARROW);
                                     break;
                                 /* kEYPAD RIGHT ARROW */
                                 case 0x4d:
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2192); }
                                     this->push_kevent(KEVENT_RIGHT_ARROW);
                                     break;
                                 /* kEYPAD DOWN ARROW */
                                 case 0x50:
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2193); }
                                     this->push_kevent(KEVENT_DOWN_ARROW);
                                     break;
                                 /* kEYPAD HOME */
                                 case 0x47:
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2196); }
                                     this->push_kevent(KEVENT_HOME);
                                     break;
                                 /* kEYPAD PGUP */
@@ -386,10 +391,12 @@ struct Keymap2
                                     break;
                                 /* kEYPAD END */
                                 case 0x4F:
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2198); }
                                     this->push_kevent(KEVENT_END);
                                     break;
                                 /* kEYPAD DELETE */
                                 case 0x53:
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x007F); }
                                     this->push_kevent(KEVENT_DELETE);
                                 default:
                                     break;
@@ -528,22 +535,27 @@ struct Keymap2
                                 switch (extendedKeyCode){
                                 // LEFT ARROW
                                 case 0xCB:
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2190); }
                                     this->push_kevent(KEVENT_LEFT_ARROW);
                                     break;
                                 // UP ARROW
                                 case 0xC8:
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2191); }
                                     this->push_kevent(KEVENT_UP_ARROW);
                                     break;
                                 // RIGHT ARROW
                                 case 0xCD:
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2192); }
                                     this->push_kevent(KEVENT_RIGHT_ARROW);
                                     break;
                                 // DOWN ARROW
                                 case 0xD0:
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2193); }
                                     this->push_kevent(KEVENT_DOWN_ARROW);
                                     break;
                                 // HOME
                                 case 0xC7:
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2196); }
                                     this->push_kevent(KEVENT_HOME);
                                     break;
                                 // PGUP
@@ -556,6 +568,7 @@ struct Keymap2
                                     break;
                                 // END
                                 case 0xCF:
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2198); }
                                     this->push_kevent(KEVENT_END);
                                     break;
                                 // TAB
@@ -564,29 +577,29 @@ struct Keymap2
                                         this->push_kevent(KEVENT_BACKTAB);
                                     }
                                     else {
-                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x0F); }
+                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x0009); }
                                         this->push_kevent(KEVENT_TAB);
                                     }
                                     break;
                                 // backspace
                                 case 0x0E:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x0E); }
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x0008); }
                                     this->push_kevent(KEVENT_BACKSPACE);
                                     break;
                                 case 0xD3: // delete
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0xD3); }
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x007F); }
                                     this->push_kevent(KEVENT_DELETE);
                                     break;
                                 case 0x53: // numpad delete
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x53); }
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x007F); }
                                     this->push_kevent(KEVENT_DELETE);
                                     break;
                                 case 0x1C: // enter
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x1C); }
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x000D); }
                                     this->push_kevent(KEVENT_ENTER);
                                     break;
                                 case 0x9C: // numpad enter
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x9C); }
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x000D); }
                                     this->push_kevent(KEVENT_ENTER);
                                     break;
                                 default:
