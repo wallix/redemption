@@ -865,7 +865,7 @@ public:
                 }
                 
                 unsigned fom_count = 0;
-                if ((p2 >= pmin) && (p2 < pmax)) {
+                if (p2 < pmax) {
                     fom_count = this->get_fom_count_fill(Bpp, pmin, pmax, p2, foreground);
                 }
                 if (fom_count){
@@ -926,7 +926,7 @@ public:
 
         if (mix_count){
             unsigned fom_count = 0;
-            if  (p3 >= pmin && p3 < pmax) {
+            if  (p3 < pmax) {
                 fom_count = this->get_fom_count_fill(Bpp, pmin, pmax, p3, foreground);
             }
             return fom_count ? mix_count + fom_count : 0;
@@ -962,11 +962,13 @@ public:
                 }
                 p3 += Bpp;
                 mix_count2 += 1;
+                if (mix_count2 >= 9) {
+                    return fom_count_fill;
+                }
             }
-
-            if (mix_count2 && (mix_count2 < 9)) {
+            if (mix_count2) {
                 fom_count_fill += mix_count2;
-                if  (p3 >= pmin && p3 < pmax) {
+                if  (p3 < pmax) {
                     fom_count_fill += this->get_fom_count_fill(Bpp, pmin, pmax, p3, foreground);
                 }
             }
@@ -991,7 +993,7 @@ public:
         }
 
         if (mix_count){
-            if  ((p2 >= pmin) && (p2 < pmax)) {
+            if  (p2 < pmax) {
                 mix_count += this->get_fom_count_fill(Bpp, pmin, pmax, p2, foreground);
             }
         }
