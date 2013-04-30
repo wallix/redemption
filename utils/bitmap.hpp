@@ -726,6 +726,18 @@ private:
     }
 
 public:
+
+    enum {
+        FLAG_NONE = 0,
+        FLAG_FILL = 1,
+        FLAG_MIX  = 2,
+        FLAG_FOM  = 3,
+        FLAG_MIX_SET = 6,
+        FLAG_FOM_SET = 7,
+        FLAG_COLOR = 8,
+        FLAG_BICOLOR = 9,
+    };
+
     unsigned get_pixel(const uint8_t Bpp, const uint8_t * const p) const
     {
         return in_bytes_le(Bpp, p);
@@ -825,18 +837,18 @@ public:
             }
 
             if (fill_count >= 8) {
-                flags = 1;
+                flags = FLAG_FILL;
                 return fill_count;
             }
 
             if (fill_count) {
                 unsigned fom_count = this->get_fom_count_mix(Bpp, pmin, pmax, p + fill_count * Bpp, foreground);
                 if (fom_count){
-                    flags = 3;
+                    flags = FLAG_FILL|FLAG_MIX;
                     return fill_count + fom_count;
                 }
                 else {
-                    flags = 1;
+                    flags = FLAG_FILL;
                     return fill_count;
                 }
             }
@@ -860,7 +872,7 @@ public:
                 }
                 mix_count = 1 + acc;
                 if (mix_count >= 8) {
-                    flags = 2;
+                    flags = FLAG_MIX;
                     return mix_count;
                 }
                 
@@ -869,71 +881,17 @@ public:
                     fom_count = this->get_fom_count_fill(Bpp, pmin, pmax, p2, foreground);
                 }
                 if (fom_count){
-                    flags = 3;
+                    flags = FLAG_FILL|FLAG_MIX;
                     return mix_count + fom_count;
                 }
                 else {
-                    flags = 2;
+                    flags = FLAG_MIX;
                     return mix_count;
                 }
             }
         }
-        flags = 0;
+        flags = FLAG_NONE;
         return 0;
-    }
-
-    unsigned get_fom_count(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * pmax, const uint8_t * p, unsigned foreground) const
-    {
-        unsigned fill_count = 0;
-        const uint8_t * p2 = p;
-        while  (p2 + Bpp <= pmax) {
-            unsigned pixel = this->get_pixel(Bpp, p2);
-            unsigned ypixel = this->get_pixel_above(Bpp, pmin, p2);
-            if (ypixel != pixel){
-                break;
-            }
-            p2 += Bpp;
-            fill_count = fill_count + 1;
-        }
-
-        if (fill_count >= 8) {
-            return 0;
-        }
-
-        if (fill_count) {
-            unsigned fom_count = this->get_fom_count_mix(Bpp, pmin, pmax, p + fill_count * Bpp, foreground);
-            return fom_count ? fill_count + fom_count : 0;
-
-        }
-
-        // fill_count and mix_count can't match at the same time.
-        // this would mean that foreground is black, and we will never set
-        // it to black, as it's useless because fill_count allready does that.
-        // Hence it's ok to check them independently.
-
-        const uint8_t * p3 = p;
-        unsigned mix_count = 0;
-        while (p3 < pmax){
-            if (this->get_pixel_above(Bpp, pmin, p3) ^ foreground ^ this->get_pixel(Bpp, p3)){
-                break;
-            }
-            p3 += Bpp;
-            mix_count += 1;
-            if (mix_count >= 8) {
-                return 0;
-            }
-        }
-
-        if (mix_count){
-            unsigned fom_count = 0;
-            if  (p3 < pmax) {
-                fom_count = this->get_fom_count_fill(Bpp, pmin, pmax, p3, foreground);
-            }
-            return fom_count ? mix_count + fom_count : 0;
-        }
-
-        return 0;
-
     }
 
     TODO(" derecursive it")
@@ -1052,11 +1010,10 @@ public:
                     }
                 }
 
-                const unsigned fom_cost = 1                      // header
-                    + (foreground != new_foreground) * Bpp       // set
-                    + (flags == 3) * nbbytes(fom_count);         // mask
-                const unsigned copy_fom_cost = 1 * (copy_count == 0) // start copy
-                    + fom_count * Bpp;                               // pixels
+                const unsigned fom_cost = 1                            // header
+                    + (foreground != new_foreground) * Bpp             // set
+                    + (flags == FLAG_FOM) * nbbytes_large(fom_count);  // mask
+                const unsigned copy_fom_cost = 1 * (copy_count == 0) + fom_count * Bpp;                               // pixels
                 const unsigned color_cost = 1 + Bpp;
                 const unsigned bicolor_cost = 1 + 2*Bpp;
 
@@ -1064,15 +1021,15 @@ public:
                 && ((fom_count >= bicolor_count) || (bicolor_count == 0) || (bicolor_count < 4))
                 && fom_cost < copy_fom_cost) {
                     switch (flags){
-                        case 3:
+                        case FLAG_FOM:
                             this->get_fom_masks(Bpp, pmin, p, masks, fom_count);
                             if (new_foreground != foreground){
-                                flags += 4;
+                                flags = FLAG_FOM_SET;
                             }
                         break;
-                        case 2:
+                        case FLAG_MIX:
                             if (new_foreground != foreground){
-                                flags += 4;
+                                flags = FLAG_MIX_SET;
                             }
                         break;
                         default:
@@ -1080,87 +1037,72 @@ public:
                     }
                 }
                 else {
-                    unsigned copy_color_cost = (copy_count == 0) // start copy
-                        + color_count * Bpp;               // pixels
-                    unsigned copy_bicolor_cost = (copy_count == 0) // start copy
-                        + bicolor_count * Bpp;               // pixels
+                    unsigned copy_color_cost = (copy_count == 0) + color_count * Bpp;     // copy + pixels
+                    unsigned copy_bicolor_cost = (copy_count == 0) + bicolor_count * Bpp; // copy + pixels
 
-                    if ((color_cost < copy_color_cost)
-                    && (color_count > 0)){
-                        flags = 8;
+                    if ((color_cost < copy_color_cost) && (color_count > 0)){
+                        flags = FLAG_COLOR;
                     }
-                    else if ((bicolor_cost < copy_bicolor_cost)
-                    && (bicolor_count > 0)){
-                        flags = 9;
+                    else if ((bicolor_cost < copy_bicolor_cost) && (bicolor_count > 0)){
+                        flags = FLAG_BICOLOR;
                     }
                     else {
-                        flags = 0;
+                        flags = FLAG_NONE;
                         copy_count++;
                     }
                 }
 
                 if (flags && copy_count > 0){
-//                    LOG(LOG_INFO, "COPY1 %u", copy_count);
                     out.out_copy_sequence(Bpp, copy_count, p - copy_count * Bpp);
                     copy_count = 0;
                 }
 
-                TODO(" use symbolic values for flags")
                 switch (flags){
-                    case 9:
-//                        LOG(LOG_INFO, "BICOLOR %u", bicolor_count);
+                    case FLAG_BICOLOR:
                         out.out_bicolor_sequence(Bpp, bicolor_count, color, color2);
                         p+= bicolor_count * Bpp;
                     break;
 
-                    case 8:
-//                        LOG(LOG_INFO, "COLOR %u", color_count);
+                    case FLAG_COLOR:
                         out.out_color_sequence(Bpp, color_count, color);
                         p+= color_count * Bpp;
                     break;
 
-                    case 7:
-//                        LOG(LOG_INFO, "FOM_SET %u", fom_count);
+                    case FLAG_FOM_SET:
                         out.out_fom_sequence_set(Bpp, fom_count, new_foreground, masks);
                         foreground = new_foreground;
                         p+= fom_count * Bpp;
                     break;
 
-                    case 6:
-//                        LOG(LOG_INFO, "MIX_SET %u", fom_count);
+                    case FLAG_MIX_SET:
                         out.out_mix_count_set(fom_count);
                         out.out_bytes_le(Bpp, new_foreground);
                         foreground = new_foreground;
                         p+= fom_count * Bpp;
                     break;
 
-                    case 3:
-//                        LOG(LOG_INFO, "FOM %u", fom_count);
+                    case FLAG_FOM:
                         out.out_fom_sequence(fom_count, masks);
                         p+= fom_count * Bpp;
                     break;
 
-                    case 2:
-//                        LOG(LOG_INFO, "MIX %u", fom_count);
+                    case FLAG_MIX:
                         out.out_mix_count(fom_count);
                         p+= fom_count * Bpp;
                     break;
 
-                    case 1:
-//                        LOG(LOG_INFO, "FILL %u", fom_count);
+                    case FLAG_FILL:
                         out.out_fill_count(fom_count);
                         p+= fom_count * Bpp;
                     break;
 
-                    default:
-//                        LOG(LOG_INFO, "default, count BPP");
+                    default: // copy, but wait until next good sequence before actual sending
                         p += Bpp;
                     break;
                 }
             }
 
             if (copy_count > 0){
-//                LOG(LOG_INFO, "COPY2 %u", copy_count);
                 out.out_copy_sequence(Bpp, copy_count, p - copy_count * Bpp);
                 copy_count = 0;
             }
