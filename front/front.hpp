@@ -1908,8 +1908,7 @@ TODO("Pass font name as parameter in constructor")
                 if (this->verbose & 2){
                     LOG(LOG_INFO, "non licence packet: still waiting for licence");
                 }
-                ShareControl sctrl(sec.payload);
-                sctrl.recv_begin();
+                ShareControl_Recv sctrl(sec.payload);
 
                 switch (sctrl.pdu_type1) {
                 case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
@@ -1932,38 +1931,37 @@ TODO("Pass font name as parameter in constructor")
                         uint16_t originatorId = sctrl.payload.in_uint16_le();
                         this->process_confirm_active(sctrl.payload);
                     }
-
+                    TODO("check all payload data is consumed")
                     break;
                 case PDUTYPE_DATAPDU: /* 7 */
                     if (this->verbose & 2){
                         LOG(LOG_INFO, "unexpected DATA PDU while in licence negociation");
                     }
-                    TODO("See what happens here")
-                    sctrl.payload.p = sctrl.payload.end;
                     // at this point licence negociation is still ongoing
                     // most data packets should not be received
                     // actually even input is dubious,
                     // but rdesktop actually sends input data
                     // also processing this is a problem because input data packets are broken
 //                    this->process_data(sctrl.payload, cb);
+                    TODO("check all payload data is consumed")
                     break;
                 case PDUTYPE_DEACTIVATEALLPDU:
                     if (this->verbose & 2){
                         LOG(LOG_INFO, "unexpected DEACTIVATEALL PDU while in licence negociation");
                     }
+                    TODO("check all payload data is consumed")
                     break;
                 case PDUTYPE_SERVER_REDIR_PKT:
                     if (this->verbose & 2){
                         LOG(LOG_INFO, "unsupported SERVER_REDIR_PKT while in licence negociation");
                     }
+                    TODO("check all payload data is consumed")
                     break;
                 default:
                     LOG(LOG_WARNING, "unknown PDU type received while in licence negociation (%d)\n", sctrl.pdu_type1);
                     break;
                 }
                 TODO("Check why this is necessary when using loop connection ?")
-                sctrl.payload.end = sctrl.payload.p;
-                sctrl.recv_end();
             }
             sec.payload.p = sec.payload.end;
         }
@@ -2182,8 +2180,7 @@ TODO("Pass font name as parameter in constructor")
                 }
                 else {
                     while (sec.payload.p < sec.payload.end) {
-                        ShareControl sctrl(sec.payload);
-                        sctrl.recv_begin();
+                        ShareControl_Recv sctrl(sec.payload);
 
                         switch (sctrl.pdu_type1) {
                         case PDUTYPE_DEMANDACTIVEPDU:
@@ -2241,8 +2238,7 @@ TODO("Pass font name as parameter in constructor")
                             LOG(LOG_WARNING, "Front received unknown PDU type in session_data (%d)\n", sctrl.pdu_type1);
                             break;
                         }
-    //                    sctrl.end = sctrl.p;
-                        sctrl.recv_end();
+                        TODO("check all sctrl.payload data is consumed")
                         sec.payload.p = sctrl.payload.p;
                     }
                 }

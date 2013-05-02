@@ -109,6 +109,80 @@ enum {
     RDP_POINTER_NEW                = 8,
 };
 
+
+//##############################################################################
+struct ShareControl_Recv
+//##############################################################################
+{
+    SubStream payload;
+    public:
+    TODO("rename to totalLength")
+    uint16_t len;
+    TODO("rename to pduType")
+    uint8_t pdu_type1;
+    TODO("Rename to PDUSource")
+    uint16_t mcs_channel;
+
+    ShareControl_Recv(Stream & stream)
+    : payload(stream, 0)
+    , len(0)
+    , pdu_type1(0)
+    , mcs_channel(0)
+    {
+        const unsigned expected = 4; /* len(2) + pdu_type1(2) */
+        if (!stream.in_check_rem(expected)){
+            LOG(LOG_ERR, "Truncated ShareControl packet, need=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_SEC);
+        }
+
+        this->len = stream.in_uint16_le();
+
+        this->pdu_type1 = stream.in_uint16_le() & 0xF;
+        if (this->pdu_type1 == PDUTYPE_DEACTIVATEALLPDU && len == 4){
+            // should not happen
+            // but DEACTIVATEALLPDU seems to be broken on windows 2000
+            this->payload.resize(stream, 0);
+            return;
+        }
+
+        if (!stream.in_check_rem(2)){
+            LOG(LOG_ERR, "Truncated ShareControl packet mcs_channel, need=2 remains=%u",
+                stream.in_remain());
+            throw Error(ERR_SEC);
+        }
+
+        this->mcs_channel = stream.in_uint16_le();
+        if (this->len < 6){
+            LOG(LOG_ERR, "ShareControl packet too short len=%u", this->len);
+            throw Error(ERR_SEC);
+        }
+
+        size_t new_size = this->len - 6;
+
+        if (!stream.in_check_rem(new_size)){
+            LOG(LOG_ERR, "Truncated ShareControl packet mcs_channel, need=2 remains=%u",
+                stream.in_remain());
+            throw Error(ERR_SEC);
+        }
+
+        this->payload.resize(stream, new_size);
+    } // END METHOD recv_begin
+
+//    //==============================================================================
+//    void recv_end()
+//    //==============================================================================
+//    {
+//        if (this->payload.p != this->payload.end){
+//            LOG(LOG_ERR, "ShareControl: all payload data should have been consumed : len = %u size=%u remains %d", this->len, this->payload.size(), stream.in_remain());
+//            throw Error(ERR_SEC);
+//        }
+//    } // END METHOD recv_end
+
+}; // END CLASS ShareControl_Recv
+
+
+
 //##############################################################################
 struct ShareControl
 //##############################################################################

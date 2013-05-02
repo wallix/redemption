@@ -1506,8 +1506,8 @@ struct mod_rdp : public mod_api {
                 uint8_t * next_packet = sec.payload.p;
                 while (next_packet < sec.payload.end) {
                     sec.payload.p = next_packet;
-                    ShareControl sctrl(sec.payload);
-                    sctrl.recv_begin();
+                    ShareControl_Recv sctrl(sec.payload);
+                    TODO("use sectrl.payload")
                     next_packet += sctrl.len;
 
                     if (this->verbose & 128){
@@ -1530,16 +1530,12 @@ struct mod_rdp : public mod_api {
                                 LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
                             }
 //                            this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
-                            TODO("CGR: Data should actually be consumed")
-                            sctrl.payload.p = sctrl.payload.end;
                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
                         break;
                         case WAITING_CTL_COOPERATE:
                             if (this->verbose & 1){
                                 LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
                             }
-                            TODO("CGR: Data should actually be consumed")
-                            sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                         break;
@@ -1547,8 +1543,6 @@ struct mod_rdp : public mod_api {
                             if (this->verbose & 1){
                                 LOG(LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
                             }
-                            TODO("CGR: Data should actually be consumed")
-                            sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_CONTROL);
                             this->connection_finalization_state = WAITING_FONT_MAP;
                         break;
@@ -1556,8 +1550,6 @@ struct mod_rdp : public mod_api {
                             if (this->verbose & 1){
                                 LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
                             }
-                            TODO("CGR: Data should actually be consumed")
-                            sctrl.payload.p = sctrl.payload.end;
 //                            this->check_data_pdu(PDUTYPE2_FONTMAP);
                             this->connection_finalization_state = UP_AND_RUNNING;
 
@@ -1654,7 +1646,6 @@ struct mod_rdp : public mod_api {
                             break;
                             }
                             sdata.recv_end();
-                            sctrl.payload.p = sdata.payload.end;
                         }
                         break;
                     }
@@ -1701,8 +1692,6 @@ struct mod_rdp : public mod_api {
                         if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_DEACTIVATEALLPDU"); }
                         LOG(LOG_INFO, "Deactivate All PDU");
                         TODO("CGR: Data should actually be consumed")
-                        sctrl.payload.p = sctrl.payload.end;
-                        sctrl.recv_end();
                         TODO("CGR: Check we are indeed expecting Synchronize... dubious")
                         this->connection_finalization_state = WAITING_SYNCHRONIZE;
                     break;
@@ -1713,7 +1702,7 @@ struct mod_rdp : public mod_api {
                         LOG(LOG_INFO, "unknown PDU %u", sctrl.pdu_type1);
                         break;
                     }
-                    sctrl.recv_end();
+                    TODO("check sctrl.payload is completely consumed")
                 }
             }
         }
