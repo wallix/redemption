@@ -379,7 +379,6 @@ struct ShareData
     Stream & stream;
     SubStream payload;
 
-    uint8_t offlen;
     public:
     uint32_t share_id;
     uint8_t streamid;
@@ -390,11 +389,10 @@ struct ShareData
 
     // CONSTRUCTOR
     //==============================================================================
-    ShareData ( Stream & stream )
+    ShareData(Stream & stream )
     //==============================================================================
     : stream(stream)
     , payload(this->stream, 0)
-    , offlen(stream.get_offset())
     , share_id(0)
     , streamid(0)
     , len(0)
@@ -425,7 +423,7 @@ struct ShareData
     void emit_end()
     //==============================================================================
     {
-        stream.set_out_uint16_le(stream.get_offset() - (this->offlen + 8), this->offlen + 6);
+        stream.set_out_uint16_le(stream.get_offset() - 8, 6);
         stream.mark_end();
 
     } // END METHOD emit_end

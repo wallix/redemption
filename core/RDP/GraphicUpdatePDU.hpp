@@ -138,13 +138,13 @@ struct GraphicsUpdatePDU : public RDPSerializer
     }
 
     void init(){
-        if (this->sdata){ delete this->sdata; }
-
         if (this->fastpath_support == false) {
+            if (this->sdata){ delete this->sdata; }
+            this->sdata = new ShareData(this->stream);
+
             if (this->ini.globals.debug.primary_orders > 3){
                 LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
             }
-            this->sdata = new ShareData(this->stream);
             this->sdata->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
             TODO("this is to kind of header, to be treated like other headers")
             this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
@@ -155,7 +155,6 @@ struct GraphicsUpdatePDU : public RDPSerializer
         }
         else {
             this->stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
-
             this->offset_order_count = this->stream.get_offset();
             this->stream.out_clear_bytes(2);  // number of orders, set later
         }
@@ -165,21 +164,24 @@ struct GraphicsUpdatePDU : public RDPSerializer
     {
         if (this->order_count > 0){
             if (this->ini.globals.debug.primary_orders > 3){
-                LOG(LOG_INFO, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
+                LOG(LOG_INFO, "GraphicsUpdatePDU::flush: order_count=%d offset=%u", this->order_count, this->offset_order_count);
             }
-
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
-            this->sdata->emit_end();
-
-            BStream sctrl_header(256);
-            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, this->stream.size());
-            
-            BStream target_stream(65536);
-            target_stream.out_copy_bytes(sctrl_header);
-            target_stream.out_copy_bytes(this->stream);
-            target_stream.mark_end();
 
             if (this->fastpath_support == false) {
+                if (this->ini.globals.debug.primary_orders > 3){
+                    LOG(LOG_INFO, "GraphicsUpdatePDU::flush:slow-path");
+                }
+
+                this->sdata->emit_end();
+
+                BStream sctrl_header(256);
+                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, this->stream.size());
+
+                BStream target_stream(65536);
+                target_stream.out_copy_bytes(sctrl_header);
+                target_stream.out_copy_bytes(this->stream);
+                target_stream.mark_end();
 
                 BStream x224_header(256);
                 BStream mcs_header(256);
@@ -195,10 +197,11 @@ struct GraphicsUpdatePDU : public RDPSerializer
                     LOG(LOG_INFO, "GraphicsUpdatePDU::flush: fast-path");
                 }
 
-                SubStream Upd_s(target_stream, 0, FastPath::Update_Send::GetSize());
+                this->stream.mark_end();
+                SubStream Upd_s(this->stream, 0, FastPath::Update_Send::GetSize());
 
                 FastPath::Update_Send Upd( Upd_s
-                                         , target_stream.size() - FastPath::Update_Send::GetSize()
+                                         , this->stream.size() - FastPath::Update_Send::GetSize()
                                          , FastPath::FASTPATH_UPDATETYPE_ORDERS
                                          , FastPath::FASTPATH_FRAGMENT_SINGLE);
 
@@ -206,12 +209,12 @@ struct GraphicsUpdatePDU : public RDPSerializer
 
                 FastPath::ServerUpdatePDU_Send SvrUpdPDU(
                       fastpath_header
-                    , target_stream
+                    , this->stream
                     , ((this->encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                     , this->encrypt
                     );
 
-                this->trans->send(fastpath_header, target_stream);
+                this->trans->send(fastpath_header, this->stream);
             }
 
             this->order_count = 0;
