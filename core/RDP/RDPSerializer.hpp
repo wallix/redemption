@@ -177,14 +177,14 @@ struct RDPSerializer : public RDPGraphicDevice
         size_t max_packet_size = std::min(this->stream.capacity, (size_t)16384);
         size_t used_size = this->stream.get_offset();
         if (this->ini.globals.debug.primary_orders > 3){
-            LOG(LOG_INFO, "<Serializer %p> RDPSerializer::reserve_order[%u](%u) used=%u free=%u", this, this->order_count, asked_size, used_size, max_packet_size - used_size - 100);
+            LOG(LOG_INFO, "<Serializer %p> RDPSerializer::reserve_order[%u](%u) used=%u free=%u", this, this->order_count, asked_size, used_size, max_packet_size - used_size - 106);
         }
-        if (asked_size + 100 > max_packet_size){
-            LOG(LOG_ERR, "asked size (%u) > order batch capacity (%u)", asked_size + 100, max_packet_size);
+        if (asked_size + 106 > max_packet_size){
+            LOG(LOG_ERR, "asked size (%u) > order batch capacity (%u)", asked_size + 106, max_packet_size);
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
         const size_t max_order_batch = 4096;
-        if ((this->order_count >= max_order_batch) || (used_size + asked_size + 100) > max_packet_size) {
+        if ((this->order_count >= max_order_batch) || (used_size + asked_size + 106) > max_packet_size) {
             this->flush();
         }
         this->order_count++;

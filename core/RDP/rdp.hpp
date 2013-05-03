@@ -167,128 +167,27 @@ struct ShareControl_Recv
         }
 
         this->payload.resize(stream, new_size);
-    } // END METHOD recv_begin
-
-//    //==============================================================================
-//    void recv_end()
-//    //==============================================================================
-//    {
-//        if (this->payload.p != this->payload.end){
-//            LOG(LOG_ERR, "ShareControl: all payload data should have been consumed : len = %u size=%u remains %d", this->len, this->payload.size(), stream.in_remain());
-//            throw Error(ERR_SEC);
-//        }
-//    } // END METHOD recv_end
-
+    } 
 }; // END CLASS ShareControl_Recv
 
 
 
 //##############################################################################
-struct ShareControl
+struct ShareControl_Send
 //##############################################################################
 {
-    Stream & stream;
-    SubStream payload;
-    uint8_t offlen;
-    public:
-    uint16_t len;
-    uint8_t pdu_type1;
-    uint16_t mcs_channel;
-
-    // CONSTRUCTOR
-    //==============================================================================
-    ShareControl (Stream & stream )
-    //==============================================================================
-    : stream(stream)
-    , payload(this->stream, 0)
-    , offlen(stream.get_offset())
-    , len(0)
-    , pdu_type1(0)
-    , mcs_channel(0)
-    {
-    } // END CONSTRUCTOR
-
-    //==============================================================================
-    void emit_begin( uint8_t pdu_type1
-                   , uint16_t mcs_channel
-                   )
-    //==============================================================================
+    ShareControl_Send(Stream & stream, uint8_t pdu_type1, uint16_t mcs_channel, uint16_t payload_len)
     {
         enum {
             versionLow = 0x10,
             versionHigh = 0
         };
-        stream.out_uint16_le(0); // skip len
+        stream.out_uint16_le(payload_len + 6);
         stream.out_uint16_le(versionHigh | versionLow | pdu_type1);
         stream.out_uint16_le(mcs_channel);
-
-    } // END METHOD emit_begin
-
-    //==============================================================================
-    void emit_end()
-    //==============================================================================
-    {
-        stream.set_out_uint16_le(stream.get_offset() - this->offlen, this->offlen);
         stream.mark_end();
-
-    } // END METHOD emit_end
-
-    //==============================================================================
-    void recv_begin() throw(Error)
-    //==============================================================================
-    {
-        const unsigned expected = 4; /* len(2) + pdu_type1(2) */
-        if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated ShareControl packet, need=%u remains=%u",
-                expected, stream.in_remain());
-            throw Error(ERR_SEC);
-        }
-
-        this->len = stream.in_uint16_le();
-
-        this->pdu_type1 = stream.in_uint16_le() & 0xF;
-        if (this->pdu_type1 == PDUTYPE_DEACTIVATEALLPDU && len == 4){
-            // should not happen
-            // but DEACTIVATEALLPDU seems to be broken on windows 2000
-            this->payload.resize(this->stream, 0);
-            return;
-        }
-
-        if (!stream.in_check_rem(2)){
-            LOG(LOG_ERR, "Truncated ShareControl packet mcs_channel, need=2 remains=%u",
-                stream.in_remain());
-            throw Error(ERR_SEC);
-        }
-
-        this->mcs_channel = stream.in_uint16_le();
-        if (this->len < 6){
-            LOG(LOG_ERR, "ShareControl packet too short len=%u", this->len);
-            throw Error(ERR_SEC);
-        }
-
-        size_t new_size = this->len - 6;
-
-        if (!stream.in_check_rem(new_size)){
-            LOG(LOG_ERR, "Truncated ShareControl packet mcs_channel, need=2 remains=%u",
-                stream.in_remain());
-            throw Error(ERR_SEC);
-        }
-
-        this->payload.resize(this->stream, new_size);
-    } // END METHOD recv_begin
-
-    //==============================================================================
-    void recv_end()
-    //==============================================================================
-    {
-        if (this->payload.p != this->payload.end){
-            LOG(LOG_ERR, "ShareControl: all payload data should have been consumed : len = %u size=%u remains %d", this->len, this->payload.size(), stream.in_remain());
-            throw Error(ERR_SEC);
-        }
-    } // END METHOD recv_end
-
-
-}; // END CLASS ShareControl
+    }
+}; // END CLASS ShareControl_Send
 
 
 // [MS-RDPBCGR] 2.2.8.1.1.1.2 Share Data Header (TS_SHAREDATAHEADER)
