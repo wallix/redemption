@@ -784,8 +784,8 @@ public:
             if (ypixel != pixel){
                 break;
             }
-            p = p + Bpp;
-            acc = acc + 1;
+            p += Bpp;
+            acc += 1;
         }
         return acc;
     }
@@ -794,7 +794,7 @@ public:
     unsigned get_mix_count(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * pmax, const uint8_t * p, unsigned foreground) const
     {
         unsigned acc = 0;
-        while (p < pmax){
+        while (p + Bpp <= pmax){
             if (this->get_pixel_above(Bpp, pmin, p) ^ foreground ^ this->get_pixel(Bpp, p)){
                 break;
             }
@@ -804,6 +804,31 @@ public:
         return acc;
     }
 
+    unsigned get_fom_count(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * pmax, const uint8_t * p, unsigned foreground, bool fill) const
+    {
+        unsigned acc = 0;
+        while (true){
+            unsigned count = 0;
+            while  (p + Bpp <= pmax) {
+                unsigned pixel = this->get_pixel(Bpp, p);
+                unsigned ypixel = this->get_pixel_above(Bpp, pmin, p);
+                if (ypixel ^ pixel ^ (fill?0:foreground)){
+                    break;
+                }
+                p += Bpp;
+                count += 1;
+                if (count >= 9) {
+                    return acc;
+                }
+            }
+            if (!count){
+                break;
+            }
+            acc += count;
+            fill ^= true;
+        }
+        return acc;
+    }
 
     void get_fom_masks(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * p, uint8_t * mask, const unsigned count) const
     {
@@ -823,139 +848,39 @@ public:
     unsigned get_fom_count_set(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * pmax, const uint8_t * p, unsigned & foreground, unsigned & flags) const
     {
         // flags : 1 = fill, 2 = MIX, 3 = (1+2) = FOM
-        {
-            unsigned fill_count = 0;
-            const uint8_t * p2 = p;
-            while  (p2 + Bpp <= pmax) {
-                unsigned pixel = this->get_pixel(Bpp, p2);
-                unsigned ypixel = this->get_pixel_above(Bpp, pmin, p2);
-                if (ypixel != pixel){
-                    break;
-                }
-                p2 += Bpp;
-                fill_count = fill_count + 1;
-            }
-
-            if (fill_count >= 8) {
-                flags = FLAG_FILL;
-                return fill_count;
-            }
-
-            if (fill_count) {
-                unsigned fom_count = this->get_fom_count_mix(Bpp, pmin, pmax, p + fill_count * Bpp, foreground);
+        flags = FLAG_FILL;
+        unsigned fill_count = this->get_fill_count(Bpp, pmin, pmax, p);
+        if (fill_count) {
+            if (fill_count < 8) {
+                unsigned fom_count = this->get_fom_count(Bpp, pmin, pmax, p + fill_count * Bpp, foreground, false);
                 if (fom_count){
-                    flags = FLAG_FILL|FLAG_MIX;
-                    return fill_count + fom_count;
-                }
-                else {
-                    flags = FLAG_FILL;
-                    return fill_count;
+                    flags = FLAG_FOM;
+                    fill_count += fom_count;
                 }
             }
+            return fill_count;
         }
         // fill_count and mix_count can't match at the same time.
         // this would mean that foreground is black, and we will never set
         // it to black, as it's useless because fill_count allready does that.
         // Hence it's ok to check them independently.
-        {
-            unsigned mix_count = 0;
+        if  (p + Bpp <= pmax) {
+            flags = FLAG_MIX;
+            // if there is a pixel we are always able to mix (at worse we will set foreground ourself)
             foreground = this->get_pixel_above(Bpp, pmin, p) ^ this->get_pixel(Bpp, p);
-            if  (p < pmax) {
-                const uint8_t * p2 = p + Bpp;
-                unsigned acc = 0;
-                while (p2 < pmax){
-                    if (this->get_pixel_above(Bpp, pmin, p2) ^ foreground ^ this->get_pixel(Bpp, p2)){
-                        break;
-                    }
-                    p2 += Bpp;
-                    acc += 1;
-                }
-                mix_count = 1 + acc;
-                if (mix_count >= 8) {
-                    flags = FLAG_MIX;
-                    return mix_count;
-                }
-                
+            unsigned mix_count = 1 + this->get_mix_count(Bpp, pmin, pmax, p + Bpp, foreground);
+            if (mix_count < 8) {
                 unsigned fom_count = 0;
-                if (p2 < pmax) {
-                    fom_count = this->get_fom_count_fill(Bpp, pmin, pmax, p2, foreground);
-                }
+                fom_count = this->get_fom_count(Bpp, pmin, pmax, p + mix_count * Bpp, foreground, true);
                 if (fom_count){
-                    flags = FLAG_FILL|FLAG_MIX;
-                    return mix_count + fom_count;
-                }
-                else {
-                    flags = FLAG_MIX;
-                    return mix_count;
+                    flags = FLAG_FOM;
+                    mix_count += fom_count;
                 }
             }
+            return mix_count;
         }
         flags = FLAG_NONE;
         return 0;
-    }
-
-    TODO(" derecursive it")
-    unsigned get_fom_count_fill(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * pmax, const uint8_t * p, unsigned foreground) const
-    {
-        unsigned fill_count = 0;
-        const uint8_t * p2 = p;
-        while  (p2 + Bpp <= pmax) {
-            unsigned pixel = this->get_pixel(Bpp, p2);
-            unsigned ypixel = this->get_pixel_above(Bpp, pmin, p2);
-            if (ypixel != pixel){
-                break;
-            }
-            p2 += Bpp;
-            fill_count = fill_count + 1;
-        }
-
-        unsigned fom_count_fill = 0;
-        if (fill_count && (fill_count < 9)) {
-            fom_count_fill = fill_count;
-            unsigned mix_count2 = 0;
-            const uint8_t * p3 = p + fill_count * Bpp;
-            while (p3 < pmax){
-                if (this->get_pixel_above(Bpp, pmin, p3) ^ foreground ^ this->get_pixel(Bpp, p3)){
-                    break;
-                }
-                p3 += Bpp;
-                mix_count2 += 1;
-                if (mix_count2 >= 9) {
-                    return fom_count_fill;
-                }
-            }
-            if (mix_count2) {
-                fom_count_fill += mix_count2;
-                if  (p3 < pmax) {
-                    fom_count_fill += this->get_fom_count_fill(Bpp, pmin, pmax, p3, foreground);
-                }
-            }
-        }
-        return fom_count_fill;
-    }
-
-
-    unsigned get_fom_count_mix(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * pmax, const uint8_t * p, unsigned foreground) const
-    {
-        unsigned mix_count = 0;
-        const uint8_t * p2 = p;
-        while (p2 < pmax){
-            if (this->get_pixel_above(Bpp, pmin, p2) ^ foreground ^ this->get_pixel(Bpp, p2)){
-                break;
-            }
-            p2 += Bpp;
-            mix_count += 1;
-            if (mix_count >= 9) {
-                return 0;
-            }
-        }
-
-        if (mix_count){
-            if  (p2 < pmax) {
-                mix_count += this->get_fom_count_fill(Bpp, pmin, pmax, p2, foreground);
-            }
-        }
-        return mix_count;
     }
 
     TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.")

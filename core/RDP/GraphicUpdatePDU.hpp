@@ -101,7 +101,6 @@
 struct GraphicsUpdatePDU : public RDPSerializer
 {
     BStream buffer_stream;
-    ShareControl * sctrl;
     ShareData * sdata;
     uint16_t & userid;
     int & shareid;
@@ -124,7 +123,6 @@ struct GraphicsUpdatePDU : public RDPSerializer
         : RDPSerializer(trans, this->buffer_stream,
             bpp, bmp_cache, bitmap_cache_version, use_bitmap_comp, op2, ini),
         buffer_stream(65536),
-        sctrl(NULL),
         sdata(NULL),
         userid(userid),
         shareid(shareid),
@@ -136,20 +134,16 @@ struct GraphicsUpdatePDU : public RDPSerializer
     }
 
     ~GraphicsUpdatePDU(){
-        if (this->sctrl){ delete this->sctrl; }
         if (this->sdata){ delete this->sdata; }
     }
 
     void init(){
-        if (this->sctrl){ delete this->sctrl; }
         if (this->sdata){ delete this->sdata; }
 
         if (this->fastpath_support == false) {
             if (this->ini.globals.debug.primary_orders > 3){
                 LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
             }
-            this->sctrl = new ShareControl(this->stream);
-            this->sctrl->emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
             this->sdata = new ShareData(this->stream);
             this->sdata->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
             TODO("this is to kind of header, to be treated like other headers")
@@ -175,30 +169,36 @@ struct GraphicsUpdatePDU : public RDPSerializer
             }
 
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
-            this->stream.mark_end();
+            this->sdata->emit_end();
+
+            BStream sctrl_header(256);
+            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, this->stream.size());
+            
+            BStream target_stream(65536);
+            target_stream.out_copy_bytes(sctrl_header);
+            target_stream.out_copy_bytes(this->stream);
+            target_stream.mark_end();
 
             if (this->fastpath_support == false) {
-                this->sdata->emit_end();
-                this->sctrl->emit_end();
 
                 BStream x224_header(256);
                 BStream mcs_header(256);
                 BStream sec_header(256);
 
-                SEC::Sec_Send sec(sec_header, this->stream, 0, this->encrypt, this->encryptionLevel);
-                MCS::SendDataIndication_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + this->stream.size(), MCS::PER_ENCODING);
-                X224::DT_TPDU_Send(x224_header, sec_header.size() + this->stream.size() + mcs_header.size());
-                this->trans->send(x224_header, mcs_header, sec_header, this->stream);
+                SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->encryptionLevel);
+                MCS::SendDataIndication_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
+                X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + target_stream.size());
+                this->trans->send(x224_header, mcs_header, sec_header, target_stream);
             }
             else {
                 if (this->ini.globals.debug.primary_orders > 3){
                     LOG(LOG_INFO, "GraphicsUpdatePDU::flush: fast-path");
                 }
 
-                SubStream Upd_s(this->stream, 0, FastPath::Update_Send::GetSize());
+                SubStream Upd_s(target_stream, 0, FastPath::Update_Send::GetSize());
 
                 FastPath::Update_Send Upd( Upd_s
-                                         , this->stream.size() - FastPath::Update_Send::GetSize()
+                                         , target_stream.size() - FastPath::Update_Send::GetSize()
                                          , FastPath::FASTPATH_UPDATETYPE_ORDERS
                                          , FastPath::FASTPATH_FRAGMENT_SINGLE);
 
@@ -206,12 +206,12 @@ struct GraphicsUpdatePDU : public RDPSerializer
 
                 FastPath::ServerUpdatePDU_Send SvrUpdPDU(
                       fastpath_header
-                    , this->stream
+                    , target_stream
                     , ((this->encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                     , this->encrypt
                     );
 
-                this->trans->send(fastpath_header, this->stream);
+                this->trans->send(fastpath_header, target_stream);
             }
 
             this->order_count = 0;

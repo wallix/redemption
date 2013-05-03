@@ -109,59 +109,25 @@ enum {
     RDP_POINTER_NEW                = 8,
 };
 
+
 //##############################################################################
-struct ShareControl
+struct ShareControl_Recv
 //##############################################################################
 {
-    Stream & stream;
     SubStream payload;
-    uint8_t offlen;
     public:
+    TODO("rename to totalLength")
     uint16_t len;
+    TODO("rename to pduType")
     uint8_t pdu_type1;
+    TODO("Rename to PDUSource")
     uint16_t mcs_channel;
 
-    // CONSTRUCTOR
-    //==============================================================================
-    ShareControl (Stream & stream )
-    //==============================================================================
-    : stream(stream)
-    , payload(this->stream, 0)
-    , offlen(stream.get_offset())
+    ShareControl_Recv(Stream & stream)
+    : payload(stream, 0)
     , len(0)
     , pdu_type1(0)
     , mcs_channel(0)
-    {
-    } // END CONSTRUCTOR
-
-    //==============================================================================
-    void emit_begin( uint8_t pdu_type1
-                   , uint16_t mcs_channel
-                   )
-    //==============================================================================
-    {
-        enum {
-            versionLow = 0x10,
-            versionHigh = 0
-        };
-        stream.out_uint16_le(0); // skip len
-        stream.out_uint16_le(versionHigh | versionLow | pdu_type1);
-        stream.out_uint16_le(mcs_channel);
-
-    } // END METHOD emit_begin
-
-    //==============================================================================
-    void emit_end()
-    //==============================================================================
-    {
-        stream.set_out_uint16_le(stream.get_offset() - this->offlen, this->offlen);
-        stream.mark_end();
-
-    } // END METHOD emit_end
-
-    //==============================================================================
-    void recv_begin() throw(Error)
-    //==============================================================================
     {
         const unsigned expected = 4; /* len(2) + pdu_type1(2) */
         if (!stream.in_check_rem(expected)){
@@ -176,7 +142,7 @@ struct ShareControl
         if (this->pdu_type1 == PDUTYPE_DEACTIVATEALLPDU && len == 4){
             // should not happen
             // but DEACTIVATEALLPDU seems to be broken on windows 2000
-            this->payload.resize(this->stream, 0);
+            this->payload.resize(stream, 0);
             return;
         }
 
@@ -200,21 +166,28 @@ struct ShareControl
             throw Error(ERR_SEC);
         }
 
-        this->payload.resize(this->stream, new_size);
-    } // END METHOD recv_begin
+        this->payload.resize(stream, new_size);
+    } 
+}; // END CLASS ShareControl_Recv
 
-    //==============================================================================
-    void recv_end()
-    //==============================================================================
+
+
+//##############################################################################
+struct ShareControl_Send
+//##############################################################################
+{
+    ShareControl_Send(Stream & stream, uint8_t pdu_type1, uint16_t mcs_channel, uint16_t payload_len)
     {
-        if (this->payload.p != this->payload.end){
-            LOG(LOG_ERR, "ShareControl: all payload data should have been consumed : len = %u size=%u remains %d", this->len, this->payload.size(), stream.in_remain());
-            throw Error(ERR_SEC);
-        }
-    } // END METHOD recv_end
-
-
-}; // END CLASS ShareControl
+        enum {
+            versionLow = 0x10,
+            versionHigh = 0
+        };
+        stream.out_uint16_le(payload_len + 6);
+        stream.out_uint16_le(versionHigh | versionLow | pdu_type1);
+        stream.out_uint16_le(mcs_channel);
+        stream.mark_end();
+    }
+}; // END CLASS ShareControl_Send
 
 
 // [MS-RDPBCGR] 2.2.8.1.1.1.2 Share Data Header (TS_SHAREDATAHEADER)

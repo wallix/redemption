@@ -636,8 +636,6 @@ TODO("Pass font name as parameter in constructor")
             BStream stream(65536);
 
             if (this->server_fastpath_update_support == false) {
-                ShareControl sctrl(stream);
-                sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
                 ShareData sdata(stream);
                 sdata.emit_begin(PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
@@ -645,7 +643,14 @@ TODO("Pass font name as parameter in constructor")
 
                 // Packet trailer
                 sdata.emit_end();
-                sctrl.emit_end();
+
+                BStream sctrl_header(256);
+                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+
+                BStream target_stream(65536);
+                target_stream.out_copy_bytes(sctrl_header);
+                target_stream.out_copy_bytes(stream);
+                target_stream.mark_end();
 
                 BStream x224_header(256);
                 BStream mcs_header(256);
@@ -653,13 +658,13 @@ TODO("Pass font name as parameter in constructor")
 
                 if (this->verbose & 128){
                     LOG(LOG_INFO, "Sec clear payload to send:");
-                    hexdump_d(stream.data, stream.size());
+                    hexdump_d(target_stream.data, target_stream.size());
                 }
 
-                SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
-                MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-                X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-                this->trans->send(x224_header, mcs_header, sec_header, stream);
+                SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+                MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
+                X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
+                this->trans->send(x224_header, mcs_header, sec_header, target_stream);
             }
             else {
                 if (this->verbose & 4){
@@ -884,8 +889,7 @@ TODO("Pass font name as parameter in constructor")
         BStream stream(65536);
 
         if (this->server_fastpath_update_support == false) {
-            ShareControl sctrl(stream);
-            sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
+
             ShareData sdata(stream);
             sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
@@ -897,21 +901,28 @@ TODO("Pass font name as parameter in constructor")
 
             // Packet trailer
             sdata.emit_end();
-            sctrl.emit_end();
+
+            BStream sctrl_header(256);
+            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+
+            BStream target_stream(65536);
+            target_stream.out_copy_bytes(sctrl_header);
+            target_stream.out_copy_bytes(stream);
+            target_stream.mark_end();
+            
+            if (((this->verbose & 4)!=0)&&((this->verbose & 4)!=0)){
+                LOG(LOG_INFO, "Sec clear payload to send:");
+                hexdump_d(target_stream.data, target_stream.size());
+            }
 
             BStream x224_header(256);
             BStream mcs_header(256);
             BStream sec_header(256);
 
-            if (((this->verbose & 4)!=0)&&((this->verbose & 4)!=0)){
-                LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(stream.data, stream.size());
-            }
-
-            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
-            MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-            X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-            this->trans->send(x224_header, mcs_header, sec_header, stream);
+            SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+            MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
+            X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
+            this->trans->send(x224_header, mcs_header, sec_header, target_stream);
         }
         else {
             if (this->verbose & 4){
@@ -985,8 +996,7 @@ TODO("Pass font name as parameter in constructor")
         BStream stream(65536);
 
         if (this->server_fastpath_update_support == false) {
-            ShareControl sctrl(stream);
-            sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
+
             ShareData sdata(stream);
             sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
@@ -998,21 +1008,28 @@ TODO("Pass font name as parameter in constructor")
 
             // Packet trailer
             sdata.emit_end();
-            sctrl.emit_end();
+
+            BStream sctrl_header(256);
+            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+            
+            BStream target_stream(65536);
+            target_stream.out_copy_bytes(sctrl_header);
+            target_stream.out_copy_bytes(stream);
+            target_stream.mark_end();
+
+            if ((this->verbose & (128|4)) == (128|4)){
+                LOG(LOG_INFO, "Sec clear payload to send:");
+                hexdump_d(target_stream.data, target_stream.size());
+            }
 
             BStream x224_header(256);
             BStream mcs_header(256);
             BStream sec_header(256);
 
-            if ((this->verbose & (128|4)) == (128|4)){
-                LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(stream.data, stream.size());
-            }
-
-            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
-            MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-            X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-            this->trans->send(x224_header, mcs_header, sec_header, stream);
+            SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+            MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
+            X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
+            this->trans->send(x224_header, mcs_header, sec_header, target_stream);
         }
         else {
             if (this->verbose & 4){
@@ -1908,8 +1925,7 @@ TODO("Pass font name as parameter in constructor")
                 if (this->verbose & 2){
                     LOG(LOG_INFO, "non licence packet: still waiting for licence");
                 }
-                ShareControl sctrl(sec.payload);
-                sctrl.recv_begin();
+                ShareControl_Recv sctrl(sec.payload);
 
                 switch (sctrl.pdu_type1) {
                 case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
@@ -1932,38 +1948,37 @@ TODO("Pass font name as parameter in constructor")
                         uint16_t originatorId = sctrl.payload.in_uint16_le();
                         this->process_confirm_active(sctrl.payload);
                     }
-
+                    TODO("check all payload data is consumed")
                     break;
                 case PDUTYPE_DATAPDU: /* 7 */
                     if (this->verbose & 2){
                         LOG(LOG_INFO, "unexpected DATA PDU while in licence negociation");
                     }
-                    TODO("See what happens here")
-                    sctrl.payload.p = sctrl.payload.end;
                     // at this point licence negociation is still ongoing
                     // most data packets should not be received
                     // actually even input is dubious,
                     // but rdesktop actually sends input data
                     // also processing this is a problem because input data packets are broken
 //                    this->process_data(sctrl.payload, cb);
+                    TODO("check all payload data is consumed")
                     break;
                 case PDUTYPE_DEACTIVATEALLPDU:
                     if (this->verbose & 2){
                         LOG(LOG_INFO, "unexpected DEACTIVATEALL PDU while in licence negociation");
                     }
+                    TODO("check all payload data is consumed")
                     break;
                 case PDUTYPE_SERVER_REDIR_PKT:
                     if (this->verbose & 2){
                         LOG(LOG_INFO, "unsupported SERVER_REDIR_PKT while in licence negociation");
                     }
+                    TODO("check all payload data is consumed")
                     break;
                 default:
                     LOG(LOG_WARNING, "unknown PDU type received while in licence negociation (%d)\n", sctrl.pdu_type1);
                     break;
                 }
                 TODO("Check why this is necessary when using loop connection ?")
-                sctrl.payload.end = sctrl.payload.p;
-                sctrl.recv_end();
             }
             sec.payload.p = sec.payload.end;
         }
@@ -2182,8 +2197,7 @@ TODO("Pass font name as parameter in constructor")
                 }
                 else {
                     while (sec.payload.p < sec.payload.end) {
-                        ShareControl sctrl(sec.payload);
-                        sctrl.recv_begin();
+                        ShareControl_Recv sctrl(sec.payload);
 
                         switch (sctrl.pdu_type1) {
                         case PDUTYPE_DEMANDACTIVEPDU:
@@ -2241,8 +2255,7 @@ TODO("Pass font name as parameter in constructor")
                             LOG(LOG_WARNING, "Front received unknown PDU type in session_data (%d)\n", sctrl.pdu_type1);
                             break;
                         }
-    //                    sctrl.end = sctrl.p;
-                        sctrl.recv_end();
+                        TODO("check all sctrl.payload data is consumed")
                         sec.payload.p = sctrl.payload.p;
                     }
                 }
@@ -2275,8 +2288,6 @@ TODO("Pass font name as parameter in constructor")
         if (this->server_fastpath_update_support == false) {
             BStream stream(65536);
 
-            ShareControl sctrl(stream);
-            sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
             ShareData sdata(stream);
             sdata.emit_begin(PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
@@ -2287,21 +2298,28 @@ TODO("Pass font name as parameter in constructor")
 
             // Packet trailer
             sdata.emit_end();
-            sctrl.emit_end();
+
+            BStream sctrl_header(256);
+            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+            
+            BStream target_stream(65536);
+            target_stream.out_copy_bytes(sctrl_header);
+            target_stream.out_copy_bytes(stream);
+            target_stream.mark_end();
+
+            if ((this->verbose & (128|1)) == (128|1)){
+                LOG(LOG_INFO, "Sec clear payload to send:");
+                hexdump_d(target_stream.data, target_stream.size());
+            }
 
             BStream x224_header(256);
             BStream mcs_header(256);
             BStream sec_header(256);
 
-            if ((this->verbose & (128|1)) == (128|1)){
-                LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(stream.data, stream.size());
-            }
-
-            SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
-            MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-            X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-            this->trans->send(x224_header, mcs_header, sec_header, stream);
+            SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+            MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
+            X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
+            this->trans->send(x224_header, mcs_header, sec_header, target_stream);
         }
         else {
             if (this->verbose & 4){
@@ -2339,8 +2357,6 @@ TODO("Pass font name as parameter in constructor")
         }
 
         BStream stream(65536);
-        ShareControl sctrl(stream);
-        sctrl.emit_begin(PDUTYPE_DEMANDACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
 
         // Payload
         size_t caps_count = 0;
@@ -2447,22 +2463,27 @@ TODO("Pass font name as parameter in constructor")
         caps_count_ptr[3] = caps_count >> 24;
         stream.mark_end();
 
-        // Packet trailer
-        sctrl.emit_end();
+        BStream sctrl_header(256);
+        ShareControl_Send(sctrl_header, PDUTYPE_DEMANDACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+
+        BStream target_stream(65536);
+        target_stream.out_copy_bytes(sctrl_header);
+        target_stream.out_copy_bytes(stream);
+        target_stream.mark_end();
+
+        if ((this->verbose & (128|1)) == (128|1)){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(target_stream.data, target_stream.size());
+        }
 
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        if ((this->verbose & (128|1)) == (128|1)){
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.data, stream.size());
-        }
-
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, stream);
+        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
+        this->trans->send(x224_header, mcs_header, sec_header, target_stream);
     }
 
     /* store the number of client cursor cache in client_info */
@@ -2783,8 +2804,6 @@ TODO("Pass font name as parameter in constructor")
         }
 
         BStream stream(65536);
-        ShareControl sctrl(stream);
-        sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
         sdata.emit_begin(PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
@@ -2795,21 +2814,29 @@ TODO("Pass font name as parameter in constructor")
 
         // Packet trailer
         sdata.emit_end();
-        sctrl.emit_end();
+
+        BStream sctrl_header(256);
+        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+
+        BStream target_stream(65536);
+        target_stream.out_copy_bytes(sctrl_header);
+        target_stream.out_copy_bytes(stream);
+        target_stream.mark_end();
+
+        if ((this->verbose & (128|1)) == (128|1)){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(target_stream.data, target_stream.size());
+        }
 
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        if ((this->verbose & (128|1)) == (128|1)){
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.data, stream.size());
-        }
+        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
+        this->trans->send(x224_header, mcs_header, sec_header, target_stream);
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, stream);
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_synchronize done");
         }
@@ -2844,8 +2871,6 @@ TODO("Pass font name as parameter in constructor")
         }
 
         BStream stream(65536);
-        ShareControl sctrl(stream);
-        sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
         sdata.emit_begin(PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
@@ -2857,21 +2882,29 @@ TODO("Pass font name as parameter in constructor")
 
         // Packet trailer
         sdata.emit_end();
-        sctrl.emit_end();
+
+        BStream sctrl_header(256);
+        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+
+        BStream target_stream(65536);
+        target_stream.out_copy_bytes(sctrl_header);
+        target_stream.out_copy_bytes(stream);
+        target_stream.mark_end();
+
+        if ((this->verbose & (128|1)) == (128|1)){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(target_stream.data, target_stream.size());
+        }
+
 
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        if ((this->verbose & (128|1)) == (128|1)){
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.data, stream.size());
-        }
-
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, stream);
+        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
+        this->trans->send(x224_header, mcs_header, sec_header, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_control action=%u", action);
@@ -2910,8 +2943,6 @@ TODO("Pass font name as parameter in constructor")
                               };
 
         BStream stream(65536);
-        ShareControl sctrl(stream);
-        sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
         ShareData sdata(stream);
         sdata.emit_begin(PDUTYPE2_FONTMAP, this->share_id, RDP::STREAM_MED);
 
@@ -2921,21 +2952,28 @@ TODO("Pass font name as parameter in constructor")
 
         // Packet trailer
         sdata.emit_end();
-        sctrl.emit_end();
+
+        BStream sctrl_header(256);
+        ShareControl_Send sctrl(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+
+        BStream target_stream(65535);
+        target_stream.out_copy_bytes(sctrl_header);
+        target_stream.out_copy_bytes(stream);
+        target_stream.mark_end();
+
+        if ((this->verbose & (128|1)) == (128|1)){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(target_stream.data, target_stream.size());
+        }
 
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        if ((this->verbose & (128|1)) == (128|1)){
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.data, stream.size());
-        }
-
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, stream);
+        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
+        this->trans->send(x224_header, mcs_header, sec_header, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_fontmap");
@@ -3173,29 +3211,35 @@ TODO("Pass font name as parameter in constructor")
                 // if user really wants to disconnect */
 
                 BStream stream(65536);
-                ShareControl sctrl(stream);
-                sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
                 ShareData sdata_out(stream);
                 sdata_out.emit_begin(PDUTYPE2_SHUTDOWN_DENIED, this->share_id, RDP::STREAM_MED);
                 stream.mark_end();
 
                 // Packet trailer
                 sdata_out.emit_end();
-                sctrl.emit_end();
+
+                BStream sctrl_header(256);
+                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+
+                BStream target_stream(65536);
+                target_stream.out_copy_bytes(sctrl_header);
+                target_stream.out_copy_bytes(stream);
+                target_stream.mark_end();
+
+                if ((this->verbose & (128|8)) == (128|8)){
+                    LOG(LOG_INFO, "Sec clear payload to send:");
+                    hexdump_d(target_stream.data, target_stream.size());
+                }
 
                 BStream x224_header(256);
                 BStream mcs_header(256);
                 BStream sec_header(256);
 
-                if ((this->verbose & (128|8)) == (128|8)){
-                    LOG(LOG_INFO, "Sec clear payload to send:");
-                    hexdump_d(stream.data, stream.size());
-                }
+                SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+                MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
+                X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
 
-                SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
-                MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-                X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-                this->trans->send(x224_header, mcs_header, sec_header, stream);
+                this->trans->send(x224_header, mcs_header, sec_header, target_stream);
             }
         break;
         case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
@@ -3360,16 +3404,11 @@ TODO("Pass font name as parameter in constructor")
             LOG(LOG_INFO, "send_deactive");
         }
 
-        BStream stream(65536);
-
-        ShareControl sctrl(stream);
-        sctrl.emit_begin(PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE);
-        sctrl.emit_end();
-        stream.mark_end();
-
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
+        BStream stream(256);
+        ShareControl_Send(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, 0);
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
@@ -3380,6 +3419,7 @@ TODO("Pass font name as parameter in constructor")
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
         this->trans->send(x224_header, mcs_header, sec_header, stream);
+
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_deactive done");
         }
