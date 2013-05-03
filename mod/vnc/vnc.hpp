@@ -411,12 +411,15 @@ struct mod_vnc : public mod_api {
             BStream stream(32768);
             stream.out_uint8(2);
             stream.out_uint8(0);
-            stream.out_uint16_be(3);
+//            stream.out_uint16_be(3);
+            stream.out_uint16_be(4);
+            stream.out_uint32_be(2); /* RRE */
             stream.out_uint32_be(0); /* raw */
             stream.out_uint32_be(1); /* copy rect */
             stream.out_uint32_be(0xffffff11); /* cursor */
 
-            this->t->send(stream.data, 4 + 3 * 4);
+//            this->t->send(stream.data, 4 + 3 * 4);
+            this->t->send(stream.data, 4 + 4 * 4);                
         }
 
         TODO("Maybe the resize should be done in session ?")
@@ -672,6 +675,7 @@ struct mod_vnc : public mod_api {
             switch (encoding){
             case 0: /* raw */
             {
+LOG(LOG_INFO, "VNC Encoding: RAW");
                 uint8_t * raw = (uint8_t *)malloc(cx*16*Bpp);
                 if (!raw){
                     LOG(LOG_ERR, "Memory allocation failed for raw buffer in VNC");
@@ -692,6 +696,7 @@ struct mod_vnc : public mod_api {
             break;
             case 1: /* copy rect */
             {
+LOG(LOG_INFO, "VNC Encoding: Copy Rect");
                 BStream stream(4);
                 this->t->recv(&stream.end, 4);
                 const int srcx = stream.in_uint16_be();
@@ -703,7 +708,75 @@ struct mod_vnc : public mod_api {
                 this->front.end_update();
             }
             break;
+            case 2:
+            {
+LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
+                uint8_t * raw = (uint8_t *)malloc(cx * cy * Bpp);
+                if (!raw){
+                    LOG(LOG_ERR, "Memory allocation failed for RRE buffer in VNC");
+                    throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
+                }
+
+                this->t->recv(&stream.end,
+                      4   /* number-of-subrectangles */
+                    + Bpp /* background-pixel-value */
+                    );
+
+                uint32_t   number_of_subrectangles = stream.in_uint32_be();
+                uint32_t   i, k, j                                        ;
+                char     * p                                              ;
+                char     * bytes_per_pixel                                ;
+                char     * point_cur;
+                char     * point_end;
+
+                for (point_cur = reinterpret_cast<char *>(raw), point_end = point_cur + cx * cy * Bpp;
+                     point_cur < point_end; point_cur += Bpp)
+                    memcpy(point_cur, reinterpret_cast<char *>(stream.p), Bpp);
+
+                stream.in_skip_bytes(Bpp);
+
+                BStream subrectangles(32767);
+                uint16_t subrec_x, subrec_y, subrec_width, subrec_height;
+
+                uint32_t remain_subrectangle_count = number_of_subrectangles;
+                uint32_t number_of_subrectangles_read;
+
+                char * point_line;
+
+                while (remain_subrectangle_count > 0) {
+                    number_of_subrectangles_read = min<uint32_t>(512, remain_subrectangle_count);
+
+                    subrectangles.reset();
+                    this->t->recv(&subrectangles.end, (Bpp + 8) * number_of_subrectangles_read);
+
+                    remain_subrectangle_count -= number_of_subrectangles_read;
+
+                    for (i = 0; i < number_of_subrectangles_read; i++) {
+                        bytes_per_pixel = reinterpret_cast<char *>(subrectangles.p);
+
+                        subrectangles.in_skip_bytes(Bpp);
+
+                        subrec_x        = subrectangles.in_uint16_be();
+                        subrec_y        = subrectangles.in_uint16_be();
+                        subrec_width    = subrectangles.in_uint16_be();
+                        subrec_height   = subrectangles.in_uint16_be();
+
+                        for (j = 0, point_line = reinterpret_cast<char *>(raw) + subrec_y * cx * Bpp; j < subrec_height; j++, point_line += cx * Bpp)
+                            for (k = 0, p = point_line + (k + subrec_x) * Bpp; k < subrec_width; k++, p += Bpp) {
+                                memcpy(p, bytes_per_pixel, Bpp);
+                            }
+                    }
+                }
+
+                this->front.begin_update();
+                this->front.draw_vnc(Rect(x, y, cx, cy), this->bpp, this->palette332, raw, cx*cy*Bpp);
+                this->front.end_update();
+
+                free(raw);
+            }
+            break;
             case 0xffffff11: /* cursor */
+LOG(LOG_INFO, "VNC Encoding: Cursor");
             TODO(" see why we get these empty rects ?")
             if (cx > 0 && cy > 0) {
                 // 7.7.2   Cursor Pseudo-encoding
