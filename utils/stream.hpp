@@ -62,11 +62,11 @@ class Stream {
         return this->get_offset() + n <= this->capacity;
     }
 
-    uint16_t get_offset() const {
+    uint32_t get_offset() const {
         return this->p - this->data;
     }
 
-    uint16_t room() const {
+    uint32_t room() const {
         return this->capacity - this->get_offset();
     }
 
