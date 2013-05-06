@@ -692,8 +692,8 @@ struct InfoPacket {
     uint8_t Domain[257];
     uint8_t UserName[257];
     uint8_t Password[257];
-    uint8_t AlternateShell[257];
-    uint8_t WorkingDir[257];
+    uint8_t AlternateShell[512];
+    uint8_t WorkingDir[512];
     ExtendedInfoPacket extendedInfoPacket;  // optionals Extra attributes from TS_EXTENDED_INFO_PACKET:
 
     InfoPacket()
@@ -707,11 +707,11 @@ struct InfoPacket {
     , cbWorkingDir(0) //....... size in bytes of variable size WorkingDir attribute
     , extendedInfoPacket()
     {
-        memset(Domain, 0, 256);
-        memset(UserName, 0, 256);
-        memset(Password, 0, 256);
-        memset(AlternateShell, 0, 256);
-        memset(WorkingDir, 0, 256);
+        memset(this->Domain,         0, sizeof(this->Domain));
+        memset(this->UserName,       0, sizeof(this->UserName));
+        memset(this->Password,       0, sizeof(this->Password));
+        memset(this->AlternateShell, 0, sizeof(this->AlternateShell));
+        memset(this->WorkingDir,     0, sizeof(this->WorkingDir));
 
         this->flags  = INFO_MOUSE;
         this->flags |= INFO_DISABLECTRLALTDEL;
@@ -739,11 +739,11 @@ struct InfoPacket {
     , cbWorkingDir(0) //....... size in bytes of variable size WorkingDir attribute
     , extendedInfoPacket()
     {
-        memset(Domain, 0, 256);
-        memset(UserName, 0, 256);
-        memset(Password, 0, 256);
-        memset(AlternateShell, 0, 256);
-        memset(WorkingDir, 0, 256);
+        memset(this->Domain,         0, sizeof(this->Domain));
+        memset(this->UserName,       0, sizeof(this->UserName));
+        memset(this->Password,       0, sizeof(this->Password));
+        memset(this->AlternateShell, 0, sizeof(this->AlternateShell));
+        memset(this->WorkingDir,     0, sizeof(this->WorkingDir));
 
         this->flags  = INFO_MOUSE;
         this->flags |= INFO_DISABLECTRLALTDEL;

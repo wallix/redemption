@@ -188,6 +188,9 @@ struct Inifile {
         char png_path[1024];
         char wrm_path[1024];
 
+        char alternate_shell[1024];
+        char shell_working_directory[1024];
+
         // Section "debug"
         struct {
             uint32_t x224;
@@ -303,8 +306,12 @@ struct Inifile {
             strcpy(this->globals.listen_address, "0.0.0.0");
             this->globals.enable_ip_transparent  = false;
             strcpy(this->globals.certificate_password, "inquisition");
+
             strcpy(this->globals.png_path, PNG_PATH);
             strcpy(this->globals.wrm_path, WRM_PATH);
+
+            this->globals.alternate_shell[0]         = 0;
+            this->globals.shell_working_directory[0] = 0;
 
             memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
 
@@ -403,6 +410,7 @@ struct Inifile {
                     }
                     const char * endvalue;
                     for (endvalue = startvalue; *endvalue ; endvalue++) {
+                        TODO(RZ: Support space in value)
                         if (isspace(*endvalue) || *endvalue == '#'){
                             break;
                         }
@@ -488,6 +496,14 @@ struct Inifile {
             else if (0 == strcmp(key, "wrm_path")){
                 strncpy(this->globals.wrm_path, value, sizeof(this->globals.wrm_path));
                 this->globals.wrm_path[sizeof(this->globals.wrm_path) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "alternate_shell")) {
+                strncpy(this->globals.alternate_shell, value, sizeof(this->globals.alternate_shell));
+                this->globals.alternate_shell[sizeof(this->globals.alternate_shell) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "shell_working_directory")) {
+                strncpy(this->globals.shell_working_directory, value, sizeof(this->globals.shell_working_directory));
+                this->globals.shell_working_directory[sizeof(this->globals.shell_working_directory) - 1] = 0;
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
