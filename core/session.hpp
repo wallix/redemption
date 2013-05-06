@@ -851,16 +851,18 @@ struct Session {
 
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote VNC host");
 
-                this->mod = new mod_vnc(t,
-                    this->context->get(STRAUTHID_TARGET_USER),
-                    this->context->get(STRAUTHID_TARGET_PASSWORD),
-                    *this->front,
-                    this->front->client_info.width,
-                    this->front->client_info.height,
-                    this->front->client_info.keylayout,
-                    this->front->keymap.key_flags,
-                    this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
-                    this->ini->globals.debug.mod_vnc);
+                this->mod = new mod_vnc(
+                      t
+                    , this->context->get(STRAUTHID_TARGET_USER)
+                    , this->context->get(STRAUTHID_TARGET_PASSWORD)
+                    , *this->front
+                    , this->front->client_info.width
+                    , this->front->client_info.height
+                    , this->front->client_info.keylayout
+                    , this->front->keymap.key_flags
+                    , this->context->get_bool(STRAUTHID_OPT_CLIPBOARD)
+                    , false /* RRE encoding */
+                    , this->ini->globals.debug.mod_vnc);
                 this->mod->event.obj = client_sck;
                 this->mod->draw_event();
 

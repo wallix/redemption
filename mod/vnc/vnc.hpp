@@ -95,6 +95,7 @@ struct mod_vnc : public mod_api {
             , int keylayout
             , int key_flags
             , bool clipboard
+            , bool new_encoding
             , uint32_t verbose
             )
     //==============================================================================================================
@@ -412,14 +413,16 @@ struct mod_vnc : public mod_api {
             stream.out_uint8(2);
             stream.out_uint8(0);
 //            stream.out_uint16_be(3);
-            stream.out_uint16_be(4);
-            stream.out_uint32_be(2); /* RRE */
-            stream.out_uint32_be(0); /* raw */
-            stream.out_uint32_be(1); /* copy rect */
-            stream.out_uint32_be(0xffffff11); /* cursor */
+            stream.out_uint16_be(new_encoding ? 4 : 3);
+            if (new_encoding) {
+                stream.out_uint32_be(2);        /* RRE */
+            }
+            stream.out_uint32_be(0);            /* raw */
+            stream.out_uint32_be(1);            /* copy rect */
+            stream.out_uint32_be(0xffffff11);   /* cursor */
 
 //            this->t->send(stream.data, 4 + 3 * 4);
-            this->t->send(stream.data, 4 + 4 * 4);                
+            this->t->send(stream.data, 4 + (new_encoding ? 4 : 3) * 4);                
         }
 
         TODO("Maybe the resize should be done in session ?")
