@@ -678,7 +678,6 @@ struct mod_vnc : public mod_api {
             switch (encoding){
             case 0: /* raw */
             {
-LOG(LOG_INFO, "VNC Encoding: RAW");
                 uint8_t * raw = (uint8_t *)malloc(cx*16*Bpp);
                 if (!raw){
                     LOG(LOG_ERR, "Memory allocation failed for raw buffer in VNC");
@@ -699,7 +698,6 @@ LOG(LOG_INFO, "VNC Encoding: RAW");
             break;
             case 1: /* copy rect */
             {
-LOG(LOG_INFO, "VNC Encoding: Copy Rect");
                 BStream stream(4);
                 this->t->recv(&stream.end, 4);
                 const int srcx = stream.in_uint16_be();
@@ -713,7 +711,7 @@ LOG(LOG_INFO, "VNC Encoding: Copy Rect");
             break;
             case 2:
             {
-LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
+//LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
                 uint8_t * raw = (uint8_t *)malloc(cx * cy * Bpp);
                 if (!raw){
                     LOG(LOG_ERR, "Memory allocation failed for RRE buffer in VNC");
@@ -779,7 +777,6 @@ LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y
             }
             break;
             case 0xffffff11: /* cursor */
-LOG(LOG_INFO, "VNC Encoding: Cursor");
             TODO(" see why we get these empty rects ?")
             if (cx > 0 && cy > 0) {
                 // 7.7.2   Cursor Pseudo-encoding
