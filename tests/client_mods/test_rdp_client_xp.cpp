@@ -301,7 +301,24 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    struct mod_api * mod = new mod_rdp(&t, "xavier", "SecureLinux", "10.10.9.161", front, "test", false, info, &gen, 7, NULL, "", true, false, verbose, false);
+    struct mod_api * mod = new mod_rdp( &t
+                                      , "xavier"
+                                      , "SecureLinux"
+                                      , "10.10.9.161"
+                                      , front
+                                      , "test"
+                                      , false
+                                      , info
+                                      , &gen
+                                      , 7
+                                      , NULL
+                                      , ""
+                                      , "" /* alternate_shell */
+                                      , "" /* shell_working_directory */
+                                      , true
+                                      , false
+                                      , verbose
+                                      , false);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

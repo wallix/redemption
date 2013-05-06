@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -57,8 +57,6 @@
 
 #include "genrandom.hpp"
 
-
-
 struct mod_rdp : public mod_api {
     /* mod data */
     FrontAPI & front;
@@ -85,8 +83,8 @@ struct mod_rdp : public mod_api {
     char username[128];
     char password[256];
     char domain[256];
-    char program[256];
-    char directory[256];
+    char program[512];
+    char directory[512];
     uint8_t bpp;
 
     int encryptionLevel;
@@ -154,6 +152,8 @@ struct mod_rdp : public mod_api {
             int key_flags,
             SessionManager * sesman,
             const char * auth_channel,
+            const char * alternate_shell,
+            const char * shell_working_directory,
             bool clipboard,
             bool fp_support, // If true, fast-path must be supported
             uint32_t verbose = 0,
@@ -245,8 +245,11 @@ struct mod_rdp : public mod_api {
         strcpy(this->password, target_password);
 
         memset(this->domain, 0, 256);
-        memset(this->program, 0, 256);
-        memset(this->directory, 0, 256);
+
+        strncpy(this->program, alternate_shell, sizeof(this->program) - 1);
+        this->program[sizeof(this->program) - 1] = '\0';
+        strncpy(this->directory, shell_working_directory, sizeof(this->directory) - 1);
+        this->directory[sizeof(this->directory) - 1] = '\0';
 
         LOG(LOG_INFO, "Server key layout is %x", this->keylayout);
 

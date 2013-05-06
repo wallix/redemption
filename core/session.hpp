@@ -129,6 +129,8 @@ struct Session {
             this->context->cpy(STRAUTHID_HOST, ip_source);
             this->context->cpy(STRAUTHID_OPT_FILE_ENCRYPTION,
                 (this->ini->globals.enable_file_encryption ? "True" : "False"));
+            this->context->cpy(STRAUTHID_ALTERNATE_SHELL, this->ini->globals.alternate_shell);
+            this->context->cpy(STRAUTHID_SHELL_WORKING_DIRECTORY, this->ini->globals.shell_working_directory);
 
             this->sesman = new SessionManager(*this->context
                                              , this->ini->globals.keepalive_grace_delay
@@ -792,6 +794,8 @@ struct Session {
                     , 8192
                     );
 
+LOG(LOG_INFO, "STRAUTHID_ALTERNATE_SHELL=\"%s\"", this->context->get(STRAUTHID_ALTERNATE_SHELL));
+LOG(LOG_INFO, "STRAUTHID_SHELL_WORKING_DIRECTORY=\"%s\"", this->context->get(STRAUTHID_SHELL_WORKING_DIRECTORY));
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote RDP host");
                 this->mod = new mod_rdp(t,
                                     this->context->get(STRAUTHID_TARGET_USER),
@@ -805,6 +809,8 @@ struct Session {
                                     this->front->keymap.key_flags,
                                     this->sesman, // we give mod_rdp a direct access to sesman for auth_channel channel
                                     this->ini->globals.auth_channel,
+                                    this->context->get(STRAUTHID_ALTERNATE_SHELL),
+                                    this->context->get(STRAUTHID_SHELL_WORKING_DIRECTORY),
                                     this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
                                     true, // support fast-path
                                     this->ini->globals.debug.mod_rdp,
@@ -851,16 +857,18 @@ struct Session {
 
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote VNC host");
 
-                this->mod = new mod_vnc(t,
-                    this->context->get(STRAUTHID_TARGET_USER),
-                    this->context->get(STRAUTHID_TARGET_PASSWORD),
-                    *this->front,
-                    this->front->client_info.width,
-                    this->front->client_info.height,
-                    this->front->client_info.keylayout,
-                    this->front->keymap.key_flags,
-                    this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
-                    this->ini->globals.debug.mod_vnc);
+                this->mod = new mod_vnc(
+                      t
+                    , this->context->get(STRAUTHID_TARGET_USER)
+                    , this->context->get(STRAUTHID_TARGET_PASSWORD)
+                    , *this->front
+                    , this->front->client_info.width
+                    , this->front->client_info.height
+                    , this->front->client_info.keylayout
+                    , this->front->keymap.key_flags
+                    , this->context->get_bool(STRAUTHID_OPT_CLIPBOARD)
+                    , true /* RRE encoding */
+                    , this->ini->globals.debug.mod_vnc);
                 this->mod->event.obj = client_sck;
                 this->mod->draw_event();
 
