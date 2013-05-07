@@ -364,8 +364,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     "certificate_password=redemption\n"
     "png_path=/var/tmp/wab/recorded/rdp\n"
     "wrm_path=/var/wab/recorded/rdp\n"
-    "alternate_shell=C:\\WINDOWS\\NOTEPAD.EXE\n"
-    "shell_working_directory=C:\\WINDOWS\\\n"
+    "alternate_shell=C:\\\\WINDOWS\\\\NOTEPAD.EXE\n"
+    "shell_working_directory=C:\\\\WINDOWS\\\\\n"
     "\n"
     "[client]\n"
     "ignore_logon_password=yes\n"
@@ -627,7 +627,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     "enable_ip_transparent=true\n"
     "png_path=/var/tmp/wab/recorded/rdp\n"
     "wrm_path=/var/wab/recorded/rdp\n"
-//    "alternate_shell=C:\\Program\ Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE\n"
+    "alternate_shell=C:\\\\Program\\ Files\\\\Microsoft\\ Visual\\ Studio\\\\Common\\\\MSDev98\\\\Bin\\\\MSDEV.EXE\n"
     "shell_working_directory=\n"
     "[client]\n"
     "performance_flags_default=07\n"
@@ -708,8 +708,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(std::string("/var/wab/recorded/rdp"),
                                                         std::string(ini.globals.wrm_path));
 
-    BOOST_CHECK_EQUAL(std::string(""),
-//        std::string("C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE"),
+    BOOST_CHECK_EQUAL(
+        std::string("C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE"),
                                                         std::string(ini.globals.alternate_shell));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
 
