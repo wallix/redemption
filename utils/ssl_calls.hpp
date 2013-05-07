@@ -267,20 +267,14 @@ struct CryptContext
         memset(this->update_key, 0, MD5_DIGEST_LENGTH);
     }
 
-    void generate_key(uint8_t * key_block, const uint8_t* salt1, const uint8_t* salt2, uint32_t encryptionMethod)
+    void generate_key(uint8_t * keyblob, uint32_t encryptionMethod)
     {
         // 16-byte transformation used to generate export keys (6.2.2).
         this->encryptionMethod = encryptionMethod;
-
-        SslMd5 md5;
-        md5.update(FixedSizeStream(key_block, 16));
-        md5.update(StaticStream(salt1, 32));
-        md5.update(StaticStream(salt2, 32));
-        md5.final(this->key);
-
+        memcpy(this->key, keyblob, 16);
+        
         if (encryptionMethod == 1) {
             // 40 bits encryption
-
             ssllib ssl;
             ssl.sec_make_40bit(this->key);
             memcpy(this->update_key, this->key, 16);

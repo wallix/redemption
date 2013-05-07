@@ -1600,8 +1600,8 @@ TODO("Pass font name as parameter in constructor")
                     ssl.sec_make_40bit(this->encrypt.sign_key);
                 }
 
-                this->decrypt.generate_key(key_block.blob2, client_random, this->server_random, this->encrypt.encryptionMethod);
-                this->encrypt.generate_key(key_block.blob1, client_random, this->server_random, this->encrypt.encryptionMethod);
+                this->encrypt.generate_key(key_block.key1, this->encrypt.encryptionMethod);
+                this->decrypt.generate_key(key_block.key2, this->encrypt.encryptionMethod);
             }
             else {
                 LOG(LOG_INFO, "TLS mode: exchange packet disabled");

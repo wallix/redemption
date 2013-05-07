@@ -717,8 +717,8 @@ struct mod_rdp : public mod_api {
                             if (sc_sec1.encryptionMethod == 1){
                                 ssl.sec_make_40bit(encrypt.sign_key);
                             }
-                            this->decrypt.generate_key(key_block.blob1, client_random, serverRandom, sc_sec1.encryptionMethod);
-                            this->encrypt.generate_key(key_block.blob2, client_random, serverRandom, sc_sec1.encryptionMethod);
+                            this->decrypt.generate_key(key_block.key1, sc_sec1.encryptionMethod);
+                            this->encrypt.generate_key(key_block.key2, sc_sec1.encryptionMethod);
                         }
                     }
                     break;
@@ -1039,7 +1039,7 @@ struct mod_rdp : public mod_api {
                             memset(null_data, 0, sizeof(null_data));
                             /* We currently use null client keys. This is a bit naughty but, hey,
                                the security of license negotiation isn't exactly paramount. */
-                            SEC::SessionKey keyblock(null_data, 48, null_data, 32, lic.server_random, 32);
+                            SEC::SessionKey keyblock(null_data, null_data, lic.server_random);
 
                             /* Store first 16 bytes of session key as MAC secret */
                             memcpy(this->lic_layer_license_sign_key, keyblock.get_MAC_salt_key(), 16);
