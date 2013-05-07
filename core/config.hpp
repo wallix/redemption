@@ -247,107 +247,107 @@ struct Inifile {
     }
 
     void init(){
-            this->globals.capture_flags = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
-            this->globals.capture_wrm   = true;
-            this->globals.capture_png   = true;
-            this->globals.capture_flv   = false;
-            this->globals.capture_ocr   = false;
-            this->globals.capture_chunk = false;
-            this->globals.movie_path[0]    = 0;
-            this->globals.auth_user[0]     = 0;
-            this->globals.host[0]          = 0;
-            this->globals.target_device[0] = 0;
-            this->globals.target_user[0]   = 0;
+        this->globals.capture_flags = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
+        this->globals.capture_wrm   = true;
+        this->globals.capture_png   = true;
+        this->globals.capture_flv   = false;
+        this->globals.capture_ocr   = false;
+        this->globals.capture_chunk = false;
+        this->globals.movie_path[0]    = 0;
+        this->globals.auth_user[0]     = 0;
+        this->globals.host[0]          = 0;
+        this->globals.target_device[0] = 0;
+        this->globals.target_user[0]   = 0;
 
-            this->globals.bitmap_cache = true;
-            this->globals.bitmap_compression = true;
-            this->globals.port = 3389;
-            this->globals.nomouse = false;
-            this->globals.notimestamp = false;
-            this->globals.encryptionLevel = level_from_cstr("low");
-            strcpy(this->globals.authip, "127.0.0.1");
-            this->globals.authport = 3350;
-            this->globals.autovalidate = false;
-            strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
-            strcpy(this->globals.codec_id, "flv");
-            TODO("this could be some kind of enumeration")
-            strcpy(this->globals.video_quality, "medium");
+        this->globals.bitmap_cache = true;
+        this->globals.bitmap_compression = true;
+        this->globals.port = 3389;
+        this->globals.nomouse = false;
+        this->globals.notimestamp = false;
+        this->globals.encryptionLevel = level_from_cstr("low");
+        strcpy(this->globals.authip, "127.0.0.1");
+        this->globals.authport = 3350;
+        this->globals.autovalidate = false;
+        strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
+        strcpy(this->globals.codec_id, "flv");
+        TODO("this could be some kind of enumeration")
+        strcpy(this->globals.video_quality, "medium");
 
-            this->globals.png_interval = 3000;
-            this->globals.ocr_interval = 100; // 1 every second
-            this->globals.frame_interval = 40;
-            this->globals.break_interval = 600;
-            this->globals.flv_break_interval = 600000000l;
-            this->globals.flv_frame_interval = 1000000L; 
-            this->globals.capture_groupid = 33; 
+        this->globals.png_interval = 3000;
+        this->globals.ocr_interval = 100; // 1 every second
+        this->globals.frame_interval = 40;
+        this->globals.break_interval = 600;
+        this->globals.flv_break_interval = 600000000l;
+        this->globals.flv_frame_interval = 1000000L; 
+        this->globals.capture_groupid = 33; 
 
-            this->globals.png_limit = 3;
-            this->globals.l_bitrate   = 20000;
-            this->globals.l_framerate = 1;
-            this->globals.l_height    = 480;
-            this->globals.l_width     = 640;
-            this->globals.l_qscale    = 25;
-            this->globals.m_bitrate   = 40000;
-            this->globals.m_framerate = 1;
-            this->globals.m_height    = 768;
-            this->globals.m_width     = 1024;
-            this->globals.m_qscale    = 15;
-            this->globals.h_bitrate   = 200000;
-            this->globals.h_framerate = 5;
-            this->globals.h_height    = 1024;
-            this->globals.h_width     = 1280;
-            this->globals.h_qscale    = 15;
-            this->globals.max_tick    = 30;
-            this->globals.keepalive_grace_delay = 30;
-            strcpy(this->globals.replay_path, "/tmp/");
-            this->globals.internal_domain = false;
-            this->globals.enable_file_encryption = false;
-            this->globals.enable_tls             = true;
-            strcpy(this->globals.listen_address, "0.0.0.0");
-            this->globals.enable_ip_transparent  = false;
-            strcpy(this->globals.certificate_password, "inquisition");
+        this->globals.png_limit = 3;
+        this->globals.l_bitrate   = 20000;
+        this->globals.l_framerate = 1;
+        this->globals.l_height    = 480;
+        this->globals.l_width     = 640;
+        this->globals.l_qscale    = 25;
+        this->globals.m_bitrate   = 40000;
+        this->globals.m_framerate = 1;
+        this->globals.m_height    = 768;
+        this->globals.m_width     = 1024;
+        this->globals.m_qscale    = 15;
+        this->globals.h_bitrate   = 200000;
+        this->globals.h_framerate = 5;
+        this->globals.h_height    = 1024;
+        this->globals.h_width     = 1280;
+        this->globals.h_qscale    = 15;
+        this->globals.max_tick    = 30;
+        this->globals.keepalive_grace_delay = 30;
+        strcpy(this->globals.replay_path, "/tmp/");
+        this->globals.internal_domain = false;
+        this->globals.enable_file_encryption = false;
+        this->globals.enable_tls             = true;
+        strcpy(this->globals.listen_address, "0.0.0.0");
+        this->globals.enable_ip_transparent  = false;
+        strcpy(this->globals.certificate_password, "inquisition");
 
-            strcpy(this->globals.png_path, PNG_PATH);
-            strcpy(this->globals.wrm_path, WRM_PATH);
+        strcpy(this->globals.png_path, PNG_PATH);
+        strcpy(this->globals.wrm_path, WRM_PATH);
 
-            this->globals.alternate_shell[0]         = 0;
-            this->globals.shell_working_directory[0] = 0;
+        this->globals.alternate_shell[0]         = 0;
+        this->globals.shell_working_directory[0] = 0;
 
-            memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
+        memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
 
-            strcpy(this->account.accountname, "");
-            strcpy(this->account.username,    "");
-            strcpy(this->account.password,    "");
+        strcpy(this->account.accountname, "");
+        strcpy(this->account.username,    "");
+        strcpy(this->account.password,    "");
 
-            // Section "debug".
-            this->globals.debug.x224              = 0;
-            this->globals.debug.mcs               = 0;
-            this->globals.debug.sec               = 0;
-            this->globals.debug.rdp               = 0;
-            this->globals.debug.primary_orders    = 0;
-            this->globals.debug.secondary_orders  = 0;
-            this->globals.debug.bitmap            = 0;
-            this->globals.debug.capture           = 0;
-            this->globals.debug.auth              = 0;
-            this->globals.debug.session           = 0;
-            this->globals.debug.front             = 0;
-            this->globals.debug.mod_rdp           = 0;
-            this->globals.debug.mod_vnc           = 0;
-            this->globals.debug.mod_int           = 0;
-            this->globals.debug.mod_xup           = 0;
-            this->globals.debug.widget            = 0;
-            this->globals.debug.input             = 0;
+        // Section "debug".
+        this->globals.debug.x224              = 0;
+        this->globals.debug.mcs               = 0;
+        this->globals.debug.sec               = 0;
+        this->globals.debug.rdp               = 0;
+        this->globals.debug.primary_orders    = 0;
+        this->globals.debug.secondary_orders  = 0;
+        this->globals.debug.bitmap            = 0;
+        this->globals.debug.capture           = 0;
+        this->globals.debug.auth              = 0;
+        this->globals.debug.session           = 0;
+        this->globals.debug.front             = 0;
+        this->globals.debug.mod_rdp           = 0;
+        this->globals.debug.mod_vnc           = 0;
+        this->globals.debug.mod_int           = 0;
+        this->globals.debug.mod_xup           = 0;
+        this->globals.debug.widget            = 0;
+        this->globals.debug.input             = 0;
 
-            this->globals.debug.log_type         = 2; // syslog by default
-            this->globals.debug.log_file_path[0] = 0;
+        this->globals.debug.log_type         = 2; // syslog by default
+        this->globals.debug.log_file_path[0] = 0;
 
-            // Section "client".
-            this->globals.client.ignore_logon_password               = false;
-//          this->globals.client.performance_flags_default           = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
-            this->globals.client.performance_flags_default           = 0;
-            this->globals.client.performance_flags_force_present     = 0;
-            this->globals.client.performance_flags_force_not_present = 0;
-            this->globals.client.tls_fallback_legacy                 = false;
+        // Section "client".
+        this->globals.client.ignore_logon_password               = false;
+//      this->globals.client.performance_flags_default           = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
+        this->globals.client.performance_flags_default           = 0;
+        this->globals.client.performance_flags_force_present     = 0;
+        this->globals.client.performance_flags_force_not_present = 0;
+        this->globals.client.tls_fallback_legacy                 = false;
     };
 
     void cparse(istream & ifs){
@@ -399,6 +399,7 @@ struct Inifile {
             const char * sep = endkey;
             for (--endkey; endkey >= startkey ; endkey--) {
                 if (!isspace(*endkey)){
+                    TODO("RZ: Possible buffer overflow if length of key is larger than 128 bytes")
                     memcpy(key, startkey, endkey - startkey + 1);
                     key[endkey - startkey + 1] = 0;
 
@@ -409,14 +410,41 @@ struct Inifile {
                         }
                     }
                     const char * endvalue;
+/*
                     for (endvalue = startvalue; *endvalue ; endvalue++) {
-                        TODO(RZ: Support space in value)
+                        TODO("RZ: Support space in value")
                         if (isspace(*endvalue) || *endvalue == '#'){
                             break;
                         }
                     }
+                    TODO("RZ: Possible buffer overflow if length of value is larger than 128 bytes")
                     memcpy(value, startvalue, endvalue - startvalue + 1);
                     value[endvalue - startvalue + 1] = 0;
+*/
+                    char *curvalue = value;
+                    for (endvalue = startvalue; *endvalue ; endvalue++) {
+                        if (isspace(*endvalue) || *endvalue == '#'){
+                            break;
+                        }
+                        else if ((*endvalue == '\\') && *(endvalue + 1)) {
+                            if (endvalue > startvalue) {
+                                memcpy(curvalue, startvalue, endvalue - startvalue);
+                                curvalue += (endvalue - startvalue);
+                            }
+
+                            endvalue++;
+
+                            *curvalue++ = *endvalue;
+
+                            startvalue = endvalue + 1;
+                        }
+                    }
+                    if (endvalue > startvalue) {
+                        memcpy(curvalue, startvalue, endvalue - startvalue);
+                        curvalue += (endvalue - startvalue);
+                    }
+                    *curvalue = 0;
+
                     this->setglobal(key, value, context);
                     break;
                 }
