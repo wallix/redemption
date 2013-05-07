@@ -1594,15 +1594,14 @@ TODO("Pass font name as parameter in constructor")
                 }
 
                 // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
-                uint8_t key_block[48];
-                ssl.rdp_sec_generate_keyblock(key_block, client_random, this->server_random);
-                memcpy(this->encrypt.sign_key, key_block, 16);
+                SEC::KeyBlock key_block(client_random, this->server_random);
+                memcpy(this->encrypt.sign_key, key_block.blob0, 16);
                 if (this->encrypt.encryptionMethod == 1){
                     ssl.sec_make_40bit(this->encrypt.sign_key);
                 }
 
-                this->decrypt.generate_key(&key_block[32], client_random, this->server_random, this->encrypt.encryptionMethod);
-                this->encrypt.generate_key(&key_block[16], client_random, this->server_random, this->encrypt.encryptionMethod);
+                this->decrypt.generate_key(key_block.blob2, client_random, this->server_random, this->encrypt.encryptionMethod);
+                this->encrypt.generate_key(key_block.blob1, client_random, this->server_random, this->encrypt.encryptionMethod);
             }
             else {
                 LOG(LOG_INFO, "TLS mode: exchange packet disabled");

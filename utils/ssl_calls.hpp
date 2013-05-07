@@ -218,56 +218,6 @@ class ssllib
 
         memcpy(signature.data, md5sig, signature.capacity);
     }
-
-    static void rdp_sec_generate_keyblock(uint8_t (& key_block)[48], uint8_t *client_random, uint8_t *server_random)
-    {
-        uint8_t pre_master_secret[48];
-        uint8_t master_secret[48];
-
-        /* Construct pre-master secret (session key) */
-        memcpy(pre_master_secret, client_random, 24);
-        memcpy(pre_master_secret + 24, server_random, 24);
-
-        uint8_t shasig[20];
-
-        // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
-        for (int i = 0; i < 3; i++) {
-            uint8_t pad[4];
-
-            memset(pad, 'A' + i, i + 1);
-
-            SslSha1 sha1;
-            sha1.update(FixedSizeStream(pad, i + 1));
-            sha1.update(FixedSizeStream(pre_master_secret, sizeof(pre_master_secret)));
-            sha1.update(FixedSizeStream(client_random, 32));
-            sha1.update(FixedSizeStream(server_random, 32));
-            sha1.final(shasig);
-
-            SslMd5 md5;
-            md5.update(FixedSizeStream(pre_master_secret, sizeof(pre_master_secret)));
-            md5.update(FixedSizeStream(shasig, sizeof(shasig)));
-            md5.final(&master_secret[i * 16]);
-        }
-
-        // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
-        for (int i = 0; i < 3; i++) {
-            uint8_t pad[4];
-
-            memset(pad, 'X' + i, i + 1);
-
-            SslSha1 sha1;
-            sha1.update(FixedSizeStream(pad, i + 1));
-            sha1.update(FixedSizeStream(master_secret, sizeof(master_secret)));
-            sha1.update(FixedSizeStream(client_random, 32));
-            sha1.update(FixedSizeStream(server_random, 32));
-            sha1.final(shasig);
-
-            SslMd5 md5;
-            md5.update(FixedSizeStream(master_secret, sizeof(master_secret)));
-            md5.update(FixedSizeStream(shasig, sizeof(shasig)));
-            md5.final(&key_block[i * 16]);
-        }
-    }
 };
 
 

@@ -711,16 +711,14 @@ struct mod_rdp : public mod_api {
 
                             ssllib ssl;
 
-                            ssl.rsa_encrypt(client_crypt_random, client_random,
-                                    SEC_RANDOM_SIZE, this->server_public_key_len, modulus, exponent);
-                            uint8_t key_block[48];
-                            ssl.rdp_sec_generate_keyblock(key_block, client_random, serverRandom);
-                            memcpy(encrypt.sign_key, key_block, 16);
+                            ssl.rsa_encrypt(client_crypt_random, client_random, SEC_RANDOM_SIZE, this->server_public_key_len, modulus, exponent);
+                            SEC::KeyBlock key_block(client_random, serverRandom);
+                            memcpy(encrypt.sign_key, key_block.blob0, 16);
                             if (sc_sec1.encryptionMethod == 1){
                                 ssl.sec_make_40bit(encrypt.sign_key);
                             }
-                            this->decrypt.generate_key(&key_block[16], client_random, serverRandom, sc_sec1.encryptionMethod);
-                            this->encrypt.generate_key(&key_block[32], client_random, serverRandom, sc_sec1.encryptionMethod);
+                            this->decrypt.generate_key(key_block.blob1, client_random, serverRandom, sc_sec1.encryptionMethod);
+                            this->encrypt.generate_key(key_block.blob2, client_random, serverRandom, sc_sec1.encryptionMethod);
                         }
                     }
                     break;
