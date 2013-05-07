@@ -220,6 +220,13 @@ TODO("Pass font name as parameter in constructor")
     }
 
     ~Front(){
+        if (this->bmp_cache) {
+            delete this->bmp_cache;
+        }
+
+        if (this->orders) {
+            delete this->orders;
+        }
     }
 
     int server_resize(int width, int height, int bpp)

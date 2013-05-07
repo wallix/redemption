@@ -215,7 +215,7 @@ struct Inifile {
             char log_file_path[1024]; // log file location
         } debug;
 
-        // Section "client"
+        // section "client"
         struct {
             bool ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default false
 
@@ -225,6 +225,22 @@ struct Inifile {
 
             bool tls_fallback_legacy;
         } client;
+
+        // section "translation"
+        struct {
+            char button_ok[128];
+            char button_cancel[128];
+            char button_help[128];
+            char button_close[128];
+            char button_refused[128];
+            char login[128];
+            char username[128];
+            char password[128];
+            char target[256];
+            char diagnostic[1024];
+            char connection_closed[1024];
+            char help_message[1024];
+        } translation;
     } globals;
 
     struct IniAccounts account;
@@ -348,6 +364,19 @@ struct Inifile {
         this->globals.client.performance_flags_force_present     = 0;
         this->globals.client.performance_flags_force_not_present = 0;
         this->globals.client.tls_fallback_legacy                 = false;
+
+        strcpy(this->globals.translation.button_ok,         "OK");
+        strcpy(this->globals.translation.button_cancel,     "Cancel");
+        strcpy(this->globals.translation.button_help,       "Help");
+        strcpy(this->globals.translation.button_close,      "Close");
+        strcpy(this->globals.translation.button_refused,    "Refused");
+        strcpy(this->globals.translation.login,             "login");
+        strcpy(this->globals.translation.username,          "username");
+        strcpy(this->globals.translation.password,          "password");
+        strcpy(this->globals.translation.target,            "target");
+        strcpy(this->globals.translation.diagnostic,        "diagnostic");
+        strcpy(this->globals.translation.connection_closed, "Connection closed");
+        strcpy(this->globals.translation.help_message,      "Help message");
     };
 
     void cparse(istream & ifs){
@@ -691,6 +720,63 @@ struct Inifile {
             else if (0 == strcmp(key, "log_file_path")){
                 strncpy(this->globals.debug.log_file_path, value, sizeof(this->globals.debug.log_file_path));
                 this->globals.debug.log_file_path[sizeof(this->globals.debug.log_file_path) - 1] = 0;
+            }
+            else {
+                LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            }
+        }
+        else if (0 == strcmp(context, "translation")){ 
+            if (0 == strcmp(key, "button_ok")){
+                strncpy(this->globals.translation.button_ok, value, sizeof(this->globals.translation.button_ok));
+                this->globals.translation.button_ok[sizeof(this->globals.translation.button_ok) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "button_cancel")){
+                strncpy(this->globals.translation.button_cancel, value, sizeof(this->globals.translation.button_cancel));
+                this->globals.translation.button_cancel[sizeof(this->globals.translation.button_cancel) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "button_help")){
+                strncpy(this->globals.translation.button_help, value, sizeof(this->globals.translation.button_help));
+                this->globals.translation.button_help[sizeof(this->globals.translation.button_help) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "button_close")){
+                strncpy(this->globals.translation.button_close, value, sizeof(this->globals.translation.button_close));
+                this->globals.translation.button_close[sizeof(this->globals.translation.button_close) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "button_refused")){
+                strncpy(this->globals.translation.button_refused, value, sizeof(this->globals.translation.button_refused));
+                this->globals.translation.button_refused[sizeof(this->globals.translation.button_refused) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "button_refused")){
+                strncpy(this->globals.translation.button_refused, value, sizeof(this->globals.translation.button_refused));
+                this->globals.translation.button_refused[sizeof(this->globals.translation.button_refused) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "login")){
+                strncpy(this->globals.translation.login, value, sizeof(this->globals.translation.login));
+                this->globals.translation.login[sizeof(this->globals.translation.login) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "username")){
+                strncpy(this->globals.translation.username, value, sizeof(this->globals.translation.username));
+                this->globals.translation.username[sizeof(this->globals.translation.username) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "password")){
+                strncpy(this->globals.translation.password, value, sizeof(this->globals.translation.password));
+                this->globals.translation.password[sizeof(this->globals.translation.password) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "target")){
+                strncpy(this->globals.translation.target, value, sizeof(this->globals.translation.target));
+                this->globals.translation.target[sizeof(this->globals.translation.target) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "diagnostic")){
+                strncpy(this->globals.translation.diagnostic, value, sizeof(this->globals.translation.diagnostic));
+                this->globals.translation.diagnostic[sizeof(this->globals.translation.diagnostic) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "connection_closed")){
+                strncpy(this->globals.translation.connection_closed, value, sizeof(this->globals.translation.connection_closed));
+                this->globals.translation.connection_closed[sizeof(this->globals.translation.connection_closed) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "help_message")){
+                strncpy(this->globals.translation.help_message, value, sizeof(this->globals.translation.help_message));
+                this->globals.translation.help_message[sizeof(this->globals.translation.help_message) - 1] = 0;
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

@@ -114,6 +114,8 @@ struct Session {
     SessionManager * sesman;
     UdevRandom gen;
 
+    Transport * mod_transport;
+
     Session(wait_obj & front_event, int sck, const char * ip_source, int * refreshconf, Inifile * ini)
         : refreshconf(refreshconf)
         , front_event(front_event)
@@ -121,6 +123,7 @@ struct Session {
         , verbose(this->ini->globals.debug.session)
         , context(NULL)
         , nextmod(INTERNAL_NONE)
+        , mod_transport(NULL)
     {
         SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->globals.debug.front);
 
@@ -285,6 +288,10 @@ struct Session {
 
                             if (this->mod != this->no_mod) {
                                 delete this->mod;
+                                if (this->mod_transport) {
+                                    delete this->mod_transport;
+                                    this->mod_transport = NULL;
+                                }
                                 this->mod = this->no_mod;
                             }
                             this->mod = new transitory_mod(*(this->front),
@@ -380,6 +387,10 @@ struct Session {
                                 if (next_state != MCTX_STATUS_WAITING){
                                     this->internal_state = SESSION_STATE_STOP;
                                     delete this->mod;
+                                    if (this->mod_transport) {
+                                        delete this->mod_transport;
+                                        this->mod_transport = NULL;
+                                    }
                                     this->mod = this->no_mod;
                                     this->session_setup_mod(next_state, this->context, this->nextmod);
                                     this->internal_state = SESSION_STATE_RUNNING;
@@ -398,6 +409,10 @@ struct Session {
                                // end the current module and switch to new one
                                 if (this->mod != this->no_mod){
                                     delete this->mod;
+                                    if (this->mod_transport) {
+                                        delete this->mod_transport;
+                                        this->mod_transport = NULL;
+                                    }
                                     this->mod = this->no_mod;
                                 }
                                 this->context->cpy(STRAUTHID_OPT_WIDTH, this->front->client_info.width);
@@ -496,6 +511,10 @@ struct Session {
         delete this->front;
         if (this->mod != this->no_mod){
             delete this->mod;
+            if (this->mod_transport) {
+                delete this->mod_transport;
+                this->mod_transport = NULL;
+            }
             this->mod = this->no_mod;
         }
         delete this->no_mod;
@@ -543,6 +562,10 @@ struct Session {
                 }
                 if (this->mod != this->no_mod) {
                     delete this->mod;
+                    if (this->mod_transport) {
+                        delete this->mod_transport;
+                        this->mod_transport = NULL;
+                    }
                     this->mod = this->no_mod;
                 }
                 this->mod = new cli_mod(*this->context, *(this->front),
@@ -559,6 +582,10 @@ struct Session {
             {
                 if (this->mod != this->no_mod) {
                     delete this->mod;
+                    if (this->mod_transport) {
+                        delete this->mod_transport;
+                        this->mod_transport = NULL;
+                    }
                     this->mod = this->no_mod;
                 }
                 switch (submodule){
@@ -722,6 +749,10 @@ struct Session {
                 }
                 if (this->mod != this->no_mod) {
                     delete this->mod;
+                    if (this->mod_transport) {
+                        delete this->mod_transport;
+                        this->mod_transport = NULL;
+                    }
                     this->mod = this->no_mod;
                 }
 
@@ -741,6 +772,8 @@ struct Session {
                     , this->context->get(STRAUTHID_TARGET_DEVICE)
                     , atoi(this->context->get(STRAUTHID_TARGET_PORT))
                     , this->ini->globals.debug.mod_xup);
+                this->mod_transport = t;
+                
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote X host");
                 this->mod = new xup_mod(t, *this->context, *(this->front),
                                         this->front->client_info.width,
@@ -762,6 +795,10 @@ struct Session {
                 }
                 if (this->mod != this->no_mod) {
                     delete this->mod;
+                    if (this->mod_transport) {
+                        delete this->mod_transport;
+                        this->mod_transport = NULL;
+                    }
                     this->mod = this->no_mod;
                 }
                 REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.")
@@ -793,6 +830,7 @@ struct Session {
                     , this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)
                     , 8192
                     );
+                this->mod_transport = t;
 
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote RDP host");
                 this->mod = new mod_rdp(t,
@@ -831,6 +869,10 @@ struct Session {
                 }
                 if (this->mod != this->no_mod) {
                     delete this->mod;
+                    if (this->mod_transport) {
+                        delete this->mod_transport;
+                        this->mod_transport = NULL;
+                    }
                     this->mod = this->no_mod;
                 }
                 static const char * name = "VNC Target";
@@ -852,6 +894,7 @@ struct Session {
                     , this->context->get(STRAUTHID_TARGET_DEVICE)
                     , atoi(this->context->get(STRAUTHID_TARGET_PORT))
                     ,this->ini->globals.debug.mod_vnc);
+                this->mod_transport = t;
 
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote VNC host");
 
@@ -884,6 +927,10 @@ struct Session {
                 }
                 if (this->mod != this->no_mod) {
                     delete this->mod;
+                    if (this->mod_transport) {
+                        delete this->mod_transport;
+                        this->mod_transport = NULL;
+                    }
                     this->mod = this->no_mod;
                 }
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);

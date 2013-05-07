@@ -149,7 +149,7 @@ TODO("Pass font name as parameter in constructor")
         LOG(LOG_INFO, "Reading font file %s", file_path);
         // RAZ of font chars table
         for (int i = 0; i < NUM_GLYPHS ; i++){
-            font_items[i] = 0;
+            this->font_items[i] = 0;
         }
 
         // Does font definition file exist and is it accessible ?
@@ -300,6 +300,11 @@ ErrorReadingFontFile:
     ~Font()
     //==============================================================================
     {
+        for (int i = 0; i < NUM_GLYPHS ; i++){
+            if (this->font_items[i]) {
+                delete this->font_items[i];
+            }
+        }
     }
 
     bool glyph_defined(uint32_t charnum)
