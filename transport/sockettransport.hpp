@@ -96,6 +96,7 @@ class SocketTransport : public Transport {
         char ip_address[128];
         int  port;
 
+        TODO("check if buffer is defined before accessing it")
         char * error_message_buffer;
         size_t error_message_len;
 
@@ -1061,9 +1062,10 @@ LOG(LOG_INFO, "%s", certificate_password);
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error)
     {
-//        if (this->verbose & 0x100){
-//            LOG(LOG_INFO, "Socket %s (%u) receiving %u bytes", this->name, this->sck, total_len);
-//        }
+        if (this->verbose & 0x100){
+            LOG(LOG_INFO, "Socket %s (%u) receiving %u bytes", this->name, this->sck, len);
+        }
+        char * start = *pbuffer;
 
         ssize_t res = rio_recv(&this->rio, *pbuffer, len);
         if (res < 0){
@@ -1075,11 +1077,11 @@ LOG(LOG_INFO, "%s", certificate_password);
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
 
-//        if (this->verbose & 0x100){
-//            LOG(LOG_INFO, "Recv done on %s (%u) %u bytes", this->name, this->sck, total_len);
-//            hexdump_c(start, total_len);
-//            LOG(LOG_INFO, "Dump done on %s (%u) %u bytes", this->name, this->sck, total_len);
-//        }
+        if (this->verbose & 0x100){
+            LOG(LOG_INFO, "Recv done on %s (%u) %u bytes", this->name, this->sck, len);
+            hexdump_c(start, len);
+            LOG(LOG_INFO, "Dump done on %s (%u) %u bytes", this->name, this->sck, len);
+        }
 
         this->total_received += len;
         this->last_quantum_received += len;
@@ -1089,6 +1091,13 @@ LOG(LOG_INFO, "%s", certificate_password);
     virtual void send(const char * const buffer, size_t len) throw (Error)
     {
         if (len == 0) { return; }
+
+        if (this->verbose & 0x100){
+            LOG(LOG_INFO, "Sending on %s (%u) %u bytes", this->name, this->sck, len);
+            hexdump_c(buffer, len);
+            LOG(LOG_INFO, "Sent dumped on %s (%u) %u bytes", this->name, this->sck, len);
+        }
+
         ssize_t res = rio_send(&this->rio, buffer, len);
         if (res < 0) {
             throw Error(ERR_TRANSPORT_DIFFERS);

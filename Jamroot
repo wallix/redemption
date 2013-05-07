@@ -243,6 +243,7 @@ unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w200
 unit-test test_rdp_client_xp : tests/client_mods/test_rdp_client_xp.cpp png openssl crypto d3des z dl libboost_unit_test ;
 unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp openssl crypto d3des z dl libboost_unit_test ;
 unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp d3des openssl crypto z dl png libboost_unit_test ;
+unit-test test_mstsc_client : tests/server/test_mstsc_client.cpp d3des openssl crypto z dl png libboost_unit_test ;
 
 unit-test test_capability_activate : tests/capabilities/activate.cpp libboost_unit_test ;
 unit-test test_capability_bitmap : tests/capabilities/bitmap.cpp libboost_unit_test ;

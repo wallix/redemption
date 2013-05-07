@@ -23,6 +23,8 @@
 #define BOOST_TEST_MODULE TestWindowWabClose
 #include <boost/test/auto_unit_test.hpp>
 
+#define SHARE_PATH "./tests/fixtures"
+
 #define LOGNULL
 #include "log.hpp"
 
