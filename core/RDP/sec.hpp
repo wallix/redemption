@@ -844,6 +844,172 @@ enum {
             stream.mark_end();
         }
     };
+    
+    // 5.1.3 Generating the Licensing Encryption and MAC Salt Keys
+    // ===========================================================
+
+    // Both the client and the server use the licensing encryption key when necessary to encrypt and decrypt 
+    // licensing message data. Both the client and the server use the method described in this section to generate
+    // the licensing encryption key. The key generating procedure is described as follows. Note that the "+" symbol
+    // is used in the following procedure to represent concatenation of the keys.
+
+    // The client and server random values and the decrypted premaster secret are first used to generate a 384-bit
+    // master secret, as follows. Note that SHA-1 hash is used.
+
+    // SaltedHash(S, I) = MD5(S + SHA-1 (I + S + ClientRandom + ServerRandom))
+    // PreMasterHash(I) = SaltedHash(PremasterSecret, I)
+    // MasterSecret = PreMasterHash('A') + PreMasterHash('BB') + PreMasterHash('CCC')
+
+    // A 384-bit SessionKeyBlob is generated.
+
+    // SaltedHash2(S, I) = MD5(S + SHA-1 (I + S + ServerRandom + ClientRandom))
+    // MasterHash(I) = SaltedHash2(MasterSecret, I)
+    // SessionKeyBlob = MasterHash('A') + MasterHash('BB')  + MasterHash('CCC')
+
+    // The first 128 bits of the SessionKeyBlob are used to generate the MAC salt key.
+
+    // MAC-salt-key = First128Bits(SessionKeyBlob)
+    // The MAC salt key is used to generate the MAC checksum that the recipient uses to check 
+    // the integrity of the licensing message.
+
+    // The licensing encryption key is derived from the SessionKeyBlob. 
+    // Note that the "+" symbol is used in the following procedure to represent concatenation of the keys.
+
+    // FinalHash(K) = MD5(K + ClientRandom + ServerRandom)
+    // LicensingEncryptionKey = FinalHash(Second128Bits(SessionKeyBlob))
+
+    struct SessionKey 
+    {
+        uint8_t blob0[16];
+        uint8_t blob1[16];
+        uint8_t blob2[16];
+        uint8_t licensingEncryptionKey[16];
+
+        SessionKey(const uint8_t * pre_master_secret, size_t pre_master_secret_size, 
+                   const uint8_t * client_random, size_t client_random_size,
+                   const uint8_t * server_random, size_t server_random_size)
+        {
+            uint8_t master_secret[48];
+            const int master_secret_size = sizeof(master_secret);
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "A", 1);
+                SHA1_Update(&sha1, pre_master_secret, pre_master_secret_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, pre_master_secret, pre_master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(master_secret, &md5);
+            }
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "BB", 2);
+                SHA1_Update(&sha1, pre_master_secret, pre_master_secret_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, pre_master_secret, pre_master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(master_secret + 16, &md5);
+            }
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "CCC", 3);
+                SHA1_Update(&sha1, pre_master_secret, pre_master_secret_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, pre_master_secret, pre_master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(master_secret + 32, &md5);
+            }
+
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "A", 1);
+                SHA1_Update(&sha1, master_secret, master_secret_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, master_secret, master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(this->blob0, &md5);
+            }
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "BB", 2);
+                SHA1_Update(&sha1, master_secret, master_secret_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, master_secret, master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(this->blob1, &md5);
+            }
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "CCC", 3);
+                SHA1_Update(&sha1, master_secret, master_secret_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, master_secret, master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(this->blob2, &md5);
+            }
+
+            {
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, this->blob1, sizeof(this->blob1));
+                MD5_Update(&md5, client_random, client_random_size);
+                MD5_Update(&md5, server_random, server_random_size);
+                MD5_Final(this->licensingEncryptionKey, &md5);
+            }
+        }
+        
+        const uint8_t * get_MAC_salt_key(void)
+        {
+            return this->blob0;
+        }
+
+        const uint8_t * get_LicensingEncryptionKey(void)
+        {
+            return this->licensingEncryptionKey;
+        }
+    };
+    
 };
 
 #endif

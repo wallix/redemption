@@ -1037,65 +1037,15 @@ struct mod_rdp : public mod_api {
                         }
                         {
                             LIC::LicenseRequest_Recv lic(sec.payload);
-
                             uint8_t null_data[SEC_MODULUS_SIZE];
-
+                            memset(null_data, 0, sizeof(null_data));
                             /* We currently use null client keys. This is a bit naughty but, hey,
                                the security of license negotiation isn't exactly paramount. */
-                            memset(null_data, 0, sizeof(null_data));
-                            uint8_t* client_random = null_data;
-                            uint8_t* pre_master_secret = null_data;
-                            uint8_t master_secret[48];
-                            uint8_t key_block[48];
-
-                            /* Generate master secret and then key material */
-                            for (int i = 0; i < 3; i++) {
-                                uint8_t shasig[20];
-                                uint8_t pad[4];
-
-                                memset(pad, 'A' + i, i + 1);
-
-                                SslSha1 sha1;
-                                sha1.update(FixedSizeStream(pad, i + 1));
-                                sha1.update(FixedSizeStream(pre_master_secret, 48));
-                                sha1.update(FixedSizeStream(client_random, 32));
-                                sha1.update(FixedSizeStream(lic.server_random, 32));
-                                sha1.final(shasig);
-
-                                SslMd5 md5;
-                                md5.update(FixedSizeStream(pre_master_secret, 48));
-                                md5.update(FixedSizeStream(shasig, sizeof(shasig)));
-                                md5.final(&master_secret[i * 16]);
-                            }
-
-                            for (int i = 0; i < 3; i++) {
-                                uint8_t shasig[20];
-                                uint8_t pad[4];
-                                memset(pad, 'A' + i, i + 1);
-
-                                SslSha1 sha1;
-                                sha1.update(FixedSizeStream(pad, i + 1));
-                                sha1.update(FixedSizeStream(master_secret, 48));
-                                sha1.update(FixedSizeStream(lic.server_random, 32));
-                                sha1.update(FixedSizeStream(client_random, 32));
-                                sha1.final(shasig);
-
-                                SslMd5 md5;
-                                md5.update(FixedSizeStream(master_secret, 48));
-                                md5.update(FixedSizeStream(shasig, sizeof(shasig)));
-                                md5.final(&key_block[i * 16]);
-                            }
+                            SEC::SessionKey keyblock(null_data, 48, null_data, 32, lic.server_random, 32);
 
                             /* Store first 16 bytes of session key as MAC secret */
-                            memcpy(this->lic_layer_license_sign_key, key_block, 16);
-
-                            // Generate RC4 key from next 16 bytes
-                            // 16-byte transformation used to generate export keys (6.2.2).
-                            SslMd5 md5;
-                            md5.update(FixedSizeStream(key_block + 16, 16));
-                            md5.update(FixedSizeStream(client_random, 32));
-                            md5.update(FixedSizeStream(lic.server_random, 32));
-                            md5.final(this->lic_layer_license_key);
+                            memcpy(this->lic_layer_license_sign_key, keyblock.get_MAC_salt_key(), 16);
+                            memcpy(this->lic_layer_license_key, keyblock.get_LicensingEncryptionKey(), 16);
 
                             BStream x224_header(256);
                             BStream mcs_header(256);
