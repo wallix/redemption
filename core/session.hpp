@@ -794,8 +794,6 @@ struct Session {
                     , 8192
                     );
 
-LOG(LOG_INFO, "STRAUTHID_ALTERNATE_SHELL=\"%s\"", this->context->get(STRAUTHID_ALTERNATE_SHELL));
-LOG(LOG_INFO, "STRAUTHID_SHELL_WORKING_DIRECTORY=\"%s\"", this->context->get(STRAUTHID_SHELL_WORKING_DIRECTORY));
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote RDP host");
                 this->mod = new mod_rdp(t,
                                     this->context->get(STRAUTHID_TARGET_USER),

@@ -723,38 +723,42 @@ struct mod_vnc : public mod_api {
                     + Bpp /* background-pixel-value */
                     );
 
-                uint32_t   number_of_subrectangles = stream.in_uint32_be();
-                uint32_t   i, k, j                                        ;
-                char     * p                                              ;
-                char     * bytes_per_pixel                                ;
-                char     * point_cur;
-                char     * point_end;
-
-                for (point_cur = reinterpret_cast<char *>(raw), point_end = point_cur + cx * cy * Bpp;
-                     point_cur < point_end; point_cur += Bpp)
-                    memcpy(point_cur, reinterpret_cast<char *>(stream.p), Bpp);
-
-                stream.in_skip_bytes(Bpp);
-
-                BStream subrectangles(32767);
-                uint16_t subrec_x, subrec_y, subrec_width, subrec_height;
-
-                uint32_t remain_subrectangle_count = number_of_subrectangles;
+                uint32_t number_of_subrectangles;
+                uint32_t number_of_subrectangles_remain;
                 uint32_t number_of_subrectangles_read;
 
-                char * point_line;
+                number_of_subrectangles_remain = 
+                number_of_subrectangles        = stream.in_uint32_be();
 
-                while (remain_subrectangle_count > 0) {
-                    number_of_subrectangles_read = min<uint32_t>(512, remain_subrectangle_count);
+                char * bytes_per_pixel;
+                char * point_cur;
+                char * point_end;
+
+                bytes_per_pixel = reinterpret_cast<char *>(stream.p);
+                stream.in_skip_bytes(Bpp);
+
+                for (point_cur = reinterpret_cast<char *>(raw), point_end = point_cur + cx * cy * Bpp;
+                     point_cur < point_end; point_cur += Bpp) {
+                    memcpy(point_cur, bytes_per_pixel, Bpp);
+                }
+
+                BStream    subrectangles(65535);
+                uint16_t   subrec_x, subrec_y, subrec_width, subrec_height;
+                char     * point_line_cur;
+                char     * point_line_end;
+                uint32_t   i;
+                uint32_t   ling_boundary;
+
+                while (number_of_subrectangles_remain > 0) {
+                    number_of_subrectangles_read = min<uint32_t>(4096, number_of_subrectangles_remain);
 
                     subrectangles.reset();
                     this->t->recv(&subrectangles.end, (Bpp + 8) * number_of_subrectangles_read);
 
-                    remain_subrectangle_count -= number_of_subrectangles_read;
+                    number_of_subrectangles_remain -= number_of_subrectangles_read;
 
                     for (i = 0; i < number_of_subrectangles_read; i++) {
                         bytes_per_pixel = reinterpret_cast<char *>(subrectangles.p);
-
                         subrectangles.in_skip_bytes(Bpp);
 
                         subrec_x        = subrectangles.in_uint16_be();
@@ -762,9 +766,14 @@ struct mod_vnc : public mod_api {
                         subrec_width    = subrectangles.in_uint16_be();
                         subrec_height   = subrectangles.in_uint16_be();
 
-                        for (j = 0, point_line = reinterpret_cast<char *>(raw) + subrec_y * cx * Bpp; j < subrec_height; j++, point_line += cx * Bpp)
-                            for (k = 0, p = point_line + (k + subrec_x) * Bpp; k < subrec_width; k++, p += Bpp) {
-                                memcpy(p, bytes_per_pixel, Bpp);
+                        for (ling_boundary = cx * Bpp,
+                                 point_line_cur = reinterpret_cast<char *>(raw) + subrec_y * ling_boundary,
+                                 point_line_end = point_line_cur + subrec_height * ling_boundary;
+                             point_line_cur < point_line_end; point_line_cur += ling_boundary)
+                            for (point_cur = point_line_cur + subrec_x * Bpp,
+                                    point_end = point_cur + subrec_width * Bpp;
+                                 point_cur < point_end; point_cur += Bpp) {
+                                memcpy(point_cur, bytes_per_pixel, Bpp);
                             }
                     }
                 }
