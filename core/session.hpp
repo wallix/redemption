@@ -91,7 +91,6 @@ enum {
 };
 
 struct Session {
-
     int * refreshconf;
 
     wait_obj & front_event;
@@ -105,16 +104,15 @@ struct Session {
     long id;
     time_t keep_alive_time;
 
-
     struct mod_api * mod; /* module interface */
     struct mod_api * no_mod;
 
-    struct Front* front;
+    Transport * mod_transport;
+
+    struct Front * front;
 
     SessionManager * sesman;
     UdevRandom gen;
-
-    Transport * mod_transport;
 
     Session(wait_obj & front_event, int sck, const char * ip_source, int * refreshconf, Inifile * ini)
         : refreshconf(refreshconf)
@@ -135,7 +133,8 @@ struct Session {
             this->context->cpy(STRAUTHID_ALTERNATE_SHELL, this->ini->globals.alternate_shell);
             this->context->cpy(STRAUTHID_SHELL_WORKING_DIRECTORY, this->ini->globals.shell_working_directory);
 
-            this->sesman = new SessionManager(*this->context
+            this->sesman = new SessionManager( *this->context
+                                             , this->ini
                                              , this->ini->globals.keepalive_grace_delay
                                              , this->ini->globals.max_tick
                                              , this->ini->globals.internal_domain
@@ -615,7 +614,7 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of new mod 'INTERNAL::Dialog Accept Message'");
                         }
                         message = this->context->get(STRAUTHID_MESSAGE);
-                        button = this->context->get(STRAUTHID_TRANS_BUTTON_REFUSED);
+                        button = ini->globals.translation.button_refused;
                         this->mod = new dialog_mod(*this->context,
                                         *this->front,
                                         this->front->client_info.width,
@@ -773,7 +772,7 @@ struct Session {
                     , atoi(this->context->get(STRAUTHID_TARGET_PORT))
                     , this->ini->globals.debug.mod_xup);
                 this->mod_transport = t;
-                
+
                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote X host");
                 this->mod = new xup_mod(t, *this->context, *(this->front),
                                         this->front->client_info.width,

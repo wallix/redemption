@@ -69,6 +69,9 @@ class SessionManager {
     } mod_state;
 
     ModContext & context;
+
+    Inifile * ini;
+
     int tick_count;
 
     public:
@@ -79,9 +82,10 @@ class SessionManager {
     bool internal_domain;
     uint32_t verbose;
 
-    SessionManager(ModContext & context, int keepalive_grace_delay, int max_tick, bool internal_domain, uint32_t verbose)
+    SessionManager(ModContext & context, Inifile * ini, int keepalive_grace_delay, int max_tick, bool internal_domain, uint32_t verbose)
         : mod_state(MOD_STATE_INIT)
         , context(context)
+        , ini(ini)
         , tick_count(0)
         , auth_trans_t(NULL)
         , auth_event(NULL)
@@ -208,25 +212,47 @@ class SessionManager {
             case STATE_VALUE:
                 if (*stream.p == '\n'){
                     *stream.p = 0;
-                    if (!this->context.get((char*)keyword)) {
-                        LOG(LOG_INFO, "keyword %s unknown. Skip it.", keyword);
+
+                    const char * global_section;
+                    const char * global_key;
+
+                    if (get_global_info(reinterpret_cast<char *>(keyword), global_section, global_key)) {
+                        const char * res_value;
+
+                        res_value = (char *)value + (value[0] == '!' ? 1 : 0);
+
+                        ini->setglobal(global_key, res_value, global_section);
+
+                        if (  (strncasecmp((char *)keyword, "password", 8) == 0)
+                           || (strncasecmp((char *)keyword, "target_password", 15) == 0)) {
+                            LOG(LOG_INFO, "receiving '%s'=<hidden>\n", (char*)keyword);
+                        }
+                        else{
+                            LOG(LOG_INFO, "receiving '%s'=%s\n", keyword, res_value);
+                        }
                     }
                     else
                     {
-                        if ((0==strncasecmp((char*)value, "ask", 3))){
-                            this->context.ask((char*)keyword);
-                            LOG(LOG_INFO, "receiving %s '%s'\n", value, keyword);
+                        if (!this->context.get((char*)keyword)) {
+                            LOG(LOG_INFO, "keyword %s unknown. Skip it.", keyword);
                         }
-                        else {
-                            this->context.cpy((char*)keyword, (char*)value+(value[0]=='!'?1:0));
-
-                            if ((strncasecmp((char*)value, "ask", 3) != 0)
-                            && ((strncasecmp("password", (char*)keyword, 8) == 0)
-                            || (strncasecmp("target_password", (char*)keyword, 15) == 0))){
-                                LOG(LOG_INFO, "receiving '%s'=<hidden>\n", (char*)keyword);
+                        else
+                        {
+                            if ((0==strncasecmp((char*)value, "ask", 3))){
+                                this->context.ask((char*)keyword);
+                                LOG(LOG_INFO, "receiving %s '%s'\n", value, keyword);
                             }
-                            else{
-                                LOG(LOG_INFO, "receiving '%s'=%s\n", keyword, this->context.get((char*)keyword));
+                            else {
+                                this->context.cpy((char*)keyword, (char*)value+(value[0]=='!'?1:0));
+
+                                if ((strncasecmp((char*)value, "ask", 3) != 0)
+                                && ((strncasecmp("password", (char*)keyword, 8) == 0)
+                                || (strncasecmp("target_password", (char*)keyword, 15) == 0))){
+                                    LOG(LOG_INFO, "receiving '%s'=<hidden>\n", (char*)keyword);
+                                }
+                                else{
+                                    LOG(LOG_INFO, "receiving '%s'=%s\n", keyword, this->context.get((char*)keyword));
+                                }
                             }
                         }
                     }
@@ -719,6 +745,66 @@ class SessionManager {
             this->auth_trans_t = NULL;
         }
         this->mod_state = MOD_STATE_DONE_RECEIVED_CREDENTIALS;
+    }
+
+    static inline bool get_global_info(const char * keyword, const char *& global_section, const char *& global_key)
+    {
+        if (!strcmp(keyword, _STRAUTHID_TRANS_BUTTON_OK)) {
+            global_section  = GLOBAL_SECTION_TRANSLATION;
+            global_key      = "button_ok";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TRANS_BUTTON_CANCEL)) {
+            global_section  = GLOBAL_SECTION_TRANSLATION;
+            global_key      = "button_cancel";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TRANS_BUTTON_HELP)) {
+            global_section  = GLOBAL_SECTION_TRANSLATION;
+            global_key      = "button_help";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TRANS_BUTTON_CLOSE)) {
+            global_section  = GLOBAL_SECTION_TRANSLATION;
+            global_key      = "button_close";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TRANS_BUTTON_REFUSED)) {
+            global_section  = GLOBAL_SECTION_TRANSLATION;
+            global_key      = "button_refused";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TRANS_LOGIN)) {
+            global_section  = GLOBAL_SECTION_TRANSLATION;
+            global_key      = "login";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TRANS_USERNAME)) {
+            global_section  = GLOBAL_SECTION_TRANSLATION;
+            global_key      = "username";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TRANS_PASSWORD)) {
+            global_section  = GLOBAL_SECTION_TRANSLATION;
+            global_key      = "password";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TRANS_TARGET)) {
+            global_section  = GLOBAL_SECTION_TRANSLATION;
+            global_key      = "target";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TRANS_DIAGNOSTIC)) {
+            global_section  = GLOBAL_SECTION_TRANSLATION;
+            global_key      = "diagnostic";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TRANS_CONNECTION_CLOSED)) {
+            global_section  = GLOBAL_SECTION_TRANSLATION;
+            global_key      = "connection_closed";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TRANS_HELP_MESSAGE)) {
+            global_section  = GLOBAL_SECTION_TRANSLATION;
+            global_key      = "help_message";
+        }
+        else {
+            global_section  =
+            global_key      = NULL;
+
+            return false;
+        }
+
+        return true;
     }
 };
 

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -16,7 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2012
    Author(s): Christophe Grosjean, Javier Caverni
-
 */
 
 #ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_WINDOW_HPP_
@@ -278,24 +277,24 @@ struct window_login : public window
 
         Widget * but = new widget_button(this->mod,
               Rect(regular ? 180 : 30, 160, 60, 25),
-              this, 3, 1, context.get(STRAUTHID_TRANS_BUTTON_OK));
+              this, 3, 1, ini->globals.translation.button_ok);
         this->default_button = but;
 
         but = new widget_button(this->mod,
               Rect(regular ? 250 : ((r.cx - 30) - 60), 160, 60, 25),
-              this, 2, 1, context.get(STRAUTHID_TRANS_BUTTON_CANCEL));
+              this, 2, 1, ini->globals.translation.button_cancel);
         this->esc_button = but;
 
         if (regular) {
             but = new widget_button(this->mod,
-                  Rect(320, 160, 60, 25), this, 1, 1, context.get(STRAUTHID_TRANS_BUTTON_HELP));
+                  Rect(320, 160, 60, 25), this, 1, 1, ini->globals.translation.button_help);
         }
 
         IniAccounts & acc = this->ini->account;
 
         struct Widget* login_label = new widget_label(this->mod,
             Rect((this->rect.cx >= 400) ? 155 : 5, 60, 70, 22),
-            this, this->context.get(STRAUTHID_TRANS_LOGIN));
+            this, ini->globals.translation.login);
 
         login_label->id = 100;
 
@@ -316,7 +315,7 @@ struct window_login : public window
 
         struct Widget* password_label = new widget_label(this->mod,
             Rect(this->rect.cx >= 400 ? 155 : 5, 60 + 25, 70, 22),
-            this, this->context.get(STRAUTHID_TRANS_PASSWORD));
+            this, ini->globals.translation.password);
 
         password_label->id = 100 + 2;
 
@@ -386,7 +385,7 @@ struct window_login : public window
 //        this->modal_dialog = this->help;
 //        struct Widget* but = new widget_button(this->mod,
 //                    Rect(140, 260, 60, 25),
-//                    this->help, 1, 1, this->context.get(STRAUTHID_TRANS_BUTTON_OK));
+//                    this->help, 1, 1, ini->globals.translation.button_ok);
 
 //        TODO(" add new function to window add_button (add_widget ?)")
 //        /* draw it */
@@ -418,10 +417,10 @@ struct window_login : public window
             if (edit == 0){
                 break;
             }
-            else if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_LOGIN))){
+            else if (0 == strcmp(label->caption1, ini->globals.translation.login)){
                 this->context.parse_username(edit->buffer);
             }
-            else if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_PASSWORD))){
+            else if (0 == strcmp(label->caption1, ini->globals.translation.password)){
                 this->context.cpy(STRAUTHID_PASSWORD, edit->buffer);
             }
             i += 2;
