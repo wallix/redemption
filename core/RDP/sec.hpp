@@ -844,6 +844,1036 @@ enum {
             stream.mark_end();
         }
     };
+    
+    // 5.1.3 Generating the Licensing Encryption and MAC Salt Keys
+    // ===========================================================
+
+    // Both the client and the server use the licensing encryption key when necessary to encrypt and decrypt 
+    // licensing message data. Both the client and the server use the method described in this section to generate
+    // the licensing encryption key. The key generating procedure is described as follows. Note that the "+" symbol
+    // is used in the following procedure to represent concatenation of the keys.
+
+    // The client and server random values and the decrypted premaster secret are first used to generate a 384-bit
+    // master secret, as follows. Note that SHA-1 hash is used.
+
+    // SaltedHash(S, I) = MD5(S + SHA-1 (I + S + ClientRandom + ServerRandom))
+    // PreMasterHash(I) = SaltedHash(PremasterSecret, I)
+    // MasterSecret = PreMasterHash('A') + PreMasterHash('BB') + PreMasterHash('CCC')
+
+    // A 384-bit SessionKeyBlob is generated.
+
+    // SaltedHash2(S, I) = MD5(S + SHA-1 (I + S + ServerRandom + ClientRandom))
+    // MasterHash(I) = SaltedHash2(MasterSecret, I)
+    // SessionKeyBlob = MasterHash('A') + MasterHash('BB')  + MasterHash('CCC')
+
+    // The first 128 bits of the SessionKeyBlob are used to generate the MAC salt key.
+
+    // MAC-salt-key = First128Bits(SessionKeyBlob)
+    // The MAC salt key is used to generate the MAC checksum that the recipient uses to check 
+    // the integrity of the licensing message.
+
+    // The licensing encryption key is derived from the SessionKeyBlob. 
+    // Note that the "+" symbol is used in the following procedure to represent concatenation of the keys.
+
+    // FinalHash(K) = MD5(K + ClientRandom + ServerRandom)
+    // LicensingEncryptionKey = FinalHash(Second128Bits(SessionKeyBlob))
+
+    struct SessionKey 
+    {
+        uint8_t blob0[16];
+        uint8_t blob1[16];
+        uint8_t blob2[16];
+        uint8_t licensingEncryptionKey[16];
+
+        SessionKey(const uint8_t * pre_master_secret, const uint8_t * client_random, const uint8_t * server_random)
+        {
+            const size_t pre_master_secret_size = 48;
+            const size_t client_random_size = 32;
+            const size_t server_random_size = 32;
+            uint8_t master_secret[48];
+            const int master_secret_size = sizeof(master_secret);
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "A", 1);
+                SHA1_Update(&sha1, pre_master_secret, pre_master_secret_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, pre_master_secret, pre_master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(master_secret, &md5);
+            }
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "BB", 2);
+                SHA1_Update(&sha1, pre_master_secret, pre_master_secret_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, pre_master_secret, pre_master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(master_secret + 16, &md5);
+            }
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "CCC", 3);
+                SHA1_Update(&sha1, pre_master_secret, pre_master_secret_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, pre_master_secret, pre_master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(master_secret + 32, &md5);
+            }
+
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "A", 1);
+                SHA1_Update(&sha1, master_secret, master_secret_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, master_secret, master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(this->blob0, &md5);
+            }
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "BB", 2);
+                SHA1_Update(&sha1, master_secret, master_secret_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, master_secret, master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(this->blob1, &md5);
+            }
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "CCC", 3);
+                SHA1_Update(&sha1, master_secret, master_secret_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, master_secret, master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(this->blob2, &md5);
+            }
+
+            {
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, this->blob1, sizeof(this->blob1));
+                MD5_Update(&md5, client_random, client_random_size);
+                MD5_Update(&md5, server_random, server_random_size);
+                MD5_Final(this->licensingEncryptionKey, &md5);
+            }
+        }
+        
+        const uint8_t * get_MAC_salt_key(void)
+        {
+            return this->blob0;
+        }
+
+        const uint8_t * get_LicensingEncryptionKey(void)
+        {
+            return this->licensingEncryptionKey;
+        }
+    };
+
+
+
+// 5.3.4 Client and Server Random Values
+// =====================================
+
+// The client and server both generate a 32-byte random value using a cryptographically-safe 
+// pseudorandom number generator.
+
+// The server sends the random value that it generated (along with its public key embedded in
+// a certificate) to the client in the Server Security Data (section 2.2.1.4.3) during the 
+// Basic Settings Exchange phase of the RDP Connection Sequence (see section 1.3.1.1).
+
+// If RDP Standard Security mechanisms (section 5.3) are being used, the client sends its random
+// value to the server (encrypted with the server's public key) in the Security Exchange PDU 
+// (section 2.2.1.10) as part of the RDP Security Commencement phase of the RDP Connection Sequence
+// (see section 1.3.1.1).
+
+
+// 5.3.5 Initial Session Key Generation
+// ====================================
+
+// RDP uses three symmetric session keys derived from the client and server random values 
+// (see section 5.3.4). Client-to-server traffic is encrypted with one of these keys (known as
+//  the client's encryption key and server's decryption key), server-to-client traffic with another
+// (known as the server's encryption key and client's decryption key) and the final key is used to
+// generate a MAC over the data to help ensure its integrity. The generated keys are 40, 56, 
+// or 128 bits in length.
+ 
+
+// 5.3.5.1 Non-FIPS
+// ================
+
+// The client and server random values are used to create a 384-bit Pre-Master Secret by concatenating 
+// the first 192 bits of the Client Random with the first 192 bits of the Server Random.
+
+//    PreMasterSecret = First192Bits(ClientRandom) + First192Bits(ServerRandom)
+
+// A 384-bit Master Secret is generated using the Pre-Master Secret, the client and server random values, 
+// and the MD5 hash and SHA-1 hash functions.
+
+//    MasterSecret = PreMasterHash(0x41) + PreMasterHash(0x4242) + PreMasterHash(0x434343)
+
+// Here, the PreMasterHash function is defined as follows.
+
+//    PreMasterHash(I) = SaltedHash(PremasterSecret, I)
+
+// The SaltedHash function is defined as follows.
+
+//    SaltedHash(S, I) = MD5(S + SHA(I + S + ClientRandom + ServerRandom))
+
+// A 384-bit session key blob is generated as follows.
+
+//    SessionKeyBlob = MasterHash(0x58) + MasterHash(0x5959) + MasterHash(0x5A5A5A)
+
+// Here, the MasterHash function is defined as follows.
+
+//    MasterHash(I) = SaltedHash(MasterSecret, I)
+
+// From the session key blob the actual session keys which will be used are derived. 
+// Both client and server extract the same key data for generating MAC signatures.
+
+//    MACKey128 = First128Bits(SessionKeyBlob)
+
+// The initial encryption and decryption keys are generated next (these keys are updated
+// at a later point in the protocol, per section 5.3.6.1). The server generates its encryption
+// and decryption keys as follows.
+
+//    InitialServerEncryptKey128 = FinalHash(Second128Bits(SessionKeyBlob))
+//    InitialServerDecryptKey128 = FinalHash(Third128Bits(SessionKeyBlob))
+
+// Here, the FinalHash function is defined as follows.
+
+//    FinalHash(K) = MD5(K + ClientRandom + ServerRandom)
+
+// The client constructs its initial decryption key with the bytes that the server uses to
+// construct its initial encryption key. Similarly, the client forms its initial encryption
+// key with the bytes that the server uses to form its initial decryption key.
+
+//    InitialClientDecryptKey128 = FinalHash(Second128Bits(SessionKeyBlob))
+//    InitialClientEncryptKey128 = FinalHash(Third128Bits(SessionKeyBlob))
+
+// This means that the client will use its encryption key to encrypt data and the server will
+// use its decryption key to decrypt the same data. Similarly, the server will use its encryption
+// key to encrypt data and the client will use its decryption key to decrypt the same data.
+// In effect, there are two streams of data (client-to-server and server-to-client) encrypted
+// with different session keys which are updated at different intervals.
+
+// To reduce the entropy of the keys to either 40 or 56 bits, the 128-bit client and server keys
+// are salted appropriately to produce 64-bit versions with the required strength. The salt values
+// to reduce key entropy are shown in the following table:
+
+// +-----------------------+-------------+------------------+----------------+
+// | Negotiated key length | Salt length | Salt values      | RC4 key length |
+// +-----------------------+-------------+------------------+----------------+
+// |           40 bits     |  3 bytes    | 0xD1, 0x26, 0x9E |  8 bytes       | 
+// +-----------------------+-------------+------------------+----------------+
+// |           56 bits     |  1 byte     | 0xD1             |  8 bytes       | 
+// +-----------------------+-------------+------------------+----------------+
+// |          128 bits     |  0 byte     |  N/A             | 16 bytes       | 
+// +-----------------------+-------------+------------------+----------------+
+
+// Using the salt values, the 40-bit keys are generated as follows.
+
+// MACKey40 = 0xD1269E + Last40Bits(First64Bits(MACKey128))
+
+// InitialServerEncryptKey40 = 0xD1269E + Last40Bits(First64Bits(InitialServerEncryptKey128))
+// InitialServerDecryptKey40 = 0xD1269E + Last40Bits(First64Bits(InitialServerDecryptKey128))
+
+// InitialClientEncryptKey40 = 0xD1269E + Last40Bits(First64Bits(InitialClientEncryptKey128))
+// InitialClientDecryptKey40 = 0xD1269E + Last40Bits(First64Bits(InitialClientDecryptKey128))
+
+// The 56-bit keys are generated as follows.
+
+// MACKey56 = 0xD1 + Last56Bits(First64Bits(MACKey128))
+
+// InitialServerEncryptKey56 = 0xD1 + Last56Bits(First64Bits(InitialServerEncryptKey128))
+// InitialServerDecryptKey56 = 0xD1 + Last56Bits(First64Bits(InitialServerDecryptKey128))
+
+// InitialClientEncryptKey56 = 0xD1 + Last56Bits(First64Bits(InitialClientEncryptKey128))
+// InitialClientDecryptKey56 = 0xD1 + Last56Bits(First64Bits(InitialClientDecryptKey128))
+
+// After any necessary salting has been applied, the generated encryption and decryption keys 
+// are used to initialize RC-4 substitution tables which can then be used to encrypt and decrypt
+// data.
+
+// At the end of this process the client and server will each possess three symmetric keys 
+// to use with the RC4 stream cipher: a MAC key, an encryption key, and a decryption key. 
+// The MAC key is used to initialize the RC4 substitution table that is used to generate 
+// Message Authentication Codes, the encryption key is used to initialize the RC4 substitution
+// table that is used to perform encryption, and the decryption key is used to initialize the
+// RC4 substitution table that is used to perform decryption (for more information on RC4
+// substitution table initialization, see [SCHNEIER] section 17.1).
+
+
+
+
+// Detailed sample : Computing message hashing keys
+// ================================================
+
+// INPUT
+// -----
+
+// ClientRandom (32 bytes):
+//    f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2 32 87 5e 23 97 87 b6 91 65 21 bb c6 b0 86 81 1d 78 f3 c5
+
+// ServerRandom (32 bytes):
+//    7a fb 29 5b 7e 19 74 67 ae 88 a1 ad 80 bf 8c 6c e0 16 4b 03 82 16 10 bd a2 8c 85 5f 48 74 85 7e
+
+// PROCESS
+// ========
+
+//PreMasterSecret = First192Bits(ClientRandom) + First192Bits(ServerRandom)
+//    f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2 32 87 5e 23 97 87 b6 91 65 21 bb
+//    7a fb 29 5b 7e 19 74 67 ae 88 a1 ad 80 bf 8c 6c e0 16 4b 03 82 16 10 bd
+
+// MasterSecret = PreMasterHash( 0x41 'A' ) + PreMasterHash( 0x4242 'BB' ) + PreMasterHash( 0x434343 'CCC' )
+
+// PreMasterHash( 'A' )
+// ~~~~~~~~~~~~~~~~~~~~
+//    'A' (0x41) + PreMasterSecret + ClientRandom + ServerRandom:
+//        41 f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2 32 87
+//        5e 23 97 87 b6 91 65 21 bb 7a fb 29 5b 7e 19 74
+//        67 ae 88 a1 ad 80 bf 8c 6c e0 16 4b 03 82 16 10
+//        bd f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2 32 87
+//        5e 23 97 87 b6 91 65 21 bb c6 b0 86 81 1d 78 f3
+//        c5 7a fb 29 5b 7e 19 74 67 ae 88 a1 ad 80 bf 8c
+//        6c e0 16 4b 03 82 16 10 bd a2 8c 85 5f 48 74 85
+//        7e
+
+//    Calculate SHA1 Hash of above:
+//        14 cf 3a 70 31 ee cb bb a8 9b 7b f3 0b b1 02 c3 3a 55 67 be
+
+//    PreMasterSecret + SHA1Hash:
+//        f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2 32 87 5e 23 97 87 b6 91 65 21 bb
+//        7a fb 29 5b 7e 19 74 67 ae 88 a1 ad 80 bf 8c 6c e0 16 4b 03 82 16 10 bd
+//        14 cf 3a 70 31 ee cb bb a8 9b 7b f3 0b b1 02 c3 3a 55 67 be
+
+//    MD5Hash of the above:
+
+//        03 75 89 f4 30 6c 14 35 69 f5 66 db 28 22 a9 f8
+
+// PreMasterHash( 'BB' )
+// ~~~~~~~~~~~~~~~~~~~~~
+//    'BB' (0x4242) + PreMasterSecret + ClientRandom + ServerRandom:
+//        42 42 f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2 32
+//        87 5e 23 97 87 b6 91 65 21 bb 7a fb 29 5b 7e 19
+//        74 67 ae 88 a1 ad 80 bf 8c 6c e0 16 4b 03 82 16
+//        10 bd f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2 32
+//        87 5e 23 97 87 b6 91 65 21 bb c6 b0 86 81 1d 78
+//        f3 c5 7a fb 29 5b 7e 19 74 67 ae 88 a1 ad 80 bf
+//        8c 6c e0 16 4b 03 82 16 10 bd a2 8c 85 5f 48 74
+//        85 7e
+
+//    Calculate SHA1 Hash of above:
+//        99 3a 3c e5 2a 5c 49 3f 49 b0 16 3a 40 b3 40 0d 97 ce d4 9e
+
+//    PreMasterSecret + SHA1Hash:
+//        f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2 32 87 5e 23 97 87 b6 91 65 21 bb
+//        7a fb 29 5b 7e 19 74 67 ae 88 a1 ad 80 bf 8c 6c e0 16 4b 03 82 16 10 bd
+//        99 3a 3c e5 2a 5c 49 3f 49 b0 16 3a 40 b3 40 0d 97 ce d4 9e
+
+//    MD5Hash of the above:
+//        c7 3a ab 7a 66 0f 8e 65 76 af aa 56 23 6d 9d c9
+
+
+// PreMasterHash( 'CCC' )
+// ~~~~~~~~~~~~~~~~~~~~~~
+
+//    'CCC' (0x434343) + PreMasterSecret + ClientRandom + ServerRandom:
+//        43 43 43 f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2
+//        32 87 5e 23 97 87 b6 91 65 21 bb 7a fb 29 5b 7e
+//        19 74 67 ae 88 a1 ad 80 bf 8c 6c e0 16 4b 03 82
+//        16 10 bd f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2
+//        32 87 5e 23 97 87 b6 91 65 21 bb c6 b0 86 81 1d
+//        78 f3 c5 7a fb 29 5b 7e 19 74 67 ae 88 a1 ad 80
+//        bf 8c 6c e0 16 4b 03 82 16 10 bd a2 8c 85 5f 48
+//        74 85 7e
+
+//    Calculate SHA1 Hash of above:
+//        40 6f 23 e7 da 94 1a 5f 29 ec 11 a6 38 ad b7 91 13 2c 03 e6
+
+//    PreMasterSecret + SHA1Hash:
+//        f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2 32 87 5e 23 97 87 b6 91 65 21 bb
+//        7a fb 29 5b 7e 19 74 67 ae 88 a1 ad 80 bf 8c 6c e0 16 4b 03 82 16 10 bd
+//        40 6f 23 e7 da 94 1a 5f 29 ec 11 a6 38 ad b7 91 13 2c 03 e6
+
+//    MD5Hash of the above:
+//        7b bc 03 05 4a c9 5e 2a 76 4c 65 3a 13 36 14 b4
+
+// MasterSecret = PreMasterHash( 0x41 'A' ) + PreMasterHash( 0x4242 'BB' ) + PreMasterHash( 0x434343 'CCC' ):
+//    03 75 89 f4 30 6c 14 35 69 f5 66 db 28 22 a9 f8
+//    c7 3a ab 7a 66 0f 8e 65 76 af aa 56 23 6d 9d c9
+//    7b bc 03 05 4a c9 5e 2a 76 4c 65 3a 13 36 14 b4
+
+// SessionKeyBlob = MasterHash( 0x58 'X' ) + MasterHash( 0x5959 'YY' ) + MasterHash( 0x5A5A5A 'ZZZ' )
+
+// MasterHash( 'X' )
+// ~~~~~~~~~~~~~~~~~~~
+//    'X' (0x58) + MasterSecret + ClientRandom + ServerRandom:
+//        58 03 75 89 f4 30 6c 14 35 69 f5 66 db 28 22 a9
+//        f8 c7 3a ab 7a 66 0f 8e 65 76 af aa 56 23 6d 9d
+//        c9 7b bc 03 05 4a c9 5e 2a 76 4c 65 3a 13 36 14
+//        b4 f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2 32 87
+//        5e 23 97 87 b6 91 65 21 bb c6 b0 86 81 1d 78 f3
+//        c5 7a fb 29 5b 7e 19 74 67 ae 88 a1 ad 80 bf 8c
+//        6c e0 16 4b 03 82 16 10 bd a2 8c 85 5f 48 74 85 
+//        7e
+
+//    Calculate SHA1 Hash of above:
+//        ac e2 c1 6c f8 95 38 17 fd de c2 cf a6 c1 32 78 f3 8b 7d 25
+
+//    MasterSecret + SHA1Hash:
+//        03 75 89 f4 30 6c 14 35 69 f5 66 db 28 22 a9 f8
+//        c7 3a ab 7a 66 0f 8e 65 76 af aa 56 23 6d 9d c9
+//        7b bc 03 05 4a c9 5e 2a 76 4c 65 3a 13 36 14 b4
+//        ac e2 c1 6c f8 95 38 17 fd de c2 cf a6 c1 32 78
+//        f3 8b 7d 25
+
+//    MD5Hash of the above:
+//        15 0e 4f 19 89 ae be 30 5f 08 ab 26 4a 2d 66 26
+
+
+// MasterHash( 'YY' )
+// ~~~~~~~~~~~~~~~~~~~
+
+//    'YY' (0x5959) + MasterSecret + ClientRandom + ServerRandom:
+//        59 59 03 75 89 f4 30 6c 14 35 69 f5 66 db 28 22
+//        a9 f8 c7 3a ab 7a 66 0f 8e 65 76 af aa 56 23 6d
+//        9d c9 7b bc 03 05 4a c9 5e 2a 76 4c 65 3a 13 36
+//        14 b4 f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2 32
+//        87 5e 23 97 87 b6 91 65 21 bb c6 b0 86 81 1d 78
+//        f3 c5 7a fb 29 5b 7e 19 74 67 ae 88 a1 ad 80 bf
+//        8c 6c e0 16 4b 03 82 16 10 bd a2 8c 85 5f 48 74
+//        85 7e
+
+//    Calculate SHA1 Hash of above:
+//        9f a9 d4 fd 6f 76 98 52 f5 10 22 4d 57 94 a5 a8 3b 57 3e 71
+
+//    MasterSecret + SHA1Hash:
+//        03 75 89 f4 30 6c 14 35 69 f5 66 db 28 22 a9 f8
+//        c7 3a ab 7a 66 0f 8e 65 76 af aa 56 23 6d 9d c9
+//        7b bc 03 05 4a c9 5e 2a 76 4c 65 3a 13 36 14 b4
+//        9f a9 d4 fd 6f 76 98 52 f5 10 22 4d 57 94 a5 a8
+//        3b 57 3e 71
+
+//    MD5Hash of the above:
+//        ee d7 8c 87 7f c5 bf 60 46 35 63 f4 ea 86 76 fa
+
+
+// MasterHash( 'ZZZ' )
+// ~~~~~~~~~~~~~~~~~~~
+//    'ZZZ' (0x5A5A5A) + MasterSecret + ClientRandom + ServerRandom:
+//        5a 5a 5a 03 75 89 f4 30 6c 14 35 69 f5 66 db 28
+//        22 a9 f8 c7 3a ab 7a 66 0f 8e 65 76 af aa 56 23
+//        6d 9d c9 7b bc 03 05 4a c9 5e 2a 76 4c 65 3a 13
+//        36 14 b4 f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2
+//        32 87 5e 23 97 87 b6 91 65 21 bb c6 b0 86 81 1d
+//        78 f3 c5 7a fb 29 5b 7e 19 74 67 ae 88 a1 ad 80
+//        bf 8c 6c e0 16 4b 03 82 16 10 bd a2 8c 85 5f 48
+//        74 85 7e
+
+//    Calculate SHA1 Hash of above:
+//        2d 6b d9 ed fa b8 7f 95 e0 07 45 1f a2 f4 04 b8 4a aa 55 ce
+
+//    MasterSecret + SHA1Hash:
+//        03 75 89 f4 30 6c 14 35 69 f5 66 db 28 22 a9 f8
+//        c7 3a ab 7a 66 0f 8e 65 76 af aa 56 23 6d 9d c9
+//        7b bc 03 05 4a c9 5e 2a 76 4c 65 3a 13 36 14 b4
+//        2d 6b d9 ed fa b8 7f 95 e0 07 45 1f a2 f4 04 b8
+//        4a aa 55 ce
+
+//    MD5Hash of the above:
+//        f1 4d f1 d4 34 f1 d8 ea 2c d9 4a af 9a 05 84 f3
+
+// SessionKeyBlob = MasterHash( 0x58 'X' ) + MasterHash( 0x5959 'YY' ) + MasterHash( 0x5A5A5A 'ZZZ' ):
+//    15 0e 4f 19 89 ae be 30 5f 08 ab 26 4a 2d 66 26
+//    ee d7 8c 87 7f c5 bf 60 46 35 63 f4 ea 86 76 fa
+//    f1 4d f1 d4 34 f1 d8 ea 2c d9 4a af 9a 05 84 f3
+
+// MACKey128 = First128Bits( SessionKeyBlob ):
+//    15 0e 4f 19 89 ae be 30 5f 08 ab 26 4a 2d 66 26
+
+// InitialServerEncryptKey128 = FinalHash(Second128Bits(SessionKeyBlob)):
+//    Second128Bits(SessionKeyBlob) + ClientRandom + ServerRandom:
+//        ee d7 8c 87 7f c5 bf 60 46 35 63 f4 ea 86 76 fa
+//        f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2 32 87 5e
+//        23 97 87 b6 91 65 21 bb c6 b0 86 81 1d 78 f3 c5
+//        7a fb 29 5b 7e 19 74 67 ae 88 a1 ad 80 bf 8c 6c
+//        e0 16 4b 03 82 16 10 bd a2 8c 85 5f 48 74 85 7e
+
+//    MD5Hash of the above:
+//        59 8d b3 6b 64 bd 07 75 85 8a f6 28 5f ba 94 30
+
+
+// InitialServerDecryptKey128 = FinalHash(Third128Bits(SessionKeyBlob)):
+//    Third128Bits(SessionKeyBlob) + ClientRandom + ServerRandom:
+//        f1 4d f1 d4 34 f1 d8 ea 2c d9 4a af 9a 05 84 f3
+//        f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2 32 87 5e
+//        23 97 87 b6 91 65 21 bb c6 b0 86 81 1d 78 f3 c5
+//        7a fb 29 5b 7e 19 74 67 ae 88 a1 ad 80 bf 8c 6c
+//        e0 16 4b 03 82 16 10 bd a2 8c 85 5f 48 74 85 7e
+
+//    MD5Hash of the above:
+//        cd 8c 18 db d4 34 bd 2f 9e 9a 3d b4 ee 11 af 92
+
+// OUTPUT
+// ------
+
+// MACKey:
+//    15 0e 4f 19 89 ae be 30 5f 08 ab 26 4a 2d 66 26
+
+// ServerEncryption/ClientDecryption:
+//    59 8d b3 6b 64 bd 07 75 85 8a f6 28 5f ba 94 30
+
+// ServerDecryption/ClientEncryption:
+//    cd 8c 18 db d4 34 bd 2f 9e 9a 3d b4 ee 11 af 92
+
+    struct KeyBlock 
+    {
+        uint8_t blob0[16];
+        uint8_t blob1[16];
+        uint8_t blob2[16];
+        uint8_t key1[16];
+        uint8_t key2[16];
+
+        KeyBlock(const uint8_t * client_random, const uint8_t * server_random)
+        {
+            const size_t client_random_size = 32;
+            const size_t server_random_size = 32;
+            uint8_t pre_master_secret[48];
+            const int pre_master_secret_size = sizeof(pre_master_secret);
+            /* Construct pre-master secret (session key) we get 24 bytes on 32 from client_random and server_random */
+            memcpy(pre_master_secret, client_random, 24);
+            memcpy(pre_master_secret + 24, server_random, 24);
+        
+            uint8_t master_secret[48];
+            const int master_secret_size = sizeof(master_secret);
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "A", 1);
+                SHA1_Update(&sha1, pre_master_secret, pre_master_secret_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, pre_master_secret, pre_master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(master_secret, &md5);
+            }
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "BB", 2);
+                SHA1_Update(&sha1, pre_master_secret, pre_master_secret_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, pre_master_secret, pre_master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(master_secret + 16, &md5);
+            }
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "CCC", 3);
+                SHA1_Update(&sha1, pre_master_secret, pre_master_secret_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, pre_master_secret, pre_master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(master_secret + 32, &md5);
+            }
+
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "X", 1);
+                SHA1_Update(&sha1, master_secret, master_secret_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, master_secret, master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(this->blob0, &md5);
+            }
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "YY", 2);
+                SHA1_Update(&sha1, master_secret, master_secret_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, master_secret, master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(this->blob1, &md5);
+            }
+            {
+                uint8_t shasig[20];
+                SHA_CTX sha1;
+                SHA1_Init(&sha1);
+                SHA1_Update(&sha1, "ZZZ", 3);
+                SHA1_Update(&sha1, master_secret, master_secret_size);
+                SHA1_Update(&sha1, client_random, client_random_size);
+                SHA1_Update(&sha1, server_random, server_random_size);
+                SHA1_Final(shasig, &sha1);
+
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, master_secret, master_secret_size);
+                MD5_Update(&md5, shasig, sizeof(shasig));
+                MD5_Final(this->blob2, &md5);
+            }
+
+            {
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, this->blob1, sizeof(this->blob1));
+                MD5_Update(&md5, client_random, client_random_size);
+                MD5_Update(&md5, server_random, server_random_size);
+                MD5_Final(this->key1, &md5);
+            }
+            {
+                MD5_CTX md5;
+                MD5_Init(&md5);
+                MD5_Update(&md5, this->blob2, sizeof(this->blob2));
+                MD5_Update(&md5, client_random, client_random_size);
+                MD5_Update(&md5, server_random, server_random_size);
+                MD5_Final(this->key2, &md5);
+            }
+        }
+    };
+    
+    
+// 5.3.5.2 FIPS
+// ============
+
+// The client and server random values are used to generate temporary 160-bit initial 
+// encryption and decryption keys by using the SHA-1 hash function. The client generates
+// the following:
+
+// ClientEncryptKeyT = SHA(Last128Bits(ClientRandom) + Last128Bits(ServerRandom))
+// ClientDecryptKeyT = SHA(First128Bits(ClientRandom) + First128Bits(ServerRandom))
+
+// The server generates the following:
+
+// ServerDecryptKeyT = SHA(Last128Bits(ClientRandom) + Last128Bits(ServerRandom))
+// ServerEncryptKeyT= SHA(First128Bits(ClientRandom) + First128Bits(ServerRandom))
+
+// Each of these four keys are then expanded to be 168 bits in length by copying the
+// first 8 bits of each key to the rear of the key:
+
+// ClientEncryptKey = ClientEncryptKeyT + First8Bits(ClientEncryptKeyT)
+// ClientDecryptKey = ClientDecryptKeyT + First8Bits(ClientDecryptKeyT)
+
+// ServerDecryptKey = ServerDecryptKeyT + First8Bits(ServerDecryptKeyT)
+// ServerEncryptKey= ServerEncryptKeyT + First8Bits(ServerEncryptKeyT)
+
+// After expansion to 168 bits, each key is then expanded to be 192 bits in length by
+// adding a zero-bit to every group of seven bits using the following algorithm:
+
+//    Reverse every byte in the key.
+//    Insert a zero-bit bit after every seventh bit.
+//    Reverse every byte.
+
+// The following example (which only shows the first 5 bytes of a 21-byte key) demonstrates
+// how a 168-bit key is expanded to 192 bits in size. Assume that the key is:
+
+// 0xD1 0x5E 0xC4 0x7E 0xDA ...
+
+// In binary this is: 
+//   11010001 01011110 11000100 01111110 11011010 ...
+// Reversing each byte yields: 
+//   10001011 01111010 00100011 01111110 01011011 ...
+// Adding a zero-bit after each group of seven bits results in the following values: 
+//   10001010 10111100 10001000 01101110 11100100 ...
+// Finally, reversing each of the bytes yields:
+//   01010001 00111101 00010001 01110110 00100111 ...
+// In hexadecimal this is:
+//   0x51 0x3D 0x11 0x76 0x27 ...
+
+// Once each key has been expanded to 192 bits in size, the final step is to alter the 
+// least significant bit in each byte so that the entire byte has odd parity. Applying
+// this transformation to the bytes in the previous example yields:
+//    01010001 00111101 00010000 01110110 00100110 ...
+
+// In hexadecimal this is:
+//    0x51 0x3D 0x10 0x76 0x26 ...
+
+// After producing the client and server encryption and decryption keys, the shared key
+// to be used with SHA-1 hash to produce a Hash-Based Message Authentication Code (HMAC)
+// (see [RFC2104]) is computed by the client as follows:
+
+// HMACKey = SHA(ClientDecryptKeyT + ClientEncryptKeyT)
+
+// The server performs the same computation with the same data (the client encryption
+// and server decryption keys are identical, while the server encryption and 
+// client decryption keys are identical).
+
+// HMACKey = SHA(ServerEncryptKeyT + ServerDecryptKeyT)
+
+// At the end of this process the client and server will each possess three symmetric keys 
+// to use with the Triple DES block cipher: an HMAC key, a encryption key, and a decryption key.
+
+
+// 5.3.6 Encrypting and Decrypting the I/O Data Stream
+
+// If the Encryption Level (see section 5.4.1) of the server is greater than zero,
+// then encryption will always be in effect. At a minimum, all client-to-server traffic
+// (except for licensing PDUs which have optional encryption) will be encrypted and a MAC
+// will be appended to the data to ensure transmission integrity.
+
+// The table which follows summarizes the possible encryption and MAC generation scenarios
+// based on the Encryption Method and Encryption Level selected by the server (the Encryption
+// Method values are described in section 2.2.1.4.3, while the Encryption Levels are described
+// in 5.4.1) as part of the cryptographic negotiation described in section 5.3.2:
+
+//+--------------------------+----------------------------+-------------------------+-----------------------+
+//|Selected Encryption Level | Selected Encryption Method |   Data Encryption       |   MAC Generation      |
+//+--------------------------+----------------------------+-------------------------+-----------------------+
+//|         None (0)         |          None (0x00)       |       None              |       None            |
+//+--------------------------+----------------------------+-------------------------+-----------------------+
+//|         Low (1)          |        40-Bit (0x01)       |   Client-to-server      | Client-to-server      |
+//|                          |        56-Bit (0x08)       | traffic only using RC4  | traffic only using    |
+//|                          |       128-Bit (0x02)       |                         |  MD5 and SHA-1        |
+//+--------------------------+----------------------------+-------------------------+-----------------------+
+//|  Client Compatible (2)   |        40-Bit (0x01)       |  Client-to-server and   | Client-to-server and  |
+//|                          |        56-Bit (0x08)       | server_to_client        | server_to_client      |
+//|                          |       128-Bit (0x02)       | traffic  using RC4      | traffic using MD5 and |
+//|                          |                            |                         | SHA-1.                |
+//+--------------------------+----------------------------+-------------------------+-----------------------+
+//|  High (3)                |       128-Bit (0x02)       |  Client-to-server and   | Client-to-server and  |
+//|                          |                            | server_to_client        | server_to_client      |
+//|                          |                            | traffic using RC4       | traffic using MD5 and |
+//|                          |                            |                         | SHA-1.                |
+//+--------------------------+----------------------------+-------------------------+-----------------------+
+//|  FIPS (4)                |       FIPS (0x10)          | Client-to-server and    | Client-to-server and  |
+//|                          |                            | server_to_client traffic| server_to_client      |
+//|                          |                            | using Triple DES        | traffic using SHA-1   |
+//+--------------------------+----------------------------+-------------------------+-----------------------+
+
+// 5.3.6.1 Non-FIPS
+// ================
+
+// The client and server follow the same series of steps to encrypt a block of data. First, 
+// a MAC value is generated over the unencrypted data.
+
+// Pad1 = 0x36 repeated 40 times to give 320 bits
+// Pad2 = 0x5C repeated 48 times to give 384 bits
+
+// SHAComponent = SHA(MACKeyN + Pad1 + DataLength + Data)
+// MACSignature = First64Bits(MD5(MACKeyN + Pad2 + SHAComponent))
+
+// MACKeyN is either MACKey40, MACKey56 or MACKey128, depending on the negotiated key strength.
+
+// DataLength is the size of the data to encrypt in bytes, expressed as a little-endian 32-bit integer.
+// Data is the information to be encrypted. The first 8 bytes of the generated MD5 hash are used 
+// as an 8-byte MAC value to send on the wire.
+
+// Next, the data block is encrypted with RC4 using the current client or server encryption 
+// substitution table. The encrypted data is appended to the 8-byte MAC value in the network packet.
+
+// Decryption involves a reverse ordering of the previous steps. First, the data is decrypted using
+// the current RC4 decryption substitution table. Then, a 16-byte MAC value is generated over the
+// decrypted data, and the first 8 bytes of this MAC are compared to the 8-byte MAC value that was
+// sent over the wire. If the MAC values do not match, an appropriate error is generated and the
+// connection is dropped.
+
+// 5.3.6.1.1 Salted MAC Generation
+// ===============================
+
+// The MAC value may be generated by salting the data to be hashed with the current encryption 
+// count. For example, assume that 42 packets  have already been encrypted. When the next packet
+// is encrypted the value 42 is added to the SHA component of the MAC signature. The addition
+// of the encryption count can be expressed as follows.
+
+// SHAComponent = SHA(MACKeyN + Pad1 + DataLength + Data + EncryptionCount)
+// MACSignature = First64Bits(MD5(MACKeyN + Pad2 + SHAComponent))
+
+// EncryptionCount is the cumulative encryption count, indicating how many encryptions have been
+// carried out. It is expressed as a little-endian 32-bit integer. The descriptions for DataLength,
+// Data, and MacKeyN are the same as in section 5.3.6.1.
+
+// The use of the salted MAC is dictated by capability flags in the General Capability Set 
+// (section 2.2.7.1.1), sent by both client and server during the Capability Exchange phase 
+// of the RDP Connection Sequence (see section 1.3.1.1). In addition, the presence of a 
+// salted MAC is indicated by the presence of the SEC_SECURE_CHECKSUM flag in the Security Header
+// flags field (see section 5.3.8).
+
+// 5.3.6.2 FIPS
+// ============
+
+// Prior to performing an encryption or decryption operation, the cryptographic modules used to
+// implement Triple DES must be configured with the following Initialization Vector.
+// {0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF}
+
+// The 160-bit MAC signature key is used to key the HMAC function (see [RFC2104]), which uses
+// SHA-1 as the iterative hash function.
+
+// MACSignature = First64Bits(HMAC(HMACKey, Data + EncryptionCount))
+
+// EncryptionCount is the cumulative encryption count, indicating how many encryptions 
+// have been carried out. It is expressed as a little-endian 32-bit integer. The description
+// for Data is the same as in section 5.3.6.1.
+
+// Encryption of the data and construction of the network packet to transmit is similar to 
+// section 5.3.6.1. The main difference is that Triple DES (in cipher block chaining (CBC) mode)
+// is used. Because DES is a block cipher, the data to be encrypted must be padded to be a multiple
+// of the block size (8 bytes). The FIPS Security Header (see sections 2.2.8.1 and 2.2.9.1) 
+// has an extra field to record the number of padding bytes which were appended to the data prior
+// to encryption to ensure that upon decryption these bytes are not included as part of the data.
+
+// 5.3.7 Session Key Updates
+// =========================
+
+// During the course of a session, the symmetric encryption and decryption keys may need 
+// to be refreshed.
+
+// 5.3.7.1 Non-FIPS
+// ================
+
+// The encryption and the decryption keys are updated after 4,096 packets have been
+// sent or received.
+
+// Generating an updated session key requires:
+
+//    The initial session keys (generated as described in section 5.3.5).
+
+//    The current session keys (if no update has been performed, the current
+// and initial session keys will be identical).
+
+//    Knowledge of the RC4 key length (computed using Table 1 and the negotiated key length).
+
+// The following sequence of steps shows how updated client and server encryption keys are
+// generated (the same steps are used to update the client and server decryption keys). 
+// The following padding constants are used.
+
+// Pad1 = 0x36 repeated 40 times to give 320 bits
+// Pad2 = 0x5C repeated 48 times to give 384 bits
+
+// If the negotiated key strength is 128-bit, then the full 128 bits of the initial
+// and current encryption key will be used.
+
+// InitialEncryptKey = InitialEncryptKey128
+// CurrentEncryptKey = CurrentEncryptKey128
+
+// If the negotiated key strength is 40-bit or 56-bit, then the first 64 bits of the initial
+// and current encryption keys will be used.
+
+// InitialEncryptKey = First64Bits(InitialEncryptKeyN)
+// CurrentEncryptKey = First64Bits(CurrentEncryptKeyN)
+
+// InitialEncryptKeyN is either InitialEncryptKey40 or InitialEncryptKey56, depending 
+// on the negotiated key strength, while CurrentEncryptKeyN is either CurrentEncryptKey40 
+// or CurrentEncryptKey56, depending on the negotiated key strength.
+
+// The initial and current keys are concatenated and hashed together with padding to form 
+// a temporary key as follows.
+
+// SHAComponent = SHA(InitialEncryptKey + Pad1 + CurrentEncryptKey)
+// TempKey128 = MD5(InitialEncryptKey + Pad2 + SHAComponent)
+
+// If the key strength is 128 bits, then the temporary key (TempKey128) is used
+// to reinitialize the associated RC4 substitution table. (For more information on
+// RC4 substitution table initialization, see [SCHNEIER] section 17.1.)
+
+// S-TableEncrypt = InitRC4(TempKey128)
+
+// RC4 is then used to encrypt TempKey128 to obtain the new 128-bit encryption key.
+
+// NewEncryptKey128 = RC4(TempKey128, S-TableEncrypt)
+
+// Finally, the associated RC4 substitution table is reinitialized with the new encryption
+// key (NewEncryptKey128), which can then be used to encrypt a further 4,096 packets.
+
+// S-Table = InitRC4(NewEncryptKey128)
+
+// If 40-bit or 56-bit keys are being used, then the first 64 bits of the temporary key
+// (TempKey128) are used to reinitialize the associated RC4 substitution table.
+
+// TempKey64 = First64Bits(TempKey128)
+// S-TableEncrypt = InitRC4(TempKey64)
+
+// RC4 is then used to encrypt these 64 bits, and the first few bytes are salted
+// according to the key strength to derive a new 40-bit or 56-bit encryption key
+// (see section 5.3.5.1 for details on how to perform the salting operation).
+
+// PreSaltKey = RC4(TempKey64, S-TableEncrypt)
+
+// NewEncryptKey40 = 0xD1269E + Last40Bits(PreSaltKey)
+// NewEncryptKey56 = 0xD1 + Last56Bits(PreSaltKey)
+
+// Finally, the new 40-bit or 56-bit encryption key (NewEncryptKey40 or NewEncryptKey56)
+// is used to reinitialize the associated RC4 substitution table.
+
+// 5.3.7.2 FIPS
+// ============
+// No session key updates take place for the duration of a connection if Standard RDP Security 
+// mechanisms (section 5.3) are being used with a FIPS Encryption Level.
+
+// 5.3.8 Packet Layout in the I/O Data Stream
+// ==========================================
+
+// The usage of Standard RDP Security mechanisms (see section 5.3) results in a security header 
+// being present in all packets following the Security Exchange PDU (section 2.2.1.10) when 
+// encryption is in force. Connection sequence PDUs following the RDP Security Commencement
+// phase of the RDP Connection Sequence (see section 1.3.1.1) and slow-path packets have the
+//  same general wire format.
+
+// +----------+------------------+---------------------------+------------+------+
+// | TPKT-HDR | X224 Data Header | MCS Header (SDRQ or SDIN) | Sec Header | Data |
+// +----------+------------------+---------------------------+------------+------+
+// Figure 9: Slow-path packet layout
+
+
+// The Security Header essentially contains flags and a MAC signature taken over the encrypted
+// data (see section 5.3.6 for details on the MAC generation). In FIPS scenarios, the header also
+// includes the number of padding bytes appended to the data.
+
+// Fast-path packets are more compact and formatted differently, but the essential contents
+// of the Security Header are still present. For non-FIPS scenarios, the packet layout is as follows.
+
+// +------------------+---------+---------------+------+
+// | Fast-Path Header | Length  | MAC Signature | Data |
+// +------------------+---------+---------------+------+
+// Figure 10: Non-FIPS fast-path packet layout
+
+// And in FIPS fast-path scenarios the packet layout is as follows.
+
+// +------------------+---------+------------------+---------------+------+
+// | Fast-Path Header | Length  | FIPS Information | MAC Signature | Data |
+// +------------------+---------+------------------+---------------+------+
+// Figure 11: FIPS fast-path packet layout
+
+// If no encryption is in effect, the Selected Encryption Method and Encryption Level (see section 5.3.1)
+// returned to the client is zero. The Security Header will not be included with any data sent on the wire,
+// except for the Client Info (section 2.2.1.11) and licensing PDUs (for an example of a licensing PDU see
+// section 2.2.1.12), which always contain the Security Header.
+
+// See sections 2.2.8.1 and 2.2.9.1 for more details on slow and fast-path packet formats and the structure
+// of the Security Header in both of these scenarios.
+
+
+// 5.5 Automatic Reconnection
+// ==========================
+
+// The Automatic Reconnection feature allows a client to reconnect to an existing session
+// (after a short-term network failure has occurred) without having to resend the user's
+// credentials to the server. A connection which employs Automatic Reconnection proceeds as follows:
+
+// The user logs in to a new or existing session. As soon as the user has been authenticated,
+// a Server Auto-Reconnect Packet (section 2.2.4.2) is generated by the server and sent to the
+// client in the Save Session Info PDU (section 2.2.10.1). The Auto-Reconnect Packet (also called
+// the auto-reconnect cookie) contains a 16-byte cryptographically secure random number (called the
+// auto-reconnect random) and the ID of the session to which the user has connected.
+
+// The client receives the cookie and stores it in memory, never allowing programmatic access to it.
+
+// In the case of a disconnection due to a network error, the client attempts to reconnect to the
+// server by trying to reconnect continuously or for a predetermined number of times. Once it has
+// connected, the client and server may exchange large random numbers (the client and server random
+// specified in section 5.3.4). If Enhanced RDP Security (section 5.4) is in effect, no client random
+// is sent to the server (see section 5.3.2).
+
+// The client derives a 16-byte security verifier from the random number contained in the auto-reconnect
+// cookie received in Step 2. This security verifier is wrapped in a Client Auto-Reconnect Packet (section
+// 2.2.4.3) and sent to the server as part of the extended information (see section 2.2.1.11.1.1.1) of the
+// Client Info PDU (section 2.2.1.11).
+
+// The auto-reconnect random is used to key the HMAC function (see [RFC2104]), which uses MD5 as the 
+// iterative hash function. The security verifier is derived by applying the HMAC to the client random
+// received in Step 3.
+
+// SecurityVerifier = HMAC(AutoReconnectRandom, ClientRandom)
+
+// The one-way HMAC transformation prevents an unauthenticated server from obtaining the original 
+// auto-reconnect random and replaying it for the purpose of connecting to the user's existing session.
+
+// When Enhanced RDP Security is in effect the client random value is not generated (see section 5.3.2).
+// In this case, for the purpose of generating the security verifier, the client random is assumed to be
+// an array of 16 zero bytes, that is, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }. This effectively
+// means that the derived security verifier will always have the same value when carrying out auto-reconnect
+// under the Enhanced RDP Security. Hence, care must be taken to authenticate the identity of the server
+// to which the client is reconnecting, ensuring that the identity has not changed in the period between
+// connections.
+
+// When the server receives the Client Auto-Reconnect Packet, it looks up the auto-reconnect random for the
+// session and computes the security verifier using the client random (the same calculation executed by the
+// client). If the security verifier value which the client transmitted matches the one computed by the 
+// server, the client is granted access. At this point, the server has confirmed that the client requesting 
+// auto-reconnection was the last one connected to the session in question.
+
+// If the check in Step 5 passes, then the client is automatically reconnected to the desired session; 
+// otherwise the client must obtain the user's credentials to regain access to the session on the remote
+// server.
+
+// The auto-reconnect cookie associated with a given session is flushed and regenerated whenever a client
+// connects to the session or the session is reset. This ensures that if a different client connects to the
+// session, then any previous clients which were connected can no longer use the auto-reconnect mechanism
+// to connect. Furthermore, the server invalidates and updates the cookie at hourly intervals, sending the
+// new cookie to the client in the Save Session Info PDU.
+
 };
 
 #endif

@@ -218,56 +218,6 @@ class ssllib
 
         memcpy(signature.data, md5sig, signature.capacity);
     }
-
-    static void rdp_sec_generate_keyblock(uint8_t (& key_block)[48], uint8_t *client_random, uint8_t *server_random)
-    {
-        uint8_t pre_master_secret[48];
-        uint8_t master_secret[48];
-
-        /* Construct pre-master secret (session key) */
-        memcpy(pre_master_secret, client_random, 24);
-        memcpy(pre_master_secret + 24, server_random, 24);
-
-        uint8_t shasig[20];
-
-        // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
-        for (int i = 0; i < 3; i++) {
-            uint8_t pad[4];
-
-            memset(pad, 'A' + i, i + 1);
-
-            SslSha1 sha1;
-            sha1.update(FixedSizeStream(pad, i + 1));
-            sha1.update(FixedSizeStream(pre_master_secret, sizeof(pre_master_secret)));
-            sha1.update(FixedSizeStream(client_random, 32));
-            sha1.update(FixedSizeStream(server_random, 32));
-            sha1.final(shasig);
-
-            SslMd5 md5;
-            md5.update(FixedSizeStream(pre_master_secret, sizeof(pre_master_secret)));
-            md5.update(FixedSizeStream(shasig, sizeof(shasig)));
-            md5.final(&master_secret[i * 16]);
-        }
-
-        // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
-        for (int i = 0; i < 3; i++) {
-            uint8_t pad[4];
-
-            memset(pad, 'X' + i, i + 1);
-
-            SslSha1 sha1;
-            sha1.update(FixedSizeStream(pad, i + 1));
-            sha1.update(FixedSizeStream(master_secret, sizeof(master_secret)));
-            sha1.update(FixedSizeStream(client_random, 32));
-            sha1.update(FixedSizeStream(server_random, 32));
-            sha1.final(shasig);
-
-            SslMd5 md5;
-            md5.update(FixedSizeStream(master_secret, sizeof(master_secret)));
-            md5.update(FixedSizeStream(shasig, sizeof(shasig)));
-            md5.final(&key_block[i * 16]);
-        }
-    }
 };
 
 
@@ -317,20 +267,14 @@ struct CryptContext
         memset(this->update_key, 0, MD5_DIGEST_LENGTH);
     }
 
-    void generate_key(uint8_t * key_block, const uint8_t* salt1, const uint8_t* salt2, uint32_t encryptionMethod)
+    void generate_key(uint8_t * keyblob, uint32_t encryptionMethod)
     {
         // 16-byte transformation used to generate export keys (6.2.2).
         this->encryptionMethod = encryptionMethod;
-
-        SslMd5 md5;
-        md5.update(FixedSizeStream(key_block, 16));
-        md5.update(StaticStream(salt1, 32));
-        md5.update(StaticStream(salt2, 32));
-        md5.final(this->key);
-
+        memcpy(this->key, keyblob, 16);
+        
         if (encryptionMethod == 1) {
             // 40 bits encryption
-
             ssllib ssl;
             ssl.sec_make_40bit(this->key);
             memcpy(this->update_key, this->key, 16);
