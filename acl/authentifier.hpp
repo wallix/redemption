@@ -807,7 +807,7 @@ class SessionManager {
             global_section  = GLOBAL_SECTION_CLIENT;
             global_key      = "device_redirection";
         }
-        else if (!strcmp(keyword, _STRAUTHID_OPT_CLIPBOARD)) {
+        else if (!strcmp(keyword, _STRAUTHID_OPT_FILE_ENCRYPTION)) {
             global_section  = GLOBAL_SECTION_GLOBALS;
             global_key      = "enable_file_encryption";
         }
