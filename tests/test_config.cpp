@@ -136,6 +136,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
@@ -253,6 +255,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
@@ -372,6 +376,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
@@ -412,6 +418,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     "performance_flags_force_present=0x1\n"
     "performance_flags_force_not_present=0x0\n"
     "tls_fallback_legacy=yes\n"
+    "clipboard=no\n"
+    "device_redirection=no\n"
     "[debug]\n"
     "log_type=file\n"
     "log_file_path=/var/log/redemption.log\n"
@@ -523,6 +531,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(1,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.globals.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.client.clipboard);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.client.device_redirection);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
     BOOST_CHECK_EQUAL(std::string("Annuler"),           std::string(ini.globals.translation.button_cancel));
@@ -666,6 +676,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(1,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
@@ -808,6 +820,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(1,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
@@ -941,6 +955,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
@@ -1068,6 +1084,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
@@ -1189,6 +1207,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
@@ -1314,6 +1334,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
@@ -1429,6 +1451,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));

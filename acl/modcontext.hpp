@@ -52,8 +52,6 @@ typedef enum{
     AUTHID_SESSION_ID,      // session_id
     AUTHID_OPT_MOVIE,       // is_rec
     AUTHID_OPT_MOVIE_PATH,  // rec_path
-    AUTHID_OPT_CLIPBOARD,   // clipboard
-    AUTHID_OPT_DEVICEREDIRECTION, // device_redirection
     AUTHID_END_DATE_CNX,    // timeclose
     AUTHID_MESSAGE, // warning_message
     AUTHID_OPT_BITRATE,     // Bit rate for video encoding
@@ -70,8 +68,12 @@ typedef enum{
     AUTHID_AUTHENTICATED,
     AUTHID_SELECTOR,
     AUTHID_KEEPALIVE,
-    // Translation Text
-/*    
+/*
+    // Options
+    AUTHID_OPT_CLIPBOARD,   // clipboard
+    AUTHID_OPT_DEVICEREDIRECTION, // device_redirection
+    AUTHID_OPT_FILE_ENCRYPTION, // file encryption
+    // Translation text
     AUTHID_TRANS_BUTTON_OK,
     AUTHID_TRANS_BUTTON_CANCEL,
     AUTHID_TRANS_BUTTON_HELP,
@@ -89,7 +91,6 @@ typedef enum{
     AUTHID_VIDEO_QUALITY,
     AUTHID_TIMEZONE,
     // Encryption
-    AUTHID_OPT_FILE_ENCRYPTION, // file encryption
     AUTHID_TRACE_SEAL,          // after closing trace file trace is sealed using a signature hash
     // Alternate shelk
     AUTHID_ALTERNATE_SHELL,
@@ -120,8 +121,6 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 #define STRAUTHID_SESSION_ID               "session_id"
 #define STRAUTHID_OPT_MOVIE                "is_rec"
 #define STRAUTHID_OPT_MOVIE_PATH           "rec_path"
-#define STRAUTHID_OPT_CLIPBOARD            "clipboard"
-#define STRAUTHID_OPT_DEVICEREDIRECTION    "device_redirection"
 #define STRAUTHID_END_DATE_CNX             "timeclose"
 #define STRAUTHID_MESSAGE                  "message"
 #define STRAUTHID_OPT_BITRATE              "bitrate"
@@ -141,12 +140,15 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 #define STRAUTHID_MODE_CONSOLE             "mode_console"
 #define STRAUTHID_VIDEO_QUALITY            "video_quality"
 #define STRAUTHID_TIMEZONE                 "timezone"
-#define STRAUTHID_OPT_FILE_ENCRYPTION      "file_encryption"
 #define STRAUTHID_TRACE_SEAL               "trace_seal"
 #define STRAUTHID_ALTERNATE_SHELL          "alternate_shell"
 #define STRAUTHID_SHELL_WORKING_DIRECTORY  "shell_working_directory"
 
-
+// Options
+#define _STRAUTHID_OPT_CLIPBOARD           "clipboard"
+#define _STRAUTHID_OPT_DEVICEREDIRECTION   "device_redirection"
+#define _STRAUTHID_OPT_FILE_ENCRYPTION     "file_encryption"
+// Translation text
 #define _STRAUTHID_TRANS_BUTTON_OK         "trans_ok"
 #define _STRAUTHID_TRANS_BUTTON_CANCEL     "trans_cancel"
 #define _STRAUTHID_TRANS_BUTTON_HELP       "trans_help"
@@ -162,6 +164,8 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 
 
 #define GLOBAL_SECTION_UNKNOWN      NULL
+#define GLOBAL_SECTION_CLIENT       "client"
+#define GLOBAL_SECTION_GLOBALS      "globals"
 #define GLOBAL_SECTION_TRANSLATION  "translation"
 
 
@@ -202,8 +206,6 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     {STRAUTHID_SELECTOR_NUMBER_OF_PAGES, TYPE_TEXT,    "!"                                    },
     {STRAUTHID_SELECTOR_CURRENT_PAGE,    TYPE_TEXT,    "!1"                                   },
     {STRAUTHID_OPT_MOVIE,                TYPE_BOOLEAN, "!False"                               },
-    {STRAUTHID_OPT_CLIPBOARD,            TYPE_BOOLEAN, "!True"                                },
-    {STRAUTHID_OPT_DEVICEREDIRECTION,    TYPE_BOOLEAN, "!True"                                },
     {STRAUTHID_MESSAGE,                  TYPE_TEXT,    "!"                                    },
     {STRAUTHID_DISPLAY_MESSAGE,          TYPE_TEXT,    "!"                                    },
     {STRAUTHID_ACCEPT_MESSAGE,           TYPE_TEXT,    "!"                                    },
@@ -223,25 +225,30 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     {STRAUTHID_SESSION_ID,               TYPE_TEXT,    "!"                                    },
     // password or AuthenticationInteractive
     {"authentication_challenge",         TYPE_TEXT,    "!password"                            },
-    // Translation
-//    {STRAUTHID_TRANS_BUTTON_OK,          TYPE_TEXT,    "!OK"                                  },
-//    {STRAUTHID_TRANS_BUTTON_CANCEL,      TYPE_TEXT,    "!Cancel"                              },
-//    {STRAUTHID_TRANS_BUTTON_HELP,        TYPE_TEXT,    "!Help"                                },
-//    {STRAUTHID_TRANS_BUTTON_CLOSE,       TYPE_TEXT,    "!Close"                               },
-//    {STRAUTHID_TRANS_BUTTON_REFUSED,     TYPE_TEXT,    "!Refused"                             },
-//    {STRAUTHID_TRANS_LOGIN,              TYPE_TEXT,    "!login"                               },
-//    {STRAUTHID_TRANS_USERNAME,           TYPE_TEXT,    "!username"                            },
-//    {STRAUTHID_TRANS_PASSWORD,           TYPE_TEXT,    "!password"                            },
-//    {STRAUTHID_TRANS_TARGET,             TYPE_TEXT,    "!target"                              },
-//    {STRAUTHID_TRANS_DIAGNOSTIC,         TYPE_TEXT,    "!diagnostic"                          },
-//    {STRAUTHID_TRANS_CONNECTION_CLOSED,  TYPE_TEXT,    "!Connection closed"                   },
-//    {STRAUTHID_TRANS_HELP_MESSAGE,       TYPE_TEXT,    "!Help message"                        },
+/*    
+    // Options
+    {STRAUTHID_OPT_CLIPBOARD,            TYPE_BOOLEAN, "!True"                                },
+    {STRAUTHID_OPT_DEVICEREDIRECTION,    TYPE_BOOLEAN, "!True"                                },
+    {STRAUTHID_OPT_FILE_ENCRYPTION,      TYPE_BOOLEAN, "!False"                               },
+    // Translation text
+    {STRAUTHID_TRANS_BUTTON_OK,          TYPE_TEXT,    "!OK"                                  },
+    {STRAUTHID_TRANS_BUTTON_CANCEL,      TYPE_TEXT,    "!Cancel"                              },
+    {STRAUTHID_TRANS_BUTTON_HELP,        TYPE_TEXT,    "!Help"                                },
+    {STRAUTHID_TRANS_BUTTON_CLOSE,       TYPE_TEXT,    "!Close"                               },
+    {STRAUTHID_TRANS_BUTTON_REFUSED,     TYPE_TEXT,    "!Refused"                             },
+    {STRAUTHID_TRANS_LOGIN,              TYPE_TEXT,    "!login"                               },
+    {STRAUTHID_TRANS_USERNAME,           TYPE_TEXT,    "!username"                            },
+    {STRAUTHID_TRANS_PASSWORD,           TYPE_TEXT,    "!password"                            },
+    {STRAUTHID_TRANS_TARGET,             TYPE_TEXT,    "!target"                              },
+    {STRAUTHID_TRANS_DIAGNOSTIC,         TYPE_TEXT,    "!diagnostic"                          },
+    {STRAUTHID_TRANS_CONNECTION_CLOSED,  TYPE_TEXT,    "!Connection closed"                   },
+    {STRAUTHID_TRANS_HELP_MESSAGE,       TYPE_TEXT,    "!Help message"                        },
+*/    
 
     {STRAUTHID_MODE_CONSOLE,             TYPE_TEXT,    "!allow"                               },
     {STRAUTHID_VIDEO_QUALITY,            TYPE_TEXT,    "!medium"                              },
     {STRAUTHID_TIMEZONE,                 TYPE_INTEGER, "!-3600"                               },
     // Encryption
-    {STRAUTHID_OPT_FILE_ENCRYPTION,      TYPE_BOOLEAN, "!False"                               },
     {STRAUTHID_TRACE_SEAL,               TYPE_TEXT,    "!"                                    },
     // Alternate shell
     {STRAUTHID_ALTERNATE_SHELL,          TYPE_TEXT,    "!"                                    },
@@ -272,8 +279,6 @@ static inline authid_t authid_from_string(const char * kw)
     STRAUTHID_REJECTED,
     STRAUTHID_OPT_MOVIE,
     STRAUTHID_OPT_MOVIE_PATH,
-    STRAUTHID_OPT_CLIPBOARD,
-    STRAUTHID_OPT_DEVICEREDIRECTION,
     STRAUTHID_END_DATE_CNX,
     STRAUTHID_MESSAGE,
     STRAUTHID_OPT_BITRATE,
@@ -290,7 +295,12 @@ static inline authid_t authid_from_string(const char * kw)
     STRAUTHID_AUTHENTICATED,
     STRAUTHID_SELECTOR,
     STRAUTHID_KEEPALIVE,
-/*    
+/*
+    // Options
+    STRAUTHID_OPT_FILE_ENCRYPTION,
+    STRAUTHID_OPT_CLIPBOARD,
+    STRAUTHID_OPT_DEVICEREDIRECTION,
+    // Translation text
     STRAUTHID_TRANS_BUTTON_OK,
     STRAUTHID_TRANS_BUTTON_CANCEL,
     STRAUTHID_TRANS_BUTTON_HELP,
@@ -307,7 +317,6 @@ static inline authid_t authid_from_string(const char * kw)
     STRAUTHID_MODE_CONSOLE,
     STRAUTHID_VIDEO_QUALITY,
     STRAUTHID_TIMEZONE,
-    STRAUTHID_OPT_FILE_ENCRYPTION,
     STRAUTHID_TRACE_SEAL,
     STRAUTHID_ALTERNATE_SHELL,
     STRAUTHID_SHELL_WORKING_DIRECTORY,

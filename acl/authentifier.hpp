@@ -797,6 +797,22 @@ class SessionManager {
             global_section  = GLOBAL_SECTION_TRANSLATION;
             global_key      = "help_message";
         }
+
+
+        else if (!strcmp(keyword, _STRAUTHID_OPT_CLIPBOARD)) {
+            global_section  = GLOBAL_SECTION_CLIENT;
+            global_key      = "clipboard";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_DEVICEREDIRECTION)) {
+            global_section  = GLOBAL_SECTION_CLIENT;
+            global_key      = "device_redirection";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_CLIPBOARD)) {
+            global_section  = GLOBAL_SECTION_GLOBALS;
+            global_key      = "enable_file_encryption";
+        }
+
+
         else {
             global_section  =
             global_key      = NULL;

@@ -128,8 +128,10 @@ struct Session {
         try {
             this->context = new ModContext();
             this->context->cpy(STRAUTHID_HOST, ip_source);
+/*            
             this->context->cpy(STRAUTHID_OPT_FILE_ENCRYPTION,
                 (this->ini->globals.enable_file_encryption ? "True" : "False"));
+*/            
             this->context->cpy(STRAUTHID_ALTERNATE_SHELL, this->ini->globals.alternate_shell);
             this->context->cpy(STRAUTHID_SHELL_WORKING_DIRECTORY, this->ini->globals.shell_working_directory);
 
@@ -846,7 +848,8 @@ struct Session {
                                     this->ini->globals.auth_channel,
                                     this->context->get(STRAUTHID_ALTERNATE_SHELL),
                                     this->context->get(STRAUTHID_SHELL_WORKING_DIRECTORY),
-                                    this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
+//                                    this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
+                                    this->ini->globals.client.clipboard,
                                     true, // support fast-path
                                     this->ini->globals.debug.mod_rdp,
                                     true
@@ -906,7 +909,7 @@ struct Session {
                     , this->front->client_info.height
                     , this->front->client_info.keylayout
                     , this->front->keymap.key_flags
-                    , this->context->get_bool(STRAUTHID_OPT_CLIPBOARD)
+                    , this->ini->globals.client.clipboard
                     , true /* RRE encoding */
                     , this->ini->globals.debug.mod_vnc);
                 this->mod->event.obj = client_sck;

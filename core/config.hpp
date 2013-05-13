@@ -224,6 +224,9 @@ struct Inifile {
             uint32_t performance_flags_force_not_present;
 
             bool tls_fallback_legacy;
+
+            bool clipboard;
+            bool device_redirection;
         } client;
 
         // section "translation"
@@ -364,7 +367,10 @@ struct Inifile {
         this->globals.client.performance_flags_force_present     = 0;
         this->globals.client.performance_flags_force_not_present = 0;
         this->globals.client.tls_fallback_legacy                 = false;
+        this->globals.client.clipboard                           = true;
+        this->globals.client.device_redirection                  = true;
 
+        // Section "translation"
         strcpy(this->globals.translation.button_ok,         "OK");
         strcpy(this->globals.translation.button_cancel,     "Cancel");
         strcpy(this->globals.translation.button_help,       "Help");
@@ -579,8 +585,14 @@ struct Inifile {
             else if (0 == strcmp(key, "performance_flags_force_not_present")){
                 this->globals.client.performance_flags_force_not_present = long_from_cstr(value);
             }
-            if (0 == strcmp(key, "tls_fallback_legacy")){
+            else if (0 == strcmp(key, "tls_fallback_legacy")){
                 this->globals.client.tls_fallback_legacy = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "clipboard")){
+                this->globals.client.clipboard = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "device_redirection")){
+                this->globals.client.device_redirection = bool_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "video")){ 
