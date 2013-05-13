@@ -121,6 +121,7 @@ struct Inifile {
         bool capture_flv;
         bool capture_ocr;
         bool capture_chunk;
+        bool movie;
         char movie_path[512];
         char codec_id[512];
         char video_quality[512];
@@ -272,6 +273,7 @@ struct Inifile {
         this->globals.capture_flv   = false;
         this->globals.capture_ocr   = false;
         this->globals.capture_chunk = false;
+        this->globals.movie            = false;
         this->globals.movie_path[0]    = 0;
         this->globals.auth_user[0]     = 0;
         this->globals.host[0]          = 0;
@@ -567,6 +569,21 @@ struct Inifile {
             else if (0 == strcmp(key, "shell_working_directory")) {
                 strncpy(this->globals.shell_working_directory, value, sizeof(this->globals.shell_working_directory));
                 this->globals.shell_working_directory[sizeof(this->globals.shell_working_directory) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "codec_id")) {
+                strncpy(this->globals.codec_id, value, sizeof(this->globals.codec_id));
+                this->globals.codec_id[sizeof(this->globals.codec_id) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "movie")){
+                this->globals.movie = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "movie_path")) {
+                strncpy(this->globals.movie_path, value, sizeof(this->globals.movie_path));
+                this->globals.movie_path[sizeof(this->globals.movie_path) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "video_quality")) {
+                strncpy(this->globals.video_quality, value, sizeof(this->globals.video_quality));
+                this->globals.video_quality[sizeof(this->globals.video_quality) - 1] = 0;
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

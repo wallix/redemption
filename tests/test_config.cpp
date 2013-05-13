@@ -44,6 +44,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
@@ -163,6 +164,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
@@ -284,6 +286,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
@@ -398,6 +401,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     // test we can read a config file with a global section
     std::stringstream oss(
     "[globals]\n"
+    "movie=yes\n"
     "bitmap_cache=yes\n"
     "bitmap_compression=true\n"
     "port=3390\n"
@@ -435,6 +439,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
@@ -582,6 +587,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
@@ -724,6 +730,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
@@ -862,6 +869,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
@@ -991,6 +999,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
@@ -1115,6 +1124,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
@@ -1242,6 +1252,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
@@ -1359,6 +1370,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));

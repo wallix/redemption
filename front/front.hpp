@@ -393,19 +393,28 @@ TODO("Pass font name as parameter in constructor")
     // ===========================================================================
     void start_capture(int width, int height, Inifile & ini, ModContext & context)
     {
-        if (context.get_bool(STRAUTHID_OPT_MOVIE)){
+//        if (context.get_bool(STRAUTHID_OPT_MOVIE)){
+        if (ini.globals.movie) {
             this->stop_capture();
             struct timeval now = tvtime();
 
+/*
             strncpy(ini.globals.movie_path, context.get(STRAUTHID_OPT_MOVIE_PATH), sizeof(ini.globals.movie_path)-1);
             ini.globals.movie_path[sizeof(ini.globals.movie_path)-1] = 0;
+*/            
             LOG(LOG_INFO, "movie_path = %s\n", ini.globals.movie_path);
 
+/*
             strncpy(ini.globals.codec_id, context.get(STRAUTHID_OPT_CODEC_ID), sizeof(ini.globals.codec_id)-1);
             ini.globals.codec_id[sizeof(ini.globals.codec_id)-1] = 0;
+*/            
+            LOG(LOG_INFO, "codec_id = %s\n", ini.globals.codec_id);
 
+/*
             strncpy(ini.globals.video_quality, context.get(STRAUTHID_VIDEO_QUALITY), sizeof(ini.globals.video_quality)-1);
             ini.globals.video_quality[sizeof(ini.globals.video_quality)-1] = 0;
+*/            
+            LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality);
 
             strncpy(ini.globals.auth_user, context.get(STRAUTHID_AUTH_USER), sizeof(ini.globals.auth_user)-1);
             ini.globals.auth_user[sizeof(ini.globals.auth_user)-1] = 0;
