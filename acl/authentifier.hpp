@@ -829,7 +829,15 @@ class SessionManager {
             global_section  = GLOBAL_SECTION_GLOBALS;
             global_key      = "video_quality";
         }
-
+        // Alternate shell
+        else if (!strcmp(keyword, _STRAUTHID_ALTERNATE_SHELL)) {
+            global_section  = GLOBAL_SECTION_GLOBALS;
+            global_key      = "alternate_shell";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_SHELL_WORKING_DIRECTORY)) {
+            global_section  = GLOBAL_SECTION_GLOBALS;
+            global_key      = "shell_working_directory";
+        }
         else {
             global_section  =
             global_key      = NULL;

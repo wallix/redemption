@@ -65,6 +65,13 @@ typedef enum{
     AUTHID_AUTHENTICATED,
     AUTHID_SELECTOR,
     AUTHID_KEEPALIVE,
+
+    AUTHID_MODE_CONSOLE,
+    AUTHID_TIMEZONE,
+    // Encryption
+    AUTHID_TRACE_SEAL,          // after closing trace file trace is sealed using a signature hash
+    MAX_AUTHID
+
 /*
     // Translation text
     AUTHID_TRANS_BUTTON_OK,
@@ -83,23 +90,15 @@ typedef enum{
     AUTHID_OPT_CLIPBOARD,         // clipboard
     AUTHID_OPT_DEVICEREDIRECTION, // device_redirection
     AUTHID_OPT_FILE_ENCRYPTION,   // file encryption
-*/
-/*    
     // Video capture
     AUTHID_OPT_CODEC_ID,    // CODEC_ID for video encoding
     AUTHID_OPT_MOVIE,       // is_rec
     AUTHID_OPT_MOVIE_PATH,  // rec_path
     AUTHID_VIDEO_QUALITY,
-*/
-
-    AUTHID_MODE_CONSOLE,
-    AUTHID_TIMEZONE,
-    // Encryption
-    AUTHID_TRACE_SEAL,          // after closing trace file trace is sealed using a signature hash
-    // Alternate shelk
+    // Alternate shell
     AUTHID_ALTERNATE_SHELL,
     AUTHID_SHELL_WORKING_DIRECTORY,
-    MAX_AUTHID
+*/
 } authid_t;
 
 
@@ -141,8 +140,6 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 #define STRAUTHID_MODE_CONSOLE             "mode_console"
 #define STRAUTHID_TIMEZONE                 "timezone"
 #define STRAUTHID_TRACE_SEAL               "trace_seal"
-#define STRAUTHID_ALTERNATE_SHELL          "alternate_shell"
-#define STRAUTHID_SHELL_WORKING_DIRECTORY  "shell_working_directory"
 // Translation text
 #define _STRAUTHID_TRANS_BUTTON_OK         "trans_ok"
 #define _STRAUTHID_TRANS_BUTTON_CANCEL     "trans_cancel"
@@ -165,6 +162,9 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 #define _STRAUTHID_OPT_MOVIE                "is_rec"
 #define _STRAUTHID_OPT_MOVIE_PATH           "rec_path"
 #define _STRAUTHID_VIDEO_QUALITY            "video_quality"
+// Alternate shell
+#define _STRAUTHID_ALTERNATE_SHELL          "alternate_shell"
+#define _STRAUTHID_SHELL_WORKING_DIRECTORY  "shell_working_directory"
 
 
 #define GLOBAL_SECTION_UNKNOWN      NULL
@@ -226,6 +226,12 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     {STRAUTHID_SESSION_ID,               TYPE_TEXT,    "!"                                    },
     // password or AuthenticationInteractive
     {"authentication_challenge",         TYPE_TEXT,    "!password"                            },
+
+    {STRAUTHID_MODE_CONSOLE,             TYPE_TEXT,    "!allow"                               },
+    {STRAUTHID_TIMEZONE,                 TYPE_INTEGER, "!-3600"                               },
+    // Encryption
+    {STRAUTHID_TRACE_SEAL,               TYPE_TEXT,    "!"                                    },
+
 /*
     // Translation text
     {STRAUTHID_TRANS_BUTTON_OK,          TYPE_TEXT,    "!OK"                                  },
@@ -244,22 +250,15 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     {STRAUTHID_OPT_CLIPBOARD,            TYPE_BOOLEAN, "!True"                                },
     {STRAUTHID_OPT_DEVICEREDIRECTION,    TYPE_BOOLEAN, "!True"                                },
     {STRAUTHID_OPT_FILE_ENCRYPTION,      TYPE_BOOLEAN, "!False"                               },
-*/
-/*    
     // Video capture
     {STRAUTHID_OPT_CODEC_ID,             TYPE_TEXT,    "!flv"                                 },
     {STRAUTHID_OPT_MOVIE,                TYPE_BOOLEAN, "!False"                               },
     {STRAUTHID_OPT_MOVIE_PATH,           TYPE_TEXT,    "!"                                    },
     {STRAUTHID_VIDEO_QUALITY,            TYPE_TEXT,    "!medium"                              },
-*/
-
-    {STRAUTHID_MODE_CONSOLE,             TYPE_TEXT,    "!allow"                               },
-    {STRAUTHID_TIMEZONE,                 TYPE_INTEGER, "!-3600"                               },
-    // Encryption
-    {STRAUTHID_TRACE_SEAL,               TYPE_TEXT,    "!"                                    },
     // Alternate shell
     {STRAUTHID_ALTERNATE_SHELL,          TYPE_TEXT,    "!"                                    },
     {STRAUTHID_SHELL_WORKING_DIRECTORY,  TYPE_TEXT,    "!"                                    },
+*/
 };
 
 
@@ -299,6 +298,11 @@ static inline authid_t authid_from_string(const char * kw)
     STRAUTHID_AUTHENTICATED,
     STRAUTHID_SELECTOR,
     STRAUTHID_KEEPALIVE,
+
+    STRAUTHID_MODE_CONSOLE,
+    STRAUTHID_TIMEZONE,
+    STRAUTHID_TRACE_SEAL,
+
 /*
     // Translation text
     STRAUTHID_TRANS_BUTTON_OK,
@@ -317,20 +321,14 @@ static inline authid_t authid_from_string(const char * kw)
     STRAUTHID_OPT_FILE_ENCRYPTION,
     STRAUTHID_OPT_CLIPBOARD,
     STRAUTHID_OPT_DEVICEREDIRECTION,
-*/
-/*    
     // Video capture
     STRAUTHID_OPT_CODEC_ID,
     STRAUTHID_OPT_MOVIE,
     STRAUTHID_OPT_MOVIE_PATH,
     STRAUTHID_VIDEO_QUALITY,
-*/    
-
-    STRAUTHID_MODE_CONSOLE,
-    STRAUTHID_TIMEZONE,
-    STRAUTHID_TRACE_SEAL,
     STRAUTHID_ALTERNATE_SHELL,
     STRAUTHID_SHELL_WORKING_DIRECTORY,
+*/
     };
 
     string str = string(kw);

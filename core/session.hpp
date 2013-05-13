@@ -128,12 +128,12 @@ struct Session {
         try {
             this->context = new ModContext();
             this->context->cpy(STRAUTHID_HOST, ip_source);
-/*            
+/*
             this->context->cpy(STRAUTHID_OPT_FILE_ENCRYPTION,
                 (this->ini->globals.enable_file_encryption ? "True" : "False"));
-*/            
             this->context->cpy(STRAUTHID_ALTERNATE_SHELL, this->ini->globals.alternate_shell);
             this->context->cpy(STRAUTHID_SHELL_WORKING_DIRECTORY, this->ini->globals.shell_working_directory);
+*/
 
             this->sesman = new SessionManager( *this->context
                                              , this->ini
@@ -845,10 +845,12 @@ struct Session {
                                     &this->gen,
                                     this->front->keymap.key_flags,
                                     this->sesman, // we give mod_rdp a direct access to sesman for auth_channel channel
-                                    this->ini->globals.auth_channel,
-                                    this->context->get(STRAUTHID_ALTERNATE_SHELL),
-                                    this->context->get(STRAUTHID_SHELL_WORKING_DIRECTORY),
+//                                    this->context->get(STRAUTHID_ALTERNATE_SHELL),
+//                                    this->context->get(STRAUTHID_SHELL_WORKING_DIRECTORY),
 //                                    this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
+                                    this->ini->globals.auth_channel,
+                                    this->ini->globals.alternate_shell,
+                                    this->ini->globals.shell_working_directory,
                                     this->ini->globals.client.clipboard,
                                     true, // support fast-path
                                     this->ini->globals.debug.mod_rdp,
