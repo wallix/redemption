@@ -190,6 +190,7 @@ unit-test test_font : tests/test_font.cpp libboost_unit_test ;
 unit-test test_rect : tests/test_rect.cpp libboost_unit_test ;
 unit-test test_compact_to_aligned : tests/test_compact_to_aligned.cpp libboost_unit_test ;
 unit-test test_region : tests/test_region.cpp libboost_unit_test ;
+unit-test test_string : tests/test_string.cpp libboost_unit_test ;
 unit-test test_strings : tests/test_strings.cpp libboost_unit_test ;
 
 unit-test test_transport : tests/transport/test_transport.cpp openssl crypto z dl libboost_unit_test ;
