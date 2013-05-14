@@ -1,0 +1,5 @@
+redemption (0.9.247-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- cgrosjean <cgrosjean@unknown>  Mon, 13 May 2013 14:47:26 +0200

@@ -1,0 +1,35 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE=10
+
+clean:
+	dh_testdir
+	dh_testroot
+	dh_clean
+
+build:
+	dh_testdir
+	PREFIX=/usr/local bjam -q
+
+install: build
+	dh_testdir
+	DESTDIR=debian/buildtmp PREFIX=/usr/local bjam -a -q install
+
+binary-indep: build install
+
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_install --sourcedir=debian/buildtmp --list-missing
+#   dh_strip
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+
