@@ -78,6 +78,11 @@ public:
         return (*this);
     }
 
+    size_t length() const {
+        return ::strlen(this->buffer_pointer);
+    }
+
+
 protected:
     // Ensure that the buffer is large enough to hold size bytes.
     void realloc_memory(size_t size, bool preserve_content) {
