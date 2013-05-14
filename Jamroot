@@ -4,6 +4,7 @@ import os ;
 # below feature rule come from http://www.boost.org/doc/tools/build/doc/html/bbv2/extending/features.html
 
 import feature : feature ;
+import modules : poke ;
 
 # this feature is defined so we can add a dependency on <distri>lenny for some targets
 # disabled because in our current code it finds the right library
@@ -14,17 +15,42 @@ import feature : feature ;
 
 path-constant TOP : . ;
 
-rule defines ( properties * )
+# Returns environment value if it exists or default otherwise.
+# Allow us to customize install path with shell variables like $PREFIX...
+# (this is bad practice and should be replaced by a site configuration file
+# but I until now I miserably failed creating a clean separate configuration file)
+rule setvar ( env : default * )
 {
+    if [ os.environ $(env) ]
+    {
+        return [ os.environ $(env) ] ;
+    }
+    else
+    {
+        return $(default) ;
+    }
+}
+
+constant INSTALLDIR : [ setvar DESTDIR : "" ] ;
+constant PREFIX : [ setvar PREFIX : /usr/local ] ;
+constant BIN_PREFIX : [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
+constant LIB_PREFIX : [ setvar LIB_PREFIX : $(PREFIX)/lib ] ;
+constant SHARE_PREFIX : [ setvar SHARE_PREFIX : $(PREFIX)/share/rdpproxy ] ;
+constant FIXTURES_PATH : [ setvar FIXTURES_PATH : ./tests/fixtures ] ;
+constant ETC_PREFIX : [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
+
+rule defines ( properties * )
+{  
     local defs ;
-    defs += <define>SHARE_PATH='\"/usr/local/share/rdpproxy\"' ;
-    defs += <define>CFG_PATH='\"/etc/rdpproxy\"' ;
-    defs += <define>FIXTURES_PATH='\"./tests/fixtures\"' ;
+    defs += <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
+    defs += <define>CFG_PATH='\"$(ETC_PREFIX)\"' ;
     defs += <define>LICENSE_PATH='\"/var/certs/redemption\"' ;
     defs += <define>PNG_PATH='\"/var/tmp/png\"' ;
     defs += <define>WRM_PATH='\"/var/recorded/rdp\"' ;
     defs += <define>HASH_PATH='\"/var/lib/hash\"' ;
-    defs += <define>CERTIF_PATH='\"/etc/rdpproxy/certificate\"' ;
+    defs += <define>CERTIF_PATH='\"$(ETC_PREFIX)/certificate\"' ;
+    defs += <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"' ;
+
     if [ os.environ VERBOSE ]
     {
         defs += <define>VERBOSE ;
@@ -33,6 +59,7 @@ rule defines ( properties * )
 }
 
 variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <cxxflags>--coverage <link>shared ;
+
 
 #gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
 
@@ -66,27 +93,27 @@ project redemption
 
 ;
 
-explicit install instexe install-bin install-test install-etc install-share ;
+explicit install instexe install-bin install-etc install-share ;
 
-alias instexe : install-bin install-test ;
+alias instexe : install-bin ;
 alias install : install-bin install-etc install-share ;
 
 install install-bin
     : rdpproxy redrec
     : <install-type>EXE <install-dependencies>on
-    : <location>/usr/local/bin
+    : <location>$(INSTALLDIR)/usr/local/bin
     ;
 
 install install-share
     : [ glob sys/share/rdpproxy/[^.k]* ]
     :
-    : <location>/usr/local/share/rdpproxy
+    : <location>$(INSTALLDIR)/usr/local/share/rdpproxy
     ;
 
 install install-etc
     : [ glob sys/etc/rdpproxy/*ini sys/etc/rdpproxy/*pem sys/etc/rdpproxy/*crt sys/etc/rdpproxy/*key sys/etc/rdpproxy/*p12 ]
     :
-    : <location>/etc/rdpproxy
+    : <location>$(INSTALLDIR)/etc/rdpproxy
     ;
 
 lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
