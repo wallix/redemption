@@ -121,6 +121,7 @@ struct Inifile {
         bool capture_flv;
         bool capture_ocr;
         bool capture_chunk;
+        bool movie;
         char movie_path[512];
         char codec_id[512];
         char video_quality[512];
@@ -224,6 +225,9 @@ struct Inifile {
             uint32_t performance_flags_force_not_present;
 
             bool tls_fallback_legacy;
+
+            bool clipboard;
+            bool device_redirection;
         } client;
 
         // section "translation"
@@ -269,6 +273,7 @@ struct Inifile {
         this->globals.capture_flv   = false;
         this->globals.capture_ocr   = false;
         this->globals.capture_chunk = false;
+        this->globals.movie            = false;
         this->globals.movie_path[0]    = 0;
         this->globals.auth_user[0]     = 0;
         this->globals.host[0]          = 0;
@@ -364,7 +369,10 @@ struct Inifile {
         this->globals.client.performance_flags_force_present     = 0;
         this->globals.client.performance_flags_force_not_present = 0;
         this->globals.client.tls_fallback_legacy                 = false;
+        this->globals.client.clipboard                           = true;
+        this->globals.client.device_redirection                  = true;
 
+        // Section "translation"
         strcpy(this->globals.translation.button_ok,         "OK");
         strcpy(this->globals.translation.button_cancel,     "Cancel");
         strcpy(this->globals.translation.button_help,       "Help");
@@ -562,6 +570,21 @@ struct Inifile {
                 strncpy(this->globals.shell_working_directory, value, sizeof(this->globals.shell_working_directory));
                 this->globals.shell_working_directory[sizeof(this->globals.shell_working_directory) - 1] = 0;
             }
+            else if (0 == strcmp(key, "codec_id")) {
+                strncpy(this->globals.codec_id, value, sizeof(this->globals.codec_id));
+                this->globals.codec_id[sizeof(this->globals.codec_id) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "movie")){
+                this->globals.movie = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "movie_path")) {
+                strncpy(this->globals.movie_path, value, sizeof(this->globals.movie_path));
+                this->globals.movie_path[sizeof(this->globals.movie_path) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "video_quality")) {
+                strncpy(this->globals.video_quality, value, sizeof(this->globals.video_quality));
+                this->globals.video_quality[sizeof(this->globals.video_quality) - 1] = 0;
+            }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
@@ -579,8 +602,14 @@ struct Inifile {
             else if (0 == strcmp(key, "performance_flags_force_not_present")){
                 this->globals.client.performance_flags_force_not_present = long_from_cstr(value);
             }
-            if (0 == strcmp(key, "tls_fallback_legacy")){
+            else if (0 == strcmp(key, "tls_fallback_legacy")){
                 this->globals.client.tls_fallback_legacy = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "clipboard")){
+                this->globals.client.clipboard = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "device_redirection")){
+                this->globals.client.device_redirection = bool_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "video")){ 

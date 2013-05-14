@@ -556,7 +556,8 @@ class SessionManager {
                 return MCTX_STATUS_INTERNAL;
             }
             else if (this->context.get_bool(STRAUTHID_AUTHENTICATED)){
-                record_video = this->context.get_bool(STRAUTHID_OPT_MOVIE);
+//                record_video = this->context.get_bool(STRAUTHID_OPT_MOVIE);
+                record_video = this->ini->globals.movie;
                 keep_alive = true;
                 if (context.get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                     context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "End of connection");
@@ -749,6 +750,7 @@ class SessionManager {
 
     static inline bool get_global_info(const char * keyword, const char *& global_section, const char *& global_key)
     {
+        // Translation
         if (!strcmp(keyword, _STRAUTHID_TRANS_BUTTON_OK)) {
             global_section  = GLOBAL_SECTION_TRANSLATION;
             global_key      = "button_ok";
@@ -796,6 +798,45 @@ class SessionManager {
         else if (!strcmp(keyword, _STRAUTHID_TRANS_HELP_MESSAGE)) {
             global_section  = GLOBAL_SECTION_TRANSLATION;
             global_key      = "help_message";
+        }
+        // Options
+        else if (!strcmp(keyword, _STRAUTHID_OPT_CLIPBOARD)) {
+            global_section  = GLOBAL_SECTION_CLIENT;
+            global_key      = "clipboard";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_DEVICEREDIRECTION)) {
+            global_section  = GLOBAL_SECTION_CLIENT;
+            global_key      = "device_redirection";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_FILE_ENCRYPTION)) {
+            global_section  = GLOBAL_SECTION_GLOBALS;
+            global_key      = "enable_file_encryption";
+        }
+        // Video capture
+        else if (!strcmp(keyword, _STRAUTHID_OPT_CODEC_ID)) {
+            global_section  = GLOBAL_SECTION_GLOBALS;
+            global_key      = "codec_id";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_MOVIE)) {
+            global_section  = GLOBAL_SECTION_GLOBALS;
+            global_key      = "movie";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_MOVIE_PATH)) {
+            global_section  = GLOBAL_SECTION_GLOBALS;
+            global_key      = "movie_path";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_VIDEO_QUALITY)) {
+            global_section  = GLOBAL_SECTION_GLOBALS;
+            global_key      = "video_quality";
+        }
+        // Alternate shell
+        else if (!strcmp(keyword, _STRAUTHID_ALTERNATE_SHELL)) {
+            global_section  = GLOBAL_SECTION_GLOBALS;
+            global_key      = "alternate_shell";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_SHELL_WORKING_DIRECTORY)) {
+            global_section  = GLOBAL_SECTION_GLOBALS;
+            global_key      = "shell_working_directory";
         }
         else {
             global_section  =
