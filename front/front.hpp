@@ -422,8 +422,11 @@ TODO("Pass font name as parameter in constructor")
 */
             LOG(LOG_INFO, "auth_user = %s\n", ini.globals.auth_user);
 
+/*
             strncpy(ini.globals.host, context.get(STRAUTHID_HOST), sizeof(ini.globals.host)-1);
             ini.globals.host[sizeof(ini.globals.host)-1] = 0;
+*/
+            LOG(LOG_INFO, "host = %s\n", ini.globals.host);
 
 /*
             strncpy(ini.globals.target_device, context.get(STRAUTHID_TARGET_DEVICE), sizeof(ini.globals.target_device)-1);

@@ -288,6 +288,13 @@ struct Inifile {
             unsigned           target_port;
             redemption::string target_protocol;
 //            redemption::string target_user;
+
+            bool               ask_auth_user;
+
+            bool               ask_host;
+            bool               ask_password;
+
+            redemption::string password;
         } context;
     } globals;
 
@@ -467,6 +474,8 @@ struct Inifile {
         this->globals.context.target_password             = "";
         this->globals.context.target_port                 = 3389;
         this->globals.context.target_protocol             = "RDP";
+
+        this->globals.context.password                    = "";
     };
 
     void cparse(istream & ifs){
@@ -679,6 +688,10 @@ struct Inifile {
             else if (0 == strcmp(key, "auth_user")) {
                 strncpy(this->globals.auth_user, value, sizeof(this->globals.auth_user));
                 this->globals.auth_user[sizeof(this->globals.auth_user) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "host")) {
+                strncpy(this->globals.host, value, sizeof(this->globals.host));
+                this->globals.host[sizeof(this->globals.host) - 1] = 0;
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -956,6 +969,9 @@ struct Inifile {
             else if (0 == strcmp(key, "target_protocol")){
                 this->globals.context.target_protocol          = value;
             }
+            else if (0 == strcmp(key, "password")){
+                this->globals.context.password                 = value;
+            }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
@@ -1050,6 +1066,18 @@ struct Inifile {
             }
             else if (!strcasecmp(key, "auth_user")) {
                 strncpy(buffer, this->globals.auth_user, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "host")) {
+                strncpy(buffer, this->globals.host, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "password")) {
+                strncpy(buffer, this->globals.context.password, size);
                 buffer[size - 1] = 0;
 
                 pszReturn = buffer;

@@ -127,7 +127,11 @@ struct Session {
 
         try {
             this->context = new ModContext();
-            this->context->cpy(STRAUTHID_HOST, ip_source);
+//            this->context->cpy(STRAUTHID_HOST, ip_source);
+            strncpy(this->ini->globals.host, ip_source, sizeof(this->ini->globals.host));
+            this->ini->globals.host[sizeof(this->ini->globals.host) - 1] = 0;
+            this->context->cpy(_STRAUTHID_HOST, "");
+
 /*
             this->context->cpy(STRAUTHID_OPT_FILE_ENCRYPTION,
                 (this->ini->globals.enable_file_encryption ? "True" : "False"));

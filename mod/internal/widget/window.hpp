@@ -430,7 +430,10 @@ struct window_login : public window
                 this->context.parse_username(edit->buffer, *this->ini);
             }
             else if (0 == strcmp(label->caption1, ini->globals.translation.password)){
-                this->context.cpy(STRAUTHID_PASSWORD, edit->buffer);
+//                this->context.cpy(STRAUTHID_PASSWORD, edit->buffer);
+                this->ini->globals.context.password = edit->buffer;
+
+                this->context.cpy(_STRAUTHID_PASSWORD, "");
             }
             i += 2;
         }

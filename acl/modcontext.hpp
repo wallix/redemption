@@ -31,8 +31,6 @@ using namespace std;
 
 typedef enum{
     AUTHID_UNKNOWN = 0,
-    AUTHID_HOST,            // ip_client
-    AUTHID_PASSWORD,        // password
     AUTHID_AUTHCHANNEL_TARGET, // WabLauncher target request
     AUTHID_AUTHCHANNEL_RESULT, // WabLauncher session result
     AUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
@@ -97,14 +95,14 @@ typedef enum{
     AUTHID_TARGET_PORT,     // target_port
     AUTHID_TARGET_PROTOCOL, // proto_dest
     AUTHID_AUTH_USER,       // login
+    AUTHID_HOST,            // ip_client
+    AUTHID_PASSWORD,        // password
 */
 
     MAX_AUTHID
 } authid_t;
 
 
-#define STRAUTHID_HOST                     "ip_client"
-#define STRAUTHID_PASSWORD                 "password"
 #define STRAUTHID_AUTHCHANNEL_TARGET       "auth_channel_target"
 #define STRAUTHID_AUTHCHANNEL_RESULT       "auth_channel_result"
 TODO("This is not a translation but auth_channel answer, change key name in sesman")
@@ -167,6 +165,8 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 #define _STRAUTHID_TARGET_PORT              "target_port"
 #define _STRAUTHID_TARGET_PROTOCOL          "proto_dest"
 #define _STRAUTHID_AUTH_USER                "login"
+#define _STRAUTHID_HOST                     "ip_client"
+#define _STRAUTHID_PASSWORD                 "password"
 
 
 #define GLOBAL_SECTION_UNKNOWN      NULL
@@ -192,8 +192,6 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 
 TODO("This should be initialized in constructor")
 static ProtocolKeyword KeywordsDefinitions[] = {
-    {STRAUTHID_HOST,                     TYPE_TEXT,    "!"                                    },
-    {STRAUTHID_PASSWORD,                 TYPE_TEXT,    "!"                                    },
     {STRAUTHID_AUTHCHANNEL_TARGET,       TYPE_TEXT,    "!"                                    },
     {STRAUTHID_AUTHCHANNEL_RESULT,       TYPE_TEXT,    "!"                                    },
     {STRAUTHID_AUTHCHANNEL_ANSWER,       TYPE_TEXT,    "!"                                    }, //
@@ -269,14 +267,14 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     {_STRAUTHID_TARGET_PROTOCOL,          TYPE_TEXT,    "!RDP"                                 },
     {_STRAUTHID_TARGET_USER,              TYPE_TEXT,    "!"                                    },
     {_STRAUTHID_AUTH_USER,                TYPE_TEXT,    "!"                                    },
+    {_STRAUTHID_HOST,                     TYPE_TEXT,    "!"                                    },
+    {_STRAUTHID_PASSWORD,                 TYPE_TEXT,    "!"                                    },
 };
 
 
 static inline authid_t authid_from_string(const char * kw)
 {
     static const string authstr[MAX_AUTHID-1] = {
-    STRAUTHID_HOST,
-    STRAUTHID_PASSWORD,
     STRAUTHID_AUTHCHANNEL_TARGET,
     STRAUTHID_AUTHCHANNEL_RESULT,
     STRAUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
@@ -339,6 +337,8 @@ static inline authid_t authid_from_string(const char * kw)
     STRAUTHID_TARGET_PORT,
     STRAUTHID_TARGET_PROTOCOL,
     STRAUTHID_AUTH_USER,
+    STRAUTHID_HOST,
+    STRAUTHID_PASSWORD,
 */
     };
 

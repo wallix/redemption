@@ -236,6 +236,9 @@ class SessionManager {
                            || (strcasecmp((char *)keyword, _STRAUTHID_TARGET_PASSWORD) == 0)
                            || (strcasecmp((char *)keyword, _STRAUTHID_TARGET_PROTOCOL) == 0)
                            || (strcasecmp((char *)keyword, _STRAUTHID_TARGET_USER) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_AUTH_USER) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_HOST) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_PASSWORD) == 0)
                            ){
                             if ((0==strncasecmp((char*)value, "ask", 3))){
                                 this->context.ask((char*)keyword);
@@ -556,7 +559,7 @@ class SessionManager {
                 nextmod = INTERNAL_LOGIN;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (this->context.is_asked(STRAUTHID_PASSWORD)){
+            else if (this->context.is_asked(_STRAUTHID_PASSWORD)){
                 this->mod_state = MOD_STATE_DONE_LOGIN;
                 nextmod = INTERNAL_LOGIN;
                 return MCTX_STATUS_INTERNAL;
@@ -681,6 +684,8 @@ class SessionManager {
                || !strcasecmp(key, _STRAUTHID_TARGET_PROTOCOL)
                || !strcasecmp(key, _STRAUTHID_TARGET_USER)
                || !strcasecmp(key, _STRAUTHID_AUTH_USER)
+               || !strcasecmp(key, _STRAUTHID_HOST)
+               || !strcasecmp(key, _STRAUTHID_PASSWORD)
                ) {
                 const char * global_section;
                 const char * global_key;
@@ -748,9 +753,9 @@ class SessionManager {
             this->out_item(stream, STRAUTHID_PROXY_TYPE);
             this->out_item(stream, STRAUTHID_DISPLAY_MESSAGE);
             this->out_item(stream, STRAUTHID_ACCEPT_MESSAGE);
-            this->out_item(stream, STRAUTHID_HOST);
+            this->out_item(stream, _STRAUTHID_HOST);
             this->out_item(stream, _STRAUTHID_AUTH_USER);
-            this->out_item(stream, STRAUTHID_PASSWORD);
+            this->out_item(stream, _STRAUTHID_PASSWORD);
             this->out_item(stream, _STRAUTHID_TARGET_USER);
             this->out_item(stream, _STRAUTHID_TARGET_DEVICE);
             this->out_item(stream, _STRAUTHID_TARGET_PROTOCOL);
@@ -984,7 +989,14 @@ class SessionManager {
             global_section  = GLOBAL_SECTION_GLOBALS;
             global_key      = "auth_user";
         }
-
+        else if (!strcmp(keyword, _STRAUTHID_HOST)) {
+            global_section  = GLOBAL_SECTION_GLOBALS;
+            global_key      = "host";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_PASSWORD)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "password";
+        }
         else {
 //            LOG(LOG_WARNING, "get_global_info: unknown keyword = %s", keyword);
 

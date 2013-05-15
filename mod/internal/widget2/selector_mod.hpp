@@ -86,7 +86,7 @@ public:
         if (NOTIFY_SUBMIT == event) {
             if (sender == &this->selector.logout) {
                 this->context.ask(_STRAUTHID_AUTH_USER);
-                this->context.ask(STRAUTHID_PASSWORD);
+                this->context.ask(_STRAUTHID_PASSWORD);
                 this->context.ask(_STRAUTHID_TARGET_USER);
                 this->context.ask(_STRAUTHID_TARGET_DEVICE);
                 this->context.ask(_STRAUTHID_SELECTOR);

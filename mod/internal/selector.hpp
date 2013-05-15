@@ -3608,7 +3608,7 @@ struct selector_mod : public internal_mod {
         case FOCUS_ON_LOGOUT:
         {
             this->context.ask(_STRAUTHID_AUTH_USER);
-            this->context.ask(STRAUTHID_PASSWORD);
+            this->context.ask(_STRAUTHID_PASSWORD);
             this->context.ask(_STRAUTHID_TARGET_USER);
             this->context.ask(_STRAUTHID_TARGET_DEVICE);
             this->context.ask(_STRAUTHID_SELECTOR);
@@ -3816,7 +3816,7 @@ struct selector_mod : public internal_mod {
         char buffer[256];
         buffer[0] = 0;
 //        sprintf(buffer, "%s@%s", this->context.get(STRAUTHID_AUTH_USER), this->context.get(STRAUTHID_HOST));
-        sprintf(buffer, "%s@%s", this->ini.globals.auth_user, this->context.get(STRAUTHID_HOST));
+        sprintf(buffer, "%s@%s", this->ini.globals.auth_user, this->ini.globals.host);
         this->front.server_draw_text(30, 30, buffer, GREY, BLACK, clip);
     }
 
