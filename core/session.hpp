@@ -127,7 +127,11 @@ struct Session {
 
         try {
             this->context = new ModContext();
-            this->context->cpy(STRAUTHID_HOST, ip_source);
+//            this->context->cpy(STRAUTHID_HOST, ip_source);
+            strncpy(this->ini->globals.host, ip_source, sizeof(this->ini->globals.host));
+            this->ini->globals.host[sizeof(this->ini->globals.host) - 1] = 0;
+            this->context->cpy(_STRAUTHID_HOST, "");
+
 /*
             this->context->cpy(STRAUTHID_OPT_FILE_ENCRYPTION,
                 (this->ini->globals.enable_file_encryption ? "True" : "False"));
@@ -572,7 +576,7 @@ struct Session {
                     }
                     this->mod = this->no_mod;
                 }
-                this->mod = new cli_mod(*this->context, *(this->front),
+                this->mod = new cli_mod(*this->context, *(this->ini), *(this->front),
                                         this->front->client_info,
                                         this->front->client_info.width,
                                         this->front->client_info.height);
@@ -723,6 +727,7 @@ struct Session {
                         this->context->selector_focus = 8; // FOCUS_ON_CONNECT
                         this->mod = new selector_mod(
                                         *this->context,
+                                        *this->ini,
                                         *this->front,
                                         this->front->client_info.width,
                                         this->front->client_info.height
@@ -737,6 +742,7 @@ struct Session {
                         }
                         this->mod = new SelectorMod(
                             *this->context,
+                            *this->ini,
                             *this->front,
                             this->front->client_info.width,
                             this->front->client_info.height
@@ -766,8 +772,10 @@ struct Session {
                     this->mod = this->no_mod;
                 }
 
-                int client_sck = ip_connect(this->context->get(STRAUTHID_TARGET_DEVICE),
-                                            atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                int client_sck = ip_connect(//this->context->get(STRAUTHID_TARGET_DEVICE),
+                                            this->ini->globals.target_device,
+//                                            atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                                            this->ini->globals.context.target_port,
                                             4, 1000,
                                             this->ini->globals.debug.mod_xup);
 
@@ -780,8 +788,10 @@ struct Session {
                 SocketTransport * t = new SocketTransport(
                       name
                     , client_sck
-                    , this->context->get(STRAUTHID_TARGET_DEVICE)
-                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
+//                    , this->context->get(STRAUTHID_TARGET_DEVICE)
+                    , this->ini->globals.target_device
+//                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
+                    , this->ini->globals.context.target_port
                     , this->ini->globals.debug.mod_xup);
                 this->mod_transport = t;
 
@@ -832,8 +842,10 @@ struct Session {
                 }
                 static const char * name = "RDP Target";
 
-                int client_sck = ip_connect(this->context->get(STRAUTHID_TARGET_DEVICE),
-                                            atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                int client_sck = ip_connect(//this->context->get(STRAUTHID_TARGET_DEVICE),
+                                            this->ini->globals.target_device,
+                                            // atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                                            this->ini->globals.context.target_port,
                                             3, 1000,
                                             this->ini->globals.debug.mod_rdp);
 
@@ -847,8 +859,10 @@ struct Session {
                 SocketTransport * t = new SocketTransport(
                       name
                     , client_sck
-                    , this->context->get(STRAUTHID_TARGET_DEVICE)
-                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
+//                    , this->context->get(STRAUTHID_TARGET_DEVICE)
+                    , this->ini->globals.target_device
+//                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
+                    , this->ini->globals.context.target_port
                     , this->ini->globals.debug.mod_rdp
 //                    , this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)
 /*
@@ -862,8 +876,10 @@ struct Session {
 //                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote RDP host");
                 this->ini->globals.context.auth_error_message = "failed authentification on remote RDP host";
                 this->mod = new mod_rdp(t,
-                                    this->context->get(STRAUTHID_TARGET_USER),
-                                    this->context->get(STRAUTHID_TARGET_PASSWORD),
+//                                    this->context->get(STRAUTHID_TARGET_USER),
+                                    this->ini->globals.target_user,
+//                                    this->context->get(STRAUTHID_TARGET_PASSWORD),
+                                    this->ini->globals.context.target_password,
                                     "0.0.0.0", // client ip is silenced
                                     *this->front,
                                     hostname,
@@ -910,8 +926,10 @@ struct Session {
                 static const char * name = "VNC Target";
 
 
-                int client_sck = ip_connect(this->context->get(STRAUTHID_TARGET_DEVICE),
-                                            atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                int client_sck = ip_connect(//this->context->get(STRAUTHID_TARGET_DEVICE),
+                                            this->ini->globals.target_device,
+                                            //atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                                            this->ini->globals.context.target_port,
                                             3, 1000,
                                             this->ini->globals.debug.mod_vnc);
 
@@ -924,9 +942,11 @@ struct Session {
                 SocketTransport * t = new SocketTransport(
                       name
                     , client_sck
-                    , this->context->get(STRAUTHID_TARGET_DEVICE)
-                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
-                    ,this->ini->globals.debug.mod_vnc);
+//                    , this->context->get(STRAUTHID_TARGET_DEVICE)
+                    , this->ini->globals.target_device
+//                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
+                    , this->ini->globals.context.target_port
+                    , this->ini->globals.debug.mod_vnc);
                 this->mod_transport = t;
 
 //                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote VNC host");
@@ -934,8 +954,10 @@ struct Session {
 
                 this->mod = new mod_vnc(
                       t
-                    , this->context->get(STRAUTHID_TARGET_USER)
-                    , this->context->get(STRAUTHID_TARGET_PASSWORD)
+//                    , this->context->get(STRAUTHID_TARGET_USER)
+                    , this->ini->globals.target_user
+//                    , this->context->get(STRAUTHID_TARGET_PASSWORD)
+                    , this->ini->globals.context.target_password
                     , *this->front
                     , this->front->client_info.width
                     , this->front->client_info.height

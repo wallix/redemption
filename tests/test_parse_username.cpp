@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -19,7 +19,6 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Unit test to ModContext.parse_username(string)
-
 */
 
 
@@ -51,166 +50,209 @@
 BOOST_AUTO_TEST_CASE(TestParseUsername1)
 {
     ModContext mc;
+    Inifile ini;
 
     // TEST 1 (simplest case - three separators)
     char username_1[256] = "u@d:p:a";
-    mc.parse_username(username_1);
+    mc.parse_username(username_1, ini);
 
-    BOOST_CHECK_EQUAL("u", mc.get(STRAUTHID_TARGET_USER));
-    BOOST_CHECK_EQUAL("d", mc.get(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK_EQUAL("p", mc.get(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK_EQUAL("a", mc.get(STRAUTHID_AUTH_USER));
-
+//    BOOST_CHECK_EQUAL("u", mc.get(STRAUTHID_TARGET_USER));
+    BOOST_CHECK_EQUAL("u", ini.globals.target_user);
+//    BOOST_CHECK_EQUAL("d", mc.get(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK_EQUAL("d", ini.globals.target_device);
+//    BOOST_CHECK_EQUAL("p", mc.get(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK_EQUAL("p", (const char *)ini.globals.context.target_protocol);
+//    BOOST_CHECK_EQUAL("a", mc.get(STRAUTHID_AUTH_USER));
+    BOOST_CHECK_EQUAL("a", ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
 
 BOOST_AUTO_TEST_CASE(TestParseUsername2)
 {
     ModContext mc;
+    Inifile ini;
 
     // TEST 2 (three separators with a '@' include " in User)
     char username_2[256] = "u@u1@d:p:a";
-    mc.parse_username(username_2);
+    mc.parse_username(username_2, ini);
 
-    BOOST_CHECK_EQUAL("u@u1", mc.get(STRAUTHID_TARGET_USER));
-    BOOST_CHECK_EQUAL("d",    mc.get(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK_EQUAL("p",    mc.get(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK_EQUAL("a",    mc.get(STRAUTHID_AUTH_USER));
-
+//    BOOST_CHECK_EQUAL("u@u1", mc.get(STRAUTHID_TARGET_USER));
+    BOOST_CHECK_EQUAL("u@u1", ini.globals.target_user);
+//    BOOST_CHECK_EQUAL("d",    mc.get(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK_EQUAL("d",    ini.globals.target_device);
+//    BOOST_CHECK_EQUAL("p",    mc.get(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK_EQUAL("p",    (const char *)ini.globals.context.target_protocol);
+//    BOOST_CHECK_EQUAL("a",    mc.get(STRAUTHID_AUTH_USER));
+    BOOST_CHECK_EQUAL("a",    ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
 
 BOOST_AUTO_TEST_CASE(TestParseUsername3)
 {
     ModContext mc;
+    Inifile ini;
 
     // TEST 3 (only two separators with a '@' in User)
     char username_3[256] = "u@u1@d:a";
-    mc.parse_username(username_3);
+    mc.parse_username(username_3, ini);
 
-    BOOST_CHECK_EQUAL("u@u1", mc.get(STRAUTHID_TARGET_USER));
-    BOOST_CHECK_EQUAL("d",    mc.get(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK_EQUAL("",     mc.get(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK_EQUAL("a",    mc.get(STRAUTHID_AUTH_USER));
-
+//    BOOST_CHECK_EQUAL("u@u1", mc.get(STRAUTHID_TARGET_USER));
+    BOOST_CHECK_EQUAL("u@u1", ini.globals.target_user);
+//    BOOST_CHECK_EQUAL("d",    mc.get(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK_EQUAL("d",    ini.globals.target_device);
+//    BOOST_CHECK_EQUAL("",     mc.get(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK_EQUAL("RDP",  (const char *)ini.globals.context.target_protocol);
+//    BOOST_CHECK_EQUAL("a",    mc.get(STRAUTHID_AUTH_USER));
+    BOOST_CHECK_EQUAL("a",    ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
 
 BOOST_AUTO_TEST_CASE(TestParseUsername4)
 {
     ModContext mc;
+    Inifile ini;
 
     // TEST 4 (only two separators)
     char username_4[256] = "u@d:a";
-    mc.parse_username(username_4);
+    mc.parse_username(username_4, ini);
 
-    BOOST_CHECK_EQUAL("u", mc.get(STRAUTHID_TARGET_USER));
-    BOOST_CHECK_EQUAL("d",    mc.get(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK_EQUAL("",     mc.get(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK_EQUAL("a",    mc.get(STRAUTHID_AUTH_USER));
-
+//    BOOST_CHECK_EQUAL("u", mc.get(STRAUTHID_TARGET_USER));
+    BOOST_CHECK_EQUAL("u",    ini.globals.target_user);
+//    BOOST_CHECK_EQUAL("d", mc.get(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK_EQUAL("d",    ini.globals.target_device);
+//    BOOST_CHECK_EQUAL("",  mc.get(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK_EQUAL("RDP",  (const char *)ini.globals.context.target_protocol);
+//    BOOST_CHECK_EQUAL("a",    mc.get(STRAUTHID_AUTH_USER));
+    BOOST_CHECK_EQUAL("a",    ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
 
 BOOST_AUTO_TEST_CASE(TestParseUsername5)
 {
-
     ModContext mc;
+    Inifile ini;
 
     // TEST 5 (real case)
     char username_5[256] = "administrateur@qa@devwin1:RDP_1:user12";
-    mc.parse_username(username_5);
+    mc.parse_username(username_5, ini);
 
-    BOOST_CHECK_EQUAL("administrateur@qa", mc.get(STRAUTHID_TARGET_USER));
-    BOOST_CHECK_EQUAL("devwin1",    mc.get(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK_EQUAL("RDP_1",     mc.get(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK_EQUAL("user12",    mc.get(STRAUTHID_AUTH_USER));
-
+//    BOOST_CHECK_EQUAL("administrateur@qa", mc.get(STRAUTHID_TARGET_USER));
+    BOOST_CHECK_EQUAL("administrateur@qa", ini.globals.target_user);
+//    BOOST_CHECK_EQUAL("devwin1",           mc.get(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK_EQUAL("devwin1",           ini.globals.target_device);
+//    BOOST_CHECK_EQUAL("RDP_1",             mc.get(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK_EQUAL("RDP_1",             (const char *)ini.globals.context.target_protocol);
+//    BOOST_CHECK_EQUAL("user12",            mc.get(STRAUTHID_AUTH_USER));
+    BOOST_CHECK_EQUAL("user12",            ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
 
 BOOST_AUTO_TEST_CASE(TestParseUsername6)
 {
     ModContext mc;
+    Inifile ini;
 
     // TEST 6 (3 separators with an @ in wabuser)
     char username_6[256] = "administrateur@qa@devwin1:RDP_1:administrateur@qa";
-    mc.parse_username(username_6);
+    mc.parse_username(username_6, ini);
 
-    BOOST_CHECK_EQUAL("administrateur@qa", mc.get(STRAUTHID_TARGET_USER));
-    BOOST_CHECK_EQUAL("devwin1",    mc.get(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK_EQUAL("RDP_1",     mc.get(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK_EQUAL("administrateur@qa",    mc.get(STRAUTHID_AUTH_USER));
-
+//    BOOST_CHECK_EQUAL("administrateur@qa", mc.get(STRAUTHID_TARGET_USER));
+    BOOST_CHECK_EQUAL("administrateur@qa", ini.globals.target_user);
+//    BOOST_CHECK_EQUAL("devwin1",           mc.get(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK_EQUAL("devwin1",           ini.globals.target_device);
+//    BOOST_CHECK_EQUAL("RDP_1",             mc.get(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK_EQUAL("RDP_1",             (const char *)ini.globals.context.target_protocol);
+//    BOOST_CHECK_EQUAL("administrateur@qa", mc.get(STRAUTHID_AUTH_USER));
+    BOOST_CHECK_EQUAL("administrateur@qa", ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
 
 BOOST_AUTO_TEST_CASE(TestParseUsername7)
 {
     ModContext mc;
+    Inifile ini;
 
     // TEST 7 (no : separator)
     char username[] = "admin";
-    mc.parse_username(username);
+    mc.parse_username(username, ini);
 
-    BOOST_CHECK_EQUAL("", mc.get(STRAUTHID_TARGET_USER));
-    BOOST_CHECK_EQUAL("", mc.get(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK_EQUAL("", mc.get(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK_EQUAL("admin",    mc.get(STRAUTHID_AUTH_USER));
-
+//    BOOST_CHECK_EQUAL("",      mc.get(STRAUTHID_TARGET_USER));
+    BOOST_CHECK_EQUAL("",      ini.globals.target_user);
+//    BOOST_CHECK_EQUAL("",      mc.get(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK_EQUAL("",      ini.globals.target_device);
+//    BOOST_CHECK_EQUAL("",      mc.get(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK_EQUAL("RDP",   (const char *)ini.globals.context.target_protocol);
+//    BOOST_CHECK_EQUAL("admin", mc.get(STRAUTHID_AUTH_USER));
+    BOOST_CHECK_EQUAL("admin", ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
 
 
 BOOST_AUTO_TEST_CASE(TestParseUsername8)
 {
     ModContext mc;
+    Inifile ini;
 
     // TEST 8 (no : separator, one arobas)
     char username[] = "admin@qa";
-    mc.parse_username(username);
+    mc.parse_username(username, ini);
 
-    BOOST_CHECK_EQUAL("", mc.get(STRAUTHID_TARGET_USER));
-    BOOST_CHECK_EQUAL("", mc.get(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK_EQUAL("", mc.get(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK_EQUAL("admin@qa",    mc.get(STRAUTHID_AUTH_USER));
-
+//    BOOST_CHECK_EQUAL("",         mc.get(STRAUTHID_TARGET_USER));
+    BOOST_CHECK_EQUAL("",         ini.globals.target_user);
+//    BOOST_CHECK_EQUAL("",         mc.get(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK_EQUAL("",         ini.globals.target_device);
+//    BOOST_CHECK_EQUAL("",         mc.get(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK_EQUAL("RDP",      (const char *)ini.globals.context.target_protocol);
+//    BOOST_CHECK_EQUAL("admin@qa", mc.get(STRAUTHID_AUTH_USER));
+    BOOST_CHECK_EQUAL("admin@qa", ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
 
 BOOST_AUTO_TEST_CASE(TestParseUsername9)
 {
     ModContext mc;
+    Inifile ini;
 
     // TEST 9 (no : separator, two arobas)
     char username[] = "admin@qa@win";
-    mc.parse_username(username);
+    mc.parse_username(username, ini);
 
-    BOOST_CHECK_EQUAL("", mc.get(STRAUTHID_TARGET_USER));
-    BOOST_CHECK_EQUAL("", mc.get(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK_EQUAL("", mc.get(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK_EQUAL("admin@qa@win",    mc.get(STRAUTHID_AUTH_USER));
-
+//    BOOST_CHECK_EQUAL("",             mc.get(STRAUTHID_TARGET_USER));
+    BOOST_CHECK_EQUAL("",             ini.globals.target_user);
+//    BOOST_CHECK_EQUAL("",             mc.get(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK_EQUAL("",             ini.globals.target_device);
+//    BOOST_CHECK_EQUAL("",             mc.get(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK_EQUAL("RDP",          (const char *)ini.globals.context.target_protocol);
+//    BOOST_CHECK_EQUAL("admin@qa@win", mc.get(STRAUTHID_AUTH_USER));
+    BOOST_CHECK_EQUAL("admin@qa@win", ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
 
 BOOST_AUTO_TEST_CASE(TestParseUsername10)
 {
     ModContext mc;
+    Inifile ini;
 
     // TEST 10, one ':' separator, no arobas => implicit target login
     char username[] = "win:admin";
-    mc.parse_username(username);
+    mc.parse_username(username, ini);
 
-    BOOST_CHECK_EQUAL("admin", mc.get(STRAUTHID_TARGET_USER));
-    BOOST_CHECK_EQUAL("win", mc.get(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK_EQUAL("", mc.get(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK_EQUAL("admin",    mc.get(STRAUTHID_AUTH_USER));
-
+//    BOOST_CHECK_EQUAL("admin", mc.get(STRAUTHID_TARGET_USER));
+    BOOST_CHECK_EQUAL("admin", ini.globals.target_user);
+//    BOOST_CHECK_EQUAL("win",   mc.get(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK_EQUAL("win",   ini.globals.target_device);
+//    BOOST_CHECK_EQUAL("",      mc.get(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK_EQUAL("RDP",   (const char *)ini.globals.context.target_protocol);
+//    BOOST_CHECK_EQUAL("admin", mc.get(STRAUTHID_AUTH_USER));
+    BOOST_CHECK_EQUAL("admin", ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
 
 BOOST_AUTO_TEST_CASE(TestParseUsername11)
 {
     ModContext mc;
+    Inifile ini;
 
     // TEST 10, one ':' separator, no arobas => implicit target login
     char username[] = "win:admin@qa";
-    mc.parse_username(username);
+    mc.parse_username(username, ini);
 
-    BOOST_CHECK_EQUAL("admin@qa", mc.get(STRAUTHID_TARGET_USER));
-    BOOST_CHECK_EQUAL("win",      mc.get(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK_EQUAL("",         mc.get(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK_EQUAL("admin@qa", mc.get(STRAUTHID_AUTH_USER));
-
+//    BOOST_CHECK_EQUAL("admin@qa", mc.get(STRAUTHID_TARGET_USER));
+    BOOST_CHECK_EQUAL("admin@qa", ini.globals.target_user);
+//    BOOST_CHECK_EQUAL("win",      mc.get(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK_EQUAL("win",      ini.globals.target_device);
+//    BOOST_CHECK_EQUAL("",         mc.get(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK_EQUAL("RDP",      (const char *)ini.globals.context.target_protocol);
+//    BOOST_CHECK_EQUAL("admin@qa", mc.get(STRAUTHID_AUTH_USER));
+    BOOST_CHECK_EQUAL("admin@qa", ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)

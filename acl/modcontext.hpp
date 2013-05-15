@@ -31,23 +31,10 @@ using namespace std;
 
 typedef enum{
     AUTHID_UNKNOWN = 0,
-    AUTHID_TARGET_USER,     // target_login
-    AUTHID_TARGET_PASSWORD, // target_password
-    AUTHID_HOST,            // ip_client
-    AUTHID_PASSWORD,        // password
-    AUTHID_AUTH_USER,       // login
-    AUTHID_TARGET_DEVICE,   // target_device
-    AUTHID_TARGET_PORT,     // target_port
-    AUTHID_TARGET_PROTOCOL, // proto_dest
     AUTHID_AUTHCHANNEL_TARGET, // WabLauncher target request
     AUTHID_AUTHCHANNEL_RESULT, // WabLauncher session result
     AUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
     AUTHID_END_TIME,        // end time as text
-    AUTHID_SELECTOR_GROUP_FILTER, // group filter text
-    AUTHID_SELECTOR_DEVICE_FILTER, // device filter text
-    AUTHID_SELECTOR_LINES_PER_PAGE, // number of lines per page
-    AUTHID_SELECTOR_NUMBER_OF_PAGES, // number of pages
-    AUTHID_SELECTOR_CURRENT_PAGE, // current page
     AUTHID_REJECTED,        // rejected
     AUTHID_SESSION_ID,      // session_id
     AUTHID_END_DATE_CNX,    // timeclose
@@ -56,7 +43,6 @@ typedef enum{
     AUTHID_ACCEPT_MESSAGE,  // display a dialog to valid a message
     AUTHID_PROXY_TYPE,
     AUTHID_AUTHENTICATED,
-    AUTHID_SELECTOR,
     AUTHID_KEEPALIVE,
 
     AUTHID_MODE_CONSOLE,
@@ -97,30 +83,31 @@ typedef enum{
     AUTHID_OPT_HEIGHT,          // client height
     AUTHID_OPT_BPP,             // bits per planes (number of colors)
     AUTHID_AUTH_ERROR_MESSAGE,
+    AUTHID_SELECTOR,
+    AUTHID_SELECTOR_CURRENT_PAGE,       // current page
+    AUTHID_SELECTOR_DEVICE_FILTER,      // device filter text
+    AUTHID_SELECTOR_GROUP_FILTER,       // group filter text
+    AUTHID_SELECTOR_LINES_PER_PAGE,     // number of lines per page
+    AUTHID_SELECTOR_NUMBER_OF_PAGES,    // number of pages
+    AUTHID_TARGET_USER,     // target_login
+    AUTHID_TARGET_PASSWORD, // target_password
+    AUTHID_TARGET_DEVICE,   // target_device
+    AUTHID_TARGET_PORT,     // target_port
+    AUTHID_TARGET_PROTOCOL, // proto_dest
+    AUTHID_AUTH_USER,       // login
+    AUTHID_HOST,            // ip_client
+    AUTHID_PASSWORD,        // password
 */
 
     MAX_AUTHID
 } authid_t;
 
 
-#define STRAUTHID_TARGET_USER              "target_login"
-#define STRAUTHID_TARGET_PASSWORD          "target_password"
-#define STRAUTHID_HOST                     "ip_client"
-#define STRAUTHID_PASSWORD                 "password"
-#define STRAUTHID_AUTH_USER                "login"
-#define STRAUTHID_TARGET_DEVICE            "target_device"
-#define STRAUTHID_TARGET_PORT              "target_port"
-#define STRAUTHID_TARGET_PROTOCOL          "proto_dest"
 #define STRAUTHID_AUTHCHANNEL_TARGET       "auth_channel_target"
 #define STRAUTHID_AUTHCHANNEL_RESULT       "auth_channel_result"
 TODO("This is not a translation but auth_channel answer, change key name in sesman")
 #define STRAUTHID_AUTHCHANNEL_ANSWER       "trans_auth_channel"
 #define STRAUTHID_END_TIME                 "end_time"
-#define STRAUTHID_SELECTOR_GROUP_FILTER    "selector_group_filter"
-#define STRAUTHID_SELECTOR_DEVICE_FILTER   "selector_device_filter"
-#define STRAUTHID_SELECTOR_LINES_PER_PAGE  "selector_lines_per_page"
-#define STRAUTHID_SELECTOR_NUMBER_OF_PAGES "selector_number_of_pages"
-#define STRAUTHID_SELECTOR_CURRENT_PAGE    "selector_current_page"
 #define STRAUTHID_REJECTED                 "rejected"
 #define STRAUTHID_SESSION_ID               "session_id"
 #define STRAUTHID_END_DATE_CNX             "timeclose"
@@ -129,7 +116,6 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 #define STRAUTHID_ACCEPT_MESSAGE           "accept_message"
 #define STRAUTHID_PROXY_TYPE               "proxy_type"
 #define STRAUTHID_AUTHENTICATED            "authenticated"
-#define STRAUTHID_SELECTOR                 "selector"
 #define STRAUTHID_KEEPALIVE                "keepalive"
 #define STRAUTHID_MODE_CONSOLE             "mode_console"
 #define STRAUTHID_TIMEZONE                 "timezone"
@@ -167,6 +153,20 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 #define _STRAUTHID_OPT_HEIGHT               "height"
 #define _STRAUTHID_OPT_BPP                  "bpp"
 #define _STRAUTHID_AUTH_ERROR_MESSAGE       "error_message"
+#define _STRAUTHID_SELECTOR                 "selector"
+#define _STRAUTHID_SELECTOR_CURRENT_PAGE    "selector_current_page"
+#define _STRAUTHID_SELECTOR_DEVICE_FILTER   "selector_device_filter"
+#define _STRAUTHID_SELECTOR_GROUP_FILTER    "selector_group_filter"
+#define _STRAUTHID_SELECTOR_LINES_PER_PAGE  "selector_lines_per_page"
+#define _STRAUTHID_SELECTOR_NUMBER_OF_PAGES "selector_number_of_pages"
+#define _STRAUTHID_TARGET_USER              "target_login"
+#define _STRAUTHID_TARGET_PASSWORD          "target_password"
+#define _STRAUTHID_TARGET_DEVICE            "target_device"
+#define _STRAUTHID_TARGET_PORT              "target_port"
+#define _STRAUTHID_TARGET_PROTOCOL          "proto_dest"
+#define _STRAUTHID_AUTH_USER                "login"
+#define _STRAUTHID_HOST                     "ip_client"
+#define _STRAUTHID_PASSWORD                 "password"
 
 
 #define GLOBAL_SECTION_UNKNOWN      NULL
@@ -192,30 +192,16 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 
 TODO("This should be initialized in constructor")
 static ProtocolKeyword KeywordsDefinitions[] = {
-    {STRAUTHID_TARGET_USER,              TYPE_TEXT,    "!"                                    },
-    {STRAUTHID_TARGET_PASSWORD,          TYPE_TEXT,    "!"                                    },
-    {STRAUTHID_HOST,                     TYPE_TEXT,    "!"                                    },
-    {STRAUTHID_PASSWORD,                 TYPE_TEXT,    "!"                                    },
-    {STRAUTHID_AUTH_USER,                TYPE_TEXT,    "!"                                    },
-    {STRAUTHID_TARGET_DEVICE,            TYPE_TEXT,    "!"                                    },
-    {STRAUTHID_TARGET_PORT,              TYPE_INTEGER, "!3389"                                }, //
-    {STRAUTHID_TARGET_PROTOCOL,          TYPE_TEXT,    "!RDP"                                 },
     {STRAUTHID_AUTHCHANNEL_TARGET,       TYPE_TEXT,    "!"                                    },
     {STRAUTHID_AUTHCHANNEL_RESULT,       TYPE_TEXT,    "!"                                    },
     {STRAUTHID_AUTHCHANNEL_ANSWER,       TYPE_TEXT,    "!"                                    }, //
 
     {STRAUTHID_END_TIME,                 TYPE_TEXT,    "!-"                                   }, //
-    {STRAUTHID_SELECTOR_GROUP_FILTER,    TYPE_TEXT,    "!"                                    },
-    {STRAUTHID_SELECTOR_DEVICE_FILTER,   TYPE_TEXT,    "!"                                    },
-    {STRAUTHID_SELECTOR_LINES_PER_PAGE,  TYPE_TEXT,    "!20"                                  },
-    {STRAUTHID_SELECTOR_NUMBER_OF_PAGES, TYPE_TEXT,    "!"                                    }, //
-    {STRAUTHID_SELECTOR_CURRENT_PAGE,    TYPE_TEXT,    "!1"                                   },
     {STRAUTHID_MESSAGE,                  TYPE_TEXT,    "!"                                    }, //
     {STRAUTHID_DISPLAY_MESSAGE,          TYPE_TEXT,    "!"                                    },
     {STRAUTHID_ACCEPT_MESSAGE,           TYPE_TEXT,    "!"                                    },
     {STRAUTHID_PROXY_TYPE,               TYPE_TEXT,    "!RDP"                                 },
     {STRAUTHID_AUTHENTICATED,            TYPE_BOOLEAN, "!False"                               }, //
-    {STRAUTHID_SELECTOR,                 TYPE_BOOLEAN, "!False"                               },
     {STRAUTHID_KEEPALIVE,                TYPE_BOOLEAN, "ASK"                                  },
     {STRAUTHID_END_DATE_CNX,             TYPE_INTEGER, "!0"                                   }, //
     {STRAUTHID_REJECTED,                 TYPE_TEXT,    "!Connection refused by authentifier." }, //
@@ -259,33 +245,40 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     {STRAUTHID_OPT_FRAMERATE,            TYPE_INTEGER, "!5"                                   },
     {STRAUTHID_OPT_QSCALE,               TYPE_INTEGER, "!15"                                  },
 */
-    {_STRAUTHID_OPT_WIDTH,               TYPE_INTEGER, "!800"                                 },
-    {_STRAUTHID_OPT_HEIGHT,              TYPE_INTEGER, "!600"                                 },
-    {_STRAUTHID_OPT_BPP,                 TYPE_INTEGER, "!24"                                  },
-    {_STRAUTHID_AUTH_ERROR_MESSAGE,      TYPE_TEXT,    "!"                                    },
+    {_STRAUTHID_OPT_WIDTH,                TYPE_INTEGER, "!800"                                 },
+    {_STRAUTHID_OPT_HEIGHT,               TYPE_INTEGER, "!600"                                 },
+    {_STRAUTHID_OPT_BPP,                  TYPE_INTEGER, "!24"                                  },
+/*
+    {_STRAUTHID_AUTH_ERROR_MESSAGE,       TYPE_TEXT,    "!"                                    },
+*/
+    {_STRAUTHID_SELECTOR,                 TYPE_BOOLEAN, "!False"                               },
+    {_STRAUTHID_SELECTOR_CURRENT_PAGE,    TYPE_TEXT,    "!1"                                   },
+    {_STRAUTHID_SELECTOR_DEVICE_FILTER,   TYPE_TEXT,    "!"                                    },
+    {_STRAUTHID_SELECTOR_GROUP_FILTER,    TYPE_TEXT,    "!"                                    },
+    {_STRAUTHID_SELECTOR_LINES_PER_PAGE,  TYPE_TEXT,    "!20"                                  },
+/*
+    {STRAUTHID_SELECTOR_NUMBER_OF_PAGES, TYPE_TEXT,    "!"                                    }, //
+*/
+    {_STRAUTHID_TARGET_DEVICE,            TYPE_TEXT,    "!"                                    },
+    {_STRAUTHID_TARGET_PASSWORD,          TYPE_TEXT,    "!"                                    },
+/*
+    {STRAUTHID_TARGET_PORT,              TYPE_INTEGER, "!3389"                                }, //
+*/
+    {_STRAUTHID_TARGET_PROTOCOL,          TYPE_TEXT,    "!RDP"                                 },
+    {_STRAUTHID_TARGET_USER,              TYPE_TEXT,    "!"                                    },
+    {_STRAUTHID_AUTH_USER,                TYPE_TEXT,    "!"                                    },
+    {_STRAUTHID_HOST,                     TYPE_TEXT,    "!"                                    },
+    {_STRAUTHID_PASSWORD,                 TYPE_TEXT,    "!"                                    },
 };
 
 
 static inline authid_t authid_from_string(const char * kw)
 {
     static const string authstr[MAX_AUTHID-1] = {
-    STRAUTHID_TARGET_USER,
-    STRAUTHID_TARGET_PASSWORD,
-    STRAUTHID_HOST,
-    STRAUTHID_PASSWORD,
-    STRAUTHID_AUTH_USER,
-    STRAUTHID_TARGET_DEVICE,
-    STRAUTHID_TARGET_PORT,
-    STRAUTHID_TARGET_PROTOCOL,
     STRAUTHID_AUTHCHANNEL_TARGET,
     STRAUTHID_AUTHCHANNEL_RESULT,
     STRAUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
     STRAUTHID_END_TIME,
-    STRAUTHID_SELECTOR_GROUP_FILTER,
-    STRAUTHID_SELECTOR_DEVICE_FILTER,
-    STRAUTHID_SELECTOR_LINES_PER_PAGE,
-    STRAUTHID_SELECTOR_NUMBER_OF_PAGES,
-    STRAUTHID_SELECTOR_CURRENT_PAGE,
     STRAUTHID_REJECTED,
     STRAUTHID_END_DATE_CNX,
     STRAUTHID_MESSAGE,
@@ -293,7 +286,6 @@ static inline authid_t authid_from_string(const char * kw)
     STRAUTHID_ACCEPT_MESSAGE,
     STRAUTHID_PROXY_TYPE,
     STRAUTHID_AUTHENTICATED,
-    STRAUTHID_SELECTOR,
     STRAUTHID_KEEPALIVE,
 
     STRAUTHID_MODE_CONSOLE,
@@ -333,6 +325,20 @@ static inline authid_t authid_from_string(const char * kw)
     STRAUTHID_OPT_HEIGHT,
     STRAUTHID_OPT_BPP,
     STRAUTHID_AUTH_ERROR_MESSAGE,
+    STRAUTHID_SELECTOR,
+    STRAUTHID_SELECTOR_CURRENT_PAGE,
+    STRAUTHID_SELECTOR_DEVICE_FILTER,
+    STRAUTHID_SELECTOR_GROUP_FILTER,
+    STRAUTHID_SELECTOR_LINES_PER_PAGE,
+    STRAUTHID_SELECTOR_NUMBER_OF_PAGES,
+    STRAUTHID_TARGET_USER,
+    STRAUTHID_TARGET_PASSWORD,
+    STRAUTHID_TARGET_DEVICE,
+    STRAUTHID_TARGET_PORT,
+    STRAUTHID_TARGET_PROTOCOL,
+    STRAUTHID_AUTH_USER,
+    STRAUTHID_HOST,
+    STRAUTHID_PASSWORD,
 */
     };
 
@@ -362,7 +368,7 @@ struct ModContext : public Dico {
 //        LOG(LOG_INFO, "mod context deleted");
     }
 
-    void parse_username(const char * username)
+    void parse_username(const char * username, Inifile & ini)
     {
 //        LOG(LOG_INFO, "parse_username(%s)", username);
         TODO("These should be results of the parsing function, not storing it away immediately in context. Mixing context management and parsing is not right")
@@ -375,7 +381,7 @@ struct ModContext : public Dico {
         target_protocol[0] = 0;
         auth_user[0] = 0;
 
-        this->ask(STRAUTHID_SELECTOR);
+        this->ask(_STRAUTHID_SELECTOR);
         LOG(LOG_INFO, "asking for selector");
 
         if (username[0]){
@@ -470,28 +476,43 @@ struct ModContext : public Dico {
 
         if (*target_user == 0)
         {
-            this->ask(STRAUTHID_TARGET_USER);
+            this->ask(_STRAUTHID_TARGET_USER);
         }
         else {
-            this->cpy(STRAUTHID_TARGET_USER, target_user);
+//            this->cpy(STRAUTHID_TARGET_USER, target_user);
+            strncpy(ini.globals.target_user, target_user, sizeof(ini.globals.target_user));
+            ini.globals.target_user[sizeof(ini.globals.target_user) - 1] = 0;
+
+            this->cpy(_STRAUTHID_TARGET_USER, "");
         }
         if (*target_device == 0) {
-            this->ask(STRAUTHID_TARGET_DEVICE);
+            this->ask(_STRAUTHID_TARGET_DEVICE);
         }
         else {
-            this->cpy(STRAUTHID_TARGET_DEVICE, target_device);
+//            this->cpy(STRAUTHID_TARGET_DEVICE, target_device);
+            strncpy(ini.globals.target_device, target_device, sizeof(ini.globals.target_device));
+            ini.globals.target_device[sizeof(ini.globals.target_device) - 1] = 0;
+
+            this->cpy(_STRAUTHID_TARGET_DEVICE, "");
         }
         if (*target_protocol == 0) {
-            this->ask(STRAUTHID_TARGET_PROTOCOL);
+            this->ask(_STRAUTHID_TARGET_PROTOCOL);
         }
         else {
-            this->cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
+//            this->cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
+            ini.globals.context.target_protocol = target_protocol;
+
+            this->cpy(_STRAUTHID_TARGET_PROTOCOL, "");
         }
         if (*auth_user == 0) {
-            this->ask(STRAUTHID_AUTH_USER);
+            this->ask(_STRAUTHID_AUTH_USER);
         }
         else {
-            this->cpy(STRAUTHID_AUTH_USER, auth_user);
+//            this->cpy(STRAUTHID_AUTH_USER, auth_user);
+            strncpy(ini.globals.auth_user, auth_user, sizeof(ini.globals.auth_user));
+            ini.globals.auth_user[sizeof(ini.globals.auth_user) - 1] = 0;
+
+            this->cpy(_STRAUTHID_AUTH_USER, "");
         }
     }
 };
