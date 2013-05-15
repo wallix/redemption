@@ -18,6 +18,9 @@
    Author(s): Christophe Grosjean, Raphael Zhou
 */
 
+#ifndef _REDEMPTION_STRING_HPP_
+#define _REDEMPTION_STRING_HPP_
+
 #include "error.hpp"
 #include "log.hpp"
 
@@ -58,24 +61,35 @@ public:
     }
 
     string & operator =(const char * source) {
-        size_t source_length = ::strlen(source);
+        if (source) {
+            size_t source_length = ::strlen(source);
 
-        realloc_memory(source_length + 1, false);
+            realloc_memory(source_length + 1, false);
 
-        ::strcpy(this->buffer_pointer, source);
+            ::strcpy(this->buffer_pointer, source);
+        }
+        else {
+            this->buffer_pointer[0] = 0;
+        }
 
         return (*this);
     }
 
     string & operator +=(const char * source) {
-        size_t source_length  = ::strlen(source);
-        size_t content_length = ::strlen(this->buffer_pointer);
+        if (source) {
+            size_t source_length  = ::strlen(source);
+            size_t content_length = ::strlen(this->buffer_pointer);
 
-        realloc_memory(content_length + source_length + 1, true);
+            realloc_memory(content_length + source_length + 1, true);
 
-        ::strcpy(this->buffer_pointer + content_length, source);
+            ::strcpy(this->buffer_pointer + content_length, source);
+        }
 
         return (*this);
+    }
+
+    bool is_empty() const {
+        return (this->buffer_pointer[0] == 0);
     }
 
     size_t length() const {
@@ -116,3 +130,5 @@ protected:
 };  // class string
 
 }   // namespace redemption
+
+#endif

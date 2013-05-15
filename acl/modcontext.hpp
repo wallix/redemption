@@ -52,15 +52,8 @@ typedef enum{
     AUTHID_SESSION_ID,      // session_id
     AUTHID_END_DATE_CNX,    // timeclose
     AUTHID_MESSAGE, // warning_message
-    AUTHID_OPT_BITRATE,     // Bit rate for video encoding
-    AUTHID_OPT_FRAMERATE,   // Frame rate for video encoding
-    AUTHID_OPT_QSCALE,      // QScale parameter for vdeo encoding
-    AUTHID_OPT_WIDTH,       // client width
-    AUTHID_OPT_HEIGHT,      // client height
-    AUTHID_OPT_BPP,         // bits per planes (number of colors)
     AUTHID_DISPLAY_MESSAGE, // display a dialog box with a message
     AUTHID_ACCEPT_MESSAGE,  // display a dialog to valid a message
-    AUTHID_AUTH_ERROR_MESSAGE,
     AUTHID_PROXY_TYPE,
     AUTHID_AUTHENTICATED,
     AUTHID_SELECTOR,
@@ -70,8 +63,6 @@ typedef enum{
     AUTHID_TIMEZONE,
     // Encryption
     AUTHID_TRACE_SEAL,          // after closing trace file trace is sealed using a signature hash
-    MAX_AUTHID
-
 /*
     // Translation text
     AUTHID_TRANS_BUTTON_OK,
@@ -98,7 +89,17 @@ typedef enum{
     // Alternate shell
     AUTHID_ALTERNATE_SHELL,
     AUTHID_SHELL_WORKING_DIRECTORY,
+    // Context
+    AUTHID_OPT_BITRATE,         // Bit rate for video encoding
+    AUTHID_OPT_FRAMERATE,       // Frame rate for video encoding
+    AUTHID_OPT_QSCALE,          // QScale parameter for vdeo encoding
+    AUTHID_OPT_WIDTH,           // client width
+    AUTHID_OPT_HEIGHT,          // client height
+    AUTHID_OPT_BPP,             // bits per planes (number of colors)
+    AUTHID_AUTH_ERROR_MESSAGE,
 */
+
+    MAX_AUTHID
 } authid_t;
 
 
@@ -124,15 +125,8 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 #define STRAUTHID_SESSION_ID               "session_id"
 #define STRAUTHID_END_DATE_CNX             "timeclose"
 #define STRAUTHID_MESSAGE                  "message"
-#define STRAUTHID_OPT_BITRATE              "bitrate"
-#define STRAUTHID_OPT_FRAMERATE            "framerate"
-#define STRAUTHID_OPT_QSCALE               "qscale"
-#define STRAUTHID_OPT_WIDTH                "width"
-#define STRAUTHID_OPT_HEIGHT               "height"
-#define STRAUTHID_OPT_BPP                  "bpp"
 #define STRAUTHID_DISPLAY_MESSAGE          "display_message"
 #define STRAUTHID_ACCEPT_MESSAGE           "accept_message"
-#define STRAUTHID_AUTH_ERROR_MESSAGE       "error_message"
 #define STRAUTHID_PROXY_TYPE               "proxy_type"
 #define STRAUTHID_AUTHENTICATED            "authenticated"
 #define STRAUTHID_SELECTOR                 "selector"
@@ -165,10 +159,19 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 // Alternate shell
 #define _STRAUTHID_ALTERNATE_SHELL          "alternate_shell"
 #define _STRAUTHID_SHELL_WORKING_DIRECTORY  "shell_working_directory"
+// Context
+#define _STRAUTHID_OPT_BITRATE              "bitrate"
+#define _STRAUTHID_OPT_FRAMERATE            "framerate"
+#define _STRAUTHID_OPT_QSCALE               "qscale"
+#define _STRAUTHID_OPT_WIDTH                "width"
+#define _STRAUTHID_OPT_HEIGHT               "height"
+#define _STRAUTHID_OPT_BPP                  "bpp"
+#define _STRAUTHID_AUTH_ERROR_MESSAGE       "error_message"
 
 
 #define GLOBAL_SECTION_UNKNOWN      NULL
 #define GLOBAL_SECTION_CLIENT       "client"
+#define GLOBAL_SECTION_CONTEXT      "context"
 #define GLOBAL_SECTION_GLOBALS      "globals"
 #define GLOBAL_SECTION_TRANSLATION  "translation"
 
@@ -189,46 +192,39 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 
 TODO("This should be initialized in constructor")
 static ProtocolKeyword KeywordsDefinitions[] = {
-    {STRAUTHID_AUTH_ERROR_MESSAGE,       TYPE_TEXT,    "!"                                    },
     {STRAUTHID_TARGET_USER,              TYPE_TEXT,    "!"                                    },
     {STRAUTHID_TARGET_PASSWORD,          TYPE_TEXT,    "!"                                    },
     {STRAUTHID_HOST,                     TYPE_TEXT,    "!"                                    },
     {STRAUTHID_PASSWORD,                 TYPE_TEXT,    "!"                                    },
     {STRAUTHID_AUTH_USER,                TYPE_TEXT,    "!"                                    },
     {STRAUTHID_TARGET_DEVICE,            TYPE_TEXT,    "!"                                    },
-    {STRAUTHID_TARGET_PORT,              TYPE_INTEGER, "!3389"                                },
+    {STRAUTHID_TARGET_PORT,              TYPE_INTEGER, "!3389"                                }, //
     {STRAUTHID_TARGET_PROTOCOL,          TYPE_TEXT,    "!RDP"                                 },
     {STRAUTHID_AUTHCHANNEL_TARGET,       TYPE_TEXT,    "!"                                    },
     {STRAUTHID_AUTHCHANNEL_RESULT,       TYPE_TEXT,    "!"                                    },
-    {STRAUTHID_AUTHCHANNEL_ANSWER,       TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_AUTHCHANNEL_ANSWER,       TYPE_TEXT,    "!"                                    }, //
 
-    {STRAUTHID_END_TIME,                 TYPE_TEXT,    "!-"                                   },
+    {STRAUTHID_END_TIME,                 TYPE_TEXT,    "!-"                                   }, //
     {STRAUTHID_SELECTOR_GROUP_FILTER,    TYPE_TEXT,    "!"                                    },
     {STRAUTHID_SELECTOR_DEVICE_FILTER,   TYPE_TEXT,    "!"                                    },
     {STRAUTHID_SELECTOR_LINES_PER_PAGE,  TYPE_TEXT,    "!20"                                  },
-    {STRAUTHID_SELECTOR_NUMBER_OF_PAGES, TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_SELECTOR_NUMBER_OF_PAGES, TYPE_TEXT,    "!"                                    }, //
     {STRAUTHID_SELECTOR_CURRENT_PAGE,    TYPE_TEXT,    "!1"                                   },
-    {STRAUTHID_MESSAGE,                  TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_MESSAGE,                  TYPE_TEXT,    "!"                                    }, //
     {STRAUTHID_DISPLAY_MESSAGE,          TYPE_TEXT,    "!"                                    },
     {STRAUTHID_ACCEPT_MESSAGE,           TYPE_TEXT,    "!"                                    },
-    {STRAUTHID_OPT_WIDTH,                TYPE_INTEGER, "!800"                                 },
-    {STRAUTHID_OPT_HEIGHT,               TYPE_INTEGER, "!600"                                 },
-    {STRAUTHID_OPT_BPP,                  TYPE_INTEGER, "!24"                                  },
     {STRAUTHID_PROXY_TYPE,               TYPE_TEXT,    "!RDP"                                 },
-    {STRAUTHID_AUTHENTICATED,            TYPE_BOOLEAN, "!False"                               },
+    {STRAUTHID_AUTHENTICATED,            TYPE_BOOLEAN, "!False"                               }, //
     {STRAUTHID_SELECTOR,                 TYPE_BOOLEAN, "!False"                               },
     {STRAUTHID_KEEPALIVE,                TYPE_BOOLEAN, "ASK"                                  },
-    {STRAUTHID_END_DATE_CNX,             TYPE_INTEGER, "!0"                                   },
-    {STRAUTHID_OPT_BITRATE,              TYPE_INTEGER, "!40000"                               },
-    {STRAUTHID_OPT_FRAMERATE,            TYPE_INTEGER, "!5"                                   },
-    {STRAUTHID_OPT_QSCALE,               TYPE_INTEGER, "!15"                                  },
-    {STRAUTHID_REJECTED,                 TYPE_TEXT,    "!Connection refused by authentifier." },
-    {STRAUTHID_SESSION_ID,               TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_END_DATE_CNX,             TYPE_INTEGER, "!0"                                   }, //
+    {STRAUTHID_REJECTED,                 TYPE_TEXT,    "!Connection refused by authentifier." }, //
+    {STRAUTHID_SESSION_ID,               TYPE_TEXT,    "!"                                    }, //
     // password or AuthenticationInteractive
-    {"authentication_challenge",         TYPE_TEXT,    "!password"                            },
+    {"authentication_challenge",         TYPE_TEXT,    "!password"                            }, //
 
-    {STRAUTHID_MODE_CONSOLE,             TYPE_TEXT,    "!allow"                               },
-    {STRAUTHID_TIMEZONE,                 TYPE_INTEGER, "!-3600"                               },
+    {STRAUTHID_MODE_CONSOLE,             TYPE_TEXT,    "!allow"                               }, //
+    {STRAUTHID_TIMEZONE,                 TYPE_INTEGER, "!-3600"                               }, //
     // Encryption
     {STRAUTHID_TRACE_SEAL,               TYPE_TEXT,    "!"                                    },
 
@@ -258,7 +254,15 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     // Alternate shell
     {STRAUTHID_ALTERNATE_SHELL,          TYPE_TEXT,    "!"                                    },
     {STRAUTHID_SHELL_WORKING_DIRECTORY,  TYPE_TEXT,    "!"                                    },
+    // Context
+    {STRAUTHID_OPT_BITRATE,              TYPE_INTEGER, "!40000"                               },
+    {STRAUTHID_OPT_FRAMERATE,            TYPE_INTEGER, "!5"                                   },
+    {STRAUTHID_OPT_QSCALE,               TYPE_INTEGER, "!15"                                  },
 */
+    {_STRAUTHID_OPT_WIDTH,               TYPE_INTEGER, "!800"                                 },
+    {_STRAUTHID_OPT_HEIGHT,              TYPE_INTEGER, "!600"                                 },
+    {_STRAUTHID_OPT_BPP,                 TYPE_INTEGER, "!24"                                  },
+    {_STRAUTHID_AUTH_ERROR_MESSAGE,      TYPE_TEXT,    "!"                                    },
 };
 
 
@@ -285,15 +289,8 @@ static inline authid_t authid_from_string(const char * kw)
     STRAUTHID_REJECTED,
     STRAUTHID_END_DATE_CNX,
     STRAUTHID_MESSAGE,
-    STRAUTHID_OPT_BITRATE,
-    STRAUTHID_OPT_FRAMERATE,
-    STRAUTHID_OPT_QSCALE,
-    STRAUTHID_OPT_WIDTH,
-    STRAUTHID_OPT_HEIGHT,
-    STRAUTHID_OPT_BPP,
     STRAUTHID_DISPLAY_MESSAGE,
     STRAUTHID_ACCEPT_MESSAGE,
-    STRAUTHID_AUTH_ERROR_MESSAGE,
     STRAUTHID_PROXY_TYPE,
     STRAUTHID_AUTHENTICATED,
     STRAUTHID_SELECTOR,
@@ -328,6 +325,14 @@ static inline authid_t authid_from_string(const char * kw)
     STRAUTHID_VIDEO_QUALITY,
     STRAUTHID_ALTERNATE_SHELL,
     STRAUTHID_SHELL_WORKING_DIRECTORY,
+    // Context
+    STRAUTHID_OPT_BITRATE,
+    STRAUTHID_OPT_FRAMERATE,
+    STRAUTHID_OPT_QSCALE,
+    STRAUTHID_OPT_WIDTH,
+    STRAUTHID_OPT_HEIGHT,
+    STRAUTHID_OPT_BPP,
+    STRAUTHID_AUTH_ERROR_MESSAGE,
 */
     };
 

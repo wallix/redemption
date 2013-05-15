@@ -305,7 +305,8 @@ class SessionManager {
         TODO("we should manage a mode to disconnect on inactivity when we are on login box or on selector")
         if (now > (keepalive_time + this->keepalive_grace_delay)){
             LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-            this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (timeout)");
+//            this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (timeout)");
+            this->ini->globals.context.auth_error_message = "Connection closed by manager (timeout)";
             return false;
         }
 
@@ -330,7 +331,8 @@ class SessionManager {
             if (trans->last_quantum_received == 0){
                 this->tick_count++;
                 if (this->tick_count > this->max_tick){ // 15 minutes before closing on inactivity
-                    this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed on inactivity");
+//                    this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed on inactivity");
+                    this->ini->globals.context.auth_error_message = "Connection closed on inactivity";
                     LOG(LOG_INFO, "Session ACL inactivity : closing");
                     this->mod_state = MOD_STATE_DONE_CLOSE;
                     return false;
@@ -357,7 +359,8 @@ class SessionManager {
                 this->auth_trans_t->send(stream.data, total_length);
             }
             catch (...){
-                this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (ACL closed)");
+//                this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (ACL closed)");
+                this->ini->globals.context.auth_error_message = "Connection closed by manager (ACL closed)";
                 this->mod_state = MOD_STATE_DONE_CLOSE;
                 return false;
             }
@@ -375,7 +378,8 @@ class SessionManager {
                 }
             }
             catch (...){
-                this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (ACL closed)");
+//                this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (ACL closed)");
+                this->ini->globals.context.auth_error_message = "Connection closed by manager (ACL closed)";
                 this->mod_state = MOD_STATE_DONE_CLOSE;
                 return false;
             }
@@ -559,18 +563,29 @@ class SessionManager {
 //                record_video = this->context.get_bool(STRAUTHID_OPT_MOVIE);
                 record_video = this->ini->globals.movie;
                 keep_alive = true;
+/*
                 if (context.get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                     context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "End of connection");
+                }
+*/
+                if (this->ini->globals.context.auth_error_message.is_empty()) {
+                    this->ini->globals.context.auth_error_message = "End of connection";
                 }
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
                 return this->get_mod_from_protocol(nextmod);
             }
             else {
                 if (context.get(STRAUTHID_REJECTED)[0] != 0){
-                    context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, context.get(STRAUTHID_REJECTED));
+//                    context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, context.get(STRAUTHID_REJECTED));
+                    this->ini->globals.context.auth_error_message = context.get(STRAUTHID_REJECTED);
                 }
+/*
                 if (context.get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                     context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Authentifier service failed");
+                }
+*/
+                if (this->ini->globals.context.auth_error_message.is_empty()) {
+                    this->ini->globals.context.auth_error_message = "Authentifier service failed";
                 }
                 TODO(" check life cycle of auth_trans_t")
                 if (this->auth_trans_t){
@@ -620,7 +635,29 @@ class SessionManager {
             stream.out_copy_bytes("\nASK\n",5);
         }
         else {
-            const char * tmp = this->context.get(key);
+            char         temp_buffer[256];
+            const char * tmp;
+
+//            const char * tmp = this->context.get(key);
+            if (  !strcasecmp(key, _STRAUTHID_OPT_WIDTH)
+               || !strcasecmp(key, _STRAUTHID_OPT_HEIGHT)
+               || !strcasecmp(key, _STRAUTHID_OPT_BPP)
+               ) {
+                const char * global_section;
+                const char * global_key;
+
+                if (get_global_info(key, global_section, global_key)) {
+                    tmp = this->ini->context_get_value(global_key, temp_buffer, sizeof(temp_buffer));
+                }
+                else {
+                    LOG(LOG_WARNING, "Context value \"%s\" is not found\n", key);
+                    tmp = "";
+                }
+            }
+            else {
+                tmp = this->context.get(key);
+            }
+
             if ((strncasecmp("password", (char*)key, 8) == 0)
             ||(strncasecmp("target_password", (char*)key, 15) == 0)){
                 LOG(LOG_INFO, "sending %s=<hidden>\n", key);
@@ -684,9 +721,9 @@ class SessionManager {
             this->out_item(stream, STRAUTHID_SELECTOR_LINES_PER_PAGE);
             this->out_item(stream, STRAUTHID_SELECTOR_CURRENT_PAGE);
             this->out_item(stream, STRAUTHID_TARGET_PASSWORD);
-            this->out_item(stream, STRAUTHID_OPT_WIDTH);
-            this->out_item(stream, STRAUTHID_OPT_HEIGHT);
-            this->out_item(stream, STRAUTHID_OPT_BPP);
+            this->out_item(stream, _STRAUTHID_OPT_WIDTH);
+            this->out_item(stream, _STRAUTHID_OPT_HEIGHT);
+            this->out_item(stream, _STRAUTHID_OPT_BPP);
             // send trace seal if and only if there is one
             if (this->context.get(STRAUTHID_TRACE_SEAL)){
                 this->out_item(stream, STRAUTHID_TRACE_SEAL);
@@ -837,6 +874,31 @@ class SessionManager {
         else if (!strcmp(keyword, _STRAUTHID_SHELL_WORKING_DIRECTORY)) {
             global_section  = GLOBAL_SECTION_GLOBALS;
             global_key      = "shell_working_directory";
+        }
+        // Options
+        else if (!strcmp(keyword, _STRAUTHID_OPT_BITRATE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "opt_bitrate";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_FRAMERATE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "opt_framerate";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_QSCALE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "opt_qscale";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_WIDTH)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "opt_width";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_HEIGHT)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "opt_height";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_BPP)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "opt_bpp";
         }
         else {
             global_section  =

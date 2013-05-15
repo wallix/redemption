@@ -25,6 +25,7 @@
 
 #include "transport.hpp"
 #include "rio/rio.h"
+#include "string.hpp"
 
     // X509_NAME_print_ex() prints a human readable version of nm to BIO out.
     // Each line (for multiline formats) is indented by indent spaces.
@@ -97,13 +98,17 @@ class SocketTransport : public Transport {
         int  port;
 
         TODO("check if buffer is defined before accessing it")
+/*
         char * error_message_buffer;
         size_t error_message_len;
+*/
 
-        
+        redemption::string * error_message;
 
-    SocketTransport(const char * name, int sck, const char *ip_address, int port, uint32_t verbose, char * error_message_buffer = NULL, size_t error_message_len = 0)
-        : Transport(), tls(false), name(name), verbose(verbose), error_message_buffer(error_message_buffer), error_message_len(error_message_len)
+//    SocketTransport(const char * name, int sck, const char *ip_address, int port, uint32_t verbose, char * error_message_buffer = NULL, size_t error_message_len = 0)
+//        : Transport(), tls(false), name(name), verbose(verbose), error_message_buffer(error_message_buffer), error_message_len(error_message_len)
+    SocketTransport(const char * name, int sck, const char *ip_address, int port, uint32_t verbose, redemption::string * error_message = 0)
+        : Transport(), tls(false), name(name), verbose(verbose), error_message(error_message)
     {
         RIO_ERROR res = rio_init_socket(&this->rio, sck);
         this->sck = sck;
@@ -767,7 +772,10 @@ LOG(LOG_INFO, "%s", certificate_password);
         // ensures the certificate directory exists
         if (recursive_create_directory(CERTIF_PATH "/", S_IRWXU|S_IRWXG, 0) != 0) {
             LOG(LOG_ERR, "Failed to create certificate directory: " CERTIF_PATH "/");
-            strcpy(error_message_buffer, "Failed to create certificate directory: " CERTIF_PATH "/");
+//            strcpy(error_message_buffer, "Failed to create certificate directory: " CERTIF_PATH "/");
+            if (error_message) {
+                (*error_message) = "Failed to create certificate directory: \"" CERTIF_PATH "/\"";
+            }
             throw Error(ERR_TRANSPORT, 0);
         }
 
@@ -783,7 +791,12 @@ LOG(LOG_INFO, "%s", certificate_password);
             if (errno != ENOENT) {
                 // failed to open stored certificate file
                 LOG(LOG_ERR, "Failed to open stored certificate: \"%s\"\n", filename);
-                sprintf(error_message_buffer, "Failed to open stored certificate: \"%s\"\n", filename);
+//                sprintf(error_message_buffer, "Failed to open stored certificate: \"%s\"\n", filename);
+                if (error_message) {
+                    (*error_message) =  "Failed to open stored certificate: \"";
+                    (*error_message) += filename;
+                    (*error_message) += "\"\n";
+                }
                 throw Error(ERR_TRANSPORT, 0);
             }
             else {
@@ -799,7 +812,12 @@ LOG(LOG_INFO, "%s", certificate_password);
             if (!px509Existing) {
                 // failed to read stored certificate file
                 LOG(LOG_ERR, "Failed to read stored certificate: \"%s\"\n", filename);
-                sprintf(error_message_buffer, "Failed to read stored certificate: \"%s\"\n", filename);
+//                sprintf(error_message_buffer, "Failed to read stored certificate: \"%s\"\n", filename);
+                if (error_message) {
+                    (*error_message) =  "Failed to read stored certificate: \"";
+                    (*error_message) += filename;
+                    (*error_message) += "\"\n";
+                }
                 throw Error(ERR_TRANSPORT, 0);
             }
             ::fclose(fp);
@@ -866,6 +884,7 @@ LOG(LOG_INFO, "%s", certificate_password);
             || (0 != strcmp(issuer_existing, issuer)) 
             || (0 != strcmp(subject_existing, subject)) 
             || (0 != strcmp(fingerprint_existing, fingerprint))) {
+/*
                 if (this->error_message_buffer && this->error_message_len) {
                     snprintf(this->error_message_buffer, this->error_message_len,
                         "The certificate for host %s:%d has changed\n\n"
@@ -881,6 +900,12 @@ LOG(LOG_INFO, "%s", certificate_password);
                         issuer_existing, subject_existing, fingerprint_existing,
                         issuer, subject, fingerprint);
                     this->error_message_buffer[this->error_message_len - 1] = 0;
+                }
+*/
+                if (error_message) {
+                    snprintf(const_cast<char *>((const char *)*error_message), 1024,
+                        "The certificate for host %s:%d has changed!",
+                        this->ip_address, this->port);
                 }
                 LOG(LOG_ERR, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"\n",
                     this->ip_address, this->port,
