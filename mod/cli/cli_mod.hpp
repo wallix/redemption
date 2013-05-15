@@ -27,10 +27,10 @@
 
 struct cli_mod : public transitory_mod {
     cli_mod(
-        struct ModContext & context, FrontAPI & front, ClientInfo & client_info, const uint16_t front_width, const uint16_t front_height)
+        struct ModContext & context, Inifile & ini, FrontAPI & front, ClientInfo & client_info, const uint16_t front_width, const uint16_t front_height)
             : transitory_mod(front, front_width, front_height)
     {
-        context.parse_username(client_info.username);
+        context.parse_username(client_info.username, ini);
 
         if (client_info.password[0]){
             context.cpy(STRAUTHID_PASSWORD, client_info.password);

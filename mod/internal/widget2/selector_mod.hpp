@@ -22,6 +22,7 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_SELECTOR_MOD_HPP
 
 #include "front_api.hpp"
+#include "config.hpp"
 #include "modcontext.hpp"
 #include "internal/internal_mod.hpp"
 #include "selector.hpp"
@@ -33,15 +34,23 @@ class SelectorMod : public internal_mod, public NotifyApi
     int current_page;
     int number_page;
 
+    char selector_current_page[16];
+    char selector_number_of_pages[16];
+
+    Inifile & ini;
+
 public:
-    SelectorMod(ModContext& context, FrontAPI& front, uint16_t width, uint16_t height)
+    SelectorMod(ModContext& context, Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
     : internal_mod(front, width, height)
     , selector(this, "bidule", width, height, this,
-               context.get(STRAUTHID_SELECTOR_CURRENT_PAGE),
-               context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES))
+//               context.get(STRAUTHID_SELECTOR_CURRENT_PAGE),
+//               context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES))
+               ini.context_get_value("selector_current_page", this->selector_current_page, sizeof(this->selector_current_page)),
+               ini.context_get_value("selector_number_of_pages", this->selector_number_of_pages, sizeof(this->selector_number_of_pages)))
     , context(context)
     , current_page(atoi(this->selector.current_page.label.buffer))
     , number_page(atoi(this->selector.number_page.buffer))
+    , ini(ini)
     {
         this->refresh_context();
 
@@ -76,11 +85,11 @@ public:
     {
         if (NOTIFY_SUBMIT == event) {
             if (sender == &this->selector.logout) {
-                this->context.ask(STRAUTHID_AUTH_USER);
+                this->context.ask(_STRAUTHID_AUTH_USER);
                 this->context.ask(STRAUTHID_PASSWORD);
-                this->context.ask(STRAUTHID_TARGET_USER);
-                this->context.ask(STRAUTHID_TARGET_DEVICE);
-                this->context.ask(STRAUTHID_SELECTOR);
+                this->context.ask(_STRAUTHID_TARGET_USER);
+                this->context.ask(_STRAUTHID_TARGET_DEVICE);
+                this->context.ask(_STRAUTHID_SELECTOR);
                 this->signal = BACK_EVENT_NEXT;
                 this->event.set();
             }
@@ -122,9 +131,12 @@ public:
 
     void refresh_context()
     {
-        char * groups = this->context.get(STRAUTHID_TARGET_USER);
-        char * targets = this->context.get(STRAUTHID_TARGET_DEVICE);
-        char * protocols = this->context.get(STRAUTHID_TARGET_PROTOCOL);
+//        char * groups = this->context.get(STRAUTHID_TARGET_USER);
+        char * groups = this->ini.globals.target_user;
+//        char * targets = this->context.get(STRAUTHID_TARGET_DEVICE);
+        char * targets = this->ini.globals.target_device;
+//        char * protocols = this->context.get(STRAUTHID_TARGET_PROTOCOL);
+        char * protocols = const_cast<char *>((const char *)this->ini.globals.context.target_protocol);
         char * endtimes = this->context.get(STRAUTHID_END_TIME);
 
         for (size_t index = 0 ; index < 50 ; index++){

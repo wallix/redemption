@@ -110,8 +110,9 @@ struct selector_mod : public internal_mod {
     Bitmap * next_page_inactive;
     Bitmap * last_page_inactive;
 
+    Inifile & ini;
 
-    selector_mod(ModContext & context, FrontAPI & front, uint16_t width, uint16_t height):
+    selector_mod(ModContext & context, Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height):
             internal_mod(front, width, height), focus_line(0),
             focus_item(context.selector_focus),
             click_focus(NO_FOCUS),
@@ -120,7 +121,8 @@ struct selector_mod : public internal_mod {
             filter_device_edit_pos(0),
             showed_page(0),
             total_page(1),
-            context(context)
+            context(context),
+            ini(ini)
     {
 
         LOG(LOG_INFO, "Creating selector");
@@ -3378,20 +3380,28 @@ struct selector_mod : public internal_mod {
 
     virtual void refresh_context(ModContext & context)
     {
-        this->showed_page = atoi(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE));
-        this->total_page = atoi(context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES));
+//        this->showed_page = atoi(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE));
+        this->showed_page = this->ini.globals.context.selector_current_page;
+//        this->total_page = atoi(context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES));
+        this->total_page = this->ini.globals.context.selector_number_of_pages;
 
-        if (context.is_asked(STRAUTHID_SELECTOR_DEVICE_FILTER)){
+        if (context.is_asked(_STRAUTHID_SELECTOR_DEVICE_FILTER)){
             this->filter_device_text[0] = 0;
         }
         else{
-            strcpy(this->filter_device_text, context.get(STRAUTHID_SELECTOR_DEVICE_FILTER));
+//            strcpy(this->filter_device_text, context.get(STRAUTHID_SELECTOR_DEVICE_FILTER));
+            strncpy(this->filter_device_text, this->ini.globals.context.selector_device_filter,
+                sizeof(this->filter_device_text));
+            this->filter_device_text[sizeof(this->filter_device_text) - 1] = 0;
         }
-        if (context.is_asked(STRAUTHID_SELECTOR_GROUP_FILTER)){
+        if (context.is_asked(_STRAUTHID_SELECTOR_GROUP_FILTER)){
             this->filter_group_text[0] = 0;
         }
         else{
-            strcpy(this->filter_group_text, context.get(STRAUTHID_SELECTOR_GROUP_FILTER));
+//            strcpy(this->filter_group_text, context.get(STRAUTHID_SELECTOR_GROUP_FILTER));
+            strncpy(this->filter_group_text, this->ini.globals.context.selector_group_filter,
+                sizeof(this->filter_group_text));
+            this->filter_group_text[sizeof(this->filter_group_text) - 1] = 0;
         }
 
         this->rect_button_logout = Rect(this->get_screen_rect().cx-240, this->get_screen_rect().cy- 100, 60, 26);
@@ -3409,9 +3419,12 @@ struct selector_mod : public internal_mod {
         this->rect_grid = Rect(20, 100, this->get_screen_rect().cx-40, this->nblines() * 20);
 
 
-        const char * groups = context.get(STRAUTHID_TARGET_USER);
-        const char * targets = context.get(STRAUTHID_TARGET_DEVICE);
-        const char * protocols = context.get(STRAUTHID_TARGET_PROTOCOL);
+//        const char * groups = context.get(STRAUTHID_TARGET_USER);
+        const char * groups = this->ini.globals.target_user;
+//        const char * targets = context.get(STRAUTHID_TARGET_DEVICE);
+        const char * targets = this->ini.globals.target_device;
+//        const char * protocols = context.get(STRAUTHID_TARGET_PROTOCOL);
+        const char * protocols = this->ini.globals.context.target_protocol;
         const char * endtimes = context.get(STRAUTHID_END_TIME);
 
         for (size_t index = 0 ; index < 50 ; index++){
@@ -3533,15 +3546,18 @@ struct selector_mod : public internal_mod {
     }
 
     void ask_page(void){
-        this->context.ask(STRAUTHID_SELECTOR);
-        char buffer[64];
-        sprintf(buffer, "%u", (unsigned int)this->showed_page);
-        this->context.cpy(STRAUTHID_SELECTOR_CURRENT_PAGE, buffer);
-        this->context.cpy(STRAUTHID_SELECTOR_GROUP_FILTER, this->filter_group_text);
-        this->context.cpy(STRAUTHID_SELECTOR_DEVICE_FILTER, this->filter_device_text);
-        this->context.ask(STRAUTHID_TARGET_USER);
-        this->context.ask(STRAUTHID_TARGET_DEVICE);
-        this->context.ask(STRAUTHID_SELECTOR);
+        this->context.ask(_STRAUTHID_SELECTOR);
+//        char buffer[64];
+//        sprintf(buffer, "%u", (unsigned int)this->showed_page);
+//        this->context.cpy(STRAUTHID_SELECTOR_CURRENT_PAGE, buffer);
+        this->ini.globals.context.selector_current_page = this->showed_page;
+//        this->context.cpy(STRAUTHID_SELECTOR_GROUP_FILTER, this->filter_group_text);
+        this->ini.globals.context.selector_group_filter = this->filter_group_text;
+//        this->context.cpy(STRAUTHID_SELECTOR_DEVICE_FILTER, this->filter_device_text);
+        this->ini.globals.context.selector_device_filter = this->filter_device_text;
+        this->context.ask(_STRAUTHID_TARGET_USER);
+        this->context.ask(_STRAUTHID_TARGET_DEVICE);
+        this->context.ask(_STRAUTHID_SELECTOR);
         this->signal = BACK_EVENT_REFRESH;
         this->event.set();
     }
@@ -3582,19 +3598,20 @@ struct selector_mod : public internal_mod {
             char buffer[1024];
             sprintf(buffer, "%s:%s",
                 this->grid[this->focus_line].target,
-                this->context.get(STRAUTHID_AUTH_USER));
-            this->context.parse_username(buffer);
+//                this->context.get(STRAUTHID_AUTH_USER));
+                this->ini.globals.auth_user);
+            this->context.parse_username(buffer, this->ini);
             this->signal = BACK_EVENT_NEXT;
             this->event.set();
         }
         break;
         case FOCUS_ON_LOGOUT:
         {
-            this->context.ask(STRAUTHID_AUTH_USER);
+            this->context.ask(_STRAUTHID_AUTH_USER);
             this->context.ask(STRAUTHID_PASSWORD);
-            this->context.ask(STRAUTHID_TARGET_USER);
-            this->context.ask(STRAUTHID_TARGET_DEVICE);
-            this->context.ask(STRAUTHID_SELECTOR);
+            this->context.ask(_STRAUTHID_TARGET_USER);
+            this->context.ask(_STRAUTHID_TARGET_DEVICE);
+            this->context.ask(_STRAUTHID_SELECTOR);
             this->signal = BACK_EVENT_NEXT;
             this->event.set();
         }
@@ -3798,7 +3815,8 @@ struct selector_mod : public internal_mod {
     void draw_login(const Rect & clip){
         char buffer[256];
         buffer[0] = 0;
-        sprintf(buffer, "%s@%s", this->context.get(STRAUTHID_AUTH_USER), this->context.get(STRAUTHID_HOST));
+//        sprintf(buffer, "%s@%s", this->context.get(STRAUTHID_AUTH_USER), this->context.get(STRAUTHID_HOST));
+        sprintf(buffer, "%s@%s", this->ini.globals.auth_user, this->context.get(STRAUTHID_HOST));
         this->front.server_draw_text(30, 30, buffer, GREY, BLACK, clip);
     }
 

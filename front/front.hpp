@@ -416,17 +416,26 @@ TODO("Pass font name as parameter in constructor")
 */
             LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality);
 
+/*
             strncpy(ini.globals.auth_user, context.get(STRAUTHID_AUTH_USER), sizeof(ini.globals.auth_user)-1);
             ini.globals.auth_user[sizeof(ini.globals.auth_user)-1] = 0;
+*/
+            LOG(LOG_INFO, "auth_user = %s\n", ini.globals.auth_user);
 
             strncpy(ini.globals.host, context.get(STRAUTHID_HOST), sizeof(ini.globals.host)-1);
             ini.globals.host[sizeof(ini.globals.host)-1] = 0;
 
+/*
             strncpy(ini.globals.target_device, context.get(STRAUTHID_TARGET_DEVICE), sizeof(ini.globals.target_device)-1);
             ini.globals.target_device[sizeof(ini.globals.target_device)-1] = 0;
+*/
+            LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device);
 
+/*
             strncpy(ini.globals.target_user, context.get(STRAUTHID_TARGET_USER), sizeof(ini.globals.target_user)-1);
             ini.globals.target_user[sizeof(ini.globals.target_user)-1] = 0;
+*/
+            LOG(LOG_INFO, "target_user = %s\n", ini.globals.target_user);
 
 //            ini.globals.enable_file_encryption = context.get_bool(STRAUTHID_OPT_FILE_ENCRYPTION);
 

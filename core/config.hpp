@@ -250,13 +250,44 @@ struct Inifile {
 
         // section "context"
         struct {
-            unsigned            opt_bitrate;
-            unsigned            opt_framerate;
-            unsigned            opt_qscale;
-            unsigned            opt_width;
-            unsigned            opt_height;
-            unsigned            opt_bpp;
-            redemption::string  auth_error_message;
+            unsigned           opt_bitrate;
+            unsigned           opt_framerate;
+            unsigned           opt_qscale;
+
+            bool               ask_opt_bpp;
+            bool               ask_opt_height;
+            bool               ask_opt_width;
+
+            unsigned           opt_bpp;
+            unsigned           opt_height;
+            unsigned           opt_width;
+
+            redemption::string auth_error_message;
+
+            bool               ask_selector;
+            bool               ask_selector_current_page;
+            bool               ask_selector_device_filter;
+            bool               ask_selector_group_filter;
+            bool               ask_selector_lines_per_page;
+
+            bool               selector;
+            unsigned           selector_current_page;
+            redemption::string selector_device_filter;
+            redemption::string selector_group_filter;
+            unsigned           selector_lines_per_page;
+            unsigned           selector_number_of_pages;
+
+            bool               ask_target_device;
+            bool               ask_target_password;
+            bool               ask_target_port;
+            bool               ask_target_protocol;
+            bool               ask_target_user;
+
+//            redemption::string target_device;
+            redemption::string target_password;
+            unsigned           target_port;
+            redemption::string target_protocol;
+//            redemption::string target_user;
         } context;
     } globals;
 
@@ -400,13 +431,42 @@ struct Inifile {
         strcpy(this->globals.translation.help_message,      "Help message");
 
         // section "context"
-        this->globals.context.opt_bitrate           = 40000;
-        this->globals.context.opt_framerate         = 5;
-        this->globals.context.opt_qscale            = 15;
-        this->globals.context.opt_width             = 800;
-        this->globals.context.opt_height            = 600;
-        this->globals.context.opt_bpp               = 24;
-        this->globals.context.auth_error_message    = "";
+        this->globals.context.opt_bitrate                 = 40000;
+        this->globals.context.opt_framerate               = 5;
+        this->globals.context.opt_qscale                  = 15;
+
+        this->globals.context.ask_opt_bpp                 = false;
+        this->globals.context.ask_opt_height              = false;
+        this->globals.context.ask_opt_width               = false;
+
+        this->globals.context.opt_bpp                     = 24;
+        this->globals.context.opt_height                  = 600;
+        this->globals.context.opt_width                   = 800;
+
+        this->globals.context.auth_error_message          = "";
+
+        this->globals.context.ask_selector                = false;
+        this->globals.context.ask_selector_current_page   = false;
+        this->globals.context.ask_selector_device_filter  = false;
+        this->globals.context.ask_selector_group_filter   = false;
+        this->globals.context.ask_selector_lines_per_page = false;
+
+        this->globals.context.selector                    = false;
+        this->globals.context.selector_current_page       = 1;
+        this->globals.context.selector_device_filter      = "";
+        this->globals.context.selector_group_filter       = "";
+        this->globals.context.selector_lines_per_page     = 20;
+        this->globals.context.selector_number_of_pages    = 1;
+
+        this->globals.context.ask_target_device           = false;
+        this->globals.context.ask_target_password         = false;
+        this->globals.context.ask_target_port             = false;
+        this->globals.context.ask_target_protocol         = false;
+        this->globals.context.ask_target_user             = false;
+
+        this->globals.context.target_password             = "";
+        this->globals.context.target_port                 = 3389;
+        this->globals.context.target_protocol             = "RDP";
     };
 
     void cparse(istream & ifs){
@@ -606,6 +666,19 @@ struct Inifile {
             else if (0 == strcmp(key, "video_quality")) {
                 strncpy(this->globals.video_quality, value, sizeof(this->globals.video_quality));
                 this->globals.video_quality[sizeof(this->globals.video_quality) - 1] = 0;
+            }
+            // Context
+            else if (0 == strcmp(key, "target_device")) {
+                strncpy(this->globals.target_device, value, sizeof(this->globals.target_device));
+                this->globals.target_device[sizeof(this->globals.target_device) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "target_user")) {
+                strncpy(this->globals.target_user, value, sizeof(this->globals.target_user));
+                this->globals.target_user[sizeof(this->globals.target_user) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "auth_user")) {
+                strncpy(this->globals.auth_user, value, sizeof(this->globals.auth_user));
+                this->globals.auth_user[sizeof(this->globals.auth_user) - 1] = 0;
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -834,26 +907,54 @@ struct Inifile {
             }
         }
         else if (0 == strcmp(context, "context")){
+            // LOG(LOG_INFO, "parameter %s in section [%s]: value=%s", key, context, value);
             if (0 == strcmp(key, "opt_bitrate")){
-                this->globals.context.opt_bitrate    = long_from_cstr(value);
+                this->globals.context.opt_bitrate              = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "opt_framerate")){
-                this->globals.context.opt_framerate  = long_from_cstr(value);
+                this->globals.context.opt_framerate            = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "opt_qscale")){
-                this->globals.context.opt_qscale     = long_from_cstr(value);
+                this->globals.context.opt_qscale               = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "opt_width")){
-                this->globals.context.opt_width      = long_from_cstr(value);
+                this->globals.context.opt_width                = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "opt_height")){
-                this->globals.context.opt_height     = long_from_cstr(value);
+                this->globals.context.opt_height               = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "opt_bpp")){
-                this->globals.context.opt_bpp        = long_from_cstr(value);
+                this->globals.context.opt_bpp                  = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "auth_error_message")){
                 this->globals.context.auth_error_message = value;
+            }
+            else if (0 == strcmp(key, "selector")){
+                this->globals.context.selector                 = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "selector_group_filter")){
+                this->globals.context.selector_group_filter    = value;
+            }
+            else if (0 == strcmp(key, "selector_device_filter")){
+                this->globals.context.selector_device_filter   = value;
+            }
+            else if (0 == strcmp(key, "selector_lines_per_page")){
+                this->globals.context.selector_lines_per_page  = long_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "selector_number_of_pages")){
+                this->globals.context.selector_number_of_pages = long_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "selector_current_page")){
+                this->globals.context.selector_current_page    = long_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "target_password")){
+                this->globals.context.target_password          = value;
+            }
+            else if (0 == strcmp(key, "target_port")){
+                this->globals.context.target_port              = long_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "target_protocol")){
+                this->globals.context.target_protocol          = value;
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -869,24 +970,96 @@ struct Inifile {
 
         if (size) {
             *buffer = 0;
+
+            if (!strcasecmp(key, "opt_bpp")) {
+                snprintf(buffer, size, "%d", this->globals.context.opt_bpp);
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "opt_height")) {
+                snprintf(buffer, size, "%d", this->globals.context.opt_height);
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "opt_width")) {
+                snprintf(buffer, size, "%d", this->globals.context.opt_width);
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "selector")) {
+                strncpy(buffer, (this->globals.context.selector ? "True" : "False"), size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "selector_current_page")) {
+                snprintf(buffer, size, "%d", this->globals.context.selector_current_page);
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "selector_device_filter")) {
+                strncpy(buffer, this->globals.context.selector_device_filter, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "selector_group_filter")) {
+                strncpy(buffer, this->globals.context.selector_group_filter, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "selector_lines_per_page")) {
+                snprintf(buffer, size, "%d", this->globals.context.selector_lines_per_page);
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "selector_number_of_pages")) {
+                snprintf(buffer, size, "%d", this->globals.context.selector_number_of_pages);
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "target_device")) {
+                strncpy(buffer, this->globals.target_device, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "target_password")) {
+                strncpy(buffer, this->globals.context.target_password, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "target_port")) {
+                snprintf(buffer, size, "%d", this->globals.context.target_port);
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "target_protocol")) {
+                strncpy(buffer, this->globals.context.target_protocol, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "target_user")) {
+                strncpy(buffer, this->globals.target_user, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "auth_user")) {
+                strncpy(buffer, this->globals.auth_user, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else {
+                LOG(LOG_WARNING, "context_get_value: unknown key=\"%s\"", key);
+            }
         }
 
-        if (!strcasecmp(key, "opt_width")) {
-            snprintf(buffer, size, "%d", this->globals.context.opt_width);
-
-            pszReturn = buffer;
-        }
-        else if (!strcasecmp(key, "opt_height")) {
-            snprintf(buffer, size, "%d", this->globals.context.opt_height);
-
-            pszReturn = buffer;
-        }
-        else if (!strcasecmp(key, "opt_bpp")) {
-            snprintf(buffer, size, "%d", this->globals.context.opt_bpp);
-
-            pszReturn = buffer;
-        }
-
+        //LOG(LOG_INFO, "parameter %s out section [%s]: value=%s", key, "context", pszReturn);
         return pszReturn;
     }
 
