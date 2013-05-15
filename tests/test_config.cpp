@@ -152,6 +152,13 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
@@ -272,6 +279,13 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigDefault)
@@ -394,6 +408,13 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfig1)
@@ -551,6 +572,13 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfig1bis)
@@ -697,6 +725,13 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
     BOOST_CHECK_EQUAL(std::string("Connexion fermée"),  std::string(ini.globals.translation.connection_closed));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfig2)
@@ -842,6 +877,13 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestMultiple)
@@ -979,6 +1021,13 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
 
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
+
 
     // see we can change configuration using parse without default setting of existing ini
     std::stringstream oss2(
@@ -1108,6 +1157,13 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestNewConf)
@@ -1232,6 +1288,13 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
 
 
     std::stringstream ifs2(
@@ -1361,6 +1424,13 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
 
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
+
 
     // back to default values
     ini.init();
@@ -1478,6 +1548,13 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigTools)

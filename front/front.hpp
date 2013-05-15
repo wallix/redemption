@@ -159,31 +159,31 @@ TODO("Pass font name as parameter in constructor")
 
 
         // -------- Start of system wide SSL_Ctx option ------------------------------
-        
-        // ERR_load_crypto_strings() registers the error strings for all libcrypto 
+
+        // ERR_load_crypto_strings() registers the error strings for all libcrypto
         // functions. SSL_load_error_strings() does the same, but also registers the
         // libssl error strings.
 
-        // One of these functions should be called before generating textual error 
+        // One of these functions should be called before generating textual error
         // messages. However, this is not required when memory usage is an issue.
 
-        // ERR_free_strings() frees all previously loaded error strings. 
-        
+        // ERR_free_strings() frees all previously loaded error strings.
+
         SSL_load_error_strings();
 
         // SSL_library_init() registers the available SSL/TLS ciphers and digests.
-        // OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms 
-        // for SSL_library_init(). 
-        
-        // - SSL_library_init() must be called before any other action takes place. 
-        // - SSL_library_init() is not reentrant. 
+        // OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms
+        // for SSL_library_init().
+
+        // - SSL_library_init() must be called before any other action takes place.
+        // - SSL_library_init() is not reentrant.
         // - SSL_library_init() always returns "1", so it is safe to discard the return
         // value.
-        
+
         // Note: OpenSSL 0.9.8o and 1.0.0a and later added SHA2 algorithms to 
         // SSL_library_init(). Applications which need to use SHA2 in earlier versions
         // of OpenSSL should call OpenSSL_add_all_algorithms() as well. 
-        
+
         SSL_library_init();
 
         // --------------------------------------------------------
@@ -298,7 +298,7 @@ TODO("Pass font name as parameter in constructor")
         size_t len_uni = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
         if (len_uni){
             for (size_t index = 0; index < len_uni; index++) {
-                uint32_t charnum = uni[index]; // 
+                uint32_t charnum = uni[index]; //
                 FontChar *font_item = this->font.glyph_defined(charnum)?this->font.font_items[charnum]:NULL;
                 if (!font_item) {
                     LOG(LOG_WARNING, "Front::text_metrics() - character not defined >0x%02x<", charnum);
@@ -401,19 +401,19 @@ TODO("Pass font name as parameter in constructor")
 /*
             strncpy(ini.globals.movie_path, context.get(STRAUTHID_OPT_MOVIE_PATH), sizeof(ini.globals.movie_path)-1);
             ini.globals.movie_path[sizeof(ini.globals.movie_path)-1] = 0;
-*/            
+*/
             LOG(LOG_INFO, "movie_path = %s\n", ini.globals.movie_path);
 
 /*
             strncpy(ini.globals.codec_id, context.get(STRAUTHID_OPT_CODEC_ID), sizeof(ini.globals.codec_id)-1);
             ini.globals.codec_id[sizeof(ini.globals.codec_id)-1] = 0;
-*/            
+*/
             LOG(LOG_INFO, "codec_id = %s\n", ini.globals.codec_id);
 
 /*
             strncpy(ini.globals.video_quality, context.get(STRAUTHID_VIDEO_QUALITY), sizeof(ini.globals.video_quality)-1);
             ini.globals.video_quality[sizeof(ini.globals.video_quality)-1] = 0;
-*/            
+*/
             LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality);
 
             strncpy(ini.globals.auth_user, context.get(STRAUTHID_AUTH_USER), sizeof(ini.globals.auth_user)-1);
@@ -601,7 +601,7 @@ TODO("Pass font name as parameter in constructor")
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
         MCS::SendDataIndication_Send mcs(mcs_header, userid, channel.chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+        X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
         this->trans->send(x224_header, mcs_header, sec_header, stream);
 
         if (this->verbose & 16){

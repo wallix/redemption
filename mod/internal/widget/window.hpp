@@ -30,6 +30,7 @@
 #include "internal/widget/edit.hpp"
 #include "internal/widget/image.hpp"
 #include "modcontext.hpp"
+#include "config.hpp"
 
 struct window : public Widget
 {
@@ -527,7 +528,7 @@ struct wab_close : public window
     ModContext & context;
     window * help;
 
-    wab_close(mod_api * mod, const Rect & r, ModContext & context, Widget * parent, int bg_color, const char * title, int regular)
+    wab_close(mod_api * mod, const Rect & r, ModContext & context, Inifile & ini, Widget * parent, int bg_color, const char * title, int regular)
     : window(mod, r, parent, bg_color, title),
       context(context)
     {
@@ -592,7 +593,8 @@ struct wab_close : public window
         bool done = false;
         int line = 0;
         const char * message;
-        message = context.get(STRAUTHID_AUTH_ERROR_MESSAGE);
+//        message = context.get(STRAUTHID_AUTH_ERROR_MESSAGE);
+        message = ini.globals.context.auth_error_message;
         while (!done) {
             const char * str = strstr(message, "<br>");
             char tmp[256];

@@ -39,6 +39,8 @@
 #include <sstream>
 #include <map>
 
+#include <string.hpp>
+
 using namespace std;
 
 /*
@@ -245,6 +247,17 @@ struct Inifile {
             char connection_closed[1024];
             char help_message[1024];
         } translation;
+
+        // section "context"
+        struct {
+            unsigned            opt_bitrate;
+            unsigned            opt_framerate;
+            unsigned            opt_qscale;
+            unsigned            opt_width;
+            unsigned            opt_height;
+            unsigned            opt_bpp;
+            redemption::string  auth_error_message;
+        } context;
     } globals;
 
     struct IniAccounts account;
@@ -385,6 +398,15 @@ struct Inifile {
         strcpy(this->globals.translation.diagnostic,        "diagnostic");
         strcpy(this->globals.translation.connection_closed, "Connection closed");
         strcpy(this->globals.translation.help_message,      "Help message");
+
+        // section "context"
+        this->globals.context.opt_bitrate           = 40000;
+        this->globals.context.opt_framerate         = 5;
+        this->globals.context.opt_qscale            = 15;
+        this->globals.context.opt_width             = 800;
+        this->globals.context.opt_height            = 600;
+        this->globals.context.opt_bpp               = 24;
+        this->globals.context.auth_error_message    = "";
     };
 
     void cparse(istream & ifs){
@@ -627,7 +649,7 @@ struct Inifile {
                 this->globals.png_interval   = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "capture_groupid")){
-                this->globals.capture_groupid   = long_from_cstr(value);
+                this->globals.capture_groupid  = long_from_cstr(value);
             }
             else if (0 == strcmp(key, "frame_interval")){
                 this->globals.frame_interval   = long_from_cstr(value);
@@ -691,7 +713,7 @@ struct Inifile {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
-        else if (0 == strcmp(context, "debug")){ 
+        else if (0 == strcmp(context, "debug")){
             if (0 == strcmp(key, "x224")){
                 this->globals.debug.x224              = long_from_cstr(value);
             }
@@ -754,7 +776,7 @@ struct Inifile {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
-        else if (0 == strcmp(context, "translation")){ 
+        else if (0 == strcmp(context, "translation")){
             if (0 == strcmp(key, "button_ok")){
                 strncpy(this->globals.translation.button_ok, value, sizeof(this->globals.translation.button_ok));
                 this->globals.translation.button_ok[sizeof(this->globals.translation.button_ok) - 1] = 0;
@@ -811,9 +833,61 @@ struct Inifile {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
+        else if (0 == strcmp(context, "context")){
+            if (0 == strcmp(key, "opt_bitrate")){
+                this->globals.context.opt_bitrate    = long_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "opt_framerate")){
+                this->globals.context.opt_framerate  = long_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "opt_qscale")){
+                this->globals.context.opt_qscale     = long_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "opt_width")){
+                this->globals.context.opt_width      = long_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "opt_height")){
+                this->globals.context.opt_height     = long_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "opt_bpp")){
+                this->globals.context.opt_bpp        = long_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "auth_error_message")){
+                this->globals.context.auth_error_message = value;
+            }
+            else {
+                LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            }
+        }
         else {
             LOG(LOG_ERR, "unknown section [%s]", context);
         }
+    }
+
+    const char * context_get_value(const char * key, char * buffer, size_t size) {
+        const char * pszReturn = "";
+
+        if (size) {
+            *buffer = 0;
+        }
+
+        if (!strcasecmp(key, "opt_width")) {
+            snprintf(buffer, size, "%d", this->globals.context.opt_width);
+
+            pszReturn = buffer;
+        }
+        else if (!strcasecmp(key, "opt_height")) {
+            snprintf(buffer, size, "%d", this->globals.context.opt_height);
+
+            pszReturn = buffer;
+        }
+        else if (!strcasecmp(key, "opt_bpp")) {
+            snprintf(buffer, size, "%d", this->globals.context.opt_bpp);
+
+            pszReturn = buffer;
+        }
+
+        return pszReturn;
     }
 
     void cparse(const char * filename){

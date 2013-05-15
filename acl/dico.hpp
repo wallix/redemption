@@ -94,6 +94,7 @@ class Dico {
         TODO(" may be raising an exception would be better")
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
+            LOG(LOG_WARNING, "'%s' Not found in context\n", key);
             return false;
         }
         const char * found = it->second->value+1;
@@ -109,6 +110,7 @@ class Dico {
         TODO(" may be raising an exception would be better")
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
+            LOG(LOG_WARNING, "'%s' Not found in context\n", key);
             return false; // if key not found we say value if greater
         }
         const char * found = it->second->value;
@@ -120,6 +122,7 @@ class Dico {
         TODO(" may be raising an exception would be better")
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
+            LOG(LOG_WARNING, "'%s' Not found in context\n", key);
             return false; // if key not found we say value if greater
         }
         const char * found = it->second->value;
@@ -130,6 +133,7 @@ class Dico {
     void cpy(const char * key, int value) {
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
+            LOG(LOG_WARNING, "'%s' Not found in context\n", key);
             return;
         }
         char * found = it->second->value;
@@ -141,6 +145,7 @@ class Dico {
     void cpy(const char * key, const char * value) {
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
+            LOG(LOG_WARNING, "'%s' Not found in context\n", key);
             return;
         }
         char * found = it->second->value;
@@ -159,6 +164,7 @@ class Dico {
         TODO(" may be raising an exception would be better")
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
+            LOG(LOG_WARNING, "'%s' Not found in context\n", key);
             return;
         }
         char * found = it->second->value;
