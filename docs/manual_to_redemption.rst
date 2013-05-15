@@ -6,8 +6,8 @@ A Manual to Redemption
           - Martin Potier
 :Organization: Wallix
 :Contact: cgr@wallix.com
-:Version: 0.1
-:Date: 2011/07/20
+:Version: 0.2
+:Date: 2013/05/15
 :Copyright: Public
 :Abstract: This paper is a short developper manual
     for understanding the structure of Redemption
@@ -69,10 +69,9 @@ Building
 --------
 Redemption's main building system is bjam.
 It uses a very small part of the boost libraries -- only the essential --
-which is libboost-test and libboost-program-options (which is programmed
-to be removed).
-It also relies on the following libraries: libssl, libcrypto, libdl and
-libX11 (only needed for a functionnal test on genkeymap).
+which is libboost-test and libboost-program-options (which is being removed).
+It also relies on the following libraries: libssl, libcrypto, libpng, libdl and
+libX11 (only needed for a functional test on genkeymap).
 
 Once the build dependencies are installed, building is easy: ::
 
@@ -124,45 +123,68 @@ An eye on the internals
 +++++++++++++++++++++++
 
 ::
-
     .
+    +-- acl
+    +-- channels
     +-- capture
     +-- core
     +-- docs
     +-- front
+    +-- ftests
+    +-- keyboard
+    +-- main
     +-- mod
     +-- sys
     +-- tests
+    +-- tools
+    +-- transport
     +-- utils
 
 As of now, the top level of the directory structure of the repository looks like
 the one up there.
 
-RDP Orders
+Front
 ----------
 ::
 
-    core/RDP/orders
-    +-- RDPOrdersCommon.hpp
-    +-- RDPOrdersNames.hpp
-    +-- RDPOrdersPrimaryDestBlt.hpp
-    +-- RDPOrdersPrimaryGlyphIndex.hpp
-    +-- RDPOrdersPrimaryHeader.hpp
-    +-- RDPOrdersPrimaryLineTo.hpp
-    +-- RDPOrdersPrimaryMemBlt.hpp
-    +-- RDPOrdersPrimaryOpaqueRect.hpp
-    +-- RDPOrdersPrimaryPatBlt.hpp
-    +-- RDPOrdersPrimaryScrBlt.hpp
-    +-- RDPOrdersSecondaryBmpCache.hpp
-    +-- RDPOrdersSecondaryBrushCache.hpp
-    +-- RDPOrdersSecondaryColorCache.hpp
-    +-- RDPOrdersSecondaryGlyphCache.hpp
-    +-- RDPOrdersSecondaryHeader.hpp
+    front/
+
+Front is the server side of the proxy, connected to remote RDP client (mstsc, rdesktop).
+To implement a Terminal Server it uses basic bricks provided by core/RDP protocol classes. 
+
+acl
+----------
+::
+
+    acl/
+
+Redemption provides some authentication features at proxy level. It can check user identity 
+and password before connecting to remote servers. Or propose a list of targets avaialble to user.
+This is done remotely (by an independant python program, check tools/authhook.py for sample code).
+The acl code provide provides communication facilities to remote authentication module.
+
+RDP Orders
+----------
+::
+   core/RDP/orders/
+   ├── RDPOrdersCommon.hpp
+   ├── RDPOrdersNames.hpp
+   ├── RDPOrdersPrimaryDestBlt.hpp
+   ├── RDPOrdersPrimaryGlyphIndex.hpp
+   ├── RDPOrdersPrimaryLineTo.hpp
+   ├── RDPOrdersPrimaryMemBlt.hpp
+   ├── RDPOrdersPrimaryOpaqueRect.hpp
+   ├── RDPOrdersPrimaryPatBlt.hpp
+   ├── RDPOrdersPrimaryScrBlt.hpp
+   ├── RDPOrdersSecondaryBmpCache.hpp
+   ├── RDPOrdersSecondaryBrushCache.hpp
+   ├── RDPOrdersSecondaryColorCache.hpp
+   └── RDPOrdersSecondaryGlyphCache.hpp
 
 Orders are the elements of the RDP protocol carrying the information, either for
 drawing on a screen (drawing orders) or to manipulate cache (cache orders).
 
-They are put together in the orders folder and classify in multiple levels according
+They are put together in the orders folder and classified in multiple levels according
 to the RDP protocol (Primary, Secondary, ...). Of course -- and quite infortunately
 -- all existing orders are not implemented, yet there's enough to make Redemption
 work.
@@ -197,46 +219,48 @@ Modules
 -------
 ::
 
-    mod
-    +-- cli
-    +-- internal
-    +-- null
-    +-- rdp
-    +-- transitory
-    +-- vnc
-    +-- xup
+   mod/
+   +-- cli
+   +-- draw_api.hpp
+   +-- internal
+   +-- mod_api.hpp
+   +-- null
+   +-- rdp
+   +-- transitory
+   +-- vnc
+   +-- xup
 
 Modules are not very well defined for now, it is a work in progress.
 The most recent part is internal. VNC provides access to a VNC backend.
 
-On the conceptual level, the goal of a module is to decide which other module to
-launch when it ends.
+On the conceptual level, modules manage connexion opened to some backend (server).
 
 cli module
 ..........
-cli uses information provided by clients at connection to decide whether it should
-continue on the login box, or connect immediately to some remote server, continue on
-internal module, and so on.
+cli is a pseudo modules that receive information provided by client on statup.
+
 
 Internal Modules
 ................
 ::
 
-    mod/internal/
-    +-- bouncer2.hpp
-    +-- close.hpp
-    +-- dialog.hpp
-    +-- internal_mod.hpp
-    +-- login.hpp
-    +-- test_card.hpp
-    +-- test_internal.hpp
-    +-- widget.cpp
-    +-- widget.hpp
-    +-- widget_window_login.hpp
+   mod/internal/
+   +-- bouncer2.hpp
+   +-- close.hpp
+   +-- dialog.hpp
+   +-- internal_mod.hpp
+   +-- login.hpp
+   +-- selector.hpp
+   +-- test_card.hpp
+   +-- test_internal.hpp
+   +-- widget
+   +-- widget2
 
-Most internal modules are here for historical reasons; they are not certified
-to be usable anymore since the ongoing work on Redemption still modifies and
-obsoletes interfaces.
+Internal modules are the internal server side of redemption. They are used to
+provide basic interaction betwwen user and proxy. They rely only on the included 
+internal widget library (soon to be replaced ny widget2, hopefully easier to 
+maintain and extend).
+
 
 .. figure:: test_card_redemption.png
     :width: 66 %
@@ -247,21 +271,22 @@ obsoletes interfaces.
 Two internal modules were developped recently to provide small functionnal and
 visual tests: ``bouncer2.hpp`` and ``test_card.hpp``.
 
-The first is design to display a bouncing cube, which flees the mouse arrow.
+The first is designed to display a bouncing cube, which flees the mouse arrow.
 The second a complete test card designed to test the base orders' color -- a lot
-of trouble comes for color handling and it can reveal very userful to check with
-a test card. In the preceding figure, we used several ``OpaqueRect``, ``MemBlt``
-and ``GlyphIndex``.
+of trouble historically came from color handling and it was very useful to check
+with a test card. In the preceding figure, we used several internal RDP drawing 
+orders namely ``OpaqueRect``, ``MemBlt`` and ``GlyphIndex``.
 
 Null module
 ...........
-This module is never called. It is used to reinitialise module states to nothing,
-it can receive any data from any clients without complaining.
+This module is never supposed to be called. It is used as a Null object to 
+reinitialise module states to nothing, it can receive any data from any clients
+without complaining (but that should obviously not happen).
 
 Transitory module
 .................
-It is used as a placeholder when waiting for information from authentifier to choose
-the next module.
+Transitory is used as a placeholder when waiting for information from authentifier
+to choose the next module (Null module could probably be also used for that purpose).
 
 Capture
 -------
@@ -273,60 +298,48 @@ Capture
     +-- staticcapture.hpp
 
 As a proxy, Redemption does not only redirect traffic, it does also capture raw
-RDP sessions! You can save sessions on hard drive and replay them later. This is
-useful in a context of debugging first if you are developping a RDP server or a
-RDP client but also if you want to provide a authenticating proxy to a number of
-computers (the way `Wallix use it with the WAB`_).
+RDP sessions! You can save sessions on hard drive and replay them later or create
+still images. This is really useful when debugging first if you are developping
+a RDP server or a RDP client but also if you want to provide an authenticating proxy
+to a number of computers (the way `Wallix use it with the WAB`_).
 
 .. _Wallix use it with the WAB: http://www.wallix.com/index.php/products/wallix-adminbastion
+
+Utils
+-------
+::
+
+General purpose C++ source code used by Redemption. Feel free to reuse or modify any parts
+in your own project if it pleases you in any way.
+
+
+Tools
+-------
+::
+
+Gather all usefull scripts for redemption management: sample python authentifier, 
+log parsing tools, source code generators, and so on.
+
 
 Tests
 -----
 ::
 
     tests/
-    +-- compression.perf
-    +-- fixtures
-    +-- ftest_short_session_to_bouncing_bitmap.cpp
-    +-- test_bitmap_cache.cpp
-    +-- test_bitmap.cpp
-    +-- test_bitmap_perf.cpp
-    +-- test_colors.cpp
-    +-- test_compact_to_aligned.cpp
-    +-- test_config.cpp
-    +-- test_context_as_map.cpp
-    +-- test_dico.cpp
-    +-- test_font.cpp
-    +-- test_keymap.cpp
-    +-- test_mod.hpp
-    +-- test_orders.hpp
-    +-- test_primary_order_dest_blt.cpp
-    +-- test_primary_order_glyph_index.cpp
-    +-- test_primary_order_line_to.cpp
-    +-- test_primary_order_mem_blt.cpp
-    +-- test_primary_order_opaque_rect.cpp
-    +-- test_primary_order_pat_blt.cpp
-    +-- test_primary_order_scr_blt.cpp
-    +-- test_rect.cpp
-    +-- test_region.cpp
-    +-- test_rsa_keys.cpp
-    +-- test_secondary_order_col_cache.cpp
-    +-- test_stream.cpp
-    +-- test_strings.cpp
-    +-- test_transport.cpp
-    +-- test_urt.cpp
-    +-- test_widget.cpp
-    +-- test_write_over_file.cpp
-    +-- xrdp.ini
+    ftests/
 
 Tests -- both unit and functionnal tests -- are very important to have an idea of the 
 amount of latent bugs of your program, and we are very attached to providing as
 many tests as we can.
 
 They are very useful for the developper too, because they show parts of the code in use
-thus indicating how to use it and what they should do. Unfortunately, the program is
-not tested enough, mainly because the scarce human ressources are devoted to feature adding
-and structural cleaning. We need help ! 
+thus indicating how to use it and what they should do.
+
+As you may have guessed, unit tests are put in tests/ and it's subdirectories and
+functional tests in ftests. 
+
+We are currently working on providing some coverage data for the project using gcov.
+To have a clear view of wich parts are or aren't tested.
+
 
 .. code-block:: c++
-

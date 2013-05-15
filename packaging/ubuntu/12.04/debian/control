@@ -7,7 +7,7 @@ Build-Depends:
 Package: redemption
 Architecture: amd64 
 Homepage: http://redemption.wallix.org
-Depends: locales, libswscale0, libavutil50, libavformat52, libavcodec52, libtheora0, libvorbisenc2, libmagick++3
+Depends: 
 Description: A new generation RDP proxy for WAB
     A new generation RDP proxy for WAB
     wwww: http://redemption.wallix.org
