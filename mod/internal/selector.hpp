@@ -3420,12 +3420,13 @@ struct selector_mod : public internal_mod {
 
 
 //        const char * groups = context.get(STRAUTHID_TARGET_USER);
-        const char * groups = this->ini.globals.target_user;
+        const char * groups    = this->ini.globals.target_user;
 //        const char * targets = context.get(STRAUTHID_TARGET_DEVICE);
-        const char * targets = this->ini.globals.target_device;
+        const char * targets   = this->ini.globals.target_device;
 //        const char * protocols = context.get(STRAUTHID_TARGET_PROTOCOL);
         const char * protocols = this->ini.globals.context.target_protocol;
-        const char * endtimes = context.get(STRAUTHID_END_TIME);
+//        const char * endtimes = context.get(STRAUTHID_END_TIME);
+        const char * endtimes  = this->ini.globals.context.end_time;
 
         for (size_t index = 0 ; index < 50 ; index++){
             this->grid[index].group[0] = 0;

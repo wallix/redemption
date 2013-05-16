@@ -132,12 +132,13 @@ public:
     void refresh_context()
     {
 //        char * groups = this->context.get(STRAUTHID_TARGET_USER);
-        char * groups = this->ini.globals.target_user;
+        char * groups    = this->ini.globals.target_user;
 //        char * targets = this->context.get(STRAUTHID_TARGET_DEVICE);
-        char * targets = this->ini.globals.target_device;
+        char * targets   = this->ini.globals.target_device;
 //        char * protocols = this->context.get(STRAUTHID_TARGET_PROTOCOL);
         char * protocols = const_cast<char *>((const char *)this->ini.globals.context.target_protocol);
-        char * endtimes = this->context.get(STRAUTHID_END_TIME);
+//        char * endtimes  = this->context.get(STRAUTHID_END_TIME);
+        char * endtimes  = const_cast<char *>((const char *)this->ini.globals.context.end_time);
 
         for (size_t index = 0 ; index < 50 ; index++){
             size_t size_groups = proceed_item(groups);
