@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -19,7 +19,6 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    xup module main header file
-
 */
 
 #if !defined(__XUP_HPP__)
@@ -61,18 +60,26 @@ enum {
     int width;
     int height;
     int bpp;
-    Transport *t;
+    Transport * t;
     int rop;
     int fgcolor;
     BGRPalette palette332;
 
-    xup_mod(Transport * t, struct ModContext & context, struct FrontAPI & front, uint16_t front_width, uint16_t front_height)
-        : mod_api(front_width, front_height)
-        , front(front)
+    xup_mod( Transport * t
+           , struct ModContext & context
+           , struct FrontAPI & front
+           , uint16_t front_width
+           , uint16_t front_height
+           , int context_width
+           , int context_height
+           , int context_bpp
+           )
+    : mod_api(front_width, front_height)
+    , front(front)
+    , width(context_width)
+    , height(context_height)
+    , bpp(context_bpp)
     {
-        this->width = atoi(context.get(STRAUTHID_OPT_WIDTH));
-        this->height = atoi(context.get(STRAUTHID_OPT_HEIGHT));
-        this->bpp = atoi(context.get(STRAUTHID_OPT_BPP));
         this->rop = 0xCC;
         init_palette332(this->palette332);
 
@@ -159,7 +166,6 @@ enum {
         LOG(LOG_INFO, "overloaded by subclasses");
         return;
     }
-
 
     virtual void rdp_input_invalidate(const Rect & r)
     {
@@ -376,6 +382,7 @@ enum {
     {
         this->front.text_metrics(text, width, height);
     }
+
     virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags)
     {
     }

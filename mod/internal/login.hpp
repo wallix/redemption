@@ -40,10 +40,11 @@ struct login_mod : public internal_mod {
     {
         uint32_t nb = (this->screen.rect.cy - 230) / 20;
         nb = (nb > 50)?50:nb;
-        char buffer[128];
-        sprintf(buffer, "%u", nb);
+//        char buffer[128];
+//        sprintf(buffer, "%u", nb);
 
-        context.cpy(STRAUTHID_SELECTOR_LINES_PER_PAGE, buffer);
+//        context.cpy(STRAUTHID_SELECTOR_LINES_PER_PAGE, buffer);
+        ini->globals.context.selector_lines_per_page = nb;
 
         this->signal = BACK_EVENT_NONE;
         this->button_down = 0;

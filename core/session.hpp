@@ -127,7 +127,11 @@ struct Session {
 
         try {
             this->context = new ModContext();
-            this->context->cpy(STRAUTHID_HOST, ip_source);
+//            this->context->cpy(STRAUTHID_HOST, ip_source);
+            strncpy(this->ini->globals.host, ip_source, sizeof(this->ini->globals.host));
+            this->ini->globals.host[sizeof(this->ini->globals.host) - 1] = 0;
+            this->context->cpy(_STRAUTHID_HOST, "");
+
 /*
             this->context->cpy(STRAUTHID_OPT_FILE_ENCRYPTION,
                 (this->ini->globals.enable_file_encryption ? "True" : "False"));
@@ -416,9 +420,12 @@ struct Session {
                                     }
                                     this->mod = this->no_mod;
                                 }
-                                this->context->cpy(STRAUTHID_OPT_WIDTH, this->front->client_info.width);
-                                this->context->cpy(STRAUTHID_OPT_HEIGHT, this->front->client_info.height);
-                                this->context->cpy(STRAUTHID_OPT_BPP, this->front->client_info.bpp);
+//                                this->context->cpy(STRAUTHID_OPT_WIDTH, this->front->client_info.width);
+//                                this->context->cpy(STRAUTHID_OPT_HEIGHT, this->front->client_info.height);
+//                                this->context->cpy(STRAUTHID_OPT_BPP, this->front->client_info.bpp);
+                                this->ini->globals.context.opt_width  = this->front->client_info.width;
+                                this->ini->globals.context.opt_height = this->front->client_info.height;
+                                this->ini->globals.context.opt_bpp    = this->front->client_info.bpp;
                                 bool record_video = false;
                                 bool keep_alive = false;
                                 if (!this->sesman){
@@ -569,7 +576,7 @@ struct Session {
                     }
                     this->mod = this->no_mod;
                 }
-                this->mod = new cli_mod(*this->context, *(this->front),
+                this->mod = new cli_mod(*this->context, *(this->ini), *(this->front),
                                         this->front->client_info,
                                         this->front->client_info.width,
                                         this->front->client_info.height);
@@ -595,10 +602,16 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of new mod 'INTERNAL::Close'");
                         }
+                        if (this->ini->globals.context.auth_error_message.is_empty()) {
+                            this->ini->globals.context.auth_error_message = "Connection to server ended";
+                        }
+/*
                         if (this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                             this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection to server ended");
                         }
+*/
                         this->mod = new close_mod(*this->context,
+                                                  *this->ini,
                                                   *this->front,
                                                   this->front->client_info.width,
                                                   this->front->client_info.height);
@@ -714,6 +727,7 @@ struct Session {
                         this->context->selector_focus = 8; // FOCUS_ON_CONNECT
                         this->mod = new selector_mod(
                                         *this->context,
+                                        *this->ini,
                                         *this->front,
                                         this->front->client_info.width,
                                         this->front->client_info.height
@@ -728,6 +742,7 @@ struct Session {
                         }
                         this->mod = new SelectorMod(
                             *this->context,
+                            *this->ini,
                             *this->front,
                             this->front->client_info.width,
                             this->front->client_info.height
@@ -757,32 +772,48 @@ struct Session {
                     this->mod = this->no_mod;
                 }
 
-                int client_sck = ip_connect(this->context->get(STRAUTHID_TARGET_DEVICE),
-                                            atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                int client_sck = ip_connect(//this->context->get(STRAUTHID_TARGET_DEVICE),
+                                            this->ini->globals.target_device,
+//                                            atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                                            this->ini->globals.context.target_port,
                                             4, 1000,
                                             this->ini->globals.debug.mod_xup);
 
                 if (client_sck == -1){
-                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed to connect to remote TCP host");
+//                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed to connect to remote TCP host");
+                    this->ini->globals.context.auth_error_message = "failed to connect to remote TCP host";
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
                 SocketTransport * t = new SocketTransport(
                       name
                     , client_sck
-                    , this->context->get(STRAUTHID_TARGET_DEVICE)
-                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
+//                    , this->context->get(STRAUTHID_TARGET_DEVICE)
+                    , this->ini->globals.target_device
+//                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
+                    , this->ini->globals.context.target_port
                     , this->ini->globals.debug.mod_xup);
                 this->mod_transport = t;
 
-                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote X host");
-                this->mod = new xup_mod(t, *this->context, *(this->front),
-                                        this->front->client_info.width,
-                                        this->front->client_info.height);
+//                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote X host");
+                this->ini->globals.context.auth_error_message = "failed authentification on remote X host";
+                this->mod = new xup_mod( t
+                                       , *this->context
+                                       , *this->front
+                                       , this->front->client_info.width
+                                       , this->front->client_info.height
+//                                       , atoi(this->context->get(STRAUTHID_OPT_WIDTH))
+//                                       , atoi(this->context->get(STRAUTHID_OPT_HEIGHT))
+//                                       , atoi(this->context->get(STRAUTHID_OPT_BPP))
+                                       , this->ini->globals.context.opt_width
+                                       , this->ini->globals.context.opt_height
+                                       , this->ini->globals.context.opt_bpp
+                                       );
                 this->mod->event.obj = client_sck;
                 this->mod->draw_event();
 //                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
-                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "");
+//                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "");
+                this->ini->globals.context.auth_error_message = "";
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'XUP' suceeded\n");
                 }
@@ -811,13 +842,16 @@ struct Session {
                 }
                 static const char * name = "RDP Target";
 
-                int client_sck = ip_connect(this->context->get(STRAUTHID_TARGET_DEVICE),
-                                            atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                int client_sck = ip_connect(//this->context->get(STRAUTHID_TARGET_DEVICE),
+                                            this->ini->globals.target_device,
+                                            // atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                                            this->ini->globals.context.target_port,
                                             3, 1000,
                                             this->ini->globals.debug.mod_rdp);
 
                 if (client_sck == -1){
-                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed to connect to remote TCP host");
+//                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed to connect to remote TCP host");
+                    this->ini->globals.context.auth_error_message = "failed to connect to remote TCP host";
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -825,18 +859,27 @@ struct Session {
                 SocketTransport * t = new SocketTransport(
                       name
                     , client_sck
-                    , this->context->get(STRAUTHID_TARGET_DEVICE)
-                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
+//                    , this->context->get(STRAUTHID_TARGET_DEVICE)
+                    , this->ini->globals.target_device
+//                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
+                    , this->ini->globals.context.target_port
                     , this->ini->globals.debug.mod_rdp
-                    , this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)
-                    , 8192
+//                    , this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)
+/*
+                    , const_cast<char *>((const char *)this->ini->globals.context.auth_error_message)
+                    , 1024
+*/
+                    , &this->ini->globals.context.auth_error_message
                     );
                 this->mod_transport = t;
 
-                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote RDP host");
+//                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote RDP host");
+                this->ini->globals.context.auth_error_message = "failed authentification on remote RDP host";
                 this->mod = new mod_rdp(t,
-                                    this->context->get(STRAUTHID_TARGET_USER),
-                                    this->context->get(STRAUTHID_TARGET_PASSWORD),
+//                                    this->context->get(STRAUTHID_TARGET_USER),
+                                    this->ini->globals.target_user,
+//                                    this->context->get(STRAUTHID_TARGET_PASSWORD),
+                                    this->ini->globals.context.target_password,
                                     "0.0.0.0", // client ip is silenced
                                     *this->front,
                                     hostname,
@@ -862,7 +905,8 @@ struct Session {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'RDP' suceeded\n");
                 }
-                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "");
+//                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "");
+                this->ini->globals.context.auth_error_message = "";
             }
             break;
 
@@ -882,30 +926,38 @@ struct Session {
                 static const char * name = "VNC Target";
 
 
-                int client_sck = ip_connect(this->context->get(STRAUTHID_TARGET_DEVICE),
-                                            atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                int client_sck = ip_connect(//this->context->get(STRAUTHID_TARGET_DEVICE),
+                                            this->ini->globals.target_device,
+                                            //atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                                            this->ini->globals.context.target_port,
                                             3, 1000,
                                             this->ini->globals.debug.mod_vnc);
 
                 if (client_sck == -1){
-                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed to connect to remote TCP host");
+//                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed to connect to remote TCP host");
+                    this->ini->globals.context.auth_error_message = "failed to connect to remote TCP host";
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
                 SocketTransport * t = new SocketTransport(
                       name
                     , client_sck
-                    , this->context->get(STRAUTHID_TARGET_DEVICE)
-                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
-                    ,this->ini->globals.debug.mod_vnc);
+//                    , this->context->get(STRAUTHID_TARGET_DEVICE)
+                    , this->ini->globals.target_device
+//                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
+                    , this->ini->globals.context.target_port
+                    , this->ini->globals.debug.mod_vnc);
                 this->mod_transport = t;
 
-                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote VNC host");
+//                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote VNC host");
+                this->ini->globals.context.auth_error_message = "failed authentification on remote VNC host";
 
                 this->mod = new mod_vnc(
                       t
-                    , this->context->get(STRAUTHID_TARGET_USER)
-                    , this->context->get(STRAUTHID_TARGET_PASSWORD)
+//                    , this->context->get(STRAUTHID_TARGET_USER)
+                    , this->ini->globals.target_user
+//                    , this->context->get(STRAUTHID_TARGET_PASSWORD)
+                    , this->ini->globals.context.target_password
                     , *this->front
                     , this->front->client_info.width
                     , this->front->client_info.height
@@ -920,7 +972,8 @@ struct Session {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'VNC' suceeded\n");
                 }
-                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "");
+//                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "");
+                this->ini->globals.context.auth_error_message = "";
             }
             break;
 

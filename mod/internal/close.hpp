@@ -32,14 +32,15 @@ struct close_mod : public internal_mod {
     Widget* button_down;
     bool closing;
 
-    close_mod(ModContext & context, FrontAPI & front, uint16_t width, uint16_t height)
+    close_mod(ModContext & context, Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height)
             : internal_mod(front, width, height), closing(false)
     {
         this->button_down = NULL;
 
         int win_width = 600;
         bool done = false;
-        const char * message = context.get(STRAUTHID_AUTH_ERROR_MESSAGE);
+//        const char * message = context.get(STRAUTHID_AUTH_ERROR_MESSAGE);
+        const char * message = ini.globals.context.auth_error_message;
         int line = 0;
         while (!done) {
             const char * str = strstr(message, "<br>");
@@ -65,7 +66,7 @@ struct close_mod : public internal_mod {
                win_height);
 
         this->close_window = new wab_close(this,
-            r, context,
+            r, context, ini,
             &this->screen, // parent
             GREY,
             "Close",

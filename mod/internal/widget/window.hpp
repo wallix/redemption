@@ -30,6 +30,7 @@
 #include "internal/widget/edit.hpp"
 #include "internal/widget/image.hpp"
 #include "modcontext.hpp"
+#include "config.hpp"
 
 struct window : public Widget
 {
@@ -249,16 +250,18 @@ struct window_login : public window
                     SHARE_PATH "/" LOGIN_LOGO24, 24);
         }
 
-        if (context.is_asked(STRAUTHID_TARGET_USER)
-        ||  context.is_asked(STRAUTHID_TARGET_DEVICE)){
-            if (context.is_asked(STRAUTHID_AUTH_USER)){
+        if (context.is_asked(_STRAUTHID_TARGET_USER)
+        ||  context.is_asked(_STRAUTHID_TARGET_DEVICE)){
+            if (context.is_asked(_STRAUTHID_AUTH_USER)){
                 ini->account.username[0] = 0;
             }
             else {
-                strcpy(ini->account.username, context.get(STRAUTHID_AUTH_USER));
+//                strcpy(ini->account.username, context.get(STRAUTHID_AUTH_USER));
+                strncpy(ini->account.username, this->ini->globals.auth_user, sizeof(ini->account.username));
+                ini->account.username[sizeof(ini->account.username) - 1] = 0;
             }
         }
-        else if (context.is_asked(STRAUTHID_AUTH_USER)) {
+        else if (context.is_asked(_STRAUTHID_AUTH_USER)) {
             ini->account.username[0] = 0;
         }
         else {
@@ -266,11 +269,17 @@ struct window_login : public window
                  "method used below il likely to show @: if target fields are empty")
             char buffer[256];
             snprintf( buffer, 256, "%s@%s:%s%s%s"
-                    , context.get(STRAUTHID_TARGET_USER)
-                    , context.get(STRAUTHID_TARGET_DEVICE)
-                    , context.get(STRAUTHID_TARGET_PROTOCOL)[0]?context.get(STRAUTHID_TARGET_PROTOCOL):""
-                    , context.get(STRAUTHID_TARGET_PROTOCOL)[0]?":":""
-                    , context.get(STRAUTHID_AUTH_USER)
+//                    , context.get(STRAUTHID_TARGET_USER)
+                    , this->ini->globals.target_user
+//                    , context.get(STRAUTHID_TARGET_DEVICE)
+                    , this->ini->globals.target_device
+//                    , context.get(STRAUTHID_TARGET_PROTOCOL)[0]?context.get(STRAUTHID_TARGET_PROTOCOL):""
+                    , (!this->ini->globals.context.target_protocol.is_empty() ?
+                           (const char *)this->ini->globals.context.target_protocol : "")
+//                    , context.get(STRAUTHID_TARGET_PROTOCOL)[0]?":":""
+                    , (!this->ini->globals.context.target_protocol.is_empty() ? ":" : "")
+//                    , context.get(STRAUTHID_AUTH_USER)
+                    , this->ini->globals.auth_user
                     );
             strcpy(ini->account.username, buffer);
         }
@@ -418,10 +427,13 @@ struct window_login : public window
                 break;
             }
             else if (0 == strcmp(label->caption1, ini->globals.translation.login)){
-                this->context.parse_username(edit->buffer);
+                this->context.parse_username(edit->buffer, *this->ini);
             }
             else if (0 == strcmp(label->caption1, ini->globals.translation.password)){
-                this->context.cpy(STRAUTHID_PASSWORD, edit->buffer);
+//                this->context.cpy(STRAUTHID_PASSWORD, edit->buffer);
+                this->ini->globals.context.password = edit->buffer;
+
+                this->context.cpy(_STRAUTHID_PASSWORD, "");
             }
             i += 2;
         }
@@ -527,7 +539,7 @@ struct wab_close : public window
     ModContext & context;
     window * help;
 
-    wab_close(mod_api * mod, const Rect & r, ModContext & context, Widget * parent, int bg_color, const char * title, int regular)
+    wab_close(mod_api * mod, const Rect & r, ModContext & context, Inifile & ini, Widget * parent, int bg_color, const char * title, int regular)
     : window(mod, r, parent, bg_color, title),
       context(context)
     {
@@ -552,20 +564,23 @@ struct wab_close : public window
 
         b = new widget_label(this->mod,
             Rect(10 + ((this->rect.cx >= 400) ?  230 : 70), 60 + 25 * count, 350, 20),
-            this, context.is_asked(STRAUTHID_AUTH_USER)?"":context.get(STRAUTHID_AUTH_USER));
+//            this, context.is_asked(_STRAUTHID_AUTH_USER)? "" : context.get(STRAUTHID_AUTH_USER));
+            this, context.is_asked(_STRAUTHID_AUTH_USER)? "" : ini.globals.auth_user);
 
         b->id = 100 + 2 * count;
         count ++;
 
         char target[255];
-        if (context.is_asked(STRAUTHID_TARGET_USER)
-        ||context.is_asked(STRAUTHID_TARGET_DEVICE)){
+        if (context.is_asked(_STRAUTHID_TARGET_USER)
+        ||context.is_asked(_STRAUTHID_TARGET_DEVICE)){
             target[0] = 0;
         }
         else {
             snprintf(target, 255, "%s@%s",
-                context.get(STRAUTHID_TARGET_USER),
-                context.get(STRAUTHID_TARGET_DEVICE));
+//                context.get(STRAUTHID_TARGET_USER),
+                ini.globals.target_user,
+//                context.get(STRAUTHID_TARGET_DEVICE));
+                ini.globals.target_device);
         }
 
         b = new widget_label(this->mod,
@@ -592,7 +607,8 @@ struct wab_close : public window
         bool done = false;
         int line = 0;
         const char * message;
-        message = context.get(STRAUTHID_AUTH_ERROR_MESSAGE);
+//        message = context.get(STRAUTHID_AUTH_ERROR_MESSAGE);
+        message = ini.globals.context.auth_error_message;
         while (!done) {
             const char * str = strstr(message, "<br>");
             char tmp[256];

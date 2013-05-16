@@ -223,6 +223,31 @@ class SessionManager {
 
                         ini->setglobal(global_key, res_value, global_section);
 
+                        if (
+                              (strcasecmp((char *)keyword, _STRAUTHID_OPT_WIDTH) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_OPT_HEIGHT) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_OPT_BPP) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_SELECTOR) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_SELECTOR_CURRENT_PAGE) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_SELECTOR_DEVICE_FILTER) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_SELECTOR_GROUP_FILTER) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_SELECTOR_LINES_PER_PAGE) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_TARGET_DEVICE) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_TARGET_PASSWORD) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_TARGET_PROTOCOL) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_TARGET_USER) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_AUTH_USER) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_HOST) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_PASSWORD) == 0)
+                           ){
+                            if ((0==strncasecmp((char*)value, "ask", 3))){
+                                this->context.ask((char*)keyword);
+                            }
+                            else {
+                                this->context.cpy((char*)keyword, "");
+                            }
+                        }
+
                         if (  (strncasecmp((char *)keyword, "password", 8) == 0)
                            || (strncasecmp((char *)keyword, "target_password", 15) == 0)) {
                             LOG(LOG_INFO, "receiving '%s'=<hidden>\n", (char*)keyword);
@@ -305,7 +330,8 @@ class SessionManager {
         TODO("we should manage a mode to disconnect on inactivity when we are on login box or on selector")
         if (now > (keepalive_time + this->keepalive_grace_delay)){
             LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-            this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (timeout)");
+//            this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (timeout)");
+            this->ini->globals.context.auth_error_message = "Connection closed by manager (timeout)";
             return false;
         }
 
@@ -330,7 +356,8 @@ class SessionManager {
             if (trans->last_quantum_received == 0){
                 this->tick_count++;
                 if (this->tick_count > this->max_tick){ // 15 minutes before closing on inactivity
-                    this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed on inactivity");
+//                    this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed on inactivity");
+                    this->ini->globals.context.auth_error_message = "Connection closed on inactivity";
                     LOG(LOG_INFO, "Session ACL inactivity : closing");
                     this->mod_state = MOD_STATE_DONE_CLOSE;
                     return false;
@@ -357,7 +384,8 @@ class SessionManager {
                 this->auth_trans_t->send(stream.data, total_length);
             }
             catch (...){
-                this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (ACL closed)");
+//                this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (ACL closed)");
+                this->ini->globals.context.auth_error_message = "Connection closed by manager (ACL closed)";
                 this->mod_state = MOD_STATE_DONE_CLOSE;
                 return false;
             }
@@ -375,7 +403,8 @@ class SessionManager {
                 }
             }
             catch (...){
-                this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (ACL closed)");
+//                this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (ACL closed)");
+                this->ini->globals.context.auth_error_message = "Connection closed by manager (ACL closed)";
                 this->mod_state = MOD_STATE_DONE_CLOSE;
                 return false;
             }
@@ -389,9 +418,11 @@ class SessionManager {
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::get_mod_from_protocol");
         }
-        const char * protocol = this->context.get(STRAUTHID_TARGET_PROTOCOL);
+//        const char * protocol = this->context.get(STRAUTHID_TARGET_PROTOCOL);
+        const char * protocol = this->ini->globals.context.target_protocol;
         if (this->internal_domain){
-            char * target = this->context.get(STRAUTHID_TARGET_DEVICE);
+//            char * target = this->context.get(STRAUTHID_TARGET_DEVICE);
+            char * target = this->ini->globals.target_device;
             if (0 == strncmp(target, "autotest", 8)){
                 protocol = "INTERNAL";
             }
@@ -416,7 +447,8 @@ class SessionManager {
             res = MCTX_STATUS_XUP;
         }
         else if (strncasecmp(protocol, "INTERNAL", 8) == 0){
-            char * target = this->context.get(STRAUTHID_TARGET_DEVICE);
+//            char * target = this->context.get(STRAUTHID_TARGET_DEVICE);
+            char * target = this->ini->globals.target_device;
             if (this->verbose & 0x4){
                 LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL");
             }
@@ -431,7 +463,8 @@ class SessionManager {
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL test");
                 }
-                char * user = this->context.get(STRAUTHID_TARGET_USER);
+//                char * user = this->context.get(STRAUTHID_TARGET_USER);
+                char * user = this->ini->globals.target_user;
                 size_t len_user = strlen(user);
                 strcpy(this->context.movie, user);
                 if (0 != strcmp(".mwrm", user + len_user - 5)){
@@ -521,26 +554,27 @@ class SessionManager {
             LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS state");
         }
         {
-            if (this->context.is_asked(STRAUTHID_AUTH_USER)){
+            if (this->context.is_asked(_STRAUTHID_AUTH_USER)){
                 this->mod_state = MOD_STATE_DONE_LOGIN;
                 nextmod = INTERNAL_LOGIN;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (this->context.is_asked(STRAUTHID_PASSWORD)){
+            else if (this->context.is_asked(_STRAUTHID_PASSWORD)){
                 this->mod_state = MOD_STATE_DONE_LOGIN;
                 nextmod = INTERNAL_LOGIN;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (!this->context.is_asked(STRAUTHID_SELECTOR)
-                 &&   this->context.get_bool(STRAUTHID_SELECTOR)
-                 &&  !this->context.is_asked(STRAUTHID_TARGET_DEVICE)
-                 &&  !this->context.is_asked(STRAUTHID_TARGET_USER)){
+            else if (!this->context.is_asked(_STRAUTHID_SELECTOR)
+//                 &&   this->context.get_bool(STRAUTHID_SELECTOR)
+                 &&   this->ini->globals.context.selector
+                 &&  !this->context.is_asked(_STRAUTHID_TARGET_DEVICE)
+                 &&  !this->context.is_asked(_STRAUTHID_TARGET_USER)){
                 this->mod_state = MOD_STATE_DONE_SELECTOR;
                 nextmod = INTERNAL_SELECTOR;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (this->context.is_asked(STRAUTHID_TARGET_DEVICE)
-                 ||  this->context.is_asked(STRAUTHID_TARGET_USER)){
+            else if (this->context.is_asked(_STRAUTHID_TARGET_DEVICE)
+                 ||  this->context.is_asked(_STRAUTHID_TARGET_USER)){
                     this->mod_state = MOD_STATE_DONE_LOGIN;
                     nextmod = INTERNAL_LOGIN;
                     return MCTX_STATUS_INTERNAL;
@@ -559,18 +593,29 @@ class SessionManager {
 //                record_video = this->context.get_bool(STRAUTHID_OPT_MOVIE);
                 record_video = this->ini->globals.movie;
                 keep_alive = true;
+/*
                 if (context.get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                     context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "End of connection");
+                }
+*/
+                if (this->ini->globals.context.auth_error_message.is_empty()) {
+                    this->ini->globals.context.auth_error_message = "End of connection";
                 }
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
                 return this->get_mod_from_protocol(nextmod);
             }
             else {
                 if (context.get(STRAUTHID_REJECTED)[0] != 0){
-                    context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, context.get(STRAUTHID_REJECTED));
+//                    context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, context.get(STRAUTHID_REJECTED));
+                    this->ini->globals.context.auth_error_message = context.get(STRAUTHID_REJECTED);
                 }
+/*
                 if (context.get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                     context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Authentifier service failed");
+                }
+*/
+                if (this->ini->globals.context.auth_error_message.is_empty()) {
+                    this->ini->globals.context.auth_error_message = "Authentifier service failed";
                 }
                 TODO(" check life cycle of auth_trans_t")
                 if (this->auth_trans_t){
@@ -620,7 +665,43 @@ class SessionManager {
             stream.out_copy_bytes("\nASK\n",5);
         }
         else {
-            const char * tmp = this->context.get(key);
+            char         temp_buffer[256];
+            const char * tmp;
+
+//            const char * tmp = this->context.get(key);
+            if (  !strcasecmp(key, _STRAUTHID_OPT_WIDTH)
+               || !strcasecmp(key, _STRAUTHID_OPT_HEIGHT)
+               || !strcasecmp(key, _STRAUTHID_OPT_BPP)
+               || !strcasecmp(key, _STRAUTHID_SELECTOR)
+               || !strcasecmp(key, _STRAUTHID_SELECTOR_CURRENT_PAGE)
+               || !strcasecmp(key, _STRAUTHID_SELECTOR_DEVICE_FILTER)
+               || !strcasecmp(key, _STRAUTHID_SELECTOR_GROUP_FILTER)
+               || !strcasecmp(key, _STRAUTHID_SELECTOR_LINES_PER_PAGE)
+               || !strcasecmp(key, _STRAUTHID_SELECTOR_NUMBER_OF_PAGES)
+               || !strcasecmp(key, _STRAUTHID_TARGET_DEVICE)
+               || !strcasecmp(key, _STRAUTHID_TARGET_PASSWORD)
+               || !strcasecmp(key, _STRAUTHID_TARGET_PORT)
+               || !strcasecmp(key, _STRAUTHID_TARGET_PROTOCOL)
+               || !strcasecmp(key, _STRAUTHID_TARGET_USER)
+               || !strcasecmp(key, _STRAUTHID_AUTH_USER)
+               || !strcasecmp(key, _STRAUTHID_HOST)
+               || !strcasecmp(key, _STRAUTHID_PASSWORD)
+               ) {
+                const char * global_section;
+                const char * global_key;
+
+                if (get_global_info(key, global_section, global_key)) {
+                    tmp = this->ini->context_get_value(global_key, temp_buffer, sizeof(temp_buffer));
+                }
+                else {
+                    LOG(LOG_WARNING, "Context value \"%s\" is not found\n", key);
+                    tmp = "";
+                }
+            }
+            else {
+                tmp = this->context.get(key);
+            }
+
             if ((strncasecmp("password", (char*)key, 8) == 0)
             ||(strncasecmp("target_password", (char*)key, 15) == 0)){
                 LOG(LOG_INFO, "sending %s=<hidden>\n", key);
@@ -672,21 +753,21 @@ class SessionManager {
             this->out_item(stream, STRAUTHID_PROXY_TYPE);
             this->out_item(stream, STRAUTHID_DISPLAY_MESSAGE);
             this->out_item(stream, STRAUTHID_ACCEPT_MESSAGE);
-            this->out_item(stream, STRAUTHID_HOST);
-            this->out_item(stream, STRAUTHID_AUTH_USER);
-            this->out_item(stream, STRAUTHID_PASSWORD);
-            this->out_item(stream, STRAUTHID_TARGET_USER);
-            this->out_item(stream, STRAUTHID_TARGET_DEVICE);
-            this->out_item(stream, STRAUTHID_TARGET_PROTOCOL);
-            this->out_item(stream, STRAUTHID_SELECTOR);
-            this->out_item(stream, STRAUTHID_SELECTOR_GROUP_FILTER);
-            this->out_item(stream, STRAUTHID_SELECTOR_DEVICE_FILTER);
-            this->out_item(stream, STRAUTHID_SELECTOR_LINES_PER_PAGE);
-            this->out_item(stream, STRAUTHID_SELECTOR_CURRENT_PAGE);
-            this->out_item(stream, STRAUTHID_TARGET_PASSWORD);
-            this->out_item(stream, STRAUTHID_OPT_WIDTH);
-            this->out_item(stream, STRAUTHID_OPT_HEIGHT);
-            this->out_item(stream, STRAUTHID_OPT_BPP);
+            this->out_item(stream, _STRAUTHID_HOST);
+            this->out_item(stream, _STRAUTHID_AUTH_USER);
+            this->out_item(stream, _STRAUTHID_PASSWORD);
+            this->out_item(stream, _STRAUTHID_TARGET_USER);
+            this->out_item(stream, _STRAUTHID_TARGET_DEVICE);
+            this->out_item(stream, _STRAUTHID_TARGET_PROTOCOL);
+            this->out_item(stream, _STRAUTHID_SELECTOR);
+            this->out_item(stream, _STRAUTHID_SELECTOR_GROUP_FILTER);
+            this->out_item(stream, _STRAUTHID_SELECTOR_DEVICE_FILTER);
+            this->out_item(stream, _STRAUTHID_SELECTOR_LINES_PER_PAGE);
+            this->out_item(stream, _STRAUTHID_SELECTOR_CURRENT_PAGE);
+            this->out_item(stream, _STRAUTHID_TARGET_PASSWORD);
+            this->out_item(stream, _STRAUTHID_OPT_WIDTH);
+            this->out_item(stream, _STRAUTHID_OPT_HEIGHT);
+            this->out_item(stream, _STRAUTHID_OPT_BPP);
             // send trace seal if and only if there is one
             if (this->context.get(STRAUTHID_TRACE_SEAL)){
                 this->out_item(stream, STRAUTHID_TRACE_SEAL);
@@ -838,7 +919,87 @@ class SessionManager {
             global_section  = GLOBAL_SECTION_GLOBALS;
             global_key      = "shell_working_directory";
         }
+        // Options
+        else if (!strcmp(keyword, _STRAUTHID_OPT_BITRATE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "opt_bitrate";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_FRAMERATE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "opt_framerate";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_QSCALE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "opt_qscale";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_WIDTH)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "opt_width";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_HEIGHT)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "opt_height";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_OPT_BPP)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "opt_bpp";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_SELECTOR)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "selector";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_SELECTOR_CURRENT_PAGE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "selector_current_page";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_SELECTOR_DEVICE_FILTER)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "selector_device_filter";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_SELECTOR_GROUP_FILTER)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "selector_group_filter";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_SELECTOR_LINES_PER_PAGE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "selector_lines_per_page";
+        }
+
+        else if (!strcmp(keyword, _STRAUTHID_TARGET_DEVICE)) {
+            global_section  = GLOBAL_SECTION_GLOBALS;
+            global_key      = "target_device";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TARGET_PASSWORD)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "target_password";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TARGET_PORT)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "target_port";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TARGET_PROTOCOL)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "target_protocol";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TARGET_USER)) {
+            global_section  = GLOBAL_SECTION_GLOBALS;
+            global_key      = "target_user";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_AUTH_USER)) {
+            global_section  = GLOBAL_SECTION_GLOBALS;
+            global_key      = "auth_user";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_HOST)) {
+            global_section  = GLOBAL_SECTION_GLOBALS;
+            global_key      = "host";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_PASSWORD)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "password";
+        }
         else {
+//            LOG(LOG_WARNING, "get_global_info: unknown keyword = %s", keyword);
+
             global_section  =
             global_key      = NULL;
 

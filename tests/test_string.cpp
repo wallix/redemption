@@ -45,9 +45,30 @@ BOOST_AUTO_TEST_CASE(TestString)
 
     BOOST_CHECK(!strcmp(template_string, str));
 
+
+    str = 0;
+
+    BOOST_CHECK(!strcmp("", str));
+
+
+    str += "0123456789";
+
+    BOOST_CHECK(!strcmp("0123456789", str));
+
+
     str += "ABCDEF";
 
     BOOST_CHECK(!strcmp("0123456789ABCDEF", str));
+
+
+    str += 0;
+
+    BOOST_CHECK(!strcmp("0123456789ABCDEF", str));
+
+
+    str = "";
+
+    BOOST_CHECK(!strcmp("", str));
 
 
     template_string = "01234567890123456789012345678901234567890123456789"
