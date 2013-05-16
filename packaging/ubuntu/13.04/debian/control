@@ -1,0 +1,13 @@
+Source: redemption
+Section: x11
+Priority: extra
+Maintainer: WAB Dev Team <wab@wallix.com>
+Build-Depends: 
+
+Package: redemption
+Architecture: amd64 
+Homepage: http://redemption.wallix.org
+Depends: 
+Description: A new generation RDP proxy for WAB
+    A new generation RDP proxy for WAB
+    wwww: http://redemption.wallix.org

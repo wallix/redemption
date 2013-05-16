@@ -1,0 +1,13 @@
+etc/rdpproxy/rdpproxy.ini
+usr/local/bin/rdpproxy
+usr/local/bin/redrec
+usr/local/share/rdpproxy/ad24b.bmp
+usr/local/share/rdpproxy/ad24b-xxx.bmp
+usr/local/share/rdpproxy/cursor0.cur
+usr/local/share/rdpproxy/cursor1.cur
+usr/local/share/rdpproxy/FreeSans.ttf
+usr/local/share/rdpproxy/sans-10.fv1
+usr/local/share/rdpproxy/xrdp24b.bmp
+usr/local/share/rdpproxy/xrdp24b.jpg
+usr/local/share/rdpproxy/xrdp24b-redemption.bmp
+usr/local/share/rdpproxy/xrdp24b-wallix.bmp
