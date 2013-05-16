@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
         for d in sections:
             if d.get('Source:') == 'redemption':
-                os.system("apt-get install %s" % d.get('Build-depends:').split(r'\s*,\s*').join(' '))
+                os.system("apt-get install %s" % ' '.join(d.get('Build-Depends:').split(r',')))
                 exit(0)
 
     except Exception, e:
