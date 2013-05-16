@@ -1,13 +1,13 @@
 Source: redemption
-Section: x11
+Section: net
 Priority: extra
 Maintainer: WAB Dev Team <wab@wallix.com>
-Build-Depends: 
+Build-Depends: git, dpkg-dev, debhelper, bjam, boost-build, libboost-program-options-dev, libboost-test1.42-dev, libssl-dev, libpng-dev
 
 Package: redemption
-Architecture: amd64 
-Homepage: http://redemption.wallix.org
-Depends: 
+Architecture: i386 
+Homepage: https://github.com/wallix/redemption
+Depends: libboost-program-options1.42.0 libpng libssl0.9.8
 Description: A new generation RDP proxy for WAB
     A new generation RDP proxy for WAB
-    wwww: http://redemption.wallix.org
+    wwww: https://github.com/wallix/redemption
