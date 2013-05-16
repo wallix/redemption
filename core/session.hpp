@@ -65,6 +65,7 @@
 #include "cli/cli_mod.hpp"
 
 #include "internal/widget2/selector_mod.hpp"
+#include "internal/widget2/widget2_mod.hpp"
 
 using namespace std;
 
@@ -736,9 +737,24 @@ struct Session {
                             LOG(LOG_INFO, "Session::internal module 'selector' ready");
                         }
                     break;
-                    case INTERNAL_WIDGET2_TEST:
+                    case INTERNAL_WIDGET2_CLOSE:
                         if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'widget2_selecteur_test'");
+                            LOG(LOG_INFO, "Session::Creation of internal module 'CloseMod'");
+                        }
+                        this->mod = new widget2_mod(
+                            *this->context,
+                            *this->ini,
+                            *this->front,
+                            this->front->client_info.width,
+                            this->front->client_info.height
+                        );
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::internal module 'CloseMod' ready");
+                        }
+                    break;
+                    case INTERNAL_WIDGET2_SELECTOR:
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::Creation of internal module 'SelectorMod'");
                         }
                         this->mod = new SelectorMod(
                             *this->context,
@@ -748,7 +764,7 @@ struct Session {
                             this->front->client_info.height
                         );
                         if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'widget2_test' ready");
+                            LOG(LOG_INFO, "Session::internal module 'SelectorMod' ready");
                         }
                     break;
                     default:

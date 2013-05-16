@@ -39,7 +39,8 @@ typedef enum {
     INTERNAL_BOUNCER2,
     INTERNAL_TEST,
     INTERNAL_CARD,
-    INTERNAL_WIDGET2_TEST,
+    INTERNAL_WIDGET2_SELECTOR,
+    INTERNAL_WIDGET2_CLOSE,
 } submodule_t;
 
 enum {
@@ -490,11 +491,17 @@ class SessionManager {
                 }
                 nextmod = INTERNAL_CLOSE;
             }
-            else if (0 == strcmp(target, "widget2_test")){
+            else if (0 == strcmp(target, "widget2_selector")){
                 if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_test");
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_selector");
                 }
-                nextmod = INTERNAL_WIDGET2_TEST;
+                nextmod = INTERNAL_WIDGET2_SELECTOR;
+            }
+            else if (0 == strcmp(target, "widget2_close")){
+                if (this->verbose & 0x4){
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
+                }
+                nextmod = INTERNAL_WIDGET2_CLOSE;
             }
             else {
                 if (this->verbose & 0x4){

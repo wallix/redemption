@@ -40,7 +40,7 @@ constant FIXTURES_PATH : [ setvar FIXTURES_PATH : ./tests/fixtures ] ;
 constant ETC_PREFIX : [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
 
 rule defines ( properties * )
-{  
+{
     local defs ;
     defs += <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
     defs += <define>CFG_PATH='\"$(ETC_PREFIX)\"' ;
@@ -375,7 +375,7 @@ unit-test test_widget2_password : tests/widget2/test_widget2_password.cpp png z 
 
 # unit-test test_widget2_dialog : tests/widget2/test_widget2_dialog.cpp png z openssl crypto libboost_unit_test ;
 # unit-test test_widget2_login : tests/widget2/test_widget2_login.cpp png z openssl crypto libboost_unit_test ;
-unit-test test_widget2_wab_close : tests/widget2/test_widget2_wab_close.cpp png z openssl crypto libboost_unit_test ;
+# unit-test test_widget2_wab_close : tests/widget2/test_widget2_wab_close.cpp png z openssl crypto libboost_unit_test ;
 
 # unit-test test_widget2_selector : tests/widget2/test_widget2_selector.cpp png z openssl crypto libboost_unit_test ;
 

@@ -41,22 +41,15 @@ public:
 
 private:
     struct temporary_text {
-        char buffer[WidgetLabel::buffer_size];
-        const char * text;
+        char text[WidgetLabel::buffer_size];
 
         temporary_text(const char * lhs, const char * rhs)
         {
-            if (rhs && *rhs) {
-                size_t len = std::min(WidgetLabel::buffer_size - 1, strlen(lhs));
-                memcpy(this->buffer, lhs, len);
-                size_t len2 = std::min(WidgetLabel::buffer_size - 1 - len, strlen(rhs));
-                memcpy(&this->buffer[len], rhs, len2);
-                this->buffer[len + len2] = '\0';
-                this->text = this->buffer;
-            }
-            else {
-                this->text = lhs;
-            }
+            size_t len = std::min(WidgetLabel::buffer_size - 1, strlen(lhs));
+            memcpy(this->text, lhs, len);
+            size_t len2 = std::min(WidgetLabel::buffer_size - 1 - len, strlen(rhs));
+            memcpy(&this->text[len], rhs, len2);
+            this->text[len + len2] = '\0';
         }
     };
 
@@ -68,10 +61,10 @@ public:
     : Window(drawable, Rect(x,y,1,1), parent, notifier, "Connection closed", bgcolor, group_id)
     , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_LOGO24, this, NULL, -10)
     , username_label(drawable, this->img.cx() + 20, 0, this, NULL,
-                     temporary_text("Username: ", username).text,
+                     username && *username ? temporary_text("Username: ", username).text : "Username: ",
                      true, -11, fgcolor, bgcolor)
     , target_label(drawable, this->img.cx() + 20, 0, this, NULL,
-                   temporary_text("Target: ", target).text,
+                   target && *target ? temporary_text("Target: ", target).text : "Target: ",
                    true, -12, fgcolor, bgcolor)
     , cancel(drawable, 0, 0, this, this, "Cancel", true, -13, BLACK, WHITE, 6, 2)
     , diagnostic(drawable, this->img.cx() + 20, 0, this, NULL,

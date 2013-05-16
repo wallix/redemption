@@ -107,6 +107,18 @@ public:
         this->label.rect.cy = h - 2;
     }
 
+    virtual void set_xy(int16_t x, int16_t y)
+    {
+        this->set_edit_x(x);
+        this->set_edit_y(y);
+    }
+
+    virtual void set_wh(uint16_t w, uint16_t h)
+    {
+        this->set_edit_cx(w);
+        this->set_edit_cy(h);
+    }
+
     virtual void draw(const Rect& clip)
     {
         this->label.draw(clip);
