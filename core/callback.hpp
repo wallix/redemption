@@ -76,7 +76,7 @@ struct Callback : RdpInput
     {
     }
     // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
-    virtual void send_auth_channel_data(char * data) {};
+    virtual void send_auth_channel_data(const char * data) {};
     virtual void rdp_input_up_and_running() { /* LOG(LOG_ERR, "CB:UP_AND_RUNNING"); */}
 };
 

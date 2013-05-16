@@ -34,13 +34,15 @@ struct dialog_mod : public internal_mod {
     Widget* button_down;
     bool refuse_flag;
     ModContext & context;
+    Inifile & ini;
 
     dialog_mod(ModContext & context,
                FrontAPI & front, uint16_t width, uint16_t height,
-               const char *message, const char * refuse, Inifile * ini)
+               const char *message, const char * refuse, Inifile & ini)
             : internal_mod(front, width, height)
             , refuse_flag(refuse != NULL)
             , context(context)
+            , ini(ini)
     {
         this->button_down = 0;
 
@@ -84,7 +86,7 @@ struct dialog_mod : public internal_mod {
             &this->screen, // parent
             GREY,
             "Information",
-            ini,
+            &ini,
             regular,
             message,
             refuse);
@@ -255,7 +257,15 @@ struct dialog_mod : public internal_mod {
                 {
                     uint32_t c = keymap->get_char();
                     if (c == ' '){
-                        this->context.cpy(this->refuse_flag?STRAUTHID_ACCEPT_MESSAGE:STRAUTHID_DISPLAY_MESSAGE, "True");
+//                        this->context.cpy(this->refuse_flag?STRAUTHID_ACCEPT_MESSAGE:STRAUTHID_DISPLAY_MESSAGE, "True");
+                        if (this->refuse_flag) {
+                            this->ini.globals.context.accept_message = "True";
+                            this->context.cpy(_STRAUTHID_ACCEPT_MESSAGE, "");
+                        }
+                        else {
+                            this->ini.globals.context.display_message = "True";
+                            this->context.cpy(_STRAUTHID_DISPLAY_MESSAGE, "");
+                        }
                         this->event.set();
                         this->signal = BACK_EVENT_NEXT;
                     }
@@ -263,7 +273,15 @@ struct dialog_mod : public internal_mod {
                 break;
                 case Keymap2::KEVENT_ENTER:
                     keymap->get_kevent();
-                    this->context.cpy(this->refuse_flag?STRAUTHID_ACCEPT_MESSAGE:STRAUTHID_DISPLAY_MESSAGE, "True");
+//                    this->context.cpy(this->refuse_flag?STRAUTHID_ACCEPT_MESSAGE:STRAUTHID_DISPLAY_MESSAGE, "True");
+                    if (this->refuse_flag) {
+                        this->ini.globals.context.accept_message = "True";
+                        this->context.cpy(_STRAUTHID_ACCEPT_MESSAGE, "");
+                    }
+                    else {
+                        this->ini.globals.context.display_message = "True";
+                        this->context.cpy(_STRAUTHID_DISPLAY_MESSAGE, "");
+                    }
                     this->event.set();
                     this->signal = BACK_EVENT_NEXT;
                 break;
