@@ -79,12 +79,17 @@ static inline unsigned logtype_from_cstr(const char * str)
     return res;
 }
 
-static inline unsigned long_from_cstr(const char * str)
+static inline unsigned ulong_from_cstr(const char * str)
 { // 10 = 10, 0x10 = 16
     if ((*str == '0') && (*(str + 1) == 'x')){
         return strtol(str + 2, 0, 16);
     }
 
+    return atol(str);
+}
+
+static inline signed _long_from_cstr(const char * str)
+{
     return atol(str);
 }
 
@@ -309,6 +314,28 @@ struct Inifile {
             redemption::string message;
             redemption::string accept_message;
             redemption::string display_message;
+
+            redemption::string rejected;
+
+            bool               authenticated;
+
+            bool               ask_keepalive;
+            bool               ask_proxy_type;
+
+            bool               keepalive;
+            redemption::string proxy_type;
+
+            bool               ask_trace_seal;
+
+            redemption::string trace_seal;
+
+            redemption::string session_id;
+
+            unsigned           end_date_cnx;
+            redemption::string end_time;
+
+            redemption::string mode_console;
+            signed             timezone;
         } context;
     } globals;
 
@@ -504,6 +531,28 @@ struct Inifile {
         this->globals.context.message                     = "";
         this->globals.context.accept_message              = "";
         this->globals.context.display_message             = "";
+
+        this->globals.context.rejected                    = "Connection refused by authentifier.";
+
+        this->globals.context.authenticated               = false;
+
+        this->globals.context.ask_keepalive               = true;
+        this->globals.context.ask_proxy_type              = false;
+
+        this->globals.context.keepalive                   = false;
+        this->globals.context.proxy_type                  = "RDP";
+
+        this->globals.context.ask_trace_seal              = false;
+
+        this->globals.context.trace_seal                  = "";
+
+        this->globals.context.session_id                  = "";
+
+        this->globals.context.end_date_cnx                = 0;
+        this->globals.context.end_time                    = "";
+
+        this->globals.context.mode_console                = "allow";
+        this->globals.context.timezone                    = -3600;
     };
 
     void cparse(istream & ifs){
@@ -618,7 +667,7 @@ struct Inifile {
                 this->globals.bitmap_compression = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "port")){
-                this->globals.port = long_from_cstr(value);
+                this->globals.port = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "nomouse")){
                 this->globals.nomouse = bool_from_cstr(value);
@@ -634,16 +683,16 @@ struct Inifile {
                 this->globals.authip[sizeof(this->globals.authip) - 1] = 0;
             }
             else if (0 == strcmp(key, "authport")){
-                this->globals.authport = long_from_cstr(value);
+                this->globals.authport = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "autovalidate")){
                 this->globals.autovalidate = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "max_tick")){
-                this->globals.max_tick = long_from_cstr(value);
+                this->globals.max_tick = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "keepalive_grace_delay")){
-                this->globals.keepalive_grace_delay = long_from_cstr(value);
+                this->globals.keepalive_grace_delay = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "internal_domain")){
                 this->globals.internal_domain = bool_from_cstr(value);
@@ -730,13 +779,13 @@ struct Inifile {
                 this->globals.client.ignore_logon_password = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "performance_flags_default")){
-                this->globals.client.performance_flags_default = long_from_cstr(value);
+                this->globals.client.performance_flags_default = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "performance_flags_force_present")){
-                this->globals.client.performance_flags_force_present = long_from_cstr(value);
+                this->globals.client.performance_flags_force_present = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "performance_flags_force_not_present")){
-                this->globals.client.performance_flags_force_not_present = long_from_cstr(value);
+                this->globals.client.performance_flags_force_not_present = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "tls_fallback_legacy")){
                 this->globals.client.tls_fallback_legacy = bool_from_cstr(value);
@@ -750,78 +799,78 @@ struct Inifile {
         }
         else if (0 == strcmp(context, "video")){ 
             if (0 == strcmp(key, "capture_flags")){
-                this->globals.capture_flags   = long_from_cstr(value);
+                this->globals.capture_flags   = ulong_from_cstr(value);
                 this->globals.capture_png = 0 != (this->globals.capture_flags & 1);
                 this->globals.capture_wrm = 0 != (this->globals.capture_flags & 2);
                 this->globals.capture_flv = 0 != (this->globals.capture_flags & 4);
                 this->globals.capture_ocr = 0 != (this->globals.capture_flags & 8);
             }
             else if (0 == strcmp(key, "ocr_interval")){
-                this->globals.ocr_interval   = long_from_cstr(value);
+                this->globals.ocr_interval   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "png_interval")){
-                this->globals.png_interval   = long_from_cstr(value);
+                this->globals.png_interval   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "capture_groupid")){
-                this->globals.capture_groupid  = long_from_cstr(value);
+                this->globals.capture_groupid  = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "frame_interval")){
-                this->globals.frame_interval   = long_from_cstr(value);
+                this->globals.frame_interval   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "break_interval")){
-                this->globals.break_interval   = long_from_cstr(value);
+                this->globals.break_interval   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "png_limit")){
-                this->globals.png_limit   = long_from_cstr(value);
+                this->globals.png_limit   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "replay_path")){
                 strncpy(this->globals.replay_path, value, sizeof(this->globals.replay_path));
                 this->globals.replay_path[sizeof(this->globals.replay_path) - 1] = 0;
             }
             else if (0 == strcmp(key, "l_bitrate")){
-                this->globals.l_bitrate   = long_from_cstr(value);
+                this->globals.l_bitrate   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_framerate")){
-                this->globals.l_framerate = long_from_cstr(value);
+                this->globals.l_framerate = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_height")){
-                this->globals.l_height    = long_from_cstr(value);
+                this->globals.l_height    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_width")){
-                this->globals.l_width     = long_from_cstr(value);
+                this->globals.l_width     = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_qscale")){
-                this->globals.l_qscale    = long_from_cstr(value);
+                this->globals.l_qscale    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_bitrate")){
-                this->globals.m_bitrate   = long_from_cstr(value);
+                this->globals.m_bitrate   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_framerate")){
-                this->globals.m_framerate = long_from_cstr(value);
+                this->globals.m_framerate = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_height")){
-                this->globals.m_height    = long_from_cstr(value);
+                this->globals.m_height    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_width")){
-                this->globals.m_width     = long_from_cstr(value);
+                this->globals.m_width     = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_qscale")){
-                this->globals.m_qscale    = long_from_cstr(value);
+                this->globals.m_qscale    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_bitrate")){
-                this->globals.h_bitrate   = long_from_cstr(value);
+                this->globals.h_bitrate   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_framerate")){
-                this->globals.h_framerate = long_from_cstr(value);
+                this->globals.h_framerate = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_height")){
-                this->globals.h_height    = long_from_cstr(value);
+                this->globals.h_height    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_width")){
-                this->globals.h_width     = long_from_cstr(value);
+                this->globals.h_width     = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_qscale")){
-                this->globals.h_qscale    = long_from_cstr(value);
+                this->globals.h_qscale    = ulong_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -829,55 +878,55 @@ struct Inifile {
         }
         else if (0 == strcmp(context, "debug")){
             if (0 == strcmp(key, "x224")){
-                this->globals.debug.x224              = long_from_cstr(value);
+                this->globals.debug.x224              = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "mcs")){
-                this->globals.debug.mcs               = long_from_cstr(value);
+                this->globals.debug.mcs               = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "sec")){
-                this->globals.debug.sec               = long_from_cstr(value);
+                this->globals.debug.sec               = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "rdp")){
-                this->globals.debug.rdp               = long_from_cstr(value);
+                this->globals.debug.rdp               = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "primary_orders")){
-                this->globals.debug.primary_orders    = long_from_cstr(value);
+                this->globals.debug.primary_orders    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "secondary_orders")){
-                this->globals.debug.secondary_orders  = long_from_cstr(value);
+                this->globals.debug.secondary_orders  = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "bitmap")){
-                this->globals.debug.bitmap            = long_from_cstr(value);
+                this->globals.debug.bitmap            = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "capture")){
-                this->globals.debug.capture           = long_from_cstr(value);
+                this->globals.debug.capture           = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "auth")){
-                this->globals.debug.auth              = long_from_cstr(value);
+                this->globals.debug.auth              = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "session")){
-                this->globals.debug.session           = long_from_cstr(value);
+                this->globals.debug.session           = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "front")){
-                this->globals.debug.front             = long_from_cstr(value);
+                this->globals.debug.front             = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "mod_rdp")){
-                this->globals.debug.mod_rdp           = long_from_cstr(value);
+                this->globals.debug.mod_rdp           = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "mod_vnc")){
-                this->globals.debug.mod_vnc           = long_from_cstr(value);
+                this->globals.debug.mod_vnc           = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "mod_int")){
-                this->globals.debug.mod_int           = long_from_cstr(value);
+                this->globals.debug.mod_int           = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "mod_xup")){
-                this->globals.debug.mod_xup           = long_from_cstr(value);
+                this->globals.debug.mod_xup           = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "widget")){
-                this->globals.debug.widget            = long_from_cstr(value);
+                this->globals.debug.widget            = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "input")){
-                this->globals.debug.input             = long_from_cstr(value);
+                this->globals.debug.input             = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "log_type")){
                 this->globals.debug.log_type = logtype_from_cstr(value);
@@ -950,22 +999,22 @@ struct Inifile {
         else if (0 == strcmp(context, "context")){
             // LOG(LOG_INFO, "parameter %s in section [%s]: value=%s", key, context, value);
             if (0 == strcmp(key, "opt_bitrate")){
-                this->globals.context.opt_bitrate              = long_from_cstr(value);
+                this->globals.context.opt_bitrate              = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "opt_framerate")){
-                this->globals.context.opt_framerate            = long_from_cstr(value);
+                this->globals.context.opt_framerate            = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "opt_qscale")){
-                this->globals.context.opt_qscale               = long_from_cstr(value);
+                this->globals.context.opt_qscale               = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "opt_width")){
-                this->globals.context.opt_width                = long_from_cstr(value);
+                this->globals.context.opt_width                = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "opt_height")){
-                this->globals.context.opt_height               = long_from_cstr(value);
+                this->globals.context.opt_height               = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "opt_bpp")){
-                this->globals.context.opt_bpp                  = long_from_cstr(value);
+                this->globals.context.opt_bpp                  = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "auth_error_message")){
                 this->globals.context.auth_error_message = value;
@@ -980,19 +1029,19 @@ struct Inifile {
                 this->globals.context.selector_device_filter   = value;
             }
             else if (0 == strcmp(key, "selector_lines_per_page")){
-                this->globals.context.selector_lines_per_page  = long_from_cstr(value);
+                this->globals.context.selector_lines_per_page  = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "selector_number_of_pages")){
-                this->globals.context.selector_number_of_pages = long_from_cstr(value);
+                this->globals.context.selector_number_of_pages = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "selector_current_page")){
-                this->globals.context.selector_current_page    = long_from_cstr(value);
+                this->globals.context.selector_current_page    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "target_password")){
                 this->globals.context.target_password          = value;
             }
             else if (0 == strcmp(key, "target_port")){
-                this->globals.context.target_port              = long_from_cstr(value);
+                this->globals.context.target_port              = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "target_protocol")){
                 this->globals.context.target_protocol          = value;
@@ -1018,6 +1067,37 @@ struct Inifile {
             else if (0 == strcmp(key, "display_message")){
                 this->globals.context.display_message          = value;
             }
+            else if (0 == strcmp(key, "rejected")){
+                this->globals.context.rejected                 = value;
+            }
+            else if (0 == strcmp(key, "authenticated")){
+                this->globals.context.authenticated            = bool_from_cstr(value);
+            }
+
+            else if (0 == strcmp(key, "keepalive")){
+                this->globals.context.keepalive                = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "proxy_type")){
+                this->globals.context.proxy_type               = value;
+            }
+            else if (0 == strcmp(key, "trace_seal")){
+                this->globals.context.trace_seal               = value;
+            }
+            else if (0 == strcmp(key, "session_id")){
+                this->globals.context.session_id               = value;
+            }
+            else if (0 == strcmp(key, "end_date_cnx")){
+                this->globals.context.end_date_cnx             = ulong_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "end_time")){
+                this->globals.context.end_time                 = value;
+            }
+            else if (0 == strcmp(key, "mode_console")){
+                this->globals.context.mode_console             = value;
+            }
+            else if (0 == strcmp(key, "timezone")){
+                this->globals.context.timezone                 = _long_from_cstr(value);
+            }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
@@ -1034,17 +1114,17 @@ struct Inifile {
             *buffer = 0;
 
             if (!strcasecmp(key, "opt_bpp")) {
-                snprintf(buffer, size, "%d", this->globals.context.opt_bpp);
+                snprintf(buffer, size, "%u", this->globals.context.opt_bpp);
 
                 pszReturn = buffer;
             }
             else if (!strcasecmp(key, "opt_height")) {
-                snprintf(buffer, size, "%d", this->globals.context.opt_height);
+                snprintf(buffer, size, "%u", this->globals.context.opt_height);
 
                 pszReturn = buffer;
             }
             else if (!strcasecmp(key, "opt_width")) {
-                snprintf(buffer, size, "%d", this->globals.context.opt_width);
+                snprintf(buffer, size, "%u", this->globals.context.opt_width);
 
                 pszReturn = buffer;
             }
@@ -1055,7 +1135,7 @@ struct Inifile {
                 pszReturn = buffer;
             }
             else if (!strcasecmp(key, "selector_current_page")) {
-                snprintf(buffer, size, "%d", this->globals.context.selector_current_page);
+                snprintf(buffer, size, "%u", this->globals.context.selector_current_page);
 
                 pszReturn = buffer;
             }
@@ -1072,12 +1152,12 @@ struct Inifile {
                 pszReturn = buffer;
             }
             else if (!strcasecmp(key, "selector_lines_per_page")) {
-                snprintf(buffer, size, "%d", this->globals.context.selector_lines_per_page);
+                snprintf(buffer, size, "%u", this->globals.context.selector_lines_per_page);
 
                 pszReturn = buffer;
             }
             else if (!strcasecmp(key, "selector_number_of_pages")) {
-                snprintf(buffer, size, "%d", this->globals.context.selector_number_of_pages);
+                snprintf(buffer, size, "%u", this->globals.context.selector_number_of_pages);
 
                 pszReturn = buffer;
             }
@@ -1094,7 +1174,7 @@ struct Inifile {
                 pszReturn = buffer;
             }
             else if (!strcasecmp(key, "target_port")) {
-                snprintf(buffer, size, "%d", this->globals.context.target_port);
+                snprintf(buffer, size, "%u", this->globals.context.target_port);
 
                 pszReturn = buffer;
             }
@@ -1161,6 +1241,64 @@ struct Inifile {
             else if (!strcasecmp(key, "display_message")) {
                 strncpy(buffer, this->globals.context.display_message, size);
                 buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "rejected")) {
+                strncpy(buffer, this->globals.context.rejected, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "authenticated")) {
+                strncpy(buffer, (this->globals.context.authenticated ? "True" : "False"), size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "keepalive")) {
+                strncpy(buffer, (this->globals.context.keepalive ? "True" : "False"), size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "proxy_type")) {
+                strncpy(buffer, this->globals.context.proxy_type, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "trace_seal")) {
+                strncpy(buffer, this->globals.context.trace_seal, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "session_id")) {
+                strncpy(buffer, this->globals.context.session_id, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "end_date_cnx")) {
+                snprintf(buffer, size, "%u", this->globals.context.end_date_cnx);
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "end_time")) {
+                strncpy(buffer, this->globals.context.end_time, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "mode_console")) {
+                strncpy(buffer, this->globals.context.mode_console, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "timezone")) {
+                snprintf(buffer, size, "%d", this->globals.context.timezone);
 
                 pszReturn = buffer;
             }

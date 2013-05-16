@@ -31,18 +31,8 @@ using namespace std;
 
 typedef enum{
     AUTHID_UNKNOWN = 0,
-    AUTHID_END_TIME,        // end time as text
-    AUTHID_REJECTED,        // rejected
-    AUTHID_SESSION_ID,      // session_id
-    AUTHID_END_DATE_CNX,    // timeclose
-    AUTHID_PROXY_TYPE,
-    AUTHID_AUTHENTICATED,
-    AUTHID_KEEPALIVE,
 
-    AUTHID_MODE_CONSOLE,
-    AUTHID_TIMEZONE,
     // Encryption
-    AUTHID_TRACE_SEAL,          // after closing trace file trace is sealed using a signature hash
 /*
     // Translation text
     AUTHID_TRANS_BUTTON_OK,
@@ -97,22 +87,22 @@ typedef enum{
     AUTHID_MESSAGE, // warning_message
     AUTHID_ACCEPT_MESSAGE,  // display a dialog to valid a message
     AUTHID_DISPLAY_MESSAGE, // display a dialog box with a message
+    AUTHID_REJECTED,        // rejected
+    AUTHID_AUTHENTICATED,
+    AUTHID_KEEPALIVE,
+    AUTHID_PROXY_TYPE,
+    AUTHID_TRACE_SEAL,      // after closing trace file trace is sealed using a signature hash
+    AUTHID_SESSION_ID,      // session_id
+    AUTHID_END_DATE_CNX,    // timeclose
+    AUTHID_END_TIME,        // end time as text
+    AUTHID_MODE_CONSOLE,
+    AUTHID_TIMEZONE,
 */
 
     MAX_AUTHID
 } authid_t;
 
 
-#define STRAUTHID_END_TIME                 "end_time"
-#define STRAUTHID_REJECTED                 "rejected"
-#define STRAUTHID_SESSION_ID               "session_id"
-#define STRAUTHID_END_DATE_CNX             "timeclose"
-#define STRAUTHID_PROXY_TYPE               "proxy_type"
-#define STRAUTHID_AUTHENTICATED            "authenticated"
-#define STRAUTHID_KEEPALIVE                "keepalive"
-#define STRAUTHID_MODE_CONSOLE             "mode_console"
-#define STRAUTHID_TIMEZONE                 "timezone"
-#define STRAUTHID_TRACE_SEAL               "trace_seal"
 // Translation text
 #define _STRAUTHID_TRANS_BUTTON_OK         "trans_ok"
 #define _STRAUTHID_TRANS_BUTTON_CANCEL     "trans_cancel"
@@ -167,6 +157,16 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 #define _STRAUTHID_MESSAGE                  "message"
 #define _STRAUTHID_ACCEPT_MESSAGE           "accept_message"
 #define _STRAUTHID_DISPLAY_MESSAGE          "display_message"
+#define _STRAUTHID_REJECTED                 "rejected"
+#define _STRAUTHID_AUTHENTICATED            "authenticated"
+#define _STRAUTHID_KEEPALIVE                "keepalive"
+#define _STRAUTHID_PROXY_TYPE               "proxy_type"
+#define _STRAUTHID_TRACE_SEAL               "trace_seal"
+#define _STRAUTHID_SESSION_ID               "session_id"
+#define _STRAUTHID_END_DATE_CNX             "timeclose"
+#define _STRAUTHID_END_TIME                 "end_time"
+#define _STRAUTHID_MODE_CONSOLE             "mode_console"
+#define _STRAUTHID_TIMEZONE                 "timezone"
 
 
 #define GLOBAL_SECTION_UNKNOWN      NULL
@@ -192,20 +192,8 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 
 TODO("This should be initialized in constructor")
 static ProtocolKeyword KeywordsDefinitions[] = {
-    {STRAUTHID_END_TIME,                 TYPE_TEXT,    "!-"                                   }, //
-    {STRAUTHID_PROXY_TYPE,               TYPE_TEXT,    "!RDP"                                 },
-    {STRAUTHID_AUTHENTICATED,            TYPE_BOOLEAN, "!False"                               }, //
-    {STRAUTHID_KEEPALIVE,                TYPE_BOOLEAN, "ASK"                                  },
-    {STRAUTHID_END_DATE_CNX,             TYPE_INTEGER, "!0"                                   }, //
-    {STRAUTHID_REJECTED,                 TYPE_TEXT,    "!Connection refused by authentifier." }, //
-    {STRAUTHID_SESSION_ID,               TYPE_TEXT,    "!"                                    }, //
     // password or AuthenticationInteractive
     {"authentication_challenge",         TYPE_TEXT,    "!password"                            }, //
-
-    {STRAUTHID_MODE_CONSOLE,             TYPE_TEXT,    "!allow"                               }, //
-    {STRAUTHID_TIMEZONE,                 TYPE_INTEGER, "!-3600"                               }, //
-    // Encryption
-    {STRAUTHID_TRACE_SEAL,               TYPE_TEXT,    "!"                                    },
 
 /*
     // Translation text
@@ -272,23 +260,30 @@ static ProtocolKeyword KeywordsDefinitions[] = {
 */
     {_STRAUTHID_ACCEPT_MESSAGE,           TYPE_TEXT,    "!"                                    },
     {_STRAUTHID_DISPLAY_MESSAGE,          TYPE_TEXT,    "!"                                    },
+/*
+    {STRAUTHID_REJECTED,                 TYPE_TEXT,    "!Connection refused by authentifier." }, //
+    {STRAUTHID_AUTHENTICATED,            TYPE_BOOLEAN, "!False"                               }, //
+*/
+    {_STRAUTHID_KEEPALIVE,                TYPE_BOOLEAN, "ASK"                                  },
+    {_STRAUTHID_PROXY_TYPE,               TYPE_TEXT,    "!RDP"                                 },
+    // Encryption
+    {_STRAUTHID_TRACE_SEAL,               TYPE_TEXT,    "!"                                    },
+/*
+    {STRAUTHID_SESSION_ID,               TYPE_TEXT,    "!"                                    }, //
+    {STRAUTHID_END_DATE_CNX,             TYPE_INTEGER, "!0"                                   }, //
+    {STRAUTHID_END_TIME,                 TYPE_TEXT,    "!-"                                   }, //
+
+    {STRAUTHID_MODE_CONSOLE,             TYPE_TEXT,    "!allow"                               }, //
+    {STRAUTHID_TIMEZONE,                 TYPE_INTEGER, "!-3600"                               }, //
+*/
 };
 
 
+/*
 static inline authid_t authid_from_string(const char * kw)
 {
     static const string authstr[MAX_AUTHID-1] = {
-    STRAUTHID_END_TIME,
-    STRAUTHID_REJECTED,
-    STRAUTHID_END_DATE_CNX,
-    STRAUTHID_PROXY_TYPE,
-    STRAUTHID_AUTHENTICATED,
-    STRAUTHID_KEEPALIVE,
-
-    STRAUTHID_MODE_CONSOLE,
-    STRAUTHID_TIMEZONE,
-    STRAUTHID_TRACE_SEAL,
-
+*/
 /*
     // Translation text
     STRAUTHID_TRANS_BUTTON_OK,
@@ -342,7 +337,17 @@ static inline authid_t authid_from_string(const char * kw)
     STRAUTHID_MESSAGE,
     STRAUTHID_ACCEPT_MESSAGE,
     STRAUTHID_DISPLAY_MESSAGE,
+    STRAUTHID_REJECTED,
+    STRAUTHID_AUTHENTICATED,
+    STRAUTHID_KEEPALIVE,
+    STRAUTHID_PROXY_TYPE,
+    STRAUTHID_TRACE_SEAL,
+    STRAUTHID_END_DATE_CNX,
+    STRAUTHID_END_TIME,
+    STRAUTHID_MODE_CONSOLE,
+    STRAUTHID_TIMEZONE,
 */
+/*
     };
 
     string str = string(kw);
@@ -355,6 +360,7 @@ static inline authid_t authid_from_string(const char * kw)
     }
     return res;
 }
+*/
 
 struct ModContext : public Dico {
     unsigned selector_focus;

@@ -279,11 +279,13 @@ struct Session {
                         if (this->sesman->event(rfds)){
                             this->sesman->receive_next_module();
 
-                            if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"force")==0){
+//                            if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"force")==0){
+                            if (strcmp(this->ini->globals.context.mode_console, "force") == 0){
                                 this->front->set_console_session(true);
                                 LOG(LOG_INFO, "Session::mode console : force");
                             }
-                            else if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"forbid")==0){
+//                            else if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"forbid")==0){
+                            else if (strcmp(this->ini->globals.context.mode_console, "forbid") == 0){
                                 this->front->set_console_session(false);
                                 LOG(LOG_INFO, "Session::mode console : forbid");
                             }
@@ -313,11 +315,13 @@ struct Session {
                         if (this->sesman->event(rfds)){
                             this->sesman->receive_next_module();
 
-                            if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"force")==0){
+//                            if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"force")==0){
+                            if (strcmp(this->ini->globals.context.mode_console, "force") == 0){
                                 this->front->set_console_session(true);
                                 LOG(LOG_INFO, "Session::mode console : force");
                             }
-                            else if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"forbid")==0){
+//                            else if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"forbid")==0){
+                            else if (strcmp(this->ini->globals.context.mode_console, "forbid") == 0){
                                 this->front->set_console_session(false);
                                 LOG(LOG_INFO, "Session::mode console : forbid");
                             }
@@ -531,9 +535,12 @@ struct Session {
         delete this->no_mod;
         delete this->sesman;
         // Suppress Session file from disk (original name with PID or renamed with session_id)
-        if ( this->context->get(STRAUTHID_SESSION_ID)[0] != 0 ) {
+//        if ( this->context->get(STRAUTHID_SESSION_ID)[0] != 0 ) {
+        if (!this->ini->globals.context.session_id.is_empty()) {
             char new_session_file[256];
-            sprintf(new_session_file, "%s/session_%s.pid", PID_PATH, this->context->get(STRAUTHID_SESSION_ID));
+//            sprintf(new_session_file, "%s/session_%s.pid", PID_PATH, this->context->get(STRAUTHID_SESSION_ID));
+            sprintf(new_session_file, "%s/session_%s.pid", PID_PATH,
+                (const char *)this->ini->globals.context.session_id);
             unlink(new_session_file);
         }
         else {
@@ -552,11 +559,13 @@ struct Session {
             LOG(LOG_INFO, "Session::session_setup_mod(target_module=%u, submodule=%u)", target_module, (unsigned)submodule);
         }
 
-        if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"force")==0){
+//        if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"force")==0){
+        if (strcmp(this->ini->globals.context.mode_console, "force") == 0){
             this->front->set_console_session(true);
             LOG(LOG_INFO, "Session::mode console : force");
         }
-        else if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"forbid")==0){
+//        else if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"forbid")==0){
+        else if (strcmp(this->ini->globals.context.mode_console, "forbid") == 0){
             this->front->set_console_session(false);
             LOG(LOG_INFO, "Session::mode console : forbid");
         }
