@@ -58,6 +58,15 @@ if __name__ == '__main__':
         if changelog_red_source_version != red_source_version:
             raise Exception('Version mismatch between changelog and main/version ("%s" != "%s")' % (
                 changelog_red_source_version, red_source_version))
+
+        res = subprocess.check_output(["git", "describe", "--tags"], stderr = subprocess.STDOUT)
+        tag_describe = res.split("\n")[0]
+        if red_source_version != tag_describe:
+            raise Exception('Repository head mismatch current version ("%s" != "%s"), please tag current version before building packet' % (
+                red_source_version, tag_describe))
+        
+
+
             
         package_name = "redemption_%s%s.deb" % (red_source_version, changelog_suffix_ver)
 
