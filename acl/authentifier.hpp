@@ -152,10 +152,12 @@ class SessionManager {
 
         BStream stream(8192);
 
-        this->context.cpy(STRAUTHID_AUTHCHANNEL_TARGET, target);
+//        this->context.cpy(STRAUTHID_AUTHCHANNEL_TARGET, target);
+        this->ini->globals.context.authchannel_target = target;
+        this->context.cpy(_STRAUTHID_AUTHCHANNEL_TARGET, "");
 
         stream.out_uint32_be(0); // skip length
-        this->out_item(stream, STRAUTHID_AUTHCHANNEL_TARGET);
+        this->out_item(stream, _STRAUTHID_AUTHCHANNEL_TARGET);
 
         int total_length = stream.get_offset();
         stream.p = stream.data;
@@ -175,9 +177,13 @@ class SessionManager {
         }
         BStream stream(8192);
 
-        this->context.cpy(STRAUTHID_AUTHCHANNEL_RESULT, result);
+//        this->context.cpy(STRAUTHID_AUTHCHANNEL_RESULT, result);
+        this->ini->globals.context.authchannel_result = result;
+        this->context.cpy(_STRAUTHID_AUTHCHANNEL_RESULT, "");
+
+
         stream.out_uint32_be(0);  // skip length
-        this->out_item(stream, STRAUTHID_AUTHCHANNEL_RESULT);
+        this->out_item(stream, _STRAUTHID_AUTHCHANNEL_RESULT);
         int total_length = stream.get_offset();
         stream.set_out_uint32_be(total_length, 0);
 
@@ -239,6 +245,10 @@ class SessionManager {
                            || (strcasecmp((char *)keyword, _STRAUTHID_AUTH_USER) == 0)
                            || (strcasecmp((char *)keyword, _STRAUTHID_HOST) == 0)
                            || (strcasecmp((char *)keyword, _STRAUTHID_PASSWORD) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_AUTHCHANNEL_RESULT) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_AUTHCHANNEL_TARGET) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_ACCEPT_MESSAGE) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_DISPLAY_MESSAGE) == 0)
                            ){
                             if ((0==strncasecmp((char*)value, "ask", 3))){
                                 this->context.ask((char*)keyword);
@@ -579,12 +589,12 @@ class SessionManager {
                     nextmod = INTERNAL_LOGIN;
                     return MCTX_STATUS_INTERNAL;
             }
-            else if (this->context.is_asked(STRAUTHID_DISPLAY_MESSAGE)){
+            else if (this->context.is_asked(_STRAUTHID_DISPLAY_MESSAGE)){
                 nextmod = INTERNAL_DIALOG_DISPLAY_MESSAGE;
                 this->mod_state = MOD_STATE_DONE_DISPLAY_MESSAGE;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (this->context.is_asked(STRAUTHID_ACCEPT_MESSAGE)){
+            else if (this->context.is_asked(_STRAUTHID_ACCEPT_MESSAGE)){
                 this->mod_state = MOD_STATE_DONE_VALID_MESSAGE;
                 nextmod = INTERNAL_DIALOG_VALID_MESSAGE;
                 return MCTX_STATUS_INTERNAL;
@@ -677,15 +687,17 @@ class SessionManager {
                || !strcasecmp(key, _STRAUTHID_SELECTOR_DEVICE_FILTER)
                || !strcasecmp(key, _STRAUTHID_SELECTOR_GROUP_FILTER)
                || !strcasecmp(key, _STRAUTHID_SELECTOR_LINES_PER_PAGE)
-               || !strcasecmp(key, _STRAUTHID_SELECTOR_NUMBER_OF_PAGES)
                || !strcasecmp(key, _STRAUTHID_TARGET_DEVICE)
                || !strcasecmp(key, _STRAUTHID_TARGET_PASSWORD)
-               || !strcasecmp(key, _STRAUTHID_TARGET_PORT)
                || !strcasecmp(key, _STRAUTHID_TARGET_PROTOCOL)
                || !strcasecmp(key, _STRAUTHID_TARGET_USER)
                || !strcasecmp(key, _STRAUTHID_AUTH_USER)
                || !strcasecmp(key, _STRAUTHID_HOST)
                || !strcasecmp(key, _STRAUTHID_PASSWORD)
+               || !strcasecmp(key, _STRAUTHID_AUTHCHANNEL_RESULT)
+               || !strcasecmp(key, _STRAUTHID_AUTHCHANNEL_TARGET)
+               || !strcasecmp(key, _STRAUTHID_ACCEPT_MESSAGE)
+               || !strcasecmp(key, _STRAUTHID_DISPLAY_MESSAGE)
                ) {
                 const char * global_section;
                 const char * global_key;
@@ -751,8 +763,8 @@ class SessionManager {
                 this->auth_event = new wait_obj(this->auth_trans_t->sck);
             }
             this->out_item(stream, STRAUTHID_PROXY_TYPE);
-            this->out_item(stream, STRAUTHID_DISPLAY_MESSAGE);
-            this->out_item(stream, STRAUTHID_ACCEPT_MESSAGE);
+            this->out_item(stream, _STRAUTHID_DISPLAY_MESSAGE);
+            this->out_item(stream, _STRAUTHID_ACCEPT_MESSAGE);
             this->out_item(stream, _STRAUTHID_HOST);
             this->out_item(stream, _STRAUTHID_AUTH_USER);
             this->out_item(stream, _STRAUTHID_PASSWORD);
@@ -996,6 +1008,30 @@ class SessionManager {
         else if (!strcmp(keyword, _STRAUTHID_PASSWORD)) {
             global_section  = GLOBAL_SECTION_CONTEXT;
             global_key      = "password";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_AUTHCHANNEL_ANSWER)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "authchannel_answer";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_AUTHCHANNEL_RESULT)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "authchannel_result";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_AUTHCHANNEL_TARGET)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "authchannel_target";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_MESSAGE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "message";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_ACCEPT_MESSAGE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "accept_message";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_DISPLAY_MESSAGE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "display_message";
         }
         else {
 //            LOG(LOG_WARNING, "get_global_info: unknown keyword = %s", keyword);

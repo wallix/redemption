@@ -295,6 +295,20 @@ struct Inifile {
             bool               ask_password;
 
             redemption::string password;
+
+            bool               ask_authchannel_target;
+            bool               ask_authchannel_result;
+
+            redemption::string authchannel_answer;
+            redemption::string authchannel_result;
+            redemption::string authchannel_target;
+
+            bool               ask_accept_message;
+            bool               ask_display_message;
+
+            redemption::string message;
+            redemption::string accept_message;
+            redemption::string display_message;
         } context;
     } globals;
 
@@ -476,6 +490,20 @@ struct Inifile {
         this->globals.context.target_protocol             = "RDP";
 
         this->globals.context.password                    = "";
+
+        this->globals.context.ask_authchannel_target      = false;
+        this->globals.context.ask_authchannel_result      = false;
+
+        this->globals.context.authchannel_answer          = "";
+        this->globals.context.authchannel_result          = "";
+        this->globals.context.authchannel_target          = "";
+
+        this->globals.context.ask_accept_message          = false;
+        this->globals.context.ask_display_message         = false;
+
+        this->globals.context.message                     = "";
+        this->globals.context.accept_message              = "";
+        this->globals.context.display_message             = "";
     };
 
     void cparse(istream & ifs){
@@ -972,6 +1000,24 @@ struct Inifile {
             else if (0 == strcmp(key, "password")){
                 this->globals.context.password                 = value;
             }
+            else if (0 == strcmp(key, "authchannel_answer")){
+                this->globals.context.authchannel_answer       = value;
+            }
+            else if (0 == strcmp(key, "authchannel_result")){
+                this->globals.context.authchannel_result       = value;
+            }
+            else if (0 == strcmp(key, "authchannel_target")){
+                this->globals.context.authchannel_target       = value;
+            }
+            else if (0 == strcmp(key, "message")){
+                this->globals.context.message                  = value;
+            }
+            else if (0 == strcmp(key, "accept_message")){
+                this->globals.context.accept_message           = value;
+            }
+            else if (0 == strcmp(key, "display_message")){
+                this->globals.context.display_message          = value;
+            }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
@@ -1078,6 +1124,42 @@ struct Inifile {
             }
             else if (!strcasecmp(key, "password")) {
                 strncpy(buffer, this->globals.context.password, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "authchannel_answer")) {
+                strncpy(buffer, this->globals.context.authchannel_answer, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "authchannel_result")) {
+                strncpy(buffer, this->globals.context.authchannel_result, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "authchannel_target")) {
+                strncpy(buffer, this->globals.context.authchannel_target, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "message")) {
+                strncpy(buffer, this->globals.context.message, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "accept_message")) {
+                strncpy(buffer, this->globals.context.accept_message, size);
+                buffer[size - 1] = 0;
+
+                pszReturn = buffer;
+            }
+            else if (!strcasecmp(key, "display_message")) {
+                strncpy(buffer, this->globals.context.display_message, size);
                 buffer[size - 1] = 0;
 
                 pszReturn = buffer;
