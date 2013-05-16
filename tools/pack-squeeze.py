@@ -16,7 +16,7 @@ if __name__ == '__main__':
             pass
         
         # Set debian (packaging data) directory with distro specific packaging files
-        shutil.copytree("packaging/ubuntu/12.04/debian", "debian")
+        shutil.copytree("packaging/debian/squeeze/debian", "debian")
         shutil.copy("docs/copyright", "debian/copyright")
         
         found = False
@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
         if not found:
             raise Exception('Source Version not found in file main/version.hpp')
-        package_name = "redemption_%s_amd64.deb" % red_source_version
+        package_name = "redemption_%s_i386.deb" % red_source_version
 
         found = False
         for line in open("debian/changelog"):
@@ -55,19 +55,16 @@ if __name__ == '__main__':
             raise Exception('Version mismatch between changelog and main/version ("%s" != "%s")' % (
                 changelog_red_source_version, red_source_version))
 
-        res = subprocess.check_output(["git", "describe", "--tags"], stderr = subprocess.STDOUT)
+        res = subprocess.Popen(["git", "describe", "--tags"], stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
         tag_describe = res.split("\n")[0]
         if red_source_version != tag_describe:
             raise Exception('Repository head mismatch current version ("%s" != "%s"), please tag current version before building packet' % (
                 red_source_version, tag_describe))
 
-        res = subprocess.check_output(["git", "diff", "--shortstat"], stderr = subprocess.STDOUT)
+        res = subprocess.Popen(["git", "diff", "--shortstat"], stdout = subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
         if res:
             raise Exception('Your repository has uncommited changes ("%s"), please commit before packaging' % (res))
             
-        package_name = "redemption_%s%s_amd64.deb" % (red_source_version, changelog_suffix_ver)
-        print package_name
-
         os.system("dpkg-buildpackage -b -tc -us -uc -r")
         exit(0)
     except Exception, e:

@@ -456,6 +456,7 @@ struct window_login : public window
 struct window_dialog : public window
 {
     ModContext * context;
+    Inifile * ini;
 
     window_dialog(mod_api * mod, const Rect & r,
                   ModContext & context,
@@ -464,8 +465,10 @@ struct window_dialog : public window
                   const char * message,
                   const char * refuse)
     : window(mod, r, parent, bg_color, title)
+    , context(&context)
+    , ini(ini)
     {
-        this->context = &context;
+//        this->context = &context;
         this->esc_button = NULL;
 
         struct Widget* but = new widget_button(this->mod, Rect(200, r.cy - 40, 60, 25), this, 3, 1, "OK");
@@ -508,17 +511,37 @@ struct window_dialog : public window
             LOG(LOG_INFO, "widget_window_dialog::notify id=%d msg=%d", id, msg);
             switch (id) {
             case 2: /* cancel button -> Esc */
+/*
                 this->context->cpy(
                         (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
                                           :STRAUTHID_DISPLAY_MESSAGE,
                         "False");
+*/
+                if (this->esc_button) {
+                    this->ini->globals.context.accept_message = "False";
+                    this->context->cpy(_STRAUTHID_ACCEPT_MESSAGE, "");
+                }
+                else {
+                    this->ini->globals.context.display_message = "False";
+                    this->context->cpy(_STRAUTHID_DISPLAY_MESSAGE, "");
+                }
                 this->mod->mod_event(BACK_EVENT_NEXT);
             break;
             case 3: /* ok button -> Enter */
+/*
                 this->context->cpy(
                         (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
                                           :STRAUTHID_DISPLAY_MESSAGE,
                         "True");
+*/
+                if (this->esc_button) {
+                    this->ini->globals.context.accept_message = "True";
+                    this->context->cpy(_STRAUTHID_ACCEPT_MESSAGE, "");
+                }
+                else {
+                    this->ini->globals.context.display_message = "True";
+                    this->context->cpy(_STRAUTHID_DISPLAY_MESSAGE, "");
+                }
                 this->mod->mod_event(BACK_EVENT_NEXT);
             break;
             default:

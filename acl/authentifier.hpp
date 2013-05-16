@@ -129,8 +129,8 @@ class SessionManager {
             BStream stream(8192);
 
             stream.out_uint32_be(0); // skip length
-            this->context.ask(STRAUTHID_KEEPALIVE);
-            this->out_item(stream, STRAUTHID_KEEPALIVE);
+            this->context.ask(_STRAUTHID_KEEPALIVE);
+            this->out_item(stream, _STRAUTHID_KEEPALIVE);
             stream.mark_end();
             // now set length
             int total_length = stream.get_offset();
@@ -153,10 +153,12 @@ class SessionManager {
 
         BStream stream(8192);
 
-        this->context.cpy(STRAUTHID_AUTHCHANNEL_TARGET, target);
+//        this->context.cpy(STRAUTHID_AUTHCHANNEL_TARGET, target);
+        this->ini->globals.context.authchannel_target = target;
+        this->context.cpy(_STRAUTHID_AUTHCHANNEL_TARGET, "");
 
         stream.out_uint32_be(0); // skip length
-        this->out_item(stream, STRAUTHID_AUTHCHANNEL_TARGET);
+        this->out_item(stream, _STRAUTHID_AUTHCHANNEL_TARGET);
 
         int total_length = stream.get_offset();
         stream.p = stream.data;
@@ -176,9 +178,13 @@ class SessionManager {
         }
         BStream stream(8192);
 
-        this->context.cpy(STRAUTHID_AUTHCHANNEL_RESULT, result);
+//        this->context.cpy(STRAUTHID_AUTHCHANNEL_RESULT, result);
+        this->ini->globals.context.authchannel_result = result;
+        this->context.cpy(_STRAUTHID_AUTHCHANNEL_RESULT, "");
+
+
         stream.out_uint32_be(0);  // skip length
-        this->out_item(stream, STRAUTHID_AUTHCHANNEL_RESULT);
+        this->out_item(stream, _STRAUTHID_AUTHCHANNEL_RESULT);
         int total_length = stream.get_offset();
         stream.set_out_uint32_be(total_length, 0);
 
@@ -240,6 +246,13 @@ class SessionManager {
                            || (strcasecmp((char *)keyword, _STRAUTHID_AUTH_USER) == 0)
                            || (strcasecmp((char *)keyword, _STRAUTHID_HOST) == 0)
                            || (strcasecmp((char *)keyword, _STRAUTHID_PASSWORD) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_AUTHCHANNEL_RESULT) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_AUTHCHANNEL_TARGET) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_ACCEPT_MESSAGE) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_DISPLAY_MESSAGE) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_KEEPALIVE) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_PROXY_TYPE) == 0)
+                           || (strcasecmp((char *)keyword, _STRAUTHID_TRACE_SEAL) == 0)
                            ){
                             if ((0==strncasecmp((char*)value, "ask", 3))){
                                 this->context.ask((char*)keyword);
@@ -297,7 +310,8 @@ class SessionManager {
     {
         bool res = false;
         if (MOD_STATE_DONE_CONNECTED == this->mod_state){
-            long enddate = atol(this->context.get(STRAUTHID_END_DATE_CNX));
+//            long enddate = atol(this->context.get(STRAUTHID_END_DATE_CNX));
+            long enddate = this->ini->globals.context.end_date_cnx;
             if (enddate != 0 && (timestamp > enddate)) {
                 if (this->verbose & 0x10){
                     LOG(LOG_INFO, "auth::close_on_timestamp");
@@ -314,7 +328,8 @@ class SessionManager {
     {
 //        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
         if (MOD_STATE_DONE_CONNECTED == this->mod_state){
-            long enddate = atol(this->context.get(STRAUTHID_END_DATE_CNX));
+//            long enddate = atol(this->context.get(STRAUTHID_END_DATE_CNX));
+            long enddate = this->ini->globals.context.end_date_cnx;
 //            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu [%s])", keepalive_time, now, enddate, this->context.get(STRAUTHID_END_DATE_CNX));
             if (enddate != 0 && (now > enddate)) {
                 LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
@@ -377,7 +392,7 @@ class SessionManager {
                 BStream stream(8192);
                 stream.out_uint32_be(0); // skip length
                 // set data
-                this->out_item(stream, STRAUTHID_KEEPALIVE);
+                this->out_item(stream, _STRAUTHID_KEEPALIVE);
                 // now set length in header
                 int total_length = stream.get_offset();
                 stream.set_out_uint32_be(total_length, 0); /* size */
@@ -398,9 +413,10 @@ class SessionManager {
             }
             try {
                 this->incoming();
-                if (this->context.get_bool(STRAUTHID_KEEPALIVE)){
+//                if (this->context.get_bool(STRAUTHID_KEEPALIVE)){
+                if (this->ini->globals.context.keepalive) {
                     keepalive_time = now + this->keepalive_grace_delay;
-                    this->context.ask(STRAUTHID_KEEPALIVE);
+                    this->context.ask(_STRAUTHID_KEEPALIVE);
                 }
             }
             catch (...){
@@ -586,17 +602,18 @@ class SessionManager {
                     nextmod = INTERNAL_LOGIN;
                     return MCTX_STATUS_INTERNAL;
             }
-            else if (this->context.is_asked(STRAUTHID_DISPLAY_MESSAGE)){
+            else if (this->context.is_asked(_STRAUTHID_DISPLAY_MESSAGE)){
                 nextmod = INTERNAL_DIALOG_DISPLAY_MESSAGE;
                 this->mod_state = MOD_STATE_DONE_DISPLAY_MESSAGE;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (this->context.is_asked(STRAUTHID_ACCEPT_MESSAGE)){
+            else if (this->context.is_asked(_STRAUTHID_ACCEPT_MESSAGE)){
                 this->mod_state = MOD_STATE_DONE_VALID_MESSAGE;
                 nextmod = INTERNAL_DIALOG_VALID_MESSAGE;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (this->context.get_bool(STRAUTHID_AUTHENTICATED)){
+//            else if (this->context.get_bool(STRAUTHID_AUTHENTICATED)){
+            else if (this->ini->globals.context.authenticated){
 //                record_video = this->context.get_bool(STRAUTHID_OPT_MOVIE);
                 record_video = this->ini->globals.movie;
                 keep_alive = true;
@@ -612,9 +629,10 @@ class SessionManager {
                 return this->get_mod_from_protocol(nextmod);
             }
             else {
-                if (context.get(STRAUTHID_REJECTED)[0] != 0){
+//                if (context.get(STRAUTHID_REJECTED)[0] != 0){
+                if (!this->ini->globals.context.rejected.is_empty()) {
 //                    context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, context.get(STRAUTHID_REJECTED));
-                    this->ini->globals.context.auth_error_message = context.get(STRAUTHID_REJECTED);
+                    this->ini->globals.context.auth_error_message = this->ini->globals.context.rejected;
                 }
 /*
                 if (context.get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
@@ -684,15 +702,20 @@ class SessionManager {
                || !strcasecmp(key, _STRAUTHID_SELECTOR_DEVICE_FILTER)
                || !strcasecmp(key, _STRAUTHID_SELECTOR_GROUP_FILTER)
                || !strcasecmp(key, _STRAUTHID_SELECTOR_LINES_PER_PAGE)
-               || !strcasecmp(key, _STRAUTHID_SELECTOR_NUMBER_OF_PAGES)
                || !strcasecmp(key, _STRAUTHID_TARGET_DEVICE)
                || !strcasecmp(key, _STRAUTHID_TARGET_PASSWORD)
-               || !strcasecmp(key, _STRAUTHID_TARGET_PORT)
                || !strcasecmp(key, _STRAUTHID_TARGET_PROTOCOL)
                || !strcasecmp(key, _STRAUTHID_TARGET_USER)
                || !strcasecmp(key, _STRAUTHID_AUTH_USER)
                || !strcasecmp(key, _STRAUTHID_HOST)
                || !strcasecmp(key, _STRAUTHID_PASSWORD)
+               || !strcasecmp(key, _STRAUTHID_AUTHCHANNEL_RESULT)
+               || !strcasecmp(key, _STRAUTHID_AUTHCHANNEL_TARGET)
+               || !strcasecmp(key, _STRAUTHID_ACCEPT_MESSAGE)
+               || !strcasecmp(key, _STRAUTHID_DISPLAY_MESSAGE)
+               || !strcasecmp(key, _STRAUTHID_KEEPALIVE)
+               || !strcasecmp(key, _STRAUTHID_PROXY_TYPE)
+               || !strcasecmp(key, _STRAUTHID_TRACE_SEAL)
                ) {
                 const char * global_section;
                 const char * global_key;
@@ -757,9 +780,9 @@ class SessionManager {
                 delete this->auth_event;
                 this->auth_event = new wait_obj(this->auth_trans_t->sck);
             }
-            this->out_item(stream, STRAUTHID_PROXY_TYPE);
-            this->out_item(stream, STRAUTHID_DISPLAY_MESSAGE);
-            this->out_item(stream, STRAUTHID_ACCEPT_MESSAGE);
+            this->out_item(stream, _STRAUTHID_PROXY_TYPE);
+            this->out_item(stream, _STRAUTHID_DISPLAY_MESSAGE);
+            this->out_item(stream, _STRAUTHID_ACCEPT_MESSAGE);
             this->out_item(stream, _STRAUTHID_HOST);
             this->out_item(stream, _STRAUTHID_AUTH_USER);
             this->out_item(stream, _STRAUTHID_PASSWORD);
@@ -776,8 +799,9 @@ class SessionManager {
             this->out_item(stream, _STRAUTHID_OPT_HEIGHT);
             this->out_item(stream, _STRAUTHID_OPT_BPP);
             // send trace seal if and only if there is one
-            if (this->context.get(STRAUTHID_TRACE_SEAL)){
-                this->out_item(stream, STRAUTHID_TRACE_SEAL);
+//            if (this->context.get(STRAUTHID_TRACE_SEAL)){
+            if (!this->ini->globals.context.trace_seal.is_empty()) {
+                this->out_item(stream, _STRAUTHID_TRACE_SEAL);
             }
             stream.mark_end();
 
@@ -786,8 +810,10 @@ class SessionManager {
             this->auth_trans_t->send(stream.data, total_length);
 
         } catch (Error e) {
-            this->context.cpy(STRAUTHID_AUTHENTICATED, false);
-            this->context.cpy(STRAUTHID_REJECTED, "Authentifier service failed");
+//            this->context.cpy(STRAUTHID_AUTHENTICATED, false);
+            this->ini->globals.context.authenticated = false;
+//            this->context.cpy(STRAUTHID_REJECTED, "Authentifier service failed");
+            this->ini->globals.context.rejected = "Authentifier service failed";
             delete this->auth_trans_t;
             this->auth_trans_t = NULL;
             delete this->auth_event;
@@ -809,18 +835,23 @@ class SessionManager {
         }
         this->auth_trans_t->recv(&stream.end, size - 4);
 
-        bool flag = (this->context.get(STRAUTHID_SESSION_ID)[0] == 0);
+//        bool flag = (this->context.get(STRAUTHID_SESSION_ID)[0] == 0);
+        bool flag = this->ini->globals.context.session_id.is_empty();
         this->in_items(stream);
-        if (flag && (this->context.get(STRAUTHID_SESSION_ID)[0] != 0) ) {
+//        if (flag && (this->context.get(STRAUTHID_SESSION_ID)[0] != 0) ) {
+        if (flag && !this->ini->globals.context.session_id.is_empty()) {
             int child_pid = getpid();
             char old_session_file[256];
             sprintf(old_session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);
             char new_session_file[256];
-            sprintf(new_session_file, "%s/redemption/session_%s.pid", PID_PATH, this->context.get(STRAUTHID_SESSION_ID));
+//            sprintf(new_session_file, "%s/redemption/session_%s.pid", PID_PATH, this->context.get(STRAUTHID_SESSION_ID));
+            sprintf(new_session_file, "%s/redemption/session_%s.pid", PID_PATH,
+                (const char *)this->ini->globals.context.session_id);
             rename(old_session_file, new_session_file);
         }
 
-        LOG(LOG_INFO, "SESSION_ID = %s", this->context.get(STRAUTHID_SESSION_ID) );
+//        LOG(LOG_INFO, "SESSION_ID = %s", this->context.get(STRAUTHID_SESSION_ID) );
+        LOG(LOG_INFO, "SESSION_ID = %s", (const char *)this->ini->globals.context.session_id);
     }
 
     void receive_next_module()
@@ -828,8 +859,10 @@ class SessionManager {
         try {
             this->incoming();
         } catch (...) {
-            this->context.cpy(STRAUTHID_AUTHENTICATED, false);
-            this->context.cpy(STRAUTHID_REJECTED, "Authentifier service failed");
+//            this->context.cpy(STRAUTHID_AUTHENTICATED, false);
+            this->ini->globals.context.authenticated = false;
+//            this->context.cpy(STRAUTHID_REJECTED, "Authentifier service failed");
+            this->ini->globals.context.rejected = "Authentifier service failed";
             delete this->auth_trans_t;
             this->auth_trans_t = NULL;
         }
@@ -1003,6 +1036,66 @@ class SessionManager {
         else if (!strcmp(keyword, _STRAUTHID_PASSWORD)) {
             global_section  = GLOBAL_SECTION_CONTEXT;
             global_key      = "password";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_AUTHCHANNEL_ANSWER)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "authchannel_answer";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_AUTHCHANNEL_RESULT)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "authchannel_result";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_AUTHCHANNEL_TARGET)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "authchannel_target";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_MESSAGE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "message";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_ACCEPT_MESSAGE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "accept_message";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_DISPLAY_MESSAGE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "display_message";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_REJECTED)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "rejected";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_AUTHENTICATED)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "authenticated";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_KEEPALIVE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "keepalive";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_PROXY_TYPE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "proxy_type";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_SESSION_ID)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "session_id";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_END_DATE_CNX)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "end_date_cnx";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_END_TIME)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "end_time";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_MODE_CONSOLE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "mode_console";
+        }
+        else if (!strcmp(keyword, _STRAUTHID_TIMEZONE)) {
+            global_section  = GLOBAL_SECTION_CONTEXT;
+            global_key      = "timezone";
         }
         else {
 //            LOG(LOG_WARNING, "get_global_info: unknown keyword = %s", keyword);
