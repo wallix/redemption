@@ -350,12 +350,15 @@ struct Session {
                         // Check if sesman received an answer to auth_channel_target
                         if (this->ini->globals.auth_channel[0]) {
                             // Get sesman answer to AUTHCHANNEL_TARGET
-                            char *item = this->context->get(STRAUTHID_AUTHCHANNEL_ANSWER);
-                            if (item[0] != 0) {
+//                            char *item = this->context->get(STRAUTHID_AUTHCHANNEL_ANSWER);
+//                            if (item[0] != 0) {
+                            if (!this->ini->globals.context.authchannel_answer.is_empty()) {
                                 // If set, transmit to auth_channel channel
-                                this->mod->send_auth_channel_data(item);
+                                this->mod->send_auth_channel_data(
+                                    this->ini->globals.context.authchannel_answer);
                                 // Erase the context variable
-                                item[0] = 0;
+//                                item[0] = 0;
+                                this->ini->globals.context.authchannel_answer = "";
                             }
                         }
 
@@ -628,15 +631,16 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of new mod 'INTERNAL::Dialog Accept Message'");
                         }
-                        message = this->context->get(STRAUTHID_MESSAGE);
-                        button = ini->globals.translation.button_refused;
+//                        message = this->context->get(STRAUTHID_MESSAGE);
+                        message = this->ini->globals.context.message;
+                        button = this->ini->globals.translation.button_refused;
                         this->mod = new dialog_mod(*this->context,
                                         *this->front,
                                         this->front->client_info.width,
                                         this->front->client_info.height,
                                         message,
                                         button,
-                                        this->ini);
+                                        *this->ini);
                     }
                     if (this->verbose){
                         LOG(LOG_INFO, "Session::internal module 'Dialog Accept Message' ready");
@@ -650,7 +654,8 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of new mod 'INTERNAL::Dialog Display Message'");
                         }
-                        message = this->context->get(STRAUTHID_MESSAGE);
+//                        message = this->context->get(STRAUTHID_MESSAGE);
+                        message = this->ini->globals.context.message;
                         button = NULL;
                         this->mod = new dialog_mod(
                                         *this->context,
@@ -659,7 +664,7 @@ struct Session {
                                         this->front->client_info.height,
                                         message,
                                         button,
-                                        this->ini);
+                                        *this->ini);
                     }
                     if (this->verbose){
                         LOG(LOG_INFO, "Session::internal module 'Dialog Display Message' ready");

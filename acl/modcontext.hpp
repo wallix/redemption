@@ -31,16 +31,10 @@ using namespace std;
 
 typedef enum{
     AUTHID_UNKNOWN = 0,
-    AUTHID_AUTHCHANNEL_TARGET, // WabLauncher target request
-    AUTHID_AUTHCHANNEL_RESULT, // WabLauncher session result
-    AUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
     AUTHID_END_TIME,        // end time as text
     AUTHID_REJECTED,        // rejected
     AUTHID_SESSION_ID,      // session_id
     AUTHID_END_DATE_CNX,    // timeclose
-    AUTHID_MESSAGE, // warning_message
-    AUTHID_DISPLAY_MESSAGE, // display a dialog box with a message
-    AUTHID_ACCEPT_MESSAGE,  // display a dialog to valid a message
     AUTHID_PROXY_TYPE,
     AUTHID_AUTHENTICATED,
     AUTHID_KEEPALIVE,
@@ -97,23 +91,22 @@ typedef enum{
     AUTHID_AUTH_USER,       // login
     AUTHID_HOST,            // ip_client
     AUTHID_PASSWORD,        // password
+    AUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
+    AUTHID_AUTHCHANNEL_RESULT, // WabLauncher session result
+    AUTHID_AUTHCHANNEL_TARGET, // WabLauncher target request
+    AUTHID_MESSAGE, // warning_message
+    AUTHID_ACCEPT_MESSAGE,  // display a dialog to valid a message
+    AUTHID_DISPLAY_MESSAGE, // display a dialog box with a message
 */
 
     MAX_AUTHID
 } authid_t;
 
 
-#define STRAUTHID_AUTHCHANNEL_TARGET       "auth_channel_target"
-#define STRAUTHID_AUTHCHANNEL_RESULT       "auth_channel_result"
-TODO("This is not a translation but auth_channel answer, change key name in sesman")
-#define STRAUTHID_AUTHCHANNEL_ANSWER       "trans_auth_channel"
 #define STRAUTHID_END_TIME                 "end_time"
 #define STRAUTHID_REJECTED                 "rejected"
 #define STRAUTHID_SESSION_ID               "session_id"
 #define STRAUTHID_END_DATE_CNX             "timeclose"
-#define STRAUTHID_MESSAGE                  "message"
-#define STRAUTHID_DISPLAY_MESSAGE          "display_message"
-#define STRAUTHID_ACCEPT_MESSAGE           "accept_message"
 #define STRAUTHID_PROXY_TYPE               "proxy_type"
 #define STRAUTHID_AUTHENTICATED            "authenticated"
 #define STRAUTHID_KEEPALIVE                "keepalive"
@@ -167,6 +160,13 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 #define _STRAUTHID_AUTH_USER                "login"
 #define _STRAUTHID_HOST                     "ip_client"
 #define _STRAUTHID_PASSWORD                 "password"
+TODO("This is not a translation but auth_channel answer, change key name in sesman")
+#define _STRAUTHID_AUTHCHANNEL_ANSWER       "trans_auth_channel"
+#define _STRAUTHID_AUTHCHANNEL_RESULT       "auth_channel_result"
+#define _STRAUTHID_AUTHCHANNEL_TARGET       "auth_channel_target"
+#define _STRAUTHID_MESSAGE                  "message"
+#define _STRAUTHID_ACCEPT_MESSAGE           "accept_message"
+#define _STRAUTHID_DISPLAY_MESSAGE          "display_message"
 
 
 #define GLOBAL_SECTION_UNKNOWN      NULL
@@ -192,14 +192,7 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 
 TODO("This should be initialized in constructor")
 static ProtocolKeyword KeywordsDefinitions[] = {
-    {STRAUTHID_AUTHCHANNEL_TARGET,       TYPE_TEXT,    "!"                                    },
-    {STRAUTHID_AUTHCHANNEL_RESULT,       TYPE_TEXT,    "!"                                    },
-    {STRAUTHID_AUTHCHANNEL_ANSWER,       TYPE_TEXT,    "!"                                    }, //
-
     {STRAUTHID_END_TIME,                 TYPE_TEXT,    "!-"                                   }, //
-    {STRAUTHID_MESSAGE,                  TYPE_TEXT,    "!"                                    }, //
-    {STRAUTHID_DISPLAY_MESSAGE,          TYPE_TEXT,    "!"                                    },
-    {STRAUTHID_ACCEPT_MESSAGE,           TYPE_TEXT,    "!"                                    },
     {STRAUTHID_PROXY_TYPE,               TYPE_TEXT,    "!RDP"                                 },
     {STRAUTHID_AUTHENTICATED,            TYPE_BOOLEAN, "!False"                               }, //
     {STRAUTHID_KEEPALIVE,                TYPE_BOOLEAN, "ASK"                                  },
@@ -269,21 +262,25 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     {_STRAUTHID_AUTH_USER,                TYPE_TEXT,    "!"                                    },
     {_STRAUTHID_HOST,                     TYPE_TEXT,    "!"                                    },
     {_STRAUTHID_PASSWORD,                 TYPE_TEXT,    "!"                                    },
+/*
+    {STRAUTHID_AUTHCHANNEL_ANSWER,       TYPE_TEXT,    "!"                                    }, //
+*/
+    {_STRAUTHID_AUTHCHANNEL_RESULT,       TYPE_TEXT,    "!"                                    },
+    {_STRAUTHID_AUTHCHANNEL_TARGET,       TYPE_TEXT,    "!"                                    },
+/*
+    {STRAUTHID_MESSAGE,                  TYPE_TEXT,    "!"                                    }, //
+*/
+    {_STRAUTHID_ACCEPT_MESSAGE,           TYPE_TEXT,    "!"                                    },
+    {_STRAUTHID_DISPLAY_MESSAGE,          TYPE_TEXT,    "!"                                    },
 };
 
 
 static inline authid_t authid_from_string(const char * kw)
 {
     static const string authstr[MAX_AUTHID-1] = {
-    STRAUTHID_AUTHCHANNEL_TARGET,
-    STRAUTHID_AUTHCHANNEL_RESULT,
-    STRAUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
     STRAUTHID_END_TIME,
     STRAUTHID_REJECTED,
     STRAUTHID_END_DATE_CNX,
-    STRAUTHID_MESSAGE,
-    STRAUTHID_DISPLAY_MESSAGE,
-    STRAUTHID_ACCEPT_MESSAGE,
     STRAUTHID_PROXY_TYPE,
     STRAUTHID_AUTHENTICATED,
     STRAUTHID_KEEPALIVE,
@@ -339,6 +336,12 @@ static inline authid_t authid_from_string(const char * kw)
     STRAUTHID_AUTH_USER,
     STRAUTHID_HOST,
     STRAUTHID_PASSWORD,
+    STRAUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
+    STRAUTHID_AUTHCHANNEL_RESULT,
+    STRAUTHID_AUTHCHANNEL_TARGET,
+    STRAUTHID_MESSAGE,
+    STRAUTHID_ACCEPT_MESSAGE,
+    STRAUTHID_DISPLAY_MESSAGE,
 */
     };
 
