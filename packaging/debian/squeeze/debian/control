@@ -7,7 +7,7 @@ Build-Depends: git, dpkg-dev, debhelper, bjam, boost-build, libboost-program-opt
 Package: redemption
 Architecture: i386 
 Homepage: https://github.com/wallix/redemption
-Depends: libboost-program-options1.42.0 libpng libssl0.9.8
+Depends: libboost-program-options1.42.0, libpng12-0, libssl0.9.8
 Description: A new generation RDP proxy for WAB
     A new generation RDP proxy for WAB
     wwww: https://github.com/wallix/redemption
