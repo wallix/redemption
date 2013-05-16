@@ -7,10 +7,6 @@ import subprocess
 import os
 import re
 
-def execute(command):
-    if os.system(command) != 0:
-        raise BuildError("%s failed." % command)
-
 if __name__ == '__main__':
 
     try:
@@ -64,19 +60,15 @@ if __name__ == '__main__':
         if red_source_version != tag_describe:
             raise Exception('Repository head mismatch current version ("%s" != "%s"), please tag current version before building packet' % (
                 red_source_version, tag_describe))
-        
 
-
+        res = subprocess.check_output(["git", "diff", "--shortstat"], stderr = subprocess.STDOUT)
+        if res:
+            raise Exception('Your repository has uncommited changes ("%s"), please commit before packaging' % (res))
             
-        package_name = "redemption_%s%s.deb" % (red_source_version, changelog_suffix_ver)
+        package_name = "redemption_%s%s_amd64.deb" % (red_source_version, changelog_suffix_ver)
+        print package_name
 
-        # Create changelog from git history
-        
-        
-        #execute("DESTDIR=debian/tmp bjam -a install")
-        path = os.getcwd() #pushd
-        #execute("dch --create -v %s --package %s --empty" % (version, "redemption"))
-        execute("dpkg-buildpackage -b -tc -us -uc -r")
+        os.system("dpkg-buildpackage -b -tc -us -uc -r")
         exit(0)
     except Exception, e:
         print "Build failed: %s" % e
