@@ -140,7 +140,7 @@ public:
 //        char * endtimes  = this->context.get(STRAUTHID_END_TIME);
         char * endtimes  = const_cast<char *>((const char *)this->ini.globals.context.end_time);
 
-        for (size_t index = 0 ; index < 50 ; index++){
+        for (size_t index = 0 ; index < 50 ; index++) {
             size_t size_groups = proceed_item(groups);
             size_t size_targets = proceed_item(targets);
             size_t size_protocols = proceed_item(protocols);

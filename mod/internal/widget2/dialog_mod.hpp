@@ -15,81 +15,53 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET2_MOD_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET2_MOD_HPP
+#ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_DIALOG_MOD_HPP
+#define REDEMPTION_MOD_INTERNAL_WIDGET2_DIALOG_MOD_HPP
 
-// #include "widget.hpp"
-#include "front.hpp"
-#include "mod_api.hpp"
+#include "front_api.hpp"
+#include "config.hpp"
+#include "modcontext.hpp"
 #include "internal/internal_mod.hpp"
-#include "window_wab_close.hpp"
-#include "image.hpp"
+#include "window_dialog.hpp"
 #include "screen.hpp"
-// #include "../close.hpp"
 
-//TODO("Old CloseMod Test")
-TODO("CloseMod")
-
-
-class widget2_mod : public internal_mod, public NotifyApi
+class DialogMod : public internal_mod, public NotifyApi
 {
     WidgetScreen screen;
-    WindowWabClose window_close;
-    WidgetImage image;
+    WindowDialog window_dialog;
 
+    //unless ?
+    //@{
     ModContext & context;
     Inifile & ini;
-
-
-private:
-    struct temporary_text {
-        char text[255];
-
-        temporary_text(Inifile& ini)
-        {
-            snprintf(text, sizeof(text), "%s@%s",
-                     ini.globals.target_user,
-                     ini.globals.target_device);
-        }
-    };
+    //@}
 
 public:
-    widget2_mod(ModContext& context, Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
+    DialogMod(ModContext& context, Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height, const char * caption, const char * message, const char * cancel_text)
     : internal_mod(front, width, height)
     , screen(this, width, height)
-    , window_close(this, 0, 0, &this->screen, this, "End of connection", 0,
-                   context.is_asked(_STRAUTHID_AUTH_USER) ? NULL : ini.globals.auth_user,
-                   context.is_asked(_STRAUTHID_TARGET_USER) ||context.is_asked(_STRAUTHID_TARGET_DEVICE) ? NULL : temporary_text(ini).text,
-                   BLACK, GREY
-                  )
-    , image(this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
+    , window_dialog(this, 0, 0, &this->screen, this, caption, message, 0, "Ok", cancel_text, BLACK, GREY, BLACK, WHITE)
     , context(context)
     , ini(ini)
     {
-        this->screen.child_list.push_back(&this->window_close);
-        this->screen.child_list.push_back(&this->image);
+        this->screen.child_list.push_back(&this->window_dialog);
 
-        this->screen.widget_with_focus = &this->window_close;
-
-        this->window_close.set_xy((width - this->window_close.cx()) / 2,
-                                  (height - this->window_close.cy()) / 2);
-
-        this->image.rect.x = width - this->image.cx();
-        this->image.rect.y = height - this->image.cy();
+        this->window_dialog.set_xy((width - this->window_dialog.cx()) / 2,
+                                   (height - this->window_dialog.cy()) / 2);
 
         this->screen.refresh(this->screen.rect);
     }
 
-    virtual ~widget2_mod()
+    virtual ~DialogMod()
     {}
 
     virtual void notify(Widget2* sender, notify_event_t event,
                         long unsigned int param, long unsigned int param2)
     {
-        if (event == NOTIFY_CANCEL || (event == NOTIFY_SUBMIT && sender == &window_close)) {
+        if (event == NOTIFY_CANCEL || (event == NOTIFY_SUBMIT && sender == &window_dialog)) {
             this->signal = BACK_EVENT_STOP;
             this->event.set();
         }
@@ -108,8 +80,7 @@ public:
 
     virtual void rdp_input_invalidate(const Rect& r)
     {
-        this->window_close.rdp_input_invalidate(r);
-        //this->image.rdp_input_invalidate(r.intersect(this->image));
+        this->window_dialog.rdp_input_invalidate(r);
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
@@ -119,7 +90,7 @@ public:
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (keymap->nb_kevent_available() > 0 && keymap->top_kevent() == Keymap2::KEVENT_ENTER){
+        if (keymap->nb_kevent_available() > 0 && keymap->top_kevent() == Keymap2::KEVENT_ESC){
             keymap->get_kevent();
             this->signal = BACK_EVENT_STOP;
             this->event.set();

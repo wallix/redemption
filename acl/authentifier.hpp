@@ -41,6 +41,7 @@ typedef enum {
     INTERNAL_CARD,
     INTERNAL_WIDGET2_SELECTOR,
     INTERNAL_WIDGET2_CLOSE,
+    INTERNAL_WIDGET2_DIALOG,
 } submodule_t;
 
 enum {
@@ -518,6 +519,12 @@ class SessionManager {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
                 }
                 nextmod = INTERNAL_WIDGET2_CLOSE;
+            }
+            else if (0 == strcmp(target, "widget2_dialog")){
+                if (this->verbose & 0x4){
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_dialog");
+                }
+                nextmod = INTERNAL_WIDGET2_DIALOG;
             }
             else {
                 if (this->verbose & 0x4){

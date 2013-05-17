@@ -65,7 +65,8 @@
 #include "cli/cli_mod.hpp"
 
 #include "internal/widget2/selector_mod.hpp"
-#include "internal/widget2/widget2_mod.hpp"
+#include "internal/widget2/wab_close_mod.hpp"
+#include "internal/widget2/dialog_mod.hpp"
 
 using namespace std;
 
@@ -751,21 +752,6 @@ struct Session {
                             LOG(LOG_INFO, "Session::internal module 'selector' ready");
                         }
                     break;
-                    case INTERNAL_WIDGET2_CLOSE:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'CloseMod'");
-                        }
-                        this->mod = new widget2_mod(
-                            *this->context,
-                            *this->ini,
-                            *this->front,
-                            this->front->client_info.width,
-                            this->front->client_info.height
-                        );
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'CloseMod' ready");
-                        }
-                    break;
                     case INTERNAL_WIDGET2_SELECTOR:
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'SelectorMod'");
@@ -780,6 +766,48 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::internal module 'SelectorMod' ready");
                         }
+                    break;
+                    case INTERNAL_WIDGET2_CLOSE:
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::Creation of internal module 'CloseMod'");
+                        }
+                        this->mod = new WabCloseMod(
+                            *this->context,
+                            *this->ini,
+                            *this->front,
+                            this->front->client_info.width,
+                            this->front->client_info.height
+                        );
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::internal module 'CloseMod' ready");
+                        }
+                    break;
+                    case INTERNAL_WIDGET2_DIALOG:
+                    {
+                        std::cout << ("doalog") << '\n';
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::Creation of internal module 'DialogMod'");
+                        }
+                        //const char * message = this->context->get(STRAUTHID_MESSAGE);
+//                         const char * message = this->ini->globals.context.message;
+//                         const char * button = this->ini->globals.translation.button_refused;
+                        const char * message = "plop<br>dq";
+                        const char * button = "close";
+                        const char * caption = "Information";
+                        this->mod = new DialogMod(
+                            *this->context,
+                            *this->ini,
+                            *this->front,
+                            this->front->client_info.width,
+                            this->front->client_info.height,
+                            caption,
+                            message,
+                            button
+                        );
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::internal module 'DialogMod' ready");
+                        }
+                    }
                     break;
                     default:
                     break;

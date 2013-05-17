@@ -99,6 +99,21 @@ public:
         //this->selector.rdp_input_mouse(device_flags, x, y, keymap);
     }
 
+    bool detach_widget(Widget2 * widget)
+    {
+        for (size_t i = 0; i < this->child_list.size(); ++i) {
+            if (this->child_list[i] == widget) {
+                if (widget->parent == this) {
+                    widget->parent = 0;
+                }
+                this->child_list[i] = this->child_list[this->child_list.size()-1];
+                this->child_list.pop_back();
+                return true;
+            }
+        }
+        return false;
+    }
+
 #if 0
     static bool switch_focus(Widget2 * old_focus, Widget2 * new_focus)
     {
