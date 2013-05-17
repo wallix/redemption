@@ -560,18 +560,18 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.clipboard);
     BOOST_CHECK_EQUAL(false,                            ini.globals.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
-    BOOST_CHECK_EQUAL(std::string("Annuler"),           std::string(ini.globals.translation.button_cancel));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.globals.translation.button_help));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.globals.translation.button_close));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.globals.translation.button_refused));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.globals.translation.login));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.globals.translation.username));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.globals.translation.password));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.globals.translation.target));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string((const char *)ini.globals.translation.button_ok));
+    BOOST_CHECK_EQUAL(std::string("Annuler"),           std::string((const char *)ini.globals.translation.button_cancel));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string((const char *)ini.globals.translation.button_help));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string((const char *)ini.globals.translation.button_close));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string((const char *)ini.globals.translation.button_refused));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string((const char *)ini.globals.translation.login));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string((const char *)ini.globals.translation.username));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string((const char *)ini.globals.translation.password));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string((const char *)ini.globals.translation.target));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string((const char *)ini.globals.translation.diagnostic));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string((const char *)ini.globals.translation.connection_closed));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string((const char *)ini.globals.translation.help_message));
 
     BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
     BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);

@@ -30,13 +30,11 @@ struct cli_mod : public transitory_mod {
         struct ModContext & context, Inifile & ini, FrontAPI & front, ClientInfo & client_info, const uint16_t front_width, const uint16_t front_height)
             : transitory_mod(front, front_width, front_height)
     {
-        context.parse_username(client_info.username, ini);
+//        context.parse_username(client_info.username, ini);
+      ini.parse_username(client_info.username);
 
         if (client_info.password[0]){
-//            context.cpy(STRAUTHID_PASSWORD, client_info.password);
-            ini.globals.context.password = client_info.password;
-
-            context.cpy(_STRAUTHID_PASSWORD, "");
+            ini.context_set_value(_AUTHID_PASSWORD, client_info.password);
         }
     }
 
