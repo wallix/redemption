@@ -27,4 +27,3 @@ etc/rdpproxy/rdpproxy.key
 etc/rdpproxy/rdpproxy-cert.pem
 etc/rdpproxy/rdpproxy.p12
 etc/rdpproxy/dh1024.pem
-
