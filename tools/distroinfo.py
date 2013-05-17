@@ -45,7 +45,6 @@ def get_distro():
                 '13.10': ('Saucy', 'Salamander')
             }
             name = codenames[version][0].lower()
-            dist = 'ubuntu'
     else:
         words = re.split("\W", issue)
         if "lenny" in words:
@@ -55,7 +54,7 @@ def get_distro():
         elif "wheezy" in words:
             dist, version, name = "debian", "7", "wheezy"
 
-    return dist, version, name
+    return dist.lower(), version, name
 
 
 def get_arch():
