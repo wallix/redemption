@@ -7,13 +7,18 @@ import subprocess
 import os
 import re
 
+import distroinfo
+
 if __name__ == '__main__':
     try:
+    
+        distro, dummy, codename = distroinfo.get_distro()
+    
         sections = []
         section = {}
         current = None
         count = 0
-        for line in open("packaging/debian/squeeze/debian/control"):
+        for line in open("packaging/%s/%s/debian/control" % (distro, codename)):
             res = re.match(r'^(?:([A-Za-z0-9-]+[:])\s*([^\r\n]+)\r*|(\s*)\r*$|([^\r\n]+)\r*)$', line)
             if res.group(1):
                 current = res.group(1)

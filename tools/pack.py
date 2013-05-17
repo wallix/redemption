@@ -6,8 +6,12 @@ import shutil
 import subprocess
 import os
 import re
+import distroinfo
 
 if __name__ == '__main__':
+
+    distro, distro_release , distro_codename = distroinfo.get_distro()
+    arch = distroinfo.get_arch()
 
     try:
         try:
@@ -16,7 +20,7 @@ if __name__ == '__main__':
             pass
         
         # Set debian (packaging data) directory with distro specific packaging files
-        shutil.copytree("packaging/debian/squeeze/debian", "debian")
+        shutil.copytree("packaging/%s/%s/debian" % (distro, distro_codename), "debian")
         shutil.copy("docs/copyright", "debian/copyright")
         
         found = False
@@ -33,7 +37,7 @@ if __name__ == '__main__':
 
         if not found:
             raise Exception('Source Version not found in file main/version.hpp')
-        package_name = "redemption_%s_i386.deb" % red_source_version
+        package_name = "redemption_%s_%s.deb" % (red_source_version, arch)
 
         found = False
         for line in open("debian/changelog"):
