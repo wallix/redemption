@@ -33,10 +33,7 @@ struct cli_mod : public transitory_mod {
         context.parse_username(client_info.username, ini);
 
         if (client_info.password[0]){
-//            context.cpy(STRAUTHID_PASSWORD, client_info.password);
-            ini.globals.context.password = client_info.password;
-
-            context.cpy(_STRAUTHID_PASSWORD, "");
+            ini.context_set_value(_AUTHID_PASSWORD, client_info.password);
         }
     }
 

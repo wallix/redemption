@@ -128,7 +128,8 @@ class SessionManager {
             BStream stream(8192);
 
             stream.out_uint32_be(0); // skip length
-            this->context.ask(_STRAUTHID_KEEPALIVE);
+//            this->context.ask(_STRAUTHID_KEEPALIVE);
+            this->ini->context_ask(_AUTHID_KEEPALIVE);
             this->out_item(stream, _STRAUTHID_KEEPALIVE);
             stream.mark_end();
             // now set length
@@ -153,8 +154,7 @@ class SessionManager {
         BStream stream(8192);
 
 //        this->context.cpy(STRAUTHID_AUTHCHANNEL_TARGET, target);
-        this->ini->globals.context.authchannel_target = target;
-        this->context.cpy(_STRAUTHID_AUTHCHANNEL_TARGET, "");
+        this->ini->context_set_value(_AUTHID_AUTHCHANNEL_TARGET, target);
 
         stream.out_uint32_be(0); // skip length
         this->out_item(stream, _STRAUTHID_AUTHCHANNEL_TARGET);
@@ -178,9 +178,7 @@ class SessionManager {
         BStream stream(8192);
 
 //        this->context.cpy(STRAUTHID_AUTHCHANNEL_RESULT, result);
-        this->ini->globals.context.authchannel_result = result;
-        this->context.cpy(_STRAUTHID_AUTHCHANNEL_RESULT, "");
-
+        this->ini->context_set_value(_AUTHID_AUTHCHANNEL_RESULT, result);
 
         stream.out_uint32_be(0);  // skip length
         this->out_item(stream, _STRAUTHID_AUTHCHANNEL_RESULT);
@@ -219,81 +217,50 @@ class SessionManager {
                 if (*stream.p == '\n'){
                     *stream.p = 0;
 
-                    const char * global_section;
-                    const char * global_key;
-
-                    if (get_global_info(reinterpret_cast<char *>(keyword), global_section, global_key)) {
-                        const char * res_value;
-
-                        res_value = (char *)value + (value[0] == '!' ? 1 : 0);
-
-                        ini->setglobal(global_key, res_value, global_section);
-
-                        if (
-                              (strcasecmp((char *)keyword, _STRAUTHID_OPT_WIDTH) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_OPT_HEIGHT) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_OPT_BPP) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_SELECTOR) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_SELECTOR_CURRENT_PAGE) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_SELECTOR_DEVICE_FILTER) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_SELECTOR_GROUP_FILTER) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_SELECTOR_LINES_PER_PAGE) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_TARGET_DEVICE) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_TARGET_PASSWORD) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_TARGET_PROTOCOL) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_TARGET_USER) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_AUTH_USER) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_HOST) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_PASSWORD) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_AUTHCHANNEL_RESULT) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_AUTHCHANNEL_TARGET) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_ACCEPT_MESSAGE) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_DISPLAY_MESSAGE) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_KEEPALIVE) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_PROXY_TYPE) == 0)
-                           || (strcasecmp((char *)keyword, _STRAUTHID_TRACE_SEAL) == 0)
-                           ){
-                            if ((0==strncasecmp((char*)value, "ask", 3))){
-                                this->context.ask((char*)keyword);
-                            }
-                            else {
-                                this->context.cpy((char*)keyword, "");
-                            }
-                        }
-
-                        if (  (strncasecmp((char *)keyword, "password", 8) == 0)
-                           || (strncasecmp((char *)keyword, "target_password", 15) == 0)) {
-                            LOG(LOG_INFO, "receiving '%s'=<hidden>\n", (char*)keyword);
-                        }
-                        else{
-                            LOG(LOG_INFO, "receiving '%s'=%s\n", keyword, res_value);
-                        }
+/*
+                    if (!this->context.get((char*)keyword)) {
+                        LOG(LOG_INFO, "keyword %s unknown. Skip it.", keyword);
                     }
                     else
                     {
-                        if (!this->context.get((char*)keyword)) {
-                            LOG(LOG_INFO, "keyword %s unknown. Skip it.", keyword);
+                        if ((0==strncasecmp((char*)value, "ask", 3))){
+                            this->context.ask((char*)keyword);
+                            LOG(LOG_INFO, "receiving %s '%s'\n", value, keyword);
                         }
-                        else
-                        {
-                            if ((0==strncasecmp((char*)value, "ask", 3))){
-                                this->context.ask((char*)keyword);
-                                LOG(LOG_INFO, "receiving %s '%s'\n", value, keyword);
-                            }
-                            else {
-                                this->context.cpy((char*)keyword, (char*)value+(value[0]=='!'?1:0));
+                        else {
+                            this->context.cpy((char*)keyword, (char*)value+(value[0]=='!'?1:0));
 
-                                if ((strncasecmp((char*)value, "ask", 3) != 0)
-                                && ((strncasecmp("password", (char*)keyword, 8) == 0)
-                                || (strncasecmp("target_password", (char*)keyword, 15) == 0))){
-                                    LOG(LOG_INFO, "receiving '%s'=<hidden>\n", (char*)keyword);
-                                }
-                                else{
-                                    LOG(LOG_INFO, "receiving '%s'=%s\n", keyword, this->context.get((char*)keyword));
-                                }
+                            if ((strncasecmp((char*)value, "ask", 3) != 0)
+                            && ((strncasecmp("password", (char*)keyword, 8) == 0)
+                            || (strncasecmp("target_password", (char*)keyword, 15) == 0))){
+                                LOG(LOG_INFO, "receiving '%s'=<hidden>\n", (char*)keyword);
+                            }
+                            else{
+                                LOG(LOG_INFO, "receiving '%s'=%s\n", keyword, this->context.get((char*)keyword));
                             }
                         }
                     }
+*/
+                    if ((0 == strncasecmp((char*)value, "ask", 3))) {
+                        this->ini->context_ask((char *)keyword);
+                        LOG(LOG_INFO, "receiving %s '%s'\n", value, keyword);
+                    }
+                    else {
+                        this->ini->context_set_value((char *)keyword,
+                            (char *)value + (value[0] == '!' ? 1 : 0));
+
+                        if (  (strncasecmp("password",        (char *)keyword, 9 ) == 0)
+                           || (strncasecmp("target_password", (char *)keyword, 16) == 0)
+                           ){
+                            LOG(LOG_INFO, "receiving '%s'=<hidden>\n", (char *)keyword);
+                        }
+                        else{
+                            char buffer[128];
+                            LOG(LOG_INFO, "receiving '%s'='%s'\n", keyword,
+                                this->ini->context_get_value((char *)keyword, buffer, sizeof(buffer)));
+                        }
+                    }
+
                     stream.p = stream.p+1;
                     return;
                 }
@@ -413,9 +380,10 @@ class SessionManager {
             try {
                 this->incoming();
 //                if (this->context.get_bool(STRAUTHID_KEEPALIVE)){
-                if (this->ini->globals.context.keepalive) {
+                if (this->ini->context_get_bool(_AUTHID_KEEPALIVE)) {
                     keepalive_time = now + this->keepalive_grace_delay;
-                    this->context.ask(_STRAUTHID_KEEPALIVE);
+//                    this->context.ask(_STRAUTHID_KEEPALIVE);
+                    this->ini->context_ask(_STRAUTHID_KEEPALIVE);
                 }
             }
             catch (...){
@@ -435,10 +403,10 @@ class SessionManager {
             LOG(LOG_INFO, "auth::get_mod_from_protocol");
         }
 //        const char * protocol = this->context.get(STRAUTHID_TARGET_PROTOCOL);
-        const char * protocol = this->ini->globals.context.target_protocol;
+        const char * protocol = this->ini->context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0);
         if (this->internal_domain){
 //            char * target = this->context.get(STRAUTHID_TARGET_DEVICE);
-            char * target = this->ini->globals.target_device;
+            const char * target = this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0);
             if (0 == strncmp(target, "autotest", 8)){
                 protocol = "INTERNAL";
             }
@@ -464,7 +432,7 @@ class SessionManager {
         }
         else if (strncasecmp(protocol, "INTERNAL", 8) == 0){
 //            char * target = this->context.get(STRAUTHID_TARGET_DEVICE);
-            char * target = this->ini->globals.target_device;
+            const char * target = this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0);
             if (this->verbose & 0x4){
                 LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL");
             }
@@ -480,7 +448,7 @@ class SessionManager {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL test");
                 }
 //                char * user = this->context.get(STRAUTHID_TARGET_USER);
-                char * user = this->ini->globals.target_user;
+                const char * user = this->ini->context_get_value(_AUTHID_TARGET_USER, NULL, 0);
                 size_t len_user = strlen(user);
                 strcpy(this->context.movie, user);
                 if (0 != strcmp(".mwrm", user + len_user - 5)){
@@ -570,37 +538,37 @@ class SessionManager {
             LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS state");
         }
         {
-            if (this->context.is_asked(_STRAUTHID_AUTH_USER)){
+            if (this->ini->context_is_asked(_AUTHID_AUTH_USER)){
                 this->mod_state = MOD_STATE_DONE_LOGIN;
                 nextmod = INTERNAL_LOGIN;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (this->context.is_asked(_STRAUTHID_PASSWORD)){
+            else if (this->ini->context_is_asked(_AUTHID_PASSWORD)){
                 this->mod_state = MOD_STATE_DONE_LOGIN;
                 nextmod = INTERNAL_LOGIN;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (!this->context.is_asked(_STRAUTHID_SELECTOR)
+            else if (!this->ini->context_is_asked(_AUTHID_SELECTOR)
 //                 &&   this->context.get_bool(STRAUTHID_SELECTOR)
-                 &&   this->ini->globals.context.selector
-                 &&  !this->context.is_asked(_STRAUTHID_TARGET_DEVICE)
-                 &&  !this->context.is_asked(_STRAUTHID_TARGET_USER)){
+                 &&   this->ini->context_get_bool(_AUTHID_SELECTOR)
+                 &&  !this->ini->context_is_asked(_AUTHID_TARGET_DEVICE)
+                 &&  !this->ini->context_is_asked(_AUTHID_TARGET_USER)){
                 this->mod_state = MOD_STATE_DONE_SELECTOR;
                 nextmod = INTERNAL_SELECTOR;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (this->context.is_asked(_STRAUTHID_TARGET_DEVICE)
-                 ||  this->context.is_asked(_STRAUTHID_TARGET_USER)){
+            else if (this->ini->context_is_asked(_AUTHID_TARGET_DEVICE)
+                 ||  this->ini->context_is_asked(_AUTHID_TARGET_USER)){
                     this->mod_state = MOD_STATE_DONE_LOGIN;
                     nextmod = INTERNAL_LOGIN;
                     return MCTX_STATUS_INTERNAL;
             }
-            else if (this->context.is_asked(_STRAUTHID_DISPLAY_MESSAGE)){
+            else if (this->ini->context_is_asked(_AUTHID_DISPLAY_MESSAGE)){
                 nextmod = INTERNAL_DIALOG_DISPLAY_MESSAGE;
                 this->mod_state = MOD_STATE_DONE_DISPLAY_MESSAGE;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (this->context.is_asked(_STRAUTHID_ACCEPT_MESSAGE)){
+            else if (this->ini->context_is_asked(_AUTHID_ACCEPT_MESSAGE)){
                 this->mod_state = MOD_STATE_DONE_VALID_MESSAGE;
                 nextmod = INTERNAL_DIALOG_VALID_MESSAGE;
                 return MCTX_STATUS_INTERNAL;
@@ -677,53 +645,16 @@ class SessionManager {
     TODO("move that function to ModContext create specialized stream object ModContextStream")
     void out_item(Stream & stream, const char * key)
     {
-        if (this->context.is_asked(key)){
+        if (this->ini->context_is_asked(key)){
             LOG(LOG_INFO, "sending %s=ASK\n", key);
             stream.out_copy_bytes(key, strlen(key));
             stream.out_copy_bytes("\nASK\n",5);
         }
         else {
-            char         temp_buffer[256];
-            const char * tmp;
+            char temp_buffer[256];
 
 //            const char * tmp = this->context.get(key);
-            if (  !strcasecmp(key, _STRAUTHID_OPT_WIDTH)
-               || !strcasecmp(key, _STRAUTHID_OPT_HEIGHT)
-               || !strcasecmp(key, _STRAUTHID_OPT_BPP)
-               || !strcasecmp(key, _STRAUTHID_SELECTOR)
-               || !strcasecmp(key, _STRAUTHID_SELECTOR_CURRENT_PAGE)
-               || !strcasecmp(key, _STRAUTHID_SELECTOR_DEVICE_FILTER)
-               || !strcasecmp(key, _STRAUTHID_SELECTOR_GROUP_FILTER)
-               || !strcasecmp(key, _STRAUTHID_SELECTOR_LINES_PER_PAGE)
-               || !strcasecmp(key, _STRAUTHID_TARGET_DEVICE)
-               || !strcasecmp(key, _STRAUTHID_TARGET_PASSWORD)
-               || !strcasecmp(key, _STRAUTHID_TARGET_PROTOCOL)
-               || !strcasecmp(key, _STRAUTHID_TARGET_USER)
-               || !strcasecmp(key, _STRAUTHID_AUTH_USER)
-               || !strcasecmp(key, _STRAUTHID_HOST)
-               || !strcasecmp(key, _STRAUTHID_PASSWORD)
-               || !strcasecmp(key, _STRAUTHID_AUTHCHANNEL_RESULT)
-               || !strcasecmp(key, _STRAUTHID_AUTHCHANNEL_TARGET)
-               || !strcasecmp(key, _STRAUTHID_ACCEPT_MESSAGE)
-               || !strcasecmp(key, _STRAUTHID_DISPLAY_MESSAGE)
-               || !strcasecmp(key, _STRAUTHID_KEEPALIVE)
-               || !strcasecmp(key, _STRAUTHID_PROXY_TYPE)
-               || !strcasecmp(key, _STRAUTHID_TRACE_SEAL)
-               ) {
-                const char * global_section;
-                const char * global_key;
-
-                if (get_global_info(key, global_section, global_key)) {
-                    tmp = this->ini->context_get_value(global_key, temp_buffer, sizeof(temp_buffer));
-                }
-                else {
-                    LOG(LOG_WARNING, "Context value \"%s\" is not found\n", key);
-                    tmp = "";
-                }
-            }
-            else {
-                tmp = this->context.get(key);
-            }
+            const char * tmp = this->ini->context_get_value(key, temp_buffer, sizeof(temp_buffer));
 
             if ((strncasecmp("password", (char*)key, 8) == 0)
             ||(strncasecmp("target_password", (char*)key, 15) == 0)){
@@ -793,7 +724,7 @@ class SessionManager {
             this->out_item(stream, _STRAUTHID_OPT_BPP);
             // send trace seal if and only if there is one
 //            if (this->context.get(STRAUTHID_TRACE_SEAL)){
-            if (!this->ini->globals.context.trace_seal.is_empty()) {
+            if (strlen(this->ini->context_get_value(_AUTHID_TRACE_SEAL, NULL, 0))) {
                 this->out_item(stream, _STRAUTHID_TRACE_SEAL);
             }
             stream.mark_end();
@@ -860,246 +791,6 @@ class SessionManager {
             this->auth_trans_t = NULL;
         }
         this->mod_state = MOD_STATE_DONE_RECEIVED_CREDENTIALS;
-    }
-
-    static inline bool get_global_info(const char * keyword, const char *& global_section, const char *& global_key)
-    {
-        // Translation
-        if (!strcmp(keyword, _STRAUTHID_TRANS_BUTTON_OK)) {
-            global_section  = GLOBAL_SECTION_TRANSLATION;
-            global_key      = "button_ok";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TRANS_BUTTON_CANCEL)) {
-            global_section  = GLOBAL_SECTION_TRANSLATION;
-            global_key      = "button_cancel";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TRANS_BUTTON_HELP)) {
-            global_section  = GLOBAL_SECTION_TRANSLATION;
-            global_key      = "button_help";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TRANS_BUTTON_CLOSE)) {
-            global_section  = GLOBAL_SECTION_TRANSLATION;
-            global_key      = "button_close";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TRANS_BUTTON_REFUSED)) {
-            global_section  = GLOBAL_SECTION_TRANSLATION;
-            global_key      = "button_refused";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TRANS_LOGIN)) {
-            global_section  = GLOBAL_SECTION_TRANSLATION;
-            global_key      = "login";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TRANS_USERNAME)) {
-            global_section  = GLOBAL_SECTION_TRANSLATION;
-            global_key      = "username";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TRANS_PASSWORD)) {
-            global_section  = GLOBAL_SECTION_TRANSLATION;
-            global_key      = "password";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TRANS_TARGET)) {
-            global_section  = GLOBAL_SECTION_TRANSLATION;
-            global_key      = "target";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TRANS_DIAGNOSTIC)) {
-            global_section  = GLOBAL_SECTION_TRANSLATION;
-            global_key      = "diagnostic";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TRANS_CONNECTION_CLOSED)) {
-            global_section  = GLOBAL_SECTION_TRANSLATION;
-            global_key      = "connection_closed";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TRANS_HELP_MESSAGE)) {
-            global_section  = GLOBAL_SECTION_TRANSLATION;
-            global_key      = "help_message";
-        }
-        // Options
-        else if (!strcmp(keyword, _STRAUTHID_OPT_CLIPBOARD)) {
-            global_section  = GLOBAL_SECTION_CLIENT;
-            global_key      = "clipboard";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_OPT_DEVICEREDIRECTION)) {
-            global_section  = GLOBAL_SECTION_CLIENT;
-            global_key      = "device_redirection";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_OPT_FILE_ENCRYPTION)) {
-            global_section  = GLOBAL_SECTION_GLOBALS;
-            global_key      = "enable_file_encryption";
-        }
-        // Video capture
-        else if (!strcmp(keyword, _STRAUTHID_OPT_CODEC_ID)) {
-            global_section  = GLOBAL_SECTION_GLOBALS;
-            global_key      = "codec_id";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_OPT_MOVIE)) {
-            global_section  = GLOBAL_SECTION_GLOBALS;
-            global_key      = "movie";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_OPT_MOVIE_PATH)) {
-            global_section  = GLOBAL_SECTION_GLOBALS;
-            global_key      = "movie_path";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_VIDEO_QUALITY)) {
-            global_section  = GLOBAL_SECTION_GLOBALS;
-            global_key      = "video_quality";
-        }
-        // Alternate shell
-        else if (!strcmp(keyword, _STRAUTHID_ALTERNATE_SHELL)) {
-            global_section  = GLOBAL_SECTION_GLOBALS;
-            global_key      = "alternate_shell";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_SHELL_WORKING_DIRECTORY)) {
-            global_section  = GLOBAL_SECTION_GLOBALS;
-            global_key      = "shell_working_directory";
-        }
-        // Options
-        else if (!strcmp(keyword, _STRAUTHID_OPT_BITRATE)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "opt_bitrate";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_OPT_FRAMERATE)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "opt_framerate";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_OPT_QSCALE)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "opt_qscale";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_OPT_WIDTH)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "opt_width";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_OPT_HEIGHT)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "opt_height";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_OPT_BPP)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "opt_bpp";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_SELECTOR)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "selector";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_SELECTOR_CURRENT_PAGE)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "selector_current_page";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_SELECTOR_DEVICE_FILTER)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "selector_device_filter";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_SELECTOR_GROUP_FILTER)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "selector_group_filter";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_SELECTOR_LINES_PER_PAGE)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "selector_lines_per_page";
-        }
-
-        else if (!strcmp(keyword, _STRAUTHID_TARGET_DEVICE)) {
-            global_section  = GLOBAL_SECTION_GLOBALS;
-            global_key      = "target_device";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TARGET_PASSWORD)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "target_password";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TARGET_PORT)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "target_port";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TARGET_PROTOCOL)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "target_protocol";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TARGET_USER)) {
-            global_section  = GLOBAL_SECTION_GLOBALS;
-            global_key      = "target_user";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_AUTH_USER)) {
-            global_section  = GLOBAL_SECTION_GLOBALS;
-            global_key      = "auth_user";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_HOST)) {
-            global_section  = GLOBAL_SECTION_GLOBALS;
-            global_key      = "host";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_PASSWORD)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "password";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_AUTHCHANNEL_ANSWER)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "authchannel_answer";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_AUTHCHANNEL_RESULT)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "authchannel_result";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_AUTHCHANNEL_TARGET)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "authchannel_target";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_MESSAGE)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "message";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_ACCEPT_MESSAGE)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "accept_message";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_DISPLAY_MESSAGE)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "display_message";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_REJECTED)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "rejected";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_AUTHENTICATED)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "authenticated";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_KEEPALIVE)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "keepalive";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_PROXY_TYPE)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "proxy_type";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_SESSION_ID)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "session_id";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_END_DATE_CNX)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "end_date_cnx";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_END_TIME)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "end_time";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_MODE_CONSOLE)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "mode_console";
-        }
-        else if (!strcmp(keyword, _STRAUTHID_TIMEZONE)) {
-            global_section  = GLOBAL_SECTION_CONTEXT;
-            global_key      = "timezone";
-        }
-        else {
-//            LOG(LOG_WARNING, "get_global_info: unknown keyword = %s", keyword);
-
-            global_section  =
-            global_key      = NULL;
-
-            return false;
-        }
-
-        return true;
     }
 };
 

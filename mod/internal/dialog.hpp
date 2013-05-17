@@ -258,14 +258,9 @@ struct dialog_mod : public internal_mod {
                     uint32_t c = keymap->get_char();
                     if (c == ' '){
 //                        this->context.cpy(this->refuse_flag?STRAUTHID_ACCEPT_MESSAGE:STRAUTHID_DISPLAY_MESSAGE, "True");
-                        if (this->refuse_flag) {
-                            this->ini.globals.context.accept_message = "True";
-                            this->context.cpy(_STRAUTHID_ACCEPT_MESSAGE, "");
-                        }
-                        else {
-                            this->ini.globals.context.display_message = "True";
-                            this->context.cpy(_STRAUTHID_DISPLAY_MESSAGE, "");
-                        }
+                        this->ini.context_set_value(
+                            (this->refuse_flag ? _AUTHID_ACCEPT_MESSAGE : _AUTHID_DISPLAY_MESSAGE),
+                            "True");
                         this->event.set();
                         this->signal = BACK_EVENT_NEXT;
                     }
@@ -274,14 +269,9 @@ struct dialog_mod : public internal_mod {
                 case Keymap2::KEVENT_ENTER:
                     keymap->get_kevent();
 //                    this->context.cpy(this->refuse_flag?STRAUTHID_ACCEPT_MESSAGE:STRAUTHID_DISPLAY_MESSAGE, "True");
-                    if (this->refuse_flag) {
-                        this->ini.globals.context.accept_message = "True";
-                        this->context.cpy(_STRAUTHID_ACCEPT_MESSAGE, "");
-                    }
-                    else {
-                        this->ini.globals.context.display_message = "True";
-                        this->context.cpy(_STRAUTHID_DISPLAY_MESSAGE, "");
-                    }
+                    this->ini.context_set_value(
+                        (this->refuse_flag ? _AUTHID_ACCEPT_MESSAGE : _AUTHID_DISPLAY_MESSAGE),
+                        "True");
                     this->event.set();
                     this->signal = BACK_EVENT_NEXT;
                 break;

@@ -128,9 +128,7 @@ struct Session {
         try {
             this->context = new ModContext();
 //            this->context->cpy(STRAUTHID_HOST, ip_source);
-            strncpy(this->ini->globals.host, ip_source, sizeof(this->ini->globals.host));
-            this->ini->globals.host[sizeof(this->ini->globals.host) - 1] = 0;
-            this->context->cpy(_STRAUTHID_HOST, "");
+            this->ini->context_set_value(_AUTHID_HOST, ip_source);
 
 /*
             this->context->cpy(STRAUTHID_OPT_FILE_ENCRYPTION,
@@ -787,7 +785,7 @@ struct Session {
                 }
 
                 int client_sck = ip_connect(//this->context->get(STRAUTHID_TARGET_DEVICE),
-                                            this->ini->globals.target_device,
+                                            this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0),
 //                                            atoi(this->context->get(STRAUTHID_TARGET_PORT)),
                                             this->ini->globals.context.target_port,
                                             4, 1000,
@@ -803,7 +801,7 @@ struct Session {
                       name
                     , client_sck
 //                    , this->context->get(STRAUTHID_TARGET_DEVICE)
-                    , this->ini->globals.target_device
+                    , this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0)
 //                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
                     , this->ini->globals.context.target_port
                     , this->ini->globals.debug.mod_xup);
@@ -857,7 +855,7 @@ struct Session {
                 static const char * name = "RDP Target";
 
                 int client_sck = ip_connect(//this->context->get(STRAUTHID_TARGET_DEVICE),
-                                            this->ini->globals.target_device,
+                                            this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0),
                                             // atoi(this->context->get(STRAUTHID_TARGET_PORT)),
                                             this->ini->globals.context.target_port,
                                             3, 1000,
@@ -874,15 +872,11 @@ struct Session {
                       name
                     , client_sck
 //                    , this->context->get(STRAUTHID_TARGET_DEVICE)
-                    , this->ini->globals.target_device
+                    , this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0)
 //                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
                     , this->ini->globals.context.target_port
                     , this->ini->globals.debug.mod_rdp
 //                    , this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)
-/*
-                    , const_cast<char *>((const char *)this->ini->globals.context.auth_error_message)
-                    , 1024
-*/
                     , &this->ini->globals.context.auth_error_message
                     );
                 this->mod_transport = t;
@@ -891,9 +885,9 @@ struct Session {
                 this->ini->globals.context.auth_error_message = "failed authentification on remote RDP host";
                 this->mod = new mod_rdp(t,
 //                                    this->context->get(STRAUTHID_TARGET_USER),
-                                    this->ini->globals.target_user,
+                                    this->ini->context_get_value(_AUTHID_TARGET_USER, NULL, 0),
 //                                    this->context->get(STRAUTHID_TARGET_PASSWORD),
-                                    this->ini->globals.context.target_password,
+                                    this->ini->context_get_value(_AUTHID_TARGET_PASSWORD, NULL, 0),
                                     "0.0.0.0", // client ip is silenced
                                     *this->front,
                                     hostname,
@@ -941,7 +935,7 @@ struct Session {
 
 
                 int client_sck = ip_connect(//this->context->get(STRAUTHID_TARGET_DEVICE),
-                                            this->ini->globals.target_device,
+                                            this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0),
                                             //atoi(this->context->get(STRAUTHID_TARGET_PORT)),
                                             this->ini->globals.context.target_port,
                                             3, 1000,
@@ -957,7 +951,7 @@ struct Session {
                       name
                     , client_sck
 //                    , this->context->get(STRAUTHID_TARGET_DEVICE)
-                    , this->ini->globals.target_device
+                    , this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0)
 //                    , atoi(this->context->get(STRAUTHID_TARGET_PORT))
                     , this->ini->globals.context.target_port
                     , this->ini->globals.debug.mod_vnc);
@@ -969,9 +963,9 @@ struct Session {
                 this->mod = new mod_vnc(
                       t
 //                    , this->context->get(STRAUTHID_TARGET_USER)
-                    , this->ini->globals.target_user
+                    , this->ini->context_get_value(_AUTHID_TARGET_USER, NULL, 0)
 //                    , this->context->get(STRAUTHID_TARGET_PASSWORD)
-                    , this->ini->globals.context.target_password
+                    , this->ini->context_get_value(_AUTHID_TARGET_PASSWORD, NULL, 0)
                     , *this->front
                     , this->front->client_info.width
                     , this->front->client_info.height

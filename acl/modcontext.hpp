@@ -29,11 +29,10 @@
 
 using namespace std;
 
+/*
 typedef enum{
     AUTHID_UNKNOWN = 0,
 
-    // Encryption
-/*
     // Translation text
     AUTHID_TRANS_BUTTON_OK,
     AUTHID_TRANS_BUTTON_CANCEL,
@@ -91,18 +90,21 @@ typedef enum{
     AUTHID_AUTHENTICATED,
     AUTHID_KEEPALIVE,
     AUTHID_PROXY_TYPE,
+    // Encryption
     AUTHID_TRACE_SEAL,      // after closing trace file trace is sealed using a signature hash
+    // Other
     AUTHID_SESSION_ID,      // session_id
     AUTHID_END_DATE_CNX,    // timeclose
     AUTHID_END_TIME,        // end time as text
     AUTHID_MODE_CONSOLE,
     AUTHID_TIMEZONE,
-*/
 
     MAX_AUTHID
 } authid_t;
+*/
 
 
+/*
 // Translation text
 #define _STRAUTHID_TRANS_BUTTON_OK         "trans_ok"
 #define _STRAUTHID_TRANS_BUTTON_CANCEL     "trans_cancel"
@@ -167,14 +169,15 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 #define _STRAUTHID_END_TIME                 "end_time"
 #define _STRAUTHID_MODE_CONSOLE             "mode_console"
 #define _STRAUTHID_TIMEZONE                 "timezone"
+*/
 
-
+/*
 #define GLOBAL_SECTION_UNKNOWN      NULL
 #define GLOBAL_SECTION_CLIENT       "client"
 #define GLOBAL_SECTION_CONTEXT      "context"
 #define GLOBAL_SECTION_GLOBALS      "globals"
 #define GLOBAL_SECTION_TRANSLATION  "translation"
-
+*/
 
 // ModContext structure is used for modules to communicate with each other
 
@@ -226,9 +229,9 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     {STRAUTHID_OPT_FRAMERATE,            TYPE_INTEGER, "!5"                                   },
     {STRAUTHID_OPT_QSCALE,               TYPE_INTEGER, "!15"                                  },
 */
-    {_STRAUTHID_OPT_WIDTH,                TYPE_INTEGER, "!800"                                 },
-    {_STRAUTHID_OPT_HEIGHT,               TYPE_INTEGER, "!600"                                 },
     {_STRAUTHID_OPT_BPP,                  TYPE_INTEGER, "!24"                                  },
+    {_STRAUTHID_OPT_HEIGHT,               TYPE_INTEGER, "!600"                                 },
+    {_STRAUTHID_OPT_WIDTH,                TYPE_INTEGER, "!800"                                 },
 /*
     {_STRAUTHID_AUTH_ERROR_MESSAGE,       TYPE_TEXT,    "!"                                    },
 */
@@ -279,96 +282,13 @@ static ProtocolKeyword KeywordsDefinitions[] = {
 };
 
 
-/*
-static inline authid_t authid_from_string(const char * kw)
-{
-    static const string authstr[MAX_AUTHID-1] = {
-*/
-/*
-    // Translation text
-    STRAUTHID_TRANS_BUTTON_OK,
-    STRAUTHID_TRANS_BUTTON_CANCEL,
-    STRAUTHID_TRANS_BUTTON_HELP,
-    STRAUTHID_TRANS_BUTTON_CLOSE,
-    STRAUTHID_TRANS_BUTTON_REFUSED,
-    STRAUTHID_TRANS_LOGIN,
-    STRAUTHID_TRANS_USERNAME,
-    STRAUTHID_TRANS_PASSWORD,
-    STRAUTHID_TRANS_TARGET,
-    STRAUTHID_TRANS_DIAGNOSTIC,
-    STRAUTHID_TRANS_CONNECTION_CLOSED,
-    STRAUTHID_TRANS_HELP_MESSAGE,
-    // Options
-    STRAUTHID_OPT_FILE_ENCRYPTION,
-    STRAUTHID_OPT_CLIPBOARD,
-    STRAUTHID_OPT_DEVICEREDIRECTION,
-    // Video capture
-    STRAUTHID_OPT_CODEC_ID,
-    STRAUTHID_OPT_MOVIE,
-    STRAUTHID_OPT_MOVIE_PATH,
-    STRAUTHID_VIDEO_QUALITY,
-    STRAUTHID_ALTERNATE_SHELL,
-    STRAUTHID_SHELL_WORKING_DIRECTORY,
-    // Context
-    STRAUTHID_OPT_BITRATE,
-    STRAUTHID_OPT_FRAMERATE,
-    STRAUTHID_OPT_QSCALE,
-    STRAUTHID_OPT_WIDTH,
-    STRAUTHID_OPT_HEIGHT,
-    STRAUTHID_OPT_BPP,
-    STRAUTHID_AUTH_ERROR_MESSAGE,
-    STRAUTHID_SELECTOR,
-    STRAUTHID_SELECTOR_CURRENT_PAGE,
-    STRAUTHID_SELECTOR_DEVICE_FILTER,
-    STRAUTHID_SELECTOR_GROUP_FILTER,
-    STRAUTHID_SELECTOR_LINES_PER_PAGE,
-    STRAUTHID_SELECTOR_NUMBER_OF_PAGES,
-    STRAUTHID_TARGET_USER,
-    STRAUTHID_TARGET_PASSWORD,
-    STRAUTHID_TARGET_DEVICE,
-    STRAUTHID_TARGET_PORT,
-    STRAUTHID_TARGET_PROTOCOL,
-    STRAUTHID_AUTH_USER,
-    STRAUTHID_HOST,
-    STRAUTHID_PASSWORD,
-    STRAUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
-    STRAUTHID_AUTHCHANNEL_RESULT,
-    STRAUTHID_AUTHCHANNEL_TARGET,
-    STRAUTHID_MESSAGE,
-    STRAUTHID_ACCEPT_MESSAGE,
-    STRAUTHID_DISPLAY_MESSAGE,
-    STRAUTHID_REJECTED,
-    STRAUTHID_AUTHENTICATED,
-    STRAUTHID_KEEPALIVE,
-    STRAUTHID_PROXY_TYPE,
-    STRAUTHID_TRACE_SEAL,
-    STRAUTHID_END_DATE_CNX,
-    STRAUTHID_END_TIME,
-    STRAUTHID_MODE_CONSOLE,
-    STRAUTHID_TIMEZONE,
-*/
-/*
-    };
-
-    string str = string(kw);
-    authid_t res = AUTHID_UNKNOWN;
-    for (int i = 0; i < MAX_AUTHID-1 ; i++){
-        if (0 == authstr[i].compare(str)){
-            res = (authid_t)(i+1);
-            break;
-        }
-    }
-    return res;
-}
-*/
-
-struct ModContext : public Dico {
+struct ModContext/* : public Dico*/ {
     unsigned selector_focus;
     char movie[1024];
 
     public:
     ModContext()
-        : Dico(KeywordsDefinitions, sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword))
+//        : Dico(KeywordsDefinitions, sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword))
     {
         this->selector_focus = 0;
     }
@@ -390,7 +310,8 @@ struct ModContext : public Dico {
         target_protocol[0] = 0;
         auth_user[0] = 0;
 
-        this->ask(_STRAUTHID_SELECTOR);
+//        this->ask(_STRAUTHID_SELECTOR);
+        ini.context_ask(_STRAUTHID_SELECTOR);
         LOG(LOG_INFO, "asking for selector");
 
         if (username[0]){
@@ -485,43 +406,42 @@ struct ModContext : public Dico {
 
         if (*target_user == 0)
         {
-            this->ask(_STRAUTHID_TARGET_USER);
+//            this->ask(_STRAUTHID_TARGET_USER);
+            ini.context_ask(_AUTHID_TARGET_USER);
         }
         else {
 //            this->cpy(STRAUTHID_TARGET_USER, target_user);
-            strncpy(ini.globals.target_user, target_user, sizeof(ini.globals.target_user));
-            ini.globals.target_user[sizeof(ini.globals.target_user) - 1] = 0;
-
-            this->cpy(_STRAUTHID_TARGET_USER, "");
+            ini.context_set_value(_AUTHID_TARGET_USER, target_user);
         }
         if (*target_device == 0) {
-            this->ask(_STRAUTHID_TARGET_DEVICE);
+//            this->ask(_STRAUTHID_TARGET_DEVICE);
+            ini.context_ask(_AUTHID_TARGET_DEVICE);
         }
         else {
 //            this->cpy(STRAUTHID_TARGET_DEVICE, target_device);
-            strncpy(ini.globals.target_device, target_device, sizeof(ini.globals.target_device));
-            ini.globals.target_device[sizeof(ini.globals.target_device) - 1] = 0;
-
-            this->cpy(_STRAUTHID_TARGET_DEVICE, "");
+            ini.context_set_value(_AUTHID_TARGET_DEVICE, target_device);
         }
         if (*target_protocol == 0) {
-            this->ask(_STRAUTHID_TARGET_PROTOCOL);
+//            this->ask(_STRAUTHID_TARGET_PROTOCOL);
+            ini.context_ask(_AUTHID_TARGET_PROTOCOL);
         }
         else {
 //            this->cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
-            ini.globals.context.target_protocol = target_protocol;
-
-            this->cpy(_STRAUTHID_TARGET_PROTOCOL, "");
+            ini.context_set_value(_AUTHID_TARGET_PROTOCOL, target_protocol);
         }
         if (*auth_user == 0) {
-            this->ask(_STRAUTHID_AUTH_USER);
+//            this->ask(_STRAUTHID_AUTH_USER);
+            ini.context_ask(_STRAUTHID_AUTH_USER);
         }
         else {
 //            this->cpy(STRAUTHID_AUTH_USER, auth_user);
+/*
             strncpy(ini.globals.auth_user, auth_user, sizeof(ini.globals.auth_user));
             ini.globals.auth_user[sizeof(ini.globals.auth_user) - 1] = 0;
 
             this->cpy(_STRAUTHID_AUTH_USER, "");
+*/
+            ini.context_set_value(_AUTHID_AUTH_USER, auth_user);
         }
     }
 };
