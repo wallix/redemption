@@ -168,11 +168,37 @@ public:
         this->send_notify(event, param, param2);
     }
 
-    virtual Widget2 * widget_at_pos(int x, int y)
+    virtual Widget2 * widget_at_pos(int16_t x, int16_t y)
     {
         if (this->rect.contains_pt(x, y))
             return this;
         return 0;
+    }
+
+    virtual void set_xy(int16_t x, int16_t y)
+    {
+        this->rect.x = x;
+        this->rect.y = y;
+    }
+
+    virtual void set_wh(uint16_t w, uint16_t h)
+    {
+        this->rect.cx = w;
+        this->rect.cy = h;
+    }
+
+    virtual bool focus(Widget2 * old_focused)
+    {
+        (void)old_focused;
+        this->send_notify(NOTIFY_FOCUS_BEGIN);
+        this->has_focus = true;
+        return true;
+    }
+
+    virtual void blur()
+    {
+        this->send_notify(NOTIFY_FOCUS_END);
+        this->has_focus = false;
     }
 
     ///Return x position in it's screen

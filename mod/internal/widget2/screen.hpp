@@ -26,13 +26,35 @@
 class WidgetScreen : public WidgetComposite
 {
 public:
+    Widget2 * widget_with_focus;
+
+public:
     WidgetScreen(ModApi * drawable, uint16_t width, uint16_t height, NotifyApi * notifier = NULL)
     : WidgetComposite(drawable, Rect(0, 0, width, height), NULL, notifier)
+    , widget_with_focus(this)
     {
     }
 
     virtual ~WidgetScreen()
     {}
+
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+    {
+        if (Widget2 * w = this->child_at_pos(x, y)) {
+            if (w != this->widget_with_focus && w->focus(this->widget_with_focus)) {
+                this->widget_with_focus->blur();
+                this->widget_with_focus = w;
+            }
+            w->rdp_input_mouse(device_flags, x, y, keymap);
+        }
+    }
+
+    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+    {
+        if (this == this->widget_with_focus)
+            return ;
+        this->widget_with_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
+    }
 };
 
 #endif

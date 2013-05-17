@@ -62,6 +62,30 @@ public:
         this->label.rect.y = y + 1;
     }
 
+    void set_button_cx(int w)
+    {
+        this->rect.cx = w;
+        this->label.rect.cx = w - 3;
+    }
+
+    void set_button_cy(int h)
+    {
+        this->rect.cy = h;
+        this->label.rect.cy = h - 3;
+    }
+
+    virtual void set_xy(int16_t x, int16_t y)
+    {
+        this->set_button_x(x);
+        this->set_button_y(y);
+    }
+
+    virtual void set_wh(uint16_t w, uint16_t h)
+    {
+        this->set_button_cx(w);
+        this->set_button_cy(h);
+    }
+
     void update_draw_state(const Rect& clip)
     {
         if (this->state & 1) {
@@ -144,6 +168,15 @@ public:
         }
         else
             this->Widget2::rdp_input_mouse(device_flags, x, y, keymap);
+    }
+
+    virtual void blur()
+    {
+        if (this->state & 1) {
+            this->state &= ~1;
+            this->swap_border_color();
+        }
+        Widget2::blur();
     }
 };
 

@@ -38,15 +38,15 @@ public:
            const char * caption, int bgcolor = DARK_WABGREEN, int group_id = 0)
     : WidgetComposite(drawable, rect, parent, notifier, group_id)
     , titlebar(drawable, 0, 0, this, NULL, caption, false, -1, BLACK, WABGREEN, 5)
-    , button_close(drawable, 0, 0, this, this, "X", true, -2, WHITE, DARK_GREEN, 3, 0)
+    , button_close(drawable, 0, 0, this, this, "X", true, -2, WHITE, DARK_GREEN, 0, -1)
     , bg_color(bgcolor)
     {
         this->child_list.push_back(&this->titlebar);
         this->child_list.push_back(&this->button_close);
 
-        this->button_close.label.y_text -= 2;
-        this->button_close.label.rect.cy -= 3;
-        this->button_close.rect.cy -= 3;
+        this->button_close.label.x_text = 3;
+        this->button_close.set_button_cx(this->button_close.cx() * 2);
+        this->button_close.set_button_cy(this->button_close.cy() - 2);
 
         if (this->drawable) {
             int w,h;
@@ -67,7 +67,7 @@ public:
     virtual void notify(Widget2* widget, notify_event_t event, long unsigned int param, long unsigned int param2)
     {
         if (this->notifier) {
-            if (widget == &this->button_close) {
+            if (widget == &this->button_close && event == NOTIFY_SUBMIT) {
                 this->send_notify(NOTIFY_CANCEL);
             } else {
                 this->WidgetComposite::notify(widget, event, param, param2);
