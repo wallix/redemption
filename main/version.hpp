@@ -25,6 +25,6 @@
 #ifndef __MAIN_VERSION_HPP__
 #define __MAIN_VERSION_HPP__
 
-#define VERSION "0.9.253-future"
+#define VERSION "0.9.254-future"
 
 #endif

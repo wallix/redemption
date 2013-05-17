@@ -6,7 +6,6 @@ import shutil
 import subprocess
 import os
 import re
-
 import distroinfo
 
 if __name__ == '__main__':
@@ -33,7 +32,10 @@ if __name__ == '__main__':
 
         for d in sections:
             if d.get('Source:') == 'redemption':
-                os.system("apt-get install %s" % ' '.join(d.get('Build-Depends:').split(r',')))
+                if len(sys.argv) > 1 and sys.argv[1] == 'uninstall':
+                    os.system("apt-get remove %s" % ' '.join(d.get('Build-Depends:').split(r',')))
+                else:
+                    os.system("apt-get install %s" % ' '.join(d.get('Build-Depends:').split(r',')))
                 exit(0)
 
     except Exception, e:

@@ -55,8 +55,11 @@ public:
     : InternalMod(front, width, height)
     , screen(this, width, height)
     , window_close(this, 0, 0, &this->screen, this, "End of connection", 0,
-                   context.is_asked(_STRAUTHID_AUTH_USER) ? NULL : ini.globals.auth_user,
-                   context.is_asked(_STRAUTHID_TARGET_USER) ||context.is_asked(_STRAUTHID_TARGET_DEVICE) ? NULL : temporary_text(ini).text,
+//                   context.is_asked(_STRAUTHID_AUTH_USER) ? NULL : ini.globals.auth_user,
+                   ini.context_is_asked(_AUTHID_AUTH_USER) ? NULL : ini.globals.auth_user,
+//                   context.is_asked(_STRAUTHID_TARGET_USER) ||context.is_asked(_STRAUTHID_TARGET_DEVICE) ? NULL : temporary_text(ini).text,
+                   (ini.context_is_asked(_AUTHID_TARGET_USER) || ini.context_is_asked(_AUTHID_TARGET_DEVICE)) ?
+                       NULL : temporary_text(ini).text,
                    BLACK, GREY
     )
     , image(this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)

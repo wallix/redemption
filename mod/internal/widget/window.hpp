@@ -250,18 +250,20 @@ struct window_login : public window
                     SHARE_PATH "/" LOGIN_LOGO24, 24);
         }
 
-        if (context.is_asked(_STRAUTHID_TARGET_USER)
-        ||  context.is_asked(_STRAUTHID_TARGET_DEVICE)){
-            if (context.is_asked(_STRAUTHID_AUTH_USER)){
+        if (ini->context_is_asked(_AUTHID_TARGET_USER)
+        ||  ini->context_is_asked(_AUTHID_TARGET_DEVICE)){
+            if (ini->context_is_asked(_AUTHID_AUTH_USER)){
                 ini->account.username[0] = 0;
             }
             else {
 //                strcpy(ini->account.username, context.get(STRAUTHID_AUTH_USER));
-                strncpy(ini->account.username, this->ini->globals.auth_user, sizeof(ini->account.username));
+                strncpy(ini->account.username,
+                    this->ini->context_get_value(_AUTHID_AUTH_USER, NULL, 0),
+                    sizeof(ini->account.username));
                 ini->account.username[sizeof(ini->account.username) - 1] = 0;
             }
         }
-        else if (context.is_asked(_STRAUTHID_AUTH_USER)) {
+        else if (ini->context_is_asked(_AUTHID_AUTH_USER)) {
             ini->account.username[0] = 0;
         }
         else {
@@ -270,16 +272,16 @@ struct window_login : public window
             char buffer[256];
             snprintf( buffer, 256, "%s@%s:%s%s%s"
 //                    , context.get(STRAUTHID_TARGET_USER)
-                    , this->ini->globals.target_user
+                    , this->ini->context_get_value(_AUTHID_TARGET_USER, NULL, 0)
 //                    , context.get(STRAUTHID_TARGET_DEVICE)
-                    , this->ini->globals.target_device
+                    , this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0)
 //                    , context.get(STRAUTHID_TARGET_PROTOCOL)[0]?context.get(STRAUTHID_TARGET_PROTOCOL):""
-                    , (!this->ini->globals.context.target_protocol.is_empty() ?
-                           (const char *)this->ini->globals.context.target_protocol : "")
+                    , (this->ini->context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ?
+                           this->ini->context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0) : "")
 //                    , context.get(STRAUTHID_TARGET_PROTOCOL)[0]?":":""
-                    , (!this->ini->globals.context.target_protocol.is_empty() ? ":" : "")
+                    , (this->ini->context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ? ":" : "")
 //                    , context.get(STRAUTHID_AUTH_USER)
-                    , this->ini->globals.auth_user
+                    , this->ini->context_get_value(_AUTHID_AUTH_USER, NULL, 0)
                     );
             strcpy(ini->account.username, buffer);
         }
@@ -426,14 +428,13 @@ struct window_login : public window
             if (edit == 0){
                 break;
             }
-            else if (0 == strcmp(label->caption1, ini->globals.translation.login)){
-                this->context.parse_username(edit->buffer, *this->ini);
+            else if (0 == strcmp(label->caption1, this->ini->globals.translation.login)){
+//                this->context.parse_username(edit->buffer, *this->ini);
+                this->ini->parse_username(edit->buffer);
             }
-            else if (0 == strcmp(label->caption1, ini->globals.translation.password)){
+            else if (0 == strcmp(label->caption1, this->ini->globals.translation.password)){
 //                this->context.cpy(STRAUTHID_PASSWORD, edit->buffer);
-                this->ini->globals.context.password = edit->buffer;
-
-                this->context.cpy(_STRAUTHID_PASSWORD, "");
+                this->ini->context_set_value(_AUTHID_PASSWORD, edit->buffer);
             }
             i += 2;
         }
@@ -517,14 +518,9 @@ struct window_dialog : public window
                                           :STRAUTHID_DISPLAY_MESSAGE,
                         "False");
 */
-                if (this->esc_button) {
-                    this->ini->globals.context.accept_message = "False";
-                    this->context->cpy(_STRAUTHID_ACCEPT_MESSAGE, "");
-                }
-                else {
-                    this->ini->globals.context.display_message = "False";
-                    this->context->cpy(_STRAUTHID_DISPLAY_MESSAGE, "");
-                }
+                this->ini->context_set_value(
+                    (this->esc_button ? _AUTHID_ACCEPT_MESSAGE : _AUTHID_DISPLAY_MESSAGE),
+                    "False");
                 this->mod->mod_event(BACK_EVENT_NEXT);
             break;
             case 3: /* ok button -> Enter */
@@ -534,14 +530,9 @@ struct window_dialog : public window
                                           :STRAUTHID_DISPLAY_MESSAGE,
                         "True");
 */
-                if (this->esc_button) {
-                    this->ini->globals.context.accept_message = "True";
-                    this->context->cpy(_STRAUTHID_ACCEPT_MESSAGE, "");
-                }
-                else {
-                    this->ini->globals.context.display_message = "True";
-                    this->context->cpy(_STRAUTHID_DISPLAY_MESSAGE, "");
-                }
+                this->ini->context_set_value(
+                    (this->esc_button ? _AUTHID_ACCEPT_MESSAGE : _AUTHID_DISPLAY_MESSAGE),
+                    "True");
                 this->mod->mod_event(BACK_EVENT_NEXT);
             break;
             default:
@@ -588,22 +579,22 @@ struct wab_close : public window
         b = new widget_label(this->mod,
             Rect(10 + ((this->rect.cx >= 400) ?  230 : 70), 60 + 25 * count, 350, 20),
 //            this, context.is_asked(_STRAUTHID_AUTH_USER)? "" : context.get(STRAUTHID_AUTH_USER));
-            this, context.is_asked(_STRAUTHID_AUTH_USER)? "" : ini.globals.auth_user);
+            this, ini.context_is_asked(_STRAUTHID_AUTH_USER)? "" : ini.context_get_value(_AUTHID_AUTH_USER, NULL, 0));
 
         b->id = 100 + 2 * count;
         count ++;
 
         char target[255];
-        if (context.is_asked(_STRAUTHID_TARGET_USER)
-        ||context.is_asked(_STRAUTHID_TARGET_DEVICE)){
+        if (ini.context_is_asked(_AUTHID_TARGET_USER)
+        ||  ini.context_is_asked(_AUTHID_TARGET_DEVICE)){
             target[0] = 0;
         }
         else {
             snprintf(target, 255, "%s@%s",
 //                context.get(STRAUTHID_TARGET_USER),
-                ini.globals.target_user,
+                ini.context_get_value(_AUTHID_TARGET_USER, NULL, 0),
 //                context.get(STRAUTHID_TARGET_DEVICE));
-                ini.globals.target_device);
+                ini.context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0));
         }
 
         b = new widget_label(this->mod,

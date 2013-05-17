@@ -45,8 +45,8 @@ public:
     , selector(this, "bidule", width, height, this,
 //               context.get(STRAUTHID_SELECTOR_CURRENT_PAGE),
 //               context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES))
-               ini.context_get_value("selector_current_page", this->selector_current_page, sizeof(this->selector_current_page)),
-               ini.context_get_value("selector_number_of_pages", this->selector_number_of_pages, sizeof(this->selector_number_of_pages)))
+               ini.context_get_value(_AUTHID_SELECTOR_CURRENT_PAGE, this->selector_current_page, sizeof(this->selector_current_page)),
+               ini.context_get_value(_AUTHID_SELECTOR_NUMBER_OF_PAGES, this->selector_number_of_pages, sizeof(this->selector_number_of_pages)))
     , context(context)
     , current_page(atoi(this->selector.current_page.label.buffer))
     , number_page(atoi(this->selector.number_page.buffer))
@@ -85,11 +85,11 @@ public:
     {
         if (NOTIFY_SUBMIT == event) {
             if (sender == &this->selector.logout) {
-                this->context.ask(_STRAUTHID_AUTH_USER);
-                this->context.ask(_STRAUTHID_PASSWORD);
-                this->context.ask(_STRAUTHID_TARGET_USER);
-                this->context.ask(_STRAUTHID_TARGET_DEVICE);
-                this->context.ask(_STRAUTHID_SELECTOR);
+                this->ini.context_ask(_AUTHID_AUTH_USER);
+                this->ini.context_ask(_AUTHID_PASSWORD);
+                this->ini.context_ask(_AUTHID_TARGET_USER);
+                this->ini.context_ask(_AUTHID_TARGET_DEVICE);
+                this->ini.context_ask(_AUTHID_SELECTOR);
                 this->signal = BACK_EVENT_NEXT;
                 this->event.set();
             }
@@ -132,11 +132,11 @@ public:
     void refresh_context()
     {
 //        char * groups = this->context.get(STRAUTHID_TARGET_USER);
-        char * groups    = this->ini.globals.target_user;
+        char * groups    = const_cast<char *>(this->ini.context_get_value(_AUTHID_TARGET_USER, NULL, 0));
 //        char * targets = this->context.get(STRAUTHID_TARGET_DEVICE);
-        char * targets   = this->ini.globals.target_device;
+        char * targets   = const_cast<char *>(this->ini.context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0));
 //        char * protocols = this->context.get(STRAUTHID_TARGET_PROTOCOL);
-        char * protocols = const_cast<char *>((const char *)this->ini.globals.context.target_protocol);
+        char * protocols = const_cast<char *>(this->ini.context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0));
 //        char * endtimes  = this->context.get(STRAUTHID_END_TIME);
         char * endtimes  = const_cast<char *>((const char *)this->ini.globals.context.end_time);
 

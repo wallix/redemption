@@ -1,5 +1,13 @@
+redemption (0.9.254-future) squeeze; urgency=low
+
+  * Improved packager for debian/squeeze and ubuntu/precise
+  * merging ACL context and config file (Work in progress)
+  * new modules using widgets library V2 (Work in progress)
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 17 May 2013 16:12:26 +0200
+
 redemption (0.9.253-future) squeeze; urgency=low
 
   * Initial packaged release
 
- -- cgrosjean <cgrosjean@unknown>  Mon, 13 May 2013 14:47:26 +0200
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 13 May 2013 14:47:26 +0200
