@@ -70,28 +70,22 @@ public:
 private:
     void accepted()
     {
-        if (this->window_dialog.cancel) {
-            this->ini.globals.context.display_message = "True";
-            this->context.cpy(_STRAUTHID_DISPLAY_MESSAGE, "");
-        }
-        else {
-            this->ini.globals.context.accept_message = "True";
-            this->context.cpy(_STRAUTHID_ACCEPT_MESSAGE, "");
-        }
+        this->ini.context_set_value(
+            (this->window_dialog.cancel
+            ? _AUTHID_ACCEPT_MESSAGE
+            : _AUTHID_DISPLAY_MESSAGE),
+            "True");
         this->signal = BACK_EVENT_NEXT;
         this->event.set();
     }
 
     void refused()
     {
-        if (this->window_dialog.cancel) {
-            this->ini.globals.context.display_message = "False";
-            this->context.cpy(_STRAUTHID_DISPLAY_MESSAGE, "");
-        }
-        else {
-            this->ini.globals.context.accept_message = "False";
-            this->context.cpy(_STRAUTHID_ACCEPT_MESSAGE, "");
-        }
+        this->ini.context_set_value(
+            (this->window_dialog.cancel
+            ? _AUTHID_ACCEPT_MESSAGE
+            : _AUTHID_DISPLAY_MESSAGE),
+            "False");
         this->signal = BACK_EVENT_NEXT;
         this->event.set();
     }
