@@ -29,8 +29,8 @@ class WindowDialog : public Window
 {
 public:
     WidgetMultiLine dialog;
-    WidgetButton cancel;
     WidgetButton ok;
+    WidgetButton * cancel;
 
     WindowDialog(ModApi* drawable, int16_t x, int16_t y,
                  Widget2* parent, NotifyApi* notifier,
@@ -39,37 +39,61 @@ public:
                  int fgcolor = BLACK, int bgcolor = GREY,
                  int fgcolorbtn = BLACK, int bgcolorbtn = WHITE)
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
-    , dialog(drawable, 0, 0, this, NULL, text, true, -10, bgcolor, fgcolor, 10, 2)
-    , cancel(drawable, 0, 0, this, this, cancel_text, true, -11, fgcolorbtn, bgcolorbtn, 6, 2)
+    , dialog(drawable, 0, 0, this, NULL, text, true, -10, fgcolor, bgcolor, 10, 2)
     , ok(drawable, 0, 0, this, this, ok_text, true, -12, fgcolorbtn, bgcolorbtn, 6, 2)
+    , cancel(cancel_text ? new WidgetButton(drawable, 0, 0, this, this, cancel_text, true, -11, fgcolorbtn, bgcolorbtn, 6, 2) : NULL)
     {
         this->child_list.push_back(&this->dialog);
-        this->child_list.push_back(&this->cancel);
         this->child_list.push_back(&this->ok);
 
-        this->rect.cx = std::max<int>(this->dialog.cx(), this->ok.cx() + this->cancel.cx() + 30);
-        this->dialog.rect.x += (this->cx() - this->dialog.cx()) / 2;
-        this->cancel.set_button_x(this->dx() + this->cx() - (this->cancel.cx() + 10));
-        this->ok.set_button_x(this->cancel.dx() - (this->ok.cx() + 10));
+        int w,h;
+        this->drawable->text_metrics(this->titlebar.buffer, w,h);
+        int window_size = std::max<int>(w + this->titlebar.x_text + 5 + this->button_close.cx(), this->dialog.cx());
 
-        this->resize_titlebar();
+        if (this->cancel) {
+            this->child_list.push_back(this->cancel);
 
-        this->rect.cy = this->dialog.cy() + this->titlebar.cy() + 15 + this->ok.cy();
-        this->dialog.rect.y += this->titlebar.cy() + 5;
-        this->ok.set_button_y(this->dialog.dy() + this->dialog.cy() + 5);
-        this->cancel.set_button_y(this->ok.dy());
+            this->rect.cx = std::max<int>(window_size, this->ok.cx() + this->cancel->cx() + 30);
+            this->dialog.rect.x += (this->cx() - this->dialog.cx()) / 2;
+            this->cancel->set_button_x(this->dx() + this->cx() - (this->cancel->cx() + 10));
+            this->ok.set_button_x(this->cancel->dx() - (this->ok.cx() + 10));
+
+            this->resize_titlebar();
+
+            this->rect.cy = this->dialog.cy() + this->titlebar.cy() + 15 + this->ok.cy();
+            this->dialog.rect.y += this->titlebar.cy() + 5;
+            this->ok.set_button_y(this->dialog.dy() + this->dialog.cy() + 5);
+            this->cancel->set_button_y(this->ok.dy());
+        }
+        else {
+            this->rect.cx = std::max<int>(window_size, this->ok.cx() + 20);
+            this->dialog.rect.x += (this->cx() - this->dialog.cx()) / 2;
+            this->ok.set_button_x(this->dx() + this->cx() - (this->ok.cx() + 10));
+
+            this->resize_titlebar();
+
+            this->rect.cy = this->dialog.cy() + this->titlebar.cy() + 15 + this->ok.cy();
+            this->dialog.rect.y += this->titlebar.cy() + 5;
+            this->ok.set_button_y(this->dialog.dy() + this->dialog.cy() + 5);
+        }
     }
 
     virtual ~WindowDialog()
-    {}
+    {
+        delete this->cancel;
+    }
 
     virtual void notify(Widget2* widget, notify_event_t event,
                         long unsigned int param, long unsigned int param2)
     {
         if (this->notifier) {
-            if (widget == &this->cancel) {
+            if (event == NOTIFY_SUBMIT && widget == this->cancel) {
                 this->send_notify(NOTIFY_CANCEL);
-            } else {
+            }
+            else if (event == NOTIFY_SUBMIT && widget == &this->ok) {
+                this->send_notify(NOTIFY_SUBMIT);
+            }
+            else {
                 Window::notify(widget, event, param, param2);
             }
         }

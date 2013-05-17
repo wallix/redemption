@@ -32,7 +32,8 @@ public:
 
     MessageBox(ModApi* drawable, int16_t x, int16_t y, Widget2 * parent,
                NotifyApi* notifier, const char * caption, const char * text,
-               int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE)
+               int group_id = 0, const char * ok_text = "Ok",
+               int fgcolor = BLACK, int bgcolor = WHITE)
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
     , msg(drawable, 0, 0, this, NULL, text, true, -10, bgcolor, fgcolor, 10, 2)
     , ok(drawable, 0,0, this, this, "Ok", true, -11, bgcolor, fgcolor, 6, 2)

@@ -789,10 +789,8 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'DialogMod'");
                         }
                         //const char * message = this->context->get(STRAUTHID_MESSAGE);
-//                         const char * message = this->ini->globals.context.message;
-//                         const char * button = this->ini->globals.translation.button_refused;
-                        const char * message = "plop<br>dq";
-                        const char * button = "close";
+                        const char * message = this->ini->globals.context.message;
+                        const char * button = this->ini->globals.translation.button_refused;
                         const char * caption = "Information";
                         this->mod = new DialogMod(
                             *this->context,

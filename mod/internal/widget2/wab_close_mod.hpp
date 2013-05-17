@@ -23,13 +23,13 @@
 
 #include "front.hpp"
 #include "mod_api.hpp"
-#include "internal/internal_mod.hpp"
 #include "window_wab_close.hpp"
 #include "image.hpp"
 #include "screen.hpp"
+#include "internal_mod.hpp"
 
 
-class WabCloseMod : public internal_mod, public NotifyApi
+class WabCloseMod : public InternalMod, public NotifyApi
 {
     WidgetScreen screen;
     WindowWabClose window_close;
@@ -52,7 +52,7 @@ private:
 
 public:
     WabCloseMod(ModContext& context, Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
-    : internal_mod(front, width, height)
+    : InternalMod(front, width, height)
     , screen(this, width, height)
     , window_close(this, 0, 0, &this->screen, this, "End of connection", 0,
                    context.is_asked(_STRAUTHID_AUTH_USER) ? NULL : ini.globals.auth_user,

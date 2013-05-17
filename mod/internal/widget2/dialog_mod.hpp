@@ -24,24 +24,23 @@
 #include "front_api.hpp"
 #include "config.hpp"
 #include "modcontext.hpp"
-#include "internal/internal_mod.hpp"
 #include "window_dialog.hpp"
+#include "msgbox.hpp"
 #include "screen.hpp"
+#include "internal_mod.hpp"
 
-class DialogMod : public internal_mod, public NotifyApi
+class DialogMod : public InternalMod, public NotifyApi
 {
     WidgetScreen screen;
     WindowDialog window_dialog;
 
-    //unless ?
-    //@{
     ModContext & context;
     Inifile & ini;
-    //@}
+
 
 public:
     DialogMod(ModContext& context, Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height, const char * caption, const char * message, const char * cancel_text)
-    : internal_mod(front, width, height)
+    : InternalMod(front, width, height)
     , screen(this, width, height)
     , window_dialog(this, 0, 0, &this->screen, this, caption, message, 0, "Ok", cancel_text, BLACK, GREY, BLACK, WHITE)
     , context(context)
@@ -61,12 +60,43 @@ public:
     virtual void notify(Widget2* sender, notify_event_t event,
                         long unsigned int param, long unsigned int param2)
     {
-        if (event == NOTIFY_CANCEL || (event == NOTIFY_SUBMIT && sender == &window_dialog)) {
-            this->signal = BACK_EVENT_STOP;
-            this->event.set();
+        switch (event) {
+            case NOTIFY_SUBMIT: this->accepted(); break;
+            case NOTIFY_CANCEL: this->refused(); break;
+            default: ;
         }
     }
 
+private:
+    void accepted()
+    {
+        if (this->window_dialog.cancel) {
+            this->ini.globals.context.display_message = "True";
+            this->context.cpy(_STRAUTHID_DISPLAY_MESSAGE, "");
+        }
+        else {
+            this->ini.globals.context.accept_message = "True";
+            this->context.cpy(_STRAUTHID_ACCEPT_MESSAGE, "");
+        }
+        this->signal = BACK_EVENT_NEXT;
+        this->event.set();
+    }
+
+    void refused()
+    {
+        if (this->window_dialog.cancel) {
+            this->ini.globals.context.display_message = "False";
+            this->context.cpy(_STRAUTHID_DISPLAY_MESSAGE, "");
+        }
+        else {
+            this->ini.globals.context.accept_message = "False";
+            this->context.cpy(_STRAUTHID_ACCEPT_MESSAGE, "");
+        }
+        this->signal = BACK_EVENT_NEXT;
+        this->event.set();
+    }
+
+public:
     virtual BackEvent_t draw_event()
     {
         this->event.reset();
@@ -90,10 +120,15 @@ public:
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (keymap->nb_kevent_available() > 0 && keymap->top_kevent() == Keymap2::KEVENT_ESC){
-            keymap->get_kevent();
-            this->signal = BACK_EVENT_STOP;
-            this->event.set();
+        if (keymap->nb_kevent_available() > 0) {
+            if (keymap->top_kevent() == Keymap2::KEVENT_ESC){
+                keymap->get_kevent();
+                this->refused();
+            }
+            else if (keymap->top_kevent() == Keymap2::KEVENT_ENTER){
+                keymap->get_kevent();
+                this->accepted();
+            }
         }
         (void)param1;
         (void)param2;

@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include "colors.hpp"
+#include "internal_mod.hpp"
 
 struct selector_mod : public internal_mod {
     struct TargetDevice {
