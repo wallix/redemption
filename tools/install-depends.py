@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
         for d in sections:
             if d.get('Source:') == 'redemption':
-                if sys.argv[1] == 'uninstall':
+                if len(sys.argv) > 1 and sys.argv[1] == 'uninstall':
                     os.system("apt-get remove %s" % ' '.join(d.get('Build-Depends:').split(r',')))
                 else:
                     os.system("apt-get install %s" % ' '.join(d.get('Build-Depends:').split(r',')))
