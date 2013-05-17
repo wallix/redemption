@@ -3605,7 +3605,8 @@ struct selector_mod : public internal_mod {
                 this->grid[this->focus_line].target,
 //                this->context.get(STRAUTHID_AUTH_USER));
                 this->ini.context_get_value(_AUTHID_AUTH_USER, NULL, 0));
-            this->context.parse_username(buffer, this->ini);
+//            this->context.parse_username(buffer, this->ini);
+            this->ini.parse_username(buffer);
             this->signal = BACK_EVENT_NEXT;
             this->event.set();
         }

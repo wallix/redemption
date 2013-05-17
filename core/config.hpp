@@ -2037,6 +2037,154 @@ struct Inifile {
         ifstream inifile(filename);
         this->cparse(inifile);
     }
+
+    void parse_username(const char * username)
+    {
+//        LOG(LOG_INFO, "parse_username(%s)", username);
+        TODO("These should be results of the parsing function, not storing it away immediately in context. Mixing context management and parsing is not right")
+        char target_user[256];
+        char target_device[256];
+        char target_protocol[256];
+        char auth_user[256];
+        target_user[0] = 0;
+        target_device[0] = 0;
+        target_protocol[0] = 0;
+        auth_user[0] = 0;
+
+//        this->ask(_STRAUTHID_SELECTOR);
+        this->context_ask(_STRAUTHID_SELECTOR);
+        LOG(LOG_INFO, "asking for selector");
+
+        if (username[0]){
+            unsigned itarget_user = 0;
+            unsigned itarget_device = 0;
+            unsigned iprotocol = 0;
+            unsigned iauthuser = 0;
+            // well if that is not obvious the code below this
+            // is a finite state automata that split login@host:protocol:authuser
+            // between it's components parts.
+            // ':' is forbidden in login, host or authuser.
+            // '@' is forbidden in host or authuser.
+            // login can contain an @ character (necessary because it is used
+            // for domain names), the rule is that host follow the last @,
+            // the login is what is before, even if it contains an @.
+            // the protocol is what follows the first :
+            // the user is what follows the second :, or what follows the unique : (if only one is found)
+
+            enum { COPY_TARGET_USER
+                 , COPY_HOST
+                 , COPY_AUTHUSER
+            } state = COPY_TARGET_USER;
+
+            unsigned c;
+
+            for (unsigned i = 0; i < 255 && (c = username[i]); i++){
+                switch (state) {
+                case COPY_TARGET_USER:
+                    switch (c){
+                    case ':': state = COPY_AUTHUSER;
+                    break;
+                    case '@': state = COPY_HOST;
+                    break;
+                    default: target_user[itarget_user++] = c;
+                    break;
+                    }
+                break;
+                case COPY_HOST:
+                    switch (c){
+                        case ':': state = COPY_AUTHUSER;
+                           break;
+                        case '@':
+                            target_user[itarget_user++] = '@';
+                            memcpy(target_user+itarget_user, target_device, itarget_device);
+                            itarget_user += itarget_device;
+                            itarget_device = 0;
+                            break;
+                        default: target_device[itarget_device++] = c;
+                         break;
+                    }
+                break;
+                case COPY_AUTHUSER:
+                    switch (c){
+                        case ':': // second ':' means we had 'protocol:user' pair
+                            memcpy(target_protocol, auth_user, iauthuser);
+                            iprotocol = iauthuser;
+                            iauthuser = 0;
+                            break;
+                        default: auth_user[iauthuser++] = c;
+                            break;
+                    }
+                break;
+                }
+            }
+            target_user[itarget_user] = 0;
+            target_device[itarget_device] = 0;
+            target_protocol[iprotocol] = 0;
+            auth_user[iauthuser] = 0;
+            if (iauthuser == 0){
+                if ((itarget_user > 0) && (itarget_device == 0)){
+                    memcpy(auth_user, target_user, itarget_user);
+                    target_user[0] = 0;
+                    auth_user[itarget_user] = 0;
+                }
+                if ((itarget_user > 0) && (itarget_device > 0)){
+                    memcpy(auth_user, target_user, itarget_user);
+                    target_user[0] = 0;
+                    auth_user[itarget_user] = '@';
+                    memcpy(auth_user + 1 + itarget_user, target_device, itarget_device);
+                    target_device[0] = 0;
+                    auth_user[itarget_user + 1 + itarget_device] = 0;
+                }
+            }
+            // 'win:user' means user@win:user
+            else if ((itarget_user != 0) && (itarget_device == 0)){
+                memcpy(target_device, target_user, itarget_user);
+                target_device[itarget_user] = 0;
+                memcpy(target_user, auth_user, iauthuser);
+                target_user[iauthuser] = 0;
+            }
+        }
+
+        if (*target_user == 0)
+        {
+//            this->ask(_STRAUTHID_TARGET_USER);
+            this->context_ask(_AUTHID_TARGET_USER);
+        }
+        else {
+//            this->cpy(STRAUTHID_TARGET_USER, target_user);
+            this->context_set_value(_AUTHID_TARGET_USER, target_user);
+        }
+        if (*target_device == 0) {
+//            this->ask(_STRAUTHID_TARGET_DEVICE);
+            this->context_ask(_AUTHID_TARGET_DEVICE);
+        }
+        else {
+//            this->cpy(STRAUTHID_TARGET_DEVICE, target_device);
+            this->context_set_value(_AUTHID_TARGET_DEVICE, target_device);
+        }
+        if (*target_protocol == 0) {
+//            this->ask(_STRAUTHID_TARGET_PROTOCOL);
+            this->context_ask(_AUTHID_TARGET_PROTOCOL);
+        }
+        else {
+//            this->cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
+            this->context_set_value(_AUTHID_TARGET_PROTOCOL, target_protocol);
+        }
+        if (*auth_user == 0) {
+//            this->ask(_STRAUTHID_AUTH_USER);
+            this->context_ask(_STRAUTHID_AUTH_USER);
+        }
+        else {
+//            this->cpy(STRAUTHID_AUTH_USER, auth_user);
+/*
+            strncpy(ini.globals.auth_user, auth_user, sizeof(ini.globals.auth_user));
+            ini.globals.auth_user[sizeof(ini.globals.auth_user) - 1] = 0;
+
+            this->cpy(_STRAUTHID_AUTH_USER, "");
+*/
+            this->context_set_value(_AUTHID_AUTH_USER, auth_user);
+        }
+    }
 };
 
 #endif

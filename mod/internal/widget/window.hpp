@@ -428,10 +428,11 @@ struct window_login : public window
             if (edit == 0){
                 break;
             }
-            else if (0 == strcmp(label->caption1, ini->globals.translation.login)){
-                this->context.parse_username(edit->buffer, *this->ini);
+            else if (0 == strcmp(label->caption1, this->ini->globals.translation.login)){
+//                this->context.parse_username(edit->buffer, *this->ini);
+                this->ini->parse_username(edit->buffer);
             }
-            else if (0 == strcmp(label->caption1, ini->globals.translation.password)){
+            else if (0 == strcmp(label->caption1, this->ini->globals.translation.password)){
 //                this->context.cpy(STRAUTHID_PASSWORD, edit->buffer);
                 this->ini->context_set_value(_AUTHID_PASSWORD, edit->buffer);
             }

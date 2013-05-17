@@ -297,6 +297,7 @@ struct ModContext/* : public Dico*/ {
 //        LOG(LOG_INFO, "mod context deleted");
     }
 
+/*
     void parse_username(const char * username, Inifile & ini)
     {
 //        LOG(LOG_INFO, "parse_username(%s)", username);
@@ -435,15 +436,10 @@ struct ModContext/* : public Dico*/ {
         }
         else {
 //            this->cpy(STRAUTHID_AUTH_USER, auth_user);
-/*
-            strncpy(ini.globals.auth_user, auth_user, sizeof(ini.globals.auth_user));
-            ini.globals.auth_user[sizeof(ini.globals.auth_user) - 1] = 0;
-
-            this->cpy(_STRAUTHID_AUTH_USER, "");
-*/
             ini.context_set_value(_AUTHID_AUTH_USER, auth_user);
         }
     }
+*/
 };
 
 #endif
