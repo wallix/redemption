@@ -533,6 +533,11 @@ struct Keymap2
 
                             if (this->deadkey == DEADKEY_NONE) {
                                 switch (extendedKeyCode){
+                                // ESCAPE
+                                case 0x01:
+                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x001B); }
+                                    this->push_kevent(KEVENT_ESC);
+                                    break;
                                 // LEFT ARROW
                                 case 0xCB:
                                     if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x2190); }
