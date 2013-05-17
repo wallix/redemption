@@ -299,6 +299,7 @@ struct login_mod : public internal_mod {
     }
 
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap){
+//        KEVENT_ESC
         if (keymap->nb_kevent_available() > 0){
             if (this->login_window->has_focus) {
                 this->front.begin_update();
