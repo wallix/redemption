@@ -23,7 +23,6 @@
 
 #include "front_api.hpp"
 #include "config.hpp"
-#include "modcontext.hpp"
 #include "window_dialog.hpp"
 #include "msgbox.hpp"
 #include "screen.hpp"
@@ -34,16 +33,14 @@ class DialogMod : public InternalMod, public NotifyApi
     WidgetScreen screen;
     WindowDialog window_dialog;
 
-    ModContext & context;
     Inifile & ini;
 
-
 public:
-    DialogMod(ModContext& context, Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height, const char * caption, const char * message, const char * cancel_text)
+    DialogMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height,
+              const char * caption, const char * message, const char * cancel_text)
     : InternalMod(front, width, height)
     , screen(this, width, height)
     , window_dialog(this, 0, 0, &this->screen, this, caption, message, 0, "Ok", cancel_text, BLACK, GREY, BLACK, WHITE)
-    , context(context)
     , ini(ini)
     {
         this->screen.child_list.push_back(&this->window_dialog);

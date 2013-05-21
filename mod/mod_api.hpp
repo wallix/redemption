@@ -26,7 +26,7 @@
 #include "front_api.hpp"
 #include "wait_obj.hpp"
 #include "callback.hpp"
-#include "modcontext.hpp"
+#include "config.hpp"
 #include "font.hpp"
 #include "draw_api.hpp"
 
@@ -44,10 +44,9 @@ enum BackEvent_t {
 
 
 struct mod_api : public Callback, public DrawApi {
-
     wait_obj event;
-    RDPPen pen;
-    bool pointer_displayed;
+    RDPPen   pen;
+    bool     pointer_displayed;
 
     uint16_t front_width;
     uint16_t front_height;
@@ -78,7 +77,7 @@ struct mod_api : public Callback, public DrawApi {
     // and returns 0 as long as the connection with server is still active.
     virtual BackEvent_t draw_event(void) = 0;
 
-    virtual void refresh_context(ModContext & context)
+    virtual void refresh_context(Inifile & ini)
     {
         return; // used when context changed to avoid creating a new module
     }

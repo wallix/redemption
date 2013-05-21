@@ -52,7 +52,6 @@
 #include "capture.hpp"
 #include "font.hpp"
 #include "bitmap.hpp"
-#include "modcontext.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "RDP/caches/fontcache.hpp"
 #include "RDP/caches/pointercache.hpp"
@@ -391,7 +390,7 @@ TODO("Pass font name as parameter in constructor")
     }
 
     // ===========================================================================
-    void start_capture(int width, int height, Inifile & ini, ModContext & context)
+    void start_capture(int width, int height, Inifile & ini)
     {
 //        if (context.get_bool(STRAUTHID_OPT_MOVIE)){
         if (ini.globals.movie) {

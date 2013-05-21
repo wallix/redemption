@@ -29,7 +29,6 @@
 
 #include "internal/widget/edit.hpp"
 #include "internal/widget/image.hpp"
-#include "modcontext.hpp"
 #include "config.hpp"
 
 struct window : public Widget
@@ -233,16 +232,13 @@ struct window_login : public window
     public:
     Widget & notify_to;
     Inifile * ini;
-    ModContext & context;
     TODO("The help window should be created by module, not by other window") 
 
-    window_login(mod_api * mod, const Rect & r, ModContext & context, Widget * parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
+    window_login(mod_api * mod, const Rect & r, Widget * parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
     :   window(mod, r, parent, bg_color, title),
         notify_to(notify_to),
-        context(context)
+        ini(ini)
     {
-        this->ini = ini;
-
         if (regular) {
             TODO("CGR: see other comments about this new. Why it's not actually"
                  " an error but it's not good practice and should change")
@@ -250,21 +246,21 @@ struct window_login : public window
                     SHARE_PATH "/" LOGIN_LOGO24, 24);
         }
 
-        if (ini->context_is_asked(_AUTHID_TARGET_USER)
-        ||  ini->context_is_asked(_AUTHID_TARGET_DEVICE)){
-            if (ini->context_is_asked(_AUTHID_AUTH_USER)){
-                ini->account.username[0] = 0;
+        if (this->ini->context_is_asked(_AUTHID_TARGET_USER)
+        ||  this->ini->context_is_asked(_AUTHID_TARGET_DEVICE)){
+            if (this->ini->context_is_asked(_AUTHID_AUTH_USER)){
+                this->ini->account.username[0] = 0;
             }
             else {
 //                strcpy(ini->account.username, context.get(STRAUTHID_AUTH_USER));
-                strncpy(ini->account.username,
+                strncpy(this->ini->account.username,
                     this->ini->context_get_value(_AUTHID_AUTH_USER, NULL, 0),
-                    sizeof(ini->account.username));
-                ini->account.username[sizeof(ini->account.username) - 1] = 0;
+                    sizeof(this->ini->account.username));
+                this->ini->account.username[sizeof(this->ini->account.username) - 1] = 0;
             }
         }
-        else if (ini->context_is_asked(_AUTHID_AUTH_USER)) {
-            ini->account.username[0] = 0;
+        else if (this->ini->context_is_asked(_AUTHID_AUTH_USER)) {
+            this->ini->account.username[0] = 0;
         }
         else {
             TODO("check this! Assembling parts to get user login with target is not obvious"
@@ -283,17 +279,17 @@ struct window_login : public window
 //                    , context.get(STRAUTHID_AUTH_USER)
                     , this->ini->context_get_value(_AUTHID_AUTH_USER, NULL, 0)
                     );
-            strcpy(ini->account.username, buffer);
+            strcpy(this->ini->account.username, buffer);
         }
 
         Widget * but = new widget_button(this->mod,
               Rect(regular ? 180 : 30, 160, 60, 25),
-              this, 3, 1, ini->globals.translation.button_ok);
+              this, 3, 1, this->ini->globals.translation.button_ok);
         this->default_button = but;
 
         but = new widget_button(this->mod,
               Rect(regular ? 250 : ((r.cx - 30) - 60), 160, 60, 25),
-              this, 2, 1, ini->globals.translation.button_cancel);
+              this, 2, 1, this->ini->globals.translation.button_cancel);
         this->esc_button = but;
 
         if (regular) {
@@ -305,7 +301,7 @@ struct window_login : public window
 
         struct Widget* login_label = new widget_label(this->mod,
             Rect((this->rect.cx >= 400) ? 155 : 5, 60, 70, 22),
-            this, ini->globals.translation.login);
+            this, this->ini->globals.translation.login);
 
         login_label->id = 100;
 
@@ -326,7 +322,7 @@ struct window_login : public window
 
         struct Widget* password_label = new widget_label(this->mod,
             Rect(this->rect.cx >= 400 ? 155 : 5, 60 + 25, 70, 22),
-            this, ini->globals.translation.password);
+            this, this->ini->globals.translation.password);
 
         password_label->id = 100 + 2;
 
@@ -429,7 +425,6 @@ struct window_login : public window
                 break;
             }
             else if (0 == strcmp(label->caption1, this->ini->globals.translation.login)){
-//                this->context.parse_username(edit->buffer, *this->ini);
                 this->ini->parse_username(edit->buffer);
             }
             else if (0 == strcmp(label->caption1, this->ini->globals.translation.password)){
@@ -456,20 +451,16 @@ struct window_login : public window
 
 struct window_dialog : public window
 {
-    ModContext * context;
     Inifile * ini;
 
     window_dialog(mod_api * mod, const Rect & r,
-                  ModContext & context,
                   Widget * parent, int bg_color,
                   const char * title, Inifile * ini, int regular,
                   const char * message,
                   const char * refuse)
     : window(mod, r, parent, bg_color, title)
-    , context(&context)
     , ini(ini)
     {
-//        this->context = &context;
         this->esc_button = NULL;
 
         struct Widget* but = new widget_button(this->mod, Rect(200, r.cy - 40, 60, 25), this, 3, 1, "OK");
@@ -550,12 +541,10 @@ struct window_dialog : public window
 
 struct wab_close : public window
 {
-    ModContext & context;
     window * help;
 
-    wab_close(mod_api * mod, const Rect & r, ModContext & context, Inifile & ini, Widget * parent, int bg_color, const char * title, int regular)
-    : window(mod, r, parent, bg_color, title),
-      context(context)
+    wab_close(mod_api * mod, const Rect & r, Inifile & ini, Widget * parent, int bg_color, const char * title, int regular)
+    : window(mod, r, parent, bg_color, title)
     {
         if (regular) {
             TODO("CGR: WIdget is registered in wab_close and will de deallocated"
@@ -655,8 +644,6 @@ struct wab_close : public window
     {
         return;
     }
-
  };
-
 
 #endif

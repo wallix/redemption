@@ -23,14 +23,12 @@
 
 #include "front_api.hpp"
 #include "config.hpp"
-#include "modcontext.hpp"
 #include "selector.hpp"
 #include "internal_mod.hpp"
 
 class SelectorMod : public InternalMod, public NotifyApi
 {
     WidgetSelector selector;
-    ModContext & context;
     int current_page;
     int number_page;
 
@@ -40,14 +38,13 @@ class SelectorMod : public InternalMod, public NotifyApi
     Inifile & ini;
 
 public:
-    SelectorMod(ModContext& context, Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
+    SelectorMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
     : InternalMod(front, width, height)
     , selector(this, "bidule", width, height, this,
 //               context.get(STRAUTHID_SELECTOR_CURRENT_PAGE),
 //               context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES))
                ini.context_get_value(_AUTHID_SELECTOR_CURRENT_PAGE, this->selector_current_page, sizeof(this->selector_current_page)),
                ini.context_get_value(_AUTHID_SELECTOR_NUMBER_OF_PAGES, this->selector_number_of_pages, sizeof(this->selector_number_of_pages)))
-    , context(context)
     , current_page(atoi(this->selector.current_page.label.buffer))
     , number_page(atoi(this->selector.number_page.buffer))
     , ini(ini)

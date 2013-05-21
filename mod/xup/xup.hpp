@@ -66,7 +66,6 @@ enum {
     BGRPalette palette332;
 
     xup_mod( Transport * t
-           , struct ModContext & context
            , struct FrontAPI & front
            , uint16_t front_width
            , uint16_t front_height

@@ -33,15 +33,12 @@ struct dialog_mod : public internal_mod {
     struct window_dialog * dialog_box;
     Widget* button_down;
     bool refuse_flag;
-    ModContext & context;
     Inifile & ini;
 
-    dialog_mod(ModContext & context,
-               FrontAPI & front, uint16_t width, uint16_t height,
+    dialog_mod(FrontAPI & front, uint16_t width, uint16_t height,
                const char *message, const char * refuse, Inifile & ini)
             : internal_mod(front, width, height)
             , refuse_flag(refuse != NULL)
-            , context(context)
             , ini(ini)
     {
         this->button_down = 0;
@@ -82,7 +79,7 @@ struct dialog_mod : public internal_mod {
 
         this->front.begin_update();
         this->dialog_box = new window_dialog(this,
-            r, context,
+            r,
             &this->screen, // parent
             GREY,
             "Information",

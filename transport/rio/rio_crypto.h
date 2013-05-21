@@ -39,6 +39,7 @@ extern "C" {
     struct RIOCrypto {
         int fd;
         RIO *trans;
+        int oflag;
     };
 
     /* This method does not allocate space for object itself,
@@ -47,11 +48,26 @@ extern "C" {
     */
     static inline RIO_ERROR rio_m_RIOCrypto_constructor(RIOCrypto * self, const char * filename, int oflag) {
         RIO_ERROR error = RIO_ERROR_OK;
-        self->fd = ::open(filename, oflag | O_CREAT, S_IRUSR);
-        if (self->fd < 0){
+        int       _oflag;
+
+        if (oflag & O_WRONLY) {
+            _oflag = oflag | O_CREAT;
+        }
+        else {
+            _oflag = oflag;
+        }
+
+        self->fd = ::open(filename, _oflag, S_IRUSR);
+        if (self->fd < 0) {
             return RIO_ERROR_CREAT;
         }
-        self->trans = rio_new_outfile(&error, self->fd);
+        if (oflag & O_WRONLY) {
+            self->trans = rio_new_outfile(&error, self->fd);
+        }
+        else {
+            self->trans = rio_new_infile(&error, self->fd);
+        }
+        self->oflag = _oflag;
         return error;
     }
 
@@ -84,8 +100,12 @@ extern "C" {
        and an error returned on subsequent call.
     */
     static inline ssize_t rio_m_RIOCrypto_recv(RIOCrypto * self, void * data, size_t len) {
-         rio_m_RIOCrypto_destructor(self);
-         return -RIO_ERROR_SEND_ONLY;
+        if (self->oflag & O_WRONLY) {
+            rio_m_RIOCrypto_destructor(self);
+            return -RIO_ERROR_SEND_ONLY;
+        }
+
+        return rio_recv(self->trans, data, len);
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -96,6 +116,11 @@ extern "C" {
        and an error returned on subsequent call.
     */
     static inline ssize_t rio_m_RIOCrypto_send(RIOCrypto * self, const void * data, size_t len) {
+        if (!(self->oflag & O_WRONLY)) {
+            rio_m_RIOCrypto_destructor(self);
+            return -RIO_ERROR_RECV_ONLY;
+        }
+
         return rio_send(self->trans, data, len);
     }
 

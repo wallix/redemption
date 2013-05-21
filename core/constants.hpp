@@ -59,6 +59,10 @@ TODO("these constants should be dispatched between relevant ini files")
 #define CERTIF_PATH "/etc/rdpproxy/certificate"
 #endif
 
+#if !defined(FIXTURES_PATH)
+#define FIXTURES_PATH "./tests/fixtures"
+#endif
+
 #define LOGIN_LOGO24 "ad24b.bmp"
 #define CURSOR0 "cursor0.cur"
 #define CURSOR1 "cursor1.cur"

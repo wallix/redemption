@@ -35,7 +35,6 @@ class WabCloseMod : public InternalMod, public NotifyApi
     WindowWabClose window_close;
     WidgetImage image;
 
-    ModContext & context;
     Inifile & ini;
 
 private:
@@ -51,7 +50,7 @@ private:
     };
 
 public:
-    WabCloseMod(ModContext& context, Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
+    WabCloseMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
     : InternalMod(front, width, height)
     , screen(this, width, height)
     , window_close(this, 0, 0, &this->screen, this, "End of connection", 0,
@@ -63,7 +62,6 @@ public:
                    BLACK, GREY
     )
     , image(this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
-    , context(context)
     , ini(ini)
     {
         this->screen.child_list.push_back(&this->window_close);

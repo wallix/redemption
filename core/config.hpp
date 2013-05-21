@@ -518,6 +518,9 @@ struct Inifile {
 
         // section "context"
         struct {
+            unsigned           selector_focus;
+            char               movie[1024];
+
             unsigned           opt_bitrate;
             unsigned           opt_framerate;
             unsigned           opt_qscale;
@@ -740,6 +743,9 @@ struct Inifile {
         this->globals.translation.help_message      = "Help message";
 
         // section "context"
+        this->globals.context.selector_focus              = 0;
+        this->globals.context.movie[0]                    = 0;
+
         this->globals.context.opt_bitrate                 = 40000;
         this->globals.context.opt_framerate               = 5;
         this->globals.context.opt_qscale                  = 15;
