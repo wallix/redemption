@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -19,7 +19,6 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    RDP Secondary Connection Device Selector
-
 */
 
 #ifndef _REDEMPTION_MOD_INTERNAL_SELECTOR_HPP_
@@ -3379,17 +3378,13 @@ struct selector_mod : public internal_mod {
     virtual void refresh_context(Inifile & ini)
     {
         char buffer[128];
-//        this->showed_page = atoi(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE));
         this->showed_page = atoi(this->ini.context_get_value(_AUTHID_SELECTOR_CURRENT_PAGE, buffer, sizeof(buffer)));
-//        this->total_page = atoi(context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES));
         this->total_page  = atoi(this->ini.context_get_value(_AUTHID_SELECTOR_NUMBER_OF_PAGES, buffer, sizeof(buffer)));
 
-//        if (context.is_asked(_STRAUTHID_SELECTOR_DEVICE_FILTER)){
         if (ini.context_is_asked(_AUTHID_SELECTOR_DEVICE_FILTER)){
             this->filter_device_text[0] = 0;
         }
         else{
-//            strcpy(this->filter_device_text, context.get(STRAUTHID_SELECTOR_DEVICE_FILTER));
             strncpy(this->filter_device_text,
                 this->ini.context_get_value(_AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0),
                 sizeof(this->filter_device_text));
@@ -3399,7 +3394,6 @@ struct selector_mod : public internal_mod {
             this->filter_group_text[0] = 0;
         }
         else{
-//            strcpy(this->filter_group_text, context.get(STRAUTHID_SELECTOR_GROUP_FILTER));
             strncpy(this->filter_group_text,
                 this->ini.context_get_value(_AUTHID_SELECTOR_GROUP_FILTER, NULL, 0),
                 sizeof(this->filter_group_text));
@@ -3421,13 +3415,9 @@ struct selector_mod : public internal_mod {
         this->rect_grid = Rect(20, 100, this->get_screen_rect().cx-40, this->nblines() * 20);
 
 
-//        const char * groups = context.get(STRAUTHID_TARGET_USER);
         const char * groups    = this->ini.context_get_value(_AUTHID_TARGET_USER, NULL, 0);
-//        const char * targets = context.get(STRAUTHID_TARGET_DEVICE);
         const char * targets   = this->ini.context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0);
-//        const char * protocols = context.get(STRAUTHID_TARGET_PROTOCOL);
         const char * protocols = this->ini.context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0);
-//        const char * endtimes = context.get(STRAUTHID_END_TIME);
         const char * endtimes  = this->ini.globals.context.end_time;
 
         for (size_t index = 0 ; index < 50 ; index++){
@@ -3552,11 +3542,8 @@ struct selector_mod : public internal_mod {
         this->ini.context_ask(_AUTHID_SELECTOR);
         char buffer[64];
         sprintf(buffer, "%u", (unsigned int)this->showed_page);
-//        this->context.cpy(STRAUTHID_SELECTOR_CURRENT_PAGE, buffer);
         this->ini.context_set_value(_AUTHID_SELECTOR_CURRENT_PAGE, buffer);
-//        this->context.cpy(STRAUTHID_SELECTOR_GROUP_FILTER, this->filter_group_text);
         this->ini.context_set_value(_AUTHID_SELECTOR_GROUP_FILTER, this->filter_group_text);
-//        this->context.cpy(STRAUTHID_SELECTOR_DEVICE_FILTER, this->filter_device_text);
         this->ini.context_set_value(_AUTHID_SELECTOR_DEVICE_FILTER, this->filter_device_text);
         this->ini.context_ask(_STRAUTHID_TARGET_USER);
         this->ini.context_ask(_STRAUTHID_TARGET_DEVICE);
@@ -3601,9 +3588,7 @@ struct selector_mod : public internal_mod {
             char buffer[1024];
             sprintf(buffer, "%s:%s",
                 this->grid[this->focus_line].target,
-//                this->context.get(STRAUTHID_AUTH_USER));
                 this->ini.context_get_value(_AUTHID_AUTH_USER, NULL, 0));
-//            this->context.parse_username(buffer, this->ini);
             this->ini.parse_username(buffer);
             this->signal = BACK_EVENT_NEXT;
             this->event.set();
@@ -3819,7 +3804,6 @@ struct selector_mod : public internal_mod {
     void draw_login(const Rect & clip){
         char buffer[256];
         buffer[0] = 0;
-//        sprintf(buffer, "%s@%s", this->context.get(STRAUTHID_AUTH_USER), this->context.get(STRAUTHID_HOST));
         sprintf(buffer, "%s@%s", this->ini.globals.auth_user, this->ini.globals.host);
         this->front.server_draw_text(30, 30, buffer, GREY, BLACK, clip);
     }

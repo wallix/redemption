@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -19,7 +19,6 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Message Dialog box
-
 */
 
 #ifndef _REDEMPTION_MOD_INTERNAL_DIALOG_HPP_
@@ -254,7 +253,6 @@ struct dialog_mod : public internal_mod {
                 {
                     uint32_t c = keymap->get_char();
                     if (c == ' '){
-//                        this->context.cpy(this->refuse_flag?STRAUTHID_ACCEPT_MESSAGE:STRAUTHID_DISPLAY_MESSAGE, "True");
                         this->ini.context_set_value(
                             (this->refuse_flag ? _AUTHID_ACCEPT_MESSAGE : _AUTHID_DISPLAY_MESSAGE),
                             "True");
@@ -265,7 +263,6 @@ struct dialog_mod : public internal_mod {
                 break;
                 case Keymap2::KEVENT_ENTER:
                     keymap->get_kevent();
-//                    this->context.cpy(this->refuse_flag?STRAUTHID_ACCEPT_MESSAGE:STRAUTHID_DISPLAY_MESSAGE, "True");
                     this->ini.context_set_value(
                         (this->refuse_flag ? _AUTHID_ACCEPT_MESSAGE : _AUTHID_DISPLAY_MESSAGE),
                         "True");
@@ -312,7 +309,6 @@ struct dialog_mod : public internal_mod {
         this->draw(RDPPatBlt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, brush), clip);
         this->end_update();
     }
-
 };
 
 #endif

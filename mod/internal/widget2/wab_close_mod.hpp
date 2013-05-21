@@ -6,7 +6,7 @@
  *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *   GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
@@ -54,9 +54,7 @@ public:
     : InternalMod(front, width, height)
     , screen(this, width, height)
     , window_close(this, 0, 0, &this->screen, this, "End of connection", 0,
-//                   context.is_asked(_STRAUTHID_AUTH_USER) ? NULL : ini.globals.auth_user,
                    ini.context_is_asked(_AUTHID_AUTH_USER) ? NULL : ini.globals.auth_user,
-//                   context.is_asked(_STRAUTHID_TARGET_USER) ||context.is_asked(_STRAUTHID_TARGET_DEVICE) ? NULL : temporary_text(ini).text,
                    (ini.context_is_asked(_AUTHID_TARGET_USER) || ini.context_is_asked(_AUTHID_TARGET_DEVICE)) ?
                        NULL : temporary_text(ini).text,
                    BLACK, GREY

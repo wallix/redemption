@@ -252,7 +252,6 @@ struct window_login : public window
                 this->ini->account.username[0] = 0;
             }
             else {
-//                strcpy(ini->account.username, context.get(STRAUTHID_AUTH_USER));
                 strncpy(this->ini->account.username,
                     this->ini->context_get_value(_AUTHID_AUTH_USER, NULL, 0),
                     sizeof(this->ini->account.username));
@@ -267,16 +266,11 @@ struct window_login : public window
                  "method used below il likely to show @: if target fields are empty")
             char buffer[256];
             snprintf( buffer, 256, "%s@%s:%s%s%s"
-//                    , context.get(STRAUTHID_TARGET_USER)
                     , this->ini->context_get_value(_AUTHID_TARGET_USER, NULL, 0)
-//                    , context.get(STRAUTHID_TARGET_DEVICE)
                     , this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0)
-//                    , context.get(STRAUTHID_TARGET_PROTOCOL)[0]?context.get(STRAUTHID_TARGET_PROTOCOL):""
                     , (this->ini->context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ?
                            this->ini->context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0) : "")
-//                    , context.get(STRAUTHID_TARGET_PROTOCOL)[0]?":":""
                     , (this->ini->context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ? ":" : "")
-//                    , context.get(STRAUTHID_AUTH_USER)
                     , this->ini->context_get_value(_AUTHID_AUTH_USER, NULL, 0)
                     );
             strcpy(this->ini->account.username, buffer);
@@ -428,7 +422,6 @@ struct window_login : public window
                 this->ini->parse_username(edit->buffer);
             }
             else if (0 == strcmp(label->caption1, this->ini->globals.translation.password)){
-//                this->context.cpy(STRAUTHID_PASSWORD, edit->buffer);
                 this->ini->context_set_value(_AUTHID_PASSWORD, edit->buffer);
             }
             i += 2;
@@ -503,24 +496,12 @@ struct window_dialog : public window
             LOG(LOG_INFO, "widget_window_dialog::notify id=%d msg=%d", id, msg);
             switch (id) {
             case 2: /* cancel button -> Esc */
-/*
-                this->context->cpy(
-                        (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
-                                          :STRAUTHID_DISPLAY_MESSAGE,
-                        "False");
-*/
                 this->ini->context_set_value(
                     (this->esc_button ? _AUTHID_ACCEPT_MESSAGE : _AUTHID_DISPLAY_MESSAGE),
                     "False");
                 this->mod->mod_event(BACK_EVENT_NEXT);
             break;
             case 3: /* ok button -> Enter */
-/*
-                this->context->cpy(
-                        (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
-                                          :STRAUTHID_DISPLAY_MESSAGE,
-                        "True");
-*/
                 this->ini->context_set_value(
                     (this->esc_button ? _AUTHID_ACCEPT_MESSAGE : _AUTHID_DISPLAY_MESSAGE),
                     "True");
@@ -567,7 +548,6 @@ struct wab_close : public window
 
         b = new widget_label(this->mod,
             Rect(10 + ((this->rect.cx >= 400) ?  230 : 70), 60 + 25 * count, 350, 20),
-//            this, context.is_asked(_STRAUTHID_AUTH_USER)? "" : context.get(STRAUTHID_AUTH_USER));
             this, ini.context_is_asked(_STRAUTHID_AUTH_USER)? "" : ini.context_get_value(_AUTHID_AUTH_USER, NULL, 0));
 
         b->id = 100 + 2 * count;
@@ -580,9 +560,7 @@ struct wab_close : public window
         }
         else {
             snprintf(target, 255, "%s@%s",
-//                context.get(STRAUTHID_TARGET_USER),
                 ini.context_get_value(_AUTHID_TARGET_USER, NULL, 0),
-//                context.get(STRAUTHID_TARGET_DEVICE));
                 ini.context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0));
         }
 
@@ -610,7 +588,6 @@ struct wab_close : public window
         bool done = false;
         int line = 0;
         const char * message;
-//        message = context.get(STRAUTHID_AUTH_ERROR_MESSAGE);
         message = ini.globals.context.auth_error_message;
         while (!done) {
             const char * str = strstr(message, "<br>");

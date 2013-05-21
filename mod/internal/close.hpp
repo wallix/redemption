@@ -39,7 +39,6 @@ struct close_mod : public internal_mod {
 
         int win_width = 600;
         bool done = false;
-//        const char * message = context.get(STRAUTHID_AUTH_ERROR_MESSAGE);
         const char * message = ini.globals.context.auth_error_message;
         int line = 0;
         while (!done) {

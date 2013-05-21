@@ -41,8 +41,6 @@ public:
     SelectorMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
     : InternalMod(front, width, height)
     , selector(this, "bidule", width, height, this,
-//               context.get(STRAUTHID_SELECTOR_CURRENT_PAGE),
-//               context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES))
                ini.context_get_value(_AUTHID_SELECTOR_CURRENT_PAGE, this->selector_current_page, sizeof(this->selector_current_page)),
                ini.context_get_value(_AUTHID_SELECTOR_NUMBER_OF_PAGES, this->selector_number_of_pages, sizeof(this->selector_number_of_pages)))
     , current_page(atoi(this->selector.current_page.label.buffer))
@@ -128,13 +126,9 @@ public:
 
     void refresh_context()
     {
-//        char * groups = this->context.get(STRAUTHID_TARGET_USER);
         char * groups    = const_cast<char *>(this->ini.context_get_value(_AUTHID_TARGET_USER, NULL, 0));
-//        char * targets = this->context.get(STRAUTHID_TARGET_DEVICE);
         char * targets   = const_cast<char *>(this->ini.context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0));
-//        char * protocols = this->context.get(STRAUTHID_TARGET_PROTOCOL);
         char * protocols = const_cast<char *>(this->ini.context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0));
-//        char * endtimes  = this->context.get(STRAUTHID_END_TIME);
         char * endtimes  = const_cast<char *>((const char *)this->ini.globals.context.end_time);
 
         for (size_t index = 0 ; index < 50 ; index++) {
