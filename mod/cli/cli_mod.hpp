@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -17,7 +17,6 @@
    Copyright (C) Wallix 2010
    Author(s): Christophe Grosjean, Javier Caverni
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
-
 */
 
 #ifndef _REDEMPTION_MOD_CLI_CLI_MOD_HPP_
@@ -26,21 +25,20 @@
 #include "transitory/transitory.hpp"
 
 struct cli_mod : public transitory_mod {
-    cli_mod(
-        struct ModContext & context, Inifile & ini, FrontAPI & front, ClientInfo & client_info, const uint16_t front_width, const uint16_t front_height)
-            : transitory_mod(front, front_width, front_height)
-    {
-//        context.parse_username(client_info.username, ini);
-      ini.parse_username(client_info.username);
+    cli_mod( Inifile & ini
+           , FrontAPI & front
+           , ClientInfo & client_info
+           , const uint16_t front_width
+           , const uint16_t front_height)
+    : transitory_mod(front, front_width, front_height) {
+        ini.parse_username(client_info.username);
 
-        if (client_info.password[0]){
+        if (client_info.password[0]) {
             ini.context_set_value(_AUTHID_PASSWORD, client_info.password);
         }
     }
 
-    virtual ~cli_mod()
-    {
-    }
+    virtual ~cli_mod() {}
 
     virtual void begin_update() {}
     virtual void end_update() {}
@@ -53,7 +51,7 @@ struct cli_mod : public transitory_mod {
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) {}
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) {}
     virtual void text_metrics(const char * text, int & width, int & height) {}
-    virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags){}
+    virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags) {}
 };
 
 #endif

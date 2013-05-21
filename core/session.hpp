@@ -46,7 +46,6 @@
 #include "wait_obj.hpp"
 #include "transport.hpp"
 #include "bitmap.hpp"
-#include "modcontext.hpp"
 
 #include "authentifier.hpp"
 #include "front.hpp"
@@ -99,7 +98,6 @@ struct Session {
     Inifile * ini;
     uint32_t & verbose;
 
-    ModContext * context;
     submodule_t nextmod;
     int internal_state;
     long id;
@@ -120,14 +118,13 @@ struct Session {
         , front_event(front_event)
         , ini(ini)
         , verbose(this->ini->globals.debug.session)
-        , context(NULL)
         , nextmod(INTERNAL_NONE)
         , mod_transport(NULL)
     {
         SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->globals.debug.front);
 
         try {
-            this->context = new ModContext();
+//            this->context = new ModContext();
 //            this->context->cpy(STRAUTHID_HOST, ip_source);
             this->ini->context_set_value(_AUTHID_HOST, ip_source);
 
@@ -138,8 +135,7 @@ struct Session {
             this->context->cpy(STRAUTHID_SHELL_WORKING_DIRECTORY, this->ini->globals.shell_working_directory);
 */
 
-            this->sesman = new SessionManager( *this->context
-                                             , this->ini
+            this->sesman = new SessionManager( this->ini
                                              , this->ini->globals.keepalive_grace_delay
                                              , this->ini->globals.max_tick
                                              , this->ini->globals.internal_domain
@@ -267,7 +263,7 @@ struct Session {
                     case SESSION_STATE_ENTRY:
                     {
                         if (this->front->up_and_running){
-                            this->session_setup_mod(MCTX_STATUS_CLI, this->context, this->nextmod);
+                            this->session_setup_mod(MCTX_STATUS_CLI, this->nextmod);
                             this->mod->event.set();
                             this->internal_state = SESSION_STATE_RUNNING;
                         }
@@ -328,7 +324,7 @@ struct Session {
                                 // default is "allow", do nothing special
                             }
 
-                            this->mod->refresh_context(*this->context);
+                            this->mod->refresh_context(*this->ini);
 
                             this->mod->event.set();
                             this->internal_state = SESSION_STATE_RUNNING;
@@ -343,7 +339,7 @@ struct Session {
 //                        if (this->sesman && !this->sesman->keep_alive(rfds, this->keep_alive_time, timestamp, &this->front_trans)){
                         if (this->sesman && !this->sesman->keep_alive(rfds, this->keep_alive_time, timestamp, &front_trans)){
                             this->nextmod = INTERNAL_CLOSE;
-                            this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context, this->nextmod);
+                            this->session_setup_mod(MCTX_STATUS_INTERNAL, this->nextmod);
                             this->keep_alive_time = 0;
                             this->internal_state = SESSION_STATE_RUNNING;
                             this->front->stop_capture();
@@ -403,7 +399,7 @@ struct Session {
                                         this->mod_transport = NULL;
                                     }
                                     this->mod = this->no_mod;
-                                    this->session_setup_mod(next_state, this->context, this->nextmod);
+                                    this->session_setup_mod(next_state, this->nextmod);
                                     this->internal_state = SESSION_STATE_RUNNING;
                                 }
                                 else {
@@ -438,7 +434,7 @@ struct Session {
                                     LOG(LOG_INFO, "Session::no authentifier available, closing");
                                     this->internal_state = SESSION_STATE_CLOSE_CONNECTION;
                                     this->nextmod = INTERNAL_CLOSE;
-                                    this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context, this->nextmod);
+                                    this->session_setup_mod(MCTX_STATUS_INTERNAL, this->nextmod);
                                     this->keep_alive_time = 0;
                                     this->internal_state = SESSION_STATE_RUNNING;
                                     this->front->stop_capture();
@@ -461,13 +457,12 @@ struct Session {
                                     if (next_state != MCTX_STATUS_WAITING){
                                         this->internal_state = SESSION_STATE_STOP;
                                         try {
-                                            this->session_setup_mod(next_state, this->context, this->nextmod);
+                                            this->session_setup_mod(next_state, this->nextmod);
                                             if (record_video) {
                                                 this->front->start_capture(
                                                     this->front->client_info.width,
                                                     this->front->client_info.height,
-                                                    *this->ini,
-                                                    *this->context
+                                                    *this->ini
                                                     );
                                             }
                                             else {
@@ -481,7 +476,7 @@ struct Session {
                                         catch (const Error & e) {
                                             LOG(LOG_INFO, "Session::connect failed Error=%u", e.id);
                                             this->nextmod = INTERNAL_CLOSE;
-                                            this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context, this->nextmod);
+                                            this->session_setup_mod(MCTX_STATUS_INTERNAL, this->nextmod);
                                             this->keep_alive_time = 0;
                                             delete sesman;
                                             this->sesman = NULL;
@@ -548,11 +543,10 @@ struct Session {
             sprintf(old_session_file, "%s/session_%d.pid", PID_PATH, child_pid);
             unlink(old_session_file);
         }
-        delete this->context;
     }
 
     TODO("We shoudl be able to flatten MCTX_STATUS and submodule, combining the two we get the desired target")
-    void session_setup_mod(int target_module, const ModContext * context, submodule_t submodule)
+    void session_setup_mod(int target_module, submodule_t submodule)
     {
         if (this->verbose){
             LOG(LOG_INFO, "Session::session_setup_mod(target_module=%u, submodule=%u)", target_module, (unsigned)submodule);
@@ -587,7 +581,7 @@ struct Session {
                     }
                     this->mod = this->no_mod;
                 }
-                this->mod = new cli_mod(*this->context, *(this->ini), *(this->front),
+                this->mod = new cli_mod(*(this->ini), *(this->front),
                                         this->front->client_info,
                                         this->front->client_info.width,
                                         this->front->client_info.height);
@@ -621,8 +615,7 @@ struct Session {
                             this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection to server ended");
                         }
 */
-                        this->mod = new close_mod(*this->context,
-                                                  *this->ini,
+                        this->mod = new close_mod(*this->ini,
                                                   *this->front,
                                                   this->front->client_info.width,
                                                   this->front->client_info.height);
@@ -642,8 +635,7 @@ struct Session {
 //                        message = this->context->get(STRAUTHID_MESSAGE);
                         message = this->ini->globals.context.message;
                         button = this->ini->globals.translation.button_refused;
-                        this->mod = new dialog_mod(*this->context,
-                                        *this->front,
+                        this->mod = new dialog_mod(*this->front,
                                         this->front->client_info.width,
                                         this->front->client_info.height,
                                         message,
@@ -666,7 +658,6 @@ struct Session {
                         message = this->ini->globals.context.message;
                         button = NULL;
                         this->mod = new dialog_mod(
-                                        *this->context,
                                         *this->front,
                                         this->front->client_info.width,
                                         this->front->client_info.height,
@@ -683,7 +674,6 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
                         }
                         this->mod = new login_mod(
-                                         *this->context,
                                          *this->front,
                                          this->front->client_info.width,
                                          this->front->client_info.height,
@@ -709,10 +699,10 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'test'");
                         }
                         this->mod = new test_internal_mod(
-                                        *this->context,
                                         *this->front,
                                         this->ini->globals.replay_path,
-                                        this->context->movie,
+//                                        this->context->movie,
+                                        this->ini->globals.context.movie,
                                         this->front->client_info.width,
                                         this->front->client_info.height
                                         );
@@ -737,9 +727,9 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'selector'");
                         }
-                        this->context->selector_focus = 8; // FOCUS_ON_CONNECT
+//                        this->context->selector_focus = 8; // FOCUS_ON_CONNECT
+                        this->ini->globals.context.selector_focus = 8; // FOCUS_ON_CONNECT
                         this->mod = new selector_mod(
-                                        *this->context,
                                         *this->ini,
                                         *this->front,
                                         this->front->client_info.width,
@@ -754,7 +744,6 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'CloseMod'");
                         }
                         this->mod = new widget2_mod(
-                            *this->context,
                             *this->ini,
                             *this->front,
                             this->front->client_info.width,
@@ -769,7 +758,6 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'SelectorMod'");
                         }
                         this->mod = new SelectorMod(
-                            *this->context,
                             *this->ini,
                             *this->front,
                             this->front->client_info.width,
@@ -826,7 +814,6 @@ struct Session {
 //                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote X host");
                 this->ini->globals.context.auth_error_message = "failed authentification on remote X host";
                 this->mod = new xup_mod( t
-                                       , *this->context
                                        , *this->front
                                        , this->front->client_info.width
                                        , this->front->client_info.height

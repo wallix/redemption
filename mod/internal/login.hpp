@@ -35,7 +35,7 @@ struct login_mod : public internal_mod {
     Widget * help;
 
 
-    login_mod(ModContext & context, FrontAPI & front, uint16_t width, uint16_t height, Inifile * ini)
+    login_mod(FrontAPI & front, uint16_t width, uint16_t height, Inifile * ini)
             : internal_mod(front, width, height)
     {
         uint32_t nb = (this->screen.rect.cy - 230) / 20;
@@ -81,7 +81,7 @@ struct login_mod : public internal_mod {
             log_height);
 
         this->login_window = new window_login(this,
-            r, context,
+            r,
             &this->screen, // parent
             this->screen, // notify_to
             GREY,

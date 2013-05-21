@@ -89,8 +89,6 @@ struct selector_mod : public internal_mod {
     size_t showed_page;
     size_t total_page;
 
-    ModContext & context;
-
     uint32_t back_color[4];
     uint32_t fore_color[4];
 
@@ -112,16 +110,15 @@ struct selector_mod : public internal_mod {
 
     Inifile & ini;
 
-    selector_mod(ModContext & context, Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height):
+    selector_mod(Inifile & ini, FrontAPI & front, uint16_t width, uint16_t height):
             internal_mod(front, width, height), focus_line(0),
-            focus_item(context.selector_focus),
+            focus_item(ini.globals.context.selector_focus),
             click_focus(NO_FOCUS),
             state(BUTTON_STATE_UP),
             filter_group_edit_pos(0),
             filter_device_edit_pos(0),
             showed_page(0),
             total_page(1),
-            context(context),
             ini(ini)
     {
 
@@ -3355,7 +3352,7 @@ struct selector_mod : public internal_mod {
     };
     this->last_page = new Bitmap(24, NULL, 32, 20, raw_last_page, sizeof(raw_last_page));
 
-        this->refresh_context(context);
+        this->refresh_context(this->ini);
         LOG(LOG_INFO, "selector init done : signal = %u", this->signal);
     }
 
@@ -3378,7 +3375,7 @@ struct selector_mod : public internal_mod {
         delete this->last_page_inactive;
     }
 
-    virtual void refresh_context(ModContext & context)
+    virtual void refresh_context(Inifile & ini)
     {
         char buffer[128];
 //        this->showed_page = atoi(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE));

@@ -23,7 +23,6 @@
 #define _REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP_
 
 #include "widget/screen.hpp"
-#include "modcontext.hpp"
 #include "mod_api.hpp"
 
 struct internal_mod : public mod_api {

@@ -25,7 +25,6 @@ TODO("Sesman is performing two largely unrelated tasks : finding out the next mo
 
 #include "stream.hpp"
 #include "config.hpp"
-#include "modcontext.hpp"
 #include "netutils.hpp"
 #include "sockettransport.hpp"
 
@@ -69,8 +68,6 @@ class SessionManager {
         MOD_STATE_DONE_EXIT,
     } mod_state;
 
-    ModContext & context;
-
     Inifile * ini;
 
     int tick_count;
@@ -83,9 +80,8 @@ class SessionManager {
     bool internal_domain;
     uint32_t verbose;
 
-    SessionManager(ModContext & context, Inifile * ini, int keepalive_grace_delay, int max_tick, bool internal_domain, uint32_t verbose)
+    SessionManager(Inifile * ini, int keepalive_grace_delay, int max_tick, bool internal_domain, uint32_t verbose)
         : mod_state(MOD_STATE_INIT)
-        , context(context)
         , ini(ini)
         , tick_count(0)
         , auth_trans_t(NULL)
@@ -451,9 +447,12 @@ class SessionManager {
 //                char * user = this->context.get(STRAUTHID_TARGET_USER);
                 const char * user = this->ini->context_get_value(_AUTHID_TARGET_USER, NULL, 0);
                 size_t len_user = strlen(user);
-                strcpy(this->context.movie, user);
+//                strcpy(this->context.movie, user);
+                strncpy(this->ini->globals.context.movie, user, sizeof(this->ini->globals.context.movie));
+                this->ini->globals.context.movie[sizeof(this->ini->globals.context.movie) - 1] = 0;
                 if (0 != strcmp(".mwrm", user + len_user - 5)){
-                    strcpy(this->context.movie + len_user, ".mwrm");
+//                    strcpy(this->context.movie + len_user, ".mwrm");
+                    strcpy(this->ini->globals.context.movie + len_user, ".mwrm");
                 }
                 nextmod = INTERNAL_TEST;
             }
@@ -649,7 +648,7 @@ class SessionManager {
         }
     }
 
-    TODO("move that function to ModContext create specialized stream object ModContextStream")
+    TODO("move that function to Inifile create specialized stream object InifileStream")
     void out_item(Stream & stream, const char * key)
     {
         if (this->ini->context_is_asked(key)){
