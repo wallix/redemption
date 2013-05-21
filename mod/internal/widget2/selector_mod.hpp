@@ -6,7 +6,7 @@
  *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *   GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
@@ -41,8 +41,8 @@ public:
     SelectorMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
     : InternalMod(front, width, height)
     , selector(this, "bidule", width, height, this,
-               ini.context_get_value(_AUTHID_SELECTOR_CURRENT_PAGE, this->selector_current_page, sizeof(this->selector_current_page)),
-               ini.context_get_value(_AUTHID_SELECTOR_NUMBER_OF_PAGES, this->selector_number_of_pages, sizeof(this->selector_number_of_pages)))
+               ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE, this->selector_current_page, sizeof(this->selector_current_page)),
+               ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES, this->selector_number_of_pages, sizeof(this->selector_number_of_pages)))
     , current_page(atoi(this->selector.current_page.label.buffer))
     , number_page(atoi(this->selector.number_page.buffer))
     , ini(ini)
@@ -80,11 +80,11 @@ public:
     {
         if (NOTIFY_SUBMIT == event) {
             if (sender == &this->selector.logout) {
-                this->ini.context_ask(_AUTHID_AUTH_USER);
-                this->ini.context_ask(_AUTHID_PASSWORD);
-                this->ini.context_ask(_AUTHID_TARGET_USER);
-                this->ini.context_ask(_AUTHID_TARGET_DEVICE);
-                this->ini.context_ask(_AUTHID_SELECTOR);
+                this->ini.context_ask(AUTHID_AUTH_USER);
+                this->ini.context_ask(AUTHID_PASSWORD);
+                this->ini.context_ask(AUTHID_TARGET_USER);
+                this->ini.context_ask(AUTHID_TARGET_DEVICE);
+                this->ini.context_ask(AUTHID_SELECTOR);
                 this->signal = BACK_EVENT_NEXT;
                 this->event.set();
             }
@@ -126,9 +126,9 @@ public:
 
     void refresh_context()
     {
-        char * groups    = const_cast<char *>(this->ini.context_get_value(_AUTHID_TARGET_USER, NULL, 0));
-        char * targets   = const_cast<char *>(this->ini.context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0));
-        char * protocols = const_cast<char *>(this->ini.context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0));
+        char * groups    = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0));
+        char * targets   = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0));
+        char * protocols = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0));
         char * endtimes  = const_cast<char *>((const char *)this->ini.globals.context.end_time);
 
         for (size_t index = 0 ; index < 50 ; index++) {

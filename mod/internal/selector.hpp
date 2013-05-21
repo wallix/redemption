@@ -3378,24 +3378,24 @@ struct selector_mod : public internal_mod {
     virtual void refresh_context(Inifile & ini)
     {
         char buffer[128];
-        this->showed_page = atoi(this->ini.context_get_value(_AUTHID_SELECTOR_CURRENT_PAGE, buffer, sizeof(buffer)));
-        this->total_page  = atoi(this->ini.context_get_value(_AUTHID_SELECTOR_NUMBER_OF_PAGES, buffer, sizeof(buffer)));
+        this->showed_page = atoi(this->ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE, buffer, sizeof(buffer)));
+        this->total_page  = atoi(this->ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES, buffer, sizeof(buffer)));
 
-        if (ini.context_is_asked(_AUTHID_SELECTOR_DEVICE_FILTER)){
+        if (ini.context_is_asked(AUTHID_SELECTOR_DEVICE_FILTER)){
             this->filter_device_text[0] = 0;
         }
         else{
             strncpy(this->filter_device_text,
-                this->ini.context_get_value(_AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0),
+                this->ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0),
                 sizeof(this->filter_device_text));
             this->filter_device_text[sizeof(this->filter_device_text) - 1] = 0;
         }
-        if (this->ini.context_is_asked(_AUTHID_SELECTOR_GROUP_FILTER)){
+        if (this->ini.context_is_asked(AUTHID_SELECTOR_GROUP_FILTER)){
             this->filter_group_text[0] = 0;
         }
         else{
             strncpy(this->filter_group_text,
-                this->ini.context_get_value(_AUTHID_SELECTOR_GROUP_FILTER, NULL, 0),
+                this->ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER, NULL, 0),
                 sizeof(this->filter_group_text));
             this->filter_group_text[sizeof(this->filter_group_text) - 1] = 0;
         }
@@ -3415,9 +3415,9 @@ struct selector_mod : public internal_mod {
         this->rect_grid = Rect(20, 100, this->get_screen_rect().cx-40, this->nblines() * 20);
 
 
-        const char * groups    = this->ini.context_get_value(_AUTHID_TARGET_USER, NULL, 0);
-        const char * targets   = this->ini.context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0);
-        const char * protocols = this->ini.context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0);
+        const char * groups    = this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0);
+        const char * targets   = this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0);
+        const char * protocols = this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0);
         const char * endtimes  = this->ini.globals.context.end_time;
 
         for (size_t index = 0 ; index < 50 ; index++){
@@ -3539,15 +3539,15 @@ struct selector_mod : public internal_mod {
     }
 
     void ask_page(void){
-        this->ini.context_ask(_AUTHID_SELECTOR);
+        this->ini.context_ask(AUTHID_SELECTOR);
         char buffer[64];
         sprintf(buffer, "%u", (unsigned int)this->showed_page);
-        this->ini.context_set_value(_AUTHID_SELECTOR_CURRENT_PAGE, buffer);
-        this->ini.context_set_value(_AUTHID_SELECTOR_GROUP_FILTER, this->filter_group_text);
-        this->ini.context_set_value(_AUTHID_SELECTOR_DEVICE_FILTER, this->filter_device_text);
-        this->ini.context_ask(_STRAUTHID_TARGET_USER);
-        this->ini.context_ask(_STRAUTHID_TARGET_DEVICE);
-        this->ini.context_ask(_STRAUTHID_SELECTOR);
+        this->ini.context_set_value(AUTHID_SELECTOR_CURRENT_PAGE, buffer);
+        this->ini.context_set_value(AUTHID_SELECTOR_GROUP_FILTER, this->filter_group_text);
+        this->ini.context_set_value(AUTHID_SELECTOR_DEVICE_FILTER, this->filter_device_text);
+        this->ini.context_ask(AUTHID_TARGET_USER);
+        this->ini.context_ask(AUTHID_TARGET_DEVICE);
+        this->ini.context_ask(AUTHID_SELECTOR);
         this->signal = BACK_EVENT_REFRESH;
         this->event.set();
     }
@@ -3588,7 +3588,7 @@ struct selector_mod : public internal_mod {
             char buffer[1024];
             sprintf(buffer, "%s:%s",
                 this->grid[this->focus_line].target,
-                this->ini.context_get_value(_AUTHID_AUTH_USER, NULL, 0));
+                this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0));
             this->ini.parse_username(buffer);
             this->signal = BACK_EVENT_NEXT;
             this->event.set();
@@ -3596,11 +3596,11 @@ struct selector_mod : public internal_mod {
         break;
         case FOCUS_ON_LOGOUT:
         {
-            this->ini.context_ask(_STRAUTHID_AUTH_USER);
-            this->ini.context_ask(_STRAUTHID_PASSWORD);
-            this->ini.context_ask(_STRAUTHID_TARGET_USER);
-            this->ini.context_ask(_STRAUTHID_TARGET_DEVICE);
-            this->ini.context_ask(_STRAUTHID_SELECTOR);
+            this->ini.context_ask(AUTHID_AUTH_USER);
+            this->ini.context_ask(AUTHID_PASSWORD);
+            this->ini.context_ask(AUTHID_TARGET_USER);
+            this->ini.context_ask(AUTHID_TARGET_DEVICE);
+            this->ini.context_ask(AUTHID_SELECTOR);
             this->signal = BACK_EVENT_NEXT;
             this->event.set();
         }

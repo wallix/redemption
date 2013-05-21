@@ -6,7 +6,7 @@
  *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *   GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
@@ -69,8 +69,8 @@ private:
     {
         this->ini.context_set_value(
             (this->window_dialog.cancel
-            ? _AUTHID_ACCEPT_MESSAGE
-            : _AUTHID_DISPLAY_MESSAGE),
+            ? AUTHID_ACCEPT_MESSAGE
+            : AUTHID_DISPLAY_MESSAGE),
             "True");
         this->signal = BACK_EVENT_NEXT;
         this->event.set();
@@ -80,8 +80,8 @@ private:
     {
         this->ini.context_set_value(
             (this->window_dialog.cancel
-            ? _AUTHID_ACCEPT_MESSAGE
-            : _AUTHID_DISPLAY_MESSAGE),
+            ? AUTHID_ACCEPT_MESSAGE
+            : AUTHID_DISPLAY_MESSAGE),
             "False");
         this->signal = BACK_EVENT_NEXT;
         this->event.set();

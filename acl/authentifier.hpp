@@ -126,8 +126,8 @@ class SessionManager {
             BStream stream(8192);
 
             stream.out_uint32_be(0); // skip length
-            this->ini->context_ask(_AUTHID_KEEPALIVE);
-            this->out_item(stream, _STRAUTHID_KEEPALIVE);
+            this->ini->context_ask(AUTHID_KEEPALIVE);
+            this->out_item(stream, STRAUTHID_KEEPALIVE);
             stream.mark_end();
             // now set length
             int total_length = stream.get_offset();
@@ -150,10 +150,10 @@ class SessionManager {
 
         BStream stream(8192);
 
-        this->ini->context_set_value(_AUTHID_AUTHCHANNEL_TARGET, target);
+        this->ini->context_set_value(AUTHID_AUTHCHANNEL_TARGET, target);
 
         stream.out_uint32_be(0); // skip length
-        this->out_item(stream, _STRAUTHID_AUTHCHANNEL_TARGET);
+        this->out_item(stream, STRAUTHID_AUTHCHANNEL_TARGET);
 
         int total_length = stream.get_offset();
         stream.p = stream.data;
@@ -173,10 +173,10 @@ class SessionManager {
         }
         BStream stream(8192);
 
-        this->ini->context_set_value(_AUTHID_AUTHCHANNEL_RESULT, result);
+        this->ini->context_set_value(AUTHID_AUTHCHANNEL_RESULT, result);
 
         stream.out_uint32_be(0);  // skip length
-        this->out_item(stream, _STRAUTHID_AUTHCHANNEL_RESULT);
+        this->out_item(stream, STRAUTHID_AUTHCHANNEL_RESULT);
         int total_length = stream.get_offset();
         stream.set_out_uint32_be(total_length, 0);
 
@@ -319,7 +319,7 @@ class SessionManager {
                 BStream stream(8192);
                 stream.out_uint32_be(0); // skip length
                 // set data
-                this->out_item(stream, _STRAUTHID_KEEPALIVE);
+                this->out_item(stream, STRAUTHID_KEEPALIVE);
                 // now set length in header
                 int total_length = stream.get_offset();
                 stream.set_out_uint32_be(total_length, 0); /* size */
@@ -339,9 +339,9 @@ class SessionManager {
             }
             try {
                 this->incoming();
-                if (this->ini->context_get_bool(_AUTHID_KEEPALIVE)) {
+                if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
                     keepalive_time = now + this->keepalive_grace_delay;
-                    this->ini->context_ask(_STRAUTHID_KEEPALIVE);
+                    this->ini->context_ask(AUTHID_KEEPALIVE);
                 }
             }
             catch (...){
@@ -359,9 +359,9 @@ class SessionManager {
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::get_mod_from_protocol");
         }
-        const char * protocol = this->ini->context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0);
+        const char * protocol = this->ini->context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0);
         if (this->internal_domain){
-            const char * target = this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0);
+            const char * target = this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0);
             if (0 == strncmp(target, "autotest", 8)){
                 protocol = "INTERNAL";
             }
@@ -386,7 +386,7 @@ class SessionManager {
             res = MCTX_STATUS_XUP;
         }
         else if (strncasecmp(protocol, "INTERNAL", 8) == 0){
-            const char * target = this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0);
+            const char * target = this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0);
             if (this->verbose & 0x4){
                 LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL");
             }
@@ -401,7 +401,7 @@ class SessionManager {
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL test");
                 }
-                const char * user = this->ini->context_get_value(_AUTHID_TARGET_USER, NULL, 0);
+                const char * user = this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0);
                 size_t len_user = strlen(user);
                 strncpy(this->ini->globals.context.movie, user, sizeof(this->ini->globals.context.movie));
                 this->ini->globals.context.movie[sizeof(this->ini->globals.context.movie) - 1] = 0;
@@ -504,36 +504,36 @@ class SessionManager {
             LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS state");
         }
         {
-            if (this->ini->context_is_asked(_AUTHID_AUTH_USER)){
+            if (this->ini->context_is_asked(AUTHID_AUTH_USER)){
                 this->mod_state = MOD_STATE_DONE_LOGIN;
                 nextmod = INTERNAL_LOGIN;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (this->ini->context_is_asked(_AUTHID_PASSWORD)){
+            else if (this->ini->context_is_asked(AUTHID_PASSWORD)){
                 this->mod_state = MOD_STATE_DONE_LOGIN;
                 nextmod = INTERNAL_LOGIN;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (!this->ini->context_is_asked(_AUTHID_SELECTOR)
-                 &&   this->ini->context_get_bool(_AUTHID_SELECTOR)
-                 &&  !this->ini->context_is_asked(_AUTHID_TARGET_DEVICE)
-                 &&  !this->ini->context_is_asked(_AUTHID_TARGET_USER)){
+            else if (!this->ini->context_is_asked(AUTHID_SELECTOR)
+                 &&   this->ini->context_get_bool(AUTHID_SELECTOR)
+                 &&  !this->ini->context_is_asked(AUTHID_TARGET_DEVICE)
+                 &&  !this->ini->context_is_asked(AUTHID_TARGET_USER)){
                 this->mod_state = MOD_STATE_DONE_SELECTOR;
                 nextmod = INTERNAL_SELECTOR;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (this->ini->context_is_asked(_AUTHID_TARGET_DEVICE)
-                 ||  this->ini->context_is_asked(_AUTHID_TARGET_USER)){
+            else if (this->ini->context_is_asked(AUTHID_TARGET_DEVICE)
+                 ||  this->ini->context_is_asked(AUTHID_TARGET_USER)){
                     this->mod_state = MOD_STATE_DONE_LOGIN;
                     nextmod = INTERNAL_LOGIN;
                     return MCTX_STATUS_INTERNAL;
             }
-            else if (this->ini->context_is_asked(_AUTHID_DISPLAY_MESSAGE)){
+            else if (this->ini->context_is_asked(AUTHID_DISPLAY_MESSAGE)){
                 nextmod = INTERNAL_DIALOG_DISPLAY_MESSAGE;
                 this->mod_state = MOD_STATE_DONE_DISPLAY_MESSAGE;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (this->ini->context_is_asked(_AUTHID_ACCEPT_MESSAGE)){
+            else if (this->ini->context_is_asked(AUTHID_ACCEPT_MESSAGE)){
                 this->mod_state = MOD_STATE_DONE_VALID_MESSAGE;
                 nextmod = INTERNAL_DIALOG_VALID_MESSAGE;
                 return MCTX_STATUS_INTERNAL;
@@ -654,27 +654,27 @@ class SessionManager {
                 delete this->auth_event;
                 this->auth_event = new wait_obj(this->auth_trans_t->sck);
             }
-            this->out_item(stream, _STRAUTHID_PROXY_TYPE);
-            this->out_item(stream, _STRAUTHID_DISPLAY_MESSAGE);
-            this->out_item(stream, _STRAUTHID_ACCEPT_MESSAGE);
-            this->out_item(stream, _STRAUTHID_HOST);
-            this->out_item(stream, _STRAUTHID_AUTH_USER);
-            this->out_item(stream, _STRAUTHID_PASSWORD);
-            this->out_item(stream, _STRAUTHID_TARGET_USER);
-            this->out_item(stream, _STRAUTHID_TARGET_DEVICE);
-            this->out_item(stream, _STRAUTHID_TARGET_PROTOCOL);
-            this->out_item(stream, _STRAUTHID_SELECTOR);
-            this->out_item(stream, _STRAUTHID_SELECTOR_GROUP_FILTER);
-            this->out_item(stream, _STRAUTHID_SELECTOR_DEVICE_FILTER);
-            this->out_item(stream, _STRAUTHID_SELECTOR_LINES_PER_PAGE);
-            this->out_item(stream, _STRAUTHID_SELECTOR_CURRENT_PAGE);
-            this->out_item(stream, _STRAUTHID_TARGET_PASSWORD);
-            this->out_item(stream, _STRAUTHID_OPT_WIDTH);
-            this->out_item(stream, _STRAUTHID_OPT_HEIGHT);
-            this->out_item(stream, _STRAUTHID_OPT_BPP);
+            this->out_item(stream, STRAUTHID_PROXY_TYPE);
+            this->out_item(stream, STRAUTHID_DISPLAY_MESSAGE);
+            this->out_item(stream, STRAUTHID_ACCEPT_MESSAGE);
+            this->out_item(stream, STRAUTHID_HOST);
+            this->out_item(stream, STRAUTHID_AUTH_USER);
+            this->out_item(stream, STRAUTHID_PASSWORD);
+            this->out_item(stream, STRAUTHID_TARGET_USER);
+            this->out_item(stream, STRAUTHID_TARGET_DEVICE);
+            this->out_item(stream, STRAUTHID_TARGET_PROTOCOL);
+            this->out_item(stream, STRAUTHID_SELECTOR);
+            this->out_item(stream, STRAUTHID_SELECTOR_GROUP_FILTER);
+            this->out_item(stream, STRAUTHID_SELECTOR_DEVICE_FILTER);
+            this->out_item(stream, STRAUTHID_SELECTOR_LINES_PER_PAGE);
+            this->out_item(stream, STRAUTHID_SELECTOR_CURRENT_PAGE);
+            this->out_item(stream, STRAUTHID_TARGET_PASSWORD);
+            this->out_item(stream, STRAUTHID_OPT_WIDTH);
+            this->out_item(stream, STRAUTHID_OPT_HEIGHT);
+            this->out_item(stream, STRAUTHID_OPT_BPP);
             // send trace seal if and only if there is one
-            if (strlen(this->ini->context_get_value(_AUTHID_TRACE_SEAL, NULL, 0))) {
-                this->out_item(stream, _STRAUTHID_TRACE_SEAL);
+            if (strlen(this->ini->context_get_value(AUTHID_TRACE_SEAL, NULL, 0))) {
+                this->out_item(stream, STRAUTHID_TRACE_SEAL);
             }
             stream.mark_end();
 

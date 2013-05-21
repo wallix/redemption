@@ -125,7 +125,7 @@ struct Session {
         SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->globals.debug.front);
 
         try {
-            this->ini->context_set_value(_AUTHID_HOST, ip_source);
+            this->ini->context_set_value(AUTHID_HOST, ip_source);
 
             this->sesman = new SessionManager( this->ini
                                              , this->ini->globals.keepalive_grace_delay
@@ -779,7 +779,7 @@ struct Session {
                     this->mod = this->no_mod;
                 }
 
-                int client_sck = ip_connect(this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0),
+                int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
                                             this->ini->globals.context.target_port,
                                             4, 1000,
                                             this->ini->globals.debug.mod_xup);
@@ -792,7 +792,7 @@ struct Session {
                 SocketTransport * t = new SocketTransport(
                       name
                     , client_sck
-                    , this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0)
+                    , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
                     , this->ini->globals.context.target_port
                     , this->ini->globals.debug.mod_xup);
                 this->mod_transport = t;
@@ -838,7 +838,7 @@ struct Session {
                 }
                 static const char * name = "RDP Target";
 
-                int client_sck = ip_connect(this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0),
+                int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
                                             this->ini->globals.context.target_port,
                                             3, 1000,
                                             this->ini->globals.debug.mod_rdp);
@@ -852,7 +852,7 @@ struct Session {
                 SocketTransport * t = new SocketTransport(
                       name
                     , client_sck
-                    , this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0)
+                    , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
                     , this->ini->globals.context.target_port
                     , this->ini->globals.debug.mod_rdp
                     , &this->ini->globals.context.auth_error_message
@@ -861,8 +861,8 @@ struct Session {
 
                 this->ini->globals.context.auth_error_message = "failed authentification on remote RDP host";
                 this->mod = new mod_rdp(t,
-                                    this->ini->context_get_value(_AUTHID_TARGET_USER, NULL, 0),
-                                    this->ini->context_get_value(_AUTHID_TARGET_PASSWORD, NULL, 0),
+                                    this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0),
+                                    this->ini->context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0),
                                     "0.0.0.0", // client ip is silenced
                                     *this->front,
                                     hostname,
@@ -905,7 +905,7 @@ struct Session {
                 static const char * name = "VNC Target";
 
 
-                int client_sck = ip_connect(this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0),
+                int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
                                             this->ini->globals.context.target_port,
                                             3, 1000,
                                             this->ini->globals.debug.mod_vnc);
@@ -918,7 +918,7 @@ struct Session {
                 SocketTransport * t = new SocketTransport(
                       name
                     , client_sck
-                    , this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0)
+                    , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
                     , this->ini->globals.context.target_port
                     , this->ini->globals.debug.mod_vnc);
                 this->mod_transport = t;
@@ -927,8 +927,8 @@ struct Session {
 
                 this->mod = new mod_vnc(
                       t
-                    , this->ini->context_get_value(_AUTHID_TARGET_USER, NULL, 0)
-                    , this->ini->context_get_value(_AUTHID_TARGET_PASSWORD, NULL, 0)
+                    , this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0)
+                    , this->ini->context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
                     , *this->front
                     , this->front->client_info.width
                     , this->front->client_info.height

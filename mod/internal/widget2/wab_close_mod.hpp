@@ -54,8 +54,8 @@ public:
     : InternalMod(front, width, height)
     , screen(this, width, height)
     , window_close(this, 0, 0, &this->screen, this, "End of connection", 0,
-                   ini.context_is_asked(_AUTHID_AUTH_USER) ? NULL : ini.globals.auth_user,
-                   (ini.context_is_asked(_AUTHID_TARGET_USER) || ini.context_is_asked(_AUTHID_TARGET_DEVICE)) ?
+                   ini.context_is_asked(AUTHID_AUTH_USER) ? NULL : ini.globals.auth_user,
+                   (ini.context_is_asked(AUTHID_TARGET_USER) || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
                        NULL : temporary_text(ini).text,
                    BLACK, GREY
     )

@@ -34,7 +34,7 @@ struct cli_mod : public transitory_mod {
         ini.parse_username(client_info.username);
 
         if (client_info.password[0]) {
-            ini.context_set_value(_AUTHID_PASSWORD, client_info.password);
+            ini.context_set_value(AUTHID_PASSWORD, client_info.password);
         }
     }
 

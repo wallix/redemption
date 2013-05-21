@@ -106,69 +106,69 @@ typedef enum{
 
 /*
 // Translation text
-#define _STRAUTHID_TRANS_BUTTON_OK         "trans_ok"
-#define _STRAUTHID_TRANS_BUTTON_CANCEL     "trans_cancel"
-#define _STRAUTHID_TRANS_BUTTON_HELP       "trans_help"
-#define _STRAUTHID_TRANS_BUTTON_CLOSE      "trans_close"
-#define _STRAUTHID_TRANS_BUTTON_REFUSED    "trans_refused"
-#define _STRAUTHID_TRANS_LOGIN             "trans_login"
-#define _STRAUTHID_TRANS_USERNAME          "trans_username"
-#define _STRAUTHID_TRANS_PASSWORD          "trans_password"
-#define _STRAUTHID_TRANS_TARGET            "trans_target"
-#define _STRAUTHID_TRANS_DIAGNOSTIC        "trans_diagnostic"
-#define _STRAUTHID_TRANS_CONNECTION_CLOSED "trans_connection_closed"
-#define _STRAUTHID_TRANS_HELP_MESSAGE      "trans_help_message"
+#define STRAUTHID_TRANS_BUTTON_OK         "trans_ok"
+#define STRAUTHID_TRANS_BUTTON_CANCEL     "trans_cancel"
+#define STRAUTHID_TRANS_BUTTON_HELP       "trans_help"
+#define STRAUTHID_TRANS_BUTTON_CLOSE      "trans_close"
+#define STRAUTHID_TRANS_BUTTON_REFUSED    "trans_refused"
+#define STRAUTHID_TRANS_LOGIN             "trans_login"
+#define STRAUTHID_TRANS_USERNAME          "trans_username"
+#define STRAUTHID_TRANS_PASSWORD          "trans_password"
+#define STRAUTHID_TRANS_TARGET            "trans_target"
+#define STRAUTHID_TRANS_DIAGNOSTIC        "trans_diagnostic"
+#define STRAUTHID_TRANS_CONNECTION_CLOSED "trans_connection_closed"
+#define STRAUTHID_TRANS_HELP_MESSAGE      "trans_help_message"
 // Options
-#define _STRAUTHID_OPT_CLIPBOARD           "clipboard"
-#define _STRAUTHID_OPT_DEVICEREDIRECTION   "device_redirection"
-#define _STRAUTHID_OPT_FILE_ENCRYPTION     "file_encryption"
+#define STRAUTHID_OPT_CLIPBOARD           "clipboard"
+#define STRAUTHID_OPT_DEVICEREDIRECTION   "device_redirection"
+#define STRAUTHID_OPT_FILE_ENCRYPTION     "file_encryption"
 // Video capture
-#define _STRAUTHID_OPT_CODEC_ID             "codec_id"
-#define _STRAUTHID_OPT_MOVIE                "is_rec"
-#define _STRAUTHID_OPT_MOVIE_PATH           "rec_path"
-#define _STRAUTHID_VIDEO_QUALITY            "video_quality"
+#define STRAUTHID_OPT_CODEC_ID             "codec_id"
+#define STRAUTHID_OPT_MOVIE                "is_rec"
+#define STRAUTHID_OPT_MOVIE_PATH           "rec_path"
+#define STRAUTHID_VIDEO_QUALITY            "video_quality"
 // Alternate shell
-#define _STRAUTHID_ALTERNATE_SHELL          "alternate_shell"
-#define _STRAUTHID_SHELL_WORKING_DIRECTORY  "shell_working_directory"
+#define STRAUTHID_ALTERNATE_SHELL          "alternate_shell"
+#define STRAUTHID_SHELL_WORKING_DIRECTORY  "shell_working_directory"
 // Context
-#define _STRAUTHID_OPT_BITRATE              "bitrate"
-#define _STRAUTHID_OPT_FRAMERATE            "framerate"
-#define _STRAUTHID_OPT_QSCALE               "qscale"
-#define _STRAUTHID_OPT_WIDTH                "width"
-#define _STRAUTHID_OPT_HEIGHT               "height"
-#define _STRAUTHID_OPT_BPP                  "bpp"
-#define _STRAUTHID_AUTH_ERROR_MESSAGE       "error_message"
-#define _STRAUTHID_SELECTOR                 "selector"
-#define _STRAUTHID_SELECTOR_CURRENT_PAGE    "selector_current_page"
-#define _STRAUTHID_SELECTOR_DEVICE_FILTER   "selector_device_filter"
-#define _STRAUTHID_SELECTOR_GROUP_FILTER    "selector_group_filter"
-#define _STRAUTHID_SELECTOR_LINES_PER_PAGE  "selector_lines_per_page"
-#define _STRAUTHID_SELECTOR_NUMBER_OF_PAGES "selector_number_of_pages"
-#define _STRAUTHID_TARGET_USER              "target_login"
-#define _STRAUTHID_TARGET_PASSWORD          "target_password"
-#define _STRAUTHID_TARGET_DEVICE            "target_device"
-#define _STRAUTHID_TARGET_PORT              "target_port"
-#define _STRAUTHID_TARGET_PROTOCOL          "proto_dest"
-#define _STRAUTHID_AUTH_USER                "login"
-#define _STRAUTHID_HOST                     "ip_client"
-#define _STRAUTHID_PASSWORD                 "password"
+#define STRAUTHID_OPT_BITRATE              "bitrate"
+#define STRAUTHID_OPT_FRAMERATE            "framerate"
+#define STRAUTHID_OPT_QSCALE               "qscale"
+#define STRAUTHID_OPT_WIDTH                "width"
+#define STRAUTHID_OPT_HEIGHT               "height"
+#define STRAUTHID_OPT_BPP                  "bpp"
+#define STRAUTHID_AUTH_ERROR_MESSAGE       "error_message"
+#define STRAUTHID_SELECTOR                 "selector"
+#define STRAUTHID_SELECTOR_CURRENT_PAGE    "selector_current_page"
+#define STRAUTHID_SELECTOR_DEVICE_FILTER   "selector_device_filter"
+#define STRAUTHID_SELECTOR_GROUP_FILTER    "selector_group_filter"
+#define STRAUTHID_SELECTOR_LINES_PER_PAGE  "selector_lines_per_page"
+#define STRAUTHID_SELECTOR_NUMBER_OF_PAGES "selector_number_of_pages"
+#define STRAUTHID_TARGET_USER              "target_login"
+#define STRAUTHID_TARGET_PASSWORD          "target_password"
+#define STRAUTHID_TARGET_DEVICE            "target_device"
+#define STRAUTHID_TARGET_PORT              "target_port"
+#define STRAUTHID_TARGET_PROTOCOL          "proto_dest"
+#define STRAUTHID_AUTH_USER                "login"
+#define STRAUTHID_HOST                     "ip_client"
+#define STRAUTHID_PASSWORD                 "password"
 TODO("This is not a translation but auth_channel answer, change key name in sesman")
-#define _STRAUTHID_AUTHCHANNEL_ANSWER       "trans_auth_channel"
-#define _STRAUTHID_AUTHCHANNEL_RESULT       "auth_channel_result"
-#define _STRAUTHID_AUTHCHANNEL_TARGET       "auth_channel_target"
-#define _STRAUTHID_MESSAGE                  "message"
-#define _STRAUTHID_ACCEPT_MESSAGE           "accept_message"
-#define _STRAUTHID_DISPLAY_MESSAGE          "display_message"
-#define _STRAUTHID_REJECTED                 "rejected"
-#define _STRAUTHID_AUTHENTICATED            "authenticated"
-#define _STRAUTHID_KEEPALIVE                "keepalive"
-#define _STRAUTHID_PROXY_TYPE               "proxy_type"
-#define _STRAUTHID_TRACE_SEAL               "trace_seal"
-#define _STRAUTHID_SESSION_ID               "session_id"
-#define _STRAUTHID_END_DATE_CNX             "timeclose"
-#define _STRAUTHID_END_TIME                 "end_time"
-#define _STRAUTHID_MODE_CONSOLE             "mode_console"
-#define _STRAUTHID_TIMEZONE                 "timezone"
+#define STRAUTHID_AUTHCHANNEL_ANSWER       "trans_auth_channel"
+#define STRAUTHID_AUTHCHANNEL_RESULT       "auth_channel_result"
+#define STRAUTHID_AUTHCHANNEL_TARGET       "auth_channel_target"
+#define STRAUTHID_MESSAGE                  "message"
+#define STRAUTHID_ACCEPT_MESSAGE           "accept_message"
+#define STRAUTHID_DISPLAY_MESSAGE          "display_message"
+#define STRAUTHID_REJECTED                 "rejected"
+#define STRAUTHID_AUTHENTICATED            "authenticated"
+#define STRAUTHID_KEEPALIVE                "keepalive"
+#define STRAUTHID_PROXY_TYPE               "proxy_type"
+#define STRAUTHID_TRACE_SEAL               "trace_seal"
+#define STRAUTHID_SESSION_ID               "session_id"
+#define STRAUTHID_END_DATE_CNX             "timeclose"
+#define STRAUTHID_END_TIME                 "end_time"
+#define STRAUTHID_MODE_CONSOLE             "mode_console"
+#define STRAUTHID_TIMEZONE                 "timezone"
 */
 
 /*
@@ -229,48 +229,48 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     {STRAUTHID_OPT_FRAMERATE,            TYPE_INTEGER, "!5"                                   },
     {STRAUTHID_OPT_QSCALE,               TYPE_INTEGER, "!15"                                  },
 */
-    {_STRAUTHID_OPT_BPP,                  TYPE_INTEGER, "!24"                                  },
-    {_STRAUTHID_OPT_HEIGHT,               TYPE_INTEGER, "!600"                                 },
-    {_STRAUTHID_OPT_WIDTH,                TYPE_INTEGER, "!800"                                 },
+    {STRAUTHID_OPT_BPP,                  TYPE_INTEGER, "!24"                                  },
+    {STRAUTHID_OPT_HEIGHT,               TYPE_INTEGER, "!600"                                 },
+    {STRAUTHID_OPT_WIDTH,                TYPE_INTEGER, "!800"                                 },
 /*
-    {_STRAUTHID_AUTH_ERROR_MESSAGE,       TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_AUTH_ERROR_MESSAGE,       TYPE_TEXT,    "!"                                    },
 */
-    {_STRAUTHID_SELECTOR,                 TYPE_BOOLEAN, "!False"                               },
-    {_STRAUTHID_SELECTOR_CURRENT_PAGE,    TYPE_TEXT,    "!1"                                   },
-    {_STRAUTHID_SELECTOR_DEVICE_FILTER,   TYPE_TEXT,    "!"                                    },
-    {_STRAUTHID_SELECTOR_GROUP_FILTER,    TYPE_TEXT,    "!"                                    },
-    {_STRAUTHID_SELECTOR_LINES_PER_PAGE,  TYPE_TEXT,    "!20"                                  },
+    {STRAUTHID_SELECTOR,                 TYPE_BOOLEAN, "!False"                               },
+    {STRAUTHID_SELECTOR_CURRENT_PAGE,    TYPE_TEXT,    "!1"                                   },
+    {STRAUTHID_SELECTOR_DEVICE_FILTER,   TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_SELECTOR_GROUP_FILTER,    TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_SELECTOR_LINES_PER_PAGE,  TYPE_TEXT,    "!20"                                  },
 /*
     {STRAUTHID_SELECTOR_NUMBER_OF_PAGES, TYPE_TEXT,    "!"                                    }, //
 */
-    {_STRAUTHID_TARGET_DEVICE,            TYPE_TEXT,    "!"                                    },
-    {_STRAUTHID_TARGET_PASSWORD,          TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_TARGET_DEVICE,            TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_TARGET_PASSWORD,          TYPE_TEXT,    "!"                                    },
 /*
     {STRAUTHID_TARGET_PORT,              TYPE_INTEGER, "!3389"                                }, //
 */
-    {_STRAUTHID_TARGET_PROTOCOL,          TYPE_TEXT,    "!RDP"                                 },
-    {_STRAUTHID_TARGET_USER,              TYPE_TEXT,    "!"                                    },
-    {_STRAUTHID_AUTH_USER,                TYPE_TEXT,    "!"                                    },
-    {_STRAUTHID_HOST,                     TYPE_TEXT,    "!"                                    },
-    {_STRAUTHID_PASSWORD,                 TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_TARGET_PROTOCOL,          TYPE_TEXT,    "!RDP"                                 },
+    {STRAUTHID_TARGET_USER,              TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_AUTH_USER,                TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_HOST,                     TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_PASSWORD,                 TYPE_TEXT,    "!"                                    },
 /*
     {STRAUTHID_AUTHCHANNEL_ANSWER,       TYPE_TEXT,    "!"                                    }, //
 */
-    {_STRAUTHID_AUTHCHANNEL_RESULT,       TYPE_TEXT,    "!"                                    },
-    {_STRAUTHID_AUTHCHANNEL_TARGET,       TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_AUTHCHANNEL_RESULT,       TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_AUTHCHANNEL_TARGET,       TYPE_TEXT,    "!"                                    },
 /*
     {STRAUTHID_MESSAGE,                  TYPE_TEXT,    "!"                                    }, //
 */
-    {_STRAUTHID_ACCEPT_MESSAGE,           TYPE_TEXT,    "!"                                    },
-    {_STRAUTHID_DISPLAY_MESSAGE,          TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_ACCEPT_MESSAGE,           TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_DISPLAY_MESSAGE,          TYPE_TEXT,    "!"                                    },
 /*
     {STRAUTHID_REJECTED,                 TYPE_TEXT,    "!Connection refused by authentifier." }, //
     {STRAUTHID_AUTHENTICATED,            TYPE_BOOLEAN, "!False"                               }, //
 */
-    {_STRAUTHID_KEEPALIVE,                TYPE_BOOLEAN, "ASK"                                  },
-    {_STRAUTHID_PROXY_TYPE,               TYPE_TEXT,    "!RDP"                                 },
+    {STRAUTHID_KEEPALIVE,                TYPE_BOOLEAN, "ASK"                                  },
+    {STRAUTHID_PROXY_TYPE,               TYPE_TEXT,    "!RDP"                                 },
     // Encryption
-    {_STRAUTHID_TRACE_SEAL,               TYPE_TEXT,    "!"                                    },
+    {STRAUTHID_TRACE_SEAL,               TYPE_TEXT,    "!"                                    },
 /*
     {STRAUTHID_SESSION_ID,               TYPE_TEXT,    "!"                                    }, //
     {STRAUTHID_END_DATE_CNX,             TYPE_INTEGER, "!0"                                   }, //
@@ -311,8 +311,8 @@ struct ModContext/* : public Dico*/ {
         target_protocol[0] = 0;
         auth_user[0] = 0;
 
-//        this->ask(_STRAUTHID_SELECTOR);
-        ini.context_ask(_STRAUTHID_SELECTOR);
+//        this->ask(STRAUTHID_SELECTOR);
+        ini.context_ask(STRAUTHID_SELECTOR);
         LOG(LOG_INFO, "asking for selector");
 
         if (username[0]){
@@ -407,36 +407,36 @@ struct ModContext/* : public Dico*/ {
 
         if (*target_user == 0)
         {
-//            this->ask(_STRAUTHID_TARGET_USER);
-            ini.context_ask(_AUTHID_TARGET_USER);
+//            this->ask(STRAUTHID_TARGET_USER);
+            ini.context_ask(AUTHID_TARGET_USER);
         }
         else {
 //            this->cpy(STRAUTHID_TARGET_USER, target_user);
-            ini.context_set_value(_AUTHID_TARGET_USER, target_user);
+            ini.context_set_value(AUTHID_TARGET_USER, target_user);
         }
         if (*target_device == 0) {
-//            this->ask(_STRAUTHID_TARGET_DEVICE);
-            ini.context_ask(_AUTHID_TARGET_DEVICE);
+//            this->ask(STRAUTHID_TARGET_DEVICE);
+            ini.context_ask(AUTHID_TARGET_DEVICE);
         }
         else {
 //            this->cpy(STRAUTHID_TARGET_DEVICE, target_device);
-            ini.context_set_value(_AUTHID_TARGET_DEVICE, target_device);
+            ini.context_set_value(AUTHID_TARGET_DEVICE, target_device);
         }
         if (*target_protocol == 0) {
-//            this->ask(_STRAUTHID_TARGET_PROTOCOL);
-            ini.context_ask(_AUTHID_TARGET_PROTOCOL);
+//            this->ask(STRAUTHID_TARGET_PROTOCOL);
+            ini.context_ask(AUTHID_TARGET_PROTOCOL);
         }
         else {
 //            this->cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
-            ini.context_set_value(_AUTHID_TARGET_PROTOCOL, target_protocol);
+            ini.context_set_value(AUTHID_TARGET_PROTOCOL, target_protocol);
         }
         if (*auth_user == 0) {
-//            this->ask(_STRAUTHID_AUTH_USER);
-            ini.context_ask(_STRAUTHID_AUTH_USER);
+//            this->ask(STRAUTHID_AUTH_USER);
+            ini.context_ask(STRAUTHID_AUTH_USER);
         }
         else {
 //            this->cpy(STRAUTHID_AUTH_USER, auth_user);
-            ini.context_set_value(_AUTHID_AUTH_USER, auth_user);
+            ini.context_set_value(AUTHID_AUTH_USER, auth_user);
         }
     }
 */

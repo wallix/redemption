@@ -21,7 +21,6 @@
 #ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_INTERNAL_MOD_HPP
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_INTERNAL_MOD_HPP
 
-#include "modcontext.hpp"
 #include "../mod/mod_api.hpp"
 
 struct InternalMod : public mod_api {

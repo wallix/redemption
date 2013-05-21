@@ -254,7 +254,7 @@ struct dialog_mod : public internal_mod {
                     uint32_t c = keymap->get_char();
                     if (c == ' '){
                         this->ini.context_set_value(
-                            (this->refuse_flag ? _AUTHID_ACCEPT_MESSAGE : _AUTHID_DISPLAY_MESSAGE),
+                            (this->refuse_flag ? AUTHID_ACCEPT_MESSAGE : AUTHID_DISPLAY_MESSAGE),
                             "True");
                         this->event.set();
                         this->signal = BACK_EVENT_NEXT;
@@ -264,7 +264,7 @@ struct dialog_mod : public internal_mod {
                 case Keymap2::KEVENT_ENTER:
                     keymap->get_kevent();
                     this->ini.context_set_value(
-                        (this->refuse_flag ? _AUTHID_ACCEPT_MESSAGE : _AUTHID_DISPLAY_MESSAGE),
+                        (this->refuse_flag ? AUTHID_ACCEPT_MESSAGE : AUTHID_DISPLAY_MESSAGE),
                         "True");
                     this->event.set();
                     this->signal = BACK_EVENT_NEXT;

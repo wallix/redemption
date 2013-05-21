@@ -246,19 +246,19 @@ struct window_login : public window
                     SHARE_PATH "/" LOGIN_LOGO24, 24);
         }
 
-        if (this->ini->context_is_asked(_AUTHID_TARGET_USER)
-        ||  this->ini->context_is_asked(_AUTHID_TARGET_DEVICE)){
-            if (this->ini->context_is_asked(_AUTHID_AUTH_USER)){
+        if (this->ini->context_is_asked(AUTHID_TARGET_USER)
+        ||  this->ini->context_is_asked(AUTHID_TARGET_DEVICE)){
+            if (this->ini->context_is_asked(AUTHID_AUTH_USER)){
                 this->ini->account.username[0] = 0;
             }
             else {
                 strncpy(this->ini->account.username,
-                    this->ini->context_get_value(_AUTHID_AUTH_USER, NULL, 0),
+                    this->ini->context_get_value(AUTHID_AUTH_USER, NULL, 0),
                     sizeof(this->ini->account.username));
                 this->ini->account.username[sizeof(this->ini->account.username) - 1] = 0;
             }
         }
-        else if (this->ini->context_is_asked(_AUTHID_AUTH_USER)) {
+        else if (this->ini->context_is_asked(AUTHID_AUTH_USER)) {
             this->ini->account.username[0] = 0;
         }
         else {
@@ -266,12 +266,12 @@ struct window_login : public window
                  "method used below il likely to show @: if target fields are empty")
             char buffer[256];
             snprintf( buffer, 256, "%s@%s:%s%s%s"
-                    , this->ini->context_get_value(_AUTHID_TARGET_USER, NULL, 0)
-                    , this->ini->context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0)
-                    , (this->ini->context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ?
-                           this->ini->context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0) : "")
-                    , (this->ini->context_get_value(_AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ? ":" : "")
-                    , this->ini->context_get_value(_AUTHID_AUTH_USER, NULL, 0)
+                    , this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0)
+                    , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
+                    , (this->ini->context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ?
+                           this->ini->context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0) : "")
+                    , (this->ini->context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ? ":" : "")
+                    , this->ini->context_get_value(AUTHID_AUTH_USER, NULL, 0)
                     );
             strcpy(this->ini->account.username, buffer);
         }
@@ -422,7 +422,7 @@ struct window_login : public window
                 this->ini->parse_username(edit->buffer);
             }
             else if (0 == strcmp(label->caption1, this->ini->globals.translation.password)){
-                this->ini->context_set_value(_AUTHID_PASSWORD, edit->buffer);
+                this->ini->context_set_value(AUTHID_PASSWORD, edit->buffer);
             }
             i += 2;
         }
@@ -497,13 +497,13 @@ struct window_dialog : public window
             switch (id) {
             case 2: /* cancel button -> Esc */
                 this->ini->context_set_value(
-                    (this->esc_button ? _AUTHID_ACCEPT_MESSAGE : _AUTHID_DISPLAY_MESSAGE),
+                    (this->esc_button ? AUTHID_ACCEPT_MESSAGE : AUTHID_DISPLAY_MESSAGE),
                     "False");
                 this->mod->mod_event(BACK_EVENT_NEXT);
             break;
             case 3: /* ok button -> Enter */
                 this->ini->context_set_value(
-                    (this->esc_button ? _AUTHID_ACCEPT_MESSAGE : _AUTHID_DISPLAY_MESSAGE),
+                    (this->esc_button ? AUTHID_ACCEPT_MESSAGE : AUTHID_DISPLAY_MESSAGE),
                     "True");
                 this->mod->mod_event(BACK_EVENT_NEXT);
             break;
@@ -548,20 +548,20 @@ struct wab_close : public window
 
         b = new widget_label(this->mod,
             Rect(10 + ((this->rect.cx >= 400) ?  230 : 70), 60 + 25 * count, 350, 20),
-            this, ini.context_is_asked(_STRAUTHID_AUTH_USER)? "" : ini.context_get_value(_AUTHID_AUTH_USER, NULL, 0));
+            this, ini.context_is_asked(AUTHID_AUTH_USER)? "" : ini.context_get_value(AUTHID_AUTH_USER, NULL, 0));
 
         b->id = 100 + 2 * count;
         count ++;
 
         char target[255];
-        if (ini.context_is_asked(_AUTHID_TARGET_USER)
-        ||  ini.context_is_asked(_AUTHID_TARGET_DEVICE)){
+        if (ini.context_is_asked(AUTHID_TARGET_USER)
+        ||  ini.context_is_asked(AUTHID_TARGET_DEVICE)){
             target[0] = 0;
         }
         else {
             snprintf(target, 255, "%s@%s",
-                ini.context_get_value(_AUTHID_TARGET_USER, NULL, 0),
-                ini.context_get_value(_AUTHID_TARGET_DEVICE, NULL, 0));
+                ini.context_get_value(AUTHID_TARGET_USER, NULL, 0),
+                ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0));
         }
 
         b = new widget_label(this->mod,

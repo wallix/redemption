@@ -126,251 +126,251 @@ typedef enum
     AUTHID_UNKNOWN = 0,
 
     // Translation text
-    _AUTHID_TRANS_BUTTON_OK,
-    _AUTHID_TRANS_BUTTON_CANCEL,
-    _AUTHID_TRANS_BUTTON_HELP,
-    _AUTHID_TRANS_BUTTON_CLOSE,
-    _AUTHID_TRANS_BUTTON_REFUSED,
-    _AUTHID_TRANS_LOGIN,
-    _AUTHID_TRANS_USERNAME,
-    _AUTHID_TRANS_PASSWORD,
-    _AUTHID_TRANS_TARGET,
-    _AUTHID_TRANS_DIAGNOSTIC,
-    _AUTHID_TRANS_CONNECTION_CLOSED,
-    _AUTHID_TRANS_HELP_MESSAGE,
+    AUTHID_TRANS_BUTTON_OK,
+    AUTHID_TRANS_BUTTON_CANCEL,
+    AUTHID_TRANS_BUTTON_HELP,
+    AUTHID_TRANS_BUTTON_CLOSE,
+    AUTHID_TRANS_BUTTON_REFUSED,
+    AUTHID_TRANS_LOGIN,
+    AUTHID_TRANS_USERNAME,
+    AUTHID_TRANS_PASSWORD,
+    AUTHID_TRANS_TARGET,
+    AUTHID_TRANS_DIAGNOSTIC,
+    AUTHID_TRANS_CONNECTION_CLOSED,
+    AUTHID_TRANS_HELP_MESSAGE,
 
     // Options
-    _AUTHID_OPT_CLIPBOARD,         // clipboard
-    _AUTHID_OPT_DEVICEREDIRECTION, // device_redirection
-    _AUTHID_OPT_FILE_ENCRYPTION,   // file encryption
+    AUTHID_OPT_CLIPBOARD,           // clipboard
+    AUTHID_OPT_DEVICEREDIRECTION,   // device_redirection
+    AUTHID_OPT_FILE_ENCRYPTION,     // file encryption
 
     // Video capture
-    _AUTHID_OPT_CODEC_ID,    // CODEC_ID for video encoding
-    _AUTHID_OPT_MOVIE,       // is_rec
-    _AUTHID_OPT_MOVIE_PATH,  // rec_path
-    _AUTHID_VIDEO_QUALITY,
+    AUTHID_OPT_CODEC_ID,    // CODEC_ID for video encoding
+    AUTHID_OPT_MOVIE,       // is_rec
+    AUTHID_OPT_MOVIE_PATH,  // rec_path
+    AUTHID_VIDEO_QUALITY,
 
     // Alternate shell
-    _AUTHID_ALTERNATE_SHELL,
-    _AUTHID_SHELL_WORKING_DIRECTORY,
+    AUTHID_ALTERNATE_SHELL,
+    AUTHID_SHELL_WORKING_DIRECTORY,
 
     // Context
-    _AUTHID_OPT_BITRATE,         // Bit rate for video encoding
-    _AUTHID_OPT_FRAMERATE,       // Frame rate for video encoding
-    _AUTHID_OPT_QSCALE,          // QScale parameter for vdeo encoding
+    AUTHID_OPT_BITRATE,     // Bit rate for video encoding
+    AUTHID_OPT_FRAMERATE,   // Frame rate for video encoding
+    AUTHID_OPT_QSCALE,      // QScale parameter for vdeo encoding
 
-    _AUTHID_OPT_BPP,            // bits per planes (number of colors)
-    _AUTHID_OPT_HEIGHT,         // client height
-    _AUTHID_OPT_WIDTH,          // client width
+    AUTHID_OPT_BPP,         // bits per planes (number of colors)
+    AUTHID_OPT_HEIGHT,      // client height
+    AUTHID_OPT_WIDTH,       // client width
 
-    _AUTHID_AUTH_ERROR_MESSAGE,
+    AUTHID_AUTH_ERROR_MESSAGE,
 
-    _AUTHID_SELECTOR,
-    _AUTHID_SELECTOR_CURRENT_PAGE,      // current page
-    _AUTHID_SELECTOR_DEVICE_FILTER,     // device filter text
-    _AUTHID_SELECTOR_GROUP_FILTER,      // group filter text
-    _AUTHID_SELECTOR_LINES_PER_PAGE,    // number of lines per page
-    _AUTHID_SELECTOR_NUMBER_OF_PAGES,   // number of pages
+    AUTHID_SELECTOR,
+    AUTHID_SELECTOR_CURRENT_PAGE,       // current page
+    AUTHID_SELECTOR_DEVICE_FILTER,      // device filter text
+    AUTHID_SELECTOR_GROUP_FILTER,       // group filter text
+    AUTHID_SELECTOR_LINES_PER_PAGE,     // number of lines per page
+    AUTHID_SELECTOR_NUMBER_OF_PAGES,    // number of pages
 
-    _AUTHID_TARGET_DEVICE,      // target_device
-    _AUTHID_TARGET_PASSWORD,    // target_password
-    _AUTHID_TARGET_PORT,        // target_port
-    _AUTHID_TARGET_PROTOCOL,    // proto_dest
-    _AUTHID_TARGET_USER,        // target_login
+    AUTHID_TARGET_DEVICE,   // target_device
+    AUTHID_TARGET_PASSWORD, // target_password
+    AUTHID_TARGET_PORT,     // target_port
+    AUTHID_TARGET_PROTOCOL, // proto_dest
+    AUTHID_TARGET_USER,     // target_login
 
-    _AUTHID_AUTH_USER,          // login
-    _AUTHID_HOST,               // ip_client
-    _AUTHID_PASSWORD,           // password
+    AUTHID_AUTH_USER,       // login
+    AUTHID_HOST,            // ip_client
+    AUTHID_PASSWORD,        // password
 
-    _AUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
-    _AUTHID_AUTHCHANNEL_RESULT, // WabLauncher session result
-    _AUTHID_AUTHCHANNEL_TARGET, // WabLauncher target request
+    AUTHID_AUTHCHANNEL_ANSWER,  // WabLauncher target answer
+    AUTHID_AUTHCHANNEL_RESULT,  // WabLauncher session result
+    AUTHID_AUTHCHANNEL_TARGET,  // WabLauncher target request
 
-    _AUTHID_MESSAGE,    // warning_message
+    AUTHID_MESSAGE, // warning_message
 
-    _AUTHID_ACCEPT_MESSAGE,     // display a dialog to valid a message
-    _AUTHID_DISPLAY_MESSAGE,    // display a dialog box with a message
+    AUTHID_ACCEPT_MESSAGE,  // display a dialog to valid a message
+    AUTHID_DISPLAY_MESSAGE, // display a dialog box with a message
 
-    _AUTHID_AUTHENTICATED,
-    _AUTHID_REJECTED,       // rejected
+    AUTHID_AUTHENTICATED,
+    AUTHID_REJECTED,        // rejected
 
-    _AUTHID_KEEPALIVE,
-    _AUTHID_PROXY_TYPE,
+    AUTHID_KEEPALIVE,
+    AUTHID_PROXY_TYPE,
 
-    _AUTHID_TRACE_SEAL,     // after closing trace file trace is sealed using a signature hash
+    AUTHID_TRACE_SEAL,      // after closing trace file trace is sealed using a signature hash
 
-    _AUTHID_SESSION_ID,     // session_id
+    AUTHID_SESSION_ID,      // session_id
 
-    _AUTHID_END_DATE_CNX,   // timeclose
-    _AUTHID_END_TIME,       // end time as text
+    AUTHID_END_DATE_CNX,    // timeclose
+    AUTHID_END_TIME,        // end time as text
 
-    _AUTHID_MODE_CONSOLE,
-    _AUTHID_TIMEZONE,
+    AUTHID_MODE_CONSOLE,
+    AUTHID_TIMEZONE,
 
     MAX_AUTHID
 } authid_t;
 
 // Translation text
-#define _STRAUTHID_TRANS_BUTTON_OK         "trans_ok"
-#define _STRAUTHID_TRANS_BUTTON_CANCEL     "trans_cancel"
-#define _STRAUTHID_TRANS_BUTTON_HELP       "trans_help"
-#define _STRAUTHID_TRANS_BUTTON_CLOSE      "trans_close"
-#define _STRAUTHID_TRANS_BUTTON_REFUSED    "trans_refused"
-#define _STRAUTHID_TRANS_LOGIN             "trans_login"
-#define _STRAUTHID_TRANS_USERNAME          "trans_username"
-#define _STRAUTHID_TRANS_PASSWORD          "trans_password"
-#define _STRAUTHID_TRANS_TARGET            "trans_target"
-#define _STRAUTHID_TRANS_DIAGNOSTIC        "trans_diagnostic"
-#define _STRAUTHID_TRANS_CONNECTION_CLOSED "trans_connection_closed"
-#define _STRAUTHID_TRANS_HELP_MESSAGE      "trans_help_message"
+#define STRAUTHID_TRANS_BUTTON_OK         "trans_ok"
+#define STRAUTHID_TRANS_BUTTON_CANCEL     "trans_cancel"
+#define STRAUTHID_TRANS_BUTTON_HELP       "trans_help"
+#define STRAUTHID_TRANS_BUTTON_CLOSE      "trans_close"
+#define STRAUTHID_TRANS_BUTTON_REFUSED    "trans_refused"
+#define STRAUTHID_TRANS_LOGIN             "trans_login"
+#define STRAUTHID_TRANS_USERNAME          "trans_username"
+#define STRAUTHID_TRANS_PASSWORD          "trans_password"
+#define STRAUTHID_TRANS_TARGET            "trans_target"
+#define STRAUTHID_TRANS_DIAGNOSTIC        "trans_diagnostic"
+#define STRAUTHID_TRANS_CONNECTION_CLOSED "trans_connection_closed"
+#define STRAUTHID_TRANS_HELP_MESSAGE      "trans_help_message"
 // Options
-#define _STRAUTHID_OPT_CLIPBOARD           "clipboard"
-#define _STRAUTHID_OPT_DEVICEREDIRECTION   "device_redirection"
-#define _STRAUTHID_OPT_FILE_ENCRYPTION     "file_encryption"
+#define STRAUTHID_OPT_CLIPBOARD           "clipboard"
+#define STRAUTHID_OPT_DEVICEREDIRECTION   "device_redirection"
+#define STRAUTHID_OPT_FILE_ENCRYPTION     "file_encryption"
 // Video capture
-#define _STRAUTHID_OPT_CODEC_ID             "codec_id"
-#define _STRAUTHID_OPT_MOVIE                "is_rec"
-#define _STRAUTHID_OPT_MOVIE_PATH           "rec_path"
-#define _STRAUTHID_VIDEO_QUALITY            "video_quality"
+#define STRAUTHID_OPT_CODEC_ID             "codec_id"
+#define STRAUTHID_OPT_MOVIE                "is_rec"
+#define STRAUTHID_OPT_MOVIE_PATH           "rec_path"
+#define STRAUTHID_VIDEO_QUALITY            "video_quality"
 // Alternate shell
-#define _STRAUTHID_ALTERNATE_SHELL          "alternate_shell"
-#define _STRAUTHID_SHELL_WORKING_DIRECTORY  "shell_working_directory"
+#define STRAUTHID_ALTERNATE_SHELL          "alternate_shell"
+#define STRAUTHID_SHELL_WORKING_DIRECTORY  "shell_working_directory"
 // Context
-#define _STRAUTHID_OPT_BITRATE              "bitrate"
-#define _STRAUTHID_OPT_FRAMERATE            "framerate"
-#define _STRAUTHID_OPT_QSCALE               "qscale"
-#define _STRAUTHID_OPT_BPP                  "bpp"
-#define _STRAUTHID_OPT_HEIGHT               "height"
-#define _STRAUTHID_OPT_WIDTH                "width"
+#define STRAUTHID_OPT_BITRATE              "bitrate"
+#define STRAUTHID_OPT_FRAMERATE            "framerate"
+#define STRAUTHID_OPT_QSCALE               "qscale"
+#define STRAUTHID_OPT_BPP                  "bpp"
+#define STRAUTHID_OPT_HEIGHT               "height"
+#define STRAUTHID_OPT_WIDTH                "width"
 
-#define _STRAUTHID_AUTH_ERROR_MESSAGE       "error_message"
+#define STRAUTHID_AUTH_ERROR_MESSAGE       "error_message"
 
-#define _STRAUTHID_SELECTOR                  "selector"
-#define _STRAUTHID_SELECTOR_CURRENT_PAGE     "selector_current_page"
-#define _STRAUTHID_SELECTOR_DEVICE_FILTER    "selector_device_filter"
-#define _STRAUTHID_SELECTOR_GROUP_FILTER     "selector_group_filter"
-#define _STRAUTHID_SELECTOR_LINES_PER_PAGE   "selector_lines_per_page"
-#define __STRAUTHID_SELECTOR_NUMBER_OF_PAGES "selector_number_of_pages"
+#define STRAUTHID_SELECTOR                  "selector"
+#define STRAUTHID_SELECTOR_CURRENT_PAGE     "selector_current_page"
+#define STRAUTHID_SELECTOR_DEVICE_FILTER    "selector_device_filter"
+#define STRAUTHID_SELECTOR_GROUP_FILTER     "selector_group_filter"
+#define STRAUTHID_SELECTOR_LINES_PER_PAGE   "selector_lines_per_page"
+#define STRAUTHID_SELECTOR_NUMBER_OF_PAGES "selector_number_of_pages"
 
-#define _STRAUTHID_TARGET_DEVICE            "target_device"
-#define _STRAUTHID_TARGET_PASSWORD          "target_password"
-#define _STRAUTHID_TARGET_PORT              "target_port"
-#define _STRAUTHID_TARGET_PROTOCOL          "proto_dest"
-#define _STRAUTHID_TARGET_USER              "target_login"
+#define STRAUTHID_TARGET_DEVICE            "target_device"
+#define STRAUTHID_TARGET_PASSWORD          "target_password"
+#define STRAUTHID_TARGET_PORT              "target_port"
+#define STRAUTHID_TARGET_PROTOCOL          "proto_dest"
+#define STRAUTHID_TARGET_USER              "target_login"
 
-#define _STRAUTHID_AUTH_USER                "login"
-#define _STRAUTHID_HOST                     "ip_client"
-#define _STRAUTHID_PASSWORD                 "password"
+#define STRAUTHID_AUTH_USER                "login"
+#define STRAUTHID_HOST                     "ip_client"
+#define STRAUTHID_PASSWORD                 "password"
 
 TODO("This is not a translation but auth_channel answer, change key name in sesman")
-#define _STRAUTHID_AUTHCHANNEL_ANSWER       "trans_auth_channel"
-#define _STRAUTHID_AUTHCHANNEL_RESULT       "auth_channel_result"
-#define _STRAUTHID_AUTHCHANNEL_TARGET       "auth_channel_target"
+#define STRAUTHID_AUTHCHANNEL_ANSWER       "trans_auth_channel"
+#define STRAUTHID_AUTHCHANNEL_RESULT       "auth_channel_result"
+#define STRAUTHID_AUTHCHANNEL_TARGET       "auth_channel_target"
 
-#define _STRAUTHID_MESSAGE                  "message"
+#define STRAUTHID_MESSAGE                  "message"
 
-#define _STRAUTHID_ACCEPT_MESSAGE           "accept_message"
-#define _STRAUTHID_DISPLAY_MESSAGE          "display_message"
+#define STRAUTHID_ACCEPT_MESSAGE           "accept_message"
+#define STRAUTHID_DISPLAY_MESSAGE          "display_message"
 
-#define _STRAUTHID_AUTHENTICATED            "authenticated"
-#define _STRAUTHID_REJECTED                 "rejected"
+#define STRAUTHID_AUTHENTICATED            "authenticated"
+#define STRAUTHID_REJECTED                 "rejected"
 
-#define _STRAUTHID_KEEPALIVE                "keepalive"
-#define _STRAUTHID_PROXY_TYPE               "proxy_type"
+#define STRAUTHID_KEEPALIVE                "keepalive"
+#define STRAUTHID_PROXY_TYPE               "proxy_type"
 
-#define _STRAUTHID_TRACE_SEAL               "trace_seal"
+#define STRAUTHID_TRACE_SEAL               "trace_seal"
 
-#define _STRAUTHID_SESSION_ID               "session_id"
+#define STRAUTHID_SESSION_ID               "session_id"
 
-#define _STRAUTHID_END_DATE_CNX             "timeclose"
-#define _STRAUTHID_END_TIME                 "end_time"
+#define STRAUTHID_END_DATE_CNX             "timeclose"
+#define STRAUTHID_END_TIME                 "end_time"
 
-#define _STRAUTHID_MODE_CONSOLE             "mode_console"
-#define _STRAUTHID_TIMEZONE                 "timezone"
+#define STRAUTHID_MODE_CONSOLE             "mode_console"
+#define STRAUTHID_TIMEZONE                 "timezone"
 
 static inline authid_t authid_from_string(const char * strauthid) {
     static const std::string authstr[MAX_AUTHID - 1] = {
         // Translation text
-        _STRAUTHID_TRANS_BUTTON_OK,
-        _STRAUTHID_TRANS_BUTTON_CANCEL,
-        _STRAUTHID_TRANS_BUTTON_HELP,
-        _STRAUTHID_TRANS_BUTTON_CLOSE,
-        _STRAUTHID_TRANS_BUTTON_REFUSED,
-        _STRAUTHID_TRANS_LOGIN,
-        _STRAUTHID_TRANS_USERNAME,
-        _STRAUTHID_TRANS_PASSWORD,
-        _STRAUTHID_TRANS_TARGET,
-        _STRAUTHID_TRANS_DIAGNOSTIC,
-        _STRAUTHID_TRANS_CONNECTION_CLOSED,
-        _STRAUTHID_TRANS_HELP_MESSAGE,
+        STRAUTHID_TRANS_BUTTON_OK,
+        STRAUTHID_TRANS_BUTTON_CANCEL,
+        STRAUTHID_TRANS_BUTTON_HELP,
+        STRAUTHID_TRANS_BUTTON_CLOSE,
+        STRAUTHID_TRANS_BUTTON_REFUSED,
+        STRAUTHID_TRANS_LOGIN,
+        STRAUTHID_TRANS_USERNAME,
+        STRAUTHID_TRANS_PASSWORD,
+        STRAUTHID_TRANS_TARGET,
+        STRAUTHID_TRANS_DIAGNOSTIC,
+        STRAUTHID_TRANS_CONNECTION_CLOSED,
+        STRAUTHID_TRANS_HELP_MESSAGE,
 
         // Options
-        _STRAUTHID_OPT_CLIPBOARD,         // clipboard
-        _STRAUTHID_OPT_DEVICEREDIRECTION, // device_redirection
-        _STRAUTHID_OPT_FILE_ENCRYPTION,   // file encryption
+        STRAUTHID_OPT_CLIPBOARD,         // clipboard
+        STRAUTHID_OPT_DEVICEREDIRECTION, // device_redirection
+        STRAUTHID_OPT_FILE_ENCRYPTION,   // file encryption
 
         // Video capture
-        _STRAUTHID_OPT_CODEC_ID,    // CODEC_ID for video encoding
-        _STRAUTHID_OPT_MOVIE,       // is_rec
-        _STRAUTHID_OPT_MOVIE_PATH,  // rec_path
-        _STRAUTHID_VIDEO_QUALITY,
+        STRAUTHID_OPT_CODEC_ID,    // CODEC_ID for video encoding
+        STRAUTHID_OPT_MOVIE,       // is_rec
+        STRAUTHID_OPT_MOVIE_PATH,  // rec_path
+        STRAUTHID_VIDEO_QUALITY,
 
         // Alternate shell
-        _STRAUTHID_ALTERNATE_SHELL,
-        _STRAUTHID_SHELL_WORKING_DIRECTORY,
+        STRAUTHID_ALTERNATE_SHELL,
+        STRAUTHID_SHELL_WORKING_DIRECTORY,
 
         // Context
-        _STRAUTHID_OPT_BITRATE,         // Bit rate for video encoding
-        _STRAUTHID_OPT_FRAMERATE,       // Frame rate for video encoding
-        _STRAUTHID_OPT_QSCALE,          // QScale parameter for vdeo encoding
+        STRAUTHID_OPT_BITRATE,         // Bit rate for video encoding
+        STRAUTHID_OPT_FRAMERATE,       // Frame rate for video encoding
+        STRAUTHID_OPT_QSCALE,          // QScale parameter for vdeo encoding
 
-        _STRAUTHID_OPT_BPP,            // bits per planes (number of colors)
-        _STRAUTHID_OPT_HEIGHT,         // client height
-        _STRAUTHID_OPT_WIDTH,          // client width
+        STRAUTHID_OPT_BPP,            // bits per planes (number of colors)
+        STRAUTHID_OPT_HEIGHT,         // client height
+        STRAUTHID_OPT_WIDTH,          // client width
 
-        _STRAUTHID_AUTH_ERROR_MESSAGE,
+        STRAUTHID_AUTH_ERROR_MESSAGE,
 
-        _STRAUTHID_SELECTOR,
-        _STRAUTHID_SELECTOR_CURRENT_PAGE,      // current page
-        _STRAUTHID_SELECTOR_DEVICE_FILTER,     // device filter text
-        _STRAUTHID_SELECTOR_GROUP_FILTER,      // group filter text
-        _STRAUTHID_SELECTOR_LINES_PER_PAGE,    // number of lines per page
-        __STRAUTHID_SELECTOR_NUMBER_OF_PAGES,  // number of pages
+        STRAUTHID_SELECTOR,
+        STRAUTHID_SELECTOR_CURRENT_PAGE,      // current page
+        STRAUTHID_SELECTOR_DEVICE_FILTER,     // device filter text
+        STRAUTHID_SELECTOR_GROUP_FILTER,      // group filter text
+        STRAUTHID_SELECTOR_LINES_PER_PAGE,    // number of lines per page
+        STRAUTHID_SELECTOR_NUMBER_OF_PAGES,  // number of pages
 
-        _STRAUTHID_TARGET_DEVICE,      // target_device
-        _STRAUTHID_TARGET_PASSWORD,    // target_password
-        _STRAUTHID_TARGET_PORT,        // target_port
-        _STRAUTHID_TARGET_PROTOCOL,    // proto_dest
-        _STRAUTHID_TARGET_USER,        // target_login
+        STRAUTHID_TARGET_DEVICE,      // target_device
+        STRAUTHID_TARGET_PASSWORD,    // target_password
+        STRAUTHID_TARGET_PORT,        // target_port
+        STRAUTHID_TARGET_PROTOCOL,    // proto_dest
+        STRAUTHID_TARGET_USER,        // target_login
 
-        _STRAUTHID_AUTH_USER,          // login
-        _STRAUTHID_HOST,               // ip_client
-        _STRAUTHID_PASSWORD,           // password
+        STRAUTHID_AUTH_USER,          // login
+        STRAUTHID_HOST,               // ip_client
+        STRAUTHID_PASSWORD,           // password
 
-        _STRAUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
-        _STRAUTHID_AUTHCHANNEL_RESULT, // WabLauncher session result
-        _STRAUTHID_AUTHCHANNEL_TARGET, // WabLauncher target request
+        STRAUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
+        STRAUTHID_AUTHCHANNEL_RESULT, // WabLauncher session result
+        STRAUTHID_AUTHCHANNEL_TARGET, // WabLauncher target request
 
-        _STRAUTHID_MESSAGE,    // warning_message
+        STRAUTHID_MESSAGE,    // warning_message
 
-        _STRAUTHID_ACCEPT_MESSAGE,      // display a dialog to valid a message
-        _STRAUTHID_DISPLAY_MESSAGE,     // display a dialog box with a message
+        STRAUTHID_ACCEPT_MESSAGE,      // display a dialog to valid a message
+        STRAUTHID_DISPLAY_MESSAGE,     // display a dialog box with a message
 
-        _STRAUTHID_AUTHENTICATED,
-        _STRAUTHID_REJECTED,        // rejected
+        STRAUTHID_AUTHENTICATED,
+        STRAUTHID_REJECTED,        // rejected
 
-        _STRAUTHID_KEEPALIVE,
-        _STRAUTHID_PROXY_TYPE,
+        STRAUTHID_KEEPALIVE,
+        STRAUTHID_PROXY_TYPE,
 
-        _STRAUTHID_TRACE_SEAL,      // after closing trace file trace is sealed using a signature hash
+        STRAUTHID_TRACE_SEAL,      // after closing trace file trace is sealed using a signature hash
 
-        _STRAUTHID_SESSION_ID,      // session_id
+        STRAUTHID_SESSION_ID,      // session_id
 
-        _STRAUTHID_END_DATE_CNX,    // timeclose
-        _STRAUTHID_END_TIME,        // end time as text
+        STRAUTHID_END_DATE_CNX,    // timeclose
+        STRAUTHID_END_TIME,        // end time as text
 
-        _STRAUTHID_MODE_CONSOLE,
-        _STRAUTHID_TIMEZONE,
+        STRAUTHID_MODE_CONSOLE,
+        STRAUTHID_TIMEZONE,
     };
 
     std::string str = std::string(strauthid);
@@ -1245,226 +1245,226 @@ struct Inifile {
     void context_set_value(authid_t authid, const char * value) {
         switch (authid)
         {
-        case _AUTHID_TRANS_BUTTON_OK:
+        case AUTHID_TRANS_BUTTON_OK:
             this->globals.translation.button_ok         = value;
             break;
-        case _AUTHID_TRANS_BUTTON_CANCEL:
+        case AUTHID_TRANS_BUTTON_CANCEL:
             this->globals.translation.button_cancel     = value;
             break;
-        case _AUTHID_TRANS_BUTTON_HELP:
+        case AUTHID_TRANS_BUTTON_HELP:
             this->globals.translation.button_help       = value;
             break;
-        case _AUTHID_TRANS_BUTTON_CLOSE:
+        case AUTHID_TRANS_BUTTON_CLOSE:
             this->globals.translation.button_close      = value;
             break;
-        case _AUTHID_TRANS_BUTTON_REFUSED:
+        case AUTHID_TRANS_BUTTON_REFUSED:
             this->globals.translation.button_refused    = value;
             break;
-        case _AUTHID_TRANS_LOGIN:
+        case AUTHID_TRANS_LOGIN:
             this->globals.translation.login             = value;
             break;
-        case _AUTHID_TRANS_USERNAME:
+        case AUTHID_TRANS_USERNAME:
             this->globals.translation.username          = value;
             break;
-        case _AUTHID_TRANS_PASSWORD:
+        case AUTHID_TRANS_PASSWORD:
             this->globals.translation.password          = value;
             break;
-        case _AUTHID_TRANS_TARGET:
+        case AUTHID_TRANS_TARGET:
             this->globals.translation.target            = value;
             break;
-        case _AUTHID_TRANS_DIAGNOSTIC:
+        case AUTHID_TRANS_DIAGNOSTIC:
             this->globals.translation.diagnostic        = value;
             break;
-        case _AUTHID_TRANS_CONNECTION_CLOSED:
+        case AUTHID_TRANS_CONNECTION_CLOSED:
             this->globals.translation.connection_closed = value;
             break;
-        case _AUTHID_TRANS_HELP_MESSAGE:
+        case AUTHID_TRANS_HELP_MESSAGE:
             this->globals.translation.help_message      = value;
             break;
 
         // Options
-        case _AUTHID_OPT_CLIPBOARD:
+        case AUTHID_OPT_CLIPBOARD:
             this->setglobal("clipboard",              value, "client" );
             break;
-        case _AUTHID_OPT_DEVICEREDIRECTION:
+        case AUTHID_OPT_DEVICEREDIRECTION:
             this->setglobal("device_redirection",     value, "client" );
             break;
-        case _AUTHID_OPT_FILE_ENCRYPTION:
+        case AUTHID_OPT_FILE_ENCRYPTION:
             this->setglobal("enable_file_encryption", value, "globals");
             break;
 
         // Video capture
-        case _AUTHID_OPT_CODEC_ID:
+        case AUTHID_OPT_CODEC_ID:
             this->setglobal("codec_id",      value, "globals");
             break;
-        case _AUTHID_OPT_MOVIE:
+        case AUTHID_OPT_MOVIE:
             this->setglobal("movie",         value, "globals");
             break;
-        case _AUTHID_OPT_MOVIE_PATH:
+        case AUTHID_OPT_MOVIE_PATH:
             this->setglobal("movie_path",    value, "globals");
             break;
-        case _AUTHID_VIDEO_QUALITY:
+        case AUTHID_VIDEO_QUALITY:
             this->setglobal("video_quality", value, "globals");
             break;
 
         // Alternate shell
-        case _AUTHID_ALTERNATE_SHELL:
+        case AUTHID_ALTERNATE_SHELL:
             this->setglobal("alternate_shell",         value, "globals");
             break;
-        case _AUTHID_SHELL_WORKING_DIRECTORY:
+        case AUTHID_SHELL_WORKING_DIRECTORY:
             this->setglobal("shell_working_directory", value, "globals");
             break;
 
         // Context
-        case _AUTHID_OPT_BITRATE:
+        case AUTHID_OPT_BITRATE:
             this->globals.context.opt_bitrate   = ulong_from_cstr(value);
             break;
-        case _AUTHID_OPT_FRAMERATE:
+        case AUTHID_OPT_FRAMERATE:
             this->globals.context.opt_framerate = ulong_from_cstr(value);
             break;
-        case _AUTHID_OPT_QSCALE:
+        case AUTHID_OPT_QSCALE:
             this->globals.context.opt_qscale    = ulong_from_cstr(value);
             break;
 
-        case _AUTHID_OPT_BPP:
+        case AUTHID_OPT_BPP:
             this->globals.context.ask_opt_bpp    = false;
             this->globals.context.opt_bpp        = ulong_from_cstr(value);
-        case _AUTHID_OPT_HEIGHT:
+        case AUTHID_OPT_HEIGHT:
             this->globals.context.ask_opt_height = false;
             this->globals.context.opt_height     = ulong_from_cstr(value);
             break;
-        case _AUTHID_OPT_WIDTH:
+        case AUTHID_OPT_WIDTH:
             this->globals.context.ask_opt_width  = false;
             this->globals.context.opt_width      = ulong_from_cstr(value);
             break;
 
-        case _AUTHID_AUTH_ERROR_MESSAGE:
+        case AUTHID_AUTH_ERROR_MESSAGE:
             this->globals.context.auth_error_message = value;
             break;
 
-        case _AUTHID_SELECTOR:
+        case AUTHID_SELECTOR:
             this->globals.context.ask_selector                = false;
             this->globals.context.selector                    = bool_from_cstr(value);
             break;
-        case _AUTHID_SELECTOR_CURRENT_PAGE:
+        case AUTHID_SELECTOR_CURRENT_PAGE:
             this->globals.context.ask_selector_current_page   = false;
                 this->globals.context.selector_current_page   = ulong_from_cstr(value);
             break;
-        case _AUTHID_SELECTOR_DEVICE_FILTER:
+        case AUTHID_SELECTOR_DEVICE_FILTER:
             this->globals.context.ask_selector_device_filter  = false;
                 this->globals.context.selector_device_filter  = value;
             break;
-        case _AUTHID_SELECTOR_GROUP_FILTER:
+        case AUTHID_SELECTOR_GROUP_FILTER:
             this->globals.context.ask_selector_group_filter   = false;
                 this->globals.context.selector_group_filter   = value;
             break;
-        case _AUTHID_SELECTOR_LINES_PER_PAGE:
+        case AUTHID_SELECTOR_LINES_PER_PAGE:
             this->globals.context.ask_selector_lines_per_page = false;
                 this->globals.context.selector_lines_per_page = ulong_from_cstr(value);
             break;
-        case _AUTHID_SELECTOR_NUMBER_OF_PAGES:
+        case AUTHID_SELECTOR_NUMBER_OF_PAGES:
             this->globals.context.selector_number_of_pages    = ulong_from_cstr(value);
             break;
 
-        case _AUTHID_TARGET_DEVICE:
+        case AUTHID_TARGET_DEVICE:
             this->globals.context.ask_target_device   = false;
             strncpy(this->globals.target_device, value, sizeof(this->globals.target_device));
             this->globals.target_device[sizeof(this->globals.target_device) - 1] = 0;
             break;
-        case _AUTHID_TARGET_PASSWORD:
+        case AUTHID_TARGET_PASSWORD:
             this->globals.context.ask_target_password = false;
             this->globals.context.target_password     = value;
             break;
-        case _AUTHID_TARGET_PORT:
+        case AUTHID_TARGET_PORT:
                 this->globals.context.target_port     = ulong_from_cstr(value);
             break;
-        case _AUTHID_TARGET_PROTOCOL:
+        case AUTHID_TARGET_PROTOCOL:
             this->globals.context.ask_target_protocol = false;
             this->globals.context.target_protocol     = value;
             break;
-        case _AUTHID_TARGET_USER:
+        case AUTHID_TARGET_USER:
             this->globals.context.ask_target_user     = false;
             strncpy(this->globals.target_user,   value, sizeof(this->globals.target_user));
             this->globals.target_user[sizeof(this->globals.target_user) - 1]     = 0;
             break;
 
-        case _AUTHID_AUTH_USER:
+        case AUTHID_AUTH_USER:
             this->globals.context.ask_auth_user = false;
             strncpy(this->globals.auth_user, value, sizeof(this->globals.auth_user));
             this->globals.auth_user[sizeof(this->globals.auth_user) - 1] = 0;
             break;
-        case _AUTHID_HOST:
+        case AUTHID_HOST:
             this->globals.context.ask_host      = false;
             strncpy(this->globals.host,      value, sizeof(this->globals.host));
             this->globals.host[sizeof(this->globals.host) - 1]           = 0;
             break;
 
-        case _AUTHID_PASSWORD:
+        case AUTHID_PASSWORD:
             this->globals.context.ask_password = false;
             this->globals.context.password     = value;
             break;
 
-        case _AUTHID_AUTHCHANNEL_ANSWER:
+        case AUTHID_AUTHCHANNEL_ANSWER:
             this->globals.context.authchannel_answer     = value;
             break;
-        case _AUTHID_AUTHCHANNEL_RESULT:
+        case AUTHID_AUTHCHANNEL_RESULT:
             this->globals.context.ask_authchannel_result = false;
             this->globals.context.authchannel_result     = value;
             break;
-        case _AUTHID_AUTHCHANNEL_TARGET:
+        case AUTHID_AUTHCHANNEL_TARGET:
             this->globals.context.ask_authchannel_target = false;
             this->globals.context.authchannel_target     = value;
             break;
 
-        case _AUTHID_MESSAGE:
+        case AUTHID_MESSAGE:
             this->globals.context.message = value;
             break;
 
-        case _AUTHID_ACCEPT_MESSAGE:
+        case AUTHID_ACCEPT_MESSAGE:
             this->globals.context.ask_accept_message  = false;
             this->globals.context.accept_message      = value;
             break;
-        case _AUTHID_DISPLAY_MESSAGE:
+        case AUTHID_DISPLAY_MESSAGE:
             this->globals.context.ask_display_message = false;
             this->globals.context.display_message     = value;
             break;
 
-        case _AUTHID_AUTHENTICATED:
+        case AUTHID_AUTHENTICATED:
             this->globals.context.authenticated  = bool_from_cstr(value);
             break;
-        case _AUTHID_REJECTED:
+        case AUTHID_REJECTED:
             this->globals.context.rejected       = value;
             break;
 
-        case _AUTHID_KEEPALIVE:
+        case AUTHID_KEEPALIVE:
             this->globals.context.ask_keepalive  = false;
             this->globals.context.keepalive      = bool_from_cstr(value);
             break;
-        case _AUTHID_PROXY_TYPE:
+        case AUTHID_PROXY_TYPE:
             this->globals.context.ask_proxy_type = false;
             this->globals.context.proxy_type     = value;
             break;
 
-        case _AUTHID_TRACE_SEAL:
+        case AUTHID_TRACE_SEAL:
             this->globals.context.ask_trace_seal = false;
             this->globals.context.trace_seal     = value;
             break;
 
-        case _AUTHID_SESSION_ID:
+        case AUTHID_SESSION_ID:
             this->globals.context.session_id = value;
             break;
 
-        case _AUTHID_END_DATE_CNX:
+        case AUTHID_END_DATE_CNX:
             this->globals.context.end_date_cnx = ulong_from_cstr(value);
             break;
-        case _AUTHID_END_TIME:
+        case AUTHID_END_TIME:
             this->globals.context.end_time     = value;
             break;
 
-        case _AUTHID_MODE_CONSOLE:
+        case AUTHID_MODE_CONSOLE:
             this->globals.context.mode_console = value;
             break;
-        case _AUTHID_TIMEZONE:
+        case AUTHID_TIMEZONE:
             this->globals.context.timezone     = _long_from_cstr(value);
             break;
 
@@ -1492,35 +1492,35 @@ struct Inifile {
 
         switch (authid)
         {
-        case _AUTHID_OPT_FILE_ENCRYPTION:
+        case AUTHID_OPT_FILE_ENCRYPTION:
             if (size) {
                 strncpy(buffer, (this->globals.enable_file_encryption ? "True" : "False"), size);
                 buffer[size - 1] = 0;
                 pszReturn = buffer;
             }
             break;
-        case _AUTHID_OPT_BPP:
+        case AUTHID_OPT_BPP:
             if (  size
                && !this->globals.context.ask_opt_bpp) {
                 snprintf(buffer, size, "%u", this->globals.context.opt_bpp);
                 pszReturn = buffer;
             }
             break;
-        case _AUTHID_OPT_HEIGHT:
+        case AUTHID_OPT_HEIGHT:
             if (  size
                && !this->globals.context.ask_opt_height) {
                 snprintf(buffer, size, "%u", this->globals.context.opt_height);
                 pszReturn = buffer;
             }
             break;
-        case _AUTHID_OPT_WIDTH:
+        case AUTHID_OPT_WIDTH:
             if (  size
                && !this->globals.context.ask_opt_width) {
                 snprintf(buffer, size, "%u", this->globals.context.opt_width);
                 pszReturn = buffer;
             }
             break;
-        case _AUTHID_SELECTOR:
+        case AUTHID_SELECTOR:
             if (  size
                && !this->globals.context.ask_selector) {
                 strncpy(buffer, (this->globals.context.selector ? "True" : "False"), size);
@@ -1528,92 +1528,92 @@ struct Inifile {
                 pszReturn = buffer;
             }
             break;
-        case _AUTHID_SELECTOR_CURRENT_PAGE:
+        case AUTHID_SELECTOR_CURRENT_PAGE:
             if (  size
                && !this->globals.context.ask_selector_current_page) {
                 snprintf(buffer, size, "%u", this->globals.context.selector_current_page);
                 pszReturn = buffer;
             }
             break;
-        case _AUTHID_SELECTOR_DEVICE_FILTER:
+        case AUTHID_SELECTOR_DEVICE_FILTER:
             if (!this->globals.context.ask_selector_device_filter) {
                 pszReturn = this->globals.context.selector_device_filter;
             }
             break;
-        case _AUTHID_SELECTOR_GROUP_FILTER:
+        case AUTHID_SELECTOR_GROUP_FILTER:
             if ( !this->globals.context.ask_selector_group_filter) {
                 pszReturn = this->globals.context.selector_group_filter;
             }
             break;
-        case _AUTHID_SELECTOR_LINES_PER_PAGE:
+        case AUTHID_SELECTOR_LINES_PER_PAGE:
             if (  size
                && !this->globals.context.ask_selector_group_filter) {
                 snprintf(buffer, size, "%u", this->globals.context.selector_lines_per_page);
                 pszReturn = buffer;
             }
             break;
-        case _AUTHID_SELECTOR_NUMBER_OF_PAGES:
+        case AUTHID_SELECTOR_NUMBER_OF_PAGES:
             if (size) {
                 snprintf(buffer, size, "%u", this->globals.context.selector_number_of_pages);
                 pszReturn = buffer;
             }
             break;
-        case _AUTHID_TARGET_DEVICE:
+        case AUTHID_TARGET_DEVICE:
             if (!this->globals.context.ask_target_device) {
                 pszReturn = this->globals.target_device;
             }
             break;
-        case _AUTHID_TARGET_PASSWORD:
+        case AUTHID_TARGET_PASSWORD:
             if (!this->globals.context.ask_target_password) {
                 pszReturn = this->globals.context.target_password;
             }
             break;
-        case _AUTHID_TARGET_PROTOCOL:
+        case AUTHID_TARGET_PROTOCOL:
             if (!this->globals.context.ask_target_protocol) {
                 pszReturn = this->globals.context.target_protocol;
             }
             break;
-        case _AUTHID_TARGET_USER:
+        case AUTHID_TARGET_USER:
             if (!this->globals.context.ask_target_user) {
                 pszReturn = this->globals.target_user;
             }
             break;
-        case _AUTHID_AUTH_USER:
+        case AUTHID_AUTH_USER:
             if (!this->globals.context.ask_auth_user) {
                 pszReturn = this->globals.auth_user;
             }
             break;
-        case _AUTHID_HOST:
+        case AUTHID_HOST:
             if ( !this->globals.context.ask_host) {
                 pszReturn = this->globals.host;
             }
             break;
-        case _AUTHID_PASSWORD:
+        case AUTHID_PASSWORD:
             if (!this->globals.context.ask_password) {
                 pszReturn = this->globals.context.password;
             }
             break;
-        case _AUTHID_AUTHCHANNEL_RESULT:
+        case AUTHID_AUTHCHANNEL_RESULT:
             if (!this->globals.context.ask_authchannel_result) {
                 pszReturn = this->globals.context.authchannel_result;
             }
             break;
-        case _AUTHID_AUTHCHANNEL_TARGET:
+        case AUTHID_AUTHCHANNEL_TARGET:
             if (!this->globals.context.ask_authchannel_target) {
                 pszReturn = this->globals.context.authchannel_target;
             }
             break;
-        case _AUTHID_ACCEPT_MESSAGE:
+        case AUTHID_ACCEPT_MESSAGE:
             if (!this->globals.context.ask_accept_message) {
                 pszReturn = this->globals.context.accept_message;
             }
             break;
-        case _AUTHID_DISPLAY_MESSAGE:
+        case AUTHID_DISPLAY_MESSAGE:
             if (!this->globals.context.ask_display_message) {
                 pszReturn = this->globals.context.display_message;
             }
             break;
-        case _AUTHID_KEEPALIVE:
+        case AUTHID_KEEPALIVE:
             if (  size
                && !this->globals.context.ask_keepalive) {
                 strncpy(buffer, (this->globals.context.keepalive ? "True" : "False"), size);
@@ -1622,17 +1622,17 @@ struct Inifile {
                 pszReturn = buffer;
             }
             break;
-        case _AUTHID_PROXY_TYPE:
+        case AUTHID_PROXY_TYPE:
             if (!this->globals.context.ask_proxy_type) {
                 pszReturn = this->globals.context.proxy_type;
             }
             break;
-        case _AUTHID_TRACE_SEAL:
+        case AUTHID_TRACE_SEAL:
             if (!this->globals.context.ask_trace_seal) {
                 pszReturn = this->globals.context.trace_seal;
             }
             break;
-        case _AUTHID_END_TIME:
+        case AUTHID_END_TIME:
             pszReturn = this->globals.context.end_time;
             break;
         default:
@@ -1655,70 +1655,70 @@ struct Inifile {
 
     void context_ask(authid_t authid) {
         switch (authid) {
-        case _AUTHID_OPT_BPP:
+        case AUTHID_OPT_BPP:
             this->globals.context.ask_opt_bpp                 = true; break;
 
-        case _AUTHID_OPT_HEIGHT:
+        case AUTHID_OPT_HEIGHT:
             this->globals.context.ask_opt_height              = true; break;
 
-        case _AUTHID_OPT_WIDTH:
+        case AUTHID_OPT_WIDTH:
             this->globals.context.ask_opt_width               = true; break;
 
-        case _AUTHID_SELECTOR:
+        case AUTHID_SELECTOR:
             this->globals.context.ask_selector                = true; break;
 
-        case _AUTHID_SELECTOR_CURRENT_PAGE:
+        case AUTHID_SELECTOR_CURRENT_PAGE:
             this->globals.context.ask_selector_current_page   = true; break;
 
-        case _AUTHID_SELECTOR_DEVICE_FILTER:
+        case AUTHID_SELECTOR_DEVICE_FILTER:
             this->globals.context.ask_selector_device_filter  = true; break;
 
-        case _AUTHID_SELECTOR_GROUP_FILTER:
+        case AUTHID_SELECTOR_GROUP_FILTER:
             this->globals.context.ask_selector_group_filter   = true; break;
 
-        case _AUTHID_SELECTOR_LINES_PER_PAGE:
+        case AUTHID_SELECTOR_LINES_PER_PAGE:
             this->globals.context.ask_selector_lines_per_page = true; break;
 
-        case _AUTHID_TARGET_DEVICE:
+        case AUTHID_TARGET_DEVICE:
             this->globals.context.ask_target_device           = true; break;
 
-        case _AUTHID_TARGET_PASSWORD:
+        case AUTHID_TARGET_PASSWORD:
             this->globals.context.ask_target_password         = true; break;
 
-        case _AUTHID_TARGET_PROTOCOL:
+        case AUTHID_TARGET_PROTOCOL:
             this->globals.context.ask_target_protocol         = true; break;
 
-        case _AUTHID_TARGET_USER:
+        case AUTHID_TARGET_USER:
             this->globals.context.ask_target_user             = true; break;
 
-        case _AUTHID_AUTH_USER:
+        case AUTHID_AUTH_USER:
             this->globals.context.ask_auth_user               = true; break;
 
-        case _AUTHID_HOST:
+        case AUTHID_HOST:
             this->globals.context.ask_host                    = true; break;
 
-        case _AUTHID_PASSWORD:
+        case AUTHID_PASSWORD:
             this->globals.context.ask_password                = true; break;
 
-        case _AUTHID_AUTHCHANNEL_RESULT:
+        case AUTHID_AUTHCHANNEL_RESULT:
             this->globals.context.ask_authchannel_result      = true; break;
 
-        case _AUTHID_AUTHCHANNEL_TARGET:
+        case AUTHID_AUTHCHANNEL_TARGET:
             this->globals.context.ask_authchannel_target      = true; break;
 
-        case _AUTHID_ACCEPT_MESSAGE:
+        case AUTHID_ACCEPT_MESSAGE:
             this->globals.context.ask_accept_message          = true; break;
 
-        case _AUTHID_DISPLAY_MESSAGE:
+        case AUTHID_DISPLAY_MESSAGE:
             this->globals.context.ask_display_message         = true; break;
 
-        case _AUTHID_KEEPALIVE:
+        case AUTHID_KEEPALIVE:
             this->globals.context.ask_keepalive               = true; break;
 
-        case _AUTHID_PROXY_TYPE:
+        case AUTHID_PROXY_TYPE:
             this->globals.context.ask_proxy_type              = true; break;
 
-        case _AUTHID_TRACE_SEAL:
+        case AUTHID_TRACE_SEAL:
             this->globals.context.ask_trace_seal              = true; break;
 
         default:
@@ -1740,70 +1740,70 @@ struct Inifile {
 
     bool context_is_asked(authid_t authid) {
         switch (authid) {
-        case _AUTHID_OPT_BPP:
+        case AUTHID_OPT_BPP:
             return this->globals.context.ask_opt_bpp;
 
-        case _AUTHID_OPT_HEIGHT:
+        case AUTHID_OPT_HEIGHT:
             return this->globals.context.ask_opt_height;
 
-        case _AUTHID_OPT_WIDTH:
+        case AUTHID_OPT_WIDTH:
             return this->globals.context.ask_opt_width;
 
-        case _AUTHID_SELECTOR:
+        case AUTHID_SELECTOR:
             return this->globals.context.ask_selector;
 
-        case _AUTHID_SELECTOR_CURRENT_PAGE:
+        case AUTHID_SELECTOR_CURRENT_PAGE:
             return this->globals.context.ask_selector_current_page;
 
-        case _AUTHID_SELECTOR_DEVICE_FILTER:
+        case AUTHID_SELECTOR_DEVICE_FILTER:
             return this->globals.context.ask_selector_device_filter;
 
-        case _AUTHID_SELECTOR_GROUP_FILTER:
+        case AUTHID_SELECTOR_GROUP_FILTER:
             return this->globals.context.ask_selector_group_filter;
 
-        case _AUTHID_SELECTOR_LINES_PER_PAGE:
+        case AUTHID_SELECTOR_LINES_PER_PAGE:
             return this->globals.context.ask_selector_lines_per_page;
 
-        case _AUTHID_TARGET_DEVICE:
+        case AUTHID_TARGET_DEVICE:
             return this->globals.context.ask_target_device;
 
-        case _AUTHID_TARGET_PASSWORD:
+        case AUTHID_TARGET_PASSWORD:
             return this->globals.context.ask_target_password;
 
-        case _AUTHID_TARGET_PROTOCOL:
+        case AUTHID_TARGET_PROTOCOL:
             return this->globals.context.ask_target_protocol;
 
-        case _AUTHID_TARGET_USER:
+        case AUTHID_TARGET_USER:
             return this->globals.context.ask_target_user;
 
-        case _AUTHID_AUTH_USER:
+        case AUTHID_AUTH_USER:
             return this->globals.context.ask_auth_user;
 
-        case _AUTHID_HOST:
+        case AUTHID_HOST:
             return this->globals.context.ask_host;
 
-        case _AUTHID_PASSWORD:
+        case AUTHID_PASSWORD:
             return this->globals.context.ask_password;
 
-        case _AUTHID_AUTHCHANNEL_RESULT:
+        case AUTHID_AUTHCHANNEL_RESULT:
             return this->globals.context.ask_authchannel_result;
 
-        case _AUTHID_AUTHCHANNEL_TARGET:
+        case AUTHID_AUTHCHANNEL_TARGET:
             return this->globals.context.ask_authchannel_target;
 
-        case _AUTHID_ACCEPT_MESSAGE:
+        case AUTHID_ACCEPT_MESSAGE:
             return this->globals.context.ask_accept_message;
 
-        case _AUTHID_DISPLAY_MESSAGE:
+        case AUTHID_DISPLAY_MESSAGE:
             return this->globals.context.ask_display_message;
 
-        case _AUTHID_KEEPALIVE:
+        case AUTHID_KEEPALIVE:
             return this->globals.context.ask_keepalive;
 
-        case _AUTHID_PROXY_TYPE:
+        case AUTHID_PROXY_TYPE:
             return this->globals.context.ask_proxy_type;
 
-        case _AUTHID_TRACE_SEAL:
+        case AUTHID_TRACE_SEAL:
             return this->globals.context.ask_trace_seal;
 
         default:
@@ -1815,12 +1815,12 @@ struct Inifile {
     bool context_get_bool(authid_t authid) {
         switch (authid)
         {
-        case _AUTHID_SELECTOR:
+        case AUTHID_SELECTOR:
             if (!this->globals.context.ask_selector) {
                 return this->globals.context.selector;
             }
             break;
-        case _AUTHID_KEEPALIVE:
+        case AUTHID_KEEPALIVE:
             if (!this->globals.context.ask_keepalive) {
                 return this->globals.context.keepalive;
             }
@@ -1851,8 +1851,7 @@ struct Inifile {
         target_protocol[0] = 0;
         auth_user[0] = 0;
 
-//        this->ask(_STRAUTHID_SELECTOR);
-        this->context_ask(_STRAUTHID_SELECTOR);
+        this->context_ask(STRAUTHID_SELECTOR);
         LOG(LOG_INFO, "asking for selector");
 
         if (username[0]){
@@ -1947,36 +1946,28 @@ struct Inifile {
 
         if (*target_user == 0)
         {
-//            this->ask(_STRAUTHID_TARGET_USER);
-            this->context_ask(_AUTHID_TARGET_USER);
+            this->context_ask(AUTHID_TARGET_USER);
         }
         else {
-//            this->cpy(STRAUTHID_TARGET_USER, target_user);
-            this->context_set_value(_AUTHID_TARGET_USER, target_user);
+            this->context_set_value(AUTHID_TARGET_USER, target_user);
         }
         if (*target_device == 0) {
-//            this->ask(_STRAUTHID_TARGET_DEVICE);
-            this->context_ask(_AUTHID_TARGET_DEVICE);
+            this->context_ask(AUTHID_TARGET_DEVICE);
         }
         else {
-//            this->cpy(STRAUTHID_TARGET_DEVICE, target_device);
-            this->context_set_value(_AUTHID_TARGET_DEVICE, target_device);
+            this->context_set_value(AUTHID_TARGET_DEVICE, target_device);
         }
         if (*target_protocol == 0) {
-//            this->ask(_STRAUTHID_TARGET_PROTOCOL);
-            this->context_ask(_AUTHID_TARGET_PROTOCOL);
+            this->context_ask(AUTHID_TARGET_PROTOCOL);
         }
         else {
-//            this->cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
-            this->context_set_value(_AUTHID_TARGET_PROTOCOL, target_protocol);
+            this->context_set_value(AUTHID_TARGET_PROTOCOL, target_protocol);
         }
         if (*auth_user == 0) {
-//            this->ask(_STRAUTHID_AUTH_USER);
-            this->context_ask(_STRAUTHID_AUTH_USER);
+            this->context_ask(STRAUTHID_AUTH_USER);
         }
         else {
-//            this->cpy(STRAUTHID_AUTH_USER, auth_user);
-            this->context_set_value(_AUTHID_AUTH_USER, auth_user);
+            this->context_set_value(AUTHID_AUTH_USER, auth_user);
         }
     }
 };
