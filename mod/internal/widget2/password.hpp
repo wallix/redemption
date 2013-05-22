@@ -126,7 +126,7 @@ public:
     void draw_cursor(const Rect& clip)
     {
         Rect cursor_clip = clip.intersect(
-            Rect(this->x_text + this->edit_pos * (this->w_char + 2) + this->dx(),
+            Rect(this->x_text + this->edit_pos * (this->w_char + 2) + this->dx() + 1,
                  this->y_text + this->dy() + 1,
                  1,
                  this->h_char)

@@ -66,6 +66,7 @@
 #include "internal/widget2/selector_mod.hpp"
 #include "internal/widget2/wab_close_mod.hpp"
 #include "internal/widget2/dialog_mod.hpp"
+#include "internal/widget2/login_mod.hpp"
 
 using namespace std;
 
@@ -736,9 +737,8 @@ struct Session {
                     break;
                     case INTERNAL_WIDGET2_DIALOG:
                     {
-                        std::cout << ("doalog") << '\n';
                         if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'DialogMod'");
+                            LOG(LOG_INFO, "Session::Creation of internal module 'Dialog Accept Message'");
                         }
 
                         const char * message = this->ini->globals.context.message;
@@ -754,10 +754,46 @@ struct Session {
                             button
                         );
                         if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'DialogMod' ready");
+                            LOG(LOG_INFO, "Session::internal module 'Dialog Accept Message' ready");
                         }
                     }
                     break;
+                    case INTERNAL_WIDGET2_MESSAGE:
+                    {
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::Creation of internal module 'Dialog Display Message'");
+                        }
+
+                        const char * message = this->ini->globals.context.message;
+                        const char * button = NULL;
+                        const char * caption = "Information";
+                        this->mod = new DialogMod(
+                            *this->ini,
+                            *this->front,
+                            this->front->client_info.width,
+                            this->front->client_info.height,
+                            caption,
+                            message,
+                            button
+                        );
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::internal module 'Dialog Display Message' ready");
+                        }
+                    }
+                    break;
+                    case INTERNAL_WIDGET2_LOGIN:
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
+                        }
+                        this->mod = new LoginMod(
+                            *this->ini,
+                            *this->front,
+                            this->front->client_info.width,
+                            this->front->client_info.height);
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::internal module Login ready");
+                        }
+                        break;
                     default:
                     break;
                 }

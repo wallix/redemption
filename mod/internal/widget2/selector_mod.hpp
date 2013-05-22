@@ -40,15 +40,14 @@ class SelectorMod : public InternalMod, public NotifyApi
 public:
     SelectorMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
     : InternalMod(front, width, height)
-    , selector(this, "bidule", width, height, this,
-               ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE, this->selector_current_page, sizeof(this->selector_current_page)),
-               ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES, this->selector_number_of_pages, sizeof(this->selector_number_of_pages)))
-    , current_page(atoi(this->selector.current_page.label.buffer))
-    , number_page(atoi(this->selector.number_page.buffer))
+    , selector(this, "bidule", width, height, this, NULL, NULL)
+    , current_page(0)
+    , number_page(0)
     , ini(ini)
     {
         this->refresh_context();
 
+        //BEGIN TEST
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
@@ -68,6 +67,7 @@ public:
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+        //END TEST
 
         this->selector.refresh(this->selector.rect);
     }
@@ -126,6 +126,24 @@ public:
 
     void refresh_context()
     {
+        const char * s = this->ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0);
+        if (*s) {
+            this->selector.filter_device_group.label.set_text(s);
+        }
+
+        s = this->ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER, NULL, 0);
+        if (*s) {
+            this->selector.filter_account_device.label.set_text(s);
+        }
+
+        s = ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE, this->selector_current_page, sizeof(this->selector_current_page));
+        this->selector.current_page.label.set_text(s);
+        this->current_page = atoi(s);
+
+        s = ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES, this->selector_number_of_pages, sizeof(this->selector_number_of_pages));
+        this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(s).buffer);
+        this->number_page = atoi(s);
+
         char * groups    = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0));
         char * targets   = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0));
         char * protocols = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0));

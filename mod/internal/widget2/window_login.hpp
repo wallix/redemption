@@ -46,12 +46,12 @@ public:
     WindowLogin(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
                 NotifyApi* notifier, const char* caption, int group_id = 0,
                 const char * login = 0, const char * password = 0,
-                int fgcolor = BLACK, int bgcolor = DARK_WABGREEN)
+                int fgcolor = BLACK, int bgcolor = GREY)
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
     , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_LOGO24, this, NULL, -10)
-    , login_label(drawable, this->img.cx() + 20, 0, this, NULL, "Login:", true, -11, bgcolor, fgcolor)
+    , login_label(drawable, this->img.cx() + 20, 0, this, NULL, "Login:", true, -11, fgcolor, bgcolor)
     , login_edit(drawable, 0, 0, 200, this, NULL, login, -12, BLACK, WHITE, -1u, 1, 1)
-    , password_label(drawable, this->img.cx() + 20, 0, this, NULL, "Password:", true, -13, bgcolor, fgcolor)
+    , password_label(drawable, this->img.cx() + 20, 0, this, NULL, "Password:", true, -13, fgcolor, bgcolor)
     , password_edit(drawable, 0, 0, 200, this, NULL, password, -14, BLACK, WHITE, -1u, 1, 1)
     , ok(drawable, 0, 0, this, this, "Ok", true, -15, BLACK, WHITE, 6, 2)
     , cancel(drawable, 0, 0, this, this, "Cancel", true, -16, BLACK, WHITE, 6, 2)
@@ -73,41 +73,38 @@ public:
         this->login_edit.set_edit_x(x);
         this->password_edit.rect.x = x;
         this->rect.cx = x - this->dx() + std::max(this->login_edit.cx(), this->password_edit.cx()) + 10;
-        this->help.set_button_x(this->dx() + this->cx() - (this->help.cx() + 10));
-        this->cancel.set_button_x(this->help.dx() - (this->cancel.cx() + 10));
-        this->ok.set_button_x(this->cancel.dx() - (this->ok.cx() + 10));
+        uint16_t sizex = this->help.cx() + this->cancel.cx() + this->ok.cx() + 40;
+        x = this->dx() + (this->cx() - sizex) / 2 + 10;
+        this->ok.set_button_x(x);
+        x += this->ok.cx() + 10;
+        this->cancel.set_button_x(x);
+        x += this->cancel.cx() + 10;
+        this->help.set_button_x(x);
 
         this->login_edit.set_edit_cx(this->cx() - (this->login_edit.dx() - this->dx()) - 10);
         this->password_edit.rect.cx = this->login_edit.cx();
 
         this->resize_titlebar();
 
-        y = this->dy() + this->titlebar.cy() + 10;
-        this->img.rect.y = y;
+        uint16_t rightsize = this->login_edit.cy() * 2 + 10;
+        uint16_t maxry = std::max(this->img.cy(), rightsize);
+        y = this->dy() + this->titlebar.cy();
+
+        this->img.rect.y = y + (maxry - this->img.cy()) / 2;
+
+        y += (maxry - rightsize) / 2;
         this->login_label.rect.y = y + (this->login_edit.cy() - this->login_label.cy()) / 2;
         this->login_edit.set_edit_y(y);
-        y += this->login_label.cy() * 2;
+        y += this->login_edit.cy() + 10;
         this->password_label.rect.y = y + (this->password_edit.cy() - this->password_label.cy()) / 2;
         this->password_edit.rect.y = y;
-        y += this->password_label.cy() * 2;
+
+        y = this->dy() + this->titlebar.cy() + maxry;
         this->ok.set_button_y(y);
         this->cancel.set_button_y(y);
         this->help.set_button_y(y);
+
         this->rect.cy = y + this->ok.cy() + 10 - this->dy();
-        int d = (this->cy() - this->titlebar.cy() - (this->img.cy() + 20)) / 2;
-        if (d < 0) {
-            d = -d;
-            this->login_label.rect.y += d;
-            this->login_edit.set_edit_y(this->login_edit.dy() + d);
-            this->password_label.rect.y += d;
-            this->password_edit.set_password_y(this->password_edit.dy() + d);
-            this->ok.set_button_y(this->ok.dy() + d);
-            this->cancel.set_button_y(this->cancel.dy() + d);
-            this->help.set_button_y(this->help.dy() + d);
-            this->rect.cy = this->titlebar.cy() + this->img.cy() + 20;
-        } else {
-            this->img.rect.x += d;
-        }
     }
 
     virtual ~WindowLogin()
@@ -119,7 +116,7 @@ public:
     virtual void notify(Widget2* widget, NotifyApi::notify_event_t event,
                         long unsigned int param, long unsigned int param2)
     {
-        if (widget == &this->help) {
+        if (widget == &this->help && !this->window_help) {
             if (this->parent) {
                 Widget2 * p = this->parent;
                 while (p->parent)
@@ -137,7 +134,7 @@ public:
                     "<br>"
                     "Contact your system administrator if you are<br>"
                     "having problems logging on.",
-                    -20, DARK_WABGREEN, BLACK
+                    -20, "Ok", this->login_label.fg_color, this->bg_color
                 );
 
                 this->window_help->ok.label.bg_color = WHITE;
@@ -157,10 +154,21 @@ public:
                 this->window_help->ok.set_button_y(this->window_help->ok.dy() + y);
 
                 static_cast<WidgetComposite*>(p)->child_list.push_back(this->window_help);
+
+                this->widget_with_focus = this->window_help;
+
+                this->drawable->begin_update();
+                this->window_help->draw(this->window_help->rect);
+                this->drawable->end_update();
             }
         } else if (widget == this->window_help) {
             this->close_window_help();
             this->window_help = 0;
+            if (this->login_edit.label.buffer[0]) {
+                this->widget_with_focus = &this->password_edit;
+            } else {
+                this->widget_with_focus = &this->login_edit;
+            }
         } else if (event == NOTIFY_CANCEL) {
             if (this->window_help) {
                 this->close_window_help();
@@ -177,7 +185,9 @@ private:
     {
         Widget2 * parent = this->window_help->parent;
         static_cast<WidgetComposite*>(parent)->detach_widget(this->window_help);
+        parent->drawable->begin_update();
         parent->draw(this->window_help->rect);
+        parent->drawable->end_update();
         delete this->window_help;
     }
 };

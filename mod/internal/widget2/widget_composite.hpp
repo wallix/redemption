@@ -99,6 +99,14 @@ public:
         //this->selector.rdp_input_mouse(device_flags, x, y, keymap);
     }
 
+    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+    {
+        if (NULL == this->widget_with_focus && this->widget_with_focus == this) {
+            return ;
+        }
+        this->widget_with_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
+    }
+
     bool detach_widget(Widget2 * widget)
     {
         for (size_t i = 0; i < this->child_list.size(); ++i) {
@@ -112,6 +120,20 @@ public:
             }
         }
         return false;
+    }
+
+    virtual void notify(Widget2* widget, notify_event_t event, long unsigned int param, long unsigned int param2)
+    {
+        if (event == NOTIFY_FOCUS_BEGIN) {
+            Widget2 * old = this->widget_with_focus;
+            this->widget_with_focus = widget;
+            if (this->parent && this->parent->widget_with_focus != this) {
+                this->focus(old);
+            }
+        }
+        else {
+            Widget2::notify(widget, event, param, param2);
+        }
     }
 
 #if 0

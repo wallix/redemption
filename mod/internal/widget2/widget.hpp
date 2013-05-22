@@ -70,6 +70,7 @@ public:
 
 public:
     Widget2 * parent;
+    Widget2 * widget_with_focus;
     ModApi * drawable;
     NotifyApi * notifier;
     Rect rect;
@@ -80,6 +81,7 @@ public:
 public:
     Widget2(ModApi * drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0)
     : parent(parent)
+    , widget_with_focus(this)
     , drawable(drawable)
     , notifier(notifier)
     , rect(Rect(rect.x + (parent ? parent->dx() : 0),

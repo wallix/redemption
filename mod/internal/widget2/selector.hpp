@@ -264,9 +264,7 @@ public:
     WidgetButton connect;
     //WidgetPager pager;
 
-    Widget2 * widget_focused;
-
-private:
+public:
     struct temporary_number_of_page {
         char buffer[15];
 
@@ -303,8 +301,9 @@ public:
     , first_page(drawable, 0, 0, this, notifier, "<<", true, -15, BLACK, WHITE, 8, 4)
     , prev_page(drawable, 0, 0, this, notifier, "<", true, -15, BLACK, WHITE, 8, 4)
     , current_page(drawable, 0, 0, this->first_page.cy(), this, notifier,
-                   current_page, -15, BLACK, WHITE, -1, 1, 1)
-    , number_page(drawable, 0, 0, this, NULL, temporary_number_of_page(number_of_page).buffer,
+                   current_page ? current_page : "XXXX", -15, BLACK, WHITE, -1, 1, 1)
+    , number_page(drawable, 0, 0, this, NULL,
+                  number_of_page ? temporary_number_of_page(number_of_page).buffer : "/XXXX",
                   true, -15, BLACK, GREY)
     , next_page(drawable, 0, 0, this, notifier, ">>", true, -15, BLACK, WHITE, 8, 4)
     , last_page(drawable, 0, 0, this, notifier, ">", true, -15, BLACK, WHITE, 8, 4)
@@ -312,8 +311,8 @@ public:
     , logout(drawable, 0, 0, this, notifier, "Logout", true, -16, BLACK, WHITE, 8, 4)
     , apply(drawable, 0, 0, this, notifier, "Appy", true, -17, BLACK, WHITE, 8, 4)
     , connect(drawable, 0, 0, this, notifier, "Connect", true, -18, BLACK, WHITE, 8, 4)
-    , widget_focused(&this->filter_account_device/*device_group_lines*/)
     {
+        this->widget_with_focus = &this->filter_account_device/*device_group_lines*/;
         this->child_list.push_back(&this->device_label);
         this->child_list.push_back(&this->device_group_label);
         this->child_list.push_back(&this->account_device_label);
@@ -414,12 +413,12 @@ public:
                 w->group_id == this->filter_account_device.group_id
              || w->group_id == this->device_group_lines.group_id
              || w == &this->current_page)) {
-                this->widget_focused = w;
+                this->widget_with_focus = w;
                 w->rdp_input_mouse(device_flags, x, y, keymap);
                 return ;
             }
             else {
-                this->widget_focused = NULL;
+                this->widget_with_focus = NULL;
             }
         }
         WidgetComposite::rdp_input_mouse(device_flags, x, y, keymap);
@@ -427,9 +426,9 @@ public:
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (this->widget_focused) {
+        if (this->widget_with_focus) {
             this->drawable->begin_update();
-            this->widget_focused->rdp_input_scancode(param1, param2, param3, param4, keymap);
+            this->widget_with_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
             this->drawable->end_update();
         }
     }
