@@ -31,33 +31,36 @@ rule setvar ( env : default * )
     }
 }
 
+constant FIXTURES_PATH : [ setvar FIXTURES_PATH : ./tests/fixtures ] ;
 constant INSTALLDIR : [ setvar DESTDIR : "" ] ;
 constant PREFIX : [ setvar PREFIX : /usr/local ] ;
 constant BIN_PREFIX : [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
 constant LIB_PREFIX : [ setvar LIB_PREFIX : $(PREFIX)/lib ] ;
 constant SHARE_PREFIX : [ setvar SHARE_PREFIX : $(PREFIX)/share/rdpproxy ] ;
-constant FIXTURES_PATH : [ setvar FIXTURES_PATH : ./tests/fixtures ] ;
+constant RECORD_TMP_PATH : [ setvar TMP_PATH : /var/rdpproxy/tmp ] ;
+constant RECORD_PATH : [ setvar RECORD_PATH : /var/rdpproxy/recorded ] ;
 constant ETC_PREFIX : [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
+constant CERT_PREFIX : [ setvar CERT_PREFIX : /etc/rdpproxy/cert ] ;
+constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
 
 rule defines ( properties * )
 {
     local defs ;
     defs += <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
     defs += <define>CFG_PATH='\"$(ETC_PREFIX)\"' ;
-    defs += <define>LICENSE_PATH='\"/var/certs/redemption\"' ;
-    defs += <define>PNG_PATH='\"/var/tmp/png\"' ;
-    defs += <define>WRM_PATH='\"/var/recorded/rdp\"' ;
-    defs += <define>HASH_PATH='\"/var/lib/hash\"' ;
-    defs += <define>CERTIF_PATH='\"$(ETC_PREFIX)/certificate\"' ;
-    defs += <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"' ;
-
+    defs += <define>FLV_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>OCR_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>PNG_PATH='\"$(RECORD_TMP_PATH)\"' ;
+    defs += <define>WRM_PATH='\"$(RECORD_PATH)\"' ;
+    defs += <define>HASH_PATH='\"$(HASH_PATH)\"' ;
+    defs += <define>LICENSE_PATH='\"$(CERT_PREFIX)/rdplicense\"' ;
+    defs += <define>CERTIF_PATH='\"$(CERT_PREFIX)/rdp\"' ;
     if [ os.environ VERBOSE ]
     {
         defs += <define>VERBOSE ;
     }
     return $(defs) ;
 }
-
 variant coverage : debug : <cxxflags>--profile-arcs <cxxflags>--test-coverage <cxxflags>--coverage <link>shared ;
 
 
