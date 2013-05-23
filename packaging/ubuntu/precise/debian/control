@@ -2,7 +2,7 @@ Source: redemption
 Section: x11
 Priority: extra
 Maintainer: WAB Dev Team <wab@wallix.com>
-Build-Depends: git, dpkg-dev, debhelper, bjam, boost-build, build-essential, libboost-dev, g++, libboost-program-options-dev, libssl-dev, libpng12-dev
+Build-Depends: git, dpkg-dev, debhelper, build-essential, libboost-dev, g++, libboost-program-options-dev, libssl-dev, libpng12-dev
 
 Package: redemption
 Architecture: amd64 
