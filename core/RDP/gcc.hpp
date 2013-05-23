@@ -628,6 +628,13 @@ namespace GCC
 
             void emit(Stream & stream)
             {
+                if (this->length != 8 
+                && this->length != 12 
+                && this->length != 16) {
+                    LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
+                    throw Error(ERR_GCC);
+                };
+            
                 stream.out_uint16_le(this->userDataType);
                 stream.out_uint16_le(this->length);
                 stream.out_uint32_le(this->version);
@@ -639,7 +646,6 @@ namespace GCC
                     stream.out_uint32_le(this->earlyCapabilityFlags);
                 }
                 stream.mark_end();
-                TODO("add sanity check if provided length does not match 8, 12 or 16")
             }
 
             void recv(Stream & stream)
@@ -647,10 +653,26 @@ namespace GCC
                 this->userDataType = stream.in_uint16_le();
                 this->length = stream.in_uint16_le();
                 this->version = stream.in_uint32_le();
-                if (this->length < 12) { return; }
+                if (this->length < 12) {
+                    if (this->length != 8) {
+                        LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
+                        throw Error(ERR_GCC);
+                    }
+                    return;
+                }
                 this->clientRequestedProtocols = stream.in_uint32_le();
-                if (this->length < 16) { return; }
+                if (this->length < 16) {
+                    if (this->length != 12) {
+                        LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
+                        throw Error(ERR_GCC);
+                    }
+                    return; 
+                }
                 this->earlyCapabilityFlags = stream.in_uint32_le();
+                if (this->length != 16) {
+                    LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
+                    throw Error(ERR_GCC);
+                }
             }
 
             void log(const char * msg)
@@ -661,11 +683,26 @@ namespace GCC
                       (this->version==0x00080001) ? "RDP 4 client"
                      :(this->version==0x00080004) ? "RDP 5.0, 5.1, 5.2, 6.0, 6.1, 7.0, 7.1 and 8.0 servers)"
                                                   : "Unknown client");
-                if (this->length < 12) { return; }
+                if (this->length < 12) {
+                    if (this->length != 8) {
+                        LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
+                        throw Error(ERR_GCC);
+                    }
+                    return;
+                }
                 LOG(LOG_INFO, "sc_core::clientRequestedProtocols  = %u", this->clientRequestedProtocols);
-                if (this->length < 16) { return; }
+                if (this->length < 16) {
+                    if (this->length != 12) {
+                        LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
+                        throw Error(ERR_GCC);
+                    }
+                    return; 
+                }
                 LOG(LOG_INFO, "sc_core::earlyCapabilityFlags  = %u", this->earlyCapabilityFlags);
-
+                if (this->length != 16) {
+                    LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
+                    throw Error(ERR_GCC);
+                }
             }
         };
 
@@ -2294,12 +2331,25 @@ namespace GCC
                 this->encryptionMethod = stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
                 this->encryptionLevel = stream.in_uint32_le();  /* 1 = low, 2 = medium, 3 = high */
 
-                if ((this->encryptionMethod == 0) && (this->encryptionMethod == 0)){
+                if ((this->encryptionMethod == 0) && (this->encryptionLevel == 0)){
                     this->serverRandomLen = 0;
                     this->encryptionLevel = 0;
                 }
                 TODO("add sanity check if crypto is NONE and length not 12")
-                if (this->length == 12) return;
+                if (this->length == 12) {
+                    if ((this->encryptionLevel != 0)||(this->encryptionMethod != 0)){
+                        LOG(LOG_ERR, "SC_SECURITY short header with encription method=%u level=%u",
+                            this->encryptionMethod, this->encryptionLevel);
+                        throw Error(ERR_GCC);
+                    }
+                    return; 
+                }
+                
+                if ((this->encryptionLevel == 0) || (encryptionMethod == 0)){
+                    LOG(LOG_ERR, "SC_SECURITY encryption header but no encryption setted : method=%u level=%u",
+                        this->encryptionMethod, this->encryptionLevel);
+                    throw Error(ERR_GCC);
+                }
                 
                 // serverRandomLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of
                 // the serverRandom field. If the encryptionMethod and encryptionLevel fields
