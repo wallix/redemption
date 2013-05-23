@@ -118,10 +118,9 @@ public:
     bool server_fastpath_update_support;      // choice of programmer + capability of client
     bool tls_support;                         // choice of programmer, front support tls
     int clientRequestedProtocols;
-
-TODO("Pass font name as parameter in constructor")
-
+    
     Front ( Transport * trans
+          , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
           , Random * gen
           , Inifile * ini
           , bool fp_support // If true, fast-path must be supported
@@ -140,7 +139,7 @@ TODO("Pass font name as parameter in constructor")
         , order_level(0)
         , ini(ini)
         , verbose(this->ini->globals.debug.front)
-        , font(SHARE_PATH "/" DEFAULT_FONT_NAME)
+        , font(default_font_name)
         , brush_cache()
         , pointer_cache()
         , glyph_cache()
@@ -413,10 +412,11 @@ TODO("Pass font name as parameter in constructor")
             strcpy(basename, "redemption"); // default value actual one should come from movie_path
             strcpy(extension, ""); // extension is currently ignored
             canonical_path(ini.globals.movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
-            TODO("CGR: I forced path for WRM, wrm path is currently ignored. This should be fixed."
-                 " The problem is that we need two different path, one for PNG one for WRM"
-                 "Not sure of the correct way to fix that. Pass several target filenames ? Pass nothing ?")
-            this->capture = new Capture(now, width, height, WRM_PATH "/", PNG_PATH "/", HASH_PATH "/", basename, true, ini);
+            this->capture = new Capture(now, width, height, 
+                                        RECORD_PATH "/", 
+                                        RECORD_TMP_PATH "/", 
+                                        HASH_PATH "/", basename, 
+                                        true, ini);
         }
     }
 

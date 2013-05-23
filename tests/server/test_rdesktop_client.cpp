@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     bool tls_support = false;
     bool fastpath_support = false;
-    Front front(&front_trans, &gen, &ini, fastpath_support, tls_support);
+    Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini, fastpath_support, tls_support);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0){

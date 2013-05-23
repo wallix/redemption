@@ -48,6 +48,8 @@ rule defines ( properties * )
     local defs ;
     defs += <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
     defs += <define>CFG_PATH='\"$(ETC_PREFIX)\"' ;
+    defs += <define>RECORD_PATH='\"$(RECORD_PATH)\"' ;
+    defs += <define>RECORD_TMP_PATH='\"$(RECORD_TMP_PATH)\"' ;
     defs += <define>FLV_PATH='\"$(RECORD_TMP_PATH)\"' ;
     defs += <define>OCR_PATH='\"$(RECORD_TMP_PATH)\"' ;
     defs += <define>PNG_PATH='\"$(RECORD_TMP_PATH)\"' ;
