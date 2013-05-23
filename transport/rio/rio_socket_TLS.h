@@ -92,8 +92,10 @@ extern "C" {
                     continue;
 
                 case SSL_ERROR_ZERO_RETURN:
-                    LOG(LOG_WARNING, "TLS receive for %u bytes, ZERO RETURN got %u",
-                        (unsigned)len, (unsigned)(remaining_len - len));
+                    if (remaining_len - len){
+                        LOG(LOG_WARNING, "TLS receive for %u bytes, ZERO RETURN got %u",
+                            (unsigned)len, (unsigned)(remaining_len - len));
+                    }
                     return remaining_len - len;
                 default:
                 {

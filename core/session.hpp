@@ -137,7 +137,7 @@ struct Session {
             this->internal_state = SESSION_STATE_ENTRY;
             const bool enable_fastpath = true;
             const bool tls_support = this->ini->globals.enable_tls;
-            this->front = new Front(&front_trans, &this->gen, ini, enable_fastpath, tls_support);
+            this->front = new Front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &this->gen, ini, enable_fastpath, tls_support);
             this->no_mod = new null_mod(*(this->front));
             this->mod = this->no_mod;
 

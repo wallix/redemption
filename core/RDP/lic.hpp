@@ -3027,25 +3027,26 @@ namespace LIC
 // bbErrorInfo (variable): A LICENSE_BINARY_BLOB (section 2.2.1.12.1.2) structure which MUST contain a BLOB 
 //    of type BB_ERROR_BLOB (0x0004) that include " information relevant to the error code specified in dwErrorCode.
 
+    struct ValidClientMessage
+    {
+        uint32_t dwErrorCode;
+        uint32_t dwStateTransition;
+
+        uint16_t wBlobType;
+        uint16_t wBlobLen;
+        
+    }; 
+
     struct ErrorAlert_Recv
     {
         uint8_t wMsgType;
         uint8_t bVersion;
         uint16_t wMsgSize;
 
-
         // validClientMessage (variable): A Licensing Error Message (section 2.2.1.12.1.3) structure.
         // The dwStateTransition field MUST be set to ST_NO_TRANSITION (0x00000002). 
         // The bbErrorInfo field MUST contain an empty binary large object (BLOB) of type BB_ERROR_BLOB (0x0004).
-        struct ValidClientMessage
-        {
-            uint32_t dwErrorCode;
-            uint32_t dwStateTransition;
-
-            uint16_t wBlobType;
-            uint16_t wBlobLen;
-            
-        } validClientMessage;
+        ValidClientMessage validClientMessage;
 
         ErrorAlert_Recv(Stream & stream){
             hexdump_d(stream.data, stream.size());
@@ -3094,6 +3095,23 @@ namespace LIC
             }
         }
     };
+
+    struct ErrorAlert_Send
+    {
+        uint8_t wMsgType;
+        uint8_t bVersion;
+        uint16_t wMsgSize;
+
+        // validClientMessage (variable): A Licensing Error Message (section 2.2.1.12.1.3) structure.
+        // The dwStateTransition field MUST be set to ST_NO_TRANSITION (0x00000002). 
+        // The bbErrorInfo field MUST contain an empty binary large object (BLOB) of type BB_ERROR_BLOB (0x0004).
+        ValidClientMessage validClientMessage;
+
+        ErrorAlert_Send(Stream & stream, uint8_t wMsgType, uint8_t bversion, ValidClientMessage & validClientMessage){
+        }
+    };
+
+
 
 // 2.2.2.1 Server License Request (SERVER_LICENSE_REQUEST)
 // =======================================================
