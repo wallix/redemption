@@ -1097,8 +1097,8 @@ public:
 
                 
                 if (
-                    // Proxy supportes TLS.
-                       this->tls_support
+                    // Proxy supports TLS.
+                    this->tls_support
                     // RDP client doesn't support TLS.
                     && !(this->clientRequestedProtocols & X224::PROTOCOL_TLS)
                     // Fallback to legacy security protocol (RDP) is allowed.

@@ -263,7 +263,6 @@ unit-test test_fastpath : tests/core/test_fastpath.cpp z openssl crypto dl libbo
 unit-test test_slowpath : tests/core/test_slowpath.cpp z openssl crypto dl libboost_unit_test ;
 
 unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test ;
-unit-test test_dico : tests/test_dico.cpp libboost_unit_test ;
 unit-test test_colors : tests/test_colors.cpp libboost_unit_test ;
 unit-test test_libpng : tests/test_libpng.cpp png z libboost_unit_test ;
 unit-test test_drawable : tests/test_drawable.cpp png z openssl crypto libboost_unit_test ;
