@@ -28,6 +28,7 @@ class WidgetButton : public Widget2
 public:
     WidgetLabel label;
     int state;
+    notify_event_t event;
     int color_border_right_bottom;
     int color_border_right_bottom2;
     int color_border_left_top;
@@ -35,16 +36,17 @@ public:
     WidgetButton(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
                  NotifyApi* notifier, const char * text, bool auto_resize = true,
                  int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
-                 int xtext = 0, int ytext = 0)
+                 int xtext = 0, int ytext = 0, notify_event_t notify_event = NOTIFY_SUBMIT)
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , label(drawable, 1, 1, this, 0, text, auto_resize, 0, fgcolor, bgcolor, xtext, ytext)
     , state(0)
+    , event(notify_event)
+    , color_border_right_bottom(BLACK)
+    , color_border_right_bottom2(0x888888)
+    , color_border_left_top(0xCCCCCC)
     {
         this->rect.cx = this->label.cx() + 3;
         this->rect.cy = this->label.cy() + 3;
-        this->color_border_right_bottom = BLACK;
-        this->color_border_left_top = 0xCCCCCC;
-        this->color_border_right_bottom2 = 0x888888;
     }
 
     virtual ~WidgetButton()
@@ -164,10 +166,20 @@ public:
         else if (device_flags == MOUSE_FLAG_BUTTON1 && this->state & 1) {
             this->state &= ~1;
             this->swap_border_color();
-            this->send_notify(NOTIFY_SUBMIT);
+            if (this->rect.contains_pt(x, y)) {
+                this->send_notify(this->event);
+            }
         }
         else
             this->Widget2::rdp_input_mouse(device_flags, x, y, keymap);
+    }
+
+    virtual void mouse_over()
+    {
+        if (this->state & 1) {
+            this->state &= ~1;
+            this->swap_border_color();
+        }
     }
 
     virtual void blur()

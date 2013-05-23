@@ -22,6 +22,7 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_PASSWORD_HPP
 
 #include "label.hpp"
+#include <keymap2.hpp>
 
 class WidgetPassword : public Widget2
 {
@@ -40,6 +41,10 @@ public:
     int bg_color;
     int fg_color;
     bool auto_resize;
+    int cursor_color;
+    int border_color_top_left;
+    int border_color_bottom_right;
+    int border_color_bottom_right_inner;
 
     WidgetPassword(ModApi* drawable, int16_t x, int16_t y, uint16_t cx,
                    Widget2* parent, NotifyApi* notifier, const char * text,
@@ -57,6 +62,10 @@ public:
     , bg_color(bgcolor)
     , fg_color(fgcolor)
     , auto_resize(auto_resize)
+    , cursor_color(0x888888)
+    , border_color_top_left(0x444444)
+    , border_color_bottom_right(0xEEEEEE)
+    , border_color_bottom_right_inner(0x888888)
     {
         this->buffer[0] = 0;
         this->display_pass[0] = 0;
@@ -102,25 +111,34 @@ public:
                                          this->fg_color,
                                          this->bg_color,
                                          this->rect.intersect(clip)
-                                         );
-        this->draw_cursor(clip);
+        );
+
+        if (this->has_focus) {
+            this->draw_cursor(clip);
+        }
 
         //top
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx(), this->dy(), this->cx(), 1
-        )), 0x888888), this->rect);
+            this->dx(), this->dy(), this->cx() - 1, 1
+        )), this->border_color_top_left), this->rect);
         //left
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + 1, 1, this->cy() - 2
-        )), 0x888888), this->rect);
+        )), this->border_color_top_left), this->rect);
         //right
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx() + this->cx() - 1, this->dy() + 1, 1, this->cy() - 2
-        )), 0x888888), this->rect);
+            this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
+        )), this->border_color_bottom_right), this->rect);
+        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx() + this->cx() - 2, this->dy() + 1, 1, this->cy() - 3
+        )), this->border_color_bottom_right_inner), this->rect);
         //bottom
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
-        )), 0x888888), this->rect);
+        )), this->border_color_bottom_right), this->rect);
+        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
+        )), this->border_color_bottom_right_inner), this->rect);
     }
 
     void draw_cursor(const Rect& clip)
@@ -135,7 +153,7 @@ public:
             this->drawable->draw(
                 RDPOpaqueRect(
                     cursor_clip,
-                    0x888888
+                    this->cursor_color
                 ), this->rect
             );
         }

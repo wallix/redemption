@@ -46,16 +46,21 @@ public:
     WindowLogin(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
                 NotifyApi* notifier, const char* caption, int group_id = 0,
                 const char * login = 0, const char * password = 0,
-                int fgcolor = BLACK, int bgcolor = GREY)
+                int fgcolor = BLACK, int bgcolor = GREY,
+                const char * button_text_ok = "Ok",
+                const char * button_text_cancel = "Cancel",
+                const char * button_text_help = "Help",
+                const char * label_text_login = "Login",
+                const char * label_text_password = "Password")
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
     , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_LOGO24, this, NULL, -10)
-    , login_label(drawable, this->img.cx() + 20, 0, this, NULL, "Login:", true, -11, fgcolor, bgcolor)
-    , login_edit(drawable, 0, 0, 200, this, NULL, login, -12, BLACK, WHITE, -1u, 1, 1)
-    , password_label(drawable, this->img.cx() + 20, 0, this, NULL, "Password:", true, -13, fgcolor, bgcolor)
-    , password_edit(drawable, 0, 0, 200, this, NULL, password, -14, BLACK, WHITE, -1u, 1, 1)
-    , ok(drawable, 0, 0, this, this, "Ok", true, -15, BLACK, WHITE, 6, 2)
-    , cancel(drawable, 0, 0, this, this, "Cancel", true, -16, BLACK, WHITE, 6, 2)
-    , help(drawable, 0, 0, this, this, "Help", true, -17, BLACK, WHITE, 6, 2)
+    , login_label(drawable, this->img.cx() + 20, 0, this, NULL, label_text_login, true, -11, fgcolor, bgcolor)
+    , login_edit(drawable, 0, 0, 350, this, NULL, login, -12, BLACK, WHITE, -1u, 1, 1)
+    , password_label(drawable, this->img.cx() + 20, 0, this, NULL, label_text_password, true, -13, fgcolor, bgcolor)
+    , password_edit(drawable, 0, 0, 350, this, NULL, password, -14, BLACK, WHITE, -1u, 1, 1)
+    , ok(drawable, 0, 0, this, this, button_text_ok, true, -15, BLACK, WHITE, 6, 2)
+    , cancel(drawable, 0, 0, this, this, button_text_cancel, true, -16, BLACK, WHITE, 6, 2, NOTIFY_CANCEL)
+    , help(drawable, 0, 0, this, this, button_text_help, true, -17, BLACK, WHITE, 6, 2)
     , window_help(NULL)
     {
         this->child_list.push_back(&this->login_edit);
@@ -67,14 +72,14 @@ public:
         this->child_list.push_back(&this->help);
         this->child_list.push_back(&this->img);
 
-        x = this->dx() + 10;
+        x = this->dx() + 12;
         this->img.rect.x = x;
         x += this->img.cx() + std::max(this->login_label.cx(), this->password_label.cx()) + 20;
         this->login_edit.set_edit_x(x);
         this->password_edit.rect.x = x;
-        this->rect.cx = x - this->dx() + std::max(this->login_edit.cx(), this->password_edit.cx()) + 10;
+        this->rect.cx = x - this->dx() + std::max(this->login_edit.cx(), this->password_edit.cx()) + 14;
         uint16_t sizex = this->help.cx() + this->cancel.cx() + this->ok.cx() + 40;
-        x = this->dx() + (this->cx() - sizex) / 2 + 10;
+        x = this->dx() + (this->cx() - sizex) / 2 + 12;
         this->ok.set_button_x(x);
         x += this->ok.cx() + 10;
         this->cancel.set_button_x(x);
@@ -88,7 +93,7 @@ public:
 
         uint16_t rightsize = this->login_edit.cy() * 2 + 10;
         uint16_t maxry = std::max(this->img.cy(), rightsize);
-        y = this->dy() + this->titlebar.cy();
+        y = this->titlebar.dy() + this->titlebar.cy();
 
         this->img.rect.y = y + (maxry - this->img.cy()) / 2;
 
@@ -99,7 +104,7 @@ public:
         this->password_label.rect.y = y + (this->password_edit.cy() - this->password_label.cy()) / 2;
         this->password_edit.rect.y = y;
 
-        y = this->dy() + this->titlebar.cy() + maxry;
+        y = this->titlebar.dy() + this->titlebar.cy() + maxry;
         this->ok.set_button_y(y);
         this->cancel.set_button_y(y);
         this->help.set_button_y(y);
@@ -169,7 +174,7 @@ public:
             } else {
                 this->widget_with_focus = &this->login_edit;
             }
-        } else if (event == NOTIFY_CANCEL) {
+        } else if (widget == &this->cancel) {
             if (this->window_help) {
                 this->close_window_help();
                 this->window_help = 0;
@@ -177,6 +182,20 @@ public:
             this->send_notify(NOTIFY_CANCEL);
         } else {
             Window::notify(widget, event, param, param2);
+        }
+    }
+
+    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+    {
+        if (keymap->nb_kevent_available() > 0){
+            switch (keymap->top_kevent()){
+                case Keymap2::KEVENT_ESC:
+                    keymap->get_kevent();
+                    this->send_notify(NOTIFY_CANCEL);
+                    break;
+                default:
+                    Window::rdp_input_scancode(param1, param2, param3, param4, keymap);
+            }
         }
     }
 

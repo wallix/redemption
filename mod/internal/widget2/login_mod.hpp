@@ -41,7 +41,12 @@ public:
     LoginMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
     : InternalMod(front, width, height)
     , screen(this, width, height)
-    , window_login(this, 0, 0, &this->screen, this, "???")
+    , window_login(this, 0, 0, &this->screen, this, "???", 0, 0, 0, BLACK, GREY,
+                   ini.globals.translation.button_ok,
+                   ini.globals.translation.button_cancel,
+                   ini.globals.translation.button_help,
+                   ini.globals.translation.login,
+                   ini.globals.translation.password)
     , image(this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
     , ini(ini)
     {
@@ -54,21 +59,22 @@ public:
         this->image.rect.x = width - this->image.cx();
         this->image.rect.y = height - this->image.cy();
 
-        const char * auth_user = this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0);
-
         if (this->ini.context_is_asked(AUTHID_TARGET_USER)
         ||  this->ini.context_is_asked(AUTHID_TARGET_DEVICE)){
-            if (*auth_user){
-                this->window_login.login_edit.label.set_text(auth_user);
-                strncpy(this->ini.account.username, auth_user, sizeof(this->ini.account.username));
-            } else {
+            if (this->ini.context_is_asked(AUTHID_AUTH_USER)){
                 this->ini.account.username[0] = 0;
+            }
+            else {
+                strncpy(this->ini.account.username,
+                    this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0),
+                    sizeof(this->ini.account.username));
+                this->ini.account.username[sizeof(this->ini.account.username) - 1] = 0;
             }
         }
         else if (this->ini.context_is_asked(AUTHID_AUTH_USER)) {
             this->ini.account.username[0] = 0;
         }
-        else if (0 == *auth_user) {
+        else {
             TODO("check this! Assembling parts to get user login with target is not obvious"
                  "method used below il likely to show @: if target fields are empty")
             char buffer[256];
@@ -80,15 +86,16 @@ public:
                     , (this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ? ":" : "")
                     , this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0)
                     );
-            this->window_login.login_edit.label.set_text(buffer);
-            strncpy(this->ini.account.username, auth_user, sizeof(this->ini.account.username));
+            strcpy(this->ini.account.username, buffer);
         }
 
         if (this->ini.account.username[0]) {
-            this->screen.widget_with_focus = &this->window_login.password_edit;
-        } else {
             this->screen.widget_with_focus = &this->window_login.login_edit;
+        } else {
+            this->screen.widget_with_focus = &this->window_login.password_edit;
+            this->window_login.login_edit.label.set_text(this->ini.account.username);
         }
+        this->screen.widget_with_focus->has_focus = true;
 
         this->screen.refresh(this->screen.rect);
     }
@@ -101,12 +108,8 @@ public:
     {
         switch (event) {
             case NOTIFY_SUBMIT:
-                if (0 == strcmp(this->window_login.login_edit.label.buffer, this->ini.globals.translation.login)){
-                    this->ini.parse_username(this->window_login.login_edit.label.buffer);
-                }
-                else if (0 == strcmp(this->window_login.password_edit.buffer, this->ini.globals.translation.password)){
-                    this->ini.context_set_value(AUTHID_PASSWORD, this->window_login.password_edit.buffer);
-                }
+                this->ini.parse_username(this->window_login.login_edit.label.buffer);
+                this->ini.context_set_value(AUTHID_PASSWORD, this->window_login.password_edit.buffer);
                 this->mod_event(BACK_EVENT_NEXT);
                 break;
             case NOTIFY_CANCEL:

@@ -112,13 +112,18 @@ public:
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
         if (keymap->nb_kevent_available() > 0) {
-            if (keymap->top_kevent() == Keymap2::KEVENT_ESC){
-                keymap->get_kevent();
-                this->refused();
-            }
-            else if (keymap->top_kevent() == Keymap2::KEVENT_ENTER){
-                keymap->get_kevent();
-                this->accepted();
+            switch (keymap->top_kevent()) {
+                case Keymap2::KEVENT_ESC:
+                case Keymap2::KEVENT_RIGHT_ARROW:
+                    keymap->get_kevent();
+                    this->refused();
+                    break;
+                case Keymap2::KEVENT_ENTER:
+                    keymap->get_kevent();
+                    this->accepted();
+                    break;
+                default:
+                    break;
             }
         }
         (void)param1;

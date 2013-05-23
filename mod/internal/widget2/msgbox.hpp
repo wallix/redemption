@@ -36,7 +36,7 @@ public:
                int fgcolor = BLACK, int bgcolor = GREY)
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
     , msg(drawable, 0, 0, this, NULL, text, true, -10, fgcolor, bgcolor, 10, 2)
-    , ok(drawable, 0,0, this, this, "Ok", true, -11, fgcolor, bgcolor, 6, 2)
+    , ok(drawable, 0,0, this, this, "Ok", true, -11, fgcolor, bgcolor, 6, 2, NOTIFY_CANCEL)
     {
         this->child_list.push_back(&this->msg);
         this->child_list.push_back(&this->ok);
@@ -55,13 +55,17 @@ public:
     virtual ~MessageBox()
     {}
 
-    virtual void notify(Widget2 * widget, notify_event_t event, long unsigned int param, long unsigned int param2)
+    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (this->notifier) {
-            if (widget == &this->ok) {
-                this->send_notify(NOTIFY_CANCEL);
-            } else {
-                Window::notify(widget, event, param, param2);
+        if (keymap->nb_kevent_available() > 0){
+            switch (keymap->top_kevent()){
+                case Keymap2::KEVENT_ENTER:
+                case Keymap2::KEVENT_ESC:
+                    keymap->get_kevent();
+                    this->send_notify(NOTIFY_CANCEL);
+                    break;
+                default:
+                    Window::rdp_input_scancode(param1, param2, param3, param4, keymap);
             }
         }
     }

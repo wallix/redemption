@@ -22,11 +22,14 @@
 #define REDEMPTION_MOD_WIDGET2_WIDGET_COMPOSITE_HPP_
 
 #include <vector>
+#include <algorithm>
 #include "widget.hpp"
 #include "keymap2.hpp"
+#include <region.hpp>
 
 class WidgetComposite : public Widget2
 {
+    typedef std::vector<Widget2*>::iterator position_t;
 public:
     std::vector<Widget2*> child_list;
 
@@ -35,7 +38,7 @@ public:
     : Widget2(drawable, rect, parent, notifier, group_id)
     , child_list()
     {
-        //this->tab_flag = DELEGATE_CONTROL_TAB;
+        this->tab_flag = DELEGATE_CONTROL_TAB;
     }
 
     virtual ~WidgetComposite()
@@ -96,15 +99,56 @@ public:
                 w->rdp_input_mouse(device_flags, x, y, keymap);
             }
         }
-        //this->selector.rdp_input_mouse(device_flags, x, y, keymap);
     }
+
+    //BEGIN focus manager @{
+    position_t position_of_widget_with_focus()
+    {
+        return std::find(this->child_list.begin(), this->child_list.end(),
+                         this->widget_with_focus);
+    }
+
+    virtual bool next_focus()
+    {
+        struct focus_manager {
+            static position_t next_in(position_t first, position_t last)
+            {
+                for (; first < last; ++first) {
+                    if ((*first)->tab_flag == NORMAL_TAB) {
+                        break ;
+                    }
+                    if ((*first)->tab_flag == DELEGATE_CONTROL_TAB) {
+                        if ((*first)->next_focus()) {
+                            break ;
+                        }
+                    }
+                }
+                return first;
+            }
+        };
+
+        if (this->tab_flag == NORMAL_TAB) {
+            position_t pos = this->position_of_widget_with_focus();
+            if (pos != this->child_list.end()) {
+                position_t pos2 = focus_manager::next_in(pos, this->child_list.end());
+                if (pos2 == this->child_list.end()) {
+                    pos2 = focus_manager::next_in(this->child_list.begin(), pos);
+                }
+                if (pos2 != this->child_list.end()) {
+                    this->widget_with_focus = *pos2;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    //END focus manager @}
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (NULL == this->widget_with_focus && this->widget_with_focus == this) {
-            return ;
+        if (this->widget_with_focus != this && this->widget_with_focus != NULL) {
+            this->widget_with_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
         }
-        this->widget_with_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 
     bool detach_widget(Widget2 * widget)
@@ -315,6 +359,24 @@ public:
         for (std::size_t i = 0; i < size; ++i) {
             Widget2 *w = this->child_list[i];
             w->refresh(new_clip.intersect(w->rect));
+        }
+    }
+
+    void draw_inner_free(const Rect& clip, int bg_color)
+    {
+        Region region;
+        region.rects.push_back(clip);
+
+        for (std::size_t i = 0, size = this->child_list.size(); i < size; ++i) {
+            Rect rect = clip.intersect(this->child_list[i]->rect);
+
+            if (!rect.isempty()) {
+                region.subtract_rect(rect);
+            }
+        }
+
+        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
+            this->drawable->draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
         }
     }
 

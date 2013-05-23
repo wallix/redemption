@@ -41,7 +41,7 @@ public:
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
     , dialog(drawable, 0, 0, this, NULL, text, true, -10, fgcolor, bgcolor, 10, 2)
     , ok(drawable, 0, 0, this, this, ok_text, true, -12, fgcolorbtn, bgcolorbtn, 6, 2)
-    , cancel(cancel_text ? new WidgetButton(drawable, 0, 0, this, this, cancel_text, true, -11, fgcolorbtn, bgcolorbtn, 6, 2) : NULL)
+    , cancel(cancel_text ? new WidgetButton(drawable, 0, 0, this, this, cancel_text, true, -11, fgcolorbtn, bgcolorbtn, 6, 2, NOTIFY_CANCEL) : NULL)
     {
         this->child_list.push_back(&this->dialog);
         this->child_list.push_back(&this->ok);
@@ -83,18 +83,20 @@ public:
         delete this->cancel;
     }
 
-    virtual void notify(Widget2* widget, notify_event_t event,
-                        long unsigned int param, long unsigned int param2)
+    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (this->notifier) {
-            if (event == NOTIFY_SUBMIT && widget == this->cancel) {
-                this->send_notify(NOTIFY_CANCEL);
-            }
-            else if (event == NOTIFY_SUBMIT && widget == &this->ok) {
-                this->send_notify(NOTIFY_SUBMIT);
-            }
-            else {
-                Window::notify(widget, event, param, param2);
+        if (keymap->nb_kevent_available() > 0){
+            switch (keymap->top_kevent()){
+                case Keymap2::KEVENT_ENTER:
+                    keymap->get_kevent();
+                    this->send_notify(NOTIFY_SUBMIT);
+                    break;
+                case Keymap2::KEVENT_ESC:
+                    keymap->get_kevent();
+                    this->send_notify(this->cancel ? NOTIFY_CANCEL : NOTIFY_SUBMIT);
+                    break;
+                default:
+                    Window::rdp_input_scancode(param1, param2, param3, param4, keymap);
             }
         }
     }

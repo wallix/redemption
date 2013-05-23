@@ -66,7 +66,7 @@ public:
     , target_label(drawable, this->img.cx() + 20, 0, this, NULL,
                    target && *target ? temporary_text("Target: ", target).text : "Target: ",
                    true, -12, fgcolor, bgcolor)
-    , cancel(drawable, 0, 0, this, this, "Cancel", true, -13, BLACK, WHITE, 6, 2)
+    , cancel(drawable, 0, 0, this, this, "Cancel", true, -13, BLACK, WHITE, 6, 2, NOTIFY_CANCEL)
     , diagnostic(drawable, this->img.cx() + 20, 0, this, NULL,
                  "Diagnostic:", true, -15, fgcolor, bgcolor)
     , diagnostic_lines(drawable, this->img.cx() + 20, 0, this, NULL,

@@ -75,7 +75,7 @@ public:
     NotifyApi * notifier;
     Rect rect;
     int group_id;
-    //int tab_flag;
+    int tab_flag;
     bool has_focus;
 
 public:
@@ -90,38 +90,24 @@ public:
                 rect.cy
     ))
     , group_id(group_id)
-    //, tab_flag(NORMAL_TAB)
+    , tab_flag(NORMAL_TAB)
     , has_focus(false)
     {}
 
     virtual ~Widget2()
     {}
 
-    virtual void draw(const Rect& clip) = 0;
+    virtual bool next_focus()
+    {
+        return false;
+    }
 
-    // NOTE move to Widget2Composite ?
-    //void refresh(const Rect & rect)
-    //{
-    //    if (!rect.isempty() && this->drawable){
-    //        Widget2::screen_position sp = this->position_in_screen();
-    //        Rect clip = sp.clip.intersect(Rect(sp.x + rect.x, sp.y + rect.y, rect.cx, rect.cy));
-    //        if (clip.isempty()) {
-    //            return ;
-    //        }
-    //        int dx = clip.x - sp.x;
-    //        int dy = clip.y - sp.y;
-    //        Rect new_rect = Rect(dx,
-    //                             dy,
-    //                             clip.cx - (rect.x - dx),
-    //                             clip.cy - (rect.y - dy)
-    //                            );
-    //        if (!new_rect.isempty()){
-    //            this->drawable->begin_update();
-    //            this->draw(new_rect, sp.x, sp.y, clip.x, clip.y);
-    //            this->drawable->end_update();
-    //        }
-    //    }
-    //}
+    virtual bool previous_focus()
+    {
+        return false;
+    }
+
+    virtual void draw(const Rect& clip) = 0;
 
     void refresh(const Rect& clip)
     {

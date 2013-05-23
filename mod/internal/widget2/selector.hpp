@@ -375,22 +375,7 @@ public:
     virtual void draw(const Rect& clip)
     {
         this->WidgetComposite::draw(clip);
-        Rect new_clip = clip.intersect(this->rect);
-        Region region;
-        region.rects.push_back(new_clip);
-
-        for (std::size_t i = 0, size = this->child_list.size(); i < size; ++i) {
-            Rect rect = new_clip.intersect(this->child_list[i]->rect);
-
-            if (!rect.isempty()) {
-                region.subtract_rect(rect);
-            }
-        }
-
-        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-            this->drawable->draw(RDPOpaqueRect(region.rects[i], GREY),
-                                 region.rects[i]);
-        }
+        this->WidgetComposite::draw_inner_free(clip.intersect(this->rect), GREY);
     }
 
     virtual void notify(Widget2* widget, notify_event_t event, long unsigned int param, long unsigned int param2)

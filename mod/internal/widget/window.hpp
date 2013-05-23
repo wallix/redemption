@@ -232,7 +232,7 @@ struct window_login : public window
     public:
     Widget & notify_to;
     Inifile * ini;
-    TODO("The help window should be created by module, not by other window") 
+    TODO("The help window should be created by module, not by other window")
 
     window_login(mod_api * mod, const Rect & r, Widget * parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
     :   window(mod, r, parent, bg_color, title),
