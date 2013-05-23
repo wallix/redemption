@@ -1,4 +1,4 @@
-redemption (0.9.254-future) squeeze; urgency=low
+redemption (0.9.269-future) squeeze; urgency=low
 
   * Improved packager for debian/squeeze and ubuntu/precise
   * merging ACL context and config file (Work in progress)
