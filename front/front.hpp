@@ -1444,7 +1444,6 @@ public:
                 this->trans->send(x224_header, mcs_data);
             }
 
-            TODO("The code below should be simplified and correctly manage channels (confirm only channels that are really supported)")
             {
                 // read tpktHeader (4 bytes = 3 0 len)
                 // TPDU class 0    (3 bytes = LI F0 PDU_DT)
@@ -1555,7 +1554,19 @@ public:
                 BStream pdu(65536);
                 X224::RecvFactory f(*this->trans, pdu);
                 X224::DT_TPDU_Recv x224(*this->trans, pdu);
+                
+                MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
+                if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                    LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
+                    x224.payload.rewind();
+                    MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                    const char * reason = MCS::get_reason(mcs.reason);
+                    LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+                    throw Error(ERR_MCS);
+                }
+                
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                
                 SEC::SecExchangePacket_Recv sec(mcs.payload, mcs.payload_size);
 
                 ssllib ssl;
@@ -1619,9 +1630,18 @@ public:
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream);
 
-            MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-            TODO("We should also manage the DisconnectRequest case as it can also happen")
+            MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
+            if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
+                x224.payload.rewind();
+                MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                const char * reason = MCS::get_reason(mcs.reason);
+                LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+                throw Error(ERR_MCS);
+            }
 
+            MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+            
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if (this->verbose & 128){
                 LOG(LOG_INFO, "sec decrypted payload:");
@@ -1793,8 +1813,19 @@ public:
             BStream stream(65536);
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream);
+            
+            MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
+            if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
+                x224.payload.rewind();
+                MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                const char * reason = MCS::get_reason(mcs.reason);
+                LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+                throw Error(ERR_MCS);
+            }
+            
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-            TODO("We should also manage the DisconnectRequest case as it can also happen")
+
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if ((this->verbose & (128|2)) == (128|2)){
                 LOG(LOG_INFO, "sec decrypted payload:");
@@ -2118,13 +2149,17 @@ public:
 
                 X224::DT_TPDU_Recv x224(*this->trans, stream);
 
-                MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                TODO("We should also manage the DisconnectRequest case as it can also happen")
-
-                if (mcs.type == MCS::MCSPDU_DisconnectProviderUltimatum){
-                    LOG(LOG_ERR, "Front::got MCS DisconnectProviderUltimatum");
+                MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
+                if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                    LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
+                    x224.payload.rewind();
+                    MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                    const char * reason = MCS::get_reason(mcs.reason);
+                    LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
                     throw Error(ERR_MCS);
                 }
+
+                MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
                 SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
                 if (this->verbose & 128){
