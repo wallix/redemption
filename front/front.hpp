@@ -75,7 +75,7 @@ public:
     BmpCache * bmp_cache;
     GraphicsUpdatePDU * orders;
     Keymap2 keymap;
-    ChannelDefArray channel_list;
+    CHANNELS::ChannelDefArray channel_list;
     int up_and_running;
     int share_id;
     struct ClientInfo client_info;
@@ -540,13 +540,13 @@ public:
         this->client_info.console_session = b;
     }
 
-    virtual const ChannelDefArray & get_channel_list(void) const
+    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const
     {
         return this->channel_list;
     }
 
     virtual void send_to_channel(
-        const ChannelDef & channel,
+        const CHANNELS::ChannelDef & channel,
         uint8_t* data,
         size_t length,
         size_t chunk_size,
@@ -560,7 +560,7 @@ public:
 
         stream.out_uint32_le(length);
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
-            flags |= ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
+            flags |= CHANNELS::ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
         stream.out_uint32_le(flags);
         stream.out_copy_bytes(data, chunk_size);
@@ -1238,7 +1238,7 @@ public:
                         GCC::UserData::CSNet cs_net;
                         cs_net.recv(f.payload);
                         for (uint32_t index = 0; index < cs_net.channelCount; index++) {
-                            ChannelDef channel_item;
+                            CHANNELS::ChannelDef channel_item;
                             memcpy(channel_item.name, cs_net.channelDefArray[index].name, 8);
                             channel_item.flags = cs_net.channelDefArray[index].options;
                             channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
@@ -2189,7 +2189,7 @@ public:
                         throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                     }
 
-                    const ChannelDef & channel = this->channel_list[num_channel_src];
+                    const CHANNELS::ChannelDef & channel = this->channel_list[num_channel_src];
                     if (this->verbose & 16){
                         channel.log(mcs.channelId);
                     }
