@@ -55,6 +55,7 @@ rule defines ( properties * )
     defs += <define>HASH_PATH='\"$(HASH_PATH)\"' ;
     defs += <define>LICENSE_PATH='\"$(CERT_PREFIX)/rdplicense\"' ;
     defs += <define>CERTIF_PATH='\"$(CERT_PREFIX)/rdp\"' ;
+    defs += <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"' ;
     if [ os.environ VERBOSE ]
     {
         defs += <define>VERBOSE ;
