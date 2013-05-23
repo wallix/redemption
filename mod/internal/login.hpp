@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -19,7 +19,6 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Login Window
-
 */
 
 #ifndef _REDEMPTION_MOD_INTERNAL_LOGIN_HPP_
@@ -34,16 +33,12 @@ struct login_mod : public internal_mod {
     Widget* button_down;
     Widget * help;
 
-
-    login_mod(ModContext & context, FrontAPI & front, uint16_t width, uint16_t height, Inifile * ini)
+    login_mod(FrontAPI & front, uint16_t width, uint16_t height, Inifile * ini)
             : internal_mod(front, width, height)
     {
         uint32_t nb = (this->screen.rect.cy - 230) / 20;
         nb = (nb > 50)?50:nb;
-//        char buffer[128];
-//        sprintf(buffer, "%u", nb);
 
-//        context.cpy(STRAUTHID_SELECTOR_LINES_PER_PAGE, buffer);
         ini->globals.context.selector_lines_per_page = nb;
 
         this->signal = BACK_EVENT_NONE;
@@ -81,7 +76,7 @@ struct login_mod : public internal_mod {
             log_height);
 
         this->login_window = new window_login(this,
-            r, context,
+            r,
             &this->screen, // parent
             this->screen, // notify_to
             GREY,
@@ -299,7 +294,6 @@ struct login_mod : public internal_mod {
     }
 
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap){
-//        KEVENT_ESC
         if (keymap->nb_kevent_available() > 0){
             if (this->login_window->has_focus) {
                 this->front.begin_update();

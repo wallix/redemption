@@ -43,6 +43,14 @@ TODO("these constants should be dispatched between relevant ini files")
 #define LICENSE_PATH "/var/certs/redemption"
 #endif
 
+#if !defined(FLV_PATH)
+#define FLV_PATH "/tmp"
+#endif
+
+#if !defined(OCR_PATH)
+#define OCR_PATH "/tmp"
+#endif
+
 #if !defined(PNG_PATH)
 #define PNG_PATH "/tmp"
 #endif
@@ -57,6 +65,10 @@ TODO("these constants should be dispatched between relevant ini files")
 
 #if !defined(CERTIF_PATH)
 #define CERTIF_PATH "/etc/rdpproxy/certificate"
+#endif
+
+#if !defined(FIXTURES_PATH)
+#define FIXTURES_PATH "./tests/fixtures"
 #endif
 
 #define LOGIN_LOGO24 "ad24b.bmp"

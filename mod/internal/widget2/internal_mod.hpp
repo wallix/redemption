@@ -1,59 +1,59 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *   Product name: redemption, a FLOSS RDP proxy
+ *   Copyright (C) Wallix 2010-2013
+ *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen
+ */
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+#ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_INTERNAL_MOD_HPP
+#define REDEMPTION_MOD_INTERNAL_WIDGET2_INTERNAL_MOD_HPP
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#include "../mod/mod_api.hpp"
 
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
-
-*/
-
-#ifndef _REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP_
-#define _REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP_
-
-#include "widget/screen.hpp"
-#include "mod_api.hpp"
-
-struct internal_mod : public mod_api {
-    public:
+struct InternalMod : public mod_api {
+public:
     FrontAPI & front;
     BackEvent_t signal;
 
-    widget_screen screen;
-    int dragging;
-    Rect dragging_rect;
-    int draggingdx; // distance between mouse and top angle of dragged window
-    int draggingdy; // distance between mouse and left angle of dragged window
-    struct Widget* dragging_window;
-    RDPBrush brush;
+//     WidgetScreen screen;
+//     int dragging;
+//     Rect dragging_rect;
+//     int draggingdx; // distance between mouse and top angle of dragged window
+//     int draggingdy; // distance between mouse and left angle of dragged window
+//     struct Widget2 * dragging_window;
+//     RDPBrush brush;
 
-    internal_mod(FrontAPI & front, uint16_t front_width, uint16_t front_height)
-            : mod_api(front_width, front_height)
-            , front(front)
-            , signal(BACK_EVENT_NONE)
-            , screen(this, front_width, front_height)
+    InternalMod(FrontAPI & front, uint16_t front_width, uint16_t front_height)
+    : mod_api(front_width, front_height)
+    , front(front)
+    , signal(BACK_EVENT_NONE)
+//     , screen(this, front_width, front_height)
     {
         this->front.server_resize(front_width, front_height, 24);
         /* dragging info */
-        this->dragging = 0;
+//         this->dragging = 0;
         this->event = event;
         // dragging_rect is (0,0,0,0)
-        this->draggingdx = 0; // distance between mouse and top angle of dragged window
-        this->draggingdy = 0; // distance between mouse and left angle of dragged window
-        this->dragging_window = 0;
+//         this->draggingdx = 0; // distance between mouse and top angle of dragged window
+//         this->draggingdy = 0; // distance between mouse and left angle of dragged window
+//         this->dragging_window = 0;
     }
 
+    virtual ~InternalMod()
+    {}
 
     virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags)
     {
@@ -122,27 +122,6 @@ struct internal_mod : public mod_api {
     virtual void text_metrics(const char * text, int & width, int & height)
     {
         this->front.text_metrics(text, width, height);
-    }
-
-
-    virtual ~internal_mod()
-    {
-    }
-
-    size_t nb_windows()
-    {
-        return this->screen.child_list.size();
-    }
-
-
-    const Rect & get_screen_rect() const
-    {
-        return this->screen.rect;
-    }
-
-    Widget * window(int i)
-    {
-        return this->screen.child_list[i];
     }
 
 

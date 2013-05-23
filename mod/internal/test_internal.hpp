@@ -34,8 +34,7 @@ struct test_internal_mod : public internal_mod {
 
     char movie[1024];
 
-    test_internal_mod( ModContext & context
-                     , FrontAPI & front
+    test_internal_mod( FrontAPI & front
                      , char * replay_path
                      , char * movie
                      , uint16_t width
@@ -87,7 +86,8 @@ struct test_internal_mod : public internal_mod {
         canonical_path(this->movie, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
         sprintf(prefix, "%s%s", path, basename);
 
-        InByMetaSequenceTransport in_trans(prefix, extension);
+//        InByMetaSequenceTransport in_trans(prefix, extension);
+        CryptoInByMetaSequenceTransport in_trans(prefix, extension);
         timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
         timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
         FileToGraphic reader(&in_trans, begin_capture, end_capture, true, 0);

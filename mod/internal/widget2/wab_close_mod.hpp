@@ -6,7 +6,7 @@
  *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *   GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
@@ -15,34 +15,27 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET2_MOD_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET2_MOD_HPP
+#ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_WAB_CLOSE_MOD_HPP
+#define REDEMPTION_MOD_INTERNAL_WIDGET2_WAB_CLOSE_MOD_HPP
 
-// #include "widget.hpp"
 #include "front.hpp"
 #include "mod_api.hpp"
-#include "internal/internal_mod.hpp"
 #include "window_wab_close.hpp"
 #include "image.hpp"
 #include "screen.hpp"
-// #include "../close.hpp"
-
-//TODO("Old CloseMod Test")
-TODO("CloseMod")
+#include "internal_mod.hpp"
 
 
-class widget2_mod : public internal_mod, public NotifyApi
+class WabCloseMod : public InternalMod, public NotifyApi
 {
     WidgetScreen screen;
     WindowWabClose window_close;
     WidgetImage image;
 
-    ModContext & context;
     Inifile & ini;
-
 
 private:
     struct temporary_text {
@@ -57,19 +50,16 @@ private:
     };
 
 public:
-    widget2_mod(ModContext& context, Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
-    : internal_mod(front, width, height)
+    WabCloseMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
+    : InternalMod(front, width, height)
     , screen(this, width, height)
     , window_close(this, 0, 0, &this->screen, this, "End of connection", 0,
-//                   context.is_asked(_STRAUTHID_AUTH_USER) ? NULL : ini.globals.auth_user,
-                   ini.context_is_asked(_AUTHID_AUTH_USER) ? NULL : ini.globals.auth_user,
-//                   context.is_asked(_STRAUTHID_TARGET_USER) ||context.is_asked(_STRAUTHID_TARGET_DEVICE) ? NULL : temporary_text(ini).text,
-                   (ini.context_is_asked(_AUTHID_TARGET_USER) || ini.context_is_asked(_AUTHID_TARGET_DEVICE)) ?
+                   ini.context_is_asked(AUTHID_AUTH_USER) ? NULL : ini.globals.auth_user,
+                   (ini.context_is_asked(AUTHID_TARGET_USER) || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
                        NULL : temporary_text(ini).text,
                    BLACK, GREY
-                  )
+    )
     , image(this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
-    , context(context)
     , ini(ini)
     {
         this->screen.child_list.push_back(&this->window_close);
@@ -86,7 +76,7 @@ public:
         this->screen.refresh(this->screen.rect);
     }
 
-    virtual ~widget2_mod()
+    virtual ~WabCloseMod()
     {}
 
     virtual void notify(Widget2* sender, notify_event_t event,
@@ -122,7 +112,7 @@ public:
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (keymap->nb_kevent_available() > 0 && keymap->top_kevent() == Keymap2::KEVENT_ENTER){
+        if (keymap->nb_kevent_available() > 0 && keymap->top_kevent() == Keymap2::KEVENT_ESC){
             keymap->get_kevent();
             this->signal = BACK_EVENT_STOP;
             this->event.set();

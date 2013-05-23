@@ -54,7 +54,8 @@ extern "C" {
 
     /* This method return a signature based on the data written
     */
-    static inline RIO_ERROR rio_m_RIOInsequence_sign(RIOInsequence * self, unsigned char * buf, size_t size, size_t * len) {
+    static inline RIO_ERROR rio_m_RIOInsequence_sign(RIOInsequence * self, unsigned char * buf,
+        size_t size, size_t * len) {
          rio_m_RIOInsequence_destructor(self);
          return RIO_ERROR_RECV_ONLY;
     }
@@ -68,9 +69,9 @@ extern "C" {
     */
     inline ssize_t rio_m_RIOInsequence_recv(RIOInsequence * self, void * data, size_t len)
     {
-        if (!self->status){ 
+        if (!self->status){
             if (self->err == RIO_ERROR_EOF){ return 0; }
-            return -self->err; 
+            return -self->err;
         }
 
         RIO_ERROR status = RIO_ERROR_OK;

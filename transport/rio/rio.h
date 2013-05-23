@@ -27,7 +27,7 @@
 
 extern "C" {
     typedef enum {
-        RIO_ERROR_OK,
+        RIO_ERROR_OK,                           // 0
         RIO_ERROR_ANY,
         RIO_ERROR_MALLOC,
         RIO_ERROR_EOF,
@@ -37,7 +37,7 @@ extern "C" {
         RIO_ERROR_EFAULT,
         RIO_ERROR_EFBIG,
         RIO_ERROR_EINVAL,
-        RIO_ERROR_EIO,
+        RIO_ERROR_EIO,                          // 10
         RIO_ERROR_ENOSPC,
         RIO_ERROR_EPIPE,
         RIO_ERROR_EISDIR,
@@ -47,7 +47,7 @@ extern "C" {
         RIO_ERROR_DATA_MISMATCH,
         RIO_ERROR_TYPE_MISMATCH,
         RIO_ERROR_UNKNOWN_TYPE,
-        RIO_ERROR_TRAILING_DATA,
+        RIO_ERROR_TRAILING_DATA,                // 20
         RIO_ERROR_CLOSE_FAILED,
         RIO_ERROR_CLOSED,
         RIO_ERROR_CREAT,
@@ -57,7 +57,7 @@ extern "C" {
         RIO_ERROR_NOT_IMPLEMENTED,
         RIO_ERROR_STRING_PREFIX_TOO_LONG,
         RIO_ERROR_STRING_PATH_TOO_LONG,
-        RIO_ERROR_STRING_FILENAME_TOO_LONG,
+        RIO_ERROR_STRING_FILENAME_TOO_LONG,     // 30
         RIO_ERROR_STRING_EXTENSION_TOO_LONG,
         RIO_ERROR_INVALID_START_TIMESTAMP,
         RIO_ERROR_INVALID_STOP_TIMESTAMP,

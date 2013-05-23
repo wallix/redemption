@@ -175,15 +175,9 @@ public:
 private:
     void close_window_help()
     {
-        std::vector<Widget2*>& widgets = static_cast<WidgetComposite*>(this->window_help->parent)->child_list;
-        for (size_t i = 0; i < widgets.size(); ++i) {
-            if (widgets[i] == this->window_help) {
-                widgets[i] = widgets[widgets.size()-1];
-                widgets.pop_back();
-                break;
-            }
-        }
-        this->window_help->parent->draw(this->window_help->rect);
+        Widget2 * parent = this->window_help->parent;
+        static_cast<WidgetComposite*>(parent)->detach_widget(this->window_help);
+        parent->draw(this->window_help->rect);
         delete this->window_help;
     }
 };
