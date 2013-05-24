@@ -61,7 +61,7 @@ struct mod_rdp : public mod_api {
     /* mod data */
     FrontAPI & front;
     BStream in_stream;
-    ChannelDefArray mod_channel_list;
+    CHANNELS::ChannelDefArray mod_channel_list;
 
     bool dev_redirection_enable;
     int use_rdp5;
@@ -292,7 +292,7 @@ struct mod_rdp : public mod_api {
 
     virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags)
     {
-        const ChannelDef * front_channel = this->front.get_channel_list().get(mod_channel_name);
+        const CHANNELS::ChannelDef * front_channel = this->front.get_channel_list().get(mod_channel_name);
         if (front_channel){
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
         }
@@ -323,7 +323,7 @@ struct mod_rdp : public mod_api {
 
             uint16_t msgType = chunk.in_uint16_le();
 
-            if (msgType == ChannelDef::CB_FORMAT_LIST){
+            if (msgType == CHANNELS::ChannelDef::CB_FORMAT_LIST){
                 if ( this->verbose ){
                     LOG( LOG_INFO, "mod_rdp clipboard is unavailable" );
                 }
@@ -334,8 +334,8 @@ struct mod_rdp : public mod_api {
                 // 03 00 02 00 00 00 00 00
 
                 BStream out_s(256);
-                out_s.out_uint16_le(ChannelDef::CB_FORMAT_LIST_RESPONSE);   //  - MSG Type 2 bytes
-                out_s.out_uint16_le(ChannelDef::CB_RESPONSE_FAIL);          //  - MSG flags 2 bytes
+                out_s.out_uint16_le(CHANNELS::ChannelDef::CB_FORMAT_LIST_RESPONSE);   //  - MSG Type 2 bytes
+                out_s.out_uint16_le(CHANNELS::ChannelDef::CB_RESPONSE_FAIL);          //  - MSG flags 2 bytes
                 out_s.out_uint32_le(0);                                     //  - remaining datalen of message
                 out_s.mark_end();
 
@@ -345,14 +345,15 @@ struct mod_rdp : public mod_api {
                                            , out_s.data
                                            , length
                                            , out_s.size()
-                                           , ChannelDef::CHANNEL_FLAG_FIRST | ChannelDef::CHANNEL_FLAG_LAST
+                                           , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST 
+                                           | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
                                            );
 
                 return;
             }
         }
 
-        const ChannelDef * mod_channel = this->mod_channel_list.get(front_channel_name);
+        const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get(front_channel_name);
         // send it if module has a matching channel, if no matching channel is found just forget it
         if (mod_channel){
             if (this->verbose & 16){
@@ -392,7 +393,7 @@ struct mod_rdp : public mod_api {
     }
 
     void send_to_channel(
-                const ChannelDef & channel,
+                const CHANNELS::ChannelDef & channel,
                 Stream & chunk,
                 size_t length,
                 uint32_t flags)
@@ -407,7 +408,7 @@ struct mod_rdp : public mod_api {
         stream.out_uint32_le(length);
         stream.out_uint32_le(flags);
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
-            flags |= ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
+            flags |= CHANNELS::ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
         stream.out_copy_bytes(chunk.data, chunk.size());
         stream.mark_end();
@@ -524,7 +525,7 @@ struct mod_rdp : public mod_api {
                     cs_security.emit(stream);
                     // ------------------------------------------------------------
 
-                    const ChannelDefArray & channel_list = this->front.get_channel_list();
+                    const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
                     size_t num_channels = channel_list.size();
                     if (num_channels > 0) {
                         /* Here we need to put channel information in order to redirect channel data
@@ -532,10 +533,10 @@ struct mod_rdp : public mod_api {
                         GCC::UserData::CSNet cs_net;
                         cs_net.channelCount = num_channels;
                         for (size_t index = 0; index < num_channels; index++){
-                            const ChannelDef & channel_item = channel_list[index];
+                            const CHANNELS::ChannelDef & channel_item = channel_list[index];
                             memcpy(cs_net.channelDefArray[index].name, channel_list[index].name, 8);
                             cs_net.channelDefArray[index].options = channel_item.flags;
-                            ChannelDef def;
+                            CHANNELS::ChannelDef def;
                             memcpy(def.name, cs_net.channelDefArray[index].name, 8);
                             def.flags = channel_item.flags;
                             if (this->verbose & 16){
@@ -549,7 +550,7 @@ struct mod_rdp : public mod_api {
                             TODO("CGR: We should figure out what value options should actually have, not just get any channel option and copy it")
                             cs_net.channelDefArray[num_channels].options = cs_net.channelDefArray[num_channels-1].options;
                             cs_net.channelCount++;
-                            ChannelDef def;
+                            CHANNELS::ChannelDef def;
                             memcpy(def.name, this->auth_channel, 8);
                             def.flags = cs_net.channelDefArray[num_channels].options;
                             if (this->verbose & 16){
@@ -842,10 +843,8 @@ struct mod_rdp : public mod_api {
             }
 
             {
-                TODO("CGR: the array size below is arbitrary  it should be checked to avoid buffer overflow")
-
                 size_t num_channels = this->mod_channel_list.size();
-                uint16_t channels_id[100];
+                uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS];
                 channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
                 channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
                 for (size_t index = 0; index < num_channels; index++){
@@ -867,7 +866,6 @@ struct mod_rdp : public mod_api {
                     X224::DT_TPDU_Recv x224(*this->nego.trans, x224_data);
                     SubStream & mcs_cjcf_data = x224.payload;
                     MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
-                    TODO("CGR: We should check channel confirmation worked, for now we just do like server said OK to everything... and that may not be the case, some channels may be closed for instance. We should also check requested chanid are some confirm may come out of order");
                     TODO("If mcs.result is negative channel is not confirmed and should be removed from mod_channel list")
                     if (this->verbose & 16){
                         LOG(LOG_INFO, "cjcf[%u] = %u", index, mcs.channelId);
@@ -1370,7 +1368,7 @@ struct mod_rdp : public mod_api {
                 TODO("CGR: move this to channel_list.hpp")
                 size_t num_channel_src = this->mod_channel_list.size();
                 for (size_t index = 0; index < num_channel_src; index++){
-                    const ChannelDef & mod_channel_item = this->mod_channel_list[index];
+                    const CHANNELS::ChannelDef & mod_channel_item = this->mod_channel_list[index];
                     if (mcs.channelId == mod_channel_item.chanid){
                         num_channel_src = index;
                         break;
@@ -1381,7 +1379,7 @@ struct mod_rdp : public mod_api {
                     throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                 }
 
-                const ChannelDef & mod_channel = this->mod_channel_list[num_channel_src];
+                const CHANNELS::ChannelDef & mod_channel = this->mod_channel_list[num_channel_src];
                 if (this->verbose & 16){
                     mod_channel.log(num_channel_src);
                 }
@@ -1424,7 +1422,7 @@ struct mod_rdp : public mod_api {
 
                     uint16_t msgType = sec.payload.in_uint16_le();
 
-                    if (msgType == ChannelDef::CB_FORMAT_LIST){
+                    if (msgType == CHANNELS::ChannelDef::CB_FORMAT_LIST){
                         if ( this->verbose ){
                             LOG( LOG_INFO, "mod_rdp clipboard is unavailable" );
                         }
@@ -1435,18 +1433,19 @@ struct mod_rdp : public mod_api {
                         // 03 00 02 00 00 00 00 00
 
                         BStream out_s(256);
-                        out_s.out_uint16_le(ChannelDef::CB_FORMAT_LIST_RESPONSE);   //  - MSG Type 2 bytes
-                        out_s.out_uint16_le(ChannelDef::CB_RESPONSE_FAIL);          //  - MSG flags 2 bytes
+                        out_s.out_uint16_le(CHANNELS::ChannelDef::CB_FORMAT_LIST_RESPONSE);   //  - MSG Type 2 bytes
+                        out_s.out_uint16_le(CHANNELS::ChannelDef::CB_RESPONSE_FAIL);          //  - MSG flags 2 bytes
                         out_s.out_uint32_le(0);                                     //  - remaining datalen of message
                         out_s.mark_end();
 
-                        const ChannelDef * mod_channel = this->mod_channel_list.get(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+                        const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
 
                         if (mod_channel){
                             this->send_to_channel(*mod_channel,
                                                   out_s,
                                                   out_s.size(),
-                                                  ChannelDef::CHANNEL_FLAG_FIRST | ChannelDef::CHANNEL_FLAG_LAST);
+                                                    CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST 
+                                                  | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST);
                         }
                     }
                 }
@@ -1461,11 +1460,10 @@ struct mod_rdp : public mod_api {
                 while (next_packet < sec.payload.end) {
                     sec.payload.p = next_packet;
                     ShareControl_Recv sctrl(sec.payload);
-                    TODO("use sectrl.payload")
-                    next_packet += sctrl.len;
+                    next_packet += sctrl.totalLength;
 
                     if (this->verbose & 128){
-                        LOG(LOG_WARNING, "LOOPING on PDUs: %u", (unsigned)sctrl.len);
+                        LOG(LOG_WARNING, "LOOPING on PDUs: %u", (unsigned)sctrl.totalLength);
                     }
 
 

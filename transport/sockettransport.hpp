@@ -688,31 +688,24 @@ class SocketTransport : public Transport {
             {
                 case SSL_ERROR_ZERO_RETURN:
                     LOG(LOG_INFO, "Server closed TLS connection\n");
-                    LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_ZERO_RETURN done\n");
                     return;
 
                 case SSL_ERROR_WANT_READ:
-                    LOG(LOG_INFO, "SSL_ERROR_WANT_READ\n");
-                    LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_WANT_READ done\n");
                     goto again;
 
                 case SSL_ERROR_WANT_WRITE:
-                    LOG(LOG_INFO, "SSL_ERROR_WANT_WRITE\n");
-                    LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_WANT_WRITE done\n");
                     goto again;
 
                 case SSL_ERROR_SYSCALL:
                     LOG(LOG_INFO, "I/O error\n");
                     while ((error = ERR_get_error()) != 0)
                         LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
-                    LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_SYSCLASS done\n");
                     return;
 
                 case SSL_ERROR_SSL:
                     LOG(LOG_INFO, "Failure in SSL library (protocol error?)\n");
                     while ((error = ERR_get_error()) != 0)
                         LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
-                    LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_SSL done\n");
                     return;
 
                 default:
@@ -721,7 +714,6 @@ class SocketTransport : public Transport {
                         LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
                     }
                     LOG(LOG_INFO, "tls::tls_print_error %s [%u]", strerror(errno), errno);
-                    LOG(LOG_INFO, "tls::tls_print_error Unknown error done\n");
                     return;
             }
         }

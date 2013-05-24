@@ -37,13 +37,25 @@ namespace MCS
     };
     
     // Reason ::= ENUMERATED   -- in DisconnectProviderUltimatum, DetachUserRequest, DetachUserIndication
-    enum {
+    typedef enum {
         RN_DOMAIN_DISCONNECTED = 0,
         RN_PROVIDER_INITIATED  = 1,
         RN_TOKEN_PURGED        = 2,
         RN_USER_REQUESTED      = 3,
         RN_CHANNEL_PURGED      = 4
-    };
+    } t_reasons;
+
+    const char * get_reason(t_reasons reason)
+    {
+        const char * reasons[5] = {
+            "RN_DOMAIN_DISCONNECTED",
+            "RN_PROVIDER_INITIATED",
+            "RN_TOKEN_PURGED",
+            "RN_USER_REQUESTED",
+            "RN_CHANNEL_PURGED"
+        };
+        return (reason > 4)?"???":reasons[reason];
+    }
 
     enum {
         BER_TAG_MCS_DOMAIN_PARAMS = 0x30
@@ -1118,7 +1130,7 @@ namespace MCS
     struct DisconnectProviderUltimatum_Recv
     {
         uint8_t type;
-        uint8_t reason;
+        t_reasons reason;
         DisconnectProviderUltimatum_Recv(Stream & stream, int encoding)
         {
             if (encoding != PER_ENCODING){
@@ -1140,7 +1152,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_DisconnectProviderUltimatum;
-            this->reason = stream.in_uint8() >> 5;
+            this->reason = static_cast<t_reasons>(stream.in_uint8() >> 5);
         }
     };
 
@@ -2051,9 +2063,6 @@ namespace MCS
                 }
 
                 this->payload.resize(stream, this->payload_size);
-            }
-            else if (tag == MCSPDU_DisconnectProviderUltimatum){
-                this->type = MCS::MCSPDU_DisconnectProviderUltimatum;
             }
             else{
                 LOG(LOG_ERR, "SendDataRequest tag (%u) expected, got %u", MCS::MCSPDU_SendDataRequest, tag);

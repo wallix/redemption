@@ -96,12 +96,14 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     };
 
     const char * name = "Test Front Transport";
-    TestTransport front_trans(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    TestTransport front_trans(name, indata, sizeof(indata), outdata, sizeof(outdata),
+        verbose);
 
-    const bool tls_support      = false;
     const bool fastpath_support = false;
+    const bool tls_support      = false;
     const bool mem3blt_support  = false;
-    Front front(&front_trans, &gen, &ini, fastpath_support, tls_support, mem3blt_support);
+    Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini,
+        fastpath_support, tls_support, mem3blt_support);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0){

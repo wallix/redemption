@@ -10,9 +10,13 @@ import distroinfo
 
 if __name__ == '__main__':
     try:
-    
+
+        uninstall_option = False
+        if 'uninstall' in sys.argv:
+            uninstall_option = True
+
         distro, dummy, codename = distroinfo.get_distro()
-    
+
         sections = []
         section = {}
         current = None
@@ -32,10 +36,15 @@ if __name__ == '__main__':
 
         for d in sections:
             if d.get('Source:') == 'redemption':
-                if len(sys.argv) > 1 and sys.argv[1] == 'uninstall':
-                    os.system("apt-get remove %s" % ' '.join(d.get('Build-Depends:').split(r',')))
+                
+                print  d.get('Build-Depends:')
+                
+                depends = re.split(r'\s*(?:[(].*?[)])*\s*[,]\s*', d.get('Build-Depends:'))
+                
+                if uninstall_option:
+                    os.system("apt-get remove %s" % ' '.join(depends))
                 else:
-                    os.system("apt-get install %s" % ' '.join(d.get('Build-Depends:').split(r',')))
+                    os.system("apt-get install %s" % ' '.join(depends))
                 exit(0)
 
     except Exception, e:

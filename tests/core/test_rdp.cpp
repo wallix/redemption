@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(TestSendShareControlAndData)
 
     ShareControl_Recv sctrl2(stream2);
     BOOST_CHECK_EQUAL((unsigned)PDUTYPE_DATAPDU, (unsigned)sctrl2.pdu_type1);
-    BOOST_CHECK_EQUAL(18, sctrl2.len);
+    BOOST_CHECK_EQUAL(18, sctrl2.totalLength);
     BOOST_CHECK_EQUAL(1, sctrl2.mcs_channel);
 }
 
@@ -112,6 +112,6 @@ BOOST_AUTO_TEST_CASE(TestX224SendShareControlAndData)
 
     ShareControl_Recv sctrl2(stream2);
     BOOST_CHECK_EQUAL((unsigned)PDUTYPE_DATAPDU, (unsigned)sctrl2.pdu_type1);
-    BOOST_CHECK_EQUAL(18, sctrl2.len);
+    BOOST_CHECK_EQUAL(18, sctrl2.totalLength);
     BOOST_CHECK_EQUAL(1, sctrl2.mcs_channel);
 }

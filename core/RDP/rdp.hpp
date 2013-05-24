@@ -116,8 +116,7 @@ struct ShareControl_Recv
 {
     SubStream payload;
     public:
-    TODO("rename to totalLength")
-    uint16_t len;
+    uint16_t totalLength;
     TODO("rename to pduType")
     uint8_t pdu_type1;
     TODO("Rename to PDUSource")
@@ -125,21 +124,21 @@ struct ShareControl_Recv
 
     ShareControl_Recv(Stream & stream)
     : payload(stream, 0)
-    , len(0)
+    , totalLength(0)
     , pdu_type1(0)
     , mcs_channel(0)
     {
-        const unsigned expected = 4; /* len(2) + pdu_type1(2) */
+        const unsigned expected = 4; /* totalLength(2) + pdu_type1(2) */
         if (!stream.in_check_rem(expected)){
             LOG(LOG_ERR, "Truncated ShareControl packet, need=%u remains=%u",
                 expected, stream.in_remain());
             throw Error(ERR_SEC);
         }
 
-        this->len = stream.in_uint16_le();
+        this->totalLength = stream.in_uint16_le();
 
         this->pdu_type1 = stream.in_uint16_le() & 0xF;
-        if (this->pdu_type1 == PDUTYPE_DEACTIVATEALLPDU && len == 4){
+        if (this->pdu_type1 == PDUTYPE_DEACTIVATEALLPDU && this->totalLength == 4){
             // should not happen
             // but DEACTIVATEALLPDU seems to be broken on windows 2000
             this->payload.resize(stream, 0);
@@ -153,12 +152,12 @@ struct ShareControl_Recv
         }
 
         this->mcs_channel = stream.in_uint16_le();
-        if (this->len < 6){
-            LOG(LOG_ERR, "ShareControl packet too short len=%u", this->len);
+        if (this->totalLength < 6){
+            LOG(LOG_ERR, "ShareControl packet too short totalLength=%u", this->totalLength);
             throw Error(ERR_SEC);
         }
 
-        size_t new_size = this->len - 6;
+        size_t new_size = this->totalLength - 6;
 
         if (!stream.in_check_rem(new_size)){
             LOG(LOG_ERR, "Truncated ShareControl packet mcs_channel, need=2 remains=%u",

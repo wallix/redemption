@@ -34,8 +34,8 @@ class FrontAPI : public RDPGraphicDevice {
 
     virtual void draw_vnc(const Rect & rect, const uint8_t bpp, const BGRPalette & palette332, const uint8_t * raw, uint32_t need_size) {};
 
-    virtual const ChannelDefArray & get_channel_list(void) const = 0;
-    virtual void send_to_channel(const ChannelDef & channel, uint8_t* data, size_t length, size_t chunk_size, int flags) = 0;
+    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const = 0;
+    virtual void send_to_channel(const CHANNELS::ChannelDef & channel, uint8_t* data, size_t length, size_t chunk_size, int flags) = 0;
 
     virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error) = 0;
     virtual void send_global_palette() throw (Error) = 0;
