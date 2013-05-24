@@ -1636,7 +1636,7 @@ struct Inifile {
             pszReturn = this->globals.context.end_time;
             break;
         default:
-            LOG(LOG_WARNING, "Inifile::context_get_value(id): unknown authid=\"%d\"", authid);
+//            LOG(LOG_WARNING, "Inifile::context_get_value(id): unknown authid=\"%d\"", authid);
             break;
         }
 

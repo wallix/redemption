@@ -109,6 +109,14 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 LOG(LOG_INFO, "========================================\n");
             }
         }
+        virtual void draw(const RDPMem3Blt& cmd, const Rect& clip, const Bitmap& bmp)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                cmd.log(LOG_INFO, clip);
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
         virtual void draw(const RDPLineTo& cmd, const Rect& clip)
         {
             if (verbose > 10){

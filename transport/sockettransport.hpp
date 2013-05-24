@@ -98,15 +98,9 @@ class SocketTransport : public Transport {
         int  port;
 
         TODO("check if buffer is defined before accessing it")
-/*
-        char * error_message_buffer;
-        size_t error_message_len;
-*/
 
         redemption::string * error_message;
 
-//    SocketTransport(const char * name, int sck, const char *ip_address, int port, uint32_t verbose, char * error_message_buffer = NULL, size_t error_message_len = 0)
-//        : Transport(), tls(false), name(name), verbose(verbose), error_message_buffer(error_message_buffer), error_message_len(error_message_len)
     SocketTransport(const char * name, int sck, const char *ip_address, int port, uint32_t verbose, redemption::string * error_message = 0)
         : Transport(), tls(false), name(name), verbose(verbose), error_message(error_message)
     {
@@ -341,8 +335,6 @@ class SocketTransport : public Transport {
         }
 
         SSL_CTX_set_default_passwd_cb(ctx, password_cb0);
-//        SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)"inquisition");
-LOG(LOG_INFO, "%s", certificate_password);
         SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)certificate_password);
         if(!(SSL_CTX_use_PrivateKey_file(ctx, CFG_PATH "/rdpproxy.key", SSL_FILETYPE_PEM)))
         {
@@ -764,7 +756,6 @@ LOG(LOG_INFO, "%s", certificate_password);
         // ensures the certificate directory exists
         if (recursive_create_directory(CERTIF_PATH "/", S_IRWXU|S_IRWXG, 0) != 0) {
             LOG(LOG_ERR, "Failed to create certificate directory: " CERTIF_PATH "/");
-//            strcpy(error_message_buffer, "Failed to create certificate directory: " CERTIF_PATH "/");
             if (error_message) {
                 (*error_message) = "Failed to create certificate directory: \"" CERTIF_PATH "/\"";
             }
@@ -783,7 +774,6 @@ LOG(LOG_INFO, "%s", certificate_password);
             if (errno != ENOENT) {
                 // failed to open stored certificate file
                 LOG(LOG_ERR, "Failed to open stored certificate: \"%s\"\n", filename);
-//                sprintf(error_message_buffer, "Failed to open stored certificate: \"%s\"\n", filename);
                 if (error_message) {
                     (*error_message) =  "Failed to open stored certificate: \"";
                     (*error_message) += filename;
@@ -804,7 +794,6 @@ LOG(LOG_INFO, "%s", certificate_password);
             if (!px509Existing) {
                 // failed to read stored certificate file
                 LOG(LOG_ERR, "Failed to read stored certificate: \"%s\"\n", filename);
-//                sprintf(error_message_buffer, "Failed to read stored certificate: \"%s\"\n", filename);
                 if (error_message) {
                     (*error_message) =  "Failed to read stored certificate: \"";
                     (*error_message) += filename;
@@ -826,7 +815,7 @@ LOG(LOG_INFO, "%s", certificate_password);
 
             fp = ::fopen(filename, "r");
             tmpfp = ::fopen(tmpfilename, "r");
-            
+
 //            ::rewind(fp);
 //            ::rewind(tmpfp);
 

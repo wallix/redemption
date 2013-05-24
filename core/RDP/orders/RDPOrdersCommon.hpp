@@ -224,7 +224,7 @@ namespace RDP {
         RECT       = 10,
         DESKSAVE   = 11,
         MEMBLT     = 13,
-        TRIBLT     = 14,
+        MEM3BLT    = 14,
         POLYLINE   = 22,
         GLYPHINDEX = 27,
     };
@@ -627,7 +627,7 @@ private:
         int size = 1;
         switch (this->order)
         {
-            case TRIBLT:
+            case MEM3BLT:
             case GLYPHINDEX:
                 size = 3;
                 break;
@@ -734,7 +734,7 @@ public:
         size_t size = 1;
         switch (this->order)
         {
-            case TRIBLT:
+            case MEM3BLT:
             case GLYPHINDEX:
                 size = 3;
                 break;
@@ -787,6 +787,8 @@ public:
         break;
         case MEMBLT:
             assert(!(header.fields & ~0x1FF));
+        break;
+        case MEM3BLT:
         break;
         case GLYPHINDEX:
             assert(!(header.fields & ~0x3FFFFF));

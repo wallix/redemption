@@ -66,6 +66,11 @@ struct TestDraw : ModApi
         BOOST_CHECK(false);
     }
 
+    virtual void draw(const RDPMem3Blt&, const Rect&, const Bitmap&)
+    {
+        BOOST_CHECK(false);
+    }
+
     virtual void draw(const RDPLineTo&, const Rect&)
     {
         BOOST_CHECK(false);

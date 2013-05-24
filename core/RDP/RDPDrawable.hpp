@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -33,6 +33,7 @@
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "font.hpp"
 
 
@@ -164,6 +165,13 @@ public:
             // should not happen
         break;
         }
+    }
+
+    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) {
+LOG(LOG_INFO, "RDPDrawable::draw::RDPMem3Blt ...");
+        this->draw(RDPPatBlt(cmd.rect, cmd.rop, cmd.back_color, cmd.fore_color, cmd.brush), clip);
+        this->draw(RDPMemBlt(cmd.cache_id, cmd.rect, cmd.rop, cmd.srcx, cmd.srcy, cmd.cache_idx), clip, bmp);
+LOG(LOG_INFO, "RDPDrawable::draw::RDPMem3Blt end");
     }
 
     /*

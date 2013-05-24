@@ -140,7 +140,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     : RDPSerializer(trans, this->buffer_stream, bpp, bmp_cache, 0, 1, 1, ini)
     , trans(trans)
     , buffer_stream(65536)
-    , last_sent_timer() 
+    , last_sent_timer()
     , timer(now)
     , width(width)
     , height(height)
@@ -191,7 +191,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     {
         BStream header(8);
         BStream payload(20);
-        payload.out_uint16_le(1); // WRM FORMAT VERSION1
+        payload.out_uint16_le(2); // WRM FORMAT VERSION2
         payload.out_uint16_le(this->width);
         payload.out_uint16_le(this->height);
         payload.out_uint16_le(this->bpp);
@@ -303,6 +303,23 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         payload.out_uint8(this->memblt.srcx);
         payload.out_uint8(this->memblt.srcy);
         payload.out_uint16_le(this->memblt.cache_idx);
+        // RDPMem3Blt memblt;
+        payload.out_uint16_le (this->mem3blt.cache_id);
+        payload.out_uint16_le (this->mem3blt.rect.x);
+        payload.out_uint16_le (this->mem3blt.rect.y);
+        payload.out_uint16_le (this->mem3blt.rect.cx);
+        payload.out_uint16_le (this->mem3blt.rect.cy);
+        payload.out_uint8     (this->mem3blt.rop);
+        payload.out_uint8     (this->mem3blt.srcx);
+        payload.out_uint8     (this->mem3blt.srcy);
+        payload.out_uint32_le (this->mem3blt.back_color);
+        payload.out_uint32_le (this->mem3blt.fore_color);
+        payload.out_uint8     (this->mem3blt.brush.org_x);
+        payload.out_uint8     (this->mem3blt.brush.org_y);
+        payload.out_uint8     (this->mem3blt.brush.style);
+        payload.out_uint8     (this->mem3blt.brush.hatch);
+        payload.out_copy_bytes(this->mem3blt.brush.extra, 7);
+        payload.out_uint16_le (this->mem3blt.cache_idx);
         //RDPLineTo lineto;
         payload.out_uint8(this->lineto.back_mode);
         payload.out_uint16_le(this->lineto.startx);
@@ -337,9 +354,9 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         payload.out_sint16_le(this->glyphindex.glyph_x);
         payload.out_sint16_le(this->glyphindex.glyph_y);
         payload.out_uint8(this->glyphindex.data_len);
-        memset(this->glyphindex.data 
+        memset(this->glyphindex.data
                 + this->glyphindex.data_len, 0,
-            sizeof(this->glyphindex.data) 
+            sizeof(this->glyphindex.data)
                 - this->glyphindex.data_len);
         payload.out_copy_bytes(this->glyphindex.data, 256);
 
@@ -430,6 +447,12 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     }
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
+    {
+        this->drawable->draw(cmd, clip, bmp);
+        this->RDPSerializer::draw(cmd, clip, bmp);
+    }
+
+    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
     {
         this->drawable->draw(cmd, clip, bmp);
         this->RDPSerializer::draw(cmd, clip, bmp);
