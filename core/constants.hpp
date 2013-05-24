@@ -71,6 +71,14 @@ TODO("these constants should be dispatched between relevant ini files")
 #define FIXTURES_PATH "./tests/fixtures"
 #endif
 
+#if !defined(RECORD_PATH)
+#define RECORD_PATH "/var/rdpproxy/recorded"
+#endif
+
+#if !defined(RECORD_TMP_PATH)
+#define RECORD_TMP_PATH "/var/rdpproxy/tmp"
+#endif
+
 #define LOGIN_LOGO24 "ad24b.bmp"
 #define CURSOR0 "cursor0.cur"
 #define CURSOR1 "cursor1.cur"
