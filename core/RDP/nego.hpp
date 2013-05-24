@@ -240,7 +240,8 @@ struct RdpNego
                 this->state = NEGO_STATE_FINAL;
             }
             else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE
-            && x224.rdp_neg_code == X224::SSL_NOT_ALLOWED_BY_SERVER){
+            && (x224.rdp_neg_code == X224::SSL_NOT_ALLOWED_BY_SERVER
+            || x224.rdp_neg_code == X224::SSL_CERT_NOT_ON_SERVER)){
                 LOG(LOG_INFO, "Can't activate SSL, falling back to RDP legacy encryption");
                 this->tls = false;
                 this->trans->disconnect();
