@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    Unit test to conversion of RDP drawing orders to PNG images
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -26,7 +25,8 @@
 #define BOOST_TEST_MODULE TestWrmCapture
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+//#define LOGNULL
+
 #include "outfilenametransport.hpp"
 #include "infiletransport.hpp"
 #include "staticcapture.hpp"
@@ -62,14 +62,14 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
-        
+
     png_recorder.update_config(ini);
     player.add_consumer(&png_recorder);
 
     OutFilenameTransport out_wrm_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
     ini.globals.frame_interval = 10;
     ini.globals.break_interval = 20;
-    
+
     BmpCache bmp_cache(
         player.bmp_cache->bpp,
         player.bmp_cache->small_entries,
@@ -102,9 +102,11 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
     BOOST_CHECK_EQUAL((unsigned)500675, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 0));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 0);
-    BOOST_CHECK_EQUAL((unsigned)1265693, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 1));
+    // Mem3Blt save state = 34 bytes
+    BOOST_CHECK_EQUAL((unsigned)1265693 + 34, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 1));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 1);
-    BOOST_CHECK_EQUAL((unsigned)360488, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 2));
+    // Mem3Blt save state = 34 bytes
+    BOOST_CHECK_EQUAL((unsigned)360488 + 34, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 2));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 2);
 }
 
@@ -137,14 +139,14 @@ BOOST_AUTO_TEST_CASE(TestSecondPart)
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".png", groupid);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
-        
+
     png_recorder.update_config(ini);
     player.add_consumer(&png_recorder);
 
     OutFilenameTransport out_wrm_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".wrm", groupid);
     ini.globals.frame_interval = 10;
     ini.globals.break_interval = 20;
-    
+
     BmpCache bmp_cache(
         player.bmp_cache->bpp,
         player.bmp_cache->small_entries,
@@ -170,16 +172,18 @@ BOOST_AUTO_TEST_CASE(TestSecondPart)
     BOOST_CHECK_EQUAL((unsigned)1352304928, (unsigned)player.record_now.tv_sec);
 
     png_recorder.flush();
-        
+
     BOOST_CHECK_EQUAL((unsigned)47483, (unsigned)sq_outfilename_filesize(&(out_png_trans.seq), 0));
     sq_outfilename_unlink(&(out_png_trans.seq), 0);
 
     wrm_recorder.flush();
     BOOST_CHECK_EQUAL((unsigned)74803, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 0));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 0);
-    BOOST_CHECK_EQUAL((unsigned)273774, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 1));
+    // Mem3Blt save state = 34 bytes
+    BOOST_CHECK_EQUAL((unsigned)273774 + 34, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 1));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 1);
-    BOOST_CHECK_EQUAL((unsigned)185108, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 2));
+    // Mem3Blt save state = 34 bytes
+    BOOST_CHECK_EQUAL((unsigned)185108 + 34, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 2));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 2);
 }
 

@@ -225,6 +225,19 @@ public:
         }
     }
 
+    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
+    {
+        if (this->capture_drawable){
+            this->drawable->draw(cmd, clip, bmp);
+        }
+        if (this->capture_png){
+            this->psc->draw(cmd, clip, bmp);
+        }
+        if (this->capture_wrm){
+            this->pnc->draw(cmd, clip, bmp);
+        }
+    }
+
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         if (this->capture_drawable){

@@ -42,7 +42,7 @@ namespace RDP {
         "DESKSAVE",
         "ORDER12",
         "MEMBLT",
-        "TRIBLT",
+        "MEM3BLT",
         "ORDER15",
         "ORDER16",
         "ORDER17",

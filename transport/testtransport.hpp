@@ -114,7 +114,6 @@ class CheckTransport : public Transport {
 };
 
 class TestTransport : public Transport {
-
     public:
     RIO rio;
 
@@ -158,6 +157,32 @@ class TestTransport : public Transport {
     virtual bool get_status()
     {
         return rio_get_status(&this->rio) == RIO_ERROR_OK;
+    }
+};
+
+class LogTransport : public Transport {
+    public:
+    LogTransport()
+    {
+    }
+
+    ~LogTransport()
+    {
+    }
+
+    using Transport::recv;
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+        throw Error(RIO_ERROR_SEND_ONLY, 0);
+    }
+
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
+        hexdump_c(buffer, len);
+    }
+
+    virtual bool get_status()
+    {
+        return RIO_ERROR_OK;
     }
 };
 

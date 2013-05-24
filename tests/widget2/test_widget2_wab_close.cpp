@@ -69,6 +69,11 @@ struct TestDraw : ModApi
         this->gd.draw(cmd, rect, bmp);
     }
 
+    virtual void draw(const RDPMem3Blt& cmd, const Rect& rect, const Bitmap& bmp)
+    {
+        this->gd.draw(cmd, rect, bmp);
+    }
+
     virtual void draw(const RDPLineTo&, const Rect&)
     {
         BOOST_CHECK(false);

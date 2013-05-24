@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -21,7 +21,6 @@
    and send them on the wire or store them in a file (actual storage will be provided as a Transport class).
    Serialized RDP orders are put in a chunk and sent when flush is called (either explicit call or because
    the provided buffer is full).
-
 */
 
 #ifndef _REDEMPTION_CORE_RDP_RDPSERIALIZER_HPP_
@@ -101,13 +100,13 @@
 #include "colors.hpp"
 
 enum {
-    TIMESTAMP = 1008,
-    BREAKPOINT = 1005,
-    META_FILE = 1006,
-    NEXT_FILE_ID = 1007,
-    LAST_IMAGE_CHUNK = 0x1000,
-    PARTIAL_IMAGE_CHUNK = 0x1001,
-    SAVE_STATE = 0x1002,
+    BREAKPOINT          = 1005,
+    META_FILE           = 1006,
+    NEXT_FILE_ID        = 1007,
+    TIMESTAMP           = 1008,
+    LAST_IMAGE_CHUNK    = 0x1000,   // 4096
+    PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
+    SAVE_STATE          = 0x1002,   // 4098
 };
 
 struct RDPSerializer : public RDPGraphicDevice
@@ -127,6 +126,7 @@ struct RDPSerializer : public RDPGraphicDevice
     RDPScrBlt scrblt;
     RDPOpaqueRect opaquerect;
     RDPMemBlt memblt;
+    RDPMem3Blt mem3blt;
     RDPLineTo lineto;
     RDPGlyphIndex glyphindex;
     // state variables for gathering batch of orders
@@ -157,6 +157,7 @@ struct RDPSerializer : public RDPGraphicDevice
         scrblt(Rect(), 0, 0, 0),
         opaquerect(Rect(), 0),
         memblt(0, Rect(), 0, 0, 0, 0),
+        mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0),
         lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
         glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
         // state variables for a batch of orders
@@ -165,7 +166,7 @@ struct RDPSerializer : public RDPGraphicDevice
         bmp_cache(bmp_cache)
      {}
     ~RDPSerializer() {}
-    
+
     virtual void flush() = 0;
 
     /*****************************************************************************/
@@ -246,10 +247,10 @@ struct RDPSerializer : public RDPGraphicDevice
     void emit_bmp_cache(uint8_t cache_id, uint16_t cache_idx)
     {
         const Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
-        if (!bmp) { 
+        if (!bmp) {
 //            LOG(LOG_INFO, "skipping RDPSerializer::emit_bmp_cache for %u:%u (entry not used)",
 //                cache_id, cache_idx);
-            return; 
+            return;
         }
         RDPBmpCache cmd_cache(bmp, cache_id, cache_idx, this->ini.globals.debug.primary_orders);
         this->reserve_order(cmd_cache.bmp->bmp_size + 16);
@@ -258,7 +259,7 @@ struct RDPSerializer : public RDPGraphicDevice
         if (this->ini.globals.debug.secondary_orders){
             cmd_cache.log(LOG_INFO);
         }
-    }    
+    }
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & oldbmp)
     {
@@ -282,6 +283,11 @@ struct RDPSerializer : public RDPGraphicDevice
         if (this->ini.globals.debug.primary_orders){
             newcmd.log(LOG_INFO, common.clip);
         }
+    }
+
+    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & oldbmp) {
+        this->draw(RDPPatBlt(cmd.rect, cmd.rop, cmd.back_color, cmd.fore_color, cmd.brush), clip);
+        this->draw(RDPMemBlt(cmd.cache_id, cmd.rect, cmd.rop, cmd.srcx, cmd.srcy, cmd.cache_idx), clip, oldbmp);
     }
 
     virtual void draw(const RDPLineTo& cmd, const Rect & clip)
@@ -321,6 +327,5 @@ struct RDPSerializer : public RDPGraphicDevice
         cmd.emit(this->stream);
     }
 };
-
 
 #endif

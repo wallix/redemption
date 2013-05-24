@@ -136,8 +136,10 @@ struct Session {
             this->mod = 0;
             this->internal_state = SESSION_STATE_ENTRY;
             const bool enable_fastpath = true;
-            const bool tls_support = this->ini->globals.enable_tls;
-            this->front = new Front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &this->gen, ini, enable_fastpath, tls_support);
+            const bool tls_support     = this->ini->globals.enable_tls;
+            const bool mem3blt_support = true;
+            this->front = new Front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &this->gen,
+                ini, enable_fastpath, tls_support, mem3blt_support);
             this->no_mod = new null_mod(*(this->front));
             this->mod = this->no_mod;
 
@@ -912,6 +914,7 @@ struct Session {
                                     this->ini->globals.shell_working_directory,
                                     this->ini->globals.client.clipboard,
                                     true, // support fast-path
+                                    true, // support mem3blt
                                     this->ini->globals.debug.mod_rdp,
                                     true
                                     );

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -23,7 +23,6 @@
    - It may be sent on the wire,
    - Used to draw on some internal bitmap,
    - etc.
-
 */
 
 #ifndef _REDEMPTION_CAPTURE_FILETOGRAPHIC_HPP_
@@ -56,6 +55,7 @@ struct FileToGraphic
     RDPScrBlt scrblt;
     RDPOpaqueRect opaquerect;
     RDPMemBlt memblt;
+    RDPMem3Blt mem3blt;
     RDPLineTo lineto;
     RDPGlyphIndex glyphindex;
 
@@ -92,6 +92,8 @@ struct FileToGraphic
     uint32_t max_order_count;
     uint32_t verbose;
 
+    bool mem3blt_support;
+
     FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
         : stream(65536)
         , trans(trans)
@@ -101,6 +103,7 @@ struct FileToGraphic
         , scrblt(Rect(), 0, 0, 0)
         , opaquerect(Rect(), 0)
         , memblt(0, Rect(), 0, 0, 0, 0)
+        , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
         , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
         , glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"")
         , bmp_cache(NULL)
@@ -121,9 +124,10 @@ struct FileToGraphic
         , end_capture(end_capture)
         , max_order_count(0)
         , verbose(verbose)
+        , mem3blt_support(false)
     {
         init_palette332(this->palette); // We don't really care movies are always 24 bits for now
-        
+
         while (this->next_order()){
             this->interpret_order();
             if (this->meta_ok && this->timestamp_ok){
@@ -147,11 +151,11 @@ struct FileToGraphic
           "Most of the times it means not changing it, except when it must read next chunk"
           "when remaining order count is 0."
           "It update chunk headers (merely remaining orders count) and"
-          " reads the next chunk if necessary.") 
-    {   
-        if (this->chunk_type != LAST_IMAGE_CHUNK 
+          " reads the next chunk if necessary.")
+    {
+        if (this->chunk_type != LAST_IMAGE_CHUNK
         && this->chunk_type != PARTIAL_IMAGE_CHUNK){
-            if ((this->stream.p == this->stream.end) 
+            if ((this->stream.p == this->stream.end)
             && (this->remaining_order_count)){
                 LOG(LOG_ERR, "Incomplete order batch at chunk %u "
                              "order [%u/%u] "
@@ -161,7 +165,7 @@ struct FileToGraphic
                              (this->stream.end - this->stream.p), this->chunk_size);
                 return false;
             }
-            if ((this->stream.p != this->stream.end) 
+            if ((this->stream.p != this->stream.end)
             && (this->remaining_order_count == -1)){
                 LOG(LOG_ERR, "Incomplete order batch at chunk %u "
                              "order [%u/%u] "
@@ -332,6 +336,24 @@ struct FileToGraphic
                         }
                     }
                     break;
+                case RDP::MEM3BLT:
+                    {
+                        this->mem3blt.receive(this->stream, header);
+                        if (this->verbose > 32){
+                            this->mem3blt.log(LOG_INFO, clip);
+                        }
+                        const Bitmap * bmp = this->bmp_cache->get(this->mem3blt.cache_id, this->mem3blt.cache_idx);
+                        if (!bmp){
+                            LOG(LOG_ERR, "Mem3blt bitmap not found in cache at (%u, %u)", this->mem3blt.cache_id, this->mem3blt.cache_idx);
+                            throw Error(ERR_WRM);
+                        }
+                        else {
+                            for (size_t i = 0; i < this->nbconsumers ; i++){
+                                this->consumers[i]->draw(this->mem3blt, clip, *bmp);
+                            }
+                        }
+                    }
+                    break;
                 default:
                     /* error unknown order */
                     LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->common.order);
@@ -351,7 +373,7 @@ struct FileToGraphic
                         LOG(LOG_WARNING, "Input data truncated");
                         hexdump_d(stream.p, stream.end - stream.p);
                     }
-                    
+
                     this->mouse_x = this->stream.in_uint16_le();
                     this->mouse_y = this->stream.in_uint16_le();
 
@@ -406,7 +428,7 @@ struct FileToGraphic
                         uint64_t elapsed = difftimeval(now, this->synctime_now);
                         this->synctime_now = now;
                         uint64_t movie_elapsed = difftimeval(this->record_now, last_movie_time);
- 
+
                         if (elapsed <= movie_elapsed){
                             struct timespec wtime =
                                 { static_cast<uint32_t>((movie_elapsed - elapsed) / 1000000LL)
@@ -416,7 +438,7 @@ struct FileToGraphic
                         }
                     }
                     else {
-                        this->synctime_now = this->record_now; 
+                        this->synctime_now = this->record_now;
                     }
                 }
             }
@@ -427,6 +449,7 @@ struct FileToGraphic
             {
                 uint16_t version = this->stream.in_uint16_le();
                 (void)version; // for now there is only one, we do not yet have problems
+                this->mem3blt_support = (version > 1);
                 uint16_t width = this->stream.in_uint16_le();
                 uint16_t height = this->stream.in_uint16_le();
                 uint16_t bpp    =  this->stream.in_uint16_le();
@@ -513,6 +536,26 @@ struct FileToGraphic
                 this->memblt.srcy    = this->stream.in_uint8();
                 this->memblt.cache_idx = this->stream.in_uint16_le();
 
+                // RDPMem3Blt memblt;
+                if (this->mem3blt_support) {
+                    this->mem3blt.cache_id    = this->stream.in_uint16_le();
+                    this->mem3blt.rect.x      = this->stream.in_uint16_le();
+                    this->mem3blt.rect.y      = this->stream.in_uint16_le();
+                    this->mem3blt.rect.cx     = this->stream.in_uint16_le();
+                    this->mem3blt.rect.cy     = this->stream.in_uint16_le();
+                    this->mem3blt.rop         = this->stream.in_uint8();
+                    this->mem3blt.srcx        = this->stream.in_uint8();
+                    this->mem3blt.srcy        = this->stream.in_uint8();
+                    this->mem3blt.back_color  = this->stream.in_uint32_le();
+                    this->mem3blt.fore_color  = this->stream.in_uint32_le();
+                    this->mem3blt.brush.org_x = this->stream.in_uint8();
+                    this->mem3blt.brush.org_y = this->stream.in_uint8();
+                    this->mem3blt.brush.style = this->stream.in_uint8();
+                    this->mem3blt.brush.hatch = this->stream.in_uint8();
+                    this->stream.in_copy_bytes(this->mem3blt.brush.extra, 7);
+                    this->mem3blt.cache_idx   = this->stream.in_uint16_le();
+                }
+
                 // RDPLineTo lineto;
                 this->lineto.back_mode = this->stream.in_uint8();
                 this->lineto.startx = this->stream.in_uint16_le();
@@ -549,7 +592,6 @@ struct FileToGraphic
                 this->glyphindex.glyph_y = this->stream.in_sint16_le();
                 this->glyphindex.data_len = this->stream.in_uint8();
                 this->stream.in_copy_bytes(this->glyphindex.data, 256);
-                
             break;
 
             case LAST_IMAGE_CHUNK:
@@ -557,16 +599,16 @@ struct FileToGraphic
             {
                 if (this->nbconsumers){
                     InChunkedImageTransport chunk_trans(this->chunk_type, this->chunk_size, this->trans);
-                    
+
                     png_struct * ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
                     png_set_read_fn(ppng, &chunk_trans, &png_read_data_fn);
                     png_info * pinfo = png_create_info_struct(ppng);
                     png_read_info(ppng, pinfo);
 
                     size_t height = png_get_image_height(ppng, pinfo);
-                    
+
                     TODO("check png row_size is identical to drawable rowsize");
-                    
+
                     uint32_t tmp[8192];
                     for (size_t k = 0 ; k < height ; ++k) {
                         png_read_row(ppng, reinterpret_cast<uint8_t*>(tmp), NULL);
@@ -594,11 +636,11 @@ struct FileToGraphic
             break;
         }
     }
-    
+
     void play()
     {
         bool send_initial_image = true;
-        if ((this->begin_capture.tv_sec == 0) 
+        if ((this->begin_capture.tv_sec == 0)
             ||(this->begin_capture.tv_sec > this->record_now.tv_sec)
             || (this->begin_capture.tv_sec == this->record_now.tv_sec && this->begin_capture.tv_usec > this->record_now.tv_usec)){
                 send_initial_image = false;
@@ -610,9 +652,9 @@ struct FileToGraphic
                     (unsigned)this->record_now.tv_sec, (unsigned)this->total_orders_count);
             }
             this->interpret_order();
-            if ((this->begin_capture.tv_sec == 0) 
+            if ((this->begin_capture.tv_sec == 0)
             || (this->begin_capture.tv_sec < this->record_now.tv_sec)
-            || (this->begin_capture.tv_sec == this->record_now.tv_sec 
+            || (this->begin_capture.tv_sec == this->record_now.tv_sec
             && this->begin_capture.tv_usec <= this->record_now.tv_usec)){
                 if (send_initial_image){
                     send_initial_image = false;
@@ -624,7 +666,7 @@ struct FileToGraphic
             if (this->max_order_count && this->max_order_count <= this->total_orders_count){
                 break;
             }
-            if (this->end_capture.tv_sec 
+            if (this->end_capture.tv_sec
             && ((this->end_capture.tv_sec < this->record_now.tv_sec)
                || ((this->end_capture.tv_sec == this->record_now.tv_sec) && (this->end_capture.tv_usec < this->record_now.tv_usec)))){
                 break;

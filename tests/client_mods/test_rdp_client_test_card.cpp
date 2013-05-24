@@ -74,6 +74,10 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
         {
             cmd.log(LOG_INFO, clip);
         }
+        virtual void draw(const RDPMem3Blt& cmd, const Rect& clip, const Bitmap& bmp)
+        {
+            cmd.log(LOG_INFO, clip);
+        }
         virtual void draw(const RDPLineTo& cmd, const Rect& clip)
         {
             cmd.log(LOG_INFO, clip);

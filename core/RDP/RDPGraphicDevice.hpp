@@ -33,6 +33,7 @@
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
@@ -50,6 +51,7 @@ struct RDPGraphicDevice
     virtual void draw(const RDPDestBlt & cmd, const Rect &clip) = 0;
     virtual void draw(const RDPPatBlt & cmd, const Rect &clip) = 0;
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) = 0;
+    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) = 0;
     virtual void draw(const RDPLineTo& cmd, const Rect & clip) = 0;
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
 

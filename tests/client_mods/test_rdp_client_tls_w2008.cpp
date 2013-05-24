@@ -103,6 +103,11 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
             this->gd.draw(cmd, clip, bitmap);
         }
 
+        virtual void draw(const RDPMem3Blt& cmd, const Rect& clip, const Bitmap& bitmap)
+        {
+            this->gd.draw(cmd, clip, bitmap);
+        }
+
         virtual void draw(const RDPLineTo& cmd, const Rect& clip)
         {
             RDPLineTo new_cmd24 = cmd;
@@ -221,12 +226,13 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                                       , 7
                                       , NULL
                                       , ""
-                                      , "" /* alternate_shell */
-                                      , "" /* shell_working_directory */
-                                      , true
-                                      , false
-                                      , 511
-                                      , false);
+                                      , ""      /* alternate_shell         */
+                                      , ""      /* shell_working_directory */
+                                      , true    /* clipboard               */
+                                      , false   /* fast-path support       */
+                                      , false   /* mem3blt support         */
+                                      , 511     /* verbose                 */
+                                      , false); /* enable new pointer      */
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
