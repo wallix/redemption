@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier, Poelen Jonathan
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier,
+              Poelen Jonathan
 */
 
 #ifndef _REDEMPTION_UTILS_DRAWABLE_HPP_
@@ -82,17 +83,17 @@ struct Drawable
                 unsigned bRGB = *s++;
                 unsigned GBrg = *s++;
                 unsigned rgbR = *s++;
-                *t++ = ((GBrg << 16) & 0xFF000000) 
-                     | ((bRGB << 16) & 0x00FF0000) 
-                     | (bRGB         & 0x0000FF00) 
+                *t++ = ((GBrg << 16) & 0xFF000000)
+                     | ((bRGB << 16) & 0x00FF0000)
+                     | (bRGB         & 0x0000FF00)
                      | ((bRGB >> 16) & 0x000000FF) ;
-                *t++ = (GBrg         & 0xFF000000) 
-                     | ((rgbR << 16) & 0x00FF0000) 
-                     | ((bRGB >> 16) & 0x0000FF00) 
+                *t++ = (GBrg         & 0xFF000000)
+                     | ((rgbR << 16) & 0x00FF0000)
+                     | ((bRGB >> 16) & 0x0000FF00)
                      | ( GBrg        & 0x000000FF) ;
-                *t++ = ((rgbR << 16) & 0xFF000000)   
-                     | (rgbR         & 0x00FF0000) 
-                     | ((rgbR >> 16) & 0x0000FF00) 
+                *t++ = ((rgbR << 16) & 0xFF000000)
+                     | (rgbR         & 0x00FF0000)
+                     | ((rgbR >> 16) & 0x0000FF00)
                      | ((GBrg >> 16) & 0x000000FF) ;
             }
         }
@@ -613,8 +614,6 @@ struct Drawable
     // mostly avoid clipping because we already took care of it
     void patblt(const Rect & rect, const uint8_t rop, const uint32_t color)
     {
-
-
         TODO(" this switch contains much duplicated code  to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution  in this particular case I see no obvious better way.")
         switch (rop){
             // +------+-------------------------------+
