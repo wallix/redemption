@@ -286,8 +286,26 @@ struct RDPSerializer : public RDPGraphicDevice
     }
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & oldbmp) {
-        this->draw(RDPPatBlt(cmd.rect, cmd.rop, cmd.back_color, cmd.fore_color, cmd.brush), clip);
-        this->draw(RDPMemBlt(cmd.cache_id, cmd.rect, cmd.rop, cmd.srcx, cmd.srcy, cmd.cache_idx), clip, oldbmp);
+        uint32_t res = this->bmp_cache.cache_bitmap(oldbmp);
+        uint8_t cache_id = (res >> 16) & 0x3;
+        uint16_t cache_idx = res;
+
+        if ((res >> 24) == BITMAP_ADDED_TO_CACHE){
+            this->emit_bmp_cache(cache_id, cache_idx);
+        }
+
+        RDPMem3Blt newcmd = cmd;
+        newcmd.cache_id = cache_id;
+        newcmd.cache_idx = cache_idx;
+
+        this->reserve_order(60);
+        RDPOrderCommon newcommon(RDP::MEM3BLT, clip);
+        newcmd.emit(this->stream, newcommon, this->common, this->mem3blt);
+        this->common = newcommon;
+        this->mem3blt = newcmd;
+        if (this->ini.globals.debug.primary_orders){
+            newcmd.log(LOG_INFO, common.clip);
+        }
     }
 
     virtual void draw(const RDPLineTo& cmd, const Rect & clip)

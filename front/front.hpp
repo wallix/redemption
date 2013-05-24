@@ -119,7 +119,7 @@ public:
     bool tls_support;                         // choice of programmer, front support tls
     bool mem3blt_support;
     int clientRequestedProtocols;
-    
+
     Front ( Transport * trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
           , Random * gen
@@ -180,9 +180,9 @@ public:
         // - SSL_library_init() always returns "1", so it is safe to discard the return
         // value.
 
-        // Note: OpenSSL 0.9.8o and 1.0.0a and later added SHA2 algorithms to 
+        // Note: OpenSSL 0.9.8o and 1.0.0a and later added SHA2 algorithms to
         // SSL_library_init(). Applications which need to use SHA2 in earlier versions
-        // of OpenSSL should call OpenSSL_add_all_algorithms() as well. 
+        // of OpenSSL should call OpenSSL_add_all_algorithms() as well.
 
         SSL_library_init();
 
@@ -414,10 +414,10 @@ public:
             strcpy(basename, "redemption"); // default value actual one should come from movie_path
             strcpy(extension, ""); // extension is currently ignored
             canonical_path(ini.globals.movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
-            this->capture = new Capture(now, width, height, 
-                                        RECORD_PATH "/", 
-                                        RECORD_TMP_PATH "/", 
-                                        HASH_PATH "/", basename, 
+            this->capture = new Capture(now, width, height,
+                                        RECORD_PATH "/",
+                                        RECORD_TMP_PATH "/",
+                                        HASH_PATH "/", basename,
                                         true, ini);
         }
     }
@@ -903,7 +903,7 @@ public:
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
-            
+
             if (((this->verbose & 4)!=0)&&((this->verbose & 4)!=0)){
                 LOG(LOG_INFO, "Sec clear payload to send:");
                 hexdump_d(target_stream.data, target_stream.size());
@@ -1005,7 +1005,7 @@ public:
 
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-            
+
             BStream target_stream(65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
@@ -1097,7 +1097,6 @@ public:
                 }
                 this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
 
-                
                 if (
                     // Proxy supports TLS.
                     this->tls_support
@@ -1143,7 +1142,7 @@ public:
 
             // 2.2.10.2 Early User Authorization Result PDU
             // ============================================
-            
+
             // The Early User Authorization Result PDU is sent from server to client and is used
             // to convey authorization information to the client. This PDU is only sent by the server
             // if the client advertised support for it by specifying the PROTOCOL_HYBRID_EX (0x00000008)
@@ -1151,12 +1150,12 @@ public:
             // structure and it MUST be sent immediately after the CredSSP handshake (section 5.4.5.2) has completed.
 
             // authorizationResult (4 bytes): A 32-bit unsigned integer. Specifies the authorization result.
-            
+
             // +---------------------------------+--------------------------------------------------------+
             // | AUTHZ_SUCCESS 0x00000000        | The user has permission to access the server.          |
-            // +---------------------------------+--------------------------------------------------------+    
+            // +---------------------------------+--------------------------------------------------------+
             // | AUTHZ _ACCESS_DENIED 0x0000052E | The user does not have permission to access the server.|
-            // +---------------------------------+--------------------------------------------------------+    
+            // +---------------------------------+--------------------------------------------------------+
 
                 }
             }
@@ -1279,7 +1278,7 @@ public:
             BStream stream(65536);
             // ------------------------------------------------------------------
 //            GCC::UserData::ServerToClient_Send(stream, this->clientRequestedProtocols, this->channel_list.size());
-            
+
             GCC::UserData::SCCore sc_core;
             sc_core.version = 0x00080004;
             if (this->tls_support){
@@ -1556,7 +1555,7 @@ public:
                 BStream pdu(65536);
                 X224::RecvFactory f(*this->trans, pdu);
                 X224::DT_TPDU_Recv x224(*this->trans, pdu);
-                
+
                 MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
                 if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
                     LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
@@ -1566,9 +1565,9 @@ public:
                     LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
                     throw Error(ERR_MCS);
                 }
-                
+
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                
+
                 SEC::SecExchangePacket_Recv sec(mcs.payload, mcs.payload_size);
 
                 ssllib ssl;
@@ -1643,7 +1642,7 @@ public:
             }
 
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-            
+
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if (this->verbose & 128){
                 LOG(LOG_INFO, "sec decrypted payload:");
@@ -1664,7 +1663,7 @@ public:
                                                 );
 
             if (sec.payload.in_remain()){
-                LOG(LOG_ERR, "Front::incoming::process_logon all data should have been consumed %u bytes trailing", 
+                LOG(LOG_ERR, "Front::incoming::process_logon all data should have been consumed %u bytes trailing",
                     (unsigned)sec.payload.in_remain());
             }
 
@@ -1815,7 +1814,7 @@ public:
             BStream stream(65536);
             X224::RecvFactory fx224(*this->trans, stream);
             X224::DT_TPDU_Recv x224(*this->trans, stream);
-            
+
             MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
             if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
                 LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
@@ -1825,7 +1824,7 @@ public:
                 LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
                 throw Error(ERR_MCS);
             }
-            
+
             MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
@@ -1865,7 +1864,7 @@ public:
                     LIC::ErrorAlert_Recv lic(sec.payload);
                     LOG(LOG_ERR, "Front::License Alert: error=%u transition=%u",
                         lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
-                    
+
                 }
                 break;
                 case LIC::NEW_LICENSE_REQUEST:
@@ -1879,7 +1878,7 @@ public:
                     // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
 
                     /* some compilers need unsigned char to avoid warnings */
-                    static uint8_t lic2[16] = { 
+                    static uint8_t lic2[16] = {
                         0xff,       // bMsgType : ERROR_ALERT
                         0x02,       // NOT EXTENDED_ERROR_MSG_SUPPORTED, PREAMBLE_VERSION_2_0
                         0x10, 0x00, // wMsgSize: 16 bytes including preamble
@@ -2053,8 +2052,8 @@ public:
             // Detect fast-path PDU
             this->trans->recv(&stream.end, 1);
             uint8_t byte = stream.in_uint8();
-            
-            
+
+
             if ((byte & FastPath::FASTPATH_INPUT_ACTION_X224) == 0){
                 FastPath::ClientInputEventPDU_Recv cfpie(*this->trans, stream, this->decrypt);
 
@@ -2089,7 +2088,7 @@ public:
                             }
 
                             cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
-                            
+
                         }
                         break;
 
@@ -2263,7 +2262,7 @@ public:
                             // this is rdp_process_data that will set up_and_running to 1
                             // when fonts have been received
                             // we will not exit this loop until we are in this state.
-    //                        LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
+//                            LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
                             this->process_data(sctrl.payload, cb);
                             if (this->verbose & 8){
                                 LOG(LOG_INFO, "Front received DATAPDU done");
@@ -2329,7 +2328,7 @@ public:
 
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-            
+
             BStream target_stream(65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
@@ -3170,17 +3169,17 @@ public:
             }
             // numberOfAreas (1 byte): An 8-bit, unsigned integer. The number of Inclusive Rectangle
             // (section 2.2.11.1) structures in the areasToRefresh field.
-            
-            // pad3Octects (3 bytes): A 3-element array of 8-bit, unsigned integer values. Padding. 
+
+            // pad3Octects (3 bytes): A 3-element array of 8-bit, unsigned integer values. Padding.
             // Values in this field MUST be ignored.
 
             // areasToRefresh (variable): An array of TS_RECTANGLE16 structures (variable number of
-            // bytes). Array of screen area Inclusive Rectangles to redraw. The number of rectangles 
+            // bytes). Array of screen area Inclusive Rectangles to redraw. The number of rectangles
             // is given by the numberOfAreas field.
-            
+
             // 2.2.11.1 Inclusive Rectangle (TS_RECTANGLE16)
             // =============================================
-            // The TS_RECTANGLE16 structure describes a rectangle expressed in inclusive coordinates 
+            // The TS_RECTANGLE16 structure describes a rectangle expressed in inclusive coordinates
             // (the right and bottom coordinates are include " in the rectangle bounds).
             // left (2 bytes): A 16-bit, unsigned integer. The leftmost bound of the rectangle.
             // top (2 bytes): A 16-bit, unsigned integer. The upper bound of the rectangle.
@@ -3190,7 +3189,7 @@ public:
             {
                 size_t numberOfAreas = sdata_in.payload.in_uint8();
                 sdata_in.payload.in_skip_bytes(3);
-                
+
                 for (size_t i = 0; i < numberOfAreas ; i++){
                     int left = sdata_in.payload.in_uint16_le();
                     int top = sdata_in.payload.in_uint16_le();
@@ -3640,9 +3639,121 @@ public:
         }
     }
 
+    void draw_tile3(const Rect & dst_tile, const Rect & src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, const Rect & clip)
+    {
+        if (this->verbose & 64){
+            LOG(LOG_INFO, "front::draw:draw_tile3((%u, %u, %u, %u) (%u, %u, %u, %u)",
+                 dst_tile.x, dst_tile.y, dst_tile.cx, dst_tile.cy,
+                 src_tile.x, src_tile.y, src_tile.cx, src_tile.cy);
+        }
+
+        // No need to resize bitmap
+
+//        if (dst_tile.x + dst_tile.cx == this->client_info.width
+//        && dst_tile.y + dst_tile.cy == this->client_info.height){
+//            return;
+//        }
+
+        const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+        const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+
+        if (src_tile == Rect(0, 0, bitmap.cx, bitmap.cy)){
+            RDPMem3Blt cmd2(0, dst_tile, cmd.rop, 0, 0, cmd.back_color, cmd.fore_color, cmd.brush, 0);
+
+            if (this->client_info.bpp != this->mod_bpp){
+                cmd2.back_color= color_encode(back_color24, this->client_info.bpp);
+                cmd2.fore_color= color_encode(fore_color24, this->client_info.bpp);
+                // this may change the brush add send it to to remote cache
+            }
+
+            this->orders->draw(cmd2, clip, bitmap);
+            if (this->capture){
+                cmd2.back_color= back_color24;
+                cmd2.fore_color= fore_color24;
+
+                this->capture->draw(cmd2, clip, bitmap);
+            }
+        }
+        else {
+            const Bitmap tiled_bmp(bitmap, src_tile);
+            RDPMem3Blt cmd2(0, dst_tile, cmd.rop, 0, 0, cmd.back_color, cmd.fore_color, cmd.brush, 0);
+
+            if (this->client_info.bpp != this->mod_bpp){
+                cmd2.back_color= color_encode(back_color24, this->client_info.bpp);
+                cmd2.fore_color= color_encode(fore_color24, this->client_info.bpp);
+                // this may change the brush add send it to to remote cache
+            }
+
+            this->orders->draw(cmd2, clip, tiled_bmp);
+            if (this->capture){
+                cmd2.back_color= back_color24;
+                cmd2.fore_color= fore_color24;
+
+                this->capture->draw(cmd2, clip, tiled_bmp);
+            }
+        }
+    }
+
     void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) {
-        this->draw(RDPPatBlt(cmd.rect, cmd.rop, cmd.back_color, cmd.fore_color, cmd.brush), clip);
-        this->draw(RDPMemBlt(cmd.cache_id, cmd.rect, cmd.rop, cmd.srcx, cmd.srcy, cmd.cache_idx), clip, bitmap);
+//LOG(LOG_INFO, "Mem3Blt::rop = %X", cmd.rop);
+        if (bitmap.cx < cmd.srcx || bitmap.cy < cmd.srcy){
+            return;
+        }
+
+        this->send_global_palette();
+
+        const uint8_t palette_id = 0;
+        if (this->client_info.bpp == 8){
+            if (!this->palette_memblt_sent[palette_id]) {
+                RDPColCache cmd(palette_id, bitmap.original_palette);
+                this->orders->draw(cmd);
+                this->palette_memblt_sent[palette_id] = true;
+            }
+        }
+
+        // if not we have to split it
+        const uint16_t TILE_CX = 32;
+        const uint16_t TILE_CY = 32;
+
+        const uint16_t dst_x = cmd.rect.x;
+        const uint16_t dst_y = cmd.rect.y;
+        // clip dst as it can be larger than source bitmap
+        const uint16_t dst_cx = std::min<uint16_t>(bitmap.cx - cmd.srcx, cmd.rect.cx);
+        const uint16_t dst_cy = std::min<uint16_t>(bitmap.cy - cmd.srcy, cmd.rect.cy);
+
+        // check if target bitmap can be fully stored inside one front cache entry
+        // if so no need to tile it.
+        uint32_t front_bitmap_size = ::nbbytes(this->client_info.bpp) * align4(dst_cx) * dst_cy;
+        // even if cache seems to be large enough, cache entries cant be used
+        // for values whose width is larger or equal to 256 after alignment
+        // hence, we check for this case. There does not seem to exist any
+        // similar restriction on cy actual reason of this is unclear
+        // (I don't even know if it's related to redemption code or client code).
+//        LOG(LOG_INFO, "cache1=%u cache2=%u cache3=%u bmp_size==%u",
+//            this->client_info.cache1_size,
+//            this->client_info.cache2_size,
+//            this->client_info.cache3_size,
+//            front_bitmap_size);
+        if (front_bitmap_size <= this->client_info.cache3_size
+            && align4(dst_cx) < 128 && dst_cy < 128){
+            // clip dst as it can be larger than source bitmap
+            const Rect dst_tile(dst_x, dst_y, dst_cx, dst_cy);
+            const Rect src_tile(cmd.srcx, cmd.srcy, dst_cx, dst_cy);
+            this->draw_tile3(dst_tile, src_tile, cmd, bitmap, clip);
+        }
+        else {
+            for (int y = 0; y < dst_cy ; y += TILE_CY) {
+                int cy = std::min(TILE_CY, (uint16_t)(dst_cy - y));
+
+                for (int x = 0; x < dst_cx ; x += TILE_CX) {
+                    int cx = std::min(TILE_CX, (uint16_t)(dst_cx - x));
+
+                    const Rect dst_tile(dst_x + x, dst_y + y, cx, cy);
+                    const Rect src_tile(cmd.srcx + x, cmd.srcy + y, cx, cy);
+                    this->draw_tile3(dst_tile, src_tile, cmd, bitmap, clip);
+                }
+            }
+        }
     }
 
     void draw(const RDPLineTo & cmd, const Rect & clip)
@@ -3726,7 +3837,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPColCache & cmd) 
+    virtual void draw(const RDPColCache & cmd)
     {
         this->orders->draw(cmd);
     }

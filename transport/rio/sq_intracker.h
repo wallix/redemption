@@ -190,6 +190,43 @@ extern "C" {
         memcpy(self->line, &(self->buffer[self->begin_line]), name_size);
         self->line[name_size] = 0;
         ssize_t i = name_size - 1;
+
+        bool is_file_encrypted = false;
+
+        // filename(1 or >) + space(1) + start_sec(1 or >) + space(1) + stop_sec(1 or >) +
+        //     space(1) + hash1(64) + space(1) + hash2(64) >= 135
+        if (name_size >= 135) {
+            char * pos_hash2 = strrchr(self->line, ' ');
+            if (pos_hash2 && (strlen(pos_hash2 + 1) == 64)) {
+                *pos_hash2 = '\0';
+
+                char * pos_hash1 = strrchr(self->line, ' ');
+
+                if (pos_hash1 && (strlen(pos_hash1 + 1) == 64)) {
+                    is_file_encrypted = true;
+                }
+
+                *pos_hash2 = ' ';
+            }
+        }
+
+        if (is_file_encrypted) {
+            // Line format "fffff sssss eeeee hhhhh HHHHH"
+            //                               ^  ^  ^  ^
+            //                               |  |  |  |
+            //                               |hash1|  |
+            //                               |     |  |
+            //                           space3    |hash2
+            //                                     |
+            //                                   space4
+            while (self->line[i] != ' ')
+                i--;                     // skip hash2
+            i--;                         // skip space4
+            while (self->line[i] != ' ')
+                i--;                     // skip hash1
+            i--;                         // skip space3
+        }
+
         unsigned stop_sec = 0;
         {
             unsigned old_stop_sec = 0;
@@ -463,6 +500,7 @@ extern "C" {
         }
         memcpy(self->line, &(self->buffer[self->begin_line]), name_size);
         self->line[name_size] = 0;
+        ssize_t i = name_size - 1;
 
         // Line format "fffff sssss eeeee hhhhh HHHHH"
         //                               ^  ^  ^  ^
@@ -472,8 +510,6 @@ extern "C" {
         //                           space3    |hash2
         //                                     |
         //                                   space4
-        ssize_t i = name_size - 1;
-
         while (self->line[i] != ' ')
             i--;                     // skip hash2
         i--;                         // skip space4
