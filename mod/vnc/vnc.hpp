@@ -1496,6 +1496,11 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         this->front.draw(cmd, clip, bmp);
     }
 
+    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
+    {
+        this->front.draw(cmd, clip, bmp);
+    }
+
     virtual void draw(const RDPLineTo& cmd, const Rect & clip)
     {
         this->front.draw(cmd, clip);

@@ -117,6 +117,7 @@ public:
     bool client_fastpath_input_event_support; // = choice of programmer
     bool server_fastpath_update_support;      // choice of programmer + capability of client
     bool tls_support;                         // choice of programmer, front support tls
+    bool mem3blt_support;
     int clientRequestedProtocols;
 
 TODO("Pass font name as parameter in constructor")
@@ -126,6 +127,7 @@ TODO("Pass font name as parameter in constructor")
           , Inifile * ini
           , bool fp_support // If true, fast-path must be supported
           , bool tls_support // If true, tls must be supported
+          , bool mem3blt_support
           )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
         , capture(NULL)
@@ -150,9 +152,9 @@ TODO("Pass font name as parameter in constructor")
         , client_fastpath_input_event_support(fp_support)
         , server_fastpath_update_support(false)
         , tls_support(tls_support)
+        , mem3blt_support(mem3blt_support)
         , clientRequestedProtocols(X224::PROTOCOL_RDP)
     {
-
         // init TLS
         // --------------------------------------------------------
 
@@ -2394,6 +2396,7 @@ TODO("Pass font name as parameter in constructor")
         order_caps.orderSupport[TS_NEG_PATBLT_INDEX] = 1;
         order_caps.orderSupport[TS_NEG_SCRBLT_INDEX] = 1;
         order_caps.orderSupport[TS_NEG_MEMBLT_INDEX] = 1;
+        order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX] = (this->mem3blt_support ? 1 : 0);
         order_caps.orderSupport[TS_NEG_LINETO_INDEX] = 1;
         order_caps.orderSupport[UnusedIndex3] = 1;
         order_caps.textFlags = 0x06a1;
@@ -3600,6 +3603,11 @@ TODO("Pass font name as parameter in constructor")
                 }
             }
         }
+    }
+
+    void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) {
+        this->draw(RDPPatBlt(cmd.rect, cmd.rop, cmd.back_color, cmd.fore_color, cmd.brush), clip);
+        this->draw(RDPMemBlt(cmd.cache_id, cmd.rect, cmd.rop, cmd.srcx, cmd.srcy, cmd.cache_idx), clip, bitmap);
     }
 
     void draw(const RDPLineTo & cmd, const Rect & clip)

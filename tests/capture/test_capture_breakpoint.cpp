@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    Unit test to conversion of RDP drawing orders to PNG images
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -105,9 +104,11 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         sq_init_outfilename(&wrm_seq, SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "capture", ".wrm", groupid);        
         BOOST_CHECK_EQUAL((unsigned)1622, (unsigned)sq_outfilename_filesize(&wrm_seq, 0));
         sq_outfilename_unlink(&wrm_seq, 0);
-        BOOST_CHECK_EQUAL((unsigned)3392, (unsigned)sq_outfilename_filesize(&wrm_seq, 1));
+        // Mem3Blt save state = 34 bytes
+        BOOST_CHECK_EQUAL((unsigned)3392 + 34, (unsigned)sq_outfilename_filesize(&wrm_seq, 1));
         sq_outfilename_unlink(&wrm_seq, 1);
-        BOOST_CHECK_EQUAL((unsigned)3371, (unsigned)sq_outfilename_filesize(&wrm_seq, 2));
+        // Mem3Blt save state = 34 bytes
+        BOOST_CHECK_EQUAL((unsigned)3371 + 34, (unsigned)sq_outfilename_filesize(&wrm_seq, 2));
         sq_outfilename_unlink(&wrm_seq, 2);
         // The destruction of capture object will finalize the metafile content
     }
@@ -122,5 +123,3 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         sq_outfilename_unlink(&meta_seq, 0);
     }
 }
-
-

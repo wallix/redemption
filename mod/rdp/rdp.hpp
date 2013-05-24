@@ -137,6 +137,7 @@ struct mod_rdp : public mod_api {
     uint32_t performanceFlags;
 
     bool fastpath_support;                    // choice of programmer
+    bool mem3blt_support;
     bool client_fastpath_input_event_support; // choice of programmer + capability of server
     bool server_fastpath_update_support;      // = choice of programmer
 
@@ -156,6 +157,7 @@ struct mod_rdp : public mod_api {
             const char * shell_working_directory,
             bool clipboard,
             bool fp_support, // If true, fast-path must be supported
+            bool mem3blt_support,
             uint32_t verbose = 0,
             bool enable_new_pointer = false)
         : mod_api(info.width, info.height)
@@ -187,6 +189,7 @@ struct mod_rdp : public mod_api {
         , opt_clipboard(clipboard)
         , performanceFlags(info.rdp5_performanceflags)
         , fastpath_support(fp_support)
+        , mem3blt_support(mem3blt_support)
         , client_fastpath_input_event_support(false)
         , server_fastpath_update_support(fp_support)
     {
@@ -1785,6 +1788,7 @@ struct mod_rdp : public mod_api {
             order_caps.orderSupport[TS_NEG_PATBLT_INDEX] = 1;
             order_caps.orderSupport[TS_NEG_SCRBLT_INDEX] = 1;
             order_caps.orderSupport[TS_NEG_MEMBLT_INDEX] = 1;
+            order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX] = (this->mem3blt_support ? 1 : 0);
             order_caps.orderSupport[TS_NEG_LINETO_INDEX] = 1;
             order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
             order_caps.orderSupport[UnusedIndex3] = 1;
@@ -3889,6 +3893,11 @@ struct mod_rdp : public mod_api {
     }
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
+    {
+        this->front.draw(cmd, clip, bmp);
+    }
+
+    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
     {
         this->front.draw(cmd, clip, bmp);
     }

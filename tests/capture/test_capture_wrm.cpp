@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    Unit test to conversion of RDP drawing orders to PNG images
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -40,9 +39,9 @@
 #include "image_capture.hpp"
 #include "constants.hpp"
 
-const char expected_stripped_wrm[] = 
+const char expected_stripped_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x01\x00\x20\x03\x58\x02\x18\x00" // width = 800, height=600, bpp=24
+           "\x02\x00\x20\x03\x58\x02\x18\x00" // WRM version = 2, width = 800, height=600, bpp=24
            "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
 // initial screen content PNG image
@@ -152,7 +151,7 @@ const char expected_stripped_wrm[] =
 
 /* 0000 */ "\x00\x00\x12\x00\x00\x00\x01\x00" // 0000: ORDERS  0012:chunk_len=18 0002: 1 orders
            "\x01\x6e\x32\x00\xbc\x02\x1e\x00\x00\xff"  // Blue  Rect(0, 50, 700, 80)
-           
+
 /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
            "\x00\xd3\xd7\x3b\x00\x00\x00\x00" // time = 1004000000
 
@@ -176,7 +175,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     Rect screen_rect(0, 0, 800, 600);
     BStream stream(65536);
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
-    
+
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy, true);
@@ -210,13 +209,13 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     consumer.draw(cmd3, screen_rect);
     now.tv_sec++;
     consumer.timestamp(now);
- 
+
     consumer.flush();
 }
 
-const char expected_stripped_wrm2[] = 
+const char expected_stripped_wrm2[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x01\x00\x20\x03\x58\x02\x18\x00" // width = 800, height=600, bpp=24
+           "\x02\x00\x20\x03\x58\x02\x18\x00" // WRM version = 2, width = 800, height=600, bpp=24
            "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
 // initial screen content PNG image
@@ -321,7 +320,7 @@ const char expected_stripped_wrm2[] =
            "\x00\x00\x1A\x00\x00\x00\x02\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
 /* 0000 */ "\x09\x0a\x2c\x20\x03\x58\x02\xff"         // Green Rect(0, 0, 800, 600)
            "\x01\x6e\x32\x00\xbc\x02\x1e\x00\x00\xff"  // Blue  Rect(0, 50, 700, 80)
-           
+
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
 /* 0000 */ "\x40\x0c\xaa\x3b\x00\x00\x00\x00" // time = 1001000000
 
@@ -364,7 +363,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 10), BLACK), screen_rect);
- 
+
     consumer.flush();
 }
 
@@ -378,7 +377,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
 
     Rect screen_rect(0, 0, 800, 600);
     BStream stream(65536);
-    
+
     const char * filename = "./testcap.wrm";
     size_t len = strlen(filename);
     char path[1024];
@@ -418,7 +417,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     BOOST_CHECK_EQUAL(0, 0);
     rio_clear(&trans.rio); // close file before reading filesize
     BOOST_CHECK_EQUAL(1588, filesize(filename));
-    
+
     char in_path[1024];
     len = strlen(filename);
     memcpy(in_path, filename, len);
@@ -478,8 +477,8 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
 
     BOOST_CHECK_EQUAL(false, player.next_order());
     rio_clear(&in_wrm_trans.rio);
- 
-    // clear PNG files   
+
+    // clear PNG files
     size_t sz[6] = {1476, 2786, 2800, 2800, 2814, 2823};
     for (int i = 0; i < 6 ; i++){
         BOOST_CHECK_EQUAL(sz[i], sq_outfilename_filesize(&(out_png_trans.seq), i));

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    Unit test to state saving code in WRM files
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -26,7 +25,7 @@
 #define BOOST_TEST_MODULE TestWrmImageChunk
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+// #define LOGNULL
 
 #include "test_orders.hpp"
 #include "transport.hpp"
@@ -38,9 +37,9 @@
 #include "image_capture.hpp"
 #include "constants.hpp"
 
-const char expected_Red_on_Blue_wrm[] = 
+const char expected_Red_on_Blue_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x01\x00\x64\x00\x64\x00\x18\x00" // width = 20, height=10, bpp=24 
+           "\x02\x00\x64\x00\x64\x00\x18\x00" // WRM version 2, width = 20, height=10, bpp=24
            "\x02\x00\x00\x01\x02\x00\x00\x04\x02\x00\x00\x10"  // caches sizes
 
 /* 0000 */ "\x00\x10\x75\x00\x00\x00\x01\x00"
@@ -68,7 +67,7 @@ const char expected_Red_on_Blue_wrm[] =
 
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
            "\x40\x0C\xAA\x3B\x00\x00\x00\x00" // 0x000000003BAA0C40 = 1001000000
-           
+
            "\x00\x00\x1e\x00\x00\x00\x01\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
 // -----------------------------------------------------
 /* 0000 */ "\x03\x09\x00\x00\x04\x02"
@@ -93,31 +92,30 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, BLUE), scr);
-    
+
     uint8_t comp20x10RED[] = {
-        0xc0, 0x04, 0x00, 0x00, 0xFF, // MIX 20 (0, 0, FF) 
+        0xc0, 0x04, 0x00, 0x00, 0xFF, // MIX 20 (0, 0, FF)
         0x00, 0x94                    // FILL 9 * 20
     };
 
     Bitmap bloc20x10(24, NULL, 20, 10, comp20x10RED, sizeof(comp20x10RED), true );
     consumer.draw(
         RDPMemBlt(0, Rect(0, scr.cy - 10, bloc20x10.cx, bloc20x10.cy), 0xCC, 0, 0, 0),
-        scr, 
+        scr,
         bloc20x10);
     consumer.flush();
-        
+
     now.tv_sec++;
     consumer.timestamp(now);
 
     consumer.save_bmp_caches();
-    
-    consumer.flush();
 
+    consumer.flush();
 }
 
 BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
 {
-    GeneratorTransport in_wrm_trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1);   
+    GeneratorTransport in_wrm_trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1);
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
@@ -127,7 +125,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
-    
+
     player.add_consumer(&png_recorder);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
@@ -138,9 +136,9 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     sq_outfilename_unlink(&out_png_trans.seq, 0);
 }
 
-const char expected_reset_rect_wrm[] = 
+const char expected_reset_rect_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x01\x00\x64\x00\x64\x00\x18\x00" // width = 20, height=10, bpp=24 
+           "\x02\x00\x64\x00\x64\x00\x18\x00" // WRM version 2, width = 20, height=10, bpp=24
            "\x02\x00\x00\x01\x02\x00\x00\x04\x02\x00\x00\x10"  // caches sizes
 
 /* 0000 */ "\x00\x10\x75\x00\x00\x00\x01\x00"
@@ -156,12 +154,12 @@ const char expected_reset_rect_wrm[] =
 /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
 
 /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
-           "\x19\x0a\x1c\x64\x64\xff\x11"     // Red Rect 
+           "\x19\x0a\x1c\x64\x64\xff\x11"     // Red Rect
            "\x5f\x05\x05\xf6\xf6\x00\xff"     // Blue Rect
            "\x11\x5f\x05\x05\xf6\xf6\xff\x00" // Red Rect
-           
+
            // save orders cache
-           "\x02\x10\xa0\x01\x00\x00\x01\x00"
+/* 0000 */ "\x02\x10\xc2\x01\x00\x00\x01\x00"                                 //........
 /* 0000 */ "\x0a\x00\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00" //................
 /* 0010 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
 /* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
@@ -169,10 +167,10 @@ const char expected_reset_rect_wrm[] =
 /* 0040 */ "\x00\x50\x00\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //.P..............
 /* 0050 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
 /* 0060 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-/* 0070 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x01\x00" //................
-/* 0080 */ "\x00\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-/* 0090 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-/* 00a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+/* 0070 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+/* 0080 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+/* 0090 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00" //................
+/* 00a0 */ "\x01\x00\x00\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00\x00\x00\x00" //................
 /* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
 /* 00c0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
 /* 00d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
@@ -187,14 +185,15 @@ const char expected_reset_rect_wrm[] =
 /* 0160 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
 /* 0170 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
 /* 0180 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-/* 0190 */ "\x00\x00\x00\x00\x00\x00\x00\x00"                                 //........
+/* 0190 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+/* 01a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+/* 01b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"                         //..........
 
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
            "\x40\x0C\xAA\x3B\x00\x00\x00\x00" // 0x000000003BAA0C40 = 1001000000
-           
+
            "\x00\x00\x10\x00\x00\x00\x01\x00"
            "\x11\x3f\x0a\x0a\xec\xec\x00\xff" // Green Rect
-
            ;
 
 BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
@@ -212,7 +211,7 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     RDPDrawable drawable(scr.cx, scr.cy, true);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, &drawable, ini);
     consumer.timestamp(now);
-    
+
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(scr.shrink(5), BLUE), scr);
     consumer.draw(RDPOpaqueRect(scr.shrink(10), RED), scr);
@@ -220,7 +219,7 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     consumer.flush();
 
     consumer.send_save_state_chunk();
-        
+
     now.tv_sec++;
     consumer.timestamp(now);
     consumer.draw(RDPOpaqueRect(scr.shrink(20), GREEN), scr);
@@ -231,7 +230,7 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
 
 BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
 {
-    GeneratorTransport in_wrm_trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1);   
+    GeneratorTransport in_wrm_trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1);
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
@@ -241,7 +240,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
-    
+
     player.add_consumer(&png_recorder);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
@@ -252,9 +251,9 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
     sq_outfilename_unlink(&out_png_trans.seq, 0);
 }
 
-const char expected_continuation_wrm[] = 
+const char expected_continuation_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x01\x00\x64\x00\x64\x00\x18\x00" // width = 20, height=10, bpp=24 
+           "\x02\x00\x64\x00\x64\x00\x18\x00" // WRM version 2, width = 20, height=10, bpp=24
            "\x02\x00\x00\x01\x02\x00\x00\x04\x02\x00\x00\x10"  // caches sizes
 
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
@@ -283,8 +282,8 @@ const char expected_continuation_wrm[] =
 /* 0110 */ "\x70\xf3\x3d\x78\xff\xff\x38\x33\x59\x81\x58\x81\x58\x81\x58\xc1" //p.=x..83Y.X.X.X.
 /* 0120 */ "\xb4\xc0\x9f\x33\x59\x81\x58\x81\x58\x81\x58\xc1\x01\x8e\xa9\x07" //...3Y.X.X.X.....
 /* 0130 */ "\xcb\xdb\x96\x4d\x96\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60" //...M.....IEND.B`
-/* 0140 */ "\x82"                          
-           
+/* 0140 */ "\x82"
+
            // save orders cache
            "\x02\x10\xA0\x01\x00\x00\x01\x00"
 /* 0000 */ "\x0a\x00\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00" //................
@@ -313,7 +312,7 @@ const char expected_continuation_wrm[] =
 /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
 /* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
 /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-/* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"         
+/* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
            "\x00\x00\x10\x00\x00\x00\x01\x00"
            "\x11\x3f\x0a\x0a\xec\xec\x00\xff" // Green Rect
@@ -321,7 +320,7 @@ const char expected_continuation_wrm[] =
 
 BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
 {
-    GeneratorTransport in_wrm_trans(expected_continuation_wrm, sizeof(expected_continuation_wrm)-1);   
+    GeneratorTransport in_wrm_trans(expected_continuation_wrm, sizeof(expected_continuation_wrm)-1);
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
@@ -332,7 +331,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid);
     SQ * seq = &(out_png_trans.seq);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
-    
+
     player.add_consumer(&png_recorder);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    Unit test to image chunk in WRM files
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -40,19 +39,19 @@
 
 BOOST_AUTO_TEST_CASE(TestImageChunk)
 {
-    const char expected_stripped_wrm[] = 
+    const char expected_stripped_wrm[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
+               "\x02\x00\x14\x00\x0A\x00\x18\x00" // WRM version = 2, width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
-// Initial black PNG image               
+// Initial black PNG image
 /* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
 /* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
 /* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
 /* 0020 */ "\xb1\x00\x00\x00\x0f\x49\x44\x41\x54\x28\x91\x63\x60\x18\x05\xa3" //.....IDAT(.c`...
 /* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
 /* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
-    
+
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
     /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
@@ -97,12 +96,12 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     // Same test as above but forcing use of small png chunks
     // Easier to do than write tests with huge pngs to force PNG chunking.
 
-    const char expected[] = 
+    const char expected[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
+               "\x02\x00\x14\x00\x0A\x00\x18\x00" // WRM version 2, width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
-// Initial black PNG image               
+// Initial black PNG image
 /* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
 /* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
 /* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
@@ -110,16 +109,15 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
 /* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
 /* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
 
-               
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
     /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
     /* 0000 */ "\x19\x0a\x1c\x14\x0a\xff"             // RED rect
     /* 0000 */ "\x11\x5f\x05\x05\xF6\xf9\x00\xFF\x11" // BLUE RECT
     /* 0000 */ "\x3f\x05\xfb\xf7\x07\xff\xff"         // WHITE RECT
-    
+
     /* 0000 */ "\x01\x10\x64\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
-    
+
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
         "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
         "\x00\x00\x00\x14\x00\x00\x00\x0a"
@@ -169,26 +167,26 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     // Same test as above but forcing use of small png chunks
     // Easier to do than write tests with huge pngs to force PNG chunking.
 
-    const char expected[] = 
+    const char expected[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
+               "\x02\x00\x14\x00\x0A\x00\x18\x00" // WRM version = 2, width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
-// Initial black PNG image               
+// Initial black PNG image
 /* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
 /* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
 /* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
 /* 0020 */ "\xb1\x00\x00\x00\x0f\x49\x44\x41\x54\x28\x91\x63\x60\x18\x05\xa3" //.....IDAT(.c`...
 /* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
 /* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
-               
+
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
     /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
     /* 0000 */ "\x19\x0a\x1c\x14\x0a\xff"             // RED rect
     /* 0000 */ "\x11\x5f\x05\x05\xF6\xf9\x00\xFF\x11" // BLUE RECT
     /* 0000 */ "\x3f\x05\xfb\xf7\x07\xff\xff"         // WHITE RECT
-    
+
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
@@ -259,9 +257,9 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
         "\x00\x00\x00\x00\x49\x45\x4e\x44"                                 //....IEND
         "\xae\x42\x60\x82"                                                 //.B`.
     ;
-    
+
     RDPDrawable d(20, 10, true);
-    GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);   
+    GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
     ::transport_read_png24(&in_png_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
@@ -273,7 +271,6 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
                  d.drawable.rowsize
                 );
     sq_outfilename_unlink(&(png_trans.seq), 0);
-    
 }
 
 
@@ -322,8 +319,8 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     (void)chunk_count;
 
     InChunkedImageTransport chunk_trans(chunk_type, chunk_size, &in_png_trans);
-    
-    
+
+
     RDPDrawable d(20, 10, true);
     ::transport_read_png24(&chunk_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
@@ -340,12 +337,12 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 
 BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
 {
-   const char source_wrm[] = 
+   const char source_wrm[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24 PAD: 2 bytes
+               "\x02\x00\x14\x00\x0A\x00\x18\x00" // WRM version 2, width = 20, height=10, bpp=24 PAD: 2 bytes
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
-// Initial black PNG image               
+// Initial black PNG image
 /* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
 /* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
 /* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
@@ -385,7 +382,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
         "\x42\x60\x82"
         ;
 
-    GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);   
+    GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
@@ -395,7 +392,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
-  
+
     player.add_consumer(&png_recorder);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
@@ -409,12 +406,12 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
 
 BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
 {
-   const char source_wrm[] = 
+   const char source_wrm[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
+               "\x02\x00\x14\x00\x0A\x00\x18\x00" // WRM version 2, width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
-// Initial black PNG image               
+// Initial black PNG image
 /* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
 /* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
 /* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
@@ -453,11 +450,9 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
         "\x00\x00\x00\x49\x45\x4e\x44\xae"
     /* 0000 */ "\x00\x10\x0b\x00\x00\x00\x01\x00" // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
         "\x42\x60\x82"
-        
-        
         ;
 
-    GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);   
+    GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
@@ -469,7 +464,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
 
     OutFilenameTransport second_out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid);
     ImageCapture second_png_recorder(second_out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
-    
+
     player.add_consumer(&png_recorder);
     player.add_consumer(&second_png_recorder);
     BOOST_CHECK_EQUAL(2, player.nbconsumers);
@@ -488,12 +483,12 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
 
 BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
 {
-   const char source_wrm[] = 
+   const char source_wrm[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x01\x00\x14\x00\x0A\x00\x18\x00" // width = 20, height=10, bpp=24
+               "\x02\x00\x14\x00\x0A\x00\x18\x00" // WRM version 2, width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
-// Initial black PNG image               
+// Initial black PNG image
 /* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
 /* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
 /* 0010 */ "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00\x3b\x37\xe9" //.............;7.
@@ -535,7 +530,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     /* 0000 */ "\x00\xD3\xD7\x3B\x00\x00\x00\x00" // 0x000000003bd7d300 = 1004000000
        ;
 
-    GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);   
+    GeneratorTransport in_wrm_trans(source_wrm, sizeof(source_wrm)-1);
     timeval begin_capture;
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
@@ -544,7 +539,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
-   
+
     player.add_consumer(&png_recorder);
     while (player.next_order()){
         player.interpret_order();

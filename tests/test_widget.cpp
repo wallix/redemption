@@ -77,6 +77,10 @@ struct TestWidgetMod : mod_api
     {
         result += sprintf(result, "draw(RDPMemBlt(), clip(%d, %d, %d, %d))\n", clip.x, clip.y, clip.cx, clip.cy);
     }
+    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
+    {
+        result += sprintf(result, "draw(RDPMem3Blt(), clip(%d, %d, %d, %d))\n", clip.x, clip.y, clip.cx, clip.cy);
+    }
     virtual void draw(const RDPLineTo& cmd, const Rect & clip)
     {
         result += sprintf(result, "draw(RDPLineTo(), clip(%d, %d, %d, %d))\n", clip.x, clip.y, clip.cx, clip.cy);

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -20,9 +20,7 @@
 
    Unit test to check front-end behavior stays identical
    when connecting from rdesktop (mocked up)
-
 */
-
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
@@ -100,9 +98,10 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     const char * name = "Test Front Transport";
     TestTransport front_trans(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
-    bool tls_support = true;
-    bool fastpath_support = true;
-    Front front(&front_trans, &gen, &ini, fastpath_support, tls_support);
+    const bool tls_support      = true;
+    const bool fastpath_support = true;
+    const bool mem3blt_support  = false;
+    Front front(&front_trans, &gen, &ini, fastpath_support, tls_support, mem3blt_support);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0){

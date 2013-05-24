@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    rdp module process orders
-
 */
 
 #ifndef _REDEMPTION_MOD_RDP_RDP_ORDERS_HPP_
@@ -48,6 +47,7 @@ struct rdp_orders {
     // State
     RDPOrderCommon common;
     RDPMemBlt memblt;
+    RDPMem3Blt mem3blt;
     RDPOpaqueRect opaquerect;
     RDPScrBlt scrblt;
     RDPDestBlt destblt;
@@ -67,6 +67,7 @@ struct rdp_orders {
     rdp_orders(uint32_t verbose) :
         common(RDP::PATBLT, Rect(0, 0, 1, 1)),
         memblt(0, Rect(), 0, 0, 0, 0),
+        mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0),
         opaquerect(Rect(), 0),
         scrblt(Rect(), 0, 0, 0),
         destblt(Rect(), 0),
@@ -85,6 +86,7 @@ struct rdp_orders {
     {
         this->common = RDPOrderCommon(RDP::PATBLT, Rect(0, 0, 1, 1));
         this->memblt = RDPMemBlt(0, Rect(), 0, 0, 0, 0);
+        this->mem3blt = RDPMem3Blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0);
         this->opaquerect = RDPOpaqueRect(Rect(), 0);
         this->scrblt = RDPScrBlt(Rect(), 0, 0, 0);
         this->destblt = RDPDestBlt(Rect(), 0);
@@ -264,6 +266,22 @@ struct rdp_orders {
                         TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps")
                         if (bitmap) {
                             mod->draw(this->memblt, cmd_clip, *bitmap);
+                        }
+                    }
+                    break;
+                case MEM3BLT:
+                    this->mem3blt.receive(stream, header);
+                    {
+                        if ((this->mem3blt.cache_id >> 8) >= 6){
+                            LOG(LOG_INFO, "colormap out of range in mem3blt:%x", (this->mem3blt.cache_id >> 8));
+                            this->mem3blt.log(LOG_INFO, cmd_clip);
+                            assert(false);
+                        }
+                        const Bitmap* bitmap = this->cache_bitmap[this->mem3blt.cache_id & 0x3][this->mem3blt.cache_idx];
+                        TODO("CGR: check if bitmap has the right palette...")
+                        TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps")
+                        if (bitmap) {
+                            mod->draw(this->mem3blt, cmd_clip, *bitmap);
                         }
                     }
                     break;

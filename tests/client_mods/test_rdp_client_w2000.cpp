@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -20,7 +20,6 @@
 
    Unit test to check back-end behavior stays identical
    when connecting to reference W2000 server (mocked up)
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -31,7 +30,7 @@
 #include <algorithm>
 
 #define LOGNULL
-//#define LOGPRINT
+// #define LOGPRINT
 #include "test_orders.hpp"
 
 #include "stream.hpp"
@@ -128,6 +127,15 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
             this->gd.draw(new_cmd24, clip);
         }
         virtual void draw(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bmp)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                cmd.log(LOG_INFO, clip);
+                LOG(LOG_INFO, "========================================\n");
+            }
+            this->gd.draw(cmd, clip, bmp);
+        }
+        virtual void draw(const RDPMem3Blt& cmd, const Rect& clip, const Bitmap& bmp)
         {
             if (verbose > 10){
                 LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -288,11 +296,18 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     const char * name = "RDP W2000 Target";
 
-//    ClientSocketTransport t(name, "10.10.14.64", 3389, 3, 1000, verbose);
-//    t.connect();
+//    int client_sck = ip_connect("10.10.46.64", 3389, 3, 1000, verbose);
+//    redemption::string error_message;
+//    SocketTransport t( name
+//                     , client_sck
+//                     , "10.10.46.64"
+//                     , 3389
+//                     , verbose
+//                     , &error_message
+//                     );
 
 
-    #include "fixtures/dump_w2000.hpp"
+    #include "fixtures/dump_w2000_mem3blt.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests
@@ -303,27 +318,29 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     }
 
     struct mod_rdp * mod = new mod_rdp( &t
-                                      , "administrateur@qa"
-                                      , "S3cur3!1nux"
+                                      , "administrateur"
+                                      , "SecureLinux$42"
                                       , "0.0.0.0"
                                       , front
                                       , "test"
-                                      , false
+                                      , false   /* tls                     */
                                       , info
                                       , &gen
                                       , 2
                                       , NULL
                                       , ""
-                                      , "" /* alternate_shell */
-                                      , "" /* shell_working_directory */
-                                      , true
-                                      , false
-                                      , 0
-                                      , false);
+                                      , ""      /* alternate_shell         */
+                                      , ""      /* shell_working_directory */
+                                      , true    /* clipbaord               */
+                                      , false   /* fast-path support       */
+                                      , true    /* mem3blt support         */
+                                      , 0       /* verbose                 */
+                                      , false); /* enable new pointer      */
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
+
     BOOST_CHECK(t.get_status());
     BOOST_CHECK_EQUAL(mod->front_width, 800);
     BOOST_CHECK_EQUAL(mod->front_height, 600);
@@ -345,5 +362,4 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     }
 
 //    front.dump_png("trace_w2000_");
-
 }

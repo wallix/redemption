@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -20,7 +20,6 @@
 
    Unit test to check back-end behavior stays identical
    when connecting to reference W2000 server (mocked up)
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -31,6 +30,7 @@
 #include <algorithm>
 
 #define LOGNULL
+// #define LOGPRINT
 #include "test_orders.hpp"
 
 #include "stream.hpp"
@@ -51,11 +51,8 @@
 #include "RDP/RDPDrawable.hpp"
 #include "staticcapture.hpp"
 
-
-
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
-
     ClientInfo info(1, true, true);
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -128,6 +125,15 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
             this->gd.draw(new_cmd24, clip);
         }
         virtual void draw(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bmp)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                cmd.log(LOG_INFO, clip);
+                LOG(LOG_INFO, "========================================\n");
+            }
+            this->gd.draw(cmd, clip, bmp);
+        }
+        virtual void draw(const RDPMem3Blt& cmd, const Rect& clip, const Bitmap& bmp)
         {
             if (verbose > 10){
                 LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -287,11 +293,18 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     const char * name = "RDP XP Target";
 
-//    ClientSocketTransport t(name, "10.10.47.58", 3389, 3, 1000, verbose);
-//    t.connect();
+    // int client_sck = ip_connect("10.10.47.175", 3389, 3, 1000, verbose);
+    // redemption::string error_message;
+    // SocketTransport t( name
+    //                  , client_sck
+    //                  , "10.10.47.175"
+    //                  , 3389
+    //                  , verbose
+    //                  , &error_message
+    //                  );
 
 
-    #include "fixtures/dump_xp.hpp"
+    #include "fixtures/dump_xp_mem3blt.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests
@@ -307,18 +320,19 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                                       , "10.10.9.161"
                                       , front
                                       , "test"
-                                      , false
+                                      , false   /* tls                     */
                                       , info
                                       , &gen
                                       , 7
                                       , NULL
                                       , ""
-                                      , "" /* alternate_shell */
-                                      , "" /* shell_working_directory */
-                                      , true
-                                      , false
+                                      , ""      /* alternate_shell         */
+                                      , ""      /* shell_working_directory */
+                                      , true    /* clipboard               */
+                                      , false   /* fast-path support       */
+                                      , true    /* mem3blt support         */
                                       , verbose
-                                      , false);
+                                      , false); /* enable new pointer      */
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -344,5 +358,4 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     }
 
 //    front.dump_png("trace_xp_");
-
 }
