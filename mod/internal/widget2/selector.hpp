@@ -233,6 +233,7 @@ public:
                     this->send_notify(NOTIFY_SUBMIT);
                     break;
                 default:
+                    Widget2::rdp_input_scancode(param1, param2, param3, param4, keymap);
                     break;
             }
         }
@@ -409,6 +410,7 @@ public:
         WidgetComposite::rdp_input_mouse(device_flags, x, y, keymap);
     }
 
+    ///TODO unless ?
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
         if (this->widget_with_focus) {

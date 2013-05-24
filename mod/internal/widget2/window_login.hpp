@@ -121,7 +121,7 @@ public:
     virtual void notify(Widget2* widget, NotifyApi::notify_event_t event,
                         long unsigned int param, long unsigned int param2)
     {
-        if (widget == &this->help && !this->window_help) {
+        if (widget == &this->help && event == NOTIFY_SUBMIT && !this->window_help) {
             if (this->parent) {
                 Widget2 * p = this->parent;
                 while (p->parent)
@@ -160,23 +160,19 @@ public:
 
                 static_cast<WidgetComposite*>(p)->child_list.push_back(this->window_help);
 
-                this->widget_with_focus = this->window_help;
+                this->window_help->set_widget_focus(&this->window_help->ok);
+                p->set_widget_focus(this->window_help);
 
                 this->drawable->begin_update();
                 this->window_help->draw(this->window_help->rect);
                 this->drawable->end_update();
             }
-        } else if (widget == this->window_help) {
-            this->close_window_help();
+        } else if (widget == this->window_help && event == NOTIFY_CANCEL) {
+            this->close_window_help(true);
             this->window_help = 0;
-            if (this->login_edit.label.buffer[0]) {
-                this->widget_with_focus = &this->password_edit;
-            } else {
-                this->widget_with_focus = &this->login_edit;
-            }
-        } else if (widget == &this->cancel) {
+        } else if (widget == &this->cancel && event == NOTIFY_CANCEL) {
             if (this->window_help) {
-                this->close_window_help();
+                this->close_window_help(false);
                 this->window_help = 0;
             }
             this->send_notify(NOTIFY_CANCEL);
@@ -200,10 +196,10 @@ public:
     }
 
 private:
-    void close_window_help()
+    void close_window_help(bool active_previous_widget = false)
     {
         Widget2 * parent = this->window_help->parent;
-        static_cast<WidgetComposite*>(parent)->detach_widget(this->window_help);
+        static_cast<WidgetComposite*>(parent)->detach_widget(this->window_help, active_previous_widget);
         parent->drawable->begin_update();
         parent->draw(this->window_help->rect);
         parent->drawable->end_update();

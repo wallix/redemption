@@ -47,6 +47,11 @@ public:
         this->child_list.push_back(&this->titlebar);
         this->child_list.push_back(&this->button_close);
 
+        this->titlebar.tab_flag = IGNORE_TAB;
+        this->button_close.tab_flag = IGNORE_TAB;
+
+        this->tab_flag |= NO_DELEGATE_PARENT;
+
         this->button_close.label.x_text = 3;
         this->button_close.set_button_cx(this->button_close.cx() * 2);
         this->button_close.set_button_cy(this->button_close.cy() - 2);
@@ -73,7 +78,11 @@ public:
         this->WidgetComposite::draw(inner_window);
         this->WidgetComposite::draw_inner_free(inner_window, this->bg_color);
 
-        int border_color = this->has_focus ? this->active_border_color : this->inactive_border_color;
+        this->draw_border(clip, this->has_focus ? this->active_border_color : this->inactive_border_color);
+    }
+
+    void draw_border(const Rect& clip, int border_color)
+    {
         //top
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy(), this->cx(), 1
@@ -107,6 +116,18 @@ public:
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
         )), this->inactive_border_color), this->rect);
+    }
+
+    virtual bool focus(Widget2* old_focused)
+    {
+        this->draw_border(this->rect, this->active_border_color);
+        return WidgetComposite::focus(old_focused);
+    }
+
+    virtual void blur()
+    {
+        this->draw_border(this->rect, this->inactive_border_color);
+        WidgetComposite::blur();
     }
 };
 

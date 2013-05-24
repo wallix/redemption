@@ -21,7 +21,7 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_MOD_API_HPP_)
 #define REDEMPTION_MOD_WIDGET2_MOD_API_HPP_
 
-#include "../../draw_api.hpp"
+#include "draw_api.hpp"
 
 typedef DrawApi ModApi;
 

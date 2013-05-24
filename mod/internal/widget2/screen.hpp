@@ -58,26 +58,6 @@ public:
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        Widget2 * wfocus = this->widget_with_focus ? this->widget_with_focus : this;
-        if (keymap->nb_char_available() > 0) {
-            switch (keymap->top_kevent()) {
-                case Keymap2::KEVENT_TAB:
-                    keymap->get_kevent();
-                    while (false == wfocus->next_focus() && wfocus->parent && wfocus->tab_flag != NO_DELEGATE_CHILD_TAB) {
-                        wfocus = wfocus->parent;
-                    }
-                    break;
-                case Keymap2::KEVENT_BACKTAB:
-                    keymap->get_kevent();
-                    while (false == wfocus->previous_focus() && wfocus->parent && wfocus->tab_flag != NO_DELEGATE_CHILD_TAB) {
-                        wfocus = wfocus->parent;
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-
         if (this != this->widget_with_focus) {
             this->widget_with_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
         }

@@ -28,6 +28,8 @@
 #include <rect.hpp>
 #include <callback.hpp>
 
+#include <typeinfo>
+
 class Keymap2;
 
 enum EventType {
@@ -61,16 +63,18 @@ class Widget2 : public RdpInput, public NotifyApi
 public:
     enum OptionTab {
         IGNORE_TAB = 0,
-        NORMAL_TAB = 1,
-        DELEGATE_CONTROL_TAB = 2,
-        NO_DELEGATE_CHILD_TAB = 4,
-        REWIND_TAB = 8,
-        REWIND_BACKTAB = 16
+        NORMAL_TAB = 1 << 1,
+        DELEGATE_CONTROL_TAB = 1 << 2,
+        NO_DELEGATE_CHILD_TAB = 1 << 3,
+        NO_DELEGATE_PARENT = 1 << 4,
+        REWIND_TAB = 1 << 5,
+        REWIND_BACKTAB = 1 << 6
     };
 
 public:
     Widget2 * parent;
     Widget2 * widget_with_focus;
+    Widget2 * old_widget_with_focus;
     ModApi * drawable;
     NotifyApi * notifier;
     Rect rect;
@@ -81,7 +85,8 @@ public:
 public:
     Widget2(ModApi * drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0)
     : parent(parent)
-    , widget_with_focus(this)
+    , widget_with_focus(NULL)
+    , old_widget_with_focus(NULL)
     , drawable(drawable)
     , notifier(notifier)
     , rect(Rect(rect.x + (parent ? parent->dx() : 0),
@@ -124,6 +129,26 @@ public:
     // - keyboard event (scancode)
     virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
     {
+        if (keymap->nb_kevent_available() > 0) {
+            switch (keymap->top_kevent()) {
+                case Keymap2::KEVENT_TAB:
+                    std::cout << ("tab") << '\n';
+                    keymap->get_kevent();
+                    if (this->parent) {
+                        this->parent->next_focus();
+                    }
+                    break;
+                case Keymap2::KEVENT_BACKTAB:
+                    std::cout << ("backtab") << '\n';
+                    keymap->get_kevent();
+                    if (this->parent) {
+                        this->parent->previous_focus();
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     // - mouve event (mouse moves or a button went up or down)
@@ -187,6 +212,28 @@ public:
     {
         this->send_notify(NOTIFY_FOCUS_END);
         this->has_focus = false;
+    }
+
+    void switch_focus_with(Widget2 * new_focused)
+    {
+        this->old_widget_with_focus = this->widget_with_focus;
+        if (this->old_widget_with_focus) {
+            std::cout << "blur: " << (typeid(*this->old_widget_with_focus).name()) << '\n';
+            this->old_widget_with_focus->blur();
+        }
+        this->widget_with_focus = new_focused;
+        std::cout << "focus: " << (typeid(*new_focused).name()) << " " << new_focused << '\n';
+        this->widget_with_focus->focus(this->old_widget_with_focus);
+    }
+
+    void set_widget_focus(Widget2 * new_focused)
+    {
+        this->old_widget_with_focus = this->widget_with_focus;
+        if (this->old_widget_with_focus) {
+            this->old_widget_with_focus->blur();
+        }
+        this->widget_with_focus = new_focused;
+        this->widget_with_focus->has_focus = true;
     }
 
     ///Return x position in it's screen

@@ -21,6 +21,7 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_BUTTON_HPP)
 #define REDEMPTION_MOD_WIDGET2_BUTTON_HPP
 
+#include "widget.hpp"
 #include "label.hpp"
 
 class WidgetButton : public Widget2
@@ -32,6 +33,7 @@ public:
     int color_border_right_bottom;
     int color_border_right_bottom2;
     int color_border_left_top;
+    int color_border_left_top2;
 
     WidgetButton(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
                  NotifyApi* notifier, const char * text, bool auto_resize = true,
@@ -44,6 +46,7 @@ public:
     , color_border_right_bottom(BLACK)
     , color_border_right_bottom2(0x888888)
     , color_border_left_top(0xCCCCCC)
+    , color_border_left_top2(BLACK)
     {
         this->rect.cx = this->label.cx() + 3;
         this->rect.cy = this->label.cy() + 3;
@@ -103,17 +106,17 @@ public:
             //top
             this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
                 this->dx(), this->dy(), this->cx() - 1, 1
-            )), this->color_border_right_bottom), this->rect);
+            )), this->color_border_right_bottom2), this->rect);
             this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
                 this->dx() + 1, this->dy() + 1, this->cx() - 3, 1
-            )), this->color_border_right_bottom2), this->rect);
+            )), this->color_border_left_top2), this->rect);
             //left
             this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
                 this->dx(), this->dy() + 1, 1, this->cy() - 2
-            )), this->color_border_right_bottom), this->rect);
+            )), this->color_border_right_bottom2), this->rect);
             this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
                 this->dx() + 1, this->dy() + 1, 1, this->cy() - 3
-            )), this->color_border_right_bottom2), this->rect);
+            )), this->color_border_left_top2), this->rect);
         }
         else {
             this->label.draw(clip);
@@ -125,6 +128,10 @@ public:
             this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
                 this->dx(), this->dy() + 1, 1, this->cy() - 2
             )), this->color_border_left_top), this->rect);
+        }
+
+        if (this->has_focus) {
+            this->draw_focus(clip);
         }
     }
 
@@ -174,20 +181,83 @@ public:
             this->Widget2::rdp_input_mouse(device_flags, x, y, keymap);
     }
 
-    virtual void mouse_over()
+    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (this->state & 1) {
-            this->state &= ~1;
-            this->swap_border_color();
+        if (keymap->nb_kevent_available() > 0){
+            switch (keymap->top_kevent()){
+                case Keymap2::KEVENT_ENTER:
+                    keymap->get_kevent();
+                    this->send_notify(this->event);
+                    break;
+                case Keymap2::KEVENT_KEY:
+                    if (keymap->get_char() == ' ') {
+                        this->send_notify(this->event);
+                    }
+                    break;
+                default:
+                    Widget2::rdp_input_scancode(param1, param2, param3, param4, keymap);
+                    break;
+            }
         }
+    }
+
+private:
+    struct ImplFocusBorder {
+        DrawApi * drawable;
+        Rect & rect;
+        int bevel;
+
+        ImplFocusBorder(Rect & rect, int bevel, DrawApi * drawable = 0)
+        : drawable(drawable)
+        , rect(rect)
+        , bevel(bevel)
+        {}
+
+        Rect top()
+        { return Rect(rect.x + 2 + bevel, rect.y + 2 + bevel, rect.cx - 5 - bevel, 2); }
+
+        Rect left()
+        { return Rect(rect.x + 2 + bevel, rect.y + 4 + bevel, 2, rect.cy - 7 - bevel); }
+
+        Rect right()
+        { return Rect(rect.x + rect.cx - 5, rect.y + 4 + bevel, 2, rect.cy - 7 - bevel); }
+
+        Rect bottom()
+        { return Rect(rect.x + 2 + bevel, rect.y + rect.cy - 5, rect.cx - 5 - bevel, 2); }
+
+        void draw_border(const Rect& rect, const Rect& clip)
+        {
+            drawable->draw(RDPPatBlt(rect, 0xF0, GREY, BLACK, RDPBrush(this->rect.x, this->rect.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")), clip);
+        }
+    };
+
+public:
+    void draw_focus(const Rect& clip)
+    {
+        ImplFocusBorder impl(this->rect, (state & 1), this->drawable);
+        this->drawable->begin_update();
+        impl.draw_border(impl.top(), clip);
+        impl.draw_border(impl.left(), clip);
+        impl.draw_border(impl.right(), clip);
+        impl.draw_border(impl.bottom(), clip);
+        this->drawable->end_update();
+    }
+
+    virtual bool focus(Widget2* old_focused)
+    {
+        this->draw_focus(this->rect);
+        return Widget2::focus(old_focused);
     }
 
     virtual void blur()
     {
-        if (this->state & 1) {
-            this->state &= ~1;
-            this->swap_border_color();
-        }
+        ImplFocusBorder impl(this->rect, (state & 1));
+        this->drawable->begin_update();
+        this->label.draw(impl.top());
+        this->label.draw(impl.left());
+        this->label.draw(impl.bottom());
+        this->label.draw(impl.right());
+        this->drawable->end_update();
         Widget2::blur();
     }
 };

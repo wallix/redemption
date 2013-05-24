@@ -102,7 +102,7 @@ public:
     }
 
     //BEGIN focus manager @{
-    position_t position_of_widget_with_focus()
+    position_t next_position_of_widget_with_focus()
     {
         return std::find(this->child_list.begin(), this->child_list.end(),
                          this->widget_with_focus);
@@ -114,10 +114,12 @@ public:
             static position_t next_in(position_t first, position_t last)
             {
                 for (; first < last; ++first) {
-                    if ((*first)->tab_flag == NORMAL_TAB) {
+                    if ((*first)->tab_flag & NORMAL_TAB) {
+                        std::cout << ("normal tab") << std::endl;
                         break ;
                     }
-                    if ((*first)->tab_flag == DELEGATE_CONTROL_TAB) {
+                    if ((*first)->tab_flag & DELEGATE_CONTROL_TAB) {
+                        std::cout << ("delegate tab") << std::endl;
                         if ((*first)->next_focus()) {
                             break ;
                         }
@@ -127,18 +129,133 @@ public:
             }
         };
 
-        if (this->tab_flag == NORMAL_TAB) {
-            position_t pos = this->position_of_widget_with_focus();
-            if (pos != this->child_list.end()) {
-                position_t pos2 = focus_manager::next_in(pos, this->child_list.end());
-                if (pos2 == this->child_list.end()) {
-                    pos2 = focus_manager::next_in(this->child_list.begin(), pos);
-                }
-                if (pos2 != this->child_list.end()) {
-                    this->widget_with_focus = *pos2;
-                    return true;
-                }
+        struct Trace {
+            Trace() { std::cout << ("[ next_focus") << std::endl; }
+            ~Trace() { std::cout << ("] next_focus") << std::endl; }
+        } t;
+
+        if (this->widget_with_focus != NULL && this->widget_with_focus != this) {
+            if (this->widget_with_focus->next_focus()) {
+                return true;
             }
+        }
+
+       std::cout << (typeid(*this).name()) << std::endl;
+        std::cout << "tab_flag: " << (tab_flag) << std::endl;
+        position_t pos = this->next_position_of_widget_with_focus();
+        if (pos != this->child_list.end()) {
+            std::cout << ("find yes") << std::endl;
+            position_t pos2 = focus_manager::next_in(pos+1, this->child_list.end());
+            bool ok = (pos2 != this->child_list.end());
+            if (!ok) {
+                std::cout << ("to end") << std::endl;
+                pos2 = focus_manager::next_in(this->child_list.begin(), pos);
+                ok = (pos2 != pos);
+            }
+            if (ok) {
+                std::cout << ("set widget_with_focus") << std::endl;
+                if (this->widget_with_focus == *pos2) {
+                    std::cout << ("!!!!!! error switch with self") << std::endl;
+                }
+                this->switch_focus_with(*pos2);
+                std::cout << ("ok") << std::endl;
+                return true;
+            }
+            else std::cout << ("to begin, not find") << std::endl;
+        } else {
+            std::cout << ("find no") << std::endl;
+            pos = focus_manager::next_in(this->child_list.begin(), this->child_list.end());
+            if (pos != this->child_list.end()) {
+                std::cout << ("set widget_with_focus 2") << std::endl;
+                this->switch_focus_with(*pos);
+                std::cout << ("ok") << std::endl;
+                return true;
+            } else  std::cout << ("nada") << std::endl;
+        }
+
+        if ((!this->tab_flag & NO_DELEGATE_PARENT) && this->parent) {
+            this->parent->next_focus();
+        }
+        return false;
+    }
+
+    position_t previous_position_of_widget_with_focus()
+    {
+        position_t first = this->child_list.begin();
+        position_t last = this->child_list.end();
+        --first;
+        while (--last != first && *last != this->widget_with_focus) {
+        }
+        return last;
+    }
+
+    virtual bool previous_focus()
+    {
+        struct focus_manager {
+            static position_t previous_in(position_t first, position_t last)
+            {
+                for (; first != last; --first) {
+                    if ((*first)->tab_flag & NORMAL_TAB) {
+                        std::cout << ("normal tab") << std::endl;
+                        break ;
+                    }
+                    if ((*first)->tab_flag & DELEGATE_CONTROL_TAB) {
+                        std::cout << ("delegate tab") << std::endl;
+                        if ((*first)->previous_focus()) {
+                            break ;
+                        }
+                    }
+                }
+                return first;
+            }
+        };
+
+        struct Trace {
+            Trace() { std::cout << ("[ previous_focus") << std::endl; }
+            ~Trace() { std::cout << ("] previous_focus") << std::endl; }
+        } t;
+
+        if (this->widget_with_focus != NULL && this->widget_with_focus != this) {
+            if (this->widget_with_focus->previous_focus()) {
+                return true;
+            }
+        }
+
+       std::cout << (typeid(*this).name()) << std::endl;
+        std::cout << "tab_flag: " << (tab_flag) << std::endl;
+        position_t pos = this->previous_position_of_widget_with_focus();
+        if (pos != this->child_list.begin()-1) {
+            std::cout << ("find yes") << std::endl;
+            position_t pos2 = focus_manager::previous_in(pos-1, this->child_list.begin()-1);
+            bool ok = (pos2 != this->child_list.begin()-1);
+            if (!ok) {
+                std::cout << ("to end") << std::endl;
+                pos2 = focus_manager::previous_in(this->child_list.end()-1, pos);
+                ok = (pos2 != pos);
+            }
+            if (ok) {
+                std::cout << ("set widget_with_focus") << std::endl;
+                if (this->widget_with_focus == *pos2) {
+                    std::cout << ("!!!!!! error switch with self") << std::endl;
+                }
+                this->switch_focus_with(*pos2);
+                std::cout << ("ok") << std::endl;
+                return true;
+            }
+            else std::cout << ("to begin, not find") << std::endl;
+        } else {
+            std::cout << ("find no") << std::endl;
+            pos = focus_manager::previous_in(this->child_list.end()-1, this->child_list.begin()-1);
+            if (pos != this->child_list.begin()-1) {
+                std::cout << ("set widget_with_focus 2") << std::endl;
+                this->switch_focus_with(*pos);
+                std::cout << ("ok") << std::endl;
+                return true;
+            } else  std::cout << ("nada") << std::endl;
+        }
+
+        if ((!this->tab_flag & NO_DELEGATE_PARENT) && this->parent) {
+            this->parent->previous_focus();
         }
         return false;
     }
@@ -146,12 +263,15 @@ public:
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (this->widget_with_focus != this && this->widget_with_focus != NULL) {
+        if (this->widget_with_focus != NULL && this->widget_with_focus != this) {
             this->widget_with_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
+        }
+        else {
+            Widget2::rdp_input_scancode(param1, param2, param3, param4, keymap);
         }
     }
 
-    bool detach_widget(Widget2 * widget)
+    bool detach_widget(Widget2 * widget, bool active_previous_widget = false)
     {
         for (size_t i = 0; i < this->child_list.size(); ++i) {
             if (this->child_list[i] == widget) {
@@ -160,6 +280,18 @@ public:
                 }
                 this->child_list[i] = this->child_list[this->child_list.size()-1];
                 this->child_list.pop_back();
+
+                if (active_previous_widget) {
+                    if (this->old_widget_with_focus == widget) {
+                        this->old_widget_with_focus = NULL;
+                    }
+                    if (this->widget_with_focus == widget) {
+                        this->widget_with_focus = this->old_widget_with_focus;
+                        if (this->widget_with_focus) {
+                            this->widget_with_focus->focus(widget);
+                        }
+                    }
+                }
                 return true;
             }
         }

@@ -22,6 +22,7 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_PASSWORD_HPP
 
 #include "label.hpp"
+#include "widget.hpp"
 #include <keymap2.hpp>
 
 class WidgetPassword : public Widget2
@@ -283,9 +284,12 @@ public:
                     this->send_notify(NOTIFY_SUBMIT);
                     break;
                 default:
+                    Widget2::rdp_input_scancode(param1, param2, param3, param4, keymap);
                     break;
             }
         }
+        ///TODO not optimised
+        this->refresh(this->rect);
     }
 };
 

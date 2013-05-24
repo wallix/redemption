@@ -47,6 +47,8 @@ public:
     , fg_color(fgcolor)
     , auto_resize(auto_resize)
     {
+        this->tab_flag = IGNORE_TAB;
+
         this->rect.cx = 0;
         this->rect.cy = 0;
         this->set_text(text);

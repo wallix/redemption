@@ -32,6 +32,8 @@ public:
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , bmp(filename)
     {
+        this->tab_flag = IGNORE_TAB;
+
         this->rect.cx = this->bmp.cx;
         this->rect.cy = this->bmp.cy;
     }
