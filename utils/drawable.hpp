@@ -445,6 +445,64 @@ struct Drawable
         }
     }
 
+    void mem_3_blt( const Rect & rect
+                  , const Bitmap & bmp
+                  , const uint16_t srcx
+                  , const uint16_t srcy
+                  , uint8_t rop
+                  , const uint32_t fore_color
+                  , const bool bgr) {
+        if (bmp.cx < srcx || bmp.cy < srcy) {
+            return;
+        }
+
+        if (rop != 0xB8) {
+            LOG(LOG_INFO, "Drawable::mem_3_blt(): unimplemented rop=%X", rop);
+            return;
+        }
+
+        const int16_t mincx = std::min<int16_t>(bmp.cx - srcx,
+            std::min<int16_t>(this->width - rect.x, rect.cx));
+        const int16_t mincy = std::min<int16_t>(bmp.cy - srcy,
+            std::min<int16_t>(this->height - rect.y, rect.cy));
+
+        if (mincx <= 0 || mincy <= 0) {
+            return;
+        }
+        const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
+
+        const uint8_t   Bpp    = ::nbbytes(bmp.original_bpp);
+        uint8_t *       target = this->first_pixel(trect);
+        const uint8_t * source = bmp.data() + (bmp.cy - srcy - 1) * (bmp.bmp_size / bmp.cy) +
+            srcx * Bpp;
+
+        int steptarget = (this->width - trect.cx) * 3;
+        int stepsource = (bmp.bmp_size / bmp.cy) + trect.cx * Bpp;
+
+        for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource){
+            for (int x = 0; x < trect.cx ; x++, target += 3, source += Bpp){
+                uint32_t px = source[Bpp-1];
+                for (int b = 1 ; b < Bpp ; b++){
+                    px = (px << 8) + source[Bpp-1-b];
+                }
+                uint32_t color = color_decode(px, bmp.original_bpp, bmp.original_palette);
+                if (bgr){
+                    color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
+                }
+/*
+                target[0] = color;
+                target[1] = color >> 8;
+                target[2] = color >> 16;
+*/
+/*
+                target[0] = target[0] ^ fore_color;
+                target[1] = target[1] ^ fore_color;
+                target[2] = target[2] ^ fore_color;
+*/
+            }
+        }
+    }
+
     void black_color(const Rect & rect)
     {
         const Rect & trect = rect.intersect(Rect(0, 0, this->width, this->height));
