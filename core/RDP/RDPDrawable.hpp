@@ -168,8 +168,20 @@ public:
     }
 
     void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) {
+        LOG(LOG_INFO, "RDPDrawable::draw(Mem3Blt) rop=0x%X", cmd.rop);
+/*
         this->draw(RDPPatBlt(cmd.rect, cmd.rop, cmd.back_color, cmd.fore_color, cmd.brush), clip);
         this->draw(RDPMemBlt(cmd.cache_id, cmd.rect, cmd.rop, cmd.srcx, cmd.srcy, cmd.cache_idx), clip, bmp);
+*/
+        const Rect& rect = clip.intersect(cmd.rect);
+        if (rect.isempty()){
+            return ;
+        }
+
+        this->drawable.mem_3_blt(rect, bmp
+            , cmd.srcx + (rect.x  - cmd.rect.x)
+            , cmd.srcy + (rect.y  - cmd.rect.y)
+            , cmd.rop, cmd.fore_color, this->conf.bgr);
     }
 
     /*
