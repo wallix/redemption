@@ -288,6 +288,7 @@ unit-test test_libpng : tests/test_libpng.cpp png z libboost_unit_test ;
 
 unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp z openssl crypto libboost_unit_test ;
 unit-test test_rdp_client_w2000 : tests/client_mods/test_rdp_client_w2000.cpp png openssl crypto d3des z dl libboost_unit_test ;
+unit-test test_rdp_client_w2003 : tests/client_mods/test_rdp_client_w2003.cpp png openssl crypto d3des z dl libboost_unit_test ;
 unit-test test_rdp_client_w2008 : tests/client_mods/test_rdp_client_w2008.cpp png openssl crypto d3des z dl libboost_unit_test ;
 
 unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp png openssl crypto d3des z dl libboost_unit_test ;

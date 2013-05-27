@@ -94,6 +94,17 @@ struct FileToGraphic
 
     bool mem3blt_support;
 
+    uint16_t info_version;
+    uint16_t info_width;
+    uint16_t info_height;
+    uint16_t info_bpp;
+    uint16_t info_small_entries;
+    uint16_t info_small_size;
+    uint16_t info_medium_entries;
+    uint16_t info_medium_size;
+    uint16_t info_big_entries;
+    uint16_t info_big_size;
+
     FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
         : stream(65536)
         , trans(trans)
@@ -125,6 +136,16 @@ struct FileToGraphic
         , max_order_count(0)
         , verbose(verbose)
         , mem3blt_support(false)
+        , info_version(0)
+        , info_width(0)
+        , info_height(0)
+        , info_bpp(0)
+        , info_small_entries(0)
+        , info_small_size(0)
+        , info_medium_entries(0)
+        , info_medium_size(0)
+        , info_big_entries(0)
+        , info_big_size(0)
     {
         init_palette332(this->palette); // We don't really care movies are always 24 bits for now
 
@@ -447,28 +468,31 @@ struct FileToGraphic
             TODO("meta should contain some WRM version identifier")
             TODO("Cache meta_data (sizes, number of entries) should be put in META chunk")
             {
-                uint16_t version = this->stream.in_uint16_le();
-                (void)version; // for now there is only one, we do not yet have problems
-                this->mem3blt_support = (version > 1);
-                uint16_t width = this->stream.in_uint16_le();
-                uint16_t height = this->stream.in_uint16_le();
-                uint16_t bpp    =  this->stream.in_uint16_le();
-                uint16_t small_entries = this->stream.in_uint16_le();
-                uint16_t small_size = this->stream.in_uint16_le();
-                uint16_t medium_entries = this->stream.in_uint16_le();
-                uint16_t medium_size = this->stream.in_uint16_le();
-                uint16_t big_entries = this->stream.in_uint16_le();
-                uint16_t big_size = this->stream.in_uint16_le();
+                this->info_version        = this->stream.in_uint16_le();
+                (void)this->info_version; // for now there is only one, we do not yet have problems
+                this->mem3blt_support     = (this->info_version > 1);
+                this->info_width          = this->stream.in_uint16_le();
+                this->info_height         = this->stream.in_uint16_le();
+                this->info_bpp            = this->stream.in_uint16_le();
+                this->info_small_entries  = this->stream.in_uint16_le();
+                this->info_small_size     = this->stream.in_uint16_le();
+                this->info_medium_entries = this->stream.in_uint16_le();
+                this->info_medium_size    = this->stream.in_uint16_le();
+                this->info_big_entries    = this->stream.in_uint16_le();
+                this->info_big_size       = this->stream.in_uint16_le();
 
                 this->stream.p = this->stream.end;
 
                 if (!this->meta_ok){
-                    this->bmp_cache = new BmpCache(bpp, small_entries, small_size, medium_entries, medium_size, big_entries, big_size);
-                    this->screen_rect = Rect(0, 0, width, height);
+                    this->bmp_cache = new BmpCache(this->info_bpp, this->info_small_entries,
+                        this->info_small_size, this->info_medium_entries, this->info_medium_size,
+                         this->info_big_entries, this->info_big_size);
+                    this->screen_rect = Rect(0, 0, this->info_width, this->info_height);
                     this->meta_ok = true;
                 }
                 else {
-                    if (this->screen_rect.cx != width || this->screen_rect.cy != height){
+                    if (this->screen_rect.cx != this->info_width ||
+                        this->screen_rect.cy != this->info_height){
                         LOG(LOG_ERR,"Inconsistant redundant meta chunk");
                         throw Error(ERR_WRM);
                     }
