@@ -7,8 +7,11 @@ import os
 
 gccinfo = subprocess.Popen(["gcc", "--version"], stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
 #res = re.match("\s+(\d+[.]*\d+)[.]?\d+$", gccinfo)
-res = re.search(r"(\d+[.]*\d+)[.]?\d+\n", gccinfo)
+res = re.search(r"(\d+[.]*\d+[.]?\d+)\n", gccinfo)
 GCCVERSION = 'gcc-%s' % res.group(1)
+
+if GCCVERSION[:7] == 'gcc-4.6':
+    GCCVERSION = '4.6'
 
 
 class Cover:
