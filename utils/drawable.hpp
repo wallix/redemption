@@ -445,19 +445,24 @@ struct Drawable
         }
     }
 
-    void mem_3_blt( const Rect & rect
-                  , const Bitmap & bmp
-                  , const uint16_t srcx
-                  , const uint16_t srcy
-                  , uint8_t rop
-                  , const uint32_t fore_color
-                  , const bool bgr) {
-        if (bmp.cx < srcx || bmp.cy < srcy) {
-            return;
+    struct Op_0xB8
+    {
+        uint8_t operator()(uint8_t target, uint8_t source, uint8_t pattern)
+        {
+            return ((target ^ pattern) & source) ^ pattern;
         }
+    };
 
-        if (rop != 0xB8) {
-            LOG(LOG_INFO, "Drawable::mem_3_blt(): unimplemented rop=%X", rop);
+    template <typename Op>
+    void mem3blt_op( const Rect & rect
+                   , const Bitmap & bmp
+                   , const uint16_t srcx
+                   , const uint16_t srcy
+                   , const uint32_t pattern_color
+                   , const bool bgr) {
+        Op op;
+
+        if (bmp.cx < srcx || bmp.cy < srcy) {
             return;
         }
 
@@ -479,6 +484,9 @@ struct Drawable
         int steptarget = (this->width - trect.cx) * 3;
         int stepsource = (bmp.bmp_size / bmp.cy) + trect.cx * Bpp;
 
+        uint8_t s0, s1, s2;
+        uint8_t p0, p1, p2;
+
         for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource){
             for (int x = 0; x < trect.cx ; x++, target += 3, source += Bpp){
                 uint32_t px = source[Bpp-1];
@@ -491,10 +499,41 @@ struct Drawable
                             | ( color        & 0xFF00)
                             | ((color >> 16) & 0xFF);
                 }
-                target[0] = ((target[0] ^ fore_color        ) & color        ) ^ fore_color;
-                target[1] = ((target[1] ^ (fore_color >> 8 )) & (color >> 8 )) ^ (fore_color >> 8 );
-                target[2] = ((target[2] ^ (fore_color >> 16)) & (color >> 16)) ^ (fore_color >> 16);
+
+                s0 = color         & 0xFF;
+                s1 = (color >> 8 ) & 0xFF;
+                s2 = (color >> 16) & 0xFF;
+
+                p0 = pattern_color         & 0xFF;
+                p1 = (pattern_color >> 8 ) & 0xFF;
+                p2 = (pattern_color >> 16) & 0xFF;
+
+                target[0] = op(target[0], s0, p0);
+                target[1] = op(target[1], s1, p1);
+                target[2] = op(target[2], s2, p2);
             }
+        }
+    }
+
+    void mem_3_blt( const Rect & rect
+                  , const Bitmap & bmp
+                  , const uint16_t srcx
+                  , const uint16_t srcy
+                  , uint8_t rop
+                  , const uint32_t pattern_color
+                  , const bool bgr) {
+        switch (rop) {
+            // +------+-------------------------------+
+            // | 0xB8 | ROP: 0x00B8074A               |
+            // |      | RPN: PSDPxax                  |
+            // +------+-------------------------------+
+            case 0xB8:
+                this->mem3blt_op<Op_0xB8>(rect, bmp, srcx, srcy, pattern_color, bgr);
+            break;
+
+            default:
+                LOG(LOG_INFO, "Drawable::mem_3_blt(): unimplemented rop=%X", rop);
+            break;
         }
     }
 
