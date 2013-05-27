@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <string.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -44,7 +45,9 @@ static inline int filesize(const char * path)
     return -1;
 }
 
-static inline void canonical_path(const char * fullpath, char * path, size_t path_len, char * basename, size_t basename_len, char * extension, size_t extension_len)
+static inline void canonical_path( const char * fullpath, char * path, size_t path_len
+                                 , char * basename, size_t basename_len, char * extension
+                                 , size_t extension_len, uint32_t verbose = 255)
 {
     TODO("add overflow checking of path and basename len")
     const char * end_of_path = strrchr(fullpath, '/');
@@ -53,7 +56,7 @@ static inline void canonical_path(const char * fullpath, char * path, size_t pat
         path[end_of_path + 1 - fullpath] = 0;
         const char * start_of_extension = strrchr(end_of_path + 1, '.');
         if (start_of_extension){
-            strcpy(extension, start_of_extension); 
+            strcpy(extension, start_of_extension);
             if (start_of_extension > end_of_path + 1){
                 memcpy(basename, end_of_path + 1, start_of_extension - end_of_path - 1);
                 basename[start_of_extension - end_of_path - 1] = 0;
@@ -75,7 +78,7 @@ static inline void canonical_path(const char * fullpath, char * path, size_t pat
         // default path : leave whatever is in path output buffer
         const char * start_of_extension = strrchr(fullpath, '.');
         if (start_of_extension){
-            strcpy(extension, start_of_extension); 
+            strcpy(extension, start_of_extension);
             if (start_of_extension > fullpath){
                 memcpy(basename, fullpath, start_of_extension - fullpath);
                 basename[start_of_extension - fullpath] = 0;
@@ -93,7 +96,9 @@ static inline void canonical_path(const char * fullpath, char * path, size_t pat
             }
         }
     }
-    LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
+    if (verbose >= 255) {
+        LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
+    }
 }
 
 void clear_files_flv_meta_png(const char * path, const char * prefix)
@@ -105,12 +110,12 @@ void clear_files_flv_meta_png(const char * path, const char * prefix)
         size_t prefix_len = strlen(prefix);
         size_t file_len = pathconf(path, _PC_NAME_MAX) + 1;
         char * buffer = static_buffer;
-/*        
+/*
         if ((file_len > 4000) || (file_len < 10)){
             LOG(LOG_WARNING, "Max file name too large or undefined (%u) using static buffer", (unsigned)file_len);
             file_len = 4000;
         }
-*/        
+*/
         if (file_len < 4000){
             LOG(LOG_WARNING, "File name length is in normal range (%u), using static buffer", (unsigned)file_len);
             file_len = 4000;
