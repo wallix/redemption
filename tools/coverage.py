@@ -10,8 +10,10 @@ gccinfo = subprocess.Popen(["gcc", "--version"], stdout=subprocess.PIPE, stderr 
 res = re.search(r"(\d+[.]*\d+[.]?\d+)\n", gccinfo)
 GCCVERSION = 'gcc-%s' % res.group(1)
 
+testsubdir = ''
 if GCCVERSION[:7] == 'gcc-4.6':
     GCCVERSION = '4.6'
+    testsubdir = 'tests/'
 
 
 class Cover:
@@ -28,7 +30,7 @@ class Cover:
         res = subprocess.Popen(["bjam", "coverage", "test_%s" % modulename], stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
     #    print res
     #gcov --all-blocks --branch-count --branch-probabilities --function-summaries -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
-        cmd = ["gcov", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "-o", "bin/%s/coverage/tests/%stest_%s.gcno" % (GCCVERSION, modulepath, modulename), "bin/%s/coverage/test_%s" % (GCCVERSION, modulename)]
+        cmd = ["gcov", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "-o", "bin/%s/coverage/%s%stest_%s.gcno" % (GCCVERSION, testssubdir, modulepath if testssubdir else '', modulename), "bin/%s/coverage/test_%s" % (GCCVERSION, modulename)]
 #        print " ".join(cmd)
         res = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
     #    print res
