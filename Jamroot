@@ -99,7 +99,7 @@ project redemption
 
 ;
 
-explicit install instexe install-bin install-etc install-share ;
+explicit install instexe install-bin install-etc install-share check_coverage ;
 
 alias instexe : install-bin ;
 alias install : install-bin install-etc install-share ;
@@ -214,13 +214,40 @@ unit-test test_stream : tests/test_stream.cpp libboost_unit_test gcov : <variant
 unit-test test_utf : tests/test_utf.cpp libboost_unit_test ;
 unit-test test_utf : tests/test_utf.cpp libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_rect : tests/test_rect.cpp libboost_unit_test ;
+unit-test test_rect : tests/test_rect.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_drawable : tests/test_drawable.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_drawable : tests/test_drawable.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_x224 : tests/core/test_x224.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_x224 : tests/core/test_x224.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_mcs : tests/core/test_mcs.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_mcs : tests/core/test_mcs.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_gcc : tests/core/test_gcc.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_gcc : tests/core/test_gcc.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_sec : tests/core/test_sec.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_sec : tests/core/test_sec.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_lic : tests/core/test_lic.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_lic : tests/core/test_lic.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rdp : tests/core/test_rdp.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_fastpath : tests/core/test_fastpath.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_slowpath : tests/core/test_slowpath.cpp z openssl crypto dl libboost_unit_test ;
+
+
 unit-test test_widget : tests/test_widget.cpp d3des openssl crypto png z dl libboost_unit_test ;
 unit-test test_bitmap : tests/test_bitmap.cpp libboost_unit_test ;
 unit-test test_logon : tests/test_logon.cpp libboost_unit_test ;
 unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp libboost_unit_test ;
 unit-test test_config : tests/test_config.cpp libboost_unit_test ;
 unit-test test_font : tests/test_font.cpp libboost_unit_test ;
-unit-test test_rect : tests/test_rect.cpp libboost_unit_test ;
+
+
 unit-test test_compact_to_aligned : tests/test_compact_to_aligned.cpp libboost_unit_test ;
 unit-test test_region : tests/test_region.cpp libboost_unit_test ;
 unit-test test_string : tests/test_string.cpp libboost_unit_test ;
@@ -253,19 +280,10 @@ unit-test test_primary_order_glyph_index : tests/orders/primary/glyph_index.cpp 
 unit-test test_secondary_order_col_cache : tests/orders/secondary/col_cache.cpp libboost_unit_test ;
 unit-test test_secondary_order_bmp_cache : tests/orders/secondary/bmp_cache.cpp libboost_unit_test ;
 
-unit-test test_x224 : tests/core/test_x224.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_mcs : tests/core/test_mcs.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_gcc : tests/core/test_gcc.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_sec : tests/core/test_sec.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_lic : tests/core/test_lic.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_rdp : tests/core/test_rdp.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_fastpath : tests/core/test_fastpath.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_slowpath : tests/core/test_slowpath.cpp z openssl crypto dl libboost_unit_test ;
-
 unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test ;
 unit-test test_colors : tests/test_colors.cpp libboost_unit_test ;
 unit-test test_libpng : tests/test_libpng.cpp png z libboost_unit_test ;
-unit-test test_drawable : tests/test_drawable.cpp png z openssl crypto libboost_unit_test ;
+
 #unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp png z openssl crypto libboost_unit_test ;
 
 unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp z openssl crypto libboost_unit_test ;
