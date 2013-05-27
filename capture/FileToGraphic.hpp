@@ -94,16 +94,16 @@ struct FileToGraphic
 
     bool mem3blt_support;
 
-    uint16_t info_version        = 0;
-    uint16_t info_width          = 0;
-    uint16_t info_height         = 0;
-    uint16_t info_bpp            = 0;
-    uint16_t info_small_entries  = 0;
-    uint16_t info_small_size     = 0;
-    uint16_t info_medium_entries = 0;
-    uint16_t info_medium_size    = 0;
-    uint16_t info_big_entries    = 0;
-    uint16_t info_big_size       = 0;
+    uint16_t info_version;
+    uint16_t info_width;
+    uint16_t info_height;
+    uint16_t info_bpp;
+    uint16_t info_small_entries;
+    uint16_t info_small_size;
+    uint16_t info_medium_entries;
+    uint16_t info_medium_size;
+    uint16_t info_big_entries;
+    uint16_t info_big_size;
 
     FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
         : stream(65536)
@@ -136,6 +136,16 @@ struct FileToGraphic
         , max_order_count(0)
         , verbose(verbose)
         , mem3blt_support(false)
+        , info_version(0)
+        , info_width(0)
+        , info_height(0)
+        , info_bpp(0)
+        , info_small_entries(0)
+        , info_small_size(0)
+        , info_medium_entries(0)
+        , info_medium_size(0)
+        , info_big_entries(0)
+        , info_big_size(0)
     {
         init_palette332(this->palette); // We don't really care movies are always 24 bits for now
 
