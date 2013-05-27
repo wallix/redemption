@@ -101,7 +101,7 @@ static inline void canonical_path( const char * fullpath, char * path, size_t pa
     }
 }
 
-void clear_files_flv_meta_png(const char * path, const char * prefix)
+void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t verbose = 255)
 {
     DIR * d = opendir(path);
     if (d){
@@ -110,22 +110,23 @@ void clear_files_flv_meta_png(const char * path, const char * prefix)
         size_t prefix_len = strlen(prefix);
         size_t file_len = pathconf(path, _PC_NAME_MAX) + 1;
         char * buffer = static_buffer;
-/*
-        if ((file_len > 4000) || (file_len < 10)){
-            LOG(LOG_WARNING, "Max file name too large or undefined (%u) using static buffer", (unsigned)file_len);
-            file_len = 4000;
-        }
-*/
+
         if (file_len < 4000){
-            LOG(LOG_WARNING, "File name length is in normal range (%u), using static buffer", (unsigned)file_len);
+            if (verbose >= 255) {
+                LOG(LOG_WARNING, "File name length is in normal range (%u), using static buffer", (unsigned)file_len);
+            }
             file_len = 4000;
         }
         else {
-            LOG(LOG_WARNING, "Max file name too large (%u), using dynamic buffer", (unsigned)file_len);
+            if (verbose >= 255) {
+                LOG(LOG_WARNING, "Max file name too large (%u), using dynamic buffer", (unsigned)file_len);
+            }
 
             char * buffer = (char*)malloc(file_len + path_len + 1);
             if (!buffer){
-                LOG(LOG_WARNING, "Memory allocation failed for file name buffer, using static buffer");
+                if (verbose >= 255) {
+                    LOG(LOG_WARNING, "Memory allocation failed for file name buffer, using static buffer");
+                }
                 buffer = static_buffer;
                 file_len = 4000;
             }
@@ -138,7 +139,9 @@ void clear_files_flv_meta_png(const char * path, const char * prefix)
         size_t len = offsetof(struct dirent, d_name) + file_len;
         struct dirent * entryp = (struct dirent *)malloc(len);
         if (!entryp){
-            LOG(LOG_WARNING, "Memory allocation failed for entryp, exiting file cleanup code");
+            if (verbose >= 255) {
+                LOG(LOG_WARNING, "Memory allocation failed for entryp, exiting file cleanup code");
+            }
             return;
         }
         struct dirent * result;
@@ -164,11 +167,15 @@ void clear_files_flv_meta_png(const char * path, const char * prefix)
 
             struct stat st;
             if (stat(buffer, &st) < 0){
-                LOG(LOG_WARNING, "Failed to read file %s [%u: %s]\n", buffer, errno, strerror(errno));
+                if (verbose >= 255) {
+                    LOG(LOG_WARNING, "Failed to read file %s [%u: %s]\n", buffer, errno, strerror(errno));
+                }
                 continue;
             }
             if (unlink(buffer) < 0){
-                LOG(LOG_WARNING, "Failed to remove file %s", buffer, errno, strerror(errno));
+                if (verbose >= 255) {
+                    LOG(LOG_WARNING, "Failed to remove file %s", buffer, errno, strerror(errno));
+                }
             }
         }
         closedir(d);
@@ -178,11 +185,13 @@ void clear_files_flv_meta_png(const char * path, const char * prefix)
         }
     }
     else {
-        LOG(LOG_WARNING, "Failed to open directory %s [%u: %s]", path, errno, strerror(errno));
+        if (verbose >= 255) {
+            LOG(LOG_WARNING, "Failed to open directory %s [%u: %s]", path, errno, strerror(errno));
+        }
     }
 }
 
-static inline int _internal_make_directory(const char *directory, mode_t mode, const int groupid) {
+static inline int _internal_make_directory(const char *directory, mode_t mode, const int groupid, uint32_t verbose) {
     struct stat st;
     int status = 0;
 
@@ -191,18 +200,24 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
             /* Directory does not exist. */
             if ((mkdir(directory, mode) != 0) && (errno != EEXIST)) {
                 status = -1;
-                LOG(LOG_ERR, "failed to create directory %s : %s [%u]", directory, strerror(errno), errno);
+                if (verbose >= 255) {
+                    LOG(LOG_ERR, "failed to create directory %s : %s [%u]", directory, strerror(errno), errno);
+                }
             }
             if (groupid){
                 if (chown(directory, (uid_t)-1, groupid) < 0){
-                    LOG(LOG_ERR, "can't set directory %s group to %u : %s [%u]", directory, groupid, strerror(errno), errno);
+                    if (verbose >= 255) {
+                        LOG(LOG_ERR, "can't set directory %s group to %u : %s [%u]", directory, groupid, strerror(errno), errno);
+                    }
                 }
             }
 
         }
         else if (!S_ISDIR(st.st_mode)) {
             errno = ENOTDIR;
-            LOG(LOG_ERR, "expecting directory name, got filename, for %s");
+            if (verbose >= 255) {
+                LOG(LOG_ERR, "expecting directory name, got filename, for %s");
+            }
             status = -1;
         }
     }
@@ -210,7 +225,7 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
 }
 
 TODO("Add unit tests for recursive_create_directory")
-static inline int recursive_create_directory(const char *directory, mode_t mode, const int groupid) {
+static inline int recursive_create_directory(const char *directory, mode_t mode, const int groupid, uint32_t verbose = 255) {
     int    status;
     char * copy_directory;
     char * pTemp;
@@ -231,12 +246,12 @@ static inline int recursive_create_directory(const char *directory, mode_t mode,
         }
 
         pSearch[0] = 0;
-        status = _internal_make_directory(copy_directory, mode, groupid);
+        status = _internal_make_directory(copy_directory, mode, groupid, verbose);
         *pSearch = '/';
     }
 
     if (status == 0) {
-        status = _internal_make_directory(directory, mode, groupid);
+        status = _internal_make_directory(directory, mode, groupid, verbose);
     }
 
     free(copy_directory);
