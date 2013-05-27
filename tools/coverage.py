@@ -10,7 +10,7 @@ gccinfo = subprocess.Popen(["gcc", "--version"], stdout=subprocess.PIPE, stderr 
 res = re.search(r"(\d+[.]*\d+[.]?\d+)\n", gccinfo)
 GCCVERSION = 'gcc-%s' % res.group(1)
 
-testsubdir = ''
+testssubdir = ''
 if GCCVERSION[:7] == 'gcc-4.6':
     GCCVERSION = '4.6'
     testsubdir = 'tests/'
