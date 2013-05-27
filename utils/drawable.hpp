@@ -487,18 +487,13 @@ struct Drawable
                 }
                 uint32_t color = color_decode(px, bmp.original_bpp, bmp.original_palette);
                 if (bgr){
-                    color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
+                    color =   ((color << 16) & 0xFF0000)
+                            | ( color        & 0xFF00)
+                            | ((color >> 16) & 0xFF);
                 }
-/*
-                target[0] = color;
-                target[1] = color >> 8;
-                target[2] = color >> 16;
-*/
-/*
-                target[0] = target[0] ^ fore_color;
-                target[1] = target[1] ^ fore_color;
-                target[2] = target[2] ^ fore_color;
-*/
+                target[0] = ((target[0] ^ fore_color        ) & color        ) ^ fore_color;
+                target[1] = ((target[1] ^ (fore_color >> 8 )) & (color >> 8 )) ^ (fore_color >> 8 );
+                target[2] = ((target[2] ^ (fore_color >> 16)) & (color >> 16)) ^ (fore_color >> 16);
             }
         }
     }
