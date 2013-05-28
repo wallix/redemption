@@ -10,11 +10,12 @@ gccinfo = subprocess.Popen(["gcc", "--version"], stdout=subprocess.PIPE, stderr 
 res = re.search(r"(\d+[.]*\d+[.]?\d+)\n", gccinfo)
 GCCVERSION = 'gcc-%s' % res.group(1)
 
-testssubdir = ''
-if GCCVERSION[:7] == 'gcc-4.6':
-    GCCVERSION = '4.6'
-    testsubdir = 'tests/'
+TESTSSUBDIR = ''
+if GCCVERSION[:7] in ['gcc-4.6', 'gcc-4.7']:
+    GCCVERSION = GCCVERSION[:7]
+    TESTSSUBDIR = 'tests/'
 
+print GCCVERSION, TESTSSUBDIR
 
 class Cover:
     def __init__(self):
@@ -30,8 +31,8 @@ class Cover:
         res = subprocess.Popen(["bjam", "coverage", "test_%s" % modulename], stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
     #    print res
     #gcov --all-blocks --branch-count --branch-probabilities --function-summaries -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
-        cmd = ["gcov", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "-o", "bin/%s/coverage/%s%stest_%s.gcno" % (GCCVERSION, testssubdir, modulepath if testssubdir else '', modulename), "bin/%s/coverage/test_%s" % (GCCVERSION, modulename)]
-#        print " ".join(cmd)
+        cmd = ["gcov", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "-o", "bin/%s/coverage/%s%stest_%s.gcno" % (GCCVERSION, TESTSSUBDIR, modulepath if TESTSSUBDIR else '', modulename), "bin/%s/coverage/test_%s" % (GCCVERSION, modulename)]
+        print " ".join(cmd)
         res = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
     #    print res
         
@@ -62,10 +63,8 @@ class Cover:
                 covered = int(covered)
                 total = int(total)
                 self.cover(module)
-                # if covered lines is lower in absolute count
-                if (self.results[module][0] < covered
-                # or if coverage percentage is lower
-                or (self.results[module][0] * 100.0 / self.results[module][1]) < (covered * 100.0 / total)):
+                # if coverage percentage is lower
+                if (self.results[module][0] * 100 / self.results[module][1]) < (covered * 100 / total):
                     print("Lower coverage for module %s : old %d/%d new %d/%d" % (module, 
                         covered, total, 
                         self.results[module][0], self.results[module][1]))
@@ -74,6 +73,10 @@ class Cover:
                     target.write("Lower coverage for module %s : old %d/%d new %d/%d\n" % (module, 
                         covered, total, 
                         self.results[module][0], self.results[module][1]))
+                    for line in open("./coverage/%s/%s.hpp.gcov" % (module, module.split('/')[-1])):
+                        res = re.match(r'^\s+#####[:]', line)
+                        if res:
+                            print(line)
 
 cover = Cover()
 if sys.argv[1] == 'all':
