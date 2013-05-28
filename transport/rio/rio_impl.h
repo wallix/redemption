@@ -305,21 +305,21 @@ SQ * sq_new_cryptoouttracker(RIO_ERROR * error, RIO * tracker,
 }
 
 
-RIO_ERROR sq_init_intracker(SQ * self, RIO * tracker)
+RIO_ERROR sq_init_intracker(SQ * self, RIO * tracker, const char * meta_path)
 {
     self->sq_type = SQ_TYPE_INTRACKER;
-    self->err = sq_m_SQIntracker_constructor(&(self->u.intracker), tracker);
+    self->err = sq_m_SQIntracker_constructor(&(self->u.intracker), tracker, meta_path);
     return self->err;
 }
 
-SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker)
+SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker, const char * meta_path)
 {
     SQ * self = (SQ*)malloc(sizeof(SQ));
     if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
-    RIO_ERROR res = sq_init_intracker(self, tracker);
+    RIO_ERROR res = sq_init_intracker(self, tracker, meta_path);
     if (res != RIO_ERROR_OK){
         if (error) { *error = res; }
         free(self);
@@ -329,21 +329,22 @@ SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker)
 }
 
 
-RIO_ERROR sq_init_cryptointracker(SQ * self, RIO * tracker)
+RIO_ERROR sq_init_cryptointracker(SQ * self, RIO * tracker, const char * meta_path)
 {
     self->sq_type = SQ_TYPE_CRYPTOINTRACKER;
-    self->err = sq_m_SQCryptoIntracker_constructor(&(self->u.cryptointracker), tracker);
+    self->err = sq_m_SQCryptoIntracker_constructor(&(self->u.cryptointracker), tracker,
+        meta_path);
     return self->err;
 }
 
-SQ * sq_new_cryptointracker(RIO_ERROR * error, RIO * tracker)
+SQ * sq_new_cryptointracker(RIO_ERROR * error, RIO * tracker, const char * meta_path)
 {
     SQ * self = (SQ*)malloc(sizeof(SQ));
     if (self == 0){
         if (error){ *error = RIO_ERROR_MALLOC; }
         return NULL;
     }
-    RIO_ERROR res = sq_init_cryptointracker(self, tracker);
+    RIO_ERROR res = sq_init_cryptointracker(self, tracker, meta_path);
     if (res != RIO_ERROR_OK){
         if (error) { *error = res; }
         free(self);

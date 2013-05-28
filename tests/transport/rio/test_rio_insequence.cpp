@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARIO *ICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,8 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
-   Author(s): Christophe Grosjean
-
+   Author(s): Christophe Grosjean, Raphael Zhou
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -66,9 +65,9 @@ BOOST_AUTO_TEST_CASE(TestInsequence)
         RIO_ERROR status = RIO_ERROR_OK;
         SQ * inseq = sq_new_inmeta(&status, "TESTOFS", ".mwrm");
         BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
-        
-        
-        // This is the beginning of the actual test : 
+
+
+        // This is the beginning of the actual test :
         // we check that content of the chained files of the sequence can be read
         // in one call, even with parts in different chunks
         RIO * rt = rio_new_insequence(&status, inseq);
@@ -82,8 +81,8 @@ BOOST_AUTO_TEST_CASE(TestInsequence)
             LOG(LOG_ERR, "expected \"AAAAXBBBBXCCCCX\" got \"%s\"", buffer);
             BOOST_CHECK(false);
         }
-    }    
-    
+    }
+
     const char * file[] = {
         "TESTOFS.mwrm",
         "TESTOFS-000000.wrm",
@@ -120,7 +119,6 @@ BOOST_AUTO_TEST_CASE(TestSequenceMeta)
     sq_delete(sequence);
 }
 
-
 BOOST_AUTO_TEST_CASE(TestInsequence2)
 {
 // 3rd simplest sequence is "intracker" sequence
@@ -128,11 +126,11 @@ BOOST_AUTO_TEST_CASE(TestInsequence2)
 // a Transport that contains the list of the input files.
 // - sq_get_trans() open an infile if necessary using the name it got from tracker
 //   and return it on subsequent calls until it is closed (reach EOF)
-// - sq_next() close the current outfile and step to the next filename wich will 
+// - sq_next() close the current outfile and step to the next filename wich will
 //    be used by the next sq_get_trans to create an outfile transport.
 
     RIO_ERROR status = RIO_ERROR_OK;
-    const char trackdata[] = 
+    const char trackdata[] =
         "800 600\n"
         "0\n"
         "\n"
@@ -144,7 +142,7 @@ BOOST_AUTO_TEST_CASE(TestInsequence2)
     RIO * tracker = rio_new_generator(&status, trackdata, sizeof(trackdata)-1);
 
     status = RIO_ERROR_OK;
-    SQ * sequence = sq_new_intracker(&status, tracker);
+    SQ * sequence = sq_new_intracker(&status, tracker, "./tests/fixtures/");
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
     status = RIO_ERROR_OK;
@@ -161,6 +159,75 @@ BOOST_AUTO_TEST_CASE(TestInsequence2)
 
     rio_delete(rt);
     sq_delete(sequence);
-    rio_delete(tracker);  
+    rio_delete(tracker);
 }
 
+BOOST_AUTO_TEST_CASE(TestInsequencePath)
+{
+    RIO_ERROR status = RIO_ERROR_OK;
+    const char trackdata[] =
+        "800 600\n"
+        "0\n"
+        "\n"
+        "sample0.wrm 1352304810 1352304870\n"
+        "sample1.wrm 1352304870 1352304930\n"
+        "sample2.wrm 1352304930 1352304990\n"
+        ;
+
+    RIO * tracker = rio_new_generator(&status, trackdata, sizeof(trackdata)-1);
+
+    status = RIO_ERROR_OK;
+    SQ * sequence = sq_new_intracker(&status, tracker, "./tests/fixtures/");
+    BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
+
+    status = RIO_ERROR_OK;
+    RIO * rt = rio_new_insequence(&status, sequence);
+
+    char buffer[1024] = {};
+    unsigned len = 1471394 + 444578 + 290245;
+    while (len > 1024){
+        BOOST_CHECK_EQUAL(1024, rio_recv(rt, buffer, sizeof(buffer)));
+        len -= 1024;
+    }
+    BOOST_CHECK_EQUAL(521, rio_recv(rt, buffer, sizeof(buffer)));
+    BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer, sizeof(buffer)));
+
+    rio_delete(rt);
+    sq_delete(sequence);
+    rio_delete(tracker);
+}
+
+BOOST_AUTO_TEST_CASE(TestInsequencePath1)
+{
+    RIO_ERROR status = RIO_ERROR_OK;
+    const char trackdata[] =
+        "800 600\n"
+        "0\n"
+        "\n"
+        "/tmp/sample0.wrm 1352304810 1352304870\n"
+        "/tmp/sample1.wrm 1352304870 1352304930\n"
+        "/tmp/sample2.wrm 1352304930 1352304990\n"
+        ;
+
+    RIO * tracker = rio_new_generator(&status, trackdata, sizeof(trackdata)-1);
+
+    status = RIO_ERROR_OK;
+    SQ * sequence = sq_new_intracker(&status, tracker, "./tests/fixtures/");
+    BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
+
+    status = RIO_ERROR_OK;
+    RIO * rt = rio_new_insequence(&status, sequence);
+
+    char buffer[1024] = {};
+    unsigned len = 1471394 + 444578 + 290245;
+    while (len > 1024){
+        BOOST_CHECK_EQUAL(1024, rio_recv(rt, buffer, sizeof(buffer)));
+        len -= 1024;
+    }
+    BOOST_CHECK_EQUAL(521, rio_recv(rt, buffer, sizeof(buffer)));
+    BOOST_CHECK_EQUAL(0, rio_recv(rt, buffer, sizeof(buffer)));
+
+    rio_delete(rt);
+    sq_delete(sequence);
+    rio_delete(tracker);
+}

@@ -46,6 +46,7 @@ extern "C" {
         char header2[1024];
         char header3[1024];
         char line[1024];
+        char meta_path[1024];
         timeval start_tv;
         timeval stop_tv;
         int num_chunk;
@@ -125,7 +126,8 @@ extern "C" {
         return RIO_ERROR_OK;
     }
 
-    static inline RIO_ERROR sq_m_SQIntracker_constructor(SQIntracker * self, RIO * tracker)
+    static inline RIO_ERROR sq_m_SQIntracker_constructor(SQIntracker * self, RIO * tracker,
+        const char * meta_path)
     {
         self->trans = NULL;
         self->tracker = tracker;
@@ -134,6 +136,9 @@ extern "C" {
         self->eollen = 0;
         self->rlstatus = RIO_ERROR_OK;
         self->num_chunk = 0;
+
+        strncpy(self->meta_path, meta_path, sizeof(self->meta_path));
+        self->meta_path[sizeof(self->meta_path) - 1] = 0;
 
         // First header line
         self->begin_line = self->eol;
@@ -303,9 +308,27 @@ extern "C" {
             TODO("add rights information to constructor")
             self->fd = ::open(self->line, O_RDONLY, S_IRUSR);
             if (self->fd < 0){
-                self->rlstatus = RIO_ERROR_OPEN;
-                if (status) { *status = self->rlstatus; }
-                return self->trans; // self->trans is NULL
+                char full_path[2048];
+                char path[1024];
+                char basename[1024];
+                char extension[1024];
+
+                path[0] = basename[0] = extension[0] = 0;
+                canonical_path(self->line, path, sizeof(path), basename, sizeof(basename),
+                    extension, sizeof(extension));
+
+                snprintf(full_path, sizeof(full_path), "%s%s%s", self->meta_path, basename, extension);
+
+                self->fd = ::open(full_path, O_RDONLY, S_IRUSR);
+                if (self->fd < 0){
+                    self->rlstatus = RIO_ERROR_OPEN;
+                    if (status) { *status = self->rlstatus; }
+                    return self->trans; // self->trans is NULL
+                }
+                else {
+                    strncpy(self->line, full_path, sizeof(self->line));
+                    self->line[sizeof(self->line) - 1] = 0;
+                }
             }
             self->trans = rio_new_infile(&(self->rlstatus), self->fd);
             if (status){ *status = self->rlstatus; }
@@ -358,6 +381,7 @@ extern "C" {
         char header2[1024];
         char header3[1024];
         char line[1024];
+        char meta_path[1024];
         timeval start_tv;
         timeval stop_tv;
         int num_chunk;
@@ -436,7 +460,8 @@ extern "C" {
         return RIO_ERROR_OK;
     }
 
-    static inline RIO_ERROR sq_m_SQCryptoIntracker_constructor(SQCryptoIntracker * self, RIO * tracker)
+    static inline RIO_ERROR sq_m_SQCryptoIntracker_constructor(SQCryptoIntracker * self,
+        RIO * tracker, const char * meta_path)
     {
         self->trans = NULL;
         self->tracker = tracker;
@@ -445,6 +470,9 @@ extern "C" {
         self->eollen = 0;
         self->rlstatus = RIO_ERROR_OK;
         self->num_chunk = 0;
+
+        strncpy(self->meta_path, meta_path, sizeof(self->meta_path));
+        self->meta_path[sizeof(self->meta_path) - 1] = 0;
 
         // First header line
         self->begin_line = self->eol;
@@ -578,6 +606,8 @@ extern "C" {
 
     static inline RIO * sq_m_SQCryptoIntracker_get_trans(SQCryptoIntracker * self, RIO_ERROR * status)
     {
+        RIO_ERROR temp_status;
+
         if (status && (*status != RIO_ERROR_OK)) { return NULL; }
         if (self->rlstatus != RIO_ERROR_OK){
             if (status) { *status = self->rlstatus; }
@@ -591,8 +621,32 @@ extern "C" {
                 return NULL;
             }
             TODO("add rights information to constructor")
-            self->trans = rio_new_crypto(&(self->rlstatus), self->line, O_RDONLY);
-            if (status){ *status = self->rlstatus; }
+            self->trans = rio_new_crypto(&temp_status, self->line, O_RDONLY);
+            if (temp_status){
+                char full_path[2048];
+                char path[1024];
+                char basename[1024];
+                char extension[1024];
+
+                path[0] = basename[0] = extension[0] = 0;
+                canonical_path(self->line, path, sizeof(path), basename, sizeof(basename),
+                    extension, sizeof(extension));
+
+                snprintf(full_path, sizeof(full_path), "%s%s%s", self->meta_path, basename, extension);
+
+                self->trans = rio_new_crypto(&(self->rlstatus), full_path, O_RDONLY);
+                if (self->rlstatus == RIO_ERROR_OK) {
+                    strncpy(self->line, full_path, sizeof(self->line));
+                    self->line[sizeof(self->line) - 1] = 0;
+                }
+            }
+            else {
+                self->rlstatus = temp_status;
+            }
+
+            if (status){
+                *status = self->rlstatus;
+            }
         }
         return self->trans;
     }
