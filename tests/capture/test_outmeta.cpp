@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    Unit test for OutmetaTransport
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -59,6 +58,6 @@ BOOST_AUTO_TEST_CASE(TestOutmetaTransport)
     char file2[1024];
     snprintf(file2, 1024, "./xxx-%06u-%06u.wrm", getpid(), 1);
     BOOST_CHECK_EQUAL(5, filesize(file2));
-    BOOST_CHECK_EQUAL(0, ::unlink(file2));   
+    BOOST_CHECK_EQUAL(0, ::unlink(file2));
 }
 

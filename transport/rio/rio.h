@@ -79,7 +79,7 @@ extern "C" {
     struct RIO;
     struct SQ;
 
-    // Forward headers for methods defined in redtrans 
+    // Forward headers for methods defined in redtrans
     //(this allow to use them as an interface to individual transports for combining transports)
 
     RIO * rio_new_generator(RIO_ERROR * error, const void * data, size_t len);
@@ -148,18 +148,18 @@ extern "C" {
     SQ * sq_new_one(RIO_ERROR * error, RIO * trans);
     RIO_ERROR sq_init_one(SQ * self, RIO * trans);
 
-    SQ * sq_new_outfilename(RIO_ERROR * error, 
-        SQ_FORMAT format, const char * path, const char * filename, const char * extension, 
+    SQ * sq_new_outfilename(RIO_ERROR * error,
+        SQ_FORMAT format, const char * path, const char * filename, const char * extension,
         const int groupid);
-    RIO_ERROR sq_init_outfilename(SQ * self, 
-        SQ_FORMAT format, const char * path, const char * filename, const char * extension, 
+    RIO_ERROR sq_init_outfilename(SQ * self,
+        SQ_FORMAT format, const char * path, const char * filename, const char * extension,
         const int groupid);
 
-    SQ * sq_new_cryptooutfilename(RIO_ERROR * error, 
-        SQ_FORMAT format, const char * path, const char * filename, const char * extension, 
+    SQ * sq_new_cryptooutfilename(RIO_ERROR * error,
+        SQ_FORMAT format, const char * path, const char * filename, const char * extension,
         const int groupid);
-    RIO_ERROR sq_init_cryptooutfilename(SQ * self, 
-        SQ_FORMAT format, const char * path, const char * filename, 
+    RIO_ERROR sq_init_cryptooutfilename(SQ * self,
+        SQ_FORMAT format, const char * path, const char * filename,
         const char * extension);
 
     SQ * sq_new_outtracker(RIO_ERROR * error, RIO * tracker,
@@ -184,11 +184,11 @@ extern "C" {
                 timeval * tv,
                 const char * header1, const char * header2, const char * header3, const int groupid);
 
-    SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker);
-    RIO_ERROR sq_init_intracker(SQ * self, RIO * tracker);
+    SQ * sq_new_intracker(RIO_ERROR * error, RIO * tracker, const char * meta_path);
+    RIO_ERROR sq_init_intracker(SQ * self, RIO * tracker, const char * meta_path);
 
-    SQ * sq_new_cryptointracker(RIO_ERROR * error, RIO * tracker);
-    RIO_ERROR sq_init_cryptointracker(SQ * self, RIO * tracker);
+    SQ * sq_new_cryptointracker(RIO_ERROR * error, RIO * tracker, const char * meta_path);
+    RIO_ERROR sq_init_cryptointracker(SQ * self, RIO * tracker, const char * meta_path);
 
     SQ * sq_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extension);
     RIO_ERROR sq_init_inmeta(SQ * self, const char * prefix, const char * extension);
