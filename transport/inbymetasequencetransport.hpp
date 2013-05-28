@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -14,8 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2012
-   Author(s): Christophe Grosjean
+   Copyright (C) Wallix 2012-2013
+   Author(s): Christophe Grosjean, Raphael Zhou
 
    Transport layer abstraction
 */
@@ -47,7 +47,10 @@ public:
         RIO_ERROR status = RIO_ERROR_OK;
         SQ * seq = NULL;
         this->rio = rio_new_inmeta(&status, &seq, filename, extension);
-        if (status != RIO_ERROR_OK){
+        if (status == RIO_ERROR_OPEN) {
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+        else if (status != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT);
         }
         this->seq = seq;
@@ -72,7 +75,7 @@ public:
             this->begin_chunk_time = tv_begin.tv_sec;
             this->end_chunk_time = tv_end.tv_sec;
         }
-        // if some error occurs calling sq_next 
+        // if some error occurs calling sq_next
         // it will be took care of when opening next chunk, not now
         sq_next(this->seq);
     }
@@ -81,7 +84,10 @@ public:
     virtual void recv(char ** pbuffer, size_t len) throw (Error)
     {
         ssize_t res = rio_recv(this->rio, *pbuffer, len);
-        if (res <= 0){
+        if (res == -RIO_ERROR_OPEN) {
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+        else if (res <= 0){
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
         *pbuffer += res;
@@ -148,7 +154,7 @@ public:
             this->begin_chunk_time = tv_begin.tv_sec;
             this->end_chunk_time = tv_end.tv_sec;
         }
-        // if some error occurs calling sq_next 
+        // if some error occurs calling sq_next
         // it will be took care of when opening next chunk, not now
         sq_next(this->seq);
     }

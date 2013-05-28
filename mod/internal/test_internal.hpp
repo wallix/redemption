@@ -30,15 +30,18 @@
 #include "inbymetasequencetransport.hpp"
 
 struct test_internal_mod : public internal_mod {
-
     char movie[1024];
+
+    redemption::string & auth_error_message;
 
     test_internal_mod( FrontAPI & front
                      , char * replay_path
                      , char * movie
                      , uint16_t width
-                     , uint16_t height):
-            internal_mod(front, width, height)
+                     , uint16_t height
+                     , redemption::string & auth_error_message):
+      internal_mod(front, width, height)
+    , auth_error_message(auth_error_message)
     {
         TODO("use canonical_path to manage trailing slash")
         strcpy(this->movie, replay_path);
@@ -85,19 +88,35 @@ struct test_internal_mod : public internal_mod {
         canonical_path(this->movie, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
         sprintf(prefix, "%s%s", path, basename);
 
+        BackEvent_t back_event = BACK_EVENT_STOP;
+
         TODO("RZ: Support encrypted recorded file.")
-        InByMetaSequenceTransport in_trans(prefix, extension);
-        timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-        timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-        FileToGraphic reader(&in_trans, begin_capture, end_capture, true, 0);
-        reader.add_consumer(&this->front);
-        this->front.send_global_palette();
-        this->front.begin_update();
-        while (reader.next_order()){
-            reader.interpret_order();
+        try
+        {
+            InByMetaSequenceTransport in_trans(prefix, extension);
+            timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
+            timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+            FileToGraphic reader(&in_trans, begin_capture, end_capture, true, 0);
+            reader.add_consumer(&this->front);
+            this->front.send_global_palette();
+            this->front.begin_update();
+            while (reader.next_order()){
+                reader.interpret_order();
+            }
+            this->front.end_update();
         }
-        this->front.end_update();
-        return BACK_EVENT_STOP;
+        catch (Error & e) {
+            if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
+                this->auth_error_message = "The recorded file is inaccessible or corrupted!";
+
+                back_event = BACK_EVENT_NEXT;
+            }
+            else {
+                throw;
+            }
+        }
+
+        return back_event;
     }
 };
 

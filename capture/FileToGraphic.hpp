@@ -208,6 +208,7 @@ struct FileToGraphic
 
                 if (this->chunk_type != LAST_IMAGE_CHUNK && this->chunk_type != PARTIAL_IMAGE_CHUNK){
                     if (this->chunk_size > 65536){
+                        LOG(LOG_INFO,"chunk_size (%d) > 65536", this->chunk_size);
                         return false;
                     }
                     this->stream.reset();
@@ -215,7 +216,11 @@ struct FileToGraphic
                 }
             }
             catch (Error & e){
-//                LOG(LOG_INFO,"receive error %u : end of transport", e.id);
+                if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
+                    throw;
+                }
+
+                LOG(LOG_INFO,"receive error %u : end of transport", e.id);
                 // receive error, end of transport
                 return false;
             }
