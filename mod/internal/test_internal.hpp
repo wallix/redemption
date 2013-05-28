@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -14,12 +14,11 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Copyright (C) Wallix 2010-2013
+   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Use (implemented) basic RDP orders to draw some known test pattern
-
 */
 
 #ifndef _REDEMPTION_MOD_INTERNAL_TEST_INTERNAL_HPP_
@@ -82,12 +81,12 @@ struct test_internal_mod : public internal_mod {
         strcpy(basename, "replay"); // default value actual one should come from movie_path
         strcpy(extension, ".mwrm"); // extension is currently ignored
         char prefix[4096];
-        
+
         canonical_path(this->movie, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
         sprintf(prefix, "%s%s", path, basename);
 
-//        InByMetaSequenceTransport in_trans(prefix, extension);
-        CryptoInByMetaSequenceTransport in_trans(prefix, extension);
+        TODO("RZ: Support encrypted recorded file.")
+        InByMetaSequenceTransport in_trans(prefix, extension);
         timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
         timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
         FileToGraphic reader(&in_trans, begin_capture, end_capture, true, 0);
