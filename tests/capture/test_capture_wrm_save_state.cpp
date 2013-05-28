@@ -253,7 +253,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
 
 const char expected_continuation_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x02\x00\x64\x00\x64\x00\x18\x00" // WRM version 2, width = 20, height=10, bpp=24
+           "\x01\x00\x64\x00\x64\x00\x18\x00" // WRM version 1, width = 20, height=10, bpp=24
            "\x02\x00\x00\x01\x02\x00\x00\x04\x02\x00\x00\x10"  // caches sizes
 
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order

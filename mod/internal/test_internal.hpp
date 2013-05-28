@@ -97,7 +97,7 @@ struct test_internal_mod : public internal_mod {
             reader.interpret_order();
         }
         this->front.end_update();
-        return BACK_EVENT_NONE;
+        return BACK_EVENT_STOP;
     }
 };
 

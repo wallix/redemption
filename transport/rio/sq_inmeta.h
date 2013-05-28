@@ -95,6 +95,7 @@ extern "C" {
         if (!res){
             sq_m_SQInmeta_destructor(self);
             self->status = status_res;
+            if (status) { *status = self->status; }
         }
         return res;
     }
@@ -192,6 +193,7 @@ extern "C" {
         if (!res){
             sq_m_SQCryptoInmeta_destructor(self);
             self->status = status_res;
+            if (status) { *status = self->status; }
         }
         return res;
     }
