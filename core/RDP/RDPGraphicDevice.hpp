@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -23,7 +23,6 @@
    - It may be sent on the wire,
    - Used to draw on some internal bitmap,
    - etc.
-
 */
 
 #ifndef _REDEMPTION_CORE_RDP_RDPGRAPHICDEVICE_HPP_
@@ -45,7 +44,7 @@
 struct RDPGraphicDevice
 {
     virtual void set_row(size_t rownum, const uint8_t * data) {}
-    
+
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPScrBlt & cmd, const Rect &clip) = 0;
     virtual void draw(const RDPDestBlt & cmd, const Rect &clip) = 0;

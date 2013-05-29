@@ -51,6 +51,7 @@
 #include "RDP/gcc.hpp"
 #include "RDP/sec.hpp"
 #include "colors.hpp"
+#include "RDP/bitmapupdate.hpp"
 #include "RDP/capabilities.hpp"
 #include "RDP/fastpath.hpp"
 #include "authentifier.hpp"
@@ -306,7 +307,7 @@ struct mod_rdp : public mod_api {
     {
         if (this->verbose & 16){
             LOG(LOG_INFO, "mod_rdp::send_to_mod_channel");
-            LOG(LOG_INFO, "sending to channel %s", front_channel_name); 
+            LOG(LOG_INFO, "sending to channel %s", front_channel_name);
         }
 
         // Clipboard is unavailable and is a Clipboard PDU
@@ -345,7 +346,7 @@ struct mod_rdp : public mod_api {
                                            , out_s.data
                                            , length
                                            , out_s.size()
-                                           , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST 
+                                           , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
                                            | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
                                            );
 
@@ -385,7 +386,7 @@ struct mod_rdp : public mod_api {
         stream.mark_end();
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, 
+        MCS::SendDataIndication_Send mcs(mcs_header, userid,
             this->auth_channel_chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
@@ -558,7 +559,7 @@ struct mod_rdp : public mod_api {
                             }
                             this->mod_channel_list.push_back(def);
                         }
-                        
+
                         cs_net.log("Sending to server");
                         cs_net.emit(stream);
                     }
@@ -1177,7 +1178,7 @@ struct mod_rdp : public mod_api {
                             LOG(LOG_INFO, "Rdp::Get license status");
                         }
                         LIC::ErrorAlert_Recv lic(sec.payload);
-                        if ((lic.validClientMessage.dwErrorCode == LIC::STATUS_VALID_CLIENT) 
+                        if ((lic.validClientMessage.dwErrorCode == LIC::STATUS_VALID_CLIENT)
                         && (lic.validClientMessage.dwStateTransition == LIC::ST_NO_TRANSITION)){
                             this->state = MOD_RDP_CONNECTED;
                         }
@@ -1444,7 +1445,7 @@ struct mod_rdp : public mod_api {
                             this->send_to_channel(*mod_channel,
                                                   out_s,
                                                   out_s.size(),
-                                                    CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST 
+                                                    CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
                                                   | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST);
                         }
                     }
@@ -1917,7 +1918,7 @@ struct mod_rdp : public mod_api {
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
-            
+
             SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->encryptionLevel);
             MCS::SendDataRequest_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3,
                                           sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
@@ -3230,7 +3231,7 @@ struct mod_rdp : public mod_api {
 
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-            
+
             BStream target_stream(65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
@@ -3272,7 +3273,7 @@ struct mod_rdp : public mod_api {
 
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-            
+
             BStream target_stream(65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
@@ -3329,7 +3330,7 @@ struct mod_rdp : public mod_api {
 
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-            
+
             BStream target_stream(65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
@@ -3458,9 +3459,9 @@ struct mod_rdp : public mod_api {
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_CACHE_NOT_OK);
         }
         struct rdp_cursor* cursor = this->cursors + cache_idx;
-        
+
         TODO("CGR: move that to rdp_cursor")
-        
+
         cursor->x = stream.in_uint16_le();
         cursor->y = stream.in_uint16_le();
         cursor->width = stream.in_uint16_le();
@@ -3564,7 +3565,7 @@ struct mod_rdp : public mod_api {
         uint8_t * end = stream.p + dlen;
         TODO("CGR: we should ensure we have data enough to create pointer")
         switch (bpp) {
-        case 1 : 
+        case 1 :
         {
             for (unsigned x = 0; x < dlen ; x ++) {
                 BGRColor px = stream.in_uint8();
@@ -3585,7 +3586,7 @@ struct mod_rdp : public mod_api {
             }
         }
         break;
-        case 4 : 
+        case 4 :
         {
             for (unsigned i=0; i < dlen ; i++) {
                 BGRColor px = stream.in_uint8();
@@ -3604,7 +3605,7 @@ struct mod_rdp : public mod_api {
             }
         }
         break;
-        default: 
+        default:
             LOG(LOG_ERR, "Mouse pointer : color depth not supported %d, forcing green mouse (running in the grass ?)", bpp);
             for (size_t x = 0 ; x < 1024 ; x++){
                 ::out_bytes_le(data + x *3, 3, GREEN);
@@ -3624,7 +3625,7 @@ struct mod_rdp : public mod_api {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
         }
-        
+
         unsigned data_bpp = stream.in_uint16_le(); /* data bpp */
         unsigned cache_idx = stream.in_uint16_le();
         if (cache_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
@@ -3649,8 +3650,8 @@ struct mod_rdp : public mod_api {
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
-        to_regular_pointer(stream, dlen, data_bpp, cursor->data, sizeof(cursor->data)); 
-        to_regular_mask(stream, mlen, data_bpp, cursor->mask, sizeof(cursor->mask)); 
+        to_regular_pointer(stream, dlen, data_bpp, cursor->data, sizeof(cursor->data));
+        to_regular_mask(stream, mlen, data_bpp, cursor->mask, sizeof(cursor->mask));
 
         this->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
         if (this->verbose & 4){
@@ -3693,6 +3694,7 @@ struct mod_rdp : public mod_api {
             LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */", numberRectangles);
         }
         for (size_t i = 0; i < numberRectangles; i++) {
+
             // rectangles (variable): Variable-length array of TS_BITMAP_DATA
             // (section 2.2.9.1.1.3.1.2.2) structures, each of which contains a
             // rectangular clipping taken from the server-side screen frame buffer.
@@ -3707,33 +3709,24 @@ struct mod_rdp : public mod_api {
             // the server-side screen frame buffer.
 
             // A 16-bit, unsigned integer. Left bound of the rectangle.
-            const uint16_t left = stream.in_uint16_le();
 
             // A 16-bit, unsigned integer. Top bound of the rectangle.
-            const uint16_t top = stream.in_uint16_le();
 
             // A 16-bit, unsigned integer. Right bound of the rectangle.
-            const uint16_t right = stream.in_uint16_le();
 
             // A 16-bit, unsigned integer. Bottom bound of the rectangle.
-            const uint16_t bottom = stream.in_uint16_le();
 
             // A 16-bit, unsigned integer. The width of the rectangle.
-            const uint16_t width = stream.in_uint16_le();
 
             // A 16-bit, unsigned integer. The height of the rectangle.
-            const uint16_t height = stream.in_uint16_le();
 
             // A 16-bit, unsigned integer. The color depth of the rectangle
             // data in bits-per-pixel.
-            uint8_t bpp = (uint8_t)stream.in_uint16_le();
 
             // CGR: As far as I understand we should have
             // align4(right-left) == width and bottom-top == height
             // maybe put some assertion to check it's true
             // LOG(LOG_ERR, "left=%u top=%u right=%u bottom=%u width=%u height=%u bpp=%u", left, top, right, bottom, width, height, bpp);
-
-            assert(bpp == 24 || bpp == 16 || bpp == 8 || bpp == 15);
 
             // A 16-bit, unsigned integer. The flags describing the format
             // of the bitmap data in the bitmapDataStream field.
@@ -3754,26 +3747,33 @@ struct mod_rdp : public mod_api {
             // |                                   | save 8 bytes).            |
             // +-----------------------------------+---------------------------+
 
-            int flags = stream.in_uint16_le();
-            uint16_t size = stream.in_uint16_le();
+            BitmapData_Recv bmpdata(stream);
 
-            Rect boundary(left, top, right - left + 1, bottom - top + 1);
+            Rect boundary( bmpdata.dest_left
+                         , bmpdata.dest_top
+                         , bmpdata.dest_right - bmpdata.dest_left + 1
+                         , bmpdata.dest_bottom - bmpdata.dest_top + 1
+                         );
 
             // BITMAP_COMPRESSION 0x0001
             // Indicates that the bitmap data is compressed. This implies
             // that the bitmapComprHdr field is present if the
             // NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not set.
 
-            if (this->verbose & 64){
-                LOG(LOG_INFO, "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */",
-                    i, bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
+            if (this->verbose & 64) {
+                LOG( LOG_INFO
+                   , "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */"
+                   , i
+                   , bmpdata.bits_per_pixel
+                   , bmpdata.width
+                   , bmpdata.height
+                   , boundary.x
+                   , boundary.y
+                   , boundary.cx
+                   , boundary.cy
+                   );
             }
 
-            bool compressed = false;
-            uint16_t line_size = 0;
-            uint16_t final_size = 0;
-            if (flags & 0x0001){
-                if (!(flags & 0x400)) {
                 // bitmapComprHdr (8 bytes): Optional Compressed Data Header
                 // structure (see Compressed Data Header (TS_CD_HEADER)
                 // (section 2.2.9.1.1.3.1.2.3)) specifying the bitmap data
@@ -3781,18 +3781,20 @@ struct mod_rdp : public mod_api {
                 // the BITMAP_COMPRESSION (0x0001) flag is present in the
                 // Flags field, but the NO_BITMAP_COMPRESSION_HDR (0x0400)
                 // flag is not.
-                    // bitmapComprHdr
-                    stream.in_skip_bytes(2); /* pad */
-                    size = stream.in_uint16_le();
-                    line_size = stream.in_uint16_le();
-                    final_size = stream.in_uint16_le();
-                }
 
-                if (width <= 0 || height <= 0){
-                    LOG(LOG_WARNING, "Unexpected bitmap size : width=%d height=%d size=%u left=%u, top=%u, right=%u, bottom=%u",
-                        width, height, size, left, top, right, bottom);
+            if (bmpdata.flags & BITMAP_COMPRESSION) {
+                if ((bmpdata.width <= 0) || (bmpdata.height <= 0)) {
+                    LOG( LOG_WARNING
+                       , "Unexpected bitmap size: width=%d height=%d size=%u left=%u, top=%u, right=%u, bottom=%u"
+                       , bmpdata.width
+                       , bmpdata.height
+                       , bmpdata.cb_comp_main_body_size
+                       , bmpdata.dest_left
+                       , bmpdata.dest_top
+                       , bmpdata.dest_right
+                       , bmpdata.dest_bottom
+                       );
                 }
-                compressed = true;
             }
 
             TODO("CGR: check which sanity checks should be done")
@@ -3800,17 +3802,39 @@ struct mod_rdp : public mod_api {
 //                LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u",
 //                    bufsize, bitmap.bmp_size, width, height, bpp);
 //            }
-            const uint8_t * data = stream.in_uint8p(size);
-            Bitmap bitmap(bpp, &this->orders.global_palette, width, height, data, size, compressed);
-            if (line_size && (line_size - bitmap.line_size)>= nbbytes(bitmap.original_bpp)){
-                LOG(LOG_WARNING, "Bad line size: line_size=%u width=%u height=%u bpp=%u",
-                   line_size, width, height, bpp);
+            const uint8_t * data = stream.in_uint8p(bmpdata.bitmap_size());
+            Bitmap bitmap( bmpdata.bits_per_pixel
+                         , &this->orders.global_palette
+                         , bmpdata.width
+                         , bmpdata.height
+                         , data
+                         , bmpdata.bitmap_size()
+                         , (bmpdata.flags & BITMAP_COMPRESSION)
+                         );
+
+            if (     bmpdata.cb_scan_width
+                && ((bmpdata.cb_scan_width - bitmap.line_size) >= nbbytes(bitmap.original_bpp))) {
+                LOG( LOG_WARNING
+                   , "Bad line size: line_size=%u width=%u height=%u bpp=%u"
+                   , bmpdata.cb_scan_width
+                   , bmpdata.width
+                   , bmpdata.height
+                   , bmpdata.bits_per_pixel
+                   );
             }
 
-            if (final_size && final_size != bitmap.bmp_size){
-                LOG(LOG_WARNING, "final_size should be size of decompressed bitmap [%u != %u] width=%u height=%u bpp=%u",
-                    final_size, bitmap.bmp_size, width, height, bpp);
+            if (    bmpdata.cb_uncompressed_size
+                && (bmpdata.cb_uncompressed_size != bitmap.bmp_size)) {
+                LOG( LOG_WARNING
+                   , "final_size should be size of decompressed bitmap [%u != %u] width=%u height=%u bpp=%u"
+                   , bmpdata.cb_uncompressed_size
+                   , bitmap.bmp_size
+                   , bmpdata.width
+                   , bmpdata.height
+                   , bmpdata.bits_per_pixel
+                   );
             }
+
             this->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
         }
         if (this->verbose & 64){
@@ -3920,7 +3944,7 @@ struct mod_rdp : public mod_api {
         this->front.text_metrics(text, width, height);
     }
 
-    virtual void draw(const RDPColCache & cmd) 
+    virtual void draw(const RDPColCache & cmd)
     {
         this->front.draw(cmd);
     }
