@@ -83,7 +83,7 @@ namespace FastPath {
 // | c |       | c |
 // | t | numEv | F |
 // | i |  ents | l |
-// | o |       | a | 
+// | o |       | a |
 // | n |       | g |
 // |   |       | s |
 // +---+-------+---+
@@ -458,7 +458,7 @@ namespace FastPath {
             }
 
             if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_EXTENDED){
-                this->spKeyboardFlags |= SlowPath::KBDFLAGS_EXTENDED; 
+                this->spKeyboardFlags |= SlowPath::KBDFLAGS_EXTENDED;
             }
 
             if (!stream.in_check_rem(1)) {
@@ -690,7 +690,7 @@ namespace FastPath {
 // | c |       | c |
 // | t | reser | F |
 // | i |  ved  | l |
-// | o |       | a | 
+// | o |       | a |
 // | n |       | g |
 // |   |       | s |
 // +---+-------+---+
