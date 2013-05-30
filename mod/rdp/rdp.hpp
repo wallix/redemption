@@ -3747,7 +3747,9 @@ struct mod_rdp : public mod_api {
             // |                                   | save 8 bytes).            |
             // +-----------------------------------+---------------------------+
 
-            BitmapData_Recv bmpdata(stream);
+            RDPBitmapData bmpdata;
+
+            bmpdata.receive(stream);
 
             Rect boundary( bmpdata.dest_left
                          , bmpdata.dest_top
@@ -3835,6 +3837,7 @@ struct mod_rdp : public mod_api {
                    );
             }
 
+//            this->front.draw(bmpdata, bitmap);
             this->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
         }
         if (this->verbose & 64){
