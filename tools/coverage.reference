@@ -1,7 +1,10 @@
-utf 100 100
-stream 100 100
-drawable 100 100
-rect 100 100
+utils/utf 100 100
+utils/stream 100 100
+utils/drawable 100 100
+utils/rect 100 100
+utils/fileutils 100 100
+utils/bitfu 100 100
+utils/region 100 100
 core/x224 100 100
 core/mcs 100 100
 core/gcc 100 100

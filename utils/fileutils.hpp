@@ -33,7 +33,11 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <stddef.h>
+#include <sys/socket.h>
 #include "log.hpp"
+
+
+
 
 static inline int filesize(const char * path)
 {
@@ -224,6 +228,8 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
     return status;
 }
 
+
+
 TODO("Add unit tests for recursive_create_directory")
 static inline int recursive_create_directory(const char *directory, mode_t mode, const int groupid, uint32_t verbose = 255) {
     int    status;
@@ -258,5 +264,84 @@ static inline int recursive_create_directory(const char *directory, mode_t mode,
 
     return status;
 }
+
+
+struct LineBuffer
+{
+    char buffer[20480];
+    int fd;
+    int begin_line;
+    int end_line;
+    int eol;
+    int eollen;
+
+    LineBuffer(int fd) 
+        : fd(fd)
+        , begin_line(0)
+        , end_line(0)
+        , eol(0)
+        , eollen(1)
+    {
+    }
+
+    int readline()
+    {
+        for (int i = this->begin_line; i < this->end_line; i++){
+            if (this->buffer[i] == '\n'){
+                this->eol = i+1;
+                this->eollen = 1;
+                return 1;
+            }
+        }
+        size_t trailing_room = sizeof(this->buffer) - this->end_line;
+        // reframe buffer if no trailing room left
+        if (trailing_room == 0){
+            size_t used_len = this->end_line - this->begin_line;
+            memmove(this->buffer, &(this->buffer[this->begin_line]), used_len);
+            this->end_line = used_len;
+            this->begin_line = 0;
+        }
+        
+        printf("reading %u bytes\n", sizeof(this->buffer) - this->end_line);
+        ssize_t res = read(this->fd, &(this->buffer[this->end_line]), sizeof(this->buffer) - this->end_line);
+        if (res < 0){
+            return res;
+        }
+        this->end_line += res;
+        if (this->begin_line == this->end_line) {
+            return 0;
+        }
+        for (int i = this->begin_line; i < this->end_line; i++){
+            if (this->buffer[i] == '\n'){
+                this->eol = i+1;
+                this->eollen = 1;
+                return 1;
+            }
+        }
+        this->eol = this->end_line;
+        this->eollen = 0;
+        return 1;
+    }
+};
+
+
+int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport, char transparent_dest[256])
+{
+    printf("parse ip conntrack\n");
+    LineBuffer line(fd);
+    int status = line.readline();
+    printf("parse ip conntrack status = %u\n", status);
+    while (status == 1) {
+        printf("line length = %u\n", line.end_line - line.begin_line);
+        printf("%*s\n", line.end_line - line.begin_line, &(line.buffer[line.begin_line]));
+        line.begin_line = line.eol;
+        status = line.readline();
+    }
+    if (status < 0){
+        printf("Error : %s\n", strerror(errno));
+    }
+    return 0;
+} 
+
 
 #endif
