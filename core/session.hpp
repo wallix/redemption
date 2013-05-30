@@ -649,6 +649,11 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
                         }
+//                         this->mod = new LoginMod(
+//                             *this->ini,
+//                             *this->front,
+//                             this->front->client_info.width,
+//                             this->front->client_info.height);
                         this->mod = new login_mod(
                                          *this->front,
                                          this->front->client_info.width,

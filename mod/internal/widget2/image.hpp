@@ -33,6 +33,7 @@ public:
     , bmp(filename)
     {
         this->tab_flag = IGNORE_TAB;
+        this->focus_flag = IGNORE_FOCUS;
 
         this->rect.cx = this->bmp.cx;
         this->rect.cy = this->bmp.cy;

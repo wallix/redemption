@@ -55,9 +55,9 @@ public:
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
     , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_LOGO24, this, NULL, -10)
     , login_label(drawable, this->img.cx() + 20, 0, this, NULL, label_text_login, true, -11, fgcolor, bgcolor)
-    , login_edit(drawable, 0, 0, 350, this, NULL, login, -12, BLACK, WHITE, -1u, 1, 1)
+    , login_edit(drawable, 0, 0, 350, this, this, login, -12, BLACK, WHITE, -1u, 1, 1)
     , password_label(drawable, this->img.cx() + 20, 0, this, NULL, label_text_password, true, -13, fgcolor, bgcolor)
-    , password_edit(drawable, 0, 0, 350, this, NULL, password, -14, BLACK, WHITE, -1u, 1, 1)
+    , password_edit(drawable, 0, 0, 350, this, this, password, -14, BLACK, WHITE, -1u, 1, 1)
     , ok(drawable, 0, 0, this, this, button_text_ok, true, -15, BLACK, WHITE, 6, 2)
     , cancel(drawable, 0, 0, this, this, button_text_cancel, true, -16, BLACK, WHITE, 6, 2, NOTIFY_CANCEL)
     , help(drawable, 0, 0, this, this, button_text_help, true, -17, BLACK, WHITE, 6, 2)
@@ -141,6 +141,7 @@ public:
                     "having problems logging on.",
                     -20, "Ok", this->login_label.fg_color, this->bg_color
                 );
+                this->window_help->focus_flag = Widget2::FORCE_FOCUS;
 
                 this->window_help->ok.label.bg_color = WHITE;
                 this->window_help->ok.label.fg_color = BLACK;

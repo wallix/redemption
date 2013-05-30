@@ -128,16 +128,16 @@ public:
     {
         const char * s = this->ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0);
         if (*s) {
-            this->selector.filter_device_group.label.set_text(s);
+            this->selector.filter_device_group.set_text(s);
         }
 
         s = this->ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER, NULL, 0);
         if (*s) {
-            this->selector.filter_account_device.label.set_text(s);
+            this->selector.filter_account_device.set_text(s);
         }
 
         s = ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE, this->selector_current_page, sizeof(this->selector_current_page));
-        this->selector.current_page.label.set_text(s);
+        this->selector.current_page.set_text(s);
         this->current_page = atoi(s);
 
         s = ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES, this->selector_number_of_pages, sizeof(this->selector_number_of_pages));

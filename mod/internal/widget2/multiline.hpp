@@ -56,10 +56,12 @@ public:
     , bg_color(bgcolor)
     , fg_color(fgcolor)
     {
+        this->tab_flag = IGNORE_TAB;
+        this->focus_flag = IGNORE_FOCUS;
+
         this->rect.cx = 0;
         this->rect.cy = 0;
         this->set_text(text);
-        this->tab_flag = IGNORE_TAB;
     }
 
     virtual ~WidgetMultiLine()

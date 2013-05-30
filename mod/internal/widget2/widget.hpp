@@ -66,9 +66,14 @@ public:
         NORMAL_TAB = 1 << 1,
         DELEGATE_CONTROL_TAB = 1 << 2,
         NO_DELEGATE_CHILD_TAB = 1 << 3,
-        NO_DELEGATE_PARENT = 1 << 4,
-        REWIND_TAB = 1 << 5,
-        REWIND_BACKTAB = 1 << 6
+        NO_DELEGATE_PARENT = 1 << 4
+    };
+
+    enum OptionFocus {
+        IGNORE_FOCUS = 0 << 1,
+        NORMAL_FOCUS = 1 << 1,
+        DELEGATE_CONTROL_FOCUS = 1 << 2,
+        FORCE_FOCUS = 1 << 3
     };
 
 public:
@@ -80,6 +85,7 @@ public:
     Rect rect;
     int group_id;
     int tab_flag;
+    int focus_flag;
     bool has_focus;
 
 public:
@@ -96,6 +102,7 @@ public:
     ))
     , group_id(group_id)
     , tab_flag(NORMAL_TAB)
+    , focus_flag(NORMAL_FOCUS)
     , has_focus(false)
     {}
 

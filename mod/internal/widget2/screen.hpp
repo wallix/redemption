@@ -23,9 +23,84 @@
 
 #include "widget_composite.hpp"
 
+#include <typeinfo>
+
+class FocusPropagation {
+    class minivector {
+        Widget2* data[32];
+        size_t data_size;
+
+    public:
+        minivector()
+        : data_size(0)
+        {}
+
+        void clear()
+        { this->data_size = 0; }
+
+        size_t size() const
+        { return this->data_size; }
+
+        void push_back(Widget2 * w)
+        { this->data[this->data_size++] = w; }
+
+        Widget2 * & operator[](size_t n)
+        { return data[n]; }
+    };
+
+    minivector focus_parents;
+    minivector new_focus_parents;
+
+public:
+    FocusPropagation()
+    {}
+
+    void active_focus(Widget2 * screen, Widget2 * new_focused)
+    {
+        Widget2 * w2 = new_focused->parent;
+        if (0 == w2) {
+            return ;
+        }
+
+        this->new_focus_parents.clear();
+        this->focus_parents.clear();
+        Widget2 * w = screen;
+        while (w->widget_with_focus && w->widget_with_focus->has_focus && w->focus_flag != Widget2::FORCE_FOCUS) {
+            this->focus_parents.push_back(w);
+            w = w->widget_with_focus;
+        }
+        if (w != screen && Widget2::FORCE_FOCUS != w->focus_flag) {
+            Widget2 ** last = &this->focus_parents[this->focus_parents.size()];
+            this->new_focus_parents.push_back(new_focused);
+            switch (new_focused->focus_flag) {
+                case Widget2::NORMAL_FOCUS:
+                    while (w2) {
+                        this->new_focus_parents.push_back(w2);
+                        if (std::find<>(&this->focus_parents[0], last, w2) != last) {
+                            for (size_t n = this->new_focus_parents.size() - 1; n > 0; --n) {
+                                if (this->new_focus_parents[n]->widget_with_focus != this->new_focus_parents[n-1]) {
+                                    this->new_focus_parents[n]->switch_focus_with(this->new_focus_parents[n-1]);
+                                }
+                                else if (false == this->new_focus_parents[n]->has_focus) {
+                                    this->new_focus_parents[n-1]->focus(0);
+                                }
+                            }
+                            break;
+                        }
+                        w2 = w2->parent;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+};
+
 class WidgetScreen : public WidgetComposite
 {
     Widget2 * widget_pressed;
+    FocusPropagation focus_propagation;
 
 public:
     WidgetScreen(ModApi * drawable, uint16_t width, uint16_t height, NotifyApi * notifier = NULL)
@@ -51,6 +126,7 @@ public:
         if (w) {
             if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
                 this->widget_pressed = w;
+                focus_propagation.active_focus(this, w);
             }
             w->rdp_input_mouse(device_flags, x, y, keymap);
         }

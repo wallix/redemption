@@ -87,10 +87,39 @@ public:
         ++this->label.rect.y;
         this->rect.cx += 2;
         this->rect.cy += 2;
+        --this->h_text;
     }
 
     virtual ~WidgetEdit()
     {}
+
+    void set_text(const char * text/*, int position = 0*/)
+    {
+        this->label.buffer[0] = 0;
+        this->buffer_size = 0;
+        this->num_chars = 0;
+        this->h_text = 0;
+        this->w_text = 0;
+        if (text) {
+            this->buffer_size = std::min(WidgetLabel::buffer_size - 1, strlen(text));
+            memcpy(this->label.buffer, text, this->buffer_size);
+            this->label.buffer[this->buffer_size] = 0;
+            if (this->drawable) {
+                this->drawable->text_metrics(this->label.buffer, this->w_text, this->h_text);
+            }
+            if (this->label.auto_resize) {
+                this->rect.cx = this->label.x_text * 2 + this->w_text;
+                this->rect.cy = this->label.y_text * 2 + this->h_text;
+                if (this->buffer_size == 1) {
+                    this->rect.cx -= 2;
+                }
+            }
+            this->num_chars = UTF8Len(this->label.buffer);
+        }
+        this->edit_pos = this->num_chars;
+        this->edit_buffer_pos = this->buffer_size;
+        this->cursor_px_pos = this->w_text;
+    }
 
     void set_edit_x(int x)
     {
@@ -126,6 +155,26 @@ public:
     {
         this->set_edit_cx(w);
         this->set_edit_cy(h);
+    }
+
+    virtual bool focus(Widget2* old_focused)
+    {
+        if (this->drawable) {
+            this->drawable->begin_update();
+            this->draw_cursor(this->get_cursor_rect());
+            this->drawable->end_update();
+        }
+        return Widget2::focus(old_focused);
+    }
+
+    virtual void blur()
+    {
+        if (this->drawable) {
+            this->drawable->begin_update();
+            this->label.draw(this->get_cursor_rect());
+            this->drawable->end_update();
+        }
+        return Widget2::blur();
     }
 
     virtual void draw(const Rect& clip)
@@ -216,32 +265,32 @@ public:
         this->edit_buffer_pos -= len;
     }
 
-    void move_to_last_character()
+    void update_draw_cursor(Rect old_cursor)
     {
-        Rect crect = this->get_cursor_rect();
-        this->edit_pos = this->num_chars;
-        this->edit_buffer_pos = this->buffer_size;
-        this->cursor_px_pos = this->w_text;
         if (this->drawable) {
             this->drawable->begin_update();
             this->draw_cursor(this->get_cursor_rect());
-            this->label.draw(crect);
+            this->label.draw(old_cursor);
             this->drawable->end_update();
         }
     }
 
+    void move_to_last_character()
+    {
+        Rect old_cursor_rect = this->get_cursor_rect();
+        this->edit_pos = this->num_chars;
+        this->edit_buffer_pos = this->buffer_size;
+        this->cursor_px_pos = this->w_text;
+        this->update_draw_cursor(old_cursor_rect);
+    }
+
     void move_to_first_character()
     {
-        Rect crect = this->get_cursor_rect();
+        Rect old_cursor_rect = this->get_cursor_rect();
         this->edit_pos = 0;
         this->edit_buffer_pos = 0;
         this->cursor_px_pos = 0;
-        if (this->drawable) {
-            this->drawable->begin_update();
-            this->draw_cursor(this->get_cursor_rect());
-            this->label.draw(crect);
-            this->drawable->end_update();
-        }
+        this->update_draw_cursor(old_cursor_rect);
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
@@ -252,39 +301,36 @@ public:
                     this->move_to_first_character();
                 }
             }
-            else if (x >= int(this->w_text + this->dx() + this->label.x_text)) {
+            else if (x >= this->w_text + this->dx() + this->label.x_text) {
                 if (this->edit_pos < this->num_chars) {
                     this->move_to_last_character();
                 }
             }
             else {
-                Rect crect = this->get_cursor_rect();
+                Rect old_cursor_rect = this->get_cursor_rect();
                 int xx = this->dx() + this->label.x_text;
                 size_t e = this->edit_pos;
                 this->edit_pos = 0;
                 this->edit_buffer_pos = 0;
                 size_t len = this->utf8len_current_char();
                 while (this->edit_buffer_pos < this->buffer_size) {
-                    char c = this->label.buffer[this->edit_buffer_pos];
+                    char c = this->label.buffer[this->edit_buffer_pos + len];
                     this->label.buffer[this->edit_buffer_pos + len] = 0;
-                    int w;
-                    this->drawable->text_metrics(this->label.buffer + this->edit_buffer_pos, w, this->h_text);
+                    int w, h;
+                    this->drawable->text_metrics(this->label.buffer + this->edit_buffer_pos, w, h);
+                    this->label.buffer[this->edit_buffer_pos + len] = c;
                     xx += w;
                     if (xx >= x) {
                         xx -= w;
                         break;
                     }
-                    this->label.buffer[this->edit_buffer_pos + len] = c;
                     len = this->utf8len_current_char();
                     this->edit_buffer_pos += len;
                     ++this->edit_pos;
                 }
                 this->cursor_px_pos = xx - (this->dx() + this->label.x_text);
-                if (e != this->edit_pos && this->drawable) {
-                    this->drawable->begin_update();
-                    this->draw_cursor(this->get_cursor_rect());
-                    this->label.draw(crect);
-                    this->drawable->end_update();
+                if (e != this->edit_pos) {
+                    this->update_draw_cursor(old_cursor_rect);
                 }
             }
         } else {
@@ -300,28 +346,18 @@ public:
                 case Keymap2::KEVENT_UP_ARROW:
                     keymap->get_kevent();
                     if (this->edit_pos > 0) {
-                        Rect crect = this->get_cursor_rect();
+                        Rect old_cursor_rect = this->get_cursor_rect();
                         this->decrement_edit_pos();
-                        if (this->drawable) {
-                            this->drawable->begin_update();
-                            this->label.draw(crect);
-                            this->draw_cursor(this->get_cursor_rect());
-                            this->drawable->end_update();
-                        }
+                        this->update_draw_cursor(old_cursor_rect);
                     }
                     break;
                 case Keymap2::KEVENT_RIGHT_ARROW:
                 case Keymap2::KEVENT_DOWN_ARROW:
                     keymap->get_kevent();
                     if (this->edit_pos < this->num_chars) {
-                        Rect crect = this->get_cursor_rect();
+                        Rect old_cursor_rect = this->get_cursor_rect();
                         this->increment_edit_pos();
-                        if (this->drawable) {
-                            this->drawable->begin_update();
-                            this->label.draw(crect);
-                            this->draw_cursor(this->get_cursor_rect());
-                            this->drawable->end_update();
-                        }
+                        this->update_draw_cursor(old_cursor_rect);
                     }
                     break;
                 case Keymap2::KEVENT_BACKSPACE:
@@ -363,12 +399,13 @@ public:
                         this->num_chars--;
                         if (this->drawable) {
                             this->drawable->begin_update();
-                            this->draw(Rect(
+                            this->label.draw(Rect(
                                 this->dx() + this->cursor_px_pos + this->label.x_text + 3,
                                 this->dy() + this->label.y_text + 1,
                                 this->w_text - this->cursor_px_pos,
                                 this->h_text
                             ));
+                            this->draw_cursor(this->get_cursor_rect());
                             this->drawable->end_update();
                         }
                         this->w_text -= w;
@@ -397,17 +434,12 @@ public:
                         this->num_chars++;
                         this->send_notify(NOTIFY_TEXT_CHANGED);
                         this->w_text += this->cursor_px_pos - pxtmp;
-                        if (this->drawable) {
-                            this->drawable->begin_update();
-                            this->label.draw(Rect(
-                               this->dx() + pxtmp + this->label.x_text + 1,
-                               this->dy() + this->label.y_text + 1,
-                               this->w_text - pxtmp,
-                               this->h_text
-                            ));
-                            this->draw_cursor(this->get_cursor_rect());
-                            this->drawable->end_update();
-                        }
+                        this->update_draw_cursor(Rect(
+                            this->dx() + pxtmp + this->label.x_text + 1,
+                            this->dy() + this->label.y_text + 1,
+                            this->w_text - pxtmp,
+                            this->h_text
+                        ));
                     }
                     keymap->get_kevent();
                     break;

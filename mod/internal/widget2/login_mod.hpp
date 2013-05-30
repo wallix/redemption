@@ -41,7 +41,7 @@ public:
     LoginMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
     : InternalMod(front, width, height)
     , screen(this, width, height)
-    , window_login(this, 0, 0, &this->screen, this, "???", 0, 0, 0, BLACK, GREY,
+    , window_login(this, 0, 0, &this->screen, this, VERSION, 0, 0, 0, BLACK, GREY,
                    ini.globals.translation.button_ok,
                    ini.globals.translation.button_cancel,
                    ini.globals.translation.button_help,
@@ -89,13 +89,18 @@ public:
             strcpy(this->ini.account.username, buffer);
         }
 
+        if (this->ini.account.password[0]) {
+            this->window_login.password_edit.set_text(this->ini.account.username);
+        }
+
         Widget2 * focus_in_window;
         if (this->ini.account.username[0]) {
             focus_in_window = &this->window_login.login_edit;
+            this->window_login.login_edit.set_text(this->ini.account.username);
         } else {
             focus_in_window = &this->window_login.password_edit;
-            this->window_login.login_edit.label.set_text(this->ini.account.username);
         }
+
         this->screen.set_widget_focus(&this->window_login);
         this->window_login.set_widget_focus(focus_in_window);
 
