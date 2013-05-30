@@ -26,6 +26,7 @@
 #include "ssl_calls.hpp"
 #include "server.hpp"
 #include "session.hpp"
+#include "constants.hpp"
 
 class SessionServer : public Server
 {
