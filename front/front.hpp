@@ -70,6 +70,7 @@
 #include "genrandom.hpp"
 
 class Front : public FrontAPI {
+    using FrontAPI::draw;
 public:
     Capture * capture;
     BmpCache * bmp_cache;
@@ -3850,6 +3851,10 @@ public:
             this->memblt_mod_palette[i] = RGBtoBGR(palette[i]);
         }
         this->palette_sent = false;
+    }
+
+    virtual void draw(const RDPBitmapData & data, const Bitmap & bmp) {
+        this->orders->draw(data, bmp);
     }
 };
 

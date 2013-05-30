@@ -42,6 +42,9 @@ extern "C" {
     {
         TODO("Manage all actual open error with more details")
         char tmpname[1024];
+        char cp_path[1024];
+        char cp_basename[1024];
+        char cp_extension[128];
         if ((size_t)snprintf(tmpname, sizeof(tmpname), "%s%s", prefix, extension) >= sizeof(tmpname)){
             return RIO_ERROR_FILENAME_TOO_LONG;
         }
@@ -50,13 +53,19 @@ extern "C" {
             return RIO_ERROR_OPEN;
         }
         self->status = RIO_ERROR_OK;
+
+        cp_path[0] = cp_basename[0] = cp_extension[0] = 0;
+        canonical_path(prefix, cp_path, sizeof(cp_path), cp_basename, sizeof(cp_basename),
+            cp_extension, sizeof(cp_extension));
+        LOG(LOG_INFO, "%s", cp_path);
+
         RIO * rt = rio_new_infile(&self->status, self->fd);
         if (self->status != RIO_ERROR_OK){
             close(self->fd);
             return self->status;
         }
         self->tracker = rt;
-        self->status = sq_m_SQIntracker_constructor(&self->impl, rt);
+        self->status = sq_m_SQIntracker_constructor(&self->impl, rt, cp_path);
         if (self->status != RIO_ERROR_OK){
             close(self->fd);
             rio_delete(rt);
@@ -86,6 +95,7 @@ extern "C" {
         if (!res){
             sq_m_SQInmeta_destructor(self);
             self->status = status_res;
+            if (status) { *status = self->status; }
         }
         return res;
     }
@@ -137,16 +147,25 @@ extern "C" {
     {
         TODO("Manage all actual open error with more details")
         char tmpname[1024];
+        char cp_path[1024];
+        char cp_basename[1024];
+        char cp_extension[128];
         if ((size_t)snprintf(tmpname, sizeof(tmpname), "%s%s", prefix, extension) >= sizeof(tmpname)){
             return RIO_ERROR_FILENAME_TOO_LONG;
         }
         self->status = RIO_ERROR_OK;
+
+        cp_path[0] = cp_basename[0] = cp_extension[0] = 0;
+        canonical_path(prefix, cp_path, sizeof(cp_path), cp_basename, sizeof(cp_basename),
+            cp_extension, sizeof(cp_extension));
+        LOG(LOG_INFO, "%s", cp_path);
+
         RIO * rt = rio_new_crypto(&self->status, tmpname, O_RDONLY);
         if (self->status != RIO_ERROR_OK){
             return self->status;
         }
         self->tracker = rt;
-        self->status = sq_m_SQCryptoIntracker_constructor(&self->impl, rt);
+        self->status = sq_m_SQCryptoIntracker_constructor(&self->impl, rt, cp_path);
         if (self->status != RIO_ERROR_OK){
             rio_delete(rt);
         }
@@ -174,6 +193,7 @@ extern "C" {
         if (!res){
             sq_m_SQCryptoInmeta_destructor(self);
             self->status = status_res;
+            if (status) { *status = self->status; }
         }
         return res;
     }

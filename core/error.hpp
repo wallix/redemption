@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -14,11 +14,10 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Copyright (C) Wallix 2010-2013
+   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou
 
    Error exception object
-
 */
 
 #ifndef _REDEMPTION_CORE_ERROR_HPP_
@@ -49,6 +48,7 @@ enum {
     ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV,
     ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND,
     ERR_TRANSPORT_DIFFERS,
+    ERR_TRANSPORT_OPEN_FAILED,
 
     ERR_TRANSPORT_TLS_CONNECT_FAILED = 1600,
 
@@ -158,6 +158,7 @@ enum {
     ERR_RDP_RESIZE_NOT_AVAILABLE,
     ERR_RDP_SLOWPATH,
     ERR_RDP_FASTPATH,
+    ERR_RDP_DATA_TRUNCATED,
 
     ERR_WM_PASSWORD = 9000,
     ERR_WM_USERNAME,
@@ -258,7 +259,6 @@ class Error {
 //        LOG(LOG_ERR, "error=%u", this->id);
 //        exit(0);
     }
-
 };
 
 #endif

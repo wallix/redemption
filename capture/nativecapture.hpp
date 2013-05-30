@@ -171,6 +171,11 @@ public:
         this->recorder.draw(cmd, clip);
     }
 
+    virtual void flush_bitmaps()
+    {
+        this->recorder.flush_bitmaps();
+    }
+
 private:
 
     void breakpoint()

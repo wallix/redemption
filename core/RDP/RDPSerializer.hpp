@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Raphael Zhou
 
    RDPSerializer is an implementation of RDPGraphicDevice that know how to serialize RDP Orders
    and send them on the wire or store them in a file (actual storage will be provided as a Transport class).
@@ -88,7 +88,6 @@
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-
 #include "RDP/RDPGraphicDevice.hpp"
 
 #include "transport.hpp"
@@ -111,7 +110,10 @@ enum {
 
 struct RDPSerializer : public RDPGraphicDevice
 {
-    Stream & stream;
+    using RDPGraphicDevice::draw;
+
+    Stream & stream_orders;
+    Stream & stream_bitmaps;
 
     Transport * trans;
     const Inifile & ini;
@@ -135,39 +137,46 @@ struct RDPSerializer : public RDPGraphicDevice
     uint32_t offset_order_count;
     BmpCache & bmp_cache;
 
+    size_t bitmap_count;
 
-    RDPSerializer(Transport * trans
-          , Stream & stream
-          , const uint8_t  bpp
-          , BmpCache & bmp_cache
-          , const int bitmap_cache_version
-          , const int use_bitmap_comp
-          , const int op2
-          , const Inifile & ini)
-        : stream(stream),
-        trans(trans),
-        ini(ini),
-        bitmap_cache_version(bitmap_cache_version),
-        use_bitmap_comp(use_bitmap_comp),
-        op2(op2),
-        // Internal state of orders
-        common(RDP::PATBLT, Rect(0, 0, 1, 1)),
-        destblt(Rect(), 0),
-        patblt(Rect(), 0, 0, 0, RDPBrush()),
-        scrblt(Rect(), 0, 0, 0),
-        opaquerect(Rect(), 0),
-        memblt(0, Rect(), 0, 0, 0, 0),
-        mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0),
-        lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
-        glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
-        // state variables for a batch of orders
-        order_count(0),
-        offset_order_count(0),
-        bmp_cache(bmp_cache)
-     {}
+    RDPSerializer( Transport * trans
+                 , Stream & stream_orders
+                 , Stream & stream_bitmaps
+                 , const uint8_t bpp
+                 , BmpCache & bmp_cache
+                 , const int bitmap_cache_version
+                 , const int use_bitmap_comp
+                 , const int op2
+                 , const Inifile & ini)
+    : RDPGraphicDevice()
+    , stream_orders(stream_orders)
+    , stream_bitmaps(stream_bitmaps)
+    , trans(trans)
+    , ini(ini)
+    , bitmap_cache_version(bitmap_cache_version)
+    , use_bitmap_comp(use_bitmap_comp)
+    , op2(op2)
+    // Internal state of orders
+    , common(RDP::PATBLT, Rect(0, 0, 1, 1))
+    , destblt(Rect(), 0)
+    , patblt(Rect(), 0, 0, 0, RDPBrush())
+    , scrblt(Rect(), 0, 0, 0)
+    , opaquerect(Rect(), 0)
+    , memblt(0, Rect(), 0, 0, 0, 0)
+    , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
+    , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
+    , glyphindex( 0, 0, 0, 0, 0, 0
+                , Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t *)"")
+    // state variables for a batch of orders
+    , order_count(0)
+    , offset_order_count(0)
+    , bmp_cache(bmp_cache)
+    , bitmap_count(0) {}
+
     ~RDPSerializer() {}
 
     virtual void flush() = 0;
+    virtual void flush_bitmaps() = 0;
 
     /*****************************************************************************/
     // check if the next order will fit in available packet size
@@ -175,17 +184,27 @@ struct RDPSerializer : public RDPGraphicDevice
     void reserve_order(size_t asked_size)
     {
 //    LOG(LOG_INFO, "RDPSerializer::reserve_order");
-        size_t max_packet_size = std::min(this->stream.capacity, (size_t)16384);
-        size_t used_size = this->stream.get_offset();
+        size_t max_packet_size = std::min(this->stream_orders.capacity, (size_t)16384);
+        size_t used_size = this->stream_orders.get_offset();
         if (this->ini.globals.debug.primary_orders > 3){
-            LOG(LOG_INFO, "<Serializer %p> RDPSerializer::reserve_order[%u](%u) used=%u free=%u", this, this->order_count, asked_size, used_size, max_packet_size - used_size - 106);
+            LOG( LOG_INFO
+               , "<Serializer %p> RDPSerializer::reserve_order[%u](%u) used=%u free=%u"
+               , this
+               , this->order_count
+               , asked_size, used_size
+               , max_packet_size - used_size - 106
+               );
         }
         if (asked_size + 106 > max_packet_size){
-            LOG(LOG_ERR, "asked size (%u) > order batch capacity (%u)", asked_size + 106, max_packet_size);
+            LOG( LOG_ERR
+               , "asked size (%u) > order batch capacity (%u)"
+               , asked_size + 106
+               , max_packet_size);
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
         const size_t max_order_batch = 4096;
-        if ((this->order_count >= max_order_batch) || (used_size + asked_size + 106) > max_packet_size) {
+        if (   (this->order_count >= max_order_batch)
+            || ((used_size + asked_size + 106) > max_packet_size)) {
             this->flush();
         }
         this->order_count++;
@@ -197,7 +216,7 @@ struct RDPSerializer : public RDPGraphicDevice
 //    LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect");
         this->reserve_order(23);
         RDPOrderCommon newcommon(RDP::RECT, clip);
-        cmd.emit(this->stream, newcommon, this->common, this->opaquerect);
+        cmd.emit(this->stream_orders, newcommon, this->common, this->opaquerect);
         this->common = newcommon;
         this->opaquerect = cmd;
 
@@ -211,7 +230,7 @@ struct RDPSerializer : public RDPGraphicDevice
     {
         this->reserve_order(25);
         RDPOrderCommon newcommon(RDP::SCREENBLT, clip);
-        cmd.emit(this->stream, newcommon, this->common, this->scrblt);
+        cmd.emit(this->stream_orders, newcommon, this->common, this->scrblt);
         this->common = newcommon;
         this->scrblt = cmd;
         if (this->ini.globals.debug.primary_orders){
@@ -223,7 +242,7 @@ struct RDPSerializer : public RDPGraphicDevice
     {
         this->reserve_order(21);
         RDPOrderCommon newcommon(RDP::DESTBLT, clip);
-        cmd.emit(this->stream, newcommon, this->common, this->destblt);
+        cmd.emit(this->stream_orders, newcommon, this->common, this->destblt);
         this->common = newcommon;
         this->destblt = cmd;
         if (this->ini.globals.debug.primary_orders){
@@ -236,7 +255,7 @@ struct RDPSerializer : public RDPGraphicDevice
         this->reserve_order(29);
         using namespace RDP;
         RDPOrderCommon newcommon(RDP::PATBLT, clip);
-        cmd.emit(this->stream, newcommon, this->common, this->patblt);
+        cmd.emit(this->stream_orders, newcommon, this->common, this->patblt);
         this->common = newcommon;
         this->patblt = cmd;
         if (this->ini.globals.debug.primary_orders){
@@ -254,7 +273,8 @@ struct RDPSerializer : public RDPGraphicDevice
         }
         RDPBmpCache cmd_cache(bmp, cache_id, cache_idx, this->ini.globals.debug.primary_orders);
         this->reserve_order(cmd_cache.bmp->bmp_size + 16);
-        cmd_cache.emit(this->stream, this->bitmap_cache_version, this->use_bitmap_comp, this->op2);
+        cmd_cache.emit( this->stream_orders, this->bitmap_cache_version, this->use_bitmap_comp
+                      , this->op2);
 
         if (this->ini.globals.debug.secondary_orders){
             cmd_cache.log(LOG_INFO);
@@ -277,7 +297,7 @@ struct RDPSerializer : public RDPGraphicDevice
 
         this->reserve_order(30);
         RDPOrderCommon newcommon(RDP::MEMBLT, clip);
-        newcmd.emit(this->stream, newcommon, this->common, this->memblt);
+        newcmd.emit(this->stream_orders, newcommon, this->common, this->memblt);
         this->common = newcommon;
         this->memblt = newcmd;
         if (this->ini.globals.debug.primary_orders){
@@ -300,7 +320,7 @@ struct RDPSerializer : public RDPGraphicDevice
 
         this->reserve_order(60);
         RDPOrderCommon newcommon(RDP::MEM3BLT, clip);
-        newcmd.emit(this->stream, newcommon, this->common, this->mem3blt);
+        newcmd.emit(this->stream_orders, newcommon, this->common, this->mem3blt);
         this->common = newcommon;
         this->mem3blt = newcmd;
         if (this->ini.globals.debug.primary_orders){
@@ -312,7 +332,7 @@ struct RDPSerializer : public RDPGraphicDevice
     {
         this->reserve_order(32);
         RDPOrderCommon newcommon(RDP::LINE, clip);
-        cmd.emit(this->stream, newcommon, this->common, this->lineto);
+        cmd.emit(this->stream_orders, newcommon, this->common, this->lineto);
         this->common = newcommon;
         this->lineto = cmd;
     }
@@ -321,7 +341,7 @@ struct RDPSerializer : public RDPGraphicDevice
     {
         this->reserve_order(297);
         RDPOrderCommon newcommon(RDP::GLYPHINDEX, clip);
-        cmd.emit(this->stream, newcommon, this->common, this->glyphindex);
+        cmd.emit(this->stream_orders, newcommon, this->common, this->glyphindex);
         this->common = newcommon;
         this->glyphindex = cmd;
     }
@@ -329,20 +349,71 @@ struct RDPSerializer : public RDPGraphicDevice
     virtual void draw(const RDPBrushCache & cmd)
     {
         this->reserve_order(cmd.size + 12);
-        cmd.emit(this->stream);
+        cmd.emit(this->stream_orders);
     }
 
     virtual void draw(const RDPColCache & cmd)
     {
         this->reserve_order(2000);
-        cmd.emit(this->stream);
+        cmd.emit(this->stream_orders);
     }
 
     virtual void draw(const RDPGlyphCache & cmd)
     {
         TODO(" compute actual size instead of a majoration as below")
         this->reserve_order(1000);
-        cmd.emit(this->stream);
+        cmd.emit(this->stream_orders);
+    }
+
+    // check if the next bitmap will fit in available packet size
+    // if not send previous bitmaps we got and init a new packet
+    void reserve_bitmap(size_t asked_size) {
+        size_t max_packet_size = std::min(this->stream_bitmaps.capacity, (size_t)16384);
+        size_t used_size       = this->stream_bitmaps.get_offset();
+        if (this->ini.globals.debug.primary_orders > 3) {
+            LOG( LOG_INFO
+               , "<Serializer %p> RDPSerializer::reserve_bitmap[%u](%u) used=%u free=%u"
+               , this
+               , this->bitmap_count
+               , asked_size
+               , used_size
+               , max_packet_size - used_size - 106
+               );
+        }
+        if (asked_size + 106 > max_packet_size) {
+            LOG( LOG_ERR
+               , "asked size (%u) > image batch capacity (%u)"
+               , asked_size + 106
+               , max_packet_size
+               );
+            throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
+        }
+        const size_t max_image_batch = 4096;
+        if (   (this->bitmap_count >= max_image_batch)
+            || ((used_size + asked_size + 106) > max_packet_size)) {
+            this->flush_bitmaps();
+        }
+        this->bitmap_count++;
+    }
+
+    virtual void draw(const RDPBitmapData & data, const Bitmap & bmp) {
+        // estLeft (2 bytes) + destTop (2 bytes) + destRight (2 bytes) +
+        //     destBottom (2 bytes) + width (2 bytes) + height (2 bytes) +
+        //     bitsPerPixel (2 bytes) + flags (2 bytes) +
+        //     bitmapLength (2 bytes) + bitmapComprHdr (8 bytes) = (26 bytes)
+        //
+        // Can throw ERR_STREAM_MEMORY_TOO_SMALL.
+        this->reserve_bitmap(26 + bmp.bmp_size);
+
+        SubStream bitmap_data_stream( this->stream_bitmaps
+                                    , this->stream_bitmaps.get_offset() + 26
+                                    , bmp.bmp_size);
+        // Can throw ERR_STREAM_MEMORY_TOO_SMALL.
+        bmp.compress_secure(bitmap_data_stream);
+
+        data.emit(this->stream_bitmaps);
+
+        this->stream_bitmaps.p += bitmap_data_stream.get_offset();
     }
 };
 

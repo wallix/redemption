@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -20,7 +20,6 @@
 
    stream object, used for input / output communication between
    entities
-
 */
 
 #ifndef _REDEMPTION_UTILS_STREAM_HPP_
@@ -559,7 +558,7 @@ class Stream {
 
 
     // return string length or -1 on error
-    int in_ber_octet_string(uint8_t * target, uint16_t target_len) 
+    int in_ber_octet_string(uint8_t * target, uint16_t target_len)
     {
         uint8_t tag = this->in_uint8();
         if (tag != BER_TAG_OCTET_STRING){
@@ -575,7 +574,7 @@ class Stream {
         return len;
     }
 
-    int in_ber_octet_string_with_check(uint8_t * target, uint16_t target_len) 
+    int in_ber_octet_string_with_check(uint8_t * target, uint16_t target_len)
     {
         bool in_result;
         uint8_t tag = this->in_uint8_with_check(in_result);
@@ -605,7 +604,7 @@ class Stream {
     }
 
     // return 0 if false, 1 if true, -1 on error
-    int in_ber_boolean() 
+    int in_ber_boolean()
     {
         uint8_t tag = this->in_uint8();
         if (tag != BER_TAG_BOOLEAN){
@@ -621,7 +620,7 @@ class Stream {
     }
 
     // return 0 if false, 1 if true, -1 on error
-    int in_ber_boolean_with_check() 
+    int in_ber_boolean_with_check()
     {
         bool in_result;
         uint8_t tag = this->in_uint8_with_check(in_result);
@@ -1648,9 +1647,9 @@ class SubStream : public Stream {
     SubStream(const Stream & stream, size_t offset = 0, size_t new_size = 0)
     {
         if ((offset + new_size) > stream.capacity){
-            LOG(LOG_ERR, "Substream allocation overflow capacity=%u offset=%u new_size=%u", 
+            LOG(LOG_ERR, "Substream allocation overflow capacity=%u offset=%u new_size=%u",
                 static_cast<unsigned>(stream.capacity),
-                static_cast<unsigned>(offset), 
+                static_cast<unsigned>(offset),
                 static_cast<unsigned>(new_size));
             throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
         }
@@ -1662,9 +1661,9 @@ class SubStream : public Stream {
     void resize(const Stream & stream, size_t new_size){
         this->data = this->p = stream.p;
         if (new_size > (stream.room())){
-            LOG(LOG_ERR, "Substream resize overflow capacity=%u offset=%u new_size=%u", 
+            LOG(LOG_ERR, "Substream resize overflow capacity=%u offset=%u new_size=%u",
                 static_cast<unsigned>(stream.capacity),
-                static_cast<unsigned>(stream.get_offset()), 
+                static_cast<unsigned>(stream.get_offset()),
                 static_cast<unsigned>(new_size));
             throw Error(ERR_SUBSTREAM_OVERFLOW_IN_RESIZE);
         }

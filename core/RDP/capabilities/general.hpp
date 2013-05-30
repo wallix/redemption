@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,11 +18,12 @@
    Author(s): Christophe Grosjean
 
    RDP Capabilities : General Capabilities
-
 */
 
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_GENERAL_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_GENERAL_HPP_
+
+#include "common.hpp"
 
 // 2.2.7.1.1 General Capability Set (TS_GENERAL_CAPABILITYSET)
 // ===========================================================

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -14,8 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean
+   Copyright (C) Wallix 2011-2013
+   Author(s): Christophe Grosjean, Raphael Zhou
 
    RDPGraphicDevice is an abstract class that describe a device able to
    proceed RDP Drawing Orders. How the drawing will be actually done
@@ -23,11 +23,11 @@
    - It may be sent on the wire,
    - Used to draw on some internal bitmap,
    - etc.
-
 */
 
 #ifndef _REDEMPTION_CORE_RDP_RDPGRAPHICDEVICE_HPP_
 #define _REDEMPTION_CORE_RDP_RDPGRAPHICDEVICE_HPP_
+
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
@@ -41,28 +41,31 @@
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "RDP/bitmapupdate.hpp"
 
-struct RDPGraphicDevice
-{
+struct RDPGraphicDevice {
     virtual void set_row(size_t rownum, const uint8_t * data) {}
-    
+
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPScrBlt & cmd, const Rect &clip) = 0;
-    virtual void draw(const RDPDestBlt & cmd, const Rect &clip) = 0;
-    virtual void draw(const RDPPatBlt & cmd, const Rect &clip) = 0;
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) = 0;
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) = 0;
-    virtual void draw(const RDPLineTo& cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPScrBlt     & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPDestBlt    & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPPatBlt     & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPMemBlt     & cmd, const Rect & clip, const Bitmap & bmp) = 0;
+    virtual void draw(const RDPMem3Blt    & cmd, const Rect & clip, const Bitmap & bmp) = 0;
+    virtual void draw(const RDPLineTo     & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
 
     TODO("The 3 methods below should not exist and cache access be done before calling drawing orders")
-    virtual void draw(const RDPBrushCache & cmd) {};
-    virtual void draw(const RDPColCache & cmd) {};
-    virtual void draw(const RDPGlyphCache & cmd) {};
+    virtual void draw(const RDPBrushCache & cmd) {}
+    virtual void draw(const RDPColCache   & cmd) {}
+    virtual void draw(const RDPGlyphCache & cmd) {}
 
-    virtual void input(const timeval & now, Stream & input_data_32) {};
+    virtual void draw(const RDPBitmapData & data, const Bitmap & bmp) {}
 
-    virtual void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp) {}
+    virtual void input(const timeval & now, Stream & input_data_32) {}
+
+    virtual void snapshot( const timeval & now, int x, int y, bool pointer_already_displayed
+                         , bool no_timestamp) {}
 
 protected:
     // this to avoid calling constructor of base abstract class
@@ -72,7 +75,7 @@ public:
     // we choosed to make destructor virtual to allow destructing object
     // through pointer of base class. As this class is interface only
     // it does not looks really usefull.
-    virtual ~RDPGraphicDevice() {};
+    virtual ~RDPGraphicDevice() {}
 };
 
 #endif
