@@ -36,9 +36,13 @@ class Cover:
         res = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
     #    print res
         
+        extension = '.hpp'
+        if module[-2:] == '.h':
+            extension = '.h'
+
         uncovered = 0
         total = 0
-        for line in open("./%s.hpp.gcov" % modulename):
+        for line in open("./%s%s.gcov" % (modulename, extension)):
             res = re.match(r'^\s+#####[:]', line)
             if res:
                 uncovered += 1
@@ -60,6 +64,9 @@ class Cover:
             if res:
                 module, covered, total = res.group(1, 2, 3)
                 print module
+                extension = '.hpp'
+                if module[-2:] == '.h':
+                    extension = '.h'
                 covered = int(covered)
                 total = int(total)
                 self.cover(module)
@@ -73,7 +80,7 @@ class Cover:
                     target.write("Lower coverage for module %s : old %d/%d new %d/%d\n" % (module, 
                         covered, total, 
                         self.results[module][0], self.results[module][1]))
-                    for line in open("./coverage/%s/%s.hpp.gcov" % (module, module.split('/')[-1])):
+                    for line in open("./coverage/%s/%s%s.gcov" % (module, module.split('/')[-1], extension)):
                         res = re.match(r'^\s+#####[:]', line)
                         if res:
                             print module, ' ', line

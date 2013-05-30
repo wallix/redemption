@@ -21,7 +21,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOutFileTransport
+#define BOOST_TEST_MODULE TestOutFilenameTransport
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
@@ -30,13 +30,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "outfilenametransport.hpp"
 #include "transport.hpp"
 #include "testtransport.hpp"
 #include "outfiletransport.hpp"
 #include "infiletransport.hpp"
-#include "error.hpp"
 
-BOOST_AUTO_TEST_CASE(TestFileTransport)
+BOOST_AUTO_TEST_CASE(TestOutFilenameTransport)
 {
     {
         char tmpname[128];
