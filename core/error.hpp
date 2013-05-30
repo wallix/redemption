@@ -14,8 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Copyright (C) Wallix 2010-2013
+   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou
 
    Error exception object
 */
@@ -48,6 +48,7 @@ enum {
     ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV,
     ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND,
     ERR_TRANSPORT_DIFFERS,
+    ERR_TRANSPORT_OPEN_FAILED,
 
     ERR_TRANSPORT_TLS_CONNECT_FAILED = 1600,
 
@@ -258,7 +259,6 @@ class Error {
 //        LOG(LOG_ERR, "error=%u", this->id);
 //        exit(0);
     }
-
 };
 
 #endif

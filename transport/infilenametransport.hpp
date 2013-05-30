@@ -45,7 +45,7 @@ class CryptoInFilenameTransport : public Transport {
         }
     }
 
-    virtual ~CryptoInFilenameTransport() 
+    virtual ~CryptoInFilenameTransport()
     {
         rio_clear(&this->rio);
     }
@@ -54,7 +54,10 @@ class CryptoInFilenameTransport : public Transport {
     virtual void recv(char ** pbuffer, size_t len) throw (Error)
     {
         ssize_t res = rio_recv(&this->rio, *pbuffer, len);
-        if (res <= 0){
+        if (res == -RIO_ERROR_OPEN) {
+            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+        }
+        else if (res <= 0){
             throw Error(ERR_TRANSPORT_READ_FAILED, errno);
         }
         *pbuffer += res;
