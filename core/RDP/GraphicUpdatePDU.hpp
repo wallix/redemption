@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Raphael Zhou
 
    RDPGraphicDevice is an abstract class that describe a device able to
    proceed RDP Drawing Orders. How the drawing will be actually done
@@ -23,7 +23,6 @@
    - It may be sent on the wire,
    - Used to draw on some internal bitmap,
    - etc.
-
 */
 
 #ifndef _REDEMPTION_CORE_RDP_GRAPHIC_UPDATE_PDU_HPP_
@@ -36,6 +35,7 @@
 #include "RDP/lic.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 #include "RDP/fastpath.hpp"
+
 // MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
 // ================================================================
 // The TS_FP_UPDATE_ORDERS structure contains primary, secondary, and alternate
@@ -100,7 +100,8 @@
 
 struct GraphicsUpdatePDU : public RDPSerializer
 {
-    BStream buffer_stream;
+    BStream buffer_stream_orders;
+    BStream buffer_stream_bitmaps;
     ShareData * sdata;
     uint16_t & userid;
     int & shareid;
@@ -120,15 +121,17 @@ struct GraphicsUpdatePDU : public RDPSerializer
                       const int use_bitmap_comp,
                       const int op2,
                       bool fastpath_support)
-        : RDPSerializer(trans, this->buffer_stream,
-            bpp, bmp_cache, bitmap_cache_version, use_bitmap_comp, op2, ini),
-        buffer_stream(65536),
-        sdata(NULL),
-        userid(userid),
-        shareid(shareid),
-        encryptionLevel(encryptionLevel),
-        encrypt(encrypt),
-        fastpath_support(fastpath_support)
+        : RDPSerializer( trans, this->buffer_stream_orders
+                       , this->buffer_stream_bitmaps, bpp, bmp_cache
+                       , bitmap_cache_version, use_bitmap_comp, op2, ini)
+        , buffer_stream_orders(65536)
+        , buffer_stream_bitmaps(65536)
+        , sdata(NULL)
+        , userid(userid)
+        , shareid(shareid)
+        , encryptionLevel(encryptionLevel)
+        , encrypt(encrypt)
+        , fastpath_support(fastpath_support)
     {
         this->init();
     }
@@ -140,47 +143,50 @@ struct GraphicsUpdatePDU : public RDPSerializer
     void init(){
         if (this->fastpath_support == false) {
             if (this->sdata){ delete this->sdata; }
-            this->sdata = new ShareData(this->stream);
+            this->sdata = new ShareData(this->stream_orders);
 
             if (this->ini.globals.debug.primary_orders > 3){
                 LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
             }
             this->sdata->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
             TODO("this is to kind of header, to be treated like other headers")
-            this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
-            this->stream.out_clear_bytes(2); /* pad */
-            this->offset_order_count = this->stream.get_offset();
-            this->stream.out_clear_bytes(2); /* number of orders, set later */
-            this->stream.out_clear_bytes(2); /* pad */
+            this->stream_orders.out_uint16_le(RDP_UPDATE_ORDERS);
+            this->stream_orders.out_clear_bytes(2); /* pad */
+            this->offset_order_count = this->stream_orders.get_offset();
+            this->stream_orders.out_clear_bytes(2); /* number of orders, set later */
+            this->stream_orders.out_clear_bytes(2); /* pad */
         }
         else {
-            this->stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
-            this->offset_order_count = this->stream.get_offset();
-            this->stream.out_clear_bytes(2);  // number of orders, set later
+            this->stream_orders.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+            this->offset_order_count = this->stream_orders.get_offset();
+            this->stream_orders.out_clear_bytes(2);  // number of orders, set later
         }
+
+        // Slow-path
+//        this->buffer_stream_bitmaps
     }
 
-    virtual void flush()
+    virtual void flush_orders()
     {
         if (this->order_count > 0){
             if (this->ini.globals.debug.primary_orders > 3){
-                LOG(LOG_INFO, "GraphicsUpdatePDU::flush: order_count=%d offset=%u", this->order_count, this->offset_order_count);
+                LOG(LOG_INFO, "GraphicsUpdatePDU::flush_orders: order_count=%d offset=%u", this->order_count, this->offset_order_count);
             }
-            this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
+            this->stream_orders.set_out_uint16_le(this->order_count, this->offset_order_count);
 
             if (this->fastpath_support == false) {
                 if (this->ini.globals.debug.primary_orders > 3){
-                    LOG(LOG_INFO, "GraphicsUpdatePDU::flush:slow-path");
+                    LOG(LOG_INFO, "GraphicsUpdatePDU::flush_orders:slow-path");
                 }
 
                 this->sdata->emit_end();
 
                 BStream sctrl_header(256);
-                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, this->stream.size());
+                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, this->stream_orders.size());
 
                 BStream target_stream(65536);
                 target_stream.out_copy_bytes(sctrl_header);
-                target_stream.out_copy_bytes(this->stream);
+                target_stream.out_copy_bytes(this->stream_orders);
                 target_stream.mark_end();
 
                 BStream x224_header(256);
@@ -194,14 +200,14 @@ struct GraphicsUpdatePDU : public RDPSerializer
             }
             else {
                 if (this->ini.globals.debug.primary_orders > 3){
-                    LOG(LOG_INFO, "GraphicsUpdatePDU::flush: fast-path");
+                    LOG(LOG_INFO, "GraphicsUpdatePDU::flush_orders: fast-path");
                 }
 
-                this->stream.mark_end();
-                SubStream Upd_s(this->stream, 0, FastPath::Update_Send::GetSize());
+                this->stream_orders.mark_end();
+                SubStream Upd_s(this->stream_orders, 0, FastPath::Update_Send::GetSize());
 
                 FastPath::Update_Send Upd( Upd_s
-                                         , this->stream.size() - FastPath::Update_Send::GetSize()
+                                         , this->stream_orders.size() - FastPath::Update_Send::GetSize()
                                          , FastPath::FASTPATH_UPDATETYPE_ORDERS
                                          , FastPath::FASTPATH_FRAGMENT_SINGLE);
 
@@ -209,17 +215,23 @@ struct GraphicsUpdatePDU : public RDPSerializer
 
                 FastPath::ServerUpdatePDU_Send SvrUpdPDU(
                       fastpath_header
-                    , this->stream
+                    , this->stream_orders
                     , ((this->encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                     , this->encrypt
                     );
 
-                this->trans->send(fastpath_header, this->stream);
+                this->trans->send(fastpath_header, this->stream_orders);
             }
 
             this->order_count = 0;
-            this->stream.reset();
+            this->stream_orders.reset();
             this->init();
+        }
+    }
+
+    virtual void flush_bitmaps() {
+        if (this->bitmap_count > 0) {
+            LOG(LOG_INFO, "GraphicsUpdatePDU::flush_bitmap: bitmap_count=%d offset=%u", this->bitmap_count, this->offset_order_count);
         }
     }
 };

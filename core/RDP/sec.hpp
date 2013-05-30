@@ -163,7 +163,7 @@ enum {
     SEC_REDIRECTION_PKT    = 0x0400,
     SEC_SECURE_CHECKSUM    = 0x0800,
     SEC_AUTODETECT_REQ     = 0x1000,
-    SEC_AUTODETECT_RSP     = 0x2000, 
+    SEC_AUTODETECT_RSP     = 0x2000,
     SEC_FLAGSHI_VALID      = 0x8000,
 };
 
@@ -574,9 +574,9 @@ enum {
 // requested MCS Channel Join Confirm PDUs (section 2.2.1.9) have been received.
 
 // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-// 
+//
 // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224] section 13.7.
-// 
+//
 // mcsSDrq (variable): Variable-length PER-encoded MCS Domain PDU (DomainMCSPDU) which
 //  encapsulates an MCS Send Data Request structure (SDrq, choice 25 from DomainMCSPDU),
 //  as specified in [T125] section 11.32 (the ASN.1 structure definitions are given in [T125]
@@ -661,7 +661,7 @@ enum {
         uint32_t basicSecurityHeader;
         SubStream payload;
 
-        SecExchangePacket_Recv(Stream & stream, uint16_t available_len) 
+        SecExchangePacket_Recv(Stream & stream, uint16_t available_len)
             : payload(stream)
         {
             const unsigned expected = 8; /* basicSecurityHeader(4) + length(4) */
@@ -738,7 +738,7 @@ enum {
         uint32_t flags;
         SubStream payload;
         uint32_t verbose;
-        SecSpecialPacket_Recv(Stream & stream, CryptContext & crypt, uint32_t encryptionLevel) 
+        SecSpecialPacket_Recv(Stream & stream, CryptContext & crypt, uint32_t encryptionLevel)
             : flags(0), payload(stream), verbose(0)
         {
             const unsigned need = 4; /* flags(4) */
@@ -787,7 +787,7 @@ enum {
         uint32_t flags;
         SubStream payload;
         uint32_t verbose;
-        Sec_Recv(Stream & stream, CryptContext & crypt, uint32_t encryptionLevel) 
+        Sec_Recv(Stream & stream, CryptContext & crypt, uint32_t encryptionLevel)
             : flags(0), payload(stream), verbose(0)
         {
             if (encryptionLevel){
@@ -800,7 +800,7 @@ enum {
                 }
                 this->flags = stream.in_uint32_le();
                 if (this->flags & SEC::SEC_ENCRYPT){
-                    
+
                     const unsigned need = 8; /* signature(8) */
                     if (!stream.in_check_rem(need))
                     {
@@ -844,11 +844,11 @@ enum {
             stream.mark_end();
         }
     };
-    
+
     // 5.1.3 Generating the Licensing Encryption and MAC Salt Keys
     // ===========================================================
 
-    // Both the client and the server use the licensing encryption key when necessary to encrypt and decrypt 
+    // Both the client and the server use the licensing encryption key when necessary to encrypt and decrypt
     // licensing message data. Both the client and the server use the method described in this section to generate
     // the licensing encryption key. The key generating procedure is described as follows. Note that the "+" symbol
     // is used in the following procedure to represent concatenation of the keys.
@@ -869,16 +869,16 @@ enum {
     // The first 128 bits of the SessionKeyBlob are used to generate the MAC salt key.
 
     // MAC-salt-key = First128Bits(SessionKeyBlob)
-    // The MAC salt key is used to generate the MAC checksum that the recipient uses to check 
+    // The MAC salt key is used to generate the MAC checksum that the recipient uses to check
     // the integrity of the licensing message.
 
-    // The licensing encryption key is derived from the SessionKeyBlob. 
+    // The licensing encryption key is derived from the SessionKeyBlob.
     // Note that the "+" symbol is used in the following procedure to represent concatenation of the keys.
 
     // FinalHash(K) = MD5(K + ClientRandom + ServerRandom)
     // LicensingEncryptionKey = FinalHash(Second128Bits(SessionKeyBlob))
 
-    struct SessionKey 
+    struct SessionKey
     {
         uint8_t blob0[16];
         uint8_t blob1[16];
@@ -999,7 +999,7 @@ enum {
                 MD5_Final(this->licensingEncryptionKey, &md5);
             }
         }
-        
+
         const uint8_t * get_MAC_salt_key(void)
         {
             return this->blob0;
@@ -1016,15 +1016,15 @@ enum {
 // 5.3.4 Client and Server Random Values
 // =====================================
 
-// The client and server both generate a 32-byte random value using a cryptographically-safe 
+// The client and server both generate a 32-byte random value using a cryptographically-safe
 // pseudorandom number generator.
 
 // The server sends the random value that it generated (along with its public key embedded in
-// a certificate) to the client in the Server Security Data (section 2.2.1.4.3) during the 
+// a certificate) to the client in the Server Security Data (section 2.2.1.4.3) during the
 // Basic Settings Exchange phase of the RDP Connection Sequence (see section 1.3.1.1).
 
 // If RDP Standard Security mechanisms (section 5.3) are being used, the client sends its random
-// value to the server (encrypted with the server's public key) in the Security Exchange PDU 
+// value to the server (encrypted with the server's public key) in the Security Exchange PDU
 // (section 2.2.1.10) as part of the RDP Security Commencement phase of the RDP Connection Sequence
 // (see section 1.3.1.1).
 
@@ -1032,23 +1032,23 @@ enum {
 // 5.3.5 Initial Session Key Generation
 // ====================================
 
-// RDP uses three symmetric session keys derived from the client and server random values 
+// RDP uses three symmetric session keys derived from the client and server random values
 // (see section 5.3.4). Client-to-server traffic is encrypted with one of these keys (known as
 //  the client's encryption key and server's decryption key), server-to-client traffic with another
 // (known as the server's encryption key and client's decryption key) and the final key is used to
-// generate a MAC over the data to help ensure its integrity. The generated keys are 40, 56, 
+// generate a MAC over the data to help ensure its integrity. The generated keys are 40, 56,
 // or 128 bits in length.
- 
+
 
 // 5.3.5.1 Non-FIPS
 // ================
 
-// The client and server random values are used to create a 384-bit Pre-Master Secret by concatenating 
+// The client and server random values are used to create a 384-bit Pre-Master Secret by concatenating
 // the first 192 bits of the Client Random with the first 192 bits of the Server Random.
 
 //    PreMasterSecret = First192Bits(ClientRandom) + First192Bits(ServerRandom)
 
-// A 384-bit Master Secret is generated using the Pre-Master Secret, the client and server random values, 
+// A 384-bit Master Secret is generated using the Pre-Master Secret, the client and server random values,
 // and the MD5 hash and SHA-1 hash functions.
 
 //    MasterSecret = PreMasterHash(0x41) + PreMasterHash(0x4242) + PreMasterHash(0x434343)
@@ -1069,7 +1069,7 @@ enum {
 
 //    MasterHash(I) = SaltedHash(MasterSecret, I)
 
-// From the session key blob the actual session keys which will be used are derived. 
+// From the session key blob the actual session keys which will be used are derived.
 // Both client and server extract the same key data for generating MAC signatures.
 
 //    MACKey128 = First128Bits(SessionKeyBlob)
@@ -1105,11 +1105,11 @@ enum {
 // +-----------------------+-------------+------------------+----------------+
 // | Negotiated key length | Salt length | Salt values      | RC4 key length |
 // +-----------------------+-------------+------------------+----------------+
-// |           40 bits     |  3 bytes    | 0xD1, 0x26, 0x9E |  8 bytes       | 
+// |           40 bits     |  3 bytes    | 0xD1, 0x26, 0x9E |  8 bytes       |
 // +-----------------------+-------------+------------------+----------------+
-// |           56 bits     |  1 byte     | 0xD1             |  8 bytes       | 
+// |           56 bits     |  1 byte     | 0xD1             |  8 bytes       |
 // +-----------------------+-------------+------------------+----------------+
-// |          128 bits     |  0 byte     |  N/A             | 16 bytes       | 
+// |          128 bits     |  0 byte     |  N/A             | 16 bytes       |
 // +-----------------------+-------------+------------------+----------------+
 
 // Using the salt values, the 40-bit keys are generated as follows.
@@ -1132,13 +1132,13 @@ enum {
 // InitialClientEncryptKey56 = 0xD1 + Last56Bits(First64Bits(InitialClientEncryptKey128))
 // InitialClientDecryptKey56 = 0xD1 + Last56Bits(First64Bits(InitialClientDecryptKey128))
 
-// After any necessary salting has been applied, the generated encryption and decryption keys 
+// After any necessary salting has been applied, the generated encryption and decryption keys
 // are used to initialize RC-4 substitution tables which can then be used to encrypt and decrypt
 // data.
 
-// At the end of this process the client and server will each possess three symmetric keys 
-// to use with the RC4 stream cipher: a MAC key, an encryption key, and a decryption key. 
-// The MAC key is used to initialize the RC4 substitution table that is used to generate 
+// At the end of this process the client and server will each possess three symmetric keys
+// to use with the RC4 stream cipher: a MAC key, an encryption key, and a decryption key.
+// The MAC key is used to initialize the RC4 substitution table that is used to generate
 // Message Authentication Codes, the encryption key is used to initialize the RC4 substitution
 // table that is used to perform encryption, and the decryption key is used to initialize the
 // RC4 substitution table that is used to perform decryption (for more information on RC4
@@ -1256,7 +1256,7 @@ enum {
 //        b4 f1 0b 35 78 df 9e cc 37 9c 4e 65 68 f2 32 87
 //        5e 23 97 87 b6 91 65 21 bb c6 b0 86 81 1d 78 f3
 //        c5 7a fb 29 5b 7e 19 74 67 ae 88 a1 ad 80 bf 8c
-//        6c e0 16 4b 03 82 16 10 bd a2 8c 85 5f 48 74 85 
+//        6c e0 16 4b 03 82 16 10 bd a2 8c 85 5f 48 74 85
 //        7e
 
 //    Calculate SHA1 Hash of above:
@@ -1368,7 +1368,7 @@ enum {
 // ServerDecryption/ClientEncryption:
 //    cd 8c 18 db d4 34 bd 2f 9e 9a 3d b4 ee 11 af 92
 
-    struct KeyBlock 
+    struct KeyBlock
     {
         uint8_t blob0[16];
         uint8_t blob1[16];
@@ -1385,7 +1385,7 @@ enum {
             /* Construct pre-master secret (session key) we get 24 bytes on 32 from client_random and server_random */
             memcpy(pre_master_secret, client_random, 24);
             memcpy(pre_master_secret + 24, server_random, 24);
-        
+
             uint8_t master_secret[48];
             const int master_secret_size = sizeof(master_secret);
             {
@@ -1504,12 +1504,12 @@ enum {
             }
         }
     };
-    
-    
+
+
 // 5.3.5.2 FIPS
 // ============
 
-// The client and server random values are used to generate temporary 160-bit initial 
+// The client and server random values are used to generate temporary 160-bit initial
 // encryption and decryption keys by using the SHA-1 hash function. The client generates
 // the following:
 
@@ -1542,18 +1542,18 @@ enum {
 
 // 0xD1 0x5E 0xC4 0x7E 0xDA ...
 
-// In binary this is: 
+// In binary this is:
 //   11010001 01011110 11000100 01111110 11011010 ...
-// Reversing each byte yields: 
+// Reversing each byte yields:
 //   10001011 01111010 00100011 01111110 01011011 ...
-// Adding a zero-bit after each group of seven bits results in the following values: 
+// Adding a zero-bit after each group of seven bits results in the following values:
 //   10001010 10111100 10001000 01101110 11100100 ...
 // Finally, reversing each of the bytes yields:
 //   01010001 00111101 00010001 01110110 00100111 ...
 // In hexadecimal this is:
 //   0x51 0x3D 0x11 0x76 0x27 ...
 
-// Once each key has been expanded to 192 bits in size, the final step is to alter the 
+// Once each key has been expanded to 192 bits in size, the final step is to alter the
 // least significant bit in each byte so that the entire byte has odd parity. Applying
 // this transformation to the bytes in the previous example yields:
 //    01010001 00111101 00010000 01110110 00100110 ...
@@ -1568,12 +1568,12 @@ enum {
 // HMACKey = SHA(ClientDecryptKeyT + ClientEncryptKeyT)
 
 // The server performs the same computation with the same data (the client encryption
-// and server decryption keys are identical, while the server encryption and 
+// and server decryption keys are identical, while the server encryption and
 // client decryption keys are identical).
 
 // HMACKey = SHA(ServerEncryptKeyT + ServerDecryptKeyT)
 
-// At the end of this process the client and server will each possess three symmetric keys 
+// At the end of this process the client and server will each possess three symmetric keys
 // to use with the Triple DES block cipher: an HMAC key, a encryption key, and a decryption key.
 
 
@@ -1616,7 +1616,7 @@ enum {
 // 5.3.6.1 Non-FIPS
 // ================
 
-// The client and server follow the same series of steps to encrypt a block of data. First, 
+// The client and server follow the same series of steps to encrypt a block of data. First,
 // a MAC value is generated over the unencrypted data.
 
 // Pad1 = 0x36 repeated 40 times to give 320 bits
@@ -1628,10 +1628,10 @@ enum {
 // MACKeyN is either MACKey40, MACKey56 or MACKey128, depending on the negotiated key strength.
 
 // DataLength is the size of the data to encrypt in bytes, expressed as a little-endian 32-bit integer.
-// Data is the information to be encrypted. The first 8 bytes of the generated MD5 hash are used 
+// Data is the information to be encrypted. The first 8 bytes of the generated MD5 hash are used
 // as an 8-byte MAC value to send on the wire.
 
-// Next, the data block is encrypted with RC4 using the current client or server encryption 
+// Next, the data block is encrypted with RC4 using the current client or server encryption
 // substitution table. The encrypted data is appended to the 8-byte MAC value in the network packet.
 
 // Decryption involves a reverse ordering of the previous steps. First, the data is decrypted using
@@ -1643,7 +1643,7 @@ enum {
 // 5.3.6.1.1 Salted MAC Generation
 // ===============================
 
-// The MAC value may be generated by salting the data to be hashed with the current encryption 
+// The MAC value may be generated by salting the data to be hashed with the current encryption
 // count. For example, assume that 42 packets  have already been encrypted. When the next packet
 // is encrypted the value 42 is added to the SHA component of the MAC signature. The addition
 // of the encryption count can be expressed as follows.
@@ -1655,9 +1655,9 @@ enum {
 // carried out. It is expressed as a little-endian 32-bit integer. The descriptions for DataLength,
 // Data, and MacKeyN are the same as in section 5.3.6.1.
 
-// The use of the salted MAC is dictated by capability flags in the General Capability Set 
-// (section 2.2.7.1.1), sent by both client and server during the Capability Exchange phase 
-// of the RDP Connection Sequence (see section 1.3.1.1). In addition, the presence of a 
+// The use of the salted MAC is dictated by capability flags in the General Capability Set
+// (section 2.2.7.1.1), sent by both client and server during the Capability Exchange phase
+// of the RDP Connection Sequence (see section 1.3.1.1). In addition, the presence of a
 // salted MAC is indicated by the presence of the SEC_SECURE_CHECKSUM flag in the Security Header
 // flags field (see section 5.3.8).
 
@@ -1673,21 +1673,21 @@ enum {
 
 // MACSignature = First64Bits(HMAC(HMACKey, Data + EncryptionCount))
 
-// EncryptionCount is the cumulative encryption count, indicating how many encryptions 
+// EncryptionCount is the cumulative encryption count, indicating how many encryptions
 // have been carried out. It is expressed as a little-endian 32-bit integer. The description
 // for Data is the same as in section 5.3.6.1.
 
-// Encryption of the data and construction of the network packet to transmit is similar to 
+// Encryption of the data and construction of the network packet to transmit is similar to
 // section 5.3.6.1. The main difference is that Triple DES (in cipher block chaining (CBC) mode)
 // is used. Because DES is a block cipher, the data to be encrypted must be padded to be a multiple
-// of the block size (8 bytes). The FIPS Security Header (see sections 2.2.8.1 and 2.2.9.1) 
+// of the block size (8 bytes). The FIPS Security Header (see sections 2.2.8.1 and 2.2.9.1)
 // has an extra field to record the number of padding bytes which were appended to the data prior
 // to encryption to ensure that upon decryption these bytes are not included as part of the data.
 
 // 5.3.7 Session Key Updates
 // =========================
 
-// During the course of a session, the symmetric encryption and decryption keys may need 
+// During the course of a session, the symmetric encryption and decryption keys may need
 // to be refreshed.
 
 // 5.3.7.1 Non-FIPS
@@ -1706,7 +1706,7 @@ enum {
 //    Knowledge of the RC4 key length (computed using Table 1 and the negotiated key length).
 
 // The following sequence of steps shows how updated client and server encryption keys are
-// generated (the same steps are used to update the client and server decryption keys). 
+// generated (the same steps are used to update the client and server decryption keys).
 // The following padding constants are used.
 
 // Pad1 = 0x36 repeated 40 times to give 320 bits
@@ -1724,11 +1724,11 @@ enum {
 // InitialEncryptKey = First64Bits(InitialEncryptKeyN)
 // CurrentEncryptKey = First64Bits(CurrentEncryptKeyN)
 
-// InitialEncryptKeyN is either InitialEncryptKey40 or InitialEncryptKey56, depending 
-// on the negotiated key strength, while CurrentEncryptKeyN is either CurrentEncryptKey40 
+// InitialEncryptKeyN is either InitialEncryptKey40 or InitialEncryptKey56, depending
+// on the negotiated key strength, while CurrentEncryptKeyN is either CurrentEncryptKey40
 // or CurrentEncryptKey56, depending on the negotiated key strength.
 
-// The initial and current keys are concatenated and hashed together with padding to form 
+// The initial and current keys are concatenated and hashed together with padding to form
 // a temporary key as follows.
 
 // SHAComponent = SHA(InitialEncryptKey + Pad1 + CurrentEncryptKey)
@@ -1769,14 +1769,14 @@ enum {
 
 // 5.3.7.2 FIPS
 // ============
-// No session key updates take place for the duration of a connection if Standard RDP Security 
+// No session key updates take place for the duration of a connection if Standard RDP Security
 // mechanisms (section 5.3) are being used with a FIPS Encryption Level.
 
 // 5.3.8 Packet Layout in the I/O Data Stream
 // ==========================================
 
-// The usage of Standard RDP Security mechanisms (see section 5.3) results in a security header 
-// being present in all packets following the Security Exchange PDU (section 2.2.1.10) when 
+// The usage of Standard RDP Security mechanisms (see section 5.3) results in a security header
+// being present in all packets following the Security Exchange PDU (section 2.2.1.10) when
 // encryption is in force. Connection sequence PDUs following the RDP Security Commencement
 // phase of the RDP Connection Sequence (see section 1.3.1.1) and slow-path packets have the
 //  same general wire format.
@@ -1841,13 +1841,13 @@ enum {
 // 2.2.4.3) and sent to the server as part of the extended information (see section 2.2.1.11.1.1.1) of the
 // Client Info PDU (section 2.2.1.11).
 
-// The auto-reconnect random is used to key the HMAC function (see [RFC2104]), which uses MD5 as the 
+// The auto-reconnect random is used to key the HMAC function (see [RFC2104]), which uses MD5 as the
 // iterative hash function. The security verifier is derived by applying the HMAC to the client random
 // received in Step 3.
 
 // SecurityVerifier = HMAC(AutoReconnectRandom, ClientRandom)
 
-// The one-way HMAC transformation prevents an unauthenticated server from obtaining the original 
+// The one-way HMAC transformation prevents an unauthenticated server from obtaining the original
 // auto-reconnect random and replaying it for the purpose of connecting to the user's existing session.
 
 // When Enhanced RDP Security is in effect the client random value is not generated (see section 5.3.2).
@@ -1860,11 +1860,11 @@ enum {
 
 // When the server receives the Client Auto-Reconnect Packet, it looks up the auto-reconnect random for the
 // session and computes the security verifier using the client random (the same calculation executed by the
-// client). If the security verifier value which the client transmitted matches the one computed by the 
-// server, the client is granted access. At this point, the server has confirmed that the client requesting 
+// client). If the security verifier value which the client transmitted matches the one computed by the
+// server, the client is granted access. At this point, the server has confirmed that the client requesting
 // auto-reconnection was the last one connected to the session in question.
 
-// If the check in Step 5 passes, then the client is automatically reconnected to the desired session; 
+// If the check in Step 5 passes, then the client is automatically reconnected to the desired session;
 // otherwise the client must obtain the user's credentials to regain access to the session on the remote
 // server.
 

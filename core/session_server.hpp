@@ -26,6 +26,7 @@
 #include "ssl_calls.hpp"
 #include "server.hpp"
 #include "session.hpp"
+#include "constants.hpp"
 
 class SessionServer : public Server
 {
@@ -53,11 +54,22 @@ class SessionServer : public Server
         } u;
         unsigned int sin_size = sizeof(u);
         memset(&u, 0, sin_size);
-        TODO("We should manage accept errors")
+
         int sck = accept(incoming_sck, &u.s, &sin_size);
+        if (-1 == sck) {
+            LOG(LOG_INFO, "Accept failed on socket %u (%s)", incoming_sck, strerror(errno));
+            _exit(1);
+        }
+        
         char text[256];
-        char ip_source[256];
-        strcpy(ip_source, inet_ntoa(u.s4.sin_addr));
+        char source_ip[256];
+        int source_port = 0;
+        char target_ip[256];
+        int target_port = 0;
+        
+        
+        strcpy(source_ip, inet_ntoa(u.s4.sin_addr));
+        source_port = u.s4.sin_port;
         /* start new process */
         pid_t pid = fork();
         switch (pid) {
@@ -70,14 +82,30 @@ class SessionServer : public Server
                 LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
             }
 
+            union
+            {
+              struct sockaddr s;
+              struct sockaddr_storage ss;
+              struct sockaddr_in s4;
+              struct sockaddr_in6 s6;
+            } localAddress;
+            socklen_t addressLength = sizeof(localAddress);
+
+
+            if (-1 == getsockname(sck, &localAddress.s, &addressLength)){
+                LOG(LOG_INFO, "getsockname failed error=%s", strerror(errno));
+                _exit(1);
+            }
+
+            strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
+            target_port = localAddress.s4.sin_port;
+
+            LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, target_ip, target_port);
+
             if (ini.globals.enable_ip_transparent) {
-                int optval = 1;
 
-                if (setsockopt(sck, SOL_IP, IP_TRANSPARENT, &optval, sizeof(optval))) {
-                    LOG(LOG_ERR, "Failed to enable transparent proxying on accepted socket.\n");
-                    _exit(1);
-                }
-
+                TODO("extract relevant data from /proc/net/ip_conntrack to get actual incoming address")
+                
                 setgid(this->gid);
                 setuid(this->uid);
             }
@@ -104,9 +132,9 @@ class SessionServer : public Server
                 close(fd);
 
                 // Launch session
-                LOG(LOG_INFO, "New session on %u (pid=%u) from %s", (unsigned)sck, (unsigned)child_pid, ip_source);
+                LOG(LOG_INFO, "New session on %u (pid=%u) from %s to %s", (unsigned)sck, (unsigned)child_pid, source_ip, target_ip);
 //                Session session(front_event, front_trans, ip_source, this->refreshconf, &ini);
-                Session session(front_event, sck, ip_source, this->refreshconf, &ini);
+                Session session(front_event, sck, source_ip, this->refreshconf, &ini);
 
                 // Suppress session file
                 unlink(session_file);

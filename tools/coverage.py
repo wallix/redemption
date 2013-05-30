@@ -76,7 +76,7 @@ class Cover:
                     for line in open("./coverage/%s/%s.hpp.gcov" % (module, module.split('/')[-1])):
                         res = re.match(r'^\s+#####[:]', line)
                         if res:
-                            print(line)
+                            print module, ' ', line
 
 cover = Cover()
 if sys.argv[1] == 'all':

@@ -70,6 +70,7 @@
 #include "genrandom.hpp"
 
 class Front : public FrontAPI {
+    using FrontAPI::draw;
 public:
     Capture * capture;
     BmpCache * bmp_cache;
@@ -256,7 +257,7 @@ public:
                 this->client_info.height = height;
 
                 // send buffered orders
-                this->orders->flush();
+                this->orders->flush_orders();
 
                 // clear all pending orders, caches data, and so on and
                 // start a send_deactive, send_deman_active process with
@@ -516,7 +517,7 @@ public:
         }
         this->order_level--;
         if (this->order_level == 0){
-            this->orders->flush();
+            this->orders->flush_orders();
         }
     }
 
@@ -3850,6 +3851,10 @@ public:
             this->memblt_mod_palette[i] = RGBtoBGR(palette[i]);
         }
         this->palette_sent = false;
+    }
+
+    virtual void draw(const RDPBitmapData & data, const Bitmap & bmp) {
+        this->orders->draw(data, bmp);
     }
 };
 

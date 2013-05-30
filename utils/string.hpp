@@ -60,7 +60,7 @@ public:
         return this->buffer_pointer;
     }
 
-    string & operator =(const char * source) {
+    string & operator=(const char * source) {
         if (source) {
             size_t source_length = ::strlen(source);
 
@@ -75,7 +75,7 @@ public:
         return (*this);
     }
 
-    string & operator +=(const char * source) {
+    string & operator+=(const char * source) {
         if (source) {
             size_t source_length  = ::strlen(source);
             size_t content_length = ::strlen(this->buffer_pointer);

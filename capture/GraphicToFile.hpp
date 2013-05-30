@@ -115,7 +115,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     };
 
     Transport * trans;
-    BStream buffer_stream;
+    BStream buffer_stream_orders;
+    BStream buffer_stream_bitmaps;
 
     timeval last_sent_timer;
     timeval timer;
@@ -137,9 +138,11 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
                 , BmpCache & bmp_cache
                 , RDPDrawable * drawable
                 , const Inifile & ini)
-    : RDPSerializer(trans, this->buffer_stream, bpp, bmp_cache, 0, 1, 1, ini)
+    : RDPSerializer( trans, this->buffer_stream_orders
+                   , this->buffer_stream_bitmaps, bpp, bmp_cache, 0, 1, 1, ini)
     , trans(trans)
-    , buffer_stream(65536)
+    , buffer_stream_orders(65536)
+    , buffer_stream_bitmaps(65536)
     , last_sent_timer()
     , timer(now)
     , width(width)
@@ -168,7 +171,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         uint64_t old_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
         uint64_t current_timer = now.tv_sec * 1000000ULL + now.tv_usec;
         if (old_timer < current_timer){
-            this->flush();
+            this->flush_orders();
             this->timer = now;
             this->trans->timestamp(now);
         }
@@ -392,7 +395,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void breakpoint()
     {
-        this->flush();
+        this->flush_orders();
         this->trans->next();
         this->send_meta_chunk();
         this->send_timestamp_chunk();
@@ -401,7 +404,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->send_caches_chunk();
     }
 
-    virtual void flush()
+    virtual void flush_orders()
     {
         if (this->order_count > 0){
             if (this->timer.tv_sec - this->last_sent_timer.tv_sec > 0){
@@ -413,13 +416,13 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void send_orders_chunk()
     {
-        this->stream.mark_end();
+        this->stream_orders.mark_end();
         BStream header(8);
-        WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->stream.size(), this->order_count);
+        WRMChunk_Send chunk(header, RDP_UPDATE_ORDERS, this->stream_orders.size(), this->order_count);
         this->trans->send(header);
-        this->trans->send(this->stream);
+        this->trans->send(this->stream_orders);
         this->order_count = 0;
-        this->stream.reset();
+        this->stream_orders.reset();
     }
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
@@ -468,6 +471,28 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     {
         this->drawable->draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
+    }
+
+    virtual void flush_bitmaps() {
+        if (this->bitmap_count > 0) {
+            if (this->timer.tv_sec - this->last_sent_timer.tv_sec > 0) {
+                this->send_timestamp_chunk();
+            }
+            this->send_bitmaps_chunk();
+        }
+    }
+
+    void send_bitmaps_chunk()
+    {
+/*
+        this->stream_bitmaps.mark_end();
+        BStream header(8);
+        WRMChunk_Send chunk(header, RDP_UPDATE_BITMAPS, this->stream_bitmaps.size(), this->bitmap_count);
+        this->trans->send(header);
+        this->trans->send(this->stream_bitmaps);
+        this->bitmap_count = 0;
+        this->stream_bitmaps.reset();
+*/
     }
 };
 
