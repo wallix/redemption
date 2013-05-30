@@ -175,7 +175,7 @@ struct RDPSerializer : public RDPGraphicDevice
 
     ~RDPSerializer() {}
 
-    virtual void flush() = 0;
+    virtual void flush_orders() = 0;
     virtual void flush_bitmaps() = 0;
 
     /*****************************************************************************/
@@ -205,7 +205,7 @@ struct RDPSerializer : public RDPGraphicDevice
         const size_t max_order_batch = 4096;
         if (   (this->order_count >= max_order_batch)
             || ((used_size + asked_size + 106) > max_packet_size)) {
-            this->flush();
+            this->flush_orders();
         }
         this->order_count++;
 //    LOG(LOG_INFO, "RDPSerializer::reserve_order done");

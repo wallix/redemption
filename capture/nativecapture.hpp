@@ -87,7 +87,7 @@ public:
     }
 
     ~NativeCapture(){
-        this->recorder.flush();
+        this->recorder.flush_orders();
     }
 
     void update_config(const Inifile & ini)
@@ -124,7 +124,7 @@ public:
 
     virtual void flush()
     {
-        this->recorder.flush();
+        this->recorder.flush_orders();
     }
 
     virtual void input(const timeval & now, Stream & input_data_32) {
@@ -169,11 +169,6 @@ public:
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
-    }
-
-    virtual void flush_bitmaps()
-    {
-        this->recorder.flush_bitmaps();
     }
 
 private:

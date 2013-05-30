@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
-    consumer.flush();
+    consumer.flush_orders();
     consumer.send_image_chunk();
 }
 
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
-    consumer.flush();
+    consumer.flush_orders();
 
     OutChunkedBufferingTransport<100> png_trans(&trans);
 
@@ -231,7 +231,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
-    consumer.flush();
+    consumer.flush_orders();
 
     OutChunkedBufferingTransport<16> png_trans(&trans);
 
