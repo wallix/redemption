@@ -166,17 +166,17 @@ struct GraphicsUpdatePDU : public RDPSerializer
 //        this->buffer_stream_bitmaps
     }
 
-    virtual void flush()
+    virtual void flush_orders()
     {
         if (this->order_count > 0){
             if (this->ini.globals.debug.primary_orders > 3){
-                LOG(LOG_INFO, "GraphicsUpdatePDU::flush: order_count=%d offset=%u", this->order_count, this->offset_order_count);
+                LOG(LOG_INFO, "GraphicsUpdatePDU::flush_orders: order_count=%d offset=%u", this->order_count, this->offset_order_count);
             }
             this->stream_orders.set_out_uint16_le(this->order_count, this->offset_order_count);
 
             if (this->fastpath_support == false) {
                 if (this->ini.globals.debug.primary_orders > 3){
-                    LOG(LOG_INFO, "GraphicsUpdatePDU::flush:slow-path");
+                    LOG(LOG_INFO, "GraphicsUpdatePDU::flush_orders:slow-path");
                 }
 
                 this->sdata->emit_end();
@@ -200,7 +200,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
             }
             else {
                 if (this->ini.globals.debug.primary_orders > 3){
-                    LOG(LOG_INFO, "GraphicsUpdatePDU::flush: fast-path");
+                    LOG(LOG_INFO, "GraphicsUpdatePDU::flush_orders: fast-path");
                 }
 
                 this->stream_orders.mark_end();

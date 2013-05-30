@@ -171,7 +171,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         uint64_t old_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
         uint64_t current_timer = now.tv_sec * 1000000ULL + now.tv_usec;
         if (old_timer < current_timer){
-            this->flush();
+            this->flush_orders();
             this->timer = now;
             this->trans->timestamp(now);
         }
@@ -395,7 +395,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void breakpoint()
     {
-        this->flush();
+        this->flush_orders();
         this->trans->next();
         this->send_meta_chunk();
         this->send_timestamp_chunk();
@@ -404,7 +404,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->send_caches_chunk();
     }
 
-    virtual void flush()
+    virtual void flush_orders()
     {
         if (this->order_count > 0){
             if (this->timer.tv_sec - this->last_sent_timer.tv_sec > 0){
