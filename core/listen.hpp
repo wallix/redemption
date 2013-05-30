@@ -47,7 +47,7 @@ struct Listen {
     bool exit_on_timeout;
     int timeout_sec;
 
-    Listen(Server & server, uint32_t s_addr, int port, bool exit_on_timeout = false, int timeout_sec = 60) 
+    Listen(Server & server, uint32_t s_addr, int port, bool exit_on_timeout = false, int timeout_sec = 60, bool enable_ip_transparent = false) 
         : server(server)
         , s_addr(s_addr)
         , port(port)
@@ -97,6 +97,16 @@ struct Listen {
             goto end_of_listener;
         }
 
+        if (enable_ip_transparent) {
+            int optval = 1;
+
+            if (setsockopt(this->sck, SOL_IP, IP_TRANSPARENT, &optval, sizeof(optval))) {
+                LOG(LOG_ERR, "Failed to enable transparent proxying on listened socket.\n");
+                goto end_of_listener;
+            }
+        }
+
+
         LOG(LOG_INFO, "Listen: listening on socket %d", this->sck);
         if (0 != listen(this->sck, 2)) {
             LOG(LOG_ERR, "Listen: error listening on socket\n");
@@ -109,13 +119,13 @@ struct Listen {
              "read data, write data, accept incoming connections, perform some task, etc.")
 
         return;
+        
         end_of_listener:;
         if (this->sck){
             shutdown(this->sck, 2);
             close(this->sck);
         }
         // throw some exception to signal to outside world listen failed
-
     }
     
     TODO("Some values (server, timeout) become only necessary when calling check")
