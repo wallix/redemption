@@ -208,17 +208,27 @@ exe tls_test_server : ftests/tls_test_server.cpp openssl crypto png z dl : <link
 
 import testing ;
 
-unit-test test_stream : tests/test_stream.cpp libboost_unit_test ;
-unit-test test_stream : tests/test_stream.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_stream : tests/utils/test_stream.cpp libboost_unit_test ;
+unit-test test_stream : tests/utils/test_stream.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_utf : tests/test_utf.cpp libboost_unit_test ;
-unit-test test_utf : tests/test_utf.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_utf : tests/utils/test_utf.cpp libboost_unit_test ;
+unit-test test_utf : tests/utils/test_utf.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_rect : tests/test_rect.cpp libboost_unit_test ;
-unit-test test_rect : tests/test_rect.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_rect : tests/utils/test_rect.cpp libboost_unit_test ;
+unit-test test_rect : tests/utils/test_rect.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_drawable : tests/test_drawable.cpp png z openssl crypto libboost_unit_test ;
-unit-test test_drawable : tests/test_drawable.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+unit-test test_drawable : tests/utils/test_drawable.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_drawable : tests/utils/test_drawable.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_region : tests/utils/test_region.cpp libboost_unit_test ;
+unit-test test_region : tests/utils/test_region.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_bitfu : tests/utils/test_bitfu.cpp libboost_unit_test ;
+unit-test test_bitfu : tests/utils/test_bitfu.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_fileutils : tests/utils/test_fileutils.cpp libboost_unit_test ;
+unit-test test_fileutils : tests/utils/test_fileutils.cpp libboost_unit_test gcov : <variant>coverage ;
+
 
 unit-test test_x224 : tests/core/test_x224.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_x224 : tests/core/test_x224.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
@@ -249,7 +259,7 @@ unit-test test_font : tests/test_font.cpp libboost_unit_test ;
 
 
 unit-test test_compact_to_aligned : tests/test_compact_to_aligned.cpp libboost_unit_test ;
-unit-test test_region : tests/test_region.cpp libboost_unit_test ;
+
 unit-test test_string : tests/test_string.cpp libboost_unit_test ;
 unit-test test_strings : tests/test_strings.cpp libboost_unit_test ;
 
@@ -377,9 +387,6 @@ unit-test test_sq_inmeta : tests/transport/rio/test_sq_inmeta.cpp openssl crypto
 
 #gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_rio_xxx.gcno bin/gcc-4.6/coverage/test_rio_xxx
 
-unit-test test_bitfu : tests/test_bitfu.cpp libboost_unit_test ;
-
-unit-test test_fileutils : tests/test_fileutils.cpp libboost_unit_test ;
 
 unit-test test_zlib : tests/test_zlib.cpp z libboost_unit_test ;
 
