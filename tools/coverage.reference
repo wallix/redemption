@@ -12,14 +12,14 @@ core/lic 100 100
 core/sec 100 100
 
 transport/inbymetasequencetransport 100 100
-#transport/outfilenametransport 100 100
+transport/outfilenametransport 100 100
 transport/transport 100 100
 transport/infiletransport 100 100
-#transport/infilenametransport 100 100
-#transport/outmetatransport 100 100
-#transport/testtransport 100 100
-#transport/outfiletransport 100 100
-#transport/sockettransport 100 100
+transport/infilenametransport 100 100
+transport/outmetatransport 100 100
+transport/testtransport 100 100
+transport/outfiletransport 100 100
+transport/sockettransport 100 100
 
 transport/rio/rio_cryptooutmeta.h
 transport/rio/rio_cryptoinfilename.h
