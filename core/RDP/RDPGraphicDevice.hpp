@@ -60,7 +60,7 @@ struct RDPGraphicDevice {
     virtual void draw(const RDPColCache   & cmd) {}
     virtual void draw(const RDPGlyphCache & cmd) {}
 
-    virtual void draw(const RDPBitmapData & data, const Bitmap & bmp) {}
+    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size) {}
 
     virtual void input(const timeval & now, Stream & input_data_32) {}
 

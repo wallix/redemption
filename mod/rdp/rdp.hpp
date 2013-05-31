@@ -3805,6 +3805,7 @@ struct mod_rdp : public mod_api {
 //                    bufsize, bitmap.bmp_size, width, height, bpp);
 //            }
             const uint8_t * data = stream.in_uint8p(bmpdata.bitmap_size());
+//            this->front.draw(bmpdata, data, bmpdata.bitmap_size());
             Bitmap bitmap( bmpdata.bits_per_pixel
                          , &this->orders.global_palette
                          , bmpdata.width
@@ -3837,7 +3838,6 @@ struct mod_rdp : public mod_api {
                    );
             }
 
-//            this->front.draw(bmpdata, bitmap);
             this->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
         }
         if (this->verbose & 64){

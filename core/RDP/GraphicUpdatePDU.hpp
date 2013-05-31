@@ -98,57 +98,70 @@
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-struct GraphicsUpdatePDU : public RDPSerializer
-{
+struct GraphicsUpdatePDU : public RDPSerializer {
     BStream buffer_stream_orders;
     BStream buffer_stream_bitmaps;
-    ShareData * sdata;
-    uint16_t & userid;
-    int & shareid;
-    int & encryptionLevel;
+
+    ShareData    * sdata_orders;
+    ShareData    * sdata_bitmaps;
+
+    uint16_t     & userid;
+    int          & shareid;
+    int          & encryptionLevel;
     CryptContext & encrypt;
+
+    uint32_t offset_order_count;
+    uint32_t offset_bitmap_count;
+
     bool fastpath_support;
 
-    GraphicsUpdatePDU(Transport * trans,
-                      uint16_t & userid,
-                      int & shareid,
-                      int & encryptionLevel,
-                      CryptContext & encrypt,
-                      const Inifile & ini,
-                      const uint8_t bpp,
-                      BmpCache & bmp_cache,
-                      const int bitmap_cache_version,
-                      const int use_bitmap_comp,
-                      const int op2,
-                      bool fastpath_support)
+    GraphicsUpdatePDU( Transport * trans
+                     , uint16_t & userid
+                     , int & shareid
+                     , int & encryptionLevel
+                     , CryptContext & encrypt
+                     , const Inifile & ini
+                     , const uint8_t bpp
+                     , BmpCache & bmp_cache
+                     , const int bitmap_cache_version
+                     , const int use_bitmap_comp
+                     , const int op2
+                     , bool fastpath_support)
         : RDPSerializer( trans, this->buffer_stream_orders
                        , this->buffer_stream_bitmaps, bpp, bmp_cache
                        , bitmap_cache_version, use_bitmap_comp, op2, ini)
         , buffer_stream_orders(65536)
         , buffer_stream_bitmaps(65536)
-        , sdata(NULL)
+        , sdata_orders(NULL)
+        , sdata_bitmaps(NULL)
         , userid(userid)
         , shareid(shareid)
         , encryptionLevel(encryptionLevel)
         , encrypt(encrypt)
-        , fastpath_support(fastpath_support)
-    {
-        this->init();
+        , offset_order_count(0)
+        , offset_bitmap_count(0)
+        , fastpath_support(fastpath_support) {
+        this->init_orders();
+        this->init_bitmaps();
     }
 
-    ~GraphicsUpdatePDU(){
-        if (this->sdata){ delete this->sdata; }
+    ~GraphicsUpdatePDU() {
+        if (this->sdata_orders) { delete this->sdata_orders; }
+        if (this->sdata_bitmaps) { delete this->sdata_bitmaps; }
     }
 
-    void init(){
+    void init_orders() {
         if (this->fastpath_support == false) {
-            if (this->sdata){ delete this->sdata; }
-            this->sdata = new ShareData(this->stream_orders);
+            if (this->sdata_orders) { delete this->sdata_orders; }
+            this->sdata_orders = new ShareData(this->stream_orders);
 
-            if (this->ini.globals.debug.primary_orders > 3){
-                LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
+            if (this->ini.globals.debug.primary_orders > 3) {
+                LOG( LOG_INFO
+                   , "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u"
+                   , this->userid
+                   , this->shareid);
             }
-            this->sdata->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
+            this->sdata_orders->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
             TODO("this is to kind of header, to be treated like other headers")
             this->stream_orders.out_uint16_le(RDP_UPDATE_ORDERS);
             this->stream_orders.out_clear_bytes(2); /* pad */
@@ -161,9 +174,31 @@ struct GraphicsUpdatePDU : public RDPSerializer
             this->offset_order_count = this->stream_orders.get_offset();
             this->stream_orders.out_clear_bytes(2);  // number of orders, set later
         }
+    }
 
-        // Slow-path
-//        this->buffer_stream_bitmaps
+    void init_bitmaps() {
+        if (this->fastpath_support == false) {
+            if (this->sdata_bitmaps) { delete this->sdata_bitmaps; }
+            this->sdata_bitmaps = new ShareData(this->stream_bitmaps);
+
+            if (this->ini.globals.debug.primary_orders > 3) {
+                LOG( LOG_INFO
+                   , "GraphicsUpdatePDU::init::Initializing bitmaps batch mcs_userid=%u shareid=%u"
+                   , this->userid
+                   , this->shareid);
+            }
+            this->sdata_bitmaps->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
+            TODO("this is to kind of header, to be treated like other headers")
+            this->stream_bitmaps.out_uint16_le(RDP_UPDATE_BITMAP);
+            this->offset_bitmap_count = this->stream_bitmaps.get_offset();
+            this->stream_bitmaps.out_clear_bytes(2); /* number of bitmaps, set later */
+        }
+        else {
+            this->stream_bitmaps.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+            this->stream_bitmaps.out_uint16_le(RDP_UPDATE_BITMAP);  // updateType (2 bytes)
+            this->offset_bitmap_count = this->stream_bitmaps.get_offset();
+            this->stream_bitmaps.out_clear_bytes(2);  // number of bitmap, set later
+        }
     }
 
     virtual void flush_orders()
@@ -179,7 +214,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
                     LOG(LOG_INFO, "GraphicsUpdatePDU::flush_orders:slow-path");
                 }
 
-                this->sdata->emit_end();
+                this->sdata_orders->emit_end();
 
                 BStream sctrl_header(256);
                 ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, this->stream_orders.size());
@@ -225,13 +260,88 @@ struct GraphicsUpdatePDU : public RDPSerializer
 
             this->order_count = 0;
             this->stream_orders.reset();
-            this->init();
+            this->init_orders();
         }
     }
 
     virtual void flush_bitmaps() {
         if (this->bitmap_count > 0) {
-            LOG(LOG_INFO, "GraphicsUpdatePDU::flush_bitmap: bitmap_count=%d offset=%u", this->bitmap_count, this->offset_order_count);
+            if (this->ini.globals.debug.primary_orders > 3){
+                LOG( LOG_INFO
+                   , "GraphicsUpdatePDU::flush_bitmaps: bitmap_count=%d offset=%u"
+                   , this->bitmap_count, this->offset_bitmap_count);
+            }
+            this->stream_bitmaps.set_out_uint16_le(this->bitmap_count, this->offset_bitmap_count);
+
+            if (this->fastpath_support == false) {
+                if (this->ini.globals.debug.primary_orders > 3){
+                    LOG(LOG_INFO, "GraphicsUpdatePDU::flush_bitmaps:slow-path");
+                }
+
+                this->sdata_bitmaps->emit_end();
+
+                BStream sctrl_header(256);
+                ShareControl_Send( sctrl_header
+                                 , PDUTYPE_DATAPDU
+                                 , this->userid + GCC::MCS_USERCHANNEL_BASE
+                                 , this->stream_bitmaps.size());
+
+                BStream target_stream(65536);
+                target_stream.out_copy_bytes(sctrl_header);
+                target_stream.out_copy_bytes(this->stream_bitmaps);
+                target_stream.mark_end();
+
+                BStream x224_header(256);
+                BStream mcs_header(256);
+                BStream sec_header(256);
+
+                SEC::Sec_Send sec( sec_header
+                                 , target_stream
+                                 , 0
+                                 , this->encrypt
+                                 , this->encryptionLevel
+                                 );
+                MCS::SendDataIndication_Send mcs( mcs_header
+                                                , this->userid
+                                                , GCC::MCS_GLOBAL_CHANNEL
+                                                , 1
+                                                , 3
+                                                , sec_header.size() + target_stream.size()
+                                                , MCS::PER_ENCODING
+                                                );
+                X224::DT_TPDU_Send( x224_header
+                                  , mcs_header.size() + sec_header.size() + target_stream.size()
+                                  );
+                this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+            }
+            else {
+                if (this->ini.globals.debug.primary_orders > 3){
+                    LOG(LOG_INFO, "GraphicsUpdatePDU::flush_bitmaps: fast-path");
+                }
+
+                this->stream_bitmaps.mark_end();
+                SubStream Upd_s(this->stream_bitmaps, 0, FastPath::Update_Send::GetSize());
+
+                FastPath::Update_Send Upd( Upd_s
+                                         , this->stream_bitmaps.size() - FastPath::Update_Send::GetSize()
+                                         , FastPath::FASTPATH_UPDATETYPE_BITMAP
+                                         , FastPath::FASTPATH_FRAGMENT_SINGLE);
+
+                BStream fastpath_header(256);
+
+                FastPath::ServerUpdatePDU_Send SvrUpdPDU(
+                      fastpath_header
+                    , this->stream_bitmaps
+                    , ((this->encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                    , this->encrypt
+                    );
+
+                this->trans->send(fastpath_header, this->stream_bitmaps);
+            }
+
+            this->bitmap_count = 0;
+            this->stream_bitmaps.reset();
+            this->init_bitmaps();
         }
     }
 };
