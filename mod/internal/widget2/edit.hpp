@@ -36,9 +36,9 @@ public:
     int w_text;
     int h_text;
     int cursor_color;
-    int border_color_top_left;
-    int border_color_bottom_right;
-    int border_color_bottom_right_inner;
+    int border_top_left_color;
+    int border_right_bottom_color;
+    int border_right_bottom_color_inner;
 
     WidgetEdit(ModApi* drawable, int16_t x, int16_t y, uint16_t cx,
                Widget2* parent, NotifyApi* notifier, const char * text,
@@ -49,9 +49,9 @@ public:
     , w_text(0)
     , h_text(0)
     , cursor_color(0x888888)
-    , border_color_top_left(0x444444)
-    , border_color_bottom_right(0xEEEEEE)
-    , border_color_bottom_right_inner(0x888888)
+    , border_top_left_color(0x444444)
+    , border_right_bottom_color(0xEEEEEE)
+    , border_right_bottom_color_inner(0x888888)
     {
         if (text) {
             this->buffer_size = strlen(text);
@@ -121,6 +121,11 @@ public:
         this->cursor_px_pos = this->w_text;
     }
 
+    const char * get_text() const
+    {
+        return this->label.get_text();
+    }
+
     void set_edit_x(int x)
     {
         this->rect.x = x;
@@ -157,14 +162,14 @@ public:
         this->set_edit_cy(h);
     }
 
-    virtual bool focus(Widget2* old_focused)
+    virtual bool focus(Widget2* old_focused, int policy = 0)
     {
         if (this->drawable) {
             this->drawable->begin_update();
             this->draw_cursor(this->get_cursor_rect());
             this->drawable->end_update();
         }
-        return Widget2::focus(old_focused);
+        return Widget2::focus(old_focused, policy);
     }
 
     virtual void blur()
@@ -187,25 +192,25 @@ public:
         //top
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy(), this->cx() - 1, 1
-        )), this->border_color_top_left), this->rect);
+        )), this->border_top_left_color), this->rect);
         //left
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + 1, 1, this->cy() - 2
-        )), this->border_color_top_left), this->rect);
+        )), this->border_top_left_color), this->rect);
         //right
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
-        )), this->border_color_bottom_right), this->rect);
+        )), this->border_right_bottom_color), this->rect);
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 2, this->dy() + 1, 1, this->cy() - 3
-        )), this->border_color_bottom_right_inner), this->rect);
+        )), this->border_right_bottom_color_inner), this->rect);
         //bottom
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
-        )), this->border_color_bottom_right), this->rect);
+        )), this->border_right_bottom_color), this->rect);
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
-        )), this->border_color_bottom_right_inner), this->rect);
+        )), this->border_right_bottom_color_inner), this->rect);
     }
 
     Rect get_cursor_rect() const

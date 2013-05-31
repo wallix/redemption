@@ -55,7 +55,7 @@ public:
     FocusPropagation()
     {}
 
-    void active_focus(Widget2 * screen, Widget2 * new_focused)
+    void active_focus(Widget2 * screen, Widget2 * new_focused, int policy = 0)
     {
         Widget2 * w2 = new_focused->parent;
         if (0 == w2) {
@@ -79,10 +79,10 @@ public:
                         if (std::find<>(&this->focus_parents[0], last, w2) != last) {
                             for (size_t n = this->new_focus_parents.size() - 1; n > 0; --n) {
                                 if (this->new_focus_parents[n]->widget_with_focus != this->new_focus_parents[n-1]) {
-                                    this->new_focus_parents[n]->switch_focus_with(this->new_focus_parents[n-1]);
+                                    this->new_focus_parents[n]->switch_focus_with(this->new_focus_parents[n-1], policy);
                                 }
                                 else if (false == this->new_focus_parents[n]->has_focus) {
-                                    this->new_focus_parents[n-1]->focus(0);
+                                    this->new_focus_parents[n-1]->focus(0, policy);
                                 }
                             }
                             break;
@@ -114,7 +114,9 @@ public:
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
-        Widget2 * w = this->child_at_pos(x, y);
+        Widget2 * tmp_widget_with_focus = this->widget_with_focus;
+        bool same_window = this->widget_with_focus && this->widget_with_focus->rect.contains_pt(x, y);
+        Widget2 * w = same_window ? this->widget_with_focus->widget_at_pos(x, y) : this->child_at_pos(x, y);
         if (device_flags == MOUSE_FLAG_BUTTON1) {
             if (this->widget_pressed && w != this->widget_pressed) {
                 this->widget_pressed->rdp_input_mouse(device_flags, x, y, keymap);
@@ -126,7 +128,10 @@ public:
         if (w) {
             if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
                 this->widget_pressed = w;
-                focus_propagation.active_focus(this, w);
+                focus_propagation.active_focus(this, w, 2);
+                if (!same_window && tmp_widget_with_focus->focus_flag != Widget2::FORCE_FOCUS) {
+                    w->refresh(tmp_widget_with_focus->rect);
+                }
             }
             w->rdp_input_mouse(device_flags, x, y, keymap);
         }

@@ -32,8 +32,14 @@ public:
     WidgetLabel titlebar;
     WidgetButton button_close;
     int bg_color;
-    int active_border_color;
-    int inactive_border_color;
+    int active_border_top_left_color;
+    int active_border_top_left_color_inner;
+    int active_border_right_bottom_color;
+    int active_border_right_bottom_color_inner;
+    int inactive_border_top_left_color;
+    int inactive_border_top_left_color_inner;
+    int inactive_border_right_bottom_color;
+    int inactive_border_right_bottom_color_inner;
 
     Window(ModApi* drawable, const Rect& rect, Widget2* parent, NotifyApi* notifier,
            const char * caption, int bgcolor = DARK_WABGREEN, int group_id = 0)
@@ -41,8 +47,14 @@ public:
     , titlebar(drawable, 2, 2, this, NULL, caption, false, -1, WHITE, WABGREEN, 5)
     , button_close(drawable, 2, 2, this, this, "X", true, -2, WHITE, DARK_GREEN, 0, -1, NOTIFY_CANCEL)
     , bg_color(bgcolor)
-    , active_border_color(0xCCCCCC)
-    , inactive_border_color(0x888888)
+    , active_border_top_left_color(0xEEEEEE)
+    , active_border_top_left_color_inner(0xEEEEEE)
+    , active_border_right_bottom_color(0x666666)
+    , active_border_right_bottom_color_inner(0x888888)
+    , inactive_border_top_left_color(0x888888)
+    , inactive_border_top_left_color_inner(0x888888)
+    , inactive_border_right_bottom_color(0x888888)
+    , inactive_border_right_bottom_color_inner(0x888888)
     {
         this->child_list.push_back(&this->titlebar);
         this->child_list.push_back(&this->button_close);
@@ -78,55 +90,78 @@ public:
         this->WidgetComposite::draw(inner_window);
         this->WidgetComposite::draw_inner_free(inner_window, this->bg_color);
 
-        this->draw_border(clip, this->has_focus ? this->active_border_color : this->inactive_border_color);
+        if (this->has_focus) {
+            this->draw_border(clip,
+                              this->active_border_top_left_color,
+                              this->active_border_top_left_color_inner,
+                              this->active_border_right_bottom_color,
+                              this->active_border_right_bottom_color_inner);
+        }
+        else {
+            this->draw_border(clip,
+                              this->inactive_border_top_left_color,
+                              this->inactive_border_top_left_color_inner,
+                              this->inactive_border_right_bottom_color,
+                              this->inactive_border_right_bottom_color_inner);
+        }
     }
 
-    void draw_border(const Rect& clip, int border_color)
+    void draw_border(const Rect& clip,
+                     int border_top_left_color, int border_top_left_color_inner,
+                     int border_right_bottom_color, int border_right_bottom_color_inner)
     {
         //top
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy(), this->cx(), 1
-        )), border_color), this->rect);
+        )), border_top_left_color), this->rect);
         //left
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + 1, 1, this->cy() - 2
-        )), border_color), this->rect);
+        )), border_top_left_color), this->rect);
         //right
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 1, this->dy() + 1, 1, this->cy() - 2
-        )), border_color), this->rect);
+        )), border_right_bottom_color), this->rect);
         //bottom
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
-        )), border_color), this->rect);
+        )), border_right_bottom_color), this->rect);
 
         //top
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + 1, this->dy() + 1, this->cx() - 2, 1
-        )), this->inactive_border_color), this->rect);
+        )), border_top_left_color_inner), this->rect);
         //left
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + 1, this->dy() + 2, 1, this->cy() - 4
-        )), this->inactive_border_color), this->rect);
+        )), border_top_left_color_inner), this->rect);
         //right
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 2, this->dy() + 2, 1, this->cy() - 4
-        )), this->inactive_border_color), this->rect);
+        )), border_right_bottom_color_inner), this->rect);
         //bottom
         this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
-        )), this->inactive_border_color), this->rect);
+        )), border_right_bottom_color_inner), this->rect);
     }
 
-    virtual bool focus(Widget2* old_focused)
+    virtual bool focus(Widget2* old_focused, int policy = 0)
     {
-        this->draw_border(this->rect, this->active_border_color);
-        return WidgetComposite::focus(old_focused);
+        this->draw_border(this->rect,
+                          this->active_border_top_left_color,
+                          this->active_border_top_left_color_inner,
+                          this->active_border_right_bottom_color,
+                          this->active_border_right_bottom_color_inner);
+        return WidgetComposite::focus(old_focused, policy);
     }
 
     virtual void blur()
     {
-        this->draw_border(this->rect, this->inactive_border_color);
+        this->draw_border(this->rect,
+                          this->inactive_border_top_left_color,
+                          this->inactive_border_top_left_color_inner,
+                          this->inactive_border_right_bottom_color,
+                          this->inactive_border_right_bottom_color_inner);
         WidgetComposite::blur();
     }
 };

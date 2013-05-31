@@ -32,42 +32,62 @@ class SelectorMod : public InternalMod, public NotifyApi
     int current_page;
     int number_page;
 
-    char selector_current_page[16];
-    char selector_number_of_pages[16];
-
     Inifile & ini;
+
+    struct temporary_buffer {
+        char buffer[16];
+    };
+
+    struct temporary_login {
+        char buffer[256];
+
+        temporary_login(Inifile& ini) {
+            buffer[0] = 0;
+            sprintf(buffer, "%s@%s", ini.globals.auth_user, ini.globals.host);
+        }
+    };
 
 public:
     SelectorMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
     : InternalMod(front, width, height)
-    , selector(this, "bidule", width, height, this, NULL, NULL)
-    , current_page(0)
-    , number_page(0)
+    , selector(this, temporary_login(ini).buffer, width, height, this,
+               ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE,
+                                     temporary_buffer().buffer, sizeof(temporary_buffer)),
+               ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES,
+                                     temporary_buffer().buffer, sizeof(temporary_buffer)),
+               ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0),
+               ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER, NULL, 0)
+              )
+    , current_page(atoi(this->selector.current_page.get_text()))
+    , number_page(atoi(this->selector.number_page.get_text()))
     , ini(ini)
     {
-        this->refresh_context();
+        this->refresh_device();
 
         //BEGIN TEST
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
-        this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
+//         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
         //END TEST
+
+        this->selector.set_widget_focus(&this->selector.group_lines);
+        this->screen.set_widget_focus(&this->selector);
 
         this->selector.refresh(this->selector.rect);
     }
@@ -75,75 +95,109 @@ public:
     virtual ~SelectorMod()
     {}
 
-    virtual void notify(Widget2* sender, notify_event_t event,
+    void ask_page()
+    {
+        this->ini.context_ask(AUTHID_SELECTOR);
+        char buffer[32];
+        sprintf(buffer, "%u", (unsigned int)this->current_page);
+        this->ini.context_set_value(AUTHID_SELECTOR_CURRENT_PAGE, buffer);
+        this->ini.context_set_value(AUTHID_SELECTOR_GROUP_FILTER,
+                                    this->selector.filter_group.get_text());
+        this->ini.context_set_value(AUTHID_SELECTOR_DEVICE_FILTER,
+                                    this->selector.filter_device.get_text());
+        this->ini.context_ask(AUTHID_TARGET_USER);
+        this->ini.context_ask(AUTHID_TARGET_DEVICE);
+        this->ini.context_ask(AUTHID_SELECTOR);
+        this->signal = BACK_EVENT_REFRESH;
+        this->event.set();
+    }
+
+    virtual void notify(Widget2* widget, notify_event_t event,
                         long unsigned int param, long unsigned int param2)
     {
-        if (NOTIFY_SUBMIT == event) {
-            if (sender == &this->selector.logout) {
-                this->ini.context_ask(AUTHID_AUTH_USER);
-                this->ini.context_ask(AUTHID_PASSWORD);
-                this->ini.context_ask(AUTHID_TARGET_USER);
-                this->ini.context_ask(AUTHID_TARGET_DEVICE);
-                this->ini.context_ask(AUTHID_SELECTOR);
+        if (NOTIFY_CANCEL == event) {
+            this->ini.context_ask(AUTHID_AUTH_USER);
+            this->ini.context_ask(AUTHID_PASSWORD);
+            this->ini.context_ask(AUTHID_TARGET_USER);
+            this->ini.context_ask(AUTHID_TARGET_DEVICE);
+            this->ini.context_ask(AUTHID_SELECTOR);
+            this->signal = BACK_EVENT_NEXT;
+            this->event.set();
+        }
+        else if (NOTIFY_SUBMIT == event) {
+            if (widget == &this->selector.connect
+             || widget->group_id == this->selector.device_lines.group_id) {
+                char buffer[1024];
+                sprintf(buffer, "%s:%s",
+                        this->selector.device_lines.get_current_index(),
+                        this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0));
+                this->ini.parse_username(buffer);
                 this->signal = BACK_EVENT_NEXT;
                 this->event.set();
             }
-            else if (sender == &this->selector.connect) {
+            else if (widget->group_id == this->selector.apply.group_id) {
+                this->ask_page();
             }
-            else if (sender == &this->selector.apply
-                || sender == &this->selector.filter_account_device
-                || sender == &this->selector.filter_device_group
-            ) {
-            }
-            else if (sender == &this->selector.first_page) {
+            else if (widget == &this->selector.first_page) {
                 if (this->current_page > 1) {
                     this->current_page = 1;
+                    this->ask_page();
                 }
             }
-            else if (sender == &this->selector.prev_page) {
+            else if (widget == &this->selector.prev_page) {
                 if (this->current_page > 0) {
                     --this->current_page;
+                    this->ask_page();
                 }
             }
-            else if (sender == &this->selector.current_page) {
-                int page = atoi(this->selector.current_page.label.buffer);
-                if (page != this->current_page) {
+            else if (widget == &this->selector.current_page) {
+                int page = atoi(this->selector.current_page.get_text());
+                if (page != this->current_page && page <= this->number_page) {
                     this->current_page = page;
+                    this->ask_page();
                 }
             }
-            else if (sender == &this->selector.next_page) {
+            else if (widget == &this->selector.next_page) {
                 if (this->current_page < this->number_page) {
                     ++this->current_page;
+                    this->ask_page();
                 }
             }
-            else if (sender == &this->selector.last_page) {
+            else if (widget == &this->selector.last_page) {
                 if (this->current_page < this->number_page) {
                     this->current_page = this->number_page;
+                    this->ask_page();
                 }
             }
         }
     }
 
-    void refresh_context()
+    virtual void refresh_context(Inifile& ini)
     {
-        const char * s = this->ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0);
-        if (*s) {
-            this->selector.filter_device_group.set_text(s);
-        }
+        this->selector.filter_device.set_text(
+            this->ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0));
+        this->selector.filter_group.set_text(
+            this->ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER, NULL, 0));
 
-        s = this->ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER, NULL, 0);
-        if (*s) {
-            this->selector.filter_account_device.set_text(s);
-        }
+        char buffer[16];
+        ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE, buffer, sizeof(buffer));
+        this->selector.current_page.set_text(buffer);
+        this->current_page = atoi(buffer);
 
-        s = ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE, this->selector_current_page, sizeof(this->selector_current_page));
-        this->selector.current_page.set_text(s);
-        this->current_page = atoi(s);
+        ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES, buffer, sizeof(buffer));
+        this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
+        this->number_page = atoi(buffer);
 
-        s = ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES, this->selector_number_of_pages, sizeof(this->selector_number_of_pages));
-        this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(s).buffer);
-        this->number_page = atoi(s);
+        this->selector.group_lines.clear();
+        this->selector.device_lines.clear();
+        this->selector.close_time_lines.clear();
+        this->selector.protocol_lines.clear();
 
+        this->refresh_device();
+    }
+
+    void refresh_device()
+    {
         char * groups    = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0));
         char * targets   = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0));
         char * protocols = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0));
@@ -186,8 +240,8 @@ public:
             endtimes += size_endtimes + 1;
         }
 
-        this->selector.account_device_lines.init_current_index(0);
-        this->selector.device_group_lines.init_current_index(0);
+        this->selector.group_lines.init_current_index(0);
+        this->selector.device_lines.init_current_index(0);
         this->selector.close_time_lines.init_current_index(0);
         this->selector.protocol_lines.init_current_index(0);
     }
@@ -201,21 +255,6 @@ public:
         return p - list;
     }
 
-    virtual void rdp_input_invalidate(const Rect& r)
-    {
-        this->selector.rdp_input_invalidate(r);
-    }
-
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
-    {
-        this->selector.rdp_input_mouse(device_flags, x, y, keymap);
-    }
-
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
-        this->selector.rdp_input_scancode(param1, param2, param3, param4, keymap);
-    }
-
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     {}
 
@@ -223,12 +262,6 @@ public:
     {
         this->event.reset();
         return this->signal;
-    }
-
-    virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
-    {
-        TODO("bgcolor <-> fgcolor")
-        this->front.server_draw_text(x, y, text, bgcolor, fgcolor, clip);
     }
 };
 
