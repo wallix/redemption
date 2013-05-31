@@ -397,6 +397,7 @@ struct RDPSerializer : public RDPGraphicDevice
         this->bitmap_count++;
     }
 
+/*
     virtual void draw(const RDPBitmapData & data, const Bitmap & bmp) {
         BStream comp_bmp_data(65535);
         bmp.compress(comp_bmp_data);
@@ -411,6 +412,13 @@ struct RDPSerializer : public RDPGraphicDevice
 
         new_data.emit(this->stream_bitmaps);
         this->stream_bitmaps.out_copy_bytes(comp_bmp_data.data, comp_bmp_data.size());
+    }
+*/
+    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size) {
+        this->reserve_bitmap(bitmap_data.struct_size() + size);
+
+        bitmap_data.emit(this->stream_bitmaps);
+        this->stream_bitmaps.out_copy_bytes(data, size);
     }
 };
 
