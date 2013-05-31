@@ -28,7 +28,10 @@ class Cover:
             modulename = module.split('/')[-1]
             modulepath = '/'.join(module.split('/')[:-1])+'/'
             
-        res = subprocess.Popen(["bjam", "coverage", "test_%s" % modulename], stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
+            
+        cmd = ["bjam", "coverage", "test_%s" % modulename]
+        print " ".join(cmd)
+        res = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
     #    print res
     #gcov --all-blocks --branch-count --branch-probabilities --function-summaries -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
         cmd = ["gcov", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "-o", "bin/%s/coverage/%s%stest_%s.gcno" % (GCCVERSION, TESTSSUBDIR, modulepath if TESTSSUBDIR else '', modulename), "bin/%s/coverage/test_%s" % (GCCVERSION, modulename)]
@@ -37,7 +40,7 @@ class Cover:
     #    print res
         
         extension = '.hpp'
-        if module[-2:] == '.h':
+        if '/rio/' in module:
             extension = '.h'
 
         uncovered = 0
@@ -64,12 +67,12 @@ class Cover:
     def coverall(self):
         target = open("coverage.summary", "w")
         for line in open("./tools/coverage.reference"):
-            res = re.match(r'^([/A-Aa-z0-9]+)\s+(\d+)\s+(\d+)', line)
+            res = re.match(r'^([/A-Aa-z0-9_]+)\s+(\d+)\s+(\d+)', line)
             if res:
                 module, covered, total = res.group(1, 2, 3)
                 print module
                 extension = '.hpp'
-                if module[-2:] == '.h':
+                if '/rio/' in module:
                     extension = '.h'
                 covered = int(covered)
                 total = int(total)
@@ -92,6 +95,8 @@ class Cover:
                     except IOError:
                         for i in range(0, 100):
                             print module, ' #####: %u: NO COVERAGE' % i
+            else:
+                print "Line '%s' does not match" % line
 cover = Cover()
 if sys.argv[1] == 'all':
     cover.coverall()

@@ -10,7 +10,6 @@ core/mcs 100 100
 core/gcc 100 100
 core/lic 100 100
 core/sec 100 100
-
 transport/inbymetasequencetransport 100 100
 transport/outfilenametransport 100 100
 transport/transport 100 100
@@ -20,31 +19,30 @@ transport/outmetatransport 100 100
 transport/testtransport 100 100
 transport/outfiletransport 100 100
 transport/sockettransport 100 100
-
-transport/rio/rio_cryptooutmeta.h
-transport/rio/rio_cryptoinfilename.h
-transport/rio/rio_socket.h
-transport/rio/rio_infile.h
-transport/rio/sq_one.h
-transport/rio/sq_cryptoouttracker.h
-transport/rio/rio_test.h
-transport/rio/rio_impl.h
-transport/rio/rio_outfile.h
-transport/rio/rio_infilename.h
-transport/rio/sq_outfilename.h
-transport/rio/rio_generator.h
-transport/rio/rio_inmeta.h
-transport/rio/sq_intracker.h
-transport/rio/sq_inmeta.h
-transport/rio/rio_insequence.h
-transport/rio/rio_check.h
-transport/rio/rio_outfilename.h
-transport/rio/rio_crypto.h
-transport/rio/rio_cryptooutfilename.h
-transport/rio/rio.h
-transport/rio/sq_cryptooutfilename.h
-transport/rio/sq_outtracker.h
-transport/rio/rio_outsequence.h
-transport/rio/rio_outmeta.h
-transport/rio/rio_socket_TLS.h
-
+#transport/rio/rio_cryptooutmeta 100 100
+#transport/rio/rio_cryptoinfilename 100 100
+transport/rio/rio_socket 100 100
+transport/rio/rio_infile 100 100
+transport/rio/sq_one 100 100
+#transport/rio/sq_cryptoouttracker 100 100
+transport/rio/rio_test 100 100
+transport/rio/rio_impl 100 100
+transport/rio/rio_outfile 100 100
+transport/rio/rio_infilename 100 100
+transport/rio/sq_outfilename 100 100
+transport/rio/rio_generator 100 100
+transport/rio/rio_inmeta 100 100
+transport/rio/sq_intracker 100 100
+transport/rio/sq_inmeta 100 100
+transport/rio/rio_insequence 100 100
+transport/rio/rio_check 100 100
+transport/rio/rio_outfilename 100 100
+transport/rio/rio_crypto 100 100
+#transport/rio/rio_cryptooutfilename 100 100
+transport/rio/rio_socket 100 100
+transport/rio/rio 100 100
+#transport/rio/sq_cryptooutfilename 100 100
+transport/rio/sq_outtracker 100 100
+transport/rio/rio_outsequence 100 100
+transport/rio/rio_outmeta 100 100
+transport/rio/rio_socket_TLS 100 100
