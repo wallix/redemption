@@ -115,6 +115,8 @@ struct RDPSerializer : public RDPGraphicDevice
     Stream & stream_orders;
     Stream & stream_bitmaps;
 
+    uint8_t bpp;
+
     Transport * trans;
     const Inifile & ini;
     const int bitmap_cache_version;
@@ -134,7 +136,6 @@ struct RDPSerializer : public RDPGraphicDevice
     // state variables for gathering batch of orders
     size_t order_count;
     size_t chunk_flags;
-    uint32_t offset_order_count;
     BmpCache & bmp_cache;
 
     size_t bitmap_count;
@@ -151,6 +152,7 @@ struct RDPSerializer : public RDPGraphicDevice
     : RDPGraphicDevice()
     , stream_orders(stream_orders)
     , stream_bitmaps(stream_bitmaps)
+    , bpp(bpp)
     , trans(trans)
     , ini(ini)
     , bitmap_cache_version(bitmap_cache_version)
@@ -169,7 +171,6 @@ struct RDPSerializer : public RDPGraphicDevice
                 , Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t *)"")
     // state variables for a batch of orders
     , order_count(0)
-    , offset_order_count(0)
     , bmp_cache(bmp_cache)
     , bitmap_count(0) {}
 
@@ -368,7 +369,7 @@ struct RDPSerializer : public RDPGraphicDevice
     // check if the next bitmap will fit in available packet size
     // if not send previous bitmaps we got and init a new packet
     void reserve_bitmap(size_t asked_size) {
-        size_t max_packet_size = std::min(this->stream_bitmaps.capacity, (size_t)16384);
+        size_t max_packet_size = std::min(this->stream_bitmaps.capacity, (size_t)16384 * 3);
         size_t used_size       = this->stream_bitmaps.get_offset();
         if (this->ini.globals.debug.primary_orders > 3) {
             LOG( LOG_INFO
@@ -397,23 +398,19 @@ struct RDPSerializer : public RDPGraphicDevice
     }
 
     virtual void draw(const RDPBitmapData & data, const Bitmap & bmp) {
-        // estLeft (2 bytes) + destTop (2 bytes) + destRight (2 bytes) +
-        //     destBottom (2 bytes) + width (2 bytes) + height (2 bytes) +
-        //     bitsPerPixel (2 bytes) + flags (2 bytes) +
-        //     bitmapLength (2 bytes) + bitmapComprHdr (8 bytes) = (26 bytes)
-        //
-        // Can throw ERR_STREAM_MEMORY_TOO_SMALL.
-        this->reserve_bitmap(26 + bmp.bmp_size);
+        BStream comp_bmp_data(65535);
+        bmp.compress(comp_bmp_data);
+        comp_bmp_data.mark_end();
 
-        SubStream bitmap_data_stream( this->stream_bitmaps
-                                    , this->stream_bitmaps.get_offset() + 26
-                                    , bmp.bmp_size);
-        // Can throw ERR_STREAM_MEMORY_TOO_SMALL.
-        bmp.compress_secure(bitmap_data_stream);
+        this->reserve_bitmap(18 + comp_bmp_data.size());
 
-        data.emit(this->stream_bitmaps);
+        RDPBitmapData new_data = data;
 
-        this->stream_bitmaps.p += bitmap_data_stream.get_offset();
+        new_data.flags          = 0x0401;
+        new_data.bitmap_length  = comp_bmp_data.size();
+
+        new_data.emit(this->stream_bitmaps);
+        this->stream_bitmaps.out_copy_bytes(comp_bmp_data.data, comp_bmp_data.size());
     }
 };
 

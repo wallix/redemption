@@ -73,6 +73,10 @@
 // updateType (2 bytes): A 16-bit, unsigned integer. The update type. This
 //  field MUST be set to UPDATETYPE_BITMAP (0x0001).
 
+enum {
+      UPDATETYPE_BITMAP = 0x0001
+};
+
 // numberRectangles (2 bytes): A 16-bit, unsigned integer. The number of
 //  screen rectangles present in the rectangles field.
 
@@ -296,6 +300,46 @@ struct RDPBitmapData {
         }
 
         return this->bitmap_length;
+    }
+
+    void log(int level, const char * message) const {
+        if (    (this->flags & BITMAP_COMPRESSION)
+            && !(this->flags & NO_BITMAP_COMPRESSION_HDR)) {
+            LOG( level
+               , "%s: BitmapUpdate(destLeft=%u, destTop=%u, destRight=%u, destBottom=%u, "
+                 "width=%u, height=%u, bitsPerPixel=%u, flags=0x%04X, bitmapLength=%u, "
+                 "cbCompMainBodySize=%u, cbScanWidth=%u, cbUncompressedSize=%u)"
+               , message
+               , this->dest_left
+               , this->dest_top
+               , this->dest_right
+               , this->dest_bottom
+               , this->width
+               , this->height
+               , this->bits_per_pixel
+               , this->flags
+               , this->bitmap_length
+               , this->cb_comp_main_body_size
+               , this->cb_scan_width
+               , this->cb_uncompressed_size
+               );
+        }
+        else {
+            LOG( level
+               , "%s: BitmapUpdate(destLeft=%u, destTop=%u, destRight=%u, destBottom=%u, "
+                 "width=%u, height=%u, bitsPerPixel=%u, flags=0x%04X, bitmapLength=%u)"
+               , message
+               , this->dest_left
+               , this->dest_top
+               , this->dest_right
+               , this->dest_bottom
+               , this->width
+               , this->height
+               , this->bits_per_pixel
+               , this->flags
+               , this->bitmap_length
+               );
+        }
     }
 };  // struct RDPBitmapData
 

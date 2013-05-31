@@ -519,6 +519,8 @@ public:
         if (this->order_level == 0){
             this->orders->flush_orders();
         }
+
+        this->orders->flush_bitmaps();
     }
 
     void disconnect() throw (Error)
