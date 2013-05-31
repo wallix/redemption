@@ -42,14 +42,18 @@ class Cover:
 
         uncovered = 0
         total = 0
-        for line in open("./%s%s.gcov" % (modulename, extension)):
-            res = re.match(r'^\s+#####[:]', line)
-            if res:
-                uncovered += 1
-                total += 1
-            res = re.match(r'^\s+\d+[:]', line)
-            if res:
-                total += 1
+        try:
+            for line in open("./%s%s.gcov" % (modulename, extension)):
+                res = re.match(r'^\s+#####[:]', line)
+                if res:
+                    uncovered += 1
+                    total += 1
+                res = re.match(r'^\s+\d+[:]', line)
+                if res:
+                    total += 1
+        except IOError:
+            total = 100
+            uncovered = 100
         
         self.results[module] = ((total - uncovered), total)
 
@@ -80,11 +84,14 @@ class Cover:
                     target.write("Lower coverage for module %s : old %d/%d new %d/%d\n" % (module, 
                         covered, total, 
                         self.results[module][0], self.results[module][1]))
-                    for line in open("./coverage/%s/%s%s.gcov" % (module, module.split('/')[-1], extension)):
-                        res = re.match(r'^\s+#####[:]', line)
-                        if res:
-                            print module, ' ', line
-
+                    try:
+                        for line in open("./coverage/%s/%s%s.gcov" % (module, module.split('/')[-1], extension)):
+                            res = re.match(r'^\s+#####[:]', line)
+                            if res:
+                                print module, ' ', line
+                    except IOError:
+                        for i in range(0, 100):
+                            print module, ' #####: %u: NO COVERAGE' % i
 cover = Cover()
 if sys.argv[1] == 'all':
     cover.coverall()
