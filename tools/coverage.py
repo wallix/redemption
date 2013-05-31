@@ -27,18 +27,22 @@ class Cover:
         if '/' in module:
             modulename = module.split('/')[-1]
             modulepath = '/'.join(module.split('/')[:-1])+'/'
-            
-            
+
+
         cmd = ["bjam", "coverage", "test_%s" % modulename]
         print " ".join(cmd)
         res = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
+
+        if '/widget2/' in module:
+            modulename = modulename.replace('widget2_', '')
+
     #    print res
     #gcov --all-blocks --branch-count --branch-probabilities --function-summaries -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
         cmd = ["gcov", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "-o", "bin/%s/coverage/%s%stest_%s.gcno" % (GCCVERSION, TESTSSUBDIR, modulepath if TESTSSUBDIR else '', modulename), "bin/%s/coverage/test_%s" % (GCCVERSION, modulename)]
         print " ".join(cmd)
         res = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
     #    print res
-        
+
         extension = '.hpp'
         if '/rio/' in module:
             extension = '.h'
@@ -57,7 +61,7 @@ class Cover:
         except IOError:
             total = 100
             uncovered = 100
-        
+
         self.results[module] = ((total - uncovered), total)
 
         os.system("mkdir -p coverage/%s" % module)
@@ -79,13 +83,13 @@ class Cover:
                 self.cover(module)
                 # if coverage percentage is lower
                 if (self.results[module][0] * 100 / self.results[module][1]) < (covered * 100 / total):
-                    print("Lower coverage for module %s : old %d/%d new %d/%d" % (module, 
-                        covered, total, 
+                    print("Lower coverage for module %s : old %d/%d new %d/%d" % (module,
+                        covered, total,
                         self.results[module][0], self.results[module][1]))
                     target.write("%s: %d%s (%d / %d)\n" % ((
                         module, self.results[module][0] * 100.0 / self.results[module][1], "%") + self.results[module]))
-                    target.write("Lower coverage for module %s : old %d/%d new %d/%d\n" % (module, 
-                        covered, total, 
+                    target.write("Lower coverage for module %s : old %d/%d new %d/%d\n" % (module,
+                        covered, total,
                         self.results[module][0], self.results[module][1]))
                     try:
                         for line in open("./coverage/%s/%s%s.gcov" % (module, module.split('/')[-1], extension)):

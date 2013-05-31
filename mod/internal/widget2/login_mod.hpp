@@ -23,14 +23,12 @@
 
 #include "front_api.hpp"
 #include "config.hpp"
-#include "screen.hpp"
 #include "window_login.hpp"
 #include "image.hpp"
 #include "internal_mod.hpp"
 
 class LoginMod : public InternalMod, public NotifyApi
 {
-    WidgetScreen screen;
     WindowLogin window_login;
     WidgetImage image;
 
@@ -40,7 +38,6 @@ public:
 public:
     LoginMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
     : InternalMod(front, width, height)
-    , screen(this, width, height)
     , window_login(this, 0, 0, &this->screen, this, VERSION, 0, 0, 0, BLACK, GREY,
                    ini.globals.translation.button_ok,
                    ini.globals.translation.button_cancel,
@@ -129,21 +126,6 @@ public:
         }
     }
 
-    virtual void rdp_input_invalidate(const Rect& r)
-    {
-        this->screen.rdp_input_invalidate(r);
-    }
-
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
-    {
-        this->screen.rdp_input_mouse(device_flags, x, y, keymap);
-    }
-
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
-        this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
-    }
-
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     {}
 
@@ -151,12 +133,6 @@ public:
     {
         this->event.reset();
         return this->signal;
-    }
-
-    virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
-    {
-        TODO("bgcolor <-> fgcolor")
-        this->front.server_draw_text(x, y, text, bgcolor, fgcolor, clip);
     }
 };
 

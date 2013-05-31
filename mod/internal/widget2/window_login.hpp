@@ -58,9 +58,9 @@ public:
     , login_edit(drawable, 0, 0, 350, this, this, login, -12, BLACK, WHITE, -1u, 1, 1)
     , password_label(drawable, this->img.cx() + 20, 0, this, NULL, label_text_password, true, -13, fgcolor, bgcolor)
     , password_edit(drawable, 0, 0, 350, this, this, password, -14, BLACK, WHITE, -1u, 1, 1)
-    , ok(drawable, 0, 0, this, this, button_text_ok, true, -15, BLACK, WHITE, 6, 2)
-    , cancel(drawable, 0, 0, this, this, button_text_cancel, true, -16, BLACK, WHITE, 6, 2, NOTIFY_CANCEL)
-    , help(drawable, 0, 0, this, this, button_text_help, true, -17, BLACK, WHITE, 6, 2)
+    , ok(drawable, 0, 0, this, this, button_text_ok, true, -15, BLACK, GREY, 6, 2)
+    , cancel(drawable, 0, 0, this, this, button_text_cancel, true, -16, BLACK, GREY, 6, 2, NOTIFY_CANCEL)
+    , help(drawable, 0, 0, this, this, button_text_help, true, -17, BLACK, GREY, 6, 2)
     , window_help(NULL)
     {
         this->child_list.push_back(&this->login_edit);
@@ -72,12 +72,25 @@ public:
         this->child_list.push_back(&this->help);
         this->child_list.push_back(&this->img);
 
+        this->ok.border_top_left_color = WHITE;
+        this->cancel.border_top_left_color = WHITE;
+        this->help.border_top_left_color = WHITE;
+
         x = this->dx() + 12;
         this->img.rect.x = x;
         x += this->img.cx() + std::max(this->login_label.cx(), this->password_label.cx()) + 20;
         this->login_edit.set_edit_x(x);
         this->password_edit.rect.x = x;
         this->rect.cx = x - this->dx() + std::max(this->login_edit.cx(), this->password_edit.cx()) + 14;
+
+        x = std::max(std::max(this->help.cx(), this->cancel.cx()), this->ok.cx());
+        this->ok.label.x_text += (x - this->ok.cx()) / 2;
+        this->cancel.label.x_text += (x - this->cancel.cx()) / 2;
+        this->help.label.x_text += (x - this->help.cx()) / 2;
+        this->ok.set_button_cx(x);
+        this->cancel.set_button_cx(x);
+        this->help.set_button_cx(x);
+
         uint16_t sizex = this->help.cx() + this->cancel.cx() + this->ok.cx() + 40;
         x = this->dx() + (this->cx() - sizex) / 2 + 12;
         this->ok.set_button_x(x);
@@ -143,8 +156,9 @@ public:
                 );
                 this->window_help->focus_flag = Widget2::FORCE_FOCUS;
 
-                this->window_help->ok.label.bg_color = WHITE;
+                this->window_help->ok.label.bg_color = GREY;
                 this->window_help->ok.label.fg_color = BLACK;
+                this->window_help->ok.border_top_left_color = WHITE;
 
                 int x = (p->cx() - this->window_help->cx()) / 2 - this->window_help->dx();
                 int y = (p->cy() - this->window_help->cy()) / 2 - this->window_help->dy();

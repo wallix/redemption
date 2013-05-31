@@ -109,13 +109,15 @@ public:
     virtual ~Widget2()
     {}
 
-    virtual bool next_focus()
+    virtual bool next_focus(int policy = 0)
     {
+        (void)policy;
         return false;
     }
 
-    virtual bool previous_focus()
+    virtual bool previous_focus(int policy = 0)
     {
+        (void)policy;
         return false;
     }
 
@@ -142,14 +144,14 @@ public:
                     std::cout << ("tab") << '\n';
                     keymap->get_kevent();
                     if (this->parent) {
-                        this->parent->next_focus();
+                        this->parent->next_focus(1);
                     }
                     break;
                 case Keymap2::KEVENT_BACKTAB:
                     std::cout << ("backtab") << '\n';
                     keymap->get_kevent();
                     if (this->parent) {
-                        this->parent->previous_focus();
+                        this->parent->previous_focus(1);
                     }
                     break;
                 default:
@@ -207,9 +209,13 @@ public:
         this->rect.cy = h;
     }
 
-    virtual bool focus(Widget2 * old_focused)
+    /**
+     * @param policy  0 = normal ; 1 = focus with keyboard ; 2 = focus with mouse
+     */
+    virtual bool focus(Widget2 * old_focused, int policy = 0)
     {
         (void)old_focused;
+        (void)policy;
         this->send_notify(NOTIFY_FOCUS_BEGIN);
         this->has_focus = true;
         return true;
@@ -221,7 +227,7 @@ public:
         this->has_focus = false;
     }
 
-    void switch_focus_with(Widget2 * new_focused)
+    void switch_focus_with(Widget2 * new_focused, int policy = 0)
     {
         this->old_widget_with_focus = this->widget_with_focus;
         if (this->old_widget_with_focus) {
@@ -230,7 +236,7 @@ public:
         }
         this->widget_with_focus = new_focused;
         std::cout << "focus: " << (typeid(*new_focused).name()) << " " << new_focused << '\n';
-        this->widget_with_focus->focus(this->old_widget_with_focus);
+        this->widget_with_focus->focus(this->old_widget_with_focus, policy);
     }
 
     void set_widget_focus(Widget2 * new_focused)

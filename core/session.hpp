@@ -709,6 +709,12 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'selector'");
                         }
                         this->ini->globals.context.selector_focus = 8; // FOCUS_ON_CONNECT
+//                         this->mod = new SelectorMod(
+//                             *this->ini,
+//                             *this->front,
+//                             this->front->client_info.width,
+//                             this->front->client_info.height
+//                         );
                         this->mod = new selector_mod(
                                         *this->ini,
                                         *this->front,
