@@ -269,8 +269,8 @@ unit-test test_transport : tests/transport/test_transport.cpp openssl crypto z d
 unit-test test_infiletransport : tests/transport/test_infiletransport.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_infiletransport : tests/transport/test_infiletransport.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_infilenametransport : tests/transport/test_infilenametransport.cpp openssl crypto z dl libboost_unit_test ;
-unit-test test_infilenametransport : tests/transport/test_infilenametransport.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+#unit-test test_infilenametransport : tests/transport/test_infilenametransport.cpp openssl crypto z dl libboost_unit_test ;
+#unit-test test_infilenametransport : tests/transport/test_infilenametransport.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_inbymetasequencetransport : tests/transport/test_inbymetasequencetransport.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_inbymetasequencetransport : tests/transport/test_inbymetasequencetransport.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
@@ -284,11 +284,11 @@ unit-test test_outmetatransport : tests/transport/test_outmetatransport.cpp open
 unit-test test_testtransport : tests/transport/test_testtransport.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_testtransport : tests/transport/test_testtransport.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_testtransport : tests/transport/test_outfiletransport.cpp openssl crypto z dl libboost_unit_test ;
-unit-test test_testtransport : tests/transport/test_outfiletransport.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+unit-test test_outfiletransport : tests/transport/test_outfiletransport.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_outfiletransport : tests/transport/test_outfiletransport.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_testtransport : tests/transport/test_sockettransport.cpp openssl crypto z dl libboost_unit_test ;
-unit-test test_testtransport : tests/transport/test_sockettransport.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+unit-test test_sockettransport : tests/transport/test_sockettransport.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_sockettransport : tests/transport/test_sockettransport.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_filetransport : tests/transport/test_filetransport.cpp openssl crypto z dl libboost_unit_test ;
 
