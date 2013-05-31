@@ -417,7 +417,7 @@ struct Inifile {
         unsigned frame_interval; // time between 2 frame captures (in 1/100 seconds)
         unsigned break_interval; // time between 2 wrm movies (in seconds)
         uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
-        unsigned flv_frame_interval; 
+        unsigned flv_frame_interval;
         unsigned ocr_interval;
         unsigned capture_groupid;
 
@@ -655,8 +655,8 @@ struct Inifile {
         this->globals.frame_interval = 40;
         this->globals.break_interval = 600;
         this->globals.flv_break_interval = 600000000l;
-        this->globals.flv_frame_interval = 1000000L; 
-        this->globals.capture_groupid = 33; 
+        this->globals.flv_frame_interval = 1000000L;
+        this->globals.capture_groupid = 33;
 
         this->globals.png_limit = 3;
         this->globals.l_bitrate   = 20000;
@@ -1044,7 +1044,7 @@ struct Inifile {
                 this->globals.client.device_redirection = bool_from_cstr(value);
             }
         }
-        else if (0 == strcmp(context, "video")){ 
+        else if (0 == strcmp(context, "video")){
             if (0 == strcmp(key, "capture_flags")){
                 this->globals.capture_flags   = ulong_from_cstr(value);
                 this->globals.capture_png = 0 != (this->globals.capture_flags & 1);
