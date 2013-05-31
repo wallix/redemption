@@ -295,6 +295,206 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
     const char * source = "10.10.43.13" ;
     const char * dest = "10.10.47.93" ;
     char transparent_target[256] = {};
+    
+    const char first[] = "unknown  2 580 src=10.10.43.13 dst=224.0.0.251 packets=2 bytes=64 [UNREPLIED] src=224.0.0.251 dst=10.10.43.13 packets=0 bytes=0 mark=0 secmark=0 use=2\n";
+    
+    LineBuffer line(fd);
+    int status = line.readline();
+    BOOST_CHECK_EQUAL(status, 1);
+    BOOST_CHECK_EQUAL(0, memcmp(first, &line.buffer[line.begin_line], sizeof(first) - 1));
+    BOOST_CHECK_EQUAL(line.eol - line.begin_line, sizeof(first) - 1);
+    BOOST_CHECK_EQUAL(0, memcmp(first, &line.buffer[line.begin_line], line.eol - line.begin_line));
+
+    line.eow = line.begin_word = line.begin_line;
+    status = line.get_protocol();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(7, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("unknown", &line.buffer[line.begin_word], line.eow - line.begin_word));
+    
+    line.begin_word = line.eow;
+    status = line.get_space();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(2, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("  ", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_protocol_number();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(1, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("2", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_space();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(1, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp(" ", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_ttl_sec();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(3, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("580", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_space();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(1, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp(" ", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+
+    int old_eow = line.begin_word = line.eow;
+    status = line.get_var();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(4, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("src=", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_ip();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(11, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("10.10.43.13", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = old_eow;
+    status = line.get_src_ip();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(15, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("src=10.10.43.13", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_space();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(1, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp(" ", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_dst_ip();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(15, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("dst=224.0.0.251", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    // dst=224.0.0.251 packets=2 bytes=64 [UNREPLIED]
+    line.begin_word = line.eow;
+    status = line.get_space();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(1, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp(" ", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_packets();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(9, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("packets=2", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_space();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(1, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp(" ", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_bytes();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(8, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("bytes=64", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_space();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(1, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp(" ", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_status();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(11, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("[UNREPLIED]", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_space();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(1, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp(" ", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_src_ip();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(15, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("src=224.0.0.251", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_space();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(1, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp(" ", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_dst_ip();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(15, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("dst=10.10.43.13", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    // dst=224.0.0.251 packets=2 bytes=64 [UNREPLIED]
+    line.begin_word = line.eow;
+    status = line.get_space();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(1, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp(" ", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_packets();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(9, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("packets=0", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_space();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(1, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp(" ", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_bytes();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(7, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("bytes=0", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_space();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(1, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp(" ", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_mark();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(6, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("mark=0", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_space();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(1, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp(" ", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_secmark();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(9, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("secmark=0", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_space();
+    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(1, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp(" ", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    line.begin_word = line.eow;
+    status = line.get_use();
+//    BOOST_CHECK_EQUAL(status, 0);
+    BOOST_CHECK_EQUAL(5, line.eow - line.begin_word);
+    BOOST_CHECK_EQUAL(0, memcmp("use=2", &line.buffer[line.begin_word], line.eow - line.begin_word));
+
+    BOOST_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
     res = parse_ip_conntrack(fd, source, dest, 41971, 3389, transparent_target);
     BOOST_CHECK_EQUAL(res, 0);
     

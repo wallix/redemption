@@ -269,79 +269,535 @@ static inline int recursive_create_directory(const char *directory, mode_t mode,
 struct LineBuffer
 {
     char buffer[20480];
+    int end_buffer;
+
     int fd;
     int begin_line;
-    int end_line;
     int eol;
     int eollen;
+    
+    int begin_word;
+    int eow;
 
-    LineBuffer(int fd) 
-        : fd(fd)
+    LineBuffer(int fd)
+        : end_buffer(0)
+        , fd(fd)
         , begin_line(0)
-        , end_line(0)
         , eol(0)
         , eollen(1)
+        , begin_word(0)
+        , eow(0)
     {
     }
 
     int readline()
     {
-        for (int i = this->begin_line; i < this->end_line; i++){
+        for (int i = this->begin_line; i < this->end_buffer; i++){
             if (this->buffer[i] == '\n'){
                 this->eol = i+1;
                 this->eollen = 1;
                 return 1;
             }
         }
-        size_t trailing_room = sizeof(this->buffer) - this->end_line;
+        size_t trailing_room = sizeof(this->buffer) - this->end_buffer;
         // reframe buffer if no trailing room left
         if (trailing_room == 0){
-            size_t used_len = this->end_line - this->begin_line;
+            size_t used_len = this->end_buffer - this->begin_line;
             memmove(this->buffer, &(this->buffer[this->begin_line]), used_len);
-            this->end_line = used_len;
+            this->end_buffer = used_len;
             this->begin_line = 0;
         }
-        
-        printf("reading %u bytes\n", sizeof(this->buffer) - this->end_line);
-        ssize_t res = read(this->fd, &(this->buffer[this->end_line]), sizeof(this->buffer) - this->end_line);
+
+        ssize_t res = read(this->fd, &(this->buffer[this->end_buffer]), sizeof(this->buffer) - this->end_buffer);
         if (res < 0){
             return res;
         }
-        this->end_line += res;
-        if (this->begin_line == this->end_line) {
+        this->end_buffer += res;
+        if (this->begin_line == this->end_buffer) {
             return 0;
         }
-        for (int i = this->begin_line; i < this->end_line; i++){
+        for (int i = this->begin_line; i < this->end_buffer; i++){
             if (this->buffer[i] == '\n'){
                 this->eol = i+1;
                 this->eollen = 1;
                 return 1;
             }
         }
-        this->eol = this->end_line;
+        this->eol = this->end_buffer;
         this->eollen = 0;
         return 1;
     }
+    
+    int get_protocol()
+    {
+        int res = -1;
+        int i = this->begin_word;
+        for ( ; i < this->eol ; i++){
+            char c = this->buffer[i];
+            if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '-'))){
+                if (c == ' '){
+                    res = 0;
+                }
+                break;
+            }
+        }
+        this->eow = i;
+        return res;
+    }
+    
+    int get_space()
+    {
+        int i = this->begin_word;
+        int res = -1;
+        char c = this->buffer[i];
+        if (c == ' '){
+            res = 0;
+            i++;
+            for ( ; i < this->eol ; i++){
+                char c = this->buffer[i];
+                if (c != ' '){
+                    break;
+                }
+            }
+        }
+        this->eow = i;
+        return res;
+
+    }
+
+    int get_num(int start)
+    {
+        int res = -1;
+        int i = start;
+        for ( ; i < this->eol ; i++){
+            char c = this->buffer[i];
+            if (!(c >= '0' && c <= '9')){
+                break;
+            }
+            res = 0;
+        }
+        this->eow = i;
+        return res;
+    }
+
+    int get_protocol_number()
+    {
+        int res = this->get_num(this->begin_word);
+        if (this->eow == this->eol){
+            return res;
+        }
+        if (this->buffer[this->eow] == ' '){
+            return res;
+        }
+        return -1;
+    }
+
+    int get_ttl_sec()    
+    {
+        int res = this->get_num(this->begin_word);
+        if (this->eow == this->eol){
+            return res;
+        }
+        if (this->buffer[this->eow] == ' '){
+            return res;
+        }
+        return -1;
+    }
+
+    int get_identifier()
+    {
+        int res = -1;
+        int i = this->begin_word;
+        for ( ; i < this->eol ; i++){
+            char c = this->buffer[i];
+            if (!(c >= 'a' && c <= 'z')){
+                break;
+            }
+            res = 0;
+        }
+        this->eow = i;
+        return res;
+    }
+
+    int get_var()
+    {
+        int res = this->get_identifier();
+        if (res < 0){
+            return res;
+        }
+        if (this->eow + 1 >= this->eol){
+            return -1;
+        }
+        if (this->buffer[this->eow] != '='){
+            return -1;
+        }
+        this->eow++;
+        return 0;
+    }
+
+    int get_ip()
+    {
+        int res = this->get_num(this->begin_word);
+        if (res < 0){
+            return -1;
+        }
+        if (this->eow + 1 >= this->eol){
+            return -1;
+        }
+        if (this->buffer[this->eow] != '.'){
+            return -1;
+        }
+        this->eow++;
+        res = this->get_num(this->eow);
+        if (res < 0){
+            return -1;
+        }
+        if (this->eow + 1 >= this->eol){
+            return -1;
+        }
+        if (this->buffer[this->eow] != '.'){
+            return -1;
+        }
+        this->eow++;
+        res = this->get_num(this->eow);
+        if (res < 0){
+            return -1;
+        }
+        if (this->eow + 1 >= this->eol){
+            return -1;
+        }
+        if (this->buffer[this->eow] != '.'){
+            return -1;
+        }
+        this->eow++;
+        return this->get_num(this->eow);
+    }
+
+
+    int get_var_ip()
+    {
+        int res = this->get_var();
+        if (res < 0){
+            return res;
+        }
+        res = this->get_num(this->eow);
+        if (res < 0){
+            return res;
+        }
+        if (this->eow + 1 >= this->eol){
+            return -1;
+        }
+        if (this->buffer[this->eow] != '.'){
+            return -1;
+        }
+        this->eow++;
+        res = this->get_num(this->eow);
+        if (res < 0){
+            return res;
+        }
+        if (this->eow + 1 >= this->eol){
+            return -1;
+        }
+        if (this->buffer[this->eow] != '.'){
+            return -1;
+        }
+        this->eow++;
+        res = this->get_num(this->eow);
+        if (res < 0){
+            return res;
+        }
+        if (this->eow + 1 >= this->eol){
+            return -1;
+        }
+        if (this->buffer[this->eow] != '.'){
+            return -1;
+        }
+        this->eow++;
+        res = this->get_num(this->eow);
+        if ((this->eow <= this->eol) && (this->buffer[this->eow] != ' ')){
+            return -1;
+        }
+        return res;
+    }
+
+    int get_src_ip()
+    {
+        int res = this->get_var_ip();
+        if (res < 0){
+            return -1;
+        }
+        if (this->eow - this->begin_word < 4){
+            return -1;
+        }
+        if (0 != memcmp(&this->buffer[this->begin_word], "src=", 4)){
+            return -1;
+        }
+        return 0;
+    }
+
+    int get_dst_ip()
+    {
+        int res = this->get_var_ip();
+        if (res < 0){
+            return -1;
+        }
+        if (this->eow - this->begin_word < 4){
+            return -1;
+        }
+        if (0 != memcmp(&this->buffer[this->begin_word], "dst=", 4)){
+            return -1;
+        }
+        return 0;
+    }
+
+    int get_var_num()
+    {
+        int res = this->get_var();
+        if (res < 0){
+            return res;
+        }
+        res = this->get_num(this->eow);
+        if (res < 0){
+            return res;
+        }
+        if ((this->eow <= this->eol) && (this->buffer[this->eow] != ' ')){
+            return -1;
+        }
+        return res;
+    }
+
+    int get_sport()
+    {
+        int res = this->get_var_num();
+        if (res < 0){
+            return -1;
+        }
+        if (this->eow - this->begin_word < 6){
+            return -1;
+        }
+        if (0 != memcmp(&this->buffer[this->begin_word], "sport=", 6)){
+            return -1;
+        }
+        return 0;
+    }
+    
+    int get_dport()
+    {
+        int res = this->get_var_num();
+        if (res < 0){
+            return -1;
+        }
+        if (this->eow - this->begin_word < 6){
+            return -1;
+        }
+        if (0 != memcmp(&this->buffer[this->begin_word], "dport=", 6)){
+            return -1;
+        }
+        return 0;
+    }
+    
+    int get_packets()
+    {
+        int res = this->get_var_num();
+        if (res < 0){
+            return -1;
+        }
+        if (this->eow - this->begin_word < 8){
+            return -1;
+        }
+        if (0 != memcmp(&this->buffer[this->begin_word], "packets=", 8)){
+            return -1;
+        }
+        return 0;
+    }
+
+    int get_bytes()
+    {
+        int res = this->get_var_num();
+        if (res < 0){
+            return -1;
+        }
+        if (this->eow - this->begin_word < 6){
+            return -1;
+        }
+        if (0 != memcmp(&this->buffer[this->begin_word], "bytes=", 6)){
+            return -1;
+        }
+        return 0;
+    }
+
+    int get_status()
+    {
+        int res = -1;
+        int i = this->begin_word;
+        if (i >= this->eol){
+            return -1;
+        }
+        char c = this->buffer[i];
+        if (c != '['){
+            return -1;
+        }
+        i++;
+        
+        for ( ; i < this->eol ; i++){
+            char c = this->buffer[i];
+            if (!(c >= 'A' && c <= 'Z')){
+                break;
+            }
+            res = 0;
+        }
+        if (res < 0){
+            return -1;
+        }
+        if (i >= this->eol){
+            return -1;
+        }
+        c = this->buffer[i];
+        if (c != ']'){
+            return -1;
+        }
+        i++;
+        this->eow = i;
+        return res;
+    }
+
+    int get_mark()
+    {
+        int res = this->get_var_num();
+        if (res < 0){
+            return -1;
+        }
+        if (this->eow - this->begin_word < 5){
+            return -1;
+        }
+        if (0 != memcmp(&this->buffer[this->begin_word], "mark=", 5)){
+            return -1;
+        }
+        return 0;
+    }
+
+    int get_secmark()
+    {
+        int res = this->get_var_num();
+        if (res < 0){
+            return -1;
+        }
+        if (this->eow - this->begin_word < 8){
+            return -1;
+        }
+        if (0 != memcmp(&this->buffer[this->begin_word], "secmark=", 8)){
+            return -1;
+        }
+        return 0;
+    }
+
+    int get_use()
+    {
+        int res = this->get_var_num();
+        if (res < 0){
+            return -1;
+        }
+        if (this->eow - this->begin_word < 4){
+            return -1;
+        }
+        if (0 != memcmp(&this->buffer[this->begin_word], "use=", 4)){
+            return -1;
+        }
+        return 0;
+    }
+    
 };
 
 
 int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport, char transparent_dest[256])
 {
-    printf("parse ip conntrack\n");
     LineBuffer line(fd);
     int status = line.readline();
-    printf("parse ip conntrack status = %u\n", status);
     while (status == 1) {
-        printf("line length = %u\n", line.end_line - line.begin_line);
-        printf("%*s\n", line.end_line - line.begin_line, &(line.buffer[line.begin_line]));
         line.begin_line = line.eol;
+        // udp
+        line.get_protocol();
+        line.get_space();
+
+        // 17
+        line.get_protocol_number();
+        line.get_space();
+
+        // 0
+        line.get_ttl_sec();
+        line.get_space();
+
+        // src=10.10.43.31
+        line.get_src_ip();
+        line.get_space();
+
+        // dst=10.10.47.255
+        line.get_dst_ip();
+        line.get_space();
+
+        // sport=57621
+        line.get_sport();
+        line.get_space();
+
+        // dport=57621
+        line.get_dport();
+        line.get_space();
+
+        // packets=1139
+        line.get_packets();
+        line.get_space();
+
+        // bytes=82008
+        line.get_bytes();
+        line.get_space();
+
+        // [UNREPLIED]
+        line.get_status();
+        line.get_space();
+
+        // src=10.10.47.255
+        line.get_src_ip();
+        line.get_space();
+
+        // dst=10.10.43.31
+        line.get_dst_ip();
+        line.get_space();
+
+        // sport=57621
+        line.get_sport();
+        line.get_space();
+
+        // dport=57621
+        line.get_dport();
+        line.get_space();
+
+        // packets=0
+        line.get_packets();
+        line.get_space();
+
+        // bytes=0
+        line.get_bytes();
+        line.get_space();
+
+        // mark=0
+        line.get_mark();
+        line.get_space();
+
+        // secmark=0
+        line.get_secmark();
+        line.get_space();
+
+        // use=2\n";
+        line.get_use();
+        line.get_space();
+
         status = line.readline();
     }
     if (status < 0){
         printf("Error : %s\n", strerror(errno));
     }
     return 0;
-} 
+}
 
 
 #endif
