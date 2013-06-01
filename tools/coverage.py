@@ -71,7 +71,7 @@ class Cover:
     def coverall(self):
         target = open("coverage.summary", "w")
         for line in open("./tools/coverage.reference"):
-            res = re.match(r'^([/A-Aa-z0-9_]+)\s+(\d+)\s+(\d+)', line)
+            res = re.match(r'^([/A-Za-z0-9_]+)\s+(\d+)\s+(\d+)', line)
             if res:
                 module, covered, total = res.group(1, 2, 3)
                 print module
@@ -88,9 +88,6 @@ class Cover:
                         self.results[module][0], self.results[module][1]))
                     target.write("%s: %d%s (%d / %d)\n" % ((
                         module, self.results[module][0] * 100.0 / self.results[module][1], "%") + self.results[module]))
-                    target.write("Lower coverage for module %s : old %d/%d new %d/%d\n" % (module,
-                        covered, total,
-                        self.results[module][0], self.results[module][1]))
                     try:
                         for line in open("./coverage/%s/%s%s.gcov" % (module, module.split('/')[-1], extension)):
                             res = re.match(r'^\s+#####[:]', line)
