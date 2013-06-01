@@ -64,8 +64,8 @@ class Cover:
 
         self.results[module] = ((total - uncovered), total)
 
-        os.system("mkdir -p coverage/%s" % module)
-        os.system("mv *.gcov coverage/%s" % module)
+        subprocess.call("mkdir -p coverage/%s" % module, shell=True)
+        subprocess.call("mv *.gcov coverage/%s" % module, shell=True)
 
 
     def coverall(self):
