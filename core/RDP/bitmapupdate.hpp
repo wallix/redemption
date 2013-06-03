@@ -195,6 +195,7 @@ struct RDPBitmapData {
     , dest_top(0)
     , dest_right(0)
     , dest_bottom(0)
+    , width(0)
     , height(0)
     , bits_per_pixel(0)
     , flags(0)

@@ -482,17 +482,20 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         }
     }
 
+    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) {
+        this->drawable->draw(bitmap_data, data, size, bmp);
+        this->RDPSerializer::draw(bitmap_data, data, size, bmp);
+    }
+
     void send_bitmaps_chunk()
     {
-/*
         this->stream_bitmaps.mark_end();
         BStream header(8);
-        WRMChunk_Send chunk(header, RDP_UPDATE_BITMAPS, this->stream_bitmaps.size(), this->bitmap_count);
+        WRMChunk_Send chunk(header, RDP_UPDATE_BITMAP, this->stream_bitmaps.size(), this->bitmap_count);
         this->trans->send(header);
         this->trans->send(this->stream_bitmaps);
         this->bitmap_count = 0;
         this->stream_bitmaps.reset();
-*/
     }
 };
 
