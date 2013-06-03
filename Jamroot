@@ -317,11 +317,11 @@ unit-test test_primary_order_opaque_rect : tests/orders/primary/opaque_rect.cpp 
 unit-test test_primary_order_scr_blt : tests/orders/primary/scr_blt.cpp libboost_unit_test ;
 unit-test test_primary_order_mem_blt : tests/orders/primary/mem_blt.cpp libboost_unit_test ;
 
-unit-test test_RDPOrdersPrimaryDestBlt : tests/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp libboost_unit_test ;
-unit-test test_RDPOrdersPrimaryDestBlt : tests/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_RDPOrdersPrimaryDestBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp libboost_unit_test ;
+unit-test test_RDPOrdersPrimaryDestBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_RDPOrdersPrimaryLineTo : tests/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp libboost_unit_test ;
-unit-test test_RDPOrdersPrimaryLineTo : tests/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_RDPOrdersPrimaryLineTo : tests/core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp libboost_unit_test ;
+unit-test test_RDPOrdersPrimaryLineTo : tests/core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp libboost_unit_test gcov : <variant>coverage ;
 
 
 unit-test test_primary_order_pat_blt : tests/orders/primary/pat_blt.cpp libboost_unit_test ;
