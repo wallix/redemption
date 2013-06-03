@@ -323,8 +323,9 @@ unit-test test_RDPOrdersPrimaryDestBlt : tests/core/RDP/orders/test_RDPOrdersPri
 unit-test test_RDPOrdersPrimaryLineTo : tests/core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp libboost_unit_test ;
 unit-test test_RDPOrdersPrimaryLineTo : tests/core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_RDPOrdersPrimaryPatBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryPatBlt.cpp libboost_unit_test ;
+unit-test test_RDPOrdersPrimaryPatBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryPatBlt.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_primary_order_pat_blt : tests/orders/primary/pat_blt.cpp libboost_unit_test ;
 unit-test test_primary_order_glyph_index : tests/orders/primary/glyph_index.cpp libboost_unit_test ;
 unit-test test_secondary_order_col_cache : tests/orders/secondary/col_cache.cpp libboost_unit_test ;
 unit-test test_secondary_order_bmp_cache : tests/orders/secondary/bmp_cache.cpp libboost_unit_test ;
