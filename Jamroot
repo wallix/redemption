@@ -340,6 +340,9 @@ unit-test test_RDPOrdersSecondaryBmpCache : tests/core/RDP/orders/test_RDPOrders
 unit-test test_RDPOrdersSecondaryColorCache : tests/core/RDP/orders/test_RDPOrdersSecondaryColorCache.cpp libboost_unit_test ;
 unit-test test_RDPOrdersSecondaryColorCache : tests/core/RDP/orders/test_RDPOrdersSecondaryColorCache.cpp libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_RDPOrdersSecondaryBrushCache : tests/core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp libboost_unit_test ;
+unit-test test_RDPOrdersSecondaryBrushCache : tests/core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test ;
 unit-test test_colors : tests/test_colors.cpp libboost_unit_test ;
 unit-test test_libpng : tests/test_libpng.cpp png z libboost_unit_test ;

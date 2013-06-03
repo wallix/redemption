@@ -43,6 +43,8 @@
 // brush bitmap data.
 // This field MUST be one of the following values.
 
+// Note by CGR: what about 4BPP ? Compression format for 4BPP is described below...
+
 // +----------------+-------------------------+
 // | 0x01 BMF_1BPP  | 1 bits per pixel        |
 // +----------------+-------------------------+
@@ -131,6 +133,13 @@
 //         (5 bits for red, 6 bits for green, and 5 bits for blue).
 // 24 bpp : 3 bytes RGB color triplet (1 byte per component).
 
+enum {
+    BMF_1BPP = 0x01,
+    BMF_8BPP = 0x03, 
+    BMF_16BPP = 0x04, 
+    BMF_24BPP = 0x05, 
+};
+
 
 class RDPBrushCache {
 
@@ -191,7 +200,7 @@ class RDPBrushCache {
         memcpy(this->data, stream.in_uint8p(this->size), this->size);
     }
 
-    bool operator==(const RDPColCache & other) const {
+    bool operator==(const RDPBrushCache & other) const {
         return true;
     }
 
