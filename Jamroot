@@ -313,7 +313,8 @@ unit-test test_mwrm : tests/capture/test_mwrm.cpp png z openssl crypto dl libboo
 unit-test test_outmeta : tests/capture/test_outmeta.cpp png z openssl crypto dl libboost_unit_test ;
 
 
-unit-test test_primary_order_opaque_rect : tests/orders/primary/opaque_rect.cpp libboost_unit_test ;
+unit-test test_RDPOrdersPrimaryOpaqueRect : tests/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp libboost_unit_test ;
+unit-test test_RDPOrdersPrimaryOpaqueRect : tests/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_RDPOrdersPrimaryScrBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryScrBlt.cpp libboost_unit_test ;
 unit-test test_RDPOrdersPrimaryScrBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryScrBlt.cpp libboost_unit_test gcov : <variant>coverage ;
