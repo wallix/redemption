@@ -229,26 +229,29 @@ unit-test test_bitfu : tests/utils/test_bitfu.cpp libboost_unit_test gcov : <var
 unit-test test_fileutils : tests/utils/test_fileutils.cpp libboost_unit_test ;
 unit-test test_fileutils : tests/utils/test_fileutils.cpp libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_x224 : tests/core/RDP/test_x224.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_x224 : tests/core/RDP/test_x224.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_x224 : tests/core/test_x224.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_x224 : tests/core/test_x224.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+unit-test test_mcs : tests/core/RDP/test_mcs.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_mcs : tests/core/RDP/test_mcs.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_mcs : tests/core/test_mcs.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_mcs : tests/core/test_mcs.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+unit-test test_gcc : tests/core/RDP/test_gcc.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_gcc : tests/core/RDP/test_gcc.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_gcc : tests/core/test_gcc.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_gcc : tests/core/test_gcc.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+unit-test test_sec : tests/core/RDP/test_sec.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_sec : tests/core/RDP/test_sec.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_sec : tests/core/test_sec.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_sec : tests/core/test_sec.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+unit-test test_lic : tests/core/RDP/test_lic.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_lic : tests/core/RDP/test_lic.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_lic : tests/core/test_lic.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_lic : tests/core/test_lic.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+unit-test test_rdp : tests/core/RDP/test_rdp.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_rdp : tests/core/RDP/test_rdp.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_rdp : tests/core/test_rdp.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_fastpath : tests/core/test_fastpath.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_slowpath : tests/core/test_slowpath.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_widget : tests/test_widget.cpp d3des openssl crypto png z dl libboost_unit_test ;
 unit-test test_bitmap : tests/test_bitmap.cpp libboost_unit_test ;
