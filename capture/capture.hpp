@@ -270,6 +270,19 @@ public:
 //        this->drawable->draw(cmd, clip);
 //        this->pnc->glyph_index(cmd, clip);
     }
+
+    virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
+                     , size_t size, const Bitmap & bmp) {
+        if (this->capture_drawable) {
+            this->drawable->draw(bitmap_data, data, size, bmp);
+        }
+        if (this->capture_png) {
+            this->psc->draw(bitmap_data, data, size, bmp);
+        }
+        if (this->capture_wrm) {
+            this->pnc->draw(bitmap_data, data, size, bmp);
+        }
+    }
 };
 
 #endif

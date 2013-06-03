@@ -3855,8 +3855,9 @@ public:
         this->palette_sent = false;
     }
 
-    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size) {
-        this->orders->draw(bitmap_data, data, size);
+    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
+                     , size_t size, const Bitmap & bmp) {
+        this->orders->draw(bitmap_data, data, size, bmp);
     }
 };
 

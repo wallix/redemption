@@ -318,6 +318,11 @@ public:
             }
         }
     }
+
+    virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
+                     , size_t size, const Bitmap & bmp) {
+//        this->drawable.
+    }
 };
 
 #endif

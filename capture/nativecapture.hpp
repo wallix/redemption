@@ -171,6 +171,11 @@ public:
         this->recorder.draw(cmd, clip);
     }
 
+    virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
+                     , size_t size, const Bitmap & bmp) {
+        this->recorder.draw(bitmap_data, data, size, bmp);
+    }
+
 private:
 
     void breakpoint()
