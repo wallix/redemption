@@ -88,6 +88,7 @@ class Cover:
                         self.results[module][0], self.results[module][1]))
                     target.write("%s: %d%s (%d / %d)\n" % ((
                         module, self.results[module][0] * 100.0 / self.results[module][1], "%") + self.results[module]))
+                    target.flush()
                     try:
                         for line in open("./coverage/%s/%s%s.gcov" % (module, module.split('/')[-1], extension)):
                             res = re.match(r'^\s+#####[:]', line)

@@ -23,7 +23,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestPNGCapture
+#define BOOST_TEST_MODULE TestImageCapture
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
@@ -38,6 +38,7 @@
 #include "constants.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include <png.h>
+
 
     const char expected_red[] = 
     /* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
