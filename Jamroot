@@ -360,31 +360,80 @@ unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp 
 unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp d3des openssl crypto z dl png libboost_unit_test ;
 unit-test test_mstsc_client : tests/server/test_mstsc_client.cpp d3des openssl crypto z dl png libboost_unit_test ;
 
-unit-test test_capability_activate : tests/capabilities/activate.cpp libboost_unit_test ;
-unit-test test_capability_bitmap : tests/capabilities/bitmap.cpp libboost_unit_test ;
-unit-test test_capability_bmpcache : tests/capabilities/bmpcache.cpp libboost_unit_test ;
-unit-test test_capability_bitmapcachehostsupport : tests/capabilities/bitmapcachehostsupport.cpp libboost_unit_test ;
-unit-test test_capability_brushcache : tests/capabilities/brushcache.cpp libboost_unit_test ;
-unit-test test_capability_compdesk : tests/capabilities/compdesk.cpp libboost_unit_test ;
-unit-test test_capability_control : tests/capabilities/control.cpp libboost_unit_test ;
-unit-test test_capability_drawgdiplus : tests/capabilities/drawgdiplus.cpp libboost_unit_test ;
-unit-test test_capability_drawninegridcache : tests/capabilities/drawninegridcache.cpp libboost_unit_test ;
-unit-test test_capability_font : tests/capabilities/font.cpp libboost_unit_test ;
-unit-test test_capability_frameacknowledge : tests/capabilities/frameacknowledge.cpp libboost_unit_test ;
-unit-test test_capability_general : tests/capabilities/general.cpp libboost_unit_test ;
-unit-test test_capability_glyphcache : tests/capabilities/glyphcache.cpp libboost_unit_test ;
-unit-test test_capability_input : tests/capabilities/input.cpp libboost_unit_test ;
-unit-test test_capability_largepointer : tests/capabilities/largepointer.cpp libboost_unit_test ;
-unit-test test_capability_multifragmentupdate : tests/capabilities/multifragmentupdate.cpp libboost_unit_test ;
-unit-test test_capability_offscreencache : tests/capabilities/offscreencache.cpp libboost_unit_test ;
-unit-test test_capability_order : tests/capabilities/order.cpp libboost_unit_test ;
-unit-test test_capability_pointer : tests/capabilities/pointer.cpp libboost_unit_test ;
-unit-test test_capability_rail : tests/capabilities/rail.cpp libboost_unit_test ;
-unit-test test_capability_share : tests/capabilities/share.cpp libboost_unit_test ;
-unit-test test_capability_sound : tests/capabilities/sound.cpp libboost_unit_test ;
-unit-test test_capability_surfacecommands : tests/capabilities/surfacecommands.cpp libboost_unit_test ;
-unit-test test_capability_virtualchannel : tests/capabilities/virtualchannel.cpp libboost_unit_test ;
-unit-test test_capability_window : tests/capabilities/window.cpp libboost_unit_test ;
+unit-test test_activate : tests/core/RDP/capabilities/test_activate.cpp libboost_unit_test ;
+unit-test test_activate : tests/core/RDP/capabilities/test_activate.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_cap_bitmap : tests/core/RDP/capabilities/test_cap_bitmap.cpp libboost_unit_test ;
+unit-test test_cap_bitmap : tests/core/RDP/capabilities/test_cap_bitmap.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_cap_bmpcache : tests/core/RDP/capabilities/test_cap_bmpcache.cpp libboost_unit_test ;
+unit-test test_cap_bmpcache : tests/core/RDP/capabilities/test_cap_bmpcache.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_bitmapcachehostsupport : tests/core/RDP/capabilities/test_bitmapcachehostsupport.cpp libboost_unit_test ;
+unit-test test_bitmapcachehostsupport : tests/core/RDP/capabilities/test_bitmapcachehostsupport.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_brushcache : tests/core/RDP/capabilities/test_brushcache.cpp libboost_unit_test ;
+unit-test test_brushcache : tests/core/RDP/capabilities/test_brushcache.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_compdesk : tests/core/RDP/capabilities/test_compdesk.cpp libboost_unit_test ;
+unit-test test_compdesk : tests/core/RDP/capabilities/test_compdesk.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_control : tests/core/RDP/capabilities/test_control.cpp libboost_unit_test ;
+unit-test test_control : tests/core/RDP/capabilities/test_control.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_drawgdiplus : tests/core/RDP/capabilities/test_drawgdiplus.cpp libboost_unit_test ;
+unit-test test_drawgdiplus : tests/core/RDP/capabilities/test_drawgdiplus.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_drawninegridcache : tests/core/RDP/capabilities/test_drawninegridcache.cpp libboost_unit_test ;
+unit-test test_drawninegridcache : tests/core/RDP/capabilities/test_drawninegridcache.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_cap_font : tests/core/RDP/capabilities/test_cap_font.cpp libboost_unit_test ;
+unit-test test_cap_font : tests/core/RDP/capabilities/test_cap_font.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_frameacknowledge : tests/core/RDP/capabilities/test_frameacknowledge.cpp libboost_unit_test ;
+unit-test test_frameacknowledge : tests/core/RDP/capabilities/test_frameacknowledge.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_general : tests/core/RDP/capabilities/test_general.cpp libboost_unit_test ;
+unit-test test_general : tests/core/RDP/capabilities/test_general.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_glyphcache : tests/core/RDP/capabilities/test_glyphcache.cpp libboost_unit_test ;
+unit-test test_glyphcache : tests/core/RDP/capabilities/test_glyphcache.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_input : tests/core/RDP/capabilities/test_input.cpp libboost_unit_test ;
+unit-test test_input : tests/core/RDP/capabilities/test_input.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_largepointer : tests/core/RDP/capabilities/test_largepointer.cpp libboost_unit_test ;
+unit-test test_largepointer : tests/core/RDP/capabilities/test_largepointer.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_multifragmentupdate : tests/core/RDP/capabilities/test_multifragmentupdate.cpp libboost_unit_test ;
+unit-test test_multifragmentupdate : tests/core/RDP/capabilities/test_multifragmentupdate.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_offscreencache : tests/core/RDP/capabilities/test_offscreencache.cpp libboost_unit_test ;
+unit-test test_offscreencache : tests/core/RDP/capabilities/test_offscreencache.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_order : tests/core/RDP/capabilities/test_order.cpp libboost_unit_test ;
+unit-test test_order : tests/core/RDP/capabilities/test_order.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_pointer : tests/core/RDP/capabilities/test_pointer.cpp libboost_unit_test ;
+unit-test test_pointer : tests/core/RDP/capabilities/test_pointer.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rail : tests/core/RDP/capabilities/test_rail.cpp libboost_unit_test ;
+unit-test test_rail : tests/core/RDP/capabilities/test_rail.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_share : tests/core/RDP/capabilities/test_share.cpp libboost_unit_test ;
+unit-test test_share : tests/core/RDP/capabilities/test_share.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_sound : tests/core/RDP/capabilities/test_sound.cpp libboost_unit_test ;
+unit-test test_sound : tests/core/RDP/capabilities/test_sound.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_surfacecommands : tests/core/RDP/capabilities/test_surfacecommands.cpp libboost_unit_test ;
+unit-test test_surfacecommands : tests/core/RDP/capabilities/test_surfacecommands.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_virtualchannel : tests/core/RDP/capabilities/test_virtualchannel.cpp libboost_unit_test ;
+unit-test test_virtualchannel : tests/core/RDP/capabilities/test_virtualchannel.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_window : tests/core/RDP/capabilities/test_window.cpp libboost_unit_test ;
+unit-test test_window : tests/core/RDP/capabilities/test_window.cpp libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test ;
 unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test ;
