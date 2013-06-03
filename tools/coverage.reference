@@ -55,7 +55,7 @@ core/RDP/caches/pointercache 100 100
 core/RDP/capabilities/activate 100 100
 core/RDP/capabilities/bitmapcachehostsupport 100 100
 core/RDP/capabilities/sound 100 100
-core/RDP/capabilities/bitmap 100 100
+core/RDP/capabilities/cap_bitmap 100 100
 core/RDP/capabilities/brushcache 100 100
 core/RDP/capabilities/bmpcache2 100 100
 core/RDP/capabilities/compdesk 100 100
@@ -65,14 +65,14 @@ core/RDP/capabilities/order 100 100
 core/RDP/capabilities/colcache 100 100
 core/RDP/capabilities/virchan 100 100
 core/RDP/capabilities/offscreencache 100 100
-core/RDP/capabilities/bmpcache 100 100
+core/RDP/capabilities/cap_bmpcache 100 100
 core/RDP/capabilities/drawgdiplus 100 100
 core/RDP/capabilities/frameacknowledge 100 100
 core/RDP/capabilities/rail 100 100
 core/RDP/capabilities/largepointer 100 100
 core/RDP/capabilities/control 100 100
 core/RDP/capabilities/bitmapcodecs 100 100
-core/RDP/capabilities/font 100 100
+core/RDP/capabilities/cap_font 100 100
 core/RDP/capabilities/input 100 100
 core/RDP/capabilities/window 100 100
 core/RDP/capabilities/share 100 100
