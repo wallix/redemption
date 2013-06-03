@@ -316,9 +316,15 @@ unit-test test_outmeta : tests/capture/test_outmeta.cpp png z openssl crypto dl 
 unit-test test_primary_order_opaque_rect : tests/orders/primary/opaque_rect.cpp libboost_unit_test ;
 unit-test test_primary_order_scr_blt : tests/orders/primary/scr_blt.cpp libboost_unit_test ;
 unit-test test_primary_order_mem_blt : tests/orders/primary/mem_blt.cpp libboost_unit_test ;
-unit-test test_primary_order_dest_blt : tests/orders/primary/dest_blt.cpp libboost_unit_test ;
+
+unit-test test_RDPOrdersPrimaryDestBlt : tests/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp libboost_unit_test ;
+unit-test test_RDPOrdersPrimaryDestBlt : tests/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_RDPOrdersPrimaryLineTo : tests/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp libboost_unit_test ;
+unit-test test_RDPOrdersPrimaryLineTo : tests/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp libboost_unit_test gcov : <variant>coverage ;
+
+
 unit-test test_primary_order_pat_blt : tests/orders/primary/pat_blt.cpp libboost_unit_test ;
-unit-test test_primary_order_line_to : tests/orders/primary/line_to.cpp libboost_unit_test ;
 unit-test test_primary_order_glyph_index : tests/orders/primary/glyph_index.cpp libboost_unit_test ;
 unit-test test_secondary_order_col_cache : tests/orders/secondary/col_cache.cpp libboost_unit_test ;
 unit-test test_secondary_order_bmp_cache : tests/orders/secondary/bmp_cache.cpp libboost_unit_test ;
