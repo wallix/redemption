@@ -253,8 +253,8 @@ unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp z openssl crypto dl l
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test ;
-unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test openssl crypto png z dl ;
+unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test openssl crypto png z dl gcov : <variant>coverage ;
 
 unit-test test_keywords : tests/acl/test_keywords.cpp libboost_unit_test ;
 unit-test test_keywords : tests/acl/test_keywords.cpp libboost_unit_test gcov : <variant>coverage ;

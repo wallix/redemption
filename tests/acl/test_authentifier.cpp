@@ -26,8 +26,13 @@
 
 #define LOGNULL
 #include "log.hpp"
+#include "authentifier.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestXXX)
+BOOST_AUTO_TEST_CASE(TestAuthentifier)
 {
+    TODO("Writing an actual test for SessionManager is not so simple because it manage connection to auth_t behind the scene"
+         "we should make the auth_t transport explicit dependency to enable writing usefull tests")
+    Inifile ini;
+    SessionManager(&ini, 30, 30, true, 0);
 }

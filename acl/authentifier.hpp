@@ -23,10 +23,15 @@
 
 TODO("Sesman is performing two largely unrelated tasks : finding out the next module to run (from context reading) and updating context dictionnary from incoming acl traffic. These tasks should be performed by two different modules")
 
+#include <unistd.h>
+#include <fcntl.h>
+
 #include "stream.hpp"
 #include "config.hpp"
 #include "netutils.hpp"
 #include "sockettransport.hpp"
+#include "wait_obj.hpp"
+
 
 typedef enum {
     INTERNAL_NONE,
