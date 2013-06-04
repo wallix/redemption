@@ -487,6 +487,7 @@ private:
         unsigned fom_mask = 0;
         unsigned count = 0;
         int bicolor = 0;
+        unsigned total_count = 0;
 
         color1 = 0;
         color2 = 0;
@@ -643,6 +644,7 @@ private:
                 yprev = (out - this->line_size < pmin) ? 0 : in_bytes_le(Bpp, out - this->line_size);
                 out_bytes_le(out, Bpp, yprev ^ mix);
                 count--;
+//LOG(LOG_INFO, "count--, count=%u", count);
                 out += Bpp;
                 out_x_count += 1;
                 if (out_x_count == dst_cx){
@@ -653,6 +655,7 @@ private:
             lastopcode = opcode;
 
 //            LOG(LOG_INFO, "%s %u", this->get_opcode(opcode), count);
+            total_count += count;
 
             /* Output body */
             while (count > 0) {
@@ -722,6 +725,7 @@ private:
                 }
             }
         }
+        LOG(LOG_INFO, "total_count=%u", total_count);
         return;
     }
 
