@@ -25,7 +25,7 @@
 #include "config.hpp"
 #include "window_login.hpp"
 #include "image.hpp"
-#include "internal_mod.hpp"
+#include "widget2_internal_mod.hpp"
 
 class LoginMod : public InternalMod, public NotifyApi
 {

@@ -33,6 +33,7 @@
 #include "RDP/RDPGraphicDevice.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "RDP/RDPSerializer.hpp"
+#include "RDP/share.hpp"
 #include "difftimeval.hpp"
 
 #include "chunked_image_transport.hpp"

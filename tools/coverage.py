@@ -17,6 +17,24 @@ if GCCVERSION[:7] in ['gcc-4.6', 'gcc-4.7']:
 
 print GCCVERSION, TESTSSUBDIR
 
+
+def list_modules():
+    for line in open("./tools/coverage.reference"):
+        res = re.match(r'^([/A-Za-z0-9_]+)\s+(\d+)\s+(\d+)', line)
+        if res:
+            module, covered, total = res.group(1, 2, 3)
+            extension = '.hpp'
+            if '/rio/' in module:
+                extension = '.h'
+            covered = int(covered)
+            total = int(total)
+            yield module, extension, covered, total
+        else:
+            if line[0] != '\n' and line[0] != '#': 
+                print "Line '%s' does not match" % line
+
+
+
 class Cover:
     def __init__(self):
         self.results = {}
@@ -70,38 +88,43 @@ class Cover:
 
     def coverall(self):
         target = open("coverage.summary", "w")
-        for line in open("./tools/coverage.reference"):
-            res = re.match(r'^([/A-Za-z0-9_]+)\s+(\d+)\s+(\d+)', line)
-            if res:
-                module, covered, total = res.group(1, 2, 3)
-                print module
-                extension = '.hpp'
-                if '/rio/' in module:
-                    extension = '.h'
-                covered = int(covered)
-                total = int(total)
-                self.cover(module)
-                # if coverage percentage is lower
-                if (self.results[module][0] * 100 / self.results[module][1]) < (covered * 100 / total):
-                    print("Lower coverage for module %s : old %d/%d new %d/%d" % (module,
-                        covered, total,
-                        self.results[module][0], self.results[module][1]))
-                    target.write("%s: %d%s (%d / %d)\n" % ((
-                        module, self.results[module][0] * 100.0 / self.results[module][1], "%") + self.results[module]))
-                    target.flush()
-                    try:
-                        for line in open("./coverage/%s/%s%s.gcov" % (module, module.split('/')[-1], extension)):
-                            res = re.match(r'^\s+#####[:]', line)
-                            if res:
-                                print module, ' ', line
-                    except IOError:
-                        for i in range(0, 100):
-                            print module, ' #####: %u: NO COVERAGE' % i
-            else:
-                print "Line '%s' does not match" % line
+        for module, extension, covered, total in list_modules():
+            print module
+            self.cover(module)
+            # if coverage percentage is lower
+            if (self.results[module][0] * 100 / self.results[module][1]) < (covered * 100 / total):
+                print("Lower coverage for module %s : old %d/%d new %d/%d" % (module,
+                    covered, total,
+                    self.results[module][0], self.results[module][1]))
+                target.write("%s: %d%s (%d / %d)\n" % ((
+                    module, self.results[module][0] * 100.0 / self.results[module][1], "%") + self.results[module]))
+                target.flush()
+                try:
+                    for line in open("./coverage/%s/%s%s.gcov" % (module, module.split('/')[-1], extension)):
+                        res = re.match(r'^\s+#####[:]', line)
+                        if res:
+                            print module, ' ', line
+                except IOError:
+                    for i in range(0, 100):
+                        print module, ' #####: %u: NO COVERAGE' % i
+
 cover = Cover()
 if sys.argv[1] == 'all':
     cover.coverall()
+elif sys.argv[1] == 'touchall':
+    for module, extension, covered, total in list_modules():
+        
+        path = '/'.join(module.split('/')[:-1])
+        fname = module.split('/')[-1]
+        fullname = "tests/%s/test_%s%s" % (path, fname, ".cpp")
+        if os.path.getsize(fullname) == 1016:
+            print(
+            "unit-test test_%(f)s : tests/%(p)s/test_%(f)s.cpp libboost_unit_test ;\nunit-test test_%(f)s : tests/%(p)s/test_%(f)s.cpp libboost_unit_test gcov : <variant>coverage ;\n"
+        % ({'f':fname, 'p':path}))
+#        os.system("touch tests/%s/test_%s%s" % (path, fname, ".cpp"))
+#        if module.split('/')[:-1]:
+#           os.system('touch %s' % ('/'.join(module.split('/')[:-1])))
+    exit(0)
 else:
     cover.cover(sys.argv[1])
 

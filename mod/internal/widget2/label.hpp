@@ -21,7 +21,7 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_LABEL_HPP)
 #define REDEMPTION_MOD_WIDGET2_LABEL_HPP
 
-#include "widget.hpp"
+#include "widget2_widget.hpp"
 
 class WidgetLabel : public Widget2
 {

@@ -22,7 +22,7 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_WIDGET_LABEL_HPP_
 #define _REDEMPTION_MOD_INTERNAL_WIDGET_LABEL_HPP_
 
-#include "widget.hpp"
+#include "widget_widget.hpp"
 #include "mod_api.hpp"
 
 struct widget_label : public Widget {

@@ -25,8 +25,8 @@
 #include "config.hpp"
 #include "window_dialog.hpp"
 #include "msgbox.hpp"
-#include "screen.hpp"
-#include "internal_mod.hpp"
+#include "widget2_screen.hpp"
+#include "widget2_internal_mod.hpp"
 
 class DialogMod : public InternalMod, public NotifyApi
 {

@@ -24,6 +24,7 @@
 #ifndef _REDEMPTION_CORE_FRONT_API_HPP_
 #define _REDEMPTION_CORE_FRONT_API_HPP_
 
+#include "channel_list.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 
 class FrontAPI : public RDPGraphicDevice {

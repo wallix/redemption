@@ -21,7 +21,7 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_WIDGET_RECT_HPP)
 #define REDEMPTION_MOD_WIDGET2_WIDGET_RECT_HPP
 
-#include "widget.hpp"
+#include "widget2_widget.hpp"
 
 class WidgetRect : public Widget2
 {

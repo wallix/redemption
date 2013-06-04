@@ -28,7 +28,7 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "RDP/rdp.hpp"
+#include "RDP/share.hpp"
 #include "client_info.hpp"
 #include "constants.hpp"
 

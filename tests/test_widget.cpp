@@ -32,8 +32,8 @@
 
 #include "mod_api.hpp"
 
-#include "internal/widget/screen.hpp"
-#include "internal/widget/window.hpp"
+#include "internal/widget/widget_screen.hpp"
+#include "internal/widget/widget_window.hpp"
 
 struct TestWidgetMod : mod_api
 {

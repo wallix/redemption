@@ -22,7 +22,7 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_PASSWORD_HPP
 
 #include "label.hpp"
-#include "widget.hpp"
+#include "widget2_widget.hpp"
 #include <keymap2.hpp>
 
 class WidgetPassword : public Widget2

@@ -24,7 +24,7 @@
 #include "front_api.hpp"
 #include "config.hpp"
 #include "selector.hpp"
-#include "internal_mod.hpp"
+#include "widget2_internal_mod.hpp"
 
 class SelectorMod : public InternalMod, public NotifyApi
 {

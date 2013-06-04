@@ -244,8 +244,8 @@ unit-test test_sec : tests/core/RDP/test_sec.cpp z openssl crypto dl libboost_un
 unit-test test_lic : tests/core/RDP/test_lic.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_lic : tests/core/RDP/test_lic.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_rdp : tests/core/RDP/test_rdp.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_rdp : tests/core/RDP/test_rdp.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+unit-test test_share : tests/core/RDP/test_share.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_share : tests/core/RDP/test_share.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
@@ -253,18 +253,351 @@ unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp z openssl crypto dl l
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_widget : tests/test_widget.cpp d3des openssl crypto png z dl libboost_unit_test ;
-unit-test test_bitmap : tests/test_bitmap.cpp libboost_unit_test ;
-unit-test test_logon : tests/test_logon.cpp libboost_unit_test ;
-unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp libboost_unit_test ;
-unit-test test_config : tests/test_config.cpp libboost_unit_test ;
-unit-test test_font : tests/test_font.cpp libboost_unit_test ;
+unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test ;
+unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_keywords : tests/acl/test_keywords.cpp libboost_unit_test ;
+unit-test test_keywords : tests/acl/test_keywords.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_capture : tests/capture/test_capture.cpp libboost_unit_test ;
+unit-test test_capture : tests/capture/test_capture.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_chunked_image_transport : tests/capture/test_chunked_image_transport.cpp libboost_unit_test ;
+unit-test test_chunked_image_transport : tests/capture/test_chunked_image_transport.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp libboost_unit_test ;
+unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_GraphicToFile : tests/capture/test_GraphicToFile.cpp libboost_unit_test ;
+unit-test test_GraphicToFile : tests/capture/test_GraphicToFile.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_nativecapture : tests/capture/test_nativecapture.cpp libboost_unit_test ;
+unit-test test_nativecapture : tests/capture/test_nativecapture.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_staticcapture : tests/capture/test_staticcapture.cpp libboost_unit_test ;
+unit-test test_staticcapture : tests/capture/test_staticcapture.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_cliprdr : tests/channels/cliprdr/test_cliprdr.cpp libboost_unit_test ;
+unit-test test_cliprdr : tests/channels/cliprdr/test_cliprdr.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rdpdr : tests/channels/rdpdr/test_rdpdr.cpp libboost_unit_test ;
+unit-test test_rdpdr : tests/channels/rdpdr/test_rdpdr.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_sound : tests/channels/sound/test_sound.cpp libboost_unit_test ;
+unit-test test_sound : tests/channels/sound/test_sound.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_callback : tests/core/test_callback.cpp libboost_unit_test ;
+unit-test test_callback : tests/core/test_callback.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_channel_list : tests/core/test_channel_list.cpp libboost_unit_test ;
+unit-test test_channel_list : tests/core/test_channel_list.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_check_files : tests/core/test_check_files.cpp libboost_unit_test ;
+unit-test test_check_files : tests/core/test_check_files.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_cipher : tests/core/test_cipher.cpp libboost_unit_test ;
+unit-test test_cipher : tests/core/test_cipher.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_client_info : tests/core/test_client_info.cpp libboost_unit_test ;
+unit-test test_client_info : tests/core/test_client_info.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_config : tests/core/test_config.cpp libboost_unit_test ;
+unit-test test_config : tests/core/test_config.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_constants : tests/core/test_constants.cpp libboost_unit_test ;
+unit-test test_constants : tests/core/test_constants.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_error : tests/core/test_error.cpp libboost_unit_test ;
+unit-test test_error : tests/core/test_error.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_font : tests/core/test_font.cpp libboost_unit_test ;
+unit-test test_font : tests/core/test_font.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_front_api : tests/core/test_front_api.cpp libboost_unit_test ;
+unit-test test_front_api : tests/core/test_front_api.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_listen : tests/core/test_listen.cpp libboost_unit_test ;
+unit-test test_listen : tests/core/test_listen.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_mainloop : tests/core/test_mainloop.cpp libboost_unit_test ;
+unit-test test_mainloop : tests/core/test_mainloop.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_bitmapupdate : tests/core/RDP/test_bitmapupdate.cpp libboost_unit_test ;
+unit-test test_bitmapupdate : tests/core/RDP/test_bitmapupdate.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_bmpcache : tests/core/RDP/caches/test_bmpcache.cpp libboost_unit_test ;
+unit-test test_bmpcache : tests/core/RDP/caches/test_bmpcache.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_brushcache : tests/core/RDP/caches/test_brushcache.cpp libboost_unit_test ;
+unit-test test_brushcache : tests/core/RDP/caches/test_brushcache.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_fontcache : tests/core/RDP/caches/test_fontcache.cpp libboost_unit_test ;
+unit-test test_fontcache : tests/core/RDP/caches/test_fontcache.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_pointercache : tests/core/RDP/caches/test_pointercache.cpp libboost_unit_test ;
+unit-test test_pointercache : tests/core/RDP/caches/test_pointercache.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_capabilities : tests/core/RDP/test_capabilities.cpp libboost_unit_test ;
+unit-test test_capabilities : tests/core/RDP/test_capabilities.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_bitmapcodecs : tests/core/RDP/capabilities/test_bitmapcodecs.cpp libboost_unit_test ;
+unit-test test_bitmapcodecs : tests/core/RDP/capabilities/test_bitmapcodecs.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_bmpcache2 : tests/core/RDP/capabilities/test_bmpcache2.cpp libboost_unit_test ;
+unit-test test_bmpcache2 : tests/core/RDP/capabilities/test_bmpcache2.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_colcache : tests/core/RDP/capabilities/test_colcache.cpp libboost_unit_test ;
+unit-test test_colcache : tests/core/RDP/capabilities/test_colcache.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_common : tests/core/RDP/capabilities/test_common.cpp libboost_unit_test ;
+unit-test test_common : tests/core/RDP/capabilities/test_common.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_virchan : tests/core/RDP/capabilities/test_virchan.cpp libboost_unit_test ;
+unit-test test_virchan : tests/core/RDP/capabilities/test_virchan.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_GraphicUpdatePDU : tests/core/RDP/test_GraphicUpdatePDU.cpp libboost_unit_test ;
+unit-test test_GraphicUpdatePDU : tests/core/RDP/test_GraphicUpdatePDU.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_logon : tests/core/RDP/test_logon.cpp libboost_unit_test ;
+unit-test test_logon : tests/core/RDP/test_logon.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_nego : tests/core/RDP/test_nego.cpp libboost_unit_test ;
+unit-test test_nego : tests/core/RDP/test_nego.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon.cpp libboost_unit_test ;
+unit-test test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_RDPOrdersNames : tests/core/RDP/orders/test_RDPOrdersNames.cpp libboost_unit_test ;
+unit-test test_RDPOrdersNames : tests/core/RDP/orders/test_RDPOrdersNames.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_RDPOrdersPrimaryMem3Blt : tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp libboost_unit_test ;
+unit-test test_RDPOrdersPrimaryMem3Blt : tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_RDPOrdersSecondaryGlyphCache : tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp libboost_unit_test ;
+unit-test test_RDPOrdersSecondaryGlyphCache : tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_RDPDrawable : tests/core/RDP/test_RDPDrawable.cpp libboost_unit_test ;
+unit-test test_RDPDrawable : tests/core/RDP/test_RDPDrawable.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_RDPGraphicDevice : tests/core/RDP/test_RDPGraphicDevice.cpp libboost_unit_test ;
+unit-test test_RDPGraphicDevice : tests/core/RDP/test_RDPGraphicDevice.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_RDPSerializer : tests/core/RDP/test_RDPSerializer.cpp libboost_unit_test ;
+unit-test test_RDPSerializer : tests/core/RDP/test_RDPSerializer.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_server : tests/core/test_server.cpp libboost_unit_test ;
+unit-test test_server : tests/core/test_server.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_session : tests/core/test_session.cpp libboost_unit_test ;
+unit-test test_session : tests/core/test_session.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_session_server : tests/core/test_session_server.cpp libboost_unit_test ;
+unit-test test_session_server : tests/core/test_session_server.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test ;
+unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_front : tests/front/test_front.cpp libboost_unit_test ;
+unit-test test_front : tests/front/test_front.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_cli_mod : tests/mod/cli/test_cli_mod.cpp libboost_unit_test ;
+unit-test test_cli_mod : tests/mod/cli/test_cli_mod.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_draw_api : tests/mod/test_draw_api.cpp libboost_unit_test ;
+unit-test test_draw_api : tests/mod/test_draw_api.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_bouncer2 : tests/mod/internal/test_bouncer2.cpp libboost_unit_test ;
+unit-test test_bouncer2 : tests/mod/internal/test_bouncer2.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_close : tests/mod/internal/test_close.cpp libboost_unit_test ;
+unit-test test_close : tests/mod/internal/test_close.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_dialog : tests/mod/internal/test_dialog.cpp libboost_unit_test ;
+unit-test test_dialog : tests/mod/internal/test_dialog.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test ;
+unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_login : tests/mod/internal/test_login.cpp libboost_unit_test ;
+unit-test test_login : tests/mod/internal/test_login.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_selector : tests/mod/internal/test_selector.cpp libboost_unit_test ;
+unit-test test_selector : tests/mod/internal/test_selector.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_test_card : tests/mod/internal/test_test_card.cpp libboost_unit_test ;
+unit-test test_test_card : tests/mod/internal/test_test_card.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_test_internal : tests/mod/internal/test_test_internal.cpp libboost_unit_test ;
+unit-test test_test_internal : tests/mod/internal/test_test_internal.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_dialog_mod : tests/mod/internal/widget2/test_dialog_mod.cpp libboost_unit_test ;
+unit-test test_dialog_mod : tests/mod/internal/widget2/test_dialog_mod.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_widget2_internal_mod : tests/mod/internal/widget2/test_widget2_internal_mod.cpp libboost_unit_test ;
+unit-test test_widget2_internal_mod : tests/mod/internal/widget2/test_widget2_internal_mod.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_login_mod : tests/mod/internal/widget2/test_login_mod.cpp libboost_unit_test ;
+unit-test test_login_mod : tests/mod/internal/widget2/test_login_mod.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_widget2_mod_api : tests/mod/internal/widget2/test_widget2_mod_api.cpp libboost_unit_test ;
+unit-test test_widget2_mod_api : tests/mod/internal/widget2/test_widget2_mod_api.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_notify_api : tests/mod/internal/widget2/test_notify_api.cpp libboost_unit_test ;
+unit-test test_notify_api : tests/mod/internal/widget2/test_notify_api.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_widget2_screen : tests/mod/internal/widget2/test_widget2_screen.cpp libboost_unit_test ;
+unit-test test_widget2_screen : tests/mod/internal/widget2/test_widget2_screen.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_selector_mod : tests/mod/internal/widget2/test_selector_mod.cpp libboost_unit_test ;
+unit-test test_selector_mod : tests/mod/internal/widget2/test_selector_mod.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_wab_close_mod : tests/mod/internal/widget2/test_wab_close_mod.cpp libboost_unit_test ;
+unit-test test_wab_close_mod : tests/mod/internal/widget2/test_wab_close_mod.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_widget2_widget : tests/mod/internal/widget2/test_widget2_widget.cpp libboost_unit_test ;
+unit-test test_widget2_widget : tests/mod/internal/widget2/test_widget2_widget.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_widget_composite : tests/mod/internal/widget2/test_widget_composite.cpp libboost_unit_test ;
+unit-test test_widget_composite : tests/mod/internal/widget2/test_widget_composite.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp libboost_unit_test ;
+unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_window_help : tests/mod/internal/widget2/test_window_help.cpp libboost_unit_test ;
+unit-test test_window_help : tests/mod/internal/widget2/test_window_help.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp libboost_unit_test ;
+unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp libboost_unit_test ;
+unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_yes_no : tests/mod/internal/widget2/test_yes_no.cpp libboost_unit_test ;
+unit-test test_yes_no : tests/mod/internal/widget2/test_yes_no.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_button : tests/mod/internal/widget/test_button.cpp libboost_unit_test ;
+unit-test test_button : tests/mod/internal/widget/test_button.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_edit : tests/mod/internal/widget/test_edit.cpp libboost_unit_test ;
+unit-test test_edit : tests/mod/internal/widget/test_edit.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_image : tests/mod/internal/widget/test_image.cpp libboost_unit_test ;
+unit-test test_image : tests/mod/internal/widget/test_image.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_label : tests/mod/internal/widget/test_label.cpp libboost_unit_test ;
+unit-test test_label : tests/mod/internal/widget/test_label.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_widget_screen : tests/mod/internal/widget/test_widget_screen.cpp libboost_unit_test ;
+unit-test test_widget_screen : tests/mod/internal/widget/test_widget_screen.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_widget_widget : tests/mod/internal/widget/test_widget_widget.cpp libboost_unit_test ;
+unit-test test_widget_widget : tests/mod/internal/widget/test_widget_widget.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_widget : tests/test_widget.cpp d3des openssl crypto png z dl libboost_unit_test ;
+
+
+unit-test test_widget_window : tests/mod/internal/widget/test_widget_window.cpp libboost_unit_test ;
+unit-test test_widget_window : tests/mod/internal/widget/test_widget_window.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_mod_api : tests/mod/test_mod_api.cpp libboost_unit_test ;
+unit-test test_mod_api : tests/mod/test_mod_api.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_null : tests/mod/null/test_null.cpp libboost_unit_test ;
+unit-test test_null : tests/mod/null/test_null.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rdp_cursor : tests/mod/rdp/test_rdp_cursor.cpp libboost_unit_test ;
+unit-test test_rdp_cursor : tests/mod/rdp/test_rdp_cursor.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp libboost_unit_test ;
+unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_transitory : tests/mod/transitory/test_transitory.cpp libboost_unit_test ;
+unit-test test_transitory : tests/mod/transitory/test_transitory.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_vnc : tests/mod/vnc/test_vnc.cpp libboost_unit_test ;
+unit-test test_vnc : tests/mod/vnc/test_vnc.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_xup : tests/mod/xup/test_xup.cpp libboost_unit_test ;
+unit-test test_xup : tests/mod/xup/test_xup.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_infilenametransport : tests/transport/test_infilenametransport.cpp libboost_unit_test ;
+unit-test test_infilenametransport : tests/transport/test_infilenametransport.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio : tests/transport/rio/test_rio.cpp libboost_unit_test ;
+unit-test test_rio : tests/transport/rio/test_rio.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_crypto : tests/transport/rio/test_rio_crypto.cpp libboost_unit_test ;
+unit-test test_rio_crypto : tests/transport/rio/test_rio_crypto.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_cryptoinfilename : tests/transport/rio/test_rio_cryptoinfilename.cpp libboost_unit_test ;
+unit-test test_rio_cryptoinfilename : tests/transport/rio/test_rio_cryptoinfilename.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_cryptooutfilename : tests/transport/rio/test_rio_cryptooutfilename.cpp libboost_unit_test ;
+unit-test test_rio_cryptooutfilename : tests/transport/rio/test_rio_cryptooutfilename.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_cryptooutmeta : tests/transport/rio/test_rio_cryptooutmeta.cpp libboost_unit_test ;
+unit-test test_rio_cryptooutmeta : tests/transport/rio/test_rio_cryptooutmeta.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_impl : tests/transport/rio/test_rio_impl.cpp libboost_unit_test ;
+unit-test test_rio_impl : tests/transport/rio/test_rio_impl.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_infilename : tests/transport/rio/test_rio_infilename.cpp libboost_unit_test ;
+unit-test test_rio_infilename : tests/transport/rio/test_rio_infilename.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_outfilename : tests/transport/rio/test_rio_outfilename.cpp libboost_unit_test ;
+unit-test test_rio_outfilename : tests/transport/rio/test_rio_outfilename.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_socket_TLS : tests/transport/rio/test_rio_socket_TLS.cpp libboost_unit_test ;
+unit-test test_rio_socket_TLS : tests/transport/rio/test_rio_socket_TLS.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_sq_cryptooutfilename : tests/transport/rio/test_sq_cryptooutfilename.cpp libboost_unit_test ;
+unit-test test_sq_cryptooutfilename : tests/transport/rio/test_sq_cryptooutfilename.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_sq_cryptoouttracker : tests/transport/rio/test_sq_cryptoouttracker.cpp libboost_unit_test ;
+unit-test test_sq_cryptoouttracker : tests/transport/rio/test_sq_cryptoouttracker.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_bitmap : tests/utils/test_bitmap.cpp libboost_unit_test ;
+unit-test test_bitmap : tests/utils/test_bitmap.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp libboost_unit_test ;
+
+unit-test test_colors : tests/utils/test_colors.cpp libboost_unit_test ;
+unit-test test_colors : tests/utils/test_colors.cpp libboost_unit_test gcov : <variant>coverage ;
+
+
+unit-test test_d3des : tests/utils/test_d3des.cpp libboost_unit_test ;
+unit-test test_d3des : tests/utils/test_d3des.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_difftimeval : tests/utils/test_difftimeval.cpp libboost_unit_test ;
+unit-test test_difftimeval : tests/utils/test_difftimeval.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_genrandom : tests/utils/test_genrandom.cpp libboost_unit_test ;
+unit-test test_genrandom : tests/utils/test_genrandom.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_log : tests/utils/test_log.cpp libboost_unit_test ;
+unit-test test_log : tests/utils/test_log.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_netutils : tests/utils/test_netutils.cpp libboost_unit_test ;
+unit-test test_netutils : tests/utils/test_netutils.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_png : tests/utils/test_png.cpp libboost_unit_test ;
+unit-test test_png : tests/utils/test_png.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rdtsc : tests/utils/test_rdtsc.cpp libboost_unit_test ;
+unit-test test_rdtsc : tests/utils/test_rdtsc.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp libboost_unit_test ;
+unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_string : tests/utils/test_string.cpp libboost_unit_test ;
+unit-test test_string : tests/utils/test_string.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_strings : tests/test_strings.cpp libboost_unit_test ;
+
+
+unit-test test_zlib : tests/utils/test_zlib.cpp libboost_unit_test z ;
+unit-test test_zlib : tests/utils/test_zlib.cpp libboost_unit_test z gcov : <variant>coverage ;
 
 unit-test test_compact_to_aligned : tests/test_compact_to_aligned.cpp libboost_unit_test ;
 
-unit-test test_string : tests/test_string.cpp libboost_unit_test ;
-unit-test test_strings : tests/test_strings.cpp libboost_unit_test ;
 
 unit-test test_transport : tests/transport/test_transport.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_transport : tests/transport/test_transport.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
@@ -344,10 +677,13 @@ unit-test test_RDPOrdersSecondaryBrushCache : tests/core/RDP/orders/test_RDPOrde
 unit-test test_RDPOrdersSecondaryBrushCache : tests/core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test ;
-unit-test test_colors : tests/test_colors.cpp libboost_unit_test ;
 unit-test test_libpng : tests/test_libpng.cpp png z libboost_unit_test ;
 
 #unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp png z openssl crypto libboost_unit_test ;
+
+unit-test test_rdp : tests/mod/rdp/test_rdp.cpp png openssl crypto d3des z dl libboost_unit_test ;
+unit-test test_rdp : tests/mod/rdp/test_rdp.cpp png openssl crypto d3des z dl libboost_unit_test gcov : <variant>coverage ;
+
 
 unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp z openssl crypto libboost_unit_test ;
 unit-test test_rdp_client_w2000 : tests/client_mods/test_rdp_client_w2000.cpp png openssl crypto d3des z dl libboost_unit_test ;
@@ -372,8 +708,8 @@ unit-test test_cap_bmpcache : tests/core/RDP/capabilities/test_cap_bmpcache.cpp 
 unit-test test_bitmapcachehostsupport : tests/core/RDP/capabilities/test_bitmapcachehostsupport.cpp libboost_unit_test ;
 unit-test test_bitmapcachehostsupport : tests/core/RDP/capabilities/test_bitmapcachehostsupport.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_brushcache : tests/core/RDP/capabilities/test_brushcache.cpp libboost_unit_test ;
-unit-test test_brushcache : tests/core/RDP/capabilities/test_brushcache.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_cap_brushcache : tests/core/RDP/capabilities/test_cap_brushcache.cpp libboost_unit_test ;
+unit-test test_cap_brushcache : tests/core/RDP/capabilities/test_cap_brushcache.cpp libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_compdesk : tests/core/RDP/capabilities/test_compdesk.cpp libboost_unit_test ;
 unit-test test_compdesk : tests/core/RDP/capabilities/test_compdesk.cpp libboost_unit_test gcov : <variant>coverage ;
@@ -420,11 +756,11 @@ unit-test test_pointer : tests/core/RDP/capabilities/test_pointer.cpp libboost_u
 unit-test test_rail : tests/core/RDP/capabilities/test_rail.cpp libboost_unit_test ;
 unit-test test_rail : tests/core/RDP/capabilities/test_rail.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_share : tests/core/RDP/capabilities/test_share.cpp libboost_unit_test ;
-unit-test test_share : tests/core/RDP/capabilities/test_share.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_cap_share : tests/core/RDP/capabilities/test_cap_share.cpp libboost_unit_test ;
+unit-test test_cap_share : tests/core/RDP/capabilities/test_cap_share.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_sound : tests/core/RDP/capabilities/test_sound.cpp libboost_unit_test ;
-unit-test test_sound : tests/core/RDP/capabilities/test_sound.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_cap_sound : tests/core/RDP/capabilities/test_cap_sound.cpp libboost_unit_test ;
+unit-test test_cap_sound : tests/core/RDP/capabilities/test_cap_sound.cpp libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_surfacecommands : tests/core/RDP/capabilities/test_surfacecommands.cpp libboost_unit_test ;
 unit-test test_surfacecommands : tests/core/RDP/capabilities/test_surfacecommands.cpp libboost_unit_test gcov : <variant>coverage ;
@@ -437,7 +773,6 @@ unit-test test_window : tests/core/RDP/capabilities/test_window.cpp libboost_uni
 
 unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test ;
 unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test ;
-unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test ;
 
 unit-test test_rio_generator : tests/transport/rio/test_rio_generator.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_rio_generator : tests/transport/rio/test_rio_generator.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
@@ -488,9 +823,6 @@ unit-test test_sq_inmeta : tests/transport/rio/test_sq_inmeta.cpp openssl crypto
 unit-test test_sq_inmeta : tests/transport/rio/test_sq_inmeta.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
 #gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_rio_xxx.gcno bin/gcc-4.6/coverage/test_rio_xxx
-
-
-unit-test test_zlib : tests/test_zlib.cpp z libboost_unit_test ;
 
 unit-test test_parse_username : tests/test_parse_username.cpp libboost_unit_test ;
 

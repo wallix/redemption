@@ -22,7 +22,7 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP_
 #define _REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP_
 
-#include "widget/screen.hpp"
+#include "widget/widget_screen.hpp"
 #include "mod_api.hpp"
 
 struct internal_mod : public mod_api {

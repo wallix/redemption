@@ -30,7 +30,7 @@
 
 #include "RDP/x224.hpp"
 #include "RDP/mcs.hpp"
-#include "RDP/rdp.hpp"
+#include "RDP/share.hpp"
 #include "RDP/sec.hpp"
 #include "RDP/lic.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
