@@ -22,7 +22,7 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_EDIT_HPP
 
 #include "widget2_widget.hpp"
-#include "label.hpp"
+#include "widget2_label.hpp"
 #include <keymap2.hpp>
 
 class WidgetEdit : public Widget2 {

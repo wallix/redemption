@@ -24,7 +24,7 @@
 #include "front.hpp"
 #include "mod_api.hpp"
 #include "window_wab_close.hpp"
-#include "image.hpp"
+#include "widget2_image.hpp"
 #include "widget2_screen.hpp"
 #include "widget2_internal_mod.hpp"
 

@@ -21,7 +21,7 @@
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_NUMBER_EDIT_HPP)
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_NUMBER_EDIT_HPP
 
-#include "edit.hpp"
+#include "widget2_edit.hpp"
 
 class WidgetNumberEdit : public WidgetEdit
 {

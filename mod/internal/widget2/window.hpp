@@ -21,10 +21,10 @@
 #if !defined(REDEMPTION_MOD_WIDGET2_WINDOW_HPP_)
 #define REDEMPTION_MOD_WIDGET2_WINDOW_HPP_
 
-#include "widget_composite.hpp"
-#include "label.hpp"
+#include "widget2_composite.hpp"
+#include "widget2_label.hpp"
 #include "colors.hpp"
-#include "button.hpp"
+#include "widget2_button.hpp"
 
 class Window : public WidgetComposite
 {

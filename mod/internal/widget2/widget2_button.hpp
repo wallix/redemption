@@ -22,7 +22,7 @@
 #define REDEMPTION_MOD_WIDGET2_BUTTON_HPP
 
 #include "widget2_widget.hpp"
-#include "label.hpp"
+#include "widget2_label.hpp"
 
 class WidgetButton : public Widget2
 {

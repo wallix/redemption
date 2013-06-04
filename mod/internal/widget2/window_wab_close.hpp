@@ -22,10 +22,10 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_WINDOW_WAB_CLOSE_HPP
 
 #include "window.hpp"
-#include "button.hpp"
-#include "image.hpp"
-#include "edit.hpp"
-#include "multiline.hpp"
+#include "widget2_button.hpp"
+#include "widget2_image.hpp"
+#include "widget2_edit.hpp"
+#include "widget2_multiline.hpp"
 
 #include <vector>
 

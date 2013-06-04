@@ -21,13 +21,13 @@
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_SELECTOR_HPP)
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_SELECTOR_HPP
 
-#include "widget_composite.hpp"
-#include "multiline.hpp"
-#include "button.hpp"
-#include "label.hpp"
-#include "edit.hpp"
-#include "number_edit.hpp"
-#include <region.hpp>
+#include "widget2_composite.hpp"
+#include "widget2_multiline.hpp"
+#include "widget2_button.hpp"
+#include "widget2_label.hpp"
+#include "widget2_edit.hpp"
+#include "widget2_number_edit.hpp"
+#include "region.hpp"
 //#include "pager.hpp"
 //#include "selectline.hpp"
 
