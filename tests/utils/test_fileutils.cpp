@@ -290,6 +290,7 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
     int res = write(fd, conntrack, sizeof(conntrack)-1);
     BOOST_CHECK_EQUAL(res, sizeof(conntrack)-1);
     
+    // ----------------------------------------------------
     BOOST_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
     
     const char * source = "10.10.43.13" ;
@@ -297,6 +298,8 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
     char transparent_target[256] = {};
     
     const char first[] = "unknown  2 580 src=10.10.43.13 dst=224.0.0.251 packets=2 bytes=64 [UNREPLIED] src=224.0.0.251 dst=10.10.43.13 packets=0 bytes=0 mark=0 secmark=0 use=2\n";
+
+    // Read first line
     
     LineBuffer line(fd);
     int status = line.readline();
@@ -304,6 +307,8 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
     BOOST_CHECK_EQUAL(0, memcmp(first, &line.buffer[line.begin_line], sizeof(first) - 1));
     BOOST_CHECK_EQUAL(line.eol - line.begin_line, sizeof(first) - 1);
     BOOST_CHECK_EQUAL(0, memcmp(first, &line.buffer[line.begin_line], line.eol - line.begin_line));
+
+    // Parse it
 
     line.eow = line.begin_word = line.begin_line;
     status = line.get_protocol();
@@ -490,10 +495,12 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
 
     line.begin_word = line.eow;
     status = line.get_use();
-//    BOOST_CHECK_EQUAL(status, 0);
+
+    BOOST_CHECK_EQUAL(status, 0);
     BOOST_CHECK_EQUAL(5, line.eow - line.begin_word);
     BOOST_CHECK_EQUAL(0, memcmp("use=2", &line.buffer[line.begin_word], line.eow - line.begin_word));
 
+    // ----------------------------------------------------
     BOOST_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
     res = parse_ip_conntrack(fd, source, dest, 41971, 3389, transparent_target);
     BOOST_CHECK_EQUAL(res, 0);

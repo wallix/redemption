@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <stddef.h>
 #include <sys/socket.h>
+#include <ctype.h>
 #include "log.hpp"
 
 
@@ -335,7 +336,24 @@ struct LineBuffer
         for ( ; i < this->eol ; i++){
             char c = this->buffer[i];
             if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '-'))){
-                if (c == ' '){
+                if (isspace(c)){
+                    res = 0;
+                }
+                break;
+            }
+        }
+        this->eow = i;
+        return res;
+    }
+
+    int get_status1()
+    {
+        int res = -1;
+        int i = this->begin_word;
+        for ( ; i < this->eol ; i++){
+            char c = this->buffer[i];
+            if (!(c >= 'A' && c <= 'Z')){
+                if (isspace(c)){
                     res = 0;
                 }
                 break;
@@ -350,12 +368,12 @@ struct LineBuffer
         int i = this->begin_word;
         int res = -1;
         char c = this->buffer[i];
-        if (c == ' '){
+        if (isspace(c)){
             res = 0;
             i++;
             for ( ; i < this->eol ; i++){
                 char c = this->buffer[i];
-                if (c != ' '){
+                if (!isspace(c)){
                     break;
                 }
             }
@@ -386,7 +404,7 @@ struct LineBuffer
         if (this->eow == this->eol){
             return res;
         }
-        if (this->buffer[this->eow] == ' '){
+        if (isspace(this->buffer[this->eow])){
             return res;
         }
         return -1;
@@ -398,7 +416,7 @@ struct LineBuffer
         if (this->eow == this->eol){
             return res;
         }
-        if (this->buffer[this->eow] == ' '){
+        if (isspace(this->buffer[this->eow])){
             return res;
         }
         return -1;
@@ -514,7 +532,7 @@ struct LineBuffer
         }
         this->eow++;
         res = this->get_num(this->eow);
-        if ((this->eow <= this->eol) && (this->buffer[this->eow] != ' ')){
+        if ((this->eow <= this->eol) && (!isspace(this->buffer[this->eow]))){
             return -1;
         }
         return res;
@@ -560,7 +578,7 @@ struct LineBuffer
         if (res < 0){
             return res;
         }
-        if ((this->eow <= this->eol) && (this->buffer[this->eow] != ' ')){
+        if ((this->eow >= this->eol) || (!isspace(this->buffer[this->eow]))){
             return -1;
         }
         return res;
@@ -708,90 +726,146 @@ struct LineBuffer
     
 };
 
-
 int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport, char transparent_dest[256])
 {
     LineBuffer line(fd);
     int status = line.readline();
-    while (status == 1) {
-        line.begin_line = line.eol;
-        // udp
-        line.get_protocol();
-        line.get_space();
+    //"tcp      6 299 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=36699 dport=22 packets=5256 bytes=437137 src=10.10.47.93 dst=10.10.43.13 sport=22 dport=36699 packets=3523 bytes=572101 [ASSURED] mark=0 secmark=0 use=2\n"
+    
+    for ( ; status == 1 ; (line.begin_line = line.eol), (status = line.readline())) {
 
-        // 17
-        line.get_protocol_number();
-        line.get_space();
+        // tcp
+        line.begin_word = line.begin_line;
+        if (line.get_protocol() < 0) { continue; }
+//        printf("Word: %.*s\n", line.eow - line.begin_word, &line.buffer[line.begin_word]);
+        if ((line.eow - line.begin_word == 3) 
+        && (0 != memcmp(&line.buffer[line.begin_word], "tcp", 3))){ continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
+
+        // 6
+        line.begin_word = line.eow;
+        if (line.get_protocol_number() < 0) { continue; }
+//        printf("Word: %.*s\n", line.eow - line.begin_word, &line.buffer[line.begin_word]);
+        if ((line.eow - line.begin_word == 1) 
+        && (0 != memcmp(&line.buffer[line.begin_word], "6", 1))){ continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // 0
-        line.get_ttl_sec();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_ttl_sec() < 0) { continue; }
+//        printf("Word TTL: %.*s\n", line.eow - line.begin_word, &line.buffer[line.begin_word]);
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
+
+        // ESTABLISHED
+        line.begin_word = line.eow;
+        if (line.get_status1() < 0) { continue; }
+//        printf("Word: %.*s\n", line.eow - line.begin_word, &line.buffer[line.begin_word]);
+        if ((line.eow - line.begin_word == 11) 
+        && (0 != memcmp(&line.buffer[line.begin_word], "ESTABLISHED", 11))){ continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // src=10.10.43.31
-        line.get_src_ip();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_src_ip() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // dst=10.10.47.255
-        line.get_dst_ip();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_dst_ip() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // sport=57621
-        line.get_sport();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_sport() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // dport=57621
-        line.get_dport();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_dport() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // packets=1139
-        line.get_packets();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_packets() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // bytes=82008
-        line.get_bytes();
-        line.get_space();
-
-        // [UNREPLIED]
-        line.get_status();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_bytes() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // src=10.10.47.255
-        line.get_src_ip();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_src_ip() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // dst=10.10.43.31
-        line.get_dst_ip();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_dst_ip() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // sport=57621
-        line.get_sport();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_sport() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // dport=57621
-        line.get_dport();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_dport() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // packets=0
-        line.get_packets();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_packets() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // bytes=0
-        line.get_bytes();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_bytes() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
+
+        // [ASSURED]
+        line.begin_word = line.eow;
+        if (line.get_status() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // mark=0
-        line.get_mark();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_mark() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // secmark=0
-        line.get_secmark();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_secmark() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
         // use=2\n";
-        line.get_use();
-        line.get_space();
+        line.begin_word = line.eow;
+        if (line.get_use() < 0) { continue; }
+        line.begin_word = line.eow;
+        if (line.get_space() < 0) { continue; }
 
-        status = line.readline();
+        printf("Found candidate line: %.*s", line.eol - line.begin_line, &line.buffer[line.begin_line]);
+
     }
     if (status < 0){
         printf("Error : %s\n", strerror(errno));
