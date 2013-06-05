@@ -66,7 +66,7 @@ class SessionServer : public Server
         int source_port = 0;
         char target_ip[256];
         int target_port = 0;
-        
+        char real_target_ip[256];
         
         strcpy(source_ip, inet_ntoa(u.s4.sin_addr));
         source_port = u.s4.sin_port;
@@ -97,18 +97,24 @@ class SessionServer : public Server
                 _exit(1);
             }
 
-            strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
             target_port = localAddress.s4.sin_port;
-
-            LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, target_ip, target_port);
+            strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
 
             if (ini.globals.enable_ip_transparent) {
-
-                TODO("extract relevant data from /proc/net/ip_conntrack to get actual incoming address")
+                strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
+                int fd = open("/proc/net/ip_conntrack", O_RDONLY);
+                // source and dest are inverted because we get the information we want from reply path rule
+                int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip));
+                if (res){
+                    LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack");
+                }
+                close(fd);
                 
                 setgid(this->gid);
                 setuid(this->uid);
             }
+
+            LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, real_target_ip, target_port);
 
             int nodelay = 1;
             if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
@@ -132,9 +138,10 @@ class SessionServer : public Server
                 close(fd);
 
                 // Launch session
-                LOG(LOG_INFO, "New session on %u (pid=%u) from %s to %s", (unsigned)sck, (unsigned)child_pid, source_ip, target_ip);
-//                Session session(front_event, front_trans, ip_source, this->refreshconf, &ini);
-                Session session(front_event, sck, source_ip, this->refreshconf, &ini);
+                LOG(LOG_INFO, "New session on %u (pid=%u) from %s to %s", (unsigned)sck, (unsigned)child_pid, source_ip, real_target_ip);
+                ini.context_set_value(AUTHID_HOST, source_ip);
+                ini.context_set_value(AUTHID_TARGET, real_target_ip);
+                Session session(front_event, sck, this->refreshconf, &ini);
 
                 // Suppress session file
                 unlink(session_file);

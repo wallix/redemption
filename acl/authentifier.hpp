@@ -677,6 +677,7 @@ class SessionManager {
             this->out_item(stream, STRAUTHID_DISPLAY_MESSAGE);
             this->out_item(stream, STRAUTHID_ACCEPT_MESSAGE);
             this->out_item(stream, STRAUTHID_HOST);
+            this->out_item(stream, STRAUTHID_TARGET);
             this->out_item(stream, STRAUTHID_AUTH_USER);
             this->out_item(stream, STRAUTHID_PASSWORD);
             this->out_item(stream, STRAUTHID_TARGET_USER);

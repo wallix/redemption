@@ -153,7 +153,11 @@ void reset_signals(void)
 void redemption_new_session()
 {
     char text[256];
-    char ip_source[256];
+    char source_ip[256];
+    int source_port = 0;
+    char target_ip[256];
+    int target_port = 0;
+    char real_target_ip[256];
 
     union
     {
@@ -170,9 +174,41 @@ void redemption_new_session()
     snprintf(text, 255, "redemption_%8.8x_main_term", getpid());
 
     getpeername(0, &u.s, (socklen_t *)&sock_len);
-    strcpy(ip_source, inet_ntoa(u.s4.sin_addr));
+    strcpy(source_ip, inet_ntoa(u.s4.sin_addr));
+
+    union
+    {
+      struct sockaddr s;
+      struct sockaddr_storage ss;
+      struct sockaddr_in s4;
+      struct sockaddr_in6 s6;
+    } localAddress;
+    socklen_t addressLength = sizeof(localAddress);
 
     int sck = 0;
+    if (-1 == getsockname(sck, &localAddress.s, &addressLength)){
+        LOG(LOG_INFO, "getsockname failed error=%s", strerror(errno));
+        _exit(1);
+    }
+
+    target_port = localAddress.s4.sin_port;
+    strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
+
+    if (ini.globals.enable_ip_transparent) {
+        strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
+        int fd = open("/proc/net/ip_conntrack", O_RDONLY);
+        // source and dest are inverted because we get the information we want from reply path rule
+        int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip));
+        if (res){
+            LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack");
+        }
+        close(fd);
+    }
+
+
+    ini.context_set_value(AUTHID_HOST, source_ip);
+    ini.context_set_value(AUTHID_TARGET, real_target_ip);
+
     if (ini.globals.debug.session){
         LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
     }
@@ -181,7 +217,7 @@ void redemption_new_session()
     if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
         wait_obj front_event(sck);
 
-        Session session(front_event, sck, ip_source, &refreshconf, &ini);
+        Session session(front_event, sck, &refreshconf, &ini);
 
         if (ini.globals.debug.session){
             LOG(LOG_INFO, "Session::end of Session(%u)", sck);

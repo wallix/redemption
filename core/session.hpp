@@ -115,7 +115,7 @@ struct Session {
     SessionManager * sesman;
     UdevRandom gen;
 
-    Session(wait_obj & front_event, int sck, const char * ip_source, int * refreshconf, Inifile * ini)
+    Session(wait_obj & front_event, int sck, int * refreshconf, Inifile * ini)
         : refreshconf(refreshconf)
         , front_event(front_event)
         , ini(ini)
@@ -126,8 +126,6 @@ struct Session {
         SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->globals.debug.front);
 
         try {
-            this->ini->context_set_value(AUTHID_HOST, ip_source);
-
             this->sesman = new SessionManager( this->ini
                                              , this->ini->globals.keepalive_grace_delay
                                              , this->ini->globals.max_tick

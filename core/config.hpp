@@ -180,6 +180,7 @@ typedef enum
 
     AUTHID_AUTH_USER,       // login
     AUTHID_HOST,            // ip_client
+    AUTHID_TARGET,          // ip_target
     AUTHID_PASSWORD,        // password
 
     AUTHID_AUTHCHANNEL_ANSWER,  // WabLauncher target answer
@@ -260,6 +261,7 @@ typedef enum
 
 #define STRAUTHID_AUTH_USER                "login"
 #define STRAUTHID_HOST                     "ip_client"
+#define STRAUTHID_TARGET                   "ip_target"
 #define STRAUTHID_PASSWORD                 "password"
 
 TODO("This is not a translation but auth_channel answer, change key name in sesman")
@@ -345,6 +347,7 @@ static inline authid_t authid_from_string(const char * strauthid) {
 
         STRAUTHID_AUTH_USER,          // login
         STRAUTHID_HOST,               // ip_client
+        STRAUTHID_TARGET,             // ip_target
         STRAUTHID_PASSWORD,           // password
 
         STRAUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
@@ -396,7 +399,8 @@ struct Inifile {
         char codec_id[512];
         char video_quality[512];
         char auth_user[512];
-        char host[512];
+        char host[512];     // client_ip
+        char target[512];   // target ip
         char target_device[512];
         char target_user[512];
         char auth_channel[512];
@@ -561,6 +565,7 @@ struct Inifile {
             bool               ask_auth_user;
 
             bool               ask_host;
+            bool               ask_target;
             bool               ask_password;
 
             redemption::string password;
@@ -1399,6 +1404,12 @@ struct Inifile {
             this->globals.host[sizeof(this->globals.host) - 1]           = 0;
             break;
 
+        case AUTHID_TARGET:
+            this->globals.context.ask_target      = false;
+            strncpy(this->globals.target,      value, sizeof(this->globals.target));
+            this->globals.host[sizeof(this->globals.target) - 1]           = 0;
+            break;
+
         case AUTHID_PASSWORD:
             this->globals.context.ask_password = false;
             this->globals.context.password     = value;
@@ -1697,6 +1708,9 @@ struct Inifile {
         case AUTHID_HOST:
             this->globals.context.ask_host                    = true; break;
 
+        case AUTHID_TARGET:
+            this->globals.context.ask_target                  = true; break;
+
         case AUTHID_PASSWORD:
             this->globals.context.ask_password                = true; break;
 
@@ -1781,6 +1795,9 @@ struct Inifile {
 
         case AUTHID_HOST:
             return this->globals.context.ask_host;
+
+        case AUTHID_TARGET:
+            return this->globals.context.ask_target;
 
         case AUTHID_PASSWORD:
             return this->globals.context.ask_password;
