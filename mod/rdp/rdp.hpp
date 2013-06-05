@@ -3693,6 +3693,7 @@ struct mod_rdp : public mod_api {
         if (this->verbose & 64){
             LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */", numberRectangles);
         }
+
         for (size_t i = 0; i < numberRectangles; i++) {
 
             // rectangles (variable): Variable-length array of TS_BITMAP_DATA
@@ -3837,8 +3838,12 @@ struct mod_rdp : public mod_api {
                    );
             }
 
-//            this->front.draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
-            this->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
+            if ((bmpdata.bits_per_pixel == 8) && (this->front_bpp != 8)) {
+                this->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
+            }
+            else {
+                this->front.draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
+            }
         }
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");
