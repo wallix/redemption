@@ -30,6 +30,7 @@
 #include "region.hpp"
 //#include "pager.hpp"
 //#include "selectline.hpp"
+#include "difftimeval.hpp"
 
 class WidgetSelectLine : public Widget2
 {
@@ -47,6 +48,26 @@ public:
     int x_text;
     int y_text;
     std::vector<WidgetLabel*> labels;
+
+    struct difftimer {
+        uint64_t t;
+
+        difftimer(uint64_t start = 0)
+        : t(start)
+        {}
+
+        uint64_t tick()
+        {
+            uint64_t ret = this->t;
+            this->t = ustime();
+            return this->t - ret;
+        }
+
+        void update()
+        {
+            this->t = ustime();
+        }
+    } click_interval;
 
     WidgetSelectLine(ModApi* drawable, const Rect& rect,
                      Widget2* parent, NotifyApi* notifier, int group_id = 0,
@@ -70,6 +91,7 @@ public:
     , x_text(xtext)
     , y_text(ytext)
     , labels()
+    , click_interval()
     {
         if (this->drawable) {
             int w;
@@ -191,11 +213,18 @@ public:
              && (y - this->dy()) % lcy != 0) {
                 int p = (y - this->dy()) / lcy;
                 if ((uint)p != this->current_index) {
+                    this->click_interval.update();
                     int old_current_index = this->current_index;
                     this->set_current_index(p);
                     this->send_notify(NOTIFY_SELECTION_CHANGED,
                                       old_current_index, this->current_index);
                     return ;
+                }
+                else {
+                    if (this->click_interval.tick() <= 700000LL) {
+                        this->send_notify(NOTIFY_SUBMIT);
+                        return ;
+                    }
                 }
             }
         }
@@ -310,19 +339,19 @@ public:
     , filter_device(drawable, 20, 0, 120, this, this, filter_device?filter_device:0, -12, BLACK, WHITE, -1, 1, 1)
     , filter_target(drawable, 150, 0, 340, this, this, filter_target?filter_target:0, -12, BLACK, WHITE, -1, 1, 1)
     //BEGIN WidgetPager
-    , first_page(drawable, 0, 0, this, notifier, "<<", true, -15, BLACK, WHITE, 8, 4)
-    , prev_page(drawable, 0, 0, this, notifier, "<", true, -15, BLACK, WHITE, 8, 4)
+    , first_page(drawable, 0, 0, this, notifier, "<<", true, -15, BLACK, GREY, 8, 4)
+    , prev_page(drawable, 0, 0, this, notifier, "<", true, -15, BLACK, GREY, 8, 4)
     , current_page(drawable, 0, 0, this->first_page.cy(), this, notifier,
                    current_page ? current_page : "XXXX", -15, BLACK, WHITE, -1, 1, 1)
     , number_page(drawable, 0, 0, this, NULL,
                   number_of_page ? temporary_number_of_page(number_of_page).buffer : "/XXXX",
                   true, -100, BLACK, GREY)
-    , next_page(drawable, 0, 0, this, notifier, ">", true, -15, BLACK, WHITE, 8, 4)
-    , last_page(drawable, 0, 0, this, notifier, ">>", true, -15, BLACK, WHITE, 8, 4)
+    , next_page(drawable, 0, 0, this, notifier, ">", true, -15, BLACK, GREY, 8, 4)
+    , last_page(drawable, 0, 0, this, notifier, ">>", true, -15, BLACK, GREY, 8, 4)
     //END WidgetPager
-    , logout(drawable, 0, 0, this, notifier, "Logout", true, -16, BLACK, WHITE, 8, 4, NOTIFY_CANCEL)
-    , apply(drawable, 0, 0, this, notifier, "Appy", true, -12, BLACK, WHITE, 8, 4)
-    , connect(drawable, 0, 0, this, notifier, "Connect", true, -18, BLACK, WHITE, 8, 4)
+    , logout(drawable, 0, 0, this, notifier, "Logout", true, -16, BLACK, GREY, 8, 4, NOTIFY_CANCEL)
+    , apply(drawable, 0, 0, this, notifier, "Appy", true, -12, BLACK, GREY, 8, 4)
+    , connect(drawable, 0, 0, this, notifier, "Connect", true, -18, BLACK, GREY, 8, 4)
     {
         this->widget_with_focus = &this->device_lines;
         this->child_list.push_back(&this->device_label);
@@ -346,6 +375,14 @@ public:
         this->child_list.push_back(&this->apply);
         this->child_list.push_back(&this->connect);
         //this->child_list.push_back(&this->pager);
+
+        this->first_page.border_top_left_color = WHITE;
+        this->prev_page.border_top_left_color = WHITE;
+        this->next_page.border_top_left_color = WHITE;
+        this->last_page.border_top_left_color = WHITE;
+        this->logout.border_top_left_color = WHITE;
+        this->apply.border_top_left_color = WHITE;
+        this->connect.border_top_left_color = WHITE;
 
         this->target_lines.tab_flag = IGNORE_TAB;
         this->protocol_lines.tab_flag = IGNORE_TAB;

@@ -73,6 +73,8 @@ public:
         this->image.rect.x = width - this->image.cx();
         this->image.rect.y = height - this->image.cy();
 
+        this->screen.set_widget_focus(&this->window_close);
+
         this->screen.refresh(this->screen.rect);
     }
 

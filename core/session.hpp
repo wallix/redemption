@@ -514,7 +514,7 @@ struct Session {
     }
 
     TODO("We shoudl be able to flatten MCTX_STATUS and submodule, combining the two we get the desired target")
-    void session_setup_mod(int target_module, submodule_t submodule, bool delete_mod = true)
+    void session_setup_mod(int target_module, submodule_t submodule)
     {
         if (this->verbose){
             LOG(LOG_INFO, "Session::session_setup_mod(target_module=%u, submodule=%u)", target_module, (unsigned)submodule);
@@ -532,9 +532,7 @@ struct Session {
             // default is "allow", do nothing special
         }
 
-        if (delete_mod) {
-            this->remove_mod();
-        }
+        this->remove_mod();
 
         switch (target_module)
         {
@@ -620,16 +618,16 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
                         }
-//                         this->mod = new LoginMod(
-//                             *this->ini,
-//                             *this->front,
-//                             this->front->client_info.width,
-//                             this->front->client_info.height);
-                        this->mod = new login_mod(
-                                         *this->front,
-                                         this->front->client_info.width,
-                                         this->front->client_info.height,
-                                         this->ini);
+                        this->mod = new LoginMod(
+                            *this->ini,
+                            *this->front,
+                            this->front->client_info.width,
+                            this->front->client_info.height);
+//                         this->mod = new login_mod(
+//                                          *this->front,
+//                                          this->front->client_info.width,
+//                                          this->front->client_info.height,
+//                                          this->ini);
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::internal module Login ready");
                         }
