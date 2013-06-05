@@ -127,6 +127,7 @@ struct BmpCache2Caps : public Capability {
     : Capability(CAPSTYPE_BITMAPCACHE_REV2, CAPLEN_BITMAPCACHE_REV2)
     , cacheFlags(0)
     , pad1(0)
+    , numCellCaches(0)
     , bitmapCache0CellInfo(0)
     , bitmapCache1CellInfo(0)
     , bitmapCache2CellInfo(0)
