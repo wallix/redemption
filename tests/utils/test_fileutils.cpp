@@ -501,8 +501,9 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
     BOOST_CHECK_EQUAL(0, memcmp("use=2", &line.buffer[line.begin_word], line.eow - line.begin_word));
 
     // ----------------------------------------------------
+    // "tcp      6 431997 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=46392 dport=3389 packets=90 bytes=10061 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=46392 packets=89 bytes=38707 [ASSURED] mark=0 secmark=0 use=2\n"
     BOOST_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
-    res = parse_ip_conntrack(fd, source, dest, 41971, 3389, transparent_target);
+    res = parse_ip_conntrack(fd, "10.10.47.93", "10.10.43.13", 3389, 46392, transparent_target);
     BOOST_CHECK_EQUAL(res, 0);
     
     close(fd);
