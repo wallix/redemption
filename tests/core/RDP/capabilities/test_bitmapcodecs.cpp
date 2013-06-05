@@ -26,8 +26,17 @@
 
 #define LOGNULL
 #include "log.hpp"
+#include "RDP/capabilities.hpp"
 
-
-BOOST_AUTO_TEST_CASE(TestXXX)
+BOOST_AUTO_TEST_CASE(TestBitmapCodecCaps)
 {
+    BitmapCodecCaps cap;
+
+    BStream stream(1024);
+    cap.emit(stream);
+    stream.mark_end();
+    stream.p = stream.data;
+    
+    BitmapCodecCaps cap2;
+    cap2.recv(stream, CAPLEN_BITMAP_CODECS);
 }

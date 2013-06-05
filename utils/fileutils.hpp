@@ -726,11 +726,23 @@ struct LineBuffer
     
 };
 
-int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport, char transparent_dest[256])
+// return 0 if found, -1 not found or error
+int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport, char * transparent_dest, int sz_transparent_dest)
 {
     LineBuffer line(fd);
+    char src_port[6];
+    char dst_port[6];
+    int len_src_port = sprintf(src_port, "%u", sport);
+    int len_dst_port = sprintf(dst_port, "%u", dport);
+    int len_source = strlen(source);
+    int len_dest = strlen(dest);
+    
     int status = line.readline();
+    
     //"tcp      6 299 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=36699 dport=22 packets=5256 bytes=437137 src=10.10.47.93 dst=10.10.43.13 sport=22 dport=36699 packets=3523 bytes=572101 [ASSURED] mark=0 secmark=0 use=2\n"
+    
+    char tmp_transparent_dest[64] = {};
+    int len_tmp_transparent_dest = 0;
     
     for ( ; status == 1 ; (line.begin_line = line.eol), (status = line.readline())) {
 
@@ -738,8 +750,8 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
         line.begin_word = line.begin_line;
         if (line.get_protocol() < 0) { continue; }
 //        printf("Word: %.*s\n", line.eow - line.begin_word, &line.buffer[line.begin_word]);
-        if ((line.eow - line.begin_word == 3) 
-        && (0 != memcmp(&line.buffer[line.begin_word], "tcp", 3))){ continue; }
+        if ((line.eow - line.begin_word != 3) 
+        || (0 != memcmp(&line.buffer[line.begin_word], "tcp", 3))){ continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
 
@@ -747,8 +759,8 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
         line.begin_word = line.eow;
         if (line.get_protocol_number() < 0) { continue; }
 //        printf("Word: %.*s\n", line.eow - line.begin_word, &line.buffer[line.begin_word]);
-        if ((line.eow - line.begin_word == 1) 
-        && (0 != memcmp(&line.buffer[line.begin_word], "6", 1))){ continue; }
+        if ((line.eow - line.begin_word != 1) 
+        || (0 != memcmp(&line.buffer[line.begin_word], "6", 1))){ continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
 
@@ -763,8 +775,8 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
         line.begin_word = line.eow;
         if (line.get_status1() < 0) { continue; }
 //        printf("Word: %.*s\n", line.eow - line.begin_word, &line.buffer[line.begin_word]);
-        if ((line.eow - line.begin_word == 11) 
-        && (0 != memcmp(&line.buffer[line.begin_word], "ESTABLISHED", 11))){ continue; }
+        if ((line.eow - line.begin_word != 11) 
+        || (0 != memcmp(&line.buffer[line.begin_word], "ESTABLISHED", 11))){ continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
 
@@ -777,6 +789,12 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
         // dst=10.10.47.255
         line.begin_word = line.eow;
         if (line.get_dst_ip() < 0) { continue; }
+        if (line.eow - line.begin_word > static_cast<int>(sizeof(tmp_transparent_dest) + 4)){
+            return -1;
+        }
+        len_tmp_transparent_dest = line.eow - line.begin_word - 4;
+        memcpy(tmp_transparent_dest, &line.buffer[line.begin_word + 4], len_tmp_transparent_dest);
+        
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
 
@@ -807,24 +825,34 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
         // src=10.10.47.255
         line.begin_word = line.eow;
         if (line.get_src_ip() < 0) { continue; }
+        if ((line.eow - line.begin_word != len_source + 4) 
+        || (0 != memcmp(&line.buffer[line.begin_word + 4], source, len_source))){ continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
+
 
         // dst=10.10.43.31
         line.begin_word = line.eow;
         if (line.get_dst_ip() < 0) { continue; }
+        if ((line.eow - line.begin_word != len_dest + 4) 
+        || (0 != memcmp(&line.buffer[line.begin_word + 4], dest, len_dest))){ continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
+
 
         // sport=57621
         line.begin_word = line.eow;
         if (line.get_sport() < 0) { continue; }
+        if ((line.eow - line.begin_word != len_src_port + 6) 
+        || (0 != memcmp(&line.buffer[line.begin_word + 6], src_port, len_src_port))){ continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
 
         // dport=57621
         line.begin_word = line.eow;
         if (line.get_dport() < 0) { continue; }
+        if ((line.eow - line.begin_word != len_dst_port + 6) 
+        || (0 != memcmp(&line.buffer[line.begin_word + 6], dst_port, len_dst_port))){ continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
 
@@ -864,13 +892,16 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
 
-        printf("Found candidate line: %.*s", line.eol - line.begin_line, &line.buffer[line.begin_line]);
-
+        if (len_tmp_transparent_dest >= sz_transparent_dest){
+            LOG(LOG_WARNING, "No enough space to store transparent ip target address");
+            return -1;
+        }
+        memcpy(transparent_dest, tmp_transparent_dest, len_tmp_transparent_dest);
+        transparent_dest[len_tmp_transparent_dest] = 0;
+        return 0;
     }
-    if (status < 0){
-        printf("Error : %s\n", strerror(errno));
-    }
-    return 0;
+    // transparent ip route not found in ip_conntrack
+    return -1;
 }
 
 
