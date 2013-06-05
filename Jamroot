@@ -262,8 +262,8 @@ unit-test test_capture : tests/capture/test_capture.cpp libboost_unit_test png z
 unit-test test_chunked_image_transport : tests/capture/test_chunked_image_transport.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_chunked_image_transport : tests/capture/test_chunked_image_transport.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp libboost_unit_test ;
-unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_GraphicToFile : tests/capture/test_GraphicToFile.cpp libboost_unit_test ;
 unit-test test_GraphicToFile : tests/capture/test_GraphicToFile.cpp libboost_unit_test gcov : <variant>coverage ;
@@ -632,7 +632,6 @@ unit-test test_image_capture : tests/capture/test_image_capture.cpp png z openss
 unit-test test_image_capture : tests/capture/test_image_capture.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp png z openssl crypto libboost_unit_test ;
-unit-test test_play : tests/capture/test_play.cpp png z libboost_unit_test z openssl crypto ;
 unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_mwrm : tests/capture/test_mwrm.cpp png z openssl crypto dl libboost_unit_test ;
 unit-test test_outmeta : tests/capture/test_outmeta.cpp png z openssl crypto dl libboost_unit_test ;
