@@ -292,11 +292,7 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
     
     // ----------------------------------------------------
     BOOST_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
-    
-    const char * source = "10.10.43.13" ;
-    const char * dest = "10.10.47.93" ;
-    char transparent_target[256] = {};
-    
+       
     const char first[] = "unknown  2 580 src=10.10.43.13 dst=224.0.0.251 packets=2 bytes=64 [UNREPLIED] src=224.0.0.251 dst=10.10.43.13 packets=0 bytes=0 mark=0 secmark=0 use=2\n";
 
     // Read first line
@@ -501,11 +497,20 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
     BOOST_CHECK_EQUAL(0, memcmp("use=2", &line.buffer[line.begin_word], line.eow - line.begin_word));
 
     // ----------------------------------------------------
-    // "tcp      6 431997 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=46392 dport=3389 packets=90 bytes=10061 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=46392 packets=89 bytes=38707 [ASSURED] mark=0 secmark=0 use=2\n"
     BOOST_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
-    res = parse_ip_conntrack(fd, "10.10.47.93", "10.10.43.13", 3389, 46392, transparent_target);
+    char transparent_target[256] = {};
+    // "tcp      6 431979 ESTABLISHED src=10.10.43.13 dst=10.10.46.78 sport=41971 dport=3389 packets=96 bytes=10739 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=41971 packets=96 bytes=39071 [ASSURED] mark=0 secmark=0 use=2\n"
+
+    res = parse_ip_conntrack(fd, "10.10.47.93", "10.10.43.13", 3389, 41971, transparent_target, sizeof(transparent_target));
     BOOST_CHECK_EQUAL(res, 0);
+    BOOST_CHECK_EQUAL(0, strcmp(transparent_target, "10.10.46.78"));
     
+    BOOST_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
+    transparent_target[0] = 0;
+    res = parse_ip_conntrack(fd, "10.10.47.21", "10.10.43.13", 3389, 46392, transparent_target, sizeof(transparent_target));
+    BOOST_CHECK_EQUAL(res, -1);
+    BOOST_CHECK_EQUAL(0, strcmp(transparent_target, ""));
+
     close(fd);
 }
 
