@@ -660,6 +660,39 @@ struct FileToGraphic
                 this->remaining_order_count = 0;
             }
             break;
+            case RDP_UPDATE_BITMAP:
+            {
+                if (!this->meta_ok) {
+                    LOG(LOG_ERR, "Drawing orders chunk must be preceded by a META chunk to get drawing device size");
+                    throw Error(ERR_WRM);
+                }
+                if (!this->timestamp_ok) {
+                    LOG(LOG_ERR, "Drawing orders chunk must be preceded by a TIMESTAMP chunk to get drawing timing");
+                    throw Error(ERR_WRM);
+                }
+
+                RDPBitmapData bitmap_data;
+                bitmap_data.receive(this->stream);
+
+                const uint8_t * data = this->stream.in_uint8p(bitmap_data.bitmap_size());
+
+                Bitmap bitmap( bitmap_data.bits_per_pixel
+                             , 0
+                             , bitmap_data.width
+                             , bitmap_data.height
+                             , data
+                             , bitmap_data.bitmap_size()
+                             , (bitmap_data.flags & BITMAP_COMPRESSION)
+                             );
+
+                for (size_t i = 0; i < this->nbconsumers ; i++){
+                    this->consumers[i]->draw( bitmap_data
+                                            , data
+                                            , bitmap_data.bitmap_size()
+                                            , bitmap);
+                }
+            }
+            break;
             default:
                 LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
                 throw Error(ERR_WRM);
