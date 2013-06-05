@@ -268,11 +268,11 @@ unit-test test_FileToGraphic : tests/capture/test_FileToGraphic.cpp libboost_uni
 unit-test test_GraphicToFile : tests/capture/test_GraphicToFile.cpp libboost_unit_test ;
 unit-test test_GraphicToFile : tests/capture/test_GraphicToFile.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_nativecapture : tests/capture/test_nativecapture.cpp libboost_unit_test ;
-unit-test test_nativecapture : tests/capture/test_nativecapture.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_nativecapture : tests/capture/test_nativecapture.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_nativecapture : tests/capture/test_nativecapture.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_staticcapture : tests/capture/test_staticcapture.cpp libboost_unit_test ;
-unit-test test_staticcapture : tests/capture/test_staticcapture.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_staticcapture : tests/capture/test_staticcapture.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_staticcapture : tests/capture/test_staticcapture.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_cliprdr : tests/channels/cliprdr/test_cliprdr.cpp libboost_unit_test ;
 unit-test test_cliprdr : tests/channels/cliprdr/test_cliprdr.cpp libboost_unit_test gcov : <variant>coverage ;
@@ -631,11 +631,8 @@ unit-test test_filetransport : tests/transport/test_filetransport.cpp openssl cr
 unit-test test_image_capture : tests/capture/test_image_capture.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_image_capture : tests/capture/test_image_capture.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_capture_static : tests/capture/test_capture_static.cpp png z openssl crypto libboost_unit_test ;
-
 unit-test test_capture_wrm : tests/capture/test_capture_wrm.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_play : tests/capture/test_play.cpp png z libboost_unit_test z openssl crypto ;
-unit-test test_capture_native : tests/capture/test_capture_native.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_capture_wrm_save_state : tests/capture/test_capture_wrm_save_state.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_mwrm : tests/capture/test_mwrm.cpp png z openssl crypto dl libboost_unit_test ;
 unit-test test_outmeta : tests/capture/test_outmeta.cpp png z openssl crypto dl libboost_unit_test ;
