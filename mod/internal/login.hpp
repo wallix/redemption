@@ -314,7 +314,7 @@ struct login_mod : public internal_mod {
         // after refreshing button, return module status that may have changed
         return this->signal;
     }
-    
+
     void server_draw_dragging_rect(const Rect & r, const Rect & clip)
     {
         this->begin_update();

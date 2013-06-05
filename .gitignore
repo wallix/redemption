@@ -1,1 +1,8 @@
-*.swp
+.gitignore
+.kdev4
+bin
+build
+coverage.summary
+coverage
+redemption_public.kdev4
+tools/coverage.summary

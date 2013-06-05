@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -25,8 +25,6 @@
    returning a pointer on a table, corresponding to the required
    color model.
 */
-
-
 
 #ifndef _REDEMPTION_UTILS_BITMAP_HPP__
 #define _REDEMPTION_UTILS_BITMAP_HPP__
@@ -51,7 +49,6 @@
 #include "rect.hpp"
 
 class Bitmap {
-
 public:
     uint8_t original_bpp;
     BGRPalette original_palette;
@@ -86,7 +83,6 @@ public:
             this->ptr = other.ptr;
             this->ptr[0]++;
         }
-
     } data_bitmap;
 
     Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size, bool compressed=false)
@@ -125,7 +121,6 @@ public:
             LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u size=%u bpp=%u", this->cx, this->cy, size, this->original_bpp);
         }
     }
-
 
     Bitmap(const Bitmap & src_bmp, const Rect & r)
         : original_bpp(src_bmp.original_bpp)
@@ -166,7 +161,6 @@ public:
         }
     }
 
-
     TODO("add palette support");
     Bitmap(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t vnc_cy, uint8_t vnc_bpp, const Rect & tile)
         : original_bpp(vnc_bpp)
@@ -204,8 +198,6 @@ public:
             dest += this->line_size;
         }
     }
-
-
 
     Bitmap(const char* filename)
         : original_bpp(24)
@@ -468,7 +460,6 @@ private:
         };
     }
 
-
     void decompress(const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size)
     {
         const uint8_t Bpp = nbbytes(this->original_bpp);
@@ -487,7 +478,6 @@ private:
         unsigned fom_mask = 0;
         unsigned count = 0;
         int bicolor = 0;
-        unsigned total_count = 0;
 
         color1 = 0;
         color2 = 0;
@@ -644,7 +634,6 @@ private:
                 yprev = (out - this->line_size < pmin) ? 0 : in_bytes_le(Bpp, out - this->line_size);
                 out_bytes_le(out, Bpp, yprev ^ mix);
                 count--;
-//LOG(LOG_INFO, "count--, count=%u", count);
                 out += Bpp;
                 out_x_count += 1;
                 if (out_x_count == dst_cx){
@@ -655,7 +644,6 @@ private:
             lastopcode = opcode;
 
 //            LOG(LOG_INFO, "%s %u", this->get_opcode(opcode), count);
-            total_count += count;
 
             /* Output body */
             while (count > 0) {
@@ -725,7 +713,6 @@ private:
                 }
             }
         }
-        LOG(LOG_INFO, "total_count=%u", total_count);
         return;
     }
 
@@ -764,7 +751,6 @@ public:
         return acc;
     }
 
-
     unsigned get_bicolor_count(const uint8_t Bpp, const uint8_t * pmax, const uint8_t * p, unsigned color1, unsigned color2) const
     {
         unsigned acc = 0;
@@ -777,7 +763,6 @@ public:
         }
         return acc;
     }
-
 
     unsigned get_fill_count(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * pmax, const uint8_t * p) const
     {
@@ -793,7 +778,6 @@ public:
         }
         return acc;
     }
-
 
     unsigned get_mix_count(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * pmax, const uint8_t * p, unsigned foreground) const
     {

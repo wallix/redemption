@@ -3861,35 +3861,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
-LOG(LOG_INFO, "bmp.original_bpp=%u, client_info.bpp=%u", bmp.original_bpp, this->client_info.bpp);
-bitmap_data.log(LOG_INFO, "bitmap_data");
-bitmap_update_count++;
-
-            this->send_global_palette();
-        Bitmap new_bmp(this->client_info.bpp, bmp);
-
-        RDPBitmapData new_bitmap_data = bitmap_data;
-
-        BStream compressed_data(65535);
-
-        new_bmp.compress(compressed_data);
-        compressed_data.mark_end();
-
-        new_bitmap_data.bits_per_pixel = new_bmp.original_bpp;
-        new_bitmap_data.flags          = (BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR);
-        new_bitmap_data.bitmap_length  = compressed_data.size();
-new_bitmap_data.log(LOG_INFO, "new_bitmap_data");
-
-    if ((bitmap_update_count > 29) && (bitmap_update_count < 32)) {
-hexdump_d(compressed_data.data, compressed_data.size());
-        return;
-    }
-
-        this->orders->draw( new_bitmap_data, compressed_data.data
-                          , compressed_data.size(), new_bmp);
+        this->orders->draw(bitmap_data, data, size, bmp);
         if (this->capture) {
-            this->capture->draw( new_bitmap_data, compressed_data.data
-                               , compressed_data.size(), new_bmp);
+            this->capture->draw(bitmap_data, data, size, bmp);
         }
     }
 };

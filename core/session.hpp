@@ -278,14 +278,7 @@ struct Session {
                                 // default is "allow", do nothing special
                             }
 
-                            if (this->mod != this->no_mod) {
-                                delete this->mod;
-                                if (this->mod_transport) {
-                                    delete this->mod_transport;
-                                    this->mod_transport = NULL;
-                                }
-                                this->mod = this->no_mod;
-                            }
+                            this->remove_mod();
                             this->mod = new transitory_mod(*(this->front),
                                                            this->front->client_info.width,
                                                            this->front->client_info.height);
@@ -364,10 +357,10 @@ struct Session {
                                 this->internal_state = SESSION_STATE_STOP;
                                 return;
                             case BACK_EVENT_REFRESH:
-                            if (this->verbose & 8){
-                                LOG(LOG_INFO, "Session::back event refresh");
-                            }
                             {
+                                if (this->verbose & 8){
+                                    LOG(LOG_INFO, "Session::back event refresh");
+                                }
                                 bool record_video = false;
                                 bool keep_alive = false;
                                 int next_state = this->sesman->ask_next_module(
@@ -376,14 +369,6 @@ struct Session {
                                                                     this->ini->globals.authport,
                                                                     record_video, keep_alive, this->nextmod);
                                 if (next_state != MCTX_STATUS_WAITING){
-                                    this->internal_state = SESSION_STATE_STOP;
-                                    delete this->mod;
-                                    if (this->mod_transport) {
-                                        delete this->mod_transport;
-                                        this->mod_transport = NULL;
-                                    }
-                                    this->mod = this->no_mod;
-                                    this->session_setup_mod(next_state, this->nextmod);
                                     this->internal_state = SESSION_STATE_RUNNING;
                                 }
                                 else {
@@ -398,14 +383,7 @@ struct Session {
                                    LOG(LOG_INFO, "Session::back event end module");
                                 }
                                // end the current module and switch to new one
-                                if (this->mod != this->no_mod){
-                                    delete this->mod;
-                                    if (this->mod_transport) {
-                                        delete this->mod_transport;
-                                        this->mod_transport = NULL;
-                                    }
-                                    this->mod = this->no_mod;
-                                }
+                                this->remove_mod();
                                 this->ini->globals.context.opt_width  = this->front->client_info.width;
                                 this->ini->globals.context.opt_height = this->front->client_info.height;
                                 this->ini->globals.context.opt_bpp    = this->front->client_info.bpp;
@@ -503,14 +481,7 @@ struct Session {
     ~Session()
     {
         delete this->front;
-        if (this->mod != this->no_mod){
-            delete this->mod;
-            if (this->mod_transport) {
-                delete this->mod_transport;
-                this->mod_transport = NULL;
-            }
-            this->mod = this->no_mod;
-        }
+        this->remove_mod();
         delete this->no_mod;
         delete this->sesman;
         // Suppress Session file from disk (original name with PID or renamed with session_id)
@@ -525,6 +496,18 @@ struct Session {
             char old_session_file[256];
             sprintf(old_session_file, "%s/session_%d.pid", PID_PATH, child_pid);
             unlink(old_session_file);
+        }
+    }
+
+    void remove_mod()
+    {
+        if (this->mod != this->no_mod){
+            delete this->mod;
+            if (this->mod_transport) {
+                delete this->mod_transport;
+                this->mod_transport = NULL;
+            }
+            this->mod = this->no_mod;
         }
     }
 
@@ -547,20 +530,14 @@ struct Session {
             // default is "allow", do nothing special
         }
 
+        this->remove_mod();
+
         switch (target_module)
         {
             case MCTX_STATUS_CLI:
             {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'CLI parse'");
-                }
-                if (this->mod != this->no_mod) {
-                    delete this->mod;
-                    if (this->mod_transport) {
-                        delete this->mod_transport;
-                        this->mod_transport = NULL;
-                    }
-                    this->mod = this->no_mod;
                 }
                 this->mod = new cli_mod(*(this->ini), *(this->front),
                                         this->front->client_info,
@@ -574,14 +551,6 @@ struct Session {
 
             case MCTX_STATUS_INTERNAL:
             {
-                if (this->mod != this->no_mod) {
-                    delete this->mod;
-                    if (this->mod_transport) {
-                        delete this->mod_transport;
-                        this->mod_transport = NULL;
-                    }
-                    this->mod = this->no_mod;
-                }
                 switch (submodule){
                     case INTERNAL_CLOSE:
                     {
@@ -647,16 +616,16 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
                         }
-//                         this->mod = new LoginMod(
-//                             *this->ini,
-//                             *this->front,
-//                             this->front->client_info.width,
-//                             this->front->client_info.height);
-                        this->mod = new login_mod(
-                                         *this->front,
-                                         this->front->client_info.width,
-                                         this->front->client_info.height,
-                                         this->ini);
+                        this->mod = new LoginMod(
+                            *this->ini,
+                            *this->front,
+                            this->front->client_info.width,
+                            this->front->client_info.height);
+//                         this->mod = new login_mod(
+//                                          *this->front,
+//                                          this->front->client_info.width,
+//                                          this->front->client_info.height,
+//                                          this->ini);
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::internal module Login ready");
                         }
@@ -707,18 +676,18 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'selector'");
                         }
                         this->ini->globals.context.selector_focus = 8; // FOCUS_ON_CONNECT
-//                         this->mod = new SelectorMod(
-//                             *this->ini,
-//                             *this->front,
-//                             this->front->client_info.width,
-//                             this->front->client_info.height
-//                         );
-                        this->mod = new selector_mod(
-                                        *this->ini,
-                                        *this->front,
-                                        this->front->client_info.width,
-                                        this->front->client_info.height
-                                        );
+                        this->mod = new SelectorMod(
+                            *this->ini,
+                            *this->front,
+                            this->front->client_info.width,
+                            this->front->client_info.height
+                        );
+//                         this->mod = new selector_mod(
+//                                         *this->ini,
+//                                         *this->front,
+//                                         this->front->client_info.width,
+//                                         this->front->client_info.height
+//                                         );
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::internal module 'selector' ready");
                         }
@@ -822,14 +791,6 @@ struct Session {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'XUP'\n");
                 }
-                if (this->mod != this->no_mod) {
-                    delete this->mod;
-                    if (this->mod_transport) {
-                        delete this->mod_transport;
-                        this->mod_transport = NULL;
-                    }
-                    this->mod = this->no_mod;
-                }
 
                 int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
                                             this->ini->globals.context.target_port,
@@ -872,14 +833,6 @@ struct Session {
             {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'RDP'");
-                }
-                if (this->mod != this->no_mod) {
-                    delete this->mod;
-                    if (this->mod_transport) {
-                        delete this->mod_transport;
-                        this->mod_transport = NULL;
-                    }
-                    this->mod = this->no_mod;
                 }
                 REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.")
                 char hostname[255];
@@ -947,14 +900,6 @@ struct Session {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'VNC'\n");
                 }
-                if (this->mod != this->no_mod) {
-                    delete this->mod;
-                    if (this->mod_transport) {
-                        delete this->mod_transport;
-                        this->mod_transport = NULL;
-                    }
-                    this->mod = this->no_mod;
-                }
                 static const char * name = "VNC Target";
 
 
@@ -1004,14 +949,6 @@ struct Session {
             {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Unknown backend exception\n");
-                }
-                if (this->mod != this->no_mod) {
-                    delete this->mod;
-                    if (this->mod_transport) {
-                        delete this->mod_transport;
-                        this->mod_transport = NULL;
-                    }
-                    this->mod = this->no_mod;
                 }
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
             }
