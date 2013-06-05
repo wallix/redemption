@@ -92,10 +92,7 @@ class Cover:
             print module
             self.cover(module)
             # if coverage percentage is lower
-            if (self.results[module][0] * 100 / self.results[module][1]) < (covered * 100 / total):
-                print("Lower coverage for module %s : old %d/%d new %d/%d" % (module,
-                    covered, total,
-                    self.results[module][0], self.results[module][1]))
+            if (self.results[module][0] * 100 * total) <= (self.results[module][1] * covered * 100):
                 target.write("%s: %d%s (%d / %d)\n" % ((
                     module, self.results[module][0] * 100.0 / self.results[module][1], "%") + self.results[module]))
                 target.flush()
