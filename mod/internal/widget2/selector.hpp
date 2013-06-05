@@ -252,22 +252,24 @@ class WidgetSelector : public WidgetComposite
 {
 public:
     WidgetLabel device_label;
-    WidgetLabel device_group_label;
-    WidgetLabel group_label;
+    WidgetLabel device_target_label;
+    WidgetLabel target_label;
     WidgetLabel protocol_label;
     WidgetLabel close_time_label;
     WidgetSelectLine device_lines;
-    WidgetSelectLine group_lines;
+    WidgetSelectLine target_lines;
     WidgetSelectLine protocol_lines;
     WidgetSelectLine close_time_lines;
     WidgetEdit filter_device;
-    WidgetEdit filter_group;
+    WidgetEdit filter_target;
+    //BEGIN WidgetPager
     WidgetButton first_page;
     WidgetButton prev_page;
     WidgetNumberEdit current_page;
     WidgetLabel number_page;
     WidgetButton next_page;
     WidgetButton last_page;
+    //END WidgetPager
     WidgetButton logout;
     WidgetButton apply;
     WidgetButton connect;
@@ -290,23 +292,23 @@ public:
     WidgetSelector(ModApi* drawable, const char * device_name,
                    uint16_t width, uint16_t height, NotifyApi* notifier,
                    const char * current_page, const char * number_of_page,
-                   const char * filter_device = 0, const char * filter_group = 0)
+                   const char * filter_device = 0, const char * filter_target = 0)
     : WidgetComposite(drawable, Rect(0,0,width,height), NULL, notifier)
     , device_label(drawable, 20, 10, this, NULL, device_name, true, -10, BLACK, GREY)
-    , device_group_label(drawable, 20, 0, this, NULL, "Device Group", true, -10, BLACK, GREY)
-    , group_label(drawable, 150, 0, this, NULL, "Account Device", true, -10, BLACK, GREY)
+    , device_target_label(drawable, 20, 0, this, NULL, "Device Group", true, -10, BLACK, GREY)
+    , target_label(drawable, 150, 0, this, NULL, "Account Device", true, -10, BLACK, GREY)
     , protocol_label(drawable, 500, 0, this, NULL, "Protocol", true, -10, BLACK, GREY)
     , close_time_label(drawable, 620, 0, this, NULL, "Close Time", true, -10, BLACK, GREY)
     , device_lines(drawable, Rect(15,0,130,1), this, this, -11,
                    BLACK, BLACK, BLACK, 0xEEFAEE, 0xCCEEDD, 0XAAFFAA, 5, 1, GREY, 1)
-    , group_lines(drawable, Rect(145,0,350,1), this, this, -11,
+    , target_lines(drawable, Rect(145,0,350,1), this, this, -11,
                   BLACK, BLACK, BLACK, 0xEEFAEE, 0xCCEEDD, 0XAAFFAA, 5, 1, GREY, 1)
     , protocol_lines(drawable, Rect(495,0,120,1), this, this, -11,
                      BLACK, BLACK, BLACK, 0xEEFAEE, 0xCCEEDD, 0XAAFFAA, 5, 1, GREY, 1)
     , close_time_lines(drawable, Rect(615,0,170,1), this, this, -11,
                        BLACK, BLACK, BLACK, 0xEEFAEE, 0xCCEEDD, 0XAAFFAA, 5, 1, GREY, 1)
     , filter_device(drawable, 20, 0, 120, this, this, filter_device?filter_device:0, -12, BLACK, WHITE, -1, 1, 1)
-    , filter_group(drawable, 150, 0, 340, this, this, filter_group?filter_group:0, -12, BLACK, WHITE, -1, 1, 1)
+    , filter_target(drawable, 150, 0, 340, this, this, filter_target?filter_target:0, -12, BLACK, WHITE, -1, 1, 1)
     //BEGIN WidgetPager
     , first_page(drawable, 0, 0, this, notifier, "<<", true, -15, BLACK, WHITE, 8, 4)
     , prev_page(drawable, 0, 0, this, notifier, "<", true, -15, BLACK, WHITE, 8, 4)
@@ -314,24 +316,24 @@ public:
                    current_page ? current_page : "XXXX", -15, BLACK, WHITE, -1, 1, 1)
     , number_page(drawable, 0, 0, this, NULL,
                   number_of_page ? temporary_number_of_page(number_of_page).buffer : "/XXXX",
-                  true, -15, BLACK, GREY)
-    , next_page(drawable, 0, 0, this, notifier, ">>", true, -15, BLACK, WHITE, 8, 4)
-    , last_page(drawable, 0, 0, this, notifier, ">", true, -15, BLACK, WHITE, 8, 4)
+                  true, -100, BLACK, GREY)
+    , next_page(drawable, 0, 0, this, notifier, ">", true, -15, BLACK, WHITE, 8, 4)
+    , last_page(drawable, 0, 0, this, notifier, ">>", true, -15, BLACK, WHITE, 8, 4)
     //END WidgetPager
     , logout(drawable, 0, 0, this, notifier, "Logout", true, -16, BLACK, WHITE, 8, 4, NOTIFY_CANCEL)
     , apply(drawable, 0, 0, this, notifier, "Appy", true, -12, BLACK, WHITE, 8, 4)
     , connect(drawable, 0, 0, this, notifier, "Connect", true, -18, BLACK, WHITE, 8, 4)
     {
-        this->widget_with_focus = &this->filter_group/*device_lines*/;
+        this->widget_with_focus = &this->device_lines;
         this->child_list.push_back(&this->device_label);
-        this->child_list.push_back(&this->device_group_label);
-        this->child_list.push_back(&this->group_label);
+        this->child_list.push_back(&this->device_target_label);
+        this->child_list.push_back(&this->target_label);
         this->child_list.push_back(&this->protocol_label);
         this->child_list.push_back(&this->close_time_label);
         this->child_list.push_back(&this->filter_device);
-        this->child_list.push_back(&this->filter_group);
+        this->child_list.push_back(&this->filter_target);
         this->child_list.push_back(&this->device_lines);
-        this->child_list.push_back(&this->group_lines);
+        this->child_list.push_back(&this->target_lines);
         this->child_list.push_back(&this->protocol_lines);
         this->child_list.push_back(&this->close_time_lines);
         this->child_list.push_back(&this->first_page);
@@ -345,18 +347,18 @@ public:
         this->child_list.push_back(&this->connect);
         //this->child_list.push_back(&this->pager);
 
-        this->group_lines.tab_flag = IGNORE_TAB;
+        this->target_lines.tab_flag = IGNORE_TAB;
         this->protocol_lines.tab_flag = IGNORE_TAB;
         this->close_time_lines.tab_flag = IGNORE_TAB;
 
-        this->device_group_label.rect.y = this->device_label.cy() + this->device_label.dy() + 5;
-        this->group_label.rect.y = this->device_group_label.dy();
-        this->protocol_label.rect.y = this->device_group_label.dy();
-        this->close_time_label.rect.y = this->device_group_label.dy();
-        this->filter_device.set_edit_y(this->device_group_label.dy() + this->device_group_label.cy() + 5);
-        this->filter_group.set_edit_y(this->filter_device.dy());
+        this->device_target_label.rect.y = this->device_label.cy() + this->device_label.dy() + 5;
+        this->target_label.rect.y = this->device_target_label.dy();
+        this->protocol_label.rect.y = this->device_target_label.dy();
+        this->close_time_label.rect.y = this->device_target_label.dy();
+        this->filter_device.set_edit_y(this->device_target_label.dy() + this->device_target_label.cy() + 5);
+        this->filter_target.set_edit_y(this->filter_device.dy());
         this->device_lines.rect.y = this->filter_device.dy() + this->filter_device.cy() + 5;
-        this->group_lines.rect.y = this->device_lines.dy();
+        this->target_lines.rect.y = this->device_lines.dy();
         this->protocol_lines.rect.y = this->device_lines.dy();
         this->close_time_lines.rect.y = this->device_lines.dy();
 
@@ -396,61 +398,42 @@ public:
     {
         if (widget->group_id == this->device_lines.group_id) {
             if (NOTIFY_SUBMIT == event) {
-                if (this->notifier)
+                if (this->notifier) {
                     this->notifier->notify(widget, event, param, param2);
+                }
             }
             else {
                 this->set_index_list(static_cast<WidgetSelectLine*>(widget)->current_index);
             }
         }
-    }
-
-    ///TODO unless ?
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
-    {
-        if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
-            Widget2 * w = this->child_at_pos(x,y);
-            if (w && (
-                w->group_id == this->filter_group.group_id
-             || w->group_id == this->device_lines.group_id
-             || w == &this->current_page)) {
-                this->widget_with_focus = w;
-                w->rdp_input_mouse(device_flags, x, y, keymap);
-                return ;
-            }
-            else {
-                this->widget_with_focus = NULL;
+        else if (widget->group_id == this->apply.group_id) {
+            if (this->notifier) {
+                this->notifier->notify(widget, event, param, param2);
             }
         }
-        WidgetComposite::rdp_input_mouse(device_flags, x, y, keymap);
-    }
-
-    ///TODO unless ?
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
-        if (this->widget_with_focus) {
-            this->widget_with_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
+        else {
+            WidgetComposite::notify(widget, event, param, param2);
         }
     }
 
     void set_index_list(int idx)
     {
         this->device_lines.set_current_index(idx);
-        this->group_lines.set_current_index(idx);
+        this->target_lines.set_current_index(idx);
         this->protocol_lines.set_current_index(idx);
         this->close_time_lines.set_current_index(idx);
     }
 
-    void add_device(const char * device_group, const char * group_label,
+    void add_device(const char * device_group, const char * target_label,
                     const char * protocol, const char * close_time)
     {
         this->device_lines.add_line(device_group);
-        this->group_lines.add_line(group_label);
+        this->target_lines.add_line(target_label);
         this->protocol_lines.add_line(protocol);
         this->close_time_lines.add_line(close_time);
         const uint lcy = this->device_lines.labels.size() * (this->device_lines.h_text + this->device_lines.y_text * 2 + this->device_lines.h_border) - this->device_lines.h_border;
         this->device_lines.rect.cy = lcy;
-        this->group_lines.rect.cy = lcy;
+        this->target_lines.rect.cy = lcy;
         this->protocol_lines.rect.cy = lcy;
         this->close_time_lines.rect.cy = lcy;
     }

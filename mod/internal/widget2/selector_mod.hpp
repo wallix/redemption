@@ -31,6 +31,7 @@ class SelectorMod : public InternalMod, public NotifyApi
     WidgetSelector selector;
     int current_page;
     int number_page;
+    int lines_per_page;
 
     Inifile & ini;
 
@@ -55,13 +56,18 @@ public:
                                      temporary_buffer().buffer, sizeof(temporary_buffer)),
                ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES,
                                      temporary_buffer().buffer, sizeof(temporary_buffer)),
-               ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0),
-               ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER, NULL, 0)
+               ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER, NULL, 0),
+               ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0)
               )
     , current_page(atoi(this->selector.current_page.get_text()))
-    , number_page(atoi(this->selector.number_page.get_text()))
+    , number_page(atoi(this->selector.number_page.get_text()+1))
     , ini(ini)
     {
+        {
+            char buffer[16];
+            ini.context_get_value(AUTHID_SELECTOR_LINES_PER_PAGE, buffer, sizeof(buffer));
+            this->lines_per_page = atoi(buffer);
+        }
         this->refresh_device();
 
         //BEGIN TEST
@@ -86,14 +92,15 @@ public:
 //         this->selector.add_device("dsq", "dqfdfdfsfds", "fd", "fdsfsfd");
         //END TEST
 
-        this->selector.set_widget_focus(&this->selector.group_lines);
+        this->selector.set_widget_focus(&this->selector.device_lines);
         this->screen.set_widget_focus(&this->selector);
 
         this->selector.refresh(this->selector.rect);
     }
 
     virtual ~SelectorMod()
-    {}
+    {
+    }
 
     void ask_page()
     {
@@ -102,9 +109,9 @@ public:
         sprintf(buffer, "%u", (unsigned int)this->current_page);
         this->ini.context_set_value(AUTHID_SELECTOR_CURRENT_PAGE, buffer);
         this->ini.context_set_value(AUTHID_SELECTOR_GROUP_FILTER,
-                                    this->selector.filter_group.get_text());
-        this->ini.context_set_value(AUTHID_SELECTOR_DEVICE_FILTER,
                                     this->selector.filter_device.get_text());
+        this->ini.context_set_value(AUTHID_SELECTOR_DEVICE_FILTER,
+                                    this->selector.filter_target.get_text());
         this->ini.context_ask(AUTHID_TARGET_USER);
         this->ini.context_ask(AUTHID_TARGET_DEVICE);
         this->ini.context_ask(AUTHID_SELECTOR);
@@ -129,7 +136,7 @@ public:
              || widget->group_id == this->selector.device_lines.group_id) {
                 char buffer[1024];
                 sprintf(buffer, "%s:%s",
-                        this->selector.device_lines.get_current_index(),
+                        this->selector.target_lines.get_current_index(),
                         this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0));
                 this->ini.parse_username(buffer);
                 this->signal = BACK_EVENT_NEXT;
@@ -145,7 +152,7 @@ public:
                 }
             }
             else if (widget == &this->selector.prev_page) {
-                if (this->current_page > 0) {
+                if (this->current_page > 1) {
                     --this->current_page;
                     this->ask_page();
                 }
@@ -174,12 +181,11 @@ public:
 
     virtual void refresh_context(Inifile& ini)
     {
-        this->selector.filter_device.set_text(
-            this->ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0));
-        this->selector.filter_group.set_text(
-            this->ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER, NULL, 0));
-
         char buffer[16];
+
+        ini.context_get_value(AUTHID_SELECTOR_LINES_PER_PAGE, buffer, sizeof(buffer));
+        this->lines_per_page = atoi(buffer);
+
         ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE, buffer, sizeof(buffer));
         this->selector.current_page.set_text(buffer);
         this->current_page = atoi(buffer);
@@ -188,12 +194,23 @@ public:
         this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
         this->number_page = atoi(buffer);
 
-        this->selector.group_lines.clear();
+        uint16_t cy = this->selector.device_lines.cy();
+
         this->selector.device_lines.clear();
-        this->selector.close_time_lines.clear();
+        this->selector.target_lines.clear();
         this->selector.protocol_lines.clear();
+        this->selector.close_time_lines.clear();
 
         this->refresh_device();
+
+        this->selector.refresh(Rect(
+            this->selector.device_lines.dx(),
+            this->selector.device_lines.dy(),
+            this->selector.close_time_lines.dx() + this->selector.close_time_lines.cx() - this->selector.device_lines.dx(),
+            std::max(cy, this->selector.device_lines.cy())
+        ));
+        this->selector.current_page.refresh(this->selector.current_page.rect);
+        this->selector.number_page.refresh(this->selector.number_page.rect);
     }
 
     void refresh_device()
@@ -203,7 +220,7 @@ public:
         char * protocols = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0));
         char * endtimes  = const_cast<char *>((const char *)this->ini.globals.context.end_time);
 
-        for (size_t index = 0 ; index < 50 ; index++) {
+        for (int index = 0 ; index < this->lines_per_page ; index++) {
             size_t size_groups = proceed_item(groups);
             size_t size_targets = proceed_item(targets);
             size_t size_protocols = proceed_item(protocols);
@@ -240,7 +257,7 @@ public:
             endtimes += size_endtimes + 1;
         }
 
-        this->selector.group_lines.init_current_index(0);
+        this->selector.target_lines.init_current_index(0);
         this->selector.device_lines.init_current_index(0);
         this->selector.close_time_lines.init_current_index(0);
         this->selector.protocol_lines.init_current_index(0);
