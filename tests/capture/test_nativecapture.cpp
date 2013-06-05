@@ -14,20 +14,58 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2013
+   Copyright (C) Wallix 2012
    Author(s): Christophe Grosjean
+
+   Unit test to conversion of RDP drawing orders to PNG images
 
 */
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXX
+#define BOOST_TEST_MODULE TestNativeCapture
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-#include "log.hpp"
+#include "test_orders.hpp"
+#include "transport.hpp"
+#include "outfilenametransport.hpp"
+#include "image_capture.hpp"
+#include "nativecapture.hpp"
+#include "constants.hpp"
+#include "RDP/caches/bmpcache.hpp"
+#include "config.hpp"
+#include <png.h>
 
 
-BOOST_AUTO_TEST_CASE(TestXXX)
+BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
 {
+    Rect scr(0, 0, 800, 600);
+    const int groupid = 0;
+    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".wrm", groupid);
+
+    struct timeval now;
+    now.tv_sec = 1000;
+    now.tv_usec = 0;
+    
+    BmpCache bmp_cache(24, 600, 768, 300, 3072, 262, 12288); 
+    Inifile ini;
+    RDPDrawable drawable(800, 600, true);
+    NativeCapture consumer(now, trans, 800, 600, bmp_cache, &drawable, ini);
+    ini.globals.frame_interval = 100; // one snapshot by second
+    ini.globals.break_interval = 5;   // one WRM file every 5 seconds
+    consumer.update_config(ini);
+
+    consumer.draw(RDPOpaqueRect(scr, RED), scr);
+    consumer.snapshot(now, 10, 10, true, false);
+    now.tv_sec += 6;
+    consumer.snapshot(now, 10, 10, true, false);
+    rio_clear(&trans.rio);
+    
+    BOOST_CHECK_EQUAL((unsigned)1544, (unsigned)sq_outfilename_filesize(&(trans.seq), 0));
+    sq_outfilename_unlink(&(trans.seq), 0);
+    // Mem3Blt save state = 34 bytes
+    BOOST_CHECK_EQUAL((unsigned)3254 + 34, (unsigned)sq_outfilename_filesize(&(trans.seq), 1));
+    sq_outfilename_unlink(&(trans.seq), 1);
 }
+

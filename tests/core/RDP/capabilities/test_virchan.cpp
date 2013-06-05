@@ -14,20 +14,46 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2013
+   Copyright (C) Wallix 2010
    Author(s): Christophe Grosjean
 
+   Unit test to RDP VirtualChannel object
+   Using lib boost functions for testing
 */
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXX
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
 #include "log.hpp"
+#include "RDP/capabilities.hpp"
 
-
-BOOST_AUTO_TEST_CASE(TestXXX)
+BOOST_AUTO_TEST_CASE(TestCapabilityVirtualChannelEmit)
 {
+    VirtualChannelCaps virtualchannel_caps;
+    virtualchannel_caps.flags = VCCAPS_COMPR_CS_8K;
+    virtualchannel_caps.VCChunkSize = 56897;
+
+    BOOST_CHECK_EQUAL(virtualchannel_caps.capabilityType, (uint16_t)CAPSTYPE_VIRTUALCHANNEL);
+    BOOST_CHECK_EQUAL(virtualchannel_caps.len, (uint16_t)CAPLEN_VIRTUALCHANNEL);
+    BOOST_CHECK_EQUAL(virtualchannel_caps.flags, (uint32_t) 2);
+    BOOST_CHECK_EQUAL(virtualchannel_caps.VCChunkSize, (uint32_t) 56897);
+
+    BStream stream(1024);
+    virtualchannel_caps.emit(stream);
+    stream.mark_end();
+    stream.p = stream.data;
+
+    VirtualChannelCaps virtualchannel_caps2;
+
+    BOOST_CHECK_EQUAL(virtualchannel_caps2.capabilityType, (uint16_t)CAPSTYPE_VIRTUALCHANNEL);
+    BOOST_CHECK_EQUAL(virtualchannel_caps2.len, (uint16_t)CAPLEN_VIRTUALCHANNEL);
+
+    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_VIRTUALCHANNEL, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_VIRTUALCHANNEL, stream.in_uint16_le());
+    virtualchannel_caps2.recv(stream, CAPLEN_VIRTUALCHANNEL);
+
+    BOOST_CHECK_EQUAL(virtualchannel_caps2.flags, (uint32_t) 2);
+    BOOST_CHECK_EQUAL(virtualchannel_caps2.VCChunkSize, (uint32_t) 56897);
 }
