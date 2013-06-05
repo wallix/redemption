@@ -756,9 +756,6 @@ unit-test test_cap_sound : tests/core/RDP/capabilities/test_cap_sound.cpp libboo
 unit-test test_surfacecommands : tests/core/RDP/capabilities/test_surfacecommands.cpp libboost_unit_test ;
 unit-test test_surfacecommands : tests/core/RDP/capabilities/test_surfacecommands.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_virtualchannel : tests/core/RDP/capabilities/test_virtualchannel.cpp libboost_unit_test ;
-unit-test test_virtualchannel : tests/core/RDP/capabilities/test_virtualchannel.cpp libboost_unit_test gcov : <variant>coverage ;
-
 unit-test test_window : tests/core/RDP/capabilities/test_window.cpp libboost_unit_test ;
 unit-test test_window : tests/core/RDP/capabilities/test_window.cpp libboost_unit_test gcov : <variant>coverage ;
 
