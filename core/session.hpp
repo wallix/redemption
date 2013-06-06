@@ -616,16 +616,11 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
                         }
-                        this->mod = new LoginMod(
-                            *this->ini,
-                            *this->front,
-                            this->front->client_info.width,
-                            this->front->client_info.height);
-//                         this->mod = new login_mod(
-//                                          *this->front,
-//                                          this->front->client_info.width,
-//                                          this->front->client_info.height,
-//                                          this->ini);
+                        this->mod = new login_mod(
+                                          *this->front,
+                                          this->front->client_info.width,
+                                          this->front->client_info.height,
+                                          this->ini);
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::internal module Login ready");
                         }
@@ -676,18 +671,12 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'selector'");
                         }
                         this->ini->globals.context.selector_focus = 8; // FOCUS_ON_CONNECT
-                        this->mod = new SelectorMod(
-                            *this->ini,
-                            *this->front,
-                            this->front->client_info.width,
-                            this->front->client_info.height
-                        );
-//                         this->mod = new selector_mod(
-//                                         *this->ini,
-//                                         *this->front,
-//                                         this->front->client_info.width,
-//                                         this->front->client_info.height
-//                                         );
+                        this->mod = new selector_mod(
+                                         *this->ini,
+                                         *this->front,
+                                         this->front->client_info.width,
+                                         this->front->client_info.height
+                                         );
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::internal module 'selector' ready");
                         }
