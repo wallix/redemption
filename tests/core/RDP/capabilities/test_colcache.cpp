@@ -21,13 +21,22 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXX
+#define BOOST_TEST_MODULE TestColorCacheCaps
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
 #include "log.hpp"
+#include "RDP/capabilities.hpp"
 
-
-BOOST_AUTO_TEST_CASE(TestXXX)
+BOOST_AUTO_TEST_CASE(TestColorCacheCaps)
 {
+    ColorCacheCaps cap;
+
+    BStream stream(1024);
+    cap.emit(stream);
+    stream.mark_end();
+    stream.p = stream.data;
+    
+    ColorCacheCaps cap2;
+    cap2.recv(stream, CAPLEN_COLORCACHE);
 }
