@@ -321,7 +321,11 @@ public:
 
     virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
-//        this->drawable.
+        this->drawable.draw_bitmap( Rect( bitmap_data.dest_left
+                                        , bitmap_data.dest_top
+                                        , bitmap_data.width
+                                        , bitmap_data.height)
+                                  , bmp);
     }
 };
 
