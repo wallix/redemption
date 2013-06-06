@@ -457,17 +457,11 @@ unit-test test_widget2_composite : tests/mod/internal/widget2/test_widget2_compo
 unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp libboost_unit_test ;
 unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_window_help : tests/mod/internal/widget2/test_window_help.cpp libboost_unit_test ;
-unit-test test_window_help : tests/mod/internal/widget2/test_window_help.cpp libboost_unit_test gcov : <variant>coverage ;
-
 unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp libboost_unit_test ;
 unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp libboost_unit_test ;
 unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp libboost_unit_test gcov : <variant>coverage ;
-
-unit-test test_yes_no : tests/mod/internal/widget2/test_yes_no.cpp libboost_unit_test ;
-unit-test test_yes_no : tests/mod/internal/widget2/test_yes_no.cpp libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_button : tests/mod/internal/widget/test_button.cpp libboost_unit_test ;
 unit-test test_button : tests/mod/internal/widget/test_button.cpp libboost_unit_test gcov : <variant>coverage ;
