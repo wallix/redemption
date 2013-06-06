@@ -111,6 +111,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
 
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
+
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
@@ -237,6 +239,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
+
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -367,6 +371,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
 
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
+
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
@@ -436,6 +442,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     "wrm_path=/var/wab/recorded/rdp\n"
     "alternate_shell=C:\\\\WINDOWS\\\\NOTEPAD.EXE\n"
     "shell_working_directory=C:\\\\WINDOWS\\\\\n"
+    "enable_bitmap_update=true\n"
     "\n"
     "[client]\n"
     "ignore_logon_password=yes\n"
@@ -530,6 +537,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                                                         std::string(ini.globals.alternate_shell));
     BOOST_CHECK_EQUAL(std::string("C:\\WINDOWS\\"),     std::string(ini.globals.shell_working_directory));
 
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_bitmap_update);
+
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
@@ -599,6 +608,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     "wrm_path=/var/wab/recorded/rdp\n"
     "alternate_shell=\n"
     "shell_working_directory=\n"
+    "enable_bitmap_update=no\n"
     "[client]\n"
     "performance_flags_default=7\n"
     "performance_flags_force_present=1\n"
@@ -683,6 +693,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
+
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -836,6 +848,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                                                         std::string(ini.globals.alternate_shell));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
 
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
+
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
@@ -979,6 +993,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("%HOMEDRIVE%%HOMEPATH%"),
                                                         std::string(ini.globals.shell_working_directory));
 
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
+
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
@@ -1116,6 +1132,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("%HOMEDRIVE%%HOMEPATH%"),
                                                         std::string(ini.globals.shell_working_directory));
 
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
+
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
@@ -1246,6 +1264,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
+
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
@@ -1382,6 +1402,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
 
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
+
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
@@ -1506,6 +1528,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
+
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
