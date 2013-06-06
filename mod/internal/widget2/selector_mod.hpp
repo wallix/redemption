@@ -95,6 +95,11 @@ public:
         this->selector.set_widget_focus(&this->selector.device_lines);
         this->screen.set_widget_focus(&this->selector);
 
+//         this->ini.globals.context.selector_lines_per_page = 5;
+//         this->lines_per_page = 5;
+//         this->signal = BACK_EVENT_REFRESH;
+//         this->event.set();
+
         this->selector.refresh(this->selector.rect);
     }
 
