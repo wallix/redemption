@@ -120,10 +120,8 @@ mod/internal/widget2/widget2_composite 100 100
 mod/internal/widget2/widget2_rect 100 100
 mod/internal/widget2/widget2_window 100 100
 mod/internal/widget2/window_dialog 100 100
-mod/internal/widget2/window_help 100 100
 mod/internal/widget2/window_login 100 100
 mod/internal/widget2/window_wab_close 100 100
-mod/internal/widget2/yes_no 100 100
 mod/internal/widget/button 100 100
 mod/internal/widget/edit 100 100
 mod/internal/widget/image 100 100

@@ -132,7 +132,7 @@ public:
             )), this->border_top_left_color), this->rect);
         }
 
-        if (this->focus_is_visible) {
+        if (this->has_focus || this->focus_is_visible) {
             this->draw_focus(clip);
         }
     }

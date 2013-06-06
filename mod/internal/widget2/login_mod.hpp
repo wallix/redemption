@@ -112,13 +112,11 @@ public:
     {
         switch (event) {
             case NOTIFY_SUBMIT:
-                std::cout << ("login mod submit") << std::endl;
                 this->ini.parse_username(this->window_login.login_edit.label.buffer);
                 this->ini.context_set_value(AUTHID_PASSWORD, this->window_login.password_edit.buffer);
                 this->mod_event(BACK_EVENT_NEXT);
                 break;
             case NOTIFY_CANCEL:
-                std::cout << ("login mod cancel") << std::endl;
                 this->mod_event(BACK_EVENT_STOP);
                 break;
             default:

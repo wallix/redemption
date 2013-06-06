@@ -31,7 +31,6 @@
 
 class WabCloseMod : public InternalMod, public NotifyApi
 {
-    WidgetScreen screen;
     WindowWabClose window_close;
     WidgetImage image;
 
@@ -52,8 +51,7 @@ private:
 public:
     WabCloseMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
     : InternalMod(front, width, height)
-    , screen(this, width, height)
-    , window_close(this, 0, 0, &this->screen, this, "End of connection", 0,
+    , window_close(this, 0, 0, &this->screen, this, ini.globals.context.auth_error_message, 0,
                    ini.context_is_asked(AUTHID_AUTH_USER) ? NULL : ini.globals.auth_user,
                    (ini.context_is_asked(AUTHID_TARGET_USER) || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
                        NULL : temporary_text(ini).text,
@@ -65,14 +63,13 @@ public:
         this->screen.child_list.push_back(&this->window_close);
         this->screen.child_list.push_back(&this->image);
 
-        this->screen.widget_with_focus = &this->window_close;
-
         this->window_close.set_xy((width - this->window_close.cx()) / 2,
                                   (height - this->window_close.cy()) / 2);
 
         this->image.rect.x = width - this->image.cx();
         this->image.rect.y = height - this->image.cy();
 
+        this->window_close.set_widget_focus(&this->window_close.cancel);
         this->screen.set_widget_focus(&this->window_close);
 
         this->screen.refresh(this->screen.rect);
@@ -104,7 +101,6 @@ public:
     virtual void rdp_input_invalidate(const Rect& r)
     {
         this->window_close.rdp_input_invalidate(r);
-        //this->image.rdp_input_invalidate(r.intersect(this->image));
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
@@ -119,10 +115,9 @@ public:
             this->signal = BACK_EVENT_STOP;
             this->event.set();
         }
-        (void)param1;
-        (void)param2;
-        (void)param3;
-        (void)param4;
+        else {
+            this->window_close.rdp_input_scancode(param1, param2, param3, param4, keymap);
+        }
     }
 
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
