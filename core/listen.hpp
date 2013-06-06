@@ -99,6 +99,7 @@ struct Listen {
         }
 
         if (enable_ip_transparent) {
+            LOG(LOG_INFO, "Enable transparent proxying on listened socket.\n");
             int optval = 1;
 
             if (setsockopt(this->sck, SOL_IP, IP_TRANSPARENT, &optval, sizeof(optval))) {
