@@ -172,6 +172,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         uint64_t current_timer = now.tv_sec * 1000000ULL + now.tv_usec;
         if (old_timer < current_timer){
             this->flush_orders();
+            this->flush_bitmaps();
             this->timer = now;
             this->trans->timestamp(now);
         }
@@ -396,6 +397,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     void breakpoint()
     {
         this->flush_orders();
+        this->flush_bitmaps();
         this->trans->next();
         this->send_meta_chunk();
         this->send_timestamp_chunk();
