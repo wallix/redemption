@@ -92,14 +92,14 @@ public:
 
         Widget2 * focus_in_window;
         if (this->ini.account.username[0]) {
-            focus_in_window = &this->window_login.login_edit;
+            focus_in_window = &this->window_login.password_edit;
             this->window_login.login_edit.set_text(this->ini.account.username);
         } else {
-            focus_in_window = &this->window_login.password_edit;
+            focus_in_window = &this->window_login.login_edit;
         }
 
-        this->screen.set_widget_focus(&this->window_login);
         this->window_login.set_widget_focus(focus_in_window);
+        this->screen.set_widget_focus(&this->window_login);
 
         this->screen.refresh(this->screen.rect);
     }
