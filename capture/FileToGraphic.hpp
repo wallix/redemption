@@ -685,7 +685,7 @@ struct FileToGraphic
                              , (bitmap_data.flags & BITMAP_COMPRESSION)
                              );
 
-                for (size_t i = 0; i < this->nbconsumers ; i++){
+                for (size_t i = 0; i < this->nbconsumers ; i++) {
                     this->consumers[i]->draw( bitmap_data
                                             , data
                                             , bitmap_data.bitmap_size()
