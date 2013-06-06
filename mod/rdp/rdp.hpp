@@ -139,6 +139,7 @@ struct mod_rdp : public mod_api {
 
     bool fastpath_support;                    // choice of programmer
     bool mem3blt_support;
+    bool bitmap_update_support;
     bool client_fastpath_input_event_support; // choice of programmer + capability of server
     bool server_fastpath_update_support;      // = choice of programmer
 
@@ -159,6 +160,7 @@ struct mod_rdp : public mod_api {
             bool clipboard,
             bool fp_support, // If true, fast-path must be supported
             bool mem3blt_support,
+            bool bitmap_update_support,
             uint32_t verbose = 0,
             bool enable_new_pointer = false)
         : mod_api(info.width, info.height)
@@ -191,6 +193,7 @@ struct mod_rdp : public mod_api {
         , performanceFlags(info.rdp5_performanceflags)
         , fastpath_support(fp_support)
         , mem3blt_support(mem3blt_support)
+        , bitmap_update_support(bitmap_update_support)
         , client_fastpath_input_event_support(false)
         , server_fastpath_update_support(fp_support)
     {
@@ -1765,7 +1768,9 @@ struct mod_rdp : public mod_api {
             else {
                 general_caps.extraflags = this->use_rdp5 ? FASTPATH_OUTPUT_SUPPORTED|NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:FASTPATH_OUTPUT_SUPPORTED;
             }
-            general_caps.log("Sending to server");
+            if (this->verbose) {
+                general_caps.log("Sending to server");
+            }
             general_caps.emit(stream);
             stream.mark_end();
             capscount++;
@@ -1775,7 +1780,9 @@ struct mod_rdp : public mod_api {
             bitmap_caps.desktopWidth = this->front_width;
             bitmap_caps.desktopHeight = this->front_height;
             bitmap_caps.bitmapCompressionFlag = this->bitmap_compression;
-            bitmap_caps.log("Sending bitmap caps to server");
+            if (this->verbose) {
+                bitmap_caps.log("Sending bitmap caps to server");
+            }
             bitmap_caps.emit(stream);
             stream.mark_end();
             capscount++;
@@ -1795,7 +1802,9 @@ struct mod_rdp : public mod_api {
             order_caps.orderSupport[TS_NEG_INDEX_INDEX] = 1;
             order_caps.textFlags = 0x06a1;
             order_caps.textANSICodePage = 0x4e4; // Windows-1252 code"page is passed (latin-1)
-            order_caps.log("Sending order caps to server");
+            if (this->verbose) {
+                order_caps.log("Sending order caps to server");
+            }
             order_caps.emit(stream);
             stream.mark_end();
             capscount++;
@@ -1807,7 +1816,9 @@ struct mod_rdp : public mod_api {
             bmpcache_caps.cache1MaximumCellSize = nbbytes(this->bpp) * 0x400;
             bmpcache_caps.cache2Entries = 0x106;
             bmpcache_caps.cache2MaximumCellSize = nbbytes(this->bpp) * 0x1000;
-            bmpcache_caps.log("Sending bmpcache caps to server");
+            if (this->verbose) {
+                bmpcache_caps.log("Sending bmpcache caps to server");
+            }
             bmpcache_caps.emit(stream);
             stream.mark_end();
             capscount++;
@@ -1824,19 +1835,25 @@ struct mod_rdp : public mod_api {
 //            }
 
             ColorCacheCaps colorcache_caps;
-            colorcache_caps.log("Sending colorcache caps to server");
+            if (this->verbose) {
+                colorcache_caps.log("Sending colorcache caps to server");
+            }
             colorcache_caps.emit(stream);
             stream.mark_end();
             capscount++;
 
             ActivationCaps activation_caps;
-            activation_caps.log("Sending activation caps to server");
+            if (this->verbose) {
+                activation_caps.log("Sending activation caps to server");
+            }
             activation_caps.emit(stream);
             stream.mark_end();
             capscount++;
 
             ControlCaps control_caps;
-            control_caps.log("Sending control caps to server");
+            if (this->verbose) {
+                control_caps.log("Sending control caps to server");
+            }
             control_caps.emit(stream);
             stream.mark_end();
             capscount++;
@@ -1848,37 +1865,49 @@ struct mod_rdp : public mod_api {
                 pointer_caps.colorPointerCacheSize = 20;
                 pointer_caps.len = 8;
             }
-            pointer_caps.log("Sending pointer caps to server");
+            if (this->verbose) {
+                pointer_caps.log("Sending pointer caps to server");
+            }
             pointer_caps.emit(stream);
             stream.mark_end();
             capscount++;
 
             ShareCaps share_caps;
-            share_caps.log("Sending share caps to server");
+            if (this->verbose) {
+                share_caps.log("Sending share caps to server");
+            }
             share_caps.emit(stream);
             stream.mark_end();
             capscount++;
 
             InputCaps input_caps;
-            input_caps.log("Sending input caps to server");
+            if (this->verbose) {
+                input_caps.log("Sending input caps to server");
+            }
             input_caps.emit(stream);
             stream.mark_end();
             capscount++;
 
             SoundCaps sound_caps;
-            sound_caps.log("Sending sound caps to server");
+            if (this->verbose) {
+                sound_caps.log("Sending sound caps to server");
+            }
             sound_caps.emit(stream);
             stream.mark_end();
             capscount++;
 
             FontCaps font_caps;
-            font_caps.log("Sending font caps to server");
+            if (this->verbose) {
+                font_caps.log("Sending font caps to server");
+            }
             font_caps.emit(stream);
             stream.mark_end();
             capscount++;
 
             GlyphSupportCaps glyphsupport_caps;
-            glyphsupport_caps.log("Sending glyphsupport caps to server");
+            if (this->verbose) {
+                glyphsupport_caps.log("Sending glyphsupport caps to server");
+            }
             glyphsupport_caps.emit(stream);
             stream.mark_end();
             capscount++;
@@ -3838,16 +3867,13 @@ struct mod_rdp : public mod_api {
                    );
             }
 
-/*
-            if ((bmpdata.bits_per_pixel == 8) && (this->front_bpp != 8)) {
-*/
+            if (!this->bitmap_update_support
+            ||  ((bmpdata.bits_per_pixel == 8) && (this->front_bpp != 8))) {
                 this->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
-/*
             }
             else {
                 this->front.draw(bmpdata, data, bmpdata.bitmap_size(), bitmap);
             }
-*/
         }
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");

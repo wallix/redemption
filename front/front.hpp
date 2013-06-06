@@ -2412,7 +2412,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         if (this->server_fastpath_update_support) {
             general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
         }
-        general_caps.log("Sending to client");
+        if (this->verbose) {
+            general_caps.log("Sending to client");
+        }
         general_caps.emit(stream);
         caps_count++;
 
@@ -2420,12 +2422,16 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         bitmap_caps.preferredBitsPerPixel = this->client_info.bpp;
         bitmap_caps.desktopWidth = this->client_info.width;
         bitmap_caps.desktopHeight = this->client_info.height;
-        bitmap_caps.log("Sending to client");
+        if (this->verbose) {
+            bitmap_caps.log("Sending to client");
+        }
         bitmap_caps.emit(stream);
         caps_count++;
 
         FontCaps font_caps;
-        font_caps.log("Sending to client");
+        if (this->verbose) {
+            font_caps.log("Sending to client");
+        }
         font_caps.emit(stream);
         caps_count++;
 
@@ -2444,26 +2450,34 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         order_caps.pad4octetsB = 0x0f4240;
         order_caps.desktopSaveSize = 0x0f4240;
         order_caps.pad2octetsC = 1;
-        order_caps.log("Sending to client");
+        if (this->verbose) {
+            order_caps.log("Sending to client");
+        }
         order_caps.emit(stream);
         caps_count++;
 
         ColorCacheCaps colorcache_caps;
-        colorcache_caps.log("Sending to client");
+        if (this->verbose) {
+            colorcache_caps.log("Sending to client");
+        }
         colorcache_caps.emit(stream);
         caps_count++;
 
         PointerCaps pointer_caps;
         pointer_caps.colorPointerCacheSize = 0x19;
         pointer_caps.pointerCacheSize = 0x19;
-        pointer_caps.log("Sending to client");
+        if (this->verbose) {
+            pointer_caps.log("Sending to client");
+        }
         pointer_caps.emit(stream);
         caps_count++;
 
         ShareCaps share_caps;
         share_caps.nodeId = this->userid + GCC::MCS_USERCHANNEL_BASE;
         share_caps.pad2octets = 0xb5e2; /* 0x73e1 */
-        share_caps.log("Sending to client");
+        if (this->verbose) {
+            share_caps.log("Sending to client");
+        }
         share_caps.emit(stream);
         caps_count++;
 
@@ -2479,7 +2493,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         input_caps.keyboardType = 0;
         input_caps.keyboardSubType = 0;
         input_caps.keyboardFunctionKey = 0;
-        input_caps.log("Sending to client");
+        if (this->verbose) {
+            input_caps.log("Sending to client");
+        }
         input_caps.emit(stream);
         caps_count++;
 
@@ -3861,6 +3877,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
+//        LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
         this->orders->draw(bitmap_data, data, size, bmp);
         if (this->capture) {
             this->capture->draw(bitmap_data, data, size, bmp);
