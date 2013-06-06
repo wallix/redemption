@@ -231,6 +231,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                                       , true    /* clipboard               */
                                       , false   /* fast-path support       */
                                       , false   /* mem3blt support         */
+                                      , false   /* bitmap update support   */
                                       , 511     /* verbose                 */
                                       , false); /* enable new pointer      */
 

@@ -323,16 +323,18 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                                       , false   /* tls                     */
                                       , info
                                       , &gen
-                                      , 7
-                                      , NULL
-                                      , ""
+                                      , 7       /* key flags               */
+                                      , NULL    /* session manage          */
+                                      , ""      /* auth channel            */
                                       , ""      /* alternate_shell         */
                                       , ""      /* shell_working_directory */
                                       , true    /* clipboard               */
                                       , false   /* fast-path support       */
                                       , true    /* mem3blt support         */
+                                      , false   /* bitmap update support   */
                                       , verbose
-                                      , false); /* enable new pointer      */
+                                      , false   /* enable new pointer      */
+                                      );
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

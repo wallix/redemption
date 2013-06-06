@@ -466,6 +466,8 @@ struct Inifile {
         char alternate_shell[1024];
         char shell_working_directory[1024];
 
+        bool enable_bitmap_update;
+
         // Section "debug"
         struct {
             uint32_t x224;
@@ -700,6 +702,8 @@ struct Inifile {
         strcpy(this->account.accountname, "");
         strcpy(this->account.username,    "");
         strcpy(this->account.password,    "");
+
+        this->globals.enable_bitmap_update = false;
 
         // Section "debug".
         this->globals.debug.x224              = 0;
@@ -1024,6 +1028,9 @@ struct Inifile {
             else if (0 == strcmp(key, "video_quality")) {
                 strncpy(this->globals.video_quality, value, sizeof(this->globals.video_quality));
                 this->globals.video_quality[sizeof(this->globals.video_quality) - 1] = 0;
+            }
+            else if (0 == strcmp(key, "enable_bitmap_update")){
+                this->globals.enable_bitmap_update = bool_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "client")){
