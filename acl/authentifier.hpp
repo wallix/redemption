@@ -427,7 +427,7 @@ class SessionManager {
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
                 }
-                nextmod = INTERNAL_LOGIN;
+                nextmod = INTERNAL_WIDGET2_LOGIN;
             }
             else if (0 == strcmp(target, "close")){
                 if (this->verbose & 0x4){
@@ -525,12 +525,12 @@ class SessionManager {
         {
             if (this->ini->context_is_asked(AUTHID_AUTH_USER)){
                 this->mod_state = MOD_STATE_DONE_LOGIN;
-                nextmod = INTERNAL_LOGIN;
+                nextmod = INTERNAL_WIDGET2_LOGIN;
                 return MCTX_STATUS_INTERNAL;
             }
             else if (this->ini->context_is_asked(AUTHID_PASSWORD)){
                 this->mod_state = MOD_STATE_DONE_LOGIN;
-                nextmod = INTERNAL_LOGIN;
+                nextmod = INTERNAL_WIDGET2_LOGIN;
                 return MCTX_STATUS_INTERNAL;
             }
             else if (!this->ini->context_is_asked(AUTHID_SELECTOR)
@@ -544,7 +544,7 @@ class SessionManager {
             else if (this->ini->context_is_asked(AUTHID_TARGET_DEVICE)
                  ||  this->ini->context_is_asked(AUTHID_TARGET_USER)){
                     this->mod_state = MOD_STATE_DONE_LOGIN;
-                    nextmod = INTERNAL_LOGIN;
+                    nextmod = INTERNAL_WIDGET2_LOGIN;
                     return MCTX_STATUS_INTERNAL;
             }
             else if (this->ini->context_is_asked(AUTHID_DISPLAY_MESSAGE)){
