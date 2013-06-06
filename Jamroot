@@ -799,7 +799,7 @@ unit-test test_sq_outtracker : tests/transport/rio/test_sq_outtracker.cpp openss
 unit-test test_sq_outtracker : tests/transport/rio/test_sq_outtracker.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_rio_outmeta : tests/transport/rio/test_rio_outmeta.cpp openssl crypto z dl libboost_unit_test ;
-unit-test test_rio_outmeta : tests/transport/rio/test_sq_outmeta.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+unit-test test_rio_outmeta : tests/transport/rio/test_rio_outmeta.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_sq_intracker : tests/transport/rio/test_sq_intracker.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_sq_intracker : tests/transport/rio/test_sq_intracker.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
