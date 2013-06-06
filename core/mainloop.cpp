@@ -241,6 +241,12 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid)
     uint32_t s_addr = inet_addr(ini.globals.listen_address);
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
     int port = ini.globals.port;
-    Listen listener(ss, s_addr, port);
+    Listen listener( ss
+                   , s_addr
+                   , port
+                   , false                              /* exit on timeout       */
+                   , 60                                 /* timeout sec           */
+                   , ini.globals.enable_ip_transparent
+                   );
     listener.run();
 }
