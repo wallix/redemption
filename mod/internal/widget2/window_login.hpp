@@ -21,6 +21,7 @@
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_WINDOW_LOGIN_HPP)
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_WINDOW_LOGIN_HPP
 
+#include "version.hpp"
 #include "widget2_edit.hpp"
 #include "widget2_label.hpp"
 #include "widget2_button.hpp"

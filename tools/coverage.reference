@@ -95,7 +95,6 @@ mod/internal/bouncer2 100 100
 mod/internal/close 100 100
 mod/internal/dialog 100 100
 mod/internal/internal_mod 100 100
-mod/internal/login 100 100
 mod/internal/selector 100 100
 mod/internal/test_card 100 100
 mod/internal/test_internal 100 100

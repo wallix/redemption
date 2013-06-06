@@ -100,7 +100,7 @@ class Cover:
                         print module, ' #####: %u: NO COVERAGE' % i
 
 cover = Cover()
-if sys.argv[1] == 'all':
+if len(sys.argv) < 2 or sys.argv[1] == 'all':
     cover.coverall()
 elif sys.argv[1] == 'touchall':
     for module, extension, covered, total in list_modules():

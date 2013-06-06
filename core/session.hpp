@@ -50,7 +50,6 @@
 #include "authentifier.hpp"
 #include "front.hpp"
 #include "null/null.hpp"
-#include "internal/login.hpp"
 #include "internal/bouncer2.hpp"
 #include "internal/close.hpp"
 #include "internal/dialog.hpp"
@@ -612,19 +611,6 @@ struct Session {
                         LOG(LOG_INFO, "Session::internal module 'Dialog Display Message' ready");
                     }
                     break;
-                    case INTERNAL_LOGIN:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
-                        }
-                        this->mod = new login_mod(
-                                          *this->front,
-                                          this->front->client_info.width,
-                                          this->front->client_info.height,
-                                          this->ini);
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module Login ready");
-                        }
-                    break;
                     case INTERNAL_BOUNCER2:
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'bouncer2'");
@@ -755,6 +741,7 @@ struct Session {
                         }
                     }
                     break;
+                    case INTERNAL_LOGIN:
                     case INTERNAL_WIDGET2_LOGIN:
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
