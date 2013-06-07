@@ -208,6 +208,8 @@ typedef enum
     AUTHID_MODE_CONSOLE,
     AUTHID_TIMEZONE,
 
+    AUTHID_REAL_TARGET_DEVICE,  // target device in ip transparent mode
+
     MAX_AUTHID
 } authid_t;
 
@@ -289,6 +291,8 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 
 #define STRAUTHID_MODE_CONSOLE             "mode_console"
 #define STRAUTHID_TIMEZONE                 "timezone"
+
+#define STRAUTHID_REAL_TARGET_DEVICE       "real_target_device"
 
 static inline authid_t authid_from_string(const char * strauthid) {
     static const std::string authstr[MAX_AUTHID - 1] = {
@@ -374,6 +378,8 @@ static inline authid_t authid_from_string(const char * strauthid) {
 
         STRAUTHID_MODE_CONSOLE,
         STRAUTHID_TIMEZONE,
+
+        STRAUTHID_REAL_TARGET_DEVICE,
     };
 
     std::string str = std::string(strauthid);
@@ -607,6 +613,8 @@ struct Inifile {
 
             redemption::string mode_console;
             signed             timezone;
+
+            redemption::string real_target_device;
         } context;
     } globals;
 
@@ -829,6 +837,8 @@ struct Inifile {
 
         this->globals.context.mode_console                = "allow";
         this->globals.context.timezone                    = -3600;
+
+        this->globals.context.real_target_device          = "";
     };
 
     void cparse(istream & ifs){
@@ -1486,6 +1496,10 @@ struct Inifile {
             this->globals.context.timezone     = _long_from_cstr(value);
             break;
 
+        case AUTHID_REAL_TARGET_DEVICE:
+            this->globals.context.real_target_device = value;
+            break;
+
         default:
             LOG(LOG_WARNING, "Inifile::context_set_value(id): unknown authid=%d", authid);
             break;
@@ -1652,6 +1666,9 @@ struct Inifile {
             break;
         case AUTHID_END_TIME:
             pszReturn = this->globals.context.end_time;
+            break;
+        case AUTHID_REAL_TARGET_DEVICE:
+            pszReturn = this->globals.context.real_target_device;
             break;
         default:
 //            LOG(LOG_WARNING, "Inifile::context_get_value(id): unknown authid=\"%d\"", authid);

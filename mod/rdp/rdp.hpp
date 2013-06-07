@@ -497,7 +497,9 @@ struct mod_rdp : public mod_api {
                     if (this->nego.tls){
                         cs_core.serverSelectedProtocol = 1;
                     }
-                    cs_core.log("Sending to Server");
+                    if (this->verbose) {
+                        cs_core.log("Sending to Server");
+                    }
                     if (this->nego.tls){
                     }
                     cs_core.emit(stream);
@@ -520,12 +522,16 @@ struct mod_rdp : public mod_api {
                             cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID ;
                         }
                     }
-                    cs_cluster.log("Sending to server");
+                    if (this->verbose) {
+                        cs_cluster.log("Sending to server");
+                    }
                     cs_cluster.emit(stream);
                     // ------------------------------------------------------------
 
                     GCC::UserData::CSSecurity cs_security;
-                    cs_security.log("Sending to server");
+                    if (this->verbose) {
+                        cs_security.log("Sending to server");
+                    }
                     cs_security.emit(stream);
                     // ------------------------------------------------------------
 
@@ -563,7 +569,9 @@ struct mod_rdp : public mod_api {
                             this->mod_channel_list.push_back(def);
                         }
 
-                        cs_net.log("Sending to server");
+                        if (this->verbose) {
+                            cs_net.log("Sending to server");
+                        }
                         cs_net.emit(stream);
                     }
                     // ------------------------------------------------------------
@@ -607,7 +615,9 @@ struct mod_rdp : public mod_api {
                     {
                         GCC::UserData::SCCore sc_core;
                         sc_core.recv(f.payload);
-                        sc_core.log("Received from server");
+                        if (this->verbose) {
+                            sc_core.log("Received from server");
+                        }
                         if (0x0080001 == sc_core.version){ // can't use rdp5
                             this->use_rdp5 = 0;
                         }
@@ -617,7 +627,9 @@ struct mod_rdp : public mod_api {
                     {
                         GCC::UserData::SCSecurity sc_sec1;
                         sc_sec1.recv(f.payload);
-                        sc_sec1.log("Received from server");
+                        if (this->verbose) {
+                            sc_sec1.log("Received from server");
+                        }
 
                         this->encryptionLevel = sc_sec1.encryptionLevel;
                         this->encryptionMethod = sc_sec1.encryptionMethod;
@@ -749,7 +761,9 @@ struct mod_rdp : public mod_api {
                             }
                             this->mod_channel_list.set_chanid(index, sc_net.channelDefArray[index].id);
                         }
-                        sc_net.log("Received from server");
+                        if (this->verbose) {
+                            sc_net.log("Received from server");
+                        }
                     }
                     break;
                     default:
@@ -3156,14 +3170,18 @@ struct mod_rdp : public mod_api {
                 {
                     GeneralCaps general_caps;
                     general_caps.recv(stream, capset_length);
-                    general_caps.log("Received from server");
+                    if (this->verbose) {
+                        general_caps.log("Received from server");
+                    }
                 }
                 break;
                 case CAPSTYPE_BITMAP:
                 {
                     BitmapCaps bitmap_caps;
                     bitmap_caps.recv(stream, capset_length);
-                    bitmap_caps.log("Received from server");
+                    if (this->verbose) {
+                        bitmap_caps.log("Received from server");
+                    }
                     this->bpp = bitmap_caps.preferredBitsPerPixel;
                     this->front_width = bitmap_caps.desktopWidth;
                     this->front_height = bitmap_caps.desktopHeight;
@@ -3173,14 +3191,18 @@ struct mod_rdp : public mod_api {
                 {
                     OrderCaps order_caps;
                     order_caps.recv(stream, capset_length);
-                    order_caps.log("Received from server");
+                    if (this->verbose) {
+                        order_caps.log("Received from server");
+                    }
                 }
                 break;
                 case CAPSTYPE_INPUT:
                 {
                     InputCaps input_caps;
                     input_caps.recv(stream, capset_length);
-                    input_caps.log("Received from server");
+                    if (this->verbose) {
+                        input_caps.log("Received from server");
+                    }
 
                     this->client_fastpath_input_event_support =
                         (this->fastpath_support && ((input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)) != 0));
@@ -3897,7 +3919,9 @@ struct mod_rdp : public mod_api {
                              , this->clientAddr
                              );
 
-        infoPacket.log("Sending to server: ");
+        if (this->verbose) {
+            infoPacket.log("Sending to server: ");
+        }
         infoPacket.emit(stream);
         stream.mark_end();
 
