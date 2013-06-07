@@ -76,37 +76,44 @@ public:
     , diagnostic_lines(drawable, this->img.cx() + 20, 0, this, NULL,
                        diagnostic_text, true, -16, fgcolor, bgcolor)
     {
+        this->cancel.border_top_left_color = WHITE;
+
+        this->img.rect.x = this->dx() + 10;
+        this->cancel.set_button_x((this->cx() - this->cancel.cx()) / 2);
+        this->connection_closed_label.rect.x = (this->cx() - this->connection_closed_label.cx()) / 2;
+
+        this->resize_titlebar();
+
         this->child_list.push_back(&this->img);
-        this->child_list.push_back(&this->username_label);
-        this->child_list.push_back(&this->username_label_value);
-        this->child_list.push_back(&this->target_label);
-        this->child_list.push_back(&this->target_label_value);
         this->child_list.push_back(&this->connection_closed_label);
         this->child_list.push_back(&this->cancel);
         this->child_list.push_back(&this->diagnostic);
         this->child_list.push_back(&this->diagnostic_lines);
 
-        this->cancel.border_top_left_color = WHITE;
-
-        this->img.rect.x = this->dx() + 10;
-        this->cancel.set_button_x((this->cx() - this->cancel.cx()) / 2);
-        this->connection_closed_label.rect.x = (this->cx() - this->cancel.cx()) / 2;
-
-        uint16_t px = std::max(this->username_label.cx(), this->diagnostic.cx()) + 10;
-        this->username_label_value.rect.x = this->username_label.dx() + px;
-        this->target_label_value.rect.x = this->username_label.dx() + px;
-
-        this->resize_titlebar();
+        uint16_t px = this->diagnostic.cx() + 10;
 
         y = this->dy() + this->titlebar.cy() + 10;
         this->img.rect.y = y;
         y += 10;
-        this->username_label.rect.y = y;
-        this->username_label_value.rect.y = y;
-        y += this->username_label.cy() + 10;
-        this->target_label.rect.y = y;
-        this->target_label_value.rect.y = y;
-        y += this->target_label.cy() + 20;
+
+        if (username && *username) {
+            this->child_list.push_back(&this->username_label);
+            this->child_list.push_back(&this->username_label_value);
+            this->child_list.push_back(&this->target_label);
+            this->child_list.push_back(&this->target_label_value);
+
+            px = std::max(this->username_label.cx(), this->diagnostic.cx()) + 10;
+            this->username_label_value.rect.x = this->username_label.dx() + px;
+            this->target_label_value.rect.x = this->username_label.dx() + px;
+
+            this->username_label.rect.y = y;
+            this->username_label_value.rect.y = y;
+            y += this->username_label.cy() + 10;
+            this->target_label.rect.y = y;
+            this->target_label_value.rect.y = y;
+            y += this->target_label.cy() + 20;
+        }
+
         this->connection_closed_label.rect.y = y;
         y += this->connection_closed_label.cy() + 20;
         this->diagnostic.rect.y = y;

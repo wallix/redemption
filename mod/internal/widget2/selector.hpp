@@ -139,13 +139,16 @@ public:
             delete this->labels[i];
         }
         this->labels.clear();
+        this->current_index = -1u;
     }
 
     void init_current_index(uint idx)
     {
-        this->current_index = idx;
-        this->labels[idx]->bg_color = this->current_bg_color;
-        this->labels[idx]->fg_color = this->current_fg_color;
+        if (idx < this->labels.size()) {
+            this->current_index = idx;
+            this->labels[idx]->bg_color = this->current_bg_color;
+            this->labels[idx]->fg_color = this->current_fg_color;
+        }
     }
 
     void set_current_index(uint idx)
@@ -267,7 +270,9 @@ public:
                     break;
                 case Keymap2::KEVENT_ENTER:
                     keymap->get_kevent();
-                    this->send_notify(NOTIFY_SUBMIT);
+                    if (!this->labels.empty()) {
+                        this->send_notify(NOTIFY_SUBMIT);
+                    }
                     break;
                 default:
                     Widget2::rdp_input_scancode(param1, param2, param3, param4, keymap);
@@ -3701,13 +3706,13 @@ public:
     , protocol_label(drawable, 500, 0, this, NULL, "Protocol", true, -10, BLACK, GREY)
     , close_time_label(drawable, 620, 0, this, NULL, "Close Time", true, -10, BLACK, GREY)
     , device_lines(drawable, Rect(15,0,130,1), this, this, -11,
-                   BLACK, BLACK, BLACK, 0xEEFAEE, 0xCCEEDD, 0XAAFFAA, 5, 1, GREY, 1)
+                   BLACK, BLACK, BLACK, PALE_GREEN, MEDIUM_GREEN, 0X44FFAC, 5, 1, GREY, 1)
     , target_lines(drawable, Rect(145,0,350,1), this, this, -11,
-                  BLACK, BLACK, BLACK, 0xEEFAEE, 0xCCEEDD, 0XAAFFAA, 5, 1, GREY, 1)
+                  BLACK, BLACK, BLACK, PALE_GREEN, MEDIUM_GREEN, 0X44FFAC, 5, 1, GREY, 1)
     , protocol_lines(drawable, Rect(495,0,120,1), this, this, -11,
-                     BLACK, BLACK, BLACK, 0xEEFAEE, 0xCCEEDD, 0XAAFFAA, 5, 1, GREY, 1)
+                     BLACK, BLACK, BLACK, PALE_GREEN, MEDIUM_GREEN, 0X44FFAC, 5, 1, GREY, 1)
     , close_time_lines(drawable, Rect(615,0,170,1), this, this, -11,
-                       BLACK, BLACK, BLACK, 0xEEFAEE, 0xCCEEDD, 0XAAFFAA, 5, 1, GREY, 1)
+                       BLACK, BLACK, BLACK, PALE_GREEN, MEDIUM_GREEN, 0X44FFAC, 5, 1, GREY, 1)
     , filter_device(drawable, 20, 0, 120, this, this, filter_device?filter_device:0, -12, BLACK, WHITE, -1, 1, 1)
     , filter_target(drawable, 150, 0, 340, this, this, filter_target?filter_target:0, -12, BLACK, WHITE, -1, 1, 1)
     //BEGIN WidgetPager
@@ -3765,6 +3770,40 @@ public:
         this->target_lines.tab_flag = IGNORE_TAB;
         this->protocol_lines.tab_flag = IGNORE_TAB;
         this->close_time_lines.tab_flag = IGNORE_TAB;
+
+        int dw = width - (this->close_time_lines.lx() + 15);
+        if (dw < 0) {
+            this->device_target_label.rect.x -= 15;
+            this->filter_device.set_edit_x(this->device_target_label.dx());
+            this->device_lines.rect.x -= 15;
+            this->filter_device.set_edit_cx(this->device_target_label.cx());
+            this->device_lines.rect.cx = this->device_target_label.cx() + 10;
+
+            int w,h;
+            this->drawable->text_metrics("INTERNAL", w,h);
+            this->protocol_lines.rect.cx = w + 10;
+            this->drawable->text_metrics("XXXX-XX-XX XX:XX:XX", w,h);
+            this->close_time_lines.rect.cx = w + 10;
+
+            this->close_time_lines.rect.x = width - this->close_time_lines.cx();
+            this->close_time_label.rect.x = this->close_time_lines.dx() + 5;
+            this->protocol_lines.rect.x = this->close_time_lines.dx() - this->protocol_lines.cx();
+            this->protocol_label.rect.x = this->protocol_lines.dx() + 5;
+
+            this->target_lines.rect.cx = this->protocol_lines.dx() - this->device_lines.lx();
+            this->target_lines.rect.x = this->device_lines.lx();
+            this->target_label.rect.x = this->target_lines.dx() + 5;
+            this->filter_target.set_edit_x(this->target_label.dx());
+            this->filter_target.set_edit_cx(this->target_lines.cx() - 10);
+        }
+        else if (dw > 0) {
+            this->target_lines.rect.cx += dw;
+            this->filter_target.set_edit_cx(this->filter_target.cx() + dw);
+            this->protocol_label.rect.x += dw;
+            this->close_time_label.rect.x += dw;
+            this->protocol_lines.rect.x += dw;
+            this->close_time_lines.rect.x += dw;
+        }
 
         this->device_target_label.rect.y = this->device_label.cy() + this->device_label.dy() + 5;
         this->target_label.rect.y = this->device_target_label.dy();
