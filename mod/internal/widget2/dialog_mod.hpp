@@ -30,7 +30,6 @@
 
 class DialogMod : public InternalMod, public NotifyApi
 {
-    WidgetScreen screen;
     WindowDialog window_dialog;
 
     Inifile & ini;
@@ -39,7 +38,6 @@ public:
     DialogMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height,
               const char * caption, const char * message, const char * cancel_text)
     : InternalMod(front, width, height)
-    , screen(this, width, height)
     , window_dialog(this, 0, 0, &this->screen, this, caption, message, 0, "Ok", cancel_text, BLACK, GREY, BLACK, WHITE)
     , ini(ini)
     {
@@ -48,6 +46,8 @@ public:
         this->window_dialog.set_xy((width - this->window_dialog.cx()) / 2,
                                    (height - this->window_dialog.cy()) / 2);
 
+        this->window_dialog.set_widget_focus(&this->window_dialog.ok);
+        this->screen.set_widget_focus(&this->window_dialog);
         this->screen.refresh(this->screen.rect);
     }
 
@@ -99,44 +99,28 @@ public:
         return;
     }
 
-    virtual void rdp_input_invalidate(const Rect& r)
-    {
-        this->window_dialog.rdp_input_invalidate(r);
-    }
-
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
-    {
-        this->screen.rdp_input_mouse(device_flags, x, y, keymap);
-    }
-
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
-        if (keymap->nb_kevent_available() > 0) {
-            switch (keymap->top_kevent()) {
-                case Keymap2::KEVENT_ESC:
-                case Keymap2::KEVENT_RIGHT_ARROW:
-                    keymap->get_kevent();
-                    this->refused();
-                    break;
-                case Keymap2::KEVENT_ENTER:
-                    keymap->get_kevent();
-                    this->accepted();
-                    break;
-                default:
-                    break;
-            }
-        }
-        (void)param1;
-        (void)param2;
-        (void)param3;
-        (void)param4;
-    }
-
-    virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
-    {
-        TODO("bgcolor <-> fgcolor")
-        this->front.server_draw_text(x, y, text, bgcolor, fgcolor, clip);
-    }
+//     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+//     {
+//         if (keymap->nb_kevent_available() > 0) {
+//             switch (keymap->top_kevent()) {
+//                 case Keymap2::KEVENT_ESC:
+//                 case Keymap2::KEVENT_RIGHT_ARROW:
+//                     keymap->get_kevent();
+//                     this->refused();
+//                     break;
+//                 case Keymap2::KEVENT_ENTER:
+//                     keymap->get_kevent();
+//                     this->accepted();
+//                     break;
+//                 default:
+//                     break;
+//             }
+//         }
+//         (void)param1;
+//         (void)param2;
+//         (void)param3;
+//         (void)param4;
+//     }
 };
 
 #endif
