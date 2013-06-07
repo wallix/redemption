@@ -82,7 +82,7 @@ public:
         x += this->img.cx() + std::max(this->login_label.cx(), this->password_label.cx()) + 20;
         this->login_edit.set_edit_x(x);
         this->password_edit.rect.x = x;
-        this->rect.cx = x - this->dx() + std::max(this->login_edit.cx(), this->password_edit.cx()) + 14;
+        this->set_window_cx(x - this->dx() + std::max(this->login_edit.cx(), this->password_edit.cx()) + 14);
 
         x = std::max(std::max(this->help.cx(), this->cancel.cx()), this->ok.cx());
         this->ok.label.x_text += (x - this->ok.cx()) / 2;
@@ -103,8 +103,6 @@ public:
         this->login_edit.set_edit_cx(this->cx() - (this->login_edit.dx() - this->dx()) - 10);
         this->password_edit.rect.cx = this->login_edit.cx();
 
-        this->resize_titlebar();
-
         uint16_t rightsize = this->login_edit.cy() * 2 + 10;
         uint16_t maxry = std::max(this->img.cy(), rightsize);
         y = this->titlebar.dy() + this->titlebar.cy();
@@ -123,7 +121,7 @@ public:
         this->cancel.set_button_y(y);
         this->help.set_button_y(y);
 
-        this->rect.cy = y + this->ok.cy() + 10 - this->dy();
+        this->set_window_cy(y + this->ok.cy() + 10 - this->dy());
     }
 
     virtual ~WindowLogin()

@@ -53,12 +53,10 @@ public:
         if (this->cancel) {
             this->child_list.push_back(this->cancel);
 
-            this->rect.cx = std::max<int>(window_size, this->ok.cx() + this->cancel->cx() + 30);
+            this->set_window_cx(std::max<int>(window_size, this->ok.cx() + this->cancel->cx() + 30));
             this->dialog.rect.x += (this->cx() - this->dialog.cx()) / 2;
             this->cancel->set_button_x(this->dx() + this->cx() - (this->cancel->cx() + 10));
             this->ok.set_button_x(this->cancel->dx() - (this->ok.cx() + 10));
-
-            this->resize_titlebar();
 
             this->rect.cy = this->dialog.cy() + this->titlebar.cy() + 15 + this->ok.cy();
             this->dialog.rect.y += this->titlebar.cy() + 5;
@@ -66,13 +64,11 @@ public:
             this->cancel->set_button_y(this->ok.dy());
         }
         else {
-            this->rect.cx = std::max<int>(window_size, this->ok.cx() + 20);
+            this->set_window_cx(std::max<int>(window_size, this->ok.cx() + 20));
             this->dialog.rect.x += (this->cx() - this->dialog.cx()) / 2;
             this->ok.set_button_x(this->dx() + this->cx() - (this->ok.cx() + 10));
 
-            this->resize_titlebar();
-
-            this->rect.cy = this->dialog.cy() + this->titlebar.cy() + 15 + this->ok.cy();
+            this->set_window_cy(this->dialog.cy() + this->titlebar.cy() + 15 + this->ok.cy());
             this->dialog.rect.y += this->titlebar.cy() + 5;
             this->ok.set_button_y(this->dialog.dy() + this->dialog.cy() + 5);
         }

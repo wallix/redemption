@@ -37,6 +37,7 @@ public:
     WidgetLabel username_label_value;
     WidgetLabel target_label;
     WidgetLabel target_label_value;
+    WidgetLabel connection_closed_label;
     WidgetButton cancel;
     WidgetLabel diagnostic;
     WidgetMultiLine diagnostic_lines;
@@ -68,7 +69,8 @@ public:
     , target_label(drawable, this->img.cx() + 20, 0, this, NULL,
                    "Target:", true, -12, fgcolor, bgcolor)
     , target_label_value(drawable, 0, 0, this, NULL, target, true, -12, fgcolor, bgcolor)
-    , cancel(drawable, 0, 0, this, this, "Close", true, -13, BLACK, GREY, 6, 2, NOTIFY_CANCEL)
+    , connection_closed_label(drawable, 0, 0, this, NULL, "Connection closed", true, -13, fgcolor, bgcolor)
+    , cancel(drawable, 0, 0, this, this, "Close", true, -14, BLACK, GREY, 6, 2, NOTIFY_CANCEL)
     , diagnostic(drawable, this->img.cx() + 20, 0, this, NULL,
                  "Diagnostic:", true, -15, fgcolor, bgcolor)
     , diagnostic_lines(drawable, this->img.cx() + 20, 0, this, NULL,
@@ -79,6 +81,7 @@ public:
         this->child_list.push_back(&this->username_label_value);
         this->child_list.push_back(&this->target_label);
         this->child_list.push_back(&this->target_label_value);
+        this->child_list.push_back(&this->connection_closed_label);
         this->child_list.push_back(&this->cancel);
         this->child_list.push_back(&this->diagnostic);
         this->child_list.push_back(&this->diagnostic_lines);
@@ -87,10 +90,11 @@ public:
 
         this->img.rect.x = this->dx() + 10;
         this->cancel.set_button_x((this->cx() - this->cancel.cx()) / 2);
+        this->connection_closed_label.rect.x = (this->cx() - this->cancel.cx()) / 2;
 
-        uint16_t cx = std::max(this->username_label.cx(), this->target_label.cx()) + 10;
-        this->username_label_value.rect.x = this->username_label.dx() + cx;
-        this->target_label_value.rect.x = this->username_label.dx() + cx;
+        uint16_t px = std::max(this->username_label.cx(), this->diagnostic.cx()) + 10;
+        this->username_label_value.rect.x = this->username_label.dx() + px;
+        this->target_label_value.rect.x = this->username_label.dx() + px;
 
         this->resize_titlebar();
 
@@ -103,13 +107,22 @@ public:
         this->target_label.rect.y = y;
         this->target_label_value.rect.y = y;
         y += this->target_label.cy() + 20;
+        this->connection_closed_label.rect.y = y;
+        y += this->connection_closed_label.cy() + 20;
         this->diagnostic.rect.y = y;
-        y += this->diagnostic.cy() + 10;
-        this->diagnostic_lines.rect.y = y;
-        y += this->diagnostic_lines.cy() + 20;
+        if (this->diagnostic.cx() > this->cx() - (px + 10)) {
+            y += this->diagnostic.cy() + 10;
+            this->diagnostic_lines.rect.y = y;
+            y += this->diagnostic_lines.cy() + 20;
+        }
+        else {
+            this->diagnostic_lines.rect.y = y;
+            y += std::max(this->diagnostic_lines.cy(), this->diagnostic.cy()) + 20;
+            this->diagnostic_lines.rect.x = this->username_label.dx() + px;
+        }
         this->cancel.set_button_y(y);
-        y += this->cancel.cy() + 10;
-        this->rect.cy = y - this->dy();
+        y += this->cancel.cy() + 20;
+        this->set_window_cy(y - this->dy());
     }
 
     virtual ~WindowWabClose()

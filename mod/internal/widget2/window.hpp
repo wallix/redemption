@@ -75,14 +75,47 @@ public:
         }
     }
 
+    virtual ~Window()
+    {}
+
+    void set_window_x(int x)
+    {
+        this->titlebar.rect.x = x + 2;
+        this->button_close.set_button_x(this->dx() + this->cx() - this->button_close.cx() - 2);
+        this->rect.x = x;
+    }
+
+    void set_window_y(int y)
+    {
+        this->titlebar.rect.y = y + 2;
+        this->button_close.set_button_y(y + 2);
+        this->rect.y = y;
+    }
+
+protected:
     void resize_titlebar()
     {
         this->titlebar.rect.cx = this->cx() - this->button_close.cx() - 4;
         this->button_close.set_button_x(this->dx() + this->cx() - this->button_close.cx() - 2);
     }
 
-    virtual ~Window()
-    {}
+public:
+    void set_window_cx(int w)
+    {
+        this->rect.cx = w;
+        this->resize_titlebar();
+    }
+
+    void set_window_cy(int h)
+    {
+        this->rect.cy = h;
+    }
+
+    virtual void set_wh(uint16_t w, uint16_t h)
+    {
+        this->WidgetComposite::set_wh(w, h);
+        this->resize_titlebar();
+    }
 
     virtual void draw(const Rect& clip)
     {

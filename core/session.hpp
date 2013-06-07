@@ -559,10 +559,14 @@ struct Session {
                         if (this->ini->globals.context.auth_error_message.is_empty()) {
                             this->ini->globals.context.auth_error_message = "Connection to server ended";
                         }
-                        this->mod = new close_mod(*this->ini,
-                                                  *this->front,
-                                                  this->front->client_info.width,
-                                                  this->front->client_info.height);
+                        this->mod = new WabCloseMod(*this->ini,
+                                                    *this->front,
+                                                    this->front->client_info.width,
+                                                    this->front->client_info.height);
+//                         this->mod = new close_mod(*this->ini,
+//                                                   *this->front,
+//                                                   this->front->client_info.width,
+//                                                   this->front->client_info.height);
                         this->front->init_pointers();
                     }
                     if (this->verbose){

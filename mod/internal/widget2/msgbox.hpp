@@ -41,12 +41,10 @@ public:
         this->child_list.push_back(&this->msg);
         this->child_list.push_back(&this->ok);
 
-        this->rect.cx = std::max<int>(this->msg.cx(), this->ok.cx() + 20);
+        this->set_window_cx(std::max<int>(this->msg.cx(), this->ok.cx() + 20));
         this->msg.rect.x += (this->cx() - this->msg.cx()) / 2;
 
-        this->resize_titlebar();
-
-        this->rect.cy = this->titlebar.cy() + this->msg.cy() + this->ok.cy() + 10;
+        this->set_window_cy(this->titlebar.cy() + this->msg.cy() + this->ok.cy() + 10);
         this->msg.rect.y += this->titlebar.cy() + 5;
         this->ok.set_button_x(this->dx() + this->cx() - this->ok.cx() - 10);
         this->ok.set_button_y(this->dy() + this->cy() - this->ok.cy() - 5);
