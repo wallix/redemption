@@ -99,13 +99,14 @@ project redemption
 
 ;
 
-explicit install instexe install-bin install-etc install-share check_coverage ;
+explicit install instexe install-bin install-etc install-share check_coverage exe ;
 
 alias instexe : install-bin ;
 alias install : install-bin install-etc install-share ;
+alias exe     : rdpproxy redrec ;
 
 install install-bin
-    : rdpproxy redrec
+    : exe
     : <install-type>EXE <install-dependencies>on
     : <location>$(INSTALLDIR)/usr/local/bin
     ;

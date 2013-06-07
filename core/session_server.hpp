@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -16,7 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2012
    Author(s): Christophe Grosjean
-
 */
 
 #ifndef _REDEMPTION_CORE_SESSION_SERVER_HPP_
@@ -60,16 +59,16 @@ class SessionServer : public Server
             LOG(LOG_INFO, "Accept failed on socket %u (%s)", incoming_sck, strerror(errno));
             _exit(1);
         }
-        
+
         char text[256];
         char source_ip[256];
         int source_port = 0;
         char target_ip[256];
         int target_port = 0;
         char real_target_ip[256];
-        
+
         strcpy(source_ip, inet_ntoa(u.s4.sin_addr));
-        source_port = u.s4.sin_port;
+        source_port = ntohs(u.s4.sin_port);
         /* start new process */
         pid_t pid = fork();
         switch (pid) {
@@ -97,11 +96,14 @@ class SessionServer : public Server
                 _exit(1);
             }
 
-            target_port = localAddress.s4.sin_port;
+            target_port = ntohs(localAddress.s4.sin_port);
             strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
 
             if (ini.globals.enable_ip_transparent) {
                 strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
+
+                LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, target_ip, target_port);
+
                 int fd = open("/proc/net/ip_conntrack", O_RDONLY);
                 // source and dest are inverted because we get the information we want from reply path rule
                 int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip));
@@ -109,7 +111,7 @@ class SessionServer : public Server
                     LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack");
                 }
                 close(fd);
-                
+
                 setgid(this->gid);
                 setuid(this->uid);
             }
