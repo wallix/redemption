@@ -72,7 +72,11 @@ public:
     }
 
     virtual ~SelectorMod()
+    {}
+
+    virtual void rdp_input_invalidate(const Rect& r)
     {
+        this->selector.refresh(this->selector.rect);
     }
 
     void ask_page()
@@ -192,6 +196,8 @@ public:
 
         for (unsigned index = 0 ; index < this->ini.globals.context.selector_lines_per_page; index++) {
             size_t size_groups = proceed_item(groups);
+            if (!size_groups)
+                break;
             size_t size_targets = proceed_item(targets);
             size_t size_protocols = proceed_item(protocols);
             size_t size_endtimes = proceed_item(endtimes, ';');
@@ -227,10 +233,15 @@ public:
             endtimes += size_endtimes + 1;
         }
 
-        this->selector.target_lines.init_current_index(0);
-        this->selector.device_lines.init_current_index(0);
-        this->selector.close_time_lines.init_current_index(0);
-        this->selector.protocol_lines.init_current_index(0);
+        if (this->selector.device_lines.labels.empty()) {
+            this->selector.device_lines.tab_flag = Widget2::IGNORE_TAB;
+            this->selector.device_lines.focus_flag = Widget2::IGNORE_FOCUS;
+        } else {
+            this->selector.device_lines.tab_flag = Widget2::NORMAL_TAB;
+            this->selector.device_lines.focus_flag = Widget2::NORMAL_FOCUS;
+            this->selector.set_index_list(0);
+            this->selector.switch_focus_with(&this->selector.device_lines);
+        }
     }
 
     static inline size_t proceed_item(const char * list, char sep = ' ')

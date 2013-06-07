@@ -47,8 +47,8 @@ public:
     , image(this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
     , ini(ini)
     {
-        this->screen.child_list.push_back(&this->window_login);
         this->screen.child_list.push_back(&this->image);
+        this->screen.child_list.push_back(&this->window_login);
 
         this->window_login.set_xy((width - this->window_login.cx()) / 2,
                                   (height - this->window_login.cy()) / 2);

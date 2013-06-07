@@ -28,6 +28,7 @@
 #include "GraphicToFile.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 #include "inbymetasequencetransport.hpp"
+#include "internal_mod.hpp"
 
 struct test_internal_mod : public internal_mod {
     char movie[1024];

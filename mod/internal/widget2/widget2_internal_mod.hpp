@@ -34,7 +34,7 @@ public:
 //     Rect dragging_rect;
 //     int draggingdx; // distance between mouse and top angle of dragged window
 //     int draggingdy; // distance between mouse and left angle of dragged window
-//     struct Widget2 * dragging_window;
+//     Widget2 * dragging_window;
 //     RDPBrush brush;
 
     InternalMod(FrontAPI & front, uint16_t front_width, uint16_t front_height)

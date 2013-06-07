@@ -273,6 +273,18 @@ public:
         return this->rect.cy;
     }
 
+    ///Return dx()+cx()
+    int16_t lx() const
+    {
+        return this->rect.x + this->rect.cx;
+    }
+
+    ///Return dy()+cy()
+    int16_t ly() const
+    {
+        return this->rect.y + this->rect.cy;
+    }
+
     ///Return x position in it's parent
     int16_t px() const
     {

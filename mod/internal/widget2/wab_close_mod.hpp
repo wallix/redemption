@@ -60,8 +60,8 @@ public:
     , image(this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
     , ini(ini)
     {
-        this->screen.child_list.push_back(&this->window_close);
         this->screen.child_list.push_back(&this->image);
+        this->screen.child_list.push_back(&this->window_close);
 
         this->window_close.set_xy((width - this->window_close.cx()) / 2,
                                   (height - this->window_close.cy()) / 2);
@@ -81,7 +81,7 @@ public:
     virtual void notify(Widget2* sender, notify_event_t event,
                         long unsigned int param, long unsigned int param2)
     {
-        if (event == NOTIFY_CANCEL || (event == NOTIFY_SUBMIT && sender == &window_close)) {
+        if (NOTIFY_CANCEL == event) {
             this->signal = BACK_EVENT_STOP;
             this->event.set();
         }
