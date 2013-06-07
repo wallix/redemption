@@ -692,6 +692,7 @@ class SessionManager {
             this->out_item(stream, STRAUTHID_OPT_WIDTH);
             this->out_item(stream, STRAUTHID_OPT_HEIGHT);
             this->out_item(stream, STRAUTHID_OPT_BPP);
+            this->out_item(stream, STRAUTHID_REAL_TARGET_DEVICE);
             // send trace seal if and only if there is one
             if (strlen(this->ini->context_get_value(AUTHID_TRACE_SEAL, NULL, 0))) {
                 this->out_item(stream, STRAUTHID_TRACE_SEAL);

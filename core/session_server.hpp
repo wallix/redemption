@@ -143,6 +143,7 @@ class SessionServer : public Server
                 LOG(LOG_INFO, "New session on %u (pid=%u) from %s to %s", (unsigned)sck, (unsigned)child_pid, source_ip, real_target_ip);
                 ini.context_set_value(AUTHID_HOST, source_ip);
                 ini.context_set_value(AUTHID_TARGET, real_target_ip);
+                ini.context_set_value(AUTHID_REAL_TARGET_DEVICE, real_target_ip);
                 Session session(front_event, sck, this->refreshconf, &ini);
 
                 // Suppress session file

@@ -2616,7 +2616,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             case CAPSTYPE_GENERAL: {
                     GeneralCaps general;
                     general.recv(stream, capset_length);
-                    general.log("Receiving from client");
+                    if (this->verbose) {
+                        general.log("Receiving from client");
+                    }
                     this->client_info.use_compact_packets = (general.extraflags & NO_BITMAP_COMPRESSION_HDR)?1:0;
 
                     this->server_fastpath_update_support =
@@ -2626,7 +2628,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             case CAPSTYPE_BITMAP: {
                     BitmapCaps bitmap_caps;
                     bitmap_caps.recv(stream, capset_length);
-                    bitmap_caps.log("Receiving from client");
+                    if (this->verbose) {
+                        bitmap_caps.log("Receiving from client");
+                    }
                     this->client_info.bpp = (bitmap_caps.preferredBitsPerPixel >= 24)?24:bitmap_caps.preferredBitsPerPixel;
                     this->client_info.width = bitmap_caps.desktopWidth;
                     this->client_info.height = bitmap_caps.desktopHeight;
@@ -2635,13 +2639,17 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             case CAPSTYPE_ORDER: { /* 3 */
                     OrderCaps order_caps;
                     order_caps.recv(stream, capset_length);
-                    order_caps.log("Receiving from client");
+                    if (this->verbose) {
+                        order_caps.log("Receiving from client");
+                    }
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE: {
                     BmpCacheCaps bmpcache_caps;
                     bmpcache_caps.recv(stream, capset_length);
-                    bmpcache_caps.log("Receiving from client");
+                    if (this->verbose) {
+                        bmpcache_caps.log("Receiving from client");
+                    }
                     this->client_info.cache1_entries = bmpcache_caps.cache0Entries;
                     this->client_info.cache1_size = bmpcache_caps.cache0MaximumCellSize;
                     this->client_info.cache2_entries = bmpcache_caps.cache1Entries;
@@ -2651,13 +2659,19 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 }
                 break;
             case CAPSTYPE_CONTROL: /* 5 */
-                LOG(LOG_INFO, "Receiving from client CAPSTYPE_CONTROL");
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_CONTROL");
+                }
                 break;
             case CAPSTYPE_ACTIVATION: /* 7 */
-                LOG(LOG_INFO, "Receiving from client CAPSTYPE_ACTIVATION");
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_ACTIVATION");
+                }
                 break;
             case CAPSTYPE_POINTER: {  /* 8 */
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_POINTER");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_POINTER");
+                    }
 
                     expected = 4; /* color pointer(2) + pointer_cache_entries(2) */
                     if (!stream.in_check_rem(expected)){
@@ -2672,41 +2686,61 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 }
                 break;
             case CAPSTYPE_SHARE: /* 9 */
-                LOG(LOG_INFO, "Receiving from client CAPSTYPE_SHARE");
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_SHARE");
+                }
                 break;
             case CAPSTYPE_COLORCACHE: /* 10 */
-                LOG(LOG_INFO, "Receiving from client CAPSTYPE_COLORCACHE");
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_COLORCACHE");
+                }
                 break;
             case CAPSTYPE_SOUND:
-                LOG(LOG_INFO, "Receiving from client CAPSTYPE_SOUND");
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_SOUND");
+                }
                 break;
             case CAPSTYPE_INPUT: /* 13 */
-                LOG(LOG_INFO, "Receiving from client CAPSTYPE_INPUT");
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_INPUT");
+                }
                 break;
             case CAPSTYPE_FONT: /* 14 */
                 break;
             case CAPSTYPE_BRUSH: { /* 15 */
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_BRUSH");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_BRUSH");
+                    }
                     BrushCacheCaps brushcache_caps;
                     brushcache_caps.recv(stream, capset_length);
-                    brushcache_caps.log("Receiving from client");
+                    if (this->verbose) {
+                        brushcache_caps.log("Receiving from client");
+                    }
                     this->client_info.brush_cache_code = brushcache_caps.brushSupportLevel;
                 }
                 break;
             case CAPSTYPE_GLYPHCACHE: /* 16 */
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_GLYPHCACHE");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_GLYPHCACHE");
+                    }
                 break;
             case CAPSTYPE_OFFSCREENCACHE: /* 17 */
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_OFFSCREENCACHE");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_OFFSCREENCACHE");
+                    }
                 break;
             case CAPSTYPE_BITMAPCACHE_HOSTSUPPORT: /* 18 */
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_BITMAPCACHE_HOSTSUPPORT");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_BITMAPCACHE_HOSTSUPPORT");
+                    }
                 break;
             case CAPSTYPE_BITMAPCACHE_REV2: {
 //                    BmpCache2Caps bmpcache2_caps;
 //                    bmpcache2_caps.recv(stream, capset_length);
 //                    bmpcache2_caps.log("Receiving from client");
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_BITMAPCACHE_REV2");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_BITMAPCACHE_REV2");
+                    }
 
                     /* bitmap_cache_persist_enable(2) + ignored(2) + cache1_entries(4) + cache2_entries(4) +
                      * cache3_entries(4)
@@ -2718,7 +2752,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                         throw Error(ERR_MCS_PDU_TRUNCATED);
                     }
 
-                    LOG(LOG_INFO, "capset_bmpcache2");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "capset_bmpcache2");
+                    }
                     this->client_info.bitmap_cache_version = 2;
                     int Bpp = nbbytes(this->client_info.bpp);
                     this->client_info.bitmap_cache_persist_enable = stream.in_uint16_le();
@@ -2732,43 +2768,67 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 }
                 break;
             case CAPSTYPE_VIRTUALCHANNEL: /* 20 */
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_VIRTUALCHANNEL");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_VIRTUALCHANNEL");
+                    }
                 break;
             case CAPSTYPE_DRAWNINEGRIDCACHE: /* 21 */
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWNINEGRIDCACHE");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWNINEGRIDCACHE");
+                    }
                 break;
             case CAPSTYPE_DRAWGDIPLUS: /* 22 */
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWGDIPLUS");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWGDIPLUS");
+                    }
                 break;
             case CAPSTYPE_RAIL: /* 23 */
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_RAIL");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_RAIL");
+                    }
                 break;
             case CAPSTYPE_WINDOW: /* 24 */
-                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_WINDOW");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_WINDOW");
+                    }
                 break;
             case CAPSETTYPE_COMPDESK: { /* 25 */
                     CompDeskCaps compdesk_caps;
                     compdesk_caps.recv(stream, capset_length);
-                    compdesk_caps.log("Receiving from client");
+                    if (this->verbose) {
+                        compdesk_caps.log("Receiving from client");
+                    }
                 }
                 break;
             case CAPSETTYPE_MULTIFRAGMENTUPDATE: /* 26 */
-                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_MULTIFRAGMENTUPDATE");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSETTYPE_MULTIFRAGMENTUPDATE");
+                    }
                 break;
             case CAPSETTYPE_LARGE_POINTER: /* 27 */
-                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_LARGE_POINTER");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSETTYPE_LARGE_POINTER");
+                    }
                 break;
             case CAPSETTYPE_SURFACE_COMMANDS: /* 28 */
-                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_SURFACE_COMMANDS");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSETTYPE_SURFACE_COMMANDS");
+                    }
                 break;
             case CAPSETTYPE_BITMAP_CODECS: /* 29 */
-                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_BITMAP_CODECS");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSETTYPE_BITMAP_CODECS");
+                    }
                 break;
             case CAPSETTYPE_FRAME_ACKNOWLEDGE: /* 30 */
-                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_FRAME_ACKNOWLEDGE");
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client CAPSETTYPE_FRAME_ACKNOWLEDGE");
+                    }
                 break;
             default:
-                    LOG(LOG_INFO, "Receiving from client unknown caps %u", capset_type);
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "Receiving from client unknown caps %u", capset_type);
+                    }
                 break;
             }
             if (stream.p > next){
