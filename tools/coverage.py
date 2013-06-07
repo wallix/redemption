@@ -120,7 +120,7 @@ else:
     cover.cover(sys.argv[1])
 
 print "Coverage Results:"
-for module in cover.results:
+for module in sorted(cover.results):
     print "%s: %d%s (%d / %d)" % ((
         module, cover.results[module][0] * 100.0 / cover.results[module][1], "%") + cover.results[module])
 
