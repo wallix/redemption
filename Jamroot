@@ -811,7 +811,10 @@ unit-test test_widget2_label : tests/mod/internal/widget2/test_widget2_label.cpp
 # unit-test test_widget2_button : tests/mod/internal/widget2/test_widget2_button.cpp png z openssl crypto libboost_unit_test ;
 # unit-test test_widget2_edit : tests/mod/internal/widget2/test_widget2_edit.cpp png z openssl crypto libboost_unit_test ;
 # unit-test test_widget2_window : tests/mod/internal/widget2/test_widget2_window.cpp png z openssl crypto libboost_unit_test ;
+
 unit-test test_widget2_multiline : tests/mod/internal/widget2/test_widget2_multiline.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_widget2_multiline : tests/mod/internal/widget2/test_widget2_multiline.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+
 # unit-test test_widget2_msgbox : tests/mod/internal/widget2/test_msgbox.cpp png z openssl crypto libboost_unit_test ;
 # unit-test test_widget2_password : tests/mod/internal/widget2/test_password.cpp png z openssl crypto libboost_unit_test ;
 # unit-test test_widget2_number_edit : tests/mod/internal/widget2/test_widget2_number_edit.cpp png z openssl crypto libboost_unit_test ;
