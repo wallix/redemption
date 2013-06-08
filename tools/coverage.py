@@ -110,15 +110,20 @@ class Cover:
             target.write("%s: %d%s (%d / %d) %s\n" % (self.fullmodules[module], pc, "%", c, t, 
                 '[]' if  self.fullmodules[module] in p else p))
             target.flush()
-            try:
-                print "./coverage/%s/%s" % (p[0], covname)
-                for line in open("./coverage/%s/%s" % (p[0], covname)):
-                    res = re.match(r'^\s+#####[:]', line)
-                    if res:
-                        print module, ' ', line
-            except IOError:
+
+            if c == 0:
                 for i in range(0, 100):
-                    print module, ' #####: %u: NO COVERAGE' % i
+                    print module, ' #####: %u: NO COVERAGE FILE' % i
+            else:
+                try:
+                    print "./coverage/%s/%s" % (p[0], covname)
+                    for line in open("./coverage/%s/%s" % (p[0], covname)):
+                        res = re.match(r'^\s+#####[:]', line)
+                        if res:
+                            print module, ' ', line
+                except IOError:
+                    for i in range(0, 100):
+                        print module, ' #####: %u: NO COVERAGE' % i
 
 
     def coverall(self):
