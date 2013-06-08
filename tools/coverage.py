@@ -83,10 +83,6 @@ class Cover:
 
         return ((total - uncovered), total)
 
-    def targets(self):
-        self.coverset = set([ "%s%s.gcov" % (module.split('/')[-1], extension) for module, extension, covered, total in list_modules()])
-        self.fullmodules = dict([(module.split('/')[-1], module) for module, extension, covered, total in list_modules()])
-
     def findbest(self):
         for d, ds, fs in os.walk("./coverage/"):
             i = self.coverset.intersection(fs)
@@ -111,7 +107,8 @@ class Cover:
         for p, pc, covname, module, c, t in sorted(res):
             print self.fullmodules[module], p, pc, c, t
 
-            target.write("%s: %d%s (%d / %d)\n" % (self.fullmodules[module], pc, "%", c, t))
+            target.write("%s: %d%s (%d / %d) %s\n" % (self.fullmodules[module], pc, "%", c, t, 
+                '[]' if  self.fullmodules[module] in p else p))
             target.flush()
             try:
                 print "./coverage/%s/%s" % (p[0], covname)
@@ -125,49 +122,37 @@ class Cover:
 
 
     def coverall(self):
-        target = open("coverage.summary", "w")
+        self.coverset = set([ "%s%s.gcov" % (module.split('/')[-1], extension) for module, extension, covered, total in list_modules()])
+        self.fullmodules = dict([(module.split('/')[-1], module) for module, extension, covered, total in list_modules()])
         for module, extension, covered, total in list_modules():
-            print module
             self.cover(module)
-            # if coverage percentage is lower
-            if (self.results[module][0] * 100 * total) <= (self.results[module][1] * covered * 100):
-                target.write("%s: %d%s (%d / %d)\n" % ((
-                    module, self.results[module][0] * 100.0 / self.results[module][1], "%") + self.results[module]))
-                target.flush()
-                try:
-                    for line in open("./coverage/%s/%s%s.gcov" % (module, module.split('/')[-1], extension)):
-                        res = re.match(r'^\s+#####[:]', line)
-                        if res:
-                            print module, ' ', line
-                except IOError:
-                    for i in range(0, 100):
-                        print module, ' #####: %u: NO COVERAGE' % i
+        self.findbest()
+
+    def covercurrent(self):
+        self.coverset = set([ "%s%s.gcov" % (module.split('/')[-1], extension) for module, extension, covered, total in list_modules()])
+        self.fullmodules = dict([(module.split('/')[-1], module) for module, extension, covered, total in list_modules()])
+        self.findbest()
+
 
 cover = Cover()
-#if len(sys.argv) < 2 or sys.argv[1] == 'all':
-#    cover.coverall()
-#elif sys.argv[1] == 'touchall':
-#    for module, extension, covered, total in list_modules():
-#        
-#        path = '/'.join(module.split('/')[:-1])
-#        fname = module.split('/')[-1]
-#        fullname = "tests/%s/test_%s%s" % (path, fname, ".cpp")
-#        if os.path.getsize(fullname) == 1016:
-#            print(
-#            "unit-test test_%(f)s : tests/%(p)s/test_%(f)s.cpp libboost_unit_test ;\nunit-test test_%(f)s : tests/%(p)s/test_%(f)s.cpp libboost_unit_test gcov : <variant>coverage ;\n"
-#        % ({'f':fname, 'p':path}))
-##        os.system("touch tests/%s/test_%s%s" % (path, fname, ".cpp"))
-##        if module.split('/')[:-1]:
-##           os.system('touch %s' % ('/'.join(module.split('/')[:-1])))
-#    exit(0)
-#else:
-#    cover.cover(sys.argv[1])
+if len(sys.argv) < 2:
+    cover.covercurrent()
+elif sys.argv[1] == 'all':
+    cover.coverall()
+else:
+    module = sys.argv[1]
+    extension = ".hpp"
+    if '/rio/' in module:
+        extension = '.h'
 
-cover.targets()
-cover.findbest()
+    cover.cover(sys.argv[1])
+    cover.coverset = set([ "%s%s.gcov" % (module.split('/')[-1], extension)])
+    cover.fullmodules = dict([(module.split('/')[-1], module)])
+    cover.findbest()
+
+
 
 print "Coverage Results:"
-for module in sorted(cover.results):
-    print "%s: %d%s (%d / %d)" % ((
-        module, cover.results[module][0] * 100.0 / cover.results[module][1], "%") + cover.results[module])
+for line in open("coverage.summary"):
+    print line
 
