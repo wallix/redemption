@@ -276,7 +276,7 @@ struct LineBuffer
     int begin_line;
     int eol;
     int eollen;
-    
+
     int begin_word;
     int eow;
 
@@ -328,7 +328,7 @@ struct LineBuffer
         this->eollen = 0;
         return 1;
     }
-    
+
     int get_protocol()
     {
         int res = -1;
@@ -362,7 +362,7 @@ struct LineBuffer
         this->eow = i;
         return res;
     }
-    
+
     int get_space()
     {
         int i = this->begin_word;
@@ -410,7 +410,7 @@ struct LineBuffer
         return -1;
     }
 
-    int get_ttl_sec()    
+    int get_ttl_sec()
     {
         int res = this->get_num(this->begin_word);
         if (this->eow == this->eol){
@@ -598,7 +598,7 @@ struct LineBuffer
         }
         return 0;
     }
-    
+
     int get_dport()
     {
         int res = this->get_var_num();
@@ -613,7 +613,7 @@ struct LineBuffer
         }
         return 0;
     }
-    
+
     int get_packets()
     {
         int res = this->get_var_num();
@@ -656,7 +656,7 @@ struct LineBuffer
             return -1;
         }
         i++;
-        
+
         for ( ; i < this->eol ; i++){
             char c = this->buffer[i];
             if (!(c >= 'A' && c <= 'Z')){
@@ -723,11 +723,11 @@ struct LineBuffer
         }
         return 0;
     }
-    
+
 };
 
 // return 0 if found, -1 not found or error
-int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport, char * transparent_dest, int sz_transparent_dest)
+int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport, char * transparent_dest, int sz_transparent_dest, uint32_t verbose = 0)
 {
     LineBuffer line(fd);
     char src_port[6];
@@ -736,158 +736,165 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
     int len_dst_port = sprintf(dst_port, "%u", dport);
     int len_source = strlen(source);
     int len_dest = strlen(dest);
-    
+
     int status = line.readline();
-    
+
     //"tcp      6 299 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=36699 dport=22 packets=5256 bytes=437137 src=10.10.47.93 dst=10.10.43.13 sport=22 dport=36699 packets=3523 bytes=572101 [ASSURED] mark=0 secmark=0 use=2\n"
-    
+
     char tmp_transparent_dest[64] = {};
     int len_tmp_transparent_dest = 0;
-    
+
     for ( ; status == 1 ; (line.begin_line = line.eol), (status = line.readline())) {
+        if (verbose) {
+            LOG(LOG_INFO, "Line: %.*s", line.eol - line.begin_line, &line.buffer[line.begin_line]);
+        }
+
+        line.begin_word = line.begin_line;
 
         // tcp
-        line.begin_word = line.begin_line;
         if (line.get_protocol() < 0) { continue; }
 //        printf("Word: %.*s\n", line.eow - line.begin_word, &line.buffer[line.begin_word]);
-        if ((line.eow - line.begin_word != 3) 
+        if ((line.eow - line.begin_word != 3)
         || (0 != memcmp(&line.buffer[line.begin_word], "tcp", 3))){ continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
+        line.begin_word = line.eow;
 
         // 6
-        line.begin_word = line.eow;
         if (line.get_protocol_number() < 0) { continue; }
 //        printf("Word: %.*s\n", line.eow - line.begin_word, &line.buffer[line.begin_word]);
-        if ((line.eow - line.begin_word != 1) 
+        if ((line.eow - line.begin_word != 1)
         || (0 != memcmp(&line.buffer[line.begin_word], "6", 1))){ continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
+        line.begin_word = line.eow;
 
         // 0
-        line.begin_word = line.eow;
         if (line.get_ttl_sec() < 0) { continue; }
 //        printf("Word TTL: %.*s\n", line.eow - line.begin_word, &line.buffer[line.begin_word]);
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
+        line.begin_word = line.eow;
 
         // ESTABLISHED
-        line.begin_word = line.eow;
         if (line.get_status1() < 0) { continue; }
 //        printf("Word: %.*s\n", line.eow - line.begin_word, &line.buffer[line.begin_word]);
-        if ((line.eow - line.begin_word != 11) 
+        if ((line.eow - line.begin_word != 11)
         || (0 != memcmp(&line.buffer[line.begin_word], "ESTABLISHED", 11))){ continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
+        line.begin_word = line.eow;
 
         // src=10.10.43.31
-        line.begin_word = line.eow;
         if (line.get_src_ip() < 0) { continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
+        line.begin_word = line.eow;
 
         // dst=10.10.47.255
-        line.begin_word = line.eow;
         if (line.get_dst_ip() < 0) { continue; }
         if (line.eow - line.begin_word > static_cast<int>(sizeof(tmp_transparent_dest) + 4)){
             return -1;
         }
         len_tmp_transparent_dest = line.eow - line.begin_word - 4;
         memcpy(tmp_transparent_dest, &line.buffer[line.begin_word + 4], len_tmp_transparent_dest);
-        
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
+        line.begin_word = line.eow;
 
         // sport=57621
-        line.begin_word = line.eow;
         if (line.get_sport() < 0) { continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
+        line.begin_word = line.eow;
 
         // dport=57621
-        line.begin_word = line.eow;
         if (line.get_dport() < 0) { continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
+        line.begin_word = line.eow;
 
         // packets=1139
-        line.begin_word = line.eow;
-        if (line.get_packets() < 0) { continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
+        if (line.get_packets() == 0) {
+            line.begin_word = line.eow;
+            if (line.get_space() < 0) { continue; }
+            line.begin_word = line.eow;
+         }
 
         // bytes=82008
-        line.begin_word = line.eow;
-        if (line.get_bytes() < 0) { continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
+        if (line.get_bytes() == 0) {
+            line.begin_word = line.eow;
+            if (line.get_space() < 0) { continue; }
+            line.begin_word = line.eow;
+        }
 
         // src=10.10.47.255
-        line.begin_word = line.eow;
         if (line.get_src_ip() < 0) { continue; }
-        if ((line.eow - line.begin_word != len_source + 4) 
+        if ((line.eow - line.begin_word != len_source + 4)
         || (0 != memcmp(&line.buffer[line.begin_word + 4], source, len_source))){ continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
+        line.begin_word = line.eow;
 
 
         // dst=10.10.43.31
-        line.begin_word = line.eow;
         if (line.get_dst_ip() < 0) { continue; }
-        if ((line.eow - line.begin_word != len_dest + 4) 
+        if ((line.eow - line.begin_word != len_dest + 4)
         || (0 != memcmp(&line.buffer[line.begin_word + 4], dest, len_dest))){ continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
-
+        line.begin_word = line.eow;
 
         // sport=57621
-        line.begin_word = line.eow;
         if (line.get_sport() < 0) { continue; }
-        if ((line.eow - line.begin_word != len_src_port + 6) 
+        if ((line.eow - line.begin_word != len_src_port + 6)
         || (0 != memcmp(&line.buffer[line.begin_word + 6], src_port, len_src_port))){ continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
+        line.begin_word = line.eow;
 
         // dport=57621
-        line.begin_word = line.eow;
         if (line.get_dport() < 0) { continue; }
-        if ((line.eow - line.begin_word != len_dst_port + 6) 
+        if ((line.eow - line.begin_word != len_dst_port + 6)
         || (0 != memcmp(&line.buffer[line.begin_word + 6], dst_port, len_dst_port))){ continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
+        line.begin_word = line.eow;
 
         // packets=0
-        line.begin_word = line.eow;
-        if (line.get_packets() < 0) { continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
+        if (line.get_packets() == 0) {
+            line.begin_word = line.eow;
+            if (line.get_space() < 0) { continue; }
+            line.begin_word = line.eow;
+        }
 
         // bytes=0
-        line.begin_word = line.eow;
-        if (line.get_bytes() < 0) { continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
+        if (line.get_bytes() == 0) {
+            line.begin_word = line.eow;
+            if (line.get_space() < 0) { continue; }
+            line.begin_word = line.eow;
+        }
 
         // [ASSURED]
-        line.begin_word = line.eow;
         if (line.get_status() < 0) { continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
+        line.begin_word = line.eow;
 
         // mark=0
-        line.begin_word = line.eow;
         if (line.get_mark() < 0) { continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
+        line.begin_word = line.eow;
 
         // secmark=0
-        line.begin_word = line.eow;
-        if (line.get_secmark() < 0) { continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
+        if (line.get_secmark() == 0) {
+            line.begin_word = line.eow;
+            if (line.get_space() < 0) { continue; }
+            line.begin_word = line.eow;
+        }
 
         // use=2\n";
-        line.begin_word = line.eow;
         if (line.get_use() < 0) { continue; }
         line.begin_word = line.eow;
         if (line.get_space() < 0) { continue; }
@@ -898,11 +905,15 @@ int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport
         }
         memcpy(transparent_dest, tmp_transparent_dest, len_tmp_transparent_dest);
         transparent_dest[len_tmp_transparent_dest] = 0;
+
+        if (verbose) {
+            LOG(LOG_INFO, "Match found: %s", transparent_dest);
+        }
+
         return 0;
     }
     // transparent ip route not found in ip_conntrack
     return -1;
 }
-
 
 #endif

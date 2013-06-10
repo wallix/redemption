@@ -106,9 +106,9 @@ class SessionServer : public Server
 
                 int fd = open("/proc/net/ip_conntrack", O_RDONLY);
                 // source and dest are inverted because we get the information we want from reply path rule
-                int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip));
+                int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip), 1);
                 if (res){
-                    LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack");
+                    LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack: %d", fd);
                 }
                 close(fd);
 
