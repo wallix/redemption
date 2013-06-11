@@ -35,23 +35,73 @@ struct test_internal_mod : public internal_mod {
 
     redemption::string & auth_error_message;
 
+    InByMetaSequenceTransport * in_trans;
+    FileToGraphic             * reader;
+
     test_internal_mod( FrontAPI & front
                      , char * replay_path
                      , char * movie
                      , uint16_t width
                      , uint16_t height
-                     , redemption::string & auth_error_message):
-      internal_mod(front, width, height)
+                     , redemption::string & auth_error_message)
+    : internal_mod(front, width, height)
     , auth_error_message(auth_error_message)
     {
         TODO("use canonical_path to manage trailing slash")
         strcpy(this->movie, replay_path);
         strcat(this->movie, movie);
         LOG(LOG_INFO, "Playing %s", this->movie);
+
+        char path[1024];
+        char basename[1024];
+        char extension[128];
+        strcpy(path, "/tmp/"); // default value, actual one should come from movie_path
+        strcpy(basename, "replay"); // default value actual one should come from movie_path
+        strcpy(extension, ".mwrm"); // extension is currently ignored
+        char prefix[4096];
+
+        canonical_path(this->movie, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
+        sprintf(prefix, "%s%s", path, basename);
+
+        this->in_trans = new InByMetaSequenceTransport(prefix, extension);
+        timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
+        timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+        this->reader = new FileToGraphic(this->in_trans, begin_capture, end_capture, true, 0);
+
+        switch (this->front.server_resize( this->reader->info_width
+                                         , this->reader->info_height
+                                         , this->reader->info_bpp)) {
+        case 0:
+            // no resizing needed
+            break;
+        case 1:
+            // resizing done
+            this->front_width  = this->reader->info_width;
+            this->front_height = this->reader->info_height;
+
+            this->screen.rect.cx = this->reader->info_width;
+            this->screen.rect.cy = this->reader->info_height;
+
+            break;
+        case -1:
+            // resizing failed
+            // thow an Error ?
+            LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
+            throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
+            break;
+        }
+
+        this->reader->add_consumer(&this->front);
+        this->front.send_global_palette();
     }
 
     virtual ~test_internal_mod()
     {
+        if (reader)
+            delete reader;
+
+        if (in_trans)
+            delete in_trans;
     }
 
     virtual void rdp_input_invalidate(const Rect & rect)
@@ -76,34 +126,21 @@ struct test_internal_mod : public internal_mod {
     virtual BackEvent_t draw_event()
     {
         this->event.reset();
+        this->event.set(0);
         TODO("use system constants for sizes");
 
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-        strcpy(path, "/tmp/"); // default value, actual one should come from movie_path
-        strcpy(basename, "replay"); // default value actual one should come from movie_path
-        strcpy(extension, ".mwrm"); // extension is currently ignored
-        char prefix[4096];
-
-        canonical_path(this->movie, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
-        sprintf(prefix, "%s%s", path, basename);
-
-        BackEvent_t back_event = BACK_EVENT_STOP;
+        BackEvent_t back_event = BACK_EVENT_NONE;
 
         TODO("RZ: Support encrypted recorded file.")
         try
         {
-            InByMetaSequenceTransport in_trans(prefix, extension);
-            timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-            timeval end_capture; end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-            FileToGraphic reader(&in_trans, begin_capture, end_capture, true, 0);
-            reader.add_consumer(&this->front);
-            this->front.send_global_palette();
             this->front.begin_update();
-            while (reader.next_order()){
-                reader.interpret_order();
+            int i;
+            for (i = 0; (i < 500) && this->reader->next_order(); i++) {
+                this->reader->interpret_order();
             }
+            if (i < 50)
+                back_event = BACK_EVENT_STOP;
             this->front.end_update();
         }
         catch (Error & e) {
@@ -116,7 +153,6 @@ struct test_internal_mod : public internal_mod {
                 throw;
             }
         }
-
         return back_event;
     }
 };
