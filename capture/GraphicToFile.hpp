@@ -226,7 +226,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void send_timestamp_chunk(void)
     {
-        BStream payload(12);
+        BStream payload(16384);
         payload.out_timeval_to_uint64le_usec(this->timer);
 //        payload.out_uint64_le(this->timer.tv_sec * 1000000ULL + this->timer.tv_usec);
         if (this->send_input){
