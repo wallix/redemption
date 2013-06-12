@@ -125,14 +125,25 @@ int shutdown(const char * pid_file)
         pid = atoi(text);
         cout << "stopping process id " << pid << "\n";
         if (pid > 0) {
-	    kill(pid, SIGTERM);
-            sleep(2);
-            kill(pid, SIGKILL);
-     	    sleep(1);
-	    int res = kill(pid,0);
-            if (((-1 == res) && (errno != ESRCH)) 
-            || (res == 0)){
-		cout << "Error stopping process id " << pid << " " << strerror(errno) << "\n"; 		
+            int res = kill(pid, SIGTERM);
+            if (res != -1){
+                sleep(2);
+                kill(pid,0);
+            }
+            cout << "res: " << res << ", errno: " << strerror(errno) << "\n";
+            if (errno != ESRCH){
+                // errno != ESRCH, pid is still running
+                cout << "process " << pid << " is still running, "
+                "let's send a KILL signal" << "\n";
+                res = kill(pid, SIGKILL);
+                if (res != -1){
+                    sleep(1);
+                    kill(pid,0);
+                }
+                if (errno != ESRCH){
+	            // if errno != ESRCH, pid is still running
+		    cout << "Error stopping process id " << pid << "\n";
+		}
 	    }
         }
     }
