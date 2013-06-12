@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <stddef.h>
+#include <unistd.h>
 
 #include "version.hpp"
 
@@ -74,7 +75,7 @@ void daemonize(const char * pid_file)
         }
         lg = snprintf(text, 255, "%d", pid);
         if (write(fd, text, lg) == -1) {
-            LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/" LOCKFILE, strerror(errno));
+            LOG(LOG_ERR, "Couldn't write pid to %s: %s", pid_file, strerror(errno));
             _exit(1);
         }
         close(fd);
@@ -101,41 +102,48 @@ int shutdown(const char * pid_file)
     /* read the rdpproxy.pid file */
     fd = -1;
     cout << "looking if pid_file " << pid_file <<  " exists\n";
-    if ((0 == access(pid_file, F_OK))) { /* rdpproxy.pid */
-        /*Code related to g_file_open os_call*/
-        fd =  open(pid_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-        if (fd == -1) {
-            /* can't open read / write, try to open read only */
-            fd =  open(pid_file, O_RDONLY);
-        }
-    }
+//  if ((0 == access(pid_file, F_OK))) { /* rdpproxy.pid */
+//   /*Code related to g_file_open os_call*/
+//   fd =  open(pid_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+//   if (fd == -1) {
+//       /* can't open read / write, try to open read only */
+//       fd =  open(pid_file, O_RDONLY);
+//   }
+//
+    fd =  open(pid_file, O_RDONLY);
     if (fd == -1) {
+      // file does not exist.
         return 1;
     }
     cout << "reading pid_file " << pid_file << "\n";
     memset(text, 0, 32);
     if (read(fd, text, 31) < 0){
         cout << "failed to read pid file\n";
-        cout << "pid =" << text << "\n";
+        //cout << "pid =" << text << "\n";
     }
     else{
         pid = atoi(text);
         cout << "stopping process id " << pid << "\n";
         if (pid > 0) {
-            TODO("check that a process with this id is really running, if not we may consider removing pid file.")
-            cout << "sending sigterm to " << pid << "\n";
+	    kill(pid, SIGTERM);
+            sleep(2);
             kill(pid, SIGKILL);
-            TODO("wait some decent time and check no such process is running any more")
+     	    sleep(1);
+	    int res = kill(pid,0);
+            if (((-1 == res) && (errno != ESRCH)) 
+            || (res == 0)){
+		cout << "Error stopping process id " << pid << " " << strerror(errno) << "\n"; 		
+	    }
         }
     }
-    TODO("exit with a correct error status if something failed")
     close(fd);
     unlink(pid_file);
 
     // remove all other pid files
     DIR * d = opendir("/var/run/redemption");
     if (d){    
-        size_t path_len = strlen("/var/run/redemption/");
+        size_t path_len = strlen("/var/run/redemption/"); 
+
         size_t file_len = pathconf("/var/run/redemption/", _PC_NAME_MAX) + 1;
         char * buffer = (char*)malloc(file_len + path_len);
         strcpy(buffer, "/var/run/redemption/");
@@ -231,10 +239,10 @@ int main(int argc, char** argv)
     po::notify(options);
 
     if (options.count("kill")) {
-        int status = shutdown(PID_PATH "/" LOCKFILE);
+        int status = shutdown(PID_PATH "/redemption/" LOCKFILE);
         if (status){
             TODO("check the real error that occured")
-            clog << "problem opening " << PID_PATH "/" LOCKFILE  << "."
+            clog << "problem opening " << PID_PATH "/redemption/" LOCKFILE  << "."
             " Maybe rdpproxy is not running\n";
         }
         _exit(status);
@@ -270,7 +278,7 @@ int main(int argc, char** argv)
             "Share files test result: " << check_share_files << ".\n"
             << "Etc files test result: " << check_etc_files <<  ".\n"
             << "Please verify that all tests passed. If not, "
-            "you may need to remove " PID_PATH "/" LOCKFILE " or "
+            "you may need to remove " PID_PATH "/redemption/" LOCKFILE " or "
             "reinstall rdpproxy if some configuration files are missing.\n";
         }
         _exit(0);
@@ -306,7 +314,7 @@ int main(int argc, char** argv)
         clog <<
         "File " << PID_PATH "/redemption/" LOCKFILE << " already exists. "
         "It looks like rdpproxy is already running, "
-        "if not delete the " PID_PATH "/redemption/" LOCKFILE " file and try again\n";
+        "if not, try again with -f (force) option or delete the " PID_PATH "/redemption/" LOCKFILE " file and try again\n";
         _exit(1);
     }
 

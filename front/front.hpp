@@ -1978,7 +1978,10 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                         uint16_t originatorId = sctrl.payload.in_uint16_le();
                         this->process_confirm_active(sctrl.payload);
                     }
-                    TODO("check all payload data is consumed")
+		    if (!sctrl.payload.check_end()){
+                            LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u", sctrl.payload.in_remain());
+                            throw Error(ERR_MCS_PDU_TRAILINGDATA);
+		    }
                     break;
                 case PDUTYPE_DATAPDU: /* 7 */
                     if (this->verbose & 2){
