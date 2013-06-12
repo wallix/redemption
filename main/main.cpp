@@ -128,19 +128,18 @@ int shutdown(const char * pid_file)
             int res = kill(pid, SIGTERM);
             if (res != -1){
                 sleep(2);
-                kill(pid,0);
+                res = kill(pid,0);
             }
-            cout << "res: " << res << ", errno: " << strerror(errno) << "\n";
-            if (errno != ESRCH){
+            if ((errno != ESRCH) || (res == 0)){
                 // errno != ESRCH, pid is still running
                 cout << "process " << pid << " is still running, "
                 "let's send a KILL signal" << "\n";
                 res = kill(pid, SIGKILL);
                 if (res != -1){
                     sleep(1);
-                    kill(pid,0);
+                    res = kill(pid,0);
                 }
-                if (errno != ESRCH){
+                if ((errno != ESRCH) || (res == 0)){
 	            // if errno != ESRCH, pid is still running
 		    cout << "Error stopping process id " << pid << "\n";
 		}
