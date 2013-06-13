@@ -210,6 +210,8 @@ typedef enum
 
     AUTHID_REAL_TARGET_DEVICE,  // target device in ip transparent mode
 
+    AUTHID_AUTHENTICATION_CHALLENGE,
+
     MAX_AUTHID
 } authid_t;
 
@@ -293,6 +295,8 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 #define STRAUTHID_TIMEZONE                 "timezone"
 
 #define STRAUTHID_REAL_TARGET_DEVICE       "real_target_device"
+
+#define STRAUTHID_AUTHENTICATION_CHALLENGE "authentication_challenge"
 
 static inline authid_t authid_from_string(const char * strauthid) {
     static const std::string authstr[MAX_AUTHID - 1] = {
@@ -380,6 +384,8 @@ static inline authid_t authid_from_string(const char * strauthid) {
         STRAUTHID_TIMEZONE,
 
         STRAUTHID_REAL_TARGET_DEVICE,
+
+        STRAUTHID_AUTHENTICATION_CHALLENGE,
     };
 
     std::string str = std::string(strauthid);
@@ -615,6 +621,8 @@ struct Inifile {
             signed             timezone;
 
             redemption::string real_target_device;
+
+            redemption::string authentication_challenge;
         } context;
     } globals;
 
@@ -842,6 +850,8 @@ struct Inifile {
         this->globals.context.timezone                    = -3600;
 
         this->globals.context.real_target_device          = "";
+
+        this->globals.context.authentication_challenge    = "";
     };
 
     void cparse(istream & ifs){
@@ -1503,6 +1513,10 @@ struct Inifile {
             this->globals.context.real_target_device = value;
             break;
 
+        case AUTHID_AUTHENTICATION_CHALLENGE:
+            this->globals.context.authentication_challenge = value;
+            break;
+
         default:
             LOG(LOG_WARNING, "Inifile::context_set_value(id): unknown authid=%d", authid);
             break;
@@ -1672,6 +1686,9 @@ struct Inifile {
             break;
         case AUTHID_REAL_TARGET_DEVICE:
             pszReturn = this->globals.context.real_target_device;
+            break;
+        case AUTHID_AUTHENTICATION_CHALLENGE:
+            pszReturn = this->globals.context.authentication_challenge;
             break;
         default:
 //            LOG(LOG_WARNING, "Inifile::context_get_value(id): unknown authid=\"%d\"", authid);
