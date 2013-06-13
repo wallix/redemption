@@ -467,7 +467,7 @@ struct Inifile {
             bool clipboard;
             bool device_redirection;
         } client;
-        
+
         // Section "video"
         struct {
             unsigned capture_flags;  // 1 PNG capture, 2 WRM
@@ -532,7 +532,7 @@ struct Inifile {
             char log_file_path[1024]; // log file location
         } debug;
 
-        
+
 
         // section "translation"
         struct {
@@ -841,7 +841,7 @@ struct Inifile {
         // not sure about ask_host and ask_target initial values
         this->globals.context.ask_host                    = false;
         this->globals.context.ask_target                  = false;
-       
+
         this->globals.context.ask_auth_user               = true;
         this->globals.context.ask_password                = true;
 
@@ -1719,9 +1719,11 @@ struct Inifile {
         case AUTHID_END_TIME:
             pszReturn = this->globals.context.end_time;
             break;
+
         case AUTHID_REAL_TARGET_DEVICE:
             pszReturn = this->globals.context.real_target_device;
             break;
+
         case AUTHID_AUTHENTICATION_CHALLENGE:
             pszReturn = this->globals.context.authentication_challenge;
             break;
@@ -1901,6 +1903,9 @@ struct Inifile {
 
         case AUTHID_TRACE_SEAL:
             return this->globals.context.ask_trace_seal;
+
+        case AUTHID_REAL_TARGET_DEVICE:
+            return false;
 
         default:
             LOG(LOG_WARNING, "Inifile::context_is_asked(id): unknown authid=%d", authid);
