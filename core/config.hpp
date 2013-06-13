@@ -444,45 +444,6 @@ struct Inifile {
         bool enable_bitmap_update;
         // END globals
 
-        // Begin video Section (to move)
-        /*
-        unsigned capture_flags;  // 1 PNG capture, 2 WRM
-        // video opt from capture_flags
-        bool capture_png;
-        bool capture_wrm;
-        bool capture_flv;
-        bool capture_ocr;
-        
-        unsigned ocr_interval;
-        unsigned png_interval;   // time between 2 png captures (in 1/10 seconds)
-        unsigned capture_groupid;
-        unsigned frame_interval; // time between 2 frame captures (in 1/100 seconds)
-        unsigned break_interval; // time between 2 wrm movies (in seconds)
-        unsigned png_limit;    // number of png captures to keep
-        
-
-        char replay_path[1024];
-        */
-        int l_bitrate;         // bitrate for low quality
-        int l_framerate;       // framerate for low quality
-        int l_height;          // height for low quality
-        int l_width;           // width for low quality
-        int l_qscale;          // qscale (parameter given to ffmpeg) for low quality
-
-        // Same for medium quality
-        int m_bitrate;
-        int m_framerate;
-        int m_height;
-        int m_width;
-        int m_qscale;
-
-        // Same for high quality
-        int h_bitrate;
-        int h_framerate;
-        int h_height;
-        int h_width;
-        int h_qscale;
-        // End video section to move
 
         uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
         unsigned flv_frame_interval;
@@ -739,40 +700,6 @@ struct Inifile {
         // End Init globals
 
 
-        // Begin Init video section
-        /*
-        this->globals.capture_flags = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
-        this->globals.capture_wrm   = true;
-        this->globals.capture_png   = true;
-        this->globals.capture_flv   = false;
-        this->globals.capture_ocr   = false;
-        
-        this->globals.ocr_interval = 100; // 1 every second
-        this->globals.png_interval = 3000;
-        this->globals.capture_groupid = 33;
-        this->globals.frame_interval = 40;
-        this->globals.break_interval = 600;
-        this->globals.png_limit = 3;
-        
-        strcpy(this->globals.replay_path, "/tmp/");
-        */
-
-        this->globals.l_bitrate   = 20000;
-        this->globals.l_framerate = 1;
-        this->globals.l_height    = 480;
-        this->globals.l_width     = 640;
-        this->globals.l_qscale    = 25;
-        this->globals.m_bitrate   = 40000;
-        this->globals.m_framerate = 1;
-        this->globals.m_height    = 768;
-        this->globals.m_width     = 1024;
-        this->globals.m_qscale    = 15;
-        this->globals.h_bitrate   = 200000;
-        this->globals.h_framerate = 5;
-        this->globals.h_height    = 1024;
-        this->globals.h_width     = 1280;
-        this->globals.h_qscale    = 15;
-        // End Init video section
         this->globals.flv_break_interval = 600000000l;
         this->globals.flv_frame_interval = 1000000L;
 
@@ -906,8 +833,8 @@ struct Inifile {
         /* following vars not initialized ?
         this->globals.context.ask_auth_user               = false;
 
-        this->globals.context.ask_auth_host               = false;
-        this->globals.context.ask_auth_target             = false;
+        this->globals.context.ask_host                    = false;
+        this->globals.context.ask_target                  = false;
         this->globals.context.ask_auth_password           = false;
         */
 
@@ -1179,14 +1106,6 @@ struct Inifile {
         }
         else if (0 == strcmp(context, "video")){
             if (0 == strcmp(key, "capture_flags")){
-                /*
-                this->globals.capture_flags   = ulong_from_cstr(value);
-                this->globals.capture_png = 0 != (this->globals.capture_flags & 1);
-                this->globals.capture_wrm = 0 != (this->globals.capture_flags & 2);
-                this->globals.capture_flv = 0 != (this->globals.capture_flags & 4);
-                this->globals.capture_ocr = 0 != (this->globals.capture_flags & 8);
-                */
-                // new context
                 this->globals.video.capture_flags   = ulong_from_cstr(value);
                 this->globals.video.capture_png = 0 != (this->globals.video.capture_flags & 1);
                 this->globals.video.capture_wrm = 0 != (this->globals.video.capture_flags & 2);
@@ -1194,96 +1113,70 @@ struct Inifile {
                 this->globals.video.capture_ocr = 0 != (this->globals.video.capture_flags & 8);
             }
             else if (0 == strcmp(key, "ocr_interval")){
-                //this->globals.ocr_interval   = ulong_from_cstr(value);
                 this->globals.video.ocr_interval   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "png_interval")){
-                //this->globals.png_interval   = ulong_from_cstr(value);
                 this->globals.video.png_interval   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "capture_groupid")){
-                //this->globals.capture_groupid  = ulong_from_cstr(value);
                 this->globals.video.capture_groupid  = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "frame_interval")){
-                //this->globals.frame_interval   = ulong_from_cstr(value);
                 this->globals.video.frame_interval   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "break_interval")){
-                //this->globals.break_interval   = ulong_from_cstr(value);
                 this->globals.video.break_interval   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "png_limit")){
-                //this->globals.png_limit   = ulong_from_cstr(value);
                 this->globals.video.png_limit   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "replay_path")){
-                /*
-                strncpy(this->globals.replay_path, value, sizeof(this->globals.replay_path));
-                this->globals.replay_path[sizeof(this->globals.replay_path) - 1] = 0;
-                */
-                // new video vars
                 strncpy(this->globals.video.replay_path, value, sizeof(this->globals.video.replay_path));
                 this->globals.video.replay_path[sizeof(this->globals.video.replay_path) - 1] = 0;
             }
             else if (0 == strcmp(key, "l_bitrate")){
-                this->globals.l_bitrate   = ulong_from_cstr(value);
                 this->globals.video.l_bitrate   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_framerate")){
-                this->globals.l_framerate = ulong_from_cstr(value);
                 this->globals.video.l_framerate = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_height")){
-                this->globals.l_height    = ulong_from_cstr(value);
                 this->globals.video.l_height    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_width")){
-                this->globals.l_width     = ulong_from_cstr(value);
                 this->globals.video.l_width     = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_qscale")){
-                this->globals.l_qscale    = ulong_from_cstr(value);
                 this->globals.video.l_qscale    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_bitrate")){
-                this->globals.m_bitrate   = ulong_from_cstr(value);
                 this->globals.video.m_bitrate   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_framerate")){
-                this->globals.m_framerate = ulong_from_cstr(value);
                 this->globals.video.m_framerate = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_height")){
-                this->globals.m_height    = ulong_from_cstr(value);
                 this->globals.video.m_height    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_width")){
-                this->globals.m_width     = ulong_from_cstr(value);
                 this->globals.video.m_width     = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_qscale")){
-                this->globals.m_qscale    = ulong_from_cstr(value);
                 this->globals.video.m_qscale    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_bitrate")){
-                this->globals.h_bitrate   = ulong_from_cstr(value);
                 this->globals.video.h_bitrate   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_framerate")){
-                this->globals.h_framerate = ulong_from_cstr(value);
                 this->globals.video.h_framerate = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_height")){
-                this->globals.h_height    = ulong_from_cstr(value);
                 this->globals.video.h_height    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_width")){
-                this->globals.h_width     = ulong_from_cstr(value);
                 this->globals.video.h_width     = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_qscale")){
-                this->globals.h_qscale    = ulong_from_cstr(value);
                 this->globals.video.h_qscale    = ulong_from_cstr(value);
             }
             else {
