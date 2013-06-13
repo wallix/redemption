@@ -416,9 +416,6 @@ unit-test test_dialog : tests/mod/internal/test_dialog.cpp libboost_unit_test gc
 unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test ;
 unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_selector : tests/mod/internal/test_selector.cpp libboost_unit_test ;
-unit-test test_selector : tests/mod/internal/test_selector.cpp libboost_unit_test gcov : <variant>coverage ;
-
 unit-test test_test_card : tests/mod/internal/test_test_card.cpp libboost_unit_test ;
 unit-test test_test_card : tests/mod/internal/test_test_card.cpp libboost_unit_test gcov : <variant>coverage ;
 
