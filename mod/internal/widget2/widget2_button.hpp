@@ -95,7 +95,7 @@ public:
 
     void update_draw_state(const Rect& clip)
     {
-        if (this->state & 1) {
+        if (this->state & 1)  {
             ++this->label.rect.x;
             ++this->label.rect.y;
             --this->label.rect.cx;
@@ -171,7 +171,7 @@ public:
         if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN) && (this->state & 1) == 0) {
             this->state |= 1;
             this->swap_border_color();
-            this->focus_is_visible = true;
+            this->focus_is_visible = (this->focus_flag ^ IGNORE_FOCUS);
         }
         else if (device_flags == MOUSE_FLAG_BUTTON1 && this->state & 1) {
             this->state &= ~1;

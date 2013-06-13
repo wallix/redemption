@@ -165,7 +165,7 @@ public:
     void draw_text(const Rect& clip)
     {
         this->drawable->draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
-        this->drawable->server_draw_text(this->x_text + this->dx() + 1,
+        this->drawable->server_draw_text(this->x_text + this->dx(),
                                          this->y_text + this->dy() + 1,
                                          this->display_pass,
                                          this->fg_color,
