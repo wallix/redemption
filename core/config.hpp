@@ -395,43 +395,71 @@ static inline authid_t authid_from_string(const char * strauthid) {
 
 struct Inifile {
     struct Inifile_globals {
-        bool capture_png;
-        bool capture_wrm;
-        bool capture_flv;
-        bool capture_ocr;
-        bool capture_chunk;
-        bool movie;
-        char movie_path[512];
-        char codec_id[512];
-        char video_quality[512];
+
+
+        bool capture_chunk; // is it used ?
+
+
         char auth_user[512];
         char host[512];     // client_ip
         char target[512];   // target ip
         char target_device[512];
         char target_user[512];
-        char auth_channel[512];
 
+        // BEGIN globals
         bool bitmap_cache;       // default true
         bool bitmap_compression; // default true
         int port;                // default 3389
+        bool nomouse;
+        bool notimestamp;
         int encryptionLevel;     // 0=low, 1=medium, 2=high
         char authip[255];
         int authport;
-        bool nomouse;
-        bool notimestamp;
         bool autovalidate;       // dialog autovalidation for test
-        char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
 
+        // keepalive and no traffic auto deconnexion
+        int max_tick;
+        int keepalive_grace_delay;
+
+        bool internal_domain;
+
+        char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
+        char auth_channel[512];
+        bool enable_file_encryption;
+        bool enable_tls;
+        char listen_address[256];
+        bool enable_ip_transparent;
+        char certificate_password[256];
+
+        char png_path[1024];
+        char wrm_path[1024];
+
+        char alternate_shell[1024];
+        char shell_working_directory[1024];
+
+        char codec_id[512];
+        bool movie;
+        char movie_path[512];
+        char video_quality[512];
+        bool enable_bitmap_update;
+        // END globals
+
+        // Begin video Section (to move)
+        /*
         unsigned capture_flags;  // 1 PNG capture, 2 WRM
+        // video opt from capture_flags
+        bool capture_png;
+        bool capture_wrm;
+        bool capture_flv;
+        bool capture_ocr;
+        */
+        unsigned ocr_interval;
         unsigned png_interval;   // time between 2 png captures (in 1/10 seconds)
+        unsigned capture_groupid;
         unsigned frame_interval; // time between 2 frame captures (in 1/100 seconds)
         unsigned break_interval; // time between 2 wrm movies (in seconds)
-        uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
-        unsigned flv_frame_interval;
-        unsigned ocr_interval;
-        unsigned capture_groupid;
-
         unsigned png_limit;    // number of png captures to keep
+        char replay_path[1024];
 
         int l_bitrate;         // bitrate for low quality
         int l_framerate;       // framerate for low quality
@@ -452,27 +480,64 @@ struct Inifile {
         int h_height;
         int h_width;
         int h_qscale;
+        // End video section to move
 
-        // keepalive and no traffic auto deconnexion
-        int max_tick;
-        int keepalive_grace_delay;
+        uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
+        unsigned flv_frame_interval;
 
-        char replay_path[1024];
-        bool internal_domain;
+        // section "client"
+        struct {
+            bool ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default false
 
-        bool enable_file_encryption;
-        bool enable_tls;
-        char listen_address[256];
-        bool enable_ip_transparent;
-        char certificate_password[256];
+            uint32_t performance_flags_default;
+            uint32_t performance_flags_force_present;
+            uint32_t performance_flags_force_not_present;
 
-        char png_path[1024];
-        char wrm_path[1024];
+            bool tls_fallback_legacy;
 
-        char alternate_shell[1024];
-        char shell_working_directory[1024];
+            bool clipboard;
+            bool device_redirection;
+        } client;
+        
+        // Section "video"
+        struct {
+            unsigned capture_flags;  // 1 PNG capture, 2 WRM
+            // video opt from capture_flags
+            bool capture_png;
+            bool capture_wrm;
+            bool capture_flv;
+            bool capture_ocr;
 
-        bool enable_bitmap_update;
+            unsigned ocr_interval;
+            unsigned png_interval;   // time between 2 png captures (in 1/10 seconds)
+            unsigned capture_groupid;
+            unsigned frame_interval; // time between 2 frame captures (in 1/100 seconds)
+            unsigned break_interval; // time between 2 wrm movies (in seconds)
+            unsigned png_limit;    // number of png captures to keep
+            char replay_path[1024];
+
+            int l_bitrate;         // bitrate for low quality
+            int l_framerate;       // framerate for low quality
+            int l_height;          // height for low quality
+            int l_width;           // width for low quality
+            int l_qscale;          // qscale (parameter given to ffmpeg) for low quality
+
+            // Same for medium quality
+            int m_bitrate;
+            int m_framerate;
+            int m_height;
+            int m_width;
+            int m_qscale;
+
+            // Same for high quality
+            int h_bitrate;
+            int h_framerate;
+            int h_height;
+            int h_width;
+            int h_qscale;
+
+        } video;
+
 
         // Section "debug"
         struct {
@@ -498,19 +563,7 @@ struct Inifile {
             char log_file_path[1024]; // log file location
         } debug;
 
-        // section "client"
-        struct {
-            bool ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default false
-
-            uint32_t performance_flags_default;
-            uint32_t performance_flags_force_present;
-            uint32_t performance_flags_force_not_present;
-
-            bool tls_fallback_legacy;
-
-            bool clipboard;
-            bool device_redirection;
-        } client;
+        
 
         // section "translation"
         struct {
@@ -638,19 +691,15 @@ struct Inifile {
     }
 
     void init(){
-        this->globals.capture_flags = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
-        this->globals.capture_wrm   = true;
-        this->globals.capture_png   = true;
-        this->globals.capture_flv   = false;
-        this->globals.capture_ocr   = false;
         this->globals.capture_chunk = false;
-        this->globals.movie            = false;
-        this->globals.movie_path[0]    = 0;
+
+
         this->globals.auth_user[0]     = 0;
         this->globals.host[0]          = 0;
         this->globals.target_device[0] = 0;
         this->globals.target_user[0]   = 0;
 
+        // Init globals
         this->globals.bitmap_cache = true;
         this->globals.bitmap_compression = true;
         this->globals.port = 3389;
@@ -660,20 +709,50 @@ struct Inifile {
         strcpy(this->globals.authip, "127.0.0.1");
         this->globals.authport = 3350;
         this->globals.autovalidate = false;
+
+        this->globals.max_tick    = 30;
+        this->globals.keepalive_grace_delay = 30;
+
+        this->globals.internal_domain = false;
         strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
+        memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
+        this->globals.enable_file_encryption = false;
+        this->globals.enable_tls             = true;
+        strcpy(this->globals.listen_address, "0.0.0.0");
+        this->globals.enable_ip_transparent  = false;
+        strcpy(this->globals.certificate_password, "inquisition");
+
+        strcpy(this->globals.png_path, PNG_PATH);
+        strcpy(this->globals.wrm_path, WRM_PATH);
+
+        this->globals.alternate_shell[0]         = 0;
+        this->globals.shell_working_directory[0] = 0;
+
         strcpy(this->globals.codec_id, "flv");
+        this->globals.movie            = false;
+        this->globals.movie_path[0]    = 0;
         TODO("this could be some kind of enumeration")
         strcpy(this->globals.video_quality, "medium");
+        this->globals.enable_bitmap_update = false;
+        // End Init globals
 
-        this->globals.png_interval = 3000;
+
+        // Begin Init video section
+        /*
+        this->globals.capture_flags = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
+        this->globals.capture_wrm   = true;
+        this->globals.capture_png   = true;
+        this->globals.capture_flv   = false;
+        this->globals.capture_ocr   = false;
+        */
         this->globals.ocr_interval = 100; // 1 every second
+        this->globals.png_interval = 3000;
+        this->globals.capture_groupid = 33;
         this->globals.frame_interval = 40;
         this->globals.break_interval = 600;
-        this->globals.flv_break_interval = 600000000l;
-        this->globals.flv_frame_interval = 1000000L;
-        this->globals.capture_groupid = 33;
-
         this->globals.png_limit = 3;
+        strcpy(this->globals.replay_path, "/tmp/");
+
         this->globals.l_bitrate   = 20000;
         this->globals.l_framerate = 1;
         this->globals.l_height    = 480;
@@ -689,31 +768,59 @@ struct Inifile {
         this->globals.h_height    = 1024;
         this->globals.h_width     = 1280;
         this->globals.h_qscale    = 15;
-        this->globals.max_tick    = 30;
-        this->globals.keepalive_grace_delay = 30;
-        strcpy(this->globals.replay_path, "/tmp/");
-        this->globals.internal_domain = false;
-        this->globals.enable_file_encryption = false;
-        this->globals.enable_tls             = true;
-        strcpy(this->globals.listen_address, "0.0.0.0");
-        this->globals.enable_ip_transparent  = false;
-        strcpy(this->globals.certificate_password, "inquisition");
-
-        strcpy(this->globals.png_path, PNG_PATH);
-        strcpy(this->globals.wrm_path, WRM_PATH);
-
-        this->globals.alternate_shell[0]         = 0;
-        this->globals.shell_working_directory[0] = 0;
-
-        memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
+        // End Init video section
+        this->globals.flv_break_interval = 600000000l;
+        this->globals.flv_frame_interval = 1000000L;
 
         strcpy(this->account.accountname, "");
         strcpy(this->account.username,    "");
         strcpy(this->account.password,    "");
 
-        this->globals.enable_bitmap_update = false;
+        // Begin Section "client".
+        this->globals.client.ignore_logon_password               = false;
+//      this->globals.client.performance_flags_default           = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
+        this->globals.client.performance_flags_default           = 0;
+        this->globals.client.performance_flags_force_present     = 0;
+        this->globals.client.performance_flags_force_not_present = 0;
+        this->globals.client.tls_fallback_legacy                 = false;
+        this->globals.client.clipboard                           = true;
+        this->globals.client.device_redirection                  = true;
+        // End Section "client"
 
-        // Section "debug".
+        // Begin section video
+        this->globals.video.capture_flags = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
+        this->globals.video.capture_wrm   = true;
+        this->globals.video.capture_png   = true;
+        this->globals.video.capture_flv   = false;
+        this->globals.video.capture_ocr   = false;
+
+        this->globals.video.ocr_interval = 100; // 1 every second
+        this->globals.video.png_interval = 3000;
+        this->globals.video.capture_groupid = 33;
+        this->globals.video.frame_interval = 40;
+        this->globals.video.break_interval = 600;
+        this->globals.video.png_limit = 3;
+        strcpy(this->globals.video.replay_path, "/tmp/");
+
+        this->globals.video.l_bitrate   = 20000;
+        this->globals.video.l_framerate = 1;
+        this->globals.video.l_height    = 480;
+        this->globals.video.l_width     = 640;
+        this->globals.video.l_qscale    = 25;
+        this->globals.video.m_bitrate   = 40000;
+        this->globals.video.m_framerate = 1;
+        this->globals.video.m_height    = 768;
+        this->globals.video.m_width     = 1024;
+        this->globals.video.m_qscale    = 15;
+        this->globals.video.h_bitrate   = 200000;
+        this->globals.video.h_framerate = 5;
+        this->globals.video.h_height    = 1024;
+        this->globals.video.h_width     = 1280;
+        this->globals.video.h_qscale    = 15;
+        // End section "video"
+
+
+        // Begin Section "debug".
         this->globals.debug.x224              = 0;
         this->globals.debug.mcs               = 0;
         this->globals.debug.sec               = 0;
@@ -734,18 +841,9 @@ struct Inifile {
 
         this->globals.debug.log_type         = 2; // syslog by default
         this->globals.debug.log_file_path[0] = 0;
+        // End Section "debug"
 
-        // Section "client".
-        this->globals.client.ignore_logon_password               = false;
-//      this->globals.client.performance_flags_default           = PERF_DISABLE_WALLPAPER | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
-        this->globals.client.performance_flags_default           = 0;
-        this->globals.client.performance_flags_force_present     = 0;
-        this->globals.client.performance_flags_force_not_present = 0;
-        this->globals.client.tls_fallback_legacy                 = false;
-        this->globals.client.clipboard                           = true;
-        this->globals.client.device_redirection                  = true;
-
-        // Section "translation"
+        // Begin Section "translation"
         this->globals.translation.button_ok         = "OK";
         this->globals.translation.button_cancel     = "Cancel";
         this->globals.translation.button_help       = "Help";
@@ -758,8 +856,9 @@ struct Inifile {
         this->globals.translation.diagnostic        = "diagnostic";
         this->globals.translation.connection_closed = "Connection closed";
         this->globals.translation.help_message      = "Help message";
+        // End Section "translation"
 
-        // section "context"
+        // Begin section "context"
         this->globals.context.selector_focus              = 0;
         this->globals.context.movie[0]                    = 0;
 
@@ -799,6 +898,14 @@ struct Inifile {
         this->globals.context.target_password             = "";
         this->globals.context.target_port                 = 3389;
         this->globals.context.target_protocol             = "RDP";
+
+        /* following vars not initialized ?
+        this->globals.context.ask_auth_user               = false;
+
+        this->globals.context.ask_auth_host               = false;
+        this->globals.context.ask_auth_target             = false;
+        this->globals.context.ask_auth_password           = false;
+        */
 
         this->globals.context.password                    = "";
 
@@ -1068,78 +1175,110 @@ struct Inifile {
         }
         else if (0 == strcmp(context, "video")){
             if (0 == strcmp(key, "capture_flags")){
+                /*
                 this->globals.capture_flags   = ulong_from_cstr(value);
                 this->globals.capture_png = 0 != (this->globals.capture_flags & 1);
                 this->globals.capture_wrm = 0 != (this->globals.capture_flags & 2);
                 this->globals.capture_flv = 0 != (this->globals.capture_flags & 4);
                 this->globals.capture_ocr = 0 != (this->globals.capture_flags & 8);
+                */
+                // new context
+                this->globals.video.capture_flags   = ulong_from_cstr(value);
+                this->globals.video.capture_png = 0 != (this->globals.video.capture_flags & 1);
+                this->globals.video.capture_wrm = 0 != (this->globals.video.capture_flags & 2);
+                this->globals.video.capture_flv = 0 != (this->globals.video.capture_flags & 4);
+                this->globals.video.capture_ocr = 0 != (this->globals.video.capture_flags & 8);
             }
             else if (0 == strcmp(key, "ocr_interval")){
                 this->globals.ocr_interval   = ulong_from_cstr(value);
+                this->globals.video.ocr_interval   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "png_interval")){
                 this->globals.png_interval   = ulong_from_cstr(value);
+                this->globals.video.png_interval   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "capture_groupid")){
                 this->globals.capture_groupid  = ulong_from_cstr(value);
+                this->globals.video.capture_groupid  = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "frame_interval")){
                 this->globals.frame_interval   = ulong_from_cstr(value);
+                this->globals.video.frame_interval   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "break_interval")){
                 this->globals.break_interval   = ulong_from_cstr(value);
+                this->globals.video.break_interval   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "png_limit")){
                 this->globals.png_limit   = ulong_from_cstr(value);
+                this->globals.video.png_limit   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "replay_path")){
                 strncpy(this->globals.replay_path, value, sizeof(this->globals.replay_path));
                 this->globals.replay_path[sizeof(this->globals.replay_path) - 1] = 0;
+                // new video vars
+                strncpy(this->globals.video.replay_path, value, sizeof(this->globals.video.replay_path));
+                this->globals.video.replay_path[sizeof(this->globals.video.replay_path) - 1] = 0;
             }
             else if (0 == strcmp(key, "l_bitrate")){
                 this->globals.l_bitrate   = ulong_from_cstr(value);
+                this->globals.video.l_bitrate   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_framerate")){
                 this->globals.l_framerate = ulong_from_cstr(value);
+                this->globals.video.l_framerate = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_height")){
                 this->globals.l_height    = ulong_from_cstr(value);
+                this->globals.video.l_height    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_width")){
                 this->globals.l_width     = ulong_from_cstr(value);
+                this->globals.video.l_width     = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "l_qscale")){
                 this->globals.l_qscale    = ulong_from_cstr(value);
+                this->globals.video.l_qscale    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_bitrate")){
                 this->globals.m_bitrate   = ulong_from_cstr(value);
+                this->globals.video.m_bitrate   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_framerate")){
                 this->globals.m_framerate = ulong_from_cstr(value);
+                this->globals.video.m_framerate = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_height")){
                 this->globals.m_height    = ulong_from_cstr(value);
+                this->globals.video.m_height    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_width")){
                 this->globals.m_width     = ulong_from_cstr(value);
+                this->globals.video.m_width     = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "m_qscale")){
                 this->globals.m_qscale    = ulong_from_cstr(value);
+                this->globals.video.m_qscale    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_bitrate")){
                 this->globals.h_bitrate   = ulong_from_cstr(value);
+                this->globals.video.h_bitrate   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_framerate")){
                 this->globals.h_framerate = ulong_from_cstr(value);
+                this->globals.video.h_framerate = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_height")){
                 this->globals.h_height    = ulong_from_cstr(value);
+                this->globals.video.h_height    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_width")){
                 this->globals.h_width     = ulong_from_cstr(value);
+                this->globals.video.h_width     = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "h_qscale")){
                 this->globals.h_qscale    = ulong_from_cstr(value);
+                this->globals.video.h_qscale    = ulong_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

@@ -120,8 +120,8 @@ int main(int argc, char** argv)
         ini.globals.png_interval = png_interval;
         ini.globals.frame_interval = wrm_frame_interval;
         ini.globals.break_interval = wrm_break_interval;
-        ini.globals.capture_wrm = options.count("wrm") > 0;
-        ini.globals.capture_png = (options.count("png") > 0);
+        ini.globals.video.capture_wrm = options.count("wrm") > 0;
+        ini.globals.video.capture_png = (options.count("png") > 0);
 
     }
     catch(boost::program_options::error& error) {

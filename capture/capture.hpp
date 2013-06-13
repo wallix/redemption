@@ -46,8 +46,8 @@ public:
 
     TODO("capture_wrm flag should be changed to some configuration parameter in inifile")
     Capture(const timeval & now, int width, int height, const char * wrm_path, const char * png_path, const char * hash_path, const char * basename, bool clear_png, const Inifile & ini)
-      : capture_wrm(ini.globals.capture_wrm)
-      , capture_drawable(ini.globals.capture_wrm)
+      : capture_wrm(ini.globals.video.capture_wrm)
+      , capture_drawable(ini.globals.video.capture_wrm)
       , capture_png(ini.globals.png_limit > 0)
       , enable_file_encryption(ini.globals.enable_file_encryption)
       , png_trans(NULL)

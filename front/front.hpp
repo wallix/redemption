@@ -1979,8 +1979,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                         this->process_confirm_active(sctrl.payload);
                     }
 		    if (!sctrl.payload.check_end()){
-                            LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u", sctrl.payload.in_remain());
-                            throw Error(ERR_MCS_PDU_TRAILINGDATA);
+                        LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u", sctrl.payload.in_remain());
+                        throw Error(ERR_MCS_PDU_TRAILINGDATA);
 		    }
                     break;
                 case PDUTYPE_DATAPDU: /* 7 */
@@ -1993,6 +1993,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                     // but rdesktop actually sends input data
                     // also processing this is a problem because input data packets are broken
 //                    this->process_data(sctrl.payload, cb);
+                    
                     TODO("check all payload data is consumed")
                     break;
                 case PDUTYPE_DEACTIVATEALLPDU:
@@ -2277,6 +2278,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                             if (this->verbose & 8){
                                 LOG(LOG_INFO, "Front received DATAPDU done");
                             }
+                            TODO("check all received data consumed")
                             break;
                         case PDUTYPE_DEACTIVATEALLPDU:
                             if (this->verbose & 1){
