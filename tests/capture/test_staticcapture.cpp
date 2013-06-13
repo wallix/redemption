@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     now.tv_usec = 0;
     
     Inifile ini;
-    ini.globals.png_limit = 3;
-    ini.globals.png_interval = 20;
+    ini.globals.video.png_limit = 3;
+    ini.globals.video.png_interval = 20;
     StaticCapture consumer(now, trans, &(trans.seq), 800, 600, false, ini);
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);

@@ -305,8 +305,8 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "xxxtest", ".png", groupid);
     SQ * seq = &(trans.seq);
     Inifile ini;
-    ini.globals.png_interval = 1;
-    ini.globals.png_limit = 3;
+    ini.globals.video.png_interval = 1;
+    ini.globals.video.png_limit = 3;
     StaticCapture consumer(now, trans, &(trans.seq), 800, 600, false, ini);
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
@@ -343,7 +343,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     BOOST_CHECK_EQUAL(3054, sq_outfilename_filesize(seq, 3));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 4));
 
-    ini.globals.png_limit = 10;
+    ini.globals.video.png_limit = 10;
     consumer.update_config(ini);
 
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
@@ -352,7 +352,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     BOOST_CHECK_EQUAL(3054, sq_outfilename_filesize(seq, 3));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 4));
 
-    ini.globals.png_limit = 2;
+    ini.globals.video.png_limit = 2;
     consumer.update_config(ini);
 
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
@@ -361,7 +361,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     BOOST_CHECK_EQUAL(3054, sq_outfilename_filesize(seq, 3));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 4));
 
-    ini.globals.png_limit = 0;
+    ini.globals.video.png_limit = 0;
     consumer.update_config(ini);
 
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 1));
