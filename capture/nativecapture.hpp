@@ -92,14 +92,14 @@ public:
 
     void update_config(const Inifile & ini)
     {
-        if (ini.globals.frame_interval != this->frame_interval){
+        if (ini.globals.video.frame_interval != this->frame_interval){
             // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
-            this->frame_interval = ini.globals.frame_interval;
+            this->frame_interval = ini.globals.video.frame_interval;
             this->inter_frame_interval_native_capture       =  this->frame_interval * 10000; // 1 000 000 us is 1 sec
         }
 
-        if (ini.globals.break_interval != this->break_interval){
-            this->break_interval = ini.globals.break_interval; // break interval is in s, default value 1 break every 10 minutes
+        if (ini.globals.video.break_interval != this->break_interval){
+            this->break_interval = ini.globals.video.break_interval; // break interval is in s, default value 1 break every 10 minutes
             this->inter_frame_interval_start_break_capture  = 1000000 * this->break_interval; // 1 000 000 us is 1 sec
         }
     }

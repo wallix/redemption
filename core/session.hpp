@@ -632,7 +632,7 @@ struct Session {
                         }
                         this->mod = new test_internal_mod(
                               *this->front
-                            , this->ini->globals.replay_path
+                            , this->ini->globals.video.replay_path
                             , this->ini->globals.context.movie
                             , this->front->client_info.width
                             , this->front->client_info.height

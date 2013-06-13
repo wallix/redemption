@@ -66,8 +66,8 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     player.add_consumer(&png_recorder);
 
     OutFilenameTransport out_wrm_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
-    ini.globals.frame_interval = 10;
-    ini.globals.break_interval = 20;
+    ini.globals.video.frame_interval = 10;
+    ini.globals.video.break_interval = 20;
 
     BmpCache bmp_cache(
         player.bmp_cache->bpp,
@@ -143,8 +143,8 @@ BOOST_AUTO_TEST_CASE(TestSecondPart)
     player.add_consumer(&png_recorder);
 
     OutFilenameTransport out_wrm_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".wrm", groupid);
-    ini.globals.frame_interval = 10;
-    ini.globals.break_interval = 20;
+    ini.globals.video.frame_interval = 10;
+    ini.globals.video.break_interval = 20;
 
     BmpCache bmp_cache(
         player.bmp_cache->bpp,

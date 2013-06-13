@@ -39,10 +39,10 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     // test we can read from a file (and not only from a stream)
     Inifile ini(FIXTURES_PATH "/rdpproxy.ini");
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -65,39 +65,39 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -168,10 +168,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     // default config
     Inifile ini;
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -194,39 +194,39 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -299,10 +299,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
 
     Inifile ini(oss);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -325,39 +325,39 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -462,10 +462,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
 
     Inifile ini(oss);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(true,                             ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -488,39 +488,39 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_tls);
@@ -620,10 +620,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     Inifile ini(oss);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -646,39 +646,39 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -772,10 +772,10 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     Inifile ini(oss);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -798,39 +798,39 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -920,10 +920,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     Inifile ini(oss);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -946,39 +946,39 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_tls);
@@ -1059,10 +1059,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     );
     ini.cparse(oss2);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -1085,39 +1085,39 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -1193,10 +1193,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     // - every characters following # are ignored until end of line (comments)
     Inifile ini;
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -1219,39 +1219,39 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -1330,10 +1330,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     ini.cparse(ifs2);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -1356,39 +1356,39 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -1457,10 +1457,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     // back to default values
     ini.init();
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -1483,39 +1483,39 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);

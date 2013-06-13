@@ -6,3 +6,5 @@ coverage.summary
 coverage
 redemption_public.kdev4
 tools/coverage.summary
+[#]*[#]
+.\#*

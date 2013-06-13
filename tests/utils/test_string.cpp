@@ -108,3 +108,39 @@ BOOST_AUTO_TEST_CASE(TestString1)
 
     BOOST_CHECK(!strcmp(template_string, str));
 }
+
+BOOST_AUTO_TEST_CASE(TestCopy)
+{
+    const char * template_string = "0123456789";
+
+    redemption::string str0(template_string);
+    redemption::string str1;
+
+    str1 = str0;
+
+    BOOST_CHECK(!strcmp(template_string, str0));
+    BOOST_CHECK(!strcmp(str0, str1));
+}
+
+BOOST_AUTO_TEST_CASE(TestCopy2)
+{
+    const char * template_string = "0123456789";
+
+    redemption::string str0(template_string);
+    redemption::string str1 = str0;
+
+    BOOST_CHECK(!strcmp(template_string, str0));
+    BOOST_CHECK(!strcmp(str0, str1));
+}
+
+BOOST_AUTO_TEST_CASE(TestConcatenate)
+{
+    const char * template_string = "0123456789";
+
+    redemption::string str0(template_string);
+    redemption::string str1("ABCD");
+
+    str1 += str0;
+
+    BOOST_CHECK(!strcmp("ABCD0123456789", str1));
+}

@@ -95,19 +95,19 @@ public:
     }
 
     void update_config(const Inifile & ini){
-        if (ini.globals.png_limit < this->conf.png_limit){
-            for(size_t i = this->conf.png_limit ; i > ini.globals.png_limit ; i--){
+        if (ini.globals.video.png_limit < this->conf.png_limit){
+            for(size_t i = this->conf.png_limit ; i > ini.globals.video.png_limit ; i--){
                 if (this->trans.seqno >= i){
                     // unlink may fail, for instance if file does not exist, just don't care
                     sq_outfilename_unlink(this->seq, this->trans.seqno - i);
                 }
             }
         }
-        this->conf.png_limit = ini.globals.png_limit;
+        this->conf.png_limit = ini.globals.video.png_limit;
 
-        if (ini.globals.png_interval != this->conf.png_interval){
+        if (ini.globals.video.png_interval != this->conf.png_interval){
             // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
-            this->conf.png_interval = ini.globals.png_interval;
+            this->conf.png_interval = ini.globals.video.png_interval;
             this->inter_frame_interval_static_capture = this->conf.png_interval * 100000; // 1 000 000 us is 1 sec
         }
     }

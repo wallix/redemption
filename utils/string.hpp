@@ -50,6 +50,15 @@ public:
         (*this) = source;
     }
 
+    string(const string & source) {
+        this->static_buffer[0] = 0;
+
+        this->buffer_pointer = this->static_buffer;
+        this->buffer_length  = sizeof(this->static_buffer);
+
+        (*this) = source.buffer_pointer;
+    }
+
     virtual ~string() {
         if (this->buffer_pointer != this->static_buffer) {
             delete [] this->buffer_pointer;
@@ -71,6 +80,12 @@ public:
         else {
             this->buffer_pointer[0] = 0;
         }
+
+        return (*this);
+    }
+
+    string & operator=(const string & source) {
+        (*this) = source.buffer_pointer;
 
         return (*this);
     }

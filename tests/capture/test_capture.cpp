@@ -40,14 +40,14 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         Rect scr(0, 0, 800, 600);
         
-        ini.globals.frame_interval = 100; // one timestamp every second
-        ini.globals.break_interval = 3;   // one WRM file every 5 seconds
+        ini.globals.video.frame_interval = 100; // one timestamp every second
+        ini.globals.video.break_interval = 3;   // one WRM file every 5 seconds
 
-        ini.globals.png_limit = 10; // one snapshot by second
-        ini.globals.png_interval = 10; // one snapshot by second
+        ini.globals.video.png_limit = 10; // one snapshot by second
+        ini.globals.video.png_interval = 10; // one snapshot by second
 
-        ini.globals.capture_wrm = true;
-        ini.globals.capture_png = true;
+        ini.globals.video.capture_wrm = true;
+        ini.globals.video.capture_png = true;
         ini.globals.enable_file_encryption = false;
         Capture capture(now, scr.cx, scr.cy, "./", "./", "/tmp/", "capture", false, ini);
 
