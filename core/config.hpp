@@ -790,15 +790,18 @@ struct Inifile {
         this->globals.context.selector_lines_per_page     = 20;
         this->globals.context.selector_number_of_pages    = 1;
 
-        this->globals.context.ask_target_device           = false;
-        this->globals.context.ask_target_password         = false;
-        this->globals.context.ask_target_port             = false;
-        this->globals.context.ask_target_protocol         = false;
-        this->globals.context.ask_target_user             = false;
+        this->globals.context.ask_target_device           = true;
+        this->globals.context.ask_target_password         = true;
+        this->globals.context.ask_target_port             = true;
+        this->globals.context.ask_target_protocol         = true;
+        this->globals.context.ask_target_user             = true;
 
         this->globals.context.target_password             = "";
         this->globals.context.target_port                 = 3389;
         this->globals.context.target_protocol             = "RDP";
+
+        this->globals.context.ask_auth_user               = true;
+        this->globals.context.ask_password                = true;
 
         this->globals.context.password                    = "";
 
