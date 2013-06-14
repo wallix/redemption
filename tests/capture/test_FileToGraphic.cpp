@@ -55,8 +55,8 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
 
     Inifile ini;
-    ini.globals.debug.primary_orders = 0;
-    ini.globals.debug.secondary_orders = 0;
+    ini.debug.primary_orders = 0;
+    ini.debug.secondary_orders = 0;
 
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".png", groupid);
@@ -66,8 +66,8 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     player.add_consumer(&png_recorder);
 
     OutFilenameTransport out_wrm_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid);
-    ini.globals.video.frame_interval = 10;
-    ini.globals.video.break_interval = 20;
+    ini.video.frame_interval = 10;
+    ini.video.break_interval = 20;
 
     BmpCache bmp_cache(
         player.bmp_cache->bpp,
@@ -132,8 +132,8 @@ BOOST_AUTO_TEST_CASE(TestSecondPart)
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
 
     Inifile ini;
-    ini.globals.debug.primary_orders = 0;
-    ini.globals.debug.secondary_orders = 0;
+    ini.debug.primary_orders = 0;
+    ini.debug.secondary_orders = 0;
 
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".png", groupid);
@@ -143,8 +143,8 @@ BOOST_AUTO_TEST_CASE(TestSecondPart)
     player.add_consumer(&png_recorder);
 
     OutFilenameTransport out_wrm_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_part", ".wrm", groupid);
-    ini.globals.video.frame_interval = 10;
-    ini.globals.video.break_interval = 20;
+    ini.video.frame_interval = 10;
+    ini.video.break_interval = 20;
 
     BmpCache bmp_cache(
         player.bmp_cache->bpp,

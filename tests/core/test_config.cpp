@@ -39,10 +39,10 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     // test we can read from a file (and not only from a stream)
     Inifile ini(FIXTURES_PATH "/rdpproxy.ini");
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -65,39 +65,39 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -113,54 +113,54 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.primary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.secondary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.bitmap);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.capture);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.auth);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.session);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.front);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_vnc);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_int);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.sec);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.primary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.secondary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.bitmap);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.capture);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.auth);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.session);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.front);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_vnc);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_int);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.input);
     // log file
-    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
+    BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
+    BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.globals.translation.button_help));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.globals.translation.button_close));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.globals.translation.button_refused));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.globals.translation.login));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.globals.translation.username));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.globals.translation.password));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.globals.translation.target));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
-    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
-    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
@@ -168,10 +168,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     // default config
     Inifile ini;
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -194,39 +194,39 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -242,54 +242,54 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.primary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.secondary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.bitmap);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.capture);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.auth);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.session);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.front);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_vnc);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_int);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.sec);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.primary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.secondary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.bitmap);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.capture);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.auth);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.session);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.front);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_vnc);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_int);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.input);
     // log file
-    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
+    BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
+    BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.globals.translation.button_help));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.globals.translation.button_close));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.globals.translation.button_refused));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.globals.translation.login));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.globals.translation.username));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.globals.translation.password));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.globals.translation.target));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
-    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
-    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigDefault)
@@ -299,10 +299,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
 
     Inifile ini(oss);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -325,39 +325,39 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -373,54 +373,54 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.primary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.secondary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.bitmap);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.capture);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.auth);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.session);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.front);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_vnc);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_int);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.sec);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.primary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.secondary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.bitmap);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.capture);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.auth);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.session);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.front);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_vnc);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_int);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.input);
     // log
-    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
+    BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
+    BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.globals.translation.button_help));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.globals.translation.button_close));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.globals.translation.button_refused));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.globals.translation.login));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.globals.translation.username));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.globals.translation.password));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.globals.translation.target));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
-    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
-    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfig1)
@@ -462,10 +462,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
 
     Inifile ini(oss);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(true,                             ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -488,39 +488,39 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_tls);
@@ -539,55 +539,55 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_bitmap_update);
 
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.primary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.secondary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.bitmap);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.capture);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.auth);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.session);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.front);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_vnc);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_int);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.sec);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.primary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.secondary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.bitmap);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.capture);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.auth);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.session);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.front);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_vnc);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_int);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.input);
     // log
-    BOOST_CHECK_EQUAL(3,                                ini.globals.debug.log_type);
+    BOOST_CHECK_EQUAL(3,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string("/var/log/redemption.log"),
-                                                        std::string(ini.globals.debug.log_file_path));
+                                                        std::string(ini.debug.log_file_path));
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.ignore_logon_password);
-    BOOST_CHECK_EQUAL(7,                                ini.globals.client.performance_flags_default);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.client.performance_flags_force_present);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.clipboard);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.device_redirection);
+    BOOST_CHECK_EQUAL(true,                             ini.client.ignore_logon_password);
+    BOOST_CHECK_EQUAL(7,                                ini.client.performance_flags_default);
+    BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(false,                            ini.client.clipboard);
+    BOOST_CHECK_EQUAL(false,                            ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string((const char *)ini.globals.translation.button_ok));
-    BOOST_CHECK_EQUAL(std::string("Annuler"),           std::string((const char *)ini.globals.translation.button_cancel));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string((const char *)ini.globals.translation.button_help));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string((const char *)ini.globals.translation.button_close));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string((const char *)ini.globals.translation.button_refused));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string((const char *)ini.globals.translation.login));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string((const char *)ini.globals.translation.username));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string((const char *)ini.globals.translation.password));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string((const char *)ini.globals.translation.target));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string((const char *)ini.globals.translation.diagnostic));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string((const char *)ini.globals.translation.connection_closed));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string((const char *)ini.globals.translation.help_message));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string((const char *)ini.translation.button_ok));
+    BOOST_CHECK_EQUAL(std::string("Annuler"),           std::string((const char *)ini.translation.button_cancel));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string((const char *)ini.translation.button_help));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string((const char *)ini.translation.button_close));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string((const char *)ini.translation.button_refused));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string((const char *)ini.translation.login));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string((const char *)ini.translation.username));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string((const char *)ini.translation.password));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string((const char *)ini.translation.target));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string((const char *)ini.translation.diagnostic));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string((const char *)ini.translation.connection_closed));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string((const char *)ini.translation.help_message));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
-    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
-    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfig1bis)
@@ -620,10 +620,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     Inifile ini(oss);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -646,39 +646,39 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -696,54 +696,54 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.primary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.secondary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.bitmap);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.capture);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.auth);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.session);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.front);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_vnc);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_int);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.sec);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.primary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.secondary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.bitmap);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.capture);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.auth);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.session);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.front);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_vnc);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_int);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.input);
     // log
-    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
+    BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
-    BOOST_CHECK_EQUAL(7,                                ini.globals.client.performance_flags_default);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.client.performance_flags_force_present);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
+    BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
+    BOOST_CHECK_EQUAL(7,                                ini.client.performance_flags_default);
+    BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.globals.translation.button_help));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.globals.translation.button_close));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.globals.translation.button_refused));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.globals.translation.login));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.globals.translation.username));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.globals.translation.password));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.globals.translation.target));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
-    BOOST_CHECK_EQUAL(std::string("Connexion fermée"),  std::string(ini.globals.translation.connection_closed));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic));
+    BOOST_CHECK_EQUAL(std::string("Connexion fermée"),  std::string(ini.translation.connection_closed));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
-    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
-    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfig2)
@@ -772,10 +772,10 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     Inifile ini(oss);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -798,39 +798,39 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -850,54 +850,54 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.primary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.secondary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.bitmap);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.capture);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.auth);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.session);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.front);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_vnc);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_int);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.sec);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.primary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.secondary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.bitmap);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.capture);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.auth);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.session);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.front);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_vnc);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_int);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.input);
     // log
-    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
+    BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
-    BOOST_CHECK_EQUAL(7,                                ini.globals.client.performance_flags_default);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.client.performance_flags_force_present);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
+    BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
+    BOOST_CHECK_EQUAL(7,                                ini.client.performance_flags_default);
+    BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.globals.translation.button_help));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.globals.translation.button_close));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.globals.translation.button_refused));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.globals.translation.login));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.globals.translation.username));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.globals.translation.password));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.globals.translation.target));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
-    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
-    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestMultiple)
@@ -920,10 +920,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     Inifile ini(oss);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -946,39 +946,39 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_tls);
@@ -995,54 +995,54 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.primary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.secondary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.bitmap);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.capture);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.auth);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.session);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.front);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_vnc);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_int);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.sec);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.primary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.secondary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.bitmap);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.capture);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.auth);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.session);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.front);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_vnc);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_int);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.input);
     // log
-    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
+    BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
+    BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.globals.translation.button_help));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.globals.translation.button_close));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.globals.translation.button_refused));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.globals.translation.login));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.globals.translation.username));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.globals.translation.password));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.globals.translation.target));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
-    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
-    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp);
 
 
     // see we can change configuration using parse without default setting of existing ini
@@ -1059,10 +1059,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     );
     ini.cparse(oss2);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -1085,39 +1085,39 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -1134,54 +1134,54 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.primary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.secondary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.bitmap);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.capture);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.auth);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.session);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.front);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_vnc);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_int);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.sec);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.primary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.secondary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.bitmap);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.capture);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.auth);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.session);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.front);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_vnc);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_int);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.input);
     // log
-    BOOST_CHECK_EQUAL(4,                                ini.globals.debug.log_type);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
+    BOOST_CHECK_EQUAL(4,                                ini.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
+    BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.globals.translation.button_help));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.globals.translation.button_close));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.globals.translation.button_refused));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.globals.translation.login));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.globals.translation.username));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.globals.translation.password));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.globals.translation.target));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
-    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
-    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestNewConf)
@@ -1193,10 +1193,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     // - every characters following # are ignored until end of line (comments)
     Inifile ini;
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -1219,39 +1219,39 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -1267,54 +1267,54 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.primary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.secondary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.bitmap);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.capture);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.auth);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.session);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.front);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_vnc);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_int);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.sec);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.primary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.secondary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.bitmap);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.capture);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.auth);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.session);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.front);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_vnc);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_int);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.input);
     // log
-    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
+    BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
+    BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.globals.translation.button_help));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.globals.translation.button_close));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.globals.translation.button_refused));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.globals.translation.login));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.globals.translation.username));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.globals.translation.password));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.globals.translation.target));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
-    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
-    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp);
 
 
     std::stringstream ifs2(
@@ -1330,10 +1330,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     ini.cparse(ifs2);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -1356,39 +1356,39 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -1404,63 +1404,63 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.primary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.secondary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.bitmap);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.capture);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.auth);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.session);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.front);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_vnc);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_int);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.sec);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.primary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.secondary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.bitmap);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.capture);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.auth);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.session);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.front);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_vnc);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_int);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.input);
 
-    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
+    BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
+    BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.globals.translation.button_help));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.globals.translation.button_close));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.globals.translation.button_refused));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.globals.translation.login));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.globals.translation.username));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.globals.translation.password));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.globals.translation.target));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
-    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
-    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp);
 
 
     // back to default values
     ini.init();
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_png);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.video.capture_wrm);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_flv);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.video.capture_ocr);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
+    BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
+    BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
@@ -1483,39 +1483,39 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.capture_flags);
-    BOOST_CHECK_EQUAL(3000,                             ini.globals.video.png_interval);
-    BOOST_CHECK_EQUAL(40,                               ini.globals.video.frame_interval);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.video.break_interval);
+    BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
+    BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
+    BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
+    BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.globals.video.ocr_interval);
+    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
 
-    BOOST_CHECK_EQUAL(3,                                ini.globals.video.png_limit);
+    BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
-    BOOST_CHECK_EQUAL(20000,                            ini.globals.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.l_framerate);
-    BOOST_CHECK_EQUAL(480,                              ini.globals.video.l_height);
-    BOOST_CHECK_EQUAL(640,                              ini.globals.video.l_width);
-    BOOST_CHECK_EQUAL(25,                               ini.globals.video.l_qscale);
+    BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
+    BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
+    BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.globals.video.m_framerate);
-    BOOST_CHECK_EQUAL(768,                              ini.globals.video.m_height);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.m_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.m_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
+    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
 
-    BOOST_CHECK_EQUAL(200000,                           ini.globals.video.h_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.video.h_framerate);
-    BOOST_CHECK_EQUAL(1024,                             ini.globals.video.h_height);
-    BOOST_CHECK_EQUAL(1280,                             ini.globals.video.h_width);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.video.h_qscale);
+    BOOST_CHECK_EQUAL(200000,                           ini.video.h_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.h_framerate);
+    BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
+    BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
+    BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.globals.video.replay_path));
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
@@ -1531,54 +1531,54 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.x224);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mcs);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.sec);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.primary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.secondary_orders);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.bitmap);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.capture);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.auth);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.session);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.front);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_rdp);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_vnc);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_int);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.mod_xup);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.widget);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.debug.input);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.sec);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.primary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.secondary_orders);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.bitmap);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.capture);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.auth);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.session);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.front);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_rdp);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_vnc);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_int);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.mod_xup);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.widget);
+    BOOST_CHECK_EQUAL(0,                                ini.debug.input);
     // log
-    BOOST_CHECK_EQUAL(2,                                ini.globals.debug.log_type);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.debug.log_file_path));
+    BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.ignore_logon_password);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_default);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_present);
-    BOOST_CHECK_EQUAL(0,                                ini.globals.client.performance_flags_force_not_present);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.client.device_redirection);
+    BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
+    BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.globals.translation.button_ok));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.globals.translation.button_cancel));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.globals.translation.button_help));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.globals.translation.button_close));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.globals.translation.button_refused));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.globals.translation.login));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.globals.translation.username));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.globals.translation.password));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.globals.translation.target));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.globals.translation.diagnostic));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.globals.translation.connection_closed));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.globals.translation.help_message));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.globals.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.globals.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.globals.context.opt_qscale);
-    BOOST_CHECK_EQUAL(800,                              ini.globals.context.opt_width);
-    BOOST_CHECK_EQUAL(600,                              ini.globals.context.opt_height);
-    BOOST_CHECK_EQUAL(24,                               ini.globals.context.opt_bpp);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(800,                              ini.context.opt_width);
+    BOOST_CHECK_EQUAL(600,                              ini.context.opt_height);
+    BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigTools)

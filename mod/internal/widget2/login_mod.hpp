@@ -39,11 +39,11 @@ public:
     LoginMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
     : InternalMod(front, width, height)
     , window_login(this, 0, 0, &this->screen, this, VERSION, 0, 0, 0, BLACK, GREY,
-                   ini.globals.translation.button_ok,
-                   ini.globals.translation.button_cancel,
-                   ini.globals.translation.button_help,
-                   ini.globals.translation.login,
-                   ini.globals.translation.password)
+                   ini.translation.button_ok,
+                   ini.translation.button_cancel,
+                   ini.translation.button_help,
+                   ini.translation.login,
+                   ini.translation.password)
     , image(this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
     , ini(ini)
     {

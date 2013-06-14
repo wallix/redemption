@@ -77,7 +77,7 @@ class SessionServer : public Server
             close(incoming_sck);
 
             Inifile ini(CFG_PATH "/" RDPPROXY_INI);
-            if (ini.globals.debug.session){
+            if (ini.debug.session){
                 LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
             }
 
@@ -121,7 +121,7 @@ class SessionServer : public Server
             int nodelay = 1;
             if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
                 wait_obj front_event(sck);
-//                SocketTransport front_trans("RDP Client", sck, ini.globals.debug.front);
+//                SocketTransport front_trans("RDP Client", sck, ini.debug.front);
 
                 // Create session file
                 int child_pid = getpid();
@@ -152,7 +152,7 @@ class SessionServer : public Server
                 // Suppress session file
                 unlink(session_file);
 
-                if (ini.globals.debug.session){
+                if (ini.debug.session){
                     LOG(LOG_INFO, "Session::end of Session(%u)", sck);
                 }
 

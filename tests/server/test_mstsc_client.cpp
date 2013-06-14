@@ -74,14 +74,14 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     Inifile ini;
     int verbose = 511;
-    ini.globals.debug.front = 511;
+    ini.debug.front = 511;
 
 //    int nodelay = 1;
 //    if (-1 == setsockopt(one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
 //        LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
 //    }
 //    wait_obj front_event(one_shot_server.sck);
-//    SocketTransport front_trans("RDP Client", one_shot_server.sck, "0.0.0.0", 0, ini.globals.debug.front, NULL, 0);
+//    SocketTransport front_trans("RDP Client", one_shot_server.sck, "0.0.0.0", 0, ini.debug.front, NULL, 0);
 
     LCGRandom gen(0);
 

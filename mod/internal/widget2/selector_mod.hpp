@@ -66,7 +66,7 @@ public:
         this->selector.set_widget_focus(&this->selector.device_lines);
         this->screen.set_widget_focus(&this->selector);
 
-        this->ini.globals.context.selector_lines_per_page = (this->selector.first_page.dy() - (this->selector.device_lines.dy() + 10) + this->selector.device_lines.h_border) / (this->selector.device_lines.h_text + this->selector.device_lines.y_text * 2 + this->selector.device_lines.h_border);
+        this->ini.context.selector_lines_per_page = (this->selector.first_page.dy() - (this->selector.device_lines.dy() + 10) + this->selector.device_lines.h_border) / (this->selector.device_lines.h_text + this->selector.device_lines.y_text * 2 + this->selector.device_lines.h_border);
         this->ask_page();
 
         this->selector.refresh(this->selector.rect);
@@ -193,9 +193,9 @@ public:
         char * groups    = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0));
         char * targets   = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0));
         char * protocols = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0));
-        char * endtimes  = const_cast<char *>((const char *)this->ini.globals.context.end_time);
+        char * endtimes  = const_cast<char *>((const char *)this->ini.context.end_time);
 
-        for (unsigned index = 0 ; index < this->ini.globals.context.selector_lines_per_page; index++) {
+        for (unsigned index = 0 ; index < this->ini.context.selector_lines_per_page; index++) {
             size_t size_groups = proceed_item(groups);
             if (!size_groups)
                 break;
