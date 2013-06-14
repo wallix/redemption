@@ -52,8 +52,8 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     Inifile ini;
     RDPDrawable drawable(800, 600, true);
     NativeCapture consumer(now, trans, 800, 600, bmp_cache, &drawable, ini);
-    ini.globals.video.frame_interval = 100; // one snapshot by second
-    ini.globals.video.break_interval = 5;   // one WRM file every 5 seconds
+    ini.video.frame_interval = 100; // one snapshot by second
+    ini.video.break_interval = 5;   // one WRM file every 5 seconds
     consumer.update_config(ini);
 
     consumer.draw(RDPOpaqueRect(scr, RED), scr);

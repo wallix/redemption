@@ -305,7 +305,6 @@ namespace X224
     };
 
     // Factory just read enough data to know the type of packet we are dealing with
-    TODO("This could be TPKT transport layer, hence X224 could follow the same profile as others layers functions");
     struct RecvFactory
     {
         int type;

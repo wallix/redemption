@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Author(s): Christophe Grosjean, Javier Caverni, JOnathan Poelen, Raphael Zhou
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Use (implemented) basic RDP orders to draw some known test pattern
@@ -24,33 +24,43 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_TEST_CARD_HPP_
 #define _REDEMPTION_MOD_INTERNAL_TEST_CARD_HPP_
 
-#include "internal/internal_mod.hpp"
+#include "widget2_internal_mod.hpp"
 #include "RDP/bitmapupdate.hpp"
 
-struct test_card_mod : public internal_mod {
+class TestCardMod : public InternalMod
+{
     BGRPalette palette332;
-    test_card_mod(FrontAPI & front, uint16_t width, uint16_t height)
-        : internal_mod(front, width, height)
+
+public:
+    TestCardMod(FrontAPI & front, uint16_t width, uint16_t height)
+    : InternalMod(front, width, height)
     {
         init_palette332(this->palette332);
     }
 
-    virtual ~test_card_mod()
+    virtual ~TestCardMod()
     {
     }
 
-    virtual void rdp_input_invalidate(const Rect & rect)
+    virtual void rdp_input_invalidate(const Rect & /*rect*/)
     {
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+    virtual void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/)
     {
     }
 
-    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap){
+    virtual void rdp_input_scancode(long /*param1*/, long /*param2*/, long /*param3*/,
+                                    long /*param4*/, Keymap2 * keymap)
+    {
+        if (keymap->nb_kevent_available() > 0
+         && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
+            this->mod_event(BACK_EVENT_STOP);
+        }
     }
 
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+    virtual void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
+                                       int16_t /*param1*/, int16_t /*param2*/)
     {
     }
 
@@ -61,7 +71,7 @@ struct test_card_mod : public internal_mod {
     {
         this->draw();
         this->event.reset();
-        return BACK_EVENT_NONE;
+        return this->signal;
     }
 
     void draw()
@@ -139,7 +149,7 @@ struct test_card_mod : public internal_mod {
             0xf0, 0xc0, 0x0f,
         };
 
-        Bitmap bloc64x64(24, &this->palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
+        Bitmap bloc64x64(24, &this->palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true);
         this->front.draw(RDPMemBlt(0,
             Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx, bloc64x64.cy), 0xCC,
              32, 32, 0), clip, bloc64x64);

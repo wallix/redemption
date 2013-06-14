@@ -35,7 +35,7 @@
 #include "front_api.hpp"
 #include "wait_obj.hpp"
 
-#include "internal/test_card.hpp"
+#include "internal/widget2/test_card_mod.hpp"
 
 BOOST_AUTO_TEST_CASE(TestShowTestCard)
 {
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
     } front(info);
 
     BOOST_CHECK(true);
-    test_card_mod mod(front, info.width, info.height);
+    TestCardMod mod(front, info.width, info.height);
     BOOST_CHECK(true);
     try{
         BackEvent_t res = mod.draw_event();

@@ -209,7 +209,7 @@ void redemption_new_session()
     ini.context_set_value(AUTHID_HOST, source_ip);
     ini.context_set_value(AUTHID_TARGET, real_target_ip);
 
-    if (ini.globals.debug.session){
+    if (ini.debug.session){
         LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
     }
 
@@ -219,7 +219,7 @@ void redemption_new_session()
 
         Session session(front_event, sck, &refreshconf, &ini);
 
-        if (ini.globals.debug.session){
+        if (ini.debug.session){
             LOG(LOG_INFO, "Session::end of Session(%u)", sck);
         }
 
