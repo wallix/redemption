@@ -1446,7 +1446,8 @@ struct Inifile {
             this->globals.context.target_password     = value;
             break;
         case AUTHID_TARGET_PORT:
-                this->globals.context.target_port     = ulong_from_cstr(value);
+            this->globals.context.ask_target_port     = false;
+            this->globals.context.target_port         = ulong_from_cstr(value);
             break;
         case AUTHID_TARGET_PROTOCOL:
             this->globals.context.ask_target_protocol = false;
@@ -1576,6 +1577,20 @@ struct Inifile {
 
         switch (authid)
         {
+        case AUTHID_OPT_CLIPBOARD:
+            if (size) {
+                strncpy(buffer, (this->globals.client.clipboard ? "True" : "False"), size);
+                buffer[size - 1] = 0;
+                pszReturn = buffer;
+            }
+            break;
+        case AUTHID_OPT_DEVICEREDIRECTION:
+            if (size) {
+                strncpy(buffer, (this->globals.client.device_redirection ? "True" : "False"), size);
+                buffer[size - 1] = 0;
+                pszReturn = buffer;
+            }
+            break;
         case AUTHID_OPT_FILE_ENCRYPTION:
             if (size) {
                 strncpy(buffer, (this->globals.enable_file_encryption ? "True" : "False"), size);
@@ -1583,6 +1598,66 @@ struct Inifile {
                 pszReturn = buffer;
             }
             break;
+
+        case AUTHID_OPT_CODEC_ID:
+            if (size) {
+                strncpy(buffer, this->globals.codec_id, size);
+                buffer[size - 1] = 0;
+                pszReturn = buffer;
+            }
+            break;
+        case AUTHID_OPT_MOVIE:
+            if (size) {
+                strncpy(buffer, (this->globals.movie ? "True" : "False"), size);
+                buffer[size - 1] = 0;
+                pszReturn = buffer;
+            }
+            break;
+        case AUTHID_OPT_MOVIE_PATH:
+            if (size) {
+                strncpy(buffer, this->globals.movie_path, size);
+                buffer[size - 1] = 0;
+                pszReturn = buffer;
+            }
+            break;
+        case AUTHID_VIDEO_QUALITY:
+            if (size) {
+                strncpy(buffer, this->globals.video_quality, size);
+                buffer[size - 1] = 0;
+                pszReturn = buffer;
+            }
+            break;
+
+        case AUTHID_ALTERNATE_SHELL:
+            if (size) {
+                pszReturn = this->globals.alternate_shell;
+            }
+            break;
+        case AUTHID_SHELL_WORKING_DIRECTORY:
+            if (size) {
+                pszReturn = this->globals.shell_working_directory;
+            }
+            break;
+
+        case AUTHID_OPT_BITRATE:
+            if (size) {
+                snprintf(buffer, size, "%u", this->globals.context.opt_bitrate);
+                pszReturn = buffer;
+            }
+            break;
+        case AUTHID_OPT_FRAMERATE:
+            if (size) {
+                snprintf(buffer, size, "%u", this->globals.context.opt_framerate);
+                pszReturn = buffer;
+            }
+            break;
+        case AUTHID_OPT_QSCALE:
+            if (size) {
+                snprintf(buffer, size, "%u", this->globals.context.opt_qscale);
+                pszReturn = buffer;
+            }
+            break;
+
         case AUTHID_OPT_BPP:
             if (  size
                && !this->globals.context.ask_opt_bpp) {
@@ -1604,6 +1679,13 @@ struct Inifile {
                 pszReturn = buffer;
             }
             break;
+
+        case AUTHID_AUTH_ERROR_MESSAGE:
+            if (size) {
+                pszReturn = this->globals.context.auth_error_message;
+            }
+            break;
+
         case AUTHID_SELECTOR:
             if (  size
                && !this->globals.context.ask_selector) {
@@ -1642,6 +1724,7 @@ struct Inifile {
                 pszReturn = buffer;
             }
             break;
+
         case AUTHID_TARGET_DEVICE:
             if (!this->globals.context.ask_target_device) {
                 pszReturn = this->globals.target_device;
@@ -1650,6 +1733,13 @@ struct Inifile {
         case AUTHID_TARGET_PASSWORD:
             if (!this->globals.context.ask_target_password) {
                 pszReturn = this->globals.context.target_password;
+            }
+            break;
+        case AUTHID_TARGET_PORT:
+            if (  size
+               && !this->globals.context.ask_target_port) {
+                snprintf(buffer, size, "%u", this->globals.context.target_port);
+                pszReturn = buffer;
             }
             break;
         case AUTHID_TARGET_PROTOCOL:
@@ -1662,6 +1752,7 @@ struct Inifile {
                 pszReturn = this->globals.target_user;
             }
             break;
+
         case AUTHID_AUTH_USER:
             if (!this->globals.context.ask_auth_user) {
                 pszReturn = this->globals.auth_user;
@@ -1672,9 +1763,22 @@ struct Inifile {
                 pszReturn = this->globals.host;
             }
             break;
+
+        case AUTHID_TARGET:
+            if (  size
+               && !this->globals.context.ask_target) {
+                pszReturn = this->globals.target;
+            }
+            break;
         case AUTHID_PASSWORD:
             if (!this->globals.context.ask_password) {
                 pszReturn = this->globals.context.password;
+            }
+            break;
+
+        case AUTHID_AUTHCHANNEL_ANSWER:
+            if (size) {
+                pszReturn = this->globals.context.authchannel_answer;
             }
             break;
         case AUTHID_AUTHCHANNEL_RESULT:
@@ -1687,6 +1791,12 @@ struct Inifile {
                 pszReturn = this->globals.context.authchannel_target;
             }
             break;
+
+        case AUTHID_MESSAGE:
+            if (size) {
+                pszReturn = this->globals.context.message;
+            }
+            break;
         case AUTHID_ACCEPT_MESSAGE:
             if (!this->globals.context.ask_accept_message) {
                 pszReturn = this->globals.context.accept_message;
@@ -1697,6 +1807,20 @@ struct Inifile {
                 pszReturn = this->globals.context.display_message;
             }
             break;
+
+        case AUTHID_AUTHENTICATED:
+            if (size) {
+                strncpy(buffer, (this->globals.context.authenticated ? "True" : "False"), size);
+                buffer[size - 1] = 0;
+                pszReturn = buffer;
+            }
+            break;
+        case AUTHID_REJECTED:
+            if (size) {
+                pszReturn = this->globals.context.rejected;
+            }
+            break;
+
         case AUTHID_KEEPALIVE:
             if (  size
                && !this->globals.context.ask_keepalive) {
@@ -1706,6 +1830,7 @@ struct Inifile {
                 pszReturn = buffer;
             }
             break;
+
         case AUTHID_PROXY_TYPE:
             if (!this->globals.context.ask_proxy_type) {
                 pszReturn = this->globals.context.proxy_type;
@@ -1716,8 +1841,29 @@ struct Inifile {
                 pszReturn = this->globals.context.trace_seal;
             }
             break;
+
+        case AUTHID_SESSION_ID:
+            pszReturn = this->globals.context.session_id;
+            break;
+
+        case AUTHID_END_DATE_CNX:
+            if (size) {
+                snprintf(buffer, size, "%u", this->globals.context.end_date_cnx);
+                pszReturn = buffer;
+            }
+            break;
         case AUTHID_END_TIME:
             pszReturn = this->globals.context.end_time;
+            break;
+
+        case AUTHID_MODE_CONSOLE:
+            pszReturn = this->globals.context.mode_console;
+            break;
+        case AUTHID_TIMEZONE:
+            if (size) {
+                snprintf(buffer, size, "%d", this->globals.context.timezone);
+                pszReturn = buffer;
+            }
             break;
 
         case AUTHID_REAL_TARGET_DEVICE:
