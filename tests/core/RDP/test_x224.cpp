@@ -34,6 +34,79 @@
 #include "RDP/x224.hpp"
 
 
+
+BOOST_AUTO_TEST_CASE(TestReceive_RecvFactory_Bad_TPKT)
+{
+    GeneratorTransport t("\x04\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
+
+    BStream stream(65536);
+    try {
+        X224::RecvFactory fac_x224(t, stream);
+        BOOST_CHECK(false);
+    } catch (Error & e) {
+        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+    };
+}
+
+BOOST_AUTO_TEST_CASE(TestReceive_RecvFactory_Short_TPKT)
+{
+    GeneratorTransport t("\x03\x00\x00\x02\x06\x10\x00\x00\x00\x00\x00", 11);
+
+    BStream stream(65536);
+    try {
+        X224::RecvFactory fac_x224(t, stream);
+        BOOST_CHECK(false);
+    } catch (Error & e) {
+        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+    };
+}
+
+BOOST_AUTO_TEST_CASE(TestReceive_RecvFactory_Unknown_TPDU)
+{
+    GeneratorTransport t("\x03\x00\x00\x0B\x06\x10\x00\x00\x00\x00\x00", 11);
+
+    BStream stream(65536);
+    try {
+        X224::RecvFactory fac_x224(t, stream);
+        BOOST_CHECK(false);
+    } catch (Error & e) {
+        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+    };
+}
+
+BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_no_factory)
+{
+    GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
+
+    BStream stream(65536);
+    X224::CR_TPDU_Recv x224(t, stream);
+
+    BOOST_CHECK_EQUAL(3, x224.tpkt.version);
+    BOOST_CHECK_EQUAL(11, x224.tpkt.len);
+    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
+    BOOST_CHECK_EQUAL(0, strlen(x224.cookie));
+    BOOST_CHECK_EQUAL(0, x224.rdp_neg_type);
+
+    BOOST_CHECK_EQUAL(stream.size(), x224.tpkt.len);
+    BOOST_CHECK_EQUAL(x224._header_size, stream.size());
+}
+
+BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_overfull_stream)
+{
+    GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
+
+    BStream stream(4);
+    try {
+        X224::CR_TPDU_Recv x224(t, stream);
+        BOOST_CHECK(false);
+    }
+    catch (Error & e) {
+        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+    };
+}
+
+
 BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
 {
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
