@@ -42,8 +42,9 @@ class SelectorMod : public InternalMod, public NotifyApi
         char buffer[256];
 
         temporary_login(Inifile& ini) {
-            buffer[0] = 0;
-            sprintf(buffer, "%s@%s", ini.globals.auth_user, ini.globals.host);
+            this->buffer[0] = 0;
+            snprintf(this->buffer, sizeof(this->buffer),
+                     "%s@%s", ini.globals.auth_user, ini.globals.host);
         }
     };
 
@@ -112,7 +113,7 @@ public:
             if (widget == &this->selector.connect
              || widget->group_id == this->selector.device_lines.group_id) {
                 char buffer[1024];
-                sprintf(buffer, "%s:%s",
+                snprintf(buffer, sizeof(buffer), "%s:%s",
                         this->selector.target_lines.get_current_index(),
                         this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0));
                 this->ini.parse_username(buffer);

@@ -40,6 +40,10 @@
 import ImageFont
 import struct
 
+import sys
+import codecs
+sys.stdout = codecs.getwriter("utf-8")(sys.stdout)
+
 FONT_SIZE = 11
 CHARSET_SIZE = 0x4e00
 
@@ -78,8 +82,8 @@ def doBitmap( f, cptPix, pix, byteBmp, totB):
 # MAIN
 ########################################################################################################################
 
-police = ImageFont.truetype("/home/dlafages/work/wab/tags/wab2-2.1.8/redemption/tests/fixtures/DejaVuSans.ttf", FONT_SIZE)
-#police = ImageFont.truetype("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", FONT_SIZE)
+#police = ImageFont.truetype("/home/dlafages/work/wab/tags/wab2-2.1.8/redemption/tests/fixtures/DejaVuSans.ttf", FONT_SIZE)
+police = ImageFont.truetype("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", FONT_SIZE)
 
 filename = u"./dejavu_{fontsize}.fv1".format(fontsize = FONT_SIZE)
 f = open(filename, u'w')
@@ -125,12 +129,26 @@ for i in range(32, CHARSET_SIZE):
     baseW = x
     baseH = y
 
+    abc = police.font.getabc(unichr(i))
+
     # width of glyph (based on ABC.abcB, rounded to the next multiple of 8)
-    fullW = (((x - 1 ) / 8 ) + 1 ) * 8
+    rfullW = (((x - 1 ) / 8 ) + 1 ) * 8
+    if rfullW == 0:
+        rfullW = 8
+
+    xx = x
+    if abc[1] != 0:
+      if abc[0] == 0:
+        xx = xx + 1
+      if abc[2] == 0:
+        xx = xx + 1
+    fullW = (((xx - 1 ) / 8 ) + 1 ) * 8
     if fullW == 0:
         fullW = 8
     line = struct.pack('h', fullW )
     f.write(line)
+
+    print rfullW, " ", fullW, " ", x, " ", xx
 
     # height of glyph (rounded to the next multiple of 8)
     fullH = (((y - 1) / 8 ) + 1) * 8
@@ -152,7 +170,7 @@ for i in range(32, CHARSET_SIZE):
     f.write(line)
 
     # incby of glyph
-    line = struct.pack('h', x)
+    line = struct.pack('h', xx)
     f.write(line)
 
     # Pad with 6 zeros
@@ -195,7 +213,11 @@ for i in range(32, CHARSET_SIZE):
 
             if iy < baseH:
 
-                for ix in range (0, fullW):
+                if x != xx and abc[0] == 0:
+                  print ".",
+                  cptPix, byteBitmap, totBytes = doBitmap(f, cptPix, 0, byteBitmap, totBytes)
+
+                for ix in range (0, fullW - (xx-x)):
 
                     if ix < baseW:
                         pix = msk.getpixel((ix, iy))
@@ -206,8 +228,20 @@ for i in range(32, CHARSET_SIZE):
                             print ".",
                             cptPix, byteBitmap, totBytes = doBitmap(f, cptPix, 0, byteBitmap, totBytes)
                     else:
+                        if x != xx and abc[2] == 0 and ix == baseW:
+                          print ".",
+                          cptPix, byteBitmap, totBytes = doBitmap(f, cptPix, 0, byteBitmap, totBytes)
                         print "o",
                         cptPix, byteBitmap, totBytes = doBitmap(f, cptPix, 0, byteBitmap, totBytes)
+
+                X = fullW - (xx-x)
+                if x != xx and abc[0] == 0:
+                  X = X + 1
+
+                if x != xx and abc[2] == 0 and X < xx:
+                  print ".",
+                  cptPix, byteBitmap, totBytes = doBitmap(f, cptPix, 0, byteBitmap, totBytes)
+
             else:
                 for ix in range (0, fullW):
                     print "+",

@@ -35,11 +35,9 @@ TODO("Sesman is performing two largely unrelated tasks : finding out the next mo
 
 typedef enum {
     INTERNAL_NONE,
-    INTERNAL_LOGIN,
     INTERNAL_DIALOG_DISPLAY_MESSAGE,
     INTERNAL_DIALOG_VALID_MESSAGE,
     INTERNAL_CLOSE,
-    INTERNAL_SELECTOR,
     INTERNAL_BOUNCER2,
     INTERNAL_TEST,
     INTERNAL_CARD,
@@ -218,6 +216,8 @@ class SessionManager {
             case STATE_VALUE:
                 if (*stream.p == '\n'){
                     *stream.p = 0;
+
+                    LOG(LOG_INFO, " ================== receiving %s '%s'\n", value, keyword);
 
                     if ((0 == strncasecmp((char*)value, "ask", 3))) {
                         this->ini->context_ask((char *)keyword);
@@ -421,7 +421,7 @@ class SessionManager {
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL selector");
                 }
-                nextmod = INTERNAL_SELECTOR;
+                nextmod = INTERNAL_WIDGET2_SELECTOR;
             }
             else if (0 == strcmp(target, "login")){
                 if (this->verbose & 0x4){
@@ -434,12 +434,6 @@ class SessionManager {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
                 }
                 nextmod = INTERNAL_CLOSE;
-            }
-            else if (0 == strcmp(target, "widget2_selector")){
-                if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_selector");
-                }
-                nextmod = INTERNAL_WIDGET2_SELECTOR;
             }
             else if (0 == strcmp(target, "widget2_close")){
                 if (this->verbose & 0x4){
@@ -538,7 +532,7 @@ class SessionManager {
                  &&  !this->ini->context_is_asked(AUTHID_TARGET_DEVICE)
                  &&  !this->ini->context_is_asked(AUTHID_TARGET_USER)){
                 this->mod_state = MOD_STATE_DONE_SELECTOR;
-                nextmod = INTERNAL_SELECTOR;
+                nextmod = INTERNAL_WIDGET2_SELECTOR;
                 return MCTX_STATUS_INTERNAL;
             }
             else if (this->ini->context_is_asked(AUTHID_TARGET_DEVICE)
