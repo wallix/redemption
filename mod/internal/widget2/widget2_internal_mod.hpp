@@ -56,6 +56,11 @@ public:
     virtual ~InternalMod()
     {}
 
+    const Rect & get_screen_rect() const
+    {
+        return this->screen.rect;
+    }
+
     virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags)
     {
         const CHANNELS::ChannelDef * front_channel = this->front.get_channel_list().get(mod_channel_name);

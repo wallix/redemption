@@ -50,15 +50,15 @@
 #include "authentifier.hpp"
 #include "front.hpp"
 #include "null/null.hpp"
-#include "internal/bouncer2.hpp"
-#include "internal/test_card.hpp"
-#include "internal/test_internal.hpp"
 #include "rdp/rdp.hpp"
 #include "vnc/vnc.hpp"
 #include "xup/xup.hpp"
 #include "transitory/transitory.hpp"
 #include "cli/cli_mod.hpp"
 
+#include "internal/widget2/bouncer2.hpp"
+#include "internal/widget2/test_card_mod.hpp"
+#include "internal/widget2/replay_mod.hpp"
 #include "internal/widget2/selector_mod.hpp"
 #include "internal/widget2/wab_close_mod.hpp"
 #include "internal/widget2/dialog_mod.hpp"
@@ -115,18 +115,18 @@ struct Session {
         : refreshconf(refreshconf)
         , front_event(front_event)
         , ini(ini)
-        , verbose(this->ini->globals.debug.session)
+        , verbose(this->ini->debug.session)
         , nextmod(INTERNAL_NONE)
         , mod_transport(NULL)
     {
-        SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->globals.debug.front);
+        SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->debug.front);
 
         try {
             this->sesman = new SessionManager( this->ini
                                              , this->ini->globals.keepalive_grace_delay
                                              , this->ini->globals.max_tick
                                              , this->ini->globals.internal_domain
-                                             , this->ini->globals.debug.auth);
+                                             , this->ini->debug.auth);
             this->mod = 0;
             this->internal_state = SESSION_STATE_ENTRY;
             const bool enable_fastpath = true;
@@ -262,11 +262,11 @@ struct Session {
                         if (this->sesman->event(rfds)){
                             this->sesman->receive_next_module();
 
-                            if (strcmp(this->ini->globals.context.mode_console, "force") == 0){
+                            if (strcmp(this->ini->context.mode_console, "force") == 0){
                                 this->front->set_console_session(true);
                                 LOG(LOG_INFO, "Session::mode console : force");
                             }
-                            else if (strcmp(this->ini->globals.context.mode_console, "forbid") == 0){
+                            else if (strcmp(this->ini->context.mode_console, "forbid") == 0){
                                 this->front->set_console_session(false);
                                 LOG(LOG_INFO, "Session::mode console : forbid");
                             }
@@ -289,11 +289,11 @@ struct Session {
                         if (this->sesman->event(rfds)){
                             this->sesman->receive_next_module();
 
-                            if (strcmp(this->ini->globals.context.mode_console, "force") == 0){
+                            if (strcmp(this->ini->context.mode_console, "force") == 0){
                                 this->front->set_console_session(true);
                                 LOG(LOG_INFO, "Session::mode console : force");
                             }
-                            else if (strcmp(this->ini->globals.context.mode_console, "forbid") == 0){
+                            else if (strcmp(this->ini->context.mode_console, "forbid") == 0){
                                 this->front->set_console_session(false);
                                 LOG(LOG_INFO, "Session::mode console : forbid");
                             }
@@ -325,12 +325,12 @@ struct Session {
                         // Check if sesman received an answer to auth_channel_target
                         if (this->ini->globals.auth_channel[0]) {
                             // Get sesman answer to AUTHCHANNEL_TARGET
-                            if (!this->ini->globals.context.authchannel_answer.is_empty()) {
+                            if (!this->ini->context.authchannel_answer.is_empty()) {
                                 // If set, transmit to auth_channel channel
                                 this->mod->send_auth_channel_data(
-                                    this->ini->globals.context.authchannel_answer);
+                                    this->ini->context.authchannel_answer);
                                 // Erase the context variable
-                                this->ini->globals.context.authchannel_answer = "";
+                                this->ini->context.authchannel_answer = "";
                             }
                         }
 
@@ -380,9 +380,9 @@ struct Session {
                                 }
                                // end the current module and switch to new one
                                 this->remove_mod();
-                                this->ini->globals.context.opt_width  = this->front->client_info.width;
-                                this->ini->globals.context.opt_height = this->front->client_info.height;
-                                this->ini->globals.context.opt_bpp    = this->front->client_info.bpp;
+                                this->ini->context.opt_width  = this->front->client_info.width;
+                                this->ini->context.opt_height = this->front->client_info.height;
+                                this->ini->context.opt_bpp    = this->front->client_info.bpp;
                                 bool record_video = false;
                                 bool keep_alive = false;
                                 if (!this->sesman){
@@ -481,10 +481,10 @@ struct Session {
         delete this->no_mod;
         delete this->sesman;
         // Suppress Session file from disk (original name with PID or renamed with session_id)
-        if (!this->ini->globals.context.session_id.is_empty()) {
+        if (!this->ini->context.session_id.is_empty()) {
             char new_session_file[256];
             sprintf(new_session_file, "%s/session_%s.pid", PID_PATH,
-                (const char *)this->ini->globals.context.session_id);
+                (const char *)this->ini->context.session_id);
             unlink(new_session_file);
         }
         else {
@@ -514,11 +514,11 @@ struct Session {
             LOG(LOG_INFO, "Session::session_setup_mod(target_module=%u, submodule=%u)", target_module, (unsigned)submodule);
         }
 
-        if (strcmp(this->ini->globals.context.mode_console, "force") == 0){
+        if (strcmp(this->ini->context.mode_console, "force") == 0){
             this->front->set_console_session(true);
             LOG(LOG_INFO, "Session::mode console : force");
         }
-        else if (strcmp(this->ini->globals.context.mode_console, "forbid") == 0){
+        else if (strcmp(this->ini->context.mode_console, "forbid") == 0){
             this->front->set_console_session(false);
             LOG(LOG_INFO, "Session::mode console : forbid");
         }
@@ -553,8 +553,8 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of new mod 'INTERNAL::Close'");
                         }
-                        if (this->ini->globals.context.auth_error_message.is_empty()) {
-                            this->ini->globals.context.auth_error_message = "Connection to server ended";
+                        if (this->ini->context.auth_error_message.is_empty()) {
+                            this->ini->context.auth_error_message = "Connection to server ended";
                         }
                         this->mod = new WabCloseMod(*this->ini,
                                                     *this->front,
@@ -570,10 +570,10 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'bouncer2'");
                         }
-                        this->mod = new bouncer2_mod(*this->front,
-                                                     this->front->client_info.width,
-                                                     this->front->client_info.height
-                                                     );
+                        this->mod = new Bouncer2Mod(*this->front,
+                                                    this->front->client_info.width,
+                                                    this->front->client_info.height
+                                                    );
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::internal module 'bouncer2' ready");
                         }
@@ -582,13 +582,13 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'test'");
                         }
-                        this->mod = new test_internal_mod(
+                        this->mod = new ReplayMod(
                               *this->front
-                            , this->ini->globals.video.replay_path
-                            , this->ini->globals.context.movie
+                            , this->ini->video.replay_path
+                            , this->ini->context.movie
                             , this->front->client_info.width
                             , this->front->client_info.height
-                            , this->ini->globals.context.auth_error_message
+                            , this->ini->context.auth_error_message
                             );
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::internal module 'test' ready");
@@ -598,11 +598,10 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'test_card'");
                         }
-                        this->mod = new test_card_mod(
-                                        *this->front,
-                                        this->front->client_info.width,
-                                        this->front->client_info.height
-                                        );
+                        this->mod = new TestCardMod(*this->front,
+                                                    this->front->client_info.width,
+                                                    this->front->client_info.height
+                                                    );
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::internal module 'test_card' ready");
                         }
@@ -641,8 +640,8 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'Dialog Accept Message'");
                         }
 
-                        const char * message = this->ini->globals.context.message;
-                        const char * button = this->ini->globals.translation.button_refused;
+                        const char * message = this->ini->context.message;
+                        const char * button = this->ini->translation.button_refused;
                         const char * caption = "Information";
                         this->mod = new DialogMod(
                             *this->ini,
@@ -665,7 +664,7 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'Dialog Display Message'");
                         }
 
-                        const char * message = this->ini->globals.context.message;
+                        const char * message = this->ini->context.message;
                         const char * button = NULL;
                         const char * caption = "Information";
                         this->mod = new DialogMod(
@@ -709,12 +708,12 @@ struct Session {
                 }
 
                 int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->globals.context.target_port,
+                                            this->ini->context.target_port,
                                             4, 1000,
-                                            this->ini->globals.debug.mod_xup);
+                                            this->ini->debug.mod_xup);
 
                 if (client_sck == -1){
-                    this->ini->globals.context.auth_error_message = "failed to connect to remote TCP host";
+                    this->ini->context.auth_error_message = "failed to connect to remote TCP host";
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -722,23 +721,23 @@ struct Session {
                       name
                     , client_sck
                     , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->globals.context.target_port
-                    , this->ini->globals.debug.mod_xup);
+                    , this->ini->context.target_port
+                    , this->ini->debug.mod_xup);
                 this->mod_transport = t;
 
-                this->ini->globals.context.auth_error_message = "failed authentification on remote X host";
+                this->ini->context.auth_error_message = "failed authentification on remote X host";
                 this->mod = new xup_mod( t
                                        , *this->front
                                        , this->front->client_info.width
                                        , this->front->client_info.height
-                                       , this->ini->globals.context.opt_width
-                                       , this->ini->globals.context.opt_height
-                                       , this->ini->globals.context.opt_bpp
+                                       , this->ini->context.opt_width
+                                       , this->ini->context.opt_height
+                                       , this->ini->context.opt_bpp
                                        );
                 this->mod->event.obj = client_sck;
                 this->mod->draw_event();
 //                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
-                this->ini->globals.context.auth_error_message = "";
+                this->ini->context.auth_error_message = "";
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'XUP' suceeded\n");
                 }
@@ -760,12 +759,12 @@ struct Session {
                 static const char * name = "RDP Target";
 
                 int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->globals.context.target_port,
+                                            this->ini->context.target_port,
                                             3, 1000,
-                                            this->ini->globals.debug.mod_rdp);
+                                            this->ini->debug.mod_rdp);
 
                 if (client_sck == -1){
-                    this->ini->globals.context.auth_error_message = "failed to connect to remote TCP host";
+                    this->ini->context.auth_error_message = "failed to connect to remote TCP host";
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -774,13 +773,13 @@ struct Session {
                       name
                     , client_sck
                     , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->globals.context.target_port
-                    , this->ini->globals.debug.mod_rdp
-                    , &this->ini->globals.context.auth_error_message
+                    , this->ini->context.target_port
+                    , this->ini->debug.mod_rdp
+                    , &this->ini->context.auth_error_message
                     );
                 this->mod_transport = t;
 
-                this->ini->globals.context.auth_error_message = "failed authentification on remote RDP host";
+                this->ini->context.auth_error_message = "failed authentification on remote RDP host";
                 this->mod = new mod_rdp( t
                                        , this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0)
                                        , this->ini->context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
@@ -795,11 +794,11 @@ struct Session {
                                        , this->ini->globals.auth_channel
                                        , this->ini->globals.alternate_shell
                                        , this->ini->globals.shell_working_directory
-                                       , this->ini->globals.client.clipboard
+                                       , this->ini->client.clipboard
                                        , true   // support fast-path
                                        , true   // support mem3blt
                                        , this->ini->globals.enable_bitmap_update
-                                       , this->ini->globals.debug.mod_rdp
+                                       , this->ini->debug.mod_rdp
                                        , true   // support new pointer
                                        );
                 this->mod->event.obj = client_sck;
@@ -808,7 +807,7 @@ struct Session {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'RDP' suceeded\n");
                 }
-                this->ini->globals.context.auth_error_message = "";
+                this->ini->context.auth_error_message = "";
             }
             break;
 
@@ -821,12 +820,12 @@ struct Session {
 
 
                 int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->globals.context.target_port,
+                                            this->ini->context.target_port,
                                             3, 1000,
-                                            this->ini->globals.debug.mod_vnc);
+                                            this->ini->debug.mod_vnc);
 
                 if (client_sck == -1){
-                    this->ini->globals.context.auth_error_message = "failed to connect to remote TCP host";
+                    this->ini->context.auth_error_message = "failed to connect to remote TCP host";
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -834,11 +833,11 @@ struct Session {
                       name
                     , client_sck
                     , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->globals.context.target_port
-                    , this->ini->globals.debug.mod_vnc);
+                    , this->ini->context.target_port
+                    , this->ini->debug.mod_vnc);
                 this->mod_transport = t;
 
-                this->ini->globals.context.auth_error_message = "failed authentification on remote VNC host";
+                this->ini->context.auth_error_message = "failed authentification on remote VNC host";
 
                 this->mod = new mod_vnc(
                       t
@@ -849,16 +848,16 @@ struct Session {
                     , this->front->client_info.height
                     , this->front->client_info.keylayout
                     , this->front->keymap.key_flags
-                    , this->ini->globals.client.clipboard
+                    , this->ini->client.clipboard
                     , true /* RRE encoding */
-                    , this->ini->globals.debug.mod_vnc);
+                    , this->ini->debug.mod_vnc);
                 this->mod->event.obj = client_sck;
                 this->mod->draw_event();
 
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'VNC' suceeded\n");
                 }
-                this->ini->globals.context.auth_error_message = "";
+                this->ini->context.auth_error_message = "";
             }
             break;
 

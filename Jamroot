@@ -404,17 +404,14 @@ unit-test test_cli_mod : tests/mod/cli/test_cli_mod.cpp libboost_unit_test gcov 
 unit-test test_draw_api : tests/mod/test_draw_api.cpp libboost_unit_test ;
 unit-test test_draw_api : tests/mod/test_draw_api.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_bouncer2 : tests/mod/internal/test_bouncer2.cpp libboost_unit_test ;
-unit-test test_bouncer2 : tests/mod/internal/test_bouncer2.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_bouncer2 : tests/mod/internal/widget2/test_bouncer2.cpp libboost_unit_test ;
+unit-test test_bouncer2 : tests/mod/internal/widget2/test_bouncer2.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test ;
-unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_test_card_mod : tests/mod/internal/widget2/test_test_card_mod.cpp libboost_unit_test ;
+unit-test test_test_card_mod : tests/mod/internal/widget2/test_test_card_mod.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_test_card : tests/mod/internal/test_test_card.cpp libboost_unit_test ;
-unit-test test_test_card : tests/mod/internal/test_test_card.cpp libboost_unit_test gcov : <variant>coverage ;
-
-unit-test test_test_internal : tests/mod/internal/test_test_internal.cpp libboost_unit_test ;
-unit-test test_test_internal : tests/mod/internal/test_test_internal.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_replay_mod : tests/mod/internal/widget2/test_replay_mod.cpp libboost_unit_test ;
+unit-test test_replay_mod : tests/mod/internal/widget2/test_replay_mod.cpp libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_dialog_mod : tests/mod/internal/widget2/test_dialog_mod.cpp libboost_unit_test ;
 unit-test test_dialog_mod : tests/mod/internal/widget2/test_dialog_mod.cpp libboost_unit_test gcov : <variant>coverage ;
@@ -454,15 +451,6 @@ unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp l
 
 unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp libboost_unit_test ;
 unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp libboost_unit_test gcov : <variant>coverage ;
-
-unit-test test_widget_screen : tests/mod/internal/widget/test_widget_screen.cpp libboost_unit_test ;
-unit-test test_widget_screen : tests/mod/internal/widget/test_widget_screen.cpp libboost_unit_test gcov : <variant>coverage ;
-
-unit-test test_widget_widget : tests/mod/internal/widget/test_widget_widget.cpp libboost_unit_test ;
-unit-test test_widget_widget : tests/mod/internal/widget/test_widget_widget.cpp libboost_unit_test gcov : <variant>coverage ;
-
-unit-test test_widget_window : tests/mod/internal/widget/test_widget_window.cpp libboost_unit_test ;
-unit-test test_widget_window : tests/mod/internal/widget/test_widget_window.cpp libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_mod_api : tests/mod/test_mod_api.cpp libboost_unit_test ;
 unit-test test_mod_api : tests/mod/test_mod_api.cpp libboost_unit_test gcov : <variant>coverage ;

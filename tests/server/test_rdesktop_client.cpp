@@ -74,14 +74,14 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     Inifile ini;
     int verbose = 511;
-    ini.globals.debug.front = 511;
+    ini.debug.front = 511;
 
 //    int nodelay = 1;
 //    if (-1 == setsockopt(one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
 //        LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
 //    }
 //    wait_obj front_event(one_shot_server.sck);
-//    SocketTransport front_trans("RDP Client", one_shot_server.sck, ini.globals.debug.front);
+//    SocketTransport front_trans("RDP Client", one_shot_server.sck, ini.debug.front);
 
     LCGRandom gen(0);
 
@@ -109,11 +109,11 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     while (front.up_and_running == 0){
         front.incoming(no_mod);
     }
-    
+
     BOOST_CHECK_EQUAL(0, memcmp(front.client_info.hostname, "cgrgpu\0\0\0\0\0\0\0\0\0\0", 16));
-    
+
     BOOST_CHECK_EQUAL(1, front.up_and_running);
-    test_card_mod mod(front, front.client_info.width, front.client_info.height);
+    TestCardMod mod(front, front.client_info.width, front.client_info.height);
     mod.draw_event();
 
 //    sleep(5);
