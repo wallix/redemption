@@ -90,9 +90,9 @@ class Cover:
                 covered, total = self.compute_coverage("%s/%s" % (d, x))
                 if x in self.bestcoverage:
                     old_cover, old_total, old_path = self.bestcoverage[x]
-                    if covered * old_total > old_cover * total:
+                    if total > old_total:
                         self.bestcoverage[x] = (covered, total, [d[11:]])
-                    elif covered * old_total == old_cover * total:
+                    elif old_total == total:
                         self.bestcoverage[x][2].append(d[11:])
                 else:
                     self.bestcoverage[x] = (covered, total, [d[11:]])

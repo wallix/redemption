@@ -319,9 +319,7 @@ class SessionManager {
                 this->tick_count = 0;
             }
             trans->tick();
-        }
 
-        if (now > keepalive_time){
             try {
                 BStream stream(8192);
                 stream.out_uint32_be(0); // skip length
@@ -517,12 +515,25 @@ class SessionManager {
             LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS state");
         }
         {
+            if (this->verbose & 0x20){
+                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_AUTH_USER=%s",
+                    (this->ini->context_is_asked(AUTHID_AUTH_USER) ? "True": "False"));
+                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_PASSWORD=%s",
+                    (this->ini->context_is_asked(AUTHID_PASSWORD) ? "True": "False"));
+            }
+
             if (this->ini->context_is_asked(AUTHID_AUTH_USER)){
+                if (this->verbose & 0x20){
+                    LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_AUTH_USER is asked");
+                }
                 this->mod_state = MOD_STATE_DONE_LOGIN;
                 nextmod = INTERNAL_WIDGET2_LOGIN;
                 return MCTX_STATUS_INTERNAL;
             }
             else if (this->ini->context_is_asked(AUTHID_PASSWORD)){
+                if (this->verbose & 0x20){
+                    LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_PASSWORD is asked");
+                }
                 this->mod_state = MOD_STATE_DONE_LOGIN;
                 nextmod = INTERNAL_WIDGET2_LOGIN;
                 return MCTX_STATUS_INTERNAL;
@@ -531,27 +542,42 @@ class SessionManager {
                  &&   this->ini->context_get_bool(AUTHID_SELECTOR)
                  &&  !this->ini->context_is_asked(AUTHID_TARGET_DEVICE)
                  &&  !this->ini->context_is_asked(AUTHID_TARGET_USER)){
+                if (this->verbose & 0x20){
+                    LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_SELECTOR is asked");
+                }
                 this->mod_state = MOD_STATE_DONE_SELECTOR;
                 nextmod = INTERNAL_WIDGET2_SELECTOR;
                 return MCTX_STATUS_INTERNAL;
             }
             else if (this->ini->context_is_asked(AUTHID_TARGET_DEVICE)
                  ||  this->ini->context_is_asked(AUTHID_TARGET_USER)){
+                    if (this->verbose & 0x20){
+                        LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_TARGET_DEVICE is asked");
+                    }
                     this->mod_state = MOD_STATE_DONE_LOGIN;
                     nextmod = INTERNAL_WIDGET2_LOGIN;
                     return MCTX_STATUS_INTERNAL;
             }
             else if (this->ini->context_is_asked(AUTHID_DISPLAY_MESSAGE)){
+                if (this->verbose & 0x20){
+                    LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_DISPLAY_MESSAGE is asked");
+                }
                 nextmod = INTERNAL_DIALOG_DISPLAY_MESSAGE;
                 this->mod_state = MOD_STATE_DONE_DISPLAY_MESSAGE;
                 return MCTX_STATUS_INTERNAL;
             }
             else if (this->ini->context_is_asked(AUTHID_ACCEPT_MESSAGE)){
+                if (this->verbose & 0x20){
+                    LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_ACCEPT_MESSAGE is asked");
+                }
                 this->mod_state = MOD_STATE_DONE_VALID_MESSAGE;
                 nextmod = INTERNAL_DIALOG_VALID_MESSAGE;
                 return MCTX_STATUS_INTERNAL;
             }
             else if (this->ini->context.authenticated){
+                if (this->verbose & 0x20){
+                    LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS authenticated is True");
+                }
                 record_video = this->ini->globals.movie;
                 keep_alive = true;
                 if (this->ini->context.auth_error_message.is_empty()) {
@@ -561,6 +587,10 @@ class SessionManager {
                 return this->get_mod_from_protocol(nextmod);
             }
             else {
+                if (this->verbose & 0x20){
+                    LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS else");
+                }
+
                 if (!this->ini->context.rejected.is_empty()) {
                     this->ini->context.auth_error_message = this->ini->context.rejected;
                 }
