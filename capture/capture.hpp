@@ -46,9 +46,9 @@ public:
 
     TODO("capture_wrm flag should be changed to some configuration parameter in inifile")
     Capture(const timeval & now, int width, int height, const char * wrm_path, const char * png_path, const char * hash_path, const char * basename, bool clear_png, const Inifile & ini)
-      : capture_wrm(ini.globals.video.capture_wrm)
-      , capture_drawable(ini.globals.video.capture_wrm)
-      , capture_png(ini.globals.video.png_limit > 0)
+      : capture_wrm(ini.video.capture_wrm)
+      , capture_drawable(ini.video.capture_wrm)
+      , capture_png(ini.video.png_limit > 0)
       , enable_file_encryption(ini.globals.enable_file_encryption)
       , png_trans(NULL)
       , psc(NULL)
@@ -59,11 +59,11 @@ public:
       , drawable(NULL)
     {
         if (this->capture_png){
-            if (recursive_create_directory(png_path, S_IRWXU|S_IRWXG, ini.globals.video.capture_groupid) != 0) {
+            if (recursive_create_directory(png_path, S_IRWXU|S_IRWXG, ini.video.capture_groupid) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", png_path);
             }
 
-            this->png_trans = new OutFilenameTransport(SQF_PATH_FILE_PID_COUNT_EXTENSION, png_path, basename, ".png", ini.globals.video.capture_groupid);
+            this->png_trans = new OutFilenameTransport(SQF_PATH_FILE_PID_COUNT_EXTENSION, png_path, basename, ".png", ini.video.capture_groupid);
             this->psc = new StaticCapture(now, *this->png_trans, &(this->png_trans->seq), width, height, clear_png, ini);
         }
 
@@ -72,11 +72,11 @@ public:
         }
 
         if (this->capture_wrm){
-            if (recursive_create_directory(wrm_path, S_IRWXU|S_IRGRP|S_IXGRP, ini.globals.video.capture_groupid) != 0) {
+            if (recursive_create_directory(wrm_path, S_IRWXU|S_IRGRP|S_IXGRP, ini.video.capture_groupid) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", wrm_path);
             }
 
-            if (recursive_create_directory(hash_path, S_IRWXU|S_IRGRP|S_IXGRP, ini.globals.video.capture_groupid) != 0) {
+            if (recursive_create_directory(hash_path, S_IRWXU|S_IRGRP|S_IXGRP, ini.video.capture_groupid) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
             }
 
@@ -86,13 +86,13 @@ public:
                  "(This is related to the path split between png and wrm)."
                  "We should stop and consider what we should actually do")
             if (this->enable_file_encryption) {
-                this->crypto_wrm_trans = new CryptoOutmetaTransport(wrm_path, hash_path, basename, now, width, height, ini.globals.video.capture_groupid);
+                this->crypto_wrm_trans = new CryptoOutmetaTransport(wrm_path, hash_path, basename, now, width, height, ini.video.capture_groupid);
                 this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
                 this->pnc = new NativeCapture(now, *this->crypto_wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
             }
             else
             {
-                this->wrm_trans = new OutmetaTransport(wrm_path, basename, now, width, height, ini.globals.video.capture_groupid);
+                this->wrm_trans = new OutmetaTransport(wrm_path, basename, now, width, height, ini.video.capture_groupid);
                 this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
                 this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
             }

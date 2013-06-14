@@ -143,7 +143,7 @@ public:
         , userid(0)
         , order_level(0)
         , ini(ini)
-        , verbose(this->ini->globals.debug.front)
+        , verbose(this->ini->debug.front)
         , font(default_font_name)
         , brush_cache()
         , pointer_cache()
@@ -1110,7 +1110,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                     // RDP client doesn't support TLS.
                     && !(this->clientRequestedProtocols & X224::PROTOCOL_TLS)
                     // Fallback to legacy security protocol (RDP) is allowed.
-                    && this->ini->globals.client.tls_fallback_legacy) {
+                    && this->ini->client.tls_fallback_legacy) {
                     LOG(LOG_INFO, "Fallback to legacy security protocol");
 
                     this->tls_support = false;
@@ -1662,10 +1662,10 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
             /* this is the first test that the decrypt is working */
             this->client_info.process_logon_info( sec.payload
-                                                , ini->globals.client.ignore_logon_password
-                                                , ini->globals.client.performance_flags_default
-                                                , ini->globals.client.performance_flags_force_present
-                                                , ini->globals.client.performance_flags_force_not_present
+                                                , ini->client.ignore_logon_password
+                                                , ini->client.performance_flags_default
+                                                , ini->client.performance_flags_force_present
+                                                , ini->client.performance_flags_force_not_present
                                                 , (this->verbose & 128)
                                                 );
 
