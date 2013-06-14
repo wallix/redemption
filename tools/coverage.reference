@@ -92,10 +92,7 @@ front/front 100 100
 mod/cli/cli_mod 100 100
 mod/draw_api 100 100
 mod/internal/bouncer2 100 100
-mod/internal/close 100 100
-mod/internal/dialog 100 100
 mod/internal/internal_mod 100 100
-mod/internal/selector 100 100
 mod/internal/test_card 100 100
 mod/internal/test_internal 100 100
 mod/internal/widget2/widget2_button 100 100
@@ -123,12 +120,6 @@ mod/internal/widget2/window_dialog 100 100
 mod/internal/widget2/window_login 100 100
 mod/internal/widget2/window_wab_close 100 100
 mod/internal/widget/button 100 100
-mod/internal/widget/edit 100 100
-mod/internal/widget/image 100 100
-mod/internal/widget/label 100 100
-mod/internal/widget/widget_screen 100 100
-mod/internal/widget/widget_widget 100 100
-mod/internal/widget/widget_window 100 100
 mod/mod_api 100 100
 mod/null/null 100 100
 mod/rdp/rdp 100 100
