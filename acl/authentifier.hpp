@@ -217,6 +217,8 @@ class SessionManager {
                 if (*stream.p == '\n'){
                     *stream.p = 0;
 
+                    LOG(LOG_INFO, " ================== receiving %s '%s'\n", value, keyword);
+
                     if ((0 == strncasecmp((char*)value, "ask", 3))) {
                         this->ini->context_ask((char *)keyword);
                         LOG(LOG_INFO, "receiving %s '%s'\n", value, keyword);

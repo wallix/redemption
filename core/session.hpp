@@ -51,8 +51,6 @@
 #include "front.hpp"
 #include "null/null.hpp"
 #include "internal/bouncer2.hpp"
-#include "internal/close.hpp"
-#include "internal/dialog.hpp"
 #include "internal/test_card.hpp"
 #include "internal/test_internal.hpp"
 #include "rdp/rdp.hpp"
@@ -562,56 +560,10 @@ struct Session {
                                                     *this->front,
                                                     this->front->client_info.width,
                                                     this->front->client_info.height);
-//                         this->mod = new close_mod(*this->ini,
-//                                                   *this->front,
-//                                                   this->front->client_info.width,
-//                                                   this->front->client_info.height);
                         this->front->init_pointers();
                     }
                     if (this->verbose){
                         LOG(LOG_INFO, "Session::internal module Close ready");
-                    }
-                    break;
-                    case INTERNAL_DIALOG_VALID_MESSAGE:
-                    {
-                        const char * message = NULL;
-                        const char * button = NULL;
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of new mod 'INTERNAL::Dialog Accept Message'");
-                        }
-                        message = this->ini->globals.context.message;
-                        button = this->ini->globals.translation.button_refused;
-                        this->mod = new dialog_mod(*this->front,
-                                        this->front->client_info.width,
-                                        this->front->client_info.height,
-                                        message,
-                                        button,
-                                        *this->ini);
-                    }
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Session::internal module 'Dialog Accept Message' ready");
-                    }
-                    break;
-
-                    case INTERNAL_DIALOG_DISPLAY_MESSAGE:
-                    {
-                        const char * message = NULL;
-                        const char * button = NULL;
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of new mod 'INTERNAL::Dialog Display Message'");
-                        }
-                        message = this->ini->globals.context.message;
-                        button = NULL;
-                        this->mod = new dialog_mod(
-                                        *this->front,
-                                        this->front->client_info.width,
-                                        this->front->client_info.height,
-                                        message,
-                                        button,
-                                        *this->ini);
-                    }
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Session::internal module 'Dialog Display Message' ready");
                     }
                     break;
                     case INTERNAL_BOUNCER2:
@@ -682,6 +634,7 @@ struct Session {
                             LOG(LOG_INFO, "Session::internal module 'CloseMod' ready");
                         }
                     break;
+                    case INTERNAL_DIALOG_VALID_MESSAGE:
                     case INTERNAL_WIDGET2_DIALOG:
                     {
                         if (this->verbose){
@@ -705,6 +658,7 @@ struct Session {
                         }
                     }
                     break;
+                    case INTERNAL_DIALOG_DISPLAY_MESSAGE:
                     case INTERNAL_WIDGET2_MESSAGE:
                     {
                         if (this->verbose){
