@@ -202,6 +202,8 @@ exe redrec
 
 exe tls_test_client : ftests/tls_test_client.cpp openssl crypto png z dl : <link>static ;
 exe tls_test_server : ftests/tls_test_server.cpp openssl crypto png z dl : <link>static ;
+exe rgx_cmp : ftests/rgx_cmp.cpp ;
+#exe freetype_draw : ftests/freetype_draw.cpp freetype ; #add flag -I/usr/include/freetype2
 
 #
 # Unit Tests
