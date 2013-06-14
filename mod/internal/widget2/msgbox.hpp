@@ -30,7 +30,7 @@ public:
     WidgetMultiLine msg;
     WidgetButton ok;
 
-    MessageBox(ModApi* drawable, int16_t x, int16_t y, Widget2 * parent,
+    MessageBox(DrawApi* drawable, int16_t x, int16_t y, Widget2 * parent,
                NotifyApi* notifier, const char * caption, const char * text,
                int group_id = 0, const char * ok_text = "Ok",
                int fgcolor = BLACK, int bgcolor = GREY)

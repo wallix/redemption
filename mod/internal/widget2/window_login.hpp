@@ -44,7 +44,7 @@ public:
     WidgetButton help;
     MessageBox * window_help;
 
-    WindowLogin(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
+    WindowLogin(DrawApi* drawable, int16_t x, int16_t y, Widget2* parent,
                 NotifyApi* notifier, const char* caption, int group_id = 0,
                 const char * login = 0, const char * password = 0,
                 int fgcolor = BLACK, int bgcolor = GREY,

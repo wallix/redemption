@@ -80,7 +80,7 @@ public:
     Widget2 * parent;
     Widget2 * widget_with_focus;
     Widget2 * old_widget_with_focus;
-    ModApi * drawable;
+    DrawApi * drawable;
     NotifyApi * notifier;
     Rect rect;
     int group_id;
@@ -89,7 +89,7 @@ public:
     bool has_focus;
 
 public:
-    Widget2(ModApi * drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0)
+    Widget2(DrawApi * drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0)
     : parent(parent)
     , widget_with_focus(NULL)
     , old_widget_with_focus(NULL)

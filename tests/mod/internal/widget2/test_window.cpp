@@ -33,7 +33,7 @@
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
-struct TestDraw : ModApi
+struct TestDraw : DrawApi
 {
     RDPDrawable gd;
     Font font;
@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetWindow)
             this->event = event;
         }
     } notifier;
-    ModApi * drawable = 0;
+    DrawApi * drawable = 0;
     Widget2* parent = NULL;
 
     Window window(drawable, Rect(30,40,500,400), parent, &notifier, "Window 1");

@@ -29,7 +29,7 @@ public:
     int color;
 
 public:
-    WidgetRect(ModApi * drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0, int color = BLACK)
+    WidgetRect(DrawApi * drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0, int color = BLACK)
     : Widget2(drawable, rect, parent, notifier, group_id)
     , color(color)
     {

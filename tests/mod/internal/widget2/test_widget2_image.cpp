@@ -33,7 +33,7 @@
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
-struct TestDraw : ModApi
+struct TestDraw : DrawApi
 {
     RDPDrawable gd;
 
@@ -351,7 +351,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //     } widget_for_receive_event;
 //
 //     Widget2* parent = &widget_for_receive_event;
-//     ModApi * drawable = NULL;
+//     DrawApi * drawable = NULL;
 //     NotifyApi * notifier = NULL;
 //
 //     WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);

@@ -33,7 +33,7 @@
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
-struct TestDraw : ModApi
+struct TestDraw : DrawApi
 {
     RDPDrawable gd;
     Font font;
@@ -417,7 +417,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
 //     } widget_for_receive_event;
 //
 //     Widget2* parent = &widget_for_receive_event;
-//     ModApi * drawable = NULL;
+//     DrawApi * drawable = NULL;
 //     NotifyApi * notifier = NULL;
 //     bool auto_resize = false;
 //     int16_t x = 0;

@@ -33,7 +33,7 @@
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
-struct TestDraw : ModApi
+struct TestDraw : DrawApi
 {
     RDPDrawable gd;
     Font font;

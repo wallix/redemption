@@ -47,7 +47,7 @@ public:
     int border_right_bottom_color;
     int border_right_bottom_color_inner;
 
-    WidgetPassword(ModApi* drawable, int16_t x, int16_t y, uint16_t cx,
+    WidgetPassword(DrawApi* drawable, int16_t x, int16_t y, uint16_t cx,
                    Widget2* parent, NotifyApi* notifier, const char * text,
                    int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
                    std::size_t edit_position = -1, int xtext = 0, int ytext = 0)

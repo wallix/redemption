@@ -41,7 +41,7 @@ public:
     int inactive_border_right_bottom_color;
     int inactive_border_right_bottom_color_inner;
 
-    Window(ModApi* drawable, const Rect& rect, Widget2* parent, NotifyApi* notifier,
+    Window(DrawApi* drawable, const Rect& rect, Widget2* parent, NotifyApi* notifier,
            const char * caption, int bgcolor = DARK_WABGREEN, int group_id = 0)
     : WidgetComposite(drawable, rect, parent, notifier, group_id)
     , titlebar(drawable, 2, 2, this, NULL, caption, false, -1, WHITE, WABGREEN, 5)

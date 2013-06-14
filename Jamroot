@@ -422,9 +422,6 @@ unit-test test_widget2_internal_mod : tests/mod/internal/widget2/test_widget2_in
 unit-test test_login_mod : tests/mod/internal/widget2/test_login_mod.cpp libboost_unit_test ;
 unit-test test_login_mod : tests/mod/internal/widget2/test_login_mod.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_widget2_mod_api : tests/mod/internal/widget2/test_widget2_mod_api.cpp libboost_unit_test ;
-unit-test test_widget2_mod_api : tests/mod/internal/widget2/test_widget2_mod_api.cpp libboost_unit_test gcov : <variant>coverage ;
-
 unit-test test_notify_api : tests/mod/internal/widget2/test_notify_api.cpp libboost_unit_test ;
 unit-test test_notify_api : tests/mod/internal/widget2/test_notify_api.cpp libboost_unit_test gcov : <variant>coverage ;
 

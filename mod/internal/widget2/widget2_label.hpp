@@ -36,7 +36,7 @@ public:
     bool auto_resize;
 
 public:
-    WidgetLabel(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
+    WidgetLabel(DrawApi* drawable, int16_t x, int16_t y, Widget2* parent,
                 NotifyApi* notifier, const char * text, bool auto_resize = true,
                 int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
                 int xtext = 0, int ytext = 0)
@@ -71,9 +71,6 @@ public:
                 this->drawable->text_metrics(this->buffer, w,h);
                 this->rect.cx = this->x_text * 2 + w;
                 this->rect.cy = this->y_text * 2 + h;
-                if (max == 1) {
-                    this->rect.cx -= 2;
-                }
             }
         }
     }

@@ -33,7 +33,7 @@
 #include "check_sig.hpp"
 #include "callback.hpp"
 
-struct TestDraw : ModApi
+struct TestDraw : DrawApi
 {
     RDPDrawable gd;
 
@@ -367,7 +367,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectEvent)
     } widget_for_receive_event;
 
     Widget2* parent = &widget_for_receive_event;
-    ModApi * drawable = NULL;
+    DrawApi * drawable = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetRect wrect(drawable, Rect(), parent, notifier);

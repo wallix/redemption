@@ -70,7 +70,7 @@ public:
         }
     } click_interval;
 
-    WidgetSelectLine(ModApi* drawable, const Rect& rect,
+    WidgetSelectLine(DrawApi* drawable, const Rect& rect,
                      Widget2* parent, NotifyApi* notifier, int group_id = 0,
                      int fgcolor1 = BLACK, int fgcolor2 = BLACK,
                      int current_fgcolor = BLACK,
@@ -291,7 +291,7 @@ class WidgetSelectorImageButton : public Widget2
     notify_event_t event;
 
 public:
-    WidgetSelectorImageButton(ModApi* drawable, int x, int y, Widget2* parent,
+    WidgetSelectorImageButton(DrawApi* drawable, int x, int y, Widget2* parent,
                               NotifyApi* notifier,
                               uint16_t img_cx, uint16_t img_cy, size_t img_size,
                               const uint8_t * img_data1, const uint8_t * img_data2,
@@ -3695,7 +3695,7 @@ public:
     };
 
 public:
-    WidgetSelector(ModApi* drawable, const char * device_name,
+    WidgetSelector(DrawApi* drawable, const char * device_name,
                    uint16_t width, uint16_t height, NotifyApi* notifier,
                    const char * current_page, const char * number_of_page,
                    const char * filter_device = 0, const char * filter_target = 0)

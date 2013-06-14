@@ -33,7 +33,7 @@ class WidgetComposite : public Widget2
 public:
     std::vector<Widget2*> child_list;
 
-    WidgetComposite(ModApi * drawable, const Rect& rect, Widget2 * parent,
+    WidgetComposite(DrawApi * drawable, const Rect& rect, Widget2 * parent,
                     NotifyApi * notifier, int group_id = 0)
     : Widget2(drawable, rect, parent, notifier, group_id)
     , child_list()

@@ -32,7 +32,7 @@
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
-struct TestDraw : ModApi
+struct TestDraw : DrawApi
 {
     RDPDrawable gd;
     Font font;
@@ -397,7 +397,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
 
     class Screen : public WidgetComposite {
     public:
-        Screen(ModApi* drawable)
+        Screen(DrawApi* drawable)
         : WidgetComposite(drawable, Rect(0,0,800,600), 0, 0)
         {}
 

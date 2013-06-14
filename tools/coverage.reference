@@ -101,7 +101,6 @@ mod/internal/widget2/widget2_image 100 100
 mod/internal/widget2/widget2_internal_mod 100 100
 mod/internal/widget2/widget2_label 100 100
 mod/internal/widget2/login_mod 100 100
-mod/internal/widget2/widget2_mod_api 100 100
 mod/internal/widget2/msgbox 100 100
 mod/internal/widget2/widget2_multiline 100 100
 mod/internal/widget2/notify_api 100 100

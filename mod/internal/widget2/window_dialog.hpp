@@ -32,7 +32,7 @@ public:
     WidgetButton ok;
     WidgetButton * cancel;
 
-    WindowDialog(ModApi* drawable, int16_t x, int16_t y,
+    WindowDialog(DrawApi* drawable, int16_t x, int16_t y,
                  Widget2* parent, NotifyApi* notifier,
                  const char* caption, const char * text, int group_id = 0,
                  const char * ok_text = "Ok", const char * cancel_text = "Cancel",

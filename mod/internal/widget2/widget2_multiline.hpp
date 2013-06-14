@@ -43,7 +43,7 @@ public:
     int fg_color;
 
 public:
-    WidgetMultiLine(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
+    WidgetMultiLine(DrawApi* drawable, int16_t x, int16_t y, Widget2* parent,
                     NotifyApi* notifier, const char * text,
                     bool auto_resize = true,
                     int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,

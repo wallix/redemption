@@ -132,10 +132,6 @@ for i in range(32, CHARSET_SIZE):
     abc = police.font.getabc(unichr(i))
 
     # width of glyph (based on ABC.abcB, rounded to the next multiple of 8)
-    rfullW = (((x - 1 ) / 8 ) + 1 ) * 8
-    if rfullW == 0:
-        rfullW = 8
-
     xx = x
     if abc[1] != 0:
       if abc[0] == 0:
@@ -147,8 +143,6 @@ for i in range(32, CHARSET_SIZE):
         fullW = 8
     line = struct.pack('h', fullW )
     f.write(line)
-
-    print rfullW, " ", fullW, " ", x, " ", xx
 
     # height of glyph (rounded to the next multiple of 8)
     fullH = (((y - 1) / 8 ) + 1) * 8

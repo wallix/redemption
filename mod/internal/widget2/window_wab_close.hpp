@@ -57,7 +57,7 @@ private:
     };
 
 public:
-    WindowWabClose(ModApi* drawable, int16_t x, int16_t y, Widget2* parent,
+    WindowWabClose(DrawApi* drawable, int16_t x, int16_t y, Widget2* parent,
                    NotifyApi* notifier, const char * diagnostic_text, int group_id = 0,
                    const char * username = 0, const char * target = 0,
                    int fgcolor = BLACK, int bgcolor = DARK_WABGREEN)
