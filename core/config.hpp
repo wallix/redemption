@@ -1577,6 +1577,43 @@ struct Inifile {
 
         switch (authid)
         {
+        case AUTHID_TRANS_BUTTON_OK:
+            pszReturn = this->globals.translation.button_ok;
+            break;
+        case AUTHID_TRANS_BUTTON_CANCEL:
+            pszReturn = this->globals.translation.button_cancel;
+            break;
+        case AUTHID_TRANS_BUTTON_HELP:
+            pszReturn = this->globals.translation.button_help;
+            break;
+        case AUTHID_TRANS_BUTTON_CLOSE:
+            pszReturn = this->globals.translation.button_close;
+            break;
+        case AUTHID_TRANS_BUTTON_REFUSED:
+            pszReturn = this->globals.translation.button_refused;
+            break;
+        case AUTHID_TRANS_LOGIN:
+            pszReturn = this->globals.translation.login;
+            break;
+        case AUTHID_TRANS_USERNAME:
+            pszReturn = this->globals.translation.username;
+            break;
+        case AUTHID_TRANS_PASSWORD:
+            pszReturn = this->globals.translation.password;
+            break;
+        case AUTHID_TRANS_TARGET:
+            pszReturn = this->globals.translation.target;
+            break;
+        case AUTHID_TRANS_DIAGNOSTIC:
+            pszReturn = this->globals.translation.diagnostic;
+            break;
+        case AUTHID_TRANS_CONNECTION_CLOSED:
+            pszReturn = this->globals.translation.connection_closed;
+            break;
+        case AUTHID_TRANS_HELP_MESSAGE:
+            pszReturn = this->globals.translation.help_message;
+            break;
+
         case AUTHID_OPT_CLIPBOARD:
             if (size) {
                 strncpy(buffer, (this->globals.client.clipboard ? "True" : "False"), size);
@@ -1629,14 +1666,10 @@ struct Inifile {
             break;
 
         case AUTHID_ALTERNATE_SHELL:
-            if (size) {
-                pszReturn = this->globals.alternate_shell;
-            }
+            pszReturn = this->globals.alternate_shell;
             break;
         case AUTHID_SHELL_WORKING_DIRECTORY:
-            if (size) {
-                pszReturn = this->globals.shell_working_directory;
-            }
+            pszReturn = this->globals.shell_working_directory;
             break;
 
         case AUTHID_OPT_BITRATE:
@@ -1681,9 +1714,7 @@ struct Inifile {
             break;
 
         case AUTHID_AUTH_ERROR_MESSAGE:
-            if (size) {
-                pszReturn = this->globals.context.auth_error_message;
-            }
+            pszReturn = this->globals.context.auth_error_message;
             break;
 
         case AUTHID_SELECTOR:
@@ -1777,9 +1808,7 @@ struct Inifile {
             break;
 
         case AUTHID_AUTHCHANNEL_ANSWER:
-            if (size) {
-                pszReturn = this->globals.context.authchannel_answer;
-            }
+            pszReturn = this->globals.context.authchannel_answer;
             break;
         case AUTHID_AUTHCHANNEL_RESULT:
             if (!this->globals.context.ask_authchannel_result) {
@@ -1793,9 +1822,7 @@ struct Inifile {
             break;
 
         case AUTHID_MESSAGE:
-            if (size) {
-                pszReturn = this->globals.context.message;
-            }
+            pszReturn = this->globals.context.message;
             break;
         case AUTHID_ACCEPT_MESSAGE:
             if (!this->globals.context.ask_accept_message) {
@@ -1816,9 +1843,7 @@ struct Inifile {
             }
             break;
         case AUTHID_REJECTED:
-            if (size) {
-                pszReturn = this->globals.context.rejected;
-            }
+            pszReturn = this->globals.context.rejected;
             break;
 
         case AUTHID_KEEPALIVE:
@@ -1873,6 +1898,7 @@ struct Inifile {
         case AUTHID_AUTHENTICATION_CHALLENGE:
             pszReturn = this->globals.context.authentication_challenge;
             break;
+
         default:
             LOG(LOG_WARNING, "Inifile::context_get_value(id): unknown authid=\"%d\"", authid);
             break;
