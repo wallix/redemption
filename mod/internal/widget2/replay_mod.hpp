@@ -15,22 +15,22 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou
+   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Jonathan Poelen
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Use (implemented) basic RDP orders to draw some known test pattern
 */
 
-#ifndef _REDEMPTION_MOD_INTERNAL_TEST_INTERNAL_HPP_
-#define _REDEMPTION_MOD_INTERNAL_TEST_INTERNAL_HPP_
+#ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_REPLAY_MOD_HPP
+#define REDEMPTION_MOD_INTERNAL_WIDGET2_REPLAY_MOD_HPP
 
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 #include "inbymetasequencetransport.hpp"
-#include "internal_mod.hpp"
+#include "widget2_internal_mod.hpp"
 
-struct test_internal_mod : public internal_mod {
+class ReplayMod : public InternalMod {
     char movie[1024];
 
     redemption::string & auth_error_message;
@@ -38,13 +38,14 @@ struct test_internal_mod : public internal_mod {
     InByMetaSequenceTransport * in_trans;
     FileToGraphic             * reader;
 
-    test_internal_mod( FrontAPI & front
-                     , char * replay_path
-                     , char * movie
-                     , uint16_t width
-                     , uint16_t height
-                     , redemption::string & auth_error_message)
-    : internal_mod(front, width, height)
+public:
+    ReplayMod( FrontAPI & front
+             , char * replay_path
+             , char * movie
+             , uint16_t width
+             , uint16_t height
+             , redemption::string & auth_error_message)
+    : InternalMod(front, width, height)
     , auth_error_message(auth_error_message)
     {
         TODO("use canonical_path to manage trailing slash")
@@ -95,7 +96,7 @@ struct test_internal_mod : public internal_mod {
         this->front.send_global_palette();
     }
 
-    virtual ~test_internal_mod()
+    virtual ~ReplayMod()
     {
         if (reader)
             delete reader;
@@ -104,20 +105,22 @@ struct test_internal_mod : public internal_mod {
             delete in_trans;
     }
 
-    virtual void rdp_input_invalidate(const Rect & rect)
+    virtual void rdp_input_invalidate(const Rect & /*rect*/)
     {
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+    virtual void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/)
     {
     }
 
-    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap){
+    virtual void rdp_input_scancode(long /*param1*/, long /*param2*/,
+                                    long /*param3*/, long /*param4*/, Keymap2 * /*keymap*/)
+    {
     }
 
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+    virtual void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
+                                       int16_t param1, int16_t /*param2*/)
     {
-        return;
     }
 
     // event from back end (draw event from remote or internal server)

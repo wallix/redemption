@@ -38,10 +38,15 @@ public:
     DialogMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height,
               const char * caption, const char * message, const char * cancel_text)
     : InternalMod(front, width, height)
-    , window_dialog(this, 0, 0, &this->screen, this, caption, message, 0, "Ok", cancel_text, BLACK, GREY, BLACK, WHITE)
+    , window_dialog(this, 0, 0, &this->screen, this, caption, message, 0, "Ok", cancel_text, BLACK, GREY, BLACK, GREY)
     , ini(ini)
     {
         this->screen.child_list.push_back(&this->window_dialog);
+
+        this->window_dialog.ok.border_top_left_color = WHITE;
+        if (this->window_dialog.cancel) {
+            this->window_dialog.cancel->border_top_left_color = WHITE;
+        }
 
         this->window_dialog.set_xy((width - this->window_dialog.cx()) / 2,
                                    (height - this->window_dialog.cy()) / 2);

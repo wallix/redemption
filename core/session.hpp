@@ -50,15 +50,15 @@
 #include "authentifier.hpp"
 #include "front.hpp"
 #include "null/null.hpp"
-#include "internal/bouncer2.hpp"
-#include "internal/test_card.hpp"
-#include "internal/test_internal.hpp"
 #include "rdp/rdp.hpp"
 #include "vnc/vnc.hpp"
 #include "xup/xup.hpp"
 #include "transitory/transitory.hpp"
 #include "cli/cli_mod.hpp"
 
+#include "internal/widget2/bouncer2.hpp"
+#include "internal/widget2/test_card_mod.hpp"
+#include "internal/widget2/replay_mod.hpp"
 #include "internal/widget2/selector_mod.hpp"
 #include "internal/widget2/wab_close_mod.hpp"
 #include "internal/widget2/dialog_mod.hpp"
@@ -570,10 +570,10 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'bouncer2'");
                         }
-                        this->mod = new bouncer2_mod(*this->front,
-                                                     this->front->client_info.width,
-                                                     this->front->client_info.height
-                                                     );
+                        this->mod = new Bouncer2Mod(*this->front,
+                                                    this->front->client_info.width,
+                                                    this->front->client_info.height
+                                                    );
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::internal module 'bouncer2' ready");
                         }
@@ -582,7 +582,7 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'test'");
                         }
-                        this->mod = new test_internal_mod(
+                        this->mod = new ReplayMod(
                               *this->front
                             , this->ini->globals.video.replay_path
                             , this->ini->globals.context.movie
@@ -598,11 +598,10 @@ struct Session {
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::Creation of internal module 'test_card'");
                         }
-                        this->mod = new test_card_mod(
-                                        *this->front,
-                                        this->front->client_info.width,
-                                        this->front->client_info.height
-                                        );
+                        this->mod = new TestCardMod(*this->front,
+                                                    this->front->client_info.width,
+                                                    this->front->client_info.height
+                                                    );
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::internal module 'test_card' ready");
                         }
