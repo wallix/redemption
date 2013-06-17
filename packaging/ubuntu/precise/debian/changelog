@@ -1,4 +1,4 @@
-redemption (0.9.281+precise) unstable; urgency=low
+redemption (0.9.283-future+precise) unstable; urgency=low
 
   * Fully moved internal pages to new widget components
   * support for RDP Bitmap Update order
