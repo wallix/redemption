@@ -1393,16 +1393,17 @@ struct Inifile {
             this->context.opt_qscale    = ulong_from_cstr(value);
             break;
 
-        case AUTHID_OPT_BPP:
-            this->context.ask_opt_bpp    = false;
-            this->context.opt_bpp        = ulong_from_cstr(value);
+        case AUTHID_OPT_WIDTH:
+            this->context.ask_opt_width  = false;
+            this->context.opt_width      = ulong_from_cstr(value);
+            break;
         case AUTHID_OPT_HEIGHT:
             this->context.ask_opt_height = false;
             this->context.opt_height     = ulong_from_cstr(value);
             break;
-        case AUTHID_OPT_WIDTH:
-            this->context.ask_opt_width  = false;
-            this->context.opt_width      = ulong_from_cstr(value);
+        case AUTHID_OPT_BPP:
+            this->context.ask_opt_bpp    = false;
+            this->context.opt_bpp        = ulong_from_cstr(value);
             break;
 
         case AUTHID_AUTH_ERROR_MESSAGE:
@@ -1946,6 +1947,9 @@ struct Inifile {
         case AUTHID_TARGET_PASSWORD:
             this->context.ask_target_password         = true; break;
 
+        case AUTHID_TARGET_PORT:
+            this->context.ask_target_port             = true; break;
+
         case AUTHID_TARGET_PROTOCOL:
             this->context.ask_target_protocol         = true; break;
 
@@ -2034,6 +2038,9 @@ struct Inifile {
         case AUTHID_TARGET_PASSWORD:
             return this->context.ask_target_password;
 
+        case AUTHID_TARGET_PORT:
+            return this->context.ask_target_port;
+
         case AUTHID_TARGET_PROTOCOL:
             return this->context.ask_target_protocol;
 
@@ -2095,6 +2102,8 @@ struct Inifile {
                 return this->context.keepalive;
             }
             break;
+        case AUTHID_AUTHENTICATED:
+            return this->context.authenticated;
         default:
             LOG(LOG_WARNING, "Inifile::context_get_bool(id): unknown authid=\"%d\"", authid);
             break;
