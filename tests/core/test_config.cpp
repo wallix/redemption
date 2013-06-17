@@ -155,12 +155,30 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.c_str()));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.c_str()));
 
+
+    BOOST_CHECK_EQUAL(0,                                ini.context.selector_focus);
+
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.movie));
+
     BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
     BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+
+    BOOST_CHECK_EQUAL(false,                            ini.context.ask_opt_bpp);
+    BOOST_CHECK_EQUAL(false,                            ini.context.ask_opt_height);
+    BOOST_CHECK_EQUAL(false,                            ini.context.ask_opt_width);
+
     BOOST_CHECK_EQUAL(800,                              ini.context.opt_width);
     BOOST_CHECK_EQUAL(600,                              ini.context.opt_height);
     BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp);
+
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.auth_error_message.c_str()));
+
+    BOOST_CHECK_EQUAL(false,                            ini.context.ask_selector);
+    BOOST_CHECK_EQUAL(false,                            ini.context.ask_selector_current_page);
+    BOOST_CHECK_EQUAL(false,                            ini.context.ask_selector_device_filter);
+    BOOST_CHECK_EQUAL(false,                            ini.context.ask_selector_group_filter);
+    BOOST_CHECK_EQUAL(false,                            ini.context.ask_selector_lines_per_page);
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
