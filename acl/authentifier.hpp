@@ -299,6 +299,7 @@ class SessionManager {
         }
 
         if (now > keepalive_time){
+            // ===================== check if no traffic =====================
             if (this->verbose & 8){
                 LOG(LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d",
                           trans->last_quantum_received, trans->total_received,
@@ -320,6 +321,7 @@ class SessionManager {
             }
             trans->tick();
 
+            // ===================== check if keepalive ======================
             try {
                 BStream stream(8192);
                 stream.out_uint32_be(0); // skip length
@@ -332,7 +334,7 @@ class SessionManager {
                 this->auth_trans_t->send(stream.data, total_length);
             }
             catch (...){
-                this->ini->context.auth_error_message = "Connection closed by manager (ACL closed)";
+                this->ini->context.auth_error_message = "Connection closed by manager (ACL closed).";
                 this->mod_state = MOD_STATE_DONE_CLOSE;
                 return false;
             }
