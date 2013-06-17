@@ -107,7 +107,7 @@ class SocketTransport : public Transport {
         RIO_ERROR res = rio_init_socket(&this->rio, sck);
         this->sck = sck;
         this->sck_closed = 0;
-        if (res != RIO_ERROR_OK){ 
+        if (res != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT, 0);
         }
         strncpy(this->ip_address, ip_address, 127);
@@ -171,7 +171,7 @@ class SocketTransport : public Transport {
          */
 
         // SSL_CTX_set_options() adds the options set via bitmask in options to ctx.
-        // Options already set before are not cleared! 
+        // Options already set before are not cleared!
 
          // During a handshake, the option settings of the SSL object are used. When
          // a new SSL object is created from a context using SSL_new(), the current
@@ -379,7 +379,7 @@ class SocketTransport : public Transport {
         fcntl(this->sck, F_SETFL, flags & ~(O_NONBLOCK));
 
         SSL_set_bio(ssl, sbio, sbio);
-        
+
         int r = SSL_accept(ssl);
         if(r <= 0)
         {
@@ -389,7 +389,7 @@ class SocketTransport : public Transport {
         }
 
         RIO_ERROR res = rio_init_socket_tls(&this->rio, ssl);
-        if (res != RIO_ERROR_OK){ 
+        if (res != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT, 0);
         }
         this->tls = true;
@@ -405,7 +405,7 @@ class SocketTransport : public Transport {
             return;
         }
         LOG(LOG_INFO, "Client TLS start");
- 
+
         rio_clear(&this->rio);
 
 
@@ -757,7 +757,7 @@ class SocketTransport : public Transport {
         if (recursive_create_directory(CERTIF_PATH "/", S_IRWXU|S_IRWXG, 0) != 0) {
             LOG(LOG_ERR, "Failed to create certificate directory: " CERTIF_PATH "/");
             if (error_message) {
-                (*error_message) = "Failed to create certificate directory: \"" CERTIF_PATH "/\"";
+                error_message->copy_c_str("Failed to create certificate directory: \"" CERTIF_PATH "/\"");
             }
             throw Error(ERR_TRANSPORT, 0);
         }
@@ -775,9 +775,9 @@ class SocketTransport : public Transport {
                 // failed to open stored certificate file
                 LOG(LOG_ERR, "Failed to open stored certificate: \"%s\"\n", filename);
                 if (error_message) {
-                    (*error_message) =  "Failed to open stored certificate: \"";
-                    (*error_message) += filename;
-                    (*error_message) += "\"\n";
+                    error_message->copy_c_str("Failed to open stored certificate: \"");
+                    error_message->concatenate_c_str(filename);
+                    error_message->concatenate_c_str("\"\n");
                 }
                 throw Error(ERR_TRANSPORT, 0);
             }
@@ -795,9 +795,9 @@ class SocketTransport : public Transport {
                 // failed to read stored certificate file
                 LOG(LOG_ERR, "Failed to read stored certificate: \"%s\"\n", filename);
                 if (error_message) {
-                    (*error_message) =  "Failed to read stored certificate: \"";
-                    (*error_message) += filename;
-                    (*error_message) += "\"\n";
+                    error_message->copy_c_str("Failed to read stored certificate: \"");
+                    error_message->concatenate_c_str(filename);
+                    error_message->concatenate_c_str("\"\n");
                 }
                 throw Error(ERR_TRANSPORT, 0);
             }
@@ -833,7 +833,7 @@ class SocketTransport : public Transport {
                 }
                 if (feof(tmpfp) && feof(fp)){
                     break;
-                } 
+                }
                 if (ferror(tmpfp)||ferror(fp)||feof(tmpfp)||feof(fp)){
                     binary_check_failed = true;
                     break;
@@ -861,9 +861,9 @@ class SocketTransport : public Transport {
             LOG(LOG_INFO, "TLS::X509 existing::subject=%s", subject_existing);
             LOG(LOG_INFO, "TLS::X509 existing::fingerprint=%s", fingerprint_existing);
 
-            if (binary_check_failed 
-            || (0 != strcmp(issuer_existing, issuer)) 
-            || (0 != strcmp(subject_existing, subject)) 
+            if (binary_check_failed
+            || (0 != strcmp(issuer_existing, issuer))
+            || (0 != strcmp(subject_existing, subject))
             || (0 != strcmp(fingerprint_existing, fingerprint))) {
 /*
                 if (this->error_message_buffer && this->error_message_len) {
@@ -884,7 +884,7 @@ class SocketTransport : public Transport {
                 }
 */
                 if (error_message) {
-                    snprintf(const_cast<char *>((const char *)*error_message), 1024,
+                    snprintf(const_cast<char *>(error_message->c_str()), STRING_STATIC_BUFFER_SIZE,
                         "The certificate for host %s:%d has changed!",
                         this->ip_address, this->port);
                 }
@@ -918,7 +918,7 @@ class SocketTransport : public Transport {
         // SSL_get_verify_result().
 
         // The verification result is part of the established session and is restored when
-        // a session is reused. 
+        // a session is reused.
 
         // bug: If no peer certificate was presented, the returned result code is X509_V_OK.
         // This is because no verification error occurred, it does however not indicate
@@ -946,7 +946,7 @@ class SocketTransport : public Transport {
         // X509_EXTENSION (to express a certificate extension) and a few more.
 
         // Finally, there's the supertype X509_INFO, which can contain a CRL, a certificate
-        // and a corresponding private key. 
+        // and a corresponding private key.
 
 
         LOG(LOG_INFO, "RIO *::X509_get_pubkey()");
@@ -962,9 +962,9 @@ class SocketTransport : public Transport {
 
         // i2d_X509() encodes the structure pointed to by x into DER format.
         // If out is not NULL is writes the DER encoded data to the buffer at *out,
-        // and increments it to point after the data just written. 
+        // and increments it to point after the data just written.
         // If the return value is negative an error occurred, otherwise it returns
-        // the length of the encoded data. 
+        // the length of the encoded data.
 
         // export the public key to DER format
         int public_key_length = i2d_PublicKey(pkey, NULL);
@@ -1030,7 +1030,7 @@ class SocketTransport : public Transport {
        X509_free(px509);
 
        RIO_ERROR res = rio_init_socket_tls(&this->rio, ssl);
-       if (res != RIO_ERROR_OK){ 
+       if (res != RIO_ERROR_OK){
            throw Error(ERR_TRANSPORT, 0);
        }
        this->tls = true;
@@ -1057,7 +1057,7 @@ class SocketTransport : public Transport {
                                     3, 1000,
                                     this->verbose);
             RIO_ERROR res = rio_init_socket(&this->rio, this->sck);
-            if (res != RIO_ERROR_OK){ 
+            if (res != RIO_ERROR_OK){
                 throw Error(ERR_TRANSPORT, 0);
             }
             this->sck_closed = 0;

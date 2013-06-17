@@ -148,7 +148,7 @@ public:
         }
         catch (Error & e) {
             if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
-                this->auth_error_message = "The recorded file is inaccessible or corrupted!";
+                this->auth_error_message.copy_c_str("The recorded file is inaccessible or corrupted!");
 
                 back_event = BACK_EVENT_NEXT;
             }

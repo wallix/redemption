@@ -286,7 +286,7 @@ class SessionManager {
         TODO("we should manage a mode to disconnect on inactivity when we are on login box or on selector")
         if (now > (keepalive_time + this->keepalive_grace_delay)){
             LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-            this->ini->context.auth_error_message = "Connection closed by manager (timeout)";
+            this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (timeout)");
             return false;
         }
 
@@ -306,7 +306,7 @@ class SessionManager {
             if (trans->last_quantum_received == 0){
                 this->tick_count++;
                 if (this->tick_count > this->max_tick){ // 15 minutes before closing on inactivity
-                    this->ini->context.auth_error_message = "Connection closed on inactivity";
+                    this->ini->context.auth_error_message.copy_c_str("Connection closed on inactivity");
                     LOG(LOG_INFO, "Session ACL inactivity : closing");
                     this->mod_state = MOD_STATE_DONE_CLOSE;
                     return false;
@@ -332,7 +332,7 @@ class SessionManager {
                 this->auth_trans_t->send(stream.data, total_length);
             }
             catch (...){
-                this->ini->context.auth_error_message = "Connection closed by manager (ACL closed).";
+                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
                 this->mod_state = MOD_STATE_DONE_CLOSE;
                 return false;
             }
@@ -350,7 +350,7 @@ class SessionManager {
                 }
             }
             catch (...){
-                this->ini->context.auth_error_message = "Connection closed by manager (ACL closed)";
+                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed)");
                 this->mod_state = MOD_STATE_DONE_CLOSE;
                 return false;
             }
@@ -581,7 +581,7 @@ class SessionManager {
                 record_video = this->ini->globals.movie;
                 keep_alive = true;
                 if (this->ini->context.auth_error_message.is_empty()) {
-                    this->ini->context.auth_error_message = "End of connection";
+                    this->ini->context.auth_error_message.copy_c_str("End of connection");
                 }
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
                 return this->get_mod_from_protocol(nextmod);
@@ -595,7 +595,7 @@ class SessionManager {
                     this->ini->context.auth_error_message = this->ini->context.rejected;
                 }
                 if (this->ini->context.auth_error_message.is_empty()) {
-                    this->ini->context.auth_error_message = "Authentifier service failed";
+                    this->ini->context.auth_error_message.copy_c_str("Authentifier service failed");
                 }
                 TODO(" check life cycle of auth_trans_t")
                 if (this->auth_trans_t){
@@ -729,7 +729,7 @@ class SessionManager {
 
         } catch (Error e) {
             this->ini->context.authenticated = false;
-            this->ini->context.rejected = "Authentifier service failed";
+            this->ini->context.rejected.copy_c_str("Authentifier service failed");
             delete this->auth_trans_t;
             this->auth_trans_t = NULL;
             delete this->auth_event;
@@ -759,11 +759,11 @@ class SessionManager {
             sprintf(old_session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);
             char new_session_file[256];
             sprintf(new_session_file, "%s/redemption/session_%s.pid", PID_PATH,
-                (const char *)this->ini->context.session_id);
+                this->ini->context.session_id.c_str());
             rename(old_session_file, new_session_file);
         }
 
-        LOG(LOG_INFO, "SESSION_ID = %s", (const char *)this->ini->context.session_id);
+        LOG(LOG_INFO, "SESSION_ID = %s", this->ini->context.session_id.c_str());
     }
 
     void receive_next_module()
@@ -772,7 +772,7 @@ class SessionManager {
             this->incoming();
         } catch (...) {
             this->ini->context.authenticated = false;
-            this->ini->context.rejected = "Authentifier service failed";
+            this->ini->context.rejected.copy_c_str("Authentifier service failed");
             delete this->auth_trans_t;
             this->auth_trans_t = NULL;
         }

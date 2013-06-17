@@ -36,39 +36,39 @@ BOOST_AUTO_TEST_CASE(TestString)
 {
     redemption::string str;
 
-    BOOST_CHECK(!strcmp("", str));
+    BOOST_CHECK(!strcmp("", str.c_str()));
 
 
     const char * template_string = "0123456789";
 
-    str = template_string;
+    str.copy_c_str(template_string);
 
-    BOOST_CHECK(!strcmp(template_string, str));
-
-
-    str = 0;
-
-    BOOST_CHECK(!strcmp("", str));
+    BOOST_CHECK(!strcmp(template_string, str.c_str()));
 
 
-    str += "0123456789";
+    str.copy_c_str("");
 
-    BOOST_CHECK(!strcmp("0123456789", str));
-
-
-    str += "ABCDEF";
-
-    BOOST_CHECK(!strcmp("0123456789ABCDEF", str));
+    BOOST_CHECK(!strcmp("", str.c_str()));
 
 
-    str += 0;
+    str.concatenate_c_str("0123456789");
 
-    BOOST_CHECK(!strcmp("0123456789ABCDEF", str));
+    BOOST_CHECK(!strcmp("0123456789", str.c_str()));
 
 
-    str = "";
+    str.concatenate_c_str("ABCDEF");
 
-    BOOST_CHECK(!strcmp("", str));
+    BOOST_CHECK(!strcmp("0123456789ABCDEF", str.c_str()));
+
+
+    str.concatenate_c_str("");
+
+    BOOST_CHECK(!strcmp("0123456789ABCDEF", str.c_str()));
+
+
+    str.copy_c_str("");
+
+    BOOST_CHECK(!strcmp("", str.c_str()));
 
 
     template_string = "01234567890123456789012345678901234567890123456789"
@@ -95,9 +95,9 @@ BOOST_AUTO_TEST_CASE(TestString)
                       "01234567890123456789012345678901234567890123456789"    // 1100 bytes
                       ;
 
-    str = template_string;
+    str.copy_c_str(template_string);
 
-    BOOST_CHECK(!strcmp(template_string, str));
+    BOOST_CHECK(!strcmp(template_string, str.c_str()));
 }
 
 BOOST_AUTO_TEST_CASE(TestString1)
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TestString1)
 
     redemption::string str(template_string);
 
-    BOOST_CHECK(!strcmp(template_string, str));
+    BOOST_CHECK(!strcmp(template_string, str.c_str()));
 }
 
 BOOST_AUTO_TEST_CASE(TestCopy)
@@ -116,10 +116,10 @@ BOOST_AUTO_TEST_CASE(TestCopy)
     redemption::string str0(template_string);
     redemption::string str1;
 
-    str1 = str0;
+    str1.copy_str(str0);
 
-    BOOST_CHECK(!strcmp(template_string, str0));
-    BOOST_CHECK(!strcmp(str0, str1));
+    BOOST_CHECK(!strcmp(template_string, str0.c_str()));
+    BOOST_CHECK(!strcmp(str0.c_str(), str1.c_str()));
 }
 
 BOOST_AUTO_TEST_CASE(TestCopy2)
@@ -127,10 +127,12 @@ BOOST_AUTO_TEST_CASE(TestCopy2)
     const char * template_string = "0123456789";
 
     redemption::string str0(template_string);
-    redemption::string str1 = str0;
+    redemption::string str1;
 
-    BOOST_CHECK(!strcmp(template_string, str0));
-    BOOST_CHECK(!strcmp(str0, str1));
+    str1.copy_str(str0);
+
+    BOOST_CHECK(!strcmp(template_string, str0.c_str()));
+    BOOST_CHECK(!strcmp(str0.c_str(), str1.c_str()));
 }
 
 BOOST_AUTO_TEST_CASE(TestConcatenate)
@@ -140,7 +142,7 @@ BOOST_AUTO_TEST_CASE(TestConcatenate)
     redemption::string str0(template_string);
     redemption::string str1("ABCD");
 
-    str1 += str0;
+    str1.concatenate_str(str0);
 
-    BOOST_CHECK(!strcmp("ABCD0123456789", str1));
+    BOOST_CHECK(!strcmp("ABCD0123456789", str1.c_str()));
 }

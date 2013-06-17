@@ -262,11 +262,11 @@ struct Session {
                         if (this->sesman->event(rfds)){
                             this->sesman->receive_next_module();
 
-                            if (strcmp(this->ini->context.mode_console, "force") == 0){
+                            if (strcmp(this->ini->context.mode_console.c_str(), "force") == 0){
                                 this->front->set_console_session(true);
                                 LOG(LOG_INFO, "Session::mode console : force");
                             }
-                            else if (strcmp(this->ini->context.mode_console, "forbid") == 0){
+                            else if (strcmp(this->ini->context.mode_console.c_str(), "forbid") == 0){
                                 this->front->set_console_session(false);
                                 LOG(LOG_INFO, "Session::mode console : forbid");
                             }
@@ -289,11 +289,11 @@ struct Session {
                         if (this->sesman->event(rfds)){
                             this->sesman->receive_next_module();
 
-                            if (strcmp(this->ini->context.mode_console, "force") == 0){
+                            if (strcmp(this->ini->context.mode_console.c_str(), "force") == 0){
                                 this->front->set_console_session(true);
                                 LOG(LOG_INFO, "Session::mode console : force");
                             }
-                            else if (strcmp(this->ini->context.mode_console, "forbid") == 0){
+                            else if (strcmp(this->ini->context.mode_console.c_str(), "forbid") == 0){
                                 this->front->set_console_session(false);
                                 LOG(LOG_INFO, "Session::mode console : forbid");
                             }
@@ -328,9 +328,9 @@ struct Session {
                             if (!this->ini->context.authchannel_answer.is_empty()) {
                                 // If set, transmit to auth_channel channel
                                 this->mod->send_auth_channel_data(
-                                    this->ini->context.authchannel_answer);
+                                    this->ini->context.authchannel_answer.c_str());
                                 // Erase the context variable
-                                this->ini->context.authchannel_answer = "";
+                                this->ini->context.authchannel_answer.empty();
                             }
                         }
 
@@ -484,7 +484,7 @@ struct Session {
         if (!this->ini->context.session_id.is_empty()) {
             char new_session_file[256];
             sprintf(new_session_file, "%s/session_%s.pid", PID_PATH,
-                (const char *)this->ini->context.session_id);
+                this->ini->context.session_id.c_str());
             unlink(new_session_file);
         }
         else {
@@ -514,11 +514,11 @@ struct Session {
             LOG(LOG_INFO, "Session::session_setup_mod(target_module=%u, submodule=%u)", target_module, (unsigned)submodule);
         }
 
-        if (strcmp(this->ini->context.mode_console, "force") == 0){
+        if (strcmp(this->ini->context.mode_console.c_str(), "force") == 0){
             this->front->set_console_session(true);
             LOG(LOG_INFO, "Session::mode console : force");
         }
-        else if (strcmp(this->ini->context.mode_console, "forbid") == 0){
+        else if (strcmp(this->ini->context.mode_console.c_str(), "forbid") == 0){
             this->front->set_console_session(false);
             LOG(LOG_INFO, "Session::mode console : forbid");
         }
@@ -554,7 +554,7 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of new mod 'INTERNAL::Close'");
                         }
                         if (this->ini->context.auth_error_message.is_empty()) {
-                            this->ini->context.auth_error_message = "Connection to server ended";
+                            this->ini->context.auth_error_message.copy_c_str("Connection to server ended");
                         }
                         this->mod = new WabCloseMod(*this->ini,
                                                     *this->front,
@@ -640,8 +640,8 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'Dialog Accept Message'");
                         }
 
-                        const char * message = this->ini->context.message;
-                        const char * button = this->ini->translation.button_refused;
+                        const char * message = this->ini->context.message.c_str();
+                        const char * button = this->ini->translation.button_refused.c_str();
                         const char * caption = "Information";
                         this->mod = new DialogMod(
                             *this->ini,
@@ -664,7 +664,7 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'Dialog Display Message'");
                         }
 
-                        const char * message = this->ini->context.message;
+                        const char * message = this->ini->context.message.c_str();
                         const char * button = NULL;
                         const char * caption = "Information";
                         this->mod = new DialogMod(
@@ -713,7 +713,7 @@ struct Session {
                                             this->ini->debug.mod_xup);
 
                 if (client_sck == -1){
-                    this->ini->context.auth_error_message = "failed to connect to remote TCP host";
+                    this->ini->context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -725,7 +725,7 @@ struct Session {
                     , this->ini->debug.mod_xup);
                 this->mod_transport = t;
 
-                this->ini->context.auth_error_message = "failed authentification on remote X host";
+                this->ini->context.auth_error_message.copy_c_str("failed authentification on remote X host");
                 this->mod = new xup_mod( t
                                        , *this->front
                                        , this->front->client_info.width
@@ -737,7 +737,7 @@ struct Session {
                 this->mod->event.obj = client_sck;
                 this->mod->draw_event();
 //                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
-                this->ini->context.auth_error_message = "";
+                this->ini->context.auth_error_message.empty();
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'XUP' suceeded\n");
                 }
@@ -764,7 +764,7 @@ struct Session {
                                             this->ini->debug.mod_rdp);
 
                 if (client_sck == -1){
-                    this->ini->context.auth_error_message = "failed to connect to remote TCP host";
+                    this->ini->context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -779,7 +779,7 @@ struct Session {
                     );
                 this->mod_transport = t;
 
-                this->ini->context.auth_error_message = "failed authentification on remote RDP host";
+                this->ini->context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
                 this->mod = new mod_rdp( t
                                        , this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0)
                                        , this->ini->context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
@@ -807,7 +807,7 @@ struct Session {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'RDP' suceeded\n");
                 }
-                this->ini->context.auth_error_message = "";
+                this->ini->context.auth_error_message.empty();
             }
             break;
 
@@ -825,7 +825,7 @@ struct Session {
                                             this->ini->debug.mod_vnc);
 
                 if (client_sck == -1){
-                    this->ini->context.auth_error_message = "failed to connect to remote TCP host";
+                    this->ini->context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
@@ -837,7 +837,7 @@ struct Session {
                     , this->ini->debug.mod_vnc);
                 this->mod_transport = t;
 
-                this->ini->context.auth_error_message = "failed authentification on remote VNC host";
+                this->ini->context.auth_error_message.copy_c_str("failed authentification on remote VNC host");
 
                 this->mod = new mod_vnc(
                       t
@@ -857,7 +857,7 @@ struct Session {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'VNC' suceeded\n");
                 }
-                this->ini->context.auth_error_message = "";
+                this->ini->context.auth_error_message.empty();
             }
             break;
 

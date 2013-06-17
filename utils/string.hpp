@@ -18,20 +18,22 @@
    Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_STRING_HPP_
-#define _REDEMPTION_STRING_HPP_
+#ifndef _REDEMPTION_UTILS_STRING_HPP_
+#define _REDEMPTION_UTILS_STRING_HPP_
 
 #include "error.hpp"
 #include "log.hpp"
+
+#define STRING_STATIC_BUFFER_SIZE 1024
 
 namespace redemption {
 
 class string {
 protected:
-    char static_buffer[1024];
+    char static_buffer[STRING_STATIC_BUFFER_SIZE];
 
     char   * buffer_pointer;
-    size_t   buffer_length;
+    size_t   buffer_length;     /* Size of buffer pointed by buffer_pointer. */
 
 public:
     string() {
@@ -47,7 +49,7 @@ public:
         this->buffer_pointer = this->static_buffer;
         this->buffer_length  = sizeof(this->static_buffer);
 
-        (*this) = source;
+        this->copy_c_str(source);
     }
 
     string(const string & source) {
@@ -56,7 +58,7 @@ public:
         this->buffer_pointer = this->static_buffer;
         this->buffer_length  = sizeof(this->static_buffer);
 
-        (*this) = source.buffer_pointer;
+        this->copy_c_str(source.buffer_pointer);
     }
 
     virtual ~string() {
@@ -65,11 +67,26 @@ public:
         }
     }
 
-    operator const char * () const {
+    const char * c_str() const {
         return this->buffer_pointer;
     }
 
-    string & operator=(const char * source) {
+    void concatenate_c_str(const char * source) {
+        if (source) {
+            size_t source_length  = ::strlen(source);
+            size_t content_length = ::strlen(this->buffer_pointer);
+
+            realloc_memory(content_length + source_length + 1, true);
+
+            ::strcpy(this->buffer_pointer + content_length, source);
+        }
+    }
+
+    void concatenate_str(const string & source) {
+        concatenate_c_str(source.buffer_pointer);
+    }
+
+    void copy_c_str(const char * source) {
         if (source) {
             size_t source_length = ::strlen(source);
 
@@ -80,27 +97,14 @@ public:
         else {
             this->buffer_pointer[0] = 0;
         }
-
-        return (*this);
     }
 
-    string & operator=(const string & source) {
-        (*this) = source.buffer_pointer;
-
-        return (*this);
+    void copy_str(const string & source) {
+        copy_c_str(source.buffer_pointer);
     }
 
-    string & operator+=(const char * source) {
-        if (source) {
-            size_t source_length  = ::strlen(source);
-            size_t content_length = ::strlen(this->buffer_pointer);
-
-            realloc_memory(content_length + source_length + 1, true);
-
-            ::strcpy(this->buffer_pointer + content_length, source);
-        }
-
-        return (*this);
+    void empty() {
+        this->buffer_pointer[0] = 0;
     }
 
     bool is_empty() const {
@@ -110,7 +114,6 @@ public:
     size_t length() const {
         return ::strlen(this->buffer_pointer);
     }
-
 
 protected:
     // Ensure that the buffer is large enough to hold size bytes.
@@ -146,4 +149,4 @@ protected:
 
 }   // namespace redemption
 
-#endif
+#endif  // #ifndef _REDEMPTION_UTILS_STRING_HPP_

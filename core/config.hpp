@@ -403,7 +403,7 @@ struct Inifile {
     struct Inifile_globals {
 
 
-        bool capture_chunk; 
+        bool capture_chunk;
 
         char auth_user[512];
         char host[512];     // client_ip
@@ -780,18 +780,18 @@ struct Inifile {
         // End Section "debug"
 
         // Begin Section "translation"
-        this->translation.button_ok         = "OK";
-        this->translation.button_cancel     = "Cancel";
-        this->translation.button_help       = "Help";
-        this->translation.button_close      = "Close";
-        this->translation.button_refused    = "Refused";
-        this->translation.login             = "login";
-        this->translation.username          = "username";
-        this->translation.password          = "password";
-        this->translation.target            = "target";
-        this->translation.diagnostic        = "diagnostic";
-        this->translation.connection_closed = "Connection closed";
-        this->translation.help_message      = "Help message";
+        this->translation.button_ok.copy_c_str("OK");
+        this->translation.button_cancel.copy_c_str("Cancel");
+        this->translation.button_help.copy_c_str("Help");
+        this->translation.button_close.copy_c_str("Close");
+        this->translation.button_refused.copy_c_str("Refused");
+        this->translation.login.copy_c_str("login");
+        this->translation.username.copy_c_str("username");
+        this->translation.password.copy_c_str("password");
+        this->translation.target.copy_c_str("target");
+        this->translation.diagnostic.copy_c_str("diagnostic");
+        this->translation.connection_closed.copy_c_str("Connection closed");
+        this->translation.help_message.copy_c_str("Help message");
         // End Section "translation"
 
         // Begin section "context"
@@ -810,7 +810,7 @@ struct Inifile {
         this->context.opt_height                  = 600;
         this->context.opt_width                   = 800;
 
-        this->context.auth_error_message          = "";
+        this->context.auth_error_message.empty();
 
         this->context.ask_selector                = false;
         this->context.ask_selector_current_page   = false;
@@ -820,8 +820,8 @@ struct Inifile {
 
         this->context.selector                    = false;
         this->context.selector_current_page       = 1;
-        this->context.selector_device_filter      = "";
-        this->context.selector_group_filter       = "";
+        this->context.selector_device_filter.empty();
+        this->context.selector_group_filter.empty();
         this->context.selector_lines_per_page     = 20;
         this->context.selector_number_of_pages    = 1;
 
@@ -831,9 +831,9 @@ struct Inifile {
         this->context.ask_target_protocol         = true;
         this->context.ask_target_user             = true;
 
-        this->context.target_password             = "";
+        this->context.target_password.empty();
         this->context.target_port                 = 3389;
-        this->context.target_protocol             = "RDP";
+        this->context.target_protocol.copy_c_str("RDP");
 
         // not sure about ask_host and ask_target initial values
         this->context.ask_host                    = false;
@@ -843,23 +843,23 @@ struct Inifile {
         this->context.ask_password                = true;
 
 
-        this->context.password                    = "";
+        this->context.password.empty();
 
         this->context.ask_authchannel_target      = false;
         this->context.ask_authchannel_result      = false;
 
-        this->context.authchannel_answer          = "";
-        this->context.authchannel_result          = "";
-        this->context.authchannel_target          = "";
+        this->context.authchannel_answer.empty();
+        this->context.authchannel_result.empty();
+        this->context.authchannel_target.empty();
 
         this->context.ask_accept_message          = false;
         this->context.ask_display_message         = false;
 
-        this->context.message                     = "";
-        this->context.accept_message              = "";
-        this->context.display_message             = "";
+        this->context.message.empty();
+        this->context.accept_message.empty();
+        this->context.display_message.empty();
 
-        this->context.rejected                    = "Connection refused by authentifier.";
+        this->context.rejected.copy_c_str("Connection refused by authentifier.");
 
         this->context.authenticated               = false;
 
@@ -867,23 +867,23 @@ struct Inifile {
         this->context.ask_proxy_type              = false;
 
         this->context.keepalive                   = false;
-        this->context.proxy_type                  = "RDP";
+        this->context.proxy_type.copy_c_str("RDP");
 
         this->context.ask_trace_seal              = false;
 
-        this->context.trace_seal                  = "";
+        this->context.trace_seal.empty();
 
-        this->context.session_id                  = "";
+        this->context.session_id.empty();
 
         this->context.end_date_cnx                = 0;
-        this->context.end_time                    = "";
+        this->context.end_time.empty();
 
-        this->context.mode_console                = "allow";
+        this->context.mode_console.copy_c_str("allow");
         this->context.timezone                    = -3600;
 
-        this->context.real_target_device          = "";
+        this->context.real_target_device.empty();
 
-        this->context.authentication_challenge    = "";
+        this->context.authentication_challenge.empty();
     };
 
     void cparse(istream & ifs){
@@ -1255,40 +1255,40 @@ struct Inifile {
         }
         else if (0 == strcmp(context, "translation")){
             if (0 == strcmp(key, "button_ok")){
-                this->translation.button_ok = value;
+                this->translation.button_ok.copy_c_str(value);
             }
             else if (0 == strcmp(key, "button_cancel")){
-                this->translation.button_cancel     = value;
+                this->translation.button_cancel.copy_c_str(value);
             }
             else if (0 == strcmp(key, "button_help")){
-                this->translation.button_help       = value;
+                this->translation.button_help.copy_c_str(value);
             }
             else if (0 == strcmp(key, "button_close")){
-                this->translation.button_close      = value;
+                this->translation.button_close.copy_c_str(value);
             }
             else if (0 == strcmp(key, "button_refused")){
-                this->translation.button_refused    = value;
+                this->translation.button_refused.copy_c_str(value);
             }
             else if (0 == strcmp(key, "login")){
-                this->translation.login             = value;
+                this->translation.login.copy_c_str(value);
             }
             else if (0 == strcmp(key, "username")){
-                this->translation.username          = value;
+                this->translation.username.copy_c_str(value);
             }
             else if (0 == strcmp(key, "password")){
-                this->translation.password          = value;
+                this->translation.password.copy_c_str(value);
             }
             else if (0 == strcmp(key, "target")){
-                this->translation.target            = value;
+                this->translation.target.copy_c_str(value);
             }
             else if (0 == strcmp(key, "diagnostic")){
-                this->translation.diagnostic        = value;
+                this->translation.diagnostic.copy_c_str(value);
             }
             else if (0 == strcmp(key, "connection_closed")){
-                this->translation.connection_closed = value;
+                this->translation.connection_closed.copy_c_str(value);
             }
             else if (0 == strcmp(key, "help_message")){
-                this->translation.help_message      = value;
+                this->translation.help_message.copy_c_str(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -1313,40 +1313,40 @@ struct Inifile {
         switch (authid)
         {
         case AUTHID_TRANS_BUTTON_OK:
-            this->translation.button_ok         = value;
+            this->translation.button_ok.copy_c_str(value);
             break;
         case AUTHID_TRANS_BUTTON_CANCEL:
-            this->translation.button_cancel     = value;
+            this->translation.button_cancel.copy_c_str(value);
             break;
         case AUTHID_TRANS_BUTTON_HELP:
-            this->translation.button_help       = value;
+            this->translation.button_help.copy_c_str(value);
             break;
         case AUTHID_TRANS_BUTTON_CLOSE:
-            this->translation.button_close      = value;
+            this->translation.button_close.copy_c_str(value);
             break;
         case AUTHID_TRANS_BUTTON_REFUSED:
-            this->translation.button_refused    = value;
+            this->translation.button_refused.copy_c_str(value);
             break;
         case AUTHID_TRANS_LOGIN:
-            this->translation.login             = value;
+            this->translation.login.copy_c_str(value);
             break;
         case AUTHID_TRANS_USERNAME:
-            this->translation.username          = value;
+            this->translation.username.copy_c_str(value);
             break;
         case AUTHID_TRANS_PASSWORD:
-            this->translation.password          = value;
+            this->translation.password.copy_c_str(value);
             break;
         case AUTHID_TRANS_TARGET:
-            this->translation.target            = value;
+            this->translation.target.copy_c_str(value);
             break;
         case AUTHID_TRANS_DIAGNOSTIC:
-            this->translation.diagnostic        = value;
+            this->translation.diagnostic.copy_c_str(value);
             break;
         case AUTHID_TRANS_CONNECTION_CLOSED:
-            this->translation.connection_closed = value;
+            this->translation.connection_closed.copy_c_str(value);
             break;
         case AUTHID_TRANS_HELP_MESSAGE:
-            this->translation.help_message      = value;
+            this->translation.help_message.copy_c_str(value);
             break;
 
         // Options
@@ -1406,7 +1406,7 @@ struct Inifile {
             break;
 
         case AUTHID_AUTH_ERROR_MESSAGE:
-            this->context.auth_error_message = value;
+            this->context.auth_error_message.copy_c_str(value);
             break;
 
         case AUTHID_SELECTOR:
@@ -1419,11 +1419,11 @@ struct Inifile {
             break;
         case AUTHID_SELECTOR_DEVICE_FILTER:
             this->context.ask_selector_device_filter  = false;
-                this->context.selector_device_filter  = value;
+                this->context.selector_device_filter.copy_c_str(value);
             break;
         case AUTHID_SELECTOR_GROUP_FILTER:
             this->context.ask_selector_group_filter   = false;
-                this->context.selector_group_filter   = value;
+                this->context.selector_group_filter.copy_c_str(value);
             break;
         case AUTHID_SELECTOR_LINES_PER_PAGE:
             this->context.ask_selector_lines_per_page = false;
@@ -1440,7 +1440,7 @@ struct Inifile {
             break;
         case AUTHID_TARGET_PASSWORD:
             this->context.ask_target_password = false;
-            this->context.target_password     = value;
+            this->context.target_password.copy_c_str(value);
             break;
         case AUTHID_TARGET_PORT:
             this->context.ask_target_port     = false;
@@ -1448,7 +1448,7 @@ struct Inifile {
             break;
         case AUTHID_TARGET_PROTOCOL:
             this->context.ask_target_protocol = false;
-            this->context.target_protocol     = value;
+            this->context.target_protocol.copy_c_str(value);
             break;
         case AUTHID_TARGET_USER:
             this->context.ask_target_user     = false;
@@ -1475,39 +1475,39 @@ struct Inifile {
 
         case AUTHID_PASSWORD:
             this->context.ask_password = false;
-            this->context.password     = value;
+            this->context.password.copy_c_str(value);
             break;
 
         case AUTHID_AUTHCHANNEL_ANSWER:
-            this->context.authchannel_answer     = value;
+            this->context.authchannel_answer.copy_c_str(value);
             break;
         case AUTHID_AUTHCHANNEL_RESULT:
             this->context.ask_authchannel_result = false;
-            this->context.authchannel_result     = value;
+            this->context.authchannel_result.copy_c_str(value);
             break;
         case AUTHID_AUTHCHANNEL_TARGET:
             this->context.ask_authchannel_target = false;
-            this->context.authchannel_target     = value;
+            this->context.authchannel_target.copy_c_str(value);
             break;
 
         case AUTHID_MESSAGE:
-            this->context.message = value;
+            this->context.message.copy_c_str(value);
             break;
 
         case AUTHID_ACCEPT_MESSAGE:
             this->context.ask_accept_message  = false;
-            this->context.accept_message      = value;
+            this->context.accept_message.copy_c_str(value);
             break;
         case AUTHID_DISPLAY_MESSAGE:
             this->context.ask_display_message = false;
-            this->context.display_message     = value;
+            this->context.display_message.copy_c_str(value);
             break;
 
         case AUTHID_AUTHENTICATED:
             this->context.authenticated  = bool_from_cstr(value);
             break;
         case AUTHID_REJECTED:
-            this->context.rejected       = value;
+            this->context.rejected.copy_c_str(value);
             break;
 
         case AUTHID_KEEPALIVE:
@@ -1516,38 +1516,38 @@ struct Inifile {
             break;
         case AUTHID_PROXY_TYPE:
             this->context.ask_proxy_type = false;
-            this->context.proxy_type     = value;
+            this->context.proxy_type.copy_c_str(value);
             break;
 
         case AUTHID_TRACE_SEAL:
             this->context.ask_trace_seal = false;
-            this->context.trace_seal     = value;
+            this->context.trace_seal.copy_c_str(value);
             break;
 
         case AUTHID_SESSION_ID:
-            this->context.session_id = value;
+            this->context.session_id.copy_c_str(value);
             break;
 
         case AUTHID_END_DATE_CNX:
             this->context.end_date_cnx = ulong_from_cstr(value);
             break;
         case AUTHID_END_TIME:
-            this->context.end_time     = value;
+            this->context.end_time.copy_c_str(value);
             break;
 
         case AUTHID_MODE_CONSOLE:
-            this->context.mode_console = value;
+            this->context.mode_console.copy_c_str(value);
             break;
         case AUTHID_TIMEZONE:
             this->context.timezone     = _long_from_cstr(value);
             break;
 
         case AUTHID_REAL_TARGET_DEVICE:
-            this->context.real_target_device = value;
+            this->context.real_target_device.copy_c_str(value);
             break;
 
         case AUTHID_AUTHENTICATION_CHALLENGE:
-            this->context.authentication_challenge = value;
+            this->context.authentication_challenge.copy_c_str(value);
             break;
 
         default:
@@ -1575,40 +1575,40 @@ struct Inifile {
         switch (authid)
         {
         case AUTHID_TRANS_BUTTON_OK:
-            pszReturn = this->translation.button_ok;
+            pszReturn = this->translation.button_ok.c_str();
             break;
         case AUTHID_TRANS_BUTTON_CANCEL:
-            pszReturn = this->translation.button_cancel;
+            pszReturn = this->translation.button_cancel.c_str();
             break;
         case AUTHID_TRANS_BUTTON_HELP:
-            pszReturn = this->translation.button_help;
+            pszReturn = this->translation.button_help.c_str();
             break;
         case AUTHID_TRANS_BUTTON_CLOSE:
-            pszReturn = this->translation.button_close;
+            pszReturn = this->translation.button_close.c_str();
             break;
         case AUTHID_TRANS_BUTTON_REFUSED:
-            pszReturn = this->translation.button_refused;
+            pszReturn = this->translation.button_refused.c_str();
             break;
         case AUTHID_TRANS_LOGIN:
-            pszReturn = this->translation.login;
+            pszReturn = this->translation.login.c_str();
             break;
         case AUTHID_TRANS_USERNAME:
-            pszReturn = this->translation.username;
+            pszReturn = this->translation.username.c_str();
             break;
         case AUTHID_TRANS_PASSWORD:
-            pszReturn = this->translation.password;
+            pszReturn = this->translation.password.c_str();
             break;
         case AUTHID_TRANS_TARGET:
-            pszReturn = this->translation.target;
+            pszReturn = this->translation.target.c_str();
             break;
         case AUTHID_TRANS_DIAGNOSTIC:
-            pszReturn = this->translation.diagnostic;
+            pszReturn = this->translation.diagnostic.c_str();
             break;
         case AUTHID_TRANS_CONNECTION_CLOSED:
-            pszReturn = this->translation.connection_closed;
+            pszReturn = this->translation.connection_closed.c_str();
             break;
         case AUTHID_TRANS_HELP_MESSAGE:
-            pszReturn = this->translation.help_message;
+            pszReturn = this->translation.help_message.c_str();
             break;
 
         case AUTHID_OPT_CLIPBOARD:
@@ -1711,7 +1711,7 @@ struct Inifile {
             break;
 
         case AUTHID_AUTH_ERROR_MESSAGE:
-            pszReturn = this->context.auth_error_message;
+            pszReturn = this->context.auth_error_message.c_str();
             break;
 
         case AUTHID_SELECTOR:
@@ -1731,12 +1731,12 @@ struct Inifile {
             break;
         case AUTHID_SELECTOR_DEVICE_FILTER:
             if (!this->context.ask_selector_device_filter) {
-                pszReturn = this->context.selector_device_filter;
+                pszReturn = this->context.selector_device_filter.c_str();
             }
             break;
         case AUTHID_SELECTOR_GROUP_FILTER:
             if ( !this->context.ask_selector_group_filter) {
-                pszReturn = this->context.selector_group_filter;
+                pszReturn = this->context.selector_group_filter.c_str();
             }
             break;
         case AUTHID_SELECTOR_LINES_PER_PAGE:
@@ -1760,7 +1760,7 @@ struct Inifile {
             break;
         case AUTHID_TARGET_PASSWORD:
             if (!this->context.ask_target_password) {
-                pszReturn = this->context.target_password;
+                pszReturn = this->context.target_password.c_str();
             }
             break;
         case AUTHID_TARGET_PORT:
@@ -1772,7 +1772,7 @@ struct Inifile {
             break;
         case AUTHID_TARGET_PROTOCOL:
             if (!this->context.ask_target_protocol) {
-                pszReturn = this->context.target_protocol;
+                pszReturn = this->context.target_protocol.c_str();
             }
             break;
         case AUTHID_TARGET_USER:
@@ -1800,35 +1800,35 @@ struct Inifile {
             break;
         case AUTHID_PASSWORD:
             if (!this->context.ask_password) {
-                pszReturn = this->context.password;
+                pszReturn = this->context.password.c_str();
             }
             break;
 
         case AUTHID_AUTHCHANNEL_ANSWER:
-            pszReturn = this->context.authchannel_answer;
+            pszReturn = this->context.authchannel_answer.c_str();
             break;
         case AUTHID_AUTHCHANNEL_RESULT:
             if (!this->context.ask_authchannel_result) {
-                pszReturn = this->context.authchannel_result;
+                pszReturn = this->context.authchannel_result.c_str();
             }
             break;
         case AUTHID_AUTHCHANNEL_TARGET:
             if (!this->context.ask_authchannel_target) {
-                pszReturn = this->context.authchannel_target;
+                pszReturn = this->context.authchannel_target.c_str();
             }
             break;
 
         case AUTHID_MESSAGE:
-            pszReturn = this->context.message;
+            pszReturn = this->context.message.c_str();
             break;
         case AUTHID_ACCEPT_MESSAGE:
             if (!this->context.ask_accept_message) {
-                pszReturn = this->context.accept_message;
+                pszReturn = this->context.accept_message.c_str();
             }
             break;
         case AUTHID_DISPLAY_MESSAGE:
             if (!this->context.ask_display_message) {
-                pszReturn = this->context.display_message;
+                pszReturn = this->context.display_message.c_str();
             }
             break;
 
@@ -1840,7 +1840,7 @@ struct Inifile {
             }
             break;
         case AUTHID_REJECTED:
-            pszReturn = this->context.rejected;
+            pszReturn = this->context.rejected.c_str();
             break;
 
         case AUTHID_KEEPALIVE:
@@ -1855,17 +1855,17 @@ struct Inifile {
 
         case AUTHID_PROXY_TYPE:
             if (!this->context.ask_proxy_type) {
-                pszReturn = this->context.proxy_type;
+                pszReturn = this->context.proxy_type.c_str();
             }
             break;
         case AUTHID_TRACE_SEAL:
             if (!this->context.ask_trace_seal) {
-                pszReturn = this->context.trace_seal;
+                pszReturn = this->context.trace_seal.c_str();
             }
             break;
 
         case AUTHID_SESSION_ID:
-            pszReturn = this->context.session_id;
+            pszReturn = this->context.session_id.c_str();
             break;
 
         case AUTHID_END_DATE_CNX:
@@ -1875,11 +1875,11 @@ struct Inifile {
             }
             break;
         case AUTHID_END_TIME:
-            pszReturn = this->context.end_time;
+            pszReturn = this->context.end_time.c_str();
             break;
 
         case AUTHID_MODE_CONSOLE:
-            pszReturn = this->context.mode_console;
+            pszReturn = this->context.mode_console.c_str();
             break;
         case AUTHID_TIMEZONE:
             if (size) {
@@ -1889,11 +1889,11 @@ struct Inifile {
             break;
 
         case AUTHID_REAL_TARGET_DEVICE:
-            pszReturn = this->context.real_target_device;
+            pszReturn = this->context.real_target_device.c_str();
             break;
 
         case AUTHID_AUTHENTICATION_CHALLENGE:
-            pszReturn = this->context.authentication_challenge;
+            pszReturn = this->context.authentication_challenge.c_str();
             break;
 
         default:
