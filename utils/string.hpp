@@ -61,6 +61,17 @@ public:
         this->copy_c_str(source.buffer_pointer);
     }
 
+protected:
+    string & operator=(const char * source) {
+        return (*this);
+    }
+
+    string & operator=(const string & source) {
+        return (*this);
+    }
+
+public:
+
     virtual ~string() {
         if (this->buffer_pointer != this->static_buffer) {
             delete [] this->buffer_pointer;

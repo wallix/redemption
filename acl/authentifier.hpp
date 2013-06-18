@@ -592,7 +592,7 @@ class SessionManager {
                 }
 
                 if (!this->ini->context.rejected.is_empty()) {
-                    this->ini->context.auth_error_message = this->ini->context.rejected;
+                    this->ini->context.auth_error_message.copy_str(this->ini->context.rejected);
                 }
                 if (this->ini->context.auth_error_message.is_empty()) {
                     this->ini->context.auth_error_message.copy_c_str("Authentifier service failed");
