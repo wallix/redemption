@@ -1206,7 +1206,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                     {
                         GCC::UserData::CSCore cs_core;
                         cs_core.recv(f.payload);
-                        cs_core.log("Received from Client");
+                        if (this->verbose & 1) {
+                            cs_core.log("Received from Client");
+                        }
 
                         client_info.width = cs_core.desktopWidth;
                         client_info.height = cs_core.desktopHeight;
@@ -1238,7 +1240,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                     {
                         GCC::UserData::CSSecurity cs_sec;
                         cs_sec.recv(f.payload);
-                        cs_sec.log("Received from Client");
+                        if (this->verbose & 1) {
+                            cs_sec.log("Received from Client");
+                        }
                     }
                     break;
                     case CS_NET:
@@ -1252,7 +1256,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                             channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
                             this->channel_list.push_back(channel_item);
                         }
-                        cs_net.log("Received from Client");
+                        if (this->verbose & 1) {
+                            cs_net.log("Received from Client");
+                        }
                     }
                     break;
                     case CS_CLUSTER:
@@ -1261,14 +1267,18 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                         cs_cluster.recv(f.payload);
                         client_info.console_session =
                             (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID));
-                        cs_cluster.log("Receiving from Client");
+                        if (this->verbose & 1) {
+                            cs_cluster.log("Receiving from Client");
+                        }
                     }
                     break;
                     case CS_MONITOR:
                     {
                         GCC::UserData::CSMonitor cs_monitor;
                         cs_monitor.recv(f.payload);
-                        cs_monitor.log("Receiving from Client");
+                        if (this->verbose & 1) {
+                            cs_monitor.log("Receiving from Client");
+                        }
                     }
                     break;
                     default:
@@ -1292,7 +1302,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 sc_core.length = 12;
                 sc_core.clientRequestedProtocols = this->clientRequestedProtocols;
             }
-            sc_core.log("Sending to client");
+            if (this->verbose & 1) {
+                sc_core.log("Sending to client");
+            }
             sc_core.emit(stream);
             // ------------------------------------------------------------------
             GCC::UserData::SCNet sc_net;
@@ -1300,9 +1312,11 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             sc_net.MCSChannelId = GCC::MCS_GLOBAL_CHANNEL;
             sc_net.channelCount = num_channels;
             for (int index = 0; index < num_channels; index++) {
-                 sc_net.channelDefArray[index].id = GCC::MCS_GLOBAL_CHANNEL + index + 1;
+                sc_net.channelDefArray[index].id = GCC::MCS_GLOBAL_CHANNEL + index + 1;
             }
-            sc_net.log("Sending to client");
+            if (this->verbose & 1) {
+                sc_net.log("Sending to client");
+            }
             sc_net.emit(stream);
             // ------------------------------------------------------------------
             if (this->tls_support){
@@ -1312,7 +1326,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 sc_sec1.length = 12;
                 sc_sec1.serverRandomLen = 0;
                 sc_sec1.serverCertLen = 0;
-                sc_sec1.log("Sending to client");
+                if (this->verbose & 1) {
+                    sc_sec1.log("Sending to client");
+                }
                 sc_sec1.emit(stream);
             }
             else {
@@ -1368,7 +1384,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob + 64,
                     "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
 
-                sc_sec1.log("Sending to client");
+                if (this->verbose & 1) {
+                    sc_sec1.log("Sending to client");
+                }
                 sc_sec1.emit(stream);
             }
             stream.mark_end();
@@ -1993,7 +2011,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                     // but rdesktop actually sends input data
                     // also processing this is a problem because input data packets are broken
 //                    this->process_data(sctrl.payload, cb);
-                    
+
                     TODO("check all payload data is consumed")
                     break;
                 case PDUTYPE_DEACTIVATEALLPDU:
@@ -2214,17 +2232,24 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                     }
 
                     int length = sec.payload.in_uint32_le();
-                    int flags = sec.payload.in_uint32_le();
+                    int flags  = sec.payload.in_uint32_le();
 
                     size_t chunk_size = sec.payload.in_remain();
 
                     if (this->up_and_running){
-                        if (this->verbose & 16){
-                            LOG(LOG_INFO, "Front::send_to_mod_channel");
+                        if (  !this->ini->client.device_redirection
+                           && !strncmp(this->channel_list[num_channel_src].name, "rdpdr", 8)
+                           ) {
+                            LOG(LOG_INFO, "Front::incoming::rdpdr channel disabed");
                         }
-                        SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
+                        else {
+                            if (this->verbose & 16){
+                                LOG(LOG_INFO, "Front::send_to_mod_channel");
+                            }
+                            SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
 
-                        cb.send_to_mod_channel(channel.name, chunk, length, flags);
+                            cb.send_to_mod_channel(channel.name, chunk, length, flags);
+                        }
                     }
                     else {
                         if (this->verbose & 16){

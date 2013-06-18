@@ -64,8 +64,8 @@ static inline bool bool_from_cstr(const char * str)
 static inline unsigned level_from_cstr(const char * str)
 { // low = 0, medium = 1, high = 2
     unsigned res = 0;
-    if (0 == strcasecmp("medium", str)) { res = 1; }
-    else if (0 == strcasecmp("high", str)) { res = 2; }
+         if (0 == strcasecmp("medium", str)) { res = 1; }
+    else if (0 == strcasecmp("high",   str)) { res = 2; }
     return res;
 }
 
@@ -216,22 +216,22 @@ typedef enum
 } authid_t;
 
 // Translation text
-#define STRAUTHID_TRANS_BUTTON_OK         "trans_ok"
-#define STRAUTHID_TRANS_BUTTON_CANCEL     "trans_cancel"
-#define STRAUTHID_TRANS_BUTTON_HELP       "trans_help"
-#define STRAUTHID_TRANS_BUTTON_CLOSE      "trans_close"
-#define STRAUTHID_TRANS_BUTTON_REFUSED    "trans_refused"
-#define STRAUTHID_TRANS_LOGIN             "trans_login"
-#define STRAUTHID_TRANS_USERNAME          "trans_username"
-#define STRAUTHID_TRANS_PASSWORD          "trans_password"
-#define STRAUTHID_TRANS_TARGET            "trans_target"
-#define STRAUTHID_TRANS_DIAGNOSTIC        "trans_diagnostic"
-#define STRAUTHID_TRANS_CONNECTION_CLOSED "trans_connection_closed"
-#define STRAUTHID_TRANS_HELP_MESSAGE      "trans_help_message"
+#define STRAUTHID_TRANS_BUTTON_OK          "trans_ok"
+#define STRAUTHID_TRANS_BUTTON_CANCEL      "trans_cancel"
+#define STRAUTHID_TRANS_BUTTON_HELP        "trans_help"
+#define STRAUTHID_TRANS_BUTTON_CLOSE       "trans_close"
+#define STRAUTHID_TRANS_BUTTON_REFUSED     "trans_refused"
+#define STRAUTHID_TRANS_LOGIN              "trans_login"
+#define STRAUTHID_TRANS_USERNAME           "trans_username"
+#define STRAUTHID_TRANS_PASSWORD           "trans_password"
+#define STRAUTHID_TRANS_TARGET             "trans_target"
+#define STRAUTHID_TRANS_DIAGNOSTIC         "trans_diagnostic"
+#define STRAUTHID_TRANS_CONNECTION_CLOSED  "trans_connection_closed"
+#define STRAUTHID_TRANS_HELP_MESSAGE       "trans_help_message"
 // Options
-#define STRAUTHID_OPT_CLIPBOARD           "clipboard"
-#define STRAUTHID_OPT_DEVICEREDIRECTION   "device_redirection"
-#define STRAUTHID_OPT_FILE_ENCRYPTION     "file_encryption"
+#define STRAUTHID_OPT_CLIPBOARD            "clipboard"
+#define STRAUTHID_OPT_DEVICEREDIRECTION    "device_redirection"
+#define STRAUTHID_OPT_FILE_ENCRYPTION      "file_encryption"
 // Video capture
 #define STRAUTHID_OPT_CODEC_ID             "codec_id"
 #define STRAUTHID_OPT_MOVIE                "is_rec"
@@ -250,11 +250,11 @@ typedef enum
 
 #define STRAUTHID_AUTH_ERROR_MESSAGE       "error_message"
 
-#define STRAUTHID_SELECTOR                  "selector"
-#define STRAUTHID_SELECTOR_CURRENT_PAGE     "selector_current_page"
-#define STRAUTHID_SELECTOR_DEVICE_FILTER    "selector_device_filter"
-#define STRAUTHID_SELECTOR_GROUP_FILTER     "selector_group_filter"
-#define STRAUTHID_SELECTOR_LINES_PER_PAGE   "selector_lines_per_page"
+#define STRAUTHID_SELECTOR                 "selector"
+#define STRAUTHID_SELECTOR_CURRENT_PAGE    "selector_current_page"
+#define STRAUTHID_SELECTOR_DEVICE_FILTER   "selector_device_filter"
+#define STRAUTHID_SELECTOR_GROUP_FILTER    "selector_group_filter"
+#define STRAUTHID_SELECTOR_LINES_PER_PAGE  "selector_lines_per_page"
 #define STRAUTHID_SELECTOR_NUMBER_OF_PAGES "selector_number_of_pages"
 
 #define STRAUTHID_TARGET_DEVICE            "target_device"
@@ -315,14 +315,14 @@ static inline authid_t authid_from_string(const char * strauthid) {
         STRAUTHID_TRANS_HELP_MESSAGE,
 
         // Options
-        STRAUTHID_OPT_CLIPBOARD,         // clipboard
-        STRAUTHID_OPT_DEVICEREDIRECTION, // device_redirection
-        STRAUTHID_OPT_FILE_ENCRYPTION,   // file encryption
+        STRAUTHID_OPT_CLIPBOARD,            // clipboard
+        STRAUTHID_OPT_DEVICEREDIRECTION,    // device_redirection
+        STRAUTHID_OPT_FILE_ENCRYPTION,      // file encryption
 
         // Video capture
-        STRAUTHID_OPT_CODEC_ID,    // CODEC_ID for video encoding
-        STRAUTHID_OPT_MOVIE,       // is_rec
-        STRAUTHID_OPT_MOVIE_PATH,  // rec_path
+        STRAUTHID_OPT_CODEC_ID,     // CODEC_ID for video encoding
+        STRAUTHID_OPT_MOVIE,        // is_rec
+        STRAUTHID_OPT_MOVIE_PATH,   // rec_path
         STRAUTHID_VIDEO_QUALITY,
 
         // Alternate shell
@@ -330,55 +330,55 @@ static inline authid_t authid_from_string(const char * strauthid) {
         STRAUTHID_SHELL_WORKING_DIRECTORY,
 
         // Context
-        STRAUTHID_OPT_BITRATE,         // Bit rate for video encoding
-        STRAUTHID_OPT_FRAMERATE,       // Frame rate for video encoding
-        STRAUTHID_OPT_QSCALE,          // QScale parameter for vdeo encoding
+        STRAUTHID_OPT_BITRATE,      // Bit rate for video encoding
+        STRAUTHID_OPT_FRAMERATE,    // Frame rate for video encoding
+        STRAUTHID_OPT_QSCALE,       // QScale parameter for vdeo encoding
 
-        STRAUTHID_OPT_BPP,            // bits per planes (number of colors)
-        STRAUTHID_OPT_HEIGHT,         // client height
-        STRAUTHID_OPT_WIDTH,          // client width
+        STRAUTHID_OPT_BPP,          // bits per planes (number of colors)
+        STRAUTHID_OPT_HEIGHT,       // client height
+        STRAUTHID_OPT_WIDTH,        // client width
 
         STRAUTHID_AUTH_ERROR_MESSAGE,
 
         STRAUTHID_SELECTOR,
-        STRAUTHID_SELECTOR_CURRENT_PAGE,      // current page
-        STRAUTHID_SELECTOR_DEVICE_FILTER,     // device filter text
-        STRAUTHID_SELECTOR_GROUP_FILTER,      // group filter text
-        STRAUTHID_SELECTOR_LINES_PER_PAGE,    // number of lines per page
-        STRAUTHID_SELECTOR_NUMBER_OF_PAGES,  // number of pages
+        STRAUTHID_SELECTOR_CURRENT_PAGE,    // current page
+        STRAUTHID_SELECTOR_DEVICE_FILTER,   // device filter text
+        STRAUTHID_SELECTOR_GROUP_FILTER,    // group filter text
+        STRAUTHID_SELECTOR_LINES_PER_PAGE,  // number of lines per page
+        STRAUTHID_SELECTOR_NUMBER_OF_PAGES, // number of pages
 
-        STRAUTHID_TARGET_DEVICE,      // target_device
-        STRAUTHID_TARGET_PASSWORD,    // target_password
-        STRAUTHID_TARGET_PORT,        // target_port
-        STRAUTHID_TARGET_PROTOCOL,    // proto_dest
-        STRAUTHID_TARGET_USER,        // target_login
+        STRAUTHID_TARGET_DEVICE,    // target_device
+        STRAUTHID_TARGET_PASSWORD,  // target_password
+        STRAUTHID_TARGET_PORT,      // target_port
+        STRAUTHID_TARGET_PROTOCOL,  // proto_dest
+        STRAUTHID_TARGET_USER,      // target_login
 
-        STRAUTHID_AUTH_USER,          // login
-        STRAUTHID_HOST,               // ip_client
-        STRAUTHID_TARGET,             // ip_target
-        STRAUTHID_PASSWORD,           // password
+        STRAUTHID_AUTH_USER,        // login
+        STRAUTHID_HOST,             // ip_client
+        STRAUTHID_TARGET,           // ip_target
+        STRAUTHID_PASSWORD,         // password
 
-        STRAUTHID_AUTHCHANNEL_ANSWER, // WabLauncher target answer
-        STRAUTHID_AUTHCHANNEL_RESULT, // WabLauncher session result
-        STRAUTHID_AUTHCHANNEL_TARGET, // WabLauncher target request
+        STRAUTHID_AUTHCHANNEL_ANSWER,   // WabLauncher target answer
+        STRAUTHID_AUTHCHANNEL_RESULT,   // WabLauncher session result
+        STRAUTHID_AUTHCHANNEL_TARGET,   // WabLauncher target request
 
-        STRAUTHID_MESSAGE,    // warning_message
+        STRAUTHID_MESSAGE,  // warning_message
 
-        STRAUTHID_ACCEPT_MESSAGE,      // display a dialog to valid a message
-        STRAUTHID_DISPLAY_MESSAGE,     // display a dialog box with a message
+        STRAUTHID_ACCEPT_MESSAGE,   // display a dialog to valid a message
+        STRAUTHID_DISPLAY_MESSAGE,  // display a dialog box with a message
 
         STRAUTHID_AUTHENTICATED,
-        STRAUTHID_REJECTED,        // rejected
+        STRAUTHID_REJECTED,         // rejected
 
         STRAUTHID_KEEPALIVE,
         STRAUTHID_PROXY_TYPE,
 
-        STRAUTHID_TRACE_SEAL,      // after closing trace file trace is sealed using a signature hash
+        STRAUTHID_TRACE_SEAL,   // after closing trace file trace is sealed using a signature hash
 
-        STRAUTHID_SESSION_ID,      // session_id
+        STRAUTHID_SESSION_ID,   // session_id
 
-        STRAUTHID_END_DATE_CNX,    // timeclose
-        STRAUTHID_END_TIME,        // end time as text
+        STRAUTHID_END_DATE_CNX, // timeclose
+        STRAUTHID_END_TIME,     // end time as text
 
         STRAUTHID_MODE_CONSOLE,
         STRAUTHID_TIMEZONE,
@@ -401,8 +401,6 @@ static inline authid_t authid_from_string(const char * strauthid) {
 
 struct Inifile {
     struct Inifile_globals {
-
-
         bool capture_chunk;
 
         char auth_user[512];
@@ -449,11 +447,10 @@ struct Inifile {
         bool enable_bitmap_update;
         // END globals
 
-
         uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
         unsigned flv_frame_interval;
-
     } globals;
+
     // section "client"
     struct {
         bool ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default false
@@ -504,7 +501,6 @@ struct Inifile {
         int h_height;
         int h_width;
         int h_qscale;
-
     } video;
 
     // Section "debug"
@@ -531,8 +527,6 @@ struct Inifile {
         char log_file_path[1024]; // log file location
     } debug;
 
-
-
     // section "translation"
     struct {
         redemption::string button_ok;
@@ -548,6 +542,7 @@ struct Inifile {
         redemption::string connection_closed;
         redemption::string help_message;
     } translation;
+
     // section "context"
     struct {
         unsigned           selector_focus;
@@ -652,7 +647,6 @@ struct Inifile {
         this->cparse(filename);
     }
 
-
     Inifile(istream & Inifile_stream) {
         this->init();
         this->cparse(Inifile_stream);
@@ -730,12 +724,12 @@ struct Inifile {
         this->video.capture_flv   = false;
         this->video.capture_ocr   = false;
 
-        this->video.ocr_interval = 100; // 1 every second
-        this->video.png_interval = 3000;
+        this->video.ocr_interval    = 100; // 1 every second
+        this->video.png_interval    = 3000;
         this->video.capture_groupid = 33;
-        this->video.frame_interval = 40;
-        this->video.break_interval = 600;
-        this->video.png_limit = 3;
+        this->video.frame_interval  = 40;
+        this->video.break_interval  = 600;
+        this->video.png_limit       = 3;
         strcpy(this->video.replay_path, "/tmp/");
 
         this->video.l_bitrate   = 20000;
@@ -775,8 +769,8 @@ struct Inifile {
         this->debug.widget            = 0;
         this->debug.input             = 0;
 
-        this->debug.log_type         = 2; // syslog by default
-        this->debug.log_file_path[0] = 0;
+        this->debug.log_type          = 2; // syslog by default
+        this->debug.log_file_path[0]  = 0;
         // End Section "debug"
 
         // Begin Section "translation"
@@ -1191,7 +1185,7 @@ struct Inifile {
             }
         }
         else if (0 == strcmp(context, "debug")){
-            if (0 == strcmp(key, "x224")){
+                 if (0 == strcmp(key, "x224")){
                 this->debug.x224              = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "mcs")){
@@ -1254,7 +1248,7 @@ struct Inifile {
             }
         }
         else if (0 == strcmp(context, "translation")){
-            if (0 == strcmp(key, "button_ok")){
+                 if (0 == strcmp(key, "button_ok")){
                 this->translation.button_ok.copy_c_str(value);
             }
             else if (0 == strcmp(key, "button_cancel")){
@@ -1460,18 +1454,18 @@ struct Inifile {
         case AUTHID_AUTH_USER:
             this->context.ask_auth_user = false;
             strncpy(this->globals.auth_user, value, sizeof(this->globals.auth_user));
-            this->globals.auth_user[sizeof(this->globals.auth_user) - 1] = 0;
+            this->globals.auth_user[sizeof(this->globals.auth_user) - 1]         = 0;
             break;
         case AUTHID_HOST:
             this->context.ask_host      = false;
-            strncpy(this->globals.host,      value, sizeof(this->globals.host));
-            this->globals.host[sizeof(this->globals.host) - 1]           = 0;
+            strncpy(this->globals.host,          value, sizeof(this->globals.host));
+            this->globals.host[sizeof(this->globals.host) - 1]                   = 0;
             break;
 
         case AUTHID_TARGET:
             this->context.ask_target      = false;
-            strncpy(this->globals.target,      value, sizeof(this->globals.target));
-            this->globals.host[sizeof(this->globals.target) - 1]           = 0;
+            strncpy(this->globals.target,        value, sizeof(this->globals.target));
+            this->globals.host[sizeof(this->globals.target) - 1]                 = 0;
             break;
 
         case AUTHID_PASSWORD:
@@ -1540,7 +1534,7 @@ struct Inifile {
             this->context.mode_console.copy_c_str(value);
             break;
         case AUTHID_TIMEZONE:
-            this->context.timezone     = _long_from_cstr(value);
+            this->context.timezone = _long_from_cstr(value);
             break;
 
         case AUTHID_REAL_TARGET_DEVICE:
