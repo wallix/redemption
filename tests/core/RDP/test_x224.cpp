@@ -94,8 +94,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_no_factory)
 
 BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_overfull_stream)
 {
-    GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
+    GeneratorTransport t("\x03\x00\x00\x0C\x06\xE0\x00\x00\x00\x00\x00\x00", 12);
 
+    // stream is too small to hold received data
     BStream stream(4);
     try {
         X224::CR_TPDU_Recv x224(t, stream);
@@ -106,6 +107,93 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_overfull_stream)
     };
 }
 
+BOOST_AUTO_TEST_CASE(TestReceive_TPDU_truncated_header)
+{
+    GeneratorTransport t("\x03\x00\x00\x0A\x06\xE0\x00\x00\x00", 10);
+
+    BStream stream(20);
+    try {
+        X224::CR_TPDU_Recv x224(t, stream);
+        BOOST_CHECK(false);
+    }
+    catch (Error & e) {
+        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+    };
+}
+
+BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Wrong_opcode)
+{
+    GeneratorTransport t("\x03\x00\x00\x0C\x06\xF0\x00\x00\x00\x00\x00\x00", 12);
+
+    BStream stream(20);
+    try {
+        X224::CR_TPDU_Recv x224(t, stream);
+        BOOST_CHECK(false);
+    }
+    catch (Error & e) {
+        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+    };
+}
+
+BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_truncated_header)
+{
+    size_t tpkt_len = 55;
+    GeneratorTransport t(
+/* 0000 */ "\x03\x00\x00\x35\x32\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...72......Cooki |
+/* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x61\x64\x6d\x69" //e: mstshash=admi |
+/* 0020 */ "\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72\x40\x71\x61\x0d\x0a\x01" //nistrateur@qa... |
+/* 0030 */ "\x00\x08\x00\x01\x00\x00\x00"                                     //....... |
+        , tpkt_len - 2);
+
+    BStream stream(100);
+    try {
+        X224::CR_TPDU_Recv x224(t, stream);
+        BOOST_CHECK(false);
+    }
+    catch (Error & e) {
+        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+    };
+}
+
+BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_NEG_REQ_MISSING)
+{
+    size_t tpkt_len = 55;
+    GeneratorTransport t(
+/* 0000 */ "\x03\x00\x00\x37\x32\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...72......Cooki |
+/* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x61\x64\x6d\x69" //e: mstshash=admi |
+/* 0020 */ "\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72\x40\x71\x61\x0d\x0a\x00" //nistrateur@qa... |
+/* 0030 */ "\x00\x08\x00\x01\x00\x00\x00"                                     //....... |
+        , tpkt_len);
+
+    BStream stream(100);
+    try {
+        X224::CR_TPDU_Recv x224(t, stream);
+        BOOST_CHECK(false);
+    }
+    catch (Error & e) {
+        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+    };
+}
+
+BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_trailing_data)
+{
+    size_t tpkt_len = 55;
+    GeneratorTransport t(
+/* 0000 */ "\x03\x00\x00\x37\x30\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...72......Cooki |
+/* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x61\x64\x6d\x69" //e: mstshash=admi |
+/* 0020 */ "\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72\x40\x71\x61\x0d\x0a\x01" //nistrateur@qa... |
+/* 0030 */ "\x00\x08\x00\x01\x00\x00\x00"                                     //....... |
+        , tpkt_len);
+
+    BStream stream(100);
+    try {
+        X224::CR_TPDU_Recv x224(t, stream);
+        BOOST_CHECK(false);
+    }
+    catch (Error & e) {
+        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+    };
+}
 
 BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
 {
@@ -205,6 +293,20 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_with_factory)
     BOOST_CHECK_EQUAL(x224._header_size, stream.size());
 }
 
+BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_wrong_opcode)
+{
+    GeneratorTransport t("\x03\x00\x00\x0B\x06\xC0\x00\x00\x00\x00\x00", 11);
+
+    BStream stream(65536);
+    try {
+        X224::CC_TPDU_Recv x224(t, stream);
+        BOOST_CHECK(false);
+    }
+    catch(Error & e){
+        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+    };
+
+}
 
 BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU)
 {
@@ -272,6 +374,21 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_with_factory)
     BOOST_CHECK_EQUAL(x224._header_size, stream.size());
 }
 
+BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU_wrong_opcode)
+{
+    GeneratorTransport t("\x03\x00\x00\x0B\x06\xC0\x00\x00\x00\x00\x00", 11);
+
+    BStream stream(65536);
+    try {
+        X224::DR_TPDU_Recv x224(t, stream);
+        BOOST_CHECK(false);
+    }
+    catch(Error & e){
+        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+    };
+
+}
+
 BOOST_AUTO_TEST_CASE(TestSend_DR_TPDU)
 {
     BStream stream(256); 
@@ -314,6 +431,22 @@ BOOST_AUTO_TEST_CASE(TestSend_ER_TPDU)
         memcmp("\x03\x00\x00\x0D\x08\x70\x00\x00\x02\xC1\x02\x06\x22", stream.data, 13));
 }
 
+
+BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU_wrong_opcode)
+{
+    GeneratorTransport t("\x03\x00\x00\x0D\x08\xC0\x00\x00\x02\xC1\x02\x06\x22", 13);
+
+    BStream stream(65536);
+    try {
+        X224::ER_TPDU_Recv x224(t, stream);
+        BOOST_CHECK(false);
+    }
+    catch(Error & e){
+        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+    };
+
+}
+
 BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_with_factory)
 {
     GeneratorTransport t("\x03\x00\x00\x0C\x02\xF0\x80\x12\x34\x56\x78\x9A", 12);
@@ -337,6 +470,20 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_with_factory)
     BOOST_CHECK_EQUAL(5, x224.payload_size);
 }
 
+BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU_wrong_opcode)
+{
+    GeneratorTransport t("\x03\x00\x00\x0C\x02\xC0\x80\x12\x34\x56\x78\x9A", 12);
+
+    BStream stream(65536);
+    try {
+        X224::DT_TPDU_Recv x224(t, stream);
+        BOOST_CHECK(false);
+    }
+    catch(Error & e){
+        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_X224));
+    };
+
+}
 
 BOOST_AUTO_TEST_CASE(TestSend_DT_TPDU)
 {
