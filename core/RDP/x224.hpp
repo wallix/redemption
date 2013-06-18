@@ -548,7 +548,7 @@ namespace X224
         , rdp_neg_length(0)
         , rdp_neg_requestedProtocols(0)
         {
-            unsigned expected = 7; /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
+            const unsigned expected = 7; /* LI(1) + code(1) + dst_ref(2) + src_ref(2) + class_option(1) */
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated TPDU header: expected=%u remains=%u",
                     expected, stream.in_remain());
@@ -568,10 +568,10 @@ namespace X224
             this->tpdu_hdr.src_ref = stream.in_uint16_le();
             this->tpdu_hdr.class_option = stream.in_uint8();
 
-            expected = X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI;
-            if (stream.size() < expected){
+            const unsigned expected2 = X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI;
+            if (stream.size() < expected2){
                 LOG(LOG_ERR, "Truncated CR TPDU header: expected %u, got %u",
-                    expected, stream.size());
+                    expected2, stream.size());
                 throw Error(ERR_X224);
             }
 
@@ -584,10 +584,7 @@ namespace X224
             for (uint8_t * p = stream.p + 1; p < end_of_header ; p++){
                 if (p[-1] == 0x0D && p[0] == 0x0A){
                     this->cookie_len = p - (stream.data + 11) + 1;
-                    if (cookie_len > 1023){
-                        LOG(LOG_ERR, "Bad Connection Request X224 header, cookie too large (length = %u)", cookie_len);
-                        throw Error(ERR_X224);
-                    }
+                    // cookie can't be larger than header (HEADER_LEN + LI + 1 = 230)
                     memcpy(this->cookie, stream.data + 11, this->cookie_len);
                     this->cookie[this->cookie_len] = 0;
                     if (verbose){
